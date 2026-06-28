@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 2,
+  "settings": {
+    "color": {
+      "palette": [
+        { "slug": "bhp-navy", "color": "#0d1b2a", "name": "BHP Navy" },
+        { "slug": "bhp-blue", "color": "#0d5fa6", "name": "BHP Blue" },
+        { "slug": "bhp-light-blue", "color": "#4a9edd", "name": "BHP Light Blue" },
+        { "slug": "bhp-pale", "color": "#a8c5e8", "name": "BHP Pale Blue" },
+        { "slug": "bhp-bg", "color": "#f0f4f8", "name": "BHP Background" },
+        { "slug": "white", "color": "#ffffff", "name": "White" }
+      ]
+    },
+    "typography": {
+      "fontFamilies": [
+        { "fontFamily": "Georgia, serif", "slug": "serif", "name": "Serif (Georgia)" },
+        { "fontFamily": "Lato, sans-serif", "slug": "sans", "name": "Sans (Lato)" }
+      ]
+    },
+    "layout": {
+      "contentSize": "780px",
+      "wideSize": "1200px"
+    }
+  },
+  "styles": {
+    "color": {
+      "background": "#ffffff",
+      "text": "#1a1a2e"
+    },
+    "typography": {
+      "fontFamily": "Georgia, serif",
+      "fontSize": "18px",
+      "lineHeight": "1.7"
+    }
+  }
+}
