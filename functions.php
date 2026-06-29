@@ -602,3 +602,21 @@ function bhp_get_series_adventures() {
     return apply_filters('bhp_series_adventures', $adventures, $products);
 }
 
+// ============================================================
+// CONTACT FORM FOUNDATION
+// ============================================================
+/**
+ * Provider-neutral contact action. Keep empty until an approved external or
+ * first-party handler is configured with validation and spam protection.
+ */
+function bhp_get_contact_form_action($requested_action = '') {
+    return apply_filters('bhp_contact_form_action', $requested_action);
+}
+
+/**
+ * Nonfunctional destination used only while the Contact form is disabled.
+ */
+function bhp_get_contact_placeholder_action() {
+    return home_url('/contact-form-placeholder/');
+}
+
