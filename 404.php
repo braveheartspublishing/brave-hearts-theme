@@ -1,8 +1,8 @@
 <?php get_header(); ?>
-<div class="site-container" style="padding:100px 24px;text-align:center;">
-  <h1 style="font-size:5rem;color:#e0e8f0;margin-bottom:0;">404</h1>
-  <h2>This page went somewhere big.</h2>
-  <p style="color:#4a5568;max-width:400px;margin:0 auto 32px;">Probably the Mariana Trench. Let's get you back.</p>
-  <a href="<?php echo esc_url(home_url('/')); ?>" class="btn btn-primary" style="background:#0d5fa6;color:#fff;padding:14px 32px;border-radius:4px;font-weight:bold;display:inline-block;">Back to Home</a>
-</div>
+<section class="site-container error-page">
+  <p class="error-page__code" aria-hidden="true">404</p>
+  <h1><?php esc_html_e('This page went somewhere big.', 'brave-hearts'); ?></h1>
+  <p class="error-page__message"><?php esc_html_e("Probably the Mariana Trench. Let's get you back.", 'brave-hearts'); ?></p>
+  <a href="<?php echo esc_url(home_url('/')); ?>" class="btn btn-primary"><?php esc_html_e('Back to Home', 'brave-hearts'); ?></a>
+</section>
 <?php get_footer(); ?>

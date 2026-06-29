@@ -34,16 +34,36 @@ function bhp_theme_setup() {
 }
 add_action('after_setup_theme', 'bhp_theme_setup');
 
+// Make the design-system button variants available in the block editor.
+function bhp_register_block_styles() {
+    $styles = [
+        'bhp-primary'   => __('Primary', 'brave-hearts'),
+        'bhp-secondary' => __('Secondary', 'brave-hearts'),
+        'bhp-outline'   => __('Outline', 'brave-hearts'),
+        'bhp-ghost'     => __('Ghost', 'brave-hearts'),
+    ];
+
+    foreach ($styles as $name => $label) {
+        register_block_style('core/button', [
+            'name'  => $name,
+            'label' => $label,
+        ]);
+    }
+}
+add_action('init', 'bhp_register_block_styles');
+
 // ============================================================
 // ENQUEUE STYLES & SCRIPTS
 // ============================================================
 function bhp_enqueue_assets() {
-    wp_enqueue_style('bhp-style', get_stylesheet_uri(), [], '1.0.0');
+    $theme_version = wp_get_theme()->get('Version');
+
+    wp_enqueue_style('bhp-style', get_stylesheet_uri(), [], $theme_version);
     wp_enqueue_style('bhp-google-fonts',
         'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap',
         [], null
     );
-    wp_enqueue_script('bhp-nav', get_template_directory_uri() . '/assets/js/nav.js', [], '1.0.0', true);
+    wp_enqueue_script('bhp-nav', get_template_directory_uri() . '/assets/js/nav.js', [], $theme_version, true);
 
     if (is_singular() && comments_open() && get_option('thread_comments')) {
         wp_enqueue_script('comment-reply');

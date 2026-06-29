@@ -2,20 +2,182 @@
   "$schema": "https://schemas.wp.org/trunk/theme.json",
   "version": 2,
   "settings": {
+    "appearanceTools": true,
     "color": {
+      "custom": false,
+      "defaultPalette": false,
       "palette": [
-        { "slug": "bhp-navy", "color": "#0d1b2a", "name": "BHP Navy" },
-        { "slug": "bhp-blue", "color": "#0d5fa6", "name": "BHP Blue" },
-        { "slug": "bhp-light-blue", "color": "#4a9edd", "name": "BHP Light Blue" },
-        { "slug": "bhp-pale", "color": "#a8c5e8", "name": "BHP Pale Blue" },
-        { "slug": "bhp-bg", "color": "#f0f4f8", "name": "BHP Background" },
-        { "slug": "white", "color": "#ffffff", "name": "White" }
+        {
+          "slug": "bhp-navy",
+          "color": "#0d1b2a",
+          "name": "BHP Navy"
+        },
+        {
+          "slug": "bhp-navy-soft",
+          "color": "#1a3a5c",
+          "name": "BHP Soft Navy"
+        },
+        {
+          "slug": "bhp-blue",
+          "color": "#0d5fa6",
+          "name": "BHP Blue"
+        },
+        {
+          "slug": "bhp-blue-dark",
+          "color": "#0a4d8a",
+          "name": "BHP Dark Blue"
+        },
+        {
+          "slug": "bhp-light-blue",
+          "color": "#4a9edd",
+          "name": "BHP Light Blue"
+        },
+        {
+          "slug": "bhp-pale",
+          "color": "#a8c5e8",
+          "name": "BHP Pale Blue"
+        },
+        {
+          "slug": "bhp-sky",
+          "color": "#d4e8ff",
+          "name": "BHP Sky"
+        },
+        {
+          "slug": "bhp-bg",
+          "color": "#f0f4f8",
+          "name": "BHP Mist"
+        },
+        {
+          "slug": "bhp-border",
+          "color": "#e0e8f0",
+          "name": "BHP Border"
+        },
+        {
+          "slug": "bhp-ink",
+          "color": "#1a1a2e",
+          "name": "BHP Ink"
+        },
+        {
+          "slug": "bhp-slate",
+          "color": "#4a5568",
+          "name": "BHP Slate"
+        },
+        {
+          "slug": "white",
+          "color": "#ffffff",
+          "name": "White"
+        }
       ]
     },
     "typography": {
+      "customFontSize": false,
+      "dropCap": false,
       "fontFamilies": [
-        { "fontFamily": "Georgia, serif", "slug": "serif", "name": "Serif (Georgia)" },
-        { "fontFamily": "Lato, sans-serif", "slug": "sans", "name": "Sans (Lato)" }
+        {
+          "fontFamily": "Georgia, 'Times New Roman', serif",
+          "slug": "serif",
+          "name": "Serif (Georgia)"
+        },
+        {
+          "fontFamily": "Lato, Arial, sans-serif",
+          "slug": "sans",
+          "name": "Sans (Lato)"
+        }
+      ],
+      "fontSizes": [
+        {
+          "slug": "caption",
+          "size": "0.8rem",
+          "name": "Caption"
+        },
+        {
+          "slug": "small",
+          "size": "0.9rem",
+          "name": "Small"
+        },
+        {
+          "slug": "body",
+          "size": "1.125rem",
+          "name": "Body"
+        },
+        {
+          "slug": "lead",
+          "size": "clamp(1.125rem, 2vw, 1.3rem)",
+          "name": "Lead"
+        },
+        {
+          "slug": "section-heading",
+          "size": "clamp(1.75rem, 4vw, 3rem)",
+          "name": "Section Heading"
+        },
+        {
+          "slug": "hero-heading",
+          "size": "clamp(2.75rem, 7vw, 5rem)",
+          "name": "Hero Heading"
+        }
+      ]
+    },
+    "spacing": {
+      "blockGap": true,
+      "customSpacingSize": false,
+      "units": [
+        "px",
+        "rem",
+        "vh",
+        "vw",
+        "%"
+      ],
+      "spacingSizes": [
+        {
+          "slug": "1",
+          "size": "0.25rem",
+          "name": "1"
+        },
+        {
+          "slug": "2",
+          "size": "0.5rem",
+          "name": "2"
+        },
+        {
+          "slug": "3",
+          "size": "0.75rem",
+          "name": "3"
+        },
+        {
+          "slug": "4",
+          "size": "1rem",
+          "name": "4"
+        },
+        {
+          "slug": "6",
+          "size": "1.5rem",
+          "name": "6"
+        },
+        {
+          "slug": "8",
+          "size": "2rem",
+          "name": "8"
+        },
+        {
+          "slug": "12",
+          "size": "3rem",
+          "name": "12"
+        },
+        {
+          "slug": "16",
+          "size": "4rem",
+          "name": "16"
+        },
+        {
+          "slug": "20",
+          "size": "5rem",
+          "name": "20"
+        },
+        {
+          "slug": "24",
+          "size": "6rem",
+          "name": "24"
+        }
       ]
     },
     "layout": {
@@ -25,13 +187,57 @@
   },
   "styles": {
     "color": {
-      "background": "#ffffff",
-      "text": "#1a1a2e"
+      "background": "var:preset|color|white",
+      "text": "var:preset|color|bhp-ink"
+    },
+    "spacing": {
+      "blockGap": "var:preset|spacing|6"
     },
     "typography": {
-      "fontFamily": "Georgia, serif",
-      "fontSize": "18px",
+      "fontFamily": "var:preset|font-family|serif",
+      "fontSize": "var:preset|font-size|body",
       "lineHeight": "1.7"
+    },
+    "elements": {
+      "button": {
+        "border": {
+          "radius": "4px"
+        },
+        "color": {
+          "background": "var:preset|color|bhp-blue",
+          "text": "var:preset|color|white"
+        },
+        "spacing": {
+          "padding": {
+            "top": "0.875rem",
+            "right": "2rem",
+            "bottom": "0.875rem",
+            "left": "2rem"
+          }
+        },
+        "typography": {
+          "fontFamily": "var:preset|font-family|sans",
+          "fontSize": "var:preset|font-size|small",
+          "fontWeight": "700",
+          "letterSpacing": "0.04em",
+          "textTransform": "uppercase"
+        }
+      },
+      "heading": {
+        "color": {
+          "text": "var:preset|color|bhp-navy"
+        },
+        "typography": {
+          "fontFamily": "var:preset|font-family|serif",
+          "fontWeight": "700",
+          "lineHeight": "1.2"
+        }
+      },
+      "link": {
+        "color": {
+          "text": "var:preset|color|bhp-blue"
+        }
+      }
     }
   }
 }
