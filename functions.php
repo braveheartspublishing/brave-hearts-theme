@@ -435,3 +435,52 @@ function bhp_get_signup_placeholder_action($context) {
     return home_url('/signup-placeholder/' . sanitize_key($context) . '/');
 }
 
+// ============================================================
+// EXPLORER PASSPORT FOUNDATION
+// ============================================================
+/**
+ * Central registry for current and future Explorer Passport features.
+ */
+function bhp_get_explorer_passport_features() {
+    return apply_filters('bhp_explorer_passport_features', [
+        'world_explorer_map' => [
+            'title'       => __('World Explorer Map', 'brave-hearts'),
+            'description' => __('Track every real place Charlotte and Henry visit and see the adventure grow around the world.', 'brave-hearts'),
+            'status'      => 'placeholder',
+        ],
+        'adventure_stamps' => [
+            'title'       => __('Adventure Stamps', 'brave-hearts'),
+            'description' => __('Collect a stamp for each destination, book, and completed Brave Hearts adventure.', 'brave-hearts'),
+            'status'      => 'placeholder',
+        ],
+        'reading_achievements' => [
+            'title'       => __('Reading Achievements', 'brave-hearts'),
+            'description' => __('Celebrate finished books, new reading milestones, and the curiosity to keep learning.', 'brave-hearts'),
+            'status'      => 'placeholder',
+        ],
+        'explorer_certificates' => [
+            'title'       => __('Explorer Certificates', 'brave-hearts'),
+            'description' => __('Recognize readers who complete an adventure and become official Brave Hearts Explorers.', 'brave-hearts'),
+            'status'      => 'placeholder',
+        ],
+        'future_adventure_badges' => [
+            'title'       => __('Future Adventure Badges', 'brave-hearts'),
+            'description' => __('Unlock new badges as future books introduce more places, science, wildlife, and acts of courage.', 'brave-hearts'),
+            'status'      => 'placeholder',
+        ],
+    ]);
+}
+
+/**
+ * Return the placeholder or approved Passport download state.
+ */
+function bhp_get_explorer_passport_download($requested_url = '') {
+    $url = apply_filters('bhp_explorer_passport_download_url', $requested_url);
+    $ready = (bool) apply_filters('bhp_explorer_passport_download_ready', false, $url);
+
+    return [
+        'url'   => $url ?: home_url('/explorer-passport-download-placeholder/'),
+        'ready' => $ready && (bool) $url,
+    ];
+}
+

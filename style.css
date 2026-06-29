@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.6.0
+Version: 1.7.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -895,5 +895,83 @@ input[type='submit'],
   .footer-signup { padding-inline: 0; }
   .acquisition-form { grid-template-columns: 1fr; }
   .acquisition-form__submit { width: 100%; }
+}
+
+/* ============================================================
+   PHASE 6A: EXPLORER PASSPORT FOUNDATION
+   ============================================================ */
+.passport-section,
+.passport-status-page { scroll-margin-top: calc(var(--header-height) + var(--space-4)); }
+.passport-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--space-6);
+}
+.passport-card {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+.passport-card__media { aspect-ratio: 16 / 10; overflow: hidden; background: var(--color-ivory); }
+.passport-card__image { width: 100%; height: 100%; object-fit: cover; }
+.passport-card__body { padding: var(--space-6); }
+.passport-card__status {
+  margin-bottom: var(--space-2);
+  color: var(--color-earth);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.passport-card__title { margin-bottom: var(--space-3); font-size: var(--text-card-title); }
+.passport-card__text { color: var(--color-text); font-size: var(--text-sm); }
+.passport-card__text > :last-child { margin-bottom: 0; }
+
+.passport-page-hero { background: var(--color-navy); color: var(--color-pale); text-align: center; }
+.passport-page-hero h1 { color: var(--color-white); }
+.passport-page-hero .component-heading__eyebrow { color: var(--color-gold); }
+.passport-page-hero__inner,
+.passport-status-page__inner { margin-inline: auto; text-align: center; }
+.passport-status-page { background: var(--color-ivory); }
+.passport-status-page h1 { color: var(--color-navy); }
+.passport-steps { align-items: stretch; }
+.passport-signup-wrap,
+.passport-download-wrap { margin-inline: auto; }
+
+.passport-download-cta {
+  display: grid;
+  gap: var(--space-6);
+  justify-items: center;
+  padding: var(--space-10);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-ivory);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.passport-download-cta__content { max-width: var(--container-content); }
+.passport-download-cta__text { color: var(--color-text); }
+.passport-download-cta__text > :last-child { margin-bottom: 0; }
+.passport-download-cta__note { margin: calc(-1 * var(--space-3)) 0 0; color: var(--color-text-muted); font-family: var(--font-ui); font-size: var(--text-xs); }
+.passport-download-cta__button.is-disabled {
+  pointer-events: none;
+  opacity: 0.62;
+  filter: grayscale(0.35);
+}
+
+@media (max-width: 640px) {
+  .passport-download-cta { padding: var(--space-6); }
+  .passport-page-hero,
+  .passport-status-page { text-align: left; }
+  .passport-page-hero__inner,
+  .passport-status-page__inner { text-align: left; }
 }
 
