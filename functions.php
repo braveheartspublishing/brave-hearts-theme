@@ -97,7 +97,7 @@ function bhp_body_classes($classes) {
     if (is_page()) {
         $classes[] = 'page-' . get_post_field('post_name', get_post());
     }
-    if (is_woocommerce()) {
+    if (function_exists('is_woocommerce') && is_woocommerce()) {
         $classes[] = 'woo-page';
     }
     return $classes;
@@ -116,10 +116,10 @@ remove_action('woocommerce_before_main_content', 'woocommerce_output_content_wra
 remove_action('woocommerce_after_main_content', 'woocommerce_output_content_wrapper_end', 10);
 
 function bhp_woo_wrapper_start() {
-    echo '<div class="site-container woo-container"><main class="site-main">';
+    echo '<div class="site-container woo-container">';
 }
 function bhp_woo_wrapper_end() {
-    echo '</main></div>';
+    echo '</div>';
 }
 add_action('woocommerce_before_main_content', 'bhp_woo_wrapper_start', 10);
 add_action('woocommerce_after_main_content', 'bhp_woo_wrapper_end', 10);
@@ -135,6 +135,8 @@ function bhp_fallback_menu() {
     echo '<li><a href="' . esc_url(home_url('/blog')) . '">Blog</a></li>';
     echo '<li><a href="' . esc_url(home_url('/teachers-guide')) . '">Teachers</a></li>';
     echo '<li><a href="' . esc_url(home_url('/contact')) . '">Contact</a></li>';
-    echo '<li class="nav-cart"><a href="' . esc_url(wc_get_cart_url()) . '">Cart</a></li>';
+    if (function_exists('wc_get_cart_url')) {
+        echo '<li class="nav-cart"><a href="' . esc_url(wc_get_cart_url()) . '">Cart</a></li>';
+    }
     echo '</ul>';
 }
