@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.8.0
+Version: 1.9.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -1049,5 +1049,84 @@ input[type='submit'],
 @media (max-width: 560px) {
   .about-audiences__list { padding: var(--space-6) var(--space-6) var(--space-6) calc(var(--space-6) + 1.25rem); }
   .about-final-cta .final-cta__actions { display: grid; width: 100%; }
+}
+
+/* ============================================================
+   PHASE 7B: BOOKS PAGE
+   ============================================================ */
+.books-section { scroll-margin-top: calc(var(--header-height) + var(--space-4)); }
+.books-series-overview__layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.25fr);
+  gap: var(--space-16);
+  align-items: start;
+}
+.books-series-overview__content { color: var(--color-text); }
+.adventure-book-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+  align-items: stretch;
+}
+.adventure-book-card {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+.adventure-book-card__media {
+  display: grid;
+  min-height: 360px;
+  padding: var(--space-6);
+  place-items: center;
+  background: var(--color-parchment);
+}
+.adventure-book-card__cover { width: 100%; height: 100%; max-height: 380px; object-fit: contain; }
+.adventure-book-card__cover-placeholder {
+  display: grid;
+  width: min(100%, 230px);
+  aspect-ratio: 3 / 4;
+  place-items: center;
+  padding: var(--space-6);
+  border: 2px dashed var(--color-moss);
+  border-radius: var(--radius-sm);
+  background: var(--color-ivory);
+  color: var(--color-forest);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: center;
+}
+.adventure-book-card__body { display: flex; flex: 1; flex-direction: column; padding: var(--space-6); }
+.adventure-book-card__title { margin-bottom: var(--space-2); font-size: var(--text-card-title); }
+.adventure-book-card__age { margin-bottom: var(--space-4); }
+.adventure-book-card__description { margin-bottom: var(--space-6); color: var(--color-text); font-size: var(--text-sm); }
+.adventure-book-card__formats { margin-top: auto; padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+.adventure-book-card__formats h4 { margin-bottom: var(--space-3); font-family: var(--font-ui); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.adventure-book-card__formats ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.adventure-book-card__formats li { padding: var(--space-1) var(--space-3); border-radius: 999px; background: var(--color-ivory); color: var(--color-forest); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: 700; }
+.adventure-book-card__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-6); }
+.adventure-book-card__actions .btn { width: 100%; padding-inline: var(--space-4); }
+.adventure-book-card__actions .is-disabled { pointer-events: none; opacity: 0.55; }
+.adventure-book-card__availability { margin: var(--space-3) 0 0; color: var(--color-text-muted); font-family: var(--font-ui); font-size: var(--text-xs); }
+.book-format-note__inner { margin-inline: auto; padding: var(--space-8); border-left: 4px solid var(--color-gold); border-radius: var(--radius-md); background: var(--color-ivory); }
+.book-format-note__inner > :last-child { margin-bottom: 0; }
+.books-final-cta .final-cta__actions { flex-wrap: wrap; }
+
+@media (max-width: 960px) {
+  .adventure-book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .books-series-overview__layout { grid-template-columns: 1fr; gap: var(--space-8); }
+}
+
+@media (max-width: 640px) {
+  .adventure-book-grid { grid-template-columns: 1fr; }
+  .adventure-book-card__media { min-height: 300px; }
+  .adventure-book-card__actions { grid-template-columns: 1fr; }
+  .book-format-note__inner { padding: var(--space-6); }
+  .books-final-cta .final-cta__actions { display: grid; width: 100%; }
 }
 

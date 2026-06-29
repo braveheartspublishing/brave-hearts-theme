@@ -484,3 +484,114 @@ function bhp_get_explorer_passport_download($requested_url = '') {
     ];
 }
 
+// ============================================================
+// BOOKS PAGE ADVENTURE GROUPING
+// ============================================================
+/**
+ * Group format-specific product SKUs into customer-facing adventures.
+ */
+function bhp_get_series_adventures() {
+    $definitions = [
+        'mariana_trench' => [
+            'title'       => __('The Mariana Trench', 'brave-hearts'),
+            'destination' => __('Mariana Trench · Western Pacific Ocean', 'brave-hearts'),
+            'description' => __('Charlotte and Henry descend to the deepest place on Earth, meeting remarkable ocean life and discovering science, conservation, and the courage to keep going.', 'brave-hearts'),
+            'matches'     => ['mariana trench', 'mariana'],
+        ],
+        'mount_everest' => [
+            'title'       => __('Mount Everest', 'brave-hearts'),
+            'destination' => __('Mount Everest · Himalayas', 'brave-hearts'),
+            'description' => __('Charlotte and Henry journey toward the world’s highest mountain in an adventure shaped by geography, resilience, teamwork, and courage.', 'brave-hearts'),
+            'matches'     => ['mount everest', 'everest'],
+        ],
+        'amazon_rainforest' => [
+            'title'       => __('The Amazon Rainforest', 'brave-hearts'),
+            'destination' => __('Amazon Rainforest · South America', 'brave-hearts'),
+            'description' => __('Charlotte and Henry enter the world’s largest tropical rainforest to discover extraordinary wildlife, connected ecosystems, conservation, and wonder.', 'brave-hearts'),
+            'matches'     => ['amazon rainforest', 'amazon', 'rainforest'],
+        ],
+    ];
+
+    $products = bhp_get_homepage_books(-1);
+    $adventures = [];
+
+    foreach ($definitions as $key => $definition) {
+        $adventures[$key] = array_merge($definition, [
+            'key'             => $key,
+            'age_range'       => __('Ages 6–9', 'brave-hearts'),
+            'formats'         => ['Kindle', 'Paperback', 'Hardcover'],
+            'image_id'        => 0,
+            'image_alt'       => '',
+            'primary_url'     => '',
+            'paperback_url'   => '',
+            'formats_url'     => '',
+            'matching_skus'   => 0,
+            'available'       => false,
+        ]);
+    }
+
+    foreach ($products as $product) {
+        $product_title = strtolower(wp_strip_all_tags($product['title']));
+        $adventure_key = '';
+
+        foreach ($definitions as $key => $definition) {
+            foreach ($definition['matches'] as $match) {
+                if (strpos($product_title, $match) !== false) {
+                    $adventure_key = $key;
+                    break 2;
+                }
+            }
+        }
+
+        if (!$adventure_key) {
+            continue;
+        }
+
+        $adventure = &$adventures[$adventure_key];
+        $product_formats = is_array($product['formats']) ? $product['formats'] : [];
+
+        if (strpos($product_title, 'paperback') !== false && !in_array('Paperback', $product_formats, true)) {
+            $product_formats[] = 'Paperback';
+        }
+        if ((strpos($product_title, 'hardcover') !== false || strpos($product_title, 'hardback') !== false) && !in_array('Hardcover', $product_formats, true)) {
+            $product_formats[] = 'Hardcover';
+        }
+        if ((strpos($product_title, 'kindle') !== false || strpos($product_title, 'ebook') !== false) && !in_array('Kindle', $product_formats, true)) {
+            $product_formats[] = 'Kindle';
+        }
+
+        $is_paperback = in_array('Paperback', $product_formats, true) || strpos($product_title, 'paperback') !== false;
+        $adventure['matching_skus']++;
+        $adventure['available'] = true;
+
+        if (!$adventure['primary_url'] || $is_paperback) {
+            $adventure['primary_url'] = $product['url'];
+            if (!empty($product['image_id'])) {
+                $adventure['image_id'] = $product['image_id'];
+                $adventure['image_alt'] = $product['image_alt'];
+            }
+        } elseif (!$adventure['image_id'] && !empty($product['image_id'])) {
+            $adventure['image_id'] = $product['image_id'];
+            $adventure['image_alt'] = $product['image_alt'];
+        }
+
+        if ($is_paperback) {
+            $adventure['paperback_url'] = $product['url'];
+        }
+
+        unset($adventure);
+    }
+
+    foreach ($adventures as &$adventure) {
+        if ($adventure['available']) {
+            $adventure['formats_url'] = add_query_arg([
+                's'         => $adventure['title'],
+                'post_type' => 'product',
+            ], home_url('/'));
+        }
+    }
+    unset($adventure);
+
+    return apply_filters('bhp_series_adventures', $adventures, $products);
+}
+
