@@ -265,7 +265,10 @@ get_template_part('template-parts/components/newsletter-signup', null, [
     'email_label'       => bhp_get_homepage_field('newsletter_email_label', __('Email address', 'brave-hearts')),
     'email_placeholder' => bhp_get_homepage_field('newsletter_placeholder', __('you@example.com', 'brave-hearts')),
     'submit_label'      => bhp_get_homepage_field('newsletter_submit_label', __('Join the Adventure Club', 'brave-hearts')),
-    'privacy_text'      => bhp_get_homepage_field('newsletter_privacy', __('Email signup integration coming soon.', 'brave-hearts')),
+    'privacy_text'      => bhp_get_homepage_field('newsletter_privacy', __('Useful adventures only. Unsubscribe anytime.', 'brave-hearts')),
+    'audience_type'    => 'parents_families',
+    'lead_magnet'      => 'explorer_passport',
+    'source_page'      => get_permalink($page_id),
     'hidden_fields'     => apply_filters('bhp_homepage_newsletter_hidden_fields', [], $page_id),
 ]);
 

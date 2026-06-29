@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.5.0
+Version: 1.6.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -821,4 +821,79 @@ input[type='submit'],
 }
 .homepage-book-card__review-count { color: var(--color-text-muted); font-size: var(--text-xs); letter-spacing: normal; }
 .newsletter-signup__form :disabled { cursor: not-allowed; opacity: 0.72; }
+
+/* ============================================================
+   PHASE 5A: CUSTOMER ACQUISITION COMPONENTS
+   ============================================================ */
+.acquisition-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-10);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-ivory);
+  box-shadow: var(--shadow-sm);
+}
+.acquisition-panel--compact { grid-template-columns: minmax(0, 0.8fr) minmax(320px, 1.2fr); padding: var(--space-8); }
+.acquisition-panel__content > :last-child,
+.footer-signup__content > :last-child { margin-bottom: 0; }
+.acquisition-panel__text { color: var(--color-text); }
+
+.acquisition-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+.acquisition-form__field { display: grid; gap: var(--space-2); }
+.acquisition-form__field label { color: var(--color-navy); font-family: var(--font-ui); font-size: var(--text-sm); font-weight: 700; }
+.acquisition-form__field input {
+  width: 100%;
+  min-height: 52px;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.acquisition-form__field input:focus { border-color: var(--color-focus); outline: 3px solid var(--color-parchment); outline-offset: 2px; }
+.acquisition-form__notes { grid-column: 1 / -1; }
+.acquisition-form__privacy,
+.acquisition-form__provider-note { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-family: var(--font-ui); font-size: var(--text-xs); }
+.acquisition-form__provider-note { font-weight: 700; }
+.acquisition-form :disabled { cursor: not-allowed; opacity: 0.72; }
+
+.lead-magnet-cta { border-top: 4px solid var(--color-gold); }
+.teacher-signup { border-top: 4px solid var(--color-forest); }
+.adventure-club-signup { border-top: 4px solid var(--color-navy); }
+
+.footer-signup {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(320px, 1.2fr);
+  align-items: center;
+  gap: var(--space-8);
+  max-width: var(--container-max);
+  margin: 0 auto var(--space-10);
+  padding-bottom: var(--space-10);
+  border-bottom: 1px solid var(--color-overlay-light);
+}
+.footer-signup h3 { color: var(--color-white); }
+.footer-signup__text { color: var(--color-pale); }
+.footer-signup .acquisition-form__field label,
+.newsletter-signup .acquisition-form__field label { color: var(--color-white); }
+.footer-signup .acquisition-form__privacy,
+.footer-signup .acquisition-form__provider-note,
+.newsletter-signup .acquisition-form__privacy,
+.newsletter-signup .acquisition-form__provider-note { color: var(--color-pale); }
+
+@media (max-width: 760px) {
+  .acquisition-panel,
+  .acquisition-panel--compact,
+  .footer-signup { grid-template-columns: 1fr; gap: var(--space-6); padding: var(--space-6); }
+  .footer-signup { padding-inline: 0; }
+  .acquisition-form { grid-template-columns: 1fr; }
+  .acquisition-form__submit { width: 100%; }
+}
 

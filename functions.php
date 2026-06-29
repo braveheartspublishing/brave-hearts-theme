@@ -356,3 +356,82 @@ function bhp_footer_fallback_menu() {
     echo '</ul>';
 }
 
+// ============================================================
+// CUSTOMER ACQUISITION FOUNDATION
+// ============================================================
+/**
+ * Supported audience values for provider tags and CRM segmentation.
+ */
+function bhp_get_audience_types() {
+    return apply_filters('bhp_audience_types', [
+        'parents_families' => __('Parents / Families', 'brave-hearts'),
+        'teachers'         => __('Teachers', 'brave-hearts'),
+        'general_readers'  => __('General Readers', 'brave-hearts'),
+    ]);
+}
+
+/**
+ * Normalize an audience value so forms never emit an unknown segment.
+ */
+function bhp_normalize_audience_type($audience_type) {
+    $audiences = bhp_get_audience_types();
+    return isset($audiences[$audience_type]) ? $audience_type : 'general_readers';
+}
+
+/**
+ * Lead-magnet registry. Download URLs intentionally remain empty until assets
+ * and provider delivery automations are approved.
+ */
+function bhp_get_lead_magnets() {
+    return apply_filters('bhp_lead_magnets', [
+        'explorer_passport' => [
+            'title'         => __('Explorer Passport', 'brave-hearts'),
+            'description'   => __('Get free printable adventures that help young readers record what they discover.', 'brave-hearts'),
+            'audience_type' => 'parents_families',
+            'download_url'  => '',
+            'status'        => 'placeholder',
+        ],
+        'printable_adventure_maps' => [
+            'title'         => __('Printable Adventure Maps', 'brave-hearts'),
+            'description'   => __('Follow Charlotte and Henry from real places on the map into the stories.', 'brave-hearts'),
+            'audience_type' => 'general_readers',
+            'download_url'  => '',
+            'status'        => 'placeholder',
+        ],
+        'teacher_lesson_plans' => [
+            'title'         => __('Teacher Lesson Plans', 'brave-hearts'),
+            'description'   => __('Bring the adventure into your classroom with practical, story-connected learning.', 'brave-hearts'),
+            'audience_type' => 'teachers',
+            'download_url'  => '',
+            'status'        => 'placeholder',
+        ],
+        'reading_guides' => [
+            'title'         => __('Reading Guides', 'brave-hearts'),
+            'description'   => __('Help growing readers build confidence, comprehension, and curiosity.', 'brave-hearts'),
+            'audience_type' => 'parents_families',
+            'download_url'  => '',
+            'status'        => 'placeholder',
+        ],
+    ]);
+}
+
+/**
+ * Provider-neutral action filter. Leave the returned value empty until a
+ * secure Mailchimp, HubSpot, or first-party form handler is configured.
+ */
+function bhp_get_signup_form_action($requested_action, $audience_type, $context) {
+    return apply_filters(
+        'bhp_signup_form_action',
+        $requested_action,
+        bhp_normalize_audience_type($audience_type),
+        sanitize_key($context)
+    );
+}
+
+/**
+ * Nonfunctional URL used only in disabled forms before provider integration.
+ */
+function bhp_get_signup_placeholder_action($context) {
+    return home_url('/signup-placeholder/' . sanitize_key($context) . '/');
+}
+
