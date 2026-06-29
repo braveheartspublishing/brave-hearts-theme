@@ -27,10 +27,7 @@ foreach ($adventures as $key => &$adventure) {
 unset($adventure);
 
 $book_one_url = $adventures['mariana_trench']['primary_url'] ?: '#adventure-book-grid';
-$shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
-if (!$shop_url) {
-    $shop_url = home_url('/shop/');
-}
+$shop_url = home_url('/books/#adventure-book-grid');
 
 get_template_part('template-parts/components/hero', null, [
     'id'       => 'books-hero',

@@ -150,15 +150,18 @@ add_action('woocommerce_after_main_content', 'bhp_woo_wrapper_end', 10);
 // FALLBACK MENU (before nav is assigned in WP admin)
 // ============================================================
 function bhp_fallback_menu() {
+    $links = [
+        __('Home', 'brave-hearts')              => home_url('/'),
+        __('Books', 'brave-hearts')             => home_url('/books/'),
+        __('Teacher Resources', 'brave-hearts') => home_url('/teachers/'),
+        __('About', 'brave-hearts')             => home_url('/about/'),
+        __('Blog', 'brave-hearts')              => home_url('/blog/'),
+        __('Contact', 'brave-hearts')           => home_url('/contact/'),
+    ];
+
     echo '<ul>';
-    echo '<li><a href="' . esc_url(home_url('/')) . '">Home</a></li>';
-    echo '<li><a href="' . esc_url(home_url('/books')) . '">Books</a></li>';
-    echo '<li><a href="' . esc_url(home_url('/about')) . '">About</a></li>';
-    echo '<li><a href="' . esc_url(home_url('/blog')) . '">Blog</a></li>';
-    echo '<li><a href="' . esc_url(home_url('/teachers-guide')) . '">Teachers</a></li>';
-    echo '<li><a href="' . esc_url(home_url('/contact')) . '">Contact</a></li>';
-    if (function_exists('wc_get_cart_url')) {
-        echo '<li class="nav-cart"><a href="' . esc_url(wc_get_cart_url()) . '">Cart</a></li>';
+    foreach ($links as $label => $url) {
+        echo '<li><a href="' . esc_url($url) . '">' . esc_html($label) . '</a></li>';
     }
     echo '</ul>';
 }
@@ -342,11 +345,12 @@ function bhp_footer_fallback_menu() {
     $links = [
         __('Books', 'brave-hearts')             => home_url('/books/'),
         __('Teacher Resources', 'brave-hearts') => home_url('/teachers/'),
+        __('About', 'brave-hearts')             => home_url('/about/'),
         __('Blog', 'brave-hearts')              => home_url('/blog/'),
-        __('Media', 'brave-hearts')             => home_url('/media/'),
         __('Contact', 'brave-hearts')           => home_url('/contact/'),
         __('Privacy Policy', 'brave-hearts')    => $privacy_url,
         __('Terms', 'brave-hearts')             => $terms_url,
+        __('Adventure Club', 'brave-hearts')    => home_url('/#adventure-club'),
     ];
 
     echo '<ul>';
