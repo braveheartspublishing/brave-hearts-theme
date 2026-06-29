@@ -8,64 +8,59 @@
       "defaultPalette": false,
       "palette": [
         {
+          "slug": "bhp-forest",
+          "color": "#1F4D36",
+          "name": "Deep Forest Green"
+        },
+        {
           "slug": "bhp-navy",
-          "color": "#0d1b2a",
-          "name": "BHP Navy"
+          "color": "#1F3A5F",
+          "name": "Adventure Navy"
         },
         {
-          "slug": "bhp-navy-soft",
-          "color": "#1a3a5c",
-          "name": "BHP Soft Navy"
+          "slug": "bhp-gold",
+          "color": "#D9B44A",
+          "name": "Antique Gold"
         },
         {
-          "slug": "bhp-blue",
-          "color": "#0d5fa6",
-          "name": "BHP Blue"
+          "slug": "bhp-ivory",
+          "color": "#FFF3D0",
+          "name": "Warm Ivory"
         },
         {
-          "slug": "bhp-blue-dark",
-          "color": "#0a4d8a",
-          "name": "BHP Dark Blue"
+          "slug": "bhp-parchment",
+          "color": "#F4E7C5",
+          "name": "Parchment"
         },
         {
-          "slug": "bhp-light-blue",
-          "color": "#4a9edd",
-          "name": "BHP Light Blue"
+          "slug": "bhp-jungle",
+          "color": "#0D2B1E",
+          "name": "Dark Jungle Green"
         },
         {
-          "slug": "bhp-pale",
-          "color": "#a8c5e8",
-          "name": "BHP Pale Blue"
+          "slug": "bhp-earth",
+          "color": "#7A4E2D",
+          "name": "Earth Brown"
+        },
+        {
+          "slug": "bhp-moss",
+          "color": "#4F7A5A",
+          "name": "Moss Green"
         },
         {
           "slug": "bhp-sky",
-          "color": "#d4e8ff",
-          "name": "BHP Sky"
+          "color": "#7FB7D6",
+          "name": "Sky Blue Accent"
         },
         {
-          "slug": "bhp-bg",
-          "color": "#f0f4f8",
-          "name": "BHP Mist"
+          "slug": "bhp-charcoal",
+          "color": "#222222",
+          "name": "Charcoal Text"
         },
         {
-          "slug": "bhp-border",
-          "color": "#e0e8f0",
-          "name": "BHP Border"
-        },
-        {
-          "slug": "bhp-ink",
-          "color": "#1a1a2e",
-          "name": "BHP Ink"
-        },
-        {
-          "slug": "bhp-slate",
-          "color": "#4a5568",
-          "name": "BHP Slate"
-        },
-        {
-          "slug": "white",
-          "color": "#ffffff",
-          "name": "White"
+          "slug": "soft-white",
+          "color": "#FFFFFF",
+          "name": "Soft White"
         }
       ]
     },
@@ -187,8 +182,8 @@
   },
   "styles": {
     "color": {
-      "background": "var:preset|color|white",
-      "text": "var:preset|color|bhp-ink"
+      "background": "var:preset|color|soft-white",
+      "text": "var:preset|color|bhp-charcoal"
     },
     "spacing": {
       "blockGap": "var:preset|spacing|6"
@@ -204,8 +199,8 @@
           "radius": "4px"
         },
         "color": {
-          "background": "var:preset|color|bhp-blue",
-          "text": "var:preset|color|white"
+          "background": "var:preset|color|bhp-forest",
+          "text": "var:preset|color|soft-white"
         },
         "spacing": {
           "padding": {
@@ -235,7 +230,7 @@
       },
       "link": {
         "color": {
-          "text": "var:preset|color|bhp-blue"
+          "text": "var:preset|color|bhp-forest"
         }
       }
     }
