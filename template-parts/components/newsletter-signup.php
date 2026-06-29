@@ -10,6 +10,7 @@ $section_id = $args['id'] ?: wp_unique_id('adventure-club-');
 $heading_id = $section_id . '-title';
 $email_id = $section_id . '-email';
 $form_action = apply_filters('bhp_newsletter_form_action', $args['form_action']);
+$form_ready  = (bool) $form_action;
 ?>
 <section id="<?php echo esc_attr($section_id); ?>" class="newsletter-signup section section--dark <?php echo esc_attr(sanitize_html_class($args['class'])); ?>" aria-labelledby="<?php echo esc_attr($heading_id); ?>">
   <div class="container container--content newsletter-signup__inner">
@@ -22,9 +23,9 @@ $form_action = apply_filters('bhp_newsletter_form_action', $args['form_action'])
       <?php endforeach; ?>
       <div class="newsletter-signup__field">
         <label for="<?php echo esc_attr($email_id); ?>"><?php echo esc_html($args['email_label'] ?: __('Email address', 'brave-hearts')); ?></label>
-        <input id="<?php echo esc_attr($email_id); ?>" name="<?php echo esc_attr($args['email_name']); ?>" type="email" autocomplete="email" placeholder="<?php echo esc_attr($args['email_placeholder']); ?>" required>
+        <input id="<?php echo esc_attr($email_id); ?>" name="<?php echo esc_attr($args['email_name']); ?>" type="email" autocomplete="email" placeholder="<?php echo esc_attr($args['email_placeholder']); ?>" <?php disabled(!$form_ready); ?> required>
       </div>
-      <button class="btn btn-primary" type="submit"><?php echo esc_html($args['submit_label'] ?: __('Join the Adventure Club', 'brave-hearts')); ?></button>
+      <button class="btn btn-primary" type="submit" <?php disabled(!$form_ready); ?> aria-disabled="<?php echo $form_ready ? 'false' : 'true'; ?>"><?php echo esc_html($args['submit_label'] ?: __('Join the Adventure Club', 'brave-hearts')); ?></button>
     </form>
     <?php if ($args['privacy_text']): ?><p class="newsletter-signup__privacy"><?php echo esc_html($args['privacy_text']); ?></p><?php endif; ?>
   </div>

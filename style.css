@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.4.0
+Version: 1.5.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -806,4 +806,19 @@ input[type='submit'],
   .homepage-section .component-heading { margin-bottom: var(--space-8); }
   .homepage-section .component-section-action { margin-top: var(--space-8); }
 }
+
+/* Phase 4A live product metadata */
+.homepage-book-card__rating {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  color: var(--color-earth);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.homepage-book-card__review-count { color: var(--color-text-muted); font-size: var(--text-xs); letter-spacing: normal; }
+.newsletter-signup__form :disabled { cursor: not-allowed; opacity: 0.72; }
 

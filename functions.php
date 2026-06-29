@@ -184,8 +184,75 @@ function bhp_get_homepage_field($key, $fallback = '') {
  * Build book-card arguments from featured products or a future Book post type.
  * Marking a WooCommerce product as featured automatically adds it to the pool.
  */
-function bhp_get_homepage_books($limit = 3) {
-    $limit     = max(1, absint($limit));
+/**
+ * Return normalized book formats from WooCommerce attributes and variations.
+ */
+function bhp_get_product_formats($product) {
+    if (!$product || !is_a($product, 'WC_Product')) {
+        return [];
+    }
+
+    $values = [
+        $product->get_attribute('pa_format'),
+        $product->get_attribute('format'),
+        $product->get_attribute('pa_book-format'),
+        $product->get_attribute('book-format'),
+        get_post_meta($product->get_id(), 'bhp_book_formats', true),
+    ];
+
+    if ($product->is_type('variable')) {
+        foreach ($product->get_children() as $variation_id) {
+            $variation = wc_get_product($variation_id);
+            if (!$variation) {
+                continue;
+            }
+            foreach ($variation->get_attributes() as $attribute => $value) {
+                if (strpos($attribute, 'format') !== false && $value) {
+                    $values[] = $value;
+                }
+            }
+        }
+    }
+
+    $formats = [];
+    foreach ($values as $value) {
+        foreach (preg_split('/[,|]+/', (string) $value) as $format) {
+            $format = trim(str_replace(['-', '_'], ' ', wp_strip_all_tags($format)));
+            if (!$format) {
+                continue;
+            }
+
+            $normalized = strtolower($format);
+            if (in_array($normalized, ['hardback', 'hard cover', 'hardcover'], true)) {
+                $format = 'Hardcover';
+            } elseif (in_array($normalized, ['paper back', 'paperback'], true)) {
+                $format = 'Paperback';
+            } elseif (in_array($normalized, ['ebook', 'e book', 'kindle ebook', 'kindle'], true)) {
+                $format = 'Kindle';
+            } else {
+                $format = ucwords($format);
+            }
+
+            $formats[$format] = $format;
+        }
+    }
+
+    $ordered = [];
+    foreach (['Paperback', 'Hardcover', 'Kindle'] as $preferred) {
+        if (isset($formats[$preferred])) {
+            $ordered[] = $preferred;
+            unset($formats[$preferred]);
+        }
+    }
+
+    return array_merge($ordered, array_values($formats));
+}
+
+/**
+ * Build book-card arguments from every live product or a future Book post type.
+ */
+function bhp_get_homepage_books($limit = -1) {
+    $limit     = ((int) $limit === -1) ? -1 : max(1, absint($limit));
     $post_type = post_type_exists('product') ? 'product' : (post_type_exists('book') ? 'book' : '');
     $cards     = [];
 
@@ -197,42 +264,95 @@ function bhp_get_homepage_books($limit = 3) {
         'post_type'        => $post_type,
         'post_status'      => 'publish',
         'posts_per_page'   => $limit,
-        'orderby'          => 'date',
-        'order'            => 'DESC',
+        'orderby'          => ['menu_order' => 'ASC', 'date' => 'ASC'],
         'no_found_rows'    => true,
         'suppress_filters' => false,
     ];
 
-    if ($post_type === 'product' && function_exists('wc_get_featured_product_ids')) {
-        $featured_ids = array_values(array_filter(array_map('absint', wc_get_featured_product_ids())));
-        if ($featured_ids) {
-            $query_args['post__in'] = $featured_ids;
-            $query_args['orderby']  = 'post__in';
+    if ($post_type === 'product' && taxonomy_exists('product_cat')) {
+        $series_slugs = apply_filters('bhp_homepage_book_category_slugs', ['charlotte-henry', 'charlotte-and-henry', 'books']);
+        foreach ($series_slugs as $series_slug) {
+            if (term_exists($series_slug, 'product_cat')) {
+                $query_args['tax_query'] = [[
+                    'taxonomy' => 'product_cat',
+                    'field'    => 'slug',
+                    'terms'    => sanitize_title($series_slug),
+                ]];
+                break;
+            }
         }
     }
 
     $books = get_posts($query_args);
 
     foreach ($books as $book) {
-        $product    = ($post_type === 'product' && function_exists('wc_get_product')) ? wc_get_product($book->ID) : null;
-        $image_id   = get_post_thumbnail_id($book->ID);
-        $image_alt  = $image_id ? get_post_meta($image_id, '_wp_attachment_image_alt', true) : '';
+        $product     = ($post_type === 'product' && function_exists('wc_get_product')) ? wc_get_product($book->ID) : null;
+        $image_id    = get_post_thumbnail_id($book->ID);
+        $image_alt   = $image_id ? get_post_meta($image_id, '_wp_attachment_image_alt', true) : '';
         $description = has_excerpt($book) ? get_the_excerpt($book) : '';
+        $review      = get_post_meta($book->ID, 'bhp_review_label', true);
+
+        if (!$review && stripos(get_the_title($book), 'Mariana Trench') !== false) {
+            $review = __('Kirkus reviewed', 'brave-hearts');
+        }
 
         $cards[] = [
-            'title'       => get_the_title($book),
-            'url'         => get_permalink($book),
-            'image_id'    => $image_id,
-            'image_alt'   => $image_alt,
-            'badge'       => get_post_meta($book->ID, 'bhp_book_badge', true),
-            'age_range'   => get_post_meta($book->ID, 'bhp_age_range', true),
-            'review'      => get_post_meta($book->ID, 'bhp_review_label', true),
-            'description' => $description,
-            'price'       => $product ? wp_strip_all_tags($product->get_price_html()) : get_post_meta($book->ID, 'bhp_book_price', true),
-            'cta_label'   => __('Shop this book', 'brave-hearts'),
+            'product_id'   => $book->ID,
+            'title'        => get_the_title($book),
+            'url'          => get_permalink($book),
+            'image_id'     => $image_id,
+            'image_alt'    => $image_alt,
+            'badge'        => get_post_meta($book->ID, 'bhp_book_badge', true),
+            'age_range'    => get_post_meta($book->ID, 'bhp_age_range', true) ?: __('Ages 6–9', 'brave-hearts'),
+            'formats'      => $product ? bhp_get_product_formats($product) : array_filter(array_map('trim', explode(',', (string) get_post_meta($book->ID, 'bhp_book_formats', true)))),
+            'rating'       => $product ? (float) $product->get_average_rating() : 0,
+            'review_count' => $product ? (int) $product->get_rating_count() : 0,
+            'review'       => $review,
+            'description'  => $description,
+            'price'        => $product ? wp_strip_all_tags($product->get_price_html()) : get_post_meta($book->ID, 'bhp_book_price', true),
+            'cta_label'    => __('Shop this book', 'brave-hearts'),
         ];
     }
 
     return apply_filters('bhp_homepage_books', $cards, $limit);
+}
+
+/**
+ * Resolve a Learning Hub topic to an existing or future WordPress category URL.
+ */
+function bhp_get_learning_category_url($slug) {
+    $category = get_category_by_slug(sanitize_title($slug));
+    return $category ? get_category_link($category) : home_url('/category/' . sanitize_title($slug) . '/');
+}
+
+/**
+ * Required footer links when no editor-managed footer menu is assigned.
+ */
+function bhp_footer_fallback_menu() {
+    $privacy_url = get_privacy_policy_url() ?: home_url('/privacy-policy/');
+    $terms_url   = home_url('/terms/');
+
+    if (function_exists('wc_get_page_id')) {
+        $terms_page_id = wc_get_page_id('terms');
+        if ($terms_page_id > 0) {
+            $terms_url = get_permalink($terms_page_id);
+        }
+    }
+
+    $links = [
+        __('Books', 'brave-hearts')             => home_url('/books/'),
+        __('Teacher Resources', 'brave-hearts') => home_url('/teachers/'),
+        __('Blog', 'brave-hearts')              => home_url('/blog/'),
+        __('Media', 'brave-hearts')             => home_url('/media/'),
+        __('Contact', 'brave-hearts')           => home_url('/contact/'),
+        __('Privacy Policy', 'brave-hearts')    => $privacy_url,
+        __('Terms', 'brave-hearts')             => $terms_url,
+    ];
+
+    echo '<ul>';
+    foreach ($links as $label => $url) {
+        echo '<li><a href="' . esc_url($url) . '">' . esc_html($label) . '</a></li>';
+    }
+    echo '</ul>';
 }
 
