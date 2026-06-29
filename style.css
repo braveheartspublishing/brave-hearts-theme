@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.7.0
+Version: 1.8.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -973,5 +973,81 @@ input[type='submit'],
   .passport-status-page { text-align: left; }
   .passport-page-hero__inner,
   .passport-status-page__inner { text-align: left; }
+}
+
+/* ============================================================
+   PHASE 7A: ABOUT PAGE
+   ============================================================ */
+.about-section { scroll-margin-top: calc(var(--header-height) + var(--space-4)); }
+.about-mission__layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+  gap: var(--space-16);
+  align-items: start;
+}
+.about-mission__heading { position: sticky; top: calc(var(--header-height) + var(--space-8)); }
+.about-mission__content { color: var(--color-text); }
+.about-mission__tagline { color: var(--color-forest); font-family: var(--font-display); font-size: var(--text-section); font-weight: 700; line-height: var(--leading-heading); }
+.about-values-grid { align-items: stretch; }
+
+.about-founder__layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+  gap: var(--space-16);
+  align-items: center;
+}
+.about-founder__media { margin: 0; }
+.about-founder__image,
+.about-founder__placeholder {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.about-founder__image { object-fit: cover; }
+.about-founder__placeholder {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  border: 2px dashed var(--color-moss);
+  background: var(--color-ivory);
+  color: var(--color-forest);
+}
+.about-founder__placeholder span { font-family: var(--font-display); font-size: clamp(4rem, 10vw, 8rem); font-weight: 700; line-height: 1; }
+.about-founder__placeholder small { font-family: var(--font-ui); font-weight: 700; letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.about-founder__content { color: var(--color-text); }
+
+.about-audiences__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+  gap: var(--space-16);
+  align-items: center;
+}
+.about-audiences__list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-8) var(--space-8) var(--space-8) calc(var(--space-8) + 1.25rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.about-audiences__list li::marker { color: var(--color-forest); }
+.about-final-cta .final-cta__actions { flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .about-mission__layout,
+  .about-founder__layout,
+  .about-audiences__layout { grid-template-columns: 1fr; gap: var(--space-10); }
+  .about-mission__heading { position: static; }
+  .about-founder__media { max-width: 520px; }
+}
+
+@media (max-width: 560px) {
+  .about-audiences__list { padding: var(--space-6) var(--space-6) var(--space-6) calc(var(--space-6) + 1.25rem); }
+  .about-final-cta .final-cta__actions { display: grid; width: 100%; }
 }
 
