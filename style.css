@@ -501,8 +501,9 @@ input[type='submit'],
 .footer-brand .footer-logo { margin-bottom: var(--space-3); color: var(--color-white); font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; }
 .footer-brand p { font-size: var(--text-sm); line-height: 1.6; }
 .footer-proof { margin-top: var(--space-3); color: var(--color-pale); font-size: var(--text-xs) !important; }
-.footer-nav h4,
-.footer-contact h4 { margin-bottom: var(--space-4); color: var(--color-white); font-family: var(--font-ui); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; }
+.footer-nav h2,
+.footer-contact h2,
+.site-footer .widget-title { margin-bottom: var(--space-4); color: var(--color-white); font-family: var(--font-ui); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; }
 .footer-nav ul { margin: 0; padding: 0; list-style: none; }
 .footer-nav li { margin-bottom: var(--space-2); }
 .footer-nav a { color: var(--color-pale); font-size: var(--text-sm); }

@@ -77,7 +77,7 @@ get_template_part('template-parts/components/hero', null, [
   <div class="container container--content book-format-note__inner">
     <p class="component-heading__eyebrow"><?php esc_html_e('Choose the format that fits your reader', 'brave-hearts'); ?></p>
     <h2 id="book-formats-title" class="text-section-title"><?php esc_html_e('Kindle, Paperback, and Hardcover', 'brave-hearts'); ?></h2>
-    <p class="text-lead"><?php esc_html_e('Each adventure is available in paperback, hardcover, and Kindle so families, classrooms, and growing readers can choose the format that works best.', 'brave-hearts'); ?></p>
+    <p class="text-lead"><?php esc_html_e('Available formats are shown on each published book card. Selection may vary by adventure as new editions are released.', 'brave-hearts'); ?></p>
   </div>
 </section>
 

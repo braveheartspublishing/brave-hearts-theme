@@ -25,7 +25,7 @@ if (function_exists('wc_get_page_id')) {
     </div>
 
     <nav class="footer-nav" aria-label="<?php esc_attr_e('Footer navigation', 'brave-hearts'); ?>">
-      <h4><?php esc_html_e('Explore', 'brave-hearts'); ?></h4>
+      <h2><?php esc_html_e('Explore', 'brave-hearts'); ?></h2>
       <?php
       wp_nav_menu([
           'theme_location' => 'footer',
@@ -37,7 +37,7 @@ if (function_exists('wc_get_page_id')) {
     </nav>
 
     <div class="footer-contact">
-      <h4><?php esc_html_e('Get in touch', 'brave-hearts'); ?></h4>
+      <h2><?php esc_html_e('Get in touch', 'brave-hearts'); ?></h2>
       <p><a href="mailto:Asignore19@icloud.com">Asignore19@icloud.com</a></p>
       <p class="footer-contact__note">Classroom read alouds, school visits, bulk orders, media inquiries, and upcoming releases.</p>
       <?php if (is_active_sidebar('footer-3')): ?>

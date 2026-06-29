@@ -83,8 +83,8 @@ function bhp_register_sidebars() {
         'description'   => __('Add widgets for footer column 3.', 'brave-hearts'),
         'before_widget' => '<div class="widget %2$s">',
         'after_widget'  => '</div>',
-        'before_title'  => '<h4 class="widget-title">',
-        'after_title'   => '</h4>',
+        'before_title'  => '<h2 class="widget-title">',
+        'after_title'   => '</h2>',
     ]);
 }
 add_action('widgets_init', 'bhp_register_sidebars');
@@ -203,7 +203,7 @@ function bhp_get_product_formats($product) {
         get_post_meta($product->get_id(), 'bhp_book_formats', true),
     ];
 
-    if ($product->is_type('variable')) {
+    if ($product->is_type('variable') && function_exists('wc_get_product')) {
         foreach ($product->get_children() as $variation_id) {
             $variation = wc_get_product($variation_id);
             if (!$variation) {
@@ -325,7 +325,12 @@ function bhp_get_homepage_books($limit = -1) {
  */
 function bhp_get_learning_category_url($slug) {
     $category = get_category_by_slug(sanitize_title($slug));
-    return $category ? get_category_link($category) : home_url('/category/' . sanitize_title($slug) . '/');
+    if ($category) {
+        return get_category_link($category);
+    }
+
+    $posts_page_id = (int) get_option('page_for_posts');
+    return $posts_page_id ? get_permalink($posts_page_id) : home_url('/blog/');
 }
 
 /**
@@ -430,13 +435,40 @@ function bhp_get_lead_magnets() {
  * Provider-neutral action filter. Leave the returned value empty until a
  * secure Mailchimp, HubSpot, or first-party form handler is configured.
  */
+function bhp_get_valid_form_action($action) {
+    if (!is_string($action) || trim($action) === '') {
+        return '';
+    }
+
+    $action = esc_url_raw(trim($action), ['http', 'https']);
+    if (!$action || !wp_http_validate_url($action)) {
+        return '';
+    }
+
+    $path = untrailingslashit((string) wp_parse_url($action, PHP_URL_PATH));
+    $placeholder_paths = [
+        '/contact-form-placeholder',
+        '/signup-placeholder',
+    ];
+
+    foreach ($placeholder_paths as $placeholder_path) {
+        if ($path === $placeholder_path || strpos($path, $placeholder_path . '/') === 0) {
+            return '';
+        }
+    }
+
+    return $action;
+}
+
 function bhp_get_signup_form_action($requested_action, $audience_type, $context) {
-    return apply_filters(
+    $action = apply_filters(
         'bhp_signup_form_action',
         $requested_action,
         bhp_normalize_audience_type($audience_type),
         sanitize_key($context)
     );
+
+    return bhp_get_valid_form_action($action);
 }
 
 /**
@@ -530,7 +562,7 @@ function bhp_get_series_adventures() {
         $adventures[$key] = array_merge($definition, [
             'key'             => $key,
             'age_range'       => __('Ages 6–9', 'brave-hearts'),
-            'formats'         => ['Kindle', 'Paperback', 'Hardcover'],
+            'formats'         => [],
             'image_id'        => 0,
             'image_alt'       => '',
             'primary_url'     => '',
@@ -574,6 +606,7 @@ function bhp_get_series_adventures() {
         $is_paperback = in_array('Paperback', $product_formats, true) || strpos($product_title, 'paperback') !== false;
         $adventure['matching_skus']++;
         $adventure['available'] = true;
+        $adventure['formats'] = array_values(array_unique(array_merge($adventure['formats'], $product_formats)));
 
         if (!$adventure['primary_url'] || $is_paperback) {
             $adventure['primary_url'] = $product['url'];
@@ -595,6 +628,16 @@ function bhp_get_series_adventures() {
 
     foreach ($adventures as &$adventure) {
         if ($adventure['available']) {
+            $ordered_formats = [];
+            foreach (['Paperback', 'Hardcover', 'Kindle'] as $preferred_format) {
+                if (in_array($preferred_format, $adventure['formats'], true)) {
+                    $ordered_formats[] = $preferred_format;
+                }
+            }
+            $adventure['formats'] = array_merge(
+                $ordered_formats,
+                array_values(array_diff($adventure['formats'], $ordered_formats))
+            );
             $adventure['formats_url'] = add_query_arg([
                 's'         => $adventure['title'],
                 'post_type' => 'product',
@@ -614,7 +657,7 @@ function bhp_get_series_adventures() {
  * first-party handler is configured with validation and spam protection.
  */
 function bhp_get_contact_form_action($requested_action = '') {
-    return apply_filters('bhp_contact_form_action', $requested_action);
+    return bhp_get_valid_form_action(apply_filters('bhp_contact_form_action', $requested_action));
 }
 
 /**

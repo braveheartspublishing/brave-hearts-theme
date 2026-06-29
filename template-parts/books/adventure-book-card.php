@@ -28,8 +28,8 @@ $formats = is_array($args['formats']) ? array_filter($args['formats']) : [];
     <p class="adventure-book-card__age text-caption"><?php echo esc_html($args['age_range'] ?: __('Ages 6–9', 'brave-hearts')); ?></p>
     <?php if ($args['description']): ?><div class="adventure-book-card__description"><?php echo wp_kses_post($args['description']); ?></div><?php endif; ?>
     <?php if ($formats): ?>
-      <div class="adventure-book-card__formats" aria-label="<?php esc_attr_e('Available formats', 'brave-hearts'); ?>">
-        <h4><?php esc_html_e('Available formats', 'brave-hearts'); ?></h4>
+      <div class="adventure-book-card__formats" aria-label="<?php echo esc_attr($args['available'] ? __('Available formats', 'brave-hearts') : __('Planned formats', 'brave-hearts')); ?>">
+        <h4><?php echo esc_html($args['available'] ? __('Available formats', 'brave-hearts') : __('Planned formats', 'brave-hearts')); ?></h4>
         <ul>
           <?php foreach ($formats as $format): ?><li><?php echo esc_html($format); ?></li><?php endforeach; ?>
         </ul>
@@ -47,6 +47,6 @@ $formats = is_array($args['formats']) ? array_filter($args['formats']) : [];
         <span class="btn btn-outline is-disabled" aria-disabled="true"><?php esc_html_e('Shop Formats', 'brave-hearts'); ?></span>
       <?php endif; ?>
     </div>
-    <?php if (!$args['available']): ?><p class="adventure-book-card__availability"><?php esc_html_e('Product links will appear when matching WooCommerce products are published.', 'brave-hearts'); ?></p><?php endif; ?>
+    <?php if (!$args['available']): ?><p class="adventure-book-card__availability"><?php esc_html_e('This adventure is not currently available in the shop. Product links will appear when a matching book is published.', 'brave-hearts'); ?></p><?php endif; ?>
   </div>
 </article>

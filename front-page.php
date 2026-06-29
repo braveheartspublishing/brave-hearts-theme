@@ -36,12 +36,19 @@ get_template_part('template-parts/components/hero', null, [
 // 2. Featured Books: populated from featured products or the future Book post type.
 $featured_books = bhp_get_homepage_books(-1);
 $find_home_book = static function ($destination) use ($featured_books) {
+    $fallback = [];
     foreach ($featured_books as $book) {
         if (stripos($book['title'], $destination) !== false) {
-            return $book;
+            $formats = is_array($book['formats'] ?? null) ? $book['formats'] : [];
+            if (in_array('Paperback', $formats, true) || stripos($book['title'], 'paperback') !== false) {
+                return $book;
+            }
+            if (!$fallback) {
+                $fallback = $book;
+            }
         }
     }
-    return [];
+    return $fallback;
 };
 get_template_part('template-parts/components/featured-books', null, [
     'id'       => 'featured-books',
