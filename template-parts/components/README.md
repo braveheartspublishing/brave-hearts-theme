@@ -23,3 +23,10 @@ Every section component generates a unique accessible heading relationship unles
 ## Phase 3B assembly order
 
 Keep the Design Bible hierarchy visible in the final composition: books and a clear shopping path first; adventure and Learning Hub discovery second; teacher value, trust, email, and final CTA after that.
+## Phase 3B data integration
+
+The assembled front page uses public `bhp_home_*` custom fields for one-off copy, URLs, and attachment IDs. For example: `bhp_home_hero_title`, `bhp_home_hero_image_id`, `bhp_home_teachers_url`, and `bhp_home_newsletter_form_action`. Each value also has a `bhp_homepage_field_{key}` filter.
+
+Featured book cards come from featured WooCommerce products. If none are marked featured, the newest published products are used. A future `book` post type is supported when WooCommerce products are unavailable. Repeating collections can be replaced through `bhp_homepage_why_cards`, `bhp_homepage_adventure_cards`, `bhp_homepage_learning_cards`, and `bhp_homepage_testimonials`.
+
+Only verified quotations should be supplied to the testimonial fields. Configure the newsletter action and provider-specific hidden fields before launch.

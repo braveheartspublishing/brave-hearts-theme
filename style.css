@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.3.0
+Version: 1.4.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -120,6 +120,34 @@ img { display: block; max-width: 100%; height: auto; }
 a { color: var(--color-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 button, input, select, textarea { font: inherit; }
+
+
+.screen-reader-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.screen-reader-text:focus {
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: 1000;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  clip: auto;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+}
 
 /* --- TYPOGRAPHY --- */
 h1, h2, h3, h4, h5, h6 {
@@ -760,5 +788,22 @@ input[type='submit'],
 .nav-toggle:focus-visible {
   outline: 3px solid var(--color-accent);
   outline-offset: 3px;
+}
+
+/* ============================================================
+   PHASE 3B: HOMEPAGE ASSEMBLY HELPERS
+   ============================================================ */
+.homepage-section { scroll-margin-top: calc(var(--header-height) + var(--space-4)); }
+.homepage-grid { align-items: stretch; }
+.homepage-grid > * { min-width: 0; }
+.teacher-resources-cta--text-only .teacher-resources-cta__layout {
+  grid-template-columns: minmax(0, var(--container-content));
+  justify-content: center;
+}
+.teacher-resources-cta--text-only .teacher-resources-cta__content { max-width: var(--container-content); }
+
+@media (max-width: 640px) {
+  .homepage-section .component-heading { margin-bottom: var(--space-8); }
+  .homepage-section .component-section-action { margin-top: var(--space-8); }
 }
 

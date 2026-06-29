@@ -15,6 +15,8 @@
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
+<a class="skip-link screen-reader-text" href="#main"><?php esc_html_e('Skip to content', 'brave-hearts'); ?></a>
+
 <div class="site-wrapper">
 
 <header class="site-header" role="banner">
@@ -30,9 +32,9 @@
       <?php endif; ?>
     </div>
 
-    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+    <button class="nav-toggle" aria-label="<?php esc_attr_e('Toggle navigation', 'brave-hearts'); ?>" aria-controls="primary-navigation" aria-expanded="false">&#9776;</button>
 
-    <nav class="site-nav" role="navigation" aria-label="Primary navigation">
+    <nav class="site-nav" id="primary-navigation" role="navigation" aria-label="<?php esc_attr_e('Primary navigation', 'brave-hearts'); ?>">
       <?php
       wp_nav_menu([
         'theme_location' => 'primary',

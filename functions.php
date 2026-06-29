@@ -162,3 +162,77 @@ function bhp_fallback_menu() {
     }
     echo '</ul>';
 }
+
+// ============================================================
+// HOMEPAGE CONTENT AND FEATURED BOOK DATA
+// ============================================================
+/**
+ * Read an editable front-page custom field with a filterable fallback.
+ * Field names use the public bhp_home_* prefix so they remain available
+ * through WordPress's standard Custom Fields interface.
+ */
+function bhp_get_homepage_field($key, $fallback = '') {
+    $page_id    = get_queried_object_id();
+    $field_name = 'bhp_home_' . sanitize_key($key);
+    $stored     = $page_id ? get_post_meta($page_id, $field_name, true) : '';
+    $value      = ($stored !== '') ? $stored : $fallback;
+
+    return apply_filters('bhp_homepage_field_' . sanitize_key($key), $value, $page_id);
+}
+
+/**
+ * Build book-card arguments from featured products or a future Book post type.
+ * Marking a WooCommerce product as featured automatically adds it to the pool.
+ */
+function bhp_get_homepage_books($limit = 3) {
+    $limit     = max(1, absint($limit));
+    $post_type = post_type_exists('product') ? 'product' : (post_type_exists('book') ? 'book' : '');
+    $cards     = [];
+
+    if (!$post_type) {
+        return apply_filters('bhp_homepage_books', $cards, $limit);
+    }
+
+    $query_args = [
+        'post_type'        => $post_type,
+        'post_status'      => 'publish',
+        'posts_per_page'   => $limit,
+        'orderby'          => 'date',
+        'order'            => 'DESC',
+        'no_found_rows'    => true,
+        'suppress_filters' => false,
+    ];
+
+    if ($post_type === 'product' && function_exists('wc_get_featured_product_ids')) {
+        $featured_ids = array_values(array_filter(array_map('absint', wc_get_featured_product_ids())));
+        if ($featured_ids) {
+            $query_args['post__in'] = $featured_ids;
+            $query_args['orderby']  = 'post__in';
+        }
+    }
+
+    $books = get_posts($query_args);
+
+    foreach ($books as $book) {
+        $product    = ($post_type === 'product' && function_exists('wc_get_product')) ? wc_get_product($book->ID) : null;
+        $image_id   = get_post_thumbnail_id($book->ID);
+        $image_alt  = $image_id ? get_post_meta($image_id, '_wp_attachment_image_alt', true) : '';
+        $description = has_excerpt($book) ? get_the_excerpt($book) : '';
+
+        $cards[] = [
+            'title'       => get_the_title($book),
+            'url'         => get_permalink($book),
+            'image_id'    => $image_id,
+            'image_alt'   => $image_alt,
+            'badge'       => get_post_meta($book->ID, 'bhp_book_badge', true),
+            'age_range'   => get_post_meta($book->ID, 'bhp_age_range', true),
+            'review'      => get_post_meta($book->ID, 'bhp_review_label', true),
+            'description' => $description,
+            'price'       => $product ? wp_strip_all_tags($product->get_price_html()) : get_post_meta($book->ID, 'bhp_book_price', true),
+            'cta_label'   => __('Shop this book', 'brave-hearts'),
+        ];
+    }
+
+    return apply_filters('bhp_homepage_books', $cards, $limit);
+}
+
