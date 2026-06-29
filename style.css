@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.9.0
+Version: 1.10.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -1128,5 +1128,114 @@ input[type='submit'],
   .adventure-book-card__actions { grid-template-columns: 1fr; }
   .book-format-note__inner { padding: var(--space-6); }
   .books-final-cta .final-cta__actions { display: grid; width: 100%; }
+}
+
+/* ============================================================
+   PHASE 7C: TEACHER RESOURCES PAGE
+   ============================================================ */
+.teachers-section { scroll-margin-top: calc(var(--header-height) + var(--space-4)); }
+.teacher-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+  align-items: stretch;
+}
+.teacher-resource-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-forest);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+.teacher-resource-card__status {
+  margin-bottom: var(--space-3);
+  color: var(--color-earth);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.teacher-resource-card__title { margin-bottom: var(--space-3); font-size: var(--text-card-title); }
+.teacher-resource-card__text { color: var(--color-text); font-size: var(--text-sm); }
+.teacher-resource-card__text > :last-child { margin-bottom: 0; }
+.teacher-resource-card__action { margin-top: auto; padding-top: var(--space-6); }
+.teacher-resource-card__action .is-disabled { color: var(--color-text-muted); pointer-events: none; }
+
+.teacher-book-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+  align-items: stretch;
+}
+.teacher-book-card {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+.teacher-book-card__media { display: grid; min-height: 300px; padding: var(--space-6); place-items: center; background: var(--color-parchment); }
+.teacher-book-card__cover { width: 100%; height: 100%; max-height: 330px; object-fit: contain; }
+.teacher-book-card__cover-placeholder {
+  display: grid;
+  width: min(100%, 200px);
+  aspect-ratio: 3 / 4;
+  place-items: center;
+  padding: var(--space-6);
+  border: 2px dashed var(--color-moss);
+  border-radius: var(--radius-sm);
+  background: var(--color-ivory);
+  color: var(--color-forest);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: center;
+}
+.teacher-book-card__body { display: flex; flex: 1; flex-direction: column; padding: var(--space-6); }
+.teacher-book-card__title { margin-bottom: var(--space-3); font-size: var(--text-card-title); }
+.teacher-book-card__description { margin-bottom: var(--space-6); color: var(--color-text); font-size: var(--text-sm); }
+.teacher-book-card__themes,
+.teacher-book-card__subjects { margin-top: var(--space-4); }
+.teacher-book-card__themes h4,
+.teacher-book-card__subjects h4 { margin-bottom: var(--space-2); font-family: var(--font-ui); font-size: var(--text-xs); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.teacher-book-card__themes ul { margin: 0; padding-left: 1.2em; color: var(--color-text); font-size: var(--text-sm); }
+.teacher-book-card__subjects ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.teacher-book-card__subjects li { padding: var(--space-1) var(--space-3); border-radius: 999px; background: var(--color-ivory); color: var(--color-forest); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: 700; }
+.teacher-book-card__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: auto; padding-top: var(--space-6); }
+.teacher-book-card__actions .btn { width: 100%; padding-inline: var(--space-4); }
+.teacher-book-card__actions .is-disabled { pointer-events: none; opacity: 0.55; }
+
+.teacher-read-aloud__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: var(--space-16);
+  align-items: center;
+}
+.teacher-read-aloud__content { color: var(--color-text); }
+.teacher-read-aloud__action { padding: var(--space-8); border-left: 4px solid var(--color-gold); border-radius: var(--radius-md); background: var(--color-ivory); }
+.teacher-read-aloud__action p { margin: var(--space-4) 0 0; color: var(--color-text-muted); font-family: var(--font-ui); font-size: var(--text-xs); }
+.teacher-signup-wrap { margin-inline: auto; }
+.teachers-final-cta .final-cta__actions { flex-wrap: wrap; }
+
+@media (max-width: 960px) {
+  .teacher-resource-grid,
+  .teacher-book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .teacher-read-aloud__layout { grid-template-columns: 1fr; gap: var(--space-8); }
+}
+
+@media (max-width: 640px) {
+  .teacher-resource-grid,
+  .teacher-book-grid { grid-template-columns: 1fr; }
+  .teacher-book-card__actions { grid-template-columns: 1fr; }
+  .teacher-read-aloud__action { padding: var(--space-6); }
+  .teachers-final-cta .final-cta__actions { display: grid; width: 100%; }
 }
 

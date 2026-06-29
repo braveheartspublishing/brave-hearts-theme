@@ -398,6 +398,13 @@ function bhp_get_lead_magnets() {
             'download_url'  => '',
             'status'        => 'placeholder',
         ],
+        'teacher_resources' => [
+            'title'         => __('Teacher Resources', 'brave-hearts'),
+            'description'   => __('Get classroom-ready updates for lesson plans, discussion guides, vocabulary, maps, printables, and read-aloud resources.', 'brave-hearts'),
+            'audience_type' => 'teachers',
+            'download_url'  => '',
+            'status'        => 'placeholder',
+        ],
         'teacher_lesson_plans' => [
             'title'         => __('Teacher Lesson Plans', 'brave-hearts'),
             'description'   => __('Bring the adventure into your classroom with practical, story-connected learning.', 'brave-hearts'),
