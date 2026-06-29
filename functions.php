@@ -12,6 +12,8 @@ defined('ABSPATH') || exit;
 function bhp_theme_setup() {
     add_theme_support('title-tag');
     add_theme_support('post-thumbnails');
+    add_image_size('bhp-book-card', 480, 640, false);
+    add_image_size('bhp-card-landscape', 640, 420, true);
     add_theme_support('woocommerce');
     add_theme_support('wc-product-gallery-zoom');
     add_theme_support('wc-product-gallery-lightbox');
