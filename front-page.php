@@ -16,9 +16,48 @@ if (have_posts()) {
 
 $page_id = get_queried_object_id();
 
+// Load the live book collection once for the hero preview, destinations, and book grid.
+$featured_books = bhp_get_homepage_books(-1);
+$find_home_book = static function ($destination) use ($featured_books) {
+    $fallback = [];
+    foreach ($featured_books as $book) {
+        if (stripos($book['title'], $destination) !== false) {
+            $formats = is_array($book['formats'] ?? null) ? $book['formats'] : [];
+            if (in_array('Paperback', $formats, true) || stripos($book['title'], 'paperback') !== false) {
+                return $book;
+            }
+            if (!$fallback) {
+                $fallback = $book;
+            }
+        }
+    }
+    return $fallback;
+};
+
+$hero_preview_books = array_values(array_filter([
+    $find_home_book('Mariana Trench'),
+    $find_home_book('Mount Everest'),
+    $find_home_book('Amazon Rainforest'),
+], static function ($book) {
+    return !empty($book['image_id']) && !empty($book['url']) && !empty($book['title']);
+}));
+$hero_preview_ids = array_map(static function ($book) {
+    return (int) ($book['product_id'] ?? 0);
+}, $hero_preview_books);
+foreach ($featured_books as $book) {
+    $book_id = (int) ($book['product_id'] ?? 0);
+    if (count($hero_preview_books) >= 3) {
+        break;
+    }
+    if (!empty($book['image_id']) && !empty($book['url']) && !empty($book['title']) && !in_array($book_id, $hero_preview_ids, true)) {
+        $hero_preview_books[] = $book;
+        $hero_preview_ids[] = $book_id;
+    }
+}
+
 // 1. Hero: begin with wonder and invite visitors into the real world.
 $hero_title = bhp_get_homepage_field('hero_title', __("Big Places.\nBrave Hearts.", 'brave-hearts'));
-if (trim($hero_title) === 'Big Places. Brave Hearts.') {
+if (preg_match('/^Big Places\.\s*Brave Hearts\.$/i', trim($hero_title))) {
     $hero_title = __("Big Places.\nBrave Hearts.", 'brave-hearts');
 }
 $hero_eyebrow = bhp_get_homepage_field('hero_eyebrow', __('Stories that begin on the page and continue outside', 'brave-hearts'));
@@ -29,6 +68,32 @@ $hero_text = bhp_get_homepage_field('hero_text', __('<p>A child closes the book.
 if (stripos(wp_strip_all_tags($hero_text), 'STEM') !== false) {
     $hero_text = __('<p>A child closes the book. The next morning, the sky, birds, and trees are the same—but now they notice, wonder, ask, and explore.</p><ul class="home-hero__destinations"><li>Ocean depths</li><li>Mountain heights</li><li>Rainforest trails</li></ul>', 'brave-hearts');
 }
+
+if ($hero_preview_books) {
+    ob_start();
+    ?>
+    <div class="home-hero__book-preview" role="group" aria-labelledby="home-hero-books-label">
+      <p id="home-hero-books-label" class="home-hero__book-preview-label"><?php esc_html_e('Real places. Doors into wonder.', 'brave-hearts'); ?></p>
+      <ul class="home-hero__book-stack">
+        <?php foreach (array_slice($hero_preview_books, 0, 3) as $book_index => $book): ?>
+          <li>
+            <a href="<?php echo esc_url($book['url']); ?>">
+              <?php echo wp_get_attachment_image((int) $book['image_id'], 'bhp-book-card', false, [
+                  'class'   => 'home-hero__book-cover',
+                  'alt'     => $book['image_alt'] ?: sprintf(__('%s book cover', 'brave-hearts'), $book['title']),
+                  'loading' => $book_index === 0 ? 'eager' : 'lazy',
+                  'sizes'   => '(max-width: 640px) 28vw, 180px',
+              ]); ?>
+              <span><?php echo esc_html($book['title']); ?></span>
+            </a>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+    <?php
+    $hero_text .= ob_get_clean();
+}
+
 $hero_primary_label = bhp_get_homepage_field('hero_primary_label', __('Choose Your First Adventure', 'brave-hearts'));
 if (in_array(trim($hero_primary_label), ['Shop the Books', 'Choose a Real-World Adventure'], true)) {
     $hero_primary_label = __('Choose Your First Adventure', 'brave-hearts');
@@ -40,6 +105,7 @@ get_template_part('template-parts/components/hero', null, [
     'title'          => $hero_title,
     'text'           => $hero_text,
     'image_id'       => (int) bhp_get_homepage_field('hero_image_id', 0),
+    'class'          => $hero_preview_books ? 'home-hero--with-books' : '',
     'primary_link'   => [
         'url'   => bhp_get_homepage_field('hero_primary_url', '#explore-world'),
         'label' => $hero_primary_label,
@@ -76,23 +142,26 @@ get_template_part('template-parts/components/hero', null, [
 </section>
 <?php
 
-// Prepare featured books for the books step later in the page journey.
-$featured_books = bhp_get_homepage_books(-1);
-$find_home_book = static function ($destination) use ($featured_books) {
-    $fallback = [];
-    foreach ($featured_books as $book) {
-        if (stripos($book['title'], $destination) !== false) {
-            $formats = is_array($book['formats'] ?? null) ? $book['formats'] : [];
-            if (in_array('Paperback', $formats, true) || stripos($book['title'], 'paperback') !== false) {
-                return $book;
-            }
-            if (!$fallback) {
-                $fallback = $book;
-            }
-        }
-    }
-    return $fallback;
-};
+// 3. Founder origin: a compact trust bridge from philosophy to the adventures.
+?>
+<section id="first-reader" class="homepage-section home-origin" aria-labelledby="first-reader-title">
+  <div class="container">
+    <div class="home-origin__card">
+      <div class="home-origin__mark" aria-hidden="true">
+        <span>C</span><span>H</span>
+      </div>
+      <div class="home-origin__content">
+        <p class="component-heading__eyebrow"><?php esc_html_e('The first reader', 'brave-hearts'); ?></p>
+        <h2 id="first-reader-title"><?php esc_html_e('It Began With One Child and One Loyal Dog', 'brave-hearts'); ?></h2>
+        <p><?php esc_html_e('Charlotte is real. Henry is real. These stories began as a gift for one child—and became an invitation for many.', 'brave-hearts'); ?></p>
+        <a class="home-origin__link" href="<?php echo esc_url(home_url('/about/')); ?>"><?php esc_html_e('Meet the story behind Brave Hearts', 'brave-hearts'); ?> <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+<?php
+
+// Prepare the main book collection for the books step later in the page journey.
 $featured_books_args = [
     'id'       => 'featured-books',
     'eyebrow'  => bhp_get_homepage_field('books_eyebrow', __('The Adventures of Charlotte & Henry', 'brave-hearts')),
@@ -105,35 +174,38 @@ $featured_books_args = [
     ],
 ];
 
-// 3. Explore the World: destination gateways remain filterable as the series grows.
+// 4. Explore the World: destination gateways remain filterable as the series grows.
 $mariana_book = $find_home_book('Mariana Trench');
 $everest_book = $find_home_book('Mount Everest');
 $amazon_book = $find_home_book('Amazon Rainforest');
 
 $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
     [
-        'eyebrow'   => __('The deepest place on Earth', 'brave-hearts'),
+        'eyebrow'   => __('Western Pacific · Nearly 11,000 m deep', 'brave-hearts'),
         'title'     => __('Mariana Trench', 'brave-hearts'),
         'text'      => __('<p>Descend seven miles beneath the Pacific and discover deep-sea creatures, ocean science, conservation, and the courage to keep going.</p><p class="hub-card__question"><span class="hub-card__question-label">Wonder aloud</span>What glows where sunlight has never reached?</p>', 'brave-hearts'),
         'url'       => !empty($mariana_book['url']) ? $mariana_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $mariana_book['image_id'] ?? 0,
+        'class'     => 'hub-card--destination',
     ],
     [
-        'eyebrow'   => __('The highest place on Earth', 'brave-hearts'),
+        'eyebrow'   => __('The Himalayas · 8,849 m high', 'brave-hearts'),
         'title'     => __('Mount Everest', 'brave-hearts'),
         'text'      => __('<p>Climb into the Himalayas for a story of mountain geography, resilience, teamwork, and brave hearts working together.</p><p class="hub-card__question"><span class="hub-card__question-label">Wonder aloud</span>How do climbers breathe where the air is thin?</p>', 'brave-hearts'),
         'url'       => !empty($everest_book['url']) ? $everest_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $everest_book['image_id'] ?? 0,
+        'class'     => 'hub-card--destination',
     ],
     [
-        'eyebrow'   => __('The world’s largest rainforest', 'brave-hearts'),
+        'eyebrow'   => __('Equatorial South America · Largest tropical rainforest', 'brave-hearts'),
         'title'     => __('Amazon Rainforest', 'brave-hearts'),
         'text'      => __('<p>Journey into a living world of remarkable animals, interconnected ecosystems, conservation, and discovery.</p><p class="hub-card__question"><span class="hub-card__question-label">Wonder aloud</span>What can a rainforest teach us when we slow down and listen?</p>', 'brave-hearts'),
         'url'       => !empty($amazon_book['url']) ? $amazon_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $amazon_book['image_id'] ?? 0,
+        'class'     => 'hub-card--destination',
     ],
 ], $page_id);
 ?>
@@ -156,10 +228,10 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
 </section>
 
 <?php
-// 4. Books: offer the stories after visitors understand their purpose and destinations.
+// 5. Books: offer the stories after visitors understand their purpose and destinations.
 get_template_part('template-parts/components/featured-books', null, $featured_books_args);
 
-// 5. Learning Hub: educational depth extends curiosity beyond the books.
+// 6. Learning Hub: educational depth extends curiosity beyond the books.
 $learning_cards = apply_filters('bhp_homepage_learning_cards', [
     ['title' => __('Animals', 'brave-hearts'), 'text' => __('Meet the wildlife behind the adventures.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('animals'), 'label' => __('Explore animals', 'brave-hearts')]],
     ['title' => __('Science', 'brave-hearts'), 'text' => __('Understand the forces shaping our world.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('science'), 'label' => __('Explore science', 'brave-hearts')]],
@@ -177,7 +249,7 @@ foreach ($learning_cards as &$learning_card) {
 }
 unset($learning_card);
 ?>
-<section id="learning-hub" class="homepage-section section section--muted" aria-labelledby="learning-hub-title">
+<section id="learning-hub" class="homepage-section learning-hub--ecosystem section section--muted" aria-labelledby="learning-hub-title">
   <div class="container">
     <header class="component-heading component-heading--center">
       <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('learning_eyebrow', __('The story is only the beginning', 'brave-hearts'))); ?></p>
@@ -196,7 +268,7 @@ unset($learning_card);
 </section>
 
 <?php
-// 6. Teacher Resources.
+// 7. Teacher Resources.
 $teacher_image_id = (int) bhp_get_homepage_field('teachers_image_id', 0);
 get_template_part('template-parts/components/teacher-resources-cta', null, [
     'id'        => 'teacher-resources',
@@ -219,7 +291,7 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
     'class'     => $teacher_image_id ? '' : 'teacher-resources-cta--text-only',
 ]);
 
-// 7. Testimonials: verified reader excerpts; editable through front-page fields.
+// 8. Testimonials: verified reader excerpts; editable through front-page fields.
 $testimonials = apply_filters('bhp_homepage_testimonials', array_values(array_filter([
     [
         'quote' => bhp_get_homepage_field('testimonial_1_quote', __('What a great read, my heart was warm with adventure. I can’t wait for this series to continue.', 'brave-hearts')),
@@ -259,7 +331,7 @@ if ($testimonials): ?>
 </section>
 <?php endif;
 
-// 8. Adventure Club Newsletter.
+// 9. Adventure Club Newsletter.
 get_template_part('template-parts/components/newsletter-signup', null, [
     'id'                => 'adventure-club',
     'eyebrow'           => bhp_get_homepage_field('newsletter_eyebrow', __('The Adventure Club', 'brave-hearts')),
@@ -277,5 +349,5 @@ get_template_part('template-parts/components/newsletter-signup', null, [
     'hidden_fields'     => apply_filters('bhp_homepage_newsletter_hidden_fields', [], $page_id),
 ]);
 
-// 9. Footer.
+// 10. Footer.
 get_footer();
