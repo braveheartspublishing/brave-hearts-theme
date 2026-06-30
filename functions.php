@@ -460,23 +460,7 @@ function bhp_get_valid_form_action($action) {
     return $action;
 }
 
-function bhp_get_signup_form_action($requested_action, $audience_type, $context) {
-    $action = apply_filters(
-        'bhp_signup_form_action',
-        $requested_action,
-        bhp_normalize_audience_type($audience_type),
-        sanitize_key($context)
-    );
-
-    return bhp_get_valid_form_action($action);
-}
-
-/**
- * Nonfunctional URL used only in disabled forms before provider integration.
- */
-function bhp_get_signup_placeholder_action($context) {
-    return home_url('/signup-placeholder/' . sanitize_key($context) . '/');
-}
+require_once get_template_directory() . '/inc/mailchimp.php';
 
 // ============================================================
 // EXPLORER PASSPORT FOUNDATION

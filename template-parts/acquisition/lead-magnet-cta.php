@@ -27,7 +27,7 @@ $audience_type = $args['audience_type'] ?: $magnet['audience_type'];
       'lead_magnet'   => $magnet_key,
       'source_page'   => $args['source_page'],
       'submit_label'  => $args['submit_label'] ?: __('Get the Free Resource', 'brave-hearts'),
-      'privacy_text'  => __('The resource will be delivered after provider integration is configured.', 'brave-hearts'),
+      'privacy_text'  => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
       'aria_labelledby' => $heading_id,
   ]); ?>
 </aside>
