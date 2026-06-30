@@ -637,6 +637,44 @@ input[type='submit'],
 .home-hero__text > :last-child { margin-bottom: 0; }
 .home-hero__actions { --cluster-space: var(--space-4); margin-top: var(--space-8); }
 
+/* Homepage philosophy: a quiet bridge from wonder to purpose. */
+.home-philosophy { background: var(--color-surface-muted); }
+.home-philosophy__inner { max-width: var(--container-wide); text-align: center; }
+.home-philosophy__heading { margin-inline: auto; }
+.home-philosophy__declaration {
+  margin-bottom: var(--space-6);
+  color: var(--color-forest);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 700;
+}
+.home-philosophy__pillars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.home-philosophy__pillars li {
+  padding: var(--space-6);
+  border-top: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-display);
+  font-size: var(--text-lead);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+.home-philosophy__closing {
+  margin: var(--space-10) auto 0;
+  color: var(--color-text);
+  font-size: var(--text-lead);
+  line-height: 1.55;
+}
+.home-philosophy__closing strong { color: var(--color-forest); }
+
 /* Featured books and book cards */
 .featured-books { background: var(--color-surface); }
 .featured-books__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
@@ -680,6 +718,14 @@ input[type='submit'],
 .hub-card .card__body { padding: var(--space-8); }
 .hub-card__link { color: var(--color-white); font-family: var(--font-ui); font-size: var(--text-sm); font-weight: 700; }
 .hub-card__link:hover { color: var(--color-pale); }
+.hub-card__question {
+  margin-top: var(--space-4);
+  color: var(--color-white);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 700;
+}
 
 /* Teacher resources */
 .teacher-resources-cta__layout {
@@ -767,6 +813,7 @@ input[type='submit'],
   .home-hero__overlay { background: rgba(var(--color-navy-rgb), 0.82); }
   .home-hero__content > * { margin-inline: auto; }
   .home-hero__actions { justify-content: center; }
+  .home-philosophy__pillars { grid-template-columns: 1fr; gap: var(--space-4); }
   .featured-books__grid { grid-template-columns: 1fr; }
   .feature-card,
   .hub-card .card__body,

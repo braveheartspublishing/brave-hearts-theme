@@ -1,57 +1,100 @@
-# Visual Capture Manifest
+# Capture Manifest
 
-Prepared: June 30, 2026  
-Status: BLOCKED — WordPress staging target unavailable
+Generated: 2026-06-30
 
-## Why capture is blocked
+- Desktop viewport: 1440 × 900, full page
+- Mobile viewport: 390 × 844, full page
+- Desktop captures: 88
+- Mobile captures: 88
+- Capture failures: 0
 
-- No local WordPress runtime, database, or staging URL is present.
-- No local web server is listening for this project.
-- `https://www.braveheartspublishing.com/` currently serves Squarespace assets and legacy content, not this WordPress theme.
-- Capturing the legacy site as though it represented the new theme would invalidate Executive Publisher Review.
-
-## Required capture settings
-
-Desktop:
-
-- Width: 1440px
-- Full-page capture from top to bottom
-- Use production-equivalent content while logged out
-
-Mobile:
-
-- Modern mobile viewport; recommended 390 × 844px
-- Full-page capture from top to bottom
-- Use the same content and logged-out state as desktop
-
-## Sequential naming plan
-
-Assign numbers only after the WordPress export fixes the product, archive, Learning Hub, and additional-page counts.
-
-1. `01-Home.png`
-2. `02-About.png`
-3. `03-Books.png`
-4. `04-Shop.png`
-5. Continue with every product, one file per canonical product URL.
-6. Continue with Blog and every public blog archive.
-7. Continue with Animals, Science, Geography, Conservation, Explorers, Activities, and every additional Learning Hub discovered.
-8. Continue with Teachers, Contact, and every public Explorer Passport page.
-9. Continue with Privacy Policy and Terms when present.
-10. Continue with Cart, Checkout, My Account, Search, and 404.
-11. Append every additional public page discovered in the WordPress inventory.
-
-Use identical filenames beneath separate directories:
-
-- `Publisher-Review/Desktop/`
-- `Publisher-Review/Mobile/`
-
-## Capture status
-
-| Capture set | Generated | Required next input |
-| --- | ---: | --- |
-| Desktop | 0 | WordPress staging URL and complete public URL inventory |
-| Mobile | 0 | WordPress staging URL and complete public URL inventory |
-
-## Diagnostic evidence
-
-`Blocked-Target-Legacy-Squarespace.png` is a 1440px full-page diagnostic capture of the configured public domain. It confirms that the available public target is the legacy Squarespace site. It is not part of the WordPress desktop/mobile review set and must not be used to approve the new theme.
+| # | Type | Title | URL | Desktop | Mobile | Status |
+|---:|---|---|---|---|---|---|
+| 1 | Page | Home | https://staging2.braveheartspublishing.com/ | [Desktop](Desktop/01-Home.png) | [Mobile](Mobile/01-Home.png) | Captured |
+| 2 | Page | About | https://staging2.braveheartspublishing.com/about/ | [Desktop](Desktop/02-About.png) | [Mobile](Mobile/02-About.png) | Captured |
+| 3 | Page | Books | https://staging2.braveheartspublishing.com/books/ | [Desktop](Desktop/03-Books.png) | [Mobile](Mobile/03-Books.png) | Captured |
+| 4 | Page | Shop | https://staging2.braveheartspublishing.com/shop/ | [Desktop](Desktop/04-Shop.png) | [Mobile](Mobile/04-Shop.png) | Captured |
+| 5 | Product | Adventures of Charlotte and Henry: Mount Everest (Hardcover) | https://staging2.braveheartspublishing.com/product/adventures-of-charlotte-and-henry-mount-everest-hardcover/ | [Desktop](Desktop/05-Adventures-of-Charlotte-and-Henry-Mount-Everest-Hardcover.png) | [Mobile](Mobile/05-Adventures-of-Charlotte-and-Henry-Mount-Everest-Hardcover.png) | Captured |
+| 6 | Product | Adventures of Charlotte and Henry: Mount Everest (Paperback) | https://staging2.braveheartspublishing.com/product/adventures-of-charlotte-and-henry-mount-everest-paperback/ | [Desktop](Desktop/06-Adventures-of-Charlotte-and-Henry-Mount-Everest-Paperback.png) | [Mobile](Mobile/06-Adventures-of-Charlotte-and-Henry-Mount-Everest-Paperback.png) | Captured |
+| 7 | Product | Adventures of Charlotte and Henry: The Amazon (Hardcover) | https://staging2.braveheartspublishing.com/product/adventures-of-charlotte-and-henry-the-amazon-hardcover/ | [Desktop](Desktop/07-Adventures-of-Charlotte-and-Henry-The-Amazon-Hardcover.png) | [Mobile](Mobile/07-Adventures-of-Charlotte-and-Henry-The-Amazon-Hardcover.png) | Captured |
+| 8 | Product | Adventures of Charlotte and Henry: The Amazon (Paperback) | https://staging2.braveheartspublishing.com/product/adventures-of-charlotte-and-henry-the-amazon-paperback/ | [Desktop](Desktop/08-Adventures-of-Charlotte-and-Henry-The-Amazon-Paperback.png) | [Mobile](Mobile/08-Adventures-of-Charlotte-and-Henry-The-Amazon-Paperback.png) | Captured |
+| 9 | Product | Adventures of Charlotte and Henry: The Mariana Trench (Hardcover) | https://staging2.braveheartspublishing.com/product/adventures-of-charlotte-and-henry-the-mariana-trench-hardcover/ | [Desktop](Desktop/09-Adventures-of-Charlotte-and-Henry-The-Mariana-Trench-Hardcover.png) | [Mobile](Mobile/09-Adventures-of-Charlotte-and-Henry-The-Mariana-Trench-Hardcover.png) | Captured |
+| 10 | Product | Adventures of Charlotte and Henry: The Mariana Trench (Paperback) | https://staging2.braveheartspublishing.com/product/adventures-of-charlotte-and-henry-the-mariana-trench-paperback/ | [Desktop](Desktop/10-Adventures-of-Charlotte-and-Henry-The-Mariana-Trench-Paperback.png) | [Mobile](Mobile/10-Adventures-of-Charlotte-and-Henry-The-Mariana-Trench-Paperback.png) | Captured |
+| 11 | Page | Blog | https://staging2.braveheartspublishing.com/blog/ | [Desktop](Desktop/11-Blog.png) | [Mobile](Mobile/11-Blog.png) | Captured |
+| 12 | Blog category | Adventure | https://staging2.braveheartspublishing.com/category/adventure/ | [Desktop](Desktop/12-Adventure.png) | [Mobile](Mobile/12-Adventure.png) | Captured |
+| 13 | Blog category | Adventure Book Recommendations | https://staging2.braveheartspublishing.com/category/adventure-book-recommendations/ | [Desktop](Desktop/13-Adventure-Book-Recommendations.png) | [Mobile](Mobile/13-Adventure-Book-Recommendations.png) | Captured |
+| 14 | Blog category | Age-Specific Reading Lists | https://staging2.braveheartspublishing.com/category/age-specific-reading-lists/ | [Desktop](Desktop/14-Age-Specific-Reading-Lists.png) | [Mobile](Mobile/14-Age-Specific-Reading-Lists.png) | Captured |
+| 15 | Blog category | Ages 6-9 | https://staging2.braveheartspublishing.com/category/ages-6-9/ | [Desktop](Desktop/15-Ages-6-9.png) | [Mobile](Mobile/15-Ages-6-9.png) | Captured |
+| 16 | Blog category | Author Life | https://staging2.braveheartspublishing.com/category/author-life/ | [Desktop](Desktop/16-Author-Life.png) | [Mobile](Mobile/16-Author-Life.png) | Captured |
+| 17 | Blog category | Book News | https://staging2.braveheartspublishing.com/category/book-news/ | [Desktop](Desktop/17-Book-News.png) | [Mobile](Mobile/17-Book-News.png) | Captured |
+| 18 | Blog category | Book recommendations | https://staging2.braveheartspublishing.com/category/book-recommendations/ | [Desktop](Desktop/18-Book-recommendations.png) | [Mobile](Mobile/18-Book-recommendations.png) | Captured |
+| 19 | Blog category | Books for Kids | https://staging2.braveheartspublishing.com/category/books-for-kids/ | [Desktop](Desktop/19-Books-for-Kids.png) | [Mobile](Mobile/19-Books-for-Kids.png) | Captured |
+| 20 | Blog category | Bridge Books | https://staging2.braveheartspublishing.com/category/bridge-books/ | [Desktop](Desktop/20-Bridge-Books.png) | [Mobile](Mobile/20-Bridge-Books.png) | Captured |
+| 21 | Blog category | children's books | https://staging2.braveheartspublishing.com/category/childrens-books/ | [Desktop](Desktop/21-children-s-books.png) | [Mobile](Mobile/21-children-s-books.png) | Captured |
+| 22 | Blog category | Classroom Resources | https://staging2.braveheartspublishing.com/category/classroom-resources/ | [Desktop](Desktop/22-Classroom-Resources.png) | [Mobile](Mobile/22-Classroom-Resources.png) | Captured |
+| 23 | Blog category | Early Readers | https://staging2.braveheartspublishing.com/category/early-readers/ | [Desktop](Desktop/23-Early-Readers.png) | [Mobile](Mobile/23-Early-Readers.png) | Captured |
+| 24 | Blog category | Ocean Science | https://staging2.braveheartspublishing.com/category/ocean-science/ | [Desktop](Desktop/24-Ocean-Science.png) | [Mobile](Mobile/24-Ocean-Science.png) | Captured |
+| 25 | Blog category | Read alouds | https://staging2.braveheartspublishing.com/category/read-alouds/ | [Desktop](Desktop/25-Read-alouds.png) | [Mobile](Mobile/25-Read-alouds.png) | Captured |
+| 26 | Blog category | Reading Development | https://staging2.braveheartspublishing.com/category/reading-development/ | [Desktop](Desktop/26-Reading-Development.png) | [Mobile](Mobile/26-Reading-Development.png) | Captured |
+| 27 | Blog category | Reading Help for Parents | https://staging2.braveheartspublishing.com/category/reading-help-for-parents/ | [Desktop](Desktop/27-Reading-Help-for-Parents.png) | [Mobile](Mobile/27-Reading-Help-for-Parents.png) | Captured |
+| 28 | Blog category | Reading Levels &amp; Lexile | https://staging2.braveheartspublishing.com/category/reading-levels-lexile/ | [Desktop](Desktop/28-Reading-Levels-Lexile.png) | [Mobile](Mobile/28-Reading-Levels-Lexile.png) | Captured |
+| 29 | Blog category | Reading Lists | https://staging2.braveheartspublishing.com/category/reading-lists/ | [Desktop](Desktop/29-Reading-Lists.png) | [Mobile](Mobile/29-Reading-Lists.png) | Captured |
+| 30 | Blog category | Reading Tips | https://staging2.braveheartspublishing.com/category/reading-tips/ | [Desktop](Desktop/30-Reading-Tips.png) | [Mobile](Mobile/30-Reading-Tips.png) | Captured |
+| 31 | Blog category | Reading Tips for Parents | https://staging2.braveheartspublishing.com/category/reading-tips-for-parents/ | [Desktop](Desktop/31-Reading-Tips-for-Parents.png) | [Mobile](Mobile/31-Reading-Tips-for-Parents.png) | Captured |
+| 32 | Blog category | Reluctant Readers | https://staging2.braveheartspublishing.com/category/reluctant-readers/ | [Desktop](Desktop/32-Reluctant-Readers.png) | [Mobile](Mobile/32-Reluctant-Readers.png) | Captured |
+| 33 | Blog category | science for kids | https://staging2.braveheartspublishing.com/category/science-for-kids/ | [Desktop](Desktop/33-science-for-kids.png) | [Mobile](Mobile/33-science-for-kids.png) | Captured |
+| 34 | Blog category | STEM | https://staging2.braveheartspublishing.com/category/stem/ | [Desktop](Desktop/34-STEM.png) | [Mobile](Mobile/34-STEM.png) | Captured |
+| 35 | Blog category | Summer Reading | https://staging2.braveheartspublishing.com/category/summer-reading/ | [Desktop](Desktop/35-Summer-Reading.png) | [Mobile](Mobile/35-Summer-Reading.png) | Captured |
+| 36 | Blog category | Teacher Resources | https://staging2.braveheartspublishing.com/category/teacher-resources/ | [Desktop](Desktop/36-Teacher-Resources.png) | [Mobile](Mobile/36-Teacher-Resources.png) | Captured |
+| 37 | Blog category | The Mariana Trench | https://staging2.braveheartspublishing.com/category/the-mariana-trench/ | [Desktop](Desktop/37-The-Mariana-Trench.png) | [Mobile](Mobile/37-The-Mariana-Trench.png) | Captured |
+| 38 | Blog category | Uncategorized | https://staging2.braveheartspublishing.com/category/uncategorized/ | [Desktop](Desktop/38-Uncategorized.png) | [Mobile](Mobile/38-Uncategorized.png) | Captured |
+| 39 | Post | 10 Mount Everest Facts for Kids That Will Make Their Jaw Drop | https://staging2.braveheartspublishing.com/mount-everest-facts-for-kids/ | [Desktop](Desktop/39-10-Mount-Everest-Facts-for-Kids-That-Will-Make-Their-Jaw-Drop.png) | [Mobile](Mobile/39-10-Mount-Everest-Facts-for-Kids-That-Will-Make-Their-Jaw-Drop.png) | Captured |
+| 40 | Post | 8 Books Like Magic Tree House Your Kids Will Love Just as Much | https://staging2.braveheartspublishing.com/books-like-magic-tree-house/ | [Desktop](Desktop/40-8-Books-Like-Magic-Tree-House-Your-Kids-Will-Love-Just-as-Much.png) | [Mobile](Mobile/40-8-Books-Like-Magic-Tree-House-Your-Kids-Will-Love-Just-as-Much.png) | Captured |
+| 41 | Post | Adventures of Charlotte & Henry Just Got a Kirkus Review. Here's What They Said. | https://staging2.braveheartspublishing.com/kirkus-review-adventures-of-charlotte-and-henry/ | [Desktop](Desktop/41-Adventures-of-Charlotte-Henry-Just-Got-a-Kirkus-Review-Here-s-What-The.png) | [Mobile](Mobile/41-Adventures-of-Charlotte-Henry-Just-Got-a-Kirkus-Review-Here-s-What-The.png) | Captured |
+| 42 | Post | Best Books About the Ocean for Kids Ages 6-9 | https://staging2.braveheartspublishing.com/best-ocean-books-for-kids-ages-6-9/ | [Desktop](Desktop/42-Best-Books-About-the-Ocean-for-Kids-Ages-6-9.png) | [Mobile](Mobile/42-Best-Books-About-the-Ocean-for-Kids-Ages-6-9.png) | Captured |
+| 43 | Post | Best Early Chapter Books for 6 Year Olds | https://staging2.braveheartspublishing.com/best-early-chapter-books-for-6-year-olds/ | [Desktop](Desktop/43-Best-Early-Chapter-Books-for-6-Year-Olds.png) | [Mobile](Mobile/43-Best-Early-Chapter-Books-for-6-Year-Olds.png) | Captured |
+| 44 | Post | Bridge Books for Struggling Readers: The Parent's Complete Roadmap | https://staging2.braveheartspublishing.com/bridge-books-for-struggling-readers/ | [Desktop](Desktop/44-Bridge-Books-for-Struggling-Readers-The-Parent-s-Complete-Roadmap.png) | [Mobile](Mobile/44-Bridge-Books-for-Struggling-Readers-The-Parent-s-Complete-Roadmap.png) | Captured |
+| 45 | Post | Bridge Books: The Perfect Next Step After Frog and Toad | https://staging2.braveheartspublishing.com/best-bridge-books-for-kids/ | [Desktop](Desktop/45-Bridge-Books-The-Perfect-Next-Step-After-Frog-and-Toad.png) | [Mobile](Mobile/45-Bridge-Books-The-Perfect-Next-Step-After-Frog-and-Toad.png) | Captured |
+| 46 | Post | Charlotte Is Real. Henry Is Real. And This Is Why I Wrote Them a Book. | https://staging2.braveheartspublishing.com/why-i-wrote-this-book/ | [Desktop](Desktop/46-Charlotte-Is-Real-Henry-Is-Real-And-This-Is-Why-I-Wrote-Them-a-Book.png) | [Mobile](Mobile/46-Charlotte-Is-Real-Henry-Is-Real-And-This-Is-Why-I-Wrote-Them-a-Book.png) | Captured |
+| 47 | Post | For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures | https://staging2.braveheartspublishing.com/science-books-for-kids-that-feel-like-adventures/ | [Desktop](Desktop/47-For-the-Kid-Who-Always-Asks-Why-Science-Books-That-Feel-Like-Real-Adve.png) | [Mobile](Mobile/47-For-the-Kid-Who-Always-Asks-Why-Science-Books-That-Feel-Like-Real-Adve.png) | Captured |
+| 48 | Post | Free Teacher's Guide Is Here — And It's Ready for Your Classroom | https://staging2.braveheartspublishing.com/free-teachers-guide-mariana-trench/ | [Desktop](Desktop/48-Free-Teacher-s-Guide-Is-Here-And-It-s-Ready-for-Your-Classroom.png) | [Mobile](Mobile/48-Free-Teacher-s-Guide-Is-Here-And-It-s-Ready-for-Your-Classroom.png) | Captured |
+| 49 | Post | From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You | https://staging2.braveheartspublishing.com/dog-man-to-magic-tree-house-reading-roadmap/ | [Desktop](Desktop/49-From-Dog-Man-to-Magic-Tree-House-The-Reading-Roadmap-No-One-Gave-You.png) | [Mobile](Mobile/49-From-Dog-Man-to-Magic-Tree-House-The-Reading-Roadmap-No-One-Gave-You.png) | Captured |
+| 50 | Post | How Deep Is the Mariana Trench? (Explained for Kids) | https://staging2.braveheartspublishing.com/how-deep-is-the-mariana-trench-for-kids/ | [Desktop](Desktop/50-How-Deep-Is-the-Mariana-Trench-Explained-for-Kids.png) | [Mobile](Mobile/50-How-Deep-Is-the-Mariana-Trench-Explained-for-Kids.png) | Captured |
+| 51 | Post | How Stories Help Children Build Resilience and Courage (Ages 6–9) | https://staging2.braveheartspublishing.com/how-stories-build-resilience-in-children/ | [Desktop](Desktop/51-How-Stories-Help-Children-Build-Resilience-and-Courage-Ages-6-9.png) | [Mobile](Mobile/51-How-Stories-Help-Children-Build-Resilience-and-Courage-Ages-6-9.png) | Captured |
+| 52 | Post | How to Help Your Child Transition from Picture Books to Chapter Books | https://staging2.braveheartspublishing.com/bridge-books-for-early-readers/ | [Desktop](Desktop/52-How-to-Help-Your-Child-Transition-from-Picture-Books-to-Chapter-Books.png) | [Mobile](Mobile/52-How-to-Help-Your-Child-Transition-from-Picture-Books-to-Chapter-Books.png) | Captured |
+| 53 | Post | How to Pick a Read-Aloud Book That Keeps a Whole Class Listening | https://staging2.braveheartspublishing.com/how-to-pick-a-read-aloud-book/ | [Desktop](Desktop/53-How-to-Pick-a-Read-Aloud-Book-That-Keeps-a-Whole-Class-Listening.png) | [Mobile](Mobile/53-How-to-Pick-a-Read-Aloud-Book-That-Keeps-a-Whole-Class-Listening.png) | Captured |
+| 54 | Post | I Spent Two Years Picking the Wrong Books for Kids. Then I Found their Lexile Scores. | https://staging2.braveheartspublishing.com/finding-right-books-with-lexile-score/ | [Desktop](Desktop/54-I-Spent-Two-Years-Picking-the-Wrong-Books-for-Kids-Then-I-Found-their-.png) | [Mobile](Mobile/54-I-Spent-Two-Years-Picking-the-Wrong-Books-for-Kids-Then-I-Found-their-.png) | Captured |
+| 55 | Post | Mariana Trench Facts for Kids — The Deepest Place on Earth | https://staging2.braveheartspublishing.com/mariana-trench-facts-for-kids/ | [Desktop](Desktop/55-Mariana-Trench-Facts-for-Kids-The-Deepest-Place-on-Earth.png) | [Mobile](Mobile/55-Mariana-Trench-Facts-for-Kids-The-Deepest-Place-on-Earth.png) | Captured |
+| 56 | Post | My Child Got a Lexile Score — Now What? Here's Exactly What to Do | https://staging2.braveheartspublishing.com/my-child-got-a-lexile-score-now-what/ | [Desktop](Desktop/56-My-Child-Got-a-Lexile-Score-Now-What-Here-s-Exactly-What-to-Do.png) | [Mobile](Mobile/56-My-Child-Got-a-Lexile-Score-Now-What-Here-s-Exactly-What-to-Do.png) | Captured |
+| 57 | Post | My Child Hates Reading: What Actually Works | https://staging2.braveheartspublishing.com/my-child-hates-reading-what-to-do/ | [Desktop](Desktop/57-My-Child-Hates-Reading-What-Actually-Works.png) | [Mobile](Mobile/57-My-Child-Hates-Reading-What-Actually-Works.png) | Captured |
+| 58 | Post | My Kid Hates Long Books. Bridge Books Fixed That. | https://staging2.braveheartspublishing.com/what-are-bridge-books-guide-for-parents-and-teachers/ | [Desktop](Desktop/58-My-Kid-Hates-Long-Books-Bridge-Books-Fixed-That.png) | [Mobile](Mobile/58-My-Kid-Hates-Long-Books-Bridge-Books-Fixed-That.png) | Captured |
+| 59 | Post | Reading Level Chart by Grade: What Level Should My Child Be At?? | https://staging2.braveheartspublishing.com/reading-level-by-grade-chart/ | [Desktop](Desktop/59-Reading-Level-Chart-by-Grade-What-Level-Should-My-Child-Be-At.png) | [Mobile](Mobile/59-Reading-Level-Chart-by-Grade-What-Level-Should-My-Child-Be-At.png) | Captured |
+| 60 | Post | The Best Books for 7-Year-Olds That Turn Them Into Readers | https://staging2.braveheartspublishing.com/best-books-for-7-year-olds/ | [Desktop](Desktop/60-The-Best-Books-for-7-Year-Olds-That-Turn-Them-Into-Readers.png) | [Mobile](Mobile/60-The-Best-Books-for-7-Year-Olds-That-Turn-Them-Into-Readers.png) | Captured |
+| 61 | Post | The Best Read Aloud Books for Elementary Classrooms (Grades 1–3) | https://staging2.braveheartspublishing.com/best-read-aloud-books-for-classroom-grades-1-3/ | [Desktop](Desktop/61-The-Best-Read-Aloud-Books-for-Elementary-Classrooms-Grades-1-3.png) | [Mobile](Mobile/61-The-Best-Read-Aloud-Books-for-Elementary-Classrooms-Grades-1-3.png) | Captured |
+| 62 | Post | The Best Summer Reading Books for Kids Ages 6–9 (That They'll Actually Finish) | https://staging2.braveheartspublishing.com/best-summer-reading-books-for-kids-ages-6-9/ | [Desktop](Desktop/62-The-Best-Summer-Reading-Books-for-Kids-Ages-6-9-That-They-ll-Actually-.png) | [Mobile](Mobile/62-The-Best-Summer-Reading-Books-for-Kids-Ages-6-9-That-They-ll-Actually-.png) | Captured |
+| 63 | Post | The Complete Guide to Bridge Books for Kids (Ages 6-9) | https://staging2.braveheartspublishing.com/bridge-books-for-kids/ | [Desktop](Desktop/63-The-Complete-Guide-to-Bridge-Books-for-Kids-Ages-6-9.png) | [Mobile](Mobile/63-The-Complete-Guide-to-Bridge-Books-for-Kids-Ages-6-9.png) | Captured |
+| 64 | Post | The First Real Chapter Book: Helping Kids Transition From Early Readers | https://staging2.braveheartspublishing.com/first-real-chapter-book-for-kids/ | [Desktop](Desktop/64-The-First-Real-Chapter-Book-Helping-Kids-Transition-From-Early-Readers.png) | [Mobile](Mobile/64-The-First-Real-Chapter-Book-Helping-Kids-Transition-From-Early-Readers.png) | Captured |
+| 65 | Post | The Gap Between Picture Books and Chapter Books Is Real — Here's What Goes There | https://staging2.braveheartspublishing.com/gap-between-picture-books-and-chapter-books/ | [Desktop](Desktop/65-The-Gap-Between-Picture-Books-and-Chapter-Books-Is-Real-Here-s-What-Go.png) | [Mobile](Mobile/65-The-Gap-Between-Picture-Books-and-Chapter-Books-Is-Real-Here-s-What-Go.png) | Captured |
+| 66 | Post | To Every Teacher Who Said Yes: Happy Teacher Appreciation Week | https://staging2.braveheartspublishing.com/teacher-appreciation-week-thank-you/ | [Desktop](Desktop/66-To-Every-Teacher-Who-Said-Yes-Happy-Teacher-Appreciation-Week.png) | [Mobile](Mobile/66-To-Every-Teacher-Who-Said-Yes-Happy-Teacher-Appreciation-Week.png) | Captured |
+| 67 | Post | Top Bridge Books for Kids — Best Picks for Growing Readers | https://staging2.braveheartspublishing.com/top-bridge-books-for-kids/ | [Desktop](Desktop/67-Top-Bridge-Books-for-Kids-Best-Picks-for-Growing-Readers.png) | [Mobile](Mobile/67-Top-Bridge-Books-for-Kids-Best-Picks-for-Growing-Readers.png) | Captured |
+| 68 | Post | What Comes After Picture Books? Discover Bridge Books for Growing Readers | https://staging2.braveheartspublishing.com/bridge-books-for-kids-mount-everest/ | [Desktop](Desktop/68-What-Comes-After-Picture-Books-Discover-Bridge-Books-for-Growing-Reade.png) | [Mobile](Mobile/68-What-Comes-After-Picture-Books-Discover-Bridge-Books-for-Growing-Reade.png) | Captured |
+| 69 | Post | What Is a Lexile Score? A Parent's Guide to Reading Levels | https://staging2.braveheartspublishing.com/what-is-a-lexile-score/ | [Desktop](Desktop/69-What-Is-a-Lexile-Score-A-Parent-s-Guide-to-Reading-Levels.png) | [Mobile](Mobile/69-What-Is-a-Lexile-Score-A-Parent-s-Guide-to-Reading-Levels.png) | Captured |
+| 70 | Post | What Is the Mariana Trench? Everything Kids (and Parents) Need to Know | https://staging2.braveheartspublishing.com/what-is-the-mariana-trench-for-kids/ | [Desktop](Desktop/70-What-Is-the-Mariana-Trench-Everything-Kids-and-Parents-Need-to-Know.png) | [Mobile](Mobile/70-What-Is-the-Mariana-Trench-Everything-Kids-and-Parents-Need-to-Know.png) | Captured |
+| 71 | Post | What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels | https://staging2.braveheartspublishing.com/what-to-read-after-dog-man/ | [Desktop](Desktop/71-What-to-Read-After-Dog-Man-Bridge-Books-for-Kids-Who-Love-Graphic-Nove.png) | [Mobile](Mobile/71-What-to-Read-After-Dog-Man-Bridge-Books-for-Kids-Who-Love-Graphic-Nove.png) | Captured |
+| 72 | Post | Why Adventure Books for Kids (Ages 6–9) Build Confidence and Curiosity | https://staging2.braveheartspublishing.com/adventure-books-for-kids-ages-6-9/ | [Desktop](Desktop/72-Why-Adventure-Books-for-Kids-Ages-6-9-Build-Confidence-and-Curiosity.png) | [Mobile](Mobile/72-Why-Adventure-Books-for-Kids-Ages-6-9-Build-Confidence-and-Curiosity.png) | Captured |
+| 73 | Post | Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6–9) | https://staging2.braveheartspublishing.com/why-stem-storytelling-builds-braver-kids/ | [Desktop](Desktop/73-Why-STEM-Storytelling-Builds-Braver-More-Curious-Kids-Ages-6-9.png) | [Mobile](Mobile/73-Why-STEM-Storytelling-Builds-Braver-More-Curious-Kids-Ages-6-9.png) | Captured |
+| 74 | Page | For Teachers | https://staging2.braveheartspublishing.com/teachers/ | [Desktop](Desktop/74-For-Teachers.png) | [Mobile](Mobile/74-For-Teachers.png) | Captured |
+| 75 | Page | Teacher's Guide | https://staging2.braveheartspublishing.com/teachers-guide/ | [Desktop](Desktop/75-Teacher-s-Guide.png) | [Mobile](Mobile/75-Teacher-s-Guide.png) | Captured |
+| 76 | Page | Contact | https://staging2.braveheartspublishing.com/contact/ | [Desktop](Desktop/76-Contact.png) | [Mobile](Mobile/76-Contact.png) | Captured |
+| 77 | Page | Cart | https://staging2.braveheartspublishing.com/cart/ | [Desktop](Desktop/77-Cart.png) | [Mobile](Mobile/77-Cart.png) | Captured |
+| 78 | Page | Checkout | https://staging2.braveheartspublishing.com/checkout/ | [Desktop](Desktop/78-Checkout.png) | [Mobile](Mobile/78-Checkout.png) | Captured |
+| 79 | Page | My account | https://staging2.braveheartspublishing.com/my-account/ | [Desktop](Desktop/79-My-account.png) | [Mobile](Mobile/79-My-account.png) | Captured |
+| 80 | Page | Bridge Books for Kids Ages 6-9 — The Complete Guide | https://staging2.braveheartspublishing.com/bridge-books/ | [Desktop](Desktop/80-Bridge-Books-for-Kids-Ages-6-9-The-Complete-Guide.png) | [Mobile](Mobile/80-Bridge-Books-for-Kids-Ages-6-9-The-Complete-Guide.png) | Captured |
+| 81 | Page | Mailchimp Test | https://staging2.braveheartspublishing.com/mailchimp-test/ | [Desktop](Desktop/81-Mailchimp-Test.png) | [Mobile](Mobile/81-Mailchimp-Test.png) | Captured |
+| 82 | Page | Mariana Trench & Ocean Science for Kids — Facts, Books & Adventures | https://staging2.braveheartspublishing.com/mariana-trench/ | [Desktop](Desktop/82-Mariana-Trench-Ocean-Science-for-Kids-Facts-Books-Adventures.png) | [Mobile](Mobile/82-Mariana-Trench-Ocean-Science-for-Kids-Facts-Books-Adventures.png) | Captured |
+| 83 | Page | Read-Aloud Books & Classroom Resources for Grades 1-3 | https://staging2.braveheartspublishing.com/read-alouds/ | [Desktop](Desktop/83-Read-Aloud-Books-Classroom-Resources-for-Grades-1-3.png) | [Mobile](Mobile/83-Read-Aloud-Books-Classroom-Resources-for-Grades-1-3.png) | Captured |
+| 84 | Page | Reading Levels & Lexile Scores | https://staging2.braveheartspublishing.com/reading-levels/ | [Desktop](Desktop/84-Reading-Levels-Lexile-Scores.png) | [Mobile](Mobile/84-Reading-Levels-Lexile-Scores.png) | Captured |
+| 85 | Page | Reluctant Readers — What Actually Works for Kids Who Hate Books | https://staging2.braveheartspublishing.com/reluctant-readers/ | [Desktop](Desktop/85-Reluctant-Readers-What-Actually-Works-for-Kids-Who-Hate-Books.png) | [Mobile](Mobile/85-Reluctant-Readers-What-Actually-Works-for-Kids-Who-Hate-Books.png) | Captured |
+| 86 | Page | Sample Page | https://staging2.braveheartspublishing.com/sample-page/ | [Desktop](Desktop/86-Sample-Page.png) | [Mobile](Mobile/86-Sample-Page.png) | Captured |
+| 87 | Search | Search results | https://staging2.braveheartspublishing.com/?s=adventure | [Desktop](Desktop/87-Search-results.png) | [Mobile](Mobile/87-Search-results.png) | Captured |
+| 88 | 404 | 404 — Not Found | https://staging2.braveheartspublishing.com/publisher-review-not-found/ | [Desktop](Desktop/88-404-Not-Found.png) | [Mobile](Mobile/88-404-Not-Found.png) | Captured |

@@ -1,31 +1,20 @@
 # Lighthouse Summary
 
-Prepared: June 30, 2026  
-Status: NOT RUN — WordPress staging target unavailable
+Review date: 2026-06-30
 
-## Required targets
+## Result
 
-| Page | Expected URL | Performance | Accessibility | Best Practices | SEO |
-| --- | --- | ---: | ---: | ---: | ---: |
-| Home | `/` | — | — | — | — |
-| Books | `/books/` | — | — | — | — |
-| Teachers | `/teachers/` | — | — | — | — |
-| Contact | `/contact/` | — | — | — | — |
+Lighthouse scores could not be produced reliably in this environment. The local review runtime does not include the Lighthouse CLI, and the PageSpeed Insights Lighthouse endpoint returned HTTP 429 (daily quota exhausted) before the first audit completed. No scores are estimated or fabricated.
 
-## Required run conditions
+| Page | Performance | Accessibility | Best Practices | SEO | Status |
+|---|---:|---:|---:|---:|---|
+| Home | — | — | — | — | Not run — tooling unavailable |
+| Books | — | — | — | — | Not run — tooling unavailable |
+| Teachers | — | — | — | — | Not run — tooling unavailable |
+| Contact | — | — | — | — | Not run — tooling unavailable |
+| Shop | — | — | — | — | Not run — tooling unavailable |
+| Amazon Hardcover product | — | — | — | — | Not run — tooling unavailable |
 
-- Run against the WordPress staging build, not the current Squarespace domain.
-- Run logged out in an incognito-equivalent browser profile.
-- Use a production-equivalent cache/CDN state and document whether cache is warm or cold.
-- Run mobile and desktop profiles and retain the JSON/HTML reports.
-- Record the exact URL, timestamp, Lighthouse version, browser version, hosting region, and material third-party scripts.
-- Investigate individual audit failures rather than approving from aggregate scores alone.
+## Before theme freeze
 
-## Source-based performance risks to verify
-
-- Hero images request the WordPress `full` image size.
-- Google Fonts are loaded from an external origin.
-- Book discovery can query every published product and inspect variations.
-- WooCommerce, analytics, SEO, consent, email, and payment plugins may materially change results.
-- Media-library dimensions and formats are unavailable in this repository.
-
+Run Lighthouse from a machine with Chrome and Lighthouse installed, using an incognito profile and both mobile and desktop presets. Preserve the raw HTML or JSON reports. This is a launch gate because large source images and third-party Squarespace CDN assets create credible performance risk.

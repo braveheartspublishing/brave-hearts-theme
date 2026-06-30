@@ -1,64 +1,34 @@
 # Image Audit
 
-Prepared: June 30, 2026  
-Evidence level: Theme-source review only
+Review date: 2026-06-30
 
-## Repository finding
+## Inventory
 
-The theme repository contains no raster or vector image assets. Public imagery is expected to come from the WordPress media library and WooCommerce products, neither of which is available here.
+- 101 media-library objects were readable.
+- 112 unique images were observed across the 88 rendered URLs.
+- No rendered image omitted the alt attribute, but 82 unique rendered images use empty alt text.
+- 90 media-library image records have blank alternative text.
 
-## Large-image risks
+## High-priority findings
 
-- The shared hero component requests the WordPress `full` attachment size. Large originals may increase Largest Contentful Paint, memory use, and mobile transfer size.
-- Founder and Teacher CTA images request `large`.
-- Book covers use the custom `bhp-book-card` size.
-- Hub images use the cropped `bhp-card-landscape` size.
-- Blog cards use `medium_large`; single-post featured images use `large`.
+- Contact loads three large images directly from `images.squarespace-cdn.com`; two are 2500 × 3912 and one is 2500 × 1064, with no responsive `srcset` detected.
+- Teachers loads multiple original Squarespace CDN assets at 2500 pixels wide, including teaching-guide screenshots displayed around 716 pixels wide.
+- Product covers are served at full dimensions on some product pages without responsive candidates. The Everest hardcover cover has empty alt text.
+- Blog and category thumbnails often use empty alt text. Decorative treatment may be appropriate for duplicates, but meaningful editorial thumbnails should identify the article topic.
 
-## Missing-alt risks
+## Large media-library assets
 
-- Single-post featured images rely entirely on media-library alt text.
-- Teacher CTA images may intentionally be decorative, but an empty configured alt must be reviewed against the actual image purpose.
-- Book covers and Passport images have title fallbacks.
-- Decorative hero, icon, and Hub media correctly use empty alt text in source.
+- `IMG_7341.mov`: 50.4 MB.
+- `v12044gd0000d7n8697og65l2ctkq0v0.mp4`: 37.2 MB.
+- `IMG_1358.mov`: 34.8 MB.
+- Two 2500 × 1750 WebP demo images: 5.9 MB and 5.3 MB.
+- `IMG_2796-scaled.png` and `IMG_2797-scaled.png`: about 4.3 MB each at 1177 × 2560.
+- Multiple HEIC originals range from roughly 2.2 MB to 4.8 MB and are not broadly web-compatible.
 
-## Responsive image handling
+## Recommendations
 
-- WordPress attachment APIs are used, so `srcset` and `sizes` can be generated for registered image sizes.
-- CSS constrains dimensions and generally uses `object-fit` appropriately.
-- Responsive output cannot be confirmed without rendered media attachments and browser inspection.
-
-## WebP/AVIF opportunities
-
-- Confirm WordPress generates and serves modern formats through core, the hosting image pipeline, or one approved optimization layer.
-- Do not keep duplicate optimization plugins or CDNs that rewrite the same asset.
-- Preserve high-quality originals outside the public delivery path.
-- Verify transparency, color, book-cover text legibility, and illustration quality after conversion.
-
-## Required media export
-
-For every public attachment, collect:
-
-- Attachment ID and canonical URL
-- Filename and MIME type
-- Pixel dimensions and file size
-- Alt text, caption, and credit
-- Pages/products where used
-- Rendered dimensions at 1440px and mobile widths
-- `src`, `srcset`, `sizes`, lazy-loading, and fetch-priority output
-- Duplicate or orphan status
-
-## Review thresholds
-
-- Flag hero/LCP images materially larger than their rendered requirement.
-- Flag non-hero images that load eagerly above the fold without purpose.
-- Flag images missing meaningful alt when they convey information.
-- Flag decorative images with noisy or redundant alt.
-- Flag blurry upscaling, distorted aspect ratios, unreadable book-cover text, and art-direction failures.
-
-## Result
-
-Theme image API usage: GENERALLY SOUND.  
-Media-library audit: NOT POSSIBLE.  
-Launch gate: BLOCKED pending rendered image inventory and performance review.
-
+- Replace live Squarespace original-image dependencies with WordPress-managed responsive images.
+- Generate appropriately sized WebP/AVIF derivatives for large PNG/JPEG sources while preserving originals for print.
+- Add meaningful alt text to product covers and informative editorial images; retain empty alt only for genuinely decorative duplicates.
+- Keep videos out of initial page load, provide posters, and compress or stream large source files.
+- Verify mobile focal points for hero and cover imagery after asset replacement.
