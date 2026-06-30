@@ -128,7 +128,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
         'eyebrow'   => __('The deepest place on Earth', 'brave-hearts'),
         'title'     => __('Mariana Trench', 'brave-hearts'),
         'text'      => __('Descend seven miles beneath the Pacific and discover deep-sea creatures, ocean science, conservation, and the courage to keep going.', 'brave-hearts'),
-        'url'       => $mariana_book['url'] ?? home_url('/books/'),
+        'url'       => !empty($mariana_book['url']) ? $mariana_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $mariana_book['image_id'] ?? 0,
     ],
@@ -136,7 +136,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
         'eyebrow'   => __('The highest place on Earth', 'brave-hearts'),
         'title'     => __('Mount Everest', 'brave-hearts'),
         'text'      => __('Climb into the Himalayas for a story of mountain geography, resilience, teamwork, and brave hearts working together.', 'brave-hearts'),
-        'url'       => $everest_book['url'] ?? home_url('/books/'),
+        'url'       => !empty($everest_book['url']) ? $everest_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $everest_book['image_id'] ?? 0,
     ],
@@ -144,7 +144,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
         'eyebrow'   => __('The world’s largest rainforest', 'brave-hearts'),
         'title'     => __('Amazon Rainforest', 'brave-hearts'),
         'text'      => __('Journey into a living world of remarkable animals, interconnected ecosystems, conservation, and discovery.', 'brave-hearts'),
-        'url'       => $amazon_book['url'] ?? home_url('/books/'),
+        'url'       => !empty($amazon_book['url']) ? $amazon_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $amazon_book['image_id'] ?? 0,
     ],
@@ -178,6 +178,14 @@ $learning_cards = apply_filters('bhp_homepage_learning_cards', [
     ['title' => __('Explorers', 'brave-hearts'), 'text' => __('Meet courageous thinkers past and present.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('explorers'), 'label' => __('Meet explorers', 'brave-hearts')]],
     ['title' => __('Activities', 'brave-hearts'), 'text' => __('Keep learning with hands-on discoveries.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('activities'), 'label' => __('Try an activity', 'brave-hearts')]],
 ], $page_id);
+foreach ($learning_cards as &$learning_card) {
+    $topic_slug = sanitize_title($learning_card['title'] ?? '');
+    $fallback_url = bhp_get_learning_category_url($topic_slug);
+    $learning_link = is_array($learning_card['link'] ?? null) ? $learning_card['link'] : [];
+    $learning_link['url'] = bhp_get_safe_link_url($learning_link['url'] ?? '', $fallback_url);
+    $learning_card['link'] = $learning_link;
+}
+unset($learning_card);
 ?>
 <section id="learning-hub" class="homepage-section section section--muted" aria-labelledby="learning-hub-title">
   <div class="container">

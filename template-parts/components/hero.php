@@ -35,6 +35,8 @@ $heading_id = $section_id . '-title';
 $classes    = trim('home-hero section--dark ' . sanitize_html_class($args['class']));
 $primary    = wp_parse_args($args['primary_link'], ['url' => '', 'label' => '']);
 $secondary  = wp_parse_args($args['secondary_link'], ['url' => '', 'label' => '']);
+$primary['url'] = bhp_get_safe_link_url($primary['url']);
+$secondary['url'] = bhp_get_safe_link_url($secondary['url']);
 ?>
 <section id="<?php echo esc_attr($section_id); ?>" class="<?php echo esc_attr($classes); ?>" aria-labelledby="<?php echo esc_attr($heading_id); ?>">
   <?php if ($args['image_id']): ?>

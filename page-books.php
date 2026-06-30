@@ -14,7 +14,12 @@ $page_id = get_queried_object_id();
 $adventures = bhp_get_series_adventures();
 
 foreach ($adventures as $key => &$adventure) {
-    $url_override = get_post_meta($page_id, 'bhp_books_' . $key . '_url', true);
+    $url_override = bhp_get_safe_link_url(get_post_meta($page_id, 'bhp_books_' . $key . '_url', true));
+    $amazon_url = bhp_get_safe_link_url(get_post_meta($page_id, 'bhp_books_' . $key . '_amazon_url', true));
+    $amazon_host = strtolower((string) wp_parse_url($amazon_url, PHP_URL_HOST));
+    if ($amazon_url && $amazon_host !== 'amzn.to' && !preg_match('/(^|\.)amazon\.[a-z.]+$/', $amazon_host)) {
+        $amazon_url = '';
+    }
     $image_override = (int) get_post_meta($page_id, 'bhp_books_' . $key . '_image_id', true);
     if ($url_override) {
         $adventure['primary_url'] = $url_override;
@@ -23,11 +28,12 @@ foreach ($adventures as $key => &$adventure) {
     if ($image_override) {
         $adventure['image_id'] = $image_override;
     }
+    $adventure['amazon_url'] = $amazon_url;
 }
 unset($adventure);
 
-$book_one_url = $adventures['mariana_trench']['primary_url'] ?: '#adventure-book-grid';
-$shop_url = home_url('/books/#adventure-book-grid');
+$shop_url = home_url('/shop/');
+$book_one_url = bhp_get_safe_link_url($adventures['mariana_trench']['primary_url'], $shop_url);
 
 get_template_part('template-parts/components/hero', null, [
     'id'       => 'books-hero',
@@ -67,7 +73,7 @@ get_template_part('template-parts/components/hero', null, [
     </header>
     <div class="adventure-book-grid">
       <?php foreach ($adventures as $adventure): ?>
-        <?php get_template_part('template-parts/books/adventure-book-card', null, $adventure); ?>
+        <?php get_template_part('template-parts/books/adventure-book-card', null, array_merge($adventure, ['shop_url' => $shop_url])); ?>
       <?php endforeach; ?>
     </div>
   </div>

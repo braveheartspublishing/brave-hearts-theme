@@ -21,6 +21,7 @@ $args = wp_parse_args($args ?? [], [
     'cta_label'    => '',
 ]);
 
+$args['url'] = bhp_get_safe_link_url($args['url']);
 if (!$args['title'] || !$args['url']) {
     return;
 }

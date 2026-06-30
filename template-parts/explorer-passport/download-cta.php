@@ -18,10 +18,13 @@ $button_classes = 'btn btn-primary passport-download-cta__button' . ($download['
   <?php if (!$download['ready']): ?>
     <!-- Explorer Passport download placeholder: replace through bhp_explorer_passport_download_url and mark ready only after asset approval. -->
   <?php endif; ?>
-  <a
-    class="<?php echo esc_attr($button_classes); ?>"
-    href="<?php echo esc_url($download['url']); ?>"
-    <?php if (!$download['ready']): ?>aria-disabled="true" tabindex="-1"<?php endif; ?>
-  ><?php echo esc_html($args['label'] ?: __('Download the Explorer Passport', 'brave-hearts')); ?></a>
+  <?php if ($download['ready']): ?>
+    <a
+      class="<?php echo esc_attr($button_classes); ?>"
+      href="<?php echo esc_url($download['url']); ?>"
+    ><?php echo esc_html($args['label'] ?: __('Download the Explorer Passport', 'brave-hearts')); ?></a>
+  <?php else: ?>
+    <span class="<?php echo esc_attr($button_classes); ?>" aria-disabled="true"><?php echo esc_html($args['label'] ?: __('Download the Explorer Passport', 'brave-hearts')); ?></span>
+  <?php endif; ?>
   <p class="passport-download-cta__note"><?php echo esc_html($args['note'] ?: ($download['ready'] ? __('Printable PDF download.', 'brave-hearts') : __('PDF creation and delivery are coming in a later phase.', 'brave-hearts'))); ?></p>
 </aside>

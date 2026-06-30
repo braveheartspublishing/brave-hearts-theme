@@ -4,10 +4,15 @@ defined('ABSPATH') || exit;
 $args = wp_parse_args($args ?? [], [
     'title' => '', 'destination' => '', 'age_range' => '', 'description' => '', 'formats' => [],
     'image_id' => 0, 'image_alt' => '', 'primary_url' => '', 'paperback_url' => '', 'formats_url' => '',
+    'amazon_url' => '', 'shop_url' => '',
     'available' => false, 'class' => '',
 ]);
 if (!$args['title']) { return; }
 $formats = is_array($args['formats']) ? array_filter($args['formats']) : [];
+$configured_primary_url = bhp_get_safe_link_url($args['primary_url']);
+$primary_url = bhp_get_safe_link_url($configured_primary_url, $args['shop_url']);
+$formats_url = bhp_get_safe_link_url($args['formats_url'], $args['shop_url']);
+$amazon_url = bhp_get_safe_link_url($args['amazon_url']);
 ?>
 <article class="adventure-book-card <?php echo esc_attr(sanitize_html_class($args['class'])); ?>">
   <div class="adventure-book-card__media">
@@ -17,7 +22,7 @@ $formats = is_array($args['formats']) ? array_filter($args['formats']) : [];
           'alt'   => $args['image_alt'] ?: $args['title'],
       ]); ?>
     <?php else: ?>
-      <div class="adventure-book-card__cover-placeholder" role="img" aria-label="<?php echo esc_attr(sprintf(__('Cover placeholder for %s', 'brave-hearts'), $args['title'])); ?>">
+      <div class="adventure-book-card__cover-placeholder" role="img" aria-label="<?php echo esc_attr($args['title']); ?>">
         <span aria-hidden="true"><?php esc_html_e('Charlotte & Henry', 'brave-hearts'); ?></span>
       </div>
     <?php endif; ?>
@@ -36,17 +41,16 @@ $formats = is_array($args['formats']) ? array_filter($args['formats']) : [];
       </div>
     <?php endif; ?>
     <div class="adventure-book-card__actions">
-      <?php if ($args['primary_url']): ?>
-        <a class="btn btn-primary" href="<?php echo esc_url($args['primary_url']); ?>"><?php esc_html_e('View Book', 'brave-hearts'); ?></a>
-      <?php else: ?>
-        <span class="btn btn-primary is-disabled" aria-disabled="true"><?php esc_html_e('View Book', 'brave-hearts'); ?></span>
+      <?php if ($primary_url): ?>
+        <a class="btn btn-primary" href="<?php echo esc_url($primary_url); ?>"><?php echo esc_html($configured_primary_url ? __('View Book', 'brave-hearts') : __('Browse the Shop', 'brave-hearts')); ?></a>
       <?php endif; ?>
-      <?php if ($args['formats_url']): ?>
-        <a class="btn btn-outline" href="<?php echo esc_url($args['formats_url']); ?>"><?php esc_html_e('Shop Formats', 'brave-hearts'); ?></a>
-      <?php else: ?>
-        <span class="btn btn-outline is-disabled" aria-disabled="true"><?php esc_html_e('Shop Formats', 'brave-hearts'); ?></span>
+      <?php if ($formats_url): ?>
+        <a class="btn btn-outline" href="<?php echo esc_url($formats_url); ?>"><?php esc_html_e('Shop Formats', 'brave-hearts'); ?></a>
+      <?php endif; ?>
+      <?php if ($amazon_url): ?>
+        <a class="btn btn-outline" href="<?php echo esc_url($amazon_url); ?>" rel="sponsored noopener"><?php esc_html_e('Buy on Amazon', 'brave-hearts'); ?></a>
       <?php endif; ?>
     </div>
-    <?php if (!$args['available']): ?><p class="adventure-book-card__availability"><?php esc_html_e('This adventure is not currently available in the shop. Product links will appear when a matching book is published.', 'brave-hearts'); ?></p><?php endif; ?>
+    <?php if (!$args['available']): ?><p class="adventure-book-card__availability"><?php esc_html_e('This adventure is not currently available for purchase.', 'brave-hearts'); ?></p><?php endif; ?>
   </div>
 </article>

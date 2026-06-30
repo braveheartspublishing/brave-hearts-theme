@@ -35,12 +35,9 @@ if (!isset($inquiry_types[$selected_inquiry])) {
 }
 $provider_action = bhp_get_contact_form_action($args['action']);
 $form_ready = (bool) $provider_action;
-$form_action = $form_ready ? $provider_action : bhp_get_contact_placeholder_action();
+$form_action = $provider_action;
 ?>
-<?php if (!$form_ready): ?>
-  <!-- Contact provider placeholder: configure bhp_contact_form_action only after validation, spam protection, notifications, and success handling are approved. -->
-<?php endif; ?>
-<form id="<?php echo esc_attr($form_id); ?>" class="contact-form <?php echo esc_attr(sanitize_html_class($args['class'])); ?>" action="<?php echo esc_url($form_action); ?>" method="post" aria-describedby="<?php echo esc_attr($note_id); ?>">
+<form id="<?php echo esc_attr($form_id); ?>" class="contact-form <?php echo esc_attr(sanitize_html_class($args['class'])); ?>" <?php if ($form_ready): ?>action="<?php echo esc_url($form_action); ?>"<?php endif; ?> method="post" aria-describedby="<?php echo esc_attr($note_id); ?>">
   <input type="hidden" name="source_page" value="<?php echo esc_url($source_page); ?>">
 
   <div class="contact-form__field">
@@ -85,7 +82,7 @@ $form_action = $form_ready ? $provider_action : bhp_get_contact_placeholder_acti
     <?php if ($form_ready): ?>
       <p><?php esc_html_e('Please do not include sensitive or private student information.', 'brave-hearts'); ?></p>
     <?php else: ?>
-      <p><?php esc_html_e('Contact form provider connection pending. This form is not active yet. Please use the direct email shown on this page.', 'brave-hearts'); ?></p>
+      <p><?php esc_html_e('The online contact form is temporarily unavailable. Please use the direct email shown on this page.', 'brave-hearts'); ?></p>
     <?php endif; ?>
   </div>
 </form>

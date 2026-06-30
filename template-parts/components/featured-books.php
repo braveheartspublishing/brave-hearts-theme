@@ -23,6 +23,7 @@ if (!$args['title'] || !$args['books']) {
 $section_id = $args['id'] ?: wp_unique_id('featured-books-');
 $heading_id = $section_id . '-title';
 $cta        = wp_parse_args($args['cta_link'], ['url' => '', 'label' => '']);
+$cta['url'] = bhp_get_safe_link_url($cta['url']);
 ?>
 <section id="<?php echo esc_attr($section_id); ?>" class="featured-books section <?php echo esc_attr(sanitize_html_class($args['class'])); ?>" aria-labelledby="<?php echo esc_attr($heading_id); ?>">
   <div class="container">

@@ -22,7 +22,6 @@ if (!$title) { return; }
     </div>
   <?php endif; ?>
   <div class="passport-card__body">
-    <?php if ($status === 'placeholder'): ?><p class="passport-card__status"><?php esc_html_e('Future Passport feature', 'brave-hearts'); ?></p><?php endif; ?>
     <h3 class="passport-card__title"><?php echo esc_html($title); ?></h3>
     <?php if ($text): ?><div class="passport-card__text"><?php echo wp_kses_post($text); ?></div><?php endif; ?>
   </div>

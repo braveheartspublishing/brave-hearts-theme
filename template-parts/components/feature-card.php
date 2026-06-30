@@ -6,6 +6,7 @@ $args = wp_parse_args($args ?? [], [
 ]);
 if (!$args['title']) { return; }
 $link = wp_parse_args($args['link'], ['url' => '', 'label' => '']);
+$link['url'] = bhp_get_safe_link_url($link['url']);
 ?>
 <article class="feature-card <?php echo esc_attr(sanitize_html_class($args['class'])); ?>">
   <?php if ($args['image_id']): ?>

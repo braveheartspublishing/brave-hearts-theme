@@ -9,9 +9,11 @@ $terms_url   = home_url('/terms/');
 if (function_exists('wc_get_page_id')) {
     $terms_page_id = wc_get_page_id('terms');
     if ($terms_page_id > 0) {
-        $terms_url = get_permalink($terms_page_id);
+        $terms_url = bhp_get_safe_link_url(get_permalink($terms_page_id), $terms_url);
     }
 }
+$privacy_url = bhp_get_safe_link_url($privacy_url, home_url('/privacy-policy/'));
+$terms_url = bhp_get_safe_link_url($terms_url, home_url('/terms/'));
 ?>
 </main><!-- #main -->
 

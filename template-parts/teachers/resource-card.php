@@ -5,6 +5,7 @@ $args = wp_parse_args($args ?? [], [
     'title' => '', 'text' => '', 'url' => '', 'label' => '', 'status' => 'placeholder', 'class' => '',
 ]);
 if (!$args['title']) { return; }
+$args['url'] = bhp_get_safe_link_url($args['url']);
 $is_available = $args['status'] === 'available' && (bool) $args['url'];
 ?>
 <article class="teacher-resource-card <?php echo esc_attr(sanitize_html_class($args['class'])); ?>">

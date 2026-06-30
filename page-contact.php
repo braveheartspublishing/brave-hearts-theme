@@ -112,7 +112,7 @@ $contact_paths = apply_filters('bhp_contact_paths', [
   <div class="container container--content contact-direct__inner">
     <p class="component-heading__eyebrow"><?php esc_html_e('Direct contact', 'brave-hearts'); ?></p>
     <h2 id="direct-contact-title" class="text-section-title"><?php esc_html_e('Prefer Email?', 'brave-hearts'); ?></h2>
-    <p class="text-lead"><?php esc_html_e('Use direct email while the website form provider is being configured.', 'brave-hearts'); ?></p>
+    <p class="text-lead"><?php esc_html_e('You can always reach Brave Hearts Publishing directly by email.', 'brave-hearts'); ?></p>
     <?php if ($contact_email): ?>
       <p class="contact-direct__email"><a href="mailto:<?php echo esc_attr($contact_email); ?>"><?php echo esc_html($contact_email); ?></a></p>
     <?php endif; ?>

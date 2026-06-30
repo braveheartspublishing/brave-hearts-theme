@@ -18,7 +18,10 @@ $teacher_field = static function ($key, $fallback = '') use ($page_id) {
     return apply_filters('bhp_teachers_field_' . sanitize_key($key), $value, $page_id);
 };
 
-$read_aloud_url = $teacher_field('read_aloud_url', add_query_arg('inquiry', 'read-aloud', home_url('/contact/')));
+$read_aloud_url = bhp_get_safe_link_url(
+    $teacher_field('read_aloud_url', ''),
+    add_query_arg('inquiry', 'read-aloud', home_url('/contact/'))
+);
 $hero_image_id = (int) $teacher_field('hero_image_id', 0);
 $adventures = bhp_get_series_adventures();
 
@@ -50,7 +53,7 @@ $resource_categories = apply_filters('bhp_teacher_resource_categories', [
 ], $page_id);
 
 foreach ($resource_categories as $key => &$resource) {
-    $resource_url = $teacher_field($key . '_url', '');
+    $resource_url = bhp_get_safe_link_url($teacher_field($key . '_url', ''));
     $resource['url'] = $resource_url;
     $resource['status'] = $resource_url ? 'available' : 'placeholder';
 }
@@ -114,7 +117,7 @@ get_template_part('template-parts/components/hero', null, [
       <?php foreach ($adventures as $key => $adventure): ?>
         <?php
         $card = array_merge($adventure, $book_resources[$key], [
-            'resources_url' => $teacher_field($key . '_resources_url', ''),
+            'resources_url' => bhp_get_safe_link_url($teacher_field($key . '_resources_url', '')),
         ]);
         get_template_part('template-parts/teachers/book-resource-card', null, $card);
         ?>

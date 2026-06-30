@@ -9,6 +9,8 @@ $section_id = $args['id'] ?: wp_unique_id('final-cta-');
 $heading_id = $section_id . '-title';
 $primary = wp_parse_args($args['primary_link'], ['url' => '', 'label' => '']);
 $secondary = wp_parse_args($args['secondary_link'], ['url' => '', 'label' => '']);
+$primary['url'] = bhp_get_safe_link_url($primary['url']);
+$secondary['url'] = bhp_get_safe_link_url($secondary['url']);
 ?>
 <section id="<?php echo esc_attr($section_id); ?>" class="final-cta section <?php echo esc_attr(sanitize_html_class($args['class'])); ?>" aria-labelledby="<?php echo esc_attr($heading_id); ?>">
   <div class="container container--content final-cta__inner">

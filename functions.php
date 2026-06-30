@@ -166,6 +166,156 @@ function bhp_fallback_menu() {
     echo '</ul>';
 }
 
+/**
+ * Normalize a visitor-facing link and reject common empty placeholder values.
+ */
+function bhp_get_safe_link_url($url, $fallback = '') {
+    if (!is_scalar($url)) {
+        $url = '';
+    }
+
+    $url = trim((string) $url);
+    if (in_array(strtolower($url), ['', 'null', 'undefined'], true)) {
+        $url = '';
+    }
+
+    if ($url !== '' && $url[0] === '#') {
+        return preg_match('/^#[A-Za-z][A-Za-z0-9_-]*$/', $url) ? $url : '';
+    }
+
+    if ($url !== '' && strpos($url, '/') === 0) {
+        $url = home_url($url);
+    }
+
+    $url = $url ? esc_url_raw($url, ['http', 'https']) : '';
+    if ($url && wp_http_validate_url($url)) {
+        return $url;
+    }
+
+    if ($fallback && $fallback !== $url) {
+        return bhp_get_safe_link_url($fallback);
+    }
+
+    return '';
+}
+
+/**
+ * Keep the legacy Teacher Resources route and menu entries canonical.
+ */
+function bhp_redirect_legacy_teacher_resources() {
+    if (is_admin()) {
+        return;
+    }
+
+    $request_path = untrailingslashit((string) wp_parse_url(wp_unslash($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH));
+    $legacy_path  = untrailingslashit((string) wp_parse_url(home_url('/teachers-guide/'), PHP_URL_PATH));
+
+    if ($request_path === $legacy_path) {
+        wp_safe_redirect(home_url('/teachers/'), 301, 'Brave Hearts Theme');
+        exit;
+    }
+}
+add_action('template_redirect', 'bhp_redirect_legacy_teacher_resources');
+
+function bhp_canonicalize_teacher_menu_items($items) {
+    $home_host    = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
+    $teacher_path = untrailingslashit((string) wp_parse_url(home_url('/teachers/'), PHP_URL_PATH));
+    $legacy_path  = untrailingslashit((string) wp_parse_url(home_url('/teachers-guide/'), PHP_URL_PATH));
+    $seen_teacher = false;
+
+    foreach ($items as $index => $item) {
+        $item_host = strtolower((string) wp_parse_url($item->url, PHP_URL_HOST));
+        if ($item_host && $item_host !== $home_host) {
+            continue;
+        }
+
+        $item_path = untrailingslashit((string) wp_parse_url($item->url, PHP_URL_PATH));
+        if (!in_array($item_path, [$teacher_path, $legacy_path], true)) {
+            continue;
+        }
+
+        if ($seen_teacher) {
+            unset($items[$index]);
+            continue;
+        }
+
+        $item->url    = home_url('/teachers/');
+        $seen_teacher = true;
+    }
+
+    return array_values($items);
+}
+add_filter('wp_nav_menu_objects', 'bhp_canonicalize_teacher_menu_items');
+
+/**
+ * Disable invalid links stored in editor content and normalize the legacy
+ * Teacher Resources route without changing the database.
+ */
+function bhp_sanitize_content_links($content) {
+    if (!is_string($content) || stripos($content, '<a') === false) {
+        return $content;
+    }
+
+    $canonical_url  = home_url('/teachers/');
+    $home_host      = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
+    $canonical_path = untrailingslashit((string) wp_parse_url($canonical_url, PHP_URL_PATH));
+    $legacy_path = untrailingslashit((string) wp_parse_url(home_url('/teachers-guide/'), PHP_URL_PATH));
+
+    if (class_exists('WP_HTML_Tag_Processor')) {
+        $processor = new WP_HTML_Tag_Processor($content);
+        while ($processor->next_tag('A')) {
+            $href = $processor->get_attribute('href');
+            if (!is_string($href)) {
+                continue;
+            }
+
+            $href = trim($href);
+            if (in_array(strtolower($href), ['', 'null', 'undefined'], true)) {
+                $processor->remove_attribute('href');
+                $processor->set_attribute('aria-disabled', 'true');
+                continue;
+            }
+
+            $href_host = strtolower((string) wp_parse_url($href, PHP_URL_HOST));
+            $href_path = untrailingslashit((string) wp_parse_url($href, PHP_URL_PATH));
+            if ($href_host && $href_host !== $home_host) {
+                continue;
+            }
+
+            if ($href_path === $legacy_path && $href_path !== $canonical_path) {
+                $processor->set_attribute('href', $canonical_url);
+            }
+        }
+
+        return $processor->get_updated_html();
+    }
+
+    return preg_replace_callback('/<a\b[^>]*>/i', static function ($matches) use ($canonical_url, $home_host, $legacy_path, $canonical_path) {
+        $tag = $matches[0];
+        if (!preg_match('/\shref\s*=\s*(["\'])(.*?)\1/i', $tag, $href_match)) {
+            return $tag;
+        }
+
+        $href = trim($href_match[2]);
+        if (in_array(strtolower($href), ['', 'null', 'undefined'], true)) {
+            return str_replace($href_match[0], ' aria-disabled="true"', $tag);
+        }
+
+        $href_host = strtolower((string) wp_parse_url($href, PHP_URL_HOST));
+        $href_path = untrailingslashit((string) wp_parse_url($href, PHP_URL_PATH));
+        if ($href_host && $href_host !== $home_host) {
+            return $tag;
+        }
+
+        if ($href_path === $legacy_path && $href_path !== $canonical_path) {
+            return str_replace($href_match[2], esc_url($canonical_url), $tag);
+        }
+
+        return $tag;
+    }, $content);
+}
+add_filter('the_content', 'bhp_sanitize_content_links', 20);
+
 // ============================================================
 // HOMEPAGE CONTENT AND FEATURED BOOK DATA
 // ============================================================
@@ -289,6 +439,11 @@ function bhp_get_homepage_books($limit = -1) {
     $books = get_posts($query_args);
 
     foreach ($books as $book) {
+        $book_url    = bhp_get_safe_link_url(get_permalink($book));
+        if (!$book_url) {
+            continue;
+        }
+
         $product     = ($post_type === 'product' && function_exists('wc_get_product')) ? wc_get_product($book->ID) : null;
         $image_id    = get_post_thumbnail_id($book->ID);
         $image_alt   = $image_id ? get_post_meta($image_id, '_wp_attachment_image_alt', true) : '';
@@ -302,7 +457,7 @@ function bhp_get_homepage_books($limit = -1) {
         $cards[] = [
             'product_id'   => $book->ID,
             'title'        => get_the_title($book),
-            'url'          => get_permalink($book),
+            'url'          => $book_url,
             'image_id'     => $image_id,
             'image_alt'    => $image_alt,
             'badge'        => get_post_meta($book->ID, 'bhp_book_badge', true),
@@ -324,13 +479,27 @@ function bhp_get_homepage_books($limit = -1) {
  * Resolve a Learning Hub topic to an existing or future WordPress category URL.
  */
 function bhp_get_learning_category_url($slug) {
-    $category = get_category_by_slug(sanitize_title($slug));
+    $slug = sanitize_title($slug);
+    $hub_page = get_page_by_path($slug, OBJECT, 'page');
+    if ($hub_page && $hub_page->post_status === 'publish') {
+        $hub_url = bhp_get_safe_link_url(get_permalink($hub_page));
+        if ($hub_url) {
+            return $hub_url;
+        }
+    }
+
+    $category = get_category_by_slug($slug);
     if ($category) {
-        return get_category_link($category);
+        $category_url = bhp_get_safe_link_url(get_category_link($category));
+        if ($category_url) {
+            return $category_url;
+        }
     }
 
     $posts_page_id = (int) get_option('page_for_posts');
-    return $posts_page_id ? get_permalink($posts_page_id) : home_url('/blog/');
+    return $posts_page_id
+        ? bhp_get_safe_link_url(get_permalink($posts_page_id), home_url('/blog/'))
+        : home_url('/blog/');
 }
 
 /**
@@ -343,7 +512,7 @@ function bhp_footer_fallback_menu() {
     if (function_exists('wc_get_page_id')) {
         $terms_page_id = wc_get_page_id('terms');
         if ($terms_page_id > 0) {
-            $terms_url = get_permalink($terms_page_id);
+            $terms_url = bhp_get_safe_link_url(get_permalink($terms_page_id), $terms_url);
         }
     }
 
@@ -360,7 +529,10 @@ function bhp_footer_fallback_menu() {
 
     echo '<ul>';
     foreach ($links as $label => $url) {
-        echo '<li><a href="' . esc_url($url) . '">' . esc_html($label) . '</a></li>';
+        $url = bhp_get_safe_link_url($url);
+        if ($url) {
+            echo '<li><a href="' . esc_url($url) . '">' . esc_html($label) . '</a></li>';
+        }
     }
     echo '</ul>';
 }
@@ -502,11 +674,11 @@ function bhp_get_explorer_passport_features() {
  * Return the placeholder or approved Passport download state.
  */
 function bhp_get_explorer_passport_download($requested_url = '') {
-    $url = apply_filters('bhp_explorer_passport_download_url', $requested_url);
+    $url = bhp_get_safe_link_url(apply_filters('bhp_explorer_passport_download_url', $requested_url));
     $ready = (bool) apply_filters('bhp_explorer_passport_download_ready', false, $url);
 
     return [
-        'url'   => $url ?: home_url('/explorer-passport-download-placeholder/'),
+        'url'   => $url,
         'ready' => $ready && (bool) $url,
     ];
 }
@@ -552,6 +724,7 @@ function bhp_get_series_adventures() {
             'primary_url'     => '',
             'paperback_url'   => '',
             'formats_url'     => '',
+            'amazon_url'      => '',
             'matching_skus'   => 0,
             'available'       => false,
         ]);
@@ -622,10 +795,10 @@ function bhp_get_series_adventures() {
                 $ordered_formats,
                 array_values(array_diff($adventure['formats'], $ordered_formats))
             );
-            $adventure['formats_url'] = add_query_arg([
+            $adventure['formats_url'] = bhp_get_safe_link_url(add_query_arg([
                 's'         => $adventure['title'],
                 'post_type' => 'product',
-            ], home_url('/'));
+            ], home_url('/shop/')), home_url('/shop/'));
         }
     }
     unset($adventure);
@@ -642,12 +815,5 @@ function bhp_get_series_adventures() {
  */
 function bhp_get_contact_form_action($requested_action = '') {
     return bhp_get_valid_form_action(apply_filters('bhp_contact_form_action', $requested_action));
-}
-
-/**
- * Nonfunctional destination used only while the Contact form is disabled.
- */
-function bhp_get_contact_placeholder_action() {
-    return home_url('/contact-form-placeholder/');
 }
 

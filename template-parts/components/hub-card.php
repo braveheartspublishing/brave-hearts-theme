@@ -4,6 +4,7 @@ defined('ABSPATH') || exit;
 $args = wp_parse_args($args ?? [], [
     'title' => '', 'url' => '', 'eyebrow' => '', 'text' => '', 'image_id' => 0, 'image_alt' => '', 'cta_label' => '', 'class' => '',
 ]);
+$args['url'] = bhp_get_safe_link_url($args['url']);
 if (!$args['title'] || !$args['url']) { return; }
 ?>
 <article class="card destination-card hub-card <?php echo esc_attr(sanitize_html_class($args['class'])); ?>">

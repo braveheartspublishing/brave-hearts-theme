@@ -8,6 +8,7 @@ if (!$args['title']) { return; }
 $section_id = $args['id'] ?: wp_unique_id('teacher-resources-');
 $heading_id = $section_id . '-title';
 $link = wp_parse_args($args['link'], ['url' => '', 'label' => '']);
+$link['url'] = bhp_get_safe_link_url($link['url']);
 ?>
 <section id="<?php echo esc_attr($section_id); ?>" class="teacher-resources-cta section section--muted <?php echo esc_attr(sanitize_html_class($args['class'])); ?>" aria-labelledby="<?php echo esc_attr($heading_id); ?>">
   <div class="container teacher-resources-cta__layout">

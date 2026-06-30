@@ -100,9 +100,8 @@ $book_values = apply_filters('bhp_about_book_values', [
             'alt'   => __('Andrew Signore, founder of Brave Hearts Publishing', 'brave-hearts'),
         ]); ?>
       <?php else: ?>
-        <div class="about-founder__placeholder" role="img" aria-label="<?php esc_attr_e('Founder photograph placeholder for Andrew Signore', 'brave-hearts'); ?>">
+        <div class="about-founder__placeholder" role="img" aria-label="<?php esc_attr_e('Andrew Signore', 'brave-hearts'); ?>">
           <span aria-hidden="true">AS</span>
-          <small><?php esc_html_e('Founder photo placeholder', 'brave-hearts'); ?></small>
         </div>
       <?php endif; ?>
     </figure>

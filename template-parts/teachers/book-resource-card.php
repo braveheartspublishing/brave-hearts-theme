@@ -8,6 +8,8 @@ $args = wp_parse_args($args ?? [], [
 if (!$args['title']) { return; }
 $themes = is_array($args['themes']) ? array_filter($args['themes']) : [];
 $subjects = is_array($args['subjects']) ? array_filter($args['subjects']) : [];
+$args['primary_url'] = bhp_get_safe_link_url($args['primary_url']);
+$args['resources_url'] = bhp_get_safe_link_url($args['resources_url']);
 ?>
 <article class="teacher-book-card <?php echo esc_attr(sanitize_html_class($args['class'])); ?>">
   <div class="teacher-book-card__media">
@@ -17,7 +19,7 @@ $subjects = is_array($args['subjects']) ? array_filter($args['subjects']) : [];
           'alt'   => $args['image_alt'] ?: $args['title'],
       ]); ?>
     <?php else: ?>
-      <div class="teacher-book-card__cover-placeholder" role="img" aria-label="<?php echo esc_attr(sprintf(__('Cover placeholder for %s', 'brave-hearts'), $args['title'])); ?>">
+      <div class="teacher-book-card__cover-placeholder" role="img" aria-label="<?php echo esc_attr($args['title']); ?>">
         <span aria-hidden="true"><?php esc_html_e('Charlotte & Henry', 'brave-hearts'); ?></span>
       </div>
     <?php endif; ?>

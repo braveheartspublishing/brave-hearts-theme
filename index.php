@@ -23,7 +23,11 @@ get_header(); ?>
         </a>
       <?php endif; ?>
       <div class="card__body">
-        <p class="card__meta"><?php echo esc_html(get_the_date()); ?></p>
+        <p class="card__meta">
+          <time datetime="<?php echo esc_attr(get_the_date('c')); ?>"><?php echo esc_html(get_the_date()); ?></time>
+          <span aria-hidden="true"> · </span>
+          <span><?php esc_html_e('By', 'brave-hearts'); ?> <?php the_author_posts_link(); ?></span>
+        </p>
         <h2 class="card__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
         <div class="card__excerpt"><?php the_excerpt(); ?></div>
         <a class="card__link" href="<?php the_permalink(); ?>"><?php esc_html_e('Read more', 'brave-hearts'); ?> →</a>
