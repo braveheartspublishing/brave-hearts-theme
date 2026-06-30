@@ -2,7 +2,7 @@
 /** Accessible provider-neutral contact and outreach form. */
 defined('ABSPATH') || exit;
 $args = wp_parse_args($args ?? [], [
-    'id' => '', 'action' => '', 'source_page' => '', 'inquiry_type' => '', 'class' => '',
+    'id' => '', 'action' => '', 'source_page' => '', 'inquiry_type' => '', 'fallback_email' => '', 'class' => '',
 ]);
 $form_id = $args['id'] ?: wp_unique_id('bhp-contact-form-');
 $note_id = $form_id . '-note';
@@ -36,53 +36,59 @@ if (!isset($inquiry_types[$selected_inquiry])) {
 $provider_action = bhp_get_contact_form_action($args['action']);
 $form_ready = (bool) $provider_action;
 $form_action = $provider_action;
+$fallback_email = sanitize_email($args['fallback_email']);
 ?>
-<form id="<?php echo esc_attr($form_id); ?>" class="contact-form <?php echo esc_attr(sanitize_html_class($args['class'])); ?>" <?php if ($form_ready): ?>action="<?php echo esc_url($form_action); ?>"<?php endif; ?> method="post" aria-describedby="<?php echo esc_attr($note_id); ?>">
+<?php if (!$form_ready): ?>
+  <div class="contact-form contact-form--fallback <?php echo esc_attr(sanitize_html_class($args['class'])); ?>">
+    <p><?php esc_html_e('Tell us about your question, classroom, library, event, or partnership by email. Please do not include sensitive or private student information.', 'brave-hearts'); ?></p>
+    <?php if ($fallback_email): ?>
+      <p><a class="btn btn-primary" href="mailto:<?php echo esc_attr($fallback_email); ?>"><?php esc_html_e('Email Brave Hearts Publishing', 'brave-hearts'); ?></a></p>
+    <?php endif; ?>
+  </div>
+  <?php return; ?>
+<?php endif; ?>
+<form id="<?php echo esc_attr($form_id); ?>" class="contact-form <?php echo esc_attr(sanitize_html_class($args['class'])); ?>" action="<?php echo esc_url($form_action); ?>" method="post" aria-describedby="<?php echo esc_attr($note_id); ?>">
   <input type="hidden" name="source_page" value="<?php echo esc_url($source_page); ?>">
 
   <div class="contact-form__field">
     <label for="<?php echo esc_attr($form_id); ?>-name"><?php esc_html_e('Name', 'brave-hearts'); ?></label>
-    <input id="<?php echo esc_attr($form_id); ?>-name" name="name" type="text" autocomplete="name" <?php disabled(!$form_ready); ?> required>
+    <input id="<?php echo esc_attr($form_id); ?>-name" name="name" type="text" autocomplete="name" required>
   </div>
 
   <div class="contact-form__field">
     <label for="<?php echo esc_attr($form_id); ?>-email"><?php esc_html_e('Email', 'brave-hearts'); ?></label>
-    <input id="<?php echo esc_attr($form_id); ?>-email" name="email" type="email" autocomplete="email" <?php disabled(!$form_ready); ?> required>
+    <input id="<?php echo esc_attr($form_id); ?>-email" name="email" type="email" autocomplete="email" required>
   </div>
 
   <div class="contact-form__field">
     <label for="<?php echo esc_attr($form_id); ?>-organization"><?php esc_html_e('Organization / School', 'brave-hearts'); ?></label>
-    <input id="<?php echo esc_attr($form_id); ?>-organization" name="organization" type="text" autocomplete="organization" <?php disabled(!$form_ready); ?>>
+    <input id="<?php echo esc_attr($form_id); ?>-organization" name="organization" type="text" autocomplete="organization">
   </div>
 
   <div class="contact-form__field">
     <label for="<?php echo esc_attr($form_id); ?>-role"><?php esc_html_e('Role', 'brave-hearts'); ?></label>
-    <select id="<?php echo esc_attr($form_id); ?>-role" name="role" <?php disabled(!$form_ready); ?>>
+    <select id="<?php echo esc_attr($form_id); ?>-role" name="role">
       <?php foreach ($roles as $value => $label): ?><option value="<?php echo esc_attr($value); ?>"><?php echo esc_html($label); ?></option><?php endforeach; ?>
     </select>
   </div>
 
   <div class="contact-form__field contact-form__field--full">
     <label for="<?php echo esc_attr($form_id); ?>-inquiry"><?php esc_html_e('Inquiry Type', 'brave-hearts'); ?></label>
-    <select id="<?php echo esc_attr($form_id); ?>-inquiry" name="inquiry_type" <?php disabled(!$form_ready); ?> required>
+    <select id="<?php echo esc_attr($form_id); ?>-inquiry" name="inquiry_type" required>
       <?php foreach ($inquiry_types as $value => $label): ?><option value="<?php echo esc_attr($value); ?>" <?php selected($selected_inquiry, $value); ?>><?php echo esc_html($label); ?></option><?php endforeach; ?>
     </select>
   </div>
 
   <div class="contact-form__field contact-form__field--full">
     <label for="<?php echo esc_attr($form_id); ?>-message"><?php esc_html_e('Message', 'brave-hearts'); ?></label>
-    <textarea id="<?php echo esc_attr($form_id); ?>-message" name="message" rows="7" <?php disabled(!$form_ready); ?> required></textarea>
+    <textarea id="<?php echo esc_attr($form_id); ?>-message" name="message" rows="7" required></textarea>
   </div>
 
   <div class="contact-form__actions contact-form__field--full">
-    <button class="btn btn-primary" type="submit" <?php disabled(!$form_ready); ?> aria-disabled="<?php echo $form_ready ? 'false' : 'true'; ?>"><?php esc_html_e('Send Message', 'brave-hearts'); ?></button>
+    <button class="btn btn-primary" type="submit"><?php esc_html_e('Send Message', 'brave-hearts'); ?></button>
   </div>
 
   <div id="<?php echo esc_attr($note_id); ?>" class="contact-form__note contact-form__field--full">
-    <?php if ($form_ready): ?>
-      <p><?php esc_html_e('Please do not include sensitive or private student information.', 'brave-hearts'); ?></p>
-    <?php else: ?>
-      <p><?php esc_html_e('The online contact form is temporarily unavailable. Please use the direct email shown on this page.', 'brave-hearts'); ?></p>
-    <?php endif; ?>
+    <p><?php esc_html_e('Please do not include sensitive or private student information.', 'brave-hearts'); ?></p>
   </div>
 </form>

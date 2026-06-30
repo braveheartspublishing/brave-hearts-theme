@@ -23,7 +23,8 @@ $read_aloud_url = add_query_arg('inquiry', 'read-aloud', $page_url) . '#contact-
 $school_url = add_query_arg('inquiry', 'school-library', $page_url) . '#contact-form';
 $general_url = $page_url . '#contact-form';
 $contact_email = sanitize_email($contact_field('email', 'Asignore19@icloud.com'));
-$form_action = $contact_field('form_action', '');
+$form_action = bhp_get_contact_form_action($contact_field('form_action', ''));
+$form_ready = (bool) $form_action;
 $hero_image_id = (int) $contact_field('hero_image_id', 0);
 
 get_template_part('template-parts/components/hero', null, [
@@ -83,12 +84,16 @@ $contact_paths = apply_filters('bhp_contact_paths', [
     <div class="contact-form-section__intro">
       <p class="component-heading__eyebrow"><?php esc_html_e('Send a message', 'brave-hearts'); ?></p>
       <h2 id="contact-form-title" class="text-section-title"><?php esc_html_e('Tell Us About Your Next Adventure', 'brave-hearts'); ?></h2>
-      <p class="text-lead"><?php esc_html_e('Choose the inquiry type that best fits your question. Read-aloud and school links automatically select the matching path.', 'brave-hearts'); ?></p>
+      <p class="text-lead"><?php echo esc_html($form_ready
+          ? __('Choose the inquiry type that best fits your question. Read-aloud and school links automatically select the matching path.', 'brave-hearts')
+          : __('Use the email option to tell us about your question, classroom, library, event, or partnership.', 'brave-hearts'));
+      ?></p>
     </div>
     <?php get_template_part('template-parts/contact/contact-form', null, [
         'id'          => 'brave-hearts-contact-form',
         'action'      => $form_action,
         'source_page' => $page_url,
+        'fallback_email' => $contact_email,
     ]); ?>
   </div>
 </section>
@@ -108,7 +113,8 @@ $contact_paths = apply_filters('bhp_contact_paths', [
   </div>
 </section>
 
-<section id="direct-contact" class="contact-section contact-direct section section--muted" aria-labelledby="direct-contact-title">
+<?php if ($form_ready): ?>
+  <section id="direct-contact" class="contact-section contact-direct section section--muted" aria-labelledby="direct-contact-title">
   <div class="container container--content contact-direct__inner">
     <p class="component-heading__eyebrow"><?php esc_html_e('Direct contact', 'brave-hearts'); ?></p>
     <h2 id="direct-contact-title" class="text-section-title"><?php esc_html_e('Prefer Email?', 'brave-hearts'); ?></h2>
@@ -118,7 +124,8 @@ $contact_paths = apply_filters('bhp_contact_paths', [
     <?php endif; ?>
     <p class="contact-direct__note"><?php esc_html_e('No phone number or public mailing address is currently provided.', 'brave-hearts'); ?></p>
   </div>
-</section>
+  </section>
+<?php endif; ?>
 
 <section id="contact-final-cta" class="contact-final-cta final-cta section" aria-labelledby="contact-final-cta-title">
   <div class="container container--content final-cta__inner">

@@ -40,17 +40,15 @@ $args['resources_url'] = bhp_get_safe_link_url($args['resources_url']);
         <ul><?php foreach ($subjects as $subject): ?><li><?php echo esc_html($subject); ?></li><?php endforeach; ?></ul>
       </div>
     <?php endif; ?>
-    <div class="teacher-book-card__actions">
-      <?php if ($args['primary_url']): ?>
+    <?php if ($args['primary_url'] || $args['resources_url']): ?>
+      <div class="teacher-book-card__actions">
+        <?php if ($args['primary_url']): ?>
         <a class="btn btn-primary" href="<?php echo esc_url($args['primary_url']); ?>"><?php esc_html_e('View Book', 'brave-hearts'); ?></a>
-      <?php else: ?>
-        <span class="btn btn-primary is-disabled" aria-disabled="true"><?php esc_html_e('View Book', 'brave-hearts'); ?></span>
-      <?php endif; ?>
-      <?php if ($args['resources_url']): ?>
-        <a class="btn btn-outline" href="<?php echo esc_url($args['resources_url']); ?>"><?php esc_html_e('View Resources', 'brave-hearts'); ?></a>
-      <?php else: ?>
-        <span class="btn btn-outline is-disabled" aria-disabled="true"><?php esc_html_e('Coming Resources', 'brave-hearts'); ?></span>
-      <?php endif; ?>
-    </div>
+        <?php endif; ?>
+        <?php if ($args['resources_url']): ?>
+          <a class="btn btn-outline" href="<?php echo esc_url($args['resources_url']); ?>"><?php esc_html_e('View Resources', 'brave-hearts'); ?></a>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
   </div>
 </article>

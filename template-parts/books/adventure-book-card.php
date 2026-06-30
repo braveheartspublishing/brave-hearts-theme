@@ -3,7 +3,7 @@
 defined('ABSPATH') || exit;
 $args = wp_parse_args($args ?? [], [
     'title' => '', 'destination' => '', 'age_range' => '', 'description' => '', 'formats' => [],
-    'image_id' => 0, 'image_alt' => '', 'primary_url' => '', 'paperback_url' => '', 'formats_url' => '',
+    'image_id' => 0, 'image_alt' => '', 'primary_url' => '', 'formats_url' => '',
     'amazon_url' => '', 'shop_url' => '',
     'available' => false, 'class' => '',
 ]);
@@ -11,7 +11,7 @@ if (!$args['title']) { return; }
 $formats = is_array($args['formats']) ? array_filter($args['formats']) : [];
 $configured_primary_url = bhp_get_safe_link_url($args['primary_url']);
 $primary_url = bhp_get_safe_link_url($configured_primary_url, $args['shop_url']);
-$formats_url = bhp_get_safe_link_url($args['formats_url'], $args['shop_url']);
+$formats_url = $configured_primary_url ? bhp_get_safe_link_url($args['formats_url'], $args['shop_url']) : '';
 $amazon_url = bhp_get_safe_link_url($args['amazon_url']);
 ?>
 <article class="adventure-book-card <?php echo esc_attr(sanitize_html_class($args['class'])); ?>">

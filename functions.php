@@ -722,7 +722,6 @@ function bhp_get_series_adventures() {
             'image_id'        => 0,
             'image_alt'       => '',
             'primary_url'     => '',
-            'paperback_url'   => '',
             'formats_url'     => '',
             'amazon_url'      => '',
             'matching_skus'   => 0,
@@ -774,10 +773,6 @@ function bhp_get_series_adventures() {
         } elseif (!$adventure['image_id'] && !empty($product['image_id'])) {
             $adventure['image_id'] = $product['image_id'];
             $adventure['image_alt'] = $product['image_alt'];
-        }
-
-        if ($is_paperback) {
-            $adventure['paperback_url'] = $product['url'];
         }
 
         unset($adventure);

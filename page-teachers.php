@@ -55,7 +55,6 @@ $resource_categories = apply_filters('bhp_teacher_resource_categories', [
 foreach ($resource_categories as $key => &$resource) {
     $resource_url = bhp_get_safe_link_url($teacher_field($key . '_url', ''));
     $resource['url'] = $resource_url;
-    $resource['status'] = $resource_url ? 'available' : 'placeholder';
 }
 unset($resource);
 
