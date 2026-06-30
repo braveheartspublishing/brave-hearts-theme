@@ -39,14 +39,23 @@ get_template_part('template-parts/components/hero', null, [
   <div class="container home-philosophy__inner">
     <header class="component-heading component-heading--center home-philosophy__heading">
       <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('philosophy_eyebrow', __('Our philosophy', 'brave-hearts'))); ?></p>
-      <h2 id="home-philosophy-title" class="text-section-title"><?php echo esc_html(bhp_get_homepage_field('philosophy_title', __('The Real World Is Still Wild Enough', 'brave-hearts'))); ?></h2>
-      <p class="home-philosophy__declaration"><?php echo esc_html(bhp_get_homepage_field('philosophy_declaration', __('Nature is the greatest classroom on Earth.', 'brave-hearts'))); ?></p>
+      <h2 id="home-philosophy-title" class="text-section-title"><?php echo esc_html(bhp_get_homepage_field('philosophy_title', __('Nature is the greatest classroom on Earth.', 'brave-hearts'))); ?></h2>
+      <p class="home-philosophy__declaration"><?php echo esc_html(bhp_get_homepage_field('philosophy_declaration', __('The real world is still wild enough.', 'brave-hearts'))); ?></p>
       <p class="component-heading__intro text-lead"><?php echo esc_html(bhp_get_homepage_field('philosophy_intro', __('Our stories begin in real places, invite children to look closer, teach something true, and show how courage grows one choice at a time.', 'brave-hearts'))); ?></p>
     </header>
     <ul class="home-philosophy__pillars" aria-label="<?php esc_attr_e('How Brave Hearts stories guide young readers', 'brave-hearts'); ?>">
-      <li><?php esc_html_e('Adventure opens the door.', 'brave-hearts'); ?></li>
-      <li><?php esc_html_e('Truth deepens the wonder.', 'brave-hearts'); ?></li>
-      <li><?php esc_html_e('Character carries it home.', 'brave-hearts'); ?></li>
+      <li>
+        <span class="home-philosophy__marker" aria-hidden="true"><span></span></span>
+        <span><?php esc_html_e('Adventure opens the door.', 'brave-hearts'); ?></span>
+      </li>
+      <li>
+        <span class="home-philosophy__marker" aria-hidden="true"><span></span></span>
+        <span><?php esc_html_e('Truth deepens the wonder.', 'brave-hearts'); ?></span>
+      </li>
+      <li>
+        <span class="home-philosophy__marker" aria-hidden="true"><span></span></span>
+        <span><?php esc_html_e('Character carries it home.', 'brave-hearts'); ?></span>
+      </li>
     </ul>
     <p class="home-philosophy__closing"><?php esc_html_e('The world has not changed.', 'brave-hearts'); ?><br><?php esc_html_e('The child has.', 'brave-hearts'); ?><br><strong><?php esc_html_e('Help them see it again.', 'brave-hearts'); ?></strong></p>
   </div>
@@ -147,7 +156,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
     [
         'eyebrow'   => __('The deepest place on Earth', 'brave-hearts'),
         'title'     => __('Mariana Trench', 'brave-hearts'),
-        'text'      => __('<p>Descend seven miles beneath the Pacific and discover deep-sea creatures, ocean science, conservation, and the courage to keep going.</p><p class="hub-card__question">What glows where sunlight has never reached?</p>', 'brave-hearts'),
+        'text'      => __('<p>Descend seven miles beneath the Pacific and discover deep-sea creatures, ocean science, conservation, and the courage to keep going.</p><p class="hub-card__question"><span class="hub-card__question-label">Wonder aloud</span>What glows where sunlight has never reached?</p>', 'brave-hearts'),
         'url'       => !empty($mariana_book['url']) ? $mariana_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $mariana_book['image_id'] ?? 0,
@@ -155,7 +164,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
     [
         'eyebrow'   => __('The highest place on Earth', 'brave-hearts'),
         'title'     => __('Mount Everest', 'brave-hearts'),
-        'text'      => __('<p>Climb into the Himalayas for a story of mountain geography, resilience, teamwork, and brave hearts working together.</p><p class="hub-card__question">How do climbers breathe where the air is thin?</p>', 'brave-hearts'),
+        'text'      => __('<p>Climb into the Himalayas for a story of mountain geography, resilience, teamwork, and brave hearts working together.</p><p class="hub-card__question"><span class="hub-card__question-label">Wonder aloud</span>How do climbers breathe where the air is thin?</p>', 'brave-hearts'),
         'url'       => !empty($everest_book['url']) ? $everest_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $everest_book['image_id'] ?? 0,
@@ -163,7 +172,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
     [
         'eyebrow'   => __('The world’s largest rainforest', 'brave-hearts'),
         'title'     => __('Amazon Rainforest', 'brave-hearts'),
-        'text'      => __('<p>Journey into a living world of remarkable animals, interconnected ecosystems, conservation, and discovery.</p><p class="hub-card__question">What can a rainforest teach us when we slow down and listen?</p>', 'brave-hearts'),
+        'text'      => __('<p>Journey into a living world of remarkable animals, interconnected ecosystems, conservation, and discovery.</p><p class="hub-card__question"><span class="hub-card__question-label">Wonder aloud</span>What can a rainforest teach us when we slow down and listen?</p>', 'brave-hearts'),
         'url'       => !empty($amazon_book['url']) ? $amazon_book['url'] : home_url('/books/'),
         'cta_label' => __('Explore the book', 'brave-hearts'),
         'image_id'  => $amazon_book['image_id'] ?? 0,

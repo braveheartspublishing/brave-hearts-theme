@@ -613,6 +613,24 @@ input[type='submit'],
   isolation: isolate;
   background: var(--color-navy);
 }
+.home-hero::before {
+  position: absolute;
+  z-index: 0;
+  top: 8%;
+  right: -5rem;
+  width: clamp(260px, 32vw, 480px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(var(--color-gold-rgb), 0.28);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 18%, rgba(var(--color-gold-rgb), 0.14) 18.3% 18.8%, transparent 19.1% 35%, rgba(var(--color-gold-rgb), 0.12) 35.3% 35.8%, transparent 36.1%),
+    linear-gradient(45deg, transparent 49.8%, rgba(var(--color-gold-rgb), 0.18) 50%, transparent 50.2%),
+    linear-gradient(-45deg, transparent 49.8%, rgba(var(--color-gold-rgb), 0.18) 50%, transparent 50.2%);
+  content: '';
+  opacity: 0.75;
+  pointer-events: none;
+  transform: rotate(9deg);
+}
 .home-hero__media,
 .home-hero__overlay { position: absolute; inset: 0; }
 .home-hero__media { z-index: -2; }
@@ -621,7 +639,7 @@ input[type='submit'],
   z-index: -1;
   background: linear-gradient(90deg, rgba(var(--color-navy-rgb), 0.94) 0%, rgba(var(--color-navy-rgb), 0.72) 55%, rgba(var(--color-navy-rgb), 0.34) 100%);
 }
-.home-hero__content { padding-block: var(--section-space-lg); }
+.home-hero__content { position: relative; z-index: 1; padding-block: var(--section-space-lg); }
 .home-hero__content > * { max-width: var(--container-content); }
 .home-hero__eyebrow {
   margin-bottom: var(--space-4);
@@ -632,21 +650,75 @@ input[type='submit'],
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
-.home-hero__title { margin-bottom: var(--space-6); color: var(--color-white); }
-.home-hero__text { color: var(--color-sky); }
+.home-hero__title {
+  margin-bottom: var(--space-6);
+  padding-left: var(--space-6);
+  border-left: 3px solid var(--color-accent);
+  color: var(--color-white);
+  text-shadow: 0 3px 24px rgba(var(--color-jungle-rgb), 0.35);
+}
+.home-hero__text { max-width: 650px; color: var(--color-sky); text-shadow: 0 2px 14px rgba(var(--color-jungle-rgb), 0.45); }
 .home-hero__text > :last-child { margin-bottom: 0; }
 .home-hero__actions { --cluster-space: var(--space-4); margin-top: var(--space-8); }
 
-/* Homepage philosophy: a quiet bridge from wonder to purpose. */
-.home-philosophy { background: var(--color-surface-muted); }
+/* Homepage philosophy: a field-note-inspired emotional centerpiece. */
+.home-philosophy {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-block: 1px solid rgba(var(--color-gold-rgb), 0.42);
+  background:
+    linear-gradient(rgba(var(--color-gold-rgb), 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--color-gold-rgb), 0.055) 1px, transparent 1px),
+    var(--color-surface-muted);
+  background-size: 32px 32px;
+}
+.home-philosophy::before {
+  position: absolute;
+  z-index: -1;
+  right: clamp(-6rem, -5vw, -2rem);
+  bottom: -7rem;
+  width: clamp(240px, 28vw, 400px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(var(--color-forest-rgb, 31, 77, 54), 0.13);
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle at center, transparent 0 25px, rgba(var(--color-forest-rgb, 31, 77, 54), 0.06) 26px 27px);
+  content: '';
+  pointer-events: none;
+}
 .home-philosophy__inner { max-width: var(--container-wide); text-align: center; }
-.home-philosophy__heading { margin-inline: auto; }
+.home-philosophy__heading { max-width: 860px; margin-inline: auto; margin-bottom: var(--space-12); }
+.home-philosophy__heading .component-heading__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.home-philosophy__heading .component-heading__eyebrow::before,
+.home-philosophy__heading .component-heading__eyebrow::after {
+  width: 28px;
+  height: 1px;
+  background: var(--color-gold);
+  content: '';
+}
+.home-philosophy__heading .text-section-title {
+  max-width: 820px;
+  margin-inline: auto;
+  color: var(--color-jungle);
+  font-size: clamp(2.25rem, 5vw, 4.25rem);
+  line-height: 1.08;
+}
 .home-philosophy__declaration {
-  margin-bottom: var(--space-6);
-  color: var(--color-forest);
-  font-family: var(--font-display);
-  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  display: inline-block;
+  margin: 0 0 var(--space-6);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid rgba(var(--color-gold-rgb), 0.55);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--color-earth);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
   font-weight: 700;
+  letter-spacing: var(--tracking-ui);
 }
 .home-philosophy__pillars {
   display: grid;
@@ -657,16 +729,43 @@ input[type='submit'],
   list-style: none;
 }
 .home-philosophy__pillars li {
+  position: relative;
+  display: grid;
+  min-height: 190px;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-4);
   padding: var(--space-6);
-  border-top: 3px solid var(--color-accent);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-gold-rgb), 0.58);
+  border-top: 4px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.84);
   color: var(--color-navy);
   font-family: var(--font-display);
   font-size: var(--text-lead);
   font-weight: 700;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 24px rgba(var(--color-jungle-rgb), 0.1);
 }
+.home-philosophy__marker {
+  position: relative;
+  display: grid;
+  width: 44px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid var(--color-gold);
+  border-radius: 50%;
+}
+.home-philosophy__marker::before,
+.home-philosophy__marker::after,
+.home-philosophy__marker span {
+  position: absolute;
+  width: 22px;
+  height: 1px;
+  background: var(--color-forest);
+  content: '';
+}
+.home-philosophy__marker::after { transform: rotate(90deg); }
+.home-philosophy__marker span { width: 18px; height: 2px; background: var(--color-gold); transform: rotate(-45deg); }
 .home-philosophy__closing {
   margin: var(--space-10) auto 0;
   color: var(--color-text);
@@ -720,11 +819,23 @@ input[type='submit'],
 .hub-card__link:hover { color: var(--color-pale); }
 .hub-card__question {
   margin-top: var(--space-4);
+  padding: var(--space-3) 0 var(--space-1) var(--space-4);
+  border-left: 2px solid var(--color-accent);
   color: var(--color-white);
   font-family: var(--font-display);
   font-size: 1rem;
   font-style: italic;
   font-weight: 700;
+}
+.hub-card__question-label {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--color-pale);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-style: normal;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
 }
 
 /* Teacher resources */
@@ -811,9 +922,12 @@ input[type='submit'],
 @media (max-width: 640px) {
   .home-hero { min-height: 620px; text-align: center; }
   .home-hero__overlay { background: rgba(var(--color-navy-rgb), 0.82); }
+  .home-hero::before { top: 4rem; right: -10rem; opacity: 0.42; }
   .home-hero__content > * { margin-inline: auto; }
+  .home-hero__title { padding-left: 0; border-left: 0; }
   .home-hero__actions { justify-content: center; }
   .home-philosophy__pillars { grid-template-columns: 1fr; gap: var(--space-4); }
+  .home-philosophy__pillars li { min-height: 150px; }
   .featured-books__grid { grid-template-columns: 1fr; }
   .feature-card,
   .hub-card .card__body,
