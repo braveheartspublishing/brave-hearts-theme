@@ -17,7 +17,9 @@ foreach ($adventures as $key => &$adventure) {
     $url_override = bhp_get_safe_link_url(get_post_meta($page_id, 'bhp_books_' . $key . '_url', true));
     $amazon_url = bhp_get_safe_link_url(get_post_meta($page_id, 'bhp_books_' . $key . '_amazon_url', true));
     $amazon_host = strtolower((string) wp_parse_url($amazon_url, PHP_URL_HOST));
-    if ($amazon_url && $amazon_host !== 'amzn.to' && !preg_match('/(^|\.)amazon\.[a-z.]+$/', $amazon_host)) {
+    $is_amazon_host = in_array($amazon_host, ['amzn.to', 'a.co'], true)
+        || (bool) preg_match('/(^|\.)amazon\.(com|ca|de|fr|it|es|nl|in|sg|ae|sa|se|pl|co\.uk|com\.au|co\.jp|com\.br|com\.mx|com\.be|com\.tr)$/', $amazon_host);
+    if ($amazon_url && !$is_amazon_host) {
         $amazon_url = '';
     }
     $image_override = (int) get_post_meta($page_id, 'bhp_books_' . $key . '_image_id', true);

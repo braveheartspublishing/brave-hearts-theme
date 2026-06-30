@@ -10,6 +10,8 @@ defined('ABSPATH') || exit;
 // THEME SETUP
 // ============================================================
 function bhp_theme_setup() {
+    load_theme_textdomain('brave-hearts', get_template_directory() . '/languages');
+
     add_theme_support('title-tag');
     add_theme_support('post-thumbnails');
     add_image_size('bhp-book-card', 480, 640, false);
@@ -66,10 +68,6 @@ function bhp_enqueue_assets() {
         [], null
     );
     wp_enqueue_script('bhp-nav', get_template_directory_uri() . '/assets/js/nav.js', [], $theme_version, true);
-
-    if (is_singular() && comments_open() && get_option('thread_comments')) {
-        wp_enqueue_script('comment-reply');
-    }
 }
 add_action('wp_enqueue_scripts', 'bhp_enqueue_assets');
 

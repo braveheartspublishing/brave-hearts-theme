@@ -2,14 +2,13 @@
 /** Reusable Explorer Passport feature card. */
 defined('ABSPATH') || exit;
 $args = wp_parse_args($args ?? [], [
-    'feature' => '', 'title' => '', 'text' => '', 'status' => '', 'image_id' => 0, 'image_alt' => '', 'class' => '',
+    'feature' => '', 'title' => '', 'text' => '', 'image_id' => 0, 'image_alt' => '', 'class' => '',
 ]);
 $features = bhp_get_explorer_passport_features();
 $feature_key = sanitize_key($args['feature']);
 $feature = isset($features[$feature_key]) ? $features[$feature_key] : [];
 $title = $args['title'] ?: ($feature['title'] ?? '');
 $text = $args['text'] ?: ($feature['description'] ?? '');
-$status = $args['status'] ?: ($feature['status'] ?? 'placeholder');
 if (!$title) { return; }
 ?>
 <article class="passport-card <?php echo esc_attr(sanitize_html_class($args['class'])); ?>">
