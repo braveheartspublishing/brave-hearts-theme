@@ -607,7 +607,7 @@ input[type='submit'],
 .home-hero {
   position: relative;
   display: grid;
-  min-height: clamp(560px, 78vh, 820px);
+  min-height: clamp(500px, 66vh, 680px);
   overflow: hidden;
   place-items: center;
   isolation: isolate;
@@ -656,9 +656,33 @@ input[type='submit'],
   border-left: 3px solid var(--color-accent);
   color: var(--color-white);
   text-shadow: 0 3px 24px rgba(var(--color-jungle-rgb), 0.35);
+  white-space: pre-line;
 }
 .home-hero__text { max-width: 650px; color: var(--color-sky); text-shadow: 0 2px 14px rgba(var(--color-jungle-rgb), 0.45); }
 .home-hero__text > :last-child { margin-bottom: 0; }
+.home-hero__destinations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  color: var(--color-pale);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-ui);
+  list-style: none;
+  text-transform: uppercase;
+}
+.home-hero__destinations li { display: inline-flex; align-items: center; gap: var(--space-2); }
+.home-hero__destinations li::before {
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--color-accent);
+  border-radius: 50% 50% 50% 0;
+  content: '';
+  transform: rotate(-45deg);
+}
 .home-hero__actions { --cluster-space: var(--space-4); margin-top: var(--space-8); }
 
 /* Homepage philosophy: a field-note-inspired emotional centerpiece. */
@@ -920,11 +944,12 @@ input[type='submit'],
 }
 
 @media (max-width: 640px) {
-  .home-hero { min-height: 620px; text-align: center; }
+  .home-hero { min-height: 560px; text-align: center; }
   .home-hero__overlay { background: rgba(var(--color-navy-rgb), 0.82); }
   .home-hero::before { top: 4rem; right: -10rem; opacity: 0.42; }
   .home-hero__content > * { margin-inline: auto; }
   .home-hero__title { padding-left: 0; border-left: 0; }
+  .home-hero__destinations { justify-content: center; gap: var(--space-2) var(--space-4); }
   .home-hero__actions { justify-content: center; }
   .home-philosophy__pillars { grid-template-columns: 1fr; gap: var(--space-4); }
   .home-philosophy__pillars li { min-height: 150px; }
