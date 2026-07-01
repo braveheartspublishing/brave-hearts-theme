@@ -179,7 +179,7 @@ function bhp_order_confirmation_expedition_links() {
       <p class="component-heading__eyebrow"><?php esc_html_e('The expedition continues', 'brave-hearts'); ?></p>
       <h2 id="order-expedition-next-title"><?php esc_html_e('Keep Exploring the Real World', 'brave-hearts'); ?></h2>
       <p><?php esc_html_e('Visit the Learning Hub for field notes and activities, or join the expedition for future resources and book news.', 'brave-hearts'); ?></p>
-      <div class="cluster"><a class="btn btn-secondary" href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Explore the Learning Hub', 'brave-hearts'); ?></a><a class="btn btn-outline" href="<?php echo esc_url(home_url('/adventure-club/')); ?>"><?php esc_html_e('Join the Expedition', 'brave-hearts'); ?></a></div>
+      <div class="cluster"><a class="btn btn-secondary" href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Explore the Learning Hub', 'brave-hearts'); ?></a><a class="btn btn-outline" href="<?php echo esc_url(home_url('/#adventure-club')); ?>"><?php esc_html_e('Join the Expedition', 'brave-hearts'); ?></a></div>
     </section>
     <?php
 }
@@ -205,13 +205,159 @@ function bhp_add_to_cart_redirect() {
 add_filter('woocommerce_add_to_cart_redirect', 'bhp_add_to_cart_redirect');
 
 // ============================================================
+// EXPLORER EXPEDITION GUIDES CONTENT ARCHITECTURE
+// ============================================================
+/**
+ * Curated post relationships from the Phase III full-content audit.
+ * Slugs preserve canonical post URLs and remain portable across environments.
+ */
+function bhp_get_guide_registry() {
+    $reading = [
+        'dog-man-to-magic-tree-house-reading-roadmap','what-to-read-after-dog-man','best-books-for-7-year-olds',
+        'best-summer-reading-books-for-kids-ages-6-9','books-like-magic-tree-house',
+        'gap-between-picture-books-and-chapter-books','finding-right-books-with-lexile-score',
+        'bridge-books-for-struggling-readers','my-child-hates-reading-what-to-do','reading-level-by-grade-chart',
+        'my-child-got-a-lexile-score-now-what','what-is-a-lexile-score','top-bridge-books-for-kids',
+        'bridge-books-for-kids','what-are-bridge-books-guide-for-parents-and-teachers',
+        'bridge-books-for-early-readers','bridge-books-for-kids-mount-everest',
+        'best-early-chapter-books-for-6-year-olds','first-real-chapter-book-for-kids',
+        'best-bridge-books-for-kids','adventure-books-for-kids-ages-6-9','how-stories-build-resilience-in-children',
+    ];
+    $science = [
+        'science-books-for-kids-that-feel-like-adventures','mount-everest-facts-for-kids',
+        'what-is-the-mariana-trench-for-kids','best-ocean-books-for-kids-ages-6-9',
+        'mariana-trench-facts-for-kids','how-deep-is-the-mariana-trench-for-kids',
+        'why-stem-storytelling-builds-braver-kids',
+    ];
+    $educator = [
+        'how-to-pick-a-read-aloud-book','best-read-aloud-books-for-classroom-grades-1-3',
+        'teacher-appreciation-week-thank-you','free-teachers-guide-mariana-trench',
+    ];
+    $brand = ['kirkus-review-adventures-of-charlotte-and-henry','why-i-wrote-this-book'];
+    $registry = [];
+
+    foreach ($reading as $slug) {
+        $registry[$slug] = ['primary' => 'reading-growing', 'secondary' => ['family-resources'], 'destination' => '', 'book' => '', 'audiences' => ['Families','General readers'], 'type' => 'Reading resource'];
+    }
+    foreach ($science as $slug) {
+        $registry[$slug] = ['primary' => 'science-geography', 'secondary' => ['family-resources'], 'destination' => '', 'book' => '', 'audiences' => ['Families','Children with adult guidance'], 'type' => 'Educational article'];
+    }
+    foreach ($educator as $slug) {
+        $registry[$slug] = ['primary' => 'educator-resources', 'secondary' => [], 'destination' => '', 'book' => '', 'audiences' => ['Educators','Librarians'], 'type' => 'Educator guide'];
+    }
+    foreach ($brand as $slug) {
+        $registry[$slug] = ['primary' => 'book-brand-stories', 'secondary' => ['reading-growing'], 'destination' => '', 'book' => 'series-wide', 'audiences' => ['Families','Educators','General readers'], 'type' => 'Book-related article'];
+    }
+
+    $destinations = [
+        'mount-everest-facts-for-kids' => ['mount-everest','mount-everest'],
+        'what-is-the-mariana-trench-for-kids' => ['mariana-trench','mariana-trench'],
+        'best-ocean-books-for-kids-ages-6-9' => ['mariana-trench','mariana-trench'],
+        'mariana-trench-facts-for-kids' => ['mariana-trench','mariana-trench'],
+        'how-deep-is-the-mariana-trench-for-kids' => ['mariana-trench','mariana-trench'],
+        'free-teachers-guide-mariana-trench' => ['mariana-trench','mariana-trench'],
+    ];
+    foreach ($destinations as $slug => $connection) {
+        if (isset($registry[$slug])) {
+            $registry[$slug]['destination'] = $connection[0];
+            $registry[$slug]['book'] = $connection[1];
+        }
+    }
+    foreach (['science-books-for-kids-that-feel-like-adventures','why-stem-storytelling-builds-braver-kids'] as $slug) {
+        if (isset($registry[$slug])) {
+            $registry[$slug]['book'] = 'series-wide';
+        }
+    }
+
+    return apply_filters('bhp_guide_registry', $registry);
+}
+
+function bhp_get_guide_hubs() {
+    return [
+        'reading-growing' => __('Reading & Growing', 'brave-hearts'),
+        'science-geography' => __('Science & Geography', 'brave-hearts'),
+        'educator-resources' => __('Educator Resources', 'brave-hearts'),
+        'book-brand-stories' => __('Book & Brand Stories', 'brave-hearts'),
+        'mariana-trench' => __('The Mariana Trench', 'brave-hearts'),
+        'mount-everest' => __('Mount Everest', 'brave-hearts'),
+        'family-resources' => __('For Families', 'brave-hearts'),
+    ];
+}
+
+function bhp_get_guide_post_data($post = null) {
+    $post = get_post($post);
+    if (!$post || $post->post_type !== 'post') {
+        return [];
+    }
+    $registry = bhp_get_guide_registry();
+    return $registry[$post->post_name] ?? [];
+}
+
+function bhp_get_guide_hub_url($hub) {
+    return home_url('/teachers/#' . sanitize_title($hub));
+}
+
+function bhp_get_guide_posts($hub, $limit = -1) {
+    static $cache = [];
+    $cache_key = sanitize_key($hub) . ':' . (int) $limit;
+    if (isset($cache[$cache_key])) {
+        return $cache[$cache_key];
+    }
+    $slugs = [];
+    foreach (bhp_get_guide_registry() as $slug => $data) {
+        if (($data['primary'] ?? '') === $hub || in_array($hub, $data['secondary'] ?? [], true) || ($data['destination'] ?? '') === $hub) {
+            $slugs[] = $slug;
+        }
+    }
+    if (!$slugs) {
+        return [];
+    }
+    $cache[$cache_key] = get_posts([
+        'post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => $limit,
+        'post_name__in' => $slugs, 'orderby' => 'date', 'order' => 'DESC',
+        'no_found_rows' => true, 'suppress_filters' => false,
+    ]);
+    return $cache[$cache_key];
+}
+
+function bhp_get_related_guide_posts($post = null, $limit = 4) {
+    $post = get_post($post);
+    $current = bhp_get_guide_post_data($post);
+    if (!$post || !$current) {
+        return [];
+    }
+    $scored = [];
+    foreach (bhp_get_guide_registry() as $slug => $data) {
+        if ($slug === $post->post_name) { continue; }
+        $score = (($data['primary'] ?? '') === $current['primary']) ? 5 : 0;
+        if (!empty($current['destination']) && ($data['destination'] ?? '') === $current['destination']) { $score += 4; }
+        if (!empty($current['book']) && ($data['book'] ?? '') === $current['book']) { $score += 2; }
+        $score += count(array_intersect($data['secondary'] ?? [], $current['secondary'] ?? []));
+        if ($score > 0) { $scored[$slug] = $score; }
+    }
+    uksort($scored, static function ($a, $b) use ($scored, $post) {
+        if ($scored[$a] !== $scored[$b]) {
+            return $scored[$b] <=> $scored[$a];
+        }
+        return sprintf('%u', crc32($post->post_name . '|' . $a)) <=> sprintf('%u', crc32($post->post_name . '|' . $b));
+    });
+    $posts = [];
+    foreach (array_keys($scored) as $slug) {
+        $related = get_page_by_path($slug, OBJECT, 'post');
+        if ($related && $related->post_status === 'publish') { $posts[] = $related; }
+        if (count($posts) >= $limit) { break; }
+    }
+    return $posts;
+}
+
+// ============================================================
 // FALLBACK MENU (before nav is assigned in WP admin)
 // ============================================================
 function bhp_fallback_menu() {
     $links = [
         __('Home', 'brave-hearts')              => home_url('/'),
         __('Books', 'brave-hearts')             => home_url('/books/'),
-        __('Educator Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
+        __('Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
         __('About', 'brave-hearts')             => home_url('/about/'),
         __('Blog', 'brave-hearts')              => home_url('/blog/'),
         __('Contact', 'brave-hearts')           => home_url('/contact/'),
@@ -288,6 +434,14 @@ function bhp_canonicalize_teacher_menu_items($items) {
         }
 
         $item_path = untrailingslashit((string) wp_parse_url($item->url, PHP_URL_PATH));
+        if ($item_path === untrailingslashit((string) wp_parse_url(home_url('/family-resources/'), PHP_URL_PATH))) {
+            $item->url = home_url('/teachers/#family-resources');
+            continue;
+        }
+        if ($item_path === untrailingslashit((string) wp_parse_url(home_url('/adventure-club/'), PHP_URL_PATH))) {
+            $item->url = home_url('/#adventure-club');
+            continue;
+        }
         if (!in_array($item_path, [$teacher_path, $legacy_path], true)) {
             continue;
         }
@@ -298,7 +452,7 @@ function bhp_canonicalize_teacher_menu_items($items) {
         }
 
         $item->url     = home_url('/teachers/');
-        $item->title   = __('Educator Expedition Guides', 'brave-hearts');
+        $item->title   = __('Expedition Guides', 'brave-hearts');
         $item->classes = array_values(array_unique(array_merge((array) $item->classes, ['menu-item--educator-guides'])));
         $seen_teacher = true;
     }
@@ -320,6 +474,10 @@ function bhp_sanitize_content_links($content) {
     $home_host      = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
     $canonical_path = untrailingslashit((string) wp_parse_url($canonical_url, PHP_URL_PATH));
     $legacy_path = untrailingslashit((string) wp_parse_url(home_url('/teachers-guide/'), PHP_URL_PATH));
+    $known_path_repairs = [
+        '/teachers' => $canonical_url,
+        '/blog/blog/what-is-a-lexile-score' => home_url('/what-is-a-lexile-score/'),
+    ];
 
     if (class_exists('WP_HTML_Tag_Processor')) {
         $processor = new WP_HTML_Tag_Processor($content);
@@ -338,7 +496,14 @@ function bhp_sanitize_content_links($content) {
 
             $href_host = strtolower((string) wp_parse_url($href, PHP_URL_HOST));
             $href_path = untrailingslashit((string) wp_parse_url($href, PHP_URL_PATH));
-            if ($href_host && $href_host !== $home_host) {
+            $href_path_key = strtolower($href_path);
+            $is_brand_host = !$href_host || $href_host === $home_host || $href_host === 'braveheartspublishing.com' || substr($href_host, -26) === '.braveheartspublishing.com';
+            if (!$is_brand_host) {
+                continue;
+            }
+
+            if (isset($known_path_repairs[$href_path_key])) {
+                $processor->set_attribute('href', $known_path_repairs[$href_path_key]);
                 continue;
             }
 
@@ -350,7 +515,7 @@ function bhp_sanitize_content_links($content) {
         return $processor->get_updated_html();
     }
 
-    return preg_replace_callback('/<a\b[^>]*>/i', static function ($matches) use ($canonical_url, $home_host, $legacy_path, $canonical_path) {
+    return preg_replace_callback('/<a\b[^>]*>/i', static function ($matches) use ($canonical_url, $home_host, $legacy_path, $canonical_path, $known_path_repairs) {
         $tag = $matches[0];
         if (!preg_match('/\shref\s*=\s*(["\'])(.*?)\1/i', $tag, $href_match)) {
             return $tag;
@@ -363,8 +528,14 @@ function bhp_sanitize_content_links($content) {
 
         $href_host = strtolower((string) wp_parse_url($href, PHP_URL_HOST));
         $href_path = untrailingslashit((string) wp_parse_url($href, PHP_URL_PATH));
-        if ($href_host && $href_host !== $home_host) {
+        $href_path_key = strtolower($href_path);
+        $is_brand_host = !$href_host || $href_host === $home_host || $href_host === 'braveheartspublishing.com' || substr($href_host, -26) === '.braveheartspublishing.com';
+        if (!$is_brand_host) {
             return $tag;
+        }
+
+        if (isset($known_path_repairs[$href_path_key])) {
+            return str_replace($href_match[2], esc_url($known_path_repairs[$href_path_key]), $tag);
         }
 
         if ($href_path === $legacy_path && $href_path !== $canonical_path) {
@@ -578,14 +749,14 @@ function bhp_footer_fallback_menu() {
 
     $links = [
         __('Books', 'brave-hearts')             => home_url('/books/'),
-        __('Educator Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
-        __('Family Resources', 'brave-hearts')   => home_url('/family-resources/'),
+        __('Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
+        __('Family Resources', 'brave-hearts')   => home_url('/teachers/#family-resources'),
         __('About', 'brave-hearts')             => home_url('/about/'),
         __('Blog', 'brave-hearts')              => home_url('/blog/'),
         __('Contact', 'brave-hearts')           => home_url('/contact/'),
         __('Privacy Policy', 'brave-hearts')    => $privacy_url,
         __('Terms', 'brave-hearts')             => $terms_url,
-        __('Adventure Club', 'brave-hearts')    => home_url('/adventure-club/'),
+        __('Adventure Club', 'brave-hearts')    => home_url('/#adventure-club'),
     ];
 
     echo '<ul>';

@@ -76,27 +76,90 @@ $book_resources = [
 get_template_part('template-parts/components/hero', null, [
     'id'       => 'teachers-hero',
     'class'    => 'teachers-hero',
-    'eyebrow'  => __('For classrooms, libraries, homeschoolers, and families', 'brave-hearts'),
-    'title'    => __('Bring the Adventure Into Your Classroom', 'brave-hearts'),
-    'text'     => __('Real-world adventure books and classroom resources for curious readers ages 6–9.', 'brave-hearts'),
+    'eyebrow'  => __('The Brave Hearts field guide library', 'brave-hearts'),
+    'title'    => __('Explorer Expedition Guides', 'brave-hearts'),
+    'text'     => __('Explore real-world articles, reading guidance, destination field notes, educator resources, and family paths—all connected to the questions behind the books.', 'brave-hearts'),
     'image_id' => $hero_image_id,
     'primary_link' => [
-        'url'   => home_url('/books/'),
-        'label' => __('Explore the Books', 'brave-hearts'),
+        'url'   => '#explore-topics',
+        'label' => __('Explore the Guides', 'brave-hearts'),
     ],
     'secondary_link' => [
-        'url'   => $read_aloud_url,
-        'label' => __('Request a Read-Aloud', 'brave-hearts'),
+        'url'   => '#educator-resources',
+        'label' => __('For Educators', 'brave-hearts'),
     ],
 ]);
 ?>
-<section id="teacher-resource-categories" class="teachers-section section" aria-labelledby="teacher-resource-categories-title">
+<section id="explore-topics" class="guides-hub-section section" aria-labelledby="explore-topics-title">
+  <div class="container">
+    <header class="component-heading component-heading--center">
+      <p class="component-heading__eyebrow"><?php esc_html_e('Choose a trail', 'brave-hearts'); ?></p>
+      <h2 id="explore-topics-title" class="text-section-title"><?php esc_html_e('Explore by Topic', 'brave-hearts'); ?></h2>
+      <p class="component-heading__intro text-lead"><?php esc_html_e('Begin with the question your reader, family, or classroom is already asking.', 'brave-hearts'); ?></p>
+    </header>
+    <div class="guide-topic-grid">
+      <?php foreach (['reading-growing','science-geography','educator-resources','book-brand-stories'] as $hub_key): $hub_posts = bhp_get_guide_posts($hub_key); ?>
+        <a class="guide-topic-card" href="#<?php echo esc_attr($hub_key); ?>">
+          <span class="guide-topic-card__count"><?php echo esc_html(sprintf(_n('%d field note', '%d field notes', count($hub_posts), 'brave-hearts'), count($hub_posts))); ?></span>
+          <h3><?php echo esc_html(bhp_get_guide_hubs()[$hub_key]); ?></h3>
+          <span><?php esc_html_e('Open this guide', 'brave-hearts'); ?> →</span>
+        </a>
+      <?php endforeach; ?>
+      <a class="guide-topic-card" href="#family-resources">
+        <span class="guide-topic-card__count"><?php esc_html_e('Family path', 'brave-hearts'); ?></span>
+        <h3><?php esc_html_e('For Families', 'brave-hearts'); ?></h3>
+        <span><?php esc_html_e('Explore together at home', 'brave-hearts'); ?> →</span>
+      </a>
+    </div>
+    <div class="guide-search"><?php get_search_form(); ?></div>
+  </div>
+</section>
+
+<section class="guides-hub-section guides-hub-section--destinations section section--dark" aria-labelledby="guide-destinations-title">
+  <div class="container">
+    <header class="component-heading component-heading--center">
+      <p class="component-heading__eyebrow"><?php esc_html_e('Real places behind the stories', 'brave-hearts'); ?></p>
+      <h2 id="guide-destinations-title" class="text-section-title"><?php esc_html_e('Explore by Destination', 'brave-hearts'); ?></h2>
+    </header>
+    <div class="guide-destination-grid">
+      <?php foreach (['mariana-trench','mount-everest'] as $destination_key): $destination_posts = bhp_get_guide_posts($destination_key); ?>
+        <a class="guide-destination-card guide-destination-card--<?php echo esc_attr($destination_key); ?>" href="#<?php echo esc_attr($destination_key); ?>">
+          <p><?php echo esc_html(sprintf(_n('%d connected field note', '%d connected field notes', count($destination_posts), 'brave-hearts'), count($destination_posts))); ?></p>
+          <h3><?php echo esc_html(bhp_get_guide_hubs()[$destination_key]); ?></h3>
+          <span><?php esc_html_e('Enter the destination guide', 'brave-hearts'); ?> →</span>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<?php foreach (['reading-growing','science-geography','book-brand-stories','mariana-trench','mount-everest','family-resources'] as $hub_key): $hub_posts = bhp_get_guide_posts($hub_key); if (!$hub_posts) { continue; } ?>
+<section id="<?php echo esc_attr($hub_key); ?>" class="guides-hub-section guide-collection section<?php echo $hub_key === 'science-geography' ? ' section--muted' : ''; ?>" aria-labelledby="<?php echo esc_attr($hub_key); ?>-title">
+  <div class="container">
+    <header class="component-heading">
+      <p class="component-heading__eyebrow"><?php esc_html_e('Curated expedition guide', 'brave-hearts'); ?></p>
+      <h2 id="<?php echo esc_attr($hub_key); ?>-title" class="text-section-title"><?php echo esc_html(bhp_get_guide_hubs()[$hub_key]); ?></h2>
+    </header>
+    <div class="guide-article-grid">
+      <?php foreach ($hub_posts as $guide_post) { get_template_part('template-parts/guides/article-card', null, ['post' => $guide_post]); } ?>
+    </div>
+  </div>
+</section>
+<?php endforeach; ?>
+
+<section id="educator-resources" class="teachers-section section" aria-labelledby="teacher-resource-categories-title">
   <div class="container">
     <header class="component-heading component-heading--center">
       <p class="component-heading__eyebrow"><?php esc_html_e('Classroom-ready support', 'brave-hearts'); ?></p>
       <h2 id="teacher-resource-categories-title" class="text-section-title"><?php esc_html_e('Resources That Continue the Adventure', 'brave-hearts'); ?></h2>
       <p class="component-heading__intro text-lead"><?php esc_html_e('Use Charlotte & Henry for read-alouds, discussion, writing prompts, vocabulary, science, geography, and curiosity-driven learning.', 'brave-hearts'); ?></p>
     </header>
+    <?php $educator_posts = bhp_get_guide_posts('educator-resources'); ?>
+    <?php if ($educator_posts): ?>
+      <div class="guide-article-grid guide-article-grid--educators">
+        <?php foreach ($educator_posts as $guide_post) { get_template_part('template-parts/guides/article-card', null, ['post' => $guide_post]); } ?>
+      </div>
+    <?php endif; ?>
     <div class="teacher-resource-grid">
       <?php foreach ($resource_categories as $resource): ?>
         <?php get_template_part('template-parts/teachers/resource-card', null, $resource); ?>

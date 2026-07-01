@@ -7,6 +7,7 @@ get_header();
 while (have_posts()): the_post(); ?>
 
 <article id="post-<?php the_ID(); ?>" <?php post_class('single-post section'); ?>>
+  <?php get_template_part('template-parts/guides/breadcrumbs', null, ['post' => get_post()]); ?>
   <header class="post-header">
     <?php $category_list = get_the_category_list(', '); ?>
     <p class="post-header__meta text-caption">
@@ -29,6 +30,8 @@ while (have_posts()): the_post(); ?>
     <?php the_content(); ?>
   </div>
 
+  <?php get_template_part('template-parts/guides/related-content', null, ['post' => get_post()]); ?>
+
   <footer class="post-footer">
     <div class="post-footer__tags">
       <?php the_tags(esc_html__('Tags: ', 'brave-hearts'), ', '); ?>
@@ -41,11 +44,6 @@ while (have_posts()): the_post(); ?>
     </div>
   </footer>
 
-  <aside class="post-expedition-cta" aria-labelledby="post-expedition-title">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Keep exploring', 'brave-hearts'); ?></p>
-    <h2 id="post-expedition-title"><?php esc_html_e('Follow Curiosity Into the Real World', 'brave-hearts'); ?></h2>
-    <div class="cluster"><a class="btn btn-primary" href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('Explore the Books', 'brave-hearts'); ?></a><a class="btn btn-outline" href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Visit the Learning Hub', 'brave-hearts'); ?></a></div>
-  </aside>
 </article>
 
 <?php endwhile; ?>

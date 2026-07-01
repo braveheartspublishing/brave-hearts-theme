@@ -51,7 +51,7 @@ $terms_url = bhp_get_safe_link_url($terms_url, home_url('/terms/'));
       <ul>
         <li><a href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Learning Hub', 'brave-hearts'); ?></a></li>
         <li><a href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('For Teachers', 'brave-hearts'); ?></a></li>
-        <li><a href="<?php echo esc_url(home_url('/family-resources/')); ?>"><?php esc_html_e('For Families', 'brave-hearts'); ?></a></li>
+        <li><a href="<?php echo esc_url(home_url('/teachers/#family-resources')); ?>"><?php esc_html_e('For Families', 'brave-hearts'); ?></a></li>
       </ul>
     </nav>
 

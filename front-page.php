@@ -275,7 +275,7 @@ unset($learning_card);
       <?php endforeach; ?>
     </div>
     <div class="component-section-action">
-      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Open the Learning Hub', 'brave-hearts'); ?></a>
+      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Open the Expedition Guides', 'brave-hearts'); ?></a>
     </div>
   </div>
 </section>
