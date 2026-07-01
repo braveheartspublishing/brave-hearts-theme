@@ -64,47 +64,32 @@ $hero_eyebrow = bhp_get_homepage_field('hero_eyebrow', __('Stories that begin on
 if (trim($hero_eyebrow) === 'Bridge books for ages 6–9') {
     $hero_eyebrow = __('Stories that begin on the page and continue outside', 'brave-hearts');
 }
-$hero_text = __('<p>A child closes the book. The next morning the sky, the birds, the trees are all exactly the same—but now they notice, wonder, ask, and explore.</p>', 'brave-hearts');
+$hero_text = __('<p>A child closes the book. The next morning, the sky is the same, the birds are the same, and the trees are the same—but the child is not. Now they notice. They wonder. They ask. They explore.</p>', 'brave-hearts');
 $hero_details = __('<ul class="home-hero__destinations"><li><span>Nearly 11 km deep</span><small>Mariana Trench</small></li><li><span>8,849 m high</span><small>Mount Everest</small></li><li><span>A living canopy</span><small>The Amazon</small></li></ul>', 'brave-hearts');
 
 $hero_books_markup = '';
 if ($hero_preview_books) {
-    $hero_cover_designs = [
-        [
-            'class'    => 'mariana',
-            'volume'   => __('Volume I', 'brave-hearts'),
-            'title'    => __('The Mariana Trench', 'brave-hearts'),
-            'strapline'=> __('A story of depth, courage, and the wonders below', 'brave-hearts'),
-        ],
-        [
-            'class'    => 'everest',
-            'volume'   => __('Volume II', 'brave-hearts'),
-            'title'    => __('Mount Everest', 'brave-hearts'),
-            'strapline'=> __('A story of height, resilience, and the power within', 'brave-hearts'),
-        ],
-        [
-            'class'    => 'amazon',
-            'volume'   => __('Volume III', 'brave-hearts'),
-            'title'    => __('The Amazon Rainforest', 'brave-hearts'),
-            'strapline'=> __('A story of discovery, connection, and life’s web', 'brave-hearts'),
-        ],
-    ];
     ob_start();
     ?>
     <div class="home-hero__book-preview" role="group" aria-labelledby="home-hero-books-label">
       <p id="home-hero-books-label" class="home-hero__book-preview-label"><?php esc_html_e('Real places. Doors into wonder.', 'brave-hearts'); ?></p>
       <ul class="home-hero__book-stack">
-        <?php foreach (array_slice($hero_preview_books, 0, 3) as $book_index => $book):
-            $cover = $hero_cover_designs[$book_index];
-        ?>
+        <?php foreach (array_slice($hero_preview_books, 0, 3) as $book): ?>
           <li>
-            <a href="<?php echo esc_url($book['url']); ?>" aria-label="<?php echo esc_attr(sprintf(__('Explore %s', 'brave-hearts'), $cover['title'])); ?>">
-              <span class="home-hero__book-cover home-hero__book-cover--<?php echo esc_attr($cover['class']); ?>" aria-hidden="true">
-                <span class="home-hero__book-series"><?php esc_html_e('The Brave Hearts Collection', 'brave-hearts'); ?></span>
-                <span class="home-hero__book-volume"><?php echo esc_html($cover['volume']); ?></span>
-                <strong><?php echo esc_html($cover['title']); ?></strong>
-                <small><?php echo esc_html($cover['strapline']); ?></small>
-              </span>
+            <a href="<?php echo esc_url($book['url']); ?>" aria-label="<?php echo esc_attr(sprintf(__('Explore %s', 'brave-hearts'), $book['title'])); ?>">
+              <?php
+              echo wp_get_attachment_image(
+                  (int) $book['image_id'],
+                  'bhp-book-card',
+                  false,
+                  [
+                      'class'    => 'home-hero__book-cover',
+                      'loading'  => 'eager',
+                      'decoding' => 'async',
+                      'alt'      => $book['title'],
+                  ]
+              );
+              ?>
               <span class="screen-reader-text"><?php echo esc_html($book['title']); ?></span>
             </a>
           </li>
@@ -172,10 +157,9 @@ get_template_part('template-parts/components/hero', null, [
       <div class="home-origin__visual">
         <div class="home-origin__journal">
           <span class="home-origin__journal-kicker"><?php esc_html_e('Field Journal - Entry 01', 'brave-hearts'); ?></span>
-          <div class="home-origin__portrait" role="img" aria-label="<?php esc_attr_e('Founder portrait reserved for an approved photograph', 'brave-hearts'); ?>">
-            <span aria-hidden="true">&#9638;</span>
-            <em><?php esc_html_e('A candid photograph of Andrew, outdoors - to be added.', 'brave-hearts'); ?></em>
-            <small><?php esc_html_e('Portrait reserved', 'brave-hearts'); ?></small>
+          <div class="home-origin__portrait">
+            <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/charlotte-henry.webp'); ?>" alt="<?php esc_attr_e('Charlotte resting beside Henry, the loyal dog who inspired the Brave Hearts stories.', 'brave-hearts'); ?>" loading="lazy" decoding="async">
+            <small><?php esc_html_e('Charlotte and Henry', 'brave-hearts'); ?></small>
           </div>
           <strong><?php esc_html_e('One child. One loyal dog.', 'brave-hearts'); ?><br><?php esc_html_e('One lasting gift.', 'brave-hearts'); ?></strong>
           <span class="home-origin__journal-meta"><?php esc_html_e('Andrew - Founder', 'brave-hearts'); ?></span>

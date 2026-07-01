@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.14.3
+Version: 1.14.4
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3061,6 +3061,123 @@ input[type='submit'],
   .home .homepage-grid--learning,
   .home .footer-inner { grid-template-columns: 1fr; }
   .home .footer-brand { grid-column: auto; }
+}
+
+/* Sprint fidelity corrections requested after PDF review. */
+.home .site-header {
+  position: sticky;
+  top: 0;
+  padding-block: 18px;
+  background: rgba(6, 19, 31, .96);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .22);
+  backdrop-filter: blur(14px);
+}
+.home.admin-bar .site-header { top: 32px; }
+.home .home-hero--with-books {
+  margin-top: -78px;
+  padding-top: 132px;
+}
+.home .home-hero__book-stack a {
+  display: block;
+  border-radius: 4px;
+  transform-origin: center bottom;
+  transition: transform 280ms ease, filter 280ms ease, box-shadow 280ms ease;
+}
+.home .home-hero__book-stack li:first-child a { transform: rotate(-3deg); }
+.home .home-hero__book-stack li:nth-child(2) a { transform: translateY(-8px); }
+.home .home-hero__book-stack li:nth-child(3) a { transform: rotate(3deg); }
+.home .home-hero__book-stack a:hover,
+.home .home-hero__book-stack a:focus-visible {
+  filter: brightness(1.08) saturate(1.05);
+  transform: translateY(-18px) rotate(0deg) scale(1.045);
+}
+.home .home-hero__book-cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  aspect-ratio: auto;
+  object-fit: cover;
+  color: inherit;
+}
+.home .home-hero__book-cover::before { display: none; }
+.home .home-origin__portrait {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+.home .home-origin__portrait::before {
+  z-index: 2;
+  pointer-events: none;
+}
+.home .home-origin__portrait img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 434px;
+  object-fit: cover;
+  object-position: 52% 44%;
+  filter: sepia(.08) contrast(1.02) saturate(.94);
+}
+.home .home-origin__portrait small {
+  position: absolute;
+  z-index: 3;
+  right: 22px;
+  bottom: 22px;
+  display: inline-flex;
+  padding: 8px 11px;
+  border: 1px solid rgba(120, 90, 40, .35);
+  background: rgba(246, 239, 221, .88);
+  color: #4f4128;
+}
+.home .home-destinations {
+  position: relative;
+  background-color: #06131f;
+  background-image: linear-gradient(180deg, rgba(6, 19, 31, .93) 0%, rgba(4, 11, 19, .98) 100%), url('assets/images/handoff/hero-ocean.webp');
+  background-position: center bottom;
+  background-size: cover;
+  color: #fff;
+}
+.home .home-destinations .component-heading__eyebrow,
+.home .home-destinations__promise {
+  color: #c4a15c;
+}
+.home .home-destinations .text-section-title {
+  color: #fff;
+}
+.home .home-destinations .component-heading__intro {
+  color: rgba(255, 255, 255, .68);
+}
+.home .home-together {
+  background-image: url('assets/images/handoff/canopy-walk.webp');
+  background-position: center 42%;
+  background-size: cover;
+}
+@media (max-width: 768px) {
+  .home .site-header {
+    position: sticky;
+    top: 0;
+    padding: 18px 24px;
+    background: rgba(6, 19, 31, .96);
+  }
+  .home .home-hero--with-books {
+    margin-top: -76px;
+    padding-top: 128px;
+  }
+  .home .home-origin__portrait img {
+    min-height: 286px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home .home-hero__book-stack a {
+    transition: none;
+  }
+  .home .home-hero__book-stack a:hover,
+  .home .home-hero__book-stack a:focus-visible {
+    transform: none;
+  }
 }
 
 @media print {
