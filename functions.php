@@ -136,13 +136,54 @@ remove_action('woocommerce_before_main_content', 'woocommerce_output_content_wra
 remove_action('woocommerce_after_main_content', 'woocommerce_output_content_wrapper_end', 10);
 
 function bhp_woo_wrapper_start() {
-    echo '<div class="site-container woo-container">';
+    echo '<div class="woo-expedition-shell">';
 }
 function bhp_woo_wrapper_end() {
     echo '</div>';
 }
 add_action('woocommerce_before_main_content', 'bhp_woo_wrapper_start', 10);
 add_action('woocommerce_after_main_content', 'bhp_woo_wrapper_end', 10);
+
+/**
+ * Add a restrained expedition heading to WooCommerce archives without
+ * replacing product markup, schema, variation forms, or checkout behavior.
+ */
+function bhp_woocommerce_archive_hero() {
+    if (!function_exists('is_shop') || (!is_shop() && !is_product_taxonomy())) {
+        return;
+    }
+
+    $title = is_shop() ? __('The Expedition Catalog', 'brave-hearts') : woocommerce_page_title(false);
+    ?>
+    <header class="interior-hero interior-hero--product woo-archive-hero">
+      <div class="container">
+        <p class="component-heading__eyebrow"><?php esc_html_e('Real places. Doors into wonder.', 'brave-hearts'); ?></p>
+        <h1><?php echo esc_html($title); ?></h1>
+        <p class="text-lead"><?php esc_html_e('Choose the real-world adventure and edition that fits your reader.', 'brave-hearts'); ?></p>
+      </div>
+    </header>
+    <?php
+}
+add_action('woocommerce_before_main_content', 'bhp_woocommerce_archive_hero', 5);
+
+/** Add clear expedition metadata labels to product cards. */
+function bhp_woocommerce_loop_card_eyebrow() {
+    echo '<p class="woo-card__eyebrow">' . esc_html__('Brave Hearts Expedition', 'brave-hearts') . '</p>';
+}
+add_action('woocommerce_shop_loop_item_title', 'bhp_woocommerce_loop_card_eyebrow', 5);
+
+/** Continue the reader journey after a completed purchase. */
+function bhp_order_confirmation_expedition_links() {
+    ?>
+    <section class="order-expedition-next" aria-labelledby="order-expedition-next-title">
+      <p class="component-heading__eyebrow"><?php esc_html_e('The expedition continues', 'brave-hearts'); ?></p>
+      <h2 id="order-expedition-next-title"><?php esc_html_e('Keep Exploring the Real World', 'brave-hearts'); ?></h2>
+      <p><?php esc_html_e('Visit the Learning Hub for field notes and activities, or join the expedition for future resources and book news.', 'brave-hearts'); ?></p>
+      <div class="cluster"><a class="btn btn-secondary" href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Explore the Learning Hub', 'brave-hearts'); ?></a><a class="btn btn-outline" href="<?php echo esc_url(home_url('/adventure-club/')); ?>"><?php esc_html_e('Join the Expedition', 'brave-hearts'); ?></a></div>
+    </section>
+    <?php
+}
+add_action('woocommerce_thankyou', 'bhp_order_confirmation_expedition_links', 30);
 
 // ============================================================
 // FALLBACK MENU (before nav is assigned in WP admin)
@@ -518,13 +559,14 @@ function bhp_footer_fallback_menu() {
 
     $links = [
         __('Books', 'brave-hearts')             => home_url('/books/'),
-        __('Teacher Resources', 'brave-hearts') => home_url('/teachers/'),
+        __('Educator Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
+        __('Family Resources', 'brave-hearts')   => home_url('/family-resources/'),
         __('About', 'brave-hearts')             => home_url('/about/'),
         __('Blog', 'brave-hearts')              => home_url('/blog/'),
         __('Contact', 'brave-hearts')           => home_url('/contact/'),
         __('Privacy Policy', 'brave-hearts')    => $privacy_url,
         __('Terms', 'brave-hearts')             => $terms_url,
-        __('Adventure Club', 'brave-hearts')    => home_url('/#adventure-club'),
+        __('Adventure Club', 'brave-hearts')    => home_url('/adventure-club/'),
     ];
 
     echo '<ul>';

@@ -9,32 +9,32 @@
       "palette": [
         {
           "slug": "bhp-forest",
-          "color": "#1F4D36",
+          "color": "#173f2f",
           "name": "Deep Forest Green"
         },
         {
           "slug": "bhp-navy",
-          "color": "#1F3A5F",
+          "color": "#071522",
           "name": "Adventure Navy"
         },
         {
           "slug": "bhp-gold",
-          "color": "#D9B44A",
+          "color": "#c4a15c",
           "name": "Antique Gold"
         },
         {
           "slug": "bhp-ivory",
-          "color": "#FFF3D0",
+          "color": "#f8f3e9",
           "name": "Warm Ivory"
         },
         {
           "slug": "bhp-parchment",
-          "color": "#F4E7C5",
+          "color": "#f1e7d2",
           "name": "Parchment"
         },
         {
           "slug": "bhp-jungle",
-          "color": "#0D2B1E",
+          "color": "#12271d",
           "name": "Dark Jungle Green"
         },
         {
@@ -69,12 +69,12 @@
       "dropCap": false,
       "fontFamilies": [
         {
-          "fontFamily": "Georgia, 'Times New Roman', serif",
+          "fontFamily": "'Cormorant Garamond', Georgia, serif",
           "slug": "serif",
           "name": "Serif (Georgia)"
         },
         {
-          "fontFamily": "Lato, Arial, sans-serif",
+          "fontFamily": "Archivo, Arial, sans-serif",
           "slug": "sans",
           "name": "Sans (Lato)"
         }

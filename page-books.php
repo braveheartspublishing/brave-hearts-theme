@@ -103,7 +103,7 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
     ],
     'link'    => [
         'url'   => home_url('/teachers/'),
-        'label' => __('Explore Teacher Resources', 'brave-hearts'),
+        'label' => __('Explore Educator Guides', 'brave-hearts'),
     ],
     'class'   => 'teacher-resources-cta--text-only',
 ]);
@@ -116,7 +116,7 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
     <p class="text-lead final-cta__text"><?php esc_html_e('Choose the next Charlotte & Henry adventure, bring the books into your classroom, or join the Adventure Club.', 'brave-hearts'); ?></p>
     <div class="final-cta__actions cluster">
       <a class="btn btn-primary" href="<?php echo esc_url($shop_url); ?>"><?php esc_html_e('Shop the Books', 'brave-hearts'); ?></a>
-      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Explore Teacher Resources', 'brave-hearts'); ?></a>
+      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Explore Educator Guides', 'brave-hearts'); ?></a>
       <a class="btn btn-outline" href="<?php echo esc_url(home_url('/#adventure-club')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
     </div>
   </div>

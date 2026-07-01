@@ -26,13 +26,13 @@ $form_action = bhp_get_signup_form_action($args['action'], 'teachers', 'teacher_
         'audience_type'   => 'teachers',
         'lead_magnet'     => $args['lead_magnet'],
         'source_page'     => $args['source_page'],
-        'submit_label'    => $args['submit_label'] ?: __('Get Teacher Resources', 'brave-hearts'),
+        'submit_label'    => $args['submit_label'] ?: __('Get Educator Guide Updates', 'brave-hearts'),
         'privacy_text'    => __('Classroom resources and book news. Unsubscribe anytime.', 'brave-hearts'),
         'aria_labelledby' => $heading_id,
     ]); ?>
   <?php else: ?>
     <div class="acquisition-panel__action">
-      <a class="btn btn-primary" href="<?php echo esc_url(add_query_arg('inquiry', 'school-library', home_url('/contact/'))); ?>"><?php esc_html_e('Ask About Teacher Resources', 'brave-hearts'); ?></a>
+      <a class="btn btn-primary" href="<?php echo esc_url(add_query_arg('inquiry', 'school-library', home_url('/contact/'))); ?>"><?php esc_html_e('Ask About Educator Guides', 'brave-hearts'); ?></a>
     </div>
   <?php endif; ?>
 </section>

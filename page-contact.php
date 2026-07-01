@@ -22,7 +22,7 @@ $page_url = get_permalink($page_id) ?: home_url('/contact/');
 $read_aloud_url = add_query_arg('inquiry', 'read-aloud', $page_url) . '#contact-form';
 $school_url = add_query_arg('inquiry', 'school-library', $page_url) . '#contact-form';
 $general_url = $page_url . '#contact-form';
-$contact_email = sanitize_email($contact_field('email', 'Asignore19@icloud.com'));
+$contact_email = sanitize_email($contact_field('email', 'andrew@braveheartspublishing.com'));
 $form_action = bhp_get_contact_form_action($contact_field('form_action', ''));
 $form_ready = (bool) $form_action;
 $hero_image_id = (int) $contact_field('hero_image_id', 0);
@@ -133,7 +133,7 @@ $contact_paths = apply_filters('bhp_contact_paths', [
     <h2 id="contact-final-cta-title" class="text-section-title"><?php esc_html_e('Explore Brave Hearts Publishing', 'brave-hearts'); ?></h2>
     <div class="final-cta__actions cluster">
       <a class="btn btn-primary" href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('Shop the Books', 'brave-hearts'); ?></a>
-      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Explore Teacher Resources', 'brave-hearts'); ?></a>
+      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Explore Educator Guides', 'brave-hearts'); ?></a>
       <a class="btn btn-outline" href="<?php echo esc_url(home_url('/#adventure-club')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
     </div>
   </div>

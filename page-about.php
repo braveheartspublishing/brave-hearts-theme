@@ -34,7 +34,7 @@ get_template_part('template-parts/components/hero', null, [
     ],
     'secondary_link' => [
         'url'   => $about_field('hero_secondary_url', home_url('/teachers/')),
-        'label' => $about_field('hero_secondary_label', __('Teacher Resources', 'brave-hearts')),
+        'label' => $about_field('hero_secondary_label', __('Educator Expedition Guides', 'brave-hearts')),
     ],
 ]);
 ?>
@@ -100,9 +100,7 @@ $book_values = apply_filters('bhp_about_book_values', [
             'alt'   => __('Andrew Signore, founder of Brave Hearts Publishing', 'brave-hearts'),
         ]); ?>
       <?php else: ?>
-        <div class="about-founder__placeholder" role="img" aria-label="<?php esc_attr_e('Andrew Signore', 'brave-hearts'); ?>">
-          <span aria-hidden="true">AS</span>
-        </div>
+        <img class="about-founder__image" src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/charlotte-henry.webp'); ?>" alt="<?php esc_attr_e('Charlotte and Henry, the first reader and loyal dog behind Brave Hearts Publishing', 'brave-hearts'); ?>" loading="lazy">
       <?php endif; ?>
     </figure>
     <div class="about-founder__content flow">
@@ -124,7 +122,7 @@ $book_values = apply_filters('bhp_about_book_values', [
     </div>
     <ul class="about-audiences__list">
       <li><?php esc_html_e('Engaging family and classroom read-alouds', 'brave-hearts'); ?></li>
-      <li><?php esc_html_e('Classroom discussion, vocabulary, and STEM connections', 'brave-hearts'); ?></li>
+      <li><?php esc_html_e('Classroom discussion, vocabulary, and real-world discovery', 'brave-hearts'); ?></li>
       <li><?php esc_html_e('Flexible homeschool learning and unit studies', 'brave-hearts'); ?></li>
       <li><?php esc_html_e('Family reading that continues beyond the final page', 'brave-hearts'); ?></li>
       <li><?php esc_html_e('Curiosity-driven education rooted in the real world', 'brave-hearts'); ?></li>
@@ -139,7 +137,7 @@ $book_values = apply_filters('bhp_about_book_values', [
     <p class="text-lead final-cta__text"><?php esc_html_e('Choose a book, bring an adventure into the classroom, or join the community that keeps exploring after the final page.', 'brave-hearts'); ?></p>
     <div class="final-cta__actions cluster">
       <a class="btn btn-primary" href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('Shop the Books', 'brave-hearts'); ?></a>
-      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Explore Teacher Resources', 'brave-hearts'); ?></a>
+      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Explore Educator Guides', 'brave-hearts'); ?></a>
       <a class="btn btn-outline" href="<?php echo esc_url(home_url('/#adventure-club')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
     </div>
   </div>
