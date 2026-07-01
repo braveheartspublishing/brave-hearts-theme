@@ -20,7 +20,16 @@ $terms_url = bhp_get_safe_link_url($terms_url, home_url('/terms/'));
 <footer class="site-footer" role="contentinfo">
   <div class="footer-inner">
     <div class="footer-brand">
-      <div class="footer-logo">Brave Hearts Publishing</div>
+      <div class="footer-logo">
+        <?php if (has_custom_logo()): ?>
+          <?php echo get_custom_logo(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core-generated logo markup. ?>
+        <?php else: ?>
+          <a href="<?php echo esc_url(home_url('/')); ?>">
+            <?php bloginfo('name'); ?>
+            <span class="tagline"><?php esc_html_e('Big Places. Brave Hearts.', 'brave-hearts'); ?></span>
+          </a>
+        <?php endif; ?>
+      </div>
       <p class="footer-closing"><?php esc_html_e('The real world is still wild enough.', 'brave-hearts'); ?><br><?php esc_html_e('Go look up.', 'brave-hearts'); ?></p>
       <p class="footer-proof">As an Amazon Associate, Brave Hearts Publishing earns from qualifying purchases.</p>
     </div>
@@ -48,7 +57,7 @@ $terms_url = bhp_get_safe_link_url($terms_url, home_url('/terms/'));
 
     <div class="footer-contact">
       <h2><?php esc_html_e('Connect', 'brave-hearts'); ?></h2>
-      <p><a href="mailto:Asignore19@icloud.com">Asignore19@icloud.com</a></p>
+      <p><a href="mailto:andrew@braveheartspublishing.com">andrew@braveheartspublishing.com</a></p>
       <p class="footer-contact__note">Classroom read alouds, school visits, bulk orders, media inquiries, and upcoming releases.</p>
       <?php if (is_active_sidebar('footer-3')): ?>
         <?php dynamic_sidebar('footer-3'); ?>

@@ -305,7 +305,7 @@ unset($learning_card);
   <div class="container">
     <header class="component-heading component-heading--center">
       <p class="component-heading__eyebrow"><?php esc_html_e('Why parents trust Brave Hearts', 'brave-hearts'); ?></p>
-      <h2 id="home-trust-title" class="text-section-title"><?php esc_html_e('Wonder first. Learning follows - naturally.', 'brave-hearts'); ?></h2>
+      <h2 id="home-trust-title" class="text-section-title"><?php esc_html_e('Wonder first. Learning follows—naturally.', 'brave-hearts'); ?></h2>
     </header>
     <div class="home-trust__pillars">
       <article><span aria-hidden="true">△</span><h3><?php esc_html_e('Real places, real research', 'brave-hearts'); ?></h3><p><?php esc_html_e('Every destination is a place a child could truly stand one day. The science is checked, not invented.', 'brave-hearts'); ?></p></article>

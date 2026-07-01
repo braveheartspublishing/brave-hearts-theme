@@ -151,7 +151,7 @@ function bhp_fallback_menu() {
     $links = [
         __('Home', 'brave-hearts')              => home_url('/'),
         __('Books', 'brave-hearts')             => home_url('/books/'),
-        __('Teacher Resources', 'brave-hearts') => home_url('/teachers/'),
+        __('Educator Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
         __('About', 'brave-hearts')             => home_url('/about/'),
         __('Blog', 'brave-hearts')              => home_url('/blog/'),
         __('Contact', 'brave-hearts')           => home_url('/contact/'),
@@ -237,7 +237,9 @@ function bhp_canonicalize_teacher_menu_items($items) {
             continue;
         }
 
-        $item->url    = home_url('/teachers/');
+        $item->url     = home_url('/teachers/');
+        $item->title   = __('Educator Expedition Guides', 'brave-hearts');
+        $item->classes = array_values(array_unique(array_merge((array) $item->classes, ['menu-item--educator-guides'])));
         $seen_teacher = true;
     }
 
