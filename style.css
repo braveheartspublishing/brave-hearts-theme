@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.14.0
+Version: 1.14.1
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -2419,4 +2419,237 @@ input[type='submit'],
   .home .home-hero--with-books .home-hero__content { padding-bottom: 215px; }
   .home .home-hero__book-stack li { width: 96px; margin-inline: -7px; }
   .home .home-together__paths { gap: var(--space-4); }
+}
+
+/* ============================================================
+   SPRINT 6A.7 - APPROVED DESIGN FIDELITY AND SCALE CORRECTION
+   ============================================================ */
+
+.home {
+  --container-max: 1340px;
+  --container-wide: 1200px;
+  --container-content: 840px;
+}
+.home .btn {
+  min-height: 54px;
+  padding: .95rem 1.75rem;
+  font-size: .78rem;
+  letter-spacing: .095em;
+}
+.home .component-heading__eyebrow { font-size: .7rem; letter-spacing: .2em; }
+
+/* Hero: restore equal visual authority to the title and collection. */
+.home .home-hero--with-books { min-height: clamp(820px, 88vh, 920px); }
+.home .home-hero--with-books .home-hero__content { padding-block: clamp(7.5rem, 10vw, 10rem); }
+.home .home-hero--with-books .home-hero__content > * { max-width: min(45%, 630px); }
+.home .home-hero__eyebrow { margin-bottom: 2.1rem; font-size: .74rem; letter-spacing: .29em; }
+.home .home-hero__title { margin-bottom: 2.5rem; font-size: clamp(4.8rem, 7vw, 7.2rem); line-height: .94; }
+.home .home-hero__text { font-size: 1.16rem; line-height: 1.86; }
+.home .home-hero__text > p::after { margin-top: 1.2rem; font-size: 1.24rem; }
+.home .home-hero__actions { margin-top: 2.7rem; }
+.home .home-hero__actions .btn { min-height: 62px; padding-inline: 2.35rem; font-size: .84rem; }
+.home .home-hero__destinations { gap: 2.75rem; margin-top: 3.6rem; font-size: 1.03rem; }
+.home .home-hero__destinations li { gap: .75rem; }
+.home .home-hero__destinations li::before { width: 27px; height: 27px; }
+.home .home-hero__book-preview { right: max(var(--gutter), calc((100vw - var(--container-max)) / 2)); width: min(53%, 740px); }
+.home .home-hero__book-preview-label { margin-bottom: 2rem; font-size: .69rem; }
+.home .home-hero__book-stack li { width: clamp(190px, 16.5vw, 242px); margin-inline: -17px; }
+.home .home-hero__book-stack li:first-child { transform: translateY(66px) rotate(-1.5deg); }
+.home .home-hero__book-stack li:nth-child(2) { width: clamp(220px, 19vw, 286px); transform: translateY(-18px); }
+.home .home-hero__book-stack li:nth-child(3) { transform: translateY(66px) rotate(1.5deg); }
+.home .home-hero__book-cover { box-shadow: 0 35px 80px rgba(0,0,0,.62); }
+.home .home-hero__book-stack a > span { display: none; }
+
+/* Quiet editorial sections need room to breathe. */
+.home .home-philosophy { min-height: 790px; padding-block: clamp(8rem, 11vw, 11rem); }
+.home .home-philosophy__heading { margin-bottom: 4.75rem; }
+.home .home-philosophy__heading .text-section-title { font-size: clamp(3.35rem, 5.4vw, 5.4rem); }
+.home .home-philosophy__heading .component-heading__intro { margin-top: 2rem; font-size: 1.08rem; line-height: 1.8; }
+.home .home-philosophy__pillars { margin-block: 1.5rem 0; }
+.home .home-philosophy__pillars li { min-height: 190px; gap: 1.45rem; padding: 3.3rem 2.5rem; font-size: clamp(1.45rem, 2.25vw, 1.95rem); }
+.home .home-philosophy__sequence { font-size: 1.32rem; }
+.home .home-philosophy__closing { margin-top: 4.25rem; font-size: 1.48rem; line-height: 1.6; }
+
+/* First Reader: substantial journal object and wider editorial copy. */
+.home .home-origin { min-height: 820px; padding-block: clamp(8rem, 10vw, 10rem); }
+.home .home-origin::after { inset-inline-start: 43%; opacity: .86; }
+.home .home-origin__card { grid-template-columns: minmax(390px, .88fr) minmax(0, 1.32fr); gap: clamp(4rem, 8vw, 8rem); }
+.home .home-origin__visual,
+.home .home-origin__journal { min-height: 640px; }
+.home .home-origin__journal { padding: 2rem; box-shadow: 0 34px 62px rgba(63,50,34,.22); }
+.home .home-origin__journal-kicker { font-size: .7rem; letter-spacing: .22em; }
+.home .home-origin__portrait { min-height: 400px; margin: 1.7rem 0 2rem; padding: 2.5rem; }
+.home .home-origin__portrait span { font-size: 2.5rem; }
+.home .home-origin__portrait em { font-size: 1.08rem; line-height: 1.55; }
+.home .home-origin__journal > strong { font-size: 1.5rem; line-height: 1.45; }
+.home .home-origin__journal-meta { margin-top: 1.35rem; }
+.home .home-origin__content h2 { max-width: 760px; font-size: clamp(3.5rem, 5.5vw, 5.6rem); line-height: 1.02; }
+.home .home-origin__content p { max-width: 710px !important; font-size: 1.08rem; line-height: 1.85; }
+.home .home-origin__content blockquote { max-width: 720px; margin: 2.25rem 0; font-size: clamp(1.55rem, 2.35vw, 2rem); }
+.home .home-origin__link { display: inline-flex; margin-top: 1.2rem; padding-block: .55rem; }
+
+/* Adventure section: immersive visual scale rather than thumbnail cards. */
+.home .home-destinations { padding-block: clamp(8rem, 11vw, 11rem); isolation: isolate; overflow: clip; }
+.home .home-destinations .component-heading { max-width: 980px; margin-bottom: 4.75rem; }
+.home .home-destinations .text-section-title { font-size: clamp(3.6rem, 5.7vw, 5.8rem); }
+.home .home-destinations .component-heading__intro { margin-top: 1.5rem; font-size: 1.13rem; }
+.home .home-destinations__promise { margin-top: 1.5rem; font-size: 1.55rem; }
+.home .homepage-grid--adventures { gap: 1.65rem; }
+.home .hub-card--destination { min-height: 610px; }
+.home .hub-card--destination .card__body { padding: 2.7rem; }
+.home .hub-card--destination .card__eyebrow { margin-bottom: 1.05rem; font-size: .67rem; }
+.home .hub-card--destination .card__title { margin-bottom: 2rem; font-size: 1.48rem; }
+.home .hub-card--destination .hub-card__question { font-size: clamp(2rem, 2.85vw, 2.65rem); line-height: 1.16; }
+.home .hub-card--destination .hub-card__link { margin-top: 2rem; padding-block: .6rem; font-size: .78rem; }
+
+/* Catalog bridge. */
+.home .home-books-path { padding-block: 2.4rem; }
+.home .home-books-path__inner { min-height: 142px; padding: 2.25rem 2.75rem; gap: 2.5rem; }
+.home .home-books-path h2 { font-size: clamp(1.65rem, 2.5vw, 2.3rem); }
+.home .home-books-path p { margin-top: .7rem; font-size: .7rem; }
+.home .home-books-path .btn { min-width: 250px; min-height: 60px; }
+
+/* Learning Hub: a single, unclipped six-stop journey. */
+.home .learning-hub--ecosystem { padding-block: clamp(8rem, 11vw, 11rem); isolation: isolate; overflow: clip; }
+.home .learning-hub--ecosystem::after { z-index: -1; }
+.home .learning-hub--ecosystem .component-heading { margin-bottom: 5.5rem; }
+.home .learning-hub--ecosystem .text-section-title { font-size: clamp(3.6rem, 5.6vw, 5.7rem); }
+.home .learning-hub--ecosystem .component-heading__intro { margin-top: 1.75rem; font-size: 1.12rem; line-height: 1.75; }
+.home .homepage-grid--learning { gap: 0; margin-block: 1rem 5rem; }
+.home .homepage-grid--learning::before { top: 49px; right: 5%; left: 5%; }
+.home .feature-card--field-note { min-height: 250px; padding-inline: 1rem; }
+.home .feature-card--field-note::before { width: 98px; height: 98px; margin-bottom: 2rem; font-size: 1.75rem !important; }
+.home .feature-card--field-note .feature-card__title { margin-bottom: .85rem; font-size: 1.2rem; }
+.home .feature-card--field-note .feature-card__text { font-size: .92rem; line-height: 1.55; }
+.home .learning-hub--ecosystem .component-section-action .btn { min-height: 60px; padding-inline: 2.4rem; }
+
+/* Teachers & Families: full-height photographic chapter. */
+.home .home-together { min-height: 780px; isolation: isolate; overflow: clip; background-image: linear-gradient(90deg, rgba(7,43,32,.91) 0 47%, rgba(7,43,32,.28) 78%), url('assets/images/wild-places/rainforest-bridge.webp'); }
+.home .home-together__inner { padding-block: 5rem; }
+.home .home-together__inner > * { max-width: 760px; }
+.home .home-together .component-heading__eyebrow { font-size: .74rem; }
+.home .home-together h2 { max-width: 720px; font-size: clamp(3.6rem, 5.6vw, 5.8rem); line-height: 1.02; }
+.home .home-together__intro { max-width: 700px; margin-top: 2rem; font-size: 1.16rem; line-height: 1.82; }
+.home .home-together__paths { gap: 3rem; margin-block: 3rem; }
+.home .home-together__paths h3 { font-size: 1.7rem; }
+.home .home-together__paths p { font-size: 1rem; line-height: 1.65; }
+.home .home-together .btn { min-height: 62px; padding-inline: 2.35rem; }
+
+/* Trust: spacious and legible without testimonial styling. */
+.home .home-trust { padding-block: clamp(8rem, 11vw, 11rem); isolation: isolate; }
+.home .home-trust .text-section-title { max-width: 900px; font-size: clamp(3.5rem, 5.5vw, 5.5rem); }
+.home .home-trust__pillars { gap: clamp(3rem, 6vw, 6.5rem); margin-top: 6rem; }
+.home .home-trust__pillars article > span { font-size: 2.2rem; }
+.home .home-trust__pillars h3 { margin-top: 1.6rem; font-size: 1.65rem; }
+.home .home-trust__pillars p { font-size: 1rem; line-height: 1.75; }
+.home .home-trust__share { margin-top: 5.5rem; padding-top: 2.8rem; }
+.home .home-trust__share p { font-size: 1.45rem; }
+
+/* Expedition signup: the emotional final chapter. */
+.home .newsletter-signup--expedition { padding-block: clamp(8rem, 11vw, 11rem); isolation: isolate; overflow: clip; }
+.home .newsletter-signup--expedition .newsletter-signup__inner { max-width: 880px; }
+.home .newsletter-signup--expedition .text-section-title { font-size: clamp(3.7rem, 5.8vw, 5.8rem); }
+.home .newsletter-signup--expedition .newsletter-signup__text { max-width: 700px; margin: 1.75rem auto 0; font-size: 1.15rem; line-height: 1.75; }
+.home .newsletter-signup__benefits { gap: 1.25rem; margin: 3.75rem 0 3.25rem; }
+.home .newsletter-signup__benefits > div { min-height: 112px; padding: 1.7rem 2rem; }
+.home .newsletter-signup__benefits h3 { font-size: 1.4rem; }
+.home .newsletter-signup__benefits p { font-size: .95rem; line-height: 1.6; }
+.home .newsletter-signup__form { max-width: 720px; gap: 1rem; }
+.home .newsletter-signup__field input { min-height: 64px; padding-inline: 1.25rem; font-size: 1rem; }
+.home .newsletter-signup__form .acquisition-form__submit { min-width: 220px; min-height: 64px; }
+
+/* Footer scale and bleed protection. */
+.home .site-footer { overflow: clip; }
+.home .footer-inner { grid-template-columns: minmax(300px, 1.25fr) minmax(190px, .75fr) minmax(270px, 1fr); gap: clamp(3rem, 7vw, 7rem); padding-block: 5.5rem 4rem; }
+.home .footer-logo { font-size: 1.35rem; letter-spacing: .13em; }
+.home .footer-closing { margin-top: 1.75rem; font-size: 1.42rem; line-height: 1.55; }
+.home .footer-nav h2,
+.home .footer-contact h2 { margin-bottom: 1.35rem; font-size: .78rem; letter-spacing: .18em; }
+.home .footer-nav li,
+.home .footer-contact p { margin-bottom: .85rem; }
+.home .footer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding-block: 2rem 2.75rem; text-align: left; }
+.home .footer-bottom > * { margin: 0; }
+.home .footer-entry-close { flex: 0 0 auto; font-size: .68rem; }
+
+/* Mid-size desktops retain the composition without shrinking the whole page. */
+@media (min-width: 1051px) and (max-width: 1280px) {
+  .home { --container-max: 1180px; }
+  .home .home-hero__title { font-size: clamp(4.5rem, 6.7vw, 6rem); }
+  .home .home-hero__book-preview { width: 52%; }
+  .home .home-hero__book-stack li { width: clamp(170px, 16vw, 205px); margin-inline: -15px; }
+  .home .home-hero__book-stack li:nth-child(2) { width: clamp(200px, 18vw, 240px); }
+  .home .home-origin__card { grid-template-columns: minmax(350px,.85fr) 1.15fr; gap: 4rem; }
+}
+
+/* Tablet: deliberate reflow, not a scaled-down desktop. */
+@media (max-width: 1050px) {
+  .home .home-hero--with-books { min-height: 910px; }
+  .home .home-hero--with-books .home-hero__content { padding-top: 6.5rem; padding-bottom: 350px; }
+  .home .home-hero--with-books .home-hero__content > * { max-width: 760px; }
+  .home .home-hero__book-preview { width: min(100%, 760px); }
+  .home .home-hero__book-stack li { width: clamp(140px, 21vw, 190px); }
+  .home .home-hero__book-stack li:nth-child(2) { width: clamp(165px, 24vw, 220px); }
+  .home .home-origin__card { grid-template-columns: minmax(330px,.85fr) 1.15fr; gap: 3rem; }
+  .home .home-origin__visual,
+  .home .home-origin__journal { min-height: 590px; }
+  .home .home-origin__portrait { min-height: 350px; }
+  .home .homepage-grid--adventures { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .home .homepage-grid--adventures > :last-child { grid-column: 1 / -1; width: min(100%, 620px); justify-self: center; }
+  .home .homepage-grid--learning { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 4rem 1.5rem; }
+  .home .homepage-grid--learning::before { display: none; }
+  .home .home-trust__pillars { gap: 2.5rem; }
+  .home .footer-inner { grid-template-columns: 1.2fr .8fr; }
+  .home .footer-contact { grid-column: 1 / -1; }
+}
+
+@media (max-width: 760px) {
+  .home { --gutter: 1.25rem; }
+  .home .btn { width: 100%; min-height: 56px; }
+  .home .home-hero--with-books { min-height: 800px; }
+  .home .home-hero--with-books .home-hero__content { padding-top: 5rem; padding-bottom: 255px; }
+  .home .home-hero__title { font-size: clamp(3.8rem, 17vw, 5.2rem); }
+  .home .home-hero__text { font-size: 1.05rem; }
+  .home .home-hero__book-stack li { width: clamp(92px, 28vw, 125px); margin-inline: -9px; }
+  .home .home-hero__book-stack li:nth-child(2) { width: clamp(108px, 32vw, 145px); }
+  .home .home-philosophy,
+  .home .home-origin,
+  .home .home-destinations,
+  .home .learning-hub--ecosystem,
+  .home .home-trust,
+  .home .newsletter-signup--expedition { padding-block: 6rem; }
+  .home .home-origin__card { grid-template-columns: 1fr; }
+  .home .home-origin__visual,
+  .home .home-origin__journal { min-height: 560px; }
+  .home .home-origin__portrait { min-height: 340px; }
+  .home .homepage-grid--adventures { grid-template-columns: 1fr; }
+  .home .homepage-grid--adventures > :last-child { grid-column: auto; width: 100%; }
+  .home .hub-card--destination { min-height: 540px; }
+  .home .home-books-path__inner { min-height: 0; padding: 2rem; }
+  .home .homepage-grid--learning { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 3.5rem 1rem; }
+  .home .feature-card--field-note { min-height: 230px; }
+  .home .home-together { min-height: 700px; background-position: 61% center; }
+  .home .home-together__paths,
+  .home .home-trust__pillars { grid-template-columns: 1fr; }
+  .home .newsletter-signup__form { grid-template-columns: 1fr; }
+  .home .newsletter-signup__form .acquisition-form__submit { width: 100%; }
+  .home .footer-inner { grid-template-columns: 1fr; padding-block: 4rem 3rem; }
+  .home .footer-contact { grid-column: auto; }
+  .home .footer-bottom { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .home .home-hero__book-stack li { width: 88px; }
+  .home .home-hero__book-stack li:nth-child(2) { width: 104px; }
+  .home .home-philosophy__heading .text-section-title,
+  .home .home-origin__content h2,
+  .home .home-destinations .text-section-title,
+  .home .learning-hub--ecosystem .text-section-title,
+  .home .home-together h2,
+  .home .home-trust .text-section-title,
+  .home .newsletter-signup--expedition .text-section-title { font-size: clamp(2.75rem, 13vw, 3.75rem); }
+  .home .homepage-grid--learning { grid-template-columns: 1fr; }
+  .home .feature-card--field-note { max-width: 340px; min-height: 220px; }
+  .home .home-origin__journal { padding: 1.35rem; }
+  .home .home-origin__portrait { min-height: 300px; }
+  .home .home-together__paths { gap: 2rem; }
 }
