@@ -147,14 +147,16 @@ get_template_part('template-parts/components/hero', null, [
 <section id="first-reader" class="homepage-section home-origin" aria-labelledby="first-reader-title">
   <div class="container">
     <div class="home-origin__card">
-      <div class="home-origin__journal" aria-hidden="true">
-        <span class="home-origin__journal-kicker">Field Journal · Entry 01</span>
-        <strong>First Reader</strong>
-        <span class="home-origin__journal-rule"></span>
-        <span>One child</span>
-        <span>One loyal dog</span>
-        <span>One lasting gift</span>
-        <i class="home-origin__compass"></i>
+      <div class="home-origin__visual" aria-hidden="true">
+        <div class="home-origin__journal">
+          <span class="home-origin__journal-kicker">Field Journal · Entry 01</span>
+          <strong>First Reader</strong>
+          <span class="home-origin__journal-rule"></span>
+          <span>One child</span>
+          <span>One loyal dog</span>
+          <span>One lasting gift</span>
+          <i class="home-origin__compass"></i>
+        </div>
       </div>
       <div class="home-origin__content">
         <p class="component-heading__eyebrow"><?php esc_html_e('The first reader', 'brave-hearts'); ?></p>
@@ -202,7 +204,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
     ],
 ], $page_id);
 ?>
-<section id="explore-world" class="homepage-section section" aria-labelledby="explore-world-title">
+<section id="explore-world" class="homepage-section home-destinations section" aria-labelledby="explore-world-title">
   <div class="container">
     <header class="component-heading">
       <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('explore_eyebrow', __('From the deepest ocean to the highest mountain', 'brave-hearts'))); ?></p>
@@ -233,12 +235,12 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
 <?php
 // 6. Learning Hub: educational depth extends curiosity beyond the books.
 $learning_cards = apply_filters('bhp_homepage_learning_cards', [
-    ['title' => __('Animals', 'brave-hearts'), 'text' => __('Meet the wildlife behind the adventures.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('animals'), 'label' => __('Explore animals', 'brave-hearts')]],
-    ['title' => __('Science', 'brave-hearts'), 'text' => __('Understand the forces shaping our world.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('science'), 'label' => __('Explore science', 'brave-hearts')]],
-    ['title' => __('Geography', 'brave-hearts'), 'text' => __('Find the real places behind every journey.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('geography'), 'label' => __('Explore geography', 'brave-hearts')]],
-    ['title' => __('Conservation', 'brave-hearts'), 'text' => __('Learn how curiosity can become care.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('conservation'), 'label' => __('Explore conservation', 'brave-hearts')]],
-    ['title' => __('Explorers', 'brave-hearts'), 'text' => __('Meet courageous thinkers past and present.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('explorers'), 'label' => __('Meet explorers', 'brave-hearts')]],
-    ['title' => __('Activities', 'brave-hearts'), 'text' => __('Keep learning with hands-on discoveries.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('activities'), 'label' => __('Try an activity', 'brave-hearts')]],
+    ['title' => __('Animals', 'brave-hearts'), 'text' => __('Meet the wildlife behind the adventures.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('animals'), 'label' => __('Explore animals', 'brave-hearts')], 'class' => 'feature-card--field-note'],
+    ['title' => __('Science', 'brave-hearts'), 'text' => __('Understand the forces shaping our world.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('science'), 'label' => __('Explore science', 'brave-hearts')], 'class' => 'feature-card--field-note'],
+    ['title' => __('Geography', 'brave-hearts'), 'text' => __('Find the real places behind every journey.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('geography'), 'label' => __('Explore geography', 'brave-hearts')], 'class' => 'feature-card--field-note'],
+    ['title' => __('Conservation', 'brave-hearts'), 'text' => __('Learn how curiosity can become care.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('conservation'), 'label' => __('Explore conservation', 'brave-hearts')], 'class' => 'feature-card--field-note'],
+    ['title' => __('Explorers', 'brave-hearts'), 'text' => __('Meet courageous thinkers past and present.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('explorers'), 'label' => __('Meet explorers', 'brave-hearts')], 'class' => 'feature-card--field-note'],
+    ['title' => __('Activities', 'brave-hearts'), 'text' => __('Keep learning with hands-on discoveries.', 'brave-hearts'), 'link' => ['url' => bhp_get_learning_category_url('activities'), 'label' => __('Try an activity', 'brave-hearts')], 'class' => 'feature-card--field-note'],
 ], $page_id);
 foreach ($learning_cards as &$learning_card) {
     $topic_slug = sanitize_title($learning_card['title'] ?? '');
@@ -316,7 +318,7 @@ $testimonials = apply_filters('bhp_homepage_testimonials', array_values(array_fi
 })), $page_id);
 
 if ($testimonials): ?>
-<section id="testimonials" class="homepage-section section" aria-labelledby="testimonials-title">
+<section id="testimonials" class="homepage-section home-reader-proof section" aria-labelledby="testimonials-title">
   <div class="container">
     <header class="component-heading component-heading--center">
       <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('testimonials_eyebrow', __('Trusted by families and educators', 'brave-hearts'))); ?></p>
@@ -347,6 +349,7 @@ get_template_part('template-parts/components/newsletter-signup', null, [
     'lead_magnet'      => 'explorer_passport',
     'source_page'      => get_permalink($page_id),
     'hidden_fields'     => apply_filters('bhp_homepage_newsletter_hidden_fields', [], $page_id),
+    'class'             => 'newsletter-signup--expedition',
 ]);
 
 // 10. Footer.
