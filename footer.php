@@ -21,8 +21,7 @@ $terms_url = bhp_get_safe_link_url($terms_url, home_url('/terms/'));
   <div class="footer-inner">
     <div class="footer-brand">
       <div class="footer-logo">Brave Hearts Publishing</div>
-      <p>Early chapter STEM adventures for ages 6–9 that build courage, curiosity, and character.<br>Big Places. Brave Hearts.</p>
-      <p class="footer-proof">Real places. Real science. Real adventure. Real courage.</p>
+      <p class="footer-closing"><?php esc_html_e('The real world is still wild enough.', 'brave-hearts'); ?><br><?php esc_html_e('Go look up.', 'brave-hearts'); ?></p>
       <p class="footer-proof">As an Amazon Associate, Brave Hearts Publishing earns from qualifying purchases.</p>
     </div>
 
@@ -39,7 +38,7 @@ $terms_url = bhp_get_safe_link_url($terms_url, home_url('/terms/'));
     </nav>
 
     <div class="footer-contact">
-      <h2><?php esc_html_e('Get in touch', 'brave-hearts'); ?></h2>
+      <h2><?php esc_html_e('Connect', 'brave-hearts'); ?></h2>
       <p><a href="mailto:Asignore19@icloud.com">Asignore19@icloud.com</a></p>
       <p class="footer-contact__note">Classroom read alouds, school visits, bulk orders, media inquiries, and upcoming releases.</p>
       <?php if (is_active_sidebar('footer-3')): ?>
@@ -54,6 +53,7 @@ $terms_url = bhp_get_safe_link_url($terms_url, home_url('/terms/'));
       &nbsp;·&nbsp; <a class="footer-bottom__link" href="<?php echo esc_url($terms_url); ?>"><?php esc_html_e('Terms', 'brave-hearts'); ?></a>
       &nbsp;·&nbsp; <a class="footer-bottom__link" href="<?php echo esc_url(home_url('/contact/')); ?>"><?php esc_html_e('Contact', 'brave-hearts'); ?></a>
     </p>
+    <p class="footer-entry-close"><?php esc_html_e('End of entry - Close the journal', 'brave-hearts'); ?></p>
   </div>
 </footer>
 

@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.13.0
+Version: 1.14.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -2211,4 +2211,212 @@ input[type='submit'],
 @media (prefers-reduced-motion: reduce) {
   .home .home-hero__book-stack a:hover,
   .home .home-hero__book-stack a:focus-visible { transform: none; }
+}
+
+/* ============================================================
+   PHASE II APPROVED HOMEPAGE - CLAUDE DESIGN IMPLEMENTATION
+   ============================================================ */
+
+.home { background: #071522; }
+.home .homepage-section { scroll-margin-top: calc(var(--header-height) + var(--space-4)); }
+
+/* Hero */
+.home .home-hero--with-books {
+  min-height: 700px;
+  border-bottom: 0;
+  background: #071827;
+}
+.home .home-hero--with-books::after {
+  background: url('assets/images/wild-places/ocean-surface.webp') center bottom / cover no-repeat;
+  opacity: .34;
+  filter: saturate(.72) contrast(1.08);
+}
+.home .home-hero--with-books .home-hero__overlay {
+  background:
+    radial-gradient(circle at 79% 31%, transparent 0 18%, rgba(196, 161, 92, .08) 18.2% 18.5%, transparent 18.7%),
+    linear-gradient(90deg, rgba(5, 19, 31, .98) 0 44%, rgba(5, 19, 31, .78) 62%, rgba(5, 19, 31, .48));
+}
+.home .home-hero--with-books .home-hero__content { padding-block: clamp(5rem, 9vw, 8rem); }
+.home .home-hero--with-books .home-hero__content > * { max-width: min(46%, 570px); }
+.home .home-hero__eyebrow { max-width: 430px; font-size: .68rem; letter-spacing: .26em; }
+.home .home-hero__title {
+  margin-bottom: var(--space-8);
+  padding: 0;
+  border: 0;
+  font-size: clamp(4rem, 6.4vw, 6.25rem);
+  font-weight: 400;
+  line-height: .96;
+  letter-spacing: -.045em;
+}
+.home .home-hero__text { font-family: var(--font-body); font-size: 1.05rem; line-height: 1.8; }
+.home .home-hero__text > p::after {
+  display: block;
+  margin-top: var(--space-4);
+  color: var(--color-gold);
+  content: 'It is an invitation to look up.';
+  font-family: var(--font-heading);
+  font-style: italic;
+}
+.home .home-hero__destinations { gap: var(--space-8); font-family: var(--font-heading); }
+.home .home-hero__actions .btn { border-color: var(--color-gold); background: var(--color-gold); color: #071522; }
+.home .home-hero__book-preview { right: max(var(--gutter), calc((100vw - var(--container-max)) / 2)); width: min(50%, 650px); }
+.home .home-hero__book-preview-label { color: rgba(255,255,255,.58); font-size: .62rem; letter-spacing: .23em; }
+.home .home-hero__book-stack { align-items: center; }
+.home .home-hero__book-stack li { width: clamp(150px, 15.4vw, 210px); margin-inline: -14px; }
+.home .home-hero__book-stack li:first-child { transform: translateY(44px); }
+.home .home-hero__book-stack li:nth-child(2) { z-index: 2; transform: translateY(-8px); }
+.home .home-hero__book-stack li:nth-child(3) { transform: translateY(44px); }
+.home .home-hero__book-cover { border: 1px solid rgba(196,161,92,.55); box-shadow: 0 24px 60px rgba(0,0,0,.52); }
+
+/* Philosophy */
+.home .home-philosophy {
+  min-height: 640px;
+  padding-block: clamp(5rem, 9vw, 8rem);
+  background: #f3ead6;
+}
+.home .home-philosophy::after { display: none; }
+.home .home-philosophy::before { opacity: .16; }
+.home .home-philosophy__heading { margin-bottom: var(--space-12); }
+.home .home-philosophy__heading .text-section-title { max-width: 760px; margin-inline: auto; font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; }
+.home .home-philosophy__heading .component-heading__intro { max-width: 650px; color: #655f55; font-size: 1rem; }
+.home .home-philosophy__pillars { gap: 0; max-width: 1120px; border-block: 1px solid rgba(122,78,45,.18); }
+.home .home-philosophy__pillars::before { display: none; }
+.home .home-philosophy__pillars li { min-height: 160px; padding: var(--space-10); border-right: 1px solid rgba(122,78,45,.18); }
+.home .home-philosophy__pillars li:last-child { border-right: 0; }
+.home .home-philosophy__sequence { display: block; width: auto; height: auto; border: 0; background: none; box-shadow: none; font-family: var(--font-heading); font-size: 1.15rem; font-style: italic; }
+.home .home-philosophy__closing { color: #474237; font-family: var(--font-heading); font-size: 1.25rem; font-style: italic; }
+
+/* First Reader */
+.home .home-origin { padding-block: clamp(5rem, 8vw, 7.5rem); background: #e8dec7; }
+.home .home-origin::after {
+  position: absolute; inset: 0 0 0 48%;
+  background: linear-gradient(90deg, rgba(232,222,199,.96), rgba(232,222,199,.56)), url('assets/images/wild-places/mountain-light.webp') center / cover no-repeat;
+  content: ''; opacity: .72;
+}
+.home .home-origin .container { position: relative; z-index: 1; }
+.home .home-origin__card { grid-template-columns: minmax(300px, .8fr) minmax(0, 1.25fr); gap: clamp(3rem, 7vw, 6rem); overflow: visible; border: 0; background: transparent; box-shadow: none; }
+.home .home-origin__visual { min-height: 540px; overflow: visible; background: transparent; }
+.home .home-origin__visual::after { display: none; }
+.home .home-origin__journal {
+  inset: 0; width: 100%; min-height: 540px; padding: var(--space-6); transform: none;
+  border: 1px solid rgba(122,78,45,.24); background: #f8efd9; box-shadow: 0 24px 44px rgba(63,50,34,.16);
+}
+.home .home-origin__portrait { display: grid; min-height: 330px; margin: var(--space-5) 0; padding: var(--space-8); place-items: center; border: 4px double rgba(122,78,45,.2); color: #9c7b39; text-align: center; }
+.home .home-origin__portrait span { font-size: 2rem; }
+.home .home-origin__portrait em { max-width: 220px; color: #756c5d; font-family: var(--font-heading); }
+.home .home-origin__portrait small,
+.home .home-origin__journal-meta { color: #9c7b39; font-family: var(--font-ui); font-size: .62rem; font-style: normal; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+.home .home-origin__journal > strong { color: var(--color-navy); font-family: var(--font-heading); font-size: 1.25rem; font-style: italic; font-weight: 400; }
+.home .home-origin__journal-meta { display: block; margin-top: var(--space-4); }
+.home .home-origin__content { align-self: center; padding: 0; }
+.home .home-origin__content h2 { max-width: 650px; font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; }
+.home .home-origin__content p { color: #514c43; line-height: 1.75; }
+.home .home-origin__content blockquote { margin: var(--space-8) 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(1.3rem, 2.2vw, 1.8rem); font-style: italic; line-height: 1.45; }
+.home .home-origin__byline { color: #9c7b39 !important; font-family: var(--font-ui); font-size: .65rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+
+/* Destinations and catalog */
+.home .home-destinations { padding-block: clamp(5rem, 9vw, 8rem); background: #06131f; color: white; }
+.home .home-destinations::before { display: none; }
+.home .home-destinations .component-heading { margin-bottom: var(--space-12); text-align: center; }
+.home .home-destinations .text-section-title { color: white; font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; }
+.home .home-destinations .component-heading__intro { color: rgba(255,255,255,.62); }
+.home .home-destinations__promise { color: var(--color-gold); font-family: var(--font-heading); font-size: 1.3rem; font-style: italic; }
+.home .homepage-grid--adventures { gap: var(--space-5); }
+.home .hub-card--destination { min-height: 470px; border: 1px solid rgba(196,161,92,.16); border-radius: 3px; background-position: center; background-size: cover; }
+.home .homepage-grid--adventures > :nth-child(1) { background-image: linear-gradient(0deg, rgba(4,16,28,.96), rgba(4,16,28,.05) 68%), url('assets/images/wild-places/deep-ocean-jellyfish.webp'); }
+.home .homepage-grid--adventures > :nth-child(2) { background-image: linear-gradient(0deg, rgba(4,16,28,.96), rgba(4,16,28,.08) 68%), url('assets/images/wild-places/mountain-light.webp'); }
+.home .homepage-grid--adventures > :nth-child(3) { background-image: linear-gradient(0deg, rgba(4,16,28,.96), rgba(4,16,28,.08) 68%), url('assets/images/wild-places/rainforest-canopy.webp'); }
+.home .hub-card--destination .hub-card__media { display: none; }
+.home .hub-card--destination .card__body { justify-content: flex-end; padding: var(--space-8); }
+.home .hub-card--destination .card__eyebrow,
+.home .hub-card--destination .card__title { max-width: none; }
+.home .hub-card--destination .card__eyebrow { color: var(--color-gold); font-size: .6rem; letter-spacing: .16em; }
+.home .hub-card--destination .card__title { order: -1; color: white; font-size: 1.25rem; font-weight: 400; }
+.home .hub-card--destination .card__excerpt { flex: 0; }
+.home .hub-card--destination .hub-card__question { max-width: 100%; padding: 0; border: 0; font-size: clamp(1.65rem, 2.7vw, 2.3rem); font-style: italic; }
+.home .hub-card--destination .hub-card__link { color: var(--color-gold); font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; }
+.home .home-books-path { padding-block: var(--space-8); background: #09141e; }
+.home .home-books-path__inner { padding: var(--space-6); border: 1px solid rgba(196,161,92,.24); }
+.home .home-books-path h2 { font-weight: 400; }
+.home .home-books-path p { margin: .35rem 0 0; color: rgba(255,255,255,.5); font-family: var(--font-ui); font-size: .62rem; letter-spacing: .13em; text-transform: uppercase; }
+
+/* Learning Hub */
+.home .learning-hub--ecosystem { padding-block: clamp(5rem, 9vw, 8rem); background: #f3ead6; }
+.home .learning-hub--ecosystem .text-section-title { max-width: 760px; margin-inline: auto; font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; }
+.home .learning-hub--ecosystem .component-heading__intro { max-width: 680px; }
+.home .feature-card--field-note::before { background: #faf4e6; color: var(--color-forest); }
+.home .homepage-grid--learning > :nth-child(1)::before { content: '✣'; font-size: 1.35rem; }
+.home .homepage-grid--learning > :nth-child(2)::before { content: '⚗'; font-size: 1.35rem; }
+.home .homepage-grid--learning > :nth-child(3)::before { content: '⊕'; font-size: 1.45rem; }
+.home .homepage-grid--learning > :nth-child(4)::before { content: '♧'; font-size: 1.45rem; }
+.home .homepage-grid--learning > :nth-child(5)::before { content: '⌖'; font-size: 1.45rem; }
+.home .homepage-grid--learning > :nth-child(6)::before { content: '✎'; font-size: 1.35rem; }
+.home .feature-card--field-note .feature-card__link { position: absolute; inset: 0; overflow: hidden; color: transparent; }
+
+/* Teachers and Families */
+.home .home-together { min-height: 620px; display: grid; align-items: center; color: white; background: linear-gradient(90deg, rgba(9,49,36,.94) 0 48%, rgba(9,49,36,.42)), url('assets/images/wild-places/rainforest-bridge.webp') center / cover no-repeat; }
+.home .home-together__inner { width: 100%; }
+.home .home-together__inner > * { max-width: 640px; }
+.home .home-together .component-heading__eyebrow { color: var(--color-gold); }
+.home .home-together h2 { color: white; font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; }
+.home .home-together__intro { font-size: 1.05rem; line-height: 1.75; }
+.home .home-together__paths { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); margin-block: var(--space-8); }
+.home .home-together__paths h3 { color: white; font-size: 1.45rem; font-weight: 400; }
+.home .home-together__paths p { color: rgba(255,255,255,.72); font-size: .9rem; }
+
+/* Trust */
+.home .home-trust { padding-block: clamp(5rem, 9vw, 8rem); background: #f7f0e2; }
+.home .home-trust .text-section-title { max-width: 760px; margin-inline: auto; font-size: clamp(3rem, 5vw, 4.7rem); font-weight: 400; }
+.home .home-trust__pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-12); margin-top: var(--space-16); }
+.home .home-trust__pillars article > span { color: #b98c35; font-size: 1.7rem; }
+.home .home-trust__pillars h3 { margin-top: var(--space-5); font-size: 1.45rem; font-weight: 400; }
+.home .home-trust__pillars p { color: #6a6256; font-size: .9rem; line-height: 1.7; }
+.home .home-trust__share { margin-top: var(--space-12); padding-top: var(--space-8); border-top: 1px solid rgba(122,78,45,.2); text-align: center; }
+.home .home-trust__share p { font-family: var(--font-heading); font-size: 1.2rem; font-style: italic; }
+.home .home-trust__share a { color: var(--color-forest); font-family: var(--font-ui); font-size: .68rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+
+/* Adventure Club */
+.home .newsletter-signup--expedition { padding-block: clamp(5rem, 9vw, 8rem); background: linear-gradient(rgba(5,22,34,.9), rgba(5,22,34,.96)), url('assets/images/wild-places/rainforest-bridge.webp') center / cover no-repeat; }
+.home .newsletter-signup--expedition .newsletter-signup__inner { max-width: 760px; text-align: center; }
+.home .newsletter-signup--expedition .text-section-title { color: white; font-size: clamp(3rem, 5vw, 4.7rem); font-weight: 400; }
+.home .newsletter-signup__benefits { display: grid; gap: var(--space-4); margin: var(--space-10) 0 var(--space-8); text-align: left; }
+.home .newsletter-signup__benefits > div { padding: var(--space-5) var(--space-6); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.035); }
+.home .newsletter-signup__benefits h3 { color: white; font-size: 1.2rem; font-weight: 400; }
+.home .newsletter-signup__benefits p { margin: .25rem 0 0; color: rgba(255,255,255,.62); font-size: .85rem; }
+.home .newsletter-signup__form { max-width: 600px; margin-inline: auto; }
+
+/* Approved journal close */
+.site-footer { background: linear-gradient(110deg, #092a21, #061d18); }
+.footer-closing { color: var(--color-gold); font-family: var(--font-heading); font-size: 1.25rem; font-style: italic; }
+.footer-entry-close { color: var(--color-gold); font-family: var(--font-ui); font-size: .62rem; letter-spacing: .17em; text-transform: uppercase; }
+
+@media (max-width: 1050px) {
+  .home .home-hero--with-books .home-hero__content { padding-bottom: 290px; }
+  .home .home-origin__card { grid-template-columns: minmax(280px,.8fr) 1fr; gap: var(--space-10); }
+  .home .home-origin__content h2 { font-size: clamp(2.7rem, 5vw, 4rem); }
+}
+@media (max-width: 760px) {
+  .home .home-hero--with-books { min-height: 760px; }
+  .home .home-hero--with-books .home-hero__content { padding-bottom: 240px; }
+  .home .home-hero__title { font-size: clamp(3.7rem, 16vw, 5rem); }
+  .home .home-philosophy__pillars { border: 0; }
+  .home .home-philosophy__pillars li { min-height: 90px; padding: var(--space-6); border-right: 0; border-bottom: 1px solid rgba(122,78,45,.18); }
+  .home .home-origin::after { inset: 35% 0 0; }
+  .home .home-origin__card { grid-template-columns: 1fr; }
+  .home .home-origin__visual { min-height: 520px; }
+  .home .home-origin__journal { inset: 0; width: min(100%, 420px); min-height: 520px; margin-inline: auto; transform: none; }
+  .home .home-origin__content { text-align: left; }
+  .home .home-origin__content .component-heading__eyebrow { justify-content: flex-start; }
+  .home .homepage-grid--adventures { grid-template-columns: 1fr; }
+  .home .hub-card--destination { min-height: 500px; }
+  .home .home-books-path__inner { align-items: flex-start; }
+  .home .home-together { background-position: 58% center; }
+  .home .home-together__paths,
+  .home .home-trust__pillars { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .home .home-hero__destinations { display: none; }
+  .home .home-hero--with-books .home-hero__content { padding-bottom: 215px; }
+  .home .home-hero__book-stack li { width: 96px; margin-inline: -7px; }
+  .home .home-together__paths { gap: var(--space-4); }
 }
