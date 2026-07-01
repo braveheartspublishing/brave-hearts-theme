@@ -37,7 +37,7 @@ $find_home_book = static function ($destination) use ($featured_books) {
 $hero_preview_books = array_values(array_filter([
     $find_home_book('Mariana Trench'),
     $find_home_book('Mount Everest'),
-    $find_home_book('Amazon Rainforest'),
+    $find_home_book('Amazon'),
 ], static function ($book) {
     return !empty($book['image_id']) && !empty($book['url']) && !empty($book['title']);
 }));
@@ -170,7 +170,7 @@ get_template_part('template-parts/components/hero', null, [
 // 4. Explore the World: destination gateways remain filterable as the series grows.
 $mariana_book = $find_home_book('Mariana Trench');
 $everest_book = $find_home_book('Mount Everest');
-$amazon_book = $find_home_book('Amazon Rainforest');
+$amazon_book = $find_home_book('Amazon');
 
 $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
     [
