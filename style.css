@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.15.0
+Version: 1.15.1
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -1297,6 +1297,69 @@ input[type='submit'],
   .hub-card--destination:focus-within .hub-card__link { transform: none !important; }
   .homepage-grid--adventures > .hub-card--destination:hover,
   .homepage-grid--adventures > .hub-card--destination:focus-within { background-position: center !important; }
+}
+
+/* Sitewide polish: titles enter the viewport promptly beneath the masthead. */
+body:not(.home) .interior-hero,
+body:not(.home) .home-hero {
+  min-height: 0;
+  padding-top: clamp(3rem, 5vw, 4.5rem);
+  padding-bottom: clamp(3.25rem, 5.5vw, 5rem);
+  align-items: start;
+}
+body:not(.home) .home-hero__content { align-self: start; }
+body:not(.home) .home-hero__eyebrow { margin-bottom: 1.25rem; }
+body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
+
+/* Related books: a wide, image-led, CSS-only horizontal expedition rail. */
+.woocommerce div.product .related.products,
+.woocommerce div.product .upsells.products { overflow: hidden; }
+.woocommerce div.product .related.products > h2,
+.woocommerce div.product .upsells.products > h2 { margin-bottom: 2rem; }
+.woocommerce div.product .related.products ul.products,
+.woocommerce div.product .upsells.products ul.products {
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: clamp(1.25rem, 2.5vw, 2.25rem);
+  width: 100%;
+  margin: 0;
+  padding: .25rem .25rem 1.5rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-padding-inline: .25rem;
+  scroll-snap-type: inline mandatory;
+  scrollbar-color: var(--expedition-gold) rgba(111,83,38,.12);
+  scrollbar-width: thin;
+}
+.woocommerce div.product .related.products ul.products li.product,
+.woocommerce div.product .upsells.products ul.products li.product {
+  width: clamp(260px, 29vw, 360px) !important;
+  min-width: clamp(260px, 29vw, 360px);
+  max-width: 360px;
+  flex: 0 0 clamp(260px, 29vw, 360px);
+  scroll-snap-align: start;
+}
+.woocommerce div.product .related.products ul.products li.product img,
+.woocommerce div.product .upsells.products ul.products li.product img {
+  height: 340px;
+  padding: 1.5rem;
+}
+.woocommerce div.product .related.products ul.products::-webkit-scrollbar,
+.woocommerce div.product .upsells.products ul.products::-webkit-scrollbar { height: 8px; }
+.woocommerce div.product .related.products ul.products::-webkit-scrollbar-track,
+.woocommerce div.product .upsells.products ul.products::-webkit-scrollbar-track { background: rgba(111,83,38,.12); }
+.woocommerce div.product .related.products ul.products::-webkit-scrollbar-thumb,
+.woocommerce div.product .upsells.products ul.products::-webkit-scrollbar-thumb { background: var(--expedition-gold); }
+
+@media (max-width: 640px) {
+  body:not(.home) .interior-hero,
+  body:not(.home) .home-hero { padding-top: 2.5rem; padding-bottom: 3rem; }
+  .woocommerce div.product .related.products ul.products li.product,
+  .woocommerce div.product .upsells.products ul.products li.product {
+    width: min(82vw, 320px) !important;
+    min-width: min(82vw, 320px);
+    flex-basis: min(82vw, 320px);
+  }
 }
 
 /* Gold focus rings are reserved for dark brand surfaces. */

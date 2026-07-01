@@ -45,7 +45,7 @@
       ?>
     </nav>
 
-    <a class="header-expedition-cta" href="<?php echo esc_url(home_url('/adventure-club/')); ?>">
+    <a class="header-expedition-cta" href="<?php echo esc_url(home_url('/#adventure-club')); ?>">
       <?php esc_html_e('Join the Expedition', 'brave-hearts'); ?>
     </a>
   </div>
