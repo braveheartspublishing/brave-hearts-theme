@@ -66,6 +66,7 @@ if (trim($hero_eyebrow) === 'Bridge books for ages 6–9') {
 }
 $hero_text = __('<p>A child closes the book. The next morning, the sky, birds, and trees are the same—but now they notice, wonder, ask, and explore.</p><ul class="home-hero__destinations"><li>Nearly 11 km deep</li><li>8,849 m high</li><li>A living canopy</li></ul>', 'brave-hearts');
 
+$hero_books_markup = '';
 if ($hero_preview_books) {
     ob_start();
     ?>
@@ -88,7 +89,7 @@ if ($hero_preview_books) {
       </ul>
     </div>
     <?php
-    $hero_text .= ob_get_clean();
+    $hero_books_markup = ob_get_clean();
 }
 
 $hero_primary_label = bhp_get_homepage_field('hero_primary_label', __('Choose Your First Adventure', 'brave-hearts'));
@@ -103,6 +104,7 @@ get_template_part('template-parts/components/hero', null, [
     'text'           => $hero_text,
     'image_id'       => (int) bhp_get_homepage_field('hero_image_id', 0),
     'class'          => $hero_preview_books ? 'home-hero--with-books' : '',
+    'aside'          => $hero_books_markup,
     'primary_link'   => [
         'url'   => bhp_get_homepage_field('hero_primary_url', '#explore-world'),
         'label' => $hero_primary_label,
@@ -306,7 +308,8 @@ unset($learning_card);
   </div>
 </section>
 
-<?php // 9. Adventure Club expedition signup. ?>
+<?php
+// 9. Adventure Club expedition signup.
 get_template_part('template-parts/components/newsletter-signup', null, [
     'id'                => 'adventure-club',
     'eyebrow'           => bhp_get_homepage_field('newsletter_eyebrow', __('The Adventure Club', 'brave-hearts')),

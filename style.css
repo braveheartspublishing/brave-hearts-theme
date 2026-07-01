@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.14.1
+Version: 1.14.2
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -2652,4 +2652,78 @@ input[type='submit'],
   .home .home-origin__journal { padding: 1.35rem; }
   .home .home-origin__portrait { min-height: 300px; }
   .home .home-together__paths { gap: 2rem; }
+}
+
+/* Sprint 6A.7 critical rendering corrections. */
+@media (min-width: 1051px) {
+  .home .home-hero--with-books .home-hero__content { position: relative; }
+  .home .home-hero--with-books .home-hero__content > .home-hero__book-preview {
+    top: 50%;
+    right: 0;
+    left: auto;
+    width: 54%;
+    max-width: none;
+    transform: translateY(-50%);
+  }
+}
+
+.home .home-destinations {
+  background-color: #06131f;
+  background-image: linear-gradient(180deg, #06131f 0%, #071827 100%);
+  color: #fff;
+}
+.home .home-destinations .component-heading,
+.home .home-destinations .component-heading > * { background: transparent; }
+.home .home-destinations .text-section-title,
+.home .home-destinations .component-heading__intro { color: #fff; }
+.home .home-destinations .component-heading__intro { color: rgba(255,255,255,.68); }
+
+.home .home-together {
+  position: relative;
+  background-color: #123a2d;
+  background-image: url('assets/images/wild-places/rainforest-bridge.webp');
+  background-position: center;
+  background-size: cover;
+}
+.home .home-together::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(6,42,31,.96) 0 44%, rgba(6,42,31,.72) 64%, rgba(6,42,31,.28));
+  content: '';
+  pointer-events: none;
+}
+.home .home-together__inner { position: relative; z-index: 1; }
+.home .home-together h2,
+.home .home-together h3,
+.home .home-together__intro,
+.home .home-together__paths p { text-shadow: 0 2px 16px rgba(0,0,0,.5); }
+
+@media (max-width: 1050px) {
+  .home .home-hero--with-books .home-hero__content > .home-hero__book-preview {
+    top: auto;
+    right: auto;
+    bottom: var(--space-6);
+    left: 50%;
+    width: min(100%, 760px);
+    max-width: none;
+    transform: translateX(-50%);
+  }
+}
+
+@media print {
+  .home .home-destinations {
+    background: #06131f !important;
+    color: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .home .home-destinations .text-section-title,
+  .home .home-destinations .component-heading__intro { color: #fff !important; }
+  .home .home-together,
+  .home .newsletter-signup--expedition,
+  .home .site-footer {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }
