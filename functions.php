@@ -185,6 +185,25 @@ function bhp_order_confirmation_expedition_links() {
 }
 add_action('woocommerce_thankyou', 'bhp_order_confirmation_expedition_links', 30);
 
+/**
+ * Send catalog purchases directly into the cart journey. Disabling the loop
+ * AJAX class ensures WooCommerce follows the server redirect consistently.
+ */
+function bhp_catalog_add_to_cart_args($args) {
+    if (!empty($args['class'])) {
+        $classes = preg_split('/\s+/', trim((string) $args['class']));
+        $classes = array_values(array_diff($classes, ['ajax_add_to_cart']));
+        $args['class'] = implode(' ', $classes);
+    }
+    return $args;
+}
+add_filter('woocommerce_loop_add_to_cart_args', 'bhp_catalog_add_to_cart_args', 20);
+
+function bhp_add_to_cart_redirect() {
+    return function_exists('wc_get_cart_url') ? wc_get_cart_url() : home_url('/cart/');
+}
+add_filter('woocommerce_add_to_cart_redirect', 'bhp_add_to_cart_redirect');
+
 // ============================================================
 // FALLBACK MENU (before nav is assigned in WP admin)
 // ============================================================

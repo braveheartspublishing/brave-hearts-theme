@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.15.1
+Version: 1.15.2
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3749,4 +3749,45 @@ body:not(.home) .footer-bottom { max-width: 1220px; padding-top: 26px; border-to
   .home .home-books-path,
   .home .newsletter-signup,
   .home .site-footer { break-inside: avoid; }
+}
+
+/* Final interior hero correction: remove the inherited second padding layer. */
+body:not(.home) .home-hero,
+body:not(.home) .interior-hero {
+  min-height: 0 !important;
+  padding-top: clamp(2rem, 3.5vw, 3.25rem) !important;
+  padding-bottom: clamp(2.5rem, 4vw, 3.75rem) !important;
+  align-items: start !important;
+}
+body:not(.home) .home-hero__content {
+  min-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  align-self: start !important;
+}
+body:not(.home) .home-hero__eyebrow { margin-top: 0 !important; }
+
+/* Keep the editorial/blog masthead identical to every other interior page. */
+body.blog .site-header,
+body.single .site-header,
+body.archive .site-header,
+body.search .site-header {
+  right: auto;
+  left: auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+body.blog .header-inner,
+body.single .header-inner,
+body.archive .header-inner,
+body.search .header-inner { width: 100%; }
+
+@media (max-width: 640px) {
+  body:not(.home) .home-hero,
+  body:not(.home) .interior-hero {
+    padding-top: 1.75rem !important;
+    padding-bottom: 2.5rem !important;
+  }
 }

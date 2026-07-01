@@ -19,7 +19,7 @@ $about_field = static function ($key, $fallback = '') use ($page_id) {
 };
 
 $hero_image_id = (int) $about_field('hero_image_id', 0);
-$founder_image_id = (int) $about_field('founder_image_id', get_post_thumbnail_id($page_id));
+$founder_image_id = (int) $about_field('founder_image_id', 0);
 
 get_template_part('template-parts/components/hero', null, [
     'id'       => 'about-hero',
@@ -100,7 +100,7 @@ $book_values = apply_filters('bhp_about_book_values', [
             'alt'   => __('Andrew Signore, founder of Brave Hearts Publishing', 'brave-hearts'),
         ]); ?>
       <?php else: ?>
-        <img class="about-founder__image" src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/charlotte-henry.webp'); ?>" alt="<?php esc_attr_e('Charlotte and Henry, the first reader and loyal dog behind Brave Hearts Publishing', 'brave-hearts'); ?>" loading="lazy">
+        <img class="about-founder__image" src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/founder-and-charlotte.webp'); ?>" alt="<?php esc_attr_e('Andrew Signore with Charlotte and a Brave Hearts book', 'brave-hearts'); ?>" loading="lazy" decoding="async">
       <?php endif; ?>
     </figure>
     <div class="about-founder__content flow">
