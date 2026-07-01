@@ -64,7 +64,7 @@ function bhp_enqueue_assets() {
 
     wp_enqueue_style('bhp-style', get_stylesheet_uri(), [], $theme_version);
     wp_enqueue_style('bhp-google-fonts',
-        'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap',
+        'https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Caveat:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Lato:wght@400;700&display=swap',
         [], null
     );
     wp_enqueue_script('bhp-nav', get_template_directory_uri() . '/assets/js/nav.js', [], $theme_version, true);

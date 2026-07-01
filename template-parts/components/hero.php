@@ -12,6 +12,7 @@
  *   @type int    $image_id       Decorative cinematic image attachment ID.
  *   @type string $class          Additional section class.
  *   @type string $aside          Optional supporting visual HTML.
+ *   @type string $details        Optional supporting detail row HTML.
  * }
  */
 defined('ABSPATH') || exit;
@@ -26,6 +27,7 @@ $args = wp_parse_args($args ?? [], [
     'image_id'       => 0,
     'class'          => '',
     'aside'          => '',
+    'details'        => '',
 ]);
 
 if (!$args['title']) {
@@ -62,6 +64,7 @@ $secondary['url'] = bhp_get_safe_link_url($secondary['url']);
         <?php if ($secondary['url'] && $secondary['label']): ?><a class="btn btn-outline" href="<?php echo esc_url($secondary['url']); ?>"><?php echo esc_html($secondary['label']); ?></a><?php endif; ?>
       </div>
     <?php endif; ?>
+    <?php if ($args['details']): ?><div class="home-hero__details"><?php echo wp_kses_post($args['details']); ?></div><?php endif; ?>
     <?php if ($args['aside']): ?><?php echo wp_kses_post($args['aside']); ?><?php endif; ?>
   </div>
 </section>

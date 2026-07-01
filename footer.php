@@ -37,6 +37,15 @@ $terms_url = bhp_get_safe_link_url($terms_url, home_url('/terms/'));
       ?>
     </nav>
 
+    <nav class="footer-learn" aria-label="<?php esc_attr_e('Learning navigation', 'brave-hearts'); ?>">
+      <h2><?php esc_html_e('Learn', 'brave-hearts'); ?></h2>
+      <ul>
+        <li><a href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Learning Hub', 'brave-hearts'); ?></a></li>
+        <li><a href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('For Teachers', 'brave-hearts'); ?></a></li>
+        <li><a href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('For Families', 'brave-hearts'); ?></a></li>
+      </ul>
+    </nav>
+
     <div class="footer-contact">
       <h2><?php esc_html_e('Connect', 'brave-hearts'); ?></h2>
       <p><a href="mailto:Asignore19@icloud.com">Asignore19@icloud.com</a></p>
