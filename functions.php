@@ -780,6 +780,7 @@ function bhp_get_series_adventures() {
             'key'             => $key,
             'age_range'       => __('Ages 6–9', 'brave-hearts'),
             'formats'         => [],
+            'format_urls'     => [],
             'image_id'        => 0,
             'image_alt'       => '',
             'primary_url'     => '',
@@ -824,6 +825,11 @@ function bhp_get_series_adventures() {
         $adventure['matching_skus']++;
         $adventure['available'] = true;
         $adventure['formats'] = array_values(array_unique(array_merge($adventure['formats'], $product_formats)));
+        foreach ($product_formats as $product_format) {
+            if (in_array($product_format, ['Paperback', 'Hardcover', 'Kindle'], true)) {
+                $adventure['format_urls'][$product_format] = $product['url'];
+            }
+        }
 
         if (!$adventure['primary_url'] || $is_paperback) {
             $adventure['primary_url'] = $product['url'];
@@ -851,6 +857,13 @@ function bhp_get_series_adventures() {
                 $ordered_formats,
                 array_values(array_diff($adventure['formats'], $ordered_formats))
             );
+            $ordered_format_urls = [];
+            foreach ($adventure['formats'] as $format) {
+                if (!empty($adventure['format_urls'][$format])) {
+                    $ordered_format_urls[$format] = $adventure['format_urls'][$format];
+                }
+            }
+            $adventure['format_urls'] = $ordered_format_urls;
             $adventure['formats_url'] = bhp_get_safe_link_url(add_query_arg([
                 's'         => $adventure['title'],
                 'post_type' => 'product',

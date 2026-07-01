@@ -3,12 +3,13 @@
 defined('ABSPATH') || exit;
 $args = wp_parse_args($args ?? [], [
     'title' => '', 'destination' => '', 'age_range' => '', 'description' => '', 'formats' => [],
-    'image_id' => 0, 'image_alt' => '', 'primary_url' => '', 'formats_url' => '',
+    'image_id' => 0, 'image_alt' => '', 'primary_url' => '', 'formats_url' => '', 'format_urls' => [],
     'amazon_url' => '', 'shop_url' => '',
     'available' => false, 'class' => '',
 ]);
 if (!$args['title']) { return; }
 $formats = is_array($args['formats']) ? array_filter($args['formats']) : [];
+$format_urls = is_array($args['format_urls']) ? $args['format_urls'] : [];
 $configured_primary_url = bhp_get_safe_link_url($args['primary_url']);
 $primary_url = bhp_get_safe_link_url($configured_primary_url, $args['shop_url']);
 $formats_url = $configured_primary_url ? bhp_get_safe_link_url($args['formats_url'], $args['shop_url']) : '';
@@ -36,7 +37,16 @@ $amazon_url = bhp_get_safe_link_url($args['amazon_url']);
       <div class="adventure-book-card__formats" aria-label="<?php echo esc_attr($args['available'] ? __('Available formats', 'brave-hearts') : __('Planned formats', 'brave-hearts')); ?>">
         <h4><?php echo esc_html($args['available'] ? __('Available formats', 'brave-hearts') : __('Planned formats', 'brave-hearts')); ?></h4>
         <ul>
-          <?php foreach ($formats as $format): ?><li><?php echo esc_html($format); ?></li><?php endforeach; ?>
+          <?php foreach ($formats as $format): ?>
+            <?php $format_url = bhp_get_safe_link_url($format_urls[$format] ?? ''); ?>
+            <li>
+              <?php if ($format_url): ?>
+                <a href="<?php echo esc_url($format_url); ?>"><?php echo esc_html($format); ?></a>
+              <?php else: ?>
+                <?php echo esc_html($format); ?>
+              <?php endif; ?>
+            </li>
+          <?php endforeach; ?>
         </ul>
       </div>
     <?php endif; ?>

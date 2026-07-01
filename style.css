@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.15.2
+Version: 1.15.3
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -1277,6 +1277,44 @@ input[type='submit'],
   .hub-card .card__body,
   .testimonial-card { padding: var(--space-6); }
   .newsletter-signup__form { grid-template-columns: 1fr; }
+}
+
+/* WooCommerce purchase clarity and readable format-result cards. */
+.woocommerce-cart .wc-proceed-to-checkout a.checkout-button,
+.woocommerce-cart .wc-proceed-to-checkout a.checkout-button:hover,
+.woocommerce-cart .wc-proceed-to-checkout a.checkout-button:focus-visible {
+  background: var(--expedition-forest) !important;
+  color: #fff !important;
+  text-shadow: none !important;
+}
+.woocommerce ul.products li.product {
+  width: 100% !important;
+  max-width: none !important;
+}
+body.search.woocommerce .woo-expedition-shell ul.products,
+body.search-results.woocommerce .woo-expedition-shell ul.products {
+  grid-template-columns: repeat(2, minmax(280px, 1fr)) !important;
+  max-width: 920px;
+}
+body.search.woocommerce .woo-expedition-shell ul.products li.product img,
+body.search-results.woocommerce .woo-expedition-shell ul.products li.product img {
+  height: 380px;
+  padding: 1.75rem;
+}
+.adventure-book-card__formats a {
+  color: var(--expedition-forest);
+  font-weight: 700;
+  text-decoration-color: var(--expedition-gold);
+  text-underline-offset: .2em;
+}
+.adventure-book-card__formats a:hover,
+.adventure-book-card__formats a:focus-visible { color: var(--expedition-navy); }
+
+@media (max-width: 700px) {
+  body.search.woocommerce .woo-expedition-shell ul.products,
+  body.search-results.woocommerce .woo-expedition-shell ul.products {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
