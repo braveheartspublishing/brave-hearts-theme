@@ -1,0 +1,2 @@
+﻿redirect_id,source,destination,status_code,status,hits,last_accessed,notes
+,,,,,,,NOT EXPORTED: authenticated WordPress/database access and installed Rank Math schema/version were unavailable. No table assumptions made.

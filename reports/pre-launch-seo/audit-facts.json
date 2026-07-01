@@ -1,0 +1,521 @@
+{
+  "generated": "2026-07-01T21:52:49.653063+00:00",
+  "production_sitemap_count": 243,
+  "production_sitemap_failures": [],
+  "old_counts": {
+    "page": 38,
+    "post": 205
+  },
+  "new_counts": {
+    "post": 35,
+    "page": 18,
+    "product": 6,
+    "category": 28,
+    "post_tag": 137,
+    "product_cat": 6,
+    "product_tag": 12,
+    "utility": 2
+  },
+  "comparison_counts": {
+    "UNCHANGED": 9,
+    "REDIRECT": 36,
+    "REVIEW_REQUIRED": 198,
+    "NEW_URL": 199
+  },
+  "redirect_count": 36,
+  "redirect_validation": [
+    {
+      "old_url": "/blog/science-books-for-kids-that-feel-like-adventures/",
+      "proposed_new_url": "/science-books-for-kids-that-feel-like-adventures/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/science-books-for-kids-that-feel-like-adventures/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/science-books-for-kids-that-feel-like-adventures/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/dog-man-to-magic-tree-house-reading-roadmap/",
+      "proposed_new_url": "/dog-man-to-magic-tree-house-reading-roadmap/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/dog-man-to-magic-tree-house-reading-roadmap/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/dog-man-to-magic-tree-house-reading-roadmap/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/kirkus-review-adventures-of-charlotte-and-henry/",
+      "proposed_new_url": "/kirkus-review-adventures-of-charlotte-and-henry/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/kirkus-review-adventures-of-charlotte-and-henry/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/kirkus-review-adventures-of-charlotte-and-henry/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/what-to-read-after-dog-man/",
+      "proposed_new_url": "/what-to-read-after-dog-man/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/what-to-read-after-dog-man/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/what-to-read-after-dog-man/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/best-books-for-7-year-olds/",
+      "proposed_new_url": "/best-books-for-7-year-olds/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/best-books-for-7-year-olds/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/best-books-for-7-year-olds/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/best-summer-reading-books-for-kids-ages-6-9/",
+      "proposed_new_url": "/best-summer-reading-books-for-kids-ages-6-9/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/best-summer-reading-books-for-kids-ages-6-9/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/best-summer-reading-books-for-kids-ages-6-9/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/books-like-magic-tree-house/",
+      "proposed_new_url": "/books-like-magic-tree-house/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/books-like-magic-tree-house/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/books-like-magic-tree-house/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/gap-between-picture-books-and-chapter-books/",
+      "proposed_new_url": "/gap-between-picture-books-and-chapter-books/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/gap-between-picture-books-and-chapter-books/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/gap-between-picture-books-and-chapter-books/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/why-i-wrote-this-book/",
+      "proposed_new_url": "/why-i-wrote-this-book/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/why-i-wrote-this-book/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/why-i-wrote-this-book/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/finding-right-books-with-lexile-score/",
+      "proposed_new_url": "/finding-right-books-with-lexile-score/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/finding-right-books-with-lexile-score/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/finding-right-books-with-lexile-score/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/mount-everest-facts-for-kids/",
+      "proposed_new_url": "/mount-everest-facts-for-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/mount-everest-facts-for-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/mount-everest-facts-for-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/bridge-books-for-struggling-readers/",
+      "proposed_new_url": "/bridge-books-for-struggling-readers/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/bridge-books-for-struggling-readers/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/bridge-books-for-struggling-readers/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/my-child-hates-reading-what-to-do/",
+      "proposed_new_url": "/my-child-hates-reading-what-to-do/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/my-child-hates-reading-what-to-do/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/my-child-hates-reading-what-to-do/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/how-to-pick-a-read-aloud-book/",
+      "proposed_new_url": "/how-to-pick-a-read-aloud-book/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/how-to-pick-a-read-aloud-book/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/how-to-pick-a-read-aloud-book/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/reading-level-by-grade-chart/",
+      "proposed_new_url": "/reading-level-by-grade-chart/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/reading-level-by-grade-chart/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/reading-level-by-grade-chart/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/what-is-the-mariana-trench-for-kids/",
+      "proposed_new_url": "/what-is-the-mariana-trench-for-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/what-is-the-mariana-trench-for-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/what-is-the-mariana-trench-for-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/best-read-aloud-books-for-classroom-grades-1-3/",
+      "proposed_new_url": "/best-read-aloud-books-for-classroom-grades-1-3/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/best-read-aloud-books-for-classroom-grades-1-3/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/best-read-aloud-books-for-classroom-grades-1-3/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/my-child-got-a-lexile-score-now-what/",
+      "proposed_new_url": "/my-child-got-a-lexile-score-now-what/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/my-child-got-a-lexile-score-now-what/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/my-child-got-a-lexile-score-now-what/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/teacher-appreciation-week-thank-you/",
+      "proposed_new_url": "/teacher-appreciation-week-thank-you/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/teacher-appreciation-week-thank-you/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/teacher-appreciation-week-thank-you/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/what-is-a-lexile-score/",
+      "proposed_new_url": "/what-is-a-lexile-score/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/what-is-a-lexile-score/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/what-is-a-lexile-score/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/top-bridge-books-for-kids/",
+      "proposed_new_url": "/top-bridge-books-for-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/top-bridge-books-for-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/top-bridge-books-for-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/bridge-books-for-kids/",
+      "proposed_new_url": "/bridge-books-for-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/bridge-books-for-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/bridge-books-for-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/best-ocean-books-for-kids-ages-6-9/",
+      "proposed_new_url": "/best-ocean-books-for-kids-ages-6-9/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/best-ocean-books-for-kids-ages-6-9/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/best-ocean-books-for-kids-ages-6-9/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/mariana-trench-facts-for-kids/",
+      "proposed_new_url": "/mariana-trench-facts-for-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/mariana-trench-facts-for-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/mariana-trench-facts-for-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/what-are-bridge-books-guide-for-parents-and-teachers/",
+      "proposed_new_url": "/what-are-bridge-books-guide-for-parents-and-teachers/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/what-are-bridge-books-guide-for-parents-and-teachers/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/what-are-bridge-books-guide-for-parents-and-teachers/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/bridge-books-for-early-readers/",
+      "proposed_new_url": "/bridge-books-for-early-readers/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/bridge-books-for-early-readers/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/bridge-books-for-early-readers/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/bridge-books-for-kids-mount-everest/",
+      "proposed_new_url": "/bridge-books-for-kids-mount-everest/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/bridge-books-for-kids-mount-everest/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/bridge-books-for-kids-mount-everest/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/best-early-chapter-books-for-6-year-olds/",
+      "proposed_new_url": "/best-early-chapter-books-for-6-year-olds/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/best-early-chapter-books-for-6-year-olds/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/best-early-chapter-books-for-6-year-olds/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/free-teachers-guide-mariana-trench/",
+      "proposed_new_url": "/free-teachers-guide-mariana-trench/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/free-teachers-guide-mariana-trench/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/free-teachers-guide-mariana-trench/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/first-real-chapter-book-for-kids/",
+      "proposed_new_url": "/first-real-chapter-book-for-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/first-real-chapter-book-for-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/first-real-chapter-book-for-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/best-bridge-books-for-kids/",
+      "proposed_new_url": "/best-bridge-books-for-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/best-bridge-books-for-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/best-bridge-books-for-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/how-deep-is-the-mariana-trench-for-kids/",
+      "proposed_new_url": "/how-deep-is-the-mariana-trench-for-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/how-deep-is-the-mariana-trench-for-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/how-deep-is-the-mariana-trench-for-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/adventure-books-for-kids-ages-6-9/",
+      "proposed_new_url": "/adventure-books-for-kids-ages-6-9/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/adventure-books-for-kids-ages-6-9/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/adventure-books-for-kids-ages-6-9/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/how-stories-build-resilience-in-children/",
+      "proposed_new_url": "/how-stories-build-resilience-in-children/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/how-stories-build-resilience-in-children/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/how-stories-build-resilience-in-children/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/blog/why-stem-storytelling-builds-braver-kids/",
+      "proposed_new_url": "/why-stem-storytelling-builds-braver-kids/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/why-stem-storytelling-builds-braver-kids/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/why-stem-storytelling-builds-braver-kids/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    },
+    {
+      "old_url": "/home/",
+      "proposed_new_url": "/",
+      "target_status": 200,
+      "final_url": "https://staging2.braveheartspublishing.com/",
+      "hop_count": 0,
+      "loop": "no",
+      "relevance_check": "same slug and compatible object intent",
+      "validation_result": "PASS",
+      "notes": "canonical=https://staging2.braveheartspublishing.com/; robots=follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+    }
+  ],
+  "internal_link_count": 452,
+  "internal_issue_counts": {
+    "staging_domain": 198,
+    "direct": 206,
+    "redirect": 14,
+    "insecure_http": 26,
+    "broken_download": 8
+  },
+  "rest_namespaces": [
+    "oembed/1.0",
+    "jetpack/v4",
+    "klaviyo/v1",
+    "rankmath/v1",
+    "rankmath/v1/setupWizard",
+    "sg-ai-studio",
+    "siteground-settings/v1",
+    "siteground-optimizer/v1",
+    "sg-security/v1",
+    "wc/v3",
+    "wc/v1",
+    "wc/pos/v1/catalog",
+    "siteground-central/v1",
+    "wc/rfw/jetpack",
+    "wc/rfw/reddit",
+    "wc/sfw/jetpack",
+    "wc/sfw/snapchat",
+    "wpcom/v2",
+    "jetpack/v4/stats-app",
+    "mc4wp/v1",
+    "wpcom/v3",
+    "pinterest/v1",
+    "paypal/v1",
+    "wc/v3/wc_paypal",
+    "wc-admin",
+    "wc-analytics",
+    "wc/store",
+    "wc/store/v1",
+    "wc/private",
+    "siteground-dashboard/v1",
+    "payments/woopay",
+    "wc/v2",
+    "mailchimp-for-woocommerce/v1",
+    "wc/gla",
+    "jetpack-boost/v1",
+    "rankmath/v1/ca",
+    "rankmath/v1/an",
+    "rankmath/v1/in",
+    "rankmath/v1/status",
+    "wcshipping/v1",
+    "ivole/v1",
+    "wc-admin-email",
+    "wc-push-notifications",
+    "wc-telemetry",
+    "wccom-site/v3",
+    "wp-abilities/v1",
+    "mcp",
+    "wp/v2",
+    "wp-site-health/v1",
+    "wp-block-editor/v1"
+  ],
+  "rest_endpoints": [
+    [
+      "post",
+      35,
+      200
+    ],
+    [
+      "page",
+      18,
+      200
+    ],
+    [
+      "product",
+      6,
+      200
+    ],
+    [
+      "category",
+      28,
+      200
+    ],
+    [
+      "post_tag",
+      137,
+      200
+    ],
+    [
+      "product_cat",
+      6,
+      200
+    ],
+    [
+      "product_tag",
+      12,
+      200
+    ]
+  ]
+}
