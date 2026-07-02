@@ -1,2 +1,3 @@
-﻿redirect_id,source,destination,status_code,status,hits,last_accessed,notes
-,,,,,,,NOT EXPORTED: authenticated WordPress/database access and installed Rank Math schema/version were unavailable. No table assumptions made.
+redirect_id,source,destination,status_code,status,hits,last_accessed,notes
+1,/home/,https://staging2.braveheartspublishing.com/,301,active,0,,Created via RankMath\Redirections\Redirection official class; verified 301/1-hop/200 final
+2,/store/,https://staging2.braveheartspublishing.com/shop/,301,active,0,,Created via RankMath\Redirections\Redirection official class; verified 301/1-hop/200 final
