@@ -120,6 +120,15 @@ function bhp_body_classes($classes) {
     if (function_exists('is_woocommerce') && is_woocommerce()) {
         $classes[] = 'woo-page';
     }
+    if (function_exists('is_product') && is_product() && function_exists('wc_get_product')) {
+        $product = wc_get_product(get_queried_object_id());
+        if ($product) {
+            $adventure_key = bhp_get_adventure_key_from_sku($product->get_sku());
+            if ($adventure_key) {
+                $classes[] = 'bhp-book-' . $adventure_key;
+            }
+        }
+    }
     return $classes;
 }
 add_filter('body_class', 'bhp_body_classes');
@@ -1053,6 +1062,115 @@ function bhp_get_series_adventures() {
 
     return apply_filters('bhp_series_adventures', $adventures, $products);
 }
+
+// ============================================================
+// AMAZON AFFILIATE PURCHASE PATH
+// ============================================================
+/**
+ * Single source of truth for approved Amazon affiliate links. Only add a
+ * URL here once it has been explicitly approved — an empty/missing entry
+ * means no Amazon button renders for that title.
+ */
+function bhp_get_amazon_affiliate_urls() {
+    return apply_filters('bhp_amazon_affiliate_urls', [
+        'mariana_trench'    => 'https://amzn.to/4svChYL',
+        'mount_everest'     => 'https://amzn.to/4mptuGv',
+        'amazon_rainforest' => '',
+    ]);
+}
+
+function bhp_get_amazon_affiliate_url($adventure_key) {
+    $urls = bhp_get_amazon_affiliate_urls();
+    return $urls[$adventure_key] ?? '';
+}
+
+/** Map a WooCommerce SKU prefix to its series adventure key. */
+function bhp_get_adventure_key_from_sku($sku) {
+    $sku = strtoupper((string) $sku);
+    if (strpos($sku, 'BHP-MT-') === 0) {
+        return 'mariana_trench';
+    }
+    if (strpos($sku, 'BHP-EVE-') === 0) {
+        return 'mount_everest';
+    }
+    if (strpos($sku, 'BHP-AMZ-') === 0) {
+        return 'amazon_rainforest';
+    }
+    return '';
+}
+
+/** The sitewide Amazon Associates disclosure, kept in one place so wording stays consistent. */
+function bhp_get_amazon_disclosure_text() {
+    return __('As an Amazon Associate, Brave Hearts Publishing earns from qualifying purchases.', 'brave-hearts');
+}
+
+/**
+ * Renders the "Need It Faster?" Amazon affiliate section: button + required
+ * disclosure + accessible label + click-tracking data attribute. Returns
+ * empty output when no approved link exists for the adventure (e.g. Amazon
+ * Rainforest) so no placeholder or generic search link is ever shown.
+ */
+function bhp_render_amazon_affiliate_section($adventure_key, $book_title, $args = []) {
+    $amazon_url = bhp_get_amazon_affiliate_url($adventure_key);
+    if (!$amazon_url) {
+        return '';
+    }
+    $args = wp_parse_args($args, [
+        'heading' => __('Need It Faster?', 'brave-hearts'),
+        'text'    => __('Buy on Amazon for familiar checkout and faster delivery options. Amazon pricing and delivery times may vary.', 'brave-hearts'),
+        'source'  => '',
+        'format'  => '',
+    ]);
+    $aria_label = sprintf(
+        /* translators: %s: book title */
+        __('Buy %s on Amazon', 'brave-hearts'),
+        $book_title
+    );
+    ob_start();
+    ?>
+    <div class="amazon-affiliate-block">
+      <h3 class="amazon-affiliate-block__heading"><?php echo esc_html($args['heading']); ?></h3>
+      <p class="amazon-affiliate-block__text"><?php echo esc_html($args['text']); ?></p>
+      <a
+        class="btn btn-outline amazon-affiliate-block__button"
+        href="<?php echo esc_url($amazon_url); ?>"
+        rel="sponsored nofollow"
+        aria-label="<?php echo esc_attr($aria_label); ?>"
+        data-bhp-event="bhp_amazon_affiliate_click"
+        data-bhp-book="<?php echo esc_attr($adventure_key); ?>"
+        data-bhp-source="<?php echo esc_attr($args['source']); ?>"
+        data-bhp-format="<?php echo esc_attr($args['format']); ?>"
+      ><?php esc_html_e('Buy on Amazon', 'brave-hearts'); ?></a>
+      <p class="amazon-affiliate-block__disclosure"><?php echo esc_html(bhp_get_amazon_disclosure_text()); ?></p>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * Adds the Amazon affiliate option below the native WooCommerce purchase
+ * area on single product pages for Mariana Trench and Mount Everest
+ * (paperback and hardcover both link to the same approved book-level
+ * listing). No section renders for Amazon Rainforest — no approved link
+ * exists yet.
+ */
+function bhp_woocommerce_product_amazon_section() {
+    global $product;
+    if (!$product instanceof WC_Product) {
+        return;
+    }
+    $adventure_key = bhp_get_adventure_key_from_sku($product->get_sku());
+    if (!$adventure_key) {
+        return;
+    }
+    $name = strtolower($product->get_name());
+    $format = strpos($name, 'hardcover') !== false ? 'Hardcover' : (strpos($name, 'paperback') !== false ? 'Paperback' : '');
+    echo bhp_render_amazon_affiliate_section($adventure_key, $product->get_name(), [ // phpcs:ignore
+        'source' => 'product_page',
+        'format' => $format,
+    ]);
+}
+add_action('woocommerce_single_product_summary', 'bhp_woocommerce_product_amazon_section', 35);
 
 // ============================================================
 // CONTACT FORM FOUNDATION

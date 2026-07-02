@@ -52,15 +52,21 @@ $amazon_url = bhp_get_safe_link_url($args['amazon_url']);
     <?php endif; ?>
     <div class="adventure-book-card__actions">
       <?php if ($primary_url): ?>
-        <a class="btn btn-primary" href="<?php echo esc_url($primary_url); ?>"><?php echo esc_html($configured_primary_url ? __('View Book', 'brave-hearts') : __('Browse the Shop', 'brave-hearts')); ?></a>
+        <a
+          class="btn btn-primary"
+          href="<?php echo esc_url($primary_url); ?>"
+          data-bhp-event="bhp_direct_purchase_click"
+          data-bhp-book="<?php echo esc_attr($args['key'] ?? ''); ?>"
+          data-bhp-source="books_page"
+        ><?php echo esc_html($configured_primary_url ? __('Buy Direct', 'brave-hearts') : __('Browse the Shop', 'brave-hearts')); ?></a>
       <?php endif; ?>
       <?php if ($formats_url): ?>
         <a class="btn btn-outline" href="<?php echo esc_url($formats_url); ?>"><?php esc_html_e('Shop Formats', 'brave-hearts'); ?></a>
       <?php endif; ?>
-      <?php if ($amazon_url): ?>
-        <a class="btn btn-outline" href="<?php echo esc_url($amazon_url); ?>" rel="sponsored noopener"><?php esc_html_e('Buy on Amazon', 'brave-hearts'); ?></a>
-      <?php endif; ?>
     </div>
     <?php if (!$args['available']): ?><p class="adventure-book-card__availability"><?php esc_html_e('This adventure is not currently available for purchase.', 'brave-hearts'); ?></p><?php endif; ?>
+    <?php if (function_exists('bhp_render_amazon_affiliate_section')): ?>
+      <?php echo bhp_render_amazon_affiliate_section($args['key'] ?? '', $args['title'], ['source' => 'books_page']); // phpcs:ignore ?>
+    <?php endif; ?>
   </div>
 </article>
