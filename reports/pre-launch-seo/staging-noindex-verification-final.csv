@@ -1,0 +1,14 @@
+﻿URL,HTTP Status,Robots Meta,Robots Header,Canonical,Result,Notes
+https://staging2.braveheartspublishing.com/,200,"nofollow, noindex",,suppressed on noindex response,PASS,Homepage
+https://staging2.braveheartspublishing.com/books/,200,"nofollow, noindex",,suppressed on noindex response,PASS,Books
+https://staging2.braveheartspublishing.com/product/adventures-of-charlotte-and-henry-the-mariana-trench-hardcover/,200,"nofollow, noindex",,suppressed on noindex response,PASS,Product
+https://staging2.braveheartspublishing.com/science-books-for-kids-that-feel-like-adventures/,200,"nofollow, noindex",,suppressed on noindex response,PASS,Post
+https://staging2.braveheartspublishing.com/teachers/,200,"nofollow, noindex",,suppressed on noindex response,PASS,Guides
+https://staging2.braveheartspublishing.com/teachers/#science,200,"nofollow, noindex",,suppressed on noindex response,PASS,Topic section; section inherits /teachers/ metadata
+https://staging2.braveheartspublishing.com/teachers/#mariana-trench,200,"nofollow, noindex",,suppressed on noindex response,PASS,Destination section; section inherits /teachers/ metadata
+https://staging2.braveheartspublishing.com/about/,200,"nofollow, noindex",,suppressed on noindex response,PASS,About
+https://staging2.braveheartspublishing.com/contact/,200,"nofollow, noindex",,suppressed on noindex response,PASS,Contact
+https://staging2.braveheartspublishing.com/cart/,200,"noindex, follow",,suppressed on noindex response,PASS,Cart
+https://staging2.braveheartspublishing.com/checkout/,200,"noindex, follow",,suppressed on noindex response,PASS,Checkout
+https://staging2.braveheartspublishing.com/?s=adventure,200,"nofollow, noindex",,suppressed on noindex response,PASS,Search
+https://staging2.braveheartspublishing.com/category/uncategorized/,200,"nofollow, noindex",,suppressed on noindex response,PASS,Category

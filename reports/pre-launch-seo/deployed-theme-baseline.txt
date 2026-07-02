@@ -1,0 +1,24 @@
+Brave Hearts Publishing deployed theme baseline
+Generated: 2026-07-01
+
+ZIP filename: brave-hearts-theme-deploy-explorer-expedition-guides.zip
+ZIP path: C:\BHP\brave-hearts-theme\brave-hearts-theme-deploy-explorer-expedition-guides.zip
+ZIP size: 3,155,975 bytes
+Theme version: 1.16.0
+Runtime file count: 61
+Extraction path: C:\BHP\brave-hearts-theme\tmp\seo-remediation-baseline-1.16.0
+Top-level contents: assets/, inc/, template-parts/, 404.php, footer.php, front-page.php, functions.php, header.php, index.php, page-about.php, page-adventure-club.php, page-books.php, page-contact.php, page-explorer-passport-download.php, page-explorer-passport-lead-magnet.php, page-explorer-passport-thank-you.php, page-explorer-passport.php, page-family-resources.php, page-teachers.php, page.php, searchform.php, single.php, style.css, theme.json
+
+SHA-256
+style.css: 51F12F7DA5B0AD838F2A11ADBCF8F923B27F110AA05183080C070F37C53AF72A
+functions.php: AF9954A5554B9DB6BD9D8F76CA3CD14E96008B79E82D8027A677451D06025E74
+header.php: 0C9EF2C487A9B84082DFB2BBBE95B8BB8C0696A005E5C27F8189CE7A5BCC31AA
+footer.php: 1096600A1328A4FFF8FDCC2231557F6F455693296FA04FCC9ADBE1937AF61558
+front-page.php: 192969C826D1D95E7B7652EB7C757A5A67A5369C0EA6BA82ACC4D44A7A5CFC63
+page-teachers.php: F3CFA8ADE4A3834B06D99EE0C28C0010B03B2E392E2D6BAE946171C2C1FA1911
+single.php: 363E745CFE847CD8E408925BC83C0209C0C4659DB2FB1667AE14A54EE55EC7A6
+template-parts/guides/article-card.php: E2D59B94E9C766DBDC7EC1C0AEAC1C5C8E01B5842FABB8897A670B34B3FD1CFC
+template-parts/guides/breadcrumbs.php: 5A1CE73B65E2AF612C26AA8EE30817DEA73EC89AF93B89F3031FC37FE3186E95
+template-parts/guides/related-content.php: 745E800257559B627BC5FA956460132BD1623137262231ACD694F873918EBC4D
+
+Validation result: PASS. The archive is a direct-upload WordPress theme, contains version 1.16.0, includes all three Explorer Expedition Guides template parts, and matches the deployed theme asset path observed on staging.

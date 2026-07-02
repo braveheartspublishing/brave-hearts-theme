@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) || ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 }
 
 $mode = in_array( '--apply', $GLOBALS['argv'], true ) ? 'apply' : 'dry-run';
-$csv  = __DIR__ . '/bhp-redirect-map.csv';
+$csv  = __DIR__ . '/bhp-redirect-map-final.csv';
 
 if ( ! file_exists( $csv ) || ! is_readable( $csv ) ) {
 	WP_CLI::error( 'bhp-redirect-map.csv is missing or unreadable.' );
@@ -77,8 +77,7 @@ while ( false !== ( $row = fgetcsv( $handle ) ) ) {
 fclose( $handle );
 
 if ( 'apply' === $mode ) {
-	WP_CLI::error( 'Apply mode is locked: verify the installed Rank Math version, schema, and supported native import/API first. Approve rows in the CSV, export a database backup, test one redirect through Rank Math, then replace this guard with that verified method.' );
+	WP_CLI::error( 'Apply mode is locked: verify the installed Rank Math version, schema, and supported native import/API first. Export a database backup and existing redirects, test one redirect through Rank Math, then replace this guard with that verified method. Rollback must restore the redirect export/database backup and purge caches.' );
 }
 
 WP_CLI::success( sprintf( 'Dry run complete: %d valid, %d skipped, %d failed. No redirects written.', $counts['valid'], $counts['skipped'], $counts['failed'] ) );
-
