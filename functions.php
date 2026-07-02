@@ -1173,6 +1173,85 @@ function bhp_woocommerce_product_amazon_section() {
 add_action('woocommerce_single_product_summary', 'bhp_woocommerce_product_amazon_section', 35);
 
 // ============================================================
+// CHECKOUT MARKETING CONSENT
+// ============================================================
+/**
+ * Two optional, unchecked-by-default marketing consent checkboxes at
+ * checkout. Purchasing alone never implies consent — both fields are
+ * independent of order completion and are not required. Values are
+ * captured via WooCommerce's Additional Checkout Fields API (which
+ * persists them to the order under its own key) and then mirrored into
+ * explicit, stable meta keys here so any future sync (HubSpot or
+ * otherwise) has a single, predictable source of truth to read from
+ * rather than depending on WooCommerce's internal field-storage format.
+ */
+function bhp_get_marketing_consent_field_definitions() {
+    return [
+        'new_book_releases' => [
+            'id'    => 'brave-hearts/new-book-releases',
+            'label' => __('Send me announcements when a new Charlotte and Henry book, edition, or bundle is released.', 'brave-hearts'),
+            'meta'  => '_bhp_new_book_releases_optin',
+        ],
+        'explorer_updates' => [
+            'id'    => 'brave-hearts/explorer-updates',
+            'label' => __('Send me new book announcements, free teacher guides, family activities, outdoor education ideas, Expedition Guides, and occasional Brave Hearts Publishing news.', 'brave-hearts'),
+            'meta'  => '_bhp_explorer_updates_optin',
+        ],
+    ];
+}
+
+function bhp_register_marketing_consent_fields() {
+    if (!function_exists('woocommerce_register_additional_checkout_field')) {
+        return;
+    }
+    foreach (bhp_get_marketing_consent_field_definitions() as $field) {
+        woocommerce_register_additional_checkout_field([
+            'id'       => $field['id'],
+            'label'    => $field['label'],
+            'location' => 'order',
+            'type'     => 'checkbox',
+            'required' => false,
+        ]);
+    }
+}
+add_action('woocommerce_init', 'bhp_register_marketing_consent_fields');
+
+/**
+ * Mirror the two checkbox values into explicit order meta once the order
+ * exists, whether it came from the classic checkout or Checkout Blocks.
+ * Selecting neither box stores 'no' on both fields and no consent
+ * timestamp — no marketing subscription is implied either way.
+ */
+function bhp_store_marketing_consent_meta($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        return;
+    }
+
+    $any_consent_given = false;
+    foreach (bhp_get_marketing_consent_field_definitions() as $field) {
+        // WooCommerce's Additional Checkout Fields API stores "order"
+        // location values under a `_wc_other/{field_id}` meta key, not
+        // the raw field id.
+        $value = $order->get_meta('_wc_other/' . $field['id']);
+        $checked = in_array($value, [true, 'yes', '1', 1], true) || $value === true;
+        $order->update_meta_data($field['meta'], $checked ? 'yes' : 'no');
+        if ($checked) {
+            $any_consent_given = true;
+        }
+    }
+
+    if ($any_consent_given) {
+        $order->update_meta_data('_bhp_marketing_consent_timestamp', current_time('mysql', true));
+        $order->update_meta_data('_bhp_marketing_consent_source', 'checkout');
+    }
+
+    $order->save();
+}
+add_action('woocommerce_checkout_order_processed', 'bhp_store_marketing_consent_meta', 20, 1);
+add_action('woocommerce_store_api_checkout_order_processed', 'bhp_store_marketing_consent_meta', 20, 1);
+
+// ============================================================
 // CONTACT FORM FOUNDATION
 // ============================================================
 /**
