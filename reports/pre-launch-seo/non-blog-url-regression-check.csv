@@ -1,0 +1,25 @@
+﻿Object Type,Object,URL Before,URL After,Changed,Expected,Result,Notes
+page,Mailchimp Test,/mailchimp-test/,/mailchimp-test/,no,unchanged,PASS,HTTP 200
+page,Read-Aloud Books & Classroom Resources for Grades 1-3,/read-alouds/,/read-alouds/,no,unchanged,PASS,HTTP 200
+page,Reluctant Readers — What Actually Works for Kids Who Hate Books,/reluctant-readers/,/reluctant-readers/,no,unchanged,PASS,HTTP 200
+page,"Mariana Trench & Ocean Science for Kids — Facts, Books & Adventures",/mariana-trench/,/mariana-trench/,no,unchanged,PASS,HTTP 200
+page,Reading Levels & Lexile Scores,/reading-levels/,/reading-levels/,no,unchanged,PASS,HTTP 200
+page,Bridge Books for Kids Ages 6-9 — The Complete Guide,/bridge-books/,/bridge-books/,no,unchanged,PASS,HTTP 200
+page,For Teachers,/teachers/,/teachers/,no,unchanged,PASS,HTTP 200
+page,Books,/books/,/books/,no,unchanged,PASS,HTTP 200
+page,Contact,/contact/,/contact/,no,unchanged,PASS,HTTP 200
+page,Home,/,/,no,unchanged,PASS,HTTP 200
+page,Teacher’s Guide,/teachers-guide/,/teachers/,yes,intentional teacher-guide consolidation,PASS,HTTP 200
+page,Blog,/blog/,/blog/,no,unchanged,PASS,HTTP 200
+page,About,/about/,/about/,no,unchanged,PASS,HTTP 200
+page,My account,/my-account/,/my-account/,no,unchanged,PASS,HTTP 200
+page,Checkout,/checkout/,/cart/,yes,empty checkout redirects to cart,PASS,HTTP 200
+page,Cart,/cart/,/cart/,no,unchanged,PASS,HTTP 200
+page,Shop,/shop/,/shop/,no,unchanged,PASS,HTTP 200
+page,Sample Page,/sample-page/,/sample-page/,no,unchanged,PASS,HTTP 200
+product,Adventures of Charlotte and Henry: The Amazon (Hardcover),/product/adventures-of-charlotte-and-henry-the-amazon-hardcover/,/product/adventures-of-charlotte-and-henry-the-amazon-hardcover/,no,unchanged,PASS,HTTP 200
+product,Adventures of Charlotte and Henry: The Amazon (Paperback),/product/adventures-of-charlotte-and-henry-the-amazon-paperback/,/product/adventures-of-charlotte-and-henry-the-amazon-paperback/,no,unchanged,PASS,HTTP 200
+product,Adventures of Charlotte and Henry: Mount Everest (Hardcover),/product/adventures-of-charlotte-and-henry-mount-everest-hardcover/,/product/adventures-of-charlotte-and-henry-mount-everest-hardcover/,no,unchanged,PASS,HTTP 200
+product,Adventures of Charlotte and Henry: Mount Everest (Paperback),/product/adventures-of-charlotte-and-henry-mount-everest-paperback/,/product/adventures-of-charlotte-and-henry-mount-everest-paperback/,no,unchanged,PASS,HTTP 200
+product,Adventures of Charlotte and Henry: The Mariana Trench (Hardcover),/product/adventures-of-charlotte-and-henry-the-mariana-trench-hardcover/,/product/adventures-of-charlotte-and-henry-the-mariana-trench-hardcover/,no,unchanged,PASS,HTTP 200
+product,Adventures of Charlotte and Henry: The Mariana Trench (Paperback),/product/adventures-of-charlotte-and-henry-the-mariana-trench-paperback/,/product/adventures-of-charlotte-and-henry-the-mariana-trench-paperback/,no,unchanged,PASS,HTTP 200
