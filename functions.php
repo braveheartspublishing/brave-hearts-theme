@@ -502,13 +502,17 @@ function bhp_sanitize_content_links($content) {
                 continue;
             }
 
+            $href_query    = (string) wp_parse_url($href, PHP_URL_QUERY);
+            $href_fragment = (string) wp_parse_url($href, PHP_URL_FRAGMENT);
+            $href_suffix   = ('' !== $href_query ? '?' . $href_query : '') . ('' !== $href_fragment ? '#' . $href_fragment : '');
+
             if (isset($known_path_repairs[$href_path_key])) {
-                $processor->set_attribute('href', $known_path_repairs[$href_path_key]);
+                $processor->set_attribute('href', $known_path_repairs[$href_path_key] . $href_suffix);
                 continue;
             }
 
             if ($href_path === $legacy_path && $href_path !== $canonical_path) {
-                $processor->set_attribute('href', $canonical_url);
+                $processor->set_attribute('href', $canonical_url . $href_suffix);
             }
         }
 
@@ -534,12 +538,16 @@ function bhp_sanitize_content_links($content) {
             return $tag;
         }
 
+        $href_query    = (string) wp_parse_url($href, PHP_URL_QUERY);
+        $href_fragment = (string) wp_parse_url($href, PHP_URL_FRAGMENT);
+        $href_suffix   = ('' !== $href_query ? '?' . $href_query : '') . ('' !== $href_fragment ? '#' . $href_fragment : '');
+
         if (isset($known_path_repairs[$href_path_key])) {
-            return str_replace($href_match[2], esc_url($known_path_repairs[$href_path_key]), $tag);
+            return str_replace($href_match[2], esc_url($known_path_repairs[$href_path_key] . $href_suffix), $tag);
         }
 
         if ($href_path === $legacy_path && $href_path !== $canonical_path) {
-            return str_replace($href_match[2], esc_url($canonical_url), $tag);
+            return str_replace($href_match[2], esc_url($canonical_url . $href_suffix), $tag);
         }
 
         return $tag;
