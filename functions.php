@@ -457,6 +457,47 @@ function bhp_redirect_legacy_bookvault_mariana_slug() {
 }
 add_action('template_redirect', 'bhp_redirect_legacy_bookvault_mariana_slug', 1);
 
+/**
+ * Mailchimp for WooCommerce ships two independent checkout newsletter
+ * checkboxes: an "additional checkout field" (gated by its own
+ * mailchimp_checkbox_defaults=hide setting, already configured) and a
+ * separate native Checkout Block ("subscribe-to-newsletter", registered in
+ * blocks/newsletter.php) that renders unconditionally whenever Mailchimp is
+ * configured and never checks that same hide setting. There's no plugin
+ * option to hide this second one, so it's hidden here the same way the
+ * plugin's own "hide" mode hides the first one: client-side, on the
+ * checkout page only.
+ */
+function bhp_hide_duplicate_mailchimp_newsletter_block() {
+    if (!function_exists('is_checkout') || !is_checkout()) {
+        return;
+    }
+    ?>
+    <style>
+        .wc-block-components-checkbox:has(#subscribe-to-newsletter) {
+            display: none !important;
+        }
+    </style>
+    <script>
+        (function () {
+            function hideMailchimpNewsletterCheckbox() {
+                var input = document.getElementById('subscribe-to-newsletter');
+                if (!input) {
+                    return;
+                }
+                var wrapper = input.closest('.wc-block-components-checkbox') || input.parentElement;
+                if (wrapper) {
+                    wrapper.style.display = 'none';
+                }
+            }
+            document.addEventListener('DOMContentLoaded', hideMailchimpNewsletterCheckbox);
+            document.body && document.body.addEventListener('wc-blocks_render_blocks_frontend', hideMailchimpNewsletterCheckbox);
+        })();
+    </script>
+    <?php
+}
+add_action('wp_footer', 'bhp_hide_duplicate_mailchimp_newsletter_block');
+
 function bhp_canonicalize_teacher_menu_items($items) {
     $home_host    = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
     $teacher_path = untrailingslashit((string) wp_parse_url(home_url('/teachers/'), PHP_URL_PATH));
