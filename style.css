@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.16.2
+Version: 1.16.3
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -417,13 +417,21 @@ input[type='submit'],
 .btn-ghost:hover,
 .wp-block-button.is-style-bhp-ghost .wp-block-button__link:hover { background: var(--color-surface-muted); color: var(--color-primary-dark); }
 .section--dark .btn-outline,
-.hero-section .btn-outline { border-color: var(--color-pale); color: var(--color-white); }
+.hero-section .btn-outline,
+body:not(.home) .final-cta .btn-outline,
+.order-expedition-next .btn-outline { border-color: var(--color-pale); color: var(--color-white); }
 .section--dark .btn-outline:hover,
-.hero-section .btn-outline:hover { border-color: var(--color-white); background: var(--color-overlay-light); }
+.hero-section .btn-outline:hover,
+body:not(.home) .final-cta .btn-outline:hover,
+.order-expedition-next .btn-outline:hover { border-color: var(--color-white); background: var(--color-overlay-light); }
 .section--dark .btn-ghost,
-.hero-section .btn-ghost { color: var(--color-white); }
+.hero-section .btn-ghost,
+body:not(.home) .final-cta .btn-ghost,
+.order-expedition-next .btn-ghost { color: var(--color-white); }
 .section--dark .btn-ghost:hover,
-.hero-section .btn-ghost:hover { background: var(--color-overlay-light); }
+.hero-section .btn-ghost:hover,
+body:not(.home) .final-cta .btn-ghost:hover,
+.order-expedition-next .btn-ghost:hover { background: var(--color-overlay-light); }
 
 /* --- CARD SYSTEM --- */
 .card-grid {
@@ -1286,6 +1294,22 @@ input[type='submit'],
   background: var(--expedition-forest) !important;
   color: #fff !important;
   text-shadow: none !important;
+}
+
+/*
+ * WooCommerce Cart/Checkout Blocks render primary actions (Proceed to
+ * Checkout, Place Order, Pay for Order) as .wc-block-components-button.
+ * When that element is an <a> tag, the sitewide `a { color }` rule (below)
+ * would otherwise set its text to the same color as its own filled
+ * background on non-home pages, making the label unreadable. Button-tag
+ * variants are unaffected by the anchor rule and already render correctly;
+ * this rule keeps anchor variants consistent without touching either.
+ */
+a.wc-block-components-button.contained,
+a.wc-block-components-button.contained:hover,
+a.wc-block-components-button.contained:focus,
+a.wc-block-components-button.contained:active {
+  color: var(--color-ivory) !important;
 }
 .woocommerce ul.products li.product {
   width: 100% !important;

@@ -1075,7 +1075,7 @@ function bhp_get_amazon_affiliate_urls() {
     return apply_filters('bhp_amazon_affiliate_urls', [
         'mariana_trench'    => 'https://amzn.to/4svChYL',
         'mount_everest'     => 'https://amzn.to/4mptuGv',
-        'amazon_rainforest' => '',
+        'amazon_rainforest' => 'https://amzn.to/4va9me7',
     ]);
 }
 
