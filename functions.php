@@ -430,6 +430,33 @@ function bhp_redirect_legacy_teacher_resources() {
 }
 add_action('template_redirect', 'bhp_redirect_legacy_teacher_resources');
 
+/**
+ * The Bookvault WooCommerce plugin originally created the Mariana Trench
+ * Paperback product at this slug before it was migrated onto the existing
+ * product/URL. Nothing should still be linking to it, but WordPress core's
+ * own 404 "guess a nearby post" fallback (redirect_guess_404_permalink, run
+ * from redirect_canonical on the default template_redirect priority) matches
+ * it against the Hardcover product's slug and sends visitors there instead.
+ * A Rank Math redirect rule was added for this same mapping, but it hooks at
+ * the same priority and loses the race to WordPress core's earlier-registered
+ * hook, which exits before Rank Math's redirect runs. Running at priority 1
+ * guarantees this fires first.
+ */
+function bhp_redirect_legacy_bookvault_mariana_slug() {
+    if (is_admin()) {
+        return;
+    }
+
+    $request_path = untrailingslashit((string) wp_parse_url(wp_unslash($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH));
+    $legacy_path  = untrailingslashit((string) wp_parse_url(home_url('/product/adventures-of-charlotte-and-henry-the-mariana-trench/'), PHP_URL_PATH));
+
+    if ($request_path === $legacy_path) {
+        wp_safe_redirect(home_url('/product/adventures-of-charlotte-and-henry-the-mariana-trench-paperback/'), 301, 'Brave Hearts Theme');
+        exit;
+    }
+}
+add_action('template_redirect', 'bhp_redirect_legacy_bookvault_mariana_slug', 1);
+
 function bhp_canonicalize_teacher_menu_items($items) {
     $home_host    = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
     $teacher_path = untrailingslashit((string) wp_parse_url(home_url('/teachers/'), PHP_URL_PATH));
