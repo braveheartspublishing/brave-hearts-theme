@@ -11,7 +11,6 @@ $source_page = get_permalink($page_id) ?: home_url('/');
 $download = bhp_get_mariana_guide_download('teachers');
 $adventure = bhp_get_series_adventures()['mariana_trench'] ?? [];
 $author_visit_url = bhp_get_safe_link_url(add_query_arg('inquiry', 'read-aloud', home_url('/contact/')));
-$thank_you_url = add_query_arg('guide', 'teacher', home_url('/mariana-guide-thank-you/'));
 
 $value_points = [
     __('Printable', 'brave-hearts'),
@@ -46,24 +45,24 @@ $value_points = [
 
 <section class="passport-section section section--muted" aria-labelledby="mariana-teacher-standards-title">
   <div class="container container--content">
-    <h2 id="mariana-teacher-standards-title" class="text-section-title"><?php esc_html_e('Curriculum Alignment', 'brave-hearts'); ?></h2>
-    <p><?php esc_html_e('Common Core ELA Standards (Grades 1–3): RL.1.3 · RL.2.6 · RL.3.3 · SL.1.1 · SL.2.1 · SL.3.1', 'brave-hearts'); ?></p>
-    <p><?php esc_html_e('NGSS (Next Generation Science Standards): ESS2 — Earth’s Systems (Oceans and Water Systems)', 'brave-hearts'); ?></p>
-    <p class="text-caption"><?php esc_html_e('Standards as documented in the guide itself.', 'brave-hearts'); ?></p>
+    <h2 id="mariana-teacher-standards-title" class="text-section-title"><?php esc_html_e('Standards Connections', 'brave-hearts'); ?></h2>
+    <p><?php esc_html_e('Includes connections to Common Core ELA and NGSS concepts listed in the guide.', 'brave-hearts'); ?></p>
+    <p class="text-caption"><?php esc_html_e('Common Core ELA (Grades 1–3): RL.1.3 · RL.2.6 · RL.3.3 · SL.1.1 · SL.2.1 · SL.3.1 — NGSS ESS2: Earth’s Systems (Oceans and Water Systems).', 'brave-hearts'); ?></p>
   </div>
 </section>
 
 <div class="container passport-signup-wrap section section--muted">
   <?php if ($download['ready']): ?>
     <?php get_template_part('template-parts/acquisition/lead-magnet-cta', null, [
-        'id'               => 'mariana-teacher-signup',
-        'lead_magnet'      => 'mariana_trench_classroom_guide',
-        'audience_type'    => 'teachers',
-        'title'            => __('Get the Classroom Guide', 'brave-hearts'),
-        'text'             => __('A free, no-prep 2-page companion built for Grades 1–3 read-alouds and classroom discussion.', 'brave-hearts'),
-        'submit_label'     => __('Email Me the Free Guide', 'brave-hearts'),
-        'source_page'      => $source_page,
-        'success_redirect' => $thank_you_url,
+        'id'                   => 'mariana-teacher-signup',
+        'lead_magnet'          => 'mariana_trench_classroom_guide',
+        'audience_type'        => 'teachers',
+        'title'                => __('Get the Classroom Guide', 'brave-hearts'),
+        'text'                 => __('A free, no-prep 2-page companion built for Grades 1–3 read-alouds and classroom discussion.', 'brave-hearts'),
+        'submit_label'         => __('Email Me the Free Guide', 'brave-hearts'),
+        'source_page'          => $source_page,
+        'success_redirect_key' => 'mariana_guide_thank_you',
+        'require_name'         => true,
     ]); ?>
   <?php else: ?>
     <aside class="acquisition-panel lead-magnet-cta" aria-labelledby="mariana-teacher-unavailable-title">

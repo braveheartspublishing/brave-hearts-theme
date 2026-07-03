@@ -4,37 +4,48 @@
  *
  * Required segmentation fields: audience_type, lead_magnet, and source_page.
  * Forms remain disabled if MC4WP or its selected audience is unavailable.
+ *
+ * Set 'require_name' => true to make the first-name field required for this
+ * specific form only — other forms rendered from this same template are
+ * unaffected unless they also opt in.
  */
 defined('ABSPATH') || exit;
 
 $args = wp_parse_args($args ?? [], [
-    'id'                => '',
-    'action'            => '',
-    'context'           => 'adventure_club',
-    'audience_type'     => 'general_readers',
-    'lead_magnet'       => '',
-    'source_page'       => '',
-    'success_redirect'  => '',
-    'email_name'        => 'email',
-    'email_label'       => '',
-    'email_placeholder' => '',
-    'submit_label'      => '',
-    'privacy_text'      => '',
-    'provider_note'     => '',
-    'hidden_fields'     => [],
-    'aria_labelledby'   => '',
-    'class'             => '',
-    'field_class'       => '',
-    'privacy_class'     => '',
+    'id'                   => '',
+    'action'               => '',
+    'context'              => 'adventure_club',
+    'audience_type'        => 'general_readers',
+    'lead_magnet'          => '',
+    'source_page'          => '',
+    'success_redirect_key' => '',
+    'require_name'         => false,
+    'name_name'            => 'first_name',
+    'name_label'           => '',
+    'name_placeholder'     => '',
+    'email_name'           => 'email',
+    'email_label'          => '',
+    'email_placeholder'    => '',
+    'submit_label'         => '',
+    'privacy_text'         => '',
+    'provider_note'        => '',
+    'hidden_fields'        => [],
+    'aria_labelledby'      => '',
+    'class'                => '',
+    'field_class'          => '',
+    'privacy_class'        => '',
 ]);
 
 $context       = sanitize_key($args['context']);
 $audience_type = bhp_normalize_audience_type($args['audience_type']);
 $form_id       = sanitize_html_class($args['id'] ?: wp_unique_id('bhp-signup-'));
+$name_id       = $form_id . '-name';
 $email_id      = $form_id . '-email';
 $note_id       = $form_id . '-note';
 $status_id     = $form_id . '-status';
 $source_page   = $args['source_page'];
+$require_name  = (bool) $args['require_name'];
+$name_name     = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $args['name_name']) ?: 'first_name';
 $email_name    = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $args['email_name']) ?: 'email';
 
 if (!$source_page) {
@@ -49,6 +60,7 @@ $field_classes   = trim('acquisition-form__field ' . $args['field_class']);
 $privacy_classes = trim('acquisition-form__privacy ' . $args['privacy_class']);
 $provider_note   = $args['provider_note'] ?: __('Signup is temporarily unavailable while the email connection is restored.', 'brave-hearts');
 $feedback        = bhp_get_signup_feedback($form_id);
+$preserved       = bhp_get_signup_preserved_values($form_id);
 $describedby     = trim($note_id . ($feedback ? ' ' . $status_id : ''));
 $reserved_fields = [
     'action',
@@ -57,13 +69,16 @@ $reserved_fields = [
     'source_page',
     'bhp_context',
     'bhp_email_field',
+    'bhp_name_field',
+    'bhp_require_name',
     'bhp_form_id',
     'bhp_signup_nonce',
-    'bhp_success_redirect',
+    'bhp_success_redirect_key',
     'bhp_website',
     $email_name,
+    $name_name,
 ];
-$success_redirect = $args['success_redirect'] ? bhp_get_safe_link_url($args['success_redirect']) : '';
+$success_redirect_key = sanitize_key($args['success_redirect_key']);
 ?>
 <form
   id="<?php echo esc_attr($form_id); ?>"
@@ -77,9 +92,13 @@ $success_redirect = $args['success_redirect'] ? bhp_get_safe_link_url($args['suc
     <input type="hidden" name="action" value="bhp_mailchimp_signup">
     <input type="hidden" name="bhp_context" value="<?php echo esc_attr($context); ?>">
     <input type="hidden" name="bhp_email_field" value="<?php echo esc_attr($email_name); ?>">
+    <?php if ($require_name): ?>
+      <input type="hidden" name="bhp_name_field" value="<?php echo esc_attr($name_name); ?>">
+      <input type="hidden" name="bhp_require_name" value="1">
+    <?php endif; ?>
     <input type="hidden" name="bhp_form_id" value="<?php echo esc_attr($form_id); ?>">
-    <?php if ($success_redirect): ?>
-      <input type="hidden" name="bhp_success_redirect" value="<?php echo esc_url($success_redirect); ?>">
+    <?php if ($success_redirect_key): ?>
+      <input type="hidden" name="bhp_success_redirect_key" value="<?php echo esc_attr($success_redirect_key); ?>">
     <?php endif; ?>
     <?php wp_nonce_field('bhp_mailchimp_signup_' . $form_id, 'bhp_signup_nonce', false); ?>
   <?php endif; ?>
@@ -99,6 +118,23 @@ $success_redirect = $args['success_redirect'] ? bhp_get_safe_link_url($args['suc
     <input id="<?php echo esc_attr($form_id); ?>-website" name="bhp_website" type="text" tabindex="-1" autocomplete="off" <?php disabled(!$form_ready); ?>>
   </div>
 
+  <?php if ($require_name): ?>
+    <div class="<?php echo esc_attr($field_classes); ?>">
+      <label for="<?php echo esc_attr($name_id); ?>"><?php echo esc_html($args['name_label'] ?: __('First name', 'brave-hearts')); ?></label>
+      <input
+        id="<?php echo esc_attr($name_id); ?>"
+        name="<?php echo esc_attr($name_name); ?>"
+        type="text"
+        autocomplete="given-name"
+        placeholder="<?php echo esc_attr($args['name_placeholder']); ?>"
+        value="<?php echo esc_attr($preserved['name']); ?>"
+        <?php disabled(!$form_ready); ?>
+        required
+        aria-required="true"
+      >
+    </div>
+  <?php endif; ?>
+
   <div class="<?php echo esc_attr($field_classes); ?>">
     <label for="<?php echo esc_attr($email_id); ?>"><?php echo esc_html($args['email_label'] ?: __('Email address', 'brave-hearts')); ?></label>
     <input
@@ -107,8 +143,10 @@ $success_redirect = $args['success_redirect'] ? bhp_get_safe_link_url($args['suc
       type="email"
       autocomplete="email"
       placeholder="<?php echo esc_attr($args['email_placeholder']); ?>"
+      value="<?php echo esc_attr($preserved['email']); ?>"
       <?php disabled(!$form_ready); ?>
       required
+      aria-required="true"
     >
   </div>
 

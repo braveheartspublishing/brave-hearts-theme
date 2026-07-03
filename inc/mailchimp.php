@@ -116,6 +116,50 @@ function bhp_get_mailchimp_signup_tags($context, $audience_type, $lead_magnet, $
 }
 
 /**
+ * Whitelisted post-signup redirect destinations. Forms never supply a URL —
+ * only a short key — so there is no attacker-controlled input anywhere in
+ * the redirect decision. Each entry is a published page's path; the actual
+ * permalink is always resolved server-side through get_permalink().
+ */
+function bhp_get_signup_success_redirect_pages() {
+    return apply_filters('bhp_signup_success_redirect_pages', [
+        'mariana_guide_thank_you' => 'mariana-guide-thank-you',
+    ]);
+}
+
+/**
+ * Resolve a whitelisted redirect key (plus the already-normalized audience
+ * type) to a same-site URL, or '' if the key is empty/unknown/unpublished.
+ * wp_validate_redirect() is applied as a second, independent check even
+ * though every candidate URL already comes from get_permalink().
+ */
+function bhp_resolve_success_redirect($key, $audience_type) {
+    $key = sanitize_key((string) $key);
+    if (!$key) {
+        return '';
+    }
+
+    $pages = bhp_get_signup_success_redirect_pages();
+    if (!isset($pages[$key])) {
+        return '';
+    }
+
+    $page = get_page_by_path(sanitize_title($pages[$key]));
+    if (!$page || $page->post_status !== 'publish') {
+        return '';
+    }
+
+    $url = get_permalink($page);
+
+    if ($key === 'mariana_guide_thank_you') {
+        $guide_param = ($audience_type === 'parents_families') ? 'parent' : 'teacher';
+        $url = add_query_arg('guide', $guide_param, $url);
+    }
+
+    return wp_validate_redirect($url, '');
+}
+
+/**
  * Read friendly feedback for one rendered form after a POST/redirect.
  */
 function bhp_get_signup_feedback($form_id) {
@@ -137,6 +181,11 @@ function bhp_get_signup_feedback($form_id) {
             'role'    => 'alert',
             'message' => __('Please enter a valid email address.', 'brave-hearts'),
         ],
+        'missing_name' => [
+            'type'    => 'error',
+            'role'    => 'alert',
+            'message' => __('Please enter your first name.', 'brave-hearts'),
+        ],
         'unavailable' => [
             'type'    => 'error',
             'role'    => 'alert',
@@ -153,32 +202,58 @@ function bhp_get_signup_feedback($form_id) {
 }
 
 /**
+ * Re-populate a form's own fields after a validation error redirected back
+ * to it. Gated by the same form_id match as bhp_get_signup_feedback() so a
+ * value never appears on any form other than the one that submitted it.
+ */
+function bhp_get_signup_preserved_values($form_id) {
+    $target = isset($_GET['bhp_form']) ? sanitize_html_class(wp_unslash($_GET['bhp_form'])) : '';
+    if (!$target || $target !== sanitize_html_class($form_id)) {
+        return ['email' => '', 'name' => ''];
+    }
+
+    return [
+        'email' => isset($_GET['bhp_email']) ? sanitize_email(wp_unslash($_GET['bhp_email'])) : '',
+        'name'  => isset($_GET['bhp_name']) ? sanitize_text_field(wp_unslash($_GET['bhp_name'])) : '',
+    ];
+}
+
+/**
  * Redirect back to the submitting form without exposing provider details.
  *
- * $success_redirect is optional and only takes effect on a successful
+ * $success_redirect_key is optional and only takes effect on a successful
  * signup, letting a form send visitors to a dedicated thank-you page
- * instead of back to itself. Forms that never set it keep the exact
- * existing behavior (back to $source_page with inline feedback).
+ * instead of back to itself. It is always a whitelisted key resolved by
+ * bhp_resolve_success_redirect() — never a URL taken from the request.
+ * Forms that never set it keep the exact existing behavior.
  */
-function bhp_mailchimp_signup_redirect($status, $source_page, $form_id, $success_redirect = '') {
+function bhp_mailchimp_signup_redirect($status, $source_page, $form_id, $success_redirect = '', $preserve = []) {
     if ($status === 'success' && $success_redirect) {
-        $safe_success_redirect = wp_validate_redirect(esc_url_raw($success_redirect), '');
-        if ($safe_success_redirect) {
-            wp_safe_redirect($safe_success_redirect, 303);
-            exit;
-        }
+        wp_safe_redirect($success_redirect, 303);
+        exit;
     }
 
     $fallback = wp_get_referer() ?: home_url('/');
     $return_url = wp_validate_redirect(esc_url_raw($source_page), $fallback);
     $return_url = preg_replace('/#.*$/', '', $return_url);
-    $return_url = remove_query_arg(['bhp_signup', 'bhp_form'], $return_url);
+    $return_url = remove_query_arg(['bhp_signup', 'bhp_form', 'bhp_email', 'bhp_name'], $return_url);
     $form_id = sanitize_html_class($form_id);
 
-    $return_url = add_query_arg([
+    $query_args = [
         'bhp_signup' => sanitize_key($status),
         'bhp_form'   => $form_id,
-    ], $return_url);
+    ];
+
+    if ($status !== 'success') {
+        if (!empty($preserve['email'])) {
+            $query_args['bhp_email'] = rawurlencode(sanitize_email($preserve['email']));
+        }
+        if (!empty($preserve['name'])) {
+            $query_args['bhp_name'] = rawurlencode(sanitize_text_field($preserve['name']));
+        }
+    }
+
+    $return_url = add_query_arg($query_args, $return_url);
 
     if ($form_id) {
         $return_url .= '#' . rawurlencode($form_id . '-status');
@@ -197,28 +272,39 @@ function bhp_handle_mailchimp_signup() {
     $form_id = isset($post['bhp_form_id']) ? sanitize_html_class($post['bhp_form_id']) : 'bhp-signup';
     $source_page = isset($post['source_page']) ? esc_url_raw($post['source_page']) : home_url('/');
     $source_page = wp_validate_redirect($source_page, home_url('/'));
-    $success_redirect = isset($post['bhp_success_redirect']) ? esc_url_raw($post['bhp_success_redirect']) : '';
+    $success_redirect_key = isset($post['bhp_success_redirect_key']) ? sanitize_key($post['bhp_success_redirect_key']) : '';
+    $require_name = !empty($post['bhp_require_name']);
     $nonce = isset($post['bhp_signup_nonce']) ? sanitize_text_field($post['bhp_signup_nonce']) : '';
-
-    if (!$nonce || !wp_verify_nonce($nonce, 'bhp_mailchimp_signup_' . $form_id)) {
-        bhp_mailchimp_signup_redirect('error', $source_page, $form_id);
-    }
-
-    if (!empty($post['bhp_website'])) {
-        bhp_mailchimp_signup_redirect('error', $source_page, $form_id);
-    }
 
     $email_field = isset($post['bhp_email_field'])
         ? preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $post['bhp_email_field'])
         : 'email';
-    $email = isset($post[$email_field]) ? sanitize_email($post[$email_field]) : '';
+    $raw_email = isset($post[$email_field]) ? (string) $post[$email_field] : '';
+    $name_field = isset($post['bhp_name_field'])
+        ? preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $post['bhp_name_field'])
+        : 'first_name';
+    $raw_name = isset($post[$name_field]) ? sanitize_text_field($post[$name_field]) : '';
+    $preserve = ['email' => sanitize_email($raw_email), 'name' => $raw_name];
 
+    if (!$nonce || !wp_verify_nonce($nonce, 'bhp_mailchimp_signup_' . $form_id)) {
+        bhp_mailchimp_signup_redirect('error', $source_page, $form_id, '', $preserve);
+    }
+
+    if (!empty($post['bhp_website'])) {
+        bhp_mailchimp_signup_redirect('error', $source_page, $form_id, '', $preserve);
+    }
+
+    $email = sanitize_email($raw_email);
     if (!$email || !is_email($email)) {
-        bhp_mailchimp_signup_redirect('invalid', $source_page, $form_id);
+        bhp_mailchimp_signup_redirect('invalid', $source_page, $form_id, '', $preserve);
+    }
+
+    if ($require_name && trim($raw_name) === '') {
+        bhp_mailchimp_signup_redirect('missing_name', $source_page, $form_id, '', $preserve);
     }
 
     if (!bhp_mailchimp_signup_is_ready()) {
-        bhp_mailchimp_signup_redirect('unavailable', $source_page, $form_id);
+        bhp_mailchimp_signup_redirect('unavailable', $source_page, $form_id, '', $preserve);
     }
 
     $context = isset($post['bhp_context']) ? sanitize_key($post['bhp_context']) : 'adventure_club';
@@ -226,6 +312,7 @@ function bhp_handle_mailchimp_signup() {
         isset($post['audience_type']) ? sanitize_key($post['audience_type']) : 'general_readers'
     );
     $lead_magnet = isset($post['lead_magnet']) ? sanitize_key($post['lead_magnet']) : '';
+    $success_redirect = bhp_resolve_success_redirect($success_redirect_key, $audience_type);
 
     $field_values = [
         'audience_type' => substr($audience_type, 0, 100),
@@ -240,6 +327,10 @@ function bhp_handle_mailchimp_signup() {
         if ($merge_tag && isset($field_values[$field]) && $field_values[$field] !== '') {
             $merge_fields[$merge_tag] = $field_values[$field];
         }
+    }
+
+    if ($raw_name !== '') {
+        $merge_fields['FNAME'] = substr($raw_name, 0, 100);
     }
 
     $subscriber_data = [
@@ -291,7 +382,7 @@ function bhp_handle_mailchimp_signup() {
             $lead_magnet,
             $source_page
         );
-        bhp_mailchimp_signup_redirect('error', $source_page, $form_id);
+        bhp_mailchimp_signup_redirect('error', $source_page, $form_id, '', $preserve);
     }
 
     bhp_mailchimp_signup_redirect('success', $source_page, $form_id, $success_redirect);

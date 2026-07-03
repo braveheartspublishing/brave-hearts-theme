@@ -17,12 +17,32 @@ function bhp_get_lead_magnet_pdf_url($key) {
     return isset($urls[$key]) ? esc_url_raw($urls[$key]) : '';
 }
 
+/**
+ * Only ever accept an https:// URL on this site's own host, or clear the
+ * field. This is an admin-only (manage_options) settings screen, but the
+ * value it stores is later echoed into public landing pages, so it's held
+ * to the same standard as user-facing input: no other scheme, no other
+ * host, and never anything that could carry markup or script content.
+ */
 function bhp_sanitize_lead_magnet_pdfs($input) {
     $clean = [];
+    $site_host = wp_parse_url(home_url(), PHP_URL_HOST);
+
     foreach (BHP_LEAD_MAGNET_PDF_KEYS as $key) {
-        $value = isset($input[$key]) ? esc_url_raw(trim((string) $input[$key])) : '';
-        $clean[$key] = ($value && wp_http_validate_url($value)) ? $value : '';
+        $value = isset($input[$key]) ? trim((string) $input[$key]) : '';
+        if ($value === '') {
+            $clean[$key] = '';
+            continue;
+        }
+
+        $value = esc_url_raw($value, ['https']);
+        $host = $value ? wp_parse_url($value, PHP_URL_HOST) : '';
+
+        $clean[$key] = ($value && $host && $site_host && $host === $site_host && wp_http_validate_url($value))
+            ? $value
+            : '';
     }
+
     return $clean;
 }
 

@@ -14,7 +14,6 @@ $page_id = get_queried_object_id();
 $source_page = get_permalink($page_id) ?: home_url('/');
 $download = bhp_get_mariana_guide_download('parents_families');
 $adventure = bhp_get_series_adventures()['mariana_trench'] ?? [];
-$thank_you_url = add_query_arg('guide', 'parent', home_url('/mariana-guide-thank-you/'));
 
 $value_points = [
     __('Screen-free learning', 'brave-hearts'),
@@ -49,14 +48,14 @@ $value_points = [
 <div class="container passport-signup-wrap section section--muted">
   <?php if ($download['ready']): ?>
     <?php get_template_part('template-parts/acquisition/lead-magnet-cta', null, [
-        'id'               => 'mariana-parent-signup',
-        'lead_magnet'      => 'mariana_trench_parent_guide',
-        'audience_type'    => 'parents_families',
-        'title'            => __('Send Me the Free Guide', 'brave-hearts'),
-        'text'             => __('A free 2-page reading companion with discussion prompts and a simple ocean-science activity.', 'brave-hearts'),
-        'submit_label'     => __('Send Me the Free Guide', 'brave-hearts'),
-        'source_page'      => $source_page,
-        'success_redirect' => $thank_you_url,
+        'id'                   => 'mariana-parent-signup',
+        'lead_magnet'          => 'mariana_trench_parent_guide',
+        'audience_type'        => 'parents_families',
+        'title'                => __('Send Me the Free Guide', 'brave-hearts'),
+        'text'                 => __('A free 2-page reading companion with discussion prompts and a simple ocean-science activity.', 'brave-hearts'),
+        'submit_label'         => __('Send Me the Free Guide', 'brave-hearts'),
+        'source_page'          => $source_page,
+        'success_redirect_key' => 'mariana_guide_thank_you',
     ]); ?>
   <?php else: ?>
     <aside class="acquisition-panel lead-magnet-cta" aria-labelledby="mariana-parent-coming-soon-title">
