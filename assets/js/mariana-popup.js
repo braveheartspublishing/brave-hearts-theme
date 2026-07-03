@@ -202,34 +202,66 @@
         return;
     }
 
+    // Gated trigger: the scroll condition alone can't open the popup before
+    // a minimum engagement time has passed, and a separate fallback timer
+    // opens it regardless if the visitor never scrolls far enough.
+    //   Desktop: (>=8s elapsed AND scroll >= 40%) OR 15s elapsed
+    //   Mobile:  (>=10s elapsed AND scroll >= 50%) OR 18s elapsed
     var isMobile = window.matchMedia('(max-width: 767px)').matches;
-    var delayMs = isMobile ? 18000 : 12000;
-    var scrollPct = isMobile ? 60 : 45;
+    var minTimeMs = isMobile ? 10000 : 8000;
+    var fallbackMs = isMobile ? 18000 : 15000;
+    var scrollPct = isMobile ? 50 : 40;
     var triggered = false;
-    var timerId = null;
+    var minTimeElapsed = false;
+    var minTimeTimerId = null;
+    var fallbackTimerId = null;
+
+    function getScrollPercent() {
+        var doc = document.documentElement;
+        var scrolled = window.scrollY || doc.scrollTop || 0;
+        // Guards pages too short to scroll: height floors at 1 instead of
+        // going to 0 or negative, so the percentage stays finite.
+        var height = Math.max(doc.scrollHeight - doc.clientHeight, 1);
+        return ((scrolled + doc.clientHeight) / (height + doc.clientHeight)) * 100;
+    }
+
+    function cleanupTriggers() {
+        if (minTimeTimerId) {
+            clearTimeout(minTimeTimerId);
+            minTimeTimerId = null;
+        }
+        if (fallbackTimerId) {
+            clearTimeout(fallbackTimerId);
+            fallbackTimerId = null;
+        }
+        window.removeEventListener('scroll', onScroll);
+    }
 
     function trigger() {
         if (triggered) {
             return;
         }
         triggered = true;
-        if (timerId) {
-            clearTimeout(timerId);
-        }
-        window.removeEventListener('scroll', onScroll);
+        cleanupTriggers();
         show();
     }
 
     function onScroll() {
-        var doc = document.documentElement;
-        var scrolled = window.scrollY || doc.scrollTop || 0;
-        var height = Math.max(doc.scrollHeight - doc.clientHeight, 1);
-        var pct = ((scrolled + doc.clientHeight) / (height + doc.clientHeight)) * 100;
-        if (pct >= scrollPct) {
+        if (!minTimeElapsed) {
+            return;
+        }
+        if (getScrollPercent() >= scrollPct) {
             trigger();
         }
     }
 
-    timerId = window.setTimeout(trigger, delayMs);
+    minTimeTimerId = window.setTimeout(function () {
+        minTimeElapsed = true;
+        // The visitor may already be past the scroll threshold and idle
+        // (no further scroll event to react to) — check right away.
+        onScroll();
+    }, minTimeMs);
+
+    fallbackTimerId = window.setTimeout(trigger, fallbackMs);
     window.addEventListener('scroll', onScroll, { passive: true });
 })();
