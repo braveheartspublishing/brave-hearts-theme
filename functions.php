@@ -956,7 +956,8 @@ function bhp_get_mariana_guide_download($audience_type) {
  */
 add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_type, $lead_magnet, $source_page) {
     if ($lead_magnet === 'mariana_trench_classroom_guide') {
-        return ['Mariana Trench Classroom Guide', 'Audience: Teacher/Librarian', 'Source: Mariana Teacher Landing Page'];
+        $source_tag = ($context === 'mariana_popup') ? 'Source: Mariana Popup' : 'Source: Mariana Teacher Landing Page';
+        return ['Mariana Trench Classroom Guide', 'Audience: Teacher/Librarian', $source_tag];
     }
 
     if ($lead_magnet === 'mariana_trench_parent_guide') {
@@ -965,6 +966,107 @@ add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_typ
 
     return $tags;
 }, 10, 5);
+
+// ============================================================
+// MARIANA SITEWIDE POPUP
+// ============================================================
+/**
+ * Simple page-type label for the popup's analytics events. Not used for
+ * any access-control decision, only for the page_type value sent to
+ * dataLayer.
+ */
+function bhp_get_page_type_for_analytics() {
+    if (is_front_page()) {
+        return 'home';
+    }
+    if (function_exists('is_product') && is_product()) {
+        return 'product';
+    }
+    if (is_singular('post')) {
+        return 'post';
+    }
+    if (is_page()) {
+        return 'page';
+    }
+    if (is_archive()) {
+        return 'archive';
+    }
+    return 'other';
+}
+
+/**
+ * Server-side eligibility for the Mariana popup. Only decides whether this
+ * *page* is an appropriate place for the popup to exist at all — timing,
+ * scroll depth, and frequency capping happen client-side in
+ * mariana-popup.js because those rely on localStorage/sessionStorage.
+ */
+function bhp_should_show_mariana_popup() {
+    if (is_admin() || (is_user_logged_in() && current_user_can('manage_options'))) {
+        return false;
+    }
+
+    if (function_exists('is_cart') && is_cart()) {
+        return false;
+    }
+    if (function_exists('is_checkout') && is_checkout()) {
+        return false;
+    }
+    if (function_exists('is_account_page') && is_account_page()) {
+        return false;
+    }
+    if (function_exists('is_order_received_page') && is_order_received_page()) {
+        return false;
+    }
+    if (is_privacy_policy()) {
+        return false;
+    }
+    if (function_exists('wc_get_page_id')) {
+        $terms_page_id = wc_get_page_id('terms');
+        if ($terms_page_id > 0 && is_page($terms_page_id)) {
+            return false;
+        }
+    }
+    if (is_page_template([
+        'page-mariana-guide-teacher.php',
+        'page-mariana-guide-parent.php',
+        'page-mariana-guide-thank-you.php',
+    ])) {
+        return false;
+    }
+    // Contact page's own success state (same-page inline feedback, not a
+    // distinct URL) — don't stack the popup on top of a just-completed form.
+    if (is_page('contact') && isset($_GET['bhp_signup']) && sanitize_key(wp_unslash($_GET['bhp_signup'])) === 'success') {
+        return false;
+    }
+
+    return (bool) apply_filters('bhp_show_mariana_popup', true);
+}
+
+/**
+ * Enqueue the popup script sitewide on the front end (not just on pages
+ * where the popup itself renders) so the thank-you page can still detect a
+ * just-completed popup signup and fire the popup_success event — see the
+ * pending-submit handoff in mariana-popup.js for why.
+ */
+add_action('wp_enqueue_scripts', function () {
+    if (is_admin()) {
+        return;
+    }
+    wp_enqueue_script(
+        'bhp-mariana-popup',
+        get_template_directory_uri() . '/assets/js/mariana-popup.js',
+        [],
+        wp_get_theme()->get('Version'),
+        true
+    );
+});
+
+add_action('wp_footer', function () {
+    if (!bhp_should_show_mariana_popup()) {
+        return;
+    }
+    get_template_part('template-parts/acquisition/mariana-popup');
+});
 
 /**
  * Provider-neutral action filter. Leave the returned value empty until a

@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.16.7
+Version: 1.16.8
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3963,4 +3963,94 @@ body.search .header-inner { width: 100%; }
 }
 @media (max-width: 640px) {
   .guide-article-grid--educators { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   MARIANA SITEWIDE POPUP
+   ============================================================ */
+.mariana-popup[hidden] { display: none; }
+.mariana-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+.mariana-popup__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(13, 43, 30, 0.72);
+}
+.mariana-popup__dialog {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  max-height: calc(100vh - var(--space-8));
+  overflow-y: auto;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8) var(--space-6) var(--space-6);
+  text-align: left;
+}
+.mariana-popup__dialog:focus { outline: none; }
+.mariana-popup__dialog:focus-visible { outline: 3px solid var(--color-focus); outline-offset: -3px; }
+.mariana-popup__close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.mariana-popup__close:hover,
+.mariana-popup__close:focus-visible { background: var(--color-surface-muted); color: var(--color-ink); }
+.mariana-popup__dialog h2 {
+  font-family: var(--font-display);
+  color: var(--color-navy);
+  margin-block: var(--space-2) var(--space-3);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+}
+.mariana-popup__text { color: var(--color-text); margin-bottom: var(--space-5); }
+.mariana-popup__form .acquisition-form__field { margin-bottom: var(--space-4); }
+.mariana-popup__trust { color: var(--color-text-muted); margin-top: var(--space-4); margin-bottom: var(--space-2); }
+.mariana-popup__dismiss {
+  display: block;
+  margin-inline: auto;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.mariana-popup__dismiss:hover,
+.mariana-popup__dismiss:focus-visible { color: var(--color-ink); }
+
+@media (max-width: 640px) {
+  .mariana-popup { padding: 0; align-items: flex-end; }
+  .mariana-popup__dialog {
+    max-width: none;
+    width: 100%;
+    max-height: 88vh;
+    border-radius: var(--radius-md, 12px) var(--radius-md, 12px) 0 0;
+    padding: var(--space-6) var(--space-5) var(--space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mariana-popup, .mariana-popup__dialog { transition: none !important; animation: none !important; }
 }
