@@ -154,8 +154,21 @@ function bhp_get_signup_feedback($form_id) {
 
 /**
  * Redirect back to the submitting form without exposing provider details.
+ *
+ * $success_redirect is optional and only takes effect on a successful
+ * signup, letting a form send visitors to a dedicated thank-you page
+ * instead of back to itself. Forms that never set it keep the exact
+ * existing behavior (back to $source_page with inline feedback).
  */
-function bhp_mailchimp_signup_redirect($status, $source_page, $form_id) {
+function bhp_mailchimp_signup_redirect($status, $source_page, $form_id, $success_redirect = '') {
+    if ($status === 'success' && $success_redirect) {
+        $safe_success_redirect = wp_validate_redirect(esc_url_raw($success_redirect), '');
+        if ($safe_success_redirect) {
+            wp_safe_redirect($safe_success_redirect, 303);
+            exit;
+        }
+    }
+
     $fallback = wp_get_referer() ?: home_url('/');
     $return_url = wp_validate_redirect(esc_url_raw($source_page), $fallback);
     $return_url = preg_replace('/#.*$/', '', $return_url);
@@ -184,6 +197,7 @@ function bhp_handle_mailchimp_signup() {
     $form_id = isset($post['bhp_form_id']) ? sanitize_html_class($post['bhp_form_id']) : 'bhp-signup';
     $source_page = isset($post['source_page']) ? esc_url_raw($post['source_page']) : home_url('/');
     $source_page = wp_validate_redirect($source_page, home_url('/'));
+    $success_redirect = isset($post['bhp_success_redirect']) ? esc_url_raw($post['bhp_success_redirect']) : '';
     $nonce = isset($post['bhp_signup_nonce']) ? sanitize_text_field($post['bhp_signup_nonce']) : '';
 
     if (!$nonce || !wp_verify_nonce($nonce, 'bhp_mailchimp_signup_' . $form_id)) {
@@ -280,7 +294,7 @@ function bhp_handle_mailchimp_signup() {
         bhp_mailchimp_signup_redirect('error', $source_page, $form_id);
     }
 
-    bhp_mailchimp_signup_redirect('success', $source_page, $form_id);
+    bhp_mailchimp_signup_redirect('success', $source_page, $form_id, $success_redirect);
 }
 add_action('admin_post_nopriv_bhp_mailchimp_signup', 'bhp_handle_mailchimp_signup');
 add_action('admin_post_bhp_mailchimp_signup', 'bhp_handle_mailchimp_signup');

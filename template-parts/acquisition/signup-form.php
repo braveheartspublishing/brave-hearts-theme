@@ -14,6 +14,7 @@ $args = wp_parse_args($args ?? [], [
     'audience_type'     => 'general_readers',
     'lead_magnet'       => '',
     'source_page'       => '',
+    'success_redirect'  => '',
     'email_name'        => 'email',
     'email_label'       => '',
     'email_placeholder' => '',
@@ -58,9 +59,11 @@ $reserved_fields = [
     'bhp_email_field',
     'bhp_form_id',
     'bhp_signup_nonce',
+    'bhp_success_redirect',
     'bhp_website',
     $email_name,
 ];
+$success_redirect = $args['success_redirect'] ? bhp_get_safe_link_url($args['success_redirect']) : '';
 ?>
 <form
   id="<?php echo esc_attr($form_id); ?>"
@@ -75,6 +78,9 @@ $reserved_fields = [
     <input type="hidden" name="bhp_context" value="<?php echo esc_attr($context); ?>">
     <input type="hidden" name="bhp_email_field" value="<?php echo esc_attr($email_name); ?>">
     <input type="hidden" name="bhp_form_id" value="<?php echo esc_attr($form_id); ?>">
+    <?php if ($success_redirect): ?>
+      <input type="hidden" name="bhp_success_redirect" value="<?php echo esc_url($success_redirect); ?>">
+    <?php endif; ?>
     <?php wp_nonce_field('bhp_mailchimp_signup_' . $form_id, 'bhp_signup_nonce', false); ?>
   <?php endif; ?>
 
