@@ -1156,36 +1156,6 @@ add_action('wp_footer', function () {
 });
 
 /**
- * The Teachers page's own post_content still contains a leftover, non-
- * functional Squarespace form embed from the original site migration (it
- * calls Y.Squarespace.FormSubmit, a library that was never carried over,
- * and describes a different "17-page" guide that no longer matches the
- * real 2-page classroom guide). Rather than edit that fragile legacy HTML
- * blob directly, this appends one real, working signup panel — reusing
- * the same secure handler as everywhere else — after the existing content.
- * The teacher popup on this same page remains a secondary capture method.
- */
-add_filter('the_content', function ($content) {
-    if (!is_page('teachers') || !in_the_loop() || !is_main_query()) {
-        return $content;
-    }
-
-    ob_start();
-    get_template_part('template-parts/acquisition/lead-magnet-cta', null, [
-        'id'                   => 'teachers-page-classroom-guide-signup',
-        'lead_magnet'          => 'mariana_trench_classroom_guide',
-        'audience_type'        => 'teachers',
-        'title'                => __('Get the Classroom Guide', 'brave-hearts'),
-        'text'                 => __('A free, no-prep 2-page companion built for Grades 1–3 read-alouds and classroom discussion.', 'brave-hearts'),
-        'submit_label'         => __('Email Me the Free Guide', 'brave-hearts'),
-        'success_redirect_key' => 'mariana_guide_thank_you',
-    ]);
-    $panel = ob_get_clean();
-
-    return $content . $panel;
-});
-
-/**
  * Provider-neutral action filter. Leave the returned value empty until a
  * secure Mailchimp, HubSpot, or first-party form handler is configured.
  */
