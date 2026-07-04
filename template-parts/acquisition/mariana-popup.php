@@ -1,18 +1,37 @@
 <?php
 /**
- * Sitewide Mariana Trench teacher-guide lead popup.
+ * Teacher-guide lead popup, now restricted to the Teachers page only (see
+ * bhp_should_show_teacher_popup()) rather than sitewide.
  *
  * Reuses the existing signup-form.php handler, Mailchimp integration,
  * tag/merge-field mapping, and thank-you redirect key — this file only
  * supplies markup and content. Display eligibility for the page itself is
- * decided server-side in bhp_should_show_mariana_popup(); the timing,
- * scroll-depth trigger, and frequency capping are decided client-side in
- * mariana-popup.js, since those depend on localStorage.
+ * decided server-side; the timing, scroll-depth trigger, and frequency
+ * capping are decided client-side in mariana-popup.js (the shared, generic
+ * popup engine), driven entirely by the data-popup-config JSON below.
+ *
+ * Storage keys intentionally keep the original bhp_mariana_popup_* prefix
+ * (rather than a newer bhp_teacher_popup_* name) so any dismissal or
+ * permanent-suppression state already saved in a returning visitor's
+ * browser from before this page-restriction change remains valid — only
+ * the analytics event names change to teacher_popup_*, since those carry
+ * no suppression behavior of their own.
  */
 defined('ABSPATH') || exit;
 
 $source_page = get_permalink(get_queried_object_id()) ?: home_url('/');
 $form_id = 'mariana-popup-signup-form';
+$popup_config = wp_json_encode([
+    'eventPrefix'   => 'teacher_popup',
+    'source'        => 'teacher_popup',
+    'storagePrefix' => 'bhp_mariana_popup',
+    'thankYouPath'  => 'mariana-guide-thank-you',
+    'trigger'       => [
+        'mode'    => 'simple',
+        'desktop' => ['delay' => 5000, 'scrollPct' => 30],
+        'mobile'  => ['delay' => 5000, 'scrollPct' => 30],
+    ],
+]);
 
 // If the popup form itself was just submitted and failed validation, the
 // existing PRG redirect sends the visitor back to this same page with
@@ -30,6 +49,7 @@ $force_open = ($submitted_form === $form_id && $submitted_status && $submitted_s
   data-bhp-popup
   data-page-type="<?php echo esc_attr(bhp_get_page_type_for_analytics()); ?>"
   data-force-open="<?php echo $force_open ? '1' : '0'; ?>"
+  data-popup-config="<?php echo esc_attr($popup_config); ?>"
   hidden
 >
   <div class="mariana-popup__overlay" data-bhp-popup-overlay></div>

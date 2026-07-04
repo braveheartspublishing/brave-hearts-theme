@@ -10,7 +10,7 @@
 
 defined('ABSPATH') || exit;
 
-const BHP_LEAD_MAGNET_PDF_KEYS = ['mariana_teacher', 'mariana_parent'];
+const BHP_LEAD_MAGNET_PDF_KEYS = ['mariana_teacher', 'mariana_parent', 'adventure_kit_parent'];
 
 function bhp_get_lead_magnet_pdf_url($key) {
     $urls = get_option('bhp_lead_magnet_pdfs', []);
@@ -92,6 +92,10 @@ function bhp_render_lead_magnet_settings_page() {
         'mariana_parent' => [
             'label' => __('Mariana Trench Parent Guide (PDF)', 'brave-hearts'),
             'help'  => __('Leave blank until the parent guide is ready. The parent landing page stays in a "coming soon" state until this is set.', 'brave-hearts'),
+        ],
+        'adventure_kit_parent' => [
+            'label' => __('Reluctant Reader Adventure Kit (Parent PDF)', 'brave-hearts'),
+            'help'  => __('Leave blank until the Adventure Kit is ready. The Adventure Kit landing page and the sitewide parent popup both stay disabled/hidden until this is set — no other guide is ever substituted.', 'brave-hearts'),
         ],
     ];
     ?>

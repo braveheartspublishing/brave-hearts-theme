@@ -931,6 +931,13 @@ function bhp_get_lead_magnets() {
             'download_url'  => bhp_get_lead_magnet_pdf_url('mariana_parent'),
             'status'        => bhp_get_lead_magnet_pdf_url('mariana_parent') ? 'active' : 'placeholder',
         ],
+        'reluctant_reader_adventure_kit' => [
+            'title'         => __('Reluctant Reader Adventure Kit', 'brave-hearts'),
+            'description'   => __('A free 20-minute reading adventure for kids ages 6–9 who lose interest in long chapters or have not found a book they enjoy yet.', 'brave-hearts'),
+            'audience_type' => 'parents_families',
+            'download_url'  => bhp_get_lead_magnet_pdf_url('adventure_kit_parent'),
+            'status'        => bhp_get_lead_magnet_pdf_url('adventure_kit_parent') ? 'active' : 'placeholder',
+        ],
     ]);
 }
 
@@ -950,13 +957,28 @@ function bhp_get_mariana_guide_download($audience_type) {
 }
 
 /**
+ * Reluctant Reader Adventure Kit download state. Deliberately a separate
+ * function/PDF key from bhp_get_mariana_guide_download() — the two parent
+ * lead magnets (Mariana Trench Parent Guide and the Adventure Kit) are
+ * independent and must never substitute for one another.
+ */
+function bhp_get_reluctant_reader_download() {
+    $url = bhp_get_safe_link_url(bhp_get_lead_magnet_pdf_url('adventure_kit_parent'));
+
+    return [
+        'url'   => $url,
+        'ready' => (bool) $url,
+    ];
+}
+
+/**
  * Mariana guide tags, matching the account's existing Title Case convention
  * (see the "Adventure Club" tag on the current MC4WP form) rather than the
  * hyphenated style first proposed for this funnel.
  */
 add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_type, $lead_magnet, $source_page) {
     if ($lead_magnet === 'mariana_trench_classroom_guide') {
-        $source_tag = ($context === 'mariana_popup') ? 'Source: Mariana Popup' : 'Source: Mariana Teacher Landing Page';
+        $source_tag = ($context === 'mariana_popup' || $context === 'teacher_popup') ? 'Source: Mariana Popup' : 'Source: Mariana Teacher Landing Page';
         return ['Mariana Trench Classroom Guide', 'Audience: Teacher/Librarian', $source_tag];
     }
 
@@ -964,8 +986,23 @@ add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_typ
         return ['Mariana Trench Parent Guide', 'Audience: Parent/Homeschool', 'Source: Mariana Parent Landing Page'];
     }
 
+    if ($lead_magnet === 'reluctant_reader_adventure_kit') {
+        $source_tag = ($context === 'parent_popup') ? 'Source: Parent Popup' : 'Source: Parent Landing Page';
+        return ['Reluctant Reader Adventure Kit', 'Audience: Parent/Grandparent', $source_tag];
+    }
+
     return $tags;
 }, 10, 5);
+
+/**
+ * Registers the Adventure Kit thank-you page as a whitelisted redirect
+ * target, additive to the existing Mariana entry — inc/mailchimp.php never
+ * needs to know about individual funnels, only this filterable map.
+ */
+add_filter('bhp_signup_success_redirect_pages', function ($pages) {
+    $pages['adventure_kit_thank_you'] = 'adventure-kit-thank-you';
+    return $pages;
+});
 
 // ============================================================
 // MARIANA SITEWIDE POPUP
@@ -995,12 +1032,13 @@ function bhp_get_page_type_for_analytics() {
 }
 
 /**
- * Server-side eligibility for the Mariana popup. Only decides whether this
- * *page* is an appropriate place for the popup to exist at all — timing,
- * scroll depth, and frequency capping happen client-side in
- * mariana-popup.js because those rely on localStorage/sessionStorage.
+ * Universal exclusions shared by every sitewide popup, regardless of which
+ * one: admin sessions, WooCommerce transactional pages, legal pages, every
+ * funnel's own landing/thank-you pages, and a just-completed contact-page
+ * submission. Popup-specific eligibility (teacher vs. parent) layers on
+ * top of this in bhp_should_show_teacher_popup() / _parent_popup().
  */
-function bhp_should_show_mariana_popup() {
+function bhp_should_show_any_popup() {
     if (is_admin() || (is_user_logged_in() && current_user_can('manage_options'))) {
         return false;
     }
@@ -1030,23 +1068,64 @@ function bhp_should_show_mariana_popup() {
         'page-mariana-guide-teacher.php',
         'page-mariana-guide-parent.php',
         'page-mariana-guide-thank-you.php',
+        'page-reluctant-reader-adventure-kit.php',
+        'page-adventure-kit-thank-you.php',
     ])) {
         return false;
     }
     // Contact page's own success state (same-page inline feedback, not a
-    // distinct URL) — don't stack the popup on top of a just-completed form.
+    // distinct URL) — don't stack a popup on top of a just-completed form.
     if (is_page('contact') && isset($_GET['bhp_signup']) && sanitize_key(wp_unslash($_GET['bhp_signup'])) === 'success') {
         return false;
     }
 
-    return (bool) apply_filters('bhp_show_mariana_popup', true);
+    return true;
 }
 
 /**
- * Enqueue the popup script sitewide on the front end (not just on pages
- * where the popup itself renders) so the thank-you page can still detect a
- * just-completed popup signup and fire the popup_success event — see the
- * pending-submit handoff in mariana-popup.js for why.
+ * The teacher popup is scoped to the Teachers page only — it is no longer
+ * a sitewide popup. It remains a secondary capture method there alongside
+ * the page's own embedded classroom-guide signup panel.
+ */
+function bhp_should_show_teacher_popup() {
+    if (!bhp_should_show_any_popup()) {
+        return false;
+    }
+
+    if (!is_page('teachers')) {
+        return false;
+    }
+
+    return (bool) apply_filters('bhp_show_teacher_popup', true);
+}
+
+/**
+ * The parent popup is the sitewide default once the parent PDF exists.
+ * Never renders on the Teachers page (that page shows the teacher popup
+ * instead — see the wp_footer hook below, which renders at most one of the
+ * two), and never renders at all while the Adventure Kit PDF is unset.
+ */
+function bhp_should_show_parent_popup() {
+    if (!bhp_should_show_any_popup()) {
+        return false;
+    }
+
+    if (is_page('teachers')) {
+        return false;
+    }
+
+    if (!bhp_get_reluctant_reader_download()['ready']) {
+        return false;
+    }
+
+    return (bool) apply_filters('bhp_show_parent_popup', true);
+}
+
+/**
+ * Enqueue the shared popup script sitewide on the front end (not just on
+ * pages where a popup itself renders) so any thank-you page can still
+ * detect a just-completed signup and fire that popup's own *_success
+ * event — see the pending-submit handoff in mariana-popup.js for why.
  */
 add_action('wp_enqueue_scripts', function () {
     if (is_admin()) {
@@ -1061,11 +1140,49 @@ add_action('wp_enqueue_scripts', function () {
     );
 });
 
+/**
+ * Renders at most one popup per page: the teacher popup on /teachers/, or
+ * the parent popup everywhere else once eligible, or nothing at all.
+ */
 add_action('wp_footer', function () {
-    if (!bhp_should_show_mariana_popup()) {
+    if (bhp_should_show_teacher_popup()) {
+        get_template_part('template-parts/acquisition/mariana-popup');
         return;
     }
-    get_template_part('template-parts/acquisition/mariana-popup');
+
+    if (bhp_should_show_parent_popup()) {
+        get_template_part('template-parts/acquisition/parent-popup');
+    }
+});
+
+/**
+ * The Teachers page's own post_content still contains a leftover, non-
+ * functional Squarespace form embed from the original site migration (it
+ * calls Y.Squarespace.FormSubmit, a library that was never carried over,
+ * and describes a different "17-page" guide that no longer matches the
+ * real 2-page classroom guide). Rather than edit that fragile legacy HTML
+ * blob directly, this appends one real, working signup panel — reusing
+ * the same secure handler as everywhere else — after the existing content.
+ * The teacher popup on this same page remains a secondary capture method.
+ */
+add_filter('the_content', function ($content) {
+    if (!is_page('teachers') || !in_the_loop() || !is_main_query()) {
+        return $content;
+    }
+
+    ob_start();
+    get_template_part('template-parts/acquisition/lead-magnet-cta', null, [
+        'id'                   => 'teachers-page-classroom-guide-signup',
+        'lead_magnet'          => 'mariana_trench_classroom_guide',
+        'audience_type'        => 'teachers',
+        'title'                => __('Get the Classroom Guide', 'brave-hearts'),
+        'text'                 => __('A free, no-prep 2-page companion built for Grades 1–3 read-alouds and classroom discussion.', 'brave-hearts'),
+        'submit_label'         => __('Email Me the Free Guide', 'brave-hearts'),
+        'success_redirect_key' => 'mariana_guide_thank_you',
+    ]);
+    $panel = ob_get_clean();
+
+    return $content . $panel;
 });
 
 /**

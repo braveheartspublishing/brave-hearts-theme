@@ -1,29 +1,66 @@
 /**
- * Sitewide Mariana Trench teacher-guide popup: trigger timing, scroll
- * depth, frequency capping, and a lightweight focus trap. Server-side
- * eligibility (page type, admin, cart/checkout, etc.) is already decided
- * in PHP — if #mariana-popup isn't in the page, this file does nothing
- * except the cross-page success check described below.
+ * Generic sitewide lead popup engine: trigger timing, scroll depth,
+ * frequency capping, and a lightweight focus trap. Server-side eligibility
+ * (page type, admin, cart/checkout, etc.) is already decided in PHP — each
+ * popup template supplies its own config via a single data-popup-config
+ * JSON attribute, so this file has no popup-specific content or behavior
+ * hardcoded into it. Multiple independent popups (teacher, parent, future
+ * ones) share this one engine while keeping fully isolated storage and
+ * analytics namespaces.
  *
  * No email addresses or personal data are ever stored client-side.
  */
 (function () {
     'use strict';
 
-    var STORAGE_DISMISSED_UNTIL = 'bhp_mariana_popup_dismissed_until';
-    var STORAGE_SIGNED_UP = 'bhp_mariana_popup_signed_up';
-    var SESSION_SHOWN = 'bhp_mariana_popup_shown_session';
-    var SESSION_PENDING_SUBMIT = 'bhp_mariana_popup_pending_submit';
     var DISMISS_DAYS = 10;
 
-    function pushEvent(eventName, extra) {
+    // Defaults exactly match the original single-purpose Mariana teacher
+    // popup, so a popup element with no data-popup-config at all behaves
+    // identically to before this file was generalized.
+    var DEFAULT_CONFIG = {
+        eventPrefix: '',
+        source: 'mariana_popup',
+        storagePrefix: 'bhp_mariana_popup',
+        thankYouPath: 'mariana-guide-thank-you',
+        trigger: {
+            mode: 'gated',
+            desktop: { minDelay: 8000, fallbackDelay: 15000, scrollPct: 40 },
+            mobile: { minDelay: 10000, fallbackDelay: 18000, scrollPct: 50 }
+        }
+    };
+
+    function parseConfig(el) {
+        var raw = el.getAttribute('data-popup-config');
+        if (!raw) {
+            return DEFAULT_CONFIG;
+        }
+        try {
+            var parsed = JSON.parse(raw);
+            return {
+                eventPrefix: parsed.eventPrefix || DEFAULT_CONFIG.eventPrefix,
+                source: parsed.source || DEFAULT_CONFIG.source,
+                storagePrefix: parsed.storagePrefix || DEFAULT_CONFIG.storagePrefix,
+                thankYouPath: parsed.thankYouPath || DEFAULT_CONFIG.thankYouPath,
+                trigger: parsed.trigger || DEFAULT_CONFIG.trigger
+            };
+        } catch (e) {
+            return DEFAULT_CONFIG;
+        }
+    }
+
+    function eventName(prefix, suffix) {
+        return prefix ? prefix + '_' + suffix : 'popup_' + suffix;
+    }
+
+    function pushEvent(source, eventNameValue, extra) {
         if (typeof window.dataLayer === 'undefined' || !Array.isArray(window.dataLayer)) {
             return;
         }
         var page = window.location.pathname || '';
         window.dataLayer.push(Object.assign({
-            event: eventName,
-            source: 'mariana_popup',
+            event: eventNameValue,
+            source: source,
             page_path: page
         }, extra || {}));
     }
@@ -64,21 +101,33 @@
         }
     }
 
-    // Cross-page success detection: the popup form is a normal POST that
-    // navigates away. On success the server redirects straight to the
-    // Mariana thank-you page via the existing whitelisted redirect key. We
-    // set a one-shot session flag right before that navigation and check it
-    // here on every subsequent page load, so popup_success only fires when
-    // the visitor actually lands on the thank-you page next.
+    // Cross-page success detection: each popup form is a normal POST that
+    // navigates away. On success the server redirects straight to that
+    // popup's own thank-you page via the existing whitelisted redirect key.
+    // We record which popup is pending (by its own storage/event prefixes,
+    // never by name/email) right before that navigation, and check it here
+    // on every subsequent page load — a shared key works for any number of
+    // independent popups without them needing to know about each other.
+    var PENDING_SUBMIT_KEY = 'bhp_popup_pending_submit';
+
     (function checkPendingSuccess() {
-        var pending = readSession(SESSION_PENDING_SUBMIT);
-        if (!pending) {
+        var raw = readSession(PENDING_SUBMIT_KEY);
+        if (!raw) {
             return;
         }
-        writeSession(SESSION_PENDING_SUBMIT, null);
-        if (window.location.pathname.indexOf('mariana-guide-thank-you') !== -1) {
-            pushEvent('popup_success');
-            writeLocal(STORAGE_SIGNED_UP, '1');
+        writeSession(PENDING_SUBMIT_KEY, null);
+        var pending;
+        try {
+            pending = JSON.parse(raw);
+        } catch (e) {
+            return;
+        }
+        if (!pending || !pending.thankYouPath || !pending.storagePrefix) {
+            return;
+        }
+        if (window.location.pathname.indexOf(pending.thankYouPath) !== -1) {
+            pushEvent(pending.source, eventName(pending.eventPrefix, 'success'), {});
+            writeLocal(pending.storagePrefix + '_signed_up', '1');
         }
     })();
 
@@ -86,6 +135,11 @@
     if (!popup) {
         return;
     }
+
+    var config = parseConfig(popup);
+    var STORAGE_DISMISSED_UNTIL = config.storagePrefix + '_dismissed_until';
+    var STORAGE_SIGNED_UP = config.storagePrefix + '_signed_up';
+    var SESSION_SHOWN = config.storagePrefix + '_shown_session';
 
     // Permanent suppression after a real signup, in this browser only.
     if (readLocal(STORAGE_SIGNED_UP) === '1') {
@@ -154,7 +208,7 @@
         (focusable[0] || dialog).focus();
 
         writeSession(SESSION_SHOWN, '1');
-        pushEvent('popup_view', { page_type: popup.getAttribute('data-page-type') || '' });
+        pushEvent(config.source, eventName(config.eventPrefix, 'view'), { page_type: popup.getAttribute('data-page-type') || '' });
     }
 
     function close(wasDismissed) {
@@ -165,7 +219,7 @@
         if (wasDismissed) {
             var until = Date.now() + DISMISS_DAYS * 24 * 60 * 60 * 1000;
             writeLocal(STORAGE_DISMISSED_UNTIL, String(until));
-            pushEvent('popup_close', { page_type: popup.getAttribute('data-page-type') || '' });
+            pushEvent(config.source, eventName(config.eventPrefix, 'close'), { page_type: popup.getAttribute('data-page-type') || '' });
         }
 
         if (lastFocused && typeof lastFocused.focus === 'function') {
@@ -192,8 +246,13 @@
     if (form) {
         form.addEventListener('submit', function () {
             // Fires synchronously before the browser navigates away.
-            writeSession(SESSION_PENDING_SUBMIT, '1');
-            pushEvent('popup_submit', { page_type: popup.getAttribute('data-page-type') || '' });
+            writeSession(PENDING_SUBMIT_KEY, JSON.stringify({
+                eventPrefix: config.eventPrefix,
+                source: config.source,
+                storagePrefix: config.storagePrefix,
+                thankYouPath: config.thankYouPath
+            }));
+            pushEvent(config.source, eventName(config.eventPrefix, 'submit'), { page_type: popup.getAttribute('data-page-type') || '' });
         });
     }
 
@@ -202,19 +261,21 @@
         return;
     }
 
-    // Gated trigger: the scroll condition alone can't open the popup before
-    // a minimum engagement time has passed, and a separate fallback timer
-    // opens it regardless if the visitor never scrolls far enough.
-    //   Desktop: (>=8s elapsed AND scroll >= 40%) OR 15s elapsed
-    //   Mobile:  (>=10s elapsed AND scroll >= 50%) OR 18s elapsed
+    // Two trigger modes, selected per popup via config.trigger.mode:
+    //   'simple' — whichever of (timer OR scroll%) happens first, no gating.
+    //   'gated'  — the scroll condition can't fire before a minimum
+    //              engagement time, with a separate, longer, ungated
+    //              fallback timer for visitors who never scroll that far.
     var isMobile = window.matchMedia('(max-width: 767px)').matches;
-    var minTimeMs = isMobile ? 10000 : 8000;
-    var fallbackMs = isMobile ? 18000 : 15000;
-    var scrollPct = isMobile ? 50 : 40;
+    var triggerConfig = config.trigger || DEFAULT_CONFIG.trigger;
+    var mode = triggerConfig.mode === 'simple' ? 'simple' : 'gated';
+    var deviceConfig = (isMobile ? triggerConfig.mobile : triggerConfig.desktop) || triggerConfig.desktop || {};
+
     var triggered = false;
-    var minTimeElapsed = false;
+    var minTimeElapsed = (mode === 'simple');
     var minTimeTimerId = null;
     var fallbackTimerId = null;
+    var scrollPct = deviceConfig.scrollPct;
 
     function getScrollPercent() {
         var doc = document.documentElement;
@@ -247,7 +308,7 @@
     }
 
     function onScroll() {
-        if (!minTimeElapsed) {
+        if (!minTimeElapsed || typeof scrollPct !== 'number') {
             return;
         }
         if (getScrollPercent() >= scrollPct) {
@@ -255,13 +316,29 @@
         }
     }
 
-    minTimeTimerId = window.setTimeout(function () {
-        minTimeElapsed = true;
-        // The visitor may already be past the scroll threshold and idle
-        // (no further scroll event to react to) — check right away.
-        onScroll();
-    }, minTimeMs);
+    if (mode === 'simple') {
+        // Timer and scroll race unconditionally; whichever fires first wins.
+        if (typeof deviceConfig.delay === 'number') {
+            minTimeTimerId = window.setTimeout(trigger, deviceConfig.delay);
+        }
+        if (typeof scrollPct === 'number') {
+            window.addEventListener('scroll', onScroll, { passive: true });
+        }
+    } else {
+        // Gated: minimum-time timer flips a flag and immediately re-checks
+        // scroll position, since a visitor who scrolled past the threshold
+        // before the minimum time elapsed and then stopped would otherwise
+        // never generate another scroll event to catch up on. The fallback
+        // timer is tracked separately so both can be cleared together once
+        // trigger() fires — the popup can still only ever open once.
+        minTimeTimerId = window.setTimeout(function () {
+            minTimeElapsed = true;
+            onScroll();
+        }, deviceConfig.minDelay);
 
-    fallbackTimerId = window.setTimeout(trigger, fallbackMs);
-    window.addEventListener('scroll', onScroll, { passive: true });
+        if (typeof deviceConfig.fallbackDelay === 'number') {
+            fallbackTimerId = window.setTimeout(trigger, deviceConfig.fallbackDelay);
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+    }
 })();
