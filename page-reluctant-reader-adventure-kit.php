@@ -106,6 +106,7 @@ $strengths = [
         'submit_label'         => __('Send Me the Free Adventure Kit', 'brave-hearts'),
         'source_page'          => $source_page,
         'success_redirect_key' => 'adventure_kit_thank_you',
+        'require_name'         => true,
     ]); ?>
     <p class="text-caption align-center"><?php esc_html_e('Free printable PDF. No purchase required.', 'brave-hearts'); ?></p>
   <?php else: ?>
