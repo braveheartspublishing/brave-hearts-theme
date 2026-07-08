@@ -917,8 +917,54 @@ function bhp_get_lead_magnets() {
             'download_url'  => '',
             'status'        => 'placeholder',
         ],
+        'mariana_trench_classroom_guide' => [
+            'title'         => __('Mariana Trench Classroom Guide', 'brave-hearts'),
+            'description'   => __('A free, no-prep 2-page classroom guide for Adventures of Charlotte and Henry: The Mariana Trench.', 'brave-hearts'),
+            'audience_type' => 'teachers',
+            'download_url'  => bhp_get_lead_magnet_pdf_url('mariana_teacher'),
+            'status'        => bhp_get_lead_magnet_pdf_url('mariana_teacher') ? 'active' : 'placeholder',
+        ],
+        'mariana_trench_parent_guide' => [
+            'title'         => __('Mariana Trench Parent Guide', 'brave-hearts'),
+            'description'   => __('A free reading companion for Adventures of Charlotte and Henry: The Mariana Trench.', 'brave-hearts'),
+            'audience_type' => 'parents_families',
+            'download_url'  => bhp_get_lead_magnet_pdf_url('mariana_parent'),
+            'status'        => bhp_get_lead_magnet_pdf_url('mariana_parent') ? 'active' : 'placeholder',
+        ],
     ]);
 }
+
+/**
+ * Mariana Trench guide download state, keyed by audience. Mirrors
+ * bhp_get_explorer_passport_download(): empty URL always means "not ready",
+ * regardless of what a filter might otherwise try to force.
+ */
+function bhp_get_mariana_guide_download($audience_type) {
+    $pdf_key = ($audience_type === 'teachers') ? 'mariana_teacher' : 'mariana_parent';
+    $url = bhp_get_safe_link_url(bhp_get_lead_magnet_pdf_url($pdf_key));
+
+    return [
+        'url'   => $url,
+        'ready' => (bool) $url,
+    ];
+}
+
+/**
+ * Mariana guide tags, matching the account's existing Title Case convention
+ * (see the "Adventure Club" tag on the current MC4WP form) rather than the
+ * hyphenated style first proposed for this funnel.
+ */
+add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_type, $lead_magnet, $source_page) {
+    if ($lead_magnet === 'mariana_trench_classroom_guide') {
+        return ['Mariana Trench Classroom Guide', 'Audience: Teacher/Librarian', 'Source: Mariana Teacher Landing Page'];
+    }
+
+    if ($lead_magnet === 'mariana_trench_parent_guide') {
+        return ['Mariana Trench Parent Guide', 'Audience: Parent/Homeschool', 'Source: Mariana Parent Landing Page'];
+    }
+
+    return $tags;
+}, 10, 5);
 
 /**
  * Provider-neutral action filter. Leave the returned value empty until a
@@ -950,6 +996,7 @@ function bhp_get_valid_form_action($action) {
 }
 
 require_once get_template_directory() . '/inc/mailchimp.php';
+require_once get_template_directory() . '/inc/lead-magnet-settings.php';
 
 // ============================================================
 // EXPLORER PASSPORT FOUNDATION
