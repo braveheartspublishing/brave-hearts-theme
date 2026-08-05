@@ -1,0 +1,142 @@
+{
+  "author_connection": {
+    "anecdote_id": 4,
+    "anecdote_key": "classroom-breath-practice",
+    "full_text": "A second grader closed her eyes right in the middle of the story and took a slow deep breath through her nose. Unprompted. She had just learned something she would use for the rest of her life.",
+    "prior_uses": [
+      {
+        "used_at": "2026-07-11 01:46:24",
+        "used_in_id": 1,
+        "used_in_table": "research_packets"
+      }
+    ],
+    "prohibited_uses": "Do not name the school or the child. Do not claim this happens at every reading -- it is one specific, real moment.",
+    "reuse_count": 1,
+    "source_document_id": null,
+    "source_passage": "THE CLASSROOM BREATH PRACTICE section, 'the proof moment', verbatim quote.",
+    "topic_categories": [
+      "classroom_read_aloud",
+      "reading_anxiety",
+      "i_can_do_hard_things",
+      "reluctant_reader",
+      "teachers"
+    ],
+    "verification_state": "confirmed"
+  },
+  "author_fingerprint_check": {
+    "has_author_connection": true,
+    "overused_anecdotes": [
+      "classroom-breath-practice"
+    ],
+    "passed": false,
+    "prohibited_matches": []
+  },
+  "book_corpus_grounding": {
+    "note": "No structured book-fact registry (volume/chapter/scene/character/location/theme) exists yet in this engine. This field intentionally carries no invented scene, dialogue, or character data -- a human editor must supply book-specific facts directly, grounded in the actual manuscript, before an article can reference specific book content beyond the Author Connection anecdote above.",
+    "status": "not_yet_populated"
+  },
+  "brand_voice_profile": {
+    "approved_taglines": [
+      "Big Places. Brave Hearts.",
+      "I can do hard things."
+    ],
+    "audience_specific_adjustments": {
+      "child_reader": "Adventure and wonder framing -- the test is 'would this make a kid say I want to go there.'",
+      "parent_buyer": "Educated, nature-oriented, skeptical of screen time and of 'literacy programs' -- speak to what excites their kid about the world, not a curriculum pitch.",
+      "teacher_librarian": "Referral/awareness register, not a sales pitch -- librarians are treated as multipliers, not customers."
+    },
+    "emotional_range": "Warm sincerity paired with stoic restraint -- affectionate about Charlotte, Henry, and the mission; understated about hardship and struggle.",
+    "first_person_style_rules": "When Andrew speaks in first person, it must be genuine and specific (a real moment), stoic about hardship (implied, not dramatized), never a manufactured quote.",
+    "forbidden_phrases_or_patterns": [
+      "listicle framing (e.g. '7 Reasons Kids Should Read More')",
+      "generic 'reading is important' messaging with no Brave Hearts perspective in it",
+      "performative inspiration / hollow exclamation-point enthusiasm",
+      "corporate or brand-speak language",
+      "preachy, lecturing tone -- show, don't lecture",
+      "content that any other children's book brand could have posted (no Andrew fingerprint)"
+    ],
+    "humor_rules": "Occasional, dry, truthful. Never forced, never at a child's expense, never sarcastic toward the reader.",
+    "hype_restrictions": "No salesperson energy. No press-release voice. Confidence without hype -- the brand earns trust through specificity, not superlatives.",
+    "paragraph_style": "Reads like Andrew talking at a farmers market -- conversational, grounded, no corporate structure (no '3 reasons why' framing).",
+    "preferred_tone": [
+      "genuine -- if it sounds like a press release, rewrite it",
+      "direct -- say the thing, no padding",
+      "warm -- built on love for a real child and a real dog, not a marketing concept",
+      "occasionally funny -- direct, dry, truthful humor only, never forced",
+      "stoic about hardship -- understated, implied rather than dramatized"
+    ],
+    "recurring_brand_ideas": [
+      "\"I can do hard things\" -- the four-word promise behind every book",
+      "The breath practice: stop, inhale through the nose, exhale through the mouth",
+      "Bravery is not fearlessness -- it's choosing to go anyway",
+      "Every challenge in the books is a decision point, not just a plot point",
+      "Charlotte is real (Andrew's niece); Henry is real (the dog); the places are real; Andrew's story is real"
+    ],
+    "sentence_style": "Short, direct sentences. Say the thing plainly. Avoid throat-clearing lead-ins and padded transitions.",
+    "source_id": "SRC-001",
+    "source_title": "Brave Hearts Publishing -- Brand Skill",
+    "unsupported_outcome_restrictions": "Never promise a reading-level jump, a behavior change, or any specific outcome for a specific child. Encouragement, not guarantees.",
+    "vocabulary_preferences": [
+      "concrete, sensory, real-world nouns (real places, real problems: tight boots, fogged goggles, a flat tire)",
+      "the brand's own vocabulary: 'the breath', 'decision point', 'brave' (not 'fearless')",
+      "avoid corporate/brand-speak and press-release phrasing"
+    ]
+  },
+  "brief": {
+    "research_packet_id": 1,
+    "status": "brief_approved",
+    "working_title": "reluctant reader books"
+  },
+  "checksum_sha256": "494767773bb2aa10a4b8477dc4d329c9250d314c5704f6840448bfd83adf5f95",
+  "content_brief_id": 1,
+  "corpus_manifest": [
+    {
+      "canonical_status": "canonical",
+      "checksum_sha256": "11f59b9cd3e8c9dd659ae14e987b72578e3a52e40ee5db5eda5fbdef27d6549e",
+      "mandatory_key": "brand_identity",
+      "source_id": "TEST-SRC-001",
+      "title": "Test Brand Skill"
+    },
+    {
+      "canonical_status": "canonical",
+      "checksum_sha256": "79f8d01305099cadfef5fecc502a21bc4f14e5f8dc6ee5750dbbe8db4995e8fe",
+      "mandatory_key": "founder_life_story",
+      "source_id": "TEST-SRC-002",
+      "title": "Test Life Story Skill"
+    },
+    {
+      "canonical_status": "canonical",
+      "checksum_sha256": "6c464f0c38bb7da1f58b0ea58ed1d9059b6a4a67ad9bb5ab9d503aa93fc398ab",
+      "mandatory_key": "volume_1_manuscript",
+      "source_id": "TEST-SRC-003",
+      "title": "Test Volume I"
+    },
+    {
+      "canonical_status": "canonical_provisional",
+      "checksum_sha256": "15e767a38bc1715428a1dac89abab28744d72c2a184dc0a6cab8cd8bbba35b4c",
+      "mandatory_key": "volume_2_manuscript",
+      "source_id": "TEST-SRC-004",
+      "title": "Test Volume II"
+    }
+  ],
+  "generated_at": "2026-07-11T01:46:24.699855+00:00Z",
+  "global_prohibited_uses": [
+    "Do not say Andrew went spearfishing 'at Bob Banks' or 'off Bob Banks' -- Bob Banks is a PERSON, a mentor/father figure.",
+    "Do not present Nepal as happening before nursing school and NCLEX -- the chronology matters.",
+    "Do not reference profit goals or business targets in public-facing content.",
+    "Do not describe Andrew as 'just' an author -- he is a nurse, traveler, and founder; the full identity matters.",
+    "Do not name a specific Himalayan peak, altitude, or route (e.g. 'Island Peak', 'Jiri to Everest Base Camp') -- the canonical Life Story Skill only confirms 'Himalayan mountaineering' and 'a headwall'; those specific route/peak claims exist only in a supporting blog post and are not corroborated by canonical source."
+  ],
+  "package_uuid": "d5f2d122-4476-4a9a-8eb6-c20143cd15b5",
+  "provenance": {
+    "exported_by": "test-fixture-generation",
+    "generator": "brave-hearts-seo-engine"
+  },
+  "research_packet": {
+    "corpus_gate_passed": true,
+    "seo_opportunity_id": null,
+    "status": "research_packet_approved",
+    "topic": "reluctant reader books"
+  },
+  "schema_version": 1
+}
