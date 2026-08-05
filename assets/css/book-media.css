@@ -1,0 +1,757 @@
+/**
+ * Brave Hearts — "Look Inside" media gallery.
+ *
+ * Three traps this file is deliberately written around:
+ *
+ *  1. GRID-COLUMN TRAP. `woocommerce_after_single_product_summary` fires
+ *     INSIDE `.woocommerce div.product`, which is itself a CSS grid
+ *     (minmax(0,1fr) / minmax(360px,.85fr)). Anything added there without an
+ *     explicit `grid-column: 1 / -1` silently collapses into the narrow first
+ *     column.
+ *
+ *  2. HEADING SPECIFICITY TRAP. style.css carries sitewide
+ *     `body:not(.home) h1/h2/h3 { ... }` rules built from TWO type selectors,
+ *     which outrank a single-class selector such as `.bhp-look-inside h2`.
+ *     Every heading rule below carries the outer scope class so it wins.
+ *
+ *  3. MIXED-ASPECT STAGE. The gallery holds a 16:9 landscape video AND 3:4
+ *     portrait page images in ONE stage. Sizing the stage to the widest item
+ *     letterboxes the portraits; sizing it to the tallest makes the video
+ *     float in a tall void and shifts layout on every switch. The stage
+ *     therefore has a FIXED height and every item is centred and contained
+ *     within it, so switching items never moves the page (CLS 0).
+ */
+
+/* ---- 1. Full width inside the product grid -------------------------- */
+.woocommerce div.product .bhp-look-inside {
+	grid-column: 1 / -1;
+	margin-top: var(--section-space-sm, 2rem);
+	/*
+	 * MIN-WIDTH TRAP — measured, not theorised. A grid item defaults to
+	 * `min-width: auto`, so the track sizes to the item's MIN-CONTENT. The
+	 * thumb rail is a flex row of non-shrinking thumbs, whose min-content is
+	 * the sum of every thumb (7 x 64px + gaps ~= 500px) EVEN THOUGH the rail
+	 * scrolls. That forced `div.product`'s single mobile column to 500.78px
+	 * inside a 358px box at 390px viewport, pushing the product title, the
+	 * summary and the format cards out with it — hidden only because
+	 * `main.site-main` is `overflow-x: clip`.
+	 *
+	 * `min-width: 0` lets the track ignore min-content; the rail then scrolls
+	 * inside its own box, which is what it was always meant to do.
+	 * Verified by removing the section from the DOM: the column collapsed to
+	 * 358px, and returned to 500.78px when it was put back.
+	 */
+	min-width: 0;
+}
+
+.bhp-look-inside {
+	margin-block: var(--section-space-sm, 2rem);
+	min-width: 0;
+}
+
+/* ---- 2. Headings — outer scope class, per the specificity trap ------- */
+body:not(.home) .bhp-look-inside .bhp-look-inside__title,
+.bhp-look-inside .bhp-look-inside__title {
+	font-family: var(--font-display, inherit);
+	font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
+	line-height: 1.2;
+	margin: 0 0 0.35em;
+	color: var(--color-navy, #1f3550);
+}
+
+.bhp-look-inside__intro {
+	margin: 0 0 1.1rem;
+	max-width: 62ch;
+	color: var(--color-text-muted, #4a5568);
+}
+
+.bhp-look-inside__note {
+	margin: 0.75rem 0 0;
+	font-size: 0.9rem;
+	font-style: italic;
+	color: var(--color-text-muted, #4a5568);
+}
+
+/* ---- 3. Stage ------------------------------------------------------- */
+.bhp-gallery {
+	--bhp-stage-h: min(62vh, 560px);
+
+	max-width: 940px;
+	margin-inline: auto;
+	min-width: 0;
+}
+
+.bhp-gallery__stage {
+	position: relative;
+	height: var(--bhp-stage-h);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--color-navy, #1f3550);
+	border-radius: var(--radius-md, 10px);
+	overflow: hidden;
+	min-width: 0;
+}
+
+.bhp-gallery__slide {
+	position: absolute;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+}
+
+.bhp-gallery__slide.is-active {
+	display: flex;
+}
+
+/* Both media kinds are CONTAINED, never cropped and never stretched. */
+.bhp-gallery__video,
+.bhp-gallery__img {
+	display: block;
+	max-width: 100%;
+	max-height: var(--bhp-stage-h);
+	width: auto;
+	height: auto;
+	object-fit: contain;
+}
+
+/* ---- 4. Inspect (enlarge) affordance -------------------------------- */
+.bhp-gallery__inspect {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	background: none;
+	border: 0;
+	cursor: zoom-in;
+	position: relative;
+}
+
+.bhp-gallery__inspect-hint {
+	position: absolute;
+	right: 0.6rem;
+	bottom: 0.6rem;
+	padding: 0.25rem 0.55rem;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: #fff;
+	background: rgba(15, 32, 51, 0.72);
+	border-radius: 999px;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	pointer-events: none;
+}
+
+.bhp-gallery__inspect:hover .bhp-gallery__inspect-hint,
+.bhp-gallery__inspect:focus-visible .bhp-gallery__inspect-hint {
+	opacity: 1;
+}
+
+.bhp-gallery__inspect:focus-visible {
+	outline: 3px solid var(--color-gold, #D9A45F);
+	outline-offset: -3px;
+}
+
+/* ---- 5. Arrows ------------------------------------------------------ */
+.bhp-gallery__arrow {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 2;
+	/* >= 44x44 target at every viewport. */
+	width: 48px;
+	height: 48px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 2rem;
+	line-height: 1;
+	color: var(--color-navy, #1f3550);
+	background: rgba(255, 255, 255, 0.92);
+	border: 0;
+	border-radius: 50%;
+	cursor: pointer;
+	box-shadow: 0 2px 8px rgba(15, 32, 51, 0.28);
+	transition: background-color 0.15s ease;
+}
+
+.bhp-gallery__arrow:hover {
+	background: #fff;
+}
+
+.bhp-gallery__arrow:focus-visible {
+	outline: 3px solid var(--color-gold, #D9A45F);
+	outline-offset: 2px;
+}
+
+.bhp-gallery__arrow--prev { left: 0.6rem; }
+.bhp-gallery__arrow--next { right: 0.6rem; }
+
+/* A single-item gallery has no arrows, no thumbs and no counter. */
+.bhp-media-gallery--single .bhp-gallery__arrow,
+.bhp-media-gallery--single .bhp-gallery__counter,
+.bhp-media-gallery--single .bhp-gallery__thumbs {
+	display: none;
+}
+
+.bhp-gallery__counter {
+	position: absolute;
+	left: 50%;
+	bottom: 0.6rem;
+	transform: translateX(-50%);
+	z-index: 2;
+	margin: 0;
+	padding: 0.2rem 0.6rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #fff;
+	background: rgba(15, 32, 51, 0.72);
+	border-radius: 999px;
+}
+
+/* ---- 6. Thumbnail carousel ------------------------------------------ */
+.bhp-gallery__thumbs {
+	list-style: none;
+	margin: 0.7rem 0 0;
+	padding: 0.15rem;
+	display: flex;
+	gap: 0.5rem;
+	/* Horizontal carousel: scrolls in its OWN wrapper, never the page. */
+	overflow-x: auto;
+	min-width: 0;
+	overscroll-behavior-x: contain;
+	scroll-snap-type: x proximity;
+	-webkit-overflow-scrolling: touch;
+}
+
+.bhp-gallery__thumb-item {
+	margin: 0;
+	flex: 0 0 auto;
+	scroll-snap-align: start;
+}
+
+.bhp-gallery__thumb {
+	position: relative;
+	display: block;
+	padding: 0;
+	/* >= 44x44 target. */
+	width: 76px;
+	height: 76px;
+	cursor: pointer;
+	background: var(--color-parchment, #f7f3e8);
+	border: 2px solid var(--color-border, #d9d2c2);
+	border-radius: var(--radius-sm, 6px);
+	overflow: hidden;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bhp-gallery__thumb-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Selected thumb differs by border colour + inset ring + a rendered check —
+   three non-colour-only signals, so it survives greyscale and forced colours. */
+.bhp-gallery__thumb[aria-current="true"] {
+	border-color: var(--color-forest, #2f5d4f);
+	box-shadow: inset 0 0 0 2px var(--color-gold, #D9A45F);
+}
+
+.bhp-gallery__thumb-mark {
+	position: absolute;
+	right: 2px;
+	bottom: 1px;
+	display: none;
+	font-size: 0.75rem;
+	line-height: 1;
+	padding: 1px 3px;
+	color: #fff;
+	background: var(--color-forest, #2f5d4f);
+	border-radius: 3px;
+}
+
+.bhp-gallery__thumb[aria-current="true"] .bhp-gallery__thumb-mark {
+	display: block;
+}
+
+/*
+ * A SMALL badge, not a full-tile scrim. The tile's job is to show a real frame
+ * of the book so the rail never reads as a generic play-button placeholder;
+ * the badge only has to say "this one is a video". A full-bleed overlay dimmed
+ * the artwork it was supposed to be advertising.
+ */
+.bhp-gallery__thumb-play {
+	position: absolute;
+	right: 3px;
+	bottom: 3px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	color: #fff;
+	background: rgba(15, 32, 51, 0.82);
+	border-radius: 50%;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+	pointer-events: none;
+}
+
+.bhp-gallery__thumb-play svg {
+	width: 13px;
+	height: 13px;
+	display: block;
+}
+
+/* The check mark for the selected state moves to the opposite corner so the
+   two badges can never sit on top of each other. */
+.bhp-gallery__thumb-mark {
+	right: auto;
+	left: 3px;
+}
+
+.bhp-gallery__thumb:focus-visible {
+	outline: 3px solid var(--color-gold, #D9A45F);
+	outline-offset: 2px;
+}
+
+/* ---- 7. Lightbox ---------------------------------------------------- */
+.bhp-gallery__lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: clamp(0.75rem, 3vw, 2rem);
+}
+
+.bhp-gallery__lightbox[hidden] {
+	display: none;
+}
+
+.bhp-gallery__lightbox-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(10, 20, 33, 0.88);
+	cursor: zoom-out;
+}
+
+.bhp-gallery__lightbox-panel {
+	position: relative;
+	max-width: min(100%, 1100px);
+	max-height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bhp-gallery__lightbox-img {
+	display: block;
+	max-width: 100%;
+	max-height: 90vh;
+	width: auto;
+	height: auto;
+	border-radius: var(--radius-sm, 6px);
+	background: #fff;
+}
+
+.bhp-gallery__lightbox-close {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	z-index: 2;
+	width: 48px;
+	height: 48px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.8rem;
+	line-height: 1;
+	color: var(--color-navy, #1f3550);
+	background: #fff;
+	border: 0;
+	border-radius: 50%;
+	cursor: pointer;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.bhp-gallery__lightbox-close:focus-visible {
+	outline: 3px solid var(--color-gold, #D9A45F);
+	outline-offset: 2px;
+}
+
+/* Stop the page scrolling behind an open lightbox. */
+body.bhp-gallery-lightbox-open {
+	overflow: hidden;
+}
+
+/* ---- 8. HERO variant — the gallery IS the main product image -------- */
+/*
+ * In hero mode the section replaces WooCommerce's native product gallery, so
+ * it sits in the LEFT column of `.woocommerce div.product`, not full width.
+ * It must NOT carry `grid-column: 1 / -1` here — that rule is scoped to the
+ * after-summary placement above and would stretch the hero across the
+ * purchase panel.
+ */
+.woocommerce div.product .bhp-media-gallery--hero {
+	grid-column: auto;
+	margin-top: 0;
+}
+
+.bhp-media-gallery--hero {
+	margin-block: 0 1rem;
+}
+
+.bhp-media-gallery--hero .bhp-gallery {
+	--bhp-stage-h: min(58vh, 520px);
+	max-width: 100%;
+}
+
+/* The hero stage holds the cover on a light ground — a navy block behind a
+   white page image reads as a letterbox rather than a backdrop. */
+.bhp-media-gallery--hero .bhp-gallery__stage {
+	background: var(--color-parchment, #f7f3e8);
+}
+
+.bhp-media-gallery--hero .bhp-look-inside__note {
+	font-size: 0.82rem;
+	margin-top: 0.5rem;
+}
+
+/* ---- 8b. Grouped rail (Complete Collection) ------------------------- */
+/*
+ * A group caption marks where one title's slides begin. It is decorative and
+ * `aria-hidden` — each thumb already carries its title in its own accessible
+ * name. It is NOT a tab: nothing here is focusable, selectable or filtering.
+ */
+.bhp-gallery__thumb-item--group-start {
+	position: relative;
+	/* The gap that does the actual grouping work. */
+	margin-left: 0.85rem;
+}
+
+.bhp-gallery__thumb-item--group-start:first-child {
+	margin-left: 0;
+}
+
+.bhp-gallery__group-label {
+	position: absolute;
+	top: -0.95rem;
+	left: 0;
+	font-size: 0.62rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	/* CYCLE144-LD-212 (2026-08-05, theme 1.19.201) — contrast, measured, not guessed,
+	   and the VARIABLE INDIRECTION IS DELIBERATELY REMOVED.
+
+	   Lighthouse 12.8.2 / axe FAILED `color-contrast` on this label on TWO pages with
+	   TWO different values, which is what exposed the real problem:
+	     home page              4.45  (#7a6e60 on #f7f2e7) — the fallback below
+	     /complete-collection/  3.89  (#7a7869 on #f6efe0) — `--bl-text-light` resolved
+	   The threshold is 4.5:1 in both cases.
+
+	   ⚠ A FIRST PASS ONLY CHANGED THE FALLBACK, AND THAT FIXED EXACTLY ONE OF THE TWO.
+	     `--bl-text-light` is undefined on the home page, so the fallback applied there
+	     — but `audience-landing.css` and `parent-landing.css` DO define it (as
+	     `--al-text-light` / `--pl-text-light`, both #7a7869), so on every landing page
+	     the fallback was never consulted and the failure survived. Caught by measuring
+	     the sales pages rather than assuming the home-page fix generalised.
+
+	   Chasing it into those tokens would be the wrong fix: they are "light text"
+	   tokens sized for body copy, and this is the SMALLEST text on the page at 9.92px
+	   bold. It should not inherit a value tuned for something else. An explicit colour
+	   is correct here.
+
+	   #6d695b measured against all three backgrounds this label actually appears on:
+	     #f6efe0 -> 4.80    #f7f2e7 -> 4.92    #fdfbf5 -> 5.31
+	   Over the line everywhere, with margin. Typeface, size, weight, tracking, case and
+	   position are untouched, and the landing-page tokens are left exactly as they are. */
+	color: #6d695b;
+	pointer-events: none;
+}
+
+/* Reserve room for the captions only where they exist. */
+.bhp-gallery__thumbs:has(.bhp-gallery__group-label) {
+	margin-top: 1.5rem;
+	padding-top: 0.15rem;
+}
+
+/* ---- 9. Compact variant (Complete Collection page) ------------------ */
+.bhp-look-inside--compact .bhp-gallery {
+	--bhp-stage-h: min(52vh, 440px);
+}
+
+/* ---- 9b. Collection hero variant ------------------------------------ */
+/*
+ * On the Complete Collection page the gallery stands in for the old static
+ * three-cover block, inside the hero's existing left grid column. It inherits
+ * that page's cream/forest/gold system rather than the product page's chrome,
+ * while the slides themselves stay on the shared navy ground so they read as
+ * the same family as the individual book galleries.
+ */
+.bhp-media-gallery--collection {
+	margin: 0;
+	min-width: 0;
+}
+
+.bhp-media-gallery--collection .bhp-gallery {
+	--bhp-stage-h: min(52vh, 460px);
+	max-width: 100%;
+}
+
+.bhp-media-gallery--collection .bhp-gallery__stage {
+	background: var(--bl-forest, #1e4331);
+	border-radius: 14px;
+	box-shadow: 0 18px 36px rgba(30, 67, 49, 0.22);
+}
+
+.bhp-media-gallery--collection .bhp-gallery__arrow {
+	color: var(--bl-forest, #1e4331);
+	background: rgba(251, 246, 235, 0.94);
+}
+
+.bhp-media-gallery--collection .bhp-gallery__arrow:hover {
+	background: var(--bl-ivory, #fffdf8);
+}
+
+.bhp-media-gallery--collection .bhp-gallery__arrow:focus-visible,
+.bhp-media-gallery--collection .bhp-gallery__thumb:focus-visible {
+	outline: 3px solid var(--color-gold, #D9A45F);
+}
+
+.bhp-media-gallery--collection .bhp-gallery__counter {
+	background: rgba(30, 67, 49, 0.82);
+}
+
+.bhp-media-gallery--collection .bhp-gallery__thumb {
+	background: var(--bl-cream-card, #fbf6eb);
+	border-color: var(--bl-border, rgba(30, 67, 49, 0.16));
+}
+
+.bhp-media-gallery--collection .bhp-gallery__thumb[aria-current="true"] {
+	border-color: var(--bl-forest, #1e4331);
+	box-shadow: inset 0 0 0 2px var(--color-gold, #D9A45F);
+}
+
+.bhp-media-gallery--collection .bhp-gallery__thumb-mark,
+.bhp-media-gallery--collection .bhp-gallery__thumb-play {
+	background: var(--bl-forest, #1e4331);
+}
+
+.bhp-media-gallery--collection .bhp-look-inside__note {
+	color: var(--bl-text-light, #7a6e60);
+	font-size: 0.8rem;
+}
+
+/* ---- 9. Shop card "Look inside" affordance -------------------------- */
+.bhp-shop-look-inside {
+	display: inline-block;
+	margin-top: 0.35rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--color-forest, #2f5d4f);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.bhp-shop-look-inside:focus-visible {
+	outline: 3px solid var(--color-gold, #D9A45F);
+	outline-offset: 2px;
+}
+
+/* ---- 10. Mobile ----------------------------------------------------- */
+@media (max-width: 782px) {
+	.bhp-gallery {
+		/* Keep the purchase controls reachable: the stage must not eat a
+		   whole phone screen on its own. */
+		--bhp-stage-h: min(56vh, 420px);
+	}
+
+	/*
+	 * MOBILE PURCHASE-FIRST HIERARCHY — inherited obligation, not a new idea.
+	 * The 2026-07-30 decision capped WooCommerce's native product gallery to
+	 * a 150px-wide cover (~210px tall) on narrow screens so the format cards,
+	 * price and CTA reach the first screen or two. This gallery now REPLACES
+	 * that element, so it inherits the obligation: a 240px stage keeps the
+	 * cover clearly legible while leaving the purchase interface where it was.
+	 * Nothing is hidden — every image and the video are one tap away in the
+	 * rail directly beneath.
+	 */
+	.bhp-media-gallery--hero .bhp-gallery {
+		--bhp-stage-h: 240px;
+	}
+
+	.bhp-media-gallery--hero .bhp-gallery__thumb {
+		width: 52px;
+		height: 52px;
+	}
+
+	.bhp-media-gallery--hero .bhp-gallery__thumbs {
+		margin-top: 0.5rem;
+	}
+
+	.bhp-gallery__arrow {
+		width: 44px;
+		height: 44px;
+		font-size: 1.6rem;
+	}
+
+	.bhp-gallery__arrow--prev { left: 0.35rem; }
+	.bhp-gallery__arrow--next { right: 0.35rem; }
+
+	.bhp-gallery__thumb {
+		width: 64px;
+		height: 64px;
+	}
+
+	/* Touch has no hover, so the hint would never appear — show it always. */
+	.bhp-gallery__inspect-hint {
+		opacity: 1;
+	}
+}
+
+/*
+ * TABLET — measured at 768x1024. The collection's lead slide is a LANDSCAPE
+ * composite (1800x1140) while the phone cap is a flat 240px. In a 691px-wide
+ * column that renders the image at 379x240 with ~150px of dead navy either
+ * side. Giving the stage more height lets the composite fill the column.
+ * Phones are unaffected: below 600px the image is width-constrained anyway.
+ */
+@media (min-width: 600px) and (max-width: 782px) {
+	.bhp-media-gallery--collection .bhp-gallery {
+		--bhp-stage-h: min(44vh, 380px);
+	}
+}
+
+/*
+ * LANDSCAPE PHONES — measured at 667x375, where the flat 240px stage was 64%
+ * of the viewport height, and at 844x390 where it was 52%. Both push the
+ * purchase panel off-screen. Capping against viewport height brings each to
+ * ~46% and keeps the CTA reachable without a long scroll.
+ */
+@media (max-width: 900px) and (max-height: 460px) {
+	.bhp-media-gallery--hero .bhp-gallery {
+		--bhp-stage-h: min(200px, 46vh);
+	}
+}
+
+/* ---- 11. Motion and contrast preferences ---------------------------- */
+@media (prefers-reduced-motion: reduce) {
+	.bhp-gallery__thumb,
+	.bhp-gallery__arrow,
+	.bhp-gallery__inspect-hint {
+		transition: none;
+	}
+
+	.bhp-gallery__thumbs {
+		scroll-behavior: auto;
+	}
+}
+
+@media (forced-colors: active) {
+	.bhp-gallery__thumb {
+		border-color: ButtonBorder;
+	}
+
+	.bhp-gallery__thumb[aria-current="true"] {
+		border-color: Highlight;
+		box-shadow: none;
+		outline: 2px solid Highlight;
+		outline-offset: -4px;
+	}
+
+	.bhp-gallery__arrow,
+	.bhp-gallery__lightbox-close {
+		border: 1px solid ButtonBorder;
+	}
+}
+
+/* ====================================================================
+ * 10. FUNNEL-PAGE PLACEMENTS  (2026-08-02)
+ *
+ * The six pages that pitch the Complete Collection in words carry a small
+ * subset of the same gallery, below the fold, inside a container that was
+ * not designed to hold one. These rules constrain it there and nowhere
+ * else — every selector is scoped to a specific host container, so the
+ * product-page hero and the /complete-collection/ hero are untouched.
+ *
+ * The gallery brings its own min-width:0 discipline (rule 1 above) — the
+ * same min-content trap applies in a flex row as in a grid track.
+ * ==================================================================== */
+
+/* ---- homepage: inside .home-collection-feature, between claim and CTA ---- */
+/*
+ * WAVE F (2026-08-03), item 10 -- widened 540 -> 620px.
+ *
+ * Measured on staging 1.19.146 at 1440: the covers occupied 540px of a
+ * 720px card, and the stage around them was 540 x 440 holding a 540 x 342
+ * composite -- 48.9px of dead navy top AND bottom. Removing the letterbox
+ * (see style.css, Wave F block) fixes the vertical waste; this fixes the
+ * horizontal, scaling the covers ~15% and leaving 50px of card margin
+ * either side.
+ *
+ * ⚠ The width override HAS to live here, not in style.css. Both selectors
+ *    are 0,2,0 and book-media.css is enqueued AFTER style.css, so a
+ *    style.css rule silently lost the cascade -- observed in QA on the
+ *    first 1.19.147 build, which reported max-width still 540px.
+ */
+.home-collection-feature .bhp-look-inside {
+	min-width: 0;
+	max-width: 620px;
+	margin: 1.5rem auto;
+}
+
+/*
+ * ---- /books/: a THIRD child of a two-child flex band.
+ * The band is `flex-wrap: wrap`, so it wraps rather than squeezing — but
+ * with three children it can still land two-up at intermediate widths and
+ * leave the composite in a third of the row. Giving it a large flex-basis
+ * makes it take its own line whenever the row is not comfortably wide.
+ */
+.books-complete-collection-banner__inner .bhp-look-inside {
+	min-width: 0;
+	flex: 1 1 420px;
+	max-width: 420px;
+	margin-inline: auto;
+}
+
+/* ---- parent + audience landing pages: centre within the section inner ---- */
+.parent-landing .bhp-look-inside,
+.audience-landing .bhp-look-inside {
+	min-width: 0;
+	max-width: 720px;
+	margin: 1.75rem auto 0;
+}
+
+/*
+ * The heading is an <h3> in every funnel placement (each insertion point
+ * already sits under the section's own <h2>). The sitewide
+ * `body:not(.home) h2/h3` rules outrank a single-class selector — the same
+ * specificity trap noted at the top of this file — so the scope class is
+ * carried here too.
+ */
+.parent-landing .bhp-look-inside .bhp-look-inside__title,
+.audience-landing .bhp-look-inside .bhp-look-inside__title,
+.home-collection-feature .bhp-look-inside .bhp-look-inside__title,
+.books-complete-collection-banner .bhp-look-inside .bhp-look-inside__title {
+	font-size: 1.05rem;
+	margin: 0 0 0.75rem;
+	text-align: center;
+}
+
+@media (max-width: 782px) {
+	.home-collection-feature .bhp-look-inside,
+	.books-complete-collection-banner__inner .bhp-look-inside,
+	.parent-landing .bhp-look-inside,
+	.audience-landing .bhp-look-inside {
+		max-width: 100%;
+		flex-basis: 100%;
+	}
+}

@@ -1,0 +1,417 @@
+/**
+ * Sitewide quiz launcher modal (2026-07-17).
+ *
+ * Wraps template-parts/quiz/audience-quiz.php (styled entirely by its own
+ * audience-quiz.css, unchanged) in an accessible dialog overlay. Modeled on
+ * the existing .mariana-popup overlay pattern already in style.css (same
+ * fixed/inset/flex-centering approach, same reduced-motion handling) so the
+ * site doesn't grow a second, differently-behaved dialog convention.
+ */
+.bhp-quiz-modal[hidden] { display: none; }
+
+/* z-index (2026-07-31, Part E): raised 2100 -> 10000.
+   WPConsent's floating settings gear is a child of #wpconsent-container's
+   SHADOW ROOT -- unreachable by page CSS -- and is position:fixed at
+   z-index 9999. At 2100 the quiz dialog painted UNDER it, so the gear sat
+   on top of Question 1's fourth answer and the result screen's lower
+   controls (confirmed in the owner's iPhone screenshots). 10000 clears the
+   gear by the smallest honest margin.
+
+   Deliberately still far BELOW WPConsent's own banner/preferences overlay
+   (measured z-index 900000): consent must stay answerable and must never be
+   painted over. The existing rule that defers quiz auto-open while a
+   consent overlay is visible is untouched in quiz-modal.js. Nothing about
+   the consent system is disabled, hidden or removed. */
+.bhp-quiz-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4, 16px);
+}
+
+/* Dynamic viewport (2026-07-31, Part B). `inset: 0` sizes this to the
+   LAYOUT viewport, which on iOS Safari extends behind the collapsed
+   browser controls -- so "centered" was centered against an area the
+   visitor could not fully see, and the dialog drifted low. 100dvh tracks
+   the visible viewport as the toolbars show and hide, so the centring is
+   measured against what is actually on screen. Progressive enhancement:
+   browsers without dvh keep the previous inset:0 behaviour. */
+@supports (height: 100dvh) {
+  .bhp-quiz-modal {
+    height: 100dvh;
+    bottom: auto;
+  }
+}
+
+.bhp-quiz-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(31, 77, 54, 0.72);
+}
+
+/* The dialog itself no longer scrolls (2026-07-29). It is a flex column that
+   clips, and .bhp-quiz inside it is the single scroll region -- see below.
+   Previously the dialog scrolled and the absolutely-positioned close button
+   scrolled away with the content, so on a short viewport the visitor could
+   scroll the quiz and lose the only visible way to dismiss it (measured on
+   staging at 1024x560: close button ended 7px ABOVE the dialog's top edge,
+   fully clipped). Moving the scroll one level in pins the close button to the
+   dialog without introducing a second scroll region. */
+.bhp-quiz-modal__dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - var(--space-8, 64px));
+  overflow: hidden;
+  background: #f7f2e7;
+  border-radius: 16px;
+  box-shadow: var(--shadow-md, 0 12px 32px rgba(0, 0, 0, 0.24));
+}
+
+/* Question steps get a wider dialog than the result form (2026-07-31).
+   Applied by audience-quiz.js's showStep(), because the dialog is an ANCESTOR
+   of the quiz root and CSS alone cannot reach it from a class on that root.
+
+   The question steps widen their content measure to 720px (see
+   .bhp-quiz--question .bhp-quiz__inner in audience-quiz.css); 720px of content
+   plus the quiz card's 2x24px padding needs 768px of dialog, so 780px is the
+   smallest honest value that fits it with a little slack. `max-width` only --
+   the dialog still shrinks to the viewport on anything narrower, so nothing
+   changes below 780px.
+
+   The RESULT step deliberately keeps the original 640px: its offer typography,
+   email fields and submit button were tuned at that measure and are out of
+   scope for this change. */
+.bhp-quiz-modal__dialog--question {
+  max-width: 780px;
+}
+
+.bhp-quiz-modal__dialog:focus { outline: none; }
+.bhp-quiz-modal__dialog:focus-visible { outline: 3px solid var(--color-focus, #d8bd7d); outline-offset: -3px; }
+
+/* The dialog wrapper above supplies the shared cream background so the
+   quiz section reads as one continuous card; .bhp-quiz's own background/
+   padding/radius (audience-quiz.css) still applies unchanged for the
+   homepage/canonical-page renders.
+
+   2026-07-29: the "Open the full quiz page" fallback paragraph that used to
+   sit below the quiz was removed as redundant, so its 24px of bottom padding
+   is folded in here instead. The modal render also runs a tighter top
+   padding than the standalone card -- the dialog already has its own close
+   button and title, so the quiz doesn't need a full 48px lead-in.
+
+   padding-top clears the close button so no content can ever sit underneath
+   it -- previously the eyebrow's box ran under the close button at desktop
+   widths (measured overlap on staging at 1440x900). This is the single scroll
+   region inside the dialog.
+
+   2026-07-30: raised 52px -> 60px. The 52px figure was derived from the OLD
+   34px close button at top:10px (=44px bottom edge). The D1 touch-target fix
+   grew the button to 48px at top:8px, whose bottom edge is 56px -- so 52px had
+   silently become 4px SHORT of clearing it. With the promotional header gone
+   this padding is now the only thing separating the close button from the
+   progress label, so it has to be honest: 60px = 56px button + 4px. */
+.bhp-quiz-modal .bhp-quiz {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0;
+  padding-top: 60px;
+  padding-bottom: 32px;
+}
+
+/* ---------------------------------------------------------------------------
+   Compact modal typography
+   ---------------------------------------------------------------------------
+   2026-07-30: the `.bhp-quiz__heading` and `.bhp-quiz__lead` overrides that
+   used to live here were removed along with the header block itself. Those two
+   elements now render ONLY in the homepage intro-gate card, which is never
+   inside a modal, so the rules had become unreachable.
+
+   The question's own size is set once, for every context, in audience-quiz.css.
+   Only its bottom margin is tightened here: inside a 640px dialog the gap
+   between the question and the first answer can be smaller than it should be
+   on a full-width page card. (0,3,0) beats that file's (0,2,0). */
+.bhp-quiz-modal .bhp-quiz .bhp-quiz__progress { margin-bottom: 4px; }
+
+/* Question -> answers gap inside the modal (2026-07-31, Part C).
+   This (0,3,0) rule outranks audience-quiz.css's (0,2,0) base rule, so the
+   flat 10px set here was what actually shipped -- the heading sat on top of
+   the first answer card in the owner's desktop screenshots. It now carries
+   the same intent as the base rule: ~18px on mobile rising to ~28px on
+   desktop. `Question N of 2` keeps its tight 4px tie to the heading above,
+   so the grouping still reads progress -> question -> answers. */
+.bhp-quiz-modal .bhp-quiz .bhp-quiz__question {
+  /* 18px floor (mobile band 18-24: ~19px at 390, ~22px at 600), crossing 24px
+     at exactly 768 so tablet and desktop sit in the 24-32 band, capped 32px. */
+  margin-bottom: clamp(1.125rem, 0.9rem + 1.25vw, 2rem);
+}
+
+/* Question steps size to their content instead of carrying the result form's
+   bottom padding (2026-07-31). 32px below the last answer is generous for a
+   screen whose only remaining control is Back; the result screen keeps its own
+   padding, untouched, below. */
+.bhp-quiz-modal .bhp-quiz--question { padding-bottom: 20px; }
+
+/* The result screen is already visually successful and is not compressed --
+   it only inherits the shared close-button clearance above. */
+
+.bhp-quiz-modal__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  /* Above the scrolling quiz content, and anchored to the non-scrolling
+     dialog, so it stays reachable at every scroll position. */
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  border: none;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #5b5b52;
+  cursor: pointer;
+}
+
+.bhp-quiz-modal__close:hover { background: #ffffff; color: #2a2a2a; }
+.bhp-quiz-modal__close:focus-visible {
+  background: #ffffff;
+  color: #2a2a2a;
+  outline: 3px solid var(--expedition-navy, #071522);
+  outline-offset: 2px;
+}
+
+/* Body scroll lock while the modal is open -- the only scrollable region
+   while open is .bhp-quiz inside the dialog, never a second nested one. */
+body.bhp-quiz-modal-open {
+  overflow: hidden;
+}
+
+/* Mobile: a CENTERED dialog, not a bottom sheet (2026-07-31, Part B).
+   `align-items: flex-end` with `border-radius: 16px 16px 0 0` produced the
+   bottom-sheet look in the owner's iPhone screenshots, flush to the bottom
+   of the layout viewport and therefore partly behind Safari's toolbar.
+   Now: centered on both axes, rounded on all four sides, with at least
+   12px of visible outer space that grows to clear the notch/home indicator
+   via env() safe-area insets. Height budget uses dvh so it is measured
+   against the visible viewport. */
+@media (max-width: 600px) {
+  .bhp-quiz-modal {
+    align-items: center;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+  .bhp-quiz-modal__dialog {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    border-radius: 16px;
+  }
+  @supports (height: 100dvh) {
+    .bhp-quiz-modal__dialog {
+      max-height: calc(100dvh - (2 * max(12px, env(safe-area-inset-bottom))));
+    }
+  }
+  /* Close button is still 48px down to 401px wide, so its 56px bottom edge
+     needs the same 60px clearance as desktop. */
+  .bhp-quiz-modal .bhp-quiz {
+    padding-top: 60px;
+    padding-bottom: 24px;
+  }
+  .bhp-quiz-modal .bhp-quiz--question { padding-bottom: 16px; }
+}
+
+/* Short viewports: reclaim the outer gutter so the dialog gets the height
+   back. The close button and its clearance are untouched. */
+@media (max-height: 600px) {
+  .bhp-quiz-modal { padding: 8px; }
+  .bhp-quiz-modal__dialog { max-height: calc(100vh - 16px); }
+  @supports (height: 100dvh) {
+    .bhp-quiz-modal__dialog { max-height: calc(100dvh - 16px); }
+  }
+  /* Short-viewport RESULT treatment (2026-07-31, Part D). On a landscape
+     phone or a 568px-tall screen the result genuinely cannot show the offer,
+     the recommendation, both labelled fields, consent and the submit button
+     at accessible sizes. Rather than pretend, this compacts the block that
+     can be compacted -- the offer/recommendation type and the gaps around
+     them -- so the submit sits as high as possible, and allows exactly ONE
+     internal scroll region (.bhp-quiz), never a nested second one. The
+     close button is anchored to the non-scrolling dialog, so it stays
+     pinned and reachable at any scroll position. */
+  .bhp-quiz-modal .bhp-quiz--result { padding-top: 56px; padding-bottom: 14px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-eyebrow { margin-bottom: 4px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-headline {
+    font-size: clamp(1.375rem, 1.05rem + 1.4vw, 1.75rem);
+    margin: 0 auto 4px;
+    max-width: min(26ch, 100%);
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-offer {
+    font-size: clamp(1.0625rem, 0.95rem + 0.6vw, 1.25rem);
+    margin-bottom: 4px;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-detail {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__signup { gap: 8px; margin-top: 8px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__consent { font-size: 0.72rem; line-height: 1.35; }
+  /* Field rhythm, not field size: the label/input gap and the input's own
+     min-height come down, but the input stays >=44px tall and its text stays
+     at 16px so iOS still does not zoom on focus. Measured at 320x568 this is
+     what lifts the submit button above the fold; the two secondary links
+     below it may still sit under one scroll, which the brief permits. */
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__field { gap: 2px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__label { font-size: 0.8rem; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__input {
+    min-height: 44px;
+    padding-block: 8px;
+    font-size: max(1rem, 16px);
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-actions { gap: 6px; }
+  /* 56px still fully clears the 48px close button at top:8px (bottom edge
+     56px) -- this reclaims the outer gutter, never the button's clearance. */
+  /* 16px, not 12px: the acceptance criterion is at least 16px of clear space
+     below the final control (the Back button on Q2), and on these screens the
+     dialog is content-sized, so this padding IS that clearance. There is room
+     for it -- Q2 measures 320px of a 359px budget at 667x375. */
+  .bhp-quiz-modal .bhp-quiz--question {
+    padding-top: 56px;
+    padding-bottom: 16px;
+  }
+  /* Short screens still need a readable separation, just a tighter one. */
+  .bhp-quiz-modal .bhp-quiz .bhp-quiz__question { margin-bottom: 14px; }
+}
+
+/* At <=400px the close button drops to 44px (bottom edge 52px), so the
+   clearance can come down with it and give the question screen back 4px on
+   the smallest phones. */
+@media (max-width: 400px) {
+  .bhp-quiz-modal .bhp-quiz {
+    padding-top: 56px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bhp-quiz-modal, .bhp-quiz-modal__dialog { transition: none !important; animation: none !important; }
+}
+
+/* ============================================================
+   D1 (2026-07-31) — close button touch target + hit testing.
+   Measured on production 1.19.112: the real button box was
+   34x34 (below the 44x44 minimum at every viewport), and at
+   320x568 / 667x375 elementFromPoint() at its centre returned
+   a sibling DIV rather than the button, so a real tap could
+   miss it. The visible circle IS the interactive box here —
+   no invisible pseudo-element whose hit area disagrees with
+   what the visitor sees.
+   ============================================================ */
+.bhp-quiz-modal__close {
+	/* 48x48 where it fits; never below 44. */
+	min-width: 48px;
+	min-height: 48px;
+	width: 48px;
+	height: 48px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	/* Above the dialog surface, the internal scroller and any
+	   decorative layer inside the modal stacking context. */
+	position: absolute;
+	z-index: 20;
+	pointer-events: auto;
+	/* Keep clear of the scrollbar and of iOS safe-area insets. */
+	top: max(8px, env(safe-area-inset-top));
+	right: max(8px, env(safe-area-inset-right));
+}
+
+/* Anything decorative inside the button must not swallow the tap. */
+.bhp-quiz-modal__close > * {
+	pointer-events: none;
+}
+
+@media (max-width: 400px) {
+	.bhp-quiz-modal__close {
+		width: 44px;
+		height: 44px;
+		min-width: 44px;
+		min-height: 44px;
+	}
+}
+
+/* ============================================================
+   ULTRA-SHORT VIEWPORTS (<=440px tall) — landscape phones
+   ------------------------------------------------------------
+   844x390 and 667x375. The <=600px tier above is not enough
+   here: the offer, recommendation, supporting line, two labelled
+   fields, consent and submit simply do not fit 304px of content
+   box at the sizes used elsewhere. This tier compacts the
+   editorial block hard so the SUBMIT BUTTON — the conversion
+   action — clears the fold, while keeping every required element
+   present: nothing is removed, the consent sentence is intact,
+   both labels stay visible, inputs stay >=44px with 16px text so
+   iOS still will not zoom, and the submit keeps its 52px height.
+
+   One internal scroll region (.bhp-quiz) may still be needed to
+   reach the two secondary links below the submit. That is the
+   brief's explicit allowance for short viewports; the close
+   button is anchored to the non-scrolling dialog so it stays
+   pinned, and there is never a nested second scroller.
+   ============================================================ */
+@media (max-height: 440px) {
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-eyebrow {
+    font-size: 0.68rem;
+    margin-bottom: 2px;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-headline {
+    font-size: 1.25rem;
+    line-height: 1.1;
+    margin: 0 auto 2px;
+    max-width: min(34ch, 100%);
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-offer {
+    font-size: 1rem;
+    line-height: 1.2;
+    margin-bottom: 2px;
+    max-width: 46ch;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-detail {
+    font-size: 0.85rem;
+    line-height: 1.32;
+    max-width: 62ch;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__signup { margin-top: 6px; gap: 6px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__consent { font-size: 0.68rem; }
+  .bhp-quiz-modal .bhp-quiz--result { padding-bottom: 10px; }
+}
+
+/* P2-2: the offer line inside the modal, where vertical space is the
+   binding constraint and the submit button must stay reachable. */
+@media (min-width: 480px) {
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-offer {
+    font-size: 0.875rem;
+    line-height: 1.35;
+    margin-top: 6px;
+  }
+}
+
+@media (max-height: 440px) {
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-offer {
+    font-size: 0.8125rem;
+    line-height: 1.25;
+    margin-top: 4px;
+    max-width: 52ch;
+  }
+}

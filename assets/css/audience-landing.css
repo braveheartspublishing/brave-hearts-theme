@@ -1,0 +1,698 @@
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * C6 (2026-08-03) — THE LAST NON-CANONICAL GOLD IN THIS FILE IS GONE
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * F1 replaced this file's `--al-gold-light: #d8b877` token with
+ * `var(--color-gold)` and stopped there. It missed SIX `rgba(216,184,119,…)`
+ * literals — the same retired `#d8b877`, written in decimal, which is why a
+ * hex search did not find them. Every one of them was a live border colour on
+ * a page Andrew has walked.
+ *
+ * All six now read `rgba(var(--color-gold-rgb), …)`, the pattern `style.css`
+ * itself already uses in a dozen places. `--color-gold-rgb` is `217, 164, 95`
+ * against the retired `216, 184, 119`, so these borders shift by a genuinely
+ * imperceptible amount at alpha .28–.55 — the point is that there is now ONE
+ * gold in the system, and changing it changes everything that uses it.
+ *
+ * ⛔ ALPHA VALUES ARE UNTOUCHED. .4 / .3 / .28 / .55 / .28 / .35 are exactly
+ *    what they were; only the colour channel is re-sourced. No layout, radius,
+ *    padding or spacing value in this file was modified.
+ *
+ * ⛔ NO FALLBACK IS SUPPLIED HERE, DELIBERATELY, unlike the plugin's
+ *    stylesheets. This file is enqueued by the theme and can only ever load
+ *    alongside the `style.css` `:root` that defines the token.
+ * ═══════════════════════════════════════════════════════════════════════
+ */
+
+/**
+ * Shared audience landing-page design system (Teachers, Gift Buyers,
+ * Bookstores/Retailers, Organizations). Scoped entirely under
+ * .audience-landing -- same proven cream/dark-green/gold visual system as
+ * the Parent template (assets/css/parent-landing.css), including its two
+ * root-caused fixes (the .audience-landing-lead__art wrapper-stretch fix
+ * for the lead-image sizing bug, and the touch-device hover-media-query
+ * gating) -- but kept as an independent file so neither page can regress
+ * the other. Each audience page supplies its own copy/content; only the
+ * component system is shared. Loaded only on the 4 audience page templates
+ * (see bhp_enqueue_audience_landing_assets() in functions.php).
+ */
+
+/*
+ * Collection-gallery chrome, mapped onto this page system (2026-08-02).
+ *
+ * `assets/css/book-media.css`'s `--collection` variant paints itself from six
+ * `--bl-*` tokens, each of which already carries a complete literal fallback,
+ * so the gallery renders correctly here with or without this block. Remapping
+ * them to this page's own tokens makes the match exact rather than
+ * approximate.
+ *
+ * Scoped inside `.audience-landing`, so it cannot reach `/complete-collection/`
+ * or a product page, whose gallery chrome is unchanged.
+ */
+.audience-landing {
+	--bl-forest: var(--al-forest);
+	--bl-cream-card: var(--al-cream-card);
+	--bl-border: var(--al-border);
+	--bl-gold: var(--al-gold);
+	--bl-ivory: var(--al-cream-card);
+	--bl-text-light: var(--al-text-light);
+}
+
+.audience-landing {
+	--al-cream: #f4eede;
+	--al-cream-card: #fffdf7;
+	--al-cream-muted: #efe7d3;
+	--al-border: #e7ddc7;
+	--al-border-strong: #e4d9bf;
+	--al-forest-deep: var(--color-jungle);      /* F1: was #15331e */
+	--al-forest: var(--color-forest);           /* F1: was #1f3d29 */
+	--al-forest-btn: var(--color-forest);       /* F1: was #17371f */
+	--al-forest-btn-hover: #215f42;             /* F1: hover lift off the one forest */
+	--al-forest-light: #1f4429;
+	--al-gold: #a07f4a;
+	--al-gold-light: var(--color-gold);         /* F1: was #d8b877 (a third gold) */
+	--al-gold-hover: #e5c98a;
+	--al-green-check: #2f6b3f;
+	--al-text: #3b3a33;
+	--al-text-muted: #514f45;
+	--al-text-light: #7a7869;
+	--al-serif: 'Cormorant Garamond', Georgia, serif;
+	/* F1: Nunito Sans retired. UI/labels take the sitewide Archivo; the
+	   funnel body copy takes the sitewide EB Garamond via --al-body below,
+	   so home -> funnel -> collection -> product is one body face. */
+	--al-sans: var(--font-ui);
+	--al-body: var(--font-body);
+
+	background: var(--al-cream);
+	color: var(--al-text);
+	font-family: var(--al-body);
+	-webkit-font-smoothing: antialiased;
+	overflow-x: hidden;
+}
+
+.audience-landing * { box-sizing: border-box; }
+
+.audience-landing h1,
+.audience-landing h2,
+.audience-landing h3 {
+	font-family: var(--al-serif);
+	font-weight: 600;
+	color: var(--al-forest);
+	margin: 0;
+}
+
+.audience-landing__section { padding-block: clamp(2.4rem, 3.8vw, 3.5rem); } /* ~38-56px standard rhythm -- two adjacent sections meet at a shared boundary, so this is deliberately lower than the felt total gap */
+.audience-landing__section--major { padding-block: clamp(3rem, 5vw, 4.5rem); } /* ~48-72px for hero/collection/final-cta weight */
+.audience-landing__section--muted { background: var(--al-cream-muted); border-top: 1px solid var(--al-border-strong); border-bottom: 1px solid var(--al-border-strong); }
+.audience-landing__section--dark { background: var(--al-forest-deep); color: #e9e3d1; }
+.audience-landing__inner { max-width: 1160px; margin-inline: auto; padding-inline: clamp(1rem, 4vw, 1.5rem); }
+.audience-landing__inner--narrow { max-width: 1000px; }
+.audience-landing__inner--content { max-width: 800px; }
+
+.audience-landing-eyebrow {
+	display: inline-block;
+	font: 700 12px/1 var(--al-sans);
+	text-transform: uppercase;
+	letter-spacing: .16em;
+	color: var(--al-gold);
+	padding: 8px 15px;
+	border: 1px solid #dbcba6;
+	border-radius: 999px;
+	background: rgba(255,255,255,.5);
+}
+.audience-landing-eyebrow--on-dark { color: var(--al-gold-light); border-color: rgba(var(--color-gold-rgb), .4); background: transparent; }
+.audience-landing__header-block { text-align: center; max-width: 660px; margin: 0 auto; }
+.audience-landing .audience-landing__header-block h2 { font-size: clamp(30px, 4vw, 50px); line-height: 1.06; margin-top: 18px; } /* extra .audience-landing prefix needed: a sitewide body:not(.home) h2 rule outranks a single-class selector on specificity */
+.audience-landing__header-block--dark h2 { color: #f4eede; }
+.audience-landing__lead { font-size: 18px; line-height: 1.6; color: var(--al-text-muted); margin: 16px 0 0; }
+
+/* ---------- Hero ---------- */
+.audience-landing-hero { position: relative; overflow: hidden; }
+.audience-landing-hero__bg {
+	position: absolute; inset: 0; pointer-events: none;
+	background: radial-gradient(1100px 520px at 78% -8%, rgba(177,138,82,.16), transparent 60%),
+	            radial-gradient(900px 500px at 8% 6%, rgba(31,61,41,.07), transparent 55%);
+}
+.audience-landing-hero__grid {
+	position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+	gap: 56px; align-items: center; padding-block: clamp(2.8rem, 5.5vw, 4.5rem) clamp(3rem, 5.5vw, 5rem);
+}
+/* Left column reads slightly wider than the art column on desktop --
+   asymmetric 1.08:1 rather than the auto-fit's equal split -- only above
+   the point where the grid would otherwise wrap to a single column. */
+@media (min-width: 860px) {
+	.audience-landing-hero__grid { grid-template-columns: 1.35fr 1fr; }
+}
+.audience-landing-hero__badge { margin-bottom: 0; }
+.audience-landing .audience-landing-hero h1 { font-size: clamp(40px, 5.2vw, 66px); line-height: 1.1; letter-spacing: -.01em; margin: 22px 0 0; max-width: 22ch; } /* wider column + smaller top-end clamp = far fewer forced line breaks on real headline lengths. Extra .audience-landing prefix needed: a sitewide body:not(.home) h1 rule (clamp 3.2rem/7vw/6rem) outranks a single-class selector on specificity and was silently winning, rendering headlines even larger than intended -- confirmed the real root cause of the excessive wrapping, not just column width. */
+.audience-landing-hero p.audience-landing__lead { font-size: clamp(18px, 1.7vw, 21px); max-width: 36ch; margin-top: 24px; } /* more air between headline and paragraph */
+.audience-landing-hero__ctas { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 32px; }
+.audience-landing-hero__ctas .btn { font-size: 17px; padding: 19px 30px; } /* ~5% taller */
+.audience-landing-hero__proof { display: flex; flex-wrap: wrap; gap: 9px 18px; margin-top: 28px; font-size: 14px; font-weight: 700; color: var(--al-text); }
+.audience-landing-hero__proof span.sep { color: #c9bfa4; }
+
+.audience-landing-hero__art img.audience-landing-hero__logo { display: block; width: min(420px, 85%); height: auto; margin: 0 auto 4px; filter: drop-shadow(0 8px 18px rgba(20,40,25,.18)); }
+/* FD-32 (2026-08-03): the five audience-landing templates render
+   the_custom_logo() at the top of the hero art column. Core emits
+   class="custom-logo", NOT .audience-landing-hero__logo, so the rule
+   above never matched it and until a custom logo existed the element
+   simply wasn't there. With the compass logo set, an uncapped 1464px
+   PNG would dominate the art column above the covers. Capped here on
+   HEIGHT (not width) because the horizontal lockup is 3.66:1 -- a
+   width cap gives wildly different optical weight per lockup shape.
+   The hero background is cream, so the navy wordmark is legible here
+   with no plate; the dark site header is the case that needs one --
+   see style.css. */
+.audience-landing-hero__art .custom-logo-link { display: block; margin: 0 auto 10px; text-align: center; }
+.audience-landing-hero__art img.custom-logo { display: block; width: auto; max-width: min(300px, 80%); height: auto; max-height: 74px; margin: 0 auto; object-fit: contain; }
+@media (max-width: 640px) {
+	.audience-landing-hero__art img.custom-logo { max-height: 58px; max-width: min(240px, 70%); }
+}
+.audience-landing-hero__covers { display: flex; justify-content: center; align-items: flex-end; }
+.audience-landing-hero__covers img { width: 100%; height: auto; border-radius: 7px; display: block; }
+.audience-landing-hero__cover--side { width: clamp(142px, 18vw, 214px); z-index: 1; } /* ~9% larger */
+.audience-landing-hero__cover--side img { box-shadow: 0 18px 40px rgba(20,40,25,.32); }
+.audience-landing-hero__cover--left { transform: rotate(-8deg) translateY(14px); margin-right: -26px; }
+.audience-landing-hero__cover--right { transform: rotate(8deg) translateY(14px); margin-left: -26px; }
+.audience-landing-hero__cover--center { width: clamp(164px, 20.8vw, 245px); z-index: 3; } /* ~9% larger */
+.audience-landing-hero__cover--center img { box-shadow: 0 22px 48px rgba(20,40,25,.38); }
+.audience-landing-hero__caption { text-align: center; margin: 20px 0 0; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--al-gold); font-weight: 700; }
+
+/* ---------- Buttons ---------- */
+.audience-landing .btn {
+	display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+	border-radius: 12px; padding: 17px 26px; font: 800 16px/1 var(--al-sans);
+	cursor: pointer; text-decoration: none; border: none; box-shadow: 0 3px 0 rgba(0,0,0,.16);
+	transition: background-color .15s ease;
+}
+.audience-landing .btn-primary { background: var(--al-forest-btn); color: #f6efdd; }
+.audience-landing .btn-primary:hover { background: var(--al-forest-btn-hover); color: #f6efdd; }
+.audience-landing .btn-outline { background: transparent; color: var(--al-forest); border: 2px solid var(--al-forest); box-shadow: none; padding: 15px 24px; }
+.audience-landing .btn-outline:hover { background: rgba(31,61,41,.06); color: var(--al-forest); }
+.audience-landing .btn-gold { background: var(--al-gold-light); color: var(--al-forest-deep); }
+.audience-landing .btn-gold:hover { background: var(--al-gold-hover); color: var(--al-forest-deep); }
+.audience-landing .btn-outline-light { background: transparent; color: #f4eede; border: 2px solid rgba(244,238,222,.6); box-shadow: none; padding: 16px 26px; }
+.audience-landing .btn-outline-light:hover { background: rgba(255,255,255,.08); color: #f4eede; }
+.audience-landing .btn-block { display: flex; width: 100%; }
+
+/* ---------- Quick-scan bar ---------- */
+.audience-landing-scanbar { background: var(--al-cream-card); border-top: 1px solid var(--al-border); border-bottom: 1px solid var(--al-border); }
+.audience-landing-scanbar__row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 34px; padding-block: 22px; }
+.audience-landing-scanbar__item { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 700; color: var(--al-forest); }
+.audience-landing-scanbar__item .check { color: var(--al-green-check); font-size: 17px; }
+
+/* ---------- Problem cards / generic card grid ---------- */
+/* Explicit 4-column desktop grid, not auto-fit -- auto-fit reflows based
+   on available track width vs. minmax(), which for exactly 4 cards was
+   fitting 3 per row and stranding the 4th alone with a large empty gap
+   beside it. An explicit column count never reflows like that: 3 or 4
+   cards both just sit in one clean row (a 3-card page leaves one empty
+   cell, not an orphan). */
+.audience-landing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 28px; }
+@media (max-width: 900px) { .audience-landing-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .audience-landing-grid { grid-template-columns: 1fr; } }
+.audience-landing-grid--tight { gap: 14px; }
+/* Card-count-aware modifiers -- a grid with fewer than 4 real cards should
+   never fall back to the 4-column default (that's what left the orphan-card
+   gap in the first place, just with a "technically tidy" empty cell instead
+   of a stray wrapped row). Apply the modifier matching the actual card
+   count; the default (no modifier) stays 4 columns for genuine 4-card
+   sections. */
+.audience-landing-grid--cols-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .audience-landing-grid--cols-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .audience-landing-grid--cols-3 { grid-template-columns: 1fr; } }
+.audience-landing-grid--cols-2 { grid-template-columns: repeat(2, 1fr); max-width: 700px; margin-inline: auto; } /* centered, not stretched full-width */
+@media (max-width: 560px) { .audience-landing-grid--cols-2 { grid-template-columns: 1fr; } }
+/* Feature-card grid ("Easy to pick up. Hard to put down.") -- explicit
+   3-column desktop grid so 6 cards fill two clean rows instead of an
+   auto-fit orphan row with empty space to the right. */
+.audience-landing-grid--features { grid-template-columns: repeat(3, 1fr); margin-top: 48px; } /* more air below the "Easy to pick up" heading */
+@media (max-width: 900px) { .audience-landing-grid--features { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .audience-landing-grid--features { grid-template-columns: 1fr; } }
+.audience-landing-card { background: var(--al-cream-card); border: 1px solid var(--al-border); border-radius: 16px; padding: 34px 30px; height: 100%; } /* extra padding + larger numbers together read ~15px taller */
+.audience-landing-card__num { font-family: var(--al-serif); font-size: 44px; color: #c2a668; line-height: 1; font-weight: 600; }
+.audience-landing-card p { margin: 13px 0 0; font-size: 18px; line-height: 1.5; color: var(--al-text); font-weight: 600; }
+.audience-landing .audience-landing-card h3 { font-size: 25px; margin: 0; }
+.audience-landing-card p.desc { margin: 10px 0 0; font-size: 16px; line-height: 1.55; color: var(--al-text-muted); font-weight: 400; }
+.audience-landing__pull-quote { text-align: center; font-family: var(--al-serif); font-style: italic; font-size: clamp(22px, 2.6vw, 30px); line-height: 1.35; color: var(--al-forest); max-width: 680px; margin: 32px auto 0; }
+
+/* ---------- Solution / checklist rows ---------- */
+.audience-landing-checklist { display: flex; flex-direction: column; gap: 20px; } /* more air between rows */
+.audience-landing-checklist__row { display: flex; gap: 16px; background: var(--al-cream-card); border: 1px solid var(--al-border); border-radius: 14px; padding: 25px 22px; } /* +9px row height */
+.audience-landing-checklist__row .check { color: var(--al-green-check); font-size: 22px; flex: none; }
+.audience-landing-checklist__row span.text { font-size: 17px; line-height: 1.5; color: var(--al-text); }
+.audience-landing-checklist--compact .audience-landing-checklist__row { background: transparent; border: none; padding: 0; align-items: center; }
+.audience-landing-checklist--compact .check { font-size: 19px; }
+.audience-landing-checklist--compact span.text { font-size: 17px; color: var(--al-text); }
+
+/* ---------- Two-column split sections (solution / see-inside) ---------- */
+.audience-landing-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 48px; align-items: center; }
+/* See-inside: media column reads larger than the text column, and the
+   section's own side padding shrinks a touch so the big preview card
+   isn't swimming in cream margin on either side. */
+@media (min-width: 860px) {
+	.audience-landing-split--media-lead { grid-template-columns: 0.92fr 1.15fr; gap: 40px; }
+}
+
+/* ---------- See-inside media ---------- */
+.audience-landing-media {
+	position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(20,40,25,.16);
+	border: 1px solid #e0d4b8; aspect-ratio: 4 / 3; background: var(--al-cream-card);
+}
+.audience-landing-media--tall { aspect-ratio: 3 / 4; border-radius: 12px; box-shadow: 0 12px 28px rgba(20,40,25,.14); }
+.audience-landing-media--wide { aspect-ratio: 16 / 9; border-radius: 18px; box-shadow: 0 22px 55px rgba(20,40,25,.18); }
+.audience-landing-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.audience-landing-media__placeholder {
+	position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+	padding: 16px; font-size: 13px; line-height: 1.5; color: #8a8875; border: 1px dashed #d8cbae; border-radius: inherit;
+}
+.audience-landing-media-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-top: 26px; } /* more breathing room between the 4 detail cards */
+.audience-landing-media-grid figure { margin: 0; text-align: center; }
+.audience-landing-media-grid figure .audience-landing-media { aspect-ratio: 3 / 4; } /* consistent crop across all 4 detail cards, independent of source image dimensions */
+.audience-landing-media-grid figcaption { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--al-gold); margin: 10px 0 0; }
+.audience-landing-media__play {
+	position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
+}
+.audience-landing-media__play span {
+	width: 74px; height: 74px; border-radius: 50%; background: rgba(21,51,30,.82); display: flex; align-items: center;
+	justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+}
+.audience-landing-media__play span::after {
+	content: ''; width: 0; height: 0; border-style: solid; border-width: 13px 0 13px 22px;
+	border-color: transparent transparent transparent #f4eede; margin-left: 5px;
+}
+
+/* ---------- Result / transformation flow (dark) ---------- */
+.audience-landing-flow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 6px; margin: 36px auto 0; max-width: 900px; }
+.audience-landing-flow__pill { background: rgba(255,255,255,.06); border: 1px solid rgba(var(--color-gold-rgb), .3); border-radius: 999px; padding: 12px 20px; font-weight: 700; font-size: 15px; color: #f4eede; }
+.audience-landing-flow__pill--final { background: var(--al-gold-light); border-color: var(--al-gold-light); font-weight: 800; color: var(--al-forest-deep); }
+.audience-landing-flow__arrow { color: var(--al-gold-light); font-size: 20px; }
+.audience-landing-outcomes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-top: 40px; }
+.audience-landing-outcomes__item { border: 1px solid rgba(var(--color-gold-rgb), .28); border-radius: 16px; padding: 32px 26px; } /* taller cards */
+.audience-landing .audience-landing-outcomes__item h3 { font-size: 25px; color: #f4eede; }
+.audience-landing-outcomes__item p { margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #c4bfae; }
+.audience-landing__disclaimer { text-align: center; font-size: 13px; color: #9a957f; margin: 24px auto 0; max-width: 620px; }
+
+/* ---------- Free lead-magnet panel ---------- */
+.audience-landing-lead {
+	background: var(--al-cream-card); border: 1px solid var(--al-border); border-radius: 24px; overflow: hidden;
+	display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); box-shadow: 0 20px 60px rgba(20,40,25,.09);
+}
+.audience-landing-lead__content { padding: clamp(30px, 4vw, 52px); }
+.audience-landing .audience-landing-lead__content h2 { font-size: clamp(28px, 3.6vw, 44px); line-height: 1.05; margin: 18px 0 0; }
+.audience-landing-lead__content > p.audience-landing__lead { font-size: 17px; margin: 16px 0 0; }
+.audience-landing-lead__checklist { margin: 24px 0 0; }
+.audience-landing-lead__fine-print { font-size: 12.5px; color: #8a8875; margin: 14px 0 0; line-height: 1.5; }
+/* The book cover is the visual proof of "this is the real chapter you're
+   about to receive" -- it needs to read as the dominant element of this
+   panel, not a small image floating in a large green field. Sized off
+   the panel's own height (via min-height + the flex layout) rather than
+   viewport width, so it scales sensibly whether the panel is short
+   (mobile, stacked under the form) or tall (desktop, beside it). */
+.audience-landing-lead__art {
+	background: linear-gradient(160deg, var(--al-forest-light), var(--al-forest-deep));
+	display: flex; flex-direction: column; align-items: center; justify-content: center;
+	padding: 32px 28px; text-align: center; min-height: 460px;
+}
+/* The image sits inside an unclassed wrapper div (the actual flex item).
+   Under align-items:center that wrapper gets an indefinite shrink-to-fit
+   width, which makes any percentage width on the img below resolve
+   against a bogus basis instead of the panel's real width. Stretching
+   the wrapper gives the img a definite, correct containing block. */
+.audience-landing-lead__art > div { align-self: stretch; width: 100%; height: 100%; }
+.audience-landing-lead__art img {
+	width: min(400px, 80%); height: auto; max-height: 68%;
+	margin: 0 auto; transform: rotate(-3deg); border-radius: 10px;
+	box-shadow: 0 30px 60px rgba(0,0,0,.45); display: block; object-fit: contain;
+}
+.audience-landing-lead__art .tag { color: var(--al-gold-light); font-weight: 700; font-size: 13.5px; letter-spacing: .12em; text-transform: uppercase; margin: 24px 0 0; }
+.audience-landing-lead__art .sub { color: #c4bfae; font-size: 14.5px; margin: 6px 0 0; }
+@media (max-width: 640px) {
+	.audience-landing-lead__art { min-height: 340px; padding: 28px 24px; }
+	.audience-landing-lead__art img { width: min(300px, 78%); max-height: 62%; }
+}
+/* Honest temporary placeholder for lead magnets whose real PDF cover
+   doesn't exist yet -- reserves a realistic document aspect ratio (close
+   to US Letter) instead of borrowing a real book cover, which wrongly
+   implied the book itself was the free download. Swap for a real design
+   once Andrew supplies the actual cover artwork. */
+.audience-landing-lead__placeholder-cover {
+	width: min(260px, 74%); aspect-ratio: 0.77 / 1; margin: 0 auto;
+	border-radius: 10px; border: 2px dashed rgba(var(--color-gold-rgb), .55); background: rgba(255,255,255,.04);
+	display: flex; align-items: center; justify-content: center; text-align: center; padding: 22px;
+}
+.audience-landing-lead__placeholder-label {
+	font-size: 12.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+	color: var(--al-gold-light); line-height: 1.6;
+}
+
+/* Embedded real signup form (lead-magnet-cta / acquisition-panel), restyled
+   to sit inside .audience-landing-lead__content without fighting the site's
+   generic acquisition-panel styling. */
+/* The site's shared .acquisition-panel component is display:grid by
+   default (built for a compact icon+text+button layout elsewhere on the
+   site) -- that grid's implicit column collapses to its content's
+   min-content width, which drags this form down to it too. Escaping to
+   display:block here is what actually fixes the "badly compressed form"
+   defect: everything else (width:100% on the form/inputs/button) was
+   already correct but had no full-width track to fill. */
+.audience-landing-lead .acquisition-panel { display: block; background: none; border: none; padding: 0; box-shadow: none; width: 100%; }
+.audience-landing-lead .acquisition-panel__content { display: none; } /* heading/text already rendered above via custom markup */
+.audience-landing-lead form.acquisition-form {
+	margin-top: 30px; display: flex; flex-direction: column; gap: 18px;
+	width: 100%; max-width: 480px; /* generous column measure, never a narrow inner box */
+}
+.audience-landing-lead .acquisition-form__field { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.audience-landing-lead .acquisition-form__field label { font-size: 13.5px; font-weight: 700; color: var(--al-text); }
+.audience-landing-lead form.acquisition-form input[type="text"],
+.audience-landing-lead form.acquisition-form input[type="email"] {
+	width: 100%; box-sizing: border-box; padding: 18px; border: 1px solid #d8cbae; border-radius: 12px;
+	font: 400 16.5px/1.3 var(--al-sans); background: #fffefb; min-height: 58px;
+}
+.audience-landing-lead form.acquisition-form input::placeholder { font-size: 16.5px; color: #9a927e; }
+.audience-landing-lead form.acquisition-form input:focus { border-color: var(--al-green-check); outline: none; }
+.audience-landing-lead form.acquisition-form .acquisition-form__submit {
+	margin-top: 8px; background: var(--al-forest-btn); color: #f6efdd; border: none; border-radius: 12px;
+	padding: 18px 26px; font: 800 16.5px/1.25 var(--al-sans); cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.16);
+	width: 100%; box-sizing: border-box; white-space: normal; text-align: center;
+}
+.audience-landing-lead form.acquisition-form .acquisition-form__submit:hover { background: var(--al-forest-btn-hover); }
+.audience-landing-lead .acquisition-form__notes { margin-top: 22px; width: 100%; max-width: 480px; } /* more breathing room beneath the CTA */
+.audience-landing-lead .acquisition-form__privacy { font-size: 13px; line-height: 1.6; color: #8a8875; max-width: 46ch; }
+.audience-landing-lead .acquisition-form__status { font-size: 13.5px; margin: 0 0 10px; }
+.audience-landing-lead .acquisition-form__status.is-success { color: var(--al-green-check); }
+.audience-landing-lead .acquisition-form__status.is-error { color: #b23b2e; }
+.audience-landing-lead .bhp-form-honeypot { position: absolute; left: -9999px; }
+
+/* Coming-soon fallback, matches site's default acquisition-panel look but
+   framed inside the new design's card. */
+.audience-landing-lead .audience-landing-coming-soon { text-align: center; }
+.audience-landing-lead .audience-landing-coming-soon .btn { margin-top: 20px; opacity: .6; cursor: not-allowed; }
+
+/* ---------- Complete Collection pricing card ---------- */
+.audience-landing-books { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px; margin-top: 28px; }
+.audience-landing-book { background: var(--al-cream-card); border: 1px solid var(--al-border); border-radius: 18px; padding: 28px; text-align: center; }
+.audience-landing-book img { width: 170px; height: auto; border-radius: 6px; box-shadow: 0 14px 30px rgba(20,40,25,.24); margin: 0 auto; display: block; }
+.audience-landing-book .eyebrow-line { font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--al-gold); font-weight: 700; margin: 20px 0 4px; }
+.audience-landing .audience-landing-book h3 { font-size: 26px; }
+.audience-landing-book p.desc { font-size: 14.5px; color: #6f6d61; margin: 6px 0 0; }
+
+/* This is the primary purchasing moment on the page -- "THE OFFER" --
+   widened and given more generous internal spacing so it reads as
+   prominent as the three book cards above it, not a small checkout
+   widget centered in empty space. */
+.audience-landing-pricecard { max-width: 920px; margin: 28px auto 0; background: var(--al-cream-card); border: 1px solid #e0d4b8; border-radius: 26px; padding: clamp(32px, 3.8vw, 52px); box-shadow: 0 28px 80px rgba(20,40,25,.14); }
+.audience-landing-pricecard__badge { display: inline-block; background: var(--al-forest-deep); color: var(--al-gold-light); font: 700 12px/1 var(--al-sans); letter-spacing: .14em; text-transform: uppercase; padding: 10px 18px; border-radius: 999px; }
+.audience-landing .audience-landing-pricecard h3 { font-size: clamp(30px, 3.4vw, 42px); margin: 20px 0 8px; }
+.audience-landing-pricecard p.subtitle { font-size: 15.5px; color: #6f6d61; margin: 0 0 28px; }
+
+.audience-landing-format-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+.audience-landing-format-btn {
+	border-radius: 12px; padding: 18px 14px; font: 800 16px/1.2 var(--al-sans); cursor: pointer; text-align: center;
+	transition: all .15s; background: #fff; color: var(--al-forest); border: 2px solid #e0d4b8;
+}
+.audience-landing-format-btn span.price { display: block; font-weight: 700; font-size: 14px; opacity: .85; margin-top: 4px; }
+.audience-landing-format-btn.is-selected { background: var(--al-forest-btn); color: #f6efdd; border-color: var(--al-forest-btn); }
+.audience-landing-format-btn:focus-visible { outline: 2px solid var(--al-green-check); outline-offset: 2px; }
+
+.audience-landing-pricecard__included { display: flex; flex-direction: column; gap: 11px; margin-bottom: 24px; }
+.audience-landing-pricecard__included-row { display: flex; gap: 11px; align-items: center; font-size: 16px; color: var(--al-text); }
+.audience-landing-pricecard__included-row .check { color: var(--al-green-check); font-size: 18px; }
+
+.audience-landing-pricecard__foot { border-top: 1px solid #eadfc6; padding-top: 26px; }
+.audience-landing-pricecard__badges { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 26px; } /* more white space around the badges */
+.audience-landing-pricecard__badge-pill { border-radius: 999px; padding: 9px 17px; font-weight: 700; font-size: 14px; }
+.audience-landing-pricecard__badge-pill--save { background: var(--al-green-check); color: #fff; font-weight: 800; }
+.audience-landing-pricecard__badge-pill--muted { background: var(--al-cream); border: 1px solid #e6dcc6; color: var(--al-text); }
+.audience-landing-pricecard__price-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.audience-landing-pricecard__price-row .label { font-size: 17px; font-weight: 700; color: var(--al-forest); }
+.audience-landing-pricecard__price-strike { font-size: 16px; color: #8a8875; text-decoration: line-through; margin-right: 10px; }
+.audience-landing-pricecard__price-final { font-family: var(--al-serif); font-weight: 700; font-size: 50px; color: var(--al-forest); }
+.audience-landing-pricecard__ship-note { font-size: 13.5px; color: #8a8875; margin: 12px 0 28px; }
+.audience-landing-pricecard__foot .btn {
+	display: block; width: 100%; text-align: center; padding: 23px; font-size: 19px;
+	box-shadow: 0 5px 0 rgba(0,0,0,.18); /* stronger, more dimensional CTA */
+}
+/* ---------- One-click collection CTA (2026-08-05) ----------
+   Three CTAs on this page stopped being <a href="/complete-collection/"> and
+   became <button type="submit"> inside a <form> that adds the set and lands on
+   /checkout/. The button itself needs NO new styling: style.css's base button
+   selector already lists `button[type='submit']` alongside `.btn`, so
+   .btn/.btn-primary/.btn-outline-light apply unchanged.
+
+   What DOES need styling is the <form> wrapper, because it is a new box in the
+   middle of two flex containers and one full-width block:
+     - inside the price card, the form must be as wide as the button was, or
+       `width:100%` on the button resolves against a shrink-to-fit form;
+     - inside .audience-landing-final__ctas and .audience-landing-stickybar__ctas
+       (both `display:flex`), the form becomes the flex item, so it has to
+       behave like the button it wraps rather than adding a row.
+   `display:contents` would also work and is NOT used: it drops the <form> from
+   the accessibility tree in several engines, and this form takes payment
+   intent. An inline-flex box is boring and correct. */
+.audience-landing .bhp-collection-cta { margin: 0; padding: 0; border: 0; display: inline-flex; }
+.audience-landing-pricecard__foot .bhp-collection-cta { display: block; width: 100%; }
+.audience-landing-final__ctas .bhp-collection-cta,
+.audience-landing-stickybar__ctas .bhp-collection-cta { display: inline-flex; }
+.audience-landing-pricecard__link-row { text-align: center; font-size: 13px; color: #8a8875; margin: 16px 0 0; }
+.audience-landing-pricecard__link-row a { color: #6f6d61; text-decoration: underline; }
+.audience-landing-pricecard [data-parent-format-panel][hidden] { display: none; }
+
+/* ---------- Trust (dark) ---------- */
+.audience-landing-trust-eyebrow { text-align: center; font: 700 12px/1 var(--al-sans); text-transform: uppercase; letter-spacing: .2em; color: var(--al-gold-light); margin: 0 0 28px; }
+.audience-landing-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; max-width: 880px; margin: 0 auto; }
+.audience-landing-stat { text-align: center; border: 1px solid rgba(var(--color-gold-rgb), .28); border-radius: 16px; padding: 30px 18px; }
+.audience-landing-stat__num { font-family: var(--al-serif); font-weight: 700; font-size: 51px; color: var(--al-gold-light); line-height: 1; }
+.audience-landing-stat__label { font-size: 15.5px; color: #ded8c4; margin: 11px 0 0; line-height: 1.4; font-weight: 700; }
+/* 2026-07-17: scoped replacement for a sentence that previously reused
+   .audience-landing__lead (color: var(--al-text-muted), tuned for the
+   light cream background) directly inside a dark-green section --
+   ~1.7:1 computed contrast, far under WCAG AA. Only used on the
+   Organization page's credibility band; --al-text-muted and the base
+   .audience-landing__lead rule are unchanged everywhere else. */
+.audience-landing-trust-note { font-size: 17px; line-height: 1.6; color: var(--al-cream-muted); text-align: center; max-width: 640px; margin: 24px auto 0; }
+.audience-landing-review { text-align: center; max-width: 720px; margin: 36px auto 0; }
+.audience-landing-review__stars { color: #e7b93f; font-size: 22px; letter-spacing: 4px; }
+.audience-landing-review blockquote { font-family: var(--al-serif); font-style: italic; font-size: clamp(22px, 2.8vw, 32px); line-height: 1.4; color: #f4eede; margin: 16px 0 0; }
+/* 2026-07-17: attribution contrast bumped (targeted to this component only,
+   --al-text-muted and the plain-text .audience-landing-review cite color
+   are unchanged everywhere else on the site). Stays visually secondary to
+   the italic serif blockquote above it via size/weight, not low contrast. */
+.audience-landing-review cite { display: block; font-style: normal; font-size: 14px; font-weight: 600; color: var(--al-cream-muted); margin: 18px 0 0; }
+.audience-landing-review cite a { color: var(--al-gold-light); font-weight: 700; text-decoration: underline; }
+
+/* ---------- Author ---------- */
+.audience-landing-author { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 48px; align-items: center; }
+.audience-landing-author__photo { aspect-ratio: 4 / 4.6; border-radius: 18px; box-shadow: 0 18px 44px rgba(20,40,25,.16); } /* slightly less tall than pure 4/5 so the placeholder block doesn't dominate before a real photo exists */
+.audience-landing .audience-landing-author h2 { font-size: clamp(28px, 3.6vw, 44px); line-height: 1.05; margin: 18px 0 0; }
+.audience-landing-author p { font-size: 17px; line-height: 1.65; color: var(--al-text-muted); margin: 16px 0 0; }
+.audience-landing-author blockquote { font-family: var(--al-serif); font-style: italic; font-size: 22px; color: var(--al-forest); margin: 22px 0 0; }
+
+/* ---------- Video ---------- */
+.audience-landing__section .audience-landing-media--wide { aspect-ratio: 16 / 8; } /* slightly shorter than 16/9 so the placeholder doesn't read as an oversized blank block before a real video exists */
+
+/* ---------- FAQ ---------- */
+.audience-landing-faq { display: flex; flex-direction: column; gap: 14px; }
+.audience-landing-faq__item { background: var(--al-cream-card); border: 1px solid var(--al-border); border-radius: 14px; overflow: hidden; }
+.audience-landing-faq__item summary {
+	list-style: none; cursor: pointer; padding: 24px; display: flex; justify-content: space-between; align-items: center;
+	gap: 16px; font: 700 17.5px/1.4 var(--al-sans); color: var(--al-forest); min-height: 28px;
+}
+.audience-landing-faq__item summary::-webkit-details-marker { display: none; }
+.audience-landing-faq__item summary .icon {
+	flex: none; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+	font-size: 21px; font-weight: 400; background: #f0e8d4; color: var(--al-green-check); transition: transform .2s;
+}
+.audience-landing-faq__item[open] summary .icon { transform: rotate(45deg); background: var(--al-forest-btn); color: #f6efdd; }
+.audience-landing-faq__item p { padding: 0 24px 24px; margin: 0; font-size: 16px; line-height: 1.65; color: var(--al-text-muted); }
+
+/* ---------- Final CTA (dark gradient) ---------- */
+.audience-landing-final { background: linear-gradient(160deg, var(--al-forest-light), var(--al-forest-deep)); color: #f4eede; text-align: center; }
+.audience-landing-final__inner { max-width: 800px; margin: 0 auto; }
+.audience-landing .audience-landing-final h2 { font-size: clamp(32px, 4.4vw, 54px); line-height: 1.05; color: #f4eede; }
+.audience-landing-final p { font-size: 18px; line-height: 1.6; color: #cfc9b5; margin: 18px auto 0; max-width: 52ch; }
+.audience-landing-final__ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 34px; }
+
+/* ---------- Sticky mini-CTA bar ---------- */
+.audience-landing-stickybar {
+	position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; background: rgba(21,51,30,.97);
+	backdrop-filter: blur(8px); border-top: 1px solid rgba(var(--color-gold-rgb), .35);
+	transform: translateY(100%); transition: transform .25s ease, visibility 0s linear .25s;
+	visibility: hidden; /* paired with the transform delay above so an off-screen bar is never keyboard-focusable */
+	/* Never sits under Safari/Chrome bottom chrome or a device's home
+	   indicator -- padding-bottom grows to include the safe area instead
+	   of the bar's content being tucked under it. */
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.audience-landing-stickybar.is-visible { transform: translateY(0); visibility: visible; transition: transform .25s ease; }
+/* JS adds this class while the signup form, collection CTA, or final CTA
+   is in view -- avoids a redundant CTA stacked directly on top of an
+   identical CTA already on screen, and never covers the signup fields. */
+.audience-landing-stickybar.is-suppressed { transform: translateY(100%); visibility: hidden; }
+.audience-landing-stickybar__row { max-width: 1160px; margin: 0 auto; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.audience-landing-stickybar__text { color: #f4eede; font-weight: 700; font-size: 13px; }
+.audience-landing-stickybar__ctas { display: flex; gap: 8px; }
+.audience-landing-stickybar .btn { padding: 10px 16px; font-size: 13.5px; box-shadow: none; border-radius: 8px; min-height: 40px; }
+.audience-landing-stickybar .btn-outline-light { padding: 9px 15px; border-width: 1px; }
+
+@media (max-width: 640px) {
+	.audience-landing-hero__grid { padding-top: 1.6rem; }
+	.audience-landing-pricecard { padding: 24px; }
+	.audience-landing-lead__content { padding: 26px; }
+	.audience-landing-stickybar__row { padding: 10px 14px; gap: 8px; }
+	.audience-landing-stickybar__text { font-size: 12px; flex: 1 1 100%; text-align: center; }
+	.audience-landing-stickybar__ctas { width: 100%; justify-content: center; }
+}
+
+/* ==================================================
+   Restrained motion -- entirely opt-out via
+   prefers-reduced-motion. Nothing here changes layout;
+   it only adds transitions/animations on top of the
+   already-final positions, so a reduced-motion visitor
+   sees the exact same finished page, just without the
+   transition getting there.
+   ================================================== */
+@media (prefers-reduced-motion: no-preference) {
+	/* Hero books float upward into place on load */
+	.audience-landing-hero__covers { animation: al-float-up .7s cubic-bezier(.16,1,.3,1) both; animation-delay: .1s; }
+	@keyframes al-float-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+	.audience-landing .btn { transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+	.audience-landing-card,
+	.audience-landing-book,
+	.audience-landing-outcomes__item,
+	.audience-landing-stat,
+	.audience-landing-pricecard,
+	.audience-landing-faq__item summary {
+		transition: transform .18s ease, box-shadow .18s ease, background-color .15s ease;
+	}
+}
+
+/* Hover elevation only on devices that actually support a real hover
+   (mouse/trackpad) -- guarded separately from the reduced-motion block
+   above so a touch device never gets a "stuck" hover state from a tap,
+   regardless of its motion preference. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+	.audience-landing .btn:hover { transform: translateY(-2px); }
+	.audience-landing .btn-primary:hover, .audience-landing .btn-gold:hover { box-shadow: 0 5px 0 rgba(0,0,0,.16); }
+
+	.audience-landing-card:hover,
+	.audience-landing-book:hover,
+	.audience-landing-outcomes__item:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(20,40,25,.12); }
+	.audience-landing-stat:hover { transform: translateY(-3px); }
+
+	.audience-landing-pricecard:hover { transform: translateY(-5px); box-shadow: 0 32px 90px rgba(20,40,25,.18); }
+
+	.audience-landing-faq__item summary:hover { background: rgba(160,127,74,.06); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+	/* Section fade-ins, driven by IntersectionObserver in audience-landing.js
+	   (adds .al-in-view once each section enters the viewport). Sections
+	   start slightly lower + transparent and settle into place. */
+	.audience-landing__section.al-fade-init { opacity: 0; transform: translateY(18px); }
+	.audience-landing__section.al-fade-init.al-in-view {
+		opacity: 1; transform: translateY(0);
+		transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1);
+	}
+}
+
+/* Defense-in-depth: any print/PDF/full-page-capture render must show
+   finished content even if the JS reveal path somehow didn't run in that
+   render context (e.g. a tool that renders via the print stylesheet). */
+@media print {
+	.audience-landing__section.al-fade-init { opacity: 1 !important; transform: none !important; }
+}
+
+/* ============================================================
+   Compass module (FD-30) -- gift-buyers page ONLY.
+   Rendered by page-audience-gift-buyers.php between the FAQ and the
+   final CTA. Scoped entirely under a new .bhp-compass namespace so the
+   other four audience-landing templates that share this stylesheet
+   cannot be affected -- verified by cross-page QA, not assumed.
+
+   Three type registers, deliberately:
+     dedication  serif ITALIC, muted, SMALLER than the payoff line -- it
+                 is a quotation and must not out-shout what follows
+     "A compass" serif ROMAN, full forest, largest -- the line that lands
+     context     sans, smallest, lightest -- a footnote, not a claim
+   No new colour is introduced; --al-text-muted / --al-forest /
+   --al-text-light is this page's own existing hierarchy.
+   line-height 1.75 on the dedication is load-bearing: six short lines at
+   normal leading read as a cramped list, at 1.75 as a printed dedication.
+   max-width in ch (not px) keeps the line breaks stable across clamp().
+   No letter-spacing, no text-transform, no eyebrow pill -- the eyebrow is
+   a marketing device and this module is not marketing.
+   ============================================================ */
+.bhp-compass { text-align: center; }
+.bhp-compass__mark { display: block; width: 48px; height: 48px; margin: 0 auto; }
+.bhp-compass__dedication { margin: 28px auto 0; padding: 0; border: 0; max-width: 34ch; }
+.bhp-compass__dedication p {
+	font-family: var(--al-serif);
+	font-style: italic;
+	font-size: clamp(19px, 2.1vw, 24px);
+	line-height: 1.75;
+	color: var(--al-text-muted);
+	margin: 0;
+}
+.bhp-compass__line {
+	font-family: var(--al-serif);
+	font-style: normal;
+	font-size: clamp(22px, 2.6vw, 30px);
+	line-height: 1.3;
+	color: var(--al-forest);
+	margin: 28px auto 0;
+	max-width: 22ch;
+}
+/* Keeps the payoff line's break between its two sentences at every width.
+   Do NOT add text-wrap:balance alongside this -- measured, it balances to
+   "Not just a / story. A compass." which is worse than either. */
+.bhp-compass__nb { white-space: nowrap; }
+.bhp-compass__context {
+	font-family: var(--al-sans);
+	font-size: 15px;
+	line-height: 1.6;
+	color: var(--al-text-light);
+	margin: 20px auto 0;
+	max-width: 46ch;
+}
+@media (max-width: 640px) {
+	.bhp-compass__mark { width: 40px; height: 40px; }
+	.bhp-compass__dedication { max-width: 30ch; }
+	.bhp-compass__dedication p { line-height: 1.7; }
+	.bhp-compass__line { max-width: 18ch; }
+}
+
+/* WAVE F (2026-08-03), item 12 -- Andrew Signore, "2 fix", relayed.
+ * The fixed sticky bar must clear the compass module's last line.
+ *
+ * REPRODUCED AND MEASURED at all six mobile geometries -- 390x844,
+ * 390x664, 360x640, 320x568, 320x844, 360x844. The bar is 89.4px tall
+ * and `.audience-landing__section--major` gives this section only 48px
+ * of bottom padding, so at the scroll position where
+ * `.bhp-compass__context` reaches the bottom of the viewport the bar
+ * covers it by 66.7-67.6px. A hit test at that line's baseline returned
+ * `DIV.audience-landing-stickybar__ctas`: the bar is painted over the
+ * sentence, not merely near it.
+ *
+ * Why a coarse scan misses this: the bar suppresses itself once 15% of
+ * `.audience-landing-final` is on screen, so the collision only exists
+ * inside a scroll window a few tens of pixels wide. It was found with a
+ * 4px-step scan, not a page-bottom check.
+ *
+ * 48px existing + 67.6px measured overlap + 16px breathing room = 132px.
+ * The selector is doubled to beat `.audience-landing__section--major`,
+ * which has the same 0,1,0 specificity, rather than relying on source
+ * order. Mobile only -- at desktop the bar is shorter and the two-column
+ * rhythm already clears it (verified, no overlap at 1440 or 1024).
+ */
+@media (max-width: 782px) {
+	.bhp-compass.bhp-compass { padding-bottom: 132px; }
+}
+/* R12: this is the one part of the page a gift buyer might plausibly
+   print or screenshot. Never display:none it in print. */
+@media print {
+	.bhp-compass, .bhp-compass * { opacity: 1 !important; transform: none !important; }
+}

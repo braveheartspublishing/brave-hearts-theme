@@ -1,0 +1,48 @@
+/**
+ * Find Your Adventure — sitewide quiz entry CTA banner (2026-07-17).
+ *
+ * Scoped to .bhp-quiz-cta, its own small stylesheet (mirrors the existing
+ * per-feature CSS convention: audience-quiz.css, parent-landing.css, etc.).
+ * Reuses the sitewide .btn.btn-secondary button and brand colors already
+ * established elsewhere -- no new colors, radii, or button styles here.
+ */
+.bhp-quiz-cta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	max-width: 1100px;
+	margin: 0 auto 32px;
+	padding: 20px 24px;
+	background: #f7f2e7;
+	border: 1px solid #e7ddc7;
+	border-radius: 12px;
+	text-align: center;
+}
+
+.bhp-quiz-cta__text {
+	margin: 0;
+	color: #2a2a2a;
+	font-size: 15px;
+}
+
+.bhp-quiz-cta__text strong {
+	display: block;
+	color: var(--color-forest);
+	font-size: 16px;
+	margin-bottom: 2px;
+}
+
+.bhp-quiz-cta__button {
+	flex-shrink: 0;
+	white-space: nowrap;
+}
+
+@media (min-width: 700px) {
+	.bhp-quiz-cta {
+		flex-wrap: nowrap;
+		text-align: left;
+		justify-content: space-between;
+	}
+}

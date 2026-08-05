@@ -1,0 +1,365 @@
+<?php
+/**
+ * Brave Hearts — D8: compact, bottom-anchored consent banner.
+ *
+ * Capstone fix wave, 2026-08-03.
+ *
+ * ⛔⛔ THE ONE THING TO UNDERSTAND BEFORE EDITING THIS FILE.
+ *
+ *     THIS CHANGES POSITION AND SIZE. IT CHANGES NOTHING ELSE.
+ *
+ *     No button is added, removed, renamed, reordered or re-bound. No
+ *     category is pre-checked. No default is altered. Nothing here decides
+ *     WHEN consent fires, WHAT is consented to, or WHAT happens on accept,
+ *     reject or save. The three buttons remain the plugin's own
+ *     `#wpconsent-accept-all`, `#wpconsent-cancel-all` and
+ *     `#wpconsent-preferences-all`, with the plugin's own handlers, in the
+ *     plugin's own order, carrying the plugin's own labels. The preferences
+ *     modal is untouched. `inc/class-bhp-wpconsent-bridge.php`, which is what
+ *     actually reads consent state, is untouched.
+ *
+ *     If a future change here would alter any of that, it is not a styling
+ *     change and it is not this file's to make.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY IT IS DONE THIS WAY, AND WHY THE OBVIOUS WAYS DO NOT WORK.
+ *
+ * WPConsent renders its banner inside an OPEN SHADOW ROOT on
+ * `#wpconsent-container`, whose host box measures 0 x 0. Consequences, all
+ * verified live rather than assumed:
+ *   - A normal stylesheet cannot reach it. Shadow-root style encapsulation
+ *     means every selector in `style.css` misses, silently.
+ *   - `::part()` is unavailable — the plugin exposes no `part` attributes.
+ *   - Light-DOM and `offsetWidth` detection of the banner always fail, which
+ *     is already recorded in the conversion-audit skill as a known trap.
+ * The one supported route into an OPEN shadow root is to append a `<style>`
+ * to it from script. That is what this does, and only that.
+ *
+ * ---------------------------------------------------------------------------
+ * MEASURED BEFORE (staging 1.19.149, 390 x 844, DPR 3, `innerWidth` asserted):
+ *
+ *   holder            `.wpconsent-banner-holder.wpconsent-banner-long-top`
+ *   banner            390 x 285  -> 33.8% of the first screen
+ *   message body      360 x 65
+ *   three buttons     360 x 45 each, STACKED, 105 / 155 / 205
+ *   powered-by row    85 x 15
+ *   anchoring         TOP. Hit-testing the centre of the header logo returned
+ *                     a DIV, not the IMG: the banner painted OVER the sticky
+ *                     site header, so the compass lockup, the whole navigation
+ *                     and every page's h1 were covered on first visit.
+ *   desktop           only 65px (7.2%) — this was a mobile-only failure, 4.4x
+ *                     worse on the phone.
+ *   owner corroboration: "goes down all the way to the middle of the everest
+ *                     book on mobile. prob 7/10 annoying".
+ *
+ * TARGET: bottom-anchored, <= 120px at 390px, header never covered.
+ *
+ * @package brave-hearts
+ */
+
+defined('ABSPATH') || exit;
+
+/**
+ * Is WPConsent actually present? If it is not, this renders nothing at all —
+ * no orphan script, no selectors for a banner that does not exist.
+ */
+function bhp_consent_banner_compact_active() {
+    return function_exists('wpconsent');
+}
+
+function bhp_consent_banner_compact_css() {
+    return <<<'CSS'
+/* Injected by the Brave Hearts theme (D8). Position and size only.
+
+   ⚠ THE POSITIONED ELEMENT IS `.wpconsent-banner`, NOT THE HOLDER.
+     Measured: the holder renders 390x0 at y=844 (it is a zero-height
+     anchor at the bottom of the viewport) while `.wpconsent-banner`
+     itself is the fixed 390x285 panel painted at y=0. A first pass that
+     moved the HOLDER changed nothing on screen — the banner stayed on
+     top of the header. Both are pinned here, and the banner's own
+     `top`/`bottom` is what actually does the work. */
+.wpconsent-banner-holder,
+.wpconsent-banner-holder.wpconsent-banner-long-top,
+.wpconsent-banner-holder.wpconsent-banner-long {
+  top: auto !important;
+  bottom: 0 !important;
+}
+.wpconsent-banner {
+  box-sizing: border-box;
+  position: fixed !important;
+  top: auto !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-height: 112px !important;
+  padding: 8px 12px 6px !important;
+  border-top: 1px solid rgba(217, 164, 95, .45);
+  border-radius: 0 !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, .18);
+}
+.wpconsent-banner-body {
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+}
+.wpconsent-banner-message,
+.wpconsent-banner-message p {
+  margin: 0 !important;
+  font-size: 11.5px !important;
+  line-height: 1.3 !important;
+  /* Two lines, then clipped. The full text stays in the DOM and is still
+     read by assistive technology; only the visual box is bounded. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* The three buttons go from a 45px stack to one 36px row. Same three
+   buttons, same order, same labels, same handlers. */
+.wpconsent-banner-footer {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 6px !important;
+  margin: 0 !important;
+}
+.wpconsent-banner-footer .wpconsent-banner-button {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 6px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  line-height: 1.15 !important;
+  font-size: 11.5px !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.wpconsent-banner-close {
+  top: 6px !important;
+  right: 8px !important;
+}
+.wpconsent-powered-by {
+  margin: 2px 0 0 !important;
+  transform: scale(.72);
+  transform-origin: left center;
+  opacity: .6;
+}
+@media (min-width: 782px) {
+  /* Desktop already measured only 65px TALL and was never a HEIGHT defect. It
+     keeps the one-row treatment for consistency and is capped lower. */
+  .wpconsent-banner { max-height: 92px !important; }
+
+  /* ⛔⛔ THE 1.19.186 CORRECTION — READ THIS BEFORE TOUCHING THE THREE RULES BELOW.
+
+     The defect it fixes (OBSERVED live on production AND staging 2026-08-05,
+     headless Chrome, `window.innerWidth` asserted 1280, WPConsent Free 1.1.7):
+
+         Accept All          x 616 -> 983    on screen
+         Reject Nonessential x 989 -> 1357   CLIPPED at the 1265px banner edge
+         Manage Preferences  x 1363 -> 1730  ENTIRELY OFF SCREEN
+
+     Every desktop visitor could Accept and could NOT Reject or Manage
+     Preferences. Mobile was never affected (measured 3 x 118px at 390px).
+
+     WHY IT HAPPENED — the mechanism, so it is not re-derived:
+
+     1. The plugin's own stylesheet sets `.wpconsent-banner-button { width: 100% }`
+        because in ITS layout the footer is a COLUMN
+        (`.wpconsent-banner-long ... .wpconsent-banner-footer { flex-direction: column }`,
+        and that rule lives inside the plugin's `@media (max-width: 767px)`).
+        A stacked button at `width: 100%` is correct.
+     2. This file turns that footer into a ROW. In a row, `width: 100%` means
+        "as wide as the whole footer" — for EACH of the three buttons.
+     3. The percentage is resolved AFTER flex-shrink. The footer is itself a
+        shrinkable item in the banner row, so it shrank to 367.5px; each button
+        then took 367.5px; 3 x 367.5 + gaps = 1114px laid out from x=616.
+     4. The mobile rule above survives this because `flex: 1 1 0` sets
+        flex-basis 0, which overrides `width` for the main axis. The old
+        desktop `flex: 0 0 auto` restores flex-basis: auto — i.e. it hands
+        control straight back to the plugin's `width: 100%`. That is the line
+        that broke it, and it broke it only above 782px.
+
+     THE FIX IS SIZING ONLY. No button is added, removed, renamed, reordered or
+     re-bound; no handler, default, category or consent semantic is touched. */
+  .wpconsent-banner-footer .wpconsent-banner-button {
+    flex: 0 0 auto;
+    /* Kills the inherited percentage. This is the load-bearing declaration. */
+    width: auto !important;
+    min-width: 0;
+    padding: 0 16px !important;
+    /* Labels stay on one line inside the fixed 34px box; wrapping would clip
+       them instead of the box growing. */
+    white-space: nowrap;
+  }
+  /* The footer must not shrink below its three buttons, or they overflow it
+     again — just less visibly. It has no `width` of its own above 767px, so
+     `flex: 0 0 auto` resolves to the buttons' own max-content width. */
+  .wpconsent-banner-footer {
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+  /* ...which means the MESSAGE absorbs a narrow desktop viewport instead. It is
+     already clamped to two lines, so it degrades gracefully; a button cannot. */
+  .wpconsent-banner-body {
+    min-width: 0 !important;
+  }
+}
+CSS;
+}
+
+/**
+ * Inline, in the footer, with no dependency on jQuery or on load order.
+ *
+ * The observer exists because the banner element is created by the plugin's
+ * own script at an unknown time; polling stops as soon as the shadow root
+ * appears, and gives up after ~10 seconds rather than spinning forever.
+ *
+ * The body-class mirror is the second half of this fix: a bottom-anchored bar
+ * would otherwise sit on top of the sticky buy bars and the floating cart
+ * button, which are also bottom-fixed. Those are lifted while the banner is
+ * up and returned the moment it is dismissed. That is a layout consequence of
+ * moving the bar, handled here rather than left to be discovered.
+ */
+function bhp_consent_banner_compact_script() {
+    if (!bhp_consent_banner_compact_active()) {
+        return;
+    }
+    $css = wp_json_encode(bhp_consent_banner_compact_css());
+    ?>
+    <script id="bhp-consent-compact">
+    (function () {
+      var CSS = <?php echo $css; // phpcs:ignore WordPress.Security.EscapeOutput -- json-encoded string literal ?>;
+      var tries = 0;
+      function styleIt() {
+        var host = document.getElementById('wpconsent-container');
+        var sr = host && host.shadowRoot;
+        if (!sr) { return false; }
+        if (!sr.getElementById || !sr.getElementById('bhp-consent-compact-style')) {
+          var st = document.createElement('style');
+          st.id = 'bhp-consent-compact-style';
+          st.textContent = CSS;
+          sr.appendChild(st);
+        }
+        mirror(sr);
+        return true;
+      }
+      function mirror(sr) {
+        var holder = sr.querySelector('.wpconsent-banner-holder');
+        if (!holder) { return; }
+        function sync() {
+          var visible = holder.classList.contains('wpconsent-banner-visible');
+          document.body.classList.toggle('bhp-consent-banner-visible', visible);
+        }
+        sync();
+        if (typeof MutationObserver === 'function') {
+          new MutationObserver(sync).observe(holder, { attributes: true, attributeFilter: ['class', 'style'] });
+        }
+      }
+      /*
+       * ⭐ CYCLE144-LD-217 (2026-08-05, theme 1.19.201) — `reveal()` AND THE
+       *    FIRST-FRAME RETRY ARE THE CLS FIX. Read the guard block in
+       *    `bhp_consent_banner_cls_guard()` before changing either.
+       *
+       * `reveal()` is called on EVERY exit path — success, exhaustion, and the
+       * hard timer below — because the guard style hides the banner until it
+       * runs. A path that forgets to call it would suppress a consent banner,
+       * which is a compliance failure, not a cosmetic one.
+       */
+      function reveal() {
+        var e = document.documentElement;
+        if (e.classList) { e.classList.add('bhp-consent-styled'); }
+        else { e.className += ' bhp-consent-styled'; }
+      }
+      function poll() {
+        if (styleIt()) { reveal(); return; }
+        if (++tries > 100) { reveal(); return; }
+        /*
+         * The first ~20 attempts ride requestAnimationFrame rather than a
+         * 100 ms timer. The shadow root is created by the plugin's own script
+         * at an unknown moment; catching it on the NEXT FRAME instead of up to
+         * 100 ms later is the difference between styling the banner before its
+         * first paint and styling it after — and "after" is the layout shift.
+         */
+        if (tries < 20 && typeof window.requestAnimationFrame === 'function') {
+          window.requestAnimationFrame(poll);
+        } else {
+          window.setTimeout(poll, 100);
+        }
+      }
+      /*
+       * Hard failsafe, independent of the polling loop: whatever happens above,
+       * the banner is revealed within 2 s. The CSS animation in the guard is a
+       * SECOND, independent failsafe at the same deadline. Both would have to
+       * fail for a banner to stay hidden.
+       */
+      window.setTimeout(reveal, 2000);
+      poll();
+    })();
+    </script>
+    <?php
+}
+/*
+ * ⭐ CYCLE144-LD-217 (2026-08-05, theme 1.19.201) — MOVED FROM `wp_footer` 99.
+ *
+ * SUPERSEDED LINE, preserved rather than deleted:
+ *     add_action('wp_footer', 'bhp_consent_banner_compact_script', 99);
+ *
+ * From the footer, the polling loop could not even START until the whole
+ * document had been parsed, and then waited up to another 100 ms per attempt.
+ * The plugin paints its banner well before that. Running from `wp_head` lets
+ * the observer be waiting when the shadow root appears instead of arriving
+ * after it.
+ */
+add_action('wp_head', 'bhp_consent_banner_compact_script', 3);
+
+/**
+ * The CLS guard: hide the banner until it has been positioned, never longer.
+ *
+ * ⛔ THIS CHANGES *WHEN* THE PLUGIN'S BANNER BECOMES VISIBLE. IT CHANGES
+ *    NOTHING ELSE. No button, label, order, handler, category, default or
+ *    consent semantic is touched, and `inc/class-bhp-wpconsent-bridge.php` —
+ *    which is what actually reads consent state — is not involved.
+ *
+ * THE DEFECT, MEASURED rather than reasoned about. Lighthouse 12.8.2,
+ * staging home page, mobile emulation, theme 1.19.199:
+ *
+ *     Cumulative Layout Shift  0.427
+ *     largest single shift     0.4167 — `div.wpconsent-banner`
+ *
+ * i.e. ONE element accounted for 98% of the page's CLS, and it is this banner.
+ * The mechanism follows directly from how the compact fix has to work: the
+ * plugin paints the banner in its own default TOP-anchored position, and the
+ * theme's `position: fixed; bottom: 0` override cannot be applied until the
+ * shadow root exists and script can append a `<style>` into it. Between those
+ * two frames the banner MOVES the height of the viewport — a textbook layout
+ * shift, and a visible flicker for the user quite apart from the score.
+ *
+ * The fix is to keep the banner invisible across that gap. `visibility`
+ * inherits through a shadow boundary, so hiding the 0x0 host hides the panel
+ * inside it; and because the panel is `position: fixed`, becoming visible in
+ * its final place shifts nothing.
+ *
+ * ⚠ THE FAILSAFE IS THE POINT, AND IT IS DOUBLE. A consent banner that never
+ *   appears is a compliance failure, so this must not depend on script
+ *   succeeding:
+ *     1. `bhp_consent_banner_compact_script()` calls `reveal()` on every exit
+ *        path and unconditionally after 2 s.
+ *     2. Independently, the CSS animation below reveals the banner 2 s in with
+ *        no script involved at all. `animation` is used rather than
+ *        `transition` precisely because it fires without a trigger.
+ *   Both would have to fail for the banner to stay hidden.
+ *
+ * ⛔ IF WPCONSENT IS NOT ACTIVE, NOTHING IS PRINTED — no orphan style for a
+ *    container that does not exist.
+ */
+function bhp_consent_banner_cls_guard() {
+    if (!bhp_consent_banner_compact_active()) {
+        return;
+    }
+    ?>
+<style id="bhp-consent-cls-guard">#wpconsent-container{visibility:hidden;animation:bhp-consent-reveal 0s linear 2s forwards}@keyframes bhp-consent-reveal{to{visibility:visible}}html.bhp-consent-styled #wpconsent-container{visibility:visible;animation:none}</style>
+    <?php
+}
+add_action('wp_head', 'bhp_consent_banner_cls_guard', 2);

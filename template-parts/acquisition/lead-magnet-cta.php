@@ -3,7 +3,8 @@
 defined('ABSPATH') || exit;
 $args = wp_parse_args($args ?? [], [
     'id' => '', 'lead_magnet' => 'explorer_passport', 'title' => '', 'text' => '', 'action' => '',
-    'audience_type' => '', 'source_page' => '', 'submit_label' => '', 'class' => '',
+    'audience_type' => '', 'source_page' => '', 'success_redirect_key' => '', 'require_name' => false,
+    'name_label' => '', 'name_placeholder' => '', 'submit_label' => '', 'class' => '',
 ]);
 $magnets = bhp_get_lead_magnets();
 $magnet_key = sanitize_key($args['lead_magnet']);
@@ -20,14 +21,18 @@ $audience_type = $args['audience_type'] ?: $magnet['audience_type'];
     <div class="acquisition-panel__text"><?php echo wp_kses_post($args['text'] ?: $magnet['description']); ?></div>
   </div>
   <?php get_template_part('template-parts/acquisition/signup-form', null, [
-      'id'            => $panel_id . '-form',
-      'action'        => $args['action'],
-      'context'       => 'lead_magnet',
-      'audience_type' => $audience_type,
-      'lead_magnet'   => $magnet_key,
-      'source_page'   => $args['source_page'],
-      'submit_label'  => $args['submit_label'] ?: __('Get the Free Resource', 'brave-hearts'),
-      'privacy_text'  => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
-      'aria_labelledby' => $heading_id,
+      'id'                   => $panel_id . '-form',
+      'action'               => $args['action'],
+      'context'              => 'lead_magnet',
+      'audience_type'        => $audience_type,
+      'lead_magnet'          => $magnet_key,
+      'source_page'          => $args['source_page'],
+      'success_redirect_key' => $args['success_redirect_key'],
+      'require_name'         => $args['require_name'],
+      'name_label'           => $args['name_label'],
+      'name_placeholder'     => $args['name_placeholder'],
+      'submit_label'         => $args['submit_label'] ?: __('Get the Free Resource', 'brave-hearts'),
+      'privacy_text'         => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
+      'aria_labelledby'      => $heading_id,
   ]); ?>
 </aside>

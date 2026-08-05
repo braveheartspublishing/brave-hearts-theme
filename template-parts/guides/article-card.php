@@ -17,6 +17,6 @@ $topic = $hubs[$data['primary'] ?? ''] ?? __('Field Note', 'brave-hearts');
     <p class="card__eyebrow"><?php echo esc_html($topic); ?></p>
     <h3><a href="<?php echo esc_url(get_permalink($post)); ?>"><?php echo esc_html(get_the_title($post)); ?></a></h3>
     <p><?php echo esc_html(wp_trim_words(get_the_excerpt($post), 24)); ?></p>
-    <a class="card__link" href="<?php echo esc_url(get_permalink($post)); ?>"><?php echo esc_html(sprintf(__('Explore %s', 'brave-hearts'), get_the_title($post))); ?> <span aria-hidden="true">→</span></a>
+    <a class="card__link" href="<?php echo esc_url(get_permalink($post)); ?>" data-bhp-event="related_content_click" data-bhp-source="related_content_module"><?php echo esc_html(sprintf(__('Explore %s', 'brave-hearts'), get_the_title($post))); ?> <span aria-hidden="true">→</span></a>
   </div>
 </article>

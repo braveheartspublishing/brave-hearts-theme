@@ -1,0 +1,896 @@
+/**
+ * Find Your Adventure — audience-routing quiz.
+ *
+ * Scoped entirely under .bhp-quiz, same isolation pattern as
+ * .parent-landing / .audience-landing (own variables, no bleed into or
+ * from the rest of the site). Reuses the real brand colors (cream/dark
+ * green/gold) already established sitewide, just under its own prefix.
+ */
+.bhp-quiz {
+	--bq-cream: #f7f2e7;
+	--bq-card: #ffffff;
+	--bq-border: #e7ddc7;
+	--bq-green: var(--color-forest);            /* F1 */
+	--bq-green-hover: #163a29;
+	--bq-gold: #D9A45F;
+	--bq-text: #2a2a2a;
+	--bq-text-muted: #5b5b52;
+
+	background: var(--bq-cream);
+	border-radius: 16px;
+	padding: 48px 24px;
+	text-align: center;
+}
+
+.bhp-quiz__inner {
+	max-width: 640px;
+	margin: 0 auto;
+}
+
+.bhp-quiz-eyebrow {
+	display: block;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--bq-gold);
+	margin-bottom: 8px;
+}
+
+.bhp-quiz__heading {
+	color: var(--bq-green);
+	margin: 0 0 8px;
+}
+
+.bhp-quiz__lead {
+	color: var(--bq-text-muted);
+	margin: 0 0 28px;
+}
+
+/* Result state (2026-07-29): the eyebrow/heading/lead block is hidden by
+   audience-quiz.js on the result step, so the card's fixed 48px top padding
+   becomes dead space above the recommendation. Trimming it is what keeps the
+   result headline and its CTA inside the modal viewport without internal
+   scrolling on desktop. Bottom padding is left alone so the actions column
+   doesn't crowd the card edge. */
+.bhp-quiz--result {
+	padding-top: 28px;
+}
+
+/* ============================================================
+   QUESTION-SCREEN HIERARCHY (2026-07-30)
+   The promotional header above the question screens was removed
+   in template-parts/quiz/audience-quiz.php, so the question is
+   now the top of the screen and must carry the weight the
+   headline used to. Sizes are fluid rather than stepped at a
+   breakpoint so nothing jumps mid-range.
+   Targets — desktop: progress 14-16px, question 30-34px.
+             mobile:  progress 13-14px, question 25-28px.
+   ============================================================ */
+.bhp-quiz__progress {
+	/* 12px floor, ~14.1px at 1024, capped 15px from ~1268px up. */
+	font-size: clamp(0.75rem, 0.66rem + 0.35vw, 0.9375rem);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--bq-text-muted);
+	margin: 0 0 6px;
+}
+
+/* Specificity note: .bhp-quiz__question is an <h2> as of 2026-07-30, so a
+   bare single-class selector (0,1,0) LOSES to style.css's sitewide
+   `body:not(.home) h2 { font-size: clamp(2.25rem, 4.5vw, 4rem) }` (0,1,2) and
+   the question would render at section-hero scale. Including the component
+   scope makes this (0,2,0), which wins without !important — the same pattern
+   DECISIONS.md records for the modal heading. `font-family: inherit` keeps the
+   body face the question has always used; the sitewide rule would otherwise
+   swap it to the display serif, which is a restyle, not a scale change. */
+.bhp-quiz .bhp-quiz__question {
+	font-family: inherit;
+	/* 23px floor, ~32.2px at 1024, ~36.8px at 1366, capped 38px. */
+	font-size: clamp(1.4375rem, 1.15rem + 1.35vw, 2.375rem);
+	line-height: 1.18;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	color: var(--bq-text);
+	/* Question -> answers breathing room (2026-07-31, Part C). Was a flat
+	   14px, which read as the heading sitting on top of the first card in the
+	   owner's desktop screenshots. Target: ~24-32px desktop/tablet, ~18-24px
+	   mobile. 18px floor, ~26px at 1024, capped 30px from ~1330px up. */
+	margin: 0 0 clamp(1.125rem, 0.9rem + 1.25vw, 2rem);
+	text-wrap: balance;
+}
+
+/* Homepage quiz-entry intro gate (2026-07-17) — reuses the same eyebrow/
+   heading/lead classes above and the sitewide .btn.btn-primary button, so
+   no new color/spacing/radius values are introduced here. */
+.bhp-quiz__start {
+	margin-top: 4px;
+}
+
+.bhp-quiz__intro-note {
+	color: var(--bq-text-muted);
+	font-size: 13px;
+	margin: 12px 0 0;
+}
+
+.bhp-quiz__intro-direct {
+	color: var(--bq-text-muted);
+	font-size: 13px;
+	margin: 10px 0 0;
+}
+.bhp-quiz__intro-direct a {
+	color: inherit;
+	text-decoration: underline;
+}
+.bhp-quiz__intro-direct a:hover {
+	color: var(--bq-accent, inherit);
+}
+
+/* ============================================================
+   ANSWER GRID (2026-07-31)
+   A real grid, not a flex column. One column is the mobile
+   default; wider viewports get two, which is what makes every
+   answer fit without internal scrolling.
+
+   DOM order is row-major grid order, so visual order and
+   keyboard order agree by construction — there is deliberately
+   no `order`, `row-reverse` or `dense` packing anywhere in this
+   file, because any of those would desynchronise them.
+   ============================================================ */
+.bhp-quiz__options {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+	margin: 0 0 6px;
+}
+
+/* Answer buttons are left-aligned, scannable rows (2026-07-30).
+   The previous build centred the label on both axes. Centred answer text
+   gives every row a different ragged start point, so the eye has to re-find
+   the beginning of each option — the brief for this pass calls for
+   left-aligned, easy-to-scan choices instead.
+
+   The arrow stays OUT of the flow (absolutely positioned), which is what the
+   earlier centring work established and is still exactly right here: it means
+   the arrow consumes no layout width, so the label's line box starts at a
+   single predictable left edge on every row. Asymmetric padding is deliberate
+   — the extra room on the right is the arrow's reserved lane, so a long label
+   wraps before it can ever collide with or crowd the glyph. `align-items:
+   center` keeps the label and the arrow on the same optical centre line when
+   the label wraps to two or three lines.
+
+   Target control heights — desktop >= 72px, mobile >= 60px, never below 44px:
+   clamp() yields 60px at 320-390px, ~74.5px at 1024, 80px from ~1300px up. */
+.bhp-quiz__option {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	width: 100%;
+	/* 52px at 320-390, ~68.6px at 1024, ~76.4px at 1366, capped 78px.
+	   Never below the 44px minimum at any viewport in the matrix. */
+	min-height: clamp(52px, 45px + 2.3vw, 78px);
+	background: var(--bq-card);
+	border: 1px solid var(--bq-border);
+	border-radius: 10px;
+	/* Right 44px = the arrow's lane (right:14px + 7px glyph) plus ~23px of
+	   clear space, so text never runs up against it. Left 18px is the single
+	   scan edge every label starts from. */
+	padding: 12px 44px 12px 18px;
+	/* 17px floor, ~19.4px at 1024, capped 21px from ~1259px up. */
+	font-size: clamp(1.0625rem, 0.98rem + 0.36vw, 1.3125rem);
+	line-height: 1.28;
+	color: var(--bq-text);
+	text-align: left;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.bhp-quiz__option-label {
+	flex: 0 1 auto;
+	text-align: left;
+	/* A flex item's min-width defaults to auto, which refuses to shrink below
+	   the longest word and is how flex layouts overflow instead of wrapping.
+	   Together with overflow-wrap this guarantees long labels wrap inside the
+	   button at 320px rather than clipping or forcing horizontal overflow. */
+	min-width: 0;
+	overflow-wrap: break-word;
+}
+
+/* "Choosing this moves you forward" affordance (2026-07-29). Drawn from
+   borders rather than pseudo-element text content, so no screen reader can
+   announce a stray character alongside the real answer label -- the arrow is
+   purely visual, and the button's accessible name is unchanged. */
+.bhp-quiz__option::after {
+	content: "";
+	/* Out of the flow entirely, so it can never consume layout width or pull
+	   the label off the button's true horizontal centre. translateY(-50%) is
+	   what keeps it vertically centred and must lead every transform below. */
+	position: absolute;
+	right: 14px;
+	top: 50%;
+	width: 7px;
+	height: 7px;
+	border-top: 2px solid var(--bq-green);
+	border-right: 2px solid var(--bq-green);
+	transform: translateY(-50%) rotate(45deg);
+	opacity: 0.45;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.bhp-quiz__option:hover,
+.bhp-quiz__option:focus-visible {
+	border-color: var(--bq-green);
+	background: #fbf8f0;
+}
+
+.bhp-quiz__option:hover::after,
+.bhp-quiz__option:focus-visible::after {
+	opacity: 1;
+	transform: translateY(-50%) rotate(45deg) translate(2px, -2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bhp-quiz__option,
+	.bhp-quiz__option::after {
+		transition: none;
+	}
+	.bhp-quiz__option:hover::after,
+	.bhp-quiz__option:focus-visible::after {
+		transform: translateY(-50%) rotate(45deg);
+	}
+}
+
+.bhp-quiz__option[aria-checked="true"] {
+	border-color: var(--bq-green);
+	background: #eef4ef;
+	font-weight: 700;
+}
+
+.bhp-quiz__option:focus-visible {
+	outline: 2px solid var(--bq-green);
+	outline-offset: 2px;
+}
+
+.bhp-quiz__back,
+.bhp-quiz__restart,
+.bhp-quiz__dismiss {
+	background: none;
+	border: none;
+	color: var(--bq-text-muted);
+	font-size: 14px;
+	text-decoration: underline;
+	cursor: pointer;
+	margin-top: 8px;
+	padding: 6px 4px;
+}
+
+.bhp-quiz__step--result {
+	padding-top: 4px;
+	/* Pulls in the shared .bhp-quiz card's fixed 48px bottom padding so the
+	   result state doesn't read as sparse once the actions row below is its
+	   own compact column (2026-07-17 CTA-alignment fix). */
+	margin-bottom: -20px;
+}
+
+.bhp-quiz__result-eyebrow {
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--bq-gold);
+	margin: 0 0 8px;
+}
+
+.bhp-quiz__step--result h3 {
+	color: var(--bq-green);
+	margin: 0 0 10px;
+}
+
+.bhp-quiz__step--result p {
+	color: var(--bq-text-muted);
+	margin: 0 0 20px;
+}
+
+/* The free resource is the point of the result, so it leads the sentence in
+   brand green at a slightly larger size than the supporting detail around it
+   (2026-07-30). Deliberately scoped to the inline <strong> only -- the
+   paragraph itself keeps its size and colour, so the result block does not
+   grow taller. */
+.bhp-quiz__result-resource {
+	font-weight: 700;
+	font-size: 1.06em;
+	color: var(--bq-green);
+}
+
+/* Result actions (2026-07-17 fix): the CTA and "Start over" link are both
+   inline-level elements, so without an explicit column layout they were
+   laid out side by side on the same line (inheriting the ancestor's
+   text-align: center as a single centered inline run) instead of stacking
+   as two independently centered rows. A real column layout, not margin/
+   transform nudges, is the structural fix -- and it's on the shared
+   .bhp-quiz__result-actions wrapper so every audience result inherits it
+   from one place. */
+.bhp-quiz__result-actions {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.bhp-quiz__result-actions .bhp-quiz__restart,
+.bhp-quiz__result-actions .bhp-quiz__dismiss {
+	margin-top: 0;
+}
+
+/* "Keep browsing this page" is the more likely of the two secondary actions
+   (modal only), so it reads slightly stronger than "Start over" without
+   competing with the primary CTA above it. */
+.bhp-quiz__dismiss {
+	color: var(--bq-green);
+	font-weight: 600;
+}
+
+.bhp-quiz__back:focus-visible,
+.bhp-quiz__restart:focus-visible,
+.bhp-quiz__dismiss:focus-visible {
+	outline: 2px solid var(--bq-green);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.bhp-quiz__step--result h3:focus {
+	outline: none;
+}
+
+.bhp-quiz__step--result h3:focus-visible {
+	outline: 2px solid var(--bq-green);
+	outline-offset: 4px;
+}
+
+.bhp-quiz__step--result .btn {
+	/* width: max-content, not flex-shrink -- flex-shrink governs the MAIN
+	   axis (height, since .bhp-quiz__result-actions is a column flex
+	   container), not the width. Without an explicit width, this
+	   block-level flex item's fit-content sizing collapsed to its
+	   min-content width (a single word), clipping the label. max-content
+	   forces natural (unwrapped) sizing; max-width: 100% still caps it on
+	   narrow viewports so long labels wrap instead of overflowing. */
+	width: max-content;
+	max-width: 100%;
+	border-radius: 6px;
+	/* Inline padding only -- block padding is owned by the shared alignment
+	   rule above so both CTAs stay symmetrical on the vertical axis. */
+	padding-inline: 28px;
+	font-weight: 700;
+	text-align: center;
+	text-decoration: none;
+	white-space: normal;
+}
+
+/* ---------------------------------------------------------------------------
+   Primary quiz CTA — deliberately gold on dark navy (2026-07-29)
+   ---------------------------------------------------------------------------
+   This block previously declared green-on-white with a gold border. None of
+   that ever rendered: style.css's sitewide
+       .btn-primary { background: var(--expedition-gold) !important;
+                      color: var(--expedition-navy) !important; }
+   outranked it, so the button was gold by accident and the local :hover rule
+   was dead — an `!important` background cannot be replaced by a normal one.
+   The same `!important` also kills style.css's own `.btn-primary:hover`, so
+   before this change the CTA had no working hover state anywhere on the site.
+
+   Resolution: the quiz now states its intent explicitly at quiz scope instead
+   of inheriting an accident. `!important` here is required, not cargo-culted —
+   it is the only way to participate in the cascade against the sitewide
+   `!important` above, and `.bhp-quiz .btn-primary` (0,2,0) outranks the bare
+   `.btn-primary` (0,1,0) among important declarations. Nothing outside
+   `.bhp-quiz` is affected, so sitewide buttons are untouched.
+
+   Colors are existing expedition tokens only — no new palette. Measured
+   contrast: gold #D9A45F on navy #071522 = 7.60:1 (passes AA, and AAA for
+   normal text); hover/focus gold #d8bd7d on the same navy = 10.19:1.
+
+   The focus ring is navy rather than the sitewide `button:focus-visible`
+   gold (--expedition-focus), which would be nearly invisible against a gold
+   button — a real focus-visibility gap this scope fixes. */
+.bhp-quiz .btn-primary {
+	background: var(--expedition-gold) !important;
+	color: var(--expedition-navy) !important;
+	border: 2px solid var(--expedition-navy) !important;
+	transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+/* Optical centring for both quiz CTAs — the intro/start button and the result
+   button (2026-07-30). The result CTA was overriding the sitewide inline-flex
+   button with `display: inline-block`, which centres the line box but not the
+   text within the button's height, so the type sat visibly high. inline-flex
+   with explicit cross- and main-axis centring, a deliberate line-height and a
+   minimum height puts the label on the true centre on both axes, and lets a
+   long label wrap centrally instead of clipping on narrow screens.
+   Colour, border, width behaviour, wording, destination and analytics are all
+   untouched -- this rule sets alignment only. */
+.bhp-quiz .btn-primary,
+.bhp-quiz__step--result .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	line-height: 1.25;
+	min-height: 48px;
+	padding-block: 12px;
+}
+
+.bhp-quiz .btn-primary:hover {
+	background: var(--expedition-focus) !important;
+	color: var(--expedition-navy) !important;
+}
+
+.bhp-quiz .btn-primary:focus-visible {
+	background: var(--expedition-focus) !important;
+	color: var(--expedition-navy) !important;
+	outline: 3px solid var(--expedition-navy);
+	outline-offset: 3px;
+}
+
+/* Pressed: drops back to the base gold and sinks, so the click reads as a
+   press rather than only as a colour change. Overrides .btn's sitewide
+   translateY(-1px) hover lift. */
+.bhp-quiz .btn-primary:active {
+	background: var(--expedition-gold) !important;
+	transform: translateY(1px);
+	box-shadow: inset 0 2px 4px rgba(7, 21, 34, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bhp-quiz .btn-primary {
+		transition: none;
+	}
+	.bhp-quiz .btn-primary:active {
+		transform: none;
+	}
+}
+
+/* ============================================================
+   TWO-COLUMN ANSWER GRID (2026-07-31)
+   ------------------------------------------------------------
+   Restored deliberately, and this time with a dialog wide enough
+   to support it. The 2026-07-30 build removed the two-column
+   treatment because at a 640px dialog each column was only 291px
+   and the longest Question 1 answer wrapped to three lines. The
+   fix for that is width, not a single column: question steps now
+   widen the dialog to 820px (see .bhp-quiz-modal__dialog--question
+   in quiz-modal.css), which gives each column ~380px and sets the
+   same label in two lines.
+
+   Why it matters: four single-column answers at the enlarged type
+   measured 537.7px of content against a 548px budget at a 580px
+   viewport — about 10px of headroom, so Question 1 clipped its
+   fourth answer as soon as the window was any shorter. Two rows of
+   two removes roughly half the answer-stack height.
+
+   Q1 has four answers -> a natural 2x2.
+   Q2 routes have three -> two on the first row, the third spanning
+   the full second row (`:nth-child(3):last-child`, which cannot
+   match Q1's third answer because that one is not last).
+   ============================================================ */
+/* The measured requirement, not a guessed breakpoint: the longest Question 1
+   answer ("Bring adventure into my classroom, library, or homeschool") has an
+   intrinsic width of 464.8px at the desktop 20.9px size, so it needs ~261px of
+   label width to break cleanly into two lines. Below ~760px of viewport, two
+   columns cannot supply that and the answer wraps to three lines -- a single
+   full-width column is both shorter and more readable there. So the grid only
+   splits once there is genuinely room for it. */
+@media (min-width: 760px) {
+	.bhp-quiz__options {
+		grid-template-columns: 1fr 1fr;
+		gap: 12px;
+	}
+
+	.bhp-quiz__options > .bhp-quiz__option:nth-child(3):last-child {
+		grid-column: 1 / -1;
+	}
+
+	/* The real constraint on column width was .bhp-quiz__inner's 640px cap, not
+	   the dialog: at 640px each column resolved to 314px and the label to
+	   250.7px -- about 10px short of the 261px needed, which is exactly why it
+	   took a third line. Question steps widen the measure to 720px, giving each
+	   label ~292px with margin to spare. The result step keeps 640px. */
+	.bhp-quiz--question .bhp-quiz__inner {
+		max-width: 720px;
+	}
+}
+
+/* Narrow phones: reclaim horizontal room for the label. The arrow moves in to
+   right:10px and the card's reserved lane narrows with it, which widens the
+   text measure by ~10px per side without ever letting the label reach the
+   glyph. On a 320px screen that is the difference between the longest answer
+   setting in two lines and in three. */
+@media (max-width: 430px) {
+	.bhp-quiz__option {
+		padding-right: 34px;
+		padding-left: 14px;
+	}
+
+	.bhp-quiz__option::after { right: 10px; }
+}
+
+/* Narrow AND short (a small phone in landscape, e.g. 568x320). Four
+   single-column controls genuinely cannot fit a viewport this short at an
+   accessible size, so pair them up -- the one case where a narrow viewport
+   still wants two columns. 667x375 does NOT need this: measured 335px of a
+   359px budget in a single column, which reads better, so it is left alone. */
+@media (max-width: 599px) and (max-height: 520px) {
+	.bhp-quiz__options {
+		grid-template-columns: 1fr 1fr;
+		gap: 8px;
+	}
+
+	.bhp-quiz__options > .bhp-quiz__option:nth-child(3):last-child {
+		grid-column: 1 / -1;
+	}
+}
+
+/* ============================================================
+   QUESTION-STEP COMPACTION (2026-07-31)
+   Scoped to .bhp-quiz--question (Q1 + Q2 only) so the result
+   screen keeps its own vertical rhythm -- it carries a real form
+   and legitimately needs the height. Height-aware, because the
+   constraint being solved is vertical, not horizontal.
+   ============================================================ */
+@media (max-height: 760px) {
+	.bhp-quiz--question .bhp-quiz__question {
+		font-size: clamp(1.375rem, 1.02rem + 1.15vw, 2rem);
+		/* Part C: keep at least the ~18px mobile floor even when compacting. */
+		margin-bottom: 18px;
+	}
+
+	.bhp-quiz--question .bhp-quiz__progress { margin-bottom: 4px; }
+
+	.bhp-quiz--question .bhp-quiz__option {
+		min-height: clamp(48px, 41px + 1.9vw, 70px);
+		padding-block: 10px;
+	}
+
+	.bhp-quiz--question .bhp-quiz__options { gap: 8px; }
+	.bhp-quiz--question .bhp-quiz__back { margin-top: 2px; }
+}
+
+/* Genuinely short screens: phones in landscape, and short desktop windows. */
+@media (max-height: 600px) {
+	.bhp-quiz--question .bhp-quiz__question {
+		font-size: clamp(1.25rem, 0.95rem + 1vw, 1.75rem);
+		margin-bottom: 16px;
+		line-height: 1.14;
+	}
+
+	.bhp-quiz--question .bhp-quiz__option {
+		/* Still never below the 44px minimum target. */
+		min-height: 46px;
+		padding-block: 8px;
+		line-height: 1.24;
+	}
+
+	.bhp-quiz--question .bhp-quiz__options { gap: 6px; margin-bottom: 4px; }
+}
+
+/* ============================================================
+   [hidden] GUARD (2026-07-30) — must come before any rule that
+   sets `display` on quiz controls.
+
+   The result CTA carries .btn.btn-primary, and the quiz's own
+   `.bhp-quiz .btn-primary { display: inline-flex }` rule above
+   has higher specificity (0,2,0) than the user-agent's
+   `[hidden] { display: none }`. That silently defeated the
+   `hidden` attribute: JS set it correctly, but the old CTA
+   stayed visible AND focusable, so resource results showed two
+   primary buttons.
+
+   This restores `hidden` as the single source of truth for the
+   two mutually-exclusive result-action states. display:none
+   removes the element from layout, the tab order and the
+   accessibility tree at once — it is not a visual cover-up.
+   ============================================================ */
+.bhp-quiz [hidden],
+.bhp-quiz-modal [hidden] {
+	display: none !important;
+}
+
+/* ============================================================
+   INLINE RESULT SIGNUP (2026-07-30)
+   Shown only on results that promise a free resource. The
+   partnership result renders no form at all.
+   The submit button deliberately carries .btn.btn-primary so it
+   inherits the existing centred-label rule above rather than
+   re-declaring its own alignment.
+   ============================================================ */
+.bhp-quiz__signup {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	width: 100%;
+	max-width: 420px;
+	margin: 18px auto 0;
+	text-align: left;
+}
+
+.bhp-quiz__field {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.bhp-quiz__label {
+	font-size: 0.86rem;
+	font-weight: 600;
+	color: var(--bq-navy, #14304d);
+	letter-spacing: 0.01em;
+}
+
+.bhp-quiz__optional {
+	font-weight: 400;
+	opacity: 0.7;
+}
+
+.bhp-quiz__input {
+	width: 100%;
+	min-height: 44px;
+	padding: 10px 12px;
+	font-size: 1rem;
+	font-family: inherit;
+	color: var(--bq-navy, #14304d);
+	background: #fff;
+	border: 1px solid rgba(20, 48, 77, 0.28);
+	border-radius: 8px;
+	box-sizing: border-box;
+}
+
+.bhp-quiz__input:focus-visible {
+	outline: 3px solid var(--expedition-focus, #d8bd7d);
+	outline-offset: 2px;
+	border-color: var(--bq-green, #173f2f);
+}
+
+.bhp-quiz__consent {
+	margin: 0;
+	font-size: 0.78rem;
+	line-height: 1.45;
+	opacity: 0.78;
+}
+
+.bhp-quiz__signup-error {
+	margin: 0;
+	padding: 9px 12px;
+	font-size: 0.86rem;
+	line-height: 1.4;
+	color: #7a1b1b;
+	background: #fdecec;
+	border: 1px solid #e4a3a3;
+	border-left: 4px solid #b3261e;
+	border-radius: 6px;
+}
+
+.bhp-quiz__signup-error:focus-visible {
+	outline: 3px solid var(--expedition-focus, #d8bd7d);
+	outline-offset: 2px;
+}
+
+/* The submit sits in the form's flex COLUMN. A sitewide .btn rule wins over
+   this file's `width: 100%`, so the button resolves to shrink-to-fit — and a
+   flex item that cannot stretch falls back to the column's start edge, i.e.
+   hard left. That is why the offset tracked the label width exactly
+   (-40.1px / -26.6px / -58.3px / -2.6px for the four labels).
+
+   `align-self: center` centres the item on the column's cross axis whatever
+   width it resolves to, so the fix holds for every label length and needs no
+   pixel offset, transform or per-route margin. max-width keeps it inside the
+   column on narrow screens. */
+.bhp-quiz__signup-submit {
+	align-self: center;
+	max-width: 100%;
+	margin-top: 2px;
+}
+
+.bhp-quiz__signup-submit[aria-busy="true"],
+.bhp-quiz__signup-submit:disabled {
+	opacity: 0.72;
+	cursor: progress;
+}
+
+@media (max-width: 480px) {
+	.bhp-quiz__signup {
+		max-width: 100%;
+	}
+}
+
+/* ============================================================
+   RESULT HIERARCHY (2026-07-30, roles swapped 2026-08-03 by P2-2)
+   The dominant slot is unchanged: one element, largest, at the
+   top of the result. What OCCUPIES it changed. It used to be the
+   free-offer name; under REVISION B it is the recommendation
+   headline, and the offer line moved down to sit with the form.
+   Sizes stay fluid between the mobile and desktop targets rather
+   than stepped at a breakpoint, so nothing jumps mid-range.
+   ============================================================ */
+.bhp-quiz__step--result .bhp-quiz__result-headline {
+	margin: 4px auto 6px;
+	/* Wide enough that the longest REVISION B headline ("They give up when
+	   it gets hard" is Q1; the longest result headline is "Tell us what you
+	   are planning.", 30 chars) sets in two lines rather than three at
+	   desktop size. Widened from 21ch, which was tuned for the shorter
+	   "Free Reluctant Reader Adventure Kit" that used to sit here. Capped at
+	   100% so it can never exceed the card. */
+	max-width: min(24ch, 100%);
+	/* ~30px at 390px wide, ~44px by 1440px. */
+	font-size: clamp(1.875rem, 1.15rem + 3vw, 2.75rem);
+	line-height: 1.12;
+	font-weight: 700;
+	text-align: center;
+	text-wrap: balance;
+	color: var(--bq-green, #173f2f);
+	overflow-wrap: break-word;
+	hyphens: none;
+}
+
+.bhp-quiz__step--result .bhp-quiz__result-offer {
+	margin: 0 auto 8px;
+	max-width: 26ch;
+	/* ~23px mobile, ~30px desktop — always below the offer title. */
+	font-size: clamp(1.4375rem, 1.15rem + 1.2vw, 1.875rem);
+	line-height: 1.24;
+	font-weight: 500;
+	text-align: center;
+	text-wrap: balance;
+	color: var(--bq-navy, #14304d);
+}
+
+.bhp-quiz__step--result .bhp-quiz__result-detail {
+	margin: 0 auto;
+	max-width: 46ch;
+	/* Part D: 16px floor on mobile, ~18px at 1024, capped 19px. */
+	font-size: clamp(1rem, 0.94rem + 0.22vw, 1.1875rem);
+	line-height: 1.5;
+	text-align: center;
+}
+
+/* SUPERSEDED 2026-08-03 (P2-2), kept so it is not re-derived: "The offer
+   heading is hidden on the partnership result; the [hidden] guard above
+   keeps it out of layout and the a11y tree so no empty heading or blank
+   gap remains." There is no hidden case any more. The partnership answer
+   retired with the twelve per-answer options, and the organization route's
+   offer line is not empty - it says out loud that the Community Reading Kit
+   is not finished. The [hidden] guard still backs the empty-string path in
+   renderResultResource(), which now only fires for a route added with no
+   copy at all. */
+
+@media (max-width: 480px) {
+	/* Part D (2026-07-31): was 14ch, which forced "Free Reluctant Reader
+	   Adventure Kit" onto THREE lines on a real iPhone and pushed the whole
+	   form down. 20ch set that string in two lines at the same font size.
+	   P2-2 widened it to 23ch for the same reason in the other direction:
+	   the REVISION B headlines are 27-30 characters, and 20ch would break
+	   "Tell us what you are planning." across three lines. */
+	.bhp-quiz__step--result .bhp-quiz__result-headline {
+		max-width: min(23ch, 100%);
+	}
+	/* Supporting copy stays >=16px on mobile (was 0.95rem/15.2px), both for
+	   legibility and because <16px inputs/labels invite iOS zoom. */
+}
+
+/* ============================================================
+   RESULT / EMAIL SCREEN COMPACTION (2026-07-31, Part D)
+   ------------------------------------------------------------
+   Owner screenshots showed the submit button — the conversion
+   action — below the fold on desktop (Screenshot 845, with a
+   visible internal scrollbar) and the offer title set over
+   THREE lines on a real iPhone.
+
+   Nothing is removed: the eyebrow, offer name, recommendation,
+   supporting line, both labelled fields, the consent sentence,
+   the submit button and both secondary controls all remain, in
+   that order. Only redundant vertical space is reclaimed, and on
+   wider screens the two short fields share a row instead of
+   stacking — which is where most of the height went.
+   ============================================================ */
+.bhp-quiz__step--result .bhp-quiz__result-eyebrow { margin-bottom: 6px; }
+
+.bhp-quiz__step--result .bhp-quiz__result-headline { margin-block: 2px 6px; }
+.bhp-quiz__step--result .bhp-quiz__result-offer { margin-bottom: 6px; }
+
+/* Pull the form up toward the copy it belongs to. */
+.bhp-quiz__signup { margin-top: 14px; gap: 10px; }
+
+/* Two-column fields from 600px up. Both keep their visible <label>; this is
+   a layout change only, never a placeholder-only substitution. Below 600px
+   they stack, which is the correct behaviour on a narrow phone. */
+@media (min-width: 600px) {
+	.bhp-quiz__signup {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		column-gap: 14px;
+		row-gap: 10px;
+		max-width: 520px;
+		align-items: start;
+	}
+	/* Honeypot, consent, error, submit stay full width; only the two real
+	   text fields pair up. Honeypot is visually hidden but still in flow. */
+	.bhp-quiz__signup > .bhp-form-honeypot,
+	.bhp-quiz__signup > .bhp-quiz__consent,
+	.bhp-quiz__signup > .bhp-quiz__signup-error,
+	.bhp-quiz__signup > .bhp-quiz__signup-submit {
+		grid-column: 1 / -1;
+	}
+}
+
+/* The primary conversion control: >=52px tall and centred. `.bhp-quiz
+   .btn-primary` sets 48px, so this needs the same scope weight to win. */
+/* The primary conversion control on every result: >=52px tall and centred.
+   Covers both shapes -- the email submit BUTTON on the four resource routes
+   and the destination LINK on the partnership route, which is that result's
+   primary action even though it submits nothing. */
+.bhp-quiz .bhp-quiz__signup-submit,
+.bhp-quiz__step--result .bhp-quiz__signup-submit,
+.bhp-quiz__step--result .bhp-quiz__result-actions > .btn {
+	min-height: 52px;
+	align-self: center;
+	justify-self: center;
+}
+
+/* Inputs stay >=44px tall and >=16px text — 16px is what stops iOS Safari
+   zooming the page when a field receives focus, so it is a functional
+   requirement here, not a stylistic one. */
+.bhp-quiz__input {
+	min-height: 46px;
+	font-size: max(1rem, 16px);
+}
+
+.bhp-quiz__consent { margin-top: 2px; }
+
+.bhp-quiz__result-actions { gap: 10px; }
+
+/* ============================================================
+   P2-2 (2026-08-03) - THE RESULT SCREEN'S TWO TEXT ROLES SWAPPED
+   ------------------------------------------------------------
+   REVISION B writes each result screen as HEADLINE, then body,
+   then offer line. Before it, the "resource title" (a short noun
+   phrase, "Free Reluctant Reader Adventure Kit") led the screen
+   as the dominant element and the recommendation headline sat
+   under it, smaller.
+
+   REVISION B's offer line is a full sentence about delivery
+   ("Your free Reluctant Reader Adventure Kit, sent by email."),
+   and the headline is the invitation ("Start with one small
+   adventure."). The invitation leads; the delivery mechanic sits
+   with the form it belongs to.
+
+   SO: every rule that used to target
+   `.bhp-quiz__result-resource-title` now targets
+   `.bhp-quiz__result-headline` - the dominant slot is unchanged,
+   only what occupies it. That deliberately KEEPS all of the Part D
+   compaction tuning (2026-07-31), which existed to get the submit
+   button above the fold on a real iPhone and is not work worth
+   re-deriving.
+
+   The block below is the one genuinely new piece: the offer line,
+   which is supporting copy sitting directly above the form, not a
+   heading. It is sized as supporting copy. The old secondary
+   headline sizes (23-30px) would have been far too loud for a
+   sentence whose job is to say quietly what arrives and where.
+   ============================================================ */
+.bhp-quiz__step--result .bhp-quiz__result-offer {
+	margin: 10px auto 0;
+	max-width: 40ch;
+	/* ~15px mobile, ~17px desktop - above the 16px iOS zoom floor by
+	   1024px and never larger than the body copy above it. */
+	font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+	line-height: 1.4;
+	font-weight: 600;
+	text-align: center;
+	text-wrap: balance;
+	color: var(--bq-navy, #14304d);
+}
+
+/* The organization route's offer line says there is nothing to
+   download yet. It is deliberately NOT styled down or greyed out:
+   it is the most important sentence on that screen. */

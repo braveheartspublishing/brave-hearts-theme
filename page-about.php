@@ -66,7 +66,7 @@ $book_values = apply_filters('bhp_about_book_values', [
     ],
     [
         'title' => __('Curiosity and Courage', 'brave-hearts'),
-        'text'  => __('Charlotte asks questions, feels uncertain, and keeps going—showing children that courage can grow one choice at a time.', 'brave-hearts'),
+        'text'  => __('Charlotte asks questions, feels uncertain, and keeps going - showing children that courage can grow one choice at a time.', 'brave-hearts'),
         'class' => 'feature-card--courage',
     ],
     [
@@ -109,6 +109,8 @@ $book_values = apply_filters('bhp_about_book_values', [
       <p class="text-lead"><?php echo esc_html($about_field('founder_intro', __('Founder of Brave Hearts Publishing and author of Adventures of Charlotte and Henry.', 'brave-hearts'))); ?></p>
       <p><?php echo esc_html($about_field('founder_text_1', __('Andrew created Brave Hearts Publishing to help children fall in love with reading, exploration, and the natural world.', 'brave-hearts'))); ?></p>
       <p><?php echo esc_html($about_field('founder_text_2', __('His stories bring together firsthand curiosity about big places, respect for real science, and a belief that the right adventure can help a growing reader see themselves as brave.', 'brave-hearts'))); ?></p>
+      <?php // Finding #28: surface the founder's real ICU-nursing background (already in his own words in the page's post content, previously unrendered) where it strengthens the brand — courage, care, steadiness, and respect for science — without overstating it as a teaching credential. Editor-overridable via bhp_about_founder_text_3. ?>
+      <p><?php echo esc_html($about_field('founder_text_3', __('Away from the page, Andrew works as an ICU nurse - including COVID and neuro intensive care, and now as a travel nurse moving between hospitals. Steady hands in hard moments, and a deep respect for science and for people, are the same spirit Charlotte and Henry carry into every big place they explore.', 'brave-hearts'))); ?></p>
     </div>
   </div>
 </section>
@@ -138,7 +140,7 @@ $book_values = apply_filters('bhp_about_book_values', [
     <div class="final-cta__actions cluster">
       <a class="btn btn-primary" href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('Shop the Books', 'brave-hearts'); ?></a>
       <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Explore Educator Guides', 'brave-hearts'); ?></a>
-      <a class="btn btn-outline" href="<?php echo esc_url(home_url('/#adventure-club')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
+      <a class="btn btn-outline" href="<?php echo esc_url(home_url('/reluctant-reader-adventure-kit/')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
     </div>
   </div>
 </section>

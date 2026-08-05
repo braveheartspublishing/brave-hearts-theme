@@ -1,0 +1,836 @@
+/**
+ * Brave Hearts — cart and checkout corrections. Capstone fix wave, 2026-08-03.
+ * Loaded on /cart/ and /checkout/ only (inc/checkout-experience.php).
+ *
+ * Every measurement quoted in a comment here was taken live on staging
+ * 1.19.149 at 390x844 DPR 3 with `window.innerWidth` asserted, before the
+ * change. None is estimated.
+ */
+
+/* ==================================================================
+   F3 — EXACTLY ONE ORDER SUMMARY ON MOBILE CHECKOUT
+   ------------------------------------------------------------------
+   Measured before: the mobile checkout renders the order summary TWICE.
+     1. `.wc-block-checkout__sidebar` at y=316 — a collapsed
+        "Order summary $14.70" panel containing a complete summary
+        (items, coupon field, subtotal, shipping, tax, total).
+     2. `.checkout-order-summary-block-fill-wrapper` at y=2660 — the same
+        summary again, expanded, directly above Place Order.
+   Both carry their own "Idaho Sales Tax $0.72" and "Total $14.70" rows;
+   `.wc-block-components-totals-item` counted EIGHT entries for a
+   four-row summary.
+
+   The one that survives is the lower one, deliberately: it is expanded by
+   default, it holds the coupon field, and it sits where a buyer actually
+   checks the number — immediately above the button that takes the money.
+
+   ⚠ MOBILE ONLY. On desktop, Blocks renders the summary INTO the sidebar
+   and there is exactly one already, so this rule is scoped to `.is-mobile`
+   and cannot remove the desktop summary.
+
+   ⛔ THE SENTENCE ABOVE WAS TRUE OF THE LAYOUT AS IT THEN WAS AND IS NOW
+      INCOMPLETE — see the 1.19.185 block at the END of this file, which
+      is where the correction lives. It is preserved unedited so a future
+      reader sees what the assumption was rather than re-deriving it: the
+      rule assumed "not mobile" means "two-column desktop". Blocks has
+      FOUR layout states, not two, and the two middle ones (`is-small`,
+      `is-medium`) also stack the sidebar ABOVE the form — which is
+      exactly what Andrew reported on 2026-08-05.
+   ================================================================== */
+.wc-block-checkout.is-mobile > .wc-block-checkout__sidebar,
+.wc-block-cart.is-mobile > .wc-block-cart__sidebar.is-duplicate {
+  display: none;
+}
+
+/* ==================================================================
+   F3 — THE COUPON GETS ITS OWN VISIBLE ROW, WITH A CENTRED LABEL
+   ------------------------------------------------------------------
+   Measured before: the "Add coupons" control was 306 x 32.2 px with a
+   LEFT-aligned label, buried inside the collapsed order-items panel.
+   With the duplicate summary gone it is already in its own row; this
+   gives it the height a thumb needs and centres the label, and marks the
+   row visually so it reads as a field rather than as a list item.
+   ================================================================== */
+.wc-block-components-totals-coupon {
+  border-top: 1px solid rgba(var(--color-earth-rgb, 122, 78, 45), 0.16);
+  border-bottom: 1px solid rgba(var(--color-earth-rgb, 122, 78, 45), 0.16);
+}
+.wc-block-components-totals-coupon .wc-block-components-panel__button {
+  min-height: 48px;              /* was 32.2px */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;       /* was left-aligned */
+  text-align: center;
+  gap: 0.4em;
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.wc-block-components-totals-coupon .wc-block-components-panel__button-icon {
+  flex: 0 0 auto;
+}
+
+/* ==================================================================
+   F3 — CENTRED BUTTON LABELS ON THE CART AND CHECKOUT ACTIONS
+   ------------------------------------------------------------------
+   Andrew, phone walk: the cart sidebar's checkout button reads off-centre.
+   Its label is a flex item sharing the row with a chevron, so its box sits
+   left of the button's true centre even though `text-align` computes as
+   `center`. Centring the FLEX AXIS is what actually moves it.
+   ================================================================== */
+.wc-block-cart__submit-button,
+.wc-block-components-checkout-place-order-button,
+.wc-block-cart__submit-container > a,
+.bhp-cart-drawer__checkout {
+  display: flex !important;
+  align-items: center;
+  justify-content: center !important;
+  text-align: center;
+  min-height: 48px;
+}
+.wc-block-cart__submit-button .wc-block-components-button__text,
+.wc-block-components-checkout-place-order-button .wc-block-components-button__text {
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* ==================================================================
+   F9 — TAP TARGETS ON THE PURCHASE PATH
+   ------------------------------------------------------------------
+   Measured before, on /cart/ at 390px:
+     quantity minus  30 x 31        -> 44 x 44
+     quantity plus   30 x 31        -> 44 x 44
+     remove item     24 x 24        -> 44 x 44
+     "Add coupons"   306 x 32.2     -> handled above, 48px
+   A shopper reducing a quantity on a phone was aiming at a 30px button,
+   and removing an item at a 24px one, on the page where the money is.
+   ================================================================== */
+.wc-block-components-quantity-selector {
+  min-height: 44px;
+}
+.wc-block-components-quantity-selector__button {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  width: 44px;
+  height: 44px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.wc-block-components-quantity-selector__input {
+  min-height: 44px;
+  font-size: 16px;   /* keeps iOS from zooming on focus */
+}
+
+/* ==================================================================
+   2C-1 — THE 44px BUTTONS NOW FIT INSIDE THEIR OWN BOX
+   ------------------------------------------------------------------
+   Andrew, final staging walk: "The plus and minus buttons on mobile
+   Cart not the sidebar, dont fit into the boxes."
+
+   ⭐ ROOT CAUSE, MEASURED LIVE ON STAGING 1.19.153 (/cart/, one
+      paperback, `window.innerWidth` asserted). None of these is
+      estimated:
+
+        .wc-block-components-quantity-selector   107 x 46   <- BLOCKS' OWN
+                                                               FIXED WIDTH
+          __button--minus                         44 x 44
+          __input                                 40 x 40 wide
+          __button--plus                          44 x 44
+                                        children = 128px of content
+
+      WooCommerce Blocks hard-codes `width: 107px` on the container,
+      which was correct for its own 30px buttons (30+40+30 = 100 + 2px
+      border = 102). F9 above grew the buttons to the 44px tap target
+      without growing the box, so the children now need 130px in a
+      107px frame. The container's `overflow` is `visible`, so the PLUS
+      button simply hangs 22px past the container's right border —
+      exactly "doesn't fit into the box".
+
+      Measured overflow of the plus button past the container's right
+      edge, BEFORE this rule: 390px viewport +22.0px · 1440px +22.0px.
+      It was never mobile-only; Andrew saw it on a phone because that is
+      where the control is largest relative to the row.
+
+   THE FIX IS THE BOX, NOT THE BUTTONS. `max-content` makes the frame
+   shrink-to-fit its three children (44+40+44 + 2px border = 130px), so
+   the 44px targets survive intact and the border closes around them.
+   `max-width: 100%` keeps it inside `.wc-block-cart-item__quantity`
+   (measured 179px at 390px, so 130px has 49px of headroom) and stops
+   this rule ever becoming a source of horizontal scroll.
+
+   ⚠ `!important` is required and is not decoration: Blocks' own
+     `width: 107px` is a single-class selector too, and its stylesheet's
+     position in the cascade relative to this one is decided by
+     WooCommerce, not by us. The button rules directly above already
+     carry `!important` for the same reason.
+
+   ⛔ THE CART DRAWER IS NOT TOUCHED BY THIS. The drawer is a separate
+      implementation in the bundle plugin
+      (`.bhp-cart-drawer__item-qty` / `bundle-drawer.css`), an auto-width
+      flex row with `gap`, whose buttons are already `min-width: 44px`
+      with no fixed frame to overflow. This selector does not exist in
+      it, and no plugin file is changed in this build.
+   ================================================================== */
+.wc-block-components-quantity-selector {
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.wc-block-components-quantity-selector__button--minus,
+.wc-block-components-quantity-selector__button--plus {
+  flex: 0 0 44px;
+}
+.wc-block-components-quantity-selector__input {
+  flex: 0 0 40px;
+  width: 40px;
+  box-sizing: border-box;
+}
+
+/* ⚠ THE COST OF WIDENING THE BOX, MEASURED AND THEN PAID BACK.
+   Growing the selector 107px -> 130px also grows the shrink-to-fit cell
+   around it, `.wc-block-cart-item__quantity`, by the same 23px (179 ->
+   202, measured). That widens Blocks' cart TABLE, and the table is what
+   decides whether the price column fits the viewport:
+
+     390px  table right edge 364  -> 26px of slack. FINE, and 390 is the
+            viewport Andrew walks.
+     360px  table right edge 364  -> 4px past. It did NOT overflow at 360
+            before this change (341). Introduced here.
+     320px  table right edge 364  -> already 21px past BEFORE this change
+            (341 vs 320). Pre-existing, not introduced here.
+
+   None of it produces horizontal SCROLL, because
+   `body:not(.home) .site-main` is `overflow: clip` — which is exactly
+   why `document.scrollWidth` reads 0 and cannot be trusted as the only
+   check here. What it produces is a clipped right edge on the price.
+
+   Below 380px the input gives 8px back (40px -> 32px, still two digits
+   at 16px) while the BUTTONS STAY 44px, which is the part that is not
+   negotiable. That returns 360px to its pre-change behaviour. It does
+   not fix 320px, which was already overflowing and is a separate,
+   pre-existing Blocks table-width issue — reported, not silently
+   absorbed into this fix. */
+@media (max-width: 380px) {
+  .wc-block-components-quantity-selector__input {
+    flex: 0 0 32px;
+    width: 32px;
+    min-width: 32px !important;
+  }
+}
+
+/* ==================================================================
+   C3 — THE 320px CART TABLE STOPS RUNNING PAST THE VIEWPORT
+   ------------------------------------------------------------------
+   This is the item 2C-1 above explicitly declined to fix and reported
+   instead: "It does not fix 320px, which was already overflowing and
+   is a separate, pre-existing Blocks table-width issue — reported,
+   not silently absorbed into this fix." Andrew has since called it
+   (C3 on the post-launch nitpick list). Relayed through the Chief of
+   Staff; NOT witnessed first-hand by this agent.
+
+   ⭐ MEASURED LIVE ON STAGING 1.19.157, /cart/, one hardcover, real
+      browser, `window.innerWidth` asserted at every width. None of
+      these numbers is estimated:
+
+        320px  .wc-block-cart-items  left 41.0  right 356.3  w 315.3
+                 -> 36.3px PAST the viewport
+               .wc-block-cart-item__total right 354.3
+                 -> the PRICE is clipped by 34.3px
+        360px  same table, right 356.3          -> 3.7px of slack, fits
+        390px  fits comfortably
+
+      `document.scrollWidth - clientWidth` read 0 at all three widths,
+      because `body:not(.home) .site-main` is `overflow: clip`. ⛔ A
+      horizontal-scroll check CANNOT see this defect and reports the
+      page as clean — which is exactly why it survived this long. It
+      has to be caught by comparing the table's own right edge to
+      `innerWidth`.
+
+   ⭐ ROOT CAUSE, READ OUT OF WOOCOMMERCE'S OWN STYLESHEET RATHER THAN
+      INFERRED. `cart.css?ver=wc-10.9.1`, inside `@media (max-width:
+      699px)`:
+
+        .wc-block-cart table.wc-block-cart-items .wc-block-cart-items__row
+          { grid-template-columns: 80px 132px; }
+
+      Two FIXED tracks. The row's computed template resolves to
+      `80px 132px 62px 37.3px` — Blocks declares the first two, and the
+      browser adds two implicit tracks because the product cell is
+      `grid-column: 2 / 4` and the total cell auto-places after it.
+      80 + 132 + 62 + 37.3 = 311.3, + 4px of table chrome = 315.3.
+
+      ⛔ THAT 315.3px IS A FLOOR, NOT A WIDTH. It is identical at 320px
+         and at 360px — the table simply cannot shrink, so below ~356px
+         it hangs off the side of the page. Its own container
+         (`.wc-block-cart__main`) measured 238px at 320px: the table was
+         77px wider than the box it sits in.
+
+   THE FIX IS THE FLOOR, NOT THE CONTENT. `minmax(0, 1fr)` replaces the
+   fixed 132px product track, so it can shrink to the space that
+   actually exists instead of demanding a constant. The image track
+   drops 80px -> 48px, which costs nothing real: that track held a 40px
+   image plus 16px of padding, i.e. 24px of it was dead space.
+
+   ⛔ THE 44px TAP TARGETS ARE UNTOUCHED, and that is the constraint
+      that decided the numbers. The quantity selector still needs its
+      full 122px (44 + 32 + 44 + 2, per 2C-1's ≤380px rule above), and
+      48 + 122 + 37.3 leaves room inside the 238px container. Nothing
+      here shrinks a button, and F9's tap targets survive intact.
+
+   ⛔ BOUNDARY IS 359px, NOT 360px, DELIBERATELY. 360px measured 3.7px
+      of slack and is the width 2C-1 went out of its way to restore to
+      its pre-change behaviour. This rule stops one pixel below it, so
+      360px and everything above it render byte-for-byte as they do
+      today and 2C-1's carefully paid-back 8px is not disturbed.
+
+   The three selectors mirror WooCommerce's own two rules (the media
+   query and the `.is-small`/`.is-mobile` container-class variants), so
+   whichever one Blocks applies at this width is overridden.
+
+   ⚠ `!important` IS REQUIRED HERE, AND IT WAS PROVEN NECESSARY BY
+     MEASUREMENT RATHER THAN ADDED PRE-EMPTIVELY. The first build of
+     this rule omitted it on the reasoning that these selectors are at
+     least as specific as WooCommerce's. Deployed to staging 1.19.158
+     and measured at 320px, the result was a HALF-FIX that would have
+     been very easy to report as a whole one:
+
+       .wc-block-cart-items      315.3 -> 238.0  (the width rules DID
+                                                  apply; table now fits)
+       .wc-block-cart-item__total  right edge 354.3, still 34.3px past
+                                                  the viewport
+       computed grid-template   STILL "80px 132px 62px 37.3125px"
+
+     The table obeyed and the ROW did not, leaving the row wider than
+     the table that contains it and the price still clipped — i.e. the
+     visible defect was untouched. WooCommerce's rule has EQUAL
+     specificity, so the winner is decided purely by which stylesheet
+     the cascade sees last, and that order is WooCommerce's to choose,
+     not ours. This is the same conclusion 2C-1 above reached about
+     `width: 107px`, for the same reason, and its wording applies
+     verbatim: "its stylesheet's position in the cascade relative to
+     this one is decided by WooCommerce, not by us."
+   ================================================================== */
+@media (max-width: 359px) {
+  .wc-block-cart table.wc-block-cart-items .wc-block-cart-items__row,
+  .is-small table.wc-block-cart-items .wc-block-cart-items__row,
+  .is-mobile table.wc-block-cart-items .wc-block-cart-items__row {
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+  }
+  .wc-block-cart-items {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+  .wc-block-cart-item__image {
+    padding-right: 8px;
+  }
+  .wc-block-cart-item__image img {
+    width: 40px;
+    max-width: 100%;
+  }
+}
+/* The remove control is a 24px glyph. It is given a real 44px hit area
+   without growing the glyph, so nothing about the card's density changes:
+   the padding does the work and a negative margin absorbs it. */
+.wc-block-cart-item__remove-link {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -10px;
+  padding: 10px;
+}
+
+/* ==================================================================
+   F8 — CART LINE-ITEM COVERS RENDER WHOLE
+   ------------------------------------------------------------------
+   Measured before: 64 x 64 box, `object-fit: fill`, `aspect-ratio: 80/80`,
+   serving a hard-cropped 300x300 square derivative of a 1303x1999 portrait
+   cover. The bottom of the illustration and the author credit were cut off
+   in the FILE, so this rule works with the source swap in
+   `inc/checkout-experience.php` (Store API now serves the uncropped
+   `woocommerce_single`); CSS alone could not have fixed it.
+   ================================================================== */
+.wc-block-cart-item__image,
+.wc-block-components-order-summary-item__image {
+  width: 56px;
+}
+.wc-block-cart-item__image img,
+.wc-block-components-order-summary-item__image img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: contain;
+  background: transparent;
+}
+
+/* ==================================================================
+   D3 — SHIPPING SCOPE AND THE ALASKA / HAWAII MESSAGE
+   ------------------------------------------------------------------
+   Both are INFORMATION, not errors, and are styled as such. The stock
+   behaviour rendered WooCommerce's generic "Please verify the address is
+   correct" in error red, which invites a customer to retype a correct
+   address rather than telling them we do not ship there.
+   ================================================================== */
+.bhp-ship-scope {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted, #6f685b);
+}
+.bhp-offshore-notice {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--color-gold, #D9A45F);
+  border-radius: var(--radius-sm, 4px);
+  background: rgba(217, 164, 95, 0.12);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text, #342f28);
+}
+/* B5 (2026-08-03): the print-on-demand explainer, relocated below the whole
+   checkout block so it sits under Place Order instead of above it. */
+.bhp-checkout-after-actions {
+  max-width: 100%;
+  margin: 2rem auto 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* A5 (2026-08-03): B1 is three paragraphs now, not one string. */
+.bhp-offshore-notice p {
+  margin: 0 0 0.6rem;
+}
+.bhp-offshore-notice p:last-child {
+  margin-bottom: 0;
+}
+.bhp-offshore-notice__heading {
+  font-weight: 700;
+}
+.bhp-offshore-notice a {
+  color: inherit;
+  text-decoration: underline;
+  word-break: break-word;
+}
+
+/* ==================================================================
+   2C-4 — REMOVE CONTROL IN THE CHECKOUT ORDER SUMMARY
+   ------------------------------------------------------------------
+   Andrew, final staging walk: "you are unable to remove items from
+   your cart on the checkout page- the order summary should allow
+   that."
+
+   Measured before: `.wc-block-components-order-summary-item` carried
+   NO control at all — the button below is new, not restyled.
+
+   It is a quiet text button rather than a second primary action, so it
+   never competes with Place Order, and it carries a real 44px tap
+   target per tonight's standard: the glyph is small, the hit area is
+   not. `min-height: 44px` on the button plus the wrapper's own
+   margin-collapse-free block keeps the row's density unchanged.
+   ================================================================== */
+/* ⚠ THE CONTROL LIVES INSIDE `__description`, AND THE ROW'S OWN FLEX
+   LINE IS NOT TOUCHED. Recorded because the first build did touch it
+   and it cost a mobile-only regression:
+
+     first attempt: append to the item + `flex-wrap: wrap` on the item
+     measured at 390px: item 94px -> 224px, and the description dropped
+     BELOW the 48px cover instead of sitting beside it
+     measured at 1440px: unchanged and correct (592px of room)
+
+   `__description` is already a block column that stacks name, price and
+   metadata, so the control simply joins that stack. No `flex-wrap`
+   override survives anywhere in this file. */
+.bhp-summary-remove-wrap {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin: 0.35rem 0 0;
+  text-align: right;
+}
+.bhp-summary-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.35rem;
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--color-text-muted, #6f685b);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.bhp-summary-remove:hover,
+.bhp-summary-remove:focus-visible {
+  color: var(--color-forest, #1F4D36);
+}
+.bhp-summary-remove:focus-visible {
+  outline: 3px solid var(--color-focus, #D9A45F);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 4px);
+}
+.bhp-summary-remove[disabled] {
+  opacity: 0.55;
+  cursor: default;
+  text-decoration: none;
+}
+
+/* ==================================================================
+   2C-4b — THE CHECKOUT'S OWN EMPTY STATE, BRANDED
+   ------------------------------------------------------------------
+   VERIFIED LIVE, because the brief asked which of two things happens:
+   removing the last item on /checkout/ does NOT redirect to /cart/.
+   Blocks renders `.wc-block-checkout-empty` in place — a 100px
+   shopping-trolley glyph, "Your cart is currently empty!", a
+   "Checkout is not available whilst your cart is empty…" sentence and
+   a "Browse store" button. URL unchanged at /checkout/ 7s later.
+
+   Same treatment as F11 below, for the same reason: the stock state is
+   suppressed visually, never deleted, so removing these rules and the
+   script's panel restores it exactly.
+   ================================================================== */
+.wc-block-checkout-empty.bhp-checkout-empty--branded {
+  text-align: center;
+}
+.bhp-checkout-empty--branded .wc-block-checkout-empty__image {
+  display: none !important;
+}
+.bhp-checkout-empty--branded .wc-block-checkout-empty__title {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #6f685b);
+  opacity: 0.75;
+}
+.bhp-checkout-empty--branded .wc-block-checkout-empty__description {
+  max-width: 32rem;
+  margin: 0.5rem auto 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6f685b);
+}
+.bhp-checkout-empty--branded .bhp-empty-cart {
+  margin-bottom: 1.5rem;
+}
+/* The checkout's empty state renders in a NARROWER column than the cart
+   page's (measured 306px at a 390px viewport, against the cart page's
+   full content width), so the shared title stepped down to four lines —
+   "Your / expedition / pack is / empty". Only the size changes here; the
+   words are the same words. */
+.bhp-checkout-empty--branded .bhp-empty-cart__title {
+  font-size: clamp(1.35rem, 4.4vw, 2rem);
+}
+.bhp-checkout-empty--branded .bhp-empty-cart__text {
+  font-size: 0.9375rem;
+}
+/* Blocks' own "Browse store" button is a THIRD primary action stacked
+   under the two above it, and all three are the same green. It is
+   demoted to a quiet link rather than hidden, because it points at
+   /shop/ while "Browse every book" points at /books/ — they are
+   different destinations and removing one would remove a real route.
+   Deleting this rule restores the stock button exactly. */
+.bhp-checkout-empty--branded .wp-block-button__link {
+  background: transparent !important;
+  color: var(--color-text-muted, #6f685b) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0.35rem 0.5rem !important;
+  min-height: 44px;
+  font-size: 0.8125rem !important;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bhp-checkout-empty--branded .wp-block-button__link:hover,
+.bhp-checkout-empty--branded .wp-block-button__link:focus-visible {
+  color: var(--color-forest, #1F4D36) !important;
+}
+
+/* ==================================================================
+   F11 — THE EMPTY CART
+   ------------------------------------------------------------------
+   Before: WooCommerce Blocks' stock ~280px navy crying face, the single
+   largest element on the page. It is suppressed here rather than deleted
+   from the page's database content, so removing this rule restores the
+   stock state exactly.
+   ================================================================== */
+.wc-block-cart__empty-cart__title.with-empty-cart-icon::before,
+.wp-block-woocommerce-empty-cart-block .with-empty-cart-icon::before {
+  display: none !important;
+  content: none !important;
+}
+.bhp-empty-cart {
+  max-width: 34rem;
+  margin: 0 auto clamp(1.5rem, 5vw, 2.5rem);
+  padding: clamp(1.75rem, 6vw, 3rem) 1.25rem 0;
+  text-align: center;
+}
+.bhp-empty-cart__mark {
+  display: block;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 1.1rem;
+  color: var(--color-gold, #D9A45F);
+}
+.bhp-empty-cart__mark svg { width: 100%; height: 100%; display: block; }
+.bhp-empty-cart__title {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--color-navy, #071522);
+}
+.bhp-empty-cart__text {
+  margin: 0 auto 1.6rem;
+  max-width: 30rem;
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--color-text-muted, #6f685b);
+}
+.bhp-empty-cart__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+.bhp-empty-cart__cta { min-width: 15rem; }
+.bhp-empty-cart__cta--quiet {
+  background: transparent !important;
+  color: var(--cta-secondary-text) !important;
+  border: 1px solid var(--cta-secondary-border) !important;
+}
+/* The stock "Your cart is currently empty!" heading still renders below the
+   invitation. It is demoted to a quiet line rather than removed, because the
+   text lives in the page's database content and this wave does not edit it. */
+.wp-block-woocommerce-empty-cart-block .wc-block-cart__empty-cart__title {
+  font-size: 0.9rem !important;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #6f685b);
+  opacity: 0.75;
+}
+
+/* ==================================================================
+   1.19.185 — THE DESKTOP CHECKOUT IS A DESKTOP CHECKOUT AGAIN
+   CYCLE144-LD-121
+   ------------------------------------------------------------------
+   Andrew Signore, 2026-08-05, current-turn defect report (⛔ RELAYED
+   through the Chief of Staff and witnessed by the main session — NOT
+   witnessed first-hand by the agent that wrote this):
+
+     "The order summary we fixed a while back is now active at the top -
+      needs to be removed."
+
+   His screenshot is production, logged in, at a full desktop width, and
+   it shows the collapsible "Order summary $51.93" panel sitting above
+   "Contact information" — the phone arrangement, on a desktop screen.
+
+   ═══ THE CAUSE, MEASURED RATHER THAN GUESSED ═══
+   WooCommerce Blocks does NOT switch its cart/checkout layout on the
+   VIEWPORT. `<SidebarLayout>` measures its OWN container with a
+   ResizeObserver and applies one of four classes — `is-mobile`,
+   `is-small`, `is-medium`, `is-large` — and only `is-large` produces the
+   two-column desktop arrangement with the summary in a right-hand
+   sidebar. Everything below `is-large` stacks the sidebar ABOVE the form
+   and renders it as a collapsed panel.
+
+   The checkout page uses the generic `page.php`, so its container is
+   `.page-content` (`max-width: var(--container-content)` = 820px, style.css
+   line ~877/4096) minus that element's 32px gutters minus the
+   `.entry-content` card's 64px padding. Measured live on staging 1.19.182/1.19.183
+   with headless Chrome, `window.innerWidth` asserted, three-hardcover cart:
+
+     viewport 1440 -> checkout container  626px -> `is-medium`  ⛔
+     viewport 1280 -> checkout container  626px -> `is-medium`  ⛔
+     viewport 1024 -> checkout container  652px -> `is-medium`  ⛔
+     viewport  900 -> checkout container  664px -> `is-medium`  ⛔
+     viewport  390 -> checkout container  308px -> `is-mobile`  ✅
+
+   `is-large` needs a container wider than 700px. The page could never
+   reach it at ANY viewport, so the desktop checkout had no desktop
+   layout to lose — and the F3 rule at the top of this file, scoped to
+   `.is-mobile`, could never fire to hide the duplicate either.
+
+   ⚠ THIS IS NOT A REGRESSION INTRODUCED BY 1.19.178-1.19.182. Nothing in
+      those releases touches `.page-content`, `--container-content` or any
+      checkout selector — verified by reading the whole `style.css` diff
+      across 1.19.177..1.19.182. The 820px cap is long-standing site
+      furniture; what changed is that Andrew looked at desktop checkout.
+      Recorded so nobody hunts a phantom CSS regression: CYCLE144-LD-122.
+
+   ⚠ VERSION NUMBER, RECORDED RATHER THAN QUIETLY RENUMBERED. This work was
+      cut as 1.19.183, rebased onto `feature/header-collection-cta-1.19.183`
+      when that session minted the SAME number minutes earlier, and shipped as
+      **1.19.185** — 1.19.184 is left to `hotfix/consent-banner-desktop-1.19.184`,
+      which was already branched. Four `lead-developer` sessions were live in
+      this tree at once. `CYCLE144-LD-123`; the `CYCLE144-LD-84` double-mint is
+      the precedent being avoided.
+
+   ═══ THE FIX — TWO RULES, BOTH SCOPED TO /cart/ AND /checkout/ ═══
+   This whole stylesheet is enqueued only when `is_cart() || is_checkout()`
+   (inc/checkout-experience.php), so neither rule can reach another page.
+
+   (1) Give the container the width Blocks needs, from 1024px up. 1240px
+       yields a 1046px checkout container at 1440 and 841px at 1024 —
+       both comfortably `is-large`. Measured after, same session:
+
+         1440 -> container 1046px, `is-large`, main 680px @ x=190,
+                 sidebar 366px @ x=869   (two columns, summary on the right)
+         1024 -> container  841px, `is-large`, main 546px + sidebar 294px
+         Stripe's payment element still mounts: 609x154 at 1440.
+
+   (2) Below 1024px the layout legitimately stays stacked, and there the
+       ORIGINAL F3 defect is still live — the collapsed sidebar panel AND
+       the expanded summary above Place Order, both on screen. The F3 rule
+       is therefore extended from `is-mobile` to the other two stacked
+       states. Measured after: at 900px and 768px the top panel is
+       `display: none` and exactly one summary remains.
+
+   ⛔ ENUMERATED, DELIBERATELY, RATHER THAN `:not(.is-large)`. If a future
+      Blocks release ever stops emitting these classes, an enumerated rule
+      stops applying (harmless — you get the duplicate back). A `:not()`
+      rule would start matching everything and DELETE THE DESKTOP ORDER
+      SUMMARY. The failure modes are not symmetric, so the selector is not
+      a matter of taste.
+
+   ⛔ NOTHING HERE TOUCHES A PAYMENT PATH. No gateway, no payment method,
+      no total, no shipping rate, no coupon and no WooCommerce setting is
+      read or written by this change, on any environment. The separate
+      production-only "no payment methods available" report is diagnosis
+      only and is NOT addressed by this release — see the session handoff.
+
+   Asserted against the RENDERED checkout by
+   tests/test-checkout-desktop-layout.php.
+   ================================================================== */
+@media (min-width: 1024px) {
+  .page-content.page-checkout,
+  .page-content.page-cart {
+    max-width: 1240px;
+  }
+}
+
+.wc-block-checkout.is-small > .wc-block-checkout__sidebar,
+.wc-block-checkout.is-medium > .wc-block-checkout__sidebar,
+.wc-block-cart.is-small > .wc-block-cart__sidebar.is-duplicate,
+.wc-block-cart.is-medium > .wc-block-cart__sidebar.is-duplicate {
+  display: none;
+}
+
+/* ==================================================================
+   1.19.194 — THE CHECKOUT SECTION HEADINGS ARE BOLD
+   CYCLE144-LD-231
+   ------------------------------------------------------------------
+   Andrew Signore, 2026-08-05, current-turn instruction, verbatim (⛔
+   RELAYED through the Chief of Staff and witnessed by the main session
+   — NOT witnessed first-hand by the agent that wrote this):
+
+     "also Make the headings on the checkout page bold 'Contact
+      Information' etc"
+
+   ⛔ SCOPE IS /checkout/ ONLY, DELIBERATELY. This stylesheet is
+      enqueued on BOTH /cart/ and /checkout/ (inc/checkout-experience.php),
+      so every selector below is prefixed `.wc-block-checkout` — the
+      class WooCommerce Blocks puts on the checkout's sidebar-layout root
+      and nowhere else. The cart page's own headings ("Products in cart",
+      "Cart totals", the cart table's column headers) are UNCHANGED,
+      because the instruction named the checkout page. Bolding those too
+      is a one-line follow-up if Andrew wants it; it is not assumed here.
+
+   ═══ WHAT WAS MEASURED BEFORE, LIVE, NOT ESTIMATED ═══
+   Staging 1.19.193, real headless Chrome, one Mount Everest paperback in
+   a guest cart, `window.innerWidth` asserted at both widths. Computed
+   `font-weight` read off the rendered nodes:
+
+     1440px (`is-large`, container 1046px) and 390px (`is-mobile`,
+     container 308px) — identical weights at both:
+
+       .wc-block-components-checkout-step__title          500   x5/x6
+         "Contact information" · "Shipping address" ·
+         "Shipping options" · "Payment options" ·
+         "Additional order information" · "Order summary" (mobile only)
+       .wc-block-components-express-payment__title        400
+         "Express Checkout"
+       .wc-block-components-checkout-order-summary__title-text
+                                                          500
+         "Order summary" (desktop sidebar only)
+
+   ═══ ⭐ WHY `font-variation-settings` IS HERE AND IS NOT DECORATION ═══
+   `font-weight: 700` ALONE DOES NOTHING VISIBLE ON THIS SITE, and that
+   was proven by measurement rather than assumed. Since 1.19.193 the
+   brand fonts are self-hosted (assets/fonts/fonts.css). Cormorant
+   Garamond is declared there at 400/500/600 only, and EB Garamond at
+   400/500 only — there is no 700 face for either. CSS font matching
+   therefore resolves a 700 request to the heaviest DECLARED face and
+   Chrome applies no synthetic bold, because a 600 (resp. 500) face
+   exists. Measured on staging, "Contact information" at 20px:
+
+     Cormorant Garamond  weight 400 -> 162.98px
+                         weight 500 -> 163.50px   (today)
+                         weight 600 -> 163.97px
+                         weight 700 -> 163.97px   ⛔ IDENTICAL TO 600
+     EB Garamond         weight 500 -> 125.75px   (today, "Order summary")
+                         weight 700 -> 125.75px   ⛔ IDENTICAL TO 500
+
+   Both files ARE variable fonts, so the `wght` axis can be driven
+   directly past the declared faces, and that is what actually bolds the
+   glyphs:
+
+     Cormorant Garamond  'wght' 700 -> 164.45px  (real 700 instance)
+     EB Garamond         'wght' 700 -> 132.50px  (real 700 instance)
+     Cormorant 'wght' 750/800 clamp to 164.45 — the axis tops out at 700.
+
+   `font-weight: 700` is kept alongside it so the declared, computed and
+   accessibility-exposed weight is genuinely 700, and so that the rule
+   degrades correctly to a real bold if these families are ever swapped
+   for static faces (a browser that ignores `font-variation-settings`
+   still honours `font-weight`).
+
+   ⛔ THE ALTERNATIVE WAS REJECTED ON PURPOSE. Adding a `font-weight: 700`
+      @font-face to assets/fonts/fonts.css would have worked too, but it
+      is a SITEWIDE typography change made from a checkout brief, and
+      that file was rewritten by 1.19.193 minutes earlier. This rule
+      touches nothing outside /checkout/.
+
+   ═══ LAYOUT SHIFT ═══
+   Weight is the only property changed — no size, no line-height, no
+   margin, no display. The line box is font-metric driven, so heading
+   HEIGHT is unaffected (measured 34px at 20px for every weight of both
+   families, 400 through 800). The only geometric effect is horizontal:
+   the step titles grow ~0.95px and the desktop sidebar "Order summary"
+   ~6.8px, both on their own lines with room to spare. Verified after
+   deploy: heading heights and y-positions unchanged, CLS not increased.
+
+   Asserted against the shipped stylesheet by
+   tests/test-checkout-heading-weight.php.
+
+   ⛔ NOTHING HERE TOUCHES A PAYMENT PATH, A TOTAL, A SHIPPING RATE, A
+      COUPON OR ANY WOOCOMMERCE SETTING, on any environment. It is one
+      declaration block of typography.
+   ================================================================== */
+.wc-block-checkout .wc-block-components-title.wc-block-components-checkout-step__title,
+.wc-block-checkout .wc-block-components-express-payment--checkout .wc-block-components-express-payment__title,
+.wc-block-checkout .wp-block-woocommerce-checkout-order-summary-block .wc-block-components-checkout-order-summary__title-text {
+  font-weight: 700;
+  font-variation-settings: 'wght' 700;
+}

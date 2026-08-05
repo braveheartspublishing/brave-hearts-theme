@@ -49,7 +49,7 @@ get_template_part('template-parts/components/hero', null, [
     ],
     'secondary_link' => [
         'url'   => $shop_url,
-        'label' => __('Shop All Books', 'brave-hearts'),
+        'label' => __('Shop All Adventure Books', 'brave-hearts'),
     ],
 ]);
 ?>
@@ -65,6 +65,53 @@ get_template_part('template-parts/components/hero', null, [
     </div>
   </div>
 </section>
+
+<?php
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.171 (2026-08-05) — CYCLE144-LD-12. THIS BAND IS NOW THE HOMEPAGE'S.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-05, verbatim (relayed through the Chief of Staff;
+ * NOT witnessed first-hand by this agent):
+ *
+ *   "On the adventure books page - keep it consistent with the homepage -
+ *    meaning put the same Best Value - The Complete section with the savings
+ *    numbers where is says Get all Three adventures, use the same homepage
+ *    one."
+ *
+ * WHAT WAS HERE: a locally-written `#books-complete-collection-banner` with
+ * its own heading ("Get All Three Adventures"), its own body sentence, no
+ * "Best Value" badge, no primacy line and NO SAVINGS NUMBERS. It shared only
+ * the collection gallery and the CTA with the homepage band.
+ *
+ * WHAT IS HERE NOW: `template-parts/components/complete-collection-feature.php`
+ * — literally the homepage's own markup, the same file the homepage renders.
+ * Not a copy of it. Read that file's header for why a copy would have
+ * re-created this defect.
+ *
+ * ⭐ B7 IS PRESERVED, and preserving it is why the partial takes a `cta`
+ *    argument at all. Andrew, walk-3 2026-08-03, verbatim: "I want less steps
+ *    to purchase." `'cta' => 'checkout'` keeps the exact behaviour this page
+ *    already had: the same `complete_<format>_smart` POST, the same
+ *    `bhp_bundle_default_format()` read, the same /checkout/ redirect, the
+ *    same "Or read about the collection first" escape hatch, and the same
+ *    plugin-inactive fallback to a plain link. One current-turn instruction
+ *    does not silently repeal an earlier one.
+ *
+ * ⛔ IDS ARE PAGE-SCOPED SO NOTHING COLLIDES. The section keeps this page's
+ *    own `#books-complete-collection-banner` id and its own heading id — the
+ *    homepage's `#home-sales-paths` is not duplicated onto a second URL, and
+ *    the existing `.books-complete-collection-banner` spacing rules keep
+ *    applying through `section_class`.
+ */
+get_template_part('template-parts/components/complete-collection-feature', null, [
+    'cta'           => 'checkout',
+    'section_id'    => 'books-complete-collection-banner',
+    'section_class' => 'books-section books-complete-collection-banner section--sm',
+    'title_id'      => 'books-complete-collection-banner-title',
+]);
+?>
 
 <section id="adventure-book-grid" class="books-section section section--muted" aria-labelledby="adventure-book-grid-title">
   <div class="container">
@@ -84,7 +131,7 @@ get_template_part('template-parts/components/hero', null, [
 <section id="book-formats" class="books-section book-format-note section section--sm" aria-labelledby="book-formats-title">
   <div class="container container--content book-format-note__inner">
     <p class="component-heading__eyebrow"><?php esc_html_e('Choose the format that fits your reader', 'brave-hearts'); ?></p>
-    <h2 id="book-formats-title" class="text-section-title"><?php esc_html_e('Kindle, Paperback, and Hardcover', 'brave-hearts'); ?></h2>
+    <h2 id="book-formats-title" class="text-section-title"><?php esc_html_e('Paperback and Hardcover', 'brave-hearts'); ?></h2>
     <p class="text-lead"><?php esc_html_e('Available formats are shown on each published book card. Selection may vary by adventure as new editions are released.', 'brave-hearts'); ?></p>
   </div>
 </section>
@@ -92,7 +139,7 @@ get_template_part('template-parts/components/hero', null, [
 <?php
 get_template_part('template-parts/components/teacher-resources-cta', null, [
     'id'      => 'books-teacher-resources',
-    'eyebrow' => __('Books made for shared learning', 'brave-hearts'),
+    'eyebrow' => __('Adventure books made for shared learning', 'brave-hearts'),
     'title'   => __('Bring Charlotte & Henry Into Your Classroom', 'brave-hearts'),
     'text'    => __('Use the adventures for read-alouds, geography, science, vocabulary, and thoughtful discussion with curious readers in Grades 1–3.', 'brave-hearts'),
     'items'   => [
@@ -115,9 +162,9 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
     <h2 id="books-final-cta-title" class="text-section-title"><?php esc_html_e('Start the Adventure Today', 'brave-hearts'); ?></h2>
     <p class="text-lead final-cta__text"><?php esc_html_e('Choose the next Charlotte & Henry adventure, bring the books into your classroom, or join the Adventure Club.', 'brave-hearts'); ?></p>
     <div class="final-cta__actions cluster">
-      <a class="btn btn-primary" href="<?php echo esc_url($shop_url); ?>"><?php esc_html_e('Shop the Books', 'brave-hearts'); ?></a>
+      <a class="btn btn-primary" href="<?php echo esc_url($shop_url); ?>"><?php esc_html_e('Shop the Adventure Books', 'brave-hearts'); ?></a>
       <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Explore Educator Guides', 'brave-hearts'); ?></a>
-      <a class="btn btn-outline" href="<?php echo esc_url(home_url('/#adventure-club')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
+      <a class="btn btn-outline" href="<?php echo esc_url(home_url('/reluctant-reader-adventure-kit/')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
     </div>
   </div>
 </section>

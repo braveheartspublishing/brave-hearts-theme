@@ -1,0 +1,220 @@
+/*! Built from quiz-modal.css by tools/build-css.mjs — DO NOT EDIT.
+    source-md5: a1ce55903563f8f976971f00e29010d8
+    Comments stripped for transfer size; the source file is canonical. */
+.bhp-quiz-modal[hidden] { display: none; }
+.bhp-quiz-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4, 16px);
+}
+@supports (height: 100dvh) {
+  .bhp-quiz-modal {
+    height: 100dvh;
+    bottom: auto;
+  }
+}
+.bhp-quiz-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(31, 77, 54, 0.72);
+}
+.bhp-quiz-modal__dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - var(--space-8, 64px));
+  overflow: hidden;
+  background: #f7f2e7;
+  border-radius: 16px;
+  box-shadow: var(--shadow-md, 0 12px 32px rgba(0, 0, 0, 0.24));
+}
+.bhp-quiz-modal__dialog--question {
+  max-width: 780px;
+}
+.bhp-quiz-modal__dialog:focus { outline: none; }
+.bhp-quiz-modal__dialog:focus-visible { outline: 3px solid var(--color-focus, #d8bd7d); outline-offset: -3px; }
+.bhp-quiz-modal .bhp-quiz {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0;
+  padding-top: 60px;
+  padding-bottom: 32px;
+}
+.bhp-quiz-modal .bhp-quiz .bhp-quiz__progress { margin-bottom: 4px; }
+.bhp-quiz-modal .bhp-quiz .bhp-quiz__question {
+margin-bottom: clamp(1.125rem, 0.9rem + 1.25vw, 2rem);
+}
+.bhp-quiz-modal .bhp-quiz--question { padding-bottom: 20px; }
+.bhp-quiz-modal__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+z-index: 3;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  border: none;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #5b5b52;
+  cursor: pointer;
+}
+.bhp-quiz-modal__close:hover { background: #ffffff; color: #2a2a2a; }
+.bhp-quiz-modal__close:focus-visible {
+  background: #ffffff;
+  color: #2a2a2a;
+  outline: 3px solid var(--expedition-navy, #071522);
+  outline-offset: 2px;
+}
+body.bhp-quiz-modal-open {
+  overflow: hidden;
+}
+@media (max-width: 600px) {
+  .bhp-quiz-modal {
+    align-items: center;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+  .bhp-quiz-modal__dialog {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    border-radius: 16px;
+  }
+  @supports (height: 100dvh) {
+    .bhp-quiz-modal__dialog {
+      max-height: calc(100dvh - (2 * max(12px, env(safe-area-inset-bottom))));
+    }
+  }
+.bhp-quiz-modal .bhp-quiz {
+    padding-top: 60px;
+    padding-bottom: 24px;
+  }
+  .bhp-quiz-modal .bhp-quiz--question { padding-bottom: 16px; }
+}
+@media (max-height: 600px) {
+  .bhp-quiz-modal { padding: 8px; }
+  .bhp-quiz-modal__dialog { max-height: calc(100vh - 16px); }
+  @supports (height: 100dvh) {
+    .bhp-quiz-modal__dialog { max-height: calc(100dvh - 16px); }
+  }
+.bhp-quiz-modal .bhp-quiz--result { padding-top: 56px; padding-bottom: 14px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-eyebrow { margin-bottom: 4px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-headline {
+    font-size: clamp(1.375rem, 1.05rem + 1.4vw, 1.75rem);
+    margin: 0 auto 4px;
+    max-width: min(26ch, 100%);
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-offer {
+    font-size: clamp(1.0625rem, 0.95rem + 0.6vw, 1.25rem);
+    margin-bottom: 4px;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-detail {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__signup { gap: 8px; margin-top: 8px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__consent { font-size: 0.72rem; line-height: 1.35; }
+.bhp-quiz-modal .bhp-quiz--result .bhp-quiz__field { gap: 2px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__label { font-size: 0.8rem; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__input {
+    min-height: 44px;
+    padding-block: 8px;
+    font-size: max(1rem, 16px);
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-actions { gap: 6px; }
+.bhp-quiz-modal .bhp-quiz--question {
+    padding-top: 56px;
+    padding-bottom: 16px;
+  }
+.bhp-quiz-modal .bhp-quiz .bhp-quiz__question { margin-bottom: 14px; }
+}
+@media (max-width: 400px) {
+  .bhp-quiz-modal .bhp-quiz {
+    padding-top: 56px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bhp-quiz-modal, .bhp-quiz-modal__dialog { transition: none !important; animation: none !important; }
+}
+.bhp-quiz-modal__close {
+min-width: 48px;
+	min-height: 48px;
+	width: 48px;
+	height: 48px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+position: absolute;
+	z-index: 20;
+	pointer-events: auto;
+top: max(8px, env(safe-area-inset-top));
+	right: max(8px, env(safe-area-inset-right));
+}
+.bhp-quiz-modal__close > * {
+	pointer-events: none;
+}
+@media (max-width: 400px) {
+	.bhp-quiz-modal__close {
+		width: 44px;
+		height: 44px;
+		min-width: 44px;
+		min-height: 44px;
+	}
+}
+@media (max-height: 440px) {
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-eyebrow {
+    font-size: 0.68rem;
+    margin-bottom: 2px;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-headline {
+    font-size: 1.25rem;
+    line-height: 1.1;
+    margin: 0 auto 2px;
+    max-width: min(34ch, 100%);
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-offer {
+    font-size: 1rem;
+    line-height: 1.2;
+    margin-bottom: 2px;
+    max-width: 46ch;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-detail {
+    font-size: 0.85rem;
+    line-height: 1.32;
+    max-width: 62ch;
+  }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__signup { margin-top: 6px; gap: 6px; }
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__consent { font-size: 0.68rem; }
+  .bhp-quiz-modal .bhp-quiz--result { padding-bottom: 10px; }
+}
+@media (min-width: 480px) {
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-offer {
+    font-size: 0.875rem;
+    line-height: 1.35;
+    margin-top: 6px;
+  }
+}
+@media (max-height: 440px) {
+  .bhp-quiz-modal .bhp-quiz--result .bhp-quiz__result-offer {
+    font-size: 0.8125rem;
+    line-height: 1.25;
+    margin-top: 4px;
+    max-width: 52ch;
+  }
+}

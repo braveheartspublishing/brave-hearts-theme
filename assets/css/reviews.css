@@ -1,0 +1,593 @@
+/*
+ * Brave Hearts — customer review system (1.19.162).
+ *
+ * Mobile-first: every rule below is written for a 390px viewport and widened
+ * with min-width queries, never the other way round.
+ *
+ * The submit button carries `btn btn-cta-primary`, which is the sitewide
+ * one-button spec declared in style.css (radius, typeface, size, tracking,
+ * min-height, padding, forest fill, ivory text, gold border, inline-flex
+ * centring). NOTHING about that button is redeclared here — this file only
+ * lays it out. Reintroducing any of those five properties here is how six
+ * radii and three typefaces happened the first time.
+ */
+
+/* ------------------------------------------------------------------
+   Anchor landing. `#reviews` and `#write-review` are linked from the
+   Mailchimp review-ask emails and from the in-page invitation; without
+   this the sticky header covers the heading they land on.
+   ------------------------------------------------------------------ */
+#reviews,
+#write-review,
+#bhp-review-thanks,
+.bhp-review-form__errors {
+  scroll-margin-top: 96px;
+}
+
+/* ------------------------------------------------------------------
+   1. The one-line invitation directly beneath the Kirkus block, inside
+      the product summary column.
+   ------------------------------------------------------------------ */
+.bhp-review-invite {
+  margin: 0.75rem 0 1.25rem;
+  padding: 0.7rem 0 0;
+  border-top: 1px solid var(--color-border);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.bhp-review-invite__link {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bhp-review-invite__link:hover,
+.bhp-review-invite__link:focus-visible {
+  text-decoration: underline;
+}
+
+.bhp-review-invite__arrow {
+  display: inline-block;
+  margin-left: 0.25em;
+  transition: transform 0.15s ease;
+}
+
+.bhp-review-invite__link:hover .bhp-review-invite__arrow {
+  transform: translateX(3px);
+}
+
+.bhp-review-invite__count {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+/* ------------------------------------------------------------------
+   2. The full-width review band on the product page.
+   ------------------------------------------------------------------ */
+.bhp-review-section {
+  padding: 2.5rem 0;
+  background: var(--color-surface-muted);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/*
+ * CYCLE142-CX-070 — the band must span BOTH grid columns.
+ *
+ * `woocommerce_after_single_product_summary` fires INSIDE `.woocommerce
+ * div.product`, which style.css makes a two-column CSS grid
+ * (gallery | summary). Anything hooked there collapses into the narrow first
+ * column unless it says otherwise. Measured live on staging 1.19.164 at 1440:
+ * this section rendered **614px wide at left-offset 102px** while every other
+ * full-width band on the same page measured **1236px** — its cream background
+ * stopped dead at roughly x=716 with bare white page beside it for the full
+ * height of the block, and the heading wrapped to two lines inside 550px.
+ *
+ * `.woocommerce-tabs`, `.related.products` and `.amazon-reviews-product-section`
+ * all already carry this exact declaration in style.css, and the comment beside
+ * the last of those records the same bug being fixed for the same reason. This
+ * is the fourth instance, not a new problem.
+ *
+ * ⚠ Scoped to `.woocommerce div.product` deliberately. `.bhp-cc-upsell` sits in
+ *   the same grid at 614px and is pre-existing, intended behaviour — a broader
+ *   selector must never widen it as a side effect.
+ */
+.woocommerce div.product .bhp-review-section {
+  grid-column: 1 / -1;
+}
+
+.bhp-review-section__header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.bhp-review-section__summary {
+  margin: 0.6rem auto 0;
+  max-width: 34rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.bhp-review-section__average {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.bhp-review-section__shortcut {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+}
+
+.bhp-review-section__shortcut a {
+  color: var(--color-text-muted);
+}
+
+/* ------------------------------------------------------------------
+   3. Displayed stars on an approved review (read-only).
+   ------------------------------------------------------------------ */
+.bhp-review-stars {
+  display: inline-block;
+  color: var(--color-gold-deep);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------------
+   4. Approved review cards.
+   ------------------------------------------------------------------ */
+.bhp-review-list {
+  margin: 0 0 2rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 1rem;
+}
+
+.bhp-review-card {
+  padding: 1.1rem 1.15rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+}
+
+.bhp-review-card__body {
+  margin-top: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.bhp-review-card__body p:last-child {
+  margin-bottom: 0;
+}
+
+.bhp-review-card__meta {
+  margin: 0.7rem 0 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+}
+
+.bhp-review-card__author {
+  font-weight: 700;
+}
+
+.bhp-review-card__sep {
+  margin: 0 0.4em;
+}
+
+.bhp-review-card__verified {
+  display: inline-block;
+  margin-left: 0.5em;
+  padding: 0.15em 0.5em;
+  background: rgba(var(--color-forest-rgb), 0.08);
+  border: 1px solid rgba(var(--color-forest-rgb), 0.25);
+  border-radius: 2px;
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------
+   5. The form.
+   ------------------------------------------------------------------ */
+.bhp-review-form {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.35rem 1.15rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+}
+
+.bhp-review-form--standalone {
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.bhp-review-form__heading {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+
+.bhp-review-form__intro {
+  margin: 0 0 1.2rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.bhp-review-form__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Validation state ------------------------------------------------
+   CYCLE142-CX-071. The summary panel and the per-field messages are
+   rendered by PHP on a server-side rejection and by reviews.js on a
+   client-side one, using the SAME markup and the same classes, so a
+   reviewer with JavaScript off sees exactly what a reviewer with it on
+   sees. `[hidden]` is the empty state for both. */
+.bhp-review-form__errors[hidden],
+.bhp-review-form__error[hidden] {
+  display: none;
+}
+
+.bhp-review-form__errors {
+  margin: 0 0 1.2rem;
+  padding: 0.95rem 1.1rem;
+  background: rgba(var(--color-earth-rgb), 0.07);
+  border: 1px solid rgba(var(--color-earth-rgb), 0.45);
+  border-left-width: 4px;
+  border-radius: 2px;
+}
+
+.bhp-review-form__errors:focus {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.bhp-review-form__errors-heading {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.bhp-review-form__errors-list {
+  margin: 0.45rem 0 0;
+  padding-left: 1.1rem;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.bhp-review-form__errors-list li + li {
+  margin-top: 0.25rem;
+}
+
+.bhp-review-form__errors-list a {
+  color: var(--color-text);
+}
+
+.bhp-review-form__error {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--color-earth);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.bhp-review-form [aria-invalid='true'] {
+  border-color: var(--color-earth);
+}
+
+.bhp-star-input[data-bhp-invalid='true'] {
+  padding-left: 0.35rem;
+  border-left: 3px solid var(--color-earth);
+}
+
+.bhp-review-form__req {
+  color: var(--color-earth);
+}
+
+.bhp-review-form__field {
+  margin: 0 0 1.1rem;
+}
+
+.bhp-review-form input[type='text'],
+.bhp-review-form input[type='email'],
+.bhp-review-form textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem 0.75rem;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 1rem; /* 16px — stops iOS Safari zooming the page on focus. */
+  line-height: 1.5;
+}
+
+.bhp-review-form textarea {
+  min-height: 8.5rem;
+  resize: vertical;
+}
+
+.bhp-review-form input[type='text']:focus,
+.bhp-review-form input[type='email']:focus,
+.bhp-review-form textarea:focus {
+  border-color: var(--color-primary);
+}
+
+/* Rating fieldset ------------------------------------------------- */
+.bhp-review-form__rating {
+  margin: 0 0 1.1rem;
+  padding: 0;
+  border: 0;
+}
+
+/*
+ * The star picker is five real radio inputs, so it is keyboard operable and
+ * announced correctly with no JavaScript at all. DOM order is 5 -> 1 and the
+ * row is reversed visually, which is what makes `input:checked ~ label` able
+ * to reach the stars to the LEFT of the selected one — CSS has no previous-
+ * sibling combinator, so the reversal is the mechanism, not a style choice.
+ */
+.bhp-star-input {
+  position: relative;
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 0.15rem;
+}
+
+.bhp-star-input input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bhp-star-input label {
+  cursor: pointer;
+  padding: 0.1rem 0.12rem;
+  color: rgba(var(--color-earth-rgb), 0.32);
+  font-size: 2.1rem;
+  line-height: 1;
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.bhp-star-input input:checked ~ label,
+.bhp-star-input label:hover,
+.bhp-star-input label:hover ~ label {
+  color: var(--color-gold-deep);
+}
+
+.bhp-star-input label:hover {
+  transform: scale(1.06);
+}
+
+.bhp-star-input input:focus-visible + label {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Identity fields -------------------------------------------------- */
+.bhp-review-form__identity {
+  display: grid;
+  gap: 0 1rem;
+}
+
+.bhp-review-form__privacy {
+  margin: -0.4rem 0 1.1rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+/* Honeypot: removed from the page for people and for assistive tech,
+   without `display:none`, which some bots specifically look for. */
+.bhp-review-form__hp {
+  position: absolute !important;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.bhp-review-form__actions {
+  margin: 0 0 0.85rem;
+}
+
+.bhp-review-form__submit {
+  width: 100%;
+}
+
+.bhp-review-form__moderation {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------------
+   6. Thank-you state.
+   ------------------------------------------------------------------ */
+.bhp-review-thanks {
+  max-width: 40rem;
+  margin: 0 auto 1.5rem;
+  padding: 1.2rem 1.15rem;
+  background: rgba(var(--color-forest-rgb), 0.06);
+  border: 1px solid rgba(var(--color-forest-rgb), 0.28);
+  border-left-width: 4px;
+  border-radius: 2px;
+}
+
+.bhp-review-thanks:focus {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.bhp-review-thanks__heading {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.bhp-review-thanks p {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.bhp-review-thanks p:last-child {
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------
+   7. The standalone `/review/<slug>/` page.
+   ------------------------------------------------------------------ */
+.bhp-review-page {
+  padding: 2rem 1rem 3rem;
+  background: var(--color-surface-muted);
+}
+
+.bhp-review-page__inner {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.15rem 1.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  text-align: left;
+}
+
+.bhp-review-page__cover {
+  text-align: center;
+}
+
+.bhp-review-page__cover-img {
+  width: auto;
+  max-width: 150px;
+  height: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.bhp-review-page__eyebrow {
+  margin: 1rem 0 0.2rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.bhp-review-page__title {
+  margin: 0 0 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1.12;
+  text-align: center;
+}
+
+.bhp-review-page__back {
+  margin: 0.75rem 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------------
+   8. Wider viewports. Everything above is the 390px baseline.
+   ------------------------------------------------------------------ */
+@media (min-width: 600px) {
+  .bhp-review-section {
+    padding: 3rem 0;
+  }
+
+  .bhp-review-form {
+    padding: 1.75rem 1.75rem 1.9rem;
+  }
+
+  .bhp-review-form--standalone {
+    padding: 0;
+  }
+
+  .bhp-review-form__identity {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bhp-review-form__privacy {
+    grid-column: 1 / -1;
+  }
+
+  .bhp-review-form__submit {
+    width: auto;
+    min-width: 15rem;
+  }
+
+  .bhp-review-form__heading {
+    font-size: 1.85rem;
+  }
+
+  .bhp-review-page__inner {
+    padding: 2rem 2.25rem 2.25rem;
+  }
+
+  .bhp-review-page__title {
+    font-size: 2.2rem;
+  }
+
+  .bhp-review-page__cover-img {
+    max-width: 180px;
+  }
+}
+
+@media (min-width: 900px) {
+  .bhp-review-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bhp-review-invite__arrow,
+  .bhp-star-input label {
+    transition: none;
+  }
+
+  .bhp-star-input label:hover {
+    transform: none;
+  }
+}

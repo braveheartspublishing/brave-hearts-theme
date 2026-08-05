@@ -78,7 +78,7 @@ get_template_part('template-parts/components/hero', null, [
     'class'    => 'teachers-hero',
     'eyebrow'  => __('The Brave Hearts field guide library', 'brave-hearts'),
     'title'    => __('Explorer Expedition Guides', 'brave-hearts'),
-    'text'     => __('Explore real-world articles, reading guidance, destination field notes, educator resources, and family paths—all connected to the questions behind the books.', 'brave-hearts'),
+    'text'     => __('Explore real-world articles, reading guidance, destination field notes, educator resources, and family paths - all connected to the questions behind the books.', 'brave-hearts'),
     'image_id' => $hero_image_id,
     'primary_link' => [
         'url'   => '#explore-topics',
@@ -115,14 +115,52 @@ get_template_part('template-parts/components/hero', null, [
   </div>
 </section>
 
-<section class="guides-hub-section guides-hub-section--destinations section section--dark" aria-labelledby="guide-destinations-title">
+<?php
+// Educator Toolkit conversion module (2026-07-18, audit-fix Change 1;
+// revised 2026-07-18 to a compact supporting band -- the first version
+// read as a full landing-page hero, oversized headline + section filling
+// most of the first viewport + empty right column, risking the page being
+// mistaken for the Educator Toolkit landing page itself). Placed here
+// (after the intro/topic-nav, before the guide/destination archive
+// content), reuses the existing teacher-resources-cta component's new
+// `compact` two-column mode rather than new markup. This hub itself
+// remains the browse-guides destination -- get_footer()'s sitewide
+// "Resources for Every Reader" cluster and this module both link to the
+// toolkit page; neither replaces or redirects this hub. The secondary
+// link scrolls to the destinations section immediately below (added
+// `id="guide-destinations"` to that section for this anchor -- same
+// same-page-anchor pattern already used by every other section on this
+// page, not a new destination).
+get_template_part('template-parts/components/teacher-resources-cta', null, [
+    'id'      => 'educator-toolkit-cta',
+    'compact' => true,
+    'eyebrow' => __('Free resource for educators', 'brave-hearts'),
+    'title'   => __('Bring every adventure into the classroom.', 'brave-hearts'),
+    'text'    => __('Download the free Adventure Learning Toolkit for classroom, library, or homeschool use.', 'brave-hearts'),
+    'link'    => [
+        'url'   => home_url('/educators-adventure-learning-toolkit/'),
+        'label' => __('Get the Free Educator Toolkit', 'brave-hearts'),
+    ],
+    'secondary_link' => [
+        'url'   => '#guide-destinations',
+        'label' => __('Browse the Expedition Guides ↓', 'brave-hearts'),
+    ],
+    'link_cta_id'            => 'educator_toolkit_teachers_hub',
+    'link_cta_placement'     => 'teachers_hub_top',
+    'link_cta_destination'   => 'audience_landing',
+    'link_cta_audience'      => 'educators',
+    'link_cta_funnel_stage'  => 'discovery',
+]);
+?>
+
+<section id="guide-destinations" class="guides-hub-section guides-hub-section--destinations section section--dark" aria-labelledby="guide-destinations-title">
   <div class="container">
     <header class="component-heading component-heading--center">
       <p class="component-heading__eyebrow"><?php esc_html_e('Real places behind the stories', 'brave-hearts'); ?></p>
       <h2 id="guide-destinations-title" class="text-section-title"><?php esc_html_e('Explore by Destination', 'brave-hearts'); ?></h2>
     </header>
     <div class="guide-destination-grid">
-      <?php foreach (['mariana-trench','mount-everest'] as $destination_key): $destination_posts = bhp_get_guide_posts($destination_key); ?>
+      <?php foreach (['mariana-trench','mount-everest','amazon-rainforest'] as $destination_key): $destination_posts = bhp_get_guide_posts($destination_key); if (!$destination_posts) { continue; } // Finding #17: only render a destination once it has real content — never a "Coming Soon" card. ?>
         <a class="guide-destination-card guide-destination-card--<?php echo esc_attr($destination_key); ?>" href="#<?php echo esc_attr($destination_key); ?>">
           <p><?php echo esc_html(sprintf(_n('%d connected field note', '%d connected field notes', count($destination_posts), 'brave-hearts'), count($destination_posts))); ?></p>
           <h3><?php echo esc_html(bhp_get_guide_hubs()[$destination_key]); ?></h3>
@@ -133,14 +171,15 @@ get_template_part('template-parts/components/hero', null, [
   </div>
 </section>
 
-<?php foreach (['reading-growing','science-geography','book-brand-stories','mariana-trench','mount-everest','family-resources'] as $hub_key): $hub_posts = bhp_get_guide_posts($hub_key); if (!$hub_posts) { continue; } ?>
+<?php foreach (['reading-growing','science-geography','book-brand-stories','mariana-trench','mount-everest','amazon-rainforest','family-resources'] as $hub_key): $hub_posts = bhp_get_guide_posts($hub_key); if (!$hub_posts) { continue; } ?>
 <section id="<?php echo esc_attr($hub_key); ?>" class="guides-hub-section guide-collection section<?php echo $hub_key === 'science-geography' ? ' section--muted' : ''; ?>" aria-labelledby="<?php echo esc_attr($hub_key); ?>-title">
   <div class="container">
     <header class="component-heading">
       <p class="component-heading__eyebrow"><?php esc_html_e('Curated expedition guide', 'brave-hearts'); ?></p>
       <h2 id="<?php echo esc_attr($hub_key); ?>-title" class="text-section-title"><?php echo esc_html(bhp_get_guide_hubs()[$hub_key]); ?></h2>
     </header>
-    <div class="guide-article-grid">
+    <?php $bhp_gc_collapsible = count($hub_posts) > 6; // Finding #16: collapse long guide lists to a preview + accessible "View all" (progressive enhancement — all cards stay in the HTML for crawlers/no-JS). ?>
+    <div class="guide-article-grid<?php echo $bhp_gc_collapsible ? ' guide-article-grid--collapsible' : ''; ?>"<?php echo $bhp_gc_collapsible ? ' data-disclosure-initial="6"' : ''; ?>>
       <?php foreach ($hub_posts as $guide_post) { get_template_part('template-parts/guides/article-card', null, ['post' => $guide_post]); } ?>
     </div>
   </div>
@@ -156,7 +195,8 @@ get_template_part('template-parts/components/hero', null, [
     </header>
     <?php $educator_posts = bhp_get_guide_posts('educator-resources'); ?>
     <?php if ($educator_posts): ?>
-      <div class="guide-article-grid guide-article-grid--educators">
+      <?php $bhp_ed_collapsible = count($educator_posts) > 6; ?>
+      <div class="guide-article-grid guide-article-grid--educators<?php echo $bhp_ed_collapsible ? ' guide-article-grid--collapsible' : ''; ?>"<?php echo $bhp_ed_collapsible ? ' data-disclosure-initial="6"' : ''; ?>>
         <?php foreach ($educator_posts as $guide_post) { get_template_part('template-parts/guides/article-card', null, ['post' => $guide_post]); } ?>
       </div>
     <?php endif; ?>
@@ -222,9 +262,42 @@ get_template_part('template-parts/components/hero', null, [
     <div class="final-cta__actions cluster">
       <a class="btn btn-primary" href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('Shop the Books', 'brave-hearts'); ?></a>
       <a class="btn btn-secondary" href="<?php echo esc_url($read_aloud_url); ?>"><?php esc_html_e('Request a Read-Aloud', 'brave-hearts'); ?></a>
-      <a class="btn btn-outline" href="<?php echo esc_url(home_url('/#adventure-club')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
+      <a class="btn btn-outline" href="<?php echo esc_url(home_url('/reluctant-reader-adventure-kit/')); ?>"><?php esc_html_e('Join the Adventure Club', 'brave-hearts'); ?></a>
     </div>
   </div>
 </section>
 
+<?php
+// Finding #16: progressive-disclosure enhancement for the guide lists. Runs
+// only when JS is available, so no-JS users and crawlers still get every card
+// (all cards are already in the HTML above). Collapses each long grid to its
+// first 6 cards and injects an accessible toggle (aria-expanded / aria-controls).
+?>
+<script>
+(function () {
+  var grids = document.querySelectorAll('.guide-article-grid--collapsible');
+  Array.prototype.forEach.call(grids, function (grid, i) {
+    var cards = grid.querySelectorAll('.guide-article-card');
+    var initial = parseInt(grid.getAttribute('data-disclosure-initial'), 10) || 6;
+    if (cards.length <= initial) { return; }
+    if (!grid.id) { grid.id = 'bhp-guide-grid-' + i; }
+    grid.classList.add('is-collapsed');
+    var moreLabel = 'View all ' + cards.length + ' field notes';
+    var lessLabel = 'Show fewer field notes';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'guide-disclosure-toggle';
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', grid.id);
+    btn.textContent = moreLabel;
+    grid.parentNode.insertBefore(btn, grid.nextSibling);
+    btn.addEventListener('click', function () {
+      var collapsed = grid.classList.toggle('is-collapsed');
+      btn.setAttribute('aria-expanded', String(!collapsed));
+      btn.textContent = collapsed ? moreLabel : lessLabel;
+      if (collapsed) { btn.scrollIntoView({ block: 'center' }); }
+    });
+  });
+})();
+</script>
 <?php get_footer(); ?>
