@@ -1,6 +1,51 @@
 # Known Issues — Open Items Only
 
 
+> ## ⭐ UPDATE 2026-08-05, LATER THE SAME DAY · **FIXED AND VERIFIED ON STAGING IN THEME 1.19.202. STILL LIVE ON PRODUCTION.**
+>
+> **The block immediately below is preserved verbatim** — it is still an accurate description of what
+> production is serving right now, and it stays until the fix is deployed there.
+>
+> **What changed.** `bhp_defer_jquery_tag()` was rewritten to defer the DEPENDENTS rather than
+> un-defer jQuery, which preserves the ordering and the 230 ms saving. It is dependency-graph driven
+> — `bhp_jquery_defer_plan()` walks `wp_scripts()->registered` transitively over the page's enqueued
+> closure — and contains no hardcoded handle list, so a future plugin cannot silently recreate the
+> bug. It is **all-or-nothing**: if any script on the page cannot be safely deferred, jQuery is not
+> deferred either, so the broken intermediate state is unrepresentable.
+>
+> **Verified on staging, with the same instrument that caught the defect** — Lighthouse 12.8.2,
+> local headless Chrome, mobile emulation, simulated throttling:
+>
+> | | production 1.19.201 | staging 1.19.202 |
+> |---|---|---|
+> | `errors-in-console` | **FAIL**, 1 item (the `ReferenceError`) | **PASS**, 0 items (3 of 3 runs) |
+> | Best Practices | 96 | **100** |
+> | Performance | 77 | 82 / 78 / 81 |
+>
+> ⚠️ **Those two columns are DIFFERENT ENVIRONMENTS, not a before/after of one.** Production carries
+> ~437 KiB of Google tag payload staging does not, so **only the `errors-in-console` and Best
+> Practices rows are a like-for-like comparison.** The Performance figures are not comparable and
+> must not be quoted as if they were. Neither column is a PageSpeed Insights number.
+>
+> ⭐ **The defect was worse than a console error, and this is measured, not inferred.** A
+> headless-browser check of the live production home page shows the Mailchimp pixel's `init()`
+> **never runs at all** — zero Mailchimp console output — where the fixed staging build emits its
+> initialisation message. **Revenue attribution is not merely erroring on production; it is dead.**
+>
+> **Also verified on staging:** rendered tags on the home page and `/books/` defer jQuery AND all
+> dependents; the product page, `/cart/` and `/complete-collection/` defer **nothing at all**. Never
+> partial, on any surface checked. Theme suites **30 pass / 7 fail** against a **29 / 7** baseline —
+> identical failure list, nothing introduced. New suite: `tests/test-jquery-defer-integrity.php`.
+>
+> ⛔ **NOT DEPLOYED TO PRODUCTION. Andrew's approval has not been given and was not requested by the
+> session that built this.** A production deploy packet is prepared and held.
+>
+> ⚠️ **One thing staging CANNOT prove:** the Mailchimp Pixel SDK does not load on staging at all
+> (*"SDK not loaded within timeout. Tracking disabled."*). That the pixel now **initialises** is
+> proven; that end-to-end tracking then **works** is not, and needs a production re-check after any
+> deploy.
+
+
 ## ⛔⛔ OPEN 2026-08-05 · `ReferenceError: jQuery is not defined` on the home page — LIVE ON PRODUCTION, caused by theme 1.19.201
 
 **Severity: high. Not urgent — no order, cart, checkout or payment path is affected — but it is a real, customer-visible-in-devtools JavaScript error on the busiest page of the site, and it is a Best Practices audit failure.**
