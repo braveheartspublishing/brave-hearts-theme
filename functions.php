@@ -4130,44 +4130,292 @@ function bhp_suppress_late_commerce_styles( $tag, $handle ) {
 add_filter( 'style_loader_tag', 'bhp_suppress_late_commerce_styles', 20, 2 );
 
 /**
- * Defer jQuery — on non-commerce surfaces ONLY.
+ * Defer jQuery — on non-commerce surfaces ONLY — AND everything that needs it.
  *
- * `jquery-core` is 29.2 KB and, uniquely among the scripts on the home page,
- * it is NOT deferred: Lighthouse's `render-blocking-resources` audit charged
- * it 230 ms of the page's 400 ms of blocking time, the joint-largest single
- * entry. Everything that depends on it — `wc-add-to-cart`, `woocommerce`,
- * `wc-jquery-blockui`, `wc-js-cookie` — already carries
- * `data-wp-strategy="defer"`, so deferring jQuery preserves their relative
- * order (deferred scripts execute in document order) and breaks no dependency.
+ * `jquery-core` is 29.2 KB and, at 1.19.199, uniquely among the scripts on the
+ * home page it was NOT deferred: Lighthouse's `render-blocking-resources` audit
+ * charged it 230 ms of the page's 400 ms of blocking time, the joint-largest
+ * single entry. Deferring it took render-blocking to 0 ms.
  *
- * ⛔ WHY THIS IS SCOPED RATHER THAN SITEWIDE. `defer` moves execution after
- *    parsing, so any INLINE script that calls `jQuery(...)` mid-document would
- *    throw. Verified on the staging home page: 19 inline script blocks, ZERO
- *    referencing `$(` or `jQuery` — so the home page is safe today. That is
- *    NOT true in general: `assets/js/product-format-autoselect.js` is a
- *    `(jQuery)` IIFE and `bundle-drawer.js`'s `initFormatSelectedTracking()`
- *    reads `window.jQuery`, both on product pages. Those surfaces are excluded
- *    by `bhp_is_commerce_surface()`, which is why that helper is conservative.
+ * ⛔⛔ THE DEFECT THIS CODE WAS REWRITTEN TO FIX (1.19.202, `CYCLE144-LD-JQUERY`).
  *
- * The `bhp_defer_jquery` filter exists so this can be switched off for one
- * page without editing the theme, should a plugin ever print inline jQuery.
+ *    1.19.201 deferred `jquery-core` and reasoned about the risk ONE LEVEL TOO
+ *    NARROWLY. Its docblock said the surface was safe because there were "19
+ *    inline script blocks, ZERO referencing `$(` or `jQuery`". That was true,
+ *    and it was a statement about INLINE scripts only. The scripts that broke
+ *    were EXTERNAL, ENQUEUED and NOT DEFERRED — `defer` moves execution after
+ *    parsing, so any enqueued jQuery dependent that is itself blocking now runs
+ *    BEFORE jQuery exists. The old docblock's claim that everything depending
+ *    on jQuery "already carries `data-wp-strategy=defer`" was true of the four
+ *    WooCommerce handles it named and FALSE of the page as a whole: a
+ *    dependency-graph scan of the front page found EIGHT jQuery dependents, of
+ *    which FOUR carried no strategy at all — `bhp-cart-drawer`,
+ *    `mailchimp-woocommerce-pixel-tracking`, `rank-math` and `bhp-addon-upsell`.
+ *    The Mailchimp pixel threw `ReferenceError: jQuery is not defined` on the
+ *    LIVE PRODUCTION home page, failing Lighthouse `errors-in-console`. That
+ *    script is revenue attribution, so this was never cosmetic.
+ *
+ * ⭐ THE FIX, AND WHY IT IS THIS ONE. Defer the DEPENDENTS too, rather than
+ *    un-deferring jQuery. Deferred scripts execute in document order, so
+ *    deferring every jQuery dependent preserves the existing relative ordering
+ *    AND keeps the 230 ms saving. Un-deferring jQuery would have thrown the
+ *    saving away to fix a bug that is really about consistency.
+ *
+ * ⭐ IT IS DEPENDENCY-GRAPH DRIVEN, DELIBERATELY, NOT A HARDCODED HANDLE LIST.
+ *    The four broken handles above are a snapshot of one afternoon's plugin
+ *    set. A hardcoded list would let the next plugin update — or the next
+ *    plugin — recreate this bug silently, which is exactly how it arrived. The
+ *    plan below walks `wp_scripts()->registered` transitively, so a handle that
+ *    reaches jQuery through three intermediates is covered without anybody
+ *    noticing it exists.
+ *
+ * ⛔ THE ALL-OR-NOTHING RULE. If ANY script on the page cannot be safely
+ *    deferred, jQuery is not deferred either and the page is served exactly as
+ *    it was before this optimisation existed. There is no partial state. A page
+ *    that defers jQuery but leaves one dependent blocking is the broken
+ *    intermediate this whole rewrite exists to make unrepresentable.
+ *
+ * The `bhp_defer_jquery` filter remains, as the manual escape hatch for
+ * anything the scan cannot see — principally raw inline `<script>` blocks
+ * printed straight into `wp_head`/`wp_footer`, which never pass through
+ * `wp_scripts()` and therefore cannot be inspected from here.
+ *
+ * @see bhp_jquery_defer_plan()
  */
 function bhp_defer_jquery_tag( $tag, $handle, $src ) {
-    if ( ! in_array( $handle, array( 'jquery-core', 'jquery-migrate' ), true ) ) {
-        return $tag;
-    }
     if ( is_admin() || bhp_is_commerce_surface() ) {
         return $tag;
     }
     if ( ! apply_filters( 'bhp_defer_jquery', true ) ) {
         return $tag;
     }
+
+    $plan = bhp_jquery_defer_plan();
+    if ( empty( $plan['defer'] ) || ! isset( $plan['handles'][ $handle ] ) ) {
+        return $tag;
+    }
     if ( false !== strpos( $tag, ' defer' ) || false !== strpos( $tag, ' async' ) ) {
         return $tag;
     }
-    return str_replace( '<script ', '<script defer ', $tag );
+
+    return preg_replace( '/<script /', '<script defer ', $tag, 1 );
 }
 add_filter( 'script_loader_tag', 'bhp_defer_jquery_tag', 10, 3 );
+
+/**
+ * Does this handle's dependency chain reach jQuery, at any depth?
+ *
+ * Direct AND transitive. `bhp-addon-upsell` declares only `bhp-cart-drawer`,
+ * which declares `jquery` — it is a jQuery dependent and a direct-deps-only
+ * check would miss it.
+ *
+ * `$memo` is passed by reference rather than held in a `static` so that a test
+ * can evaluate several different synthetic graphs in one request without one
+ * scenario's answers leaking into the next. It doubles as the cycle guard: a
+ * handle is recorded `false` BEFORE its own deps are walked, so a malformed
+ * circular registration terminates instead of exhausting the stack.
+ *
+ * @param string $handle     Script handle.
+ * @param array  $registered `WP_Scripts::$registered`, passed in explicitly.
+ * @param array  $memo       Handle => bool, by reference.
+ * @return bool
+ */
+function bhp_script_depends_on_jquery( $handle, $registered, &$memo ) {
+    if ( isset( $memo[ $handle ] ) ) {
+        return $memo[ $handle ];
+    }
+    $memo[ $handle ] = false;
+
+    if ( ! isset( $registered[ $handle ] ) ) {
+        return false;
+    }
+
+    foreach ( (array) $registered[ $handle ]->deps as $dep ) {
+        if ( 'jquery' === $dep || 'jquery-core' === $dep
+            || bhp_script_depends_on_jquery( $dep, $registered, $memo ) ) {
+            $memo[ $handle ] = true;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Does any inline code attached to this handle reference jQuery?
+ *
+ * WordPress prints `before`, `after` and `data` (`wp_localize_script`) chunks as
+ * their own blocking `<script>` blocks adjacent to the file's tag. They are NOT
+ * deferred with it. So a chunk that calls `jQuery(...)` or `$(...)` executes
+ * during parsing, and under a deferred jQuery it throws — whether or not the
+ * handle it is attached to is itself a jQuery dependent.
+ *
+ * The `$(` test is deliberately broad. A false positive costs the 230 ms
+ * optimisation on that page; a false negative costs a console error on a live
+ * customer page. Those are not comparable, so this errs toward switching the
+ * optimisation off.
+ *
+ * @param object $script `_WP_Dependency` object.
+ * @return bool
+ */
+function bhp_script_inline_touches_jquery( $script ) {
+    if ( ! isset( $script->extra ) || ! is_array( $script->extra ) ) {
+        return false;
+    }
+
+    foreach ( array( 'before', 'after', 'data' ) as $position ) {
+        if ( empty( $script->extra[ $position ] ) ) {
+            continue;
+        }
+        foreach ( (array) $script->extra[ $position ] as $chunk ) {
+            if ( ! is_string( $chunk ) || '' === $chunk ) {
+                continue;
+            }
+            if ( false !== strpos( $chunk, 'jQuery' ) ) {
+                return true;
+            }
+            // `$(` but not `foo.$(`, `a$(` or `$$(`.
+            if ( preg_match( '/(?<![\w.$])\$\s*\(/', $chunk ) ) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Decide, once per request, whether jQuery may be deferred on this page — and
+ * which handles must carry `defer` for that to be safe.
+ *
+ * ⭐ RETURNS ONE OF EXACTLY TWO SHAPES, and the all-or-nothing rule is enforced
+ *    here rather than at the call site:
+ *
+ *      array( 'defer' => false, 'handles' => array() )
+ *      array( 'defer' => true,  'handles' => array( <handle> => true, ... ) )
+ *
+ * ⛔ THE FOUR CONDITIONS THAT DISABLE DEFERRAL FOR THE WHOLE PAGE. Any single
+ *    one is enough, because the point is that no half-deferred state exists:
+ *
+ *      1. ANY handle in the page's script closure carries inline `before`,
+ *         `after` or localize `data` that references jQuery. That inline block
+ *         is blocking wherever its file ends up, so a deferred jQuery breaks it.
+ *      2. A jQuery dependent is registered `async`. `async` has no ordering
+ *         guarantee at all — it cannot be made safe by deferring anything.
+ *      3. A jQuery dependent carries an `after` inline chunk. WordPress prints
+ *         such a handle BLOCKING regardless of its declared strategy (an
+ *         `after` chunk by construction assumes the file has already run), so
+ *         it cannot be deferred, and leaving it blocking under a deferred
+ *         jQuery is the original bug.
+ *      4. `wp_scripts()` does not exist yet.
+ *
+ * ⚠ HONEST LIMIT, STATED RATHER THAN IMPLIED. This inspects the WordPress
+ *   script registry. Raw inline `<script>` blocks echoed directly into
+ *   `wp_head`/`wp_footer` never enter that registry and are invisible here.
+ *   They were verified by hand on this surface (19 blocks, none referencing
+ *   jQuery, re-checked at 1.19.202) and the `bhp_defer_jquery` filter is the
+ *   switch if one ever appears.
+ *
+ * ⚠ SECOND HONEST LIMIT. The plan is computed on first use and cached for the
+ *   request, because `jquery-core` prints in the HEAD while its dependents
+ *   print in the FOOTER — the decision has to be made before the footer is
+ *   reached, and it must not change afterwards. At head-print time the queue
+ *   already contains footer handles (`$in_footer` affects print grouping, not
+ *   enqueue time), so the scan sees them. A script enqueued for the first time
+ *   from INSIDE a `wp_footer` callback would be missed; the cache is keyed to
+ *   the `WP_Scripts` instance so the answer is at least stable and consistent
+ *   rather than flipping mid-page.
+ *
+ * @return array
+ */
+function bhp_jquery_defer_plan() {
+    static $plans = array();
+
+    if ( ! function_exists( 'wp_scripts' ) ) {
+        return array( 'defer' => false, 'handles' => array() );
+    }
+
+    $wp_scripts = wp_scripts();
+    $key        = spl_object_hash( $wp_scripts );
+    if ( isset( $plans[ $key ] ) ) {
+        return $plans[ $key ];
+    }
+
+    $off              = array( 'defer' => false, 'handles' => array() );
+    $plans[ $key ]    = $off;
+    $registered       = $wp_scripts->registered;
+
+    /*
+     * The closure of everything this page prints. `queue` is the enqueued set
+     * and survives printing; `to_do` and `done` are included so the answer is
+     * identical whether this runs during the head batch or the footer batch.
+     */
+    $closure = array();
+    $stack   = array_merge(
+        (array) $wp_scripts->queue,
+        (array) $wp_scripts->to_do,
+        (array) $wp_scripts->done
+    );
+    while ( $stack ) {
+        $handle = array_pop( $stack );
+        if ( isset( $closure[ $handle ] ) ) {
+            continue;
+        }
+        $closure[ $handle ] = true;
+        if ( isset( $registered[ $handle ] ) ) {
+            foreach ( (array) $registered[ $handle ]->deps as $dep ) {
+                if ( ! isset( $closure[ $dep ] ) ) {
+                    $stack[] = $dep;
+                }
+            }
+        }
+    }
+
+    $memo  = array();
+    $defer = array();
+
+    foreach ( array_keys( $closure ) as $handle ) {
+        if ( ! isset( $registered[ $handle ] ) ) {
+            continue;
+        }
+        $script = $registered[ $handle ];
+
+        // Condition 1 — applies to every handle, dependent or not.
+        if ( bhp_script_inline_touches_jquery( $script ) ) {
+            return $plans[ $key ];
+        }
+
+        if ( ! bhp_script_depends_on_jquery( $handle, $registered, $memo ) ) {
+            continue;
+        }
+
+        // `jquery` itself is a meta handle with no src — it prints no tag.
+        if ( empty( $script->src ) ) {
+            continue;
+        }
+
+        $strategy = isset( $script->extra['strategy'] ) ? $script->extra['strategy'] : '';
+
+        if ( 'async' === $strategy ) {
+            return $plans[ $key ];                       // Condition 2.
+        }
+        if ( ! empty( $script->extra['after'] ) ) {
+            return $plans[ $key ];                       // Condition 3.
+        }
+        if ( 'defer' === $strategy ) {
+            continue;                                    // WordPress already defers it.
+        }
+
+        $defer[ $handle ] = true;
+    }
+
+    $defer['jquery-core']    = true;
+    $defer['jquery-migrate'] = true;
+
+    $plans[ $key ] = array( 'defer' => true, 'handles' => $defer );
+
+    return $plans[ $key ];
+}
 
 /**
  * Hold the below-the-fold decorative photography until the page has loaded.
