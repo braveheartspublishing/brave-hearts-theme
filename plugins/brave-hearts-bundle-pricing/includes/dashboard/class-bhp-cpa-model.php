@@ -60,6 +60,45 @@
  * that silently defaulted to $0 would do the same. Both would look like a
  * working dashboard reporting terrible performance, which is worse than a
  * dashboard that says it has no policy loaded.
+ *
+ * ---------------------------------------------------------------------
+ * 1.8.31 — THE POLICY WAS RE-DECIDED, AND THE RATIOS ARE DESCRIPTIVE
+ * ---------------------------------------------------------------------
+ * On 2026-08-06 Andrew re-decided all four Collection policy figures -- a
+ * preferred target and a hard operating stop for each -- on the contribution
+ * basis re-approved against actual Bookvault print and postage costs. No code
+ * in this file changed to carry that: the amounts live in the option, which is
+ * the entire point of the 1.8.30 relocation, and the seed is an out-of-band
+ * operator act. What changed here is only this note and the suite's pin.
+ *
+ * ⭐ THE RATIOS ARE A DESCRIPTION, NOT A GENERATOR. This settles a question
+ *    that had been open since 1.8.23 and was raised again during the re-seed.
+ *    Read `build_table()` and it is plain: for the two APPROVED Collections
+ *    the target and both ceilings are read STRAIGHT FROM THE OPTION via
+ *    approved_policy(), and the `ratio.*` keys are never consulted. The ratios
+ *    are consulted ONLY for the four offer types that are NOT approved for
+ *    cold acquisition, to keep their clearly-labelled MODEL ESTIMATE ceilings
+ *    consistent with approved policy instead of arbitrary.
+ *
+ *    So the Collection figures are not derived from the ratios and never were;
+ *    the ratios are back-derived from the Collection figures. Andrew choosing
+ *    the figures directly -- in 2026-07-06 and again in 2026-08-06 -- is the
+ *    normal case, not an exception to a formula.
+ *
+ * ⚠️ ONE SHARED RATIO SET, AND THE TWO FORMATS DO NOT AGREE EXACTLY.
+ *    Describing the paperback figures against the paperback basis and the
+ *    hardcover figures against the hardcover basis yields slightly different
+ *    ratios. The key contract has one shared set, so the seeded ratios describe
+ *    the PAPERBACK leg -- the only one whose contribution rests on a real
+ *    invoice, since no hardcover order has ever been placed and its print and
+ *    postage inputs are estimated and extrapolated respectively. The divergence
+ *    is small, it affects only the four model-estimate rows, and the re-seed
+ *    script reports it as a labelled delta on every run rather than absorbing
+ *    it. Per-format ratio keys remain available as a future contract change and
+ *    were deliberately not taken in 1.8.31.
+ *
+ * ⛔ Nothing above names a figure, and nothing in this file may. The suite
+ *    protects the policy with a joint SHA-256 pin, which is a hash.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -437,6 +476,20 @@ class BHP_CPA_Model {
 					 *    that spending to the ceiling would now lose money.
 					 *    Computed every load, so it clears itself the moment
 					 *    Andrew's revised ceilings land above it again.
+					 *
+					 * ⭐ 1.8.31 — IT DID CLEAR ITSELF, EXACTLY AS DESIGNED.
+					 *    Andrew's revised ceilings of 2026-08-06 sit below
+					 *    live break-even in both formats, so this now reads
+					 *    FALSE on both approved rows and the dashboard's
+					 *    "ABOVE break-even, needs re-approval" note no longer
+					 *    renders. No code was needed to turn it off, which is
+					 *    the property the 1.8.23 design was after.
+					 *    ⛔ The suite asserts `false` here on purpose now, and
+					 *    keeps the `true` branch covered through a synthetic
+					 *    pathological policy injected via the `bhp_cpa_model`
+					 *    filter -- see tests/test-offer-economics.php. A guard
+					 *    that only fires while a defect is live stops guarding
+					 *    the moment the defect is fixed.
 					 */
 					'ceiling_exceeds_breakeven'           => ( (float) $policy['ceiling_high'] >= (float) $breakeven ),
 					'hard_stop_cpa'                        => $hard_stop,
