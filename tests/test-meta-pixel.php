@@ -142,7 +142,26 @@ $runtime = BHP_Meta_Pixel::runtime_js();
 /* The grant path is the ONLY path that loads the SDK or lifts the revoke. */
 bhp_mp_assert( $failures, 'B1 the runtime lifts consent in exactly one place', 1 === substr_count( $runtime, "fbq( 'consent', 'grant' )" ) );
 bhp_mp_assert( $failures, 'B2 loadSdk() is the only thing that reads config.sdk into a script src', 1 === substr_count( $runtime, 's.src = config.sdk;' ) );
-bhp_mp_assert( $failures, 'B3 ⭐ the SDK is loaded from inside grant(), never at top level', preg_match( '/function grant\(\)\s*\{[^}]*loadSdk\(\);[^}]*fbq\(\s*\x27consent\x27,\s*\x27grant\x27\s*\)/s', $runtime ) === 1 );
+/*
+ * Sliced between the two function headers rather than matched with a brace
+ * pattern: grant()'s body contains its own `{ return; }` guard, so a `[^}]*`
+ * regex reports a false failure. The slice is exact and the ordering assertion
+ * inside it is the thing that matters.
+ */
+$bhp_mp_grant_start = strpos( $runtime, 'function grant()' );
+$bhp_mp_grant_end   = strpos( $runtime, 'function revoke()' );
+$bhp_mp_grant_body  = ( false !== $bhp_mp_grant_start && false !== $bhp_mp_grant_end && $bhp_mp_grant_end > $bhp_mp_grant_start )
+	? substr( $runtime, $bhp_mp_grant_start, $bhp_mp_grant_end - $bhp_mp_grant_start )
+	: '';
+
+bhp_mp_assert(
+	$failures,
+	'B3 ⭐ the SDK is loaded from inside grant(), before the grant is signalled, and nowhere else',
+	'' !== $bhp_mp_grant_body
+		&& false !== strpos( $bhp_mp_grant_body, 'loadSdk();' )
+		&& strpos( $bhp_mp_grant_body, 'loadSdk();' ) < strpos( $bhp_mp_grant_body, "fbq( 'consent', 'grant' )" )
+		&& 2 === substr_count( $runtime, 'loadSdk' . '(' ) // the definition and exactly one call site
+);
 bhp_mp_assert( $failures, 'B4 consent is read from the MARKETING category only, and only on a strict true', false !== strpos( $runtime, "prefs[ config.category ] === true" ) );
 bhp_mp_assert( $failures, 'B5 the runtime listens to WPConsent\'s own save/update events', false !== strpos( $runtime, 'wpconsent_consent_saved' ) && false !== strpos( $runtime, 'wpconsent_consent_updated' ) );
 
@@ -184,11 +203,36 @@ bhp_mp_assert( $failures, 'B7 ⭐ the emitted bytes are IDENTICAL with no consen
 /* Per-visitor payloads must refuse to render where the page cache is not told
  * to stand off. Asserted BEFORE DONOTCACHEPAGE is defined, because a constant
  * cannot be undefined afterwards. */
+bhp_mp_assert(
+	$failures,
+	'B8 per_visitor_ok() reports exactly the DONOTCACHEPAGE flag — no second opinion, no default-open',
+	BHP_Meta_Pixel::per_visitor_ok() === ( defined( 'DONOTCACHEPAGE' ) && DONOTCACHEPAGE )
+);
+
 if ( defined( 'DONOTCACHEPAGE' ) && DONOTCACHEPAGE ) {
-	bhp_mp_skip( $skipped, 'B8 per-visitor payloads fail closed without DONOTCACHEPAGE', 'DONOTCACHEPAGE was already defined true before this suite ran' );
+	bhp_mp_skip( $skipped, 'B8b the runtime refusal path with DONOTCACHEPAGE unset', 'DONOTCACHEPAGE was already defined true before this suite ran, and a PHP constant cannot be undefined — asserted structurally by B8c instead' );
 } else {
-	bhp_mp_assert( $failures, 'B8 ⭐ per_visitor_ok() is false, and Purchase refuses to render, when DONOTCACHEPAGE is not set', false === BHP_Meta_Pixel::per_visitor_ok() && null === BHP_Meta_Pixel::purchase_event( 1, 'anything' ) );
+	bhp_mp_assert( $failures, 'B8b ⭐ Purchase refuses to render when DONOTCACHEPAGE is not set', null === BHP_Meta_Pixel::purchase_event( 1, 'anything' ) );
 }
+
+/*
+ * ⭐ B8c is the assertion that survives the constant already being true. It
+ * proves the WIRING rather than the outcome: both per-visitor emitters must
+ * open with the gate, so no future edit can add a third per-visitor payload
+ * that forgets it. Read from the shipped source, not from intent.
+ */
+$bhp_mp_src = (string) file_get_contents( get_template_directory() . '/inc/class-bhp-meta-pixel.php' );
+bhp_mp_assert(
+	$failures,
+	'B8c ⭐ BOTH per-visitor emitters gate on per_visitor_ok() as their first statement',
+	2 === preg_match_all( '/function (?:initiate_checkout_event|purchase_event)\([^)]*\)\s*\{\s*if \( ! self::per_visitor_ok\(\) \)/', $bhp_mp_src )
+);
+bhp_mp_assert(
+	$failures,
+	'B8d the gate is defined once and called exactly twice — no third, ungated per-visitor payload exists',
+	1 === substr_count( $bhp_mp_src, 'function per_visitor_ok()' )
+		&& 2 === substr_count( $bhp_mp_src, 'self::per_visitor_ok()' )
+);
 
 /* ── the pixel is present where it should be, absent where it should not ── */
 
@@ -333,10 +377,23 @@ if ( ! $is_staging || ! function_exists( 'wc_create_order' ) ) {
 	}
 	add_filter( 'pre_wp_mail', '__return_false', 999 );
 
-	$created = array();
+	/*
+	 * ⛔ CLEANUP IS INLINE AND ASSERTED, not left to a shutdown hook.
+	 *
+	 * The first run of this suite registered a `register_shutdown_function`
+	 * closure exactly as the existing purchase-validation harness does — and
+	 * SIX synthetic orders survived the run and had to be removed by hand.
+	 * The reason was not diagnosed and is deliberately not guessed at here;
+	 * what matters is that a cleanup mechanism which silently does nothing is
+	 * worse than none, because it is trusted. Deletion now happens inline at
+	 * the end of the group, its result is ASSERTED, and the shutdown handler
+	 * is kept only as a net for an abort partway through.
+	 */
+	$GLOBALS['bhp_mp_created'] = array();
+	$created                   = &$GLOBALS['bhp_mp_created'];
 	register_shutdown_function(
-		function () use ( &$created ) {
-			foreach ( $created as $oid ) {
+		function () {
+			foreach ( (array) ( $GLOBALS['bhp_mp_created'] ?? array() ) as $oid ) {
 				$o = wc_get_order( $oid );
 				if ( $o ) {
 					$o->delete( true );
@@ -411,6 +468,23 @@ if ( ! $is_staging || ! function_exists( 'wc_create_order' ) ) {
 		}
 
 		bhp_mp_assert( $failures, 'D13 a nonexistent order produces NO Purchase', null === BHP_Meta_Pixel::purchase_event( 999999999, 'wc_order_x' ) );
+
+		/* ⭐ The suite leaves nothing behind, and proves it rather than trusting it. */
+		$to_delete = $created;
+		foreach ( $to_delete as $oid ) {
+			$o = wc_get_order( $oid );
+			if ( $o ) {
+				$o->delete( true );
+			}
+		}
+		$survivors = array();
+		foreach ( $to_delete as $oid ) {
+			if ( wc_get_order( $oid ) ) {
+				$survivors[] = $oid;
+			}
+		}
+		$created = array();
+		bhp_mp_assert( $failures, 'D14 ⭐ every order this suite created has been force-deleted — ' . count( $to_delete ) . ' created, ' . count( $survivors ) . ' surviving', array() === $survivors );
 	}
 }
 
