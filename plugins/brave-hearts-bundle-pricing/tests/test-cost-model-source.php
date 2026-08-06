@@ -1,37 +1,47 @@
 <?php
 /**
- * Brave Hearts Dashboard — cost-model source-of-truth test (1.8.29).
+ * Brave Hearts Dashboard — relocated-model source-of-truth test
+ * (cost model 1.8.29, acquisition policy 1.8.30).
  *
  * Run via WP-CLI:
  *   wp eval-file wp-content/plugins/brave-hearts-bundle-pricing/tests/test-cost-model-source.php --user=1
  *
  * WHAT THIS PROTECTS
  * ------------------
- * The dashboard's unit economics -- print costs, postage quotes, the
- * processing-fee assumption and the reserve rates -- are the company's
- * cost side. This plugin is published in a public repository, so those
- * amounts moved out of the source tree in 1.8.29 and into a
- * per-environment option (BHP_Cost_Config::MODEL_OPTION).
+ * Two families of private figure used to be compiled into this plugin,
+ * which is published in a public repository:
  *
- * Two things have to stay true after that move, and one of them is easy
+ *   - the unit economics -- print costs, postage quotes, the
+ *     processing-fee assumption and the reserve rates. The company's cost
+ *     side. Moved out in 1.8.29 into BHP_Cost_Config::MODEL_OPTION.
+ *   - the approved acquisition policy -- the two Complete Collections'
+ *     target CPA and operating ceilings, plus the banding ratios derived
+ *     from them. What the company will pay for a customer. Moved out in
+ *     1.8.30 into BHP_CPA_Model::MODEL_OPTION, on Andrew's ruling of
+ *     2026-08-05.
+ *
+ * Two things have to stay true after each move, and one of them is easy
  * to lose by accident:
  *
- *   1. NO AMOUNT COMES BACK. The shipped class file must contain no
+ *   1. NO AMOUNT COMES BACK. Neither shipped class file may contain a
  *      currency-shaped literal. A helpful future edit that "restores the
  *      defaults so it works out of the box" is exactly the regression
  *      this asserts against.
- *   2. AN UNSEEDED ENVIRONMENT MUST SAY SO RATHER THAN COST AT ZERO.
+ *   2. AN UNSEEDED ENVIRONMENT MUST SAY SO RATHER THAN DEFAULT TO ZERO.
  *      Treating a missing print cost as $0 does not fail loudly -- it
- *      reports the entire order total as profit. So the unseeded path is
- *      exercised here directly, with a filtered empty model, and must
- *      return 'unavailable' rather than a number.
+ *      reports the entire order total as profit. Treating a missing CPA
+ *      target as $0 does not fail loudly either -- it grades every real
+ *      campaign STOP and looks like a working dashboard. So the unseeded
+ *      paths are exercised directly, with a filtered empty model, and
+ *      must report 'unavailable' rather than a number.
  *
  * WHAT IT DOES NOT DO
  * -------------------
- * It writes NOTHING. The unseeded path is exercised through the
- * `bhp_cost_model` filter and the in-request cache, never by deleting or
- * rewriting the real option. The filter is removed and the cache flushed
- * before the suite ends, and the restoration is itself asserted.
+ * It writes NOTHING. The unseeded paths are exercised through the
+ * `bhp_cost_model` / `bhp_cpa_model` filters and the in-request caches,
+ * never by deleting or rewriting the real options. Filters are removed
+ * and caches flushed before the suite ends, and the restoration is itself
+ * asserted.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -52,60 +62,91 @@ function bhp_cm_assert( $condition, $label, array &$failures ) {
 
 // ==================== 1. No amount is committed to the source tree ====================
 
-$config_file = dirname( __DIR__ ) . '/includes/dashboard/class-bhp-cost-config.php';
-$config_src  = file_exists( $config_file ) ? file_get_contents( $config_file ) : '';
-bhp_cm_assert( '' !== $config_src, 'class-bhp-cost-config.php is readable for source inspection', $failures );
-
-// Strip block comments and line comments first: the file legitimately
-// discusses dates (2026-07-05) and version numbers in prose, and a naive
-// scan would flag those. What must be clean is the CODE.
-$code_only = preg_replace( '!/\*.*?\*/!s', '', $config_src );
-$code_only = preg_replace( '!//[^\n]*!', '', $code_only );
-
-// Any decimal literal with 1-3 fractional digits is money-shaped. Zero
-// is exempt and deliberately so: it is the sentinel this class returns
-// for an unavailable amount, and it discloses nothing. The only other
-// numerics that may remain in this file are array indexes, rounding
-// precisions and small integers.
-preg_match_all( '/(?<![\w.])\d+\.\d{1,3}(?![\w.])/', $code_only, $decimals );
-$money_like = array_values( array_filter(
-	array_unique( $decimals[0] ),
-	function ( $n ) { return 0.0 !== (float) $n; }
-) );
-bhp_cm_assert(
-	empty( $money_like ),
-	'The shipped cost-config class contains no non-zero money-shaped decimal literal in code' .
-		( empty( $money_like ) ? '' : ' (found ' . count( $money_like ) . ' -- the amounts have leaked back into source)' ),
-	$failures
+/*
+ * BOTH relocated classes are scanned by the same instrument. The CPA
+ * class joined this scan in 1.8.30; before that it carried the approved
+ * targets and ceilings as compiled-in constants AND quoted them in its
+ * docblocks, which is why the prose check below is not optional.
+ */
+$scanned_classes = array(
+	'class-bhp-cost-config.php' => 'cost-config',
+	'class-bhp-cpa-model.php'   => 'CPA-model',
 );
 
-// A currency symbol in the prose is the other way a figure creeps back.
-// "$0" is exempt for the same reason as 0.0 above -- the docblocks use it
-// to explain what the class must NOT silently cost at.
-bhp_cm_assert(
-	0 === preg_match( '/\$[1-9]/', $config_src ) && 0 === preg_match( '/\$0\.\d/', $config_src ),
-	'The shipped cost-config class quotes no dollar figure, in code or in prose',
-	$failures
-);
+foreach ( $scanned_classes as $file => $label ) {
+	$config_file = dirname( __DIR__ ) . '/includes/dashboard/' . $file;
+	$config_src  = file_exists( $config_file ) ? file_get_contents( $config_file ) : '';
+	bhp_cm_assert( '' !== $config_src, "{$file} is readable for source inspection", $failures );
 
-// The two suites that consume the model must not pin figures either.
+	// Strip block comments and line comments first: the files legitimately
+	// discuss dates (2026-07-05) and version numbers in prose, and a naive
+	// scan would flag those. What must be clean is the CODE.
+	$code_only = preg_replace( '!/\*.*?\*/!s', '', $config_src );
+	$code_only = preg_replace( '!//[^\n]*!', '', $code_only );
+
+	// Any decimal literal with 1-3 fractional digits is money-shaped. Zero
+	// is exempt and deliberately so: it is the sentinel the cost class
+	// returns for an unavailable amount, and it discloses nothing. The only
+	// other numerics that may remain in these files are array indexes,
+	// rounding precisions and small integers.
+	preg_match_all( '/(?<![\w.])\d+\.\d{1,3}(?![\w.])/', $code_only, $decimals );
+	$money_like = array_values( array_filter(
+		array_unique( $decimals[0] ),
+		function ( $n ) { return 0.0 !== (float) $n; }
+	) );
+	bhp_cm_assert(
+		empty( $money_like ),
+		"The shipped {$label} class contains no non-zero money-shaped decimal literal in code" .
+			( empty( $money_like ) ? '' : ' (found ' . count( $money_like ) . ' -- the amounts have leaked back into source)' ),
+		$failures
+	);
+
+	// A currency symbol in the prose is the other way a figure creeps back.
+	// "$0" is exempt for the same reason as 0.0 above -- the docblocks use
+	// it to explain what these classes must NOT silently default to.
+	bhp_cm_assert(
+		0 === preg_match( '/\$[1-9]/', $config_src ) && 0 === preg_match( '/\$0\.\d/', $config_src ),
+		"The shipped {$label} class quotes no dollar figure, in code or in prose",
+		$failures
+	);
+
+	// A percentage-shaped literal is how the CPA banding ratios would come
+	// back in prose after being removed from code: they are fractions, and
+	// a fraction written as a percentage is still the figure. (This comment
+	// deliberately names no example -- an earlier draft of it quoted the two
+	// real ratios verbatim, which the tree scan caught, and which is a
+	// perfect miniature of the problem: the leak arrived inside the fix.)
+	bhp_cm_assert(
+		0 === preg_match( '/(?<![\w.])\d+(\.\d+)?\s?%/', $config_src ),
+		"The shipped {$label} class quotes no percentage figure in prose either",
+		$failures
+	);
+}
+
+// The two suites that consume the models must not pin figures either.
 foreach ( array( 'test-offer-economics.php', 'test-dashboard.php' ) as $suite ) {
 	$suite_src = file_get_contents( __DIR__ . '/' . $suite );
-	// Storefront prices, discounts and shipping ARE public and allowed.
-	// Published storefront prices, discounts, shipping rates and the
-	// Andrew-approved CPA ceilings MAY be pinned -- they are on the site
-	// or in an approved table, and pinning an approved ceiling is what
-	// protects it. Synthetic arithmetic inputs and comparison epsilons
-	// may be pinned too. Anything else is a cost figure and must not be.
+	/*
+	 * Published storefront prices, discounts and shipping rates MAY be
+	 * pinned -- they are on the live site and disclose nothing.
+	 * Synthetic arithmetic inputs and comparison epsilons may be pinned
+	 * too. Anything else is a cost or acquisition-policy figure and must
+	 * not be.
+	 *
+	 * ⛔ 1.8.30 REMOVED the six approved CPA targets and ceilings from
+	 *    this allowlist. They were legitimately pinned while they lived in
+	 *    the source tree -- an approved ceiling that is not pinned is not
+	 *    protected -- but they are private now, and the protection moved
+	 *    to BHP_CPA_Model::policy_fingerprint(). Do not re-add them. If a
+	 *    figure reappears here the suite fails, which is the point.
+	 */
 	$public_ok = array(
 		// storefront prices, bundle discounts and shipping rates
 		'31.99', '48.99', '11.99', '16.99', '3.98', '4.98', '1.99', '2.99', '3.99', '4.99', '0.00',
 		// order totals composed from those prices, used as function inputs
 		'13.98', '23.98', '24.98', '35.98', '35.97',
-		// Andrew-approved CPA targets and ceilings
-		'13.00', '17.50', '18.50', '18.00', '24.00', '26.00',
 		// synthetic arithmetic inputs, probes and epsilons
-		'20.00', '10.00', '4.00', '6.00', '7.00', '1.50', '1.00', '25.00', '15.00', '0.01', '0.001', '0.2', '0.0',
+		'20.00', '10.00', '4.00', '6.00', '7.00', '1.50', '1.00', '25.00', '15.00', '0.01', '0.001', '0.2', '0.0', '0.5',
 	);
 	$suite_code = preg_replace( '!/\*.*?\*/!s', '', $suite_src );
 	$suite_code = preg_replace( '!//[^\n]*!', '', $suite_code );
@@ -113,11 +154,41 @@ foreach ( array( 'test-offer-economics.php', 'test-dashboard.php' ) as $suite ) 
 	$unexpected = array_values( array_diff( array_unique( $found[0] ), $public_ok ) );
 	bhp_cm_assert(
 		empty( $unexpected ),
-		"{$suite} pins no figure outside the published storefront/CPA set" .
+		"{$suite} pins no figure outside the published storefront set" .
 			( empty( $unexpected ) ? '' : ' (unexpected: ' . count( $unexpected ) . ')' ),
 		$failures
 	);
 }
+
+// ==================== 1b. The acquisition policy is seeded and intact ====================
+
+bhp_cm_assert( class_exists( 'BHP_CPA_Model' ), 'BHP_CPA_Model is loaded', $failures );
+bhp_cm_assert( 9 === count( BHP_CPA_Model::model_keys() ), 'The acquisition-policy contract lists 9 amounts', $failures );
+bhp_cm_assert( 'bhp_cpa_model' === BHP_CPA_Model::MODEL_OPTION, 'The acquisition-policy option name is unchanged', $failures );
+bhp_cm_assert( 'bhp_cost_model' !== BHP_CPA_Model::MODEL_OPTION, 'The acquisition policy is a SEPARATE option from the cost model -- different owner, different lifecycle, separately seeded', $failures );
+
+$cpa_missing = BHP_CPA_Model::missing_model_keys();
+bhp_cm_assert(
+	empty( $cpa_missing ),
+	'Every acquisition-policy key is seeded on this environment' . ( empty( $cpa_missing ) ? '' : ' (missing ' . count( $cpa_missing ) . ': ' . implode( ', ', $cpa_missing ) . ')' ),
+	$failures
+);
+
+// The option must NOT be autoloaded: it is read only by the dashboard, and
+// autoloading it puts private policy into every front-end request's option
+// cache for no benefit.
+global $wpdb;
+$cpa_autoload = $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM {$wpdb->options} WHERE option_name = %s", BHP_CPA_Model::MODEL_OPTION ) );
+bhp_cm_assert(
+	null !== $cpa_autoload && ! in_array( strtolower( (string) $cpa_autoload ), array( 'yes', 'on', 'auto' ), true ),
+	'The acquisition-policy option is NOT autoloaded' . ( null === $cpa_autoload ? ' (option row not found)' : " (autoload={$cpa_autoload})" ),
+	$failures
+);
+bhp_cm_assert(
+	64 === strlen( BHP_CPA_Model::policy_fingerprint() ),
+	'A seeded policy produces a full-length joint fingerprint',
+	$failures
+);
 
 // ==================== 2. This environment is seeded ====================
 
@@ -146,12 +217,33 @@ foreach ( $seeded_bases as $basis ) {
 }
 bhp_cm_assert( $all_available, 'No seeded getter reports basis=unavailable', $failures );
 
-// The single-paperback postage is a DIFFERENT figure from the bundle one
-// -- that distinction is the whole reason bookvault_postage_for_offer()
-// exists, and a mis-seed that collapses them would be silent otherwise.
+/*
+ * The single-paperback postage is a DIFFERENT figure from the bundle one
+ * -- that distinction is the whole reason bookvault_postage_for_offer()
+ * exists, and a mis-seed that collapses them would be silent otherwise.
+ * A strict '>' catches collapse as well as inversion.
+ *
+ * ⛔ DIRECTION CORRECTED 2026-08-06. This assertion previously read
+ *    "Single-paperback postage is still higher than the
+ *    bundle/single-hardcover figure". It encoded the Phase 1A working
+ *    belief, and that belief is REFUTED: both figures are now ACTUAL --
+ *    the single-paperback amount from Andrew Signore's own test order
+ *    (attested by him 2026-08-06) and the multi/hardcover amount from
+ *    Bookvault invoiced order 2848396 -- and the multi/hardcover amount
+ *    is the LARGER of the two. The prior wording is quoted here rather
+ *    than deleted so a future session does not re-derive it.
+ *
+ * ⚠ READ THIS BEFORE "FIXING" A FAILURE HERE. This assertion reads the
+ *   LIVE bhp_cost_model option; it pins no literal and cannot be
+ *   satisfied by editing this file. On an environment whose option
+ *   still carries the pre-correction multi/hardcover value it WILL fail,
+ *   and that failure is CORRECT SIGNAL: it is flagging the DATA, not the
+ *   code. The failure label below therefore names the option, not the
+ *   plugin. Fix the environment's cost model -- do not flip this back.
+ */
 bhp_cm_assert(
-	BHP_Cost_Config::bookvault_postage_for_offer( 'paperback', 1 )['amount'] > BHP_Cost_Config::bookvault_postage_for_offer( 'hardcover', 1 )['amount'],
-	'Single-paperback postage is still higher than the bundle/single-hardcover figure',
+	BHP_Cost_Config::bookvault_postage_for_offer( 'hardcover', 1 )['amount'] > BHP_Cost_Config::bookvault_postage_for_offer( 'paperback', 1 )['amount'],
+	'COST MODEL (not plugin code): the seeded bookvault_postage.multi_or_hardcover exceeds bookvault_postage.single_paperback -- a failure here means THIS ENVIRONMENT\'S bhp_cost_model option is uncorrected, not that the build regressed',
 	$failures
 );
 bhp_cm_assert(

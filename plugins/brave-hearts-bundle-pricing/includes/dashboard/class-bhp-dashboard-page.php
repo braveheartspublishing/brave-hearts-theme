@@ -782,10 +782,17 @@ class BHP_Dashboard_Page {
 	 * Compact CPA cell for the product economics table -- approved offers
 	 * show a bold dollar target; non-approved offers explicitly say so
 	 * rather than showing a number that could be mistaken for policy.
+	 *
+	 * 1.8.30: an environment whose acquisition-policy option is unseeded
+	 * has no target and no ceiling to show. It says so. It must never fall
+	 * through to fmt_money( null ), which would render a confident $0.00.
 	 */
 	private static function cpa_cell_html( $cpa ) {
 		if ( ! $cpa || 'unknown' === $cpa['basis'] ) {
 			return '—';
+		}
+		if ( 'unavailable' === $cpa['ceiling_basis'] ) {
+			return '<span class="bhp-dash-basis bhp-dash-basis--na">' . esc_html__( 'Acquisition policy not configured', 'bhp-bundle-pricing' ) . '</span>';
 		}
 		if ( $cpa['cold_acquisition_approved'] ) {
 			return '<strong>' . esc_html( self::fmt_money( $cpa['target_cpa'] ) . ' or less' ) . '</strong> <span class="bhp-dash-card__note">(approved; ceiling ' . esc_html( self::fmt_money( $cpa['safer_ceiling_low'] ) . '–' . self::fmt_money( $cpa['safer_ceiling_high'] ) ) . ')</span>';
@@ -823,6 +830,11 @@ class BHP_Dashboard_Page {
 			echo '<td>' . esc_html( $is_unknown ? '—' : self::fmt_money( $row['theoretical_breakeven_cpa'] ) ) . '</td>';
 			if ( $is_unknown ) {
 				echo '<td>—</td>';
+			} elseif ( null === $row['target_cpa'] && 'unavailable' === $row['ceiling_basis'] ) {
+				// 1.8.30: policy not seeded on this environment. Never
+				// fmt_money( null ) -- a rendered $0.00 target would read as
+				// a decision rather than as a missing one.
+				echo '<td><span class="bhp-dash-basis bhp-dash-basis--na">' . esc_html__( 'Not configured', 'bhp-bundle-pricing' ) . '</span></td>';
 			} elseif ( $row['cold_acquisition_approved'] ) {
 				echo '<td><strong>' . esc_html( self::fmt_money( $row['target_cpa'] ) . ' or less' ) . '</strong></td>';
 			} else {
@@ -830,6 +842,8 @@ class BHP_Dashboard_Page {
 			}
 			if ( $is_unknown ) {
 				echo '<td>—</td>';
+			} elseif ( 'unavailable' === $row['ceiling_basis'] ) {
+				echo '<td><span class="bhp-dash-basis bhp-dash-basis--na">' . esc_html__( 'Not configured', 'bhp-bundle-pricing' ) . '</span></td>';
 			} else {
 				$ceiling_note = 'approved' === $row['ceiling_basis'] ? esc_html__( 'approved', 'bhp-bundle-pricing' ) : esc_html__( 'model estimate', 'bhp-bundle-pricing' );
 				/*

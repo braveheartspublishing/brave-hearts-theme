@@ -257,10 +257,22 @@ bhp_econ_test_assert(
 );
 
 // ==================== Contribution before/after acquisition ====================
-// Synthetic inputs, deliberately NOT real contribution figures -- this
-// function is arithmetic and does not need a real one to be exercised.
-$after = BHP_Offer_Economics::contribution_after_acquisition( 20.00, 13.00 );
-bhp_econ_test_assert( bhp_econ_close( $after, 7.00 ), 'Contribution after acquisition = contribution before acquisition - attributed spend', $failures );
+/*
+ * Synthetic inputs, deliberately NOT real contribution or CPA figures --
+ * this function is arithmetic and does not need a real one to be
+ * exercised.
+ *
+ * ⚠️ 1.8.30 CHANGED THE SECOND ARGUMENT, and the reason is worth keeping.
+ *    It used to be a round number that happened to equal one of Andrew's
+ *    approved target CPAs exactly, sitting in an acquisition-cost
+ *    position in a public file. Nobody put it there to disclose anything;
+ *    it was picked because it made the subtraction tidy. That is how this
+ *    class of leak actually happens, and it is why the source-scan guard
+ *    checks literals rather than intent. Do not reintroduce a "tidy"
+ *    number here without checking it against the seeded policy.
+ */
+$after = BHP_Offer_Economics::contribution_after_acquisition( 25.00, 15.00 );
+bhp_econ_test_assert( bhp_econ_close( $after, 10.00 ), 'Contribution after acquisition = contribution before acquisition - attributed spend', $failures );
 
 // ==================== Missing / null acquisition cost ====================
 $after_null = BHP_Offer_Economics::contribution_after_acquisition( 20.00, null );
@@ -335,30 +347,83 @@ foreach ( $cpa_rows as $row ) { $cpa_by_type[ $row['offer_type'] ] = $row; }
  * are asserted UNCHANGED on purpose: **only Andrew may set a CPA
  * ceiling**, the relayed ruling gave no replacement figures, and an
  * engineer inventing them here would be writing an unapproved number into
- * a constant labelled "approved".
+ * a table labelled "approved".
  *
  * The consequence is asserted rather than hidden: the approved ceiling
  * now sits ABOVE break-even on both collections, which means spending to
  * it would lose money on every order. `CYCLE143-FIN-11`, still OPEN and
  * Andrew's to close. The dashboard labels the row.
  *
+ * ─────────────────────────────────────────────────────────────────────
+ * 1.8.30 — THE PIN SURVIVES WITHOUT THE LITERALS. Read this before
+ *          "simplifying" the assertions below.
+ * ─────────────────────────────────────────────────────────────────────
+ *
  * REDACTED in 1.8.29: the four break-even literals that stood here are
- * derived directly from the relocated cost model, so they are asserted
- * against the model's own contribution rows instead. The approved
- * ceilings themselves are a separate, Andrew-owned table and are still
- * pinned -- an approved ceiling that is not pinned is not protected.
+ * derived from the relocated cost model, so they are asserted against the
+ * model's own contribution rows instead.
+ *
+ * REDACTED in 1.8.30: the approved targets and ceilings themselves. They
+ * are acquisition policy, this repository is public, and Andrew's ruling
+ * of 2026-08-05 was to remove them. They now live in the per-environment
+ * `bhp_cpa_model` option.
+ *
+ * ⛔ AN APPROVED CEILING THAT IS NOT PINNED IS NOT PROTECTED. The reason
+ *    the literals were here at all is that an unauthorised edit to a
+ *    ceiling failed a test. Relocating them must not quietly surrender
+ *    that, so the protection is re-expressed as an EXACT-MATCH FINGERPRINT
+ *    of the whole loaded policy. Change any target, any ceiling or any
+ *    ratio without authorisation and this suite fails, exactly as before,
+ *    without this file naming a figure.
+ *
+ * ⭐ The fingerprint is ONE JOINT DIGEST over all nine values, never one
+ *    digest per value. That is a security property, not a convenience: a
+ *    hash of a single currency amount has a small enough search space to
+ *    invert by brute force; the joint space does not. Do not split it.
+ *
+ * ⚠️ A FAILURE HERE HAS EXACTLY TWO CAUSES, and both must be investigated
+ *    rather than "fixed" by pasting in the new digest: either an
+ *    unauthorised change to approved policy, or a mis-seeded environment.
+ *    Only Andrew can authorise the first; updating this constant without
+ *    his decision is the precise regression it exists to catch.
  */
+bhp_econ_test_assert( BHP_CPA_Model::is_seeded(), 'The acquisition-policy option is seeded on this environment', $failures );
+bhp_econ_test_assert( 9 === count( BHP_CPA_Model::model_keys() ), 'The acquisition-policy contract lists 9 amounts', $failures );
+bhp_econ_test_assert( 'bhp_cpa_model' === BHP_CPA_Model::MODEL_OPTION, 'The acquisition-policy option name is unchanged', $failures );
+
+// Authorised as of 2026-08-06: Andrew's 2026-07-06 policy, carried over
+// byte-for-byte from the 1.8.29 build by the seed step, verified round-trip.
+$bhp_authorised_cpa_policy = '8ee4f98859f985bfe4c22610acd074e5f0c16bd21fa89285636b4f792b3ebcea';
+bhp_econ_test_assert(
+	$bhp_authorised_cpa_policy === BHP_CPA_Model::policy_fingerprint(),
+	'The loaded CPA policy (both approved targets, all four ceilings, all three banding ratios) matches the AUTHORISED fingerprint exactly -- an unauthorised change to any of them fails here',
+	$failures
+);
+
 $cpc = $cpa_by_type[ BHP_Offer_Economics::COMPLETE_PAPERBACK_SET ];
 bhp_econ_test_assert( bhp_econ_close( $cpc['theoretical_breakeven_cpa'], $complete_pb[0]['contribution_before_acquisition'] ), 'Complete Paperback Collection theoretical break-even CPA equals its contribution before acquisition', $failures );
-bhp_econ_test_assert( 13.00 === $cpc['target_cpa'], 'Complete Paperback Collection preferred target CPA is Andrew-specified $13.00 (UNCHANGED)', $failures );
-bhp_econ_test_assert( 17.50 === $cpc['safer_ceiling_low'] && 18.50 === $cpc['safer_ceiling_high'], 'Complete Paperback Collection safer ceiling is STILL the Andrew-specified $17.50-$18.50 (not silently lowered by this build)', $failures );
+bhp_econ_test_assert( null !== $cpc['target_cpa'] && $cpc['target_cpa'] > 0, 'Complete Paperback Collection carries a real preferred target CPA, never null and never zero', $failures );
+bhp_econ_test_assert(
+	$cpc['target_cpa'] < $cpc['safer_ceiling_low'] && $cpc['safer_ceiling_low'] < $cpc['safer_ceiling_high'],
+	'Complete Paperback Collection target sits below its safer ceiling, and the ceiling is a real low-to-high band',
+	$failures
+);
 bhp_econ_test_assert( bhp_econ_close( $cpc['hard_stop_cpa'], $cpc['theoretical_breakeven_cpa'] ), 'Complete Paperback Collection hard stop equals break-even', $failures );
 bhp_econ_test_assert( true === $cpc['ceiling_exceeds_breakeven'], '1.8.23 CYCLE143-FIN-11: PB approved ceiling now exceeds break-even and the table says so', $failures );
 
 $chc = $cpa_by_type[ BHP_Offer_Economics::COMPLETE_HARDCOVER_SET ];
 bhp_econ_test_assert( bhp_econ_close( $chc['theoretical_breakeven_cpa'], $complete_hc[0]['contribution_before_acquisition'] ), 'Complete Hardcover Collection theoretical break-even CPA equals its contribution before acquisition', $failures );
-bhp_econ_test_assert( 18.00 === $chc['target_cpa'], 'Complete Hardcover Collection preferred target CPA is Andrew-specified $18.00 (UNCHANGED)', $failures );
-bhp_econ_test_assert( 24.00 === $chc['safer_ceiling_low'] && 26.00 === $chc['safer_ceiling_high'], 'Complete Hardcover Collection safer ceiling is STILL the Andrew-specified $24.00-$26.00 (not silently lowered by this build)', $failures );
+bhp_econ_test_assert( null !== $chc['target_cpa'] && $chc['target_cpa'] > 0, 'Complete Hardcover Collection carries a real preferred target CPA, never null and never zero', $failures );
+bhp_econ_test_assert(
+	$chc['target_cpa'] < $chc['safer_ceiling_low'] && $chc['safer_ceiling_low'] < $chc['safer_ceiling_high'],
+	'Complete Hardcover Collection target sits below its safer ceiling, and the ceiling is a real low-to-high band',
+	$failures
+);
+bhp_econ_test_assert(
+	$chc['target_cpa'] > $cpc['target_cpa'] && $chc['safer_ceiling_high'] > $cpc['safer_ceiling_high'],
+	'The hardcover collection is allowed a higher target and a higher ceiling than the paperback one -- a seed that collapsed or swapped the two would be silent otherwise',
+	$failures
+);
 bhp_econ_test_assert( true === $chc['ceiling_exceeds_breakeven'], '1.8.23 CYCLE143-FIN-11: HC approved ceiling now exceeds break-even and the table says so', $failures );
 
 // ==================== Approved company policy (2026-07-06): only the two Complete Collections have an approved cold-acquisition target ====================
@@ -421,8 +486,25 @@ bhp_econ_test_assert(
 );
 
 // ==================== classify_cpa() status thresholds ====================
-bhp_econ_test_assert( BHP_CPA_Model::STATUS_GREEN === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, 10.00 ), 'A CPA below target classifies GREEN', $failures );
-bhp_econ_test_assert( BHP_CPA_Model::STATUS_YELLOW === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, 15.00 ), 'A CPA between target and safer ceiling, still under break-even, classifies YELLOW', $failures );
+/*
+ * 1.8.30: every probe below is DERIVED from the table rather than pinned.
+ * A literal probe would disclose a band boundary by which side of it the
+ * expected status falls on, which is the same leak the relocated figures
+ * were removed to close. Each probe asserts that it really does sit in
+ * the band it is meant to exercise, so a derived probe that drifted out
+ * of position fails loudly instead of testing nothing.
+ */
+$probe_green = (float) $cpc['target_cpa'] / 2;
+bhp_econ_test_assert( $probe_green < (float) $cpc['target_cpa'], 'The GREEN probe really does sit below the approved target', $failures );
+bhp_econ_test_assert( BHP_CPA_Model::STATUS_GREEN === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_green ), 'A CPA below target classifies GREEN', $failures );
+
+$probe_yellow = ( (float) $cpc['target_cpa'] + (float) $cpc['hard_stop_cpa'] ) / 2;
+bhp_econ_test_assert(
+	$probe_yellow > (float) $cpc['target_cpa'] && $probe_yellow < (float) $cpc['hard_stop_cpa'] && $probe_yellow <= (float) $cpc['safer_ceiling_high'],
+	'The YELLOW probe really does sit above target, under break-even and within the safer ceiling',
+	$failures
+);
+bhp_econ_test_assert( BHP_CPA_Model::STATUS_YELLOW === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_yellow ), 'A CPA between target and safer ceiling, still under break-even, classifies YELLOW', $failures );
 
 /*
  * 1.8.23 — THE ASSERTION THAT WOULD HAVE HIDDEN A LIVE DEFECT.
@@ -442,8 +524,11 @@ bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa
 bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, (float) $cpc['safer_ceiling_high'] + 1.50 ), '1.8.23: a CPA past both the approved ceiling and break-even classifies STOP', $failures );
 
 // RED still exists and is still reachable: a model-estimate row keeps the
-// ceiling-below-break-even invariant (its ceiling is 82% of break-even), so
-// the band between ceiling and hard stop is real there.
+// ceiling-below-break-even invariant, because its ceiling is a fraction of
+// break-even by construction, so the band between ceiling and hard stop is
+// real there. (That fraction is one of the relocated ratios and is
+// deliberately not named here -- it used to be, and the tree scan caught
+// it. The assertion below proves the invariant instead of quoting it.)
 $single_pb_row = $cpa_by_type[ BHP_Offer_Economics::SINGLE_PAPERBACK ];
 bhp_econ_test_assert(
 	(float) $single_pb_row['safer_ceiling_high'] < (float) $single_pb_row['hard_stop_cpa'],
@@ -456,8 +541,62 @@ bhp_econ_test_assert(
 	'1.8.23: a CPA between safer ceiling and hard stop still classifies RED where that band exists',
 	$failures
 );
-bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, 25.00 ), 'A CPA beyond the hard stop classifies STOP', $failures );
+$probe_stop = (float) $cpc['hard_stop_cpa'] * 2;
+bhp_econ_test_assert( $probe_stop > (float) $cpc['hard_stop_cpa'] && $probe_stop > (float) $cpc['safer_ceiling_high'], 'The STOP probe really does sit beyond both the hard stop and the ceiling', $failures );
+bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_stop ), 'A CPA beyond the hard stop classifies STOP', $failures );
 bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( 'not_a_real_offer_type', 1.00 ), 'An unrecognized offer type fails safe to STOP, never silently GREEN', $failures );
+
+/*
+ * 1.8.30 — AN UNSEEDED ACQUISITION POLICY MUST NOT GRADE ANYTHING.
+ *
+ * The failure this guards is the CPA analogue of the cost model's
+ * "$0 print cost reported as profit": a target that silently defaulted to
+ * zero would grade every real campaign STOP, and a ceiling that silently
+ * defaulted to zero would do the same, so the dashboard would look like
+ * it were working and reporting terrible performance. Exercised through
+ * the filter and the in-request cache -- nothing is written, and the real
+ * option is never deleted or rewritten.
+ */
+$bhp_force_empty_cpa = function () { return array(); };
+add_filter( 'bhp_cpa_model', $bhp_force_empty_cpa, 999 );
+BHP_CPA_Model::flush_model_cache();
+
+bhp_econ_test_assert( ! BHP_CPA_Model::is_seeded(), 'With an empty policy, is_seeded() is false', $failures );
+bhp_econ_test_assert( 9 === count( BHP_CPA_Model::missing_model_keys() ), 'With an empty policy, every key is reported missing by name', $failures );
+bhp_econ_test_assert( '' === BHP_CPA_Model::policy_fingerprint(), 'With an empty policy, the fingerprint is empty rather than a digest of zeroes', $failures );
+
+$unseeded_rows = array();
+foreach ( BHP_CPA_Model::build_table() as $row ) { $unseeded_rows[ $row['offer_type'] ] = $row; }
+$unseeded_pb = $unseeded_rows[ BHP_Offer_Economics::COMPLETE_PAPERBACK_SET ];
+bhp_econ_test_assert( 'unavailable' === $unseeded_pb['ceiling_basis'], 'With an empty policy, the approved row reports ceiling_basis=unavailable', $failures );
+bhp_econ_test_assert( null === $unseeded_pb['target_cpa'], 'With an empty policy, target_cpa is null -- never 0.00 presented as a decision', $failures );
+bhp_econ_test_assert( null === $unseeded_pb['safer_ceiling_low'] && null === $unseeded_pb['safer_ceiling_high'], 'With an empty policy, both ceiling bounds are null, never zero', $failures );
+bhp_econ_test_assert( null !== $unseeded_pb['theoretical_breakeven_cpa'] && null !== $unseeded_pb['hard_stop_cpa'], 'With an empty policy, break-even and hard stop are still real -- they are cost-model math, not policy', $failures );
+bhp_econ_test_assert( true === $unseeded_pb['cold_acquisition_approved'], 'With an empty policy, the approval FACT survives -- it is structure in code, not a figure in the option', $failures );
+
+$unseeded_single = $unseeded_rows[ BHP_Offer_Economics::SINGLE_PAPERBACK ];
+bhp_econ_test_assert( 'unavailable' === $unseeded_single['ceiling_basis'], 'With an empty policy, a model-estimate row reports ceiling_basis=unavailable rather than banding off a zero ratio', $failures );
+bhp_econ_test_assert( null === $unseeded_single['safer_ceiling_high'], 'With an empty policy, the model-estimate ceiling is null, never 0.00', $failures );
+
+bhp_econ_test_assert(
+	BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_green ),
+	'With an empty policy, a CPA that would otherwise be GREEN fails safe to STOP -- an unloaded policy certifies nothing',
+	$failures
+);
+
+// A partial seed is not a seed.
+remove_filter( 'bhp_cpa_model', $bhp_force_empty_cpa, 999 );
+$bhp_force_partial_cpa = function () { return array( 'ratio.target' => 0.5, 'ratio.ceiling' => 0.5, 'ratio.ceiling_band' => 0.5 ); };
+add_filter( 'bhp_cpa_model', $bhp_force_partial_cpa, 999 );
+BHP_CPA_Model::flush_model_cache();
+bhp_econ_test_assert( ! BHP_CPA_Model::is_seeded(), 'A partially populated policy is NOT reported as seeded', $failures );
+bhp_econ_test_assert( '' === BHP_CPA_Model::policy_fingerprint(), 'A partially populated policy produces no fingerprint', $failures );
+
+// Restoration is asserted, not assumed.
+remove_filter( 'bhp_cpa_model', $bhp_force_partial_cpa, 999 );
+BHP_CPA_Model::flush_model_cache();
+bhp_econ_test_assert( BHP_CPA_Model::is_seeded(), 'The real acquisition policy is restored after the suite manipulates it', $failures );
+bhp_econ_test_assert( $bhp_authorised_cpa_policy === BHP_CPA_Model::policy_fingerprint(), 'The restored policy still matches the authorised fingerprint', $failures );
 
 // ==================== Provenance logic remains unchanged ====================
 bhp_econ_test_assert(

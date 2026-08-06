@@ -25,19 +25,22 @@ require_once __DIR__ . '/class-bhp-dashboard-page.php';
 // already gates this whole require on class_exists('WooCommerce').
 BHP_Dashboard_Page::init();
 
-// The unit-economics amounts live in a per-environment option, not in
-// this (public) source tree -- see class-bhp-cost-config.php. If the
-// option is missing or partial the dashboard still renders, but every
-// cost figure reports 'unavailable' rather than a number computed
-// against zero costs. Say so where an operator will actually see it,
-// on the dashboard screen itself, rather than leaving it to be inferred
-// from a column of blanks.
+// Two per-environment options hold values that are not in this (public)
+// source tree: the unit-economics amounts (class-bhp-cost-config.php) and
+// the approved acquisition policy (class-bhp-cpa-model.php). If either is
+// missing or partial the dashboard still renders, but the affected
+// figures report 'unavailable' rather than a number computed against
+// zeroes. Say so where an operator will actually see it, on the dashboard
+// screen itself, rather than leaving it to be inferred from a column of
+// blanks. They are separate notices because they are separately seeded
+// and separately owned -- one being present says nothing about the other.
 add_action( 'admin_notices', function () {
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 	if ( ! $screen || 'woocommerce_page_bhp-dashboard' !== $screen->id ) {
 		return;
 	}
 	BHP_Cost_Config::render_unseeded_notice();
+	BHP_CPA_Model::render_unseeded_notice();
 } );
 
 add_action( 'admin_enqueue_scripts', function ( $hook ) {

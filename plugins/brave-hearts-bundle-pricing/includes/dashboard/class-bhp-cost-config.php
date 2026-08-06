@@ -360,12 +360,26 @@ class BHP_Cost_Config {
 
 	/**
 	 * Bookvault fulfillment/shipping (postage) cost, which is NOT a flat
-	 * figure across every order -- Phase 1A working economics show a
-	 * single paperback order costs more to ship than any bundle or a
-	 * single hardcover order. Before that distinction existed, every
-	 * order used the flat bundle figure, which overstated the
-	 * contribution of a single-paperback order. This function is the
-	 * single place that distinction is made.
+	 * figure across every order -- a single-paperback shipment and a
+	 * multi-book/hardcover shipment are separately evidenced amounts, and
+	 * this function is the single place that distinction is made.
+	 *
+	 * CORRECTED 2026-08-06 -- THE ORDERING WAS BACKWARDS. This docblock
+	 * previously read that "Phase 1A working economics show a single
+	 * paperback order costs more to ship than any bundle or a single
+	 * hardcover order." That is REFUTED. It is quoted here rather than
+	 * deleted so it is not re-derived from some other stale carrier.
+	 * Both figures are now ACTUAL, from two separate real shipments
+	 * (see the 'source' strings below), and the multi-book/hardcover
+	 * figure is the LARGER of the two. Any code, comment, document or
+	 * test that assumes the reverse is stale -- the invariant in
+	 * tests/test-cost-model-source.php was one such carrier and was
+	 * flipped in the same change as this comment.
+	 *
+	 * The 'basis' labels below are deliberately UNCHANGED by that
+	 * correction. Basis vocabulary is a model-wide concept; promoting
+	 * these two entries out of 'estimated' is a separate reviewed
+	 * decision, not a side effect of re-citing their provenance.
 	 *
 	 * @param string $format               'paperback' | 'hardcover'
 	 * @param int    $distinct_title_count how many distinct catalog titles are in the order (1 = a single, 2 or 3 = a bundle/collection)
@@ -376,24 +390,27 @@ class BHP_Cost_Config {
 			return array(
 				'amount'         => self::amount_or_zero( 'bookvault_postage.single_paperback' ),
 				'basis'          => self::basis( 'bookvault_postage.single_paperback', 'estimated' ),
-				'source'         => "Andrew's Phase 1A working economics figures for a single-paperback Bookvault shipment",
-				'effective_date' => '2026-07-06',
+				'source'         => 'ACTUAL -- founder test order: a single paperback copy ordered by Andrew Signore through the live store and shipped by Bookvault; attested by him 2026-08-06',
+				'effective_date' => '2026-08-06',
 			);
 		}
 		return array(
 			'amount'         => self::amount_or_zero( 'bookvault_postage.multi_or_hardcover' ),
 			'basis'          => self::basis( 'bookvault_postage.multi_or_hardcover', 'estimated' ),
-			'source'         => 'Multi-book Media Mail quote observed during Bookvault testing, also used for single-hardcover orders per Phase 1A working economics',
-			'effective_date' => '2026-07-06',
+			'source'         => 'ACTUAL -- Bookvault invoiced order 2848396, 2026-08-06; also applied to single-hardcover orders',
+			'effective_date' => '2026-08-06',
 		);
 	}
 
 	/**
 	 * The Bookvault postage figure for a real order, given the distinct
 	 * title count present per format. Only a paperback-only order with
-	 * exactly one distinct title gets the higher single-paperback figure;
-	 * every other combination (any hardcover present, or 2-3 distinct
-	 * titles) uses the bundle/single-hardcover figure.
+	 * exactly one distinct title gets the single-paperback figure; every
+	 * other combination (any hardcover present, or 2-3 distinct titles)
+	 * uses the bundle/single-hardcover figure. The routing is unchanged;
+	 * only the word "higher" was removed from this sentence on
+	 * 2026-08-06, because it asserted an ordering that is refuted -- see
+	 * bookvault_postage_for_offer() above.
 	 *
 	 * @param int $paperback_distinct_count
 	 * @param int $hardcover_distinct_count
