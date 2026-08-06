@@ -127,8 +127,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 class BHP_Meta_Pixel {
 
 	/**
-	 * Meta Pixel ID, supplied by Andrew. Public by design — see the file
-	 * docblock. Not a credential; `C:\BHP\secrets\` is not involved.
+	 * Meta Pixel ID, supplied by the site owner. Public by design — see the
+	 * file docblock. It is not a credential, and no credential store is
+	 * involved in reading it.
 	 */
 	const PIXEL_ID = '2050405642533821';
 
@@ -732,11 +733,39 @@ class BHP_Meta_Pixel {
 
 	// The ONLY place fbevents.js is ever requested. Before this runs there is
 	// no third-party script on the page.
-	function loadSdk() {
-		if ( loaded || !config.sdk ) { return; }
+	//
+	// ⛔ `onReady` IS LOAD-BEARING AND IS NOT A STYLE CHOICE. It exists because
+	// of a defect that queue inspection alone could never have found, and that
+	// was reproduced in isolation against Meta's own published snippet:
+	//
+	//   fbevents.js processes `consent revoke` from the queue and then STOPS
+	//   draining. `init` and every queued event stay in the queue. A
+	//   `fbq('consent','grant')` issued in the same tick as the script
+	//   injection is therefore QUEUED BEHIND the revoke that is blocking the
+	//   drain — and can never run. The pixel never initialises, never fetches
+	//   its config, and sends nothing, forever.
+	//
+	//   Measured, four pages, one variable at a time: Meta's canonical snippet
+	//   (queue drained, pixel registered) · canonical + revoke/init/PageView +
+	//   a later grant (drained, registered) · a late-injected SDK with the
+	//   grant queued behind the revoke (queue STUCK at 3, pixels [], NO config
+	//   request) · the same but with the grant issued on the script's `onload`
+	//   (drained, registered, config fetched).
+	//
+	//   So the grant must be a LIVE call made after the SDK is executing, not a
+	//   queued one. `onerror` also fires the callback: if Meta's CDN is
+	//   blocked, the visitor's granted state must still be recorded rather than
+	//   left silently half-applied.
+	function loadSdk( onReady ) {
+		if ( loaded || !config.sdk ) {
+			onReady();  // already loading/loaded, or staging queue-only mode
+			return;
+		}
 		loaded = true;
 		var s = document.createElement( 'script' );
 		s.async = true;
+		s.onload = onReady;
+		s.onerror = onReady;
 		s.src = config.sdk;
 		var first = document.getElementsByTagName( 'script' )[ 0 ];
 		if ( first && first.parentNode ) {
@@ -749,9 +778,10 @@ class BHP_Meta_Pixel {
 	function grant() {
 		if ( granted ) { return; }
 		granted = true;
-		loadSdk();
-		window.fbq( 'consent', 'grant' );
-		flushQueueCookie();
+		loadSdk( function () {
+			window.fbq( 'consent', 'grant' );
+			flushQueueCookie();
+		} );
 	}
 
 	function revoke() {

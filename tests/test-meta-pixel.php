@@ -158,9 +158,30 @@ bhp_mp_assert(
 	$failures,
 	'B3 ⭐ the SDK is loaded from inside grant(), before the grant is signalled, and nowhere else',
 	'' !== $bhp_mp_grant_body
-		&& false !== strpos( $bhp_mp_grant_body, 'loadSdk();' )
-		&& strpos( $bhp_mp_grant_body, 'loadSdk();' ) < strpos( $bhp_mp_grant_body, "fbq( 'consent', 'grant' )" )
+		&& false !== strpos( $bhp_mp_grant_body, 'loadSdk( function () {' )
+		&& strpos( $bhp_mp_grant_body, 'loadSdk(' ) < strpos( $bhp_mp_grant_body, "fbq( 'consent', 'grant' )" )
 		&& 2 === substr_count( $runtime, 'loadSdk' . '(' ) // the definition and exactly one call site
+);
+
+/*
+ * ⭐ B3b IS THE ASSERTION THAT WOULD HAVE CAUGHT THE ONE REAL DEFECT IN THIS
+ * BUILD, and it is here because the defect was found by a browser and not by
+ * this suite.
+ *
+ * fbevents.js processes `consent revoke` out of the queue and then STOPS
+ * draining it. A `fbq('consent','grant')` issued in the same tick as the
+ * script injection is therefore queued BEHIND the revoke that is blocking the
+ * drain, and can never run: the pixel never initialises, never fetches its
+ * config, and sends nothing, permanently. Reproduced in isolation against
+ * Meta's own published snippet. The grant must be a LIVE call made from the
+ * script's `onload`, which is what this asserts.
+ */
+bhp_mp_assert(
+	$failures,
+	'B3b ⭐ the grant is issued from the SDK script\'s onload — never queued behind the revoke that stalls the drain',
+	false !== strpos( $runtime, 's.onload = onReady;' )
+		&& false !== strpos( $runtime, 's.onerror = onReady;' )
+		&& preg_match( '/loadSdk\(\s*function \(\) \{\s*window\.fbq\( \x27consent\x27, \x27grant\x27 \);/', $runtime ) === 1
 );
 bhp_mp_assert( $failures, 'B4 consent is read from the MARKETING category only, and only on a strict true', false !== strpos( $runtime, "prefs[ config.category ] === true" ) );
 bhp_mp_assert( $failures, 'B5 the runtime listens to WPConsent\'s own save/update events', false !== strpos( $runtime, 'wpconsent_consent_saved' ) && false !== strpos( $runtime, 'wpconsent_consent_updated' ) );
