@@ -1,0 +1,132 @@
+/* Brave Hearts Bundle Pricing — storefront bundle cards + cart messaging. */
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * C6 (2026-08-03) — RETIRED GOLD `#c9a227` REPLACED BY CANONICAL TOKENS
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * This file rendered the /book-bundles/ "complete set" card border, its
+ * BEST VALUE badge and the Shop-the-Series complete-path border in `#c9a227`
+ * — a gold that is not in the brand palette and that the F1 sweep never
+ * reached, because F1 only covered the theme's own stylesheets.
+ *
+ * ⭐ TWO DIFFERENT CANONICAL TOKENS, AND THE SPLIT IS MEASURED, NOT STYLISTIC.
+ *    Contrast ratios computed against the actual colours in this file:
+ *
+ *      #c9a227  bg + #fff text  (the badge, as it shipped)   2.42:1   FAILS AA
+ *      #D9A45F  bg + #fff text  (--color-gold)               2.23:1   WORSE
+ *      #9A6A00  bg + #fff text  (--color-gold-deep)          4.73:1   PASSES AA
+ *
+ *    So a straight swap to `--color-gold` would have made the badge LESS
+ *    legible than the retired colour it replaced. `--color-gold-deep` exists
+ *    in style.css for exactly this case and its own comment says so: "gold
+ *    that must stay legible". It is used only for the FILLED badge that
+ *    carries white text.
+ *
+ *    Every other occurrence is a decorative BORDER carrying no text, so it
+ *    takes the display gold `--color-gold` and nothing about the card's
+ *    appearance changes beyond the hue moving into the palette.
+ *
+ * The literal fallbacks are the canonical hex values, present only so this
+ * stylesheet degrades to a brand-correct gold if it is ever loaded without
+ * the theme's `:root`.
+ */
+
+.bhp-bundle-offers {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 1.5rem;
+	margin: 2rem 0;
+}
+
+.bhp-bundle-card {
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 1.5rem;
+	position: relative;
+	background: #fff;
+}
+
+.bhp-bundle-complete {
+	border-color: var(--color-gold, #d9a45f);
+	background: #fffdf5;
+}
+
+.bhp-bundle-badge {
+	display: inline-block;
+	background: var(--color-gold-deep, #9a6a00);
+	color: #fff;
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	padding: 0.25rem 0.6rem;
+	border-radius: 4px;
+	margin-bottom: 0.75rem;
+}
+
+.bhp-bundle-title-list {
+	list-style: none;
+	margin: 0.75rem 0;
+	padding: 0;
+}
+
+.bhp-bundle-title-list li {
+	padding: 0.25rem 0;
+}
+
+.bhp-bundle-instructions {
+	font-size: 0.9rem;
+	color: #555;
+	margin: 0.5rem 0;
+}
+
+.bhp-bundle-submit {
+	margin-top: 0.75rem;
+}
+
+.bhp-bundle-message {
+	background: #f3f7f1;
+	border-left: 4px solid #4a7c3c;
+	padding: 0.6rem 1rem;
+	margin: 0 0 1rem;
+	font-size: 0.95rem;
+}
+
+/* Shop the Series page */
+.bhp-shop-series__format {
+	margin: 2.5rem 0;
+}
+
+.bhp-shop-series__format-heading {
+	text-align: center;
+	margin-bottom: 1.5rem;
+}
+
+.bhp-shop-series__paths {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 1.5rem;
+}
+
+.bhp-shop-series__path {
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 1.25rem;
+	background: #fff;
+}
+
+.bhp-shop-series__path--complete {
+	border-color: var(--color-gold, #d9a45f);
+	background: #fffdf5;
+}
+
+.bhp-shop-series__path h3 {
+	margin-top: 0;
+}
+
+.bhp-shop-series__price {
+	font-weight: 700;
+	font-size: 1.1rem;
+	margin: 0.25rem 0 1rem;
+}

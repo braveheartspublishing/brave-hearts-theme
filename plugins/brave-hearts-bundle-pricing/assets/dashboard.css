@@ -1,0 +1,206 @@
+/* Brave Hearts executive dashboard — admin-only styling. */
+
+.bhp-dashboard .bhp-dash-period-form,
+.bhp-dashboard .bhp-dash-refresh-form {
+	display: inline-block;
+	margin: 0.75rem 1rem 0.75rem 0;
+	vertical-align: top;
+}
+
+.bhp-dash-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1rem;
+	margin: 1rem 0 2rem;
+}
+
+.bhp-dash-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 1rem 1.25rem;
+}
+
+.bhp-dash-card--warning {
+	border-color: #d63638;
+	background: #fcf0f1;
+}
+
+.bhp-dash-card__label {
+	font-size: 0.8rem;
+	color: #646970;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.bhp-dash-card__value {
+	font-size: 1.6rem;
+	font-weight: 600;
+	margin: 0.25rem 0;
+	color: #1d2327;
+}
+
+.bhp-dash-card__note {
+	font-size: 0.75rem;
+	font-weight: 400;
+	color: #646970;
+}
+
+.bhp-dash-trend {
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+
+.bhp-dash-trend--good { color: #00a32a; }
+.bhp-dash-trend--bad { color: #d63638; }
+.bhp-dash-trend--neutral { color: #646970; }
+
+.bhp-dash-table {
+	margin-bottom: 2rem;
+}
+
+.bhp-dash-bar {
+	display: inline-block;
+	width: 100px;
+	height: 10px;
+	background: #f0f0f1;
+	border-radius: 5px;
+	overflow: hidden;
+	vertical-align: middle;
+	margin-right: 0.5rem;
+}
+
+.bhp-dash-bar__fill {
+	height: 100%;
+	background: #1f4d36;
+}
+
+.bhp-dash-warning-row--critical td:first-child { color: #d63638; font-weight: 600; }
+.bhp-dash-warning-row--warning td:first-child { color: #b45f06; font-weight: 600; }
+
+.bhp-dash-attention {
+	display: inline-block;
+	padding: 0.15rem 0.6rem;
+	border-radius: 3px;
+	font-size: 0.78rem;
+	font-weight: 600;
+}
+
+.bhp-dash-attention--ok { background: #edf7ed; color: #00a32a; }
+.bhp-dash-attention--critical { background: #fcf0f1; color: #d63638; }
+.bhp-dash-attention--monitoring { background: #e5f2fa; color: #0a4b78; }
+.bhp-dash-attention--excluded { background: #f0f0f1; color: #646970; }
+
+.bhp-dash-no-warnings {
+	color: #00a32a;
+	font-weight: 500;
+}
+
+.bhp-dash-data-as-of {
+	color: #646970;
+	font-style: italic;
+}
+
+/* Historical/excluded-order context: deliberately subdued so it reads as
+   information, never as an active alert (Phase 11/14 requirement -- an
+   excluded or historical order must never look like a critical warning). */
+.bhp-dash-historical-note {
+	color: #646970;
+	background: #f6f7f7;
+	border-left: 3px solid #c3c4c7;
+	padding: 0.6rem 1rem;
+	margin: 0.5rem 0 1.5rem;
+}
+
+.bhp-dash-table--subdued {
+	opacity: 0.85;
+}
+
+.bhp-dash-row--subdued td {
+	color: #646970;
+}
+
+.bhp-dash-row--critical td:first-child {
+	color: #d63638;
+	font-weight: 600;
+}
+
+/* Warning table breathing room -- long "Recommended next step" messages
+   were cramped against the row above/below at narrower admin widths. */
+.bhp-dash-warnings td {
+	padding-top: 0.85rem;
+	padding-bottom: 0.85rem;
+	line-height: 1.5;
+}
+
+.bhp-dash-future-panel {
+	background: #f6f7f7;
+	border: 1px dashed #c3c4c7;
+	border-radius: 4px;
+	padding: 1rem 1.25rem;
+	color: #646970;
+	margin-bottom: 2rem;
+}
+
+/* Narrower admin viewports: let wide tables scroll horizontally inside
+   their own box instead of forcing the whole admin page wider than the
+   viewport (no content is clipped either way, but this avoids a
+   page-level horizontal scrollbar at ~1280px and below). */
+@media (max-width: 1400px) {
+	.bhp-dash-table {
+		display: block;
+		overflow-x: auto;
+	}
+}
+
+/* Phase 10: SiteGround AI Studio's floating chat launcher
+   (wp-content/plugins/sg-ai-studio, container #wp-ai-studio-container,
+   class .sg-ai-floating-chat) renders as a fixed, high-z-index button that
+   can overlap KPI cards, warning rows, and the recent-orders Attention
+   column. Scoped to ONLY this admin page via WordPress's own
+   hook-suffix body class (body.woocommerce_page_bhp-dashboard) -- the
+   widget is untouched everywhere else (other admin screens, the public
+   storefront). This is a narrow CSS suppression, not a plugin
+   deactivation: SiteGround AI Studio keeps working normally on every
+   other page. */
+body.woocommerce_page_bhp-dashboard #wp-ai-studio-container {
+	display: none !important;
+}
+
+/* Order-provenance dataset-scope notice (2026-07-06 correction) --
+   deliberately placed right under the page description, before any
+   figure, so the dataset boundary is read before the numbers are. */
+.bhp-dash-dataset-notice {
+	background: #eaf3ea;
+	border-left: 3px solid #1f4d36;
+	padding: 0.6rem 1rem;
+	margin: 0.5rem 0 1rem;
+	max-width: 900px;
+}
+
+.bhp-dash-cards--compact {
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	margin-bottom: 1rem;
+}
+
+.bhp-dash-card__value--compact {
+	font-size: 1.1rem;
+}
+
+/* Phase 1A economics panels: Actual/Derived/Estimated/Unknown basis
+   badges -- never rely on color alone (the text label itself always
+   states the basis), color is a secondary reinforcement only. */
+.bhp-dash-basis {
+	display: inline-block;
+	padding: 0.1rem 0.5rem;
+	border-radius: 3px;
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+.bhp-dash-basis--actual { background: #edf7ed; color: #00a32a; }
+.bhp-dash-basis--derived { background: #e5f2fa; color: #0a4b78; }
+.bhp-dash-basis--estimated { background: #fcf3e3; color: #8a6100; }
+.bhp-dash-basis--na { background: #f0f0f1; color: #646970; }
+.bhp-dash-basis--unknown { background: #fcf0f1; color: #d63638; }
+.bhp-dash-basis--missing { background: #fcf0f1; color: #d63638; }

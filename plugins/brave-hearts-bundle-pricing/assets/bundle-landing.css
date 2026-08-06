@@ -1,0 +1,517 @@
+/**
+ * Brave Hearts Bundle Pricing — premium complete-series landing page.
+ * Scoped entirely under .bhp-landing so this page's forest-green/gold
+ * premium palette never leaks into the rest of the site.
+ */
+
+.bhp-landing {
+	--bl-forest: var(--color-forest);           /* F1: was #1E4331 */
+	--bl-forest-mid: #235340;                   /* F1: mid step off the one forest */
+	--bl-gold: var(--color-gold);               /* F1: was #C69A4C */
+	--bl-gold-light: #E8C089;                   /* F1: light step off #D9A45F */
+	--bl-gold-dark: var(--color-gold-deep);     /* F1: was #8A6A2C */
+	--bl-cream: #F6EFE0;
+	--bl-cream-card: #FBF6EB;
+	--bl-ivory: #FFFDF8;
+	--bl-text: #3A342C;
+	--bl-text-muted: #5A5045;
+	--bl-text-light: #7A6E60;
+	--bl-mint: #EAF1EC;
+	--bl-border: rgba(30, 67, 49, 0.16);
+	/* F1: Newsreader retired. It was loaded for exactly one page in the
+	   whole site and made the Collection the only surface whose body copy
+	   used a face found nowhere else. */
+	--bl-serif: var(--font-display);
+	--bl-sans: var(--font-ui);
+	--bl-body: var(--font-body);
+
+	background: var(--bl-cream);
+	color: var(--bl-text);
+	font-family: var(--bl-body);
+	padding-block: 3rem 4rem;
+}
+
+.bhp-landing * { box-sizing: border-box; }
+
+.bhp-landing h1, .bhp-landing h2, .bhp-landing h3 {
+	font-family: var(--bl-serif);
+	color: var(--bl-forest);
+	margin: 0;
+}
+
+.bhp-landing-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 14px;
+	border-radius: 999px;
+	background: rgba(217, 164, 95, 0.15);
+	border: 1px solid rgba(217, 164, 95, 0.4);
+	color: var(--bl-gold-dark);
+	font-size: 0.72rem;
+	font-weight: 800;
+	letter-spacing: 1.6px;
+	text-transform: uppercase;
+	margin-bottom: 20px;
+}
+.bhp-landing-eyebrow--center { display: flex; width: fit-content; margin-inline: auto; }
+.bhp-landing-eyebrow--on-dark { background: rgba(231, 200, 120, 0.15); border-color: rgba(231, 200, 120, 0.4); color: var(--bl-gold-light); }
+.bhp-landing-eyebrow__dot { width: 6px; height: 6px; border-radius: 2px; background: var(--bl-gold); transform: rotate(45deg); flex: none; }
+
+/* ---------- Hero ---------- */
+.bhp-landing-hero__inner {
+	max-width: 1180px;
+	margin-inline: auto;
+	padding-inline: clamp(1rem, 4vw, 2rem);
+}
+.bhp-landing-hero__intro { text-align: center; max-width: 820px; margin: 0 auto clamp(16px, 2.2vw, 26px); }
+.bhp-landing-hero__title { font-weight: 600; font-size: clamp(1.9rem, 5vw, 3.25rem); line-height: 1.05; letter-spacing: -0.4px; margin-bottom: 12px; }
+.bhp-landing-hero__text { font-size: clamp(0.95rem, 1.9vw, 1.125rem); line-height: 1.5; color: var(--bl-text-muted); margin: 0 auto 8px; max-width: 640px; }
+.bhp-landing-hero__subtext { font-size: 0.85rem; color: var(--bl-text-light); max-width: 620px; margin: 0 auto; }
+
+.bhp-landing-hero__main {
+	display: grid;
+	grid-template-columns: 1.15fr 1fr;
+	gap: clamp(1.5rem, 4vw, 3rem);
+	align-items: start;
+	margin-top: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.bhp-landing-hero__covers {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	gap: 0;
+	padding-block: 1rem;
+}
+.bhp-landing-hero__cover {
+	margin: 0;
+	width: 34%;
+	position: relative;
+	text-align: center;
+}
+.bhp-landing-hero__cover:nth-child(1) { transform: rotate(-6deg) translateX(12%); z-index: 1; }
+.bhp-landing-hero__cover:nth-child(2) { width: 40%; z-index: 2; transform: translateY(-16px); }
+.bhp-landing-hero__cover:nth-child(3) { transform: rotate(6deg) translateX(-12%); z-index: 1; }
+.bhp-landing-hero__cover img { width: 100%; height: auto; border-radius: 10px; box-shadow: 0 18px 36px rgba(30, 67, 49, 0.22); display: block; }
+.bhp-landing-hero__cover figcaption { margin-top: 0.6rem; font-size: 0.7rem; color: var(--bl-text-light); }
+
+/* ---------- Pricing card ---------- */
+.bhp-landing-card {
+	background: var(--bl-ivory);
+	border: 1px solid var(--bl-border);
+	border-radius: 16px;
+	padding: clamp(1.25rem, 2.5vw, 2rem);
+	box-shadow: 0 24px 48px rgba(30, 67, 49, 0.14);
+	transition: box-shadow 0.3s ease;
+}
+/* Brief highlight when the gift-section CTA scrolls the visitor here,
+ * so the jump reads as "here's your next step," not an unexplained jump. */
+.bhp-landing-card--highlighted {
+	box-shadow: 0 0 0 3px var(--bl-gold), 0 24px 48px rgba(30, 67, 49, 0.14);
+}
+.bhp-landing-card:focus-visible { outline: 2px solid var(--bl-gold); outline-offset: 4px; }
+.bhp-landing-card__badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--bl-forest-mid);
+	color: #fff;
+	font-size: 0.68rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	padding: 6px 12px;
+	border-radius: 999px;
+	margin-bottom: 1rem;
+}
+.bhp-landing-card__badge .bhp-landing-eyebrow__dot { background: var(--bl-gold-light); }
+
+.bhp-landing-format-selector__label {
+	font-size: 0.7rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--bl-text-light);
+	margin: 0 0 0.5rem;
+}
+.bhp-landing-format-selector__options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem; }
+.bhp-landing-format-selector__note {
+	font-size: 0.8rem;
+	line-height: 1.45;
+	color: var(--bl-text-light);
+	margin: 0 0 1.25rem;
+}
+.bhp-landing-format-btn {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
+	padding: 0.65rem 0.85rem;
+	border: 1.5px solid var(--bl-border);
+	border-radius: 10px;
+	background: #fff;
+	cursor: pointer;
+	font-family: var(--bl-sans);
+	text-align: left;
+	min-height: 44px;
+}
+.bhp-landing-format-btn__name { font-weight: 700; color: var(--bl-forest); font-size: 0.95rem; }
+.bhp-landing-format-btn__price { font-size: 0.78rem; color: var(--bl-text-light); }
+.bhp-landing-format-btn__check { display: none; font-size: 0.7rem; font-weight: 700; color: var(--bl-forest-mid); }
+.bhp-landing-format-btn.is-selected { border-color: var(--bl-forest-mid); background: var(--bl-mint); }
+.bhp-landing-format-btn.is-selected .bhp-landing-format-btn__check { display: inline-block; }
+.bhp-landing-format-btn:focus-visible { outline: 3px solid var(--bl-gold); outline-offset: 2px; }
+
+.bhp-landing-panel__title { font-size: clamp(1.15rem, 2vw, 1.4rem); margin-bottom: 4px; }
+.bhp-landing-panel__subtitle { font-size: 0.82rem; color: var(--bl-text-light); margin: 0 0 1rem; }
+.bhp-landing-panel__included-label { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bl-text-light); margin: 0 0 0.4rem; }
+.bhp-landing-panel__included-list { list-style: none; margin: 0 0 1rem; padding: 0; font-size: 0.88rem; }
+.bhp-landing-panel__included-list li { padding: 0.2rem 0; color: var(--bl-text); }
+.bhp-landing-panel__included-list li span { color: var(--bl-forest-mid); font-weight: 700; margin-right: 0.3em; }
+
+.bhp-landing-panel__price-rows { margin: 0 0 1rem; padding-top: 0.75rem; border-top: 1px solid var(--bl-border); }
+.bhp-landing-panel__price-row { display: flex; justify-content: space-between; align-items: baseline; padding: 0.25rem 0; font-size: 0.85rem; color: var(--bl-text-muted); }
+.bhp-landing-panel__price-row dt, .bhp-landing-panel__price-row dd { margin: 0; }
+.bhp-landing-panel__price-strike { text-decoration: line-through; color: var(--bl-text-light); }
+.bhp-landing-panel__price-row--main dt, .bhp-landing-panel__price-row--main dd { font-size: 1.4rem; font-weight: 700; color: var(--bl-forest); font-family: var(--bl-serif); }
+
+.bhp-landing-panel__savings { display: flex; align-items: center; justify-content: space-between; background: rgba(217, 164, 95, 0.15); border: 1px solid rgba(217, 164, 95, 0.35); border-radius: 8px; padding: 0.5rem 0.85rem; margin-bottom: 1.1rem; }
+.bhp-landing-panel__savings-badge { font-weight: 800; color: var(--bl-gold-dark); font-size: 0.85rem; }
+.bhp-landing-panel__ages { font-size: 0.78rem; color: var(--bl-text-light); }
+
+.bhp-landing-cta { display: block; width: 100%; text-align: center; padding: 0.9rem 1.25rem; border-radius: 10px; font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer; min-height: 48px; }
+.bhp-landing-cta--primary { background: var(--bl-forest-mid); color: #fff; }
+.bhp-landing-cta--primary:hover, .bhp-landing-cta--primary:focus-visible { background: var(--bl-forest); }
+.bhp-landing-cta--gold { background: var(--bl-gold-light); color: var(--bl-forest); text-decoration: none; }
+.bhp-landing-cta--gold:hover, .bhp-landing-cta--gold:focus-visible { background: var(--bl-gold); }
+.bhp-landing-cta:focus-visible { outline: 3px solid var(--bl-forest-mid); outline-offset: 2px; }
+.bhp-landing-panel__form { margin: 0; }
+
+.bhp-landing-panel__view-link { display: block; text-align: center; margin-top: 0.6rem; font-size: 0.82rem; color: var(--bl-text-light); text-decoration: underline; text-underline-offset: 3px; }
+.bhp-landing-panel__fine-print { text-align: center; font-size: 0.72rem; color: var(--bl-text-light); margin: 0.9rem 0 0; }
+
+/* ---------- Trust row ---------- */
+.bhp-landing-trust-row { max-width: 1180px; margin: 2.5rem auto 0; padding-inline: clamp(1rem, 4vw, 2rem); display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+.bhp-landing-trust-badge { display: inline-flex; align-items: center; gap: 6px; padding: 0.4rem 0.9rem; border-radius: 999px; background: var(--bl-ivory); border: 1px solid var(--bl-border); font-size: 0.78rem; font-weight: 600; color: var(--bl-text-muted); }
+.bhp-landing-trust-badge--gold { background: rgba(217, 164, 95, 0.15); border-color: rgba(217, 164, 95, 0.4); color: var(--bl-gold-dark); }
+
+/* ---------- Parent-outcome benefits ---------- */
+.bhp-landing-outcomes { max-width: 880px; margin: 1.75rem auto 0; padding-inline: clamp(1rem, 4vw, 2rem); }
+.bhp-landing-outcomes__list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+	gap: 0.6rem 1.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.bhp-landing-outcomes__list li {
+	position: relative;
+	padding-left: 1.3rem;
+	color: var(--bl-text);
+	font-size: 0.88rem;
+	line-height: 1.45;
+}
+.bhp-landing-outcomes__list li::before {
+	content: '\2713';
+	position: absolute;
+	left: 0;
+	color: var(--bl-forest);
+	font-weight: 700;
+}
+
+/* ---------- Amazon source link (moved below the final CTA) ---------- */
+.bhp-landing-amazon-source {
+	max-width: 640px;
+	margin: 1rem auto 0;
+	padding-inline: 1rem;
+	text-align: center;
+}
+.bhp-landing-amazon-source a {
+	font-size: 0.76rem;
+	color: rgba(255, 255, 255, 0.6);
+	text-decoration: underline;
+}
+.bhp-landing-amazon-source a:hover,
+.bhp-landing-amazon-source a:focus-visible { color: rgba(255, 255, 255, 0.85); }
+
+/* ---------- Testimonial ---------- */
+.bhp-landing-testimonial { max-width: 640px; margin: 2.5rem auto 0; padding-inline: 1rem; text-align: center; }
+.bhp-landing-testimonial__stars { color: var(--bl-gold); font-size: 1.1rem; margin-bottom: 0.75rem; }
+.bhp-landing-testimonial blockquote { margin: 0 0 0.75rem; font-family: var(--bl-serif); font-style: italic; font-size: clamp(1.05rem, 2vw, 1.3rem); color: var(--bl-forest); line-height: 1.5; }
+.bhp-landing-testimonial cite { font-style: normal; font-size: 0.8rem; color: var(--bl-text-light); }
+.bhp-landing-testimonial__link { display: block; margin-top: 0.35rem; font-size: 0.76rem; color: var(--bl-text-light); text-decoration: underline; }
+.bhp-landing-testimonial__link:hover, .bhp-landing-testimonial__link:focus-visible { color: var(--bl-forest); }
+
+/* ---------- Kirkus expanded block (P4a, 2026-08-02) ----------
+   Layout only. Every visual treatment of the quote card itself comes from the
+   theme's own .kirkus-credibility rules, so this page can never drift from the
+   homepage rendering of the same approved quote. No colours, no type, no
+   borders are redefined here. */
+.bhp-landing-kirkus { max-width: 1180px; margin: clamp(2.5rem, 6vw, 4rem) auto 0; padding-inline: clamp(1rem, 4vw, 2rem); }
+.bhp-landing-kirkus__inner { max-width: 820px; margin-inline: auto; }
+.bhp-landing-kirkus .kirkus-credibility--expanded { margin-block: 0; }
+
+/* ---------- Story / learning section ---------- */
+.bhp-landing-story { max-width: 1180px; margin: clamp(2.5rem, 6vw, 4rem) auto 0; padding-inline: clamp(1rem, 4vw, 2rem); }
+.bhp-landing-story__header { text-align: center; margin-bottom: 2rem; }
+.bhp-landing-story__header h2 { font-size: clamp(1.4rem, 3vw, 2rem); margin-top: 0.5rem; }
+.bhp-landing-story__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.bhp-landing-story__card { background: var(--bl-ivory); border: 1px solid var(--bl-border); border-radius: 12px; padding: 1.5rem; }
+.bhp-landing-story__card-eyebrow { display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; color: var(--bl-gold-dark); margin-bottom: 0.4rem; }
+.bhp-landing-story__card h3 { font-size: 1.1rem; margin-bottom: 0.6rem; }
+.bhp-landing-story__card ul { margin: 0; padding-left: 1.1em; color: var(--bl-text-muted); font-size: 0.88rem; line-height: 1.7; }
+
+/* ---------- Value comparison ---------- */
+.bhp-landing-value { background: var(--bl-forest); margin-top: clamp(2.5rem, 6vw, 4rem); padding-block: clamp(2.5rem, 5vw, 3.5rem); }
+.bhp-landing-value__inner { max-width: 900px; margin: 0 auto; padding-inline: clamp(1rem, 4vw, 2rem); text-align: center; }
+.bhp-landing-value__heading { color: #fff; font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: 2rem; }
+.bhp-landing-value__panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: left; }
+.bhp-landing-value__panel { border-radius: 12px; padding: 1.25rem 1.5rem; }
+.bhp-landing-value__panel--dark { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); color: rgba(255, 255, 255, 0.85); }
+.bhp-landing-value__panel--light { background: var(--bl-ivory); color: var(--bl-text); }
+.bhp-landing-value__panel-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+.bhp-landing-value__best-badge { background: var(--bl-gold-light); color: var(--bl-forest); padding: 0.15em 0.5em; border-radius: 4px; font-size: 0.65rem; }
+.bhp-landing-value__row { display: flex; justify-content: space-between; padding: 0.3rem 0; font-size: 0.95rem; font-weight: 600; }
+.bhp-landing-value__footnote { color: rgba(255, 255, 255, 0.75); font-size: 0.8rem; margin-top: 1.25rem; }
+.bhp-landing-value__non-price {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.5rem 1.25rem;
+	margin: 1.5rem 0 0;
+	padding: 0;
+	list-style: none;
+	color: rgba(255, 255, 255, 0.82);
+	font-size: 0.82rem;
+}
+.bhp-landing-value__non-price li { position: relative; padding-left: 1.1rem; }
+.bhp-landing-value__non-price li::before { content: '\2713'; position: absolute; left: 0; color: var(--bl-gold); }
+
+/* ---------- Gift section ---------- */
+.bhp-landing-gift { max-width: 1180px; margin: clamp(2.5rem, 6vw, 4rem) auto 0; padding-inline: clamp(1rem, 4vw, 2rem); display: grid; grid-template-columns: 1.1fr 1fr; gap: 2rem; align-items: center; background: var(--bl-ivory); border: 1px solid var(--bl-border); border-radius: 16px; padding-block: 2rem; }
+.bhp-landing-gift__text h2 { font-size: clamp(1.3rem, 2.6vw, 1.8rem); margin: 0.4rem 0 0.75rem; }
+.bhp-landing-gift__text p { color: var(--bl-text-muted); font-size: 0.92rem; margin: 0 0 1.25rem; max-width: 34rem; }
+.bhp-landing-gift__text .bhp-landing-cta { display: inline-block; width: auto; padding-inline: 1.5rem; }
+.bhp-landing-gift__tags { display: flex; flex-wrap: wrap; gap: 0.6rem; padding-inline: clamp(1rem, 3vw, 1.5rem); }
+.bhp-landing-gift__tag { background: var(--bl-cream); border: 1px solid var(--bl-border); border-radius: 999px; padding: 0.5rem 1rem; font-size: 0.82rem; color: var(--bl-text-muted); }
+
+/* ---------- Final CTA ---------- */
+.bhp-landing-final { background: var(--bl-forest); margin-top: clamp(2.5rem, 6vw, 4rem); padding-block: clamp(3rem, 6vw, 4rem); text-align: center; }
+.bhp-landing-final__inner { max-width: 640px; margin: 0 auto; padding-inline: clamp(1rem, 4vw, 2rem); }
+.bhp-landing-final h2 { color: #fff; font-size: clamp(1.5rem, 3.4vw, 2.2rem); margin-bottom: 0.75rem; }
+.bhp-landing-final > .bhp-landing-final__inner > p { color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; margin: 0 0 1.75rem; }
+.bhp-landing-final__panel .bhp-landing-cta { display: inline-block; width: auto; padding-inline: 2rem; }
+.bhp-landing-final__fine-print { color: rgba(255, 255, 255, 0.7); font-size: 0.78rem; margin-top: 0.85rem; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+	.bhp-landing-hero__main { grid-template-columns: 1fr; }
+	.bhp-landing-hero__covers { max-width: 420px; margin-inline: auto; }
+	.bhp-landing-story__grid { grid-template-columns: 1fr; }
+	.bhp-landing-value__panels { grid-template-columns: 1fr; }
+	.bhp-landing-gift { grid-template-columns: 1fr; text-align: center; }
+	.bhp-landing-gift__text p { margin-inline: auto; }
+	.bhp-landing-gift__tags { justify-content: center; }
+}
+
+@media (max-width: 600px) {
+	.bhp-landing { padding-block: 2rem 2.5rem; }
+	.bhp-landing-format-selector__options { grid-template-columns: 1fr; }
+	.bhp-landing-hero__cover:nth-child(1),
+	.bhp-landing-hero__cover:nth-child(3) { transform: none; }
+	.bhp-landing-hero__cover:nth-child(2) { transform: none; }
+	.bhp-landing-value__row { font-size: 0.88rem; }
+	.bhp-landing-cta { font-size: 0.9rem; }
+}
+
+/* ==================================================================
+   F5 (2026-08-03) — STICKY BUY BAR ON /complete-collection/.
+   ------------------------------------------------------------------
+   Deliberately the same shape, the same 44px+ target and the same
+   safe-area handling as the shipped `audience-landing-stickybar`, so the
+   five audience pages and the flagship page behave identically. The
+   colours come from the collapsed F1 palette, not from a fourth set.
+   ================================================================== */
+.bhp-landing-stickybar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 45;
+	background: rgba(11, 36, 27, .97);
+	backdrop-filter: blur(8px);
+	border-top: 1px solid rgba(217, 164, 95, .35);
+	transform: translateY(100%);
+	transition: transform .25s ease, visibility 0s linear .25s;
+	visibility: hidden;                       /* never keyboard-focusable while off screen */
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.bhp-landing-stickybar.is-visible {
+	transform: translateY(0);
+	visibility: visible;
+	transition: transform .25s ease;
+}
+.bhp-landing-stickybar__row {
+	max-width: 1160px;
+	margin: 0 auto;
+	padding: 10px 16px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+.bhp-landing-stickybar__text {
+	color: #f4eede;
+	font-family: var(--font-ui);
+	font-weight: 700;
+	font-size: 13px;
+	letter-spacing: .02em;
+	min-width: 0;
+}
+.bhp-landing-stickybar__form { margin: 0; flex: 0 0 auto; }
+.bhp-landing-stickybar__cta {
+	margin: 0;
+	padding: 0 18px;
+	min-height: 44px;
+	white-space: nowrap;
+}
+@media (max-width: 420px) {
+	.bhp-landing-stickybar__row { padding: 9px 12px; gap: 8px; }
+	.bhp-landing-stickybar__text { font-size: 12px; }
+	.bhp-landing-stickybar__cta { padding: 0 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.bhp-landing-stickybar { transition: none; }
+}
+
+/* ==================================================================
+   F6 — the compact pricing panel.
+   ------------------------------------------------------------------
+   See the long note in includes/bundle-landing-page.php. Nothing factual
+   was dropped; eleven stacked rows became one inline title list and a
+   two-line price block.
+   ================================================================== */
+.bhp-landing-panel__included-inline {
+	margin: .35rem 0 .9rem;
+	font-family: var(--font-ui);
+	font-size: .78rem;
+	line-height: 1.5;
+	letter-spacing: .02em;
+	color: var(--bl-text-muted);
+}
+.bhp-landing-panel__price-rows--compact { margin: 0 0 .85rem; }
+.bhp-landing-panel__price-rows--compact .bhp-landing-panel__price-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem;
+	margin: 0;
+	padding: .35rem 0;
+}
+.bhp-landing-panel__price-rows--compact .bhp-landing-panel__price-row--main dd {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--bl-forest);
+}
+.bhp-landing-panel__price-rows--compact .bhp-landing-panel__price-strike {
+	margin-right: .45rem;
+	font-size: .95rem;
+	font-weight: 400;
+	text-decoration: line-through;
+	opacity: .6;
+}
+.bhp-landing-panel__price-rows--compact .bhp-landing-panel__price-row--meta {
+	font-size: .82rem;
+	color: var(--bl-text-muted);
+}
+.bhp-landing-panel--compact .bhp-landing-panel__subtitle {
+	margin: 0;
+	font-size: .85rem;
+	line-height: 1.45;
+}
+
+/* ==================================================================
+   F23 (2026-08-03) — the five-star reader-review line pops.
+   ------------------------------------------------------------------
+   Andrew, walk-2: "kinda tan - it needs to pop". It was gold-on-cream at
+   the same weight as its three neighbours. It is now the one badge on a
+   navy ground with the single brand gold on it. THE CLAIM TEXT IS
+   UNCHANGED — it stays deliberately scoped to "our first two titles",
+   because The Amazon has no reader reviews and a broader claim would be a
+   fabrication. Styling only.
+   ================================================================== */
+.bhp-landing-trust-badge--gold {
+	background: var(--color-navy, #071522) !important;
+	border-color: rgba(217, 164, 95, .55) !important;
+	color: var(--color-gold, #D9A45F) !important;
+	font-weight: 700;
+	letter-spacing: .01em;
+	box-shadow: 0 6px 18px rgba(7, 21, 34, .22);
+}
+
+/* ==================================================================
+   F6, second pass (2026-08-03) — mobile vertical rhythm on the
+   Collection page.
+   ------------------------------------------------------------------
+   After the panel compression the buy button moved 1824 -> 1520 at
+   390x844. The remaining distance is not restatement any more, it is
+   the page's own top padding and the gaps between the hero blocks, so
+   this trims those rather than cutting more content. The gallery is
+   untouched, per the brief.
+   ================================================================== */
+@media (max-width: 640px) {
+	.bhp-landing { padding-block: 1.25rem 2.5rem; }
+	.bhp-landing-hero__intro { margin-bottom: .9rem; }
+	.bhp-landing-hero__title { margin-bottom: .5rem; }
+	.bhp-landing-hero__text { margin-bottom: .45rem; }
+	.bhp-landing-hero__subtext { margin-bottom: .4rem; font-size: .85rem; }
+	.bhp-landing-card { padding: 1rem 1rem 1.1rem; }
+	.bhp-landing-card__badge { margin-bottom: .6rem; }
+	.bhp-landing-format-selector { margin-bottom: .75rem; }
+	.bhp-landing-format-selector__note { margin: .5rem 0 0; font-size: .74rem; line-height: 1.4; }
+	.bhp-landing-panel__savings { margin-bottom: .8rem; }
+}
+
+/* ==================================================================
+   ⭐ 1.8.28 — SALES-FIRST HERO ORDER. CYCLE144-LD-251.
+   ------------------------------------------------------------------
+   Andrew Signore, 2026-08-05, with screenshots (relayed): "we need the
+   actual sales section above the fold - these need to switch".
+
+   The PHP now renders `.bhp-landing-hero__main` (gallery + purchase
+   card) BEFORE `.bhp-landing-hero__intro` (eyebrow, H1, travel copy)
+   inside the same `.bhp-landing-hero__inner`. Nothing was deleted and
+   no copy changed.
+
+   Only the vertical margins needed correcting, because both base rules
+   were written for the old order:
+
+     .bhp-landing-hero__intro  had a BOTTOM margin (space before main)
+     .bhp-landing-hero__main   had a TOP margin    (space after intro)
+
+   Left alone that produces a doubled gap between the two blocks and a
+   stray gap above the purchase card, which is now the first thing on
+   the page. These rules move the single separating gap to the intro's
+   TOP and zero the two margins that now face nothing.
+
+   Specificity: `.bhp-landing-hero--sales-first .bhp-landing-hero__X` is
+   0,2,0 and therefore beats the 0,1,0 base rules AND the 0,1,0 rule
+   inside the 640px block above, at every width, regardless of source
+   order. Scoped to the modifier so no other layout can be affected.
+   The grid, the columns, the gallery and the card are untouched.
+   ================================================================== */
+.bhp-landing-hero--sales-first .bhp-landing-hero__main {
+	margin-top: 0;
+}
+.bhp-landing-hero--sales-first .bhp-landing-hero__intro {
+	margin-top: clamp(18px, 2.6vw, 30px);
+	margin-bottom: 0;
+}
+@media (max-width: 640px) {
+	.bhp-landing-hero--sales-first .bhp-landing-hero__intro {
+		margin-top: 1.1rem;
+		margin-bottom: 0;
+	}
+}

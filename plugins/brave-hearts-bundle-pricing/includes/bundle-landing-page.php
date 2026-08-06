@@ -1,0 +1,915 @@
+<?php
+/**
+ * Brave Hearts Bundle Pricing — premium complete-series landing page.
+ *
+ * Renders [bhp_complete_series_landing]: the flagship "Three Big
+ * Adventures. One Complete Collection." sales page approved in the
+ * Staging Refinement Phase 2 mockup (Adventure Bundle4.pdf / .html).
+ *
+ * Architecture notes:
+ * - All prices, savings, and shipping figures are read from
+ *   bundle-data.php (bhp_bundle_catalog/_rules/_expected_price/
+ *   _single_shipping) — nothing here hardcodes a dollar amount that
+ *   isn't already the single source of truth used by the cart/shipping
+ *   logic in bundle-cart.php. If Andrew changes a price there, this page
+ *   updates automatically instead of silently drifting out of sync.
+ * - Both the paperback and hardcover panels of the pricing card (and the
+ *   final CTA) are rendered into the page at the same time; JS
+ *   (bundle-landing.js) toggles which one is visible via the `hidden`
+ *   attribute. No AJAX round-trip and no re-typing of copy is needed to
+ *   switch formats, and screen readers/keyboard users get a real native
+ *   `hidden` state rather than a CSS-only illusion of one.
+ * - The "Add the Complete Set" buttons submit the same form.bhp-bundle-
+ *   form markup already intercepted by bundle-drawer.js, using new
+ *   complete_paperback_smart / complete_hardcover_smart actions (see
+ *   bundle-shortcode.php) so a customer who already has part of the set
+ *   in their cart only gets the missing titles added — never a duplicate
+ *   line or an unintended quantity bump.
+ * - This file never creates a bundle product or bundle SKU. Every Add
+ *   Complete Set click adds the three real, individually-mapped
+ *   WooCommerce products as separate cart line items.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+add_shortcode( 'bhp_complete_series_landing', 'bhp_bundle_render_landing_page' );
+
+/**
+ * Only enqueue this page's dedicated CSS/JS on pages that actually use the
+ * shortcode -- the forest-green premium palette is intentionally scoped to
+ * this one flagship page, not loaded sitewide.
+ */
+add_action( 'wp_enqueue_scripts', 'bhp_bundle_landing_enqueue_assets' );
+function bhp_bundle_landing_enqueue_assets() {
+	if ( ! is_singular() || ! has_shortcode( get_post()->post_content, 'bhp_complete_series_landing' ) ) {
+		return;
+	}
+	/*
+	 * F1 (2026-08-03): the Newsreader request is REMOVED. Newsreader was
+	 * loaded for this one page in the entire site, which made the Complete
+	 * Collection the only surface whose body copy used a typeface found
+	 * nowhere else on the walk from home to funnel to collection to product.
+	 * The page now takes the sitewide Cormorant Garamond for headings and
+	 * EB Garamond for body, both already requested by the theme.
+	 */
+	wp_enqueue_style( 'bhp-bundle-landing', BHP_BUNDLE_PRICING_URL . 'assets/bundle-landing.css', array(), BHP_BUNDLE_PRICING_VERSION );
+	wp_enqueue_script( 'bhp-bundle-landing', BHP_BUNDLE_PRICING_URL . 'assets/bundle-landing.js', array( 'jquery' ), BHP_BUNDLE_PRICING_VERSION, true );
+	wp_localize_script(
+		'bhp-bundle-landing',
+		'bhpLandingData',
+		array(
+			'savings' => array(
+				'paperback' => bhp_bundle_rules( 'paperback' )[3]['discount'],
+				'hardcover' => bhp_bundle_rules( 'hardcover' )[3]['discount'],
+			),
+		)
+	);
+}
+
+/**
+ * Per-format copy that isn't already covered by bundle-data.php's price/
+ * discount tables -- material description and CTA/heading strings. Kept
+ * in one place so the two format panels stay easy to compare and edit.
+ */
+function bhp_bundle_landing_format_copy( $format ) {
+	if ( 'hardcover' === $format ) {
+		return array(
+			'title'        => 'Complete Hardcover Collection',
+			'subtitle'     => 'Hardcover · sturdy library-quality binding · built to last for years of rereading',
+			'cta'          => 'Add the Complete Hardcover Collection',
+			'material_tag' => 'Hardcover',
+		);
+	}
+	return array(
+		'title'        => 'Complete Paperback Collection',
+		'subtitle'     => 'Softcover · durable matte cover · lightweight and easy to read',
+		'cta'          => 'Add the Complete Paperback Collection',
+		'material_tag' => 'Paperback',
+	);
+}
+
+/**
+ * F14 / CYCLE142-CX-013 / KNOWN_ISSUES CYCLE141-LD-33 — ONE nonce id, not four.
+ *
+ * `wp_nonce_field()` emits `<input type="hidden" id="bhp_bundle_nonce" ...>`.
+ * This page renders FOUR bundle forms (a pricing panel and a final-CTA panel
+ * for each of paperback and hardcover, all present in the DOM at once with
+ * `hidden` toggling which is visible), so the page carried FOUR elements with
+ * the same DOM id. Measured live at both viewports; the count had grown from
+ * the three recorded in KNOWN_ISSUES.
+ *
+ * A duplicate id is invalid HTML, makes `document.getElementById` and every
+ * `label[for]` ambiguous, and is exactly the class of defect that makes an
+ * accessibility or analytics audit unreliable.
+ *
+ * The fix is to emit the field WITHOUT an id. Nonce verification reads the
+ * request by NAME (`$_POST['bhp_bundle_nonce']`), never by DOM id, so
+ * `wp_verify_nonce()` behaves identically -- verified by reading
+ * `bhp_bundle_handle_add()`'s own check, which uses the name. The value, the
+ * action string and the referer field are all unchanged.
+ */
+function bhp_bundle_nonce_input() {
+	printf(
+		'<input type="hidden" name="bhp_bundle_nonce" value="%s" />',
+		esc_attr( wp_create_nonce( 'bhp_bundle_add' ) )
+	);
+	wp_referer_field( true );
+}
+
+function bhp_bundle_render_landing_page() {
+	ob_start();
+	wc_print_notices();
+	?>
+	<div class="bhp-landing" data-bhp-landing>
+		<?php
+		bhp_bundle_render_landing_hero();
+		bhp_bundle_render_landing_trust_row();
+		bhp_bundle_render_landing_parent_outcomes();
+		bhp_bundle_render_landing_testimonial();
+		bhp_bundle_render_landing_story_section();
+		bhp_bundle_render_landing_kirkus();
+		bhp_bundle_render_landing_value_comparison();
+		bhp_bundle_render_landing_gift_section();
+		bhp_bundle_render_landing_final_cta();
+		?>
+	</div>
+	<?php
+	bhp_bundle_render_landing_sticky_bar();
+	return ob_get_clean();
+}
+
+/**
+ * Section: concise parent-outcome benefits, placed near the main offer
+ * and before the value comparison per the conversion correction spec.
+ * Every line is a supportable, non-clinical claim -- no literacy,
+ * educational, or guaranteed-performance claims are made.
+ */
+function bhp_bundle_render_landing_parent_outcomes() {
+	?>
+	<section class="bhp-landing-outcomes">
+		<ul class="bhp-landing-outcomes__list">
+			<li>Three complete adventures with familiar recurring characters</li>
+			<li>Helps growing readers build confidence across a series</li>
+			<li>Combines real-world science, geography, history, courage, and kindness</li>
+			<li>Works for family read-alouds and developing independent readers</li>
+			<li>Creates a ready-made home, homeschool, or classroom adventure library</li>
+		</ul>
+	</section>
+	<?php
+}
+
+/**
+ * Sections 1-7 (hero, headline/copy, format selector, pricing card,
+ * savings, shipping, main CTA) live together because the format selector
+ * and pricing card are one visual unit in the approved mockup.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.8.28 — THE SALES UNIT IS NOW FIRST. CYCLE144-LD-251.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-05, with screenshots (relayed through the Chief
+ * of Staff, quoted not paraphrased): "we need the actual sales section
+ * above the fold - these need to switch".
+ *
+ * ⛔ THIS IS A MOVE, NOT A COPY, AND NOTHING IS DELETED. The two blocks
+ *    that already lived inside `.bhp-landing-hero__inner` simply changed
+ *    places:
+ *
+ *      BEFORE   __intro (narrative)  →  __main (gallery + purchase card)
+ *      AFTER    __main (gallery + purchase card)  →  __intro (narrative)
+ *
+ *    Same section element, same inner wrapper, same two child blocks,
+ *    same class names, byte-identical copy inside each. Every price row,
+ *    the Shipping row, the Activity Book row, the format toggle, the
+ *    2-click CTA and the `[data-bhp-pricing-card]` hook are untouched —
+ *    they are rendered by the same functions, in the same order, from the
+ *    same data.
+ *
+ * ⛔ WHY TWO HELPER FUNCTIONS RATHER THAN A CUT-AND-PASTE. Reordering by
+ *    physically moving 60 lines of markup makes the diff unreviewable and
+ *    invites a copy/delete error in exactly the block that carries the
+ *    prices. Extracting each block into its own function makes the order
+ *    ONE line, and makes a future re-order one line again.
+ *
+ * The vertical margins that assumed intro-then-main are corrected in
+ * `bundle-landing.css` under `.bhp-landing-hero--sales-first`, which is
+ * why the section carries that modifier. No other CSS is touched.
+ */
+function bhp_bundle_render_landing_hero() {
+	?>
+	<section class="bhp-landing-hero bhp-landing-hero--sales-first">
+		<div class="bhp-landing-hero__inner">
+			<?php
+			bhp_bundle_render_landing_hero_sales();
+			bhp_bundle_render_landing_hero_intro();
+			?>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * The SALES unit: the book gallery and the purchase card, side by side.
+ *
+ * Moved verbatim out of bhp_bundle_render_landing_hero() in 1.8.28 so the
+ * order of the two hero blocks is a single readable line. Not one
+ * character of the markup, the media slot, the fallback covers or the
+ * pricing-card call changed in the move.
+ */
+function bhp_bundle_render_landing_hero_sales() {
+	$catalog = bhp_bundle_catalog();
+	?>
+	<div class="bhp-landing-hero__main">
+		<?php
+		/*
+		 * HERO MEDIA SLOT (2026-08-02). Purely additive.
+		 *
+		 * The theme's shared product gallery renders here when it has
+		 * approved Complete Collection media, so this page uses the same
+		 * main-image experience as the individual book pages instead of
+		 * a second, parallel design.
+		 *
+		 * If nothing is hooked — or the theme is swapped — the original
+		 * three-cover block below renders exactly as before, so the hero
+		 * can never end up without a main image. Cart, pricing,
+		 * discount, shipping and coupon logic all live in
+		 * bundle-cart.php and are untouched by this.
+		 */
+		ob_start();
+		do_action( 'bhp_bundle_landing_hero_media' );
+		$bhp_hero_media = trim( ob_get_clean() );
+
+		if ( '' !== $bhp_hero_media ) {
+			echo $bhp_hero_media; // phpcs:ignore WordPress.Security.EscapeOutput -- theme-rendered gallery markup, escaped at source.
+		} else {
+		?>
+		<div class="bhp-landing-hero__covers">
+			<?php
+			$covers = array(
+				array( 'format' => 'paperback', 'title' => 'mariana', 'label' => 'Book One - Ocean' ),
+				array( 'format' => 'paperback', 'title' => 'everest', 'label' => 'Book Two - Mountain' ),
+				array( 'format' => 'paperback', 'title' => 'amazon', 'label' => 'Book Three - Rainforest' ),
+			);
+			foreach ( $covers as $cover ) :
+				$info = $catalog[ $cover['format'] ][ $cover['title'] ];
+				$product = wc_get_product( $info['product_id'] );
+				$image_id = $product ? $product->get_image_id() : 0;
+			?>
+				<figure class="bhp-landing-hero__cover">
+					<?php if ( $image_id ) : ?>
+						<?php echo wp_get_attachment_image( $image_id, 'medium', false, array( 'loading' => 'eager' ) ); // phpcs:ignore ?>
+					<?php endif; ?>
+					<figcaption><?php echo esc_html( $cover['label'] ); ?></figcaption>
+				</figure>
+			<?php endforeach; ?>
+		</div>
+		<?php
+		} // end hero-media fallback
+		?>
+		<?php bhp_bundle_render_landing_pricing_card(); ?>
+	</div>
+	<?php
+}
+
+/**
+ * The NARRATIVE unit: eyebrow, H1 and the travel/ages copy.
+ *
+ * Moved verbatim out of bhp_bundle_render_landing_hero() in 1.8.28. The
+ * copy is locked approved prose and is byte-identical to 1.8.27 — the
+ * move changed where it renders, never what it says. The `<h1>` is still
+ * the page's only H1 and still carries the same text, so the document
+ * outline and the page's headline claim are unchanged.
+ */
+function bhp_bundle_render_landing_hero_intro() {
+	?>
+	<div class="bhp-landing-hero__intro">
+		<span class="bhp-landing-eyebrow">
+			<span class="bhp-landing-eyebrow__dot" aria-hidden="true"></span>
+			The Adventures of Charlotte &amp; Henry
+		</span>
+		<h1 class="bhp-landing-hero__title">Three Big Adventures.<br>One Complete Collection.</h1>
+		<p class="bhp-landing-hero__text">Travel from the deepest ocean trench to the top of Mount Everest and into the heart of the Amazon rainforest.</p>
+		<p class="bhp-landing-hero__subtext">Adventure chapter books for ages 6&ndash;9 that bring together real places, science, history, courage, and kindness.</p>
+	</div>
+	<?php
+}
+
+function bhp_bundle_render_landing_pricing_card() {
+	?>
+	<?php
+	/*
+	 * ⭐ 1.8.28 — THE ANCHOR NOW HAS A TARGET. CYCLE144-LD-252.
+	 *
+	 * VERIFIED LIVE on production 2026-08-05 before this change: the page
+	 * carries `<a href="#bhp-landing-pricing-card">` (gift section) but
+	 * `id="bhp-landing-pricing-card"` occurred ZERO times in the rendered
+	 * document. The link only worked because `bundle-landing.js`
+	 * `initScrollToCard()` intercepts the click; with JS unavailable, or
+	 * for a visitor arriving on a `/complete-collection/#bhp-landing-
+	 * pricing-card` URL from outside the page, it resolved to nothing.
+	 *
+	 * Adding the id makes the anchor resolve natively. It changes no
+	 * scripted behaviour: the JS handler calls `e.preventDefault()` before
+	 * `scrollIntoView()`, so when JS runs the smooth-scroll-and-highlight
+	 * path is exactly what it was. `[data-bhp-pricing-card]` is unchanged
+	 * and is still what the JS and the sticky-bar suppression query on.
+	 *
+	 * The id is unique on the page — the pricing card renders once.
+	 */
+	?>
+	<div class="bhp-landing-card" id="bhp-landing-pricing-card" data-bhp-pricing-card>
+		<span class="bhp-landing-card__badge">
+			<span class="bhp-landing-eyebrow__dot" aria-hidden="true"></span>
+			Best Value - Get the Complete Collection
+		</span>
+
+		<div class="bhp-landing-format-selector" role="radiogroup" aria-label="Choose your format">
+			<p class="bhp-landing-format-selector__label">Choose Your Format</p>
+			<div class="bhp-landing-format-selector__options">
+				<?php
+				/*
+				 * C1 (2026-08-03) — the pills now lead with the format the page
+				 * actually opens on. `bhp_bundle_format_order()` is derived from
+				 * `bhp_bundle_default_format()`, so the selected pill is always
+				 * the first one. Order only; no price, product or default
+				 * SELECTION changes. See bundle-data.php for the full note.
+				 */
+				foreach ( bhp_bundle_format_order() as $format ) :
+					$price = bhp_bundle_rules( $format )[3]['discount'];
+					$bundle_price = ( 3 * bhp_bundle_expected_price( $format ) ) - bhp_bundle_rules( $format )[3]['discount'];
+					// 2026-07-30: the initially-selected format now comes from
+					// bhp_bundle_default_format() instead of being hardcoded to
+					// paperback, so the selector, the pricing panel and the final
+					// CTA panel below can never disagree about the default.
+					$is_default = bhp_bundle_default_format() === $format;
+				?>
+				<button
+					type="button"
+					role="radio"
+					aria-checked="<?php echo $is_default ? 'true' : 'false'; ?>"
+					class="bhp-landing-format-btn<?php echo $is_default ? ' is-selected' : ''; ?>"
+					data-bhp-format-btn="<?php echo esc_attr( $format ); ?>"
+				>
+					<span class="bhp-landing-format-btn__name"><?php echo esc_html( ucfirst( $format ) ); ?></span>
+					<span class="bhp-landing-format-btn__price">$<?php echo esc_html( number_format( $bundle_price, 2 ) ); ?> collection</span>
+					<span class="bhp-landing-format-btn__check" aria-hidden="true">&#10003; Selected</span>
+				</button>
+				<?php endforeach; ?>
+			</div>
+			<p class="bhp-landing-format-selector__note">Choose paperback for the most affordable reading set, or hardcover for a more durable, gift-ready edition.</p>
+		</div>
+
+		<?php /* C1 — same ordering call. These panels are toggled by `hidden`, so
+		         this is a DOM/tab-order alignment with the pills above, not a
+		         visual change: the visible panel is the default either way. */ ?>
+		<?php foreach ( bhp_bundle_format_order() as $format ) : ?>
+			<?php bhp_bundle_render_landing_pricing_panel( $format ); ?>
+		<?php endforeach; ?>
+	</div>
+	<?php
+}
+
+function bhp_bundle_render_landing_pricing_panel( $format ) {
+	$catalog       = bhp_bundle_catalog();
+	$copy          = bhp_bundle_landing_format_copy( $format );
+	$unit_price    = bhp_bundle_expected_price( $format );
+	$combined      = 3 * $unit_price;
+	$rule          = bhp_bundle_rules( $format )[3];
+	$bundle_price  = $combined - $rule['discount'];
+	$action        = 'complete_' . $format . '_smart';
+	?>
+	<?php
+	/*
+	 * ---------------------------------------------------------------------
+	 * F6 / CYCLE142-CX-002 (2026-08-03) — CLOSING THE 644px.
+	 * ---------------------------------------------------------------------
+	 * MEASURED before, at 390 x 844 with `innerWidth` asserted: the format
+	 * buttons ended at y=1087 and the buy button sat at y=1824. 644px of
+	 * restatement in between, on the ONE page in the whole site whose primary
+	 * CTA is below the fold at BOTH viewports (1824 vs an 844 fold on mobile;
+	 * 1482 vs 900 on desktop). Every other page's first CTA lands at 437-739.
+	 *
+	 * The gallery is NOT the wall and is NOT touched — it costs 334px and is
+	 * the best-executed component on the site. What was cut is the bulk that
+	 * says again what the page has already said:
+	 *
+	 *   - the panel TITLE restated the format the customer had literally just
+	 *     chosen ("Complete Hardcover Collection" under a Hardcover button that
+	 *     is already showing "Selected");
+	 *   - the "All Three Books Included" label plus a three-row checklist
+	 *     restated the hero's own "Three Big Adventures. One Complete
+	 *     Collection." and the three-book photograph directly above it;
+	 *   - the price table spent three stacked rows on two numbers.
+	 *
+	 * NOTHING FACTUAL IS REMOVED. All three titles, the combined price, the
+	 * collection price, the shipping figure, the saving and the ages line are
+	 * all still on screen — as one inline list and one two-line price block
+	 * instead of eleven stacked rows. The binding/material subtitle STAYS,
+	 * deliberately: it is the only thing on the page that justifies the
+	 * hardcover's price, and it is the default format.
+	 */
+	?>
+	<div class="bhp-landing-panel bhp-landing-panel--compact" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo bhp_bundle_default_format() === $format ? '' : 'hidden'; ?>>
+		<h2 class="bhp-landing-panel__title screen-reader-text"><?php echo esc_html( $copy['title'] ); ?></h2>
+		<p class="bhp-landing-panel__subtitle"><?php echo esc_html( $copy['subtitle'] ); ?></p>
+
+		<p class="bhp-landing-panel__included-inline">
+			<?php
+			$bhp_titles = array();
+			foreach ( $catalog[ $format ] as $info ) {
+				$bhp_titles[] = $info['label'];
+			}
+			echo esc_html( implode( ' · ', $bhp_titles ) );
+			?>
+		</p>
+
+		<dl class="bhp-landing-panel__price-rows bhp-landing-panel__price-rows--compact">
+			<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--main">
+				<dt>Complete Collection</dt>
+				<dd>
+					<span class="bhp-landing-panel__price-strike">$<?php echo esc_html( number_format( $combined, 2 ) ); ?></span>
+					<?php echo esc_html( '$' . number_format( $bundle_price, 2 ) ); ?>
+				</dd>
+			</div>
+			<?php
+			/*
+			 * ⭐ 1.8.23 — rendered through bhp_bundle_shipping_display(), not
+			 *    number_format(). The figure is still read from
+			 *    bhp_bundle_rules() and is still the same figure the cart
+			 *    charges; only its WORDING is now centralised, so a $0.00
+			 *    tier reads "FREE" here instead of "$0.00 flat".
+			 */
+			?>
+			<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta">
+				<dt>Shipping</dt>
+				<dd><?php echo esc_html( bhp_bundle_shipping_display( $rule['shipping'], 'row' ) ); ?></dd>
+			</div>
+			<?php
+			/*
+			 * ═══════════════════════════════════════════════════════════
+			 * ⭐ 1.8.27 — THE ACTIVITY BOOK ROW. CYCLE144-LD-221.
+			 * ═══════════════════════════════════════════════════════════
+			 *
+			 * Andrew Signore, 2026-08-05 (relayed): "I want it clear that
+			 * you get Free Shipping and a Free Activity book with
+			 * Collection purchase- on all collection pages and boxes".
+			 * This is the collection page's price box, immediately under
+			 * the Shipping row it pairs with.
+			 *
+			 * ⛔ GATED ON THE PLUGIN'S OWN DELIVERABILITY TEST, exactly
+			 *    like the free-shipping wording above it.
+			 *    `bhp_bundle_addon_free_with_collection()` is false unless
+			 *    the offer is enabled AND `BHP-ACTIVITY-BOOK-01` resolves
+			 *    to a real, purchasable, in-stock product on THIS
+			 *    environment. On an environment without the product this
+			 *    row does not render and the page is byte-identical to
+			 *    1.8.26.
+			 *
+			 * ⛔ NO PRICE, no "$5 value", no "normally $5". A struck-out
+			 *    comparison would be a claim about what someone else pays,
+			 *    and this row makes no claim beyond what the cart does.
+			 */
+			?>
+			<?php if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) : ?>
+				<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta">
+					<dt>Activity Book</dt>
+					<dd><?php echo esc_html( bhp_bundle_addon_free_display() ); ?></dd>
+				</div>
+			<?php endif; ?>
+		</dl>
+
+		<div class="bhp-landing-panel__savings">
+			<span class="bhp-landing-panel__savings-badge"><?php echo esc_html( $rule['save'] ); ?></span>
+			<span class="bhp-landing-panel__ages">Ages 6&ndash;9</span>
+		</div>
+
+		<form method="post" class="bhp-bundle-form bhp-landing-panel__form">
+			<?php bhp_bundle_nonce_input(); ?>
+			<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( $action ); ?>" />
+			<?php bhp_bundle_checkout_redirect_input(); // P2-5: one tap -> /checkout/ ?>
+			<button type="submit" class="button bhp-landing-cta bhp-landing-cta--primary" data-bhp-landing-main-cta>
+				<?php echo esc_html( $copy['cta'] ); ?>
+			</button>
+		</form>
+
+		<?php
+		/*
+		 * 2026-08-02: "Printed and shipped in the USA" REMOVED from this line.
+		 *
+		 * It was a country-of-origin claim with no located source. Searched and
+		 * found nothing: repo docs/ (including bookvault-chronology.md and
+		 * fulfillment-copy-correction-2026-07-09.md), the Business OS corpus and
+		 * the Strategy corpus. The 2026-07-09 fulfilment-copy record states in
+		 * its own "Not claimed / not added" section that no copy was added
+		 * claiming "domestic-only printing" -- yet this line claimed exactly
+		 * that, on the highest-value page, while none of the three product pages
+		 * made any such claim. Bookvault is a print-on-demand network with
+		 * facilities in more than one country; nothing in reach establishes
+		 * where any given order is printed.
+		 *
+		 * The two surviving statements are both mechanically verifiable:
+		 * checkout is served over TLS, and Bookvault supplies tracking.
+		 *
+		 * To restore it, a Bookvault country-of-print record must exist and be
+		 * cited here. Tracked as CYCLE140-CX-10.
+		 */
+		?>
+		<p class="bhp-landing-panel__fine-print">Secure checkout &middot; Tracking provided</p>
+
+		<!-- Quiet tertiary exit, moved below the primary CTA and fine print
+		     so it never visually competes with "Add the Complete ___
+		     Collection" inside the purchase card (conversion correction). -->
+		<a href="<?php echo esc_url( home_url( '/books/' ) ); ?>" class="bhp-landing-panel__view-link">View Individual Books</a>
+	</div>
+	<?php
+}
+
+/**
+ * Section 8: trust badges. Every badge here is either a plain factual
+ * statement (age range, read-aloud friendliness) or reuses the theme's
+ * existing verified-review infrastructure (Kirkus, Amazon five-star
+ * reviews) -- nothing invents a new statistic. "Placed in 40 Boise
+ * classrooms" replaces the earlier "Used in 40 classrooms" wording
+ * (Sprint A, 2026-07-16): Andrew confirmed the defensible fact is that
+ * books were physically placed in 40 Boise-area classrooms -- actual
+ * classroom use, reading frequency, and outcomes are not confirmed, so
+ * the badge states placement only, never usage/adoption/endorsement.
+ *
+ * ⭐ N4 (2026-08-03) — THE COUNT IS NOW GONE. The badge reads "Placed in
+ *    classrooms across Boise".
+ *
+ *    Andrew, production walk, verbatim: "It was placed in 40 boise
+ *    classrooms - that number is going to change constantly - whats another
+ *    way to say it without a number", then "number 1 for sure" of the
+ *    numberless option. (Relayed through the Chief of Staff; NOT witnessed
+ *    first-hand here.)
+ *
+ *    ⛔ THE PARAGRAPH ABOVE IS PRESERVED, NOT REWRITTEN. It is the only
+ *       record of WHY the verb is "placed" rather than "used", and that
+ *       reasoning is unchanged and still binding — this edit drops a number
+ *       that goes stale, it does not widen the claim. Placement remains the
+ *       only thing asserted; use, frequency and outcomes remain unclaimed.
+ *       The claim was attested true at 40 as of 2026-08-03.
+ */
+function bhp_bundle_render_landing_trust_row() {
+	$has_reviews = function_exists( 'bhp_get_approved_amazon_reviews_for_book' )
+		&& ( bhp_get_approved_amazon_reviews_for_book( 'mariana_trench' ) || bhp_get_approved_amazon_reviews_for_book( 'mount_everest' ) );
+	?>
+	<div class="bhp-landing-trust-row">
+		<span class="bhp-landing-trust-badge">Placed in classrooms across Boise</span>
+		<span class="bhp-landing-trust-badge">Great for ages 6&ndash;9</span>
+		<span class="bhp-landing-trust-badge">Read-aloud &amp; independent friendly</span>
+		<?php
+		/*
+		 * 2026-08-02: scoped from the unqualified "Five-star reader reviews".
+		 * This page sells all three titles as one product, and $has_reviews is
+		 * an OR across Mariana and Everest -- so the unqualified badge asserted
+		 * review proof for a bundle whose third book (The Amazon, published
+		 * 2026-06-26) has none. The approved registry inc/amazon-reviews.php
+		 * holds four 5-star reviews for The Mariana Trench, two for Mount
+		 * Everest and ZERO for The Amazon. Stars and schema unchanged --
+		 * CYCLE140-CX-9 (whether a bare glyph run reads as an aggregate) is
+		 * Andrew's presentation call and is deliberately not resolved here.
+		 */
+		?>
+		<?php if ( $has_reviews ) : ?>
+			<span class="bhp-landing-trust-badge bhp-landing-trust-badge--gold">&#9733;&#9733;&#9733;&#9733;&#9733; Five-star reader reviews on our first two titles</span>
+		<?php endif; ?>
+		<span class="bhp-landing-trust-badge">Featuring a Kirkus-reviewed title</span>
+	</div>
+	<?php
+}
+
+/**
+ * Section 9: testimonial. Verified Amazon review of Adventures of
+ * Charlotte and Henry: The Mariana Trench, supplied directly by Andrew
+ * (2026-07-05). Now registered as amz-mariana-04 in
+ * bhp_get_amazon_review_registry() (inc/amazon-reviews.php) -- the source
+ * URL is read from that single registry entry rather than duplicated
+ * here, so there is only one place it could ever go stale.
+ */
+function bhp_bundle_get_testimonial_source_url() {
+	if ( function_exists( 'bhp_get_amazon_review_registry' ) ) {
+		foreach ( bhp_get_amazon_review_registry() as $review ) {
+			if ( 'amz-mariana-04' === $review['id'] ) {
+				return $review['source_url'];
+			}
+		}
+	}
+	return '';
+}
+
+/**
+ * Conversion correction (2026-07-06): the "Read on Amazon" link used to
+ * sit directly beneath this early-funnel testimonial, giving a third-party
+ * marketplace an exit right next to the top of the page before the
+ * visitor has even reached a purchase decision. The quote and "Verified
+ * Amazon review" attribution stay here (they're trust content, and
+ * accurate), but the actual outbound link now renders once, quietly,
+ * near the final CTA instead -- see bhp_bundle_render_landing_amazon_source_link().
+ */
+function bhp_bundle_render_landing_testimonial() {
+	?>
+	<div class="bhp-landing-testimonial">
+		<div class="bhp-landing-testimonial__stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+		<blockquote>
+			<p>&ldquo;My students were drawn to the vivid setting and sense of exploration. It&rsquo;s engaging, educational, and a great addition to any classroom or home library.&rdquo;</p>
+		</blockquote>
+		<cite>Payton, elementary teacher - Verified Amazon review</cite>
+	</div>
+	<?php
+}
+
+/**
+ * Quiet tertiary link to the source review, placed after the final CTA so
+ * it never competes with the direct-purchase action. Opens in a new tab
+ * with safe rel attributes; renders nothing if no verified source URL
+ * exists (never fabricates one).
+ */
+function bhp_bundle_render_landing_amazon_source_link() {
+	$source_url = bhp_bundle_get_testimonial_source_url();
+	if ( ! $source_url ) {
+		return;
+	}
+	?>
+	<p class="bhp-landing-amazon-source">
+		<a
+			href="<?php echo esc_url( $source_url ); ?>"
+			rel="noopener noreferrer"
+			target="_blank"
+			<?php
+			/*
+			 * ⭐ CYCLE144-LD-221 (2026-08-05) — WCAG 2.5.3 (Label in Name).
+			 *
+			 * MEASURED, Lighthouse 12.8.2 / axe, staging /complete-collection/,
+			 * mobile: `label-content-name-mismatch` FAILED on this anchor —
+			 * "Text inside the element is not included in the accessible name".
+			 * The visible label is "Read the verified review on Amazon"; the old
+			 * accessible name began "Read the verified Amazon review of…", which
+			 * shares words but contains the visible phrase nowhere.
+			 *
+			 * A speech-input user saying the words they can SEE could not
+			 * activate this link. The name now leads with the visible label
+			 * verbatim and keeps the disambiguating context after it.
+			 *
+			 * ⛔ NOTHING VISIBLE CHANGES, and no review, rating or quote is
+			 *    altered, added or invented — this is the link's label only.
+			 */
+			?>
+			aria-label="<?php esc_attr_e( 'Read the verified review on Amazon — The Mariana Trench, the review quoted above (opens in a new tab)', 'brave-hearts' ); ?>"
+			data-bhp-event="customer_review_source_click"
+			data-bhp-book="mariana_trench"
+			data-bhp-source="complete_collection_testimonial"
+		><?php esc_html_e( 'Read the verified review on Amazon', 'brave-hearts' ); ?></a>
+	</p>
+	<?php
+}
+
+/**
+ * Sections 10-11: three-book story section doubles as the learning-
+ * benefit cards -- each card's bullet list IS the "what children learn"
+ * content for that book, so one section satisfies both requirements
+ * without repeating the same three books twice on the page.
+ */
+function bhp_bundle_render_landing_story_section() {
+	$books = array(
+		array(
+			'eyebrow' => 'Book One',
+			'title'   => 'The Mariana Trench',
+			'points'  => array( 'Deep-sea science', 'Ocean exploration', 'Courage in the unknown' ),
+		),
+		array(
+			'eyebrow' => 'Book Two',
+			'title'   => 'Mount Everest',
+			'points'  => array( 'Mountain science', 'Historic explorers', 'Teamwork &amp; perseverance' ),
+		),
+		array(
+			'eyebrow' => 'Book Three',
+			'title'   => 'The Amazon',
+			'points'  => array( 'Rainforest wildlife', 'River systems', 'Conservation &amp; kindness' ),
+		),
+	);
+	?>
+	<section class="bhp-landing-story">
+		<header class="bhp-landing-story__header">
+			<p class="bhp-landing-eyebrow bhp-landing-eyebrow--center">What Children Discover</p>
+			<h2>Three remarkable places. Three unforgettable journeys.</h2>
+		</header>
+		<div class="bhp-landing-story__grid">
+			<?php foreach ( $books as $book ) : ?>
+				<div class="bhp-landing-story__card">
+					<span class="bhp-landing-story__card-eyebrow"><?php echo esc_html( strtoupper( $book['eyebrow'] ) ); ?></span>
+					<h3><?php echo esc_html( $book['title'] ); ?></h3>
+					<ul>
+						<?php foreach ( $book['points'] as $point ) : ?>
+							<li><?php echo wp_kses_post( $point ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			<?php endforeach; ?>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * Section 11b: the expanded Kirkus block (P4a, 2026-08-02).
+ *
+ * Closes gap G4 from the 2026-08-02 trust-signal audit: this page carried the
+ * Kirkus *badge* in the trust row with no quote and no link, while the homepage
+ * carried the full quote -- the strongest third-party asset was weakest on the
+ * highest-value page.
+ *
+ * ZERO new copy. This calls the theme's existing centralised component with the
+ * existing approved quote; the quote, attribution, reviewed title and review URL
+ * all come from bhp_get_kirkus_review_data() and are never duplicated here. The
+ * component emits plain blockquote/cite semantics and no Review or
+ * AggregateRating microdata.
+ *
+ * Placed after the three-book story section so the reader has just seen that
+ * only one of the three books is named as the reviewed title, and before the
+ * value comparison. Renders nothing at all if the theme component is absent
+ * (plugin can outlive a theme swap) or if the approved data is incomplete --
+ * fail-closed, never an empty frame.
+ */
+function bhp_bundle_render_landing_kirkus() {
+	if ( ! function_exists( 'bhp_render_kirkus_credibility' ) ) {
+		return;
+	}
+	$markup = bhp_render_kirkus_credibility(
+		'expanded',
+		array(
+			'source'    => 'complete_collection_landing',
+			'show_link' => true,
+		)
+	);
+	if ( ! trim( (string) $markup ) ) {
+		return;
+	}
+	?>
+	<section class="bhp-landing-kirkus" aria-label="Kirkus Reviews">
+		<div class="bhp-landing-kirkus__inner">
+			<?php echo $markup; // phpcs:ignore WordPress.Security.EscapeOutput -- component output is already escaped at source. ?>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * Section 12: value comparison. Figures pulled from the same
+ * bundle-data.php functions as everything else on the page.
+ */
+function bhp_bundle_render_landing_value_comparison() {
+	$pb_combined = 3 * bhp_bundle_expected_price( 'paperback' );
+	$hc_combined = 3 * bhp_bundle_expected_price( 'hardcover' );
+	$pb_bundle   = $pb_combined - bhp_bundle_rules( 'paperback' )[3]['discount'];
+	$hc_bundle   = $hc_combined - bhp_bundle_rules( 'hardcover' )[3]['discount'];
+	?>
+	<section class="bhp-landing-value">
+		<div class="bhp-landing-value__inner">
+			<p class="bhp-landing-eyebrow bhp-landing-eyebrow--on-dark bhp-landing-eyebrow--center">The Complete Collection Value</p>
+			<h2 class="bhp-landing-value__heading">Complete the adventure and save.</h2>
+			<div class="bhp-landing-value__panels">
+				<div class="bhp-landing-value__panel bhp-landing-value__panel--dark">
+					<p class="bhp-landing-value__panel-label">Buy Individually</p>
+					<div class="bhp-landing-value__row"><span>Paperback</span><span>$<?php echo esc_html( number_format( $pb_combined, 2 ) ); ?></span></div>
+					<div class="bhp-landing-value__row"><span>Hardcover</span><span>$<?php echo esc_html( number_format( $hc_combined, 2 ) ); ?></span></div>
+				</div>
+				<div class="bhp-landing-value__panel bhp-landing-value__panel--light">
+					<p class="bhp-landing-value__panel-label">Complete Collection <span class="bhp-landing-value__best-badge">Best Value</span></p>
+					<div class="bhp-landing-value__row"><span>Paperback</span><span>$<?php echo esc_html( number_format( $pb_bundle, 2 ) ); ?></span></div>
+					<div class="bhp-landing-value__row"><span>Hardcover</span><span>$<?php echo esc_html( number_format( $hc_bundle, 2 ) ); ?></span></div>
+				</div>
+			</div>
+			<p class="bhp-landing-value__footnote">
+				Paperback &middot; Save <?php echo esc_html( '$' . number_format( bhp_bundle_rules( 'paperback' )[3]['discount'], 2 ) ); ?>
+				&nbsp;&nbsp;Hardcover &middot; Save <?php echo esc_html( '$' . number_format( bhp_bundle_rules( 'hardcover' )[3]['discount'], 2 ) ); ?>
+			</p>
+			<ul class="bhp-landing-value__non-price">
+				<li>All three adventures in one purchase</li>
+				<li>One complete home or classroom collection</li>
+				<li>Paperback or hardcover - your choice</li>
+				<li>One shipment</li>
+				<li>Three full reading experiences</li>
+				<li>Direct from the publisher</li>
+			</ul>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * Section 13: gift-focused section.
+ */
+function bhp_bundle_render_landing_gift_section() {
+	?>
+	<section class="bhp-landing-gift">
+		<div class="bhp-landing-gift__text">
+			<p class="bhp-landing-eyebrow">The Perfect Present</p>
+			<h2>A Gift That Opens a World of Adventure</h2>
+			<p>A complete adventure collection that grows with young readers - from first read-alouds to confident independent chapters.</p>
+			<a href="#bhp-landing-pricing-card" class="button bhp-landing-cta bhp-landing-cta--gold" data-bhp-scroll-to-card>Get the Complete Collection</a>
+		</div>
+		<div class="bhp-landing-gift__tags">
+			<?php foreach ( array( 'Birthdays', 'Holidays', 'Classrooms', 'Homeschool libraries', 'Young explorers', 'Reluctant readers' ) as $tag ) : ?>
+				<span class="bhp-landing-gift__tag"><?php echo esc_html( $tag ); ?></span>
+			<?php endforeach; ?>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * F5 / CYCLE142-CX-003 (2026-08-03) — the sticky buy bar the flagship page
+ * was the only page without.
+ *
+ * MEASURED before: through 6,809px of scroll on /complete-collection/ the only
+ * sticky element was the 93px site header. All FIVE audience landing pages
+ * already carry `audience-landing-stickybar` — fixed, bottom-anchored, proven
+ * and shipped. The $48.99 page, the one the majority of phone buyers are being
+ * sent to, was the one page with no persistent way to buy.
+ *
+ * THIS REUSES THE SHIPPED COMPONENT'S BEHAVIOUR, not a new invention: appear
+ * past a scroll threshold, suppress itself while the real CTA is already on
+ * screen (so it never stacks a duplicate button on top of an identical one),
+ * respect the safe-area inset, and stay out of the floating cart's way. The
+ * markup and CSS live in the plugin rather than the theme only because this
+ * page is rendered by the plugin's shortcode.
+ *
+ * IT IS A REAL BUY BUTTON, NOT AN ANCHOR. It submits the same
+ * `form.bhp-bundle-form` that `bundle-drawer.js` already intercepts, with the
+ * same `complete_{format}_smart` action, so a tap opens the same drawer with
+ * the same smart de-duplication. `bundle-landing.js` keeps its action and its
+ * label in step with the format selector, so the bar can never offer a format
+ * the panel above is not showing.
+ *
+ * The label carries the live price so the bar is an offer, not a nag.
+ */
+function bhp_bundle_render_landing_sticky_bar() {
+	$default = bhp_bundle_default_format();
+	$rule    = bhp_bundle_rules( $default )[3];
+	$price   = ( 3 * bhp_bundle_expected_price( $default ) ) - $rule['discount'];
+	?>
+	<div class="bhp-landing-stickybar" data-bhp-landing-stickybar>
+		<div class="bhp-landing-stickybar__row">
+			<span class="bhp-landing-stickybar__text" data-bhp-stickybar-text><?php echo esc_html( 'Complete Collection · $' . number_format( $price, 2 ) ); ?></span>
+			<form method="post" class="bhp-bundle-form bhp-landing-stickybar__form">
+				<?php bhp_bundle_nonce_input(); ?>
+				<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( 'complete_' . $default . '_smart' ); ?>" data-bhp-stickybar-action />
+				<?php bhp_bundle_checkout_redirect_input(); // P2-5: one tap -> /checkout/ ?>
+				<button type="submit" class="button bhp-landing-cta bhp-landing-cta--gold bhp-landing-stickybar__cta" data-bhp-landing-sticky-cta><?php esc_html_e( 'Add to cart', 'brave-hearts' ); ?></button>
+			</form>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Section 14: final closing CTA. Mirrors the hero panel's per-format
+ * copy/pricing via the same data-bhp-format-panel toggle mechanism so it
+ * always agrees with the main pricing card above.
+ */
+function bhp_bundle_render_landing_final_cta() {
+	?>
+	<section class="bhp-landing-final">
+		<div class="bhp-landing-final__inner">
+			<p class="bhp-landing-eyebrow bhp-landing-eyebrow--on-dark bhp-landing-eyebrow--center">The Complete Collection</p>
+			<h2>Ready to Explore the World?</h2>
+			<p>Choose paperback or hardcover and bring home the complete Adventures of Charlotte and Henry collection.</p>
+
+			<?php /* C1 — same ordering call, same reasoning as the pricing panels. */ ?>
+			<?php foreach ( bhp_bundle_format_order() as $format ) :
+				$copy   = bhp_bundle_landing_format_copy( $format );
+				$rule   = bhp_bundle_rules( $format )[3];
+				$price  = ( 3 * bhp_bundle_expected_price( $format ) ) - $rule['discount'];
+				$action = 'complete_' . $format . '_smart';
+			?>
+				<div class="bhp-landing-final__panel" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo bhp_bundle_default_format() === $format ? '' : 'hidden'; ?>>
+					<form method="post" class="bhp-bundle-form">
+						<?php bhp_bundle_nonce_input(); ?>
+						<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( $action ); ?>" />
+						<?php bhp_bundle_checkout_redirect_input(); // P2-5: one tap -> /checkout/ ?>
+						<button type="submit" class="button bhp-landing-cta bhp-landing-cta--gold" data-bhp-landing-lower-cta>
+							<?php echo esc_html( $copy['cta'] ); ?>
+						</button>
+					</form>
+					<p class="bhp-landing-final__fine-print">
+						<?php echo esc_html( $copy['material_tag'] ); ?> &middot;
+						$<?php echo esc_html( number_format( $price, 2 ) ); ?> &middot;
+						<?php // 1.8.23: same figure, centralised wording. "FREE shipping" at $0.00. ?>
+						<?php echo esc_html( bhp_bundle_shipping_display( $rule['shipping'] ) ); ?> &middot;
+						<?php /* 1.8.27: same gate as the price-box row above. */ ?>
+						<?php if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) : ?>
+							<?php echo esc_html( bhp_bundle_addon_free_offer_label() ); ?> &middot;
+						<?php endif; ?>
+						<?php echo esc_html( $rule['save'] ); ?>
+					</p>
+				</div>
+			<?php endforeach; ?>
+			<?php bhp_bundle_render_landing_amazon_source_link(); ?>
+		</div>
+	</section>
+	<?php
+}

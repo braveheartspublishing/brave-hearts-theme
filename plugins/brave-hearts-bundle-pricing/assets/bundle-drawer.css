@@ -1,0 +1,633 @@
+/* Brave Hearts Bundle Pricing — slide-out cart drawer. */
+
+.bhp-cart-drawer {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.bhp-cart-drawer.is-open {
+	visibility: visible;
+	pointer-events: auto;
+}
+
+.bhp-cart-drawer__overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.45);
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.bhp-cart-drawer.is-open .bhp-cart-drawer__overlay {
+	opacity: 1;
+}
+
+.bhp-cart-drawer__panel {
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 100%;
+	width: 400px;
+	max-width: 92vw;
+	background: #fff;
+	box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	transform: translateX(100%);
+	transition: transform 0.25s ease;
+}
+
+.bhp-cart-drawer.is-open .bhp-cart-drawer__panel {
+	transform: translateX(0);
+}
+
+.bhp-cart-drawer__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid #eee;
+	flex: 0 0 auto;
+}
+
+.bhp-cart-drawer__header h2 {
+	margin: 0;
+	font-size: 1.1rem;
+}
+
+/* F9 / CYCLE142-CX-012 (2026-08-03): measured 25 x 28 at 390px, on the
+   control that closes the drawer covering the whole screen. Now a real
+   44 x 44 target. The glyph is unchanged; only its hit area grew, and the
+   negative margin keeps the header's visual density identical. */
+.bhp-cart-drawer__close {
+	background: none;
+	border: none;
+	font-size: 1.75rem;
+	line-height: 1;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 44px;
+	min-height: 44px;
+	margin: -8px -8px -8px 0;
+	padding: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.8.26 / `CYCLE144-LD-120` — THE LINE ITEMS GET A GUARANTEED FLOOR.
+ *
+ * ANDREW SIGNORE, 2026-08-05, current-turn defect report with a screenshot,
+ * on /complete-collection/ at desktop AND phone widths, VERBATIM:
+ *     "you cant really see whats in your cart... you can barely see whats
+ *      going on"
+ *
+ * ⛔ THE DEFECT WAS MEASURED BEFORE IT WAS FIXED, on staging (plugin
+ *    1.8.25, theme 1.19.181), headless Chrome over CDP, real Store API
+ *    cart of 3 paperbacks + the $5 activity book:
+ *
+ *      viewport      panel   header   BODY     footer   items fully visible
+ *      1440 x 900    900     100.19   304.72   495.09   1 of 4
+ *       390 x 844    844      70.80   278.11   495.09   1 of 4
+ *
+ *    With a ONE-item cart at 390 the cross-sell pushed the single row past
+ *    the body's bottom edge and **ZERO** items were fully visible.
+ *
+ * ⛔ ROOT CAUSE, diagnosed rather than patched over. The panel is a flex
+ *    column of header / body / footer. The footer was `flex: 0 0 auto` —
+ *    it could not shrink — while the body was `flex: 1 1 auto` and, because
+ *    `overflow-y: auto` gives a flex item an automatic minimum size of 0,
+ *    the body absorbed 100% of the squeeze all the way down to nothing.
+ *    Whatever the footer wanted, the items paid for.
+ *
+ *    The footer then GREW twice, and nothing rebalanced:
+ *      1.8.20  the activity-book order bump joined the footer      +78.30px
+ *      1.8.23/24  the summary grew a free-shipping row       summary 194.59px
+ *    495.09px of footer against an 844px phone panel is 59% of the drawer.
+ *    This is the same failure F4 fixed for the cross-sell in 1.8.19 by
+ *    moving it into the body — reintroduced one flex child lower down.
+ *
+ * ⛔ THE FIX IS TWO CHANGES AND NO COPY CHANGE:
+ *    1. the body gets `flex-basis: 0` plus a real `min-height` FLOOR, so it
+ *       is sized from the space that is left and can never fall below two
+ *       full item rows;
+ *    2. the footer becomes shrinkable and splits into a scrollable region
+ *       (add-on + summary + hints) and a PINNED action bar (Secure Checkout
+ *       + Continue Shopping), so the deficit comes out of whitespace and
+ *       trailing hints instead of out of the cart contents.
+ *
+ * ⛔ THE FLOOR IS MEASURED, NOT CHOSEN. Item rows measure 163.52px (first
+ *    row, which carries the savings note) and 139.38px thereafter; the
+ *    body's own padding-top is 20px. Two full rows therefore need
+ *    20 + 163.52 + 139.38 = 322.90px. `330px` is that number with 7px of
+ *    slack, which also leaves the third row visibly clipped — the scroll
+ *    affordance Andrew's screenshot was missing.
+ *
+ *    `min(330px, 45vh)` caps the floor on short viewports so the drawer
+ *    degrades instead of pushing its own checkout button off-screen. The
+ *    panel is `height: 100%` of a `position: fixed; inset: 0` parent, so
+ *    `vh` and the panel's height are the same quantity here.
+ *
+ * ⛔ THE ADD-ON REMAINS IN THE FOOTER AND REMAINS FIRST IN IT. Andrew's
+ *    2026-08-04 ruling (relayed) was "permanent and universal, regardless
+ *    of cart contents"; it is the first child of the scrollable region, so
+ *    it is the last thing that would ever scroll out of view, and it still
+ *    sits directly above the money. Moving it into the body was considered
+ *    and REJECTED for that reason.
+ * ═══════════════════════════════════════════════════════════════════════ */
+.bhp-cart-drawer__body {
+	flex: 1 1 0%;
+	min-height: min(330px, 45vh);
+	overflow-y: auto;
+	padding: 1.25rem 1.25rem 1rem;
+}
+
+/* ⭐ 1.8.26, SECOND PASS — the cross-sell case, found by MEASURING the first
+ *    pass rather than by declaring it done.
+ *
+ *    With the 330px floor in place, a THREE-book cart showed two full rows at
+ *    both viewports. A ONE-book cart at 390x844 still showed ZERO, because the
+ *    cross-sell renders above the items (F4, Andrew-ruled: "put it on top of
+ *    the inventory so they see it first") and eats the top of the same
+ *    scroll region:
+ *        20px padding + 152.53 cross-sell + 16px separation + 163.52 first row
+ *        = 352.05px needed, against a measured body of 341.09px. Eleven pixels.
+ *
+ *    So the floor rises by exactly the cross-sell's footprint when — and only
+ *    when — the cross-sell is actually rendered. `:not(:empty)` is the same
+ *    test the cross-sell's own spacing rule at the bottom of this file uses,
+ *    so the two can never disagree about whether the box is present.
+ *
+ * ⛔ FAILS SAFE. A browser without `:has()` support ignores this rule entirely
+ *    and keeps the 330px floor — degraded, never broken. The cross-sell is
+ *    absent on a full three-book cart, which is why the taller floor does not
+ *    apply there and does not steal from the footer in the common case. */
+.bhp-cart-drawer__body:has(.bhp-cart-drawer__crosssell:not(:empty)) {
+	min-height: min(360px, 48vh);
+}
+
+/* Belt-and-suspenders spacing: the header and body are already separate
+ * flex children (the header can never overlap the body in this layout),
+ * but keep a comfortable buffer above the first item in case any future
+ * change makes the header sticky-within-body instead of a flex sibling. */
+.bhp-cart-drawer__item:first-child {
+	scroll-margin-top: 1rem;
+}
+
+.bhp-cart-drawer__item {
+	display: grid;
+	grid-template-columns: 56px 1fr auto;
+	gap: 0.75rem;
+	align-items: flex-start;
+	padding: 0.75rem 0;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.bhp-cart-drawer__item-img {
+	width: 56px;
+	height: auto;
+	border-radius: 4px;
+}
+
+.bhp-cart-drawer__item-title {
+	font-size: 0.92rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.bhp-cart-drawer__item-format {
+	font-size: 0.8rem;
+	color: #666;
+	margin-top: 0.15rem;
+}
+
+.bhp-cart-drawer__item-note {
+	display: block;
+	margin-top: 0.25rem;
+	font-size: 0.74rem;
+	font-style: italic;
+	color: #4a7c3c;
+}
+
+.bhp-cart-drawer__item-qty {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-top: 0.5rem;
+}
+
+.bhp-cart-drawer__item-qty button {
+	min-width: 44px;
+	min-height: 44px;
+	border: 1px solid #ccc;
+	background: #fafafa;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.bhp-cart-drawer__item-remove {
+	border: none !important;
+	background: none !important;
+	text-decoration: underline;
+	font-size: 0.78rem;
+	color: #777;
+	min-width: auto !important;
+	min-height: 44px;
+	display: inline-flex;
+	align-items: center;
+}
+
+.bhp-cart-drawer__item-price {
+	font-size: 0.92rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.bhp-cart-drawer__message-line {
+	background: #f3f7f1;
+	border-left: 4px solid #4a7c3c;
+	padding: 0.55rem 0.85rem;
+	margin: 0.75rem 0 0;
+	font-size: 0.88rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * ⭐ R4 (2026-08-03, theme 1.19.161 / plugin 1.8.19) — THE DRAWER CROSS-SELL
+ *    NOW CARRIES THE APPROVED CHECKOUT TREATMENT. Closes `CYCLE142-LD-18`.
+ *
+ *    R3 shipped the checkout twin (`assets/checkout-upsell.css`) on Andrew's
+ *    ruling — "The checkout upsell box should be the green we use on all the
+ *    buttons with the gold outline and white font" — and DELIBERATELY left
+ *    this box on its old 1px dashed gold, recording the divergence rather
+ *    than absorbing it. Andrew has since approved that build for production,
+ *    which makes the box-green the STANDARD for this component, so the two
+ *    surfaces are brought level here.
+ *    ⛔ Both statements above are RELAYED through the Chief of Staff. This
+ *       agent witnessed neither directly.
+ *
+ * ⛔ THE VALUES ARE NOT CHOSEN — they are the same four CTA-palette tokens
+ *    `checkout-upsell.css` uses, so the two boxes cannot drift apart:
+ *        --cta-primary-bg      var(--color-forest)  #173f2f   the fill
+ *        --cta-primary-border  var(--color-gold)    #D9A45F   1.5px border
+ *        --cta-primary-text    var(--color-ivory)             the body text
+ *        --color-gold / --color-navy                          the CTA
+ *    The literal fallbacks are the measured values, so the drawer still
+ *    renders on-brand if this stylesheet ever loads without the theme's.
+ *
+ * ⛔ CONTRAST, COMPUTED NOT ASSERTED (WCAG 2.1 relative luminance) — the same
+ *    four ratios R3 computed, because these are the same four pairings:
+ *        ivory #fffaf0 on forest #173f2f = 11.29:1  (AAA)  body label
+ *        gold  #D9A45F on forest #173f2f =  5.27:1  (AA)   eyebrow + border
+ *        navy  #071522 on gold   #D9A45F =  8.27:1  (AAA)  the CTA
+ *
+ * ⚠️ WHAT THE PREVIOUS RULE SAID, PRESERVED SO IT IS NOT RE-DERIVED. C6
+ *    (2026-08-03) moved this border off the retired `#c9a227` and onto
+ *    `--color-gold`, reasoning: "DECORATIVE BORDER -> `--color-gold`. A
+ *    filled surface carrying white text gets `--color-gold-deep` instead...
+ *    This border sits on white and carries no text, so the display gold is
+ *    the right token here." ⭐ The border no longer sits on white — but the
+ *    conclusion is unchanged and now for a stronger reason: gold on forest
+ *    measures 5.27:1, so the display gold clears AA as a text colour, and
+ *    `--color-gold-deep` (#9A6A00) on forest would measure only 1.86:1 and
+ *    would be the wrong token here.
+ *
+ * ⛔ NO `!important` IN THIS BLOCK. Every selector below is on markup this
+ *    plugin creates itself. The CTA is reachable without one because
+ *    `style.css` 1.19.161 removed `.bhp-cart-drawer__crosssell-btn` from its
+ *    three sitewide CTA COLOUR lists (and only the colour lists) — see the
+ *    note there. Geometry, typeface, radius and centring still arrive from
+ *    the theme's F1 one-button spec and are NOT re-declared here.
+ * ═══════════════════════════════════════════════════════════════════════ */
+.bhp-cart-drawer__crosssell-box {
+	margin-top: 1rem;
+	padding: 0.85rem;
+	border: 1.5px solid var(--cta-primary-border, #d9a45f);
+	border-radius: 8px;
+	background: var(--cta-primary-bg, #173f2f);
+	color: var(--cta-primary-text, #fffaf0);
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+/*
+ * The eyebrow, matching `.bhp-checkout-upsell__heading` property for
+ * property. Gold on forest is a real colour rather than an opacity step,
+ * for the reason R3 recorded: dimming ivory on a DARK ground costs contrast
+ * in the wrong direction.
+ */
+.bhp-cart-drawer__crosssell-heading {
+	margin: 0;
+	color: var(--cta-primary-border, #d9a45f);
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.bhp-cart-drawer__crosssell-label {
+	color: var(--cta-primary-text, #fffaf0);
+	font-size: 0.88rem;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+/*
+ * The CTA — gold fill, navy text: what `.btn-primary` computes to on this
+ * site, and the identical declaration `.bhp-checkout-upsell__btn` carries.
+ * `min-height` is the only geometry re-asserted, as the tap-target floor.
+ */
+.bhp-cart-drawer__crosssell-btn {
+	width: 100%;
+	min-height: 44px;
+	border: 1.5px solid var(--cta-primary-border, #d9a45f);
+	background: var(--color-gold, #d9a45f);
+	color: var(--color-navy, #071522);
+	cursor: pointer;
+	box-sizing: border-box;
+	transition: background-color 160ms ease, color 160ms ease;
+}
+
+/* Hover inverts to ivory rather than darkening the gold, so the button never
+   approaches the forest it sits on. Same behaviour as the checkout twin. */
+.bhp-cart-drawer__crosssell-btn:hover {
+	background: var(--expedition-ivory, #fffaf0);
+	color: var(--color-forest, #173f2f);
+}
+
+/* The theme's focus ring is tuned for light grounds and would all but vanish
+   on forest; ivory is the one value high-contrast against BOTH the forest box
+   and the gold button. The offset clears the button's own gold border. */
+.bhp-cart-drawer__crosssell-btn:focus-visible {
+	outline: 3px solid var(--expedition-ivory, #fffaf0);
+	outline-offset: 2px;
+}
+
+/* 1.8.26 — see the block above `.bhp-cart-drawer__body`.
+ *
+ * `flex: 0 1 auto` + `min-height: 0` is the whole behavioural change here:
+ * the footer may now shrink, and because the body's flex-basis is 0 the
+ * footer only shrinks by exactly the amount the body's floor demands — it
+ * is never pre-emptively squeezed on a tall viewport, where the natural
+ * layout is byte-for-byte what it was in 1.8.25.
+ *
+ * The former `padding-top: 1rem` moved down onto `__footer-scroll` so that
+ * the padding scrolls with the content it belongs to rather than sitting
+ * above a scroll boundary. Left, right and bottom padding are unchanged. */
+.bhp-cart-drawer__footer {
+	flex: 0 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	padding: 0 1.25rem 1.25rem;
+	border-top: 1px solid #eee;
+}
+
+/* The part that may scroll: the add-on order bump, the price breakdown and
+   the two hints, in that order. Order is load-bearing — a short viewport
+   clips from the BOTTOM, so the add-on and the Estimated total are the last
+   things to go and the coupon/shipping hints are the first. */
+.bhp-cart-drawer__footer-scroll {
+	flex: 0 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	padding-top: 1rem;
+}
+
+/* The part that never scrolls. Secure Checkout must be reachable at every
+   viewport height without the customer discovering a second scroll region. */
+.bhp-cart-drawer__footer-actions {
+	flex: 0 0 auto;
+	padding-top: 0.5rem;
+}
+
+/**
+ * Transparent price-breakdown summary (Overnight Conversion Sprint,
+ * Priority 5). Every row shares one structure; --savings and --total
+ * modifiers only change color/weight, never layout, so the breakdown
+ * reads as one coherent list from "Books subtotal" down to "Total".
+ */
+.bhp-cart-drawer__summary {
+	margin: 0.25rem 0 0.85rem;
+}
+
+.bhp-cart-drawer__summary-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.2rem 0;
+	font-size: 0.88rem;
+	color: #444;
+}
+
+.bhp-cart-drawer__summary-row--savings {
+	color: #4a7c3c;
+	font-weight: 600;
+}
+
+.bhp-cart-drawer__summary-row--total {
+	margin-top: 0.35rem;
+	padding-top: 0.5rem;
+	border-top: 1px solid #eee;
+	font-size: 1.05rem;
+	font-weight: 700;
+	color: #222;
+}
+
+/* F16: this line explains the gap between the drawer's estimated total and
+   the cart's real one. #888 on white measured too faint to do that job. */
+.bhp-cart-drawer__tax-note {
+	margin: 0.35rem 0 0;
+	font-size: 0.8rem;
+	color: #5a5045;
+	text-align: right;
+}
+
+.bhp-cart-drawer__coupon-hint {
+	margin: 0 0 0.5rem;
+	font-size: 0.8rem;
+	color: #666;
+	text-align: center;
+}
+
+/* A5 / D3 (2026-08-03): contiguous-US disclosure above Secure Checkout.
+   #5a5045 on white is 8.0:1 -- deliberately NOT the #666 used above, which
+   is the same contrast defect F16 fixed on the tax hint. */
+/* 1.8.26: `margin-bottom` moved onto `.bhp-cart-drawer__footer-actions` as
+   `padding-top`. A trailing margin inside a scroll container collapses out
+   of view the moment the container scrolls, which would have left the
+   Secure Checkout button touching the last hint on a short viewport. The
+   rendered gap is 8px instead of 10.4px; nothing else about this note
+   changed, including its Andrew-approved wording and its 8.0:1 colour. */
+.bhp-cart-drawer__ship-note {
+	margin: 0;
+	font-size: 0.8rem;
+	color: #5a5045;
+	text-align: center;
+}
+
+.bhp-cart-drawer__checkout {
+	display: block;
+	width: 100%;
+	text-align: center;
+	margin-bottom: 0.5rem;
+}
+
+.bhp-cart-drawer__continue {
+	display: block;
+	width: 100%;
+	text-align: center;
+	background: none;
+	border: none;
+	text-decoration: underline;
+	font-size: 0.88rem;
+	cursor: pointer;
+	padding: 0.35rem 0;
+}
+
+body.bhp-drawer-open {
+	overflow: hidden;
+}
+
+/* Mobile: full-height drawer instead of a fixed side panel. */
+@media (max-width: 600px) {
+	.bhp-cart-drawer__panel {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.bhp-cart-drawer__item {
+		grid-template-columns: 48px 1fr auto;
+	}
+
+	.bhp-cart-drawer__item-img {
+		width: 48px;
+	}
+
+	.bhp-cart-drawer__item-qty button {
+		min-width: 44px;
+		min-height: 44px;
+	}
+}
+
+/**
+ * Persistent floating "reopen cart" button. Hidden by default (both by
+ * the missing .is-visible class and, redundantly, opacity/pointer-events)
+ * so a customer with an empty cart never sees it; JS adds .is-visible the
+ * moment the canonical Store API cart response reports at least one item,
+ * and removes it the moment the cart is empty again. Hidden whenever the
+ * drawer itself is open by keying off the same body.bhp-drawer-open class
+ * the drawer already toggles -- no separate open/close state to track.
+ */
+.bhp-floating-cart {
+	position: fixed;
+	right: calc(18px + env(safe-area-inset-right, 0px));
+	bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+	z-index: 99000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 52px;
+	height: 52px;
+	min-width: 44px;
+	min-height: 44px;
+	border: none;
+	border-radius: 50%;
+	background: var(--color-forest, #1f4d36);
+	color: var(--color-ivory, #fff3d0);
+	box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+	cursor: pointer;
+	opacity: 0;
+	transform: scale(0.85);
+	pointer-events: none;
+	visibility: hidden;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.bhp-floating-cart.is-visible {
+	opacity: 1;
+	transform: scale(1);
+	pointer-events: auto;
+	visibility: visible;
+}
+
+body.bhp-drawer-open .bhp-floating-cart {
+	opacity: 0;
+	transform: scale(0.85);
+	pointer-events: none;
+	visibility: hidden;
+}
+
+.bhp-floating-cart:hover {
+	background: var(--color-jungle, #0d2b1e);
+}
+
+.bhp-floating-cart:focus-visible {
+	outline: 3px solid var(--color-gold, #D9A45F);
+	outline-offset: 3px;
+}
+
+.bhp-floating-cart__icon {
+	width: 22px;
+	height: 22px;
+	pointer-events: none;
+}
+
+.bhp-floating-cart__badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	background: var(--color-gold, #D9A45F);
+	color: var(--color-jungle, #0d2b1e);
+	font-size: 0.72rem;
+	font-weight: 700;
+	line-height: 1;
+	box-shadow: 0 0 0 2px var(--color-forest, #1f4d36);
+	pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.bhp-floating-cart__badge--pulse {
+		animation: bhp-floating-cart-badge-pulse 0.4s ease;
+	}
+}
+
+@keyframes bhp-floating-cart-badge-pulse {
+	0% { transform: scale(1); }
+	40% { transform: scale(1.35); }
+	100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bhp-floating-cart {
+		transition: opacity 0.01ms;
+	}
+}
+
+@media (max-width: 600px) {
+	.bhp-floating-cart {
+		right: calc(14px + env(safe-area-inset-right, 0px));
+		bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+	}
+}
+
+
+/* F4 (2026-08-03) — the cross-sell now renders ABOVE the line items
+   (see the note in includes/bundle-drawer.php). It needs a little more
+   separation from the items below it than it needed from the message
+   above it, and a touch more presence now that it leads the drawer. */
+.bhp-cart-drawer__crosssell:not(:empty) {
+	margin: 0 0 1rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid rgba(122, 78, 45, 0.16);
+}

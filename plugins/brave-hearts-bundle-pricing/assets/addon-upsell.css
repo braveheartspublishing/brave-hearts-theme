@@ -1,0 +1,162 @@
+/**
+ * Brave Hearts — the ACTIVITY BOOK checkbox order bump.
+ *
+ * One panel, three surfaces (Blocks cart page, Blocks checkout, cart
+ * drawer). The base rules are shared; the per-surface blocks below adjust
+ * only spacing and width, never the control itself.
+ *
+ * ⛔ NO ATTENTION-GRABBING PATTERNS. No animation, no pulse, no flashing
+ *    border, no countdown, no colour that reads as an error or a warning.
+ *    The offer is optional and the styling says so. A quiet bordered card
+ *    is the whole treatment.
+ *
+ * ⛔ THE CHECKBOX IS A REAL, VISIBLE, NATIVE `input[type=checkbox]`. It is
+ *    not hidden and re-drawn with a pseudo-element, which is the usual way
+ *    a "checkbox" ends up unreachable by a screen reader or impossible to
+ *    tell apart from a pre-ticked one. It only gets a size and an accent
+ *    colour.
+ */
+
+.bhp-addon-upsell {
+	box-sizing: border-box;
+	margin: 16px 0;
+	padding: 12px 14px;
+	border: 1px solid #d9dee3;
+	border-radius: 8px;
+	background: #fbfcfd;
+}
+
+.bhp-addon-upsell *,
+.bhp-addon-upsell *::before,
+.bhp-addon-upsell *::after {
+	box-sizing: border-box;
+}
+
+.bhp-addon-upsell__label {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0;
+	cursor: pointer;
+	/* The whole row is the label, so the tap target is the full card and
+	   not a 16px square - which is the difference between usable and not
+	   on a phone. */
+	min-height: 44px;
+}
+
+.bhp-addon-upsell__checkbox {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 20px;
+	margin: 0;
+	accent-color: #1f6f54;
+	cursor: pointer;
+}
+
+.bhp-addon-upsell__checkbox:disabled {
+	cursor: progress;
+	opacity: 0.6;
+}
+
+/* Visible keyboard focus. The native outline is kept and lifted onto the
+   card so it is not clipped by the border radius. */
+.bhp-addon-upsell__checkbox:focus-visible {
+	outline: 2px solid #1f6f54;
+	outline-offset: 2px;
+}
+
+.bhp-addon-upsell__thumb {
+	flex: 0 0 auto;
+	width: 44px;
+	height: auto;
+	max-height: 57px;
+	border-radius: 3px;
+	border: 1px solid #e3e7ea;
+	background: #fff;
+	object-fit: cover;
+	display: block;
+}
+
+.bhp-addon-upsell__text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0; /* lets long copy wrap instead of forcing the row wide */
+}
+
+.bhp-addon-upsell__head {
+	font-weight: 600;
+	font-size: 0.95rem;
+	line-height: 1.3;
+	color: #1d2327;
+}
+
+.bhp-addon-upsell__benefit {
+	font-size: 0.8125rem;
+	line-height: 1.35;
+	color: #50575e;
+}
+
+.bhp-addon-upsell__status {
+	display: block;
+	font-size: 0.8125rem;
+	line-height: 1.35;
+	color: #50575e;
+}
+
+.bhp-addon-upsell__status:empty {
+	display: none;
+}
+
+/* ── Surface: the cart DRAWER ───────────────────────────────────────────
+   Tighter, because the drawer footer is sticky and every pixel there is
+   pixel a phone customer does not have to scroll past. */
+.bhp-cart-drawer__addon .bhp-addon-upsell {
+	margin: 0 0 12px;
+	padding: 10px 12px;
+}
+
+.bhp-cart-drawer__addon .bhp-addon-upsell__head {
+	font-size: 0.9rem;
+}
+
+.bhp-cart-drawer__addon .bhp-addon-upsell__benefit {
+	font-size: 0.78rem;
+}
+
+/* The drawer renders nothing into this container when the add-on product
+   does not exist. Collapse it completely so it cannot add stray space to
+   the footer on an environment without the product. */
+.bhp-cart-drawer__addon:empty {
+	display: none;
+}
+
+/* ── Surface: the Blocks CHECKOUT and CART pages ────────────────────────
+   Both sit directly above an order summary, so the bottom margin is
+   removed and the summary provides the separation. */
+.bhp-addon-upsell--checkout,
+.bhp-addon-upsell--cart_page {
+	margin: 0 0 16px;
+}
+
+/* ── Narrow viewports ──────────────────────────────────────────────────
+   The row stays a row: at 44px the thumbnail is already small enough that
+   stacking would only add height. Only the gap tightens. */
+@media (max-width: 480px) {
+	.bhp-addon-upsell {
+		padding: 10px 12px;
+	}
+
+	.bhp-addon-upsell__label {
+		gap: 10px;
+	}
+
+	.bhp-addon-upsell__head {
+		font-size: 0.9rem;
+	}
+}
+
+/* Respect a reduced-motion preference by having no motion to reduce. This
+   block is intentionally empty of animation overrides because there is no
+   animation anywhere above; it is recorded so a future edit that adds one
+   has to confront the decision. */

@@ -1,0 +1,206 @@
+/**
+ * Brave Hearts — N1, the checkout-page "Add This Adventure" cross-sell.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ R3 (1.19.160 / plugin 1.8.18) — THE BOX NOW CARRIES THE SITEWIDE
+ *    BUTTON TREATMENT. Andrew's ruling, 2026-08-03, verbatim: "The checkout
+ *    upsell box should be the green we use on all the buttons with the gold
+ *    outline and white font." (Relayed through the Chief of Staff; NOT
+ *    witnessed first-hand by this agent.)
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE VALUES BELOW ARE MEASURED FROM THE LIVE SITE, NOT CHOSEN.
+ *    "The green we use on all the buttons with the gold outline and white
+ *    font" is not a description to interpret — it is a treatment that already
+ *    ships, and it has a name. `style.css` line 5020 declares the sitewide
+ *    CTA palette and line 5113 applies it:
+ *
+ *        --cta-primary-bg:        var(--color-forest)   #173f2f
+ *        --cta-primary-bg-hover:  var(--color-jungle)   #12271d
+ *        --cta-primary-text:      var(--color-ivory)
+ *        --cta-primary-border:    var(--color-gold)     #D9A45F
+ *        applied as `border: 1.5px solid …`, radius 8px, min-height 44px
+ *
+ *    Read off STAGING 1.19.159 in a real browser via getComputedStyle,
+ *    2026-08-03 — the header CTA and the cart drawer's own cross-sell button
+ *    both compute to `rgb(23,63,47)` / `rgb(255,250,240)` /
+ *    `1px solid rgb(217,164,95)` (Chrome reports the 1.5px border at its used
+ *    value) / radius 8px / Archivo 700 / min-height 44px. Those are the
+ *    numbers this file uses. Nothing here was inferred from a palette
+ *    document; the rendered buttons were measured.
+ *
+ * ⭐ WHAT THIS REPLACED, AND WHY THE OLD LOOK WAS NOT SIMPLY "DIFFERENT":
+ *    the previous treatment was the drawer's 1px dashed gold on a transparent
+ *    ground, and — measured on staging, not assumed — the CTA inside it was
+ *    receiving NO theme button colour at all. It computed to
+ *    `background rgb(240,240,240)` / `color rgb(0,0,0)` / `2px outset`: the
+ *    browser's default grey system button. The reason is exact and worth
+ *    recording. `style.css` has two sitewide button lists. The GEOMETRY list
+ *    (line 5039, "F1 — ONE BUTTON SPEC") contains the bare `.button` class,
+ *    so this button already inherited radius/typeface/size/tracking. The
+ *    COLOUR list (line 5113) does NOT contain `.button` — it names specific
+ *    CTAs, including `.bhp-cart-drawer__crosssell-btn`, this module's own
+ *    twin in the drawer. The checkout twin was never added, so it got the
+ *    geometry and none of the colour. That is the defect this pass closes.
+ *
+ * ⭐ THE ONE JUDGEMENT CALL, STATED SO IT CAN BE OVERRULED IN TWO LINES:
+ *    Andrew's sentence assigns the green to the BOX, so the box takes it.
+ *    Once the box is forest, a forest button inside it is invisible, so the
+ *    CTA takes the site's OTHER shipped primary button — gold fill with navy
+ *    text, which is what `.btn-primary` computes to on this site (measured
+ *    the same session: rgb(217,164,95) on rgb(7,21,34), radius 8px, Archivo
+ *    700). The module is therefore exactly three brand colours and no new
+ *    value. ⚠️ If the intended reading was instead "the CTA alone carries the
+ *    treatment" — which is what would keep this module identical to the
+ *    drawer twin — the change is: revert `.bhp-checkout-upsell` to a
+ *    transparent ground with the gold border, and set the button to
+ *    `background: var(--color-forest)` / `color: var(--color-ivory)`.
+ *
+ * ⛔ CONTRAST, COMPUTED NOT ASSERTED (WCAG 2.1 relative luminance):
+ *        ivory  #fffaf0 on forest #173f2f  = 11.29:1   (AAA)
+ *        gold   #D9A45F on forest #173f2f  =  5.27:1   (AA, and ≥3:1 as the
+ *                                                       component border)
+ *        navy   #071522 on gold   #D9A45F  =  8.27:1   (AAA) — the CTA
+ *        salmon #ffb4a8 on forest #173f2f  =  6.90:1   — the failure line,
+ *            which had to change: the old #a3261a is unreadable on forest.
+ *
+ * ⛔ NO `!important` ANYWHERE IN THIS FILE, and that is not luck — every
+ *    selector below is on markup this module creates itself, which no
+ *    WooCommerce stylesheet targets. Nothing here overrides Blocks.
+ *
+ * ⚠️ THE CART DRAWER'S `.bhp-cart-drawer__crosssell-box` IS DELIBERATELY NOT
+ *    CHANGED BY THIS PASS and still carries the 1px dashed gold on white.
+ *    Andrew's ruling names the CHECKOUT box only. The two surfaces therefore
+ *    no longer match, which is a knowing, reported divergence rather than an
+ *    oversight — see the R3 handoff. If the drawer is to follow, this file
+ *    and `bundle-drawer.css` are the only two places to change.
+ */
+
+/*
+ * ⭐ THE TOKENS ARE THE CTA PALETTE'S OWN, NOT THE RAW COLOURS.
+ *    `--cta-primary-bg` / `--cta-primary-border` / `--cta-primary-text` are
+ *    literally the variables "the green we use on all the buttons" is made
+ *    of (style.css line 5020). Using them rather than `--color-forest` /
+ *    `--color-gold` / `--color-ivory` means this panel cannot drift away from
+ *    the buttons it was told to match: retune the palette once and this
+ *    follows. The literal fallbacks are the measured values, so the module
+ *    still renders on-brand if this stylesheet is ever loaded without the
+ *    theme's.
+ *
+ *    ⚠️ `--color-ivory` resolves DIFFERENTLY per page and that matters here.
+ *       On the checkout page `body:not(.home)` remaps it to the expedition
+ *       parchment-light #f8f3e9; on the homepage it is #fffaf0. Verified on
+ *       staging, not assumed. Both are white enough and both clear AAA on
+ *       forest (10.62:1 and 11.29:1), so `--cta-primary-text` is used as-is
+ *       and no page-specific override is introduced.
+ */
+.bhp-checkout-upsell {
+	margin: 0 0 1rem;
+	padding: 1rem;
+	border: 1.5px solid var(--cta-primary-border, #D9A45F);
+	border-radius: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	background: var(--cta-primary-bg, #173f2f);
+	color: var(--cta-primary-text, #fffaf0);
+}
+
+/*
+ * The eyebrow. Gold on forest measures 5.27:1, so it stays a real colour
+ * rather than the old `opacity: 0.75`, which would have dimmed ivory against
+ * a dark ground instead of a light one and cost contrast in the wrong
+ * direction.
+ */
+.bhp-checkout-upsell__heading {
+	margin: 0;
+	color: var(--cta-primary-border, #D9A45F);
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.bhp-checkout-upsell__label {
+	color: var(--cta-primary-text, #fffaf0);
+	font-size: 0.88rem;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+/*
+ * The CTA.
+ *
+ * ⛔ COLOUR IS ALL THIS RULE REALLY OWNS, and that is deliberate. The button
+ *    carries the bare `.button` class, which is in the F1 one-button-spec
+ *    list in style.css — so `border-radius`, `font-family`, `font-size` and
+ *    `letter-spacing` arrive from `--btn-*` with `!important` and WIN over
+ *    anything declared here. They are therefore not re-declared: a
+ *    declaration that provably never applies is worse than no declaration,
+ *    because the next reader believes it. `font-weight` (700), `line-height`,
+ *    `text-align` and `padding` also come from that list without
+ *    `!important`; only `min-height` is re-asserted, as the tap-target floor.
+ *
+ * ⛔ NO `text-transform`. The drawer twin computes `text-transform: none` and
+ *    reads "Add This Adventure - Save $2.99" in title case. Uppercasing this
+ *    one would break the parity Andrew asked for in the first place.
+ */
+.bhp-checkout-upsell__btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 44px;          /* the tap-target floor, asserted not inherited */
+	border: 1.5px solid var(--cta-primary-border, #D9A45F);
+	background: var(--color-gold, #D9A45F);
+	color: var(--color-navy, #071522);
+	cursor: pointer;
+	box-sizing: border-box;
+	transition: background-color 160ms ease, color 160ms ease;
+}
+
+/*
+ * Hover inverts to the ivory ground rather than darkening the gold, so the
+ * button never approaches the forest it sits on.
+ */
+.bhp-checkout-upsell__btn:hover {
+	background: var(--expedition-ivory, #fffaf0);
+	color: var(--color-forest, #173f2f);
+}
+
+/*
+ * The theme's focus ring is `--color-focus` (earth, #7A4E2D), tuned for light
+ * grounds; on forest it would all but vanish. Ivory is the one value in this
+ * module that is high-contrast against BOTH the forest box and the gold
+ * button, and the offset keeps it clear of the button's own gold border.
+ */
+.bhp-checkout-upsell__btn:focus-visible {
+	outline: 3px solid var(--expedition-ivory, #fffaf0);
+	outline-offset: 2px;
+}
+
+.bhp-checkout-upsell__btn[disabled],
+.bhp-checkout-upsell__btn[aria-busy='true'] {
+	opacity: 0.6;
+	cursor: default;
+}
+
+/*
+ * The status line is a live region that is EMPTY unless an add actually
+ * fails. It is not hidden with `display: none`, because a hidden live region
+ * is not announced; it simply has no content and therefore no height.
+ */
+.bhp-checkout-upsell__status:empty {
+	display: none;
+}
+
+.bhp-checkout-upsell__status {
+	font-size: 0.82rem;
+	color: #ffb4a8;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.bhp-checkout-upsell {
+		transition: border-color 160ms ease;
+	}
+}
