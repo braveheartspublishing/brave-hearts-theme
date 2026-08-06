@@ -1,0 +1,26 @@
+{
+  "blog_slug": "",
+  "reviewed_variants": [
+    {
+      "variant_type": "",
+      "scores": {
+        "brand_consistency": null,
+        "claim_accuracy": null,
+        "message_clarity": null,
+        "creative_distinctiveness": null,
+        "destination_fit": null
+      },
+      "weighted_total": null,
+      "pass": null,
+      "automatic_fail_triggered": false,
+      "automatic_fail_reason": null,
+      "revision_notes": "",
+      "revision_count": 0
+    }
+  ],
+  "human_approval": {
+    "approved_by": "",
+    "approved_at": "",
+    "notes": ""
+  }
+}

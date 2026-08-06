@@ -1,0 +1,27 @@
+# Canonical Pinterest board list. No board here has actually been
+# created on Pinterest yet -- this is the planned structure, to be
+# reconciled against real board IDs once Pinterest account access is
+# confirmed.
+
+boards:
+  - id: "reluctant_readers"
+    name: "Books for Reluctant Readers"
+    audience: parent
+    theme: "reading motivation, chapter-book transition"
+
+  - id: "adventure_chapter_books"
+    name: "Adventure Chapter Books for Kids"
+    audience: parent
+    theme: "series overview, adventure/exploration hook"
+
+  - id: "classroom_read_alouds"
+    name: "Classroom Read-Alouds"
+    audience: teacher
+    theme: "classroom use, read-aloud fit, curriculum tie-in"
+
+  - id: "gift_ideas_kids_books"
+    name: "Book Gift Ideas for Kids 6-9"
+    audience: gift_buyer
+    theme: "gifting occasions, complete-set framing"
+
+status: "planned -- not yet created on Pinterest"

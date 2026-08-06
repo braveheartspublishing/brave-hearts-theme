@@ -109,6 +109,8 @@ Example future mapping:
 
 Do not add a future tag until its segmentation and automation behavior is approved in Mailchimp.
 
+**Status check, 2026-07-18:** the `explorer_passport` branch shown above as example code was never actually added to `functions.php` — the live `bhp_mailchimp_signup_tags` filter has no `explorer_passport` case, so a homepage Adventure Club signup currently receives only the base `Adventure Club` tag (confirmed via `BHP_Lead_Event_Log` on 2 real production signups). Whether any Mailchimp Automation currently triggers on the `Adventure Club` tag (per point 7 below, "configure any resource-delivery or welcome automation separately in Mailchimp") was **not confirmed this session** — no live Mailchimp browser access was available. If no such automation exists, a technically-successful signup delivers nothing to the subscriber. Needs a direct check in Mailchimp → Automations.
+
 ## Future automation hooks
 
 Filters:

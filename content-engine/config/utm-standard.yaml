@@ -1,0 +1,35 @@
+# Machine-readable mirror of docs/utm-attribution-standard.md.
+# If these two files ever disagree, the markdown doc is authoritative --
+# update this file to match it, not the other way around.
+
+channels:
+  pinterest:
+    utm_source: "pinterest"
+    utm_medium: "organic_social"
+  instagram:
+    utm_source: "instagram"
+    utm_medium: "organic_social"
+  tiktok:
+    utm_source: "tiktok"
+    utm_medium: "organic_social"
+  youtube:
+    utm_source: "youtube"
+    utm_medium: "video"
+  facebook:
+    utm_source: "facebook"
+    utm_medium: "organic_social"
+
+campaign_naming_pattern: "<audience_or_problem>_<theme>"
+content_naming_pattern: "<blog-slug>_<design-variant>_<version>"
+
+design_variants:
+  - problem-led
+  - outcome-led
+  - curiosity-led
+  - resource-led
+
+required_params:
+  - utm_source
+  - utm_medium
+  - utm_campaign
+  - utm_content

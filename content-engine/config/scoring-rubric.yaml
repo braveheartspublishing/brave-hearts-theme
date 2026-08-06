@@ -1,0 +1,32 @@
+# Objective design-review criteria for generated Pinterest creative.
+# A variant scoring below pass_threshold goes back for revision instead
+# of shipping as-is.
+
+pass_threshold: 7.0  # out of 10, sum of weighted criteria below
+
+criteria:
+  - name: "brand_consistency"
+    weight: 0.25
+    description: "Uses the approved color palette, real cover art, and on-brand voice (config/brand-guidelines.yaml)."
+
+  - name: "claim_accuracy"
+    weight: 0.25
+    description: "Contains no fabricated statistic, review, endorsement, or medical/developmental claim. Automatic fail (score 0) if any claims-policy violation is found, regardless of other scores."
+
+  - name: "message_clarity"
+    weight: 0.20
+    description: "The headline + supporting line communicate one clear idea legible at Pinterest thumbnail size."
+
+  - name: "creative_distinctiveness"
+    weight: 0.15
+    description: "The four variants (problem/outcome/curiosity/resource-led) are meaningfully different from each other, not four re-wordings of the same angle."
+
+  - name: "destination_fit"
+    weight: 0.15
+    description: "The pin's implied intent matches its destination page (see config/funnel-routes.yaml) -- a high-intent gift-guide pin should not land on a bare blog post with no purchase path."
+
+automatic_fail_conditions:
+  - "Any fabricated claim, statistic, review, or endorsement"
+  - "Any medical or developmental claim about reading ability"
+  - "Missing or incorrect UTM parameters per docs/utm-attribution-standard.md"
+  - "Cover art or imagery not matching the real published books"

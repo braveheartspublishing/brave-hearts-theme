@@ -1,0 +1,5 @@
+# Deploy-ZIP exclusions (git archive honors export-ignore).
+# This file documents a prior incident and quotes malware IOC strings;
+# shipping it to a host triggers malware scanners (SiteGround, 2026-08-04).
+# It stays in git; it must never ship in a deploy artifact.
+docs/security-investigation-nlo-finance-redirect-2026-07-09.md export-ignore

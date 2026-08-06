@@ -1,0 +1,2940 @@
+{
+    "generated_at": "2026-07-10 22:13:44",
+    "content_count": 64,
+    "items": [
+        {
+            "content_id": 360,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+            "title": "Complete Collection",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/complete-collection"
+            },
+            "last_modified_date": "2026-07-05 12:18:21",
+            "seo": {
+                "title": "Complete Collection",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 359,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+            "title": "Shop the Series",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/shop-the-series"
+            },
+            "last_modified_date": "2026-07-05 10:08:37",
+            "seo": {
+                "title": "Shop the Series",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 356,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+            "title": "Book Bundles",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/book-bundles"
+            },
+            "last_modified_date": "2026-07-05 09:40:18",
+            "seo": {
+                "title": "Book Bundles",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 355,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/shipping-policy\/",
+            "title": "Shipping Policy",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/shipping-policy"
+            },
+            "last_modified_date": "2026-07-04 12:00:56",
+            "seo": {
+                "title": "Shipping Policy",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/shipping-policy\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 349,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/adventure-kit-thank-you\/",
+            "title": "Adventure Kit Thank You",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/adventure-kit-thank-you"
+            },
+            "last_modified_date": "2026-07-04 04:00:30",
+            "seo": {
+                "title": "Adventure Kit Thank You",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/adventure-kit-thank-you\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 348,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/reluctant-reader-adventure-kit\/",
+            "title": "Reluctant Reader Adventure Kit",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/reluctant-reader-adventure-kit"
+            },
+            "last_modified_date": "2026-07-04 04:02:25",
+            "seo": {
+                "title": "Reluctant Reader Adventure Kit",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/reluctant-reader-adventure-kit\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 341,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/mariana-guide-thank-you\/",
+            "title": "Mariana Guide Thank You",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/mariana-guide-thank-you"
+            },
+            "last_modified_date": "2026-07-03 19:43:43",
+            "seo": {
+                "title": "Mariana Guide Thank You",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/mariana-guide-thank-you\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 340,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-activity\/",
+            "title": "Free Mariana Trench Activity",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/free-mariana-trench-activity"
+            },
+            "last_modified_date": "2026-07-03 19:43:41",
+            "seo": {
+                "title": "Free Mariana Trench Activity",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-activity\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 339,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-teacher-guide\/",
+            "title": "Free Mariana Trench Teacher Guide",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/free-mariana-trench-teacher-guide"
+            },
+            "last_modified_date": "2026-07-03 19:43:38",
+            "seo": {
+                "title": "Free Mariana Trench Teacher Guide",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-teacher-guide\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 324,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/terms-and-conditions\/",
+            "title": "Terms and Conditions",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/terms-and-conditions"
+            },
+            "last_modified_date": "2026-07-10 03:11:18",
+            "seo": {
+                "title": "Terms and Conditions",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/terms-and-conditions\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 212,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/mailchimp-test\/",
+            "title": "Mailchimp Test",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/mailchimp-test"
+            },
+            "last_modified_date": "2026-06-30 00:21:12",
+            "seo": {
+                "title": "Mailchimp Test",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/mailchimp-test\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 107,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/reluctant-readers\/",
+            "title": "Reluctant Readers \u2014 What Actually Works for Kids Who Hate Books",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/how-to-pick-a-read-aloud-book",
+                "\/blog\/how-stories-build-resilience-in-children",
+                "\/blog\/adventure-books-for-kids-ages-6-9",
+                "\/blog\/first-real-chapter-book-for-kids",
+                "\/blog\/best-early-chapter-books-for-6-year-olds"
+            ],
+            "external_links": [
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-books-for-7-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-to-read-after-dog-man"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/reluctant-readers"
+            },
+            "last_modified_date": "2026-06-29 01:49:24",
+            "seo": {
+                "title": "Reluctant Readers \u2014 What Actually Works for Kids Who Hate Books",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/reluctant-readers\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 108,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/read-alouds\/",
+            "title": "Read-Aloud Books &#038; Classroom Resources for Grades 1-3",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/best-read-aloud-books-for-classroom-grades-1-3",
+                "\/blog\/teacher-appreciation-week-thank-you",
+                "\/blog\/free-teachers-guide-mariana-trench",
+                "\/blog\/why-stem-storytelling-builds-braver-kids"
+            ],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/read-alouds"
+            },
+            "last_modified_date": "2026-06-29 01:49:24",
+            "seo": {
+                "title": "Read-Aloud Books &#038; Classroom Resources for Grades 1-3",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/read-alouds\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 105,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/reading-levels\/",
+            "title": "Reading Levels &#038; Lexile Scores",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/my-child-got-a-lexile-score-now-what",
+                "\/blog\/what-is-a-lexile-score",
+                "\/blog\/reading-level-by-grade-chart"
+            ],
+            "external_links": [
+                "https:\/\/www.youtube.com\/shorts\/HiMvKVY0WNQ"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/reading-levels"
+            },
+            "last_modified_date": "2026-06-29 01:49:23",
+            "seo": {
+                "title": "Reading Levels &#038; Lexile Scores",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/reading-levels\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 106,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/mariana-trench\/",
+            "title": "Mariana Trench &#038; Ocean Science for Kids \u2014 Facts, Books &#038; Adventures",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/best-ocean-books-for-kids-ages-6-9",
+                "\/blog\/mariana-trench-facts-for-kids",
+                "\/blog\/how-deep-is-the-mariana-trench-for-kids",
+                "\/blog\/what-is-the-mariana-trench-for-kids"
+            ],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/mariana-trench"
+            },
+            "last_modified_date": "2026-06-29 01:49:23",
+            "seo": {
+                "title": "Mariana Trench &#038; Ocean Science for Kids \u2014 Facts, Books &#038; Adventures",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/mariana-trench\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 103,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/teachers\/",
+            "title": "For Teachers",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/teachers"
+            },
+            "last_modified_date": "2026-06-29 01:49:22",
+            "seo": {
+                "title": "For Teachers",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/teachers\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 104,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/bridge-books\/",
+            "title": "Bridge Books for Kids Ages 6-9 \u2014 The Complete Guide",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/bridge-books-for-struggling-readers",
+                "\/blog\/top-bridge-books-for-kids",
+                "\/blog\/bridge-books-for-kids",
+                "\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "\/blog\/bridge-books-for-early-readers",
+                "\/blog\/bridge-books-for-kids-mount-everest",
+                "\/blog\/best-bridge-books-for-kids"
+            ],
+            "external_links": [
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-to-read-after-dog-man",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-books-for-7-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9",
+                "https:\/\/www.braveheartspublishing.com\/blog\/gap-between-picture-books-and-chapter-books"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/bridge-books"
+            },
+            "last_modified_date": "2026-06-29 01:49:22",
+            "seo": {
+                "title": "Bridge Books for Kids Ages 6-9 \u2014 The Complete Guide",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/bridge-books\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 102,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/books\/",
+            "title": "Books",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/books"
+            },
+            "last_modified_date": "2026-06-29 01:49:21",
+            "seo": {
+                "title": "Books",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/books\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 25,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/contact\/",
+            "title": "Contact",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/contact"
+            },
+            "last_modified_date": "2026-06-29 01:47:24",
+            "seo": {
+                "title": "Contact",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/contact\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 24,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/",
+            "title": "Home",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/books",
+                "\/about",
+                "\/teachers-guide"
+            ],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/"
+            },
+            "last_modified_date": "2026-06-29 03:44:17",
+            "seo": {
+                "title": "Home",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 116,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/about\/",
+            "title": "About",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/books"
+            ],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/about"
+            },
+            "last_modified_date": "2026-06-28 12:36:08",
+            "seo": {
+                "title": "About",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/about\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 119,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/teachers-guide\/",
+            "title": "Teacher&#8217;s Guide",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/teachers-guide"
+            },
+            "last_modified_date": "2026-06-28 12:36:08",
+            "seo": {
+                "title": "Teacher&#8217;s Guide",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/teachers-guide\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 118,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/",
+            "title": "Blog",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog"
+            },
+            "last_modified_date": "2026-06-28 12:36:08",
+            "seo": {
+                "title": "Blog",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 9,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/my-account\/",
+            "title": "My account",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/my-account"
+            },
+            "last_modified_date": "2026-06-28 09:57:54",
+            "seo": {
+                "title": "My account",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/my-account\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 7,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/cart\/",
+            "title": "Cart",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/cart"
+            },
+            "last_modified_date": "2026-06-29 04:02:49",
+            "seo": {
+                "title": "Cart",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/cart\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 8,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/checkout\/",
+            "title": "Checkout",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/shipping-policy"
+            ],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/checkout"
+            },
+            "last_modified_date": "2026-07-04 11:59:14",
+            "seo": {
+                "title": "Checkout",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/checkout\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 6,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/shop\/",
+            "title": "Shop",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/shop"
+            },
+            "last_modified_date": "2026-06-28 09:57:52",
+            "seo": {
+                "title": "Shop",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/shop\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 2,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/sample-page\/",
+            "title": "Sample Page",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/wp-admin"
+            ],
+            "external_links": [],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/sample-page"
+            },
+            "last_modified_date": "2026-07-02 03:57:11",
+            "seo": {
+                "title": "Sample Page",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/sample-page\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 3,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/privacy-policy\/",
+            "title": "Privacy Policy",
+            "page_type": "page",
+            "audience": "mixed",
+            "funnel_stage": "awareness",
+            "content_intent": "educational",
+            "primary_topic": "",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [
+                "https:\/\/stripe.com\/privacy"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/privacy-policy"
+            },
+            "last_modified_date": "2026-07-10 03:11:17",
+            "seo": {
+                "title": "Privacy Policy",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/privacy-policy\/",
+                "schema_type": "WebPage"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "unclassified"
+        },
+        {
+            "content_id": 84,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/science-books-for-kids-that-feel-like-adventures\/",
+            "title": "For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "consideration",
+            "content_intent": "adventure_geography",
+            "primary_topic": "science-geography",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "visit_collection_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/www.braveheartspublishing.com\/books",
+                "https:\/\/static1.squarespace.com\/static\/69a4852e7db0bc7e34bc3354\/t\/69dd0c272bf3f5703f470b59\/1776094258999\/Mariana+Trench+20+min+Guide+300DPI.pdf",
+                "https:\/\/www.braveheartspublishing.com\/teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-is-a-lexile-score",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/my-child-hates-reading-what-to-do",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/gap-between-picture-books-and-chapter-books",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/science-books-for-kids-that-feel-like-adventures"
+            },
+            "last_modified_date": "2026-07-02 03:44:35",
+            "seo": {
+                "title": "For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/science-books-for-kids-that-feel-like-adventures\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 56,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+            "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/wp-content\/uploads\/2026\/07\/mariana-trench-20-min-guide.pdf",
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/www.braveheartspublishing.com\/books",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-is-a-lexile-score",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/my-child-hates-reading-what-to-do",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/gap-between-picture-books-and-chapter-books",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/dog-man-to-magic-tree-house-reading-roadmap"
+            },
+            "last_modified_date": "2026-07-02 03:57:11",
+            "seo": {
+                "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 72,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/kirkus-review-adventures-of-charlotte-and-henry\/",
+            "title": "Adventures of Charlotte &amp; Henry Just Got a Kirkus Review. Here&#8217;s What They Said.",
+            "page_type": "blog_post",
+            "audience": "teacher",
+            "funnel_stage": "consideration",
+            "content_intent": "book_recommendation",
+            "primary_topic": "book-brand-stories",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "visit_collection_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/www.kirkusreviews.com\/book-reviews\/andrew-signore\/adventures-of-charlotte-and-henry\/",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/books",
+                "https:\/\/static1.squarespace.com\/static\/69a4852e7db0bc7e34bc3354\/t\/69dd0c272bf3f5703f470b59\/1776094258999\/Mariana+Trench+20+min+Guide+300DPI.pdf",
+                "https:\/\/www.braveheartspublishing.com\/teachers",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/www.braveheartspublishing.com\/blog\/books-like-magic-tree-house",
+                "https:\/\/www.braveheartspublishing.com\/blog?tag=bridge%20books%20for%20struggling%20readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/top-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/kirkus-review-adventures-of-charlotte-and-henry"
+            },
+            "last_modified_date": "2026-07-02 03:44:32",
+            "seo": {
+                "title": "Adventures of Charlotte &amp; Henry Just Got a Kirkus Review. Here&#8217;s What They Said.",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/kirkus-review-adventures-of-charlotte-and-henry\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 96,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+            "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/3PXUEZ8",
+                "https:\/\/amzn.to\/4uA58Ns",
+                "https:\/\/amzn.to\/4wWN3eb",
+                "https:\/\/amzn.to\/4dNMSJm",
+                "https:\/\/amzn.to\/43fpdg9",
+                "https:\/\/amzn.to\/3PXUUY6",
+                "https:\/\/amzn.to\/4wM4he0",
+                "https:\/\/www.braveheartspublishing.com\/books",
+                "https:\/\/static1.squarespace.com\/static\/69a4852e7db0bc7e34bc3354\/t\/69dd0c272bf3f5703f470b59\/1776094258999\/Mariana+Trench+20+min+Guide+300DPI.pdf",
+                "https:\/\/www.braveheartspublishing.com\/teachers",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/www.braveheartspublishing.com\/blog\/books-like-magic-tree-house",
+                "https:\/\/www.braveheartspublishing.com\/blog?tag=bridge%20books%20for%20struggling%20readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/top-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/what-to-read-after-dog-man"
+            },
+            "last_modified_date": "2026-07-02 03:44:38",
+            "seo": {
+                "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 28,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+            "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/amzn.to\/4urr79a",
+                "https:\/\/amzn.to\/4uzvoYn",
+                "https:\/\/amzn.to\/42RbPP0",
+                "https:\/\/amzn.to\/3RlKS3x",
+                "https:\/\/amzn.to\/4wPVjfQ",
+                "https:\/\/amzn.to\/3PFKexe",
+                "https:\/\/www.braveheartspublishing.com\/books",
+                "https:\/\/static1.squarespace.com\/static\/69a4852e7db0bc7e34bc3354\/t\/69dd0c272bf3f5703f470b59\/1776094258999\/Mariana+Trench+20+min+Guide+300DPI.pdf",
+                "https:\/\/www.braveheartspublishing.com\/teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/books-like-magic-tree-house",
+                "https:\/\/www.braveheartspublishing.com\/blog?tag=bridge%20books%20for%20struggling%20readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/top-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/best-books-for-7-year-olds"
+            },
+            "last_modified_date": "2026-07-02 03:44:26",
+            "seo": {
+                "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 38,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9\/",
+            "title": "The Best Summer Reading Books for Kids Ages 6\u20139 (That They&#8217;ll Actually Finish)",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/wp-content\/uploads\/2026\/07\/mariana-trench-20-min-guide.pdf",
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/ https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/amzn.to\/4tNIosc",
+                "https:\/\/amzn.to\/4dwBUsV",
+                "https:\/\/amzn.to\/3RBUUgN",
+                "https:\/\/amzn.to\/3Rmp5IS",
+                "https:\/\/amzn.to\/49eRhUh",
+                "https:\/\/amzn.to\/42ISmzY",
+                "https:\/\/www.braveheartspublishing.com\/books",
+                "https:\/\/www.braveheartspublishing.com\/teachers",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/blog\/gap-between-picture-books-and-chapter-books",
+                "https:\/\/www.braveheartspublishing.com\/blog?tag=bridge%20books%20for%20struggling%20readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/top-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/best-summer-reading-books-for-kids-ages-6-9"
+            },
+            "last_modified_date": "2026-07-02 03:57:12",
+            "seo": {
+                "title": "The Best Summer Reading Books for Kids Ages 6\u20139 (That They&#8217;ll Actually Finish)",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 46,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/books-like-magic-tree-house\/",
+            "title": "8 Books Like Magic Tree House Your Kids Will Love Just as Much",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/gap-between-picture-books-and-chapter-books",
+                "\/blog",
+                "\/blog\/top-bridge-books-for-kids",
+                "\/blog\/bridge-books-for-kids",
+                "\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "\/blog\/bridge-books-for-early-readers",
+                "\/blog\/bridge-books-for-kids-mount-everest",
+                "\/blog\/best-bridge-books-for-kids"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/amzn.to\/4ulMs42",
+                "https:\/\/amzn.to\/4wwPYtF",
+                "https:\/\/amzn.to\/4ugmzlS",
+                "https:\/\/amzn.to\/4wzi87e",
+                "https:\/\/amzn.to\/4ulOeSK",
+                "https:\/\/amzn.to\/4wyNRFQ",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/books-like-magic-tree-house"
+            },
+            "last_modified_date": "2026-07-02 03:44:28",
+            "seo": {
+                "title": "8 Books Like Magic Tree House Your Kids Will Love Just as Much",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/books-like-magic-tree-house\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 64,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/gap-between-picture-books-and-chapter-books\/",
+            "title": "The Gap Between Picture Books and Chapter Books Is Real \u2014 Here&#8217;s What Goes There",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/bridge-books-for-struggling-readers",
+                "\/blog\/top-bridge-books-for-kids",
+                "\/blog\/bridge-books-for-kids",
+                "\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "\/blog\/bridge-books-for-early-readers",
+                "\/blog\/bridge-books-for-kids-mount-everest",
+                "\/blog\/best-bridge-books-for-kids"
+            ],
+            "external_links": [
+                "https:\/\/ https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/gap-between-picture-books-and-chapter-books"
+            },
+            "last_modified_date": "2026-07-02 03:44:31",
+            "seo": {
+                "title": "The Gap Between Picture Books and Chapter Books Is Real \u2014 Here&#8217;s What Goes There",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/gap-between-picture-books-and-chapter-books\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 98,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-i-wrote-this-book\/",
+            "title": "Charlotte Is Real. Henry Is Real. And This Is Why I Wrote Them a Book.",
+            "page_type": "blog_post",
+            "audience": "teacher",
+            "funnel_stage": "consideration",
+            "content_intent": "book_recommendation",
+            "primary_topic": "book-brand-stories",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "visit_collection_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/why-i-wrote-this-book"
+            },
+            "last_modified_date": "2026-07-02 04:24:18",
+            "seo": {
+                "title": "Charlotte Is Real. Henry Is Real. And This Is Why I Wrote Them a Book.",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-i-wrote-this-book\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 58,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/finding-right-books-with-lexile-score\/",
+            "title": "I Spent Two Years Picking the Wrong Books for Kids. Then I Found their Lexile Scores.",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/my-child-got-a-lexile-score-now-what",
+                "\/blog\/blog\/what-is-a-lexile-score",
+                "\/blog\/reading-level-by-grade-chart"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/www.youtube.com\/shorts\/HiMvKVY0WNQ",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/finding-right-books-with-lexile-score"
+            },
+            "last_modified_date": "2026-07-02 03:44:31",
+            "seo": {
+                "title": "I Spent Two Years Picking the Wrong Books for Kids. Then I Found their Lexile Scores.",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/finding-right-books-with-lexile-score\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 76,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mount-everest-facts-for-kids\/",
+            "title": "10 Mount Everest Facts for Kids That Will Make Their Jaw Drop",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "product_discovery",
+            "content_intent": "adventure_geography",
+            "primary_topic": "science-geography",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "mount_everest",
+            "primary_cta": "visit_book_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/mount-everest-facts-for-kids"
+            },
+            "last_modified_date": "2026-07-02 03:44:33",
+            "seo": {
+                "title": "10 Mount Everest Facts for Kids That Will Make Their Jaw Drop",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/mount-everest-facts-for-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 54,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-struggling-readers\/",
+            "title": "Bridge Books for Struggling Readers: The Parent&#8217;s Complete Roadmap",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/top-bridge-books-for-kids",
+                "\/blog\/bridge-books-for-kids",
+                "\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "\/blog\/bridge-books-for-early-readers",
+                "\/blog\/bridge-books-for-kids-mount-everest",
+                "\/blog\/best-bridge-books-for-kids"
+            ],
+            "external_links": [
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/bridge-books-for-struggling-readers"
+            },
+            "last_modified_date": "2026-07-02 03:44:30",
+            "seo": {
+                "title": "Bridge Books for Struggling Readers: The Parent&#8217;s Complete Roadmap",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-struggling-readers\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 80,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-hates-reading-what-to-do\/",
+            "title": "My Child Hates Reading: What Actually Works",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/how-to-pick-a-read-aloud-book",
+                "\/blog\/how-stories-build-resilience-in-children",
+                "\/blog\/adventure-books-for-kids-ages-6-9",
+                "\/blog\/first-real-chapter-book-for-kids",
+                "\/blog\/best-early-chapter-books-for-6-year-olds"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/my-child-hates-reading-what-to-do"
+            },
+            "last_modified_date": "2026-07-02 03:44:34",
+            "seo": {
+                "title": "My Child Hates Reading: What Actually Works",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-hates-reading-what-to-do\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 70,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-to-pick-a-read-aloud-book\/",
+            "title": "How to Pick a Read-Aloud Book That Keeps a Whole Class Listening",
+            "page_type": "blog_post",
+            "audience": "librarian",
+            "funnel_stage": "awareness",
+            "content_intent": "teacher_resource",
+            "primary_topic": "educator-resources",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/how-to-pick-a-read-aloud-book",
+                "\/blog\/how-stories-build-resilience-in-children",
+                "\/blog\/adventure-books-for-kids-ages-6-9",
+                "\/blog\/first-real-chapter-book-for-kids",
+                "\/blog\/best-early-chapter-books-for-6-year-olds"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/how-to-pick-a-read-aloud-book"
+            },
+            "last_modified_date": "2026-07-02 03:44:32",
+            "seo": {
+                "title": "How to Pick a Read-Aloud Book That Keeps a Whole Class Listening",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-to-pick-a-read-aloud-book\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 82,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/reading-level-by-grade-chart\/",
+            "title": "Reading Level Chart by Grade: What Level Should My Child Be At??",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/my-child-got-a-lexile-score-now-what",
+                "\/blog\/blog\/what-is-a-lexile-score"
+            ],
+            "external_links": [
+                "https:\/\/www.youtube.com\/shorts\/HiMvKVY0WNQ",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/reading-level-by-grade-chart"
+            },
+            "last_modified_date": "2026-07-02 03:44:34",
+            "seo": {
+                "title": "Reading Level Chart by Grade: What Level Should My Child Be At??",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/reading-level-by-grade-chart\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 94,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+            "title": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "product_discovery",
+            "content_intent": "adventure_geography",
+            "primary_topic": "science-geography",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "mariana_trench",
+            "primary_cta": "visit_book_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/wp-content\/uploads\/2026\/07\/mariana-trench-20-min-guide.pdf",
+                "\/blog\/best-ocean-books-for-kids-ages-6-9",
+                "\/blog\/mariana-trench-facts-for-kids",
+                "\/blog\/how-deep-is-the-mariana-trench-for-kids"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/what-is-the-mariana-trench-for-kids"
+            },
+            "last_modified_date": "2026-07-02 03:57:13",
+            "seo": {
+                "title": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 36,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-read-aloud-books-for-classroom-grades-1-3\/",
+            "title": "The Best Read Aloud Books for Elementary Classrooms (Grades 1\u20133)",
+            "page_type": "blog_post",
+            "audience": "librarian",
+            "funnel_stage": "awareness",
+            "content_intent": "teacher_resource",
+            "primary_topic": "educator-resources",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/wp-content\/uploads\/2026\/07\/mariana-trench-20-min-guide.pdf",
+                "\/blog\/my-child-got-a-lexile-score-now-what",
+                "\/blog\/teacher-appreciation-week-thank-you"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4t6dLxC",
+                "https:\/\/amzn.to\/497OX13",
+                "https:\/\/amzn.to\/4n6yDDF",
+                "https:\/\/amzn.to\/4tcym3o",
+                "https:\/\/amzn.to\/4cLqYag",
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/www.braveheartspublishing.com\/",
+                "https:\/\/www.braveheartspublishing.com\/blog\/blog\/what-is-a-lexile-score",
+                "https:\/\/www.braveheartspublishing.com\/blog\/top-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/best-read-aloud-books-for-classroom-grades-1-3"
+            },
+            "last_modified_date": "2026-07-02 03:57:13",
+            "seo": {
+                "title": "The Best Read Aloud Books for Elementary Classrooms (Grades 1\u20133)",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-read-aloud-books-for-classroom-grades-1-3\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 78,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-got-a-lexile-score-now-what\/",
+            "title": "My Child Got a Lexile Score \u2014 Now What? Here&#8217;s Exactly What to Do",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/blog\/what-is-a-lexile-score"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-is-a-lexile-score",
+                "https:\/\/static1.squarespace.com\/static\/69a4852e7db0bc7e34bc3354\/t\/69dd0c272bf3f5703f470b59\/1776094258999\/Mariana+Trench+20+min+Guide+300DPI.pdf",
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/www.braveheartspublishing.com\/",
+                "https:\/\/www.braveheartspublishing.com\/blog\/top-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/my-child-got-a-lexile-score-now-what"
+            },
+            "last_modified_date": "2026-07-02 03:44:33",
+            "seo": {
+                "title": "My Child Got a Lexile Score \u2014 Now What? Here&#8217;s Exactly What to Do",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-got-a-lexile-score-now-what\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 86,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you\/",
+            "title": "To Every Teacher Who Said Yes: Happy Teacher Appreciation Week",
+            "page_type": "blog_post",
+            "audience": "librarian",
+            "funnel_stage": "awareness",
+            "content_intent": "teacher_resource",
+            "primary_topic": "educator-resources",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [],
+            "external_links": [
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/teacher-appreciation-week-thank-you"
+            },
+            "last_modified_date": "2026-07-02 03:44:36",
+            "seo": {
+                "title": "To Every Teacher Who Said Yes: Happy Teacher Appreciation Week",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 92,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-a-lexile-score\/",
+            "title": "What Is a Lexile Score? A Parent&#8217;s Guide to Reading Levels",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/top-bridge-books-for-kids"
+            ],
+            "external_links": [
+                "https:\/\/www.youtube.com\/shorts\/HiMvKVY0WNQ",
+                "http:\/\/hub.lexile.com",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/www.braveheartspublishing.com\/",
+                "https:\/\/www.braveheartspublishing.com\/teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/what-is-a-lexile-score"
+            },
+            "last_modified_date": "2026-07-02 03:44:37",
+            "seo": {
+                "title": "What Is a Lexile Score? A Parent&#8217;s Guide to Reading Levels",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-a-lexile-score\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 88,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/top-bridge-books-for-kids\/",
+            "title": "Top Bridge Books for Kids \u2014 Best Picks for Growing Readers",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/bridge-books-for-kids"
+            ],
+            "external_links": [
+                "https:\/\/ https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/amzn.to\/4tBPd0L",
+                "https:\/\/amzn.to\/4u958TM",
+                "https:\/\/amzn.to\/4vOBwgt",
+                "https:\/\/amzn.to\/4cJ8BkZ",
+                "https:\/\/amzn.to\/3QpnT7d",
+                "https:\/\/amzn.to\/4uakesg",
+                "https:\/\/www.braveheartspublishing.com\/",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/top-bridge-books-for-kids"
+            },
+            "last_modified_date": "2026-07-02 03:44:36",
+            "seo": {
+                "title": "Top Bridge Books for Kids \u2014 Best Picks for Growing Readers",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/top-bridge-books-for-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 50,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-kids\/",
+            "title": "The Complete Guide to Bridge Books for Kids (Ages 6-9)",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/best-ocean-books-for-kids-ages-6-9"
+            ],
+            "external_links": [
+                "https:\/\/www.braveheartspublishing.com\/",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/bridge-books-for-kids"
+            },
+            "last_modified_date": "2026-07-02 03:44:29",
+            "seo": {
+                "title": "The Complete Guide to Bridge Books for Kids (Ages 6-9)",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 34,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/",
+            "title": "Best Books About the Ocean for Kids Ages 6-9",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "product_discovery",
+            "content_intent": "adventure_geography",
+            "primary_topic": "science-geography",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "mariana_trench",
+            "primary_cta": "visit_book_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/mariana-trench-facts-for-kids",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/42dLWbB",
+                "https:\/\/amzn.to\/3Oel1JD",
+                "https:\/\/amzn.to\/4tuP2ny",
+                "https:\/\/www.braveheartspublishing.com\/Teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/best-ocean-books-for-kids-ages-6-9"
+            },
+            "last_modified_date": "2026-07-02 03:45:54",
+            "seo": {
+                "title": "Best Books About the Ocean for Kids Ages 6-9",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 74,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/",
+            "title": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "product_discovery",
+            "content_intent": "adventure_geography",
+            "primary_topic": "science-geography",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "mariana_trench",
+            "primary_cta": "visit_book_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/wp-content\/uploads\/2026\/07\/mariana-trench-20-min-guide.pdf",
+                "\/teachers",
+                "\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": true,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/mariana-trench-facts-for-kids"
+            },
+            "last_modified_date": "2026-07-02 03:57:14",
+            "seo": {
+                "title": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 90,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers\/",
+            "title": "My Kid Hates Long Books. Bridge Books Fixed That.",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/wp-content\/uploads\/2026\/07\/mariana-trench-20-min-guide.pdf",
+                "\/wp-content\/uploads\/2026\/07\/everest-20-min-guide.pdf",
+                "\/teachers",
+                "\/blog\/bridge-books-for-early-readers",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/ https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/what-are-bridge-books-guide-for-parents-and-teachers"
+            },
+            "last_modified_date": "2026-07-02 03:57:14",
+            "seo": {
+                "title": "My Kid Hates Long Books. Bridge Books Fixed That.",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 48,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-early-readers\/",
+            "title": "How to Help Your Child Transition from Picture Books to Chapter Books",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/amzn.to\/4mptuGv",
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/www.braveheartspublishing.com\/",
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=27DIS7DLYYSZR&amp;dib=eyJ2IjoiMSJ9.Op50t0eZZJsuseit3DfNxMAqUMmieOkgDKRFve_mrhY2i-a3uT4rdDjBoOkk4hCZEiM68PxHAVPrEySK0ZW4eM6T4caPLZZF5peYqzQdnMk8buCxGYVWXB5qMC_e_hUbo4ppCVNPz8RxmBpGVJ1q5OE_MpGDdDzt5WF3PyZRCPvveH6cDauFirSGe9Spmv6cIbSfQF6gMmej186y6JeH8VpckrIo__ZxMkNH-hk5caM.SdxmNg9AtYL8ywcQj-EVkzZHlxIE8cH-asb-lYZrL6Y&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1773966160&amp;sprefix=adventures+of+charlotte+and+henry%2Caps%2C215&amp;sr=8-1",
+                "https:\/\/www.braveheartspublishing.com\/blog\/my-child-got-a-lexile-score-now-what",
+                "https:\/\/www.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you",
+                "https:\/\/www.braveheartspublishing.com\/blog\/blog\/what-is-a-lexile-score",
+                "https:\/\/www.braveheartspublishing.com\/blog\/top-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/bridge-books-for-early-readers"
+            },
+            "last_modified_date": "2026-07-02 03:44:29",
+            "seo": {
+                "title": "How to Help Your Child Transition from Picture Books to Chapter Books",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-early-readers\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 52,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest\/",
+            "title": "What Comes After Picture Books? Discover Bridge Books for Growing Readers",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/best-early-chapter-books-for-6-year-olds",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=27DIS7DLYYSZR&amp;dib=eyJ2IjoiMSJ9.Op50t0eZZJsuseit3DfNxMAqUMmieOkgDKRFve_mrhY2i-a3uT4rdDjBoOkk4hCZEiM68PxHAVPrEySK0ZW4eM6T4caPLZZF5peYqzQdnMk8buCxGYVWXB5qMC_e_hUbo4ppCVNPz8RxmBpGVJ1q5OE_MpGDdDzt5WF3PyZRCPvveH6cDauFirSGe9Spmv6cIbSfQF6gMmej186y6JeH8VpckrIo__ZxMkNH-hk5caM.SdxmNg9AtYL8ywcQj-EVkzZHlxIE8cH-asb-lYZrL6Y&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1773966160&amp;sprefix=adventures+of+charlotte+and+henry%2Caps%2C215&amp;sr=8-1",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/bridge-books-for-kids-mount-everest"
+            },
+            "last_modified_date": "2026-07-02 03:10:57",
+            "seo": {
+                "title": "What Comes After Picture Books? Discover Bridge Books for Growing Readers",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 32,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds\/",
+            "title": "Best Early Chapter Books for 6 Year Olds",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/free-teachers-guide-mariana-trench",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=27DIS7DLYYSZR&amp;dib=eyJ2IjoiMSJ9.Op50t0eZZJsuseit3DfNxMAqUMmieOkgDKRFve_mrhY2i-a3uT4rdDjBoOkk4hCZEiM68PxHAVPrEySK0ZW4eM6T4caPLZZF5peYqzQdnMk8buCxGYVWXB5qMC_e_hUbo4ppCVNPz8RxmBpGVJ1q5OE_MpGDdDzt5WF3PyZRCPvveH6cDauFirSGe9Spmv6cIbSfQF6gMmej186y6JeH8VpckrIo__ZxMkNH-hk5caM.SdxmNg9AtYL8ywcQj-EVkzZHlxIE8cH-asb-lYZrL6Y&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1773966160&amp;sprefix=adventures+of+charlotte+and+henry%2Caps%2C215&amp;sr=8-1",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/best-early-chapter-books-for-6-year-olds"
+            },
+            "last_modified_date": "2026-07-02 03:10:59",
+            "seo": {
+                "title": "Best Early Chapter Books for 6 Year Olds",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 62,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench\/",
+            "title": "Free Teacher&#8217;s Guide Is Here \u2014 And It&#8217;s Ready for Your Classroom",
+            "page_type": "blog_post",
+            "audience": "librarian",
+            "funnel_stage": "product_discovery",
+            "content_intent": "teacher_resource",
+            "primary_topic": "educator-resources",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "mariana_trench",
+            "primary_cta": "visit_book_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/wp-content\/uploads\/2026\/07\/charlotte-henry-teachers-guide.pdf",
+                "\/blog\/first-real-chapter-book-for-kids",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=27DIS7DLYYSZR&amp;dib=eyJ2IjoiMSJ9.Op50t0eZZJsuseit3DfNxMAqUMmieOkgDKRFve_mrhY2i-a3uT4rdDjBoOkk4hCZEiM68PxHAVPrEySK0ZW4eM6T4caPLZZF5peYqzQdnMk8buCxGYVWXB5qMC_e_hUbo4ppCVNPz8RxmBpGVJ1q5OE_MpGDdDzt5WF3PyZRCPvveH6cDauFirSGe9Spmv6cIbSfQF6gMmej186y6JeH8VpckrIo__ZxMkNH-hk5caM.SdxmNg9AtYL8ywcQj-EVkzZHlxIE8cH-asb-lYZrL6Y&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1773966160&amp;sprefix=adventures+of+charlotte+and+henry%2Caps%2C215&amp;sr=8-1",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/free-teachers-guide-mariana-trench"
+            },
+            "last_modified_date": "2026-07-02 03:57:15",
+            "seo": {
+                "title": "Free Teacher&#8217;s Guide Is Here \u2014 And It&#8217;s Ready for Your Classroom",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 60,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids\/",
+            "title": "The First Real Chapter Book: Helping Kids Transition From Early Readers",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/best-bridge-books-for-kids",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9",
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=QF2B281T0TCV&amp;dib=eyJ2IjoiMSJ9.DAZ2rz2kgGXTNX3UD40BryZQ5YgBSNwSYeJWB03Fc2t7_bbI4fz-3En4ltLSw4Uil8Q26LZiptrO7wrOCSPMloUqtB3CN9_FTJ9TA2XF1Lp3Yv5WRZg9TdWNnIvZvDRLlf89aTJq30WDRq3_LtDfTRKWW4Xi2Ko1vjOVB3XYPuUFN-x0EGs3jduJCTcPEYub6H7Tp7xrTDRjhMxlRWLvLTxuXUKE80iXPfVEPh5co90.sbouJzyvq2MYR1UPF27jpXp4YLurres5gQYBN3fnbPg&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1772981036&amp;sprefix=adventures+of+charlotte+and+henry%2Caps%2C204&amp;sr=8-1"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/first-real-chapter-book-for-kids"
+            },
+            "last_modified_date": "2026-07-02 03:11:01",
+            "seo": {
+                "title": "The First Real Chapter Book: Helping Kids Transition From Early Readers",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 30,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-bridge-books-for-kids\/",
+            "title": "Bridge Books: The Perfect Next Step After Frog and Toad",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers",
+                "\/blog\/why-stem-storytelling-builds-braver-kids",
+                "\/blog\/how-stories-build-resilience-in-children",
+                "\/blog\/adventure-books-for-kids-ages-6-9",
+                "\/"
+            ],
+            "external_links": [
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=QF2B281T0TCV&amp;dib=eyJ2IjoiMSJ9.DAZ2rz2kgGXTNX3UD40BryZQ5YgBSNwSYeJWB03Fc2t7_bbI4fz-3En4ltLSw4Uil8Q26LZiptrO7wrOCSPMloUqtB3CN9_FTJ9TA2XF1Lp3Yv5WRZg9TdWNnIvZvDRLlf89aTJq30WDRq3_LtDfTRKWW4Xi2Ko1vjOVB3XYPuUFN-x0EGs3jduJCTcPEYub6H7Tp7xrTDRjhMxlRWLvLTxuXUKE80iXPfVEPh5co90.sbouJzyvq2MYR1UPF27jpXp4YLurres5gQYBN3fnbPg&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1772981036&amp;sprefix=adventures+of+charlotte+and+henry%2Caps%2C204&amp;sr=8-1"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/best-bridge-books-for-kids"
+            },
+            "last_modified_date": "2026-07-02 03:11:02",
+            "seo": {
+                "title": "Bridge Books: The Perfect Next Step After Frog and Toad",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-bridge-books-for-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 66,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids\/",
+            "title": "How Deep Is the Mariana Trench? (Explained for Kids)",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "product_discovery",
+            "content_intent": "adventure_geography",
+            "primary_topic": "science-geography",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "mariana_trench",
+            "primary_cta": "visit_book_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/books",
+                "\/teachers",
+                "\/blog\/why-stem-storytelling-builds-braver-kids",
+                "\/blog\/how-stories-build-resilience-in-children",
+                "\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "external_links": [
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=LMK2DD0H2DIH&amp;dib=eyJ2IjoiMSJ9.DAZ2rz2kgGXTNX3UD40Br-hjfiULfh87rN7GysAg3DY2KgYSel6S5PJmNw4Hb8GRQ5xVWHOkc6puH8GMzXWIHRi0abx1OSAnXsVn7uPAjX_bTzVj4yvQM8qMHyJczvIHnx5jpJKrgM7Yc-Tnq2cck7sXV5lGpWDEKQRQq985vDcMptDb_q0bWyPD6dFbpFzVE79vQ8CbFKwDKnnnCXQZX1Y4V_YnA0WskhLeJZz0Ink.mh6UkYYx4iVJ1c3uOh9be140zviLBubfVol330YR3nQ&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1772811632&amp;s=books&amp;sprefix=adventures+of+charlotte+and+henry%2Cstripbooks%2C202&amp;sr=1-1"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/how-deep-is-the-mariana-trench-for-kids"
+            },
+            "last_modified_date": "2026-07-02 03:11:04",
+            "seo": {
+                "title": "How Deep Is the Mariana Trench? (Explained for Kids)",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 26,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9\/",
+            "title": "Why Adventure Books for Kids (Ages 6\u20139) Build Confidence and Curiosity",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/blog\/why-stem-storytelling-builds-braver-kids",
+                "\/blog\/how-stories-build-resilience-in-children"
+            ],
+            "external_links": [
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=P0UF6BOMZ5EH&amp;dib=eyJ2IjoiMSJ9.DAZ2rz2kgGXTNX3UD40BryZQ5YgBSNwSYeJWB03Fc2udknDnf2JYjfyYADpuyYJVDdB2x39tT-51sYNF6fJpgmLFMLNPUtpFP0n5J0L7_6t3kO35ZHZ5ZX7Wrla9DSNODHPqWbPEeyu0ovk8xESPHgBT2qutgSLSxD6SzGNQ5t174SS_GedomVX3gO8LTSsvhUZixZa7KT0XhzTAHSY7NSW8FN9PDka1tgjJgGmWeuk.zBVIFziXJboI2IHk7hX5CJCyKf0AvLyJwmfLDnoyjLo&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1772493810&amp;sprefix=%2Caps%2C726&amp;sr=8-1",
+                "https:\/\/www.braveheartspublishing.com"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/adventure-books-for-kids-ages-6-9"
+            },
+            "last_modified_date": "2026-07-02 03:42:33",
+            "seo": {
+                "title": "Why Adventure Books for Kids (Ages 6\u20139) Build Confidence and Curiosity",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 68,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children\/",
+            "title": "How Stories Help Children Build Resilience and Courage (Ages 6\u20139)",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "awareness",
+            "content_intent": "reading_development",
+            "primary_topic": "reading-growing",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "related_content_engagement",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=P0UF6BOMZ5EH&amp;dib=eyJ2IjoiMSJ9.DAZ2rz2kgGXTNX3UD40BryZQ5YgBSNwSYeJWB03Fc2udknDnf2JYjfyYADpuyYJVDdB2x39tT-51sYNF6fJpgmLFMLNPUtpFP0n5J0L7_6t3kO35ZHZ5ZX7Wrla9DSNODHPqWbPEeyu0ovk8xESPHgBT2qutgSLSxD6SzGNQ5t174SS_GedomVX3gO8LTSsvhUZixZa7KT0XhzTAHSY7NSW8FN9PDka1tgjJgGmWeuk.zBVIFziXJboI2IHk7hX5CJCyKf0AvLyJwmfLDnoyjLo&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1772493810&amp;sprefix=%2Caps%2C726&amp;sr=8-1",
+                "https:\/\/www.braveheartspublishing.com"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/how-stories-build-resilience-in-children"
+            },
+            "last_modified_date": "2026-07-02 03:42:35",
+            "seo": {
+                "title": "How Stories Help Children Build Resilience and Courage (Ages 6\u20139)",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        },
+        {
+            "content_id": 100,
+            "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids\/",
+            "title": "Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6\u20139)",
+            "page_type": "blog_post",
+            "audience": "parent",
+            "funnel_stage": "consideration",
+            "content_intent": "adventure_geography",
+            "primary_topic": "science-geography",
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "featured_book": "",
+            "primary_cta": "visit_collection_page",
+            "secondary_cta": "another_resource",
+            "lead_offer": "",
+            "internal_link_targets": [
+                "\/teachers"
+            ],
+            "external_links": [
+                "https:\/\/www.amazon.com\/Adventures-Charlotte-Henry-Mariana-Trench\/dp\/B0GQCCPZLL\/ref=sr_1_1?crid=P0UF6BOMZ5EH&amp;dib=eyJ2IjoiMSJ9.DAZ2rz2kgGXTNX3UD40BryZQ5YgBSNwSYeJWB03Fc2udknDnf2JYjfyYADpuyYJVDdB2x39tT-51sYNF6fJpgmLFMLNPUtpFP0n5J0L7_6t3kO35ZHZ5ZX7Wrla9DSNODHPqWbPEeyu0ovk8xESPHgBT2qutgSLSxD6SzGNQ5t174SS_GedomVX3gO8LTSsvhUZixZa7KT0XhzTAHSY7NSW8FN9PDka1tgjJgGmWeuk.zBVIFziXJboI2IHk7hX5CJCyKf0AvLyJwmfLDnoyjLo&amp;dib_tag=se&amp;keywords=adventures+of+charlotte+and+henry&amp;qid=1772493810&amp;sprefix=%2Caps%2C726&amp;sr=8-1",
+                "https:\/\/www.braveheartspublishing.com",
+                "https:\/\/linktr.ee\/CharlotteandHenryBooks",
+                "https:\/\/amzn.to\/4svChYL",
+                "https:\/\/www.braveheartspublishing.com\/",
+                "https:\/\/www.braveheartspublishing.com\/blog\/my-child-got-a-lexile-score-now-what",
+                "https:\/\/www.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you",
+                "https:\/\/www.braveheartspublishing.com\/blog\/blog\/what-is-a-lexile-score",
+                "https:\/\/www.braveheartspublishing.com\/blog\/top-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9",
+                "https:\/\/www.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-early-readers",
+                "https:\/\/www.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds",
+                "https:\/\/www.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench",
+                "https:\/\/www.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/best-bridge-books-for-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids",
+                "https:\/\/www.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children",
+                "https:\/\/www.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9"
+            ],
+            "existing_pinterest_brief": false,
+            "analytics_identifiers": {
+                "url_normalized": "\/blog\/why-stem-storytelling-builds-braver-kids"
+            },
+            "last_modified_date": "2026-07-02 03:44:39",
+            "seo": {
+                "title": "Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6\u20139)",
+                "description": "",
+                "canonical": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids\/",
+                "schema_type": "Article"
+            },
+            "seo_risk_flags": [
+                "missing_seo_title",
+                "missing_meta_description",
+                "missing_focus_keyword"
+            ],
+            "conversion_readiness_status": "derived_from_registry"
+        }
+    ],
+    "gaps": {
+        "orphan_pages": [
+            "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+            "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+            "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+            "https:\/\/staging2.braveheartspublishing.com\/adventure-kit-thank-you\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reluctant-reader-adventure-kit\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mariana-guide-thank-you\/",
+            "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-activity\/",
+            "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-teacher-guide\/",
+            "https:\/\/staging2.braveheartspublishing.com\/terms-and-conditions\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mailchimp-test\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reluctant-readers\/",
+            "https:\/\/staging2.braveheartspublishing.com\/read-alouds\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reading-levels\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mariana-trench\/",
+            "https:\/\/staging2.braveheartspublishing.com\/bridge-books\/",
+            "https:\/\/staging2.braveheartspublishing.com\/contact\/",
+            "https:\/\/staging2.braveheartspublishing.com\/my-account\/",
+            "https:\/\/staging2.braveheartspublishing.com\/cart\/",
+            "https:\/\/staging2.braveheartspublishing.com\/checkout\/",
+            "https:\/\/staging2.braveheartspublishing.com\/shop\/",
+            "https:\/\/staging2.braveheartspublishing.com\/sample-page\/",
+            "https:\/\/staging2.braveheartspublishing.com\/privacy-policy\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/science-books-for-kids-that-feel-like-adventures\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/kirkus-review-adventures-of-charlotte-and-henry\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/books-like-magic-tree-house\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/why-i-wrote-this-book\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/finding-right-books-with-lexile-score\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/mount-everest-facts-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-hates-reading-what-to-do\/"
+        ],
+        "missing_metadata": [
+            "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+            "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+            "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+            "https:\/\/staging2.braveheartspublishing.com\/shipping-policy\/",
+            "https:\/\/staging2.braveheartspublishing.com\/adventure-kit-thank-you\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reluctant-reader-adventure-kit\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mariana-guide-thank-you\/",
+            "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-activity\/",
+            "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-teacher-guide\/",
+            "https:\/\/staging2.braveheartspublishing.com\/terms-and-conditions\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mailchimp-test\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reluctant-readers\/",
+            "https:\/\/staging2.braveheartspublishing.com\/read-alouds\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reading-levels\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mariana-trench\/",
+            "https:\/\/staging2.braveheartspublishing.com\/teachers\/",
+            "https:\/\/staging2.braveheartspublishing.com\/bridge-books\/",
+            "https:\/\/staging2.braveheartspublishing.com\/books\/",
+            "https:\/\/staging2.braveheartspublishing.com\/contact\/",
+            "https:\/\/staging2.braveheartspublishing.com\/",
+            "https:\/\/staging2.braveheartspublishing.com\/about\/",
+            "https:\/\/staging2.braveheartspublishing.com\/teachers-guide\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/",
+            "https:\/\/staging2.braveheartspublishing.com\/my-account\/",
+            "https:\/\/staging2.braveheartspublishing.com\/cart\/",
+            "https:\/\/staging2.braveheartspublishing.com\/checkout\/",
+            "https:\/\/staging2.braveheartspublishing.com\/shop\/",
+            "https:\/\/staging2.braveheartspublishing.com\/sample-page\/",
+            "https:\/\/staging2.braveheartspublishing.com\/privacy-policy\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/science-books-for-kids-that-feel-like-adventures\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/kirkus-review-adventures-of-charlotte-and-henry\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/books-like-magic-tree-house\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/gap-between-picture-books-and-chapter-books\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/why-i-wrote-this-book\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/finding-right-books-with-lexile-score\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/mount-everest-facts-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-struggling-readers\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-hates-reading-what-to-do\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/how-to-pick-a-read-aloud-book\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/reading-level-by-grade-chart\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/best-read-aloud-books-for-classroom-grades-1-3\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-got-a-lexile-score-now-what\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-a-lexile-score\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/top-bridge-books-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-early-readers\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/best-bridge-books-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids\/"
+        ],
+        "missing_classification": [
+            "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+            "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+            "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+            "https:\/\/staging2.braveheartspublishing.com\/shipping-policy\/",
+            "https:\/\/staging2.braveheartspublishing.com\/adventure-kit-thank-you\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reluctant-reader-adventure-kit\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mariana-guide-thank-you\/",
+            "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-activity\/",
+            "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-teacher-guide\/",
+            "https:\/\/staging2.braveheartspublishing.com\/terms-and-conditions\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mailchimp-test\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reluctant-readers\/",
+            "https:\/\/staging2.braveheartspublishing.com\/read-alouds\/",
+            "https:\/\/staging2.braveheartspublishing.com\/reading-levels\/",
+            "https:\/\/staging2.braveheartspublishing.com\/mariana-trench\/",
+            "https:\/\/staging2.braveheartspublishing.com\/teachers\/",
+            "https:\/\/staging2.braveheartspublishing.com\/bridge-books\/",
+            "https:\/\/staging2.braveheartspublishing.com\/books\/",
+            "https:\/\/staging2.braveheartspublishing.com\/contact\/",
+            "https:\/\/staging2.braveheartspublishing.com\/",
+            "https:\/\/staging2.braveheartspublishing.com\/about\/",
+            "https:\/\/staging2.braveheartspublishing.com\/teachers-guide\/",
+            "https:\/\/staging2.braveheartspublishing.com\/blog\/",
+            "https:\/\/staging2.braveheartspublishing.com\/my-account\/",
+            "https:\/\/staging2.braveheartspublishing.com\/cart\/",
+            "https:\/\/staging2.braveheartspublishing.com\/checkout\/",
+            "https:\/\/staging2.braveheartspublishing.com\/shop\/",
+            "https:\/\/staging2.braveheartspublishing.com\/sample-page\/",
+            "https:\/\/staging2.braveheartspublishing.com\/privacy-policy\/"
+        ],
+        "missing_cta_alignment": [],
+        "possible_keyword_cannibalization": []
+    }
+}

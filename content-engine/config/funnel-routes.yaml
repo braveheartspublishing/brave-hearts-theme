@@ -1,0 +1,43 @@
+# Maps a blog post's content type to funnel stage and recommended
+# destination, matching the site's own approved funnel architecture
+# (Complete Collection primary path, Books page secondary path, teacher
+# resources for the education path -- see docs/PROJECT_STATE.md).
+
+funnel_stages:
+  awareness:
+    description: "Reader doesn't know this series exists yet; content should educate/entertain first."
+    recommended_destination: "blog_post_only"
+    cta_intensity: "low"
+
+  consideration:
+    description: "Reader knows the series exists and is evaluating fit."
+    recommended_destination: "books_page"
+    cta_intensity: "medium"
+
+  conversion:
+    description: "Reader has high purchase intent (e.g., searched a gift-buying or classroom-set term)."
+    recommended_destination: "complete_collection_page"
+    cta_intensity: "high"
+
+content_type_routing:
+  educational_fact_post:
+    stage: awareness
+    audience: [parent, teacher]
+  classroom_resource_post:
+    stage: consideration
+    audience: [teacher]
+    destination_override: "teacher_resources_page"
+  gift_guide_post:
+    stage: conversion
+    audience: [parent, gift_buyer]
+    destination_override: "complete_collection_page"
+  series_overview_post:
+    stage: consideration
+    audience: [parent]
+    destination_override: "books_page"
+
+destinations:
+  blog_post_only: "/blog/<slug>/"
+  books_page: "/books/"
+  complete_collection_page: "/complete-collection/"
+  teacher_resources_page: "/teachers/"

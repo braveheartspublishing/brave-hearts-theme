@@ -1,0 +1,24 @@
+# Release Record — GTM/GA4 Phases
+
+**Status:** Build substantially complete on staging (GTM console, not repo code). **Not published anywhere.**
+
+## Phase history
+- **Phase 1B** (2026-07-06): analytics event architecture built in the theme/plugin code — ecommerce events (GA4-standard names), business-custom events, `BHP_GTM_Loader`/`BHP_Analytics_Config`/`BHP_Consent` classes. No GTM container existed yet at this point.
+- **2026-07-09 staging build session**: first real, credentialed GTM console session. Built 4 of ~50+ needed items (1 constant + 3 variables) before stopping deliberately due to browser-automation reliability risk against a live account.
+- **2026-07-12 (discovered this date, built "2 days ago" per GTM's own edit history — i.e., around 2026-07-10)**: the full build — 24 variables, 38 triggers, 39 tags — found complete in the live GTM console, built directly by Andrew. Verified (not rebuilt) via a read-only inspection pass: base config tag and 2 event tags deep-checked for correctness, all 39 tags confirmed correctly linked to their triggers.
+- **Phase 9 (2026-07-12)**: CSO-approved minimum gap patch, applied directly in the live workspace (not a code change). Verified from real code first (`nav.js`, `functions.php`, `article-card.php`, `bundle-analytics.php`) which parameters each candidate event actually emits before creating anything. Added exactly: `DLV - bhp_book`, `DLV - bhp_format`, `DLV - bhp_source`, `TRG - Custom Event - bundle_type_purchased`, `TAG - GA4 Event - bundle_type_purchased` (maps only `bundle_type` → `{{DLV - bundle_type}}`; `order_id` deliberately left unmapped, no DLV exists and none was approved for creation — matches the established precedent set by the already-built `bundle_add_to_cart` tag, which likewise maps only the one parameter that has a DLV). Updated 2 existing tags with the new variables, each only where the underlying event actually provides that parameter: `amazon_outbound_click` (all 3 — `functions.php` sets `data-bhp-book`/`data-bhp-format`/`data-bhp-source` unconditionally on this link) and `related_content_click` (`bhp_source` only — `article-card.php` never sets `data-bhp-book`/`data-bhp-format` on this element, so those were left unmapped rather than wired to a permanently-empty value). 6 events remain deferred by CSO decision (`kirkus_review_link_click`, `kirkus_component_impression`, `customer_review_impression`, `customer_review_source_click`, `customer_review_product_click`, `bhp_direct_purchase_click`) — first launch stays focused on traffic/interest/format/Collection-vs-individual/cart/checkout/revenue. Workspace count: 103 → 108 Added (+3 variables, +1 trigger, +1 tag), 0 Modified (the 2 edited tags were themselves still-unpublished "Added" objects, so editing them didn't create separate "Modified" entries), 0 Deleted. Not submitted, not published, no version created, no GA4 config changed, no Google Ads tags touched, no website/theme code touched.
+
+## Current state
+27 variables / 39 triggers / 40 tags / 108 unpublished workspace changes / 0 submitted / 0 published. Live version remains an empty container. Re-verified unchanged 2026-07-13 (overnight build, Phase 2) — see `docs/ANALYTICS/GTM_STATUS.md`. Container export was deliberately not attempted: GTM's export function operates on Versions, none exist besides the empty initial one, and creating one to enable export was judged adjacent to the explicitly-barred publish workflow.
+
+## Preview/DebugView validation status (2026-07-13)
+GTM Preview UI could not be connected via browser automation (2 attempts, timed out connecting to `staging2.braveheartspublishing.com` — a documented tool limitation, not a GTM or site defect). Fell back to direct `dataLayer` inspection on staging using the pre-existing `bhp_staging_analytics_override` QA option. Confirmed firing with well-formed payloads: `view_item_list`, `view_item`, `add_to_cart`, `add_shipping_info`. Not yet validated this pass: `bundle_type_purchased`, CTA-click events, Adventure Kit/Teacher form submits, full `begin_checkout`/`purchase` click-through, true GA4 DebugView. See `docs/ANALYTICS/GA4_STATUS.md` for full detail.
+
+## Known gaps
+6 events remain without GTM coverage, all deferred by explicit CSO decision (see Phase 9 above): `bhp_direct_purchase_click`, `customer_review_product_click`, `customer_review_source_click`, `customer_review_impression`, `kirkus_review_link_click`, `kirkus_component_impression`.
+
+## Blocker to publishing
+No consent banner or Consent Mode update mechanism exists — see `docs/ANALYTICS/CONSENT_STATUS.md`.
+
+## Full detail
+`docs/gtm-ga4-production-readiness-audit-2026-07-12.md` (full audit), `docs/gtm-build-verification-2026-07-12.md` (verification pass), `docs/gtm-staging-build-2026-07-09.md` (first build session), `docs/gtm-configuration-blueprint.md` (original spec).

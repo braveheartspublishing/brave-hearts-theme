@@ -1,0 +1,37 @@
+.env
+.env.*
+!.env.example
+wp-config.php
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+brave-hearts-theme-deploy-*.zip
+
+# Local rollback/backup artifacts (post-content dumps, DB/option snapshots,
+# pre-deploy file copies) must never enter public git history - keep them
+# outside the repo (see docs/DOCUMENTATION_GOVERNANCE.md's public/private
+# classification). Record only the rollback location class + timestamp in
+# release/worklog docs, never the content itself.
+/backups/
+
+# Unsanitized internal operational records (Mailchimp campaign IDs, coupon
+# codes, internal automation URLs, test-contact identifiers). Public docs
+# under docs/ must use descriptive placeholders only - see
+# docs-private/MAILCHIMP_INTERNAL_REFERENCE.md for the real values.
+/docs-private/
+
+# Private Business OS / strategy working copies and scratch research.
+# These mirror the private Google Drive knowledge base (decision registers,
+# competitor intelligence, conversion audits) and contain live coupon codes.
+# Never commit them - the repo is public. See CLAUDE.md's CSO rule.
+/.codex-business-os-update/
+/.codex-business-os-before-growth-update/
+/tmp/
+
+# Local operational configuration (per-machine permission grants and
+# session settings). Never commit - it is machine-specific, not project
+# state. Also ignored machine-wide, but pinned here so the protection
+# travels with the repository.
+/.claude/settings.local.json

@@ -1,0 +1,1688 @@
+{
+    "generated_at": "2026-07-10 22:13:45",
+    "orphan_pages": [
+        "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+        "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+        "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+        "https:\/\/staging2.braveheartspublishing.com\/adventure-kit-thank-you\/",
+        "https:\/\/staging2.braveheartspublishing.com\/reluctant-reader-adventure-kit\/",
+        "https:\/\/staging2.braveheartspublishing.com\/mariana-guide-thank-you\/",
+        "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-activity\/",
+        "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-teacher-guide\/",
+        "https:\/\/staging2.braveheartspublishing.com\/terms-and-conditions\/",
+        "https:\/\/staging2.braveheartspublishing.com\/mailchimp-test\/",
+        "https:\/\/staging2.braveheartspublishing.com\/contact\/",
+        "https:\/\/staging2.braveheartspublishing.com\/my-account\/",
+        "https:\/\/staging2.braveheartspublishing.com\/cart\/",
+        "https:\/\/staging2.braveheartspublishing.com\/shop\/",
+        "https:\/\/staging2.braveheartspublishing.com\/privacy-policy\/",
+        "https:\/\/staging2.braveheartspublishing.com\/blog\/mount-everest-facts-for-kids\/"
+    ],
+    "overlinked_targets": [],
+    "link_recommendations": [
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shipping-policy\/",
+                    "title": "Shipping Policy",
+                    "score": 3,
+                    "suggested_anchor_text": "Shipping Policy",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shipping-policy\/",
+                    "title": "Shipping Policy",
+                    "score": 3,
+                    "suggested_anchor_text": "Shipping Policy",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shipping-policy\/",
+                    "title": "Shipping Policy",
+                    "score": 3,
+                    "suggested_anchor_text": "Shipping Policy",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/shipping-policy\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/adventure-kit-thank-you\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/reluctant-reader-adventure-kit\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/mariana-guide-thank-you\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-activity\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/free-mariana-trench-teacher-guide\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/terms-and-conditions\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/mailchimp-test\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/reluctant-readers\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/read-alouds\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/reading-levels\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/mariana-trench\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/teachers\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/bridge-books\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/books\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/contact\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/about\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/teachers-guide\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/my-account\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/cart\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/checkout\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/shop\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/sample-page\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/privacy-policy\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/complete-collection\/",
+                    "title": "Complete Collection",
+                    "score": 3,
+                    "suggested_anchor_text": "Complete Collection",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/shop-the-series\/",
+                    "title": "Shop the Series",
+                    "score": 3,
+                    "suggested_anchor_text": "Shop the Series",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/book-bundles\/",
+                    "title": "Book Bundles",
+                    "score": 3,
+                    "suggested_anchor_text": "Book Bundles",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/science-books-for-kids-that-feel-like-adventures\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids\/",
+                    "title": "Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6\u20139)",
+                    "score": 8,
+                    "suggested_anchor_text": "Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6\u20139)",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mount-everest-facts-for-kids\/",
+                    "title": "10 Mount Everest Facts for Kids That Will Make Their Jaw Drop",
+                    "score": 7,
+                    "suggested_anchor_text": "10 Mount Everest Facts for Kids That Will Make Their Jaw Drop",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+                    "title": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "score": 7,
+                    "suggested_anchor_text": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9\/",
+                    "title": "The Best Summer Reading Books for Kids Ages 6\u20139 (That They&#8217;ll Actually Finish)",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Summer Reading Books for Kids Ages 6\u20139 (That They&#8217;ll Actually Finish)",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/kirkus-review-adventures-of-charlotte-and-henry\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-i-wrote-this-book\/",
+                    "title": "Charlotte Is Real. Henry Is Real. And This Is Why I Wrote Them a Book.",
+                    "score": 8,
+                    "suggested_anchor_text": "Charlotte Is Real. Henry Is Real. And This Is Why I Wrote Them a Book.",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/science-books-for-kids-that-feel-like-adventures\/",
+                    "title": "For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures",
+                    "score": 1,
+                    "suggested_anchor_text": "For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids\/",
+                    "title": "Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6\u20139)",
+                    "score": 1,
+                    "suggested_anchor_text": "Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6\u20139)",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9\/",
+                    "title": "The Best Summer Reading Books for Kids Ages 6\u20139 (That They&#8217;ll Actually Finish)",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Summer Reading Books for Kids Ages 6\u20139 (That They&#8217;ll Actually Finish)",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9\/",
+                    "title": "The Best Summer Reading Books for Kids Ages 6\u20139 (That They&#8217;ll Actually Finish)",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Summer Reading Books for Kids Ages 6\u20139 (That They&#8217;ll Actually Finish)",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-summer-reading-books-for-kids-ages-6-9\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/books-like-magic-tree-house\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/gap-between-picture-books-and-chapter-books\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-i-wrote-this-book\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/kirkus-review-adventures-of-charlotte-and-henry\/",
+                    "title": "Adventures of Charlotte &amp; Henry Just Got a Kirkus Review. Here&#8217;s What They Said.",
+                    "score": 8,
+                    "suggested_anchor_text": "Adventures of Charlotte &amp; Henry Just Got a Kirkus Review. Here&#8217;s What They Said.",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/science-books-for-kids-that-feel-like-adventures\/",
+                    "title": "For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures",
+                    "score": 1,
+                    "suggested_anchor_text": "For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids\/",
+                    "title": "Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6\u20139)",
+                    "score": 1,
+                    "suggested_anchor_text": "Why STEM Storytelling Builds Braver, More Curious Kids (Ages 6\u20139)",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/finding-right-books-with-lexile-score\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mount-everest-facts-for-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+                    "title": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "score": 8,
+                    "suggested_anchor_text": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/",
+                    "title": "Best Books About the Ocean for Kids Ages 6-9",
+                    "score": 8,
+                    "suggested_anchor_text": "Best Books About the Ocean for Kids Ages 6-9",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/",
+                    "title": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                    "score": 8,
+                    "suggested_anchor_text": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-struggling-readers\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-hates-reading-what-to-do\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-to-pick-a-read-aloud-book\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-read-aloud-books-for-classroom-grades-1-3\/",
+                    "title": "The Best Read Aloud Books for Elementary Classrooms (Grades 1\u20133)",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Read Aloud Books for Elementary Classrooms (Grades 1\u20133)",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you\/",
+                    "title": "To Every Teacher Who Said Yes: Happy Teacher Appreciation Week",
+                    "score": 8,
+                    "suggested_anchor_text": "To Every Teacher Who Said Yes: Happy Teacher Appreciation Week",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench\/",
+                    "title": "Free Teacher&#8217;s Guide Is Here \u2014 And It&#8217;s Ready for Your Classroom",
+                    "score": 7,
+                    "suggested_anchor_text": "Free Teacher&#8217;s Guide Is Here \u2014 And It&#8217;s Ready for Your Classroom",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/reading-level-by-grade-chart\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/",
+                    "title": "Best Books About the Ocean for Kids Ages 6-9",
+                    "score": 12,
+                    "suggested_anchor_text": "Best Books About the Ocean for Kids Ages 6-9",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/",
+                    "title": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                    "score": 12,
+                    "suggested_anchor_text": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids\/",
+                    "title": "How Deep Is the Mariana Trench? (Explained for Kids)",
+                    "score": 12,
+                    "suggested_anchor_text": "How Deep Is the Mariana Trench? (Explained for Kids)",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-read-aloud-books-for-classroom-grades-1-3\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-to-pick-a-read-aloud-book\/",
+                    "title": "How to Pick a Read-Aloud Book That Keeps a Whole Class Listening",
+                    "score": 8,
+                    "suggested_anchor_text": "How to Pick a Read-Aloud Book That Keeps a Whole Class Listening",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you\/",
+                    "title": "To Every Teacher Who Said Yes: Happy Teacher Appreciation Week",
+                    "score": 8,
+                    "suggested_anchor_text": "To Every Teacher Who Said Yes: Happy Teacher Appreciation Week",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench\/",
+                    "title": "Free Teacher&#8217;s Guide Is Here \u2014 And It&#8217;s Ready for Your Classroom",
+                    "score": 7,
+                    "suggested_anchor_text": "Free Teacher&#8217;s Guide Is Here \u2014 And It&#8217;s Ready for Your Classroom",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/my-child-got-a-lexile-score-now-what\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-to-pick-a-read-aloud-book\/",
+                    "title": "How to Pick a Read-Aloud Book That Keeps a Whole Class Listening",
+                    "score": 8,
+                    "suggested_anchor_text": "How to Pick a Read-Aloud Book That Keeps a Whole Class Listening",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-read-aloud-books-for-classroom-grades-1-3\/",
+                    "title": "The Best Read Aloud Books for Elementary Classrooms (Grades 1\u20133)",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Read Aloud Books for Elementary Classrooms (Grades 1\u20133)",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench\/",
+                    "title": "Free Teacher&#8217;s Guide Is Here \u2014 And It&#8217;s Ready for Your Classroom",
+                    "score": 7,
+                    "suggested_anchor_text": "Free Teacher&#8217;s Guide Is Here \u2014 And It&#8217;s Ready for Your Classroom",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-a-lexile-score\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/top-bridge-books-for-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+                    "title": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "score": 12,
+                    "suggested_anchor_text": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/",
+                    "title": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                    "score": 12,
+                    "suggested_anchor_text": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids\/",
+                    "title": "How Deep Is the Mariana Trench? (Explained for Kids)",
+                    "score": 12,
+                    "suggested_anchor_text": "How Deep Is the Mariana Trench? (Explained for Kids)",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+                    "title": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "score": 12,
+                    "suggested_anchor_text": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/",
+                    "title": "Best Books About the Ocean for Kids Ages 6-9",
+                    "score": 12,
+                    "suggested_anchor_text": "Best Books About the Ocean for Kids Ages 6-9",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids\/",
+                    "title": "How Deep Is the Mariana Trench? (Explained for Kids)",
+                    "score": 12,
+                    "suggested_anchor_text": "How Deep Is the Mariana Trench? (Explained for Kids)",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-are-bridge-books-guide-for-parents-and-teachers\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-early-readers\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/bridge-books-for-kids-mount-everest\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-early-chapter-books-for-6-year-olds\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/free-teachers-guide-mariana-trench\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-to-pick-a-read-aloud-book\/",
+                    "title": "How to Pick a Read-Aloud Book That Keeps a Whole Class Listening",
+                    "score": 7,
+                    "suggested_anchor_text": "How to Pick a Read-Aloud Book That Keeps a Whole Class Listening",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-read-aloud-books-for-classroom-grades-1-3\/",
+                    "title": "The Best Read Aloud Books for Elementary Classrooms (Grades 1\u20133)",
+                    "score": 7,
+                    "suggested_anchor_text": "The Best Read Aloud Books for Elementary Classrooms (Grades 1\u20133)",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/teacher-appreciation-week-thank-you\/",
+                    "title": "To Every Teacher Who Said Yes: Happy Teacher Appreciation Week",
+                    "score": 7,
+                    "suggested_anchor_text": "To Every Teacher Who Said Yes: Happy Teacher Appreciation Week",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/first-real-chapter-book-for-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-bridge-books-for-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+                    "title": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "score": 12,
+                    "suggested_anchor_text": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/",
+                    "title": "Best Books About the Ocean for Kids Ages 6-9",
+                    "score": 12,
+                    "suggested_anchor_text": "Best Books About the Ocean for Kids Ages 6-9",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/",
+                    "title": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                    "score": 12,
+                    "suggested_anchor_text": "Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/adventure-books-for-kids-ages-6-9\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/how-stories-build-resilience-in-children\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/dog-man-to-magic-tree-house-reading-roadmap\/",
+                    "title": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "score": 8,
+                    "suggested_anchor_text": "From Dog Man to Magic Tree House: The Reading Roadmap No One Gave You",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-to-read-after-dog-man\/",
+                    "title": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "score": 8,
+                    "suggested_anchor_text": "What to Read After Dog Man: Bridge Books for Kids Who Love Graphic Novels",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/best-books-for-7-year-olds\/",
+                    "title": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "score": 8,
+                    "suggested_anchor_text": "The Best Books for 7-Year-Olds That Turn Them Into Readers",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        },
+        {
+            "source_url": "https:\/\/staging2.braveheartspublishing.com\/blog\/why-stem-storytelling-builds-braver-kids\/",
+            "recommended_targets": [
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/science-books-for-kids-that-feel-like-adventures\/",
+                    "title": "For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures",
+                    "score": 8,
+                    "suggested_anchor_text": "For the Kid Who Always Asks Why: Science Books That Feel Like Real Adventures",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/mount-everest-facts-for-kids\/",
+                    "title": "10 Mount Everest Facts for Kids That Will Make Their Jaw Drop",
+                    "score": 7,
+                    "suggested_anchor_text": "10 Mount Everest Facts for Kids That Will Make Their Jaw Drop",
+                    "link_direction": "new_to_existing"
+                },
+                {
+                    "url": "https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/",
+                    "title": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "score": 7,
+                    "suggested_anchor_text": "What Is the Mariana Trench? Everything Kids (and Parents) Need to Know",
+                    "link_direction": "new_to_existing"
+                }
+            ]
+        }
+    ]
+}

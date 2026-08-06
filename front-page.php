@@ -56,16 +56,206 @@ foreach ($featured_books as $book) {
 }
 
 // 1. Hero: begin with wonder and invite visitors into the real world.
-$hero_title = bhp_get_homepage_field('hero_title', __("Big Places.\nBrave Hearts.", 'brave-hearts'));
+
+/*
+ * Phase 1a (2026-07-31): product-data preparation hoisted here.
+ * It previously sat AFTER the section consuming $adventure_cards; once
+ * #explore-world moved above the editorial sections the loop ran before
+ * this block existed and rendered zero cards. Now dependency-ordered:
+ * data first, then every consuming section. Lookup rules, prices,
+ * formats, URLs, images, filters and the paperback preference are
+ * byte-identical -- a move, not a rewrite, and exactly one copy.
+ */
+// 4. Explore the World: destination gateways remain filterable as the series grows.
+$mariana_book = $find_home_book('Mariana Trench');
+$everest_book = $find_home_book('Mount Everest');
+$amazon_book = $find_home_book('Amazon');
+
+// Conversion correction (2026-07-06): these discovery cards now also
+// function as commerce entries -- surface age range and both real,
+// dynamically-fetched format prices rather than adding a second,
+// hand-maintained price list. Every book on this site is sold as two
+// separate WooCommerce products (paperback + hardcover, never a single
+// variable product with both), so both must be looked up by title
+// rather than assumed from one $find_home_book() result.
+$find_formats_for_destination = static function ($destination) use ($featured_books) {
+    $formats = [];
+    foreach ($featured_books as $book) {
+        if (stripos($book['title'], $destination) === false) {
+            continue;
+        }
+        $label = stripos($book['title'], 'hardcover') !== false ? __('Hardcover', 'brave-hearts') : __('Paperback', 'brave-hearts');
+        if (!empty($book['price'])) {
+            $formats[$label] = $book['price'];
+        }
+    }
+    return $formats;
+};
+
+/*
+ * WAVE 1 (2026-08-04, theme 1.19.169) — PRICE CUE, NOW ON BY OWNER RULING.
+ *
+ * ⭐ Andrew Signore, 2026-08-04, verbatim: "Turn it on." He was shown the F2
+ *    conflict below and reversed F2 knowingly, for the single cue only.
+ *    `bhp_home_price_cues_enabled()` now defaults to TRUE, so one live
+ *    "From $X" renders per card. NOT DRIFT — CYCLE143-LD-162, CLOSED.
+ *
+ * ⛔ THE THREE `F2 (Andrew, 2026-08-03)` COMMENTS BELOW ARE PRESERVED
+ *    VERBATIM AND ARE STILL PARTLY OPERATIVE: what F2 removed was the
+ *    two-line FORMAT PRICE LIST, and that stays removed. `formats_info` is
+ *    `[]` on all three cards under any flag. Only the sentence "the price
+ *    list is gone from this discovery module" is now narrower than it
+ *    reads — the list is gone; a single live cue is back, by his ruling.
+ *
+ * ⚠️ HISTORICAL, from the 2026-08-04 build, preserved so the reversal is
+ *    legible: "F2 ABOVE IS AN OWNER INSTRUCTION AND IT STILL STANDS ... this
+ *    build obeys the OWNER and leaves the cue switched off ... each renders
+ *    byte-identically to 1.19.167." True when written; superseded same day.
+ *
+ * ⛔ `formats_info` STAYS EMPTY EITHER WAY. The two-line format price list
+ *    F2 removed is not coming back under any flag — the gated cue is a
+ *    single "From $X", not a restoration of the list.
+ *
+ * ⛔ NO PRICE IS TYPED HERE. `bhp_get_home_price_cue()` reads the lowest
+ *    LIVE format price already fetched for these cards and lets WooCommerce
+ *    format it, so the cue cannot go stale against the store.
+ *
+ * Recorded for Andrew's decision as CYCLE143-LD-162.
+ */
+$home_price_cues_on = bhp_home_price_cues_enabled();
+$home_price_cue = static function ($destination) use ($home_price_cues_on, $find_formats_for_destination) {
+    if (!$home_price_cues_on) {
+        return '';
+    }
+    return bhp_get_home_price_cue($find_formats_for_destination($destination));
+};
+
+$adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
+    [
+        'eyebrow'   => __('Volume I', 'brave-hearts'),
+        'title'     => __('The Mariana Trench', 'brave-hearts'),
+        /* 1.19.187 (Andrew, 2026-08-05, ruling "imperial"): the hub card's
+           stat converts to imperial so it matches the hero destination row's
+           "Nearly 7 miles deep" instead of contradicting its units two
+           modules apart. 10,935 m x 3.280839895 = 35,875.98 ft -> 35,876 ft.
+           A UNIT CONVERSION of the already-approved 10,935 m figure, not a
+           new claim -- the metre figure is unchanged and still governs. */
+        'location'  => __('11°21\'N 142°12\'E - 35,876 ft down', 'brave-hearts'),
+        'text'      => __('<p class="hub-card__question">What glows where sunlight has never reached?</p>', 'brave-hearts'),
+        'url'       => !empty($mariana_book['url']) ? $mariana_book['url'] : home_url('/books/'),
+        'cta_label' => __('Shop The Mariana Trench', 'brave-hearts'),
+        'image_id'  => $mariana_book['image_id'] ?? 0,
+        'age_range' => $mariana_book['age_range'] ?? __('Ages 6–9', 'brave-hearts'),
+        /* F2 (Andrew, 2026-08-03): "remove the cost numbers" -- the price
+           list is gone from this discovery module. Prices still live on
+           /books/, on every product page and on /complete-collection/. */
+        'formats_info' => [],
+        'price_cue' => $home_price_cue('Mariana Trench'),
+        'image_size'   => 'woocommerce_single', /* F7: bhp-book-card does not exist for attachments 16/19 -- see the hero note below */
+        'image_sizes_attr' => '125px', /* CYCLE144-LD-206 (2026-08-05): MEASURED, not derived.
+                                       `190px` was the CSS CAP, not the rendered width -- and it is the cap on
+                                       the HEIGHT-driven tile, so it overstated the box by ~52%. A real Chrome
+                                       measured `article.card img.card__image` at 124-125 CSS px wide at TEN
+                                       viewports (360, 390, 480, 600, 760, 900, 1050, 1280, 1440, 1920) -- flat,
+                                       every one of them, because `min(190px, 60%)` resolves to the 60% branch at
+                                       every width the site supports. 125px is the truth; it never understates.
+                                       Superseded comment, preserved: "B3: the cover tile is capped at
+                                       min(190px, 60%) / min(176px, 62%) on home, so a single fixed value is now
+                                       the accurate hint" -- the single-fixed-value reasoning was right, the
+                                       value was the cap rather than the result. */
+        'class'     => 'hub-card--destination',
+    ],
+    [
+        'eyebrow'   => __('Volume II', 'brave-hearts'),
+        'title'     => __('Mount Everest', 'brave-hearts'),
+        /* 1.19.187: same ruling. 8,849 m = 29,032.15 ft, and 29,032 ft is the
+           already-approved published summit figure carried by the hero row
+           and by the Everest blog post -- so the card and the hero now read
+           the identical number rather than two different unit systems. */
+        'location'  => __('27°59\'N 86°55\'E - 29,032 ft up', 'brave-hearts'),
+        'text'      => __('<p class="hub-card__question">What can you see from the top of the world?</p>', 'brave-hearts'),
+        'url'       => !empty($everest_book['url']) ? $everest_book['url'] : home_url('/books/'),
+        'cta_label' => __('Shop Mount Everest', 'brave-hearts'),
+        'image_id'  => $everest_book['image_id'] ?? 0,
+        'age_range' => $everest_book['age_range'] ?? __('Ages 6–9', 'brave-hearts'),
+        /* F2 (Andrew, 2026-08-03): "remove the cost numbers" -- the price
+           list is gone from this discovery module. Prices still live on
+           /books/, on every product page and on /complete-collection/. */
+        'formats_info' => [],
+        'price_cue' => $home_price_cue('Mount Everest'),
+        'image_size'   => 'woocommerce_single', /* F7: bhp-book-card does not exist for attachments 16/19 -- see the hero note below */
+        'image_sizes_attr' => '125px', /* CYCLE144-LD-206 (2026-08-05): MEASURED, not derived.
+                                       `190px` was the CSS CAP, not the rendered width -- and it is the cap on
+                                       the HEIGHT-driven tile, so it overstated the box by ~52%. A real Chrome
+                                       measured `article.card img.card__image` at 124-125 CSS px wide at TEN
+                                       viewports (360, 390, 480, 600, 760, 900, 1050, 1280, 1440, 1920) -- flat,
+                                       every one of them, because `min(190px, 60%)` resolves to the 60% branch at
+                                       every width the site supports. 125px is the truth; it never understates.
+                                       Superseded comment, preserved: "B3: the cover tile is capped at
+                                       min(190px, 60%) / min(176px, 62%) on home, so a single fixed value is now
+                                       the accurate hint" -- the single-fixed-value reasoning was right, the
+                                       value was the cap rather than the result. */
+        'class'     => 'hub-card--destination',
+    ],
+    [
+        'eyebrow'   => __('Volume III', 'brave-hearts'),
+        'title'     => __('The Amazon Rainforest', 'brave-hearts'),
+        'location'  => __('3°28\'S 62°13\'W - The green heart', 'brave-hearts'),
+        'text'      => __('<p class="hub-card__question">What secrets live in the world\'s green heart?</p>', 'brave-hearts'),
+        'url'       => !empty($amazon_book['url']) ? $amazon_book['url'] : home_url('/books/'),
+        'cta_label' => __('Shop The Amazon', 'brave-hearts'),
+        'image_id'  => $amazon_book['image_id'] ?? 0,
+        'age_range' => $amazon_book['age_range'] ?? __('Ages 6–9', 'brave-hearts'),
+        /* F2 (Andrew, 2026-08-03): "remove the cost numbers" -- the price
+           list is gone from this discovery module. Prices still live on
+           /books/, on every product page and on /complete-collection/. */
+        'formats_info' => [],
+        'price_cue' => $home_price_cue('Amazon'),
+        'image_size'   => 'woocommerce_single', /* F7: bhp-book-card does not exist for attachments 16/19 -- see the hero note below */
+        'image_sizes_attr' => '125px', /* CYCLE144-LD-206 (2026-08-05): MEASURED, not derived.
+                                       `190px` was the CSS CAP, not the rendered width -- and it is the cap on
+                                       the HEIGHT-driven tile, so it overstated the box by ~52%. A real Chrome
+                                       measured `article.card img.card__image` at 124-125 CSS px wide at TEN
+                                       viewports (360, 390, 480, 600, 760, 900, 1050, 1280, 1440, 1920) -- flat,
+                                       every one of them, because `min(190px, 60%)` resolves to the 60% branch at
+                                       every width the site supports. 125px is the truth; it never understates.
+                                       Superseded comment, preserved: "B3: the cover tile is capped at
+                                       min(190px, 60%) / min(176px, 62%) on home, so a single fixed value is now
+                                       the accurate hint" -- the single-fixed-value reasoning was right, the
+                                       value was the cap rather than the result. */
+        'class'     => 'hub-card--destination',
+    ],
+], $page_id);
+
+/*
+ * Phase 1a (2026-07-31): the H1 now states what is actually sold. "Big
+ * Places. Brave Hearts." is memorable but never explained the product, so it
+ * moves to a visible brand signature beneath the supporting copy (see
+ * $hero_details below) instead of carrying the H1 alone. No bhp_home_*
+ * metadata exists on the front page, so these PHP fallbacks ARE the
+ * authoritative homepage content source — no DB update is required.
+ */
+$hero_title = bhp_get_homepage_field('hero_title', __('Adventure Books That Turn Curiosity Into Courage', 'brave-hearts'));
 if (preg_match('/^Big Places\.\s*Brave Hearts\.$/i', trim($hero_title))) {
-    $hero_title = __("Big Places.\nBrave Hearts.", 'brave-hearts');
+    $hero_title = __('Adventure Books That Turn Curiosity Into Courage', 'brave-hearts');
 }
-$hero_eyebrow = bhp_get_homepage_field('hero_eyebrow', __('Stories that begin on the page and continue outside', 'brave-hearts'));
+$hero_eyebrow = bhp_get_homepage_field('hero_eyebrow', __('REAL-WORLD ADVENTURE BOOKS FOR AGES 6–9', 'brave-hearts'));
 if (trim($hero_eyebrow) === 'Bridge books for ages 6–9') {
-    $hero_eyebrow = __('Stories that begin on the page and continue outside', 'brave-hearts');
+    $hero_eyebrow = __('REAL-WORLD ADVENTURE BOOKS FOR AGES 6–9', 'brave-hearts');
 }
-$hero_text = __('<p>A child closes the book. The next morning, the sky is the same, the birds are the same, and the trees are the same—but the child is not. Now they notice. They wonder. They ask. They explore.</p>', 'brave-hearts');
-$hero_details = __('<ul class="home-hero__destinations"><li><span>Nearly 11 km deep</span><small>Mariana Trench</small></li><li><span>8,849 m high</span><small>Mount Everest</small></li><li><span>A living canopy</span><small>The Amazon</small></li></ul>', 'brave-hearts');
+/*
+ * Wave F (2026-08-03), item 11 -- EM-DASH PURGE, homepage copy.
+ * "…and the Amazon—story-led adventures…" is restructured with a full stop
+ * rather than a hyphen pair. Never "--" in customer-facing copy.
+ *
+ * Wave F, item 9 -- IMPERIAL UNITS. "Nearly 11 km deep" -> "Nearly 7 miles
+ * deep" (10,935 m = 6.795 mi, so "nearly 7" is the honest rounding, matching
+ * the existing "Nearly 11 km" convention). "8,849 m high" -> "29,032 ft high"
+ * (8,849 m = 29,031.8 ft; 29,032 ft is the figure the summit is published at).
+ * "A living canopy" is not a unit and is unchanged, per the brief.
+ */
+$hero_text = __('<p>Follow Charlotte and Henry from the Mariana Trench to Mount Everest and the Amazon. Story-led adventures for family read-alouds and growing independent readers.</p>', 'brave-hearts');
+$hero_details = __('<p class="home-hero__signature">Big Places. Brave Hearts.</p><ul class="home-hero__destinations"><li><span>Nearly 7 miles deep</span><small>Mariana Trench</small></li><li><span>29,032 ft high</span><small>Mount Everest</small></li><li><span>A living canopy</span><small>The Amazon</small></li></ul>', 'brave-hearts');
 
 $hero_books_markup = '';
 if ($hero_preview_books) {
@@ -78,15 +268,96 @@ if ($hero_preview_books) {
           <li>
             <a href="<?php echo esc_url($book['url']); ?>" aria-label="<?php echo esc_attr(sprintf(__('Explore %s', 'brave-hearts'), $book['title'])); ?>">
               <?php
+              /*
+               * F7 / CYCLE142-LD-15 (2026-08-03) — THE SINGLE HEAVIEST
+               * DEFECT ON THE MOBILE HOMEPAGE, AND ITS ROOT CAUSE.
+               *
+               * MEASURED before, at 390 x 844 / DPR 3:
+               *   Mariana  ...-417x640.jpg   86 KB  ->  119x173 box  (srcset present)
+               *   Everest  ...Everest.jpg   274 KB  ->  124x187 box  (srcset: NONE)
+               *   Amazon   ...Cover.jpg     526 KB  ->  119x171 box  (srcset: NONE)
+               * A 1318 px-wide JPEG painting a 124 px box is x10.6 linear and
+               * roughly x113 in pixel area, on the three covers a phone buyer
+               * sees FIRST.
+               *
+               * ROOT CAUSE, verified rather than inferred: `bhp-book-card` was
+               * registered AFTER attachments 16 (Everest) and 19 (The Amazon)
+               * were uploaded, so neither has that derivative. WordPress then
+               * falls back to the full-size original and emits no srcset at
+               * all. Attachment 13 (Mariana) does have it, which is exactly
+               * why one of the three behaved correctly and two did not.
+               *
+               * `woocommerce_single` (600x910 / 600x920) VERIFIED-EXISTS on all
+               * three, so all three now get a real srcset and the browser
+               * picks from it. No artwork is generated, regenerated, resized
+               * or retouched, and no media record is written — this changes
+               * only which existing derivative is requested.
+               */
+              /*
+               * CYCLE144-LD-203 (2026-08-05) — THE `sizes` STRING WAS
+               * OVERSTATING THE BOX, AND THAT IS WHAT PAID FOR 600 px
+               * COVERS.
+               *
+               * `sizes` is a promise to the browser about how wide this
+               * image will actually be laid out. The old value promised
+               * `33vw` on phones and `200px` above that. The CSS says
+               * otherwise, and the CSS is the truth:
+               *
+               * ⛔ AND THE CSS IS NOT READ OFF THE STYLESHEET EITHER —
+               *    the values below were MEASURED in a real headless
+               *    Chrome at ten viewports, because three overlapping
+               *    `clamp()` rules across four breakpoints are exactly the
+               *    kind of thing that is easy to read wrongly. A first
+               *    pass at this comment did read one wrongly: it took the
+               *    `@media (max-width: 480px) { width: 92px }` rule at
+               *    face value and wrote `92px`, which UNDERSTATES the real
+               *    box (97-120 px) at those widths. Measured, per
+               *    viewport, widest of the three covers:
+               *
+               *      360 -> 112    390 -> 120    480 -> 120    600 -> 120
+               *      760 -> 124    900 -> 166   1050 -> 166   1280 -> 201
+               *     1440 -> 201   1920 -> 201
+               *
+               * The old value promised `33vw` on phones and `200px` above
+               * that. `33vw` on a 390 px phone claims 129 px for a 120 px
+               * box, and the browser multiplies that overstatement by
+               * device pixel ratio — which is what pushed phones past the
+               * 300 w rung onto the 600 w one. Measured cost: 478 KB of
+               * covers.
+               *
+               * The value below states each band's measured CEILING, so
+               * it can never claim less space than the layout uses.
+               * ⛔ IT DELIBERATELY DOES NOT UNDERSTATE, in either
+               *    direction — understating ships soft covers to retina
+               *    screens, which is the same defect pointed the other
+               *    way. Worked through against the real ladder
+               *    (196/198w, 300w, [400w], 417w Mariana only, 600w, ...):
+               *      390 px @ DPR 2   -> 125 x 2 = 250 -> picks 300 w
+               *      390 px @ DPR 3   -> 125 x 3 = 375 -> picks 400 w if
+               *                          the `bhp-hero-cover` derivative
+               *                          exists, else 600 w — i.e. exactly
+               *                          today's behaviour, never worse
+               *      1440 px @ DPR 1  -> 210     = 210 -> picks 300 w
+               *      1440 px @ DPR 2  -> 210 x 2 = 420 -> picks 600 w
+               *    Retina desktop keeps the full-resolution file. Only
+               *    devices that were being over-served stop being.
+               *    Nothing about the artwork, the derivative set or the
+               *    rendered geometry changes — only the size HINT is
+               *    corrected, and only toward the measured truth.
+               *
+               * Preserved for the record — the superseded value was:
+               *   'sizes' => '(max-width: 600px) 33vw, 200px'
+               */
               echo wp_get_attachment_image(
                   (int) $book['image_id'],
-                  'bhp-book-card',
+                  'woocommerce_single',
                   false,
                   [
                       'class'    => 'home-hero__book-cover',
                       'loading'  => 'eager',
                       'decoding' => 'async',
                       'alt'      => $book['title'],
+                      'sizes'    => '(max-width: 760px) 125px, (max-width: 1050px) 170px, 210px',
                   ]
               );
               ?>
@@ -100,10 +371,97 @@ if ($hero_preview_books) {
     $hero_books_markup = ob_get_clean();
 }
 
-$hero_primary_label = bhp_get_homepage_field('hero_primary_label', __('Choose Your First Adventure', 'brave-hearts'));
-if (in_array(trim($hero_primary_label), ['Shop the Books', 'Choose a Real-World Adventure'], true)) {
-    $hero_primary_label = __('Choose Your First Adventure', 'brave-hearts');
-}
+/*
+ * SUPERSEDED 2026-08-05 by CYCLE144-LD-70 (below). Preserved verbatim
+ * because it records a real earlier instruction, not an accident:
+ *
+ *   // Conversion correction (2026-07-06): Complete Collection is now the
+ *   // principal commercial action in the hero, matching the header CTA and
+ *   // the sales-paths card below it. "Choose Your First Adventure" moves to
+ *   // a secondary link leading to individual-book discovery, rather than
+ *   // being the hero's only/primary action.
+ *   $hero_primary_label = bhp_get_homepage_field('hero_primary_label', __('Get the Complete Collection', 'brave-hearts'));
+ *   if (in_array(trim($hero_primary_label), ['Shop the Books', 'Choose a Real-World Adventure', 'Choose Your First Adventure'], true)) {
+ *       $hero_primary_label = __('Get the Complete Collection', 'brave-hearts');
+ *   }
+ */
+/*
+ * Wave F (2026-08-03), item 7 -- HERO DEDUPE. The second descriptive
+ * paragraph is REMOVED, not reworded: it restated the first paragraph's job
+ * ("for read-alouds, growing independent readers") almost verbatim, and the
+ * ages 6-9 claim it carried is already stated in the hero eyebrow directly
+ * above the H1 ("REAL-WORLD ADVENTURE BOOKS FOR AGES 6-9"). Nothing factual
+ * is lost from the page.
+ *
+ * What now bridges the copy to the CTAs is the line already rendered by
+ * `.home .home-hero__text > p::after` in style.css -- "It is an invitation to
+ * look up." It sat BELOW this paragraph and is now the last thing read before
+ * the buttons, which is what it was written to do.
+ *
+ * ⭐ AMENDED 2026-08-05 (1.19.179), NOT corrected: there are no buttons any
+ *    more. The sentence above is preserved because its POINT survives intact
+ *    and is now literally true of the whole hero -- "It is an invitation to
+ *    look up." is the LAST THING IN THE HERO, and what it now bridges to is
+ *    the Best Value box immediately below. See CYCLE144-LD-70.
+ *
+ * The hero component's `commercial_subtext` ARGUMENT is deliberately left in
+ * place (default ''), because /about/, /books/, /contact/ and /teachers/ all
+ * call the same component; removing the argument would be a shared-component
+ * change to satisfy a homepage-only instruction.
+ */
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.179 (2026-08-05) — CYCLE144-LD-70. THE HERO LOSES BOTH BUTTONS,
+ *    AND THE BRAND LINE MOVES BELOW THE BEST VALUE BOX.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-05, current-turn order (⛔ RELAYED through the
+ * Chief of Staff and witnessed by the main session — NOT witnessed
+ * first-hand by the agent that wrote this), verbatim:
+ *
+ *   "Remove the hero section CTA 'Get the complete collection' and 'Find
+ *    their first adventure' - Because right below is the best value box
+ *    with the collection.- Right under 'Its an invitation to look up. Put
+ *    the Best Value box. Too much redundancy. Put the big places. brave
+ *    hearts under that box along with the Ages 6-9.... Featuring a kirkus
+ *    reviewed title"
+ *
+ * ⭐ THE REASON IS THE INSTRUCTION'S OWN, AND IT IS CORRECT ON THE CODE:
+ *    the hero's primary button and the Best Value box sold the SAME offer
+ *    one screen apart, and since 1.19.177 the box's own CTA adds the three
+ *    books and lands on /checkout/ while the hero button only LINKED to
+ *    /complete-collection/. The weaker duplicate goes. Nothing is added to
+ *    replace it and no new copy enters the page.
+ *
+ * ⛔ NOTHING IS DELETED, ONLY MOVED OR DROPPED WHERE ANDREW SAID TO DROP IT.
+ *    - "Find Their First Adventure" pointed at `#explore-world`. That
+ *      section still renders lower on this page and is still reachable from
+ *      the audience-gateway band and the three destination cards. One
+ *      duplicate link to it is removed; no anchor, section or route is.
+ *    - `$hero_details` ("Big Places. Brave Hearts." + the three destination
+ *      stats) is MOVED, not copied and not rewritten — it is rendered
+ *      exactly once, below the band, in `#home-trust-proof`. Its markup
+ *      string is byte-identical to what the hero was passing.
+ *
+ * ⭐ THE HERO COMPONENT IS NOT CHANGED. `template-parts/components/hero.php`
+ *    already renders `.home-hero__actions` only when a link is passed, and
+ *    only when `details` is non-empty. /about/, /books/, /contact/ and
+ *    /teachers/ all pass their own and are untouched. Dropping three
+ *    arguments HERE is a homepage-only change; editing the component would
+ *    have been a sitewide one to satisfy a homepage instruction.
+ *
+ * SUPERSEDED ARGUMENTS, quoted rather than silently dropped:
+ *
+ *   'details'        => $hero_details,
+ *   'primary_link'   => [
+ *       'url'   => bhp_get_homepage_field('hero_primary_url', home_url('/complete-collection/')),
+ *       'label' => $hero_primary_label,
+ *   ],
+ *   'secondary_link' => [
+ *       'url'   => '#explore-world',
+ *       'label' => __('Find Their First Adventure', 'brave-hearts'),
+ *   ],
+ */
 
 get_template_part('template-parts/components/hero', null, [
     'id'             => 'home-hero',
@@ -113,14 +471,375 @@ get_template_part('template-parts/components/hero', null, [
     'image_id'       => (int) bhp_get_homepage_field('hero_image_id', 0),
     'class'          => $hero_preview_books ? 'home-hero--with-books' : '',
     'aside'          => $hero_books_markup,
-    'details'        => $hero_details,
-    'primary_link'   => [
-        'url'   => bhp_get_homepage_field('hero_primary_url', '#explore-world'),
-        'label' => $hero_primary_label,
-    ],
-    'secondary_link' => [],
+    // Mobile reading order (2026-07-31): covers directly under the H1, so a
+    // phone visitor sees the actual product before any further copy. Real DOM
+    // move, homepage only -- every other hero caller keeps the default false.
+    'aside_after_title' => true,
 ]);
 
+/*
+ * 1b. THE BEST VALUE BOX NOW FOLLOWS THE HERO IMMEDIATELY — see the
+ * CYCLE144-LD-70 block above. The trust-proof strip that used to sit here
+ * has moved BELOW it, and the brand signature travels with it.
+ *
+ * SUPERSEDED placement note, preserved verbatim:
+ *
+ *   // 1b. Trust proof near the first purchase decision -- approved claims only.
+ *   // Placed before the sales-path commerce section per the approved homepage
+ *   // sequence (trust/proof strip precedes the Choose Adventure / Complete
+ *   // Collection commerce section).
+ */
+
+// 1c. Sales paths: route visitors into one of three clear paths, per the
+// approved Conversion UX Addendum. A new, distinct section rather than a
+// change to the hero component above (homepage hero is Andrew's approved
+// design source-of-truth) -- purely additive. The complete-series path is
+// visually strongest (gold "Best Value" treatment, first position),
+// matching the addendum's explicit instruction.
+?>
+<?php
+/*
+ * Phase 1a (2026-07-31): this band was three competing pathway cards
+ * (Complete Collection / "Choose Your First Adventure" / Teachers). It is now
+ * ONE focused Complete Collection feature, because the three real product
+ * cards immediately below it now serve the "choose your first adventure" job
+ * and the teacher path already exists in the Teachers & Families section
+ * lower on the page. Same section id and same base classes, so existing
+ * spacing/CSS keeps applying; the destination and the "Best Value" treatment
+ * are unchanged. No pricing, bundle or plugin logic is touched here.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.171 (2026-08-05) — THE MARKUP MOVED, IT DID NOT CHANGE.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew, 2026-08-05: "On the adventure books page - keep it consistent with
+ * the homepage ... use the same homepage one." Everything that used to be
+ * inline here is now `template-parts/components/complete-collection-feature.php`
+ * and `/books/` calls the SAME file. Nothing was reworded, re-ordered,
+ * re-classed or re-ided in the move: the section id, the heading id, every
+ * class, both currency literals, the owner gate and the gallery call are all
+ * exactly what shipped in 1.19.170. Diff the partial against 1.19.170's
+ * front-page.php to confirm.
+ *
+ * ⛔ THE SAVINGS LINE IS STILL BEHIND `bhp_home_price_cues_enabled()`, which
+ *    the partial reads for itself. Moving an owner gate is how an owner gate
+ *    gets lost, so the partial does not accept it as an argument.
+ */
+/*
+ * ⭐ 1.19.177 (2026-08-05) — CYCLE144-LD-51. `'link'` → `'checkout'`.
+ *
+ * Andrew Signore, 2026-08-05, current-turn order (⛔ RELAYED through the
+ * Chief of Staff and witnessed by the main session — NOT witnessed
+ * first-hand by this agent): the homepage "Get the Complete Collection"
+ * CTA must add the collection to the cart and land on the checkout page,
+ * like the funnel-page CTAs, instead of linking to /complete-collection/.
+ *
+ * ⭐ ONE ARGUMENT CHANGED. Nothing else on this page moved: not the
+ *    section id, not the heading, not a class, not a currency literal, not
+ *    the owner gate, not the gallery call, not the Kirkus block below.
+ *    The band component owns the CTA, the new format toggle and the
+ *    plugin-inactive fallback, and /books/ gets the identical treatment
+ *    from the identical file — which is exactly why the band was made a
+ *    shared partial in 1.19.171 rather than copied.
+ *
+ * ⛔ THIS PAGE STILL COMPUTES NO PRICE, DISCOUNT, SHIPPING FIGURE OR
+ *    TOTAL, and this change writes nothing. The three books, the bundle
+ *    discount and the FREE collection shipping remain the plugin's.
+ *
+ * ⭐ THE ROUTE TO /complete-collection/ IS NOT LOST. The band renders a
+ *    "Or read about the collection first" link directly beneath the CTA
+ *    for a visitor who wants to read before buying (the B7 pattern).
+ */
+get_template_part('template-parts/components/complete-collection-feature', null, [
+    'cta' => 'checkout',
+]);
+?>
+
+<?php
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.179 (2026-08-05) — CYCLE144-LD-70. THE SAME SECTION, ONE PLACE
+ *    LOWER, PLUS THE BRAND LINE THE HERO USED TO CARRY.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-05, current-turn order (⛔ RELAYED through the
+ * Chief of Staff and witnessed by the main session — NOT witnessed
+ * first-hand by the agent that wrote this), verbatim: "Put the big places.
+ * brave hearts under that box along with the Ages 6-9.... Featuring a
+ * kirkus reviewed title".
+ *
+ * ⭐ A MOVE, NOT A REWRITE. Every badge below — the `Ages 6–9` pill, the
+ *    Boise placement pill, the five-star pill with its screen-reader text,
+ *    and the Kirkus pill with its `#kirkus-credibility-home` anchor — is
+ *    byte-identical to what shipped in 1.19.178, comments included. The
+ *    section id, the section classes, the `aria-label` and the inner
+ *    container are unchanged, so every CSS rule and every bookmarked
+ *    `#home-trust-proof` hash keeps working.
+ *
+ * ⭐ THE KIRKUS PILL IS STILL A LINK TO THE SAME SECTION, and that section
+ *    still renders immediately below this one. The claim and its evidence
+ *    are still one click and one section apart — moving both together is
+ *    what preserves F19 (Andrew, walk-2 2026-08-03: Kirkus sits against the
+ *    Collection offer). The quote still renders exactly once.
+ *
+ * ⭐ `$hero_details` IS RENDERED HERE INSTEAD OF INSIDE THE HERO, ONCE.
+ *    It is the same string, unchanged: the `.home-hero__signature` brand
+ *    line Andrew named, followed by the three `.home-hero__destinations`
+ *    stats that have always lived in the same block with it. It is wrapped
+ *    in `.home-brand-proof` rather than `.home-hero__details` DELIBERATELY:
+ *    `style.css` hides `.home .home-hero__details` at ≤768px and re-shows it
+ *    only under `#home-hero`, so reusing that class here would have made the
+ *    brand line vanish on every phone. The new wrapper reproduces the old
+ *    responsive behaviour explicitly (stats hidden ≤768px, signature not).
+ *
+ * ⚠ JUDGEMENT CALL, DISCLOSED RATHER THAN BURIED: Andrew named the brand
+ *   line and the proof pills. He did not mention the three destination
+ *   stats, which live inside the same `$hero_details` markup string. They
+ *   travel with it, because splitting the string would have left them as
+ *   the hero's new last element and broken the "hero ends at 'It is an
+ *   invitation to look up.'" half of the same instruction. Nothing is
+ *   duplicated and nothing is dropped. If Andrew wants the stats to stay in
+ *   the hero instead, it is a one-line revert of this echo plus the
+ *   `.home-brand-proof` rules in style.css.
+ */
+?>
+<section id="home-trust-proof" class="homepage-section home-trust-proof" aria-label="<?php esc_attr_e('Why parents trust Brave Hearts', 'brave-hearts'); ?>">
+  <div class="container home-brand-proof"><?php echo wp_kses_post($hero_details); ?></div>
+  <div class="container home-trust-proof__inner">
+    <span class="home-trust-proof__badge"><?php esc_html_e('Ages 6–9', 'brave-hearts'); ?></span>
+    <?php
+    /*
+     * N4 (2026-08-03) — THE NUMBER LEAVES THE CLAIM, THE CLAIM STAYS TRUE.
+     *
+     * Andrew, production walk, verbatim: "It was placed in 40 boise
+     * classrooms - that number is going to change constantly - whats another
+     * way to say it without a number", and of the options put to him:
+     * "number 1 for sure" — i.e. "Placed in classrooms across Boise".
+     * (Relayed through the Chief of Staff; NOT witnessed first-hand here.)
+     *
+     * ⭐ THIS IS NOT A SOFTENING AND NOT A RETRACTION. The claim was attested
+     *    TRUE at 40 as of 2026-08-03. What changes is that the standing form
+     *    no longer carries a count that goes stale between page loads and
+     *    school terms — which is what makes it durable rather than a figure
+     *    somebody has to remember to re-verify. C24 (the "40 classrooms"
+     *    worked case) closes on this wording.
+     *
+     * ⛔ NO NEW CLAIM IS INTRODUCED. "Placed" is the same verb the 2026-07-16
+     *    Sprint A correction settled on deliberately: placement is the
+     *    defensible fact. Classroom USE, reading frequency and outcomes are
+     *    still not claimed anywhere, and nothing here starts claiming them.
+     */
+    ?>
+    <span class="home-trust-proof__badge"><?php esc_html_e('Placed in classrooms across Boise', 'brave-hearts'); ?></span>
+    <?php /* 2026-07-30: this pill previously carried the --gold modifier, which
+             gave it a different background, border and text colour from its
+             three neighbours. It now uses the shared badge treatment, with gold
+             confined to the stars themselves. The stars are decorative
+             (aria-hidden) because they are a glyph run, not text a screen
+             reader should spell out; the rating is conveyed by real text
+             instead. */ ?>
+    <span class="home-trust-proof__badge">
+      <span class="home-trust-proof__stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+      <span class="screen-reader-text"><?php esc_html_e('5 out of 5 stars', 'brave-hearts'); ?></span>
+      <?php /* 2026-08-02: scoped from the unqualified "Five-star reader
+               reviews". Three titles are on sale; only two of them have any
+               reader reviews at all. The approved registry
+               (inc/amazon-reviews.php) holds four 5-star reviews for The
+               Mariana Trench and two for Mount Everest, and ZERO for The
+               Amazon -- so an unqualified badge on a page showing all three
+               covers implied review proof that does not exist for the newest
+               book. The stars, the screen-reader text and the schema are
+               deliberately UNCHANGED: whether a bare glyph run reads as an
+               aggregate rating is CYCLE140-CX-9, which is Andrew's call, not
+               this change's. */ ?>
+      <?php esc_html_e('Five-star reader reviews on our first two titles', 'brave-hearts'); ?>
+    </span>
+    <?php
+    /*
+     * WAVE 1 (2026-08-04) — PROOF DENSITY, WITHOUT A SECOND KIRKUS BLOCK.
+     *
+     * The brief asks for the Kirkus quote inside this band. ⚠️ IT IS NOT
+     * PUT HERE, and the reason is an owner instruction: F19 (Andrew,
+     * walk-2, 2026-08-03) moved the Kirkus section to sit IMMEDIATELY BELOW
+     * the Complete Collection gallery — "put it right below or above the
+     * complete collection gallery" — which is the very next section after
+     * this band. Rendering the quote here as well would put two Kirkus
+     * quotes one section apart and would duplicate a block a PROTECTED pass
+     * deliberately placed. Recorded as CYCLE143-LD-163.
+     *
+     * What this pill does instead is CONNECT the two: it becomes an
+     * in-page link to the existing `#kirkus-credibility-home` section, so
+     * the claim and its evidence are one click apart and the quote still
+     * renders exactly once, still from `bhp_get_kirkus_review_data()`.
+     *
+     * ⛔ NOT ONE WORD OF ANY BADGE STRING IS CHANGED. No number, no rating,
+     *    no review count is added — the Amazon review count could not be
+     *    verified today and no string here carries one (CYCLE143-MKT-132).
+     *    No Review or AggregateRating schema is emitted, before or after.
+     */
+    ?>
+    <a class="home-trust-proof__badge home-trust-proof__badge--link" href="#kirkus-credibility-home"><?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></a>
+  </div>
+</section>
+
+<?php
+/*
+ * F19 (2026-08-03) — KIRKUS MOVED AND ENLARGED.
+ *
+ * Andrew, walk-2, verbatim: "not prominent - lets make it better or bigger
+ * and put it right below or above the complete collection gallery."
+ *
+ * It sat two sections lower, after "Choose Your Adventure". It now renders
+ * IMMEDIATELY BELOW the Complete Collection gallery it corroborates, so the
+ * strongest third-party proof the company owns is read in the same eyeful as
+ * the highest-value offer. `--prominent` is a styling modifier only.
+ *
+ * THE QUOTE IS UNTOUCHED. Text, attribution, reviewed title and review URL
+ * all still come from `bhp_get_kirkus_review_data()`; the Kirkus verdict
+ * "GET IT" is real and sourced and not one word of it is altered here. No
+ * Review or AggregateRating microdata is emitted, before or after.
+ */
+?>
+<section id="kirkus-credibility-home" class="homepage-section kirkus-credibility-home--prominent" aria-label="<?php esc_attr_e('Editorial review', 'brave-hearts'); ?>">
+  <div class="container">
+    <?php bhp_homepage_kirkus_section(); ?>
+  </div>
+</section>
+
+<?php
+/*
+ * B6 (2026-08-03) — MID-PAGE AUDIENCE BAND, REINSTATED.
+ *
+ * Spec: Business OS `WORKING-DRAFTS\commerce-cx\
+ * DRAFT-PHASE1-2026-08-03-START-HERE-ACCESS-SPEC.md` Part B (R8-R15).
+ *
+ * `template-parts/components/audience-gateway.php` was removed from this
+ * template on 2026-07-31 as COLLATERAL in the quiz-consolidation pass. That
+ * pass targeted duplicate `[data-bhp-quiz]` instances on the homepage.
+ *
+ * ⭐ THE LOAD-BEARING POINT: this module is NOT a quiz instance. It renders
+ *    four `<a>` elements and one link. Reinstating it therefore cannot
+ *    reintroduce a duplicate quiz, a duplicate DOM id or a second modal --
+ *    which is why this is safe and why the file was never deleted. Its CSS
+ *    was never removed either and is live at `style.css:2614-2626` and
+ *    `:5047`, so this adds ZERO new CSS.
+ *
+ * PLACEMENT, and why here rather than where the spec's DOM listing shows it.
+ * The spec puts it directly after `#home-sales-paths`. F19 has since moved
+ * Kirkus into that gap on Andrew's walk-2 instruction ("put it right below
+ * or above the complete collection gallery"), and F19 is a PROTECTED pass.
+ * So the band goes after Kirkus and immediately before `#explore-world`,
+ * which preserves both instructions: Kirkus still sits against the
+ * Collection offer, and the band still catches the visitor at the moment
+ * they have read the offer, read the proof, and not clicked.
+ *
+ * Homepage only (R14). Not on the audience landing pages (a visitor already
+ * through the door does not need the door), not on `/books/` or
+ * `/complete-collection/` (purchase-intent pages), and not on `/teachers/`
+ * -- that page runs the separate teacher popup and a third routing surface
+ * there would push against the parent/teacher funnel isolation rule.
+ */
+get_template_part('template-parts/components/audience-gateway');
+?>
+
+<section id="explore-world" class="homepage-section home-destinations section" aria-labelledby="explore-world-title">
+  <div class="container">
+    <header class="component-heading">
+      <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('explore_eyebrow', __('From the deepest ocean to the highest mountain', 'brave-hearts'))); ?></p>
+      <h2 id="explore-world-title" class="text-section-title"><?php echo esc_html(bhp_get_homepage_field('explore_title', __('Choose Your Adventure', 'brave-hearts'))); ?></h2>
+      <p class="component-heading__intro text-lead"><?php echo esc_html(bhp_get_homepage_field('explore_intro', __('Each adventure begins with a real place - and opens a door into wonder.', 'brave-hearts'))); ?></p>
+      <p class="home-destinations__promise"><?php esc_html_e('The question comes first. The book is the passport.', 'brave-hearts'); ?></p>
+    </header>
+    <div class="grid grid--3 homepage-grid homepage-grid--adventures">
+      <?php foreach ($adventure_cards as $card): ?>
+        <?php get_template_part('template-parts/components/hub-card', null, $card); ?>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <div class="container home-destinations__action">
+    <a class="home-section-action" href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('EXPLORE EVERY FORMAT AND EDITION', 'brave-hearts'); ?></a>
+  </div>
+</section>
+
+
+<?php
+/*
+ * F20 (2026-08-03) — SECTION ORDER.
+ *
+ * Andrew, walk-2: the "First reader" section moves ABOVE "Our philosophy".
+ * A reader meets the person and the real first reader before the statement
+ * of belief, which is the order the story actually happened in.
+ *
+ * This is a MOVE of two complete <section> blocks. Not one character of
+ * either section's markup, copy, ids, classes or images was changed by the
+ * move -- diff the two blocks against 1.19.149 to confirm.
+ *
+ * 2D (2026-08-03) -- DEFECT INTRODUCED BY THAT MOVE, AND FIXED HERE.
+ * The section marker below travelled with the block but its PHP open/close
+ * tags did not, so the literal text
+ *   "// 3. Founder origin: a compact trust bridge from philosophy to the
+ *    adventures."
+ * was echoed to the browser as visible page copy, directly under the Choose
+ * Your Adventure area. Andrew reported it on walk-4 (#6). The marker is
+ * REFENCED here rather than deleted, so the section numbering that every
+ * other marker in this file uses stays complete.
+ *
+ * A whole-theme sweep for the same species was run rather than fixing only
+ * the reported line: every .php file outside docs, reports and tests was
+ * split into PHP and HTML regions, and every HTML-region line opening with a
+ * comment marker was listed. Nine hits; eight are real JavaScript comments
+ * inside script blocks (page-adventure-kit-thank-you.php,
+ * inc/class-bhp-analytics-debug.php, template-parts/acquisition/
+ * signup-form.php). This was the only leak.
+ *
+ * 3. Founder origin: a compact trust bridge from philosophy to the adventures.
+ */
+?>
+
+<section id="first-reader" class="homepage-section home-origin" aria-labelledby="first-reader-title">
+  <div class="container">
+    <div class="home-origin__card">
+      <div class="home-origin__visual">
+        <div class="home-origin__journal">
+          <span class="home-origin__journal-kicker"><?php esc_html_e('Field Journal - Entry 01', 'brave-hearts'); ?></span>
+          <?php /* 2026-08-02 (P1a): the journal frame previously held the
+                   `charlotte-henry.webp` ILLUSTRATION. It now holds the real
+                   founder photograph that is already published on /about/ and
+                   on the Adventure Kit page -- same file, same media asset,
+                   same approved alt text, no new asset and no new claim. The
+                   caption is updated to describe what the frame now actually
+                   contains; leaving "Charlotte and Henry" under a photograph of
+                   Andrew and Charlotte would have been a false caption. */ ?>
+          <div class="home-origin__portrait home-origin__portrait--photo">
+            <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/founder-and-charlotte.webp'); ?>" alt="<?php esc_attr_e('Andrew Signore with Charlotte and a Brave Hearts book', 'brave-hearts'); ?>" width="1400" height="1867" loading="lazy" decoding="async">
+            <small><?php esc_html_e('Andrew and Charlotte', 'brave-hearts'); ?></small>
+          </div>
+          <strong><?php esc_html_e('One child. One loyal dog.', 'brave-hearts'); ?><br><?php esc_html_e('One lasting gift.', 'brave-hearts'); ?></strong>
+          <span class="home-origin__journal-meta"><?php esc_html_e('Andrew - Founder', 'brave-hearts'); ?></span>
+        </div>
+      </div>
+      <div class="home-origin__content">
+        <p class="component-heading__eyebrow"><?php esc_html_e('The first reader', 'brave-hearts'); ?></p>
+        <h2 id="first-reader-title"><?php esc_html_e('It Began With One Child and One Loyal Dog', 'brave-hearts'); ?></h2>
+        <p><?php esc_html_e('Before there was a company, a website, or a single illustration, there was one little girl. Her name is Charlotte. She is my niece - and she is real.', 'brave-hearts'); ?></p>
+        <p><?php esc_html_e('Henry is real, too. He carries a piece of Toby - the small dog of my own childhood, who used to climb into my backpack because he wanted to come along. A companion who never solves the problem for you, but never leaves while you solve it yourself.', 'brave-hearts'); ?></p>
+        <blockquote><?php esc_html_e('I wanted to give her something that would outlast every birthday - not just a story, but a compass. A way of looking at the world.', 'brave-hearts'); ?></blockquote>
+        <p class="home-origin__byline"><?php esc_html_e('Andrew - Founder, Brave Hearts Publishing', 'brave-hearts'); ?></p>
+        <a class="home-origin__link" href="<?php echo esc_url(home_url('/about/')); ?>"><?php esc_html_e('Read the story behind Brave Hearts', 'brave-hearts'); ?> <span aria-hidden="true">&rarr;</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<?php
+// 1e. Audience gateway REMOVED (2026-07-31, quiz consolidation). It was a
+// second, competing routing surface: "What brings you here today?" plus four
+// direct audience links and a prompt scrolling to the inline quiz below. With
+// the homepage now carrying exactly one quiz entry point -- the sitewide
+// launcher + auto-opening modal -- this module duplicated that job earlier in
+// the page. The component file is deliberately NOT deleted; it is simply no
+// longer rendered here, so it remains available and fully reversible.
+//
 // 2. Philosophy: connect the opening sense of wonder to the purpose behind every story.
 ?>
 <section id="home-philosophy" class="homepage-section home-philosophy section" aria-labelledby="home-philosophy-title">
@@ -148,101 +867,65 @@ get_template_part('template-parts/components/hero', null, [
   </div>
 </section>
 <?php
-
-// 3. Founder origin: a compact trust bridge from philosophy to the adventures.
+/*
+ * 5b. "Where you'll find us" — the farmers-market provenance element.
+ *
+ * PLACEMENT is `commerce-cx`'s, verbatim from its trust audit and NOT
+ * reinterpreted here: "a `Where you'll find us` strip on the homepage, BELOW
+ * `#first-reader` ... NOT above the fold — it is provenance, not product
+ * proof." It sits FIFTH in that audit's six-rank trust hierarchy, immediately
+ * after the founder photograph, because it answers the same question the
+ * founder card answers — "is there a real company behind this?" — rather than
+ * "is this book right for my child", which ranks 1–3 and is already answered
+ * higher up the page.
+ *
+ * ⛔ NO CTA, deliberately. Provenance earns nothing by asking for a click, and
+ *    the section it follows already carries the one link this part of the page
+ *    should have.
+ *
+ * THE PHOTOGRAPH. `assets/images/handoff/farmers-market-2026-05.webp` is a
+ * derivative of Andrew's own iPhone photograph, EXIF `DateTimeOriginal`
+ * 2026:05:23 10:28:34. Rotation and crop ONLY — no colour grading, no
+ * retouching, no object removal — because its whole value is that it is
+ * unmodified evidence of a real event. The crop deliberately excludes an
+ * acrylic price sign that was in the original frame and carried THREE claims
+ * that contradict live state ("PAPERBACK $8.99" against a live $11.99, "BOTH
+ * BOOKS $16" for a catalogue that now has three titles, and a superseded
+ * "save $1.98"). Removing them from a customer-facing photograph is the point
+ * of the crop, not tidiness (`CYCLE141-CX-45`).
+ *
+ * ⚠️ THE BANNER CARRIES THE RETIRED SUNRISE-HEART LOGO (`CYCLE141-CX-46`).
+ *    That is not an oversight: it is a dated documentary photograph of a real
+ *    event, and retouching a logo out of one would be the dishonest act.
+ *    Andrew approved the banner as-is. The caption carries the date so the
+ *    banner reads as history rather than as a competing identity.
+ *
+ * ⛔ WHAT IS NOT CLAIMED HERE, AND MUST NOT BE ADDED: attendance, footfall,
+ *    sales, queues, popularity, reactions, "meeting readers", "signing books",
+ *    or how the day went. None of it is sourced, and in the photograph Andrew
+ *    is holding two drink cups with no customer at the table — a caption
+ *    describing him serving a reader would be a fabricated scene. The market
+ *    and city are NOT named: the file carries no GPS and a named location is a
+ *    factual claim. The copy describes presence, not activity.
+ */
 ?>
-<section id="first-reader" class="homepage-section home-origin" aria-labelledby="first-reader-title">
+<section id="where-you-will-find-us" class="homepage-section home-market section" aria-labelledby="home-market-title">
   <div class="container">
-    <div class="home-origin__card">
-      <div class="home-origin__visual">
-        <div class="home-origin__journal">
-          <span class="home-origin__journal-kicker"><?php esc_html_e('Field Journal - Entry 01', 'brave-hearts'); ?></span>
-          <div class="home-origin__portrait">
-            <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/charlotte-henry.webp'); ?>" alt="<?php esc_attr_e('Charlotte resting beside Henry, the loyal dog who inspired the Brave Hearts stories.', 'brave-hearts'); ?>" loading="lazy" decoding="async">
-            <small><?php esc_html_e('Charlotte and Henry', 'brave-hearts'); ?></small>
-          </div>
-          <strong><?php esc_html_e('One child. One loyal dog.', 'brave-hearts'); ?><br><?php esc_html_e('One lasting gift.', 'brave-hearts'); ?></strong>
-          <span class="home-origin__journal-meta"><?php esc_html_e('Andrew - Founder', 'brave-hearts'); ?></span>
-        </div>
-      </div>
-      <div class="home-origin__content">
-        <p class="component-heading__eyebrow"><?php esc_html_e('The first reader', 'brave-hearts'); ?></p>
-        <h2 id="first-reader-title"><?php esc_html_e('It Began With One Child and One Loyal Dog', 'brave-hearts'); ?></h2>
-        <p><?php esc_html_e('Before there was a company, a website, or a single illustration, there was one little girl. Her name is Charlotte. She is my niece - and she is real.', 'brave-hearts'); ?></p>
-        <p><?php esc_html_e('Henry is real, too. He carries a piece of Toby - the small dog of my own childhood, who used to climb into my backpack because he wanted to come along. A companion who never solves the problem for you, but never leaves while you solve it yourself.', 'brave-hearts'); ?></p>
-        <blockquote><?php esc_html_e('I wanted to give her something that would outlast every birthday - not just a story, but a compass. A way of looking at the world.', 'brave-hearts'); ?></blockquote>
-        <p class="home-origin__byline"><?php esc_html_e('Andrew - Founder, Brave Hearts Publishing', 'brave-hearts'); ?></p>
-        <a class="home-origin__link" href="<?php echo esc_url(home_url('/about/')); ?>"><?php esc_html_e('Read the story behind Brave Hearts', 'brave-hearts'); ?> <span aria-hidden="true">&rarr;</span></a>
+    <div class="home-market__card">
+      <figure class="home-market__figure">
+        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/farmers-market-2026-05.webp'); ?>"
+             alt="<?php esc_attr_e('Andrew Signore standing behind a Brave Hearts Publishing table at an outdoor farmers market, with a pop-up canopy, a roll-up banner for Adventures of Charlotte and Henry, copies of the paperbacks laid out, and a plush dog on the table.', 'brave-hearts'); ?>"
+             width="1400" height="1867" loading="lazy" decoding="async">
+        <figcaption class="home-market__caption"><?php esc_html_e('Brave Hearts at a farmers market, May 2026.', 'brave-hearts'); ?></figcaption>
+      </figure>
+      <div class="home-market__content">
+        <p class="component-heading__eyebrow"><?php esc_html_e('Where you\'ll find us', 'brave-hearts'); ?></p>
+        <h2 id="home-market-title" class="home-market__title"><?php esc_html_e('A canopy, a folding table, and the same books that ship to your door.', 'brave-hearts'); ?></h2>
+        <p><?php esc_html_e('Brave Hearts is a small independent publisher. Some of what we do happens at a table outdoors, with the paperbacks laid out where a child can pick one up.', 'brave-hearts'); ?></p>
       </div>
     </div>
   </div>
 </section>
-<?php
-
-// 4. Explore the World: destination gateways remain filterable as the series grows.
-$mariana_book = $find_home_book('Mariana Trench');
-$everest_book = $find_home_book('Mount Everest');
-$amazon_book = $find_home_book('Amazon');
-
-$adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
-    [
-        'eyebrow'   => __('Volume I', 'brave-hearts'),
-        'title'     => __('The Mariana Trench', 'brave-hearts'),
-        'location'  => __('11°21\'N 142°12\'E - 10,935 m down', 'brave-hearts'),
-        'text'      => __('<p class="hub-card__question">What glows where sunlight has never reached?</p>', 'brave-hearts'),
-        'url'       => !empty($mariana_book['url']) ? $mariana_book['url'] : home_url('/books/'),
-        'cta_label' => __('Explore the depths', 'brave-hearts'),
-        'image_id'  => $mariana_book['image_id'] ?? 0,
-        'class'     => 'hub-card--destination',
-    ],
-    [
-        'eyebrow'   => __('Volume II', 'brave-hearts'),
-        'title'     => __('Mount Everest', 'brave-hearts'),
-        'location'  => __('27°59\'N 86°55\'E - 8,849 m up', 'brave-hearts'),
-        'text'      => __('<p class="hub-card__question">What can you see from the top of the world?</p>', 'brave-hearts'),
-        'url'       => !empty($everest_book['url']) ? $everest_book['url'] : home_url('/books/'),
-        'cta_label' => __('Explore the heights', 'brave-hearts'),
-        'image_id'  => $everest_book['image_id'] ?? 0,
-        'class'     => 'hub-card--destination',
-    ],
-    [
-        'eyebrow'   => __('Volume III', 'brave-hearts'),
-        'title'     => __('The Amazon Rainforest', 'brave-hearts'),
-        'location'  => __('3°28\'S 62°13\'W - The green heart', 'brave-hearts'),
-        'text'      => __('<p class="hub-card__question">What secrets live in the world\'s green heart?</p>', 'brave-hearts'),
-        'url'       => !empty($amazon_book['url']) ? $amazon_book['url'] : home_url('/books/'),
-        'cta_label' => __('Explore the canopy', 'brave-hearts'),
-        'image_id'  => $amazon_book['image_id'] ?? 0,
-        'class'     => 'hub-card--destination',
-    ],
-], $page_id);
-?>
-<section id="explore-world" class="homepage-section home-destinations section" aria-labelledby="explore-world-title">
-  <div class="container">
-    <header class="component-heading">
-      <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('explore_eyebrow', __('From the deepest ocean to the highest mountain', 'brave-hearts'))); ?></p>
-      <h2 id="explore-world-title" class="text-section-title"><?php echo esc_html(bhp_get_homepage_field('explore_title', __('Choose Your Adventure', 'brave-hearts'))); ?></h2>
-      <p class="component-heading__intro text-lead"><?php echo esc_html(bhp_get_homepage_field('explore_intro', __('Each adventure begins with a real place - and opens a door into wonder.', 'brave-hearts'))); ?></p>
-      <p class="home-destinations__promise"><?php esc_html_e('The question comes first. The book is the passport.', 'brave-hearts'); ?></p>
-    </header>
-    <div class="grid grid--3 homepage-grid homepage-grid--adventures">
-      <?php foreach ($adventure_cards as $card): ?>
-        <?php get_template_part('template-parts/components/hub-card', null, $card); ?>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-
-<section id="featured-books" class="homepage-section home-books-path" aria-labelledby="home-books-path-title">
-  <div class="container home-books-path__inner">
-    <div>
-      <h2 id="home-books-path-title"><?php esc_html_e('Find the Adventure That Fits Your Reader', 'brave-hearts'); ?></h2>
-      <p><?php esc_html_e('Picture books - Chapter books - Editions - Gift sets', 'brave-hearts'); ?></p>
-    </div>
-    <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('Explore every format and edition', 'brave-hearts'); ?></a>
-  </div>
-</section>
-
 <?php
 // 6. Learning Hub: educational depth extends curiosity beyond the books.
 $learning_cards = apply_filters('bhp_homepage_learning_cards', [
@@ -300,12 +983,14 @@ unset($learning_card);
   </div>
 </section>
 
-<?php // 8. Trust is expressed through verifiable publishing principles, not invented reviews. ?>
+<?php // 8. Trust is expressed through verifiable publishing principles and real, verified customer reviews -- never invented ones. ?>
 <section id="trust" class="homepage-section home-trust section" aria-labelledby="home-trust-title">
   <div class="container">
     <header class="component-heading component-heading--center">
       <p class="component-heading__eyebrow"><?php esc_html_e('Why parents trust Brave Hearts', 'brave-hearts'); ?></p>
-      <h2 id="home-trust-title" class="text-section-title"><?php esc_html_e('Wonder first. Learning follows—naturally.', 'brave-hearts'); ?></h2>
+      <?php /* Wave F item 11: em dash removed. "follows—naturally" becomes a
+               comma, which keeps the beat of the line without the dash. */ ?>
+      <h2 id="home-trust-title" class="text-section-title"><?php esc_html_e('Wonder first. Learning follows, naturally.', 'brave-hearts'); ?></h2>
     </header>
     <div class="home-trust__pillars">
       <article><span aria-hidden="true">△</span><h3><?php esc_html_e('Real places, real research', 'brave-hearts'); ?></h3><p><?php esc_html_e('Every destination is a place a child could truly stand one day. The science is checked, not invented.', 'brave-hearts'); ?></p></article>
@@ -319,29 +1004,69 @@ unset($learning_card);
   </div>
 </section>
 
-<?php
-// 9. Adventure Club expedition signup.
-get_template_part('template-parts/components/newsletter-signup', null, [
-    'id'                => 'adventure-club',
-    'eyebrow'           => bhp_get_homepage_field('newsletter_eyebrow', __('The Adventure Club', 'brave-hearts')),
-    'title'             => bhp_get_homepage_field('newsletter_title', __('Join the Expedition', 'brave-hearts')),
-    'text'              => bhp_get_homepage_field('newsletter_text', __('Enlist with a small band of families and teachers who believe the real world is still wild enough. No noise - just wonder, delivered.', 'brave-hearts')),
-    'benefits'          => [
-        ['title' => __('Be first to the next adventure', 'brave-hearts'), 'text' => __('We will write the moment Charlotte & Henry set out somewhere new.', 'brave-hearts')],
-        ['title' => __('Free printable expeditions', 'brave-hearts'), 'text' => __('Teacher guides, family activities, and exploration field notes - yours to keep.', 'brave-hearts')],
-    ],
-    'form_action'       => bhp_get_homepage_field('newsletter_form_action', ''),
-    'email_name'        => bhp_get_homepage_field('newsletter_email_name', 'email'),
-    'email_label'       => bhp_get_homepage_field('newsletter_email_label', __('Email address', 'brave-hearts')),
-    'email_placeholder' => bhp_get_homepage_field('newsletter_placeholder', __('Your email - no noise, just wonder', 'brave-hearts')),
-    'submit_label'      => bhp_get_homepage_field('newsletter_submit_label', __('Join the Expedition', 'brave-hearts')),
-    'privacy_text'      => bhp_get_homepage_field('newsletter_privacy', __('A field pass to wonder - unsubscribe anytime.', 'brave-hearts')),
-    'audience_type'    => 'parents_families',
-    'lead_magnet'      => 'explorer_passport',
-    'source_page'      => get_permalink($page_id),
-    'hidden_fields'     => apply_filters('bhp_homepage_newsletter_hidden_fields', [], $page_id),
-    'class'             => 'newsletter-signup--expedition',
-]);
+<?php // 8b. Genuine Amazon customer reviews -- kept several sections away from the Kirkus editorial block above so the two trust signals never visually collide, per Andrew's separation rule. Renders nothing if no book has an approved review (defensive; both featured books currently do). ?>
+<?php $amazon_reviews_home = bhp_homepage_amazon_reviews_section(); ?>
+<?php if (trim($amazon_reviews_home)): ?>
+<section id="amazon-customer-reviews" class="homepage-section section" aria-label="<?php esc_attr_e('Amazon customer reviews', 'brave-hearts'); ?>">
+  <div class="container">
+    <header class="component-heading component-heading--center">
+      <p class="component-heading__eyebrow"><?php esc_html_e('From real readers', 'brave-hearts'); ?></p>
+      <h2 class="text-section-title"><?php esc_html_e('What Families Are Saying', 'brave-hearts'); ?></h2>
+    </header>
+    <div class="amazon-review-showcase--homepage-row">
+      <?php echo $amazon_reviews_home; // phpcs:ignore -- already escaped by the component itself ?>
+    </div>
+    <?php /* ⭐ 2C-2 (2026-08-03) — ONE BUTTON REPLACES TWO LINK CLUSTERS.
 
-// 10. Footer.
+             Andrew, final staging walk, verbatim: "Remove the 'shop adventures
+             of Charlotte and henry: The mariana trench / everest' and 'Get all
+             three adventures: The complete collection' from below the two
+             reviews and put a call to action button 'Get the collection Here' -
+             then it goes to the collection page". (Relayed through the Chief of
+             Staff; NOT witnessed first-hand by this agent.)
+
+             The two "Shop <book title> →" links are gone at their source --
+             `bhp_homepage_amazon_reviews_section()` now passes
+             `show_product_link => false`. This paragraph carried the third
+             link, and it is replaced by the single button.
+
+             ⛔ THE DESTINATION IS THE LANDING PAGE, NOT CHECKOUT. Andrew's own
+                routing: "then it goes to the collection page". `/complete-
+                collection/` is the landing page; it is deliberately NOT one of
+                the one-click add-to-cart CTAs built in the supplement wave, and
+                must not be "upgraded" into one without his word.
+
+             ⛔ BUTTON TEXT IS EXACT, INCLUDING THE LOWER-CASE "the" AND THE
+                CAPITAL "H" IN "Here". It is Andrew's string, quoted, not
+                title-cased into house style.
+
+             It uses THE button spec (`.btn .btn-cta-primary`: 8px radius,
+             --btn-font/Archivo, forest fill, 1.5px gold border) -- no new
+             button variant is introduced. The old paragraph's Wave F item 4
+             recolouring note is superseded by that and is preserved in
+             style.css beside the rule it described. */ ?>
+    <p class="home-reviews__collection-cta">
+      <a class="btn btn-cta-primary home-reviews__collection-btn" href="<?php echo esc_url(home_url('/complete-collection/')); ?>"><?php esc_html_e('Get the collection Here', 'brave-hearts'); ?></a>
+    </p>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php
+// 9. Inline homepage quiz REMOVED (2026-07-31, quiz consolidation).
+// The homepage previously rendered the full intro-gated quiz here AND the
+// sitewide auto-opening modal from footer.php, i.e. two live [data-bhp-quiz]
+// instances on one page. The homepage now carries exactly one: the single
+// sitewide launcher plus its hidden modal.
+//
+// The '#find-your-adventure' deep-link contract is preserved -- footer.php
+// passes that id to the launcher on the homepage only (see
+// template-parts/components/quiz-entry-cta.php's `id` arg), so existing
+// in-page anchors still land on a real quiz entry point and the id is still
+// rendered exactly once per page.
+//
+// The quiz template part itself is untouched and still used by the modal and
+// by the canonical /find-your-adventure/ page.
+
+// 11. Footer.
 get_footer();

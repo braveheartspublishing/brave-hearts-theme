@@ -1,0 +1,34 @@
+# Brand constraints for generated Pinterest creative.
+# Mirrors the approved storefront design system (docs/DECISIONS.md,
+# style.css CTA palette) so Pinterest creative feels like the same
+# brand as the storefront, not a disconnected marketing asset.
+
+brand_name: "Brave Hearts Publishing"
+tagline: "Big Places. Brave Hearts."
+series: "Adventures of Charlotte and Henry"
+
+voice:
+  tone: "warm, curious, adventurous -- never preachy or textbook-like"
+  audience_primary: "parents and grandparents of reluctant, inconsistent, or easily discouraged readers ages 6-9"
+  audience_secondary: "teachers, librarians, homeschool families, caregivers"
+  forbidden:
+    - "fabricated statistics or claims"
+    - "manufactured urgency (fake countdowns, fake low-stock claims)"
+    - "medical or developmental claims about reading ability"
+
+color_palette:
+  dark_jungle_green: "#0D2B1E"
+  deep_amazon_green: "#1F4D36"
+  warm_ivory: "#FFF3D0"
+  antique_gold: "#D9B44A"
+  note: "Matches the storefront's own CTA palette (style.css) -- do not introduce a separate marketing palette that drifts from the storefront."
+
+typography:
+  note: "Match the storefront's existing serif/display pairing where practical; exact fonts to be confirmed against style.css when generation is implemented."
+
+imagery:
+  required: "real book cover art, real illustration style from the published books -- never AI-generated character art that doesn't match the actual books"
+  forbidden: "stock photography of unrelated children's books or generic 'kid reading' stock images that don't represent this series"
+
+claims_policy:
+  reference: "See C:/BHP/CLAUDE.md hard rules -- never invent author experiences, parent/teacher reactions, classroom results, reviews, statistics, awards, endorsements, medical or developmental claims."

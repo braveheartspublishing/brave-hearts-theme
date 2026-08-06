@@ -1,0 +1,51 @@
+{
+  "blog_slug": "mariana-trench-facts-for-kids",
+  "_review_method": "MANUAL self-review against config/scoring-rubric.yaml -- no automated design-review tool exists yet (README.md Pipeline stage 7/'Claude Design output' is external to this repo's scope until wired up). brand_consistency is scored at the COPY/DIRECTION level only (voice, palette named in visual_direction) since no actual rendered image exists to inspect -- this is an INFERRED score, not a verified one, and must be re-scored once real creative is produced.",
+  "reviewed_variants": [
+    {
+      "variant_type": "problem-led",
+      "scores": { "brand_consistency": 7, "claim_accuracy": 10, "message_clarity": 8, "creative_distinctiveness": 9, "destination_fit": 9 },
+      "weighted_total": 8.55,
+      "pass": true,
+      "automatic_fail_triggered": false,
+      "automatic_fail_reason": null,
+      "revision_notes": "brand_consistency will need re-scoring once real creative exists.",
+      "revision_count": 0
+    },
+    {
+      "variant_type": "outcome-led",
+      "scores": { "brand_consistency": 7, "claim_accuracy": 10, "message_clarity": 8, "creative_distinctiveness": 9, "destination_fit": 9 },
+      "weighted_total": 8.55,
+      "pass": true,
+      "automatic_fail_triggered": false,
+      "automatic_fail_reason": null,
+      "revision_notes": "brand_consistency will need re-scoring once real creative exists.",
+      "revision_count": 0
+    },
+    {
+      "variant_type": "curiosity-led",
+      "scores": { "brand_consistency": 7, "claim_accuracy": 10, "message_clarity": 9, "creative_distinctiveness": 9, "destination_fit": 8 },
+      "weighted_total": 8.6,
+      "pass": true,
+      "automatic_fail_triggered": false,
+      "automatic_fail_reason": null,
+      "revision_notes": "brand_consistency will need re-scoring once real creative exists.",
+      "revision_count": 0
+    },
+    {
+      "variant_type": "resource-led",
+      "scores": { "brand_consistency": 7, "claim_accuracy": 10, "message_clarity": 9, "creative_distinctiveness": 9, "destination_fit": 8 },
+      "weighted_total": 8.6,
+      "pass": true,
+      "automatic_fail_triggered": false,
+      "automatic_fail_reason": null,
+      "revision_notes": "brand_consistency will need re-scoring once real creative exists.",
+      "revision_count": 0
+    }
+  ],
+  "human_approval": {
+    "approved_by": "",
+    "approved_at": "",
+    "notes": "NOT YET APPROVED -- this review.json is a Phase 1D demonstration of the scoring pipeline (manual copy-level review only). Andrew's explicit approval is required before any variant is scheduled to publish-manifest.json, per README.md pipeline stage 10. No Pinterest account/board has been created yet either (see config/pinterest-boards.yaml status field)."
+  }
+}

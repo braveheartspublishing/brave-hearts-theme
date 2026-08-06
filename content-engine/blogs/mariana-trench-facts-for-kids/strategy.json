@@ -1,0 +1,8 @@
+{
+  "blog_slug": "mariana-trench-facts-for-kids",
+  "funnel_stage": "awareness",
+  "audience": ["parent", "teacher"],
+  "search_intent": "Parent or teacher searching for real, kid-appropriate ocean-science facts about the Mariana Trench — informational intent, not yet purchase intent.",
+  "recommended_destination": "blog_post_only",
+  "reasoning": "Classified as content_type_routing.educational_fact_post per config/funnel-routes.yaml: an ocean-facts listicle is awareness-stage content (the reader doesn't know the book series exists yet), so the destination stays the blog post itself rather than pushing straight to a purchase page. The post's own existing 'Continue the Expedition' section (template-parts/guides/related-content.php) already carries the reader onward to the book and related articles from there."
+}

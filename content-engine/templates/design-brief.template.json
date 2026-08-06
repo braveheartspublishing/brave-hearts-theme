@@ -1,0 +1,53 @@
+{
+  "blog_slug": "",
+  "variants": [
+    {
+      "variant_type": "problem-led",
+      "headline": "",
+      "supporting_line": "",
+      "visual_direction": "",
+      "pinterest_title": "",
+      "pinterest_description": "",
+      "alt_text": "",
+      "board_id": "",
+      "destination_url": "",
+      "utm_content": ""
+    },
+    {
+      "variant_type": "outcome-led",
+      "headline": "",
+      "supporting_line": "",
+      "visual_direction": "",
+      "pinterest_title": "",
+      "pinterest_description": "",
+      "alt_text": "",
+      "board_id": "",
+      "destination_url": "",
+      "utm_content": ""
+    },
+    {
+      "variant_type": "curiosity-led",
+      "headline": "",
+      "supporting_line": "",
+      "visual_direction": "",
+      "pinterest_title": "",
+      "pinterest_description": "",
+      "alt_text": "",
+      "board_id": "",
+      "destination_url": "",
+      "utm_content": ""
+    },
+    {
+      "variant_type": "resource-led",
+      "headline": "",
+      "supporting_line": "",
+      "visual_direction": "",
+      "pinterest_title": "",
+      "pinterest_description": "",
+      "alt_text": "",
+      "board_id": "",
+      "destination_url": "",
+      "utm_content": ""
+    }
+  ]
+}

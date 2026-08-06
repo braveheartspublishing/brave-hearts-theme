@@ -1,0 +1,33 @@
+{
+  "blog_slug": "",
+  "review_windows": {
+    "30_day": {
+      "impressions": null,
+      "saves": null,
+      "outbound_clicks": null,
+      "sessions_attributed": null,
+      "revenue_attributed": null,
+      "best_performing_variant": null,
+      "notes": ""
+    },
+    "60_day": {
+      "impressions": null,
+      "saves": null,
+      "outbound_clicks": null,
+      "sessions_attributed": null,
+      "revenue_attributed": null,
+      "best_performing_variant": null,
+      "notes": ""
+    },
+    "90_day": {
+      "impressions": null,
+      "saves": null,
+      "outbound_clicks": null,
+      "sessions_attributed": null,
+      "revenue_attributed": null,
+      "best_performing_variant": null,
+      "notes": ""
+    }
+  },
+  "feedback_for_future_briefs": ""
+}

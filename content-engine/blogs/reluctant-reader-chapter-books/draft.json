@@ -1,0 +1,19 @@
+{
+    "blog_slug": "reluctant-reader-chapter-books",
+    "content_html": "<!-- wp:paragraph --><p>[PLACEHOLDER: opening hook naming the reader&#039;s specific problem \u2014 [PLACEHOLDER: what specific problem is the reader trying to solve when they search this?]]<\/p><!-- \/wp:paragraph -->\n\n<!-- wp:heading --><h2>Core answer to the search query<\/h2><!-- \/wp:heading -->\n\n<!-- wp:paragraph --><p>[PLACEHOLDER: original content for &quot;Core answer to the search query&quot; \u2014 must satisfy at least 2 of the originality requirements listed in the brief]<\/p><!-- \/wp:paragraph -->\n\n<!-- wp:heading --><h2>BHP-specific angle \/ Charlotte &amp; Henry connection<\/h2><!-- \/wp:heading -->\n\n<!-- wp:paragraph --><p>[PLACEHOLDER: original content for &quot;BHP-specific angle \/ Charlotte &amp; Henry connection&quot; \u2014 must satisfy at least 2 of the originality requirements listed in the brief]<\/p><!-- \/wp:paragraph -->\n\n<!-- wp:heading --><h2>Parent \/ family use<\/h2><!-- \/wp:heading -->\n\n<!-- wp:paragraph --><p>[PLACEHOLDER: original content for &quot;Parent \/ family use&quot; \u2014 must satisfy at least 2 of the originality requirements listed in the brief]<\/p><!-- \/wp:paragraph -->\n\n<!-- wp:heading --><h2>FAQ (if applicable)<\/h2><!-- \/wp:heading -->\n\n<!-- wp:paragraph --><p>[PLACEHOLDER: original content for &quot;FAQ (if applicable)&quot; \u2014 must satisfy at least 2 of the originality requirements listed in the brief]<\/p><!-- \/wp:paragraph -->\n\n<!-- wp:heading --><h2>Related reading \/ continue exploring (internal links + CTA)<\/h2><!-- \/wp:heading -->\n\n<!-- wp:paragraph --><p>[PLACEHOLDER: original content for &quot;Related reading \/ continue exploring (internal links + CTA)&quot; \u2014 must satisfy at least 2 of the originality requirements listed in the brief]<\/p><!-- \/wp:paragraph -->\n\n<!-- wp:heading --><h2>Fact check before publishing<\/h2><!-- \/wp:heading -->\n\n<!-- wp:group {\"className\":\"bhp-fact-box\"} --><div class=\"wp-block-group bhp-fact-box\"><ul><li>[PLACEHOLDER: list every specific number, date, or scientific claim the draft will make, so it can be checked before publishing]<\/li><\/ul><\/div><!-- \/wp:group -->\n\n<!-- wp:heading --><h2>Keep exploring<\/h2><!-- \/wp:heading -->\n\n<!-- wp:list --><ul><li><a href=\"https:\/\/staging2.braveheartspublishing.com\/blog\/what-is-the-mariana-trench-for-kids\/\">What Is the Mariana Trench? Everything Kids (and Parents) Need to Know<\/a><\/li><li><a href=\"https:\/\/staging2.braveheartspublishing.com\/blog\/best-ocean-books-for-kids-ages-6-9\/\">Best Books About the Ocean for Kids Ages 6-9<\/a><\/li><li><a href=\"https:\/\/staging2.braveheartspublishing.com\/blog\/mariana-trench-facts-for-kids\/\">Mariana Trench Facts for Kids \u2014 The Deepest Place on Earth<\/a><\/li><li><a href=\"https:\/\/staging2.braveheartspublishing.com\/blog\/how-deep-is-the-mariana-trench-for-kids\/\">How Deep Is the Mariana Trench? (Explained for Kids)<\/a><\/li><\/ul><!-- \/wp:list -->\n\n<!-- wp:shortcode -->[bhp_contextual_cta id=\"adventure_kit_signup\"]<!-- \/wp:shortcode -->",
+    "placeholders": [
+        "opening_hook",
+        "section:Core answer to the search query",
+        "section:BHP-specific angle \/ Charlotte & Henry connection",
+        "section:Parent \/ family use",
+        "section:FAQ (if applicable)",
+        "section:Related reading \/ continue exploring (internal links + CTA)",
+        "factual_claims"
+    ],
+    "image_placeholders": [
+        {
+            "filename": "reluctant-reader-chapter-books-featured.jpg",
+            "alt_text_placeholder": "[PLACEHOLDER: literal image description]"
+        }
+    ]
+}

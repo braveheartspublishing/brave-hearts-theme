@@ -1,0 +1,337 @@
+{
+  "_meta": {
+    "generated": "2026-07-06",
+    "description": "Machine-readable mapping of every window.dataLayer event this codebase actually emits, for building the GTM container exactly per docs/gtm-configuration-blueprint.md. Do not hand-copy a generic GA4 ecommerce example over this -- this file reflects the real implemented schema, verified against the source files listed per event.",
+    "ga4_measurement_id": "G-7M42X19Z2T",
+    "gtm_container_id": "GTM-N474PRSH",
+    "note": "Both IDs above are configuration identifiers, not secrets."
+  },
+  "item_schema": {
+    "item_id": "string, WooCommerce product or variation ID",
+    "item_name": "string, catalog title",
+    "item_brand": "string, always 'Brave Hearts Publishing'",
+    "item_category": "string, always \"Children's Books\"",
+    "item_category2": "string, 'Paperback' or 'Hardcover'",
+    "item_variant": "string, same as item_category2",
+    "price": "number, unit price",
+    "quantity": "integer",
+    "discount": "number, optional, only present when real",
+    "item_list_name": "string, optional, only present with list context",
+    "index": "integer, optional, 1-based, only on view_item_list/select_item items"
+  },
+  "events": [
+    {
+      "name": "view_item_list",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/includes/bundle-analytics.php",
+      "trigger": "Shop archive page load, or single-product Related Products render",
+      "parameters": ["item_list_id", "item_list_name", "items[]"],
+      "contains_pii": false
+    },
+    {
+      "name": "select_item",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bhp-list-tracking.js",
+      "trigger": "Click on a product-card link inside a tracked list",
+      "parameters": ["item_list_id", "item_list_name", "items[]"],
+      "contains_pii": false
+    },
+    {
+      "name": "view_item",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/includes/bundle-analytics.php",
+      "trigger": "Single product page load",
+      "parameters": ["currency", "value", "items[]"],
+      "contains_pii": false
+    },
+    {
+      "name": "add_to_cart",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Successful Store API cart add (product page, cross-sell, bundle page)",
+      "parameters": ["currency", "value", "source", "bundle_type", "items[]"],
+      "contains_pii": false
+    },
+    {
+      "name": "remove_from_cart",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Quantity reduced to 0 or explicit Remove click",
+      "parameters": ["currency", "value", "items[]"],
+      "contains_pii": false
+    },
+    {
+      "name": "view_cart",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Side-cart drawer opens",
+      "parameters": ["currency", "value", "items[]"],
+      "contains_pii": false
+    },
+    {
+      "name": "begin_checkout",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "\"Secure Checkout\" clicked in the side-cart drawer",
+      "parameters": ["currency", "value", "source", "items[]"],
+      "contains_pii": false
+    },
+    {
+      "name": "add_shipping_info",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bhp-checkout-events.js",
+      "trigger": "A shipping rate becomes selected on the Blocks checkout page (Store API response observation)",
+      "parameters": ["event_id", "currency", "value", "shipping_tier", "items[]"],
+      "event_id_pattern": "add_shipping_info_<rate_id>",
+      "contains_pii": false
+    },
+    {
+      "name": "add_payment_info",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bhp-checkout-events.js",
+      "trigger": "A payment-method radio is selected or pre-selected on the Blocks checkout page",
+      "parameters": ["event_id", "currency", "value", "payment_type", "items[]"],
+      "event_id_pattern": "add_payment_info_<gateway_id>",
+      "notes": "payment_type is the gateway's internal ID (e.g. 'stripe'), never card data",
+      "contains_pii": false
+    },
+    {
+      "name": "purchase",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/includes/bundle-analytics.php",
+      "trigger": "woocommerce_thankyou, deduplicated to once per order",
+      "parameters": ["transaction_id", "event_id", "currency", "value", "tax", "shipping", "coupon", "items[]"],
+      "event_id_pattern": "purchase_<order_id>",
+      "contains_pii": false
+    },
+    {
+      "name": "refund",
+      "type": "ga4_ecommerce",
+      "source_file": "plugins/brave-hearts-bundle-pricing/includes/bundle-analytics.php",
+      "trigger": "woocommerce_order_refunded",
+      "parameters": ["transaction_id", "event_id", "currency", "value", "items[]"],
+      "event_id_pattern": "refund_<refund_id>",
+      "contains_pii": false
+    },
+    {
+      "name": "amazon_outbound_click",
+      "type": "business_custom",
+      "source_file": "functions.php",
+      "trigger": "Amazon affiliate button click",
+      "parameters": ["bhp_book", "bhp_format", "bhp_source"],
+      "contains_pii": false
+    },
+    {
+      "name": "adventure_kit_signup",
+      "type": "business_custom",
+      "source_file": "page-adventure-kit-thank-you.php",
+      "trigger": "Adventure Kit thank-you page load, only reachable via the whitelisted Mailchimp redirect key; sessionStorage-guarded against refresh/back-nav duplication",
+      "parameters": ["funnel", "page_type", "lead_offer", "audience", "placement", "signup_method"],
+      "contains_pii": false
+    },
+    {
+      "name": "lead_signup_success",
+      "type": "business_custom",
+      "source_file": "template-parts/acquisition/signup-form.php",
+      "trigger": "POST/redirect success feedback, forms with no dedicated thank-you page",
+      "parameters": ["lead_offer", "audience", "placement", "signup_method"],
+      "notes": "Never fires alongside adventure_kit_signup for the same submission (mutually exclusive by success_redirect_key presence)",
+      "contains_pii": false
+    },
+    {
+      "name": "signup_error",
+      "type": "business_custom",
+      "source_file": "template-parts/acquisition/signup-form.php",
+      "trigger": "POST/redirect error feedback, any acquisition form",
+      "parameters": ["lead_offer", "audience", "placement", "signup_method", "error_reason"],
+      "notes": "error_reason is one of the fixed strings invalid|missing_name|unavailable|error -- never raw exception text or user input",
+      "contains_pii": false
+    },
+    {
+      "name": "format_selected",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Variation chosen on a variable product",
+      "parameters": [],
+      "contains_pii": false
+    },
+    {
+      "name": "bundle_format_selected",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-landing.js",
+      "trigger": "Format toggle on Complete Collection page",
+      "parameters": [],
+      "contains_pii": false
+    },
+    {
+      "name": "bundle_page_view",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-landing.js",
+      "trigger": "Complete Collection page load",
+      "parameters": [],
+      "contains_pii": false
+    },
+    {
+      "name": "side_cart_opened",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Side-cart drawer opens, any trigger",
+      "parameters": ["source"],
+      "contains_pii": false
+    },
+    {
+      "name": "side_cart_cross_sell_clicked",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "\"Add This Adventure\" clicked",
+      "parameters": ["title_key"],
+      "contains_pii": false
+    },
+    {
+      "name": "second_book_added",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Cart reaches 2 distinct titles of a format",
+      "parameters": [],
+      "contains_pii": false
+    },
+    {
+      "name": "complete_set_reached",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Cart reaches all titles of a format",
+      "parameters": [],
+      "contains_pii": false
+    },
+    {
+      "name": "bundle_add_to_cart",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Bundle-form submission adds items",
+      "parameters": ["format", "bundle_type", "product_count", "cart_value"],
+      "contains_pii": false
+    },
+    {
+      "name": "bundle_savings_applied",
+      "type": "business_custom",
+      "source_file": "plugins/brave-hearts-bundle-pricing/assets/bundle-drawer.js",
+      "trigger": "Complete set reached via bundle-form submission",
+      "parameters": ["format", "savings_amount", "cart_value"],
+      "contains_pii": false
+    },
+    {
+      "name": "teacher_popup_view / teacher_popup_close / teacher_popup_submit / teacher_popup_success",
+      "type": "business_custom",
+      "source_file": "assets/js/mariana-popup.js",
+      "trigger": "Teacher popup lifecycle (/teachers/ only)",
+      "parameters": ["source", "page_path", "page_type"],
+      "contains_pii": false
+    },
+    {
+      "name": "parent_popup_view / parent_popup_close / parent_popup_submit / parent_popup_success",
+      "type": "business_custom",
+      "source_file": "assets/js/mariana-popup.js",
+      "trigger": "Parent popup lifecycle (sitewide except /teachers/)",
+      "parameters": ["source", "page_path", "page_type"],
+      "contains_pii": false
+    },
+    {
+      "name": "bhp_debug_internal_order_purchase_suppressed",
+      "type": "staging_only_debug",
+      "source_file": "plugins/brave-hearts-bundle-pricing/includes/bundle-analytics.php",
+      "trigger": "Internal/test order reaches thank-you page",
+      "parameters": [],
+      "notes": "Staging only -- never fires on production, and no GTM trigger should be created for it",
+      "contains_pii": false
+    },
+    {
+      "name": "contextual_cta_click",
+      "type": "business_custom",
+      "source_file": "inc/class-bhp-cta-engine.php",
+      "trigger": "Click on any CTA rendered by BHP_CTA_Engine::render()",
+      "parameters": ["cta_id", "cta_placement", "cta_destination_type", "audience", "funnel_stage", "variant"],
+      "notes": "Phase 1D. Reuses nav.js's existing generic data-bhp-event click handler.",
+      "contains_pii": false
+    },
+    {
+      "name": "contextual_cta_view",
+      "type": "business_custom",
+      "source_file": "inc/class-bhp-cta-engine.php",
+      "trigger": "CTA scrolled into view (50% threshold, fires once)",
+      "parameters": ["cta_id", "cta_placement", "cta_destination_type", "audience", "funnel_stage", "variant"],
+      "notes": "Phase 1D. Reuses nav.js's existing generic data-bhp-impression-event IntersectionObserver.",
+      "contains_pii": false
+    },
+    {
+      "name": "related_content_click",
+      "type": "business_custom",
+      "source_file": "template-parts/guides/article-card.php",
+      "trigger": "Click on a Related Field Notes article card",
+      "parameters": ["bhp_source"],
+      "notes": "Phase 1D",
+      "contains_pii": false
+    },
+    {
+      "name": "landing_page_view",
+      "type": "business_custom",
+      "source_file": "inc/class-bhp-campaign-landing.php",
+      "trigger": "Campaign landing page scrolled into view",
+      "parameters": ["bhp_source"],
+      "notes": "Phase 1D. bhp_source carries the campaign_id.",
+      "contains_pii": false
+    },
+    {
+      "name": "landing_page_cta_click",
+      "type": "business_custom",
+      "source_file": "inc/class-bhp-campaign-landing.php",
+      "trigger": "Click on a campaign-landing product/CTA block",
+      "parameters": ["bhp_source"],
+      "notes": "Phase 1D",
+      "contains_pii": false
+    },
+    {
+      "name": "lead_form_view",
+      "type": "business_custom",
+      "source_file": "template-parts/acquisition/signup-form.php",
+      "trigger": "Any acquisition form scrolled into view",
+      "parameters": ["lead_offer", "audience", "placement"],
+      "notes": "Phase 1D. Never contains email/name.",
+      "contains_pii": false
+    },
+    {
+      "name": "lead_form_start",
+      "type": "business_custom",
+      "source_file": "template-parts/acquisition/signup-form.php",
+      "trigger": "First focus into an acquisition form's email field (fires once per element)",
+      "parameters": ["lead_offer", "audience", "placement"],
+      "notes": "Phase 1D. New data-bhp-focus-event mechanism in nav.js (delegated focusin + {once:true}). Focus only -- never reads field content.",
+      "contains_pii": false
+    }
+  ],
+  "gtm_variables_required": [
+    { "name": "GA4 Measurement ID", "type": "Constant", "value": "G-7M42X19Z2T" },
+    { "name": "DLV - event_id", "type": "Data Layer Variable", "key": "event_id" },
+    { "name": "DLV - transaction_id", "type": "Data Layer Variable", "key": "transaction_id" },
+    { "name": "DLV - currency", "type": "Data Layer Variable", "key": "currency" },
+    { "name": "DLV - value", "type": "Data Layer Variable", "key": "value" },
+    { "name": "DLV - items", "type": "Data Layer Variable", "key": "items" },
+    { "name": "DLV - item_list_id", "type": "Data Layer Variable", "key": "item_list_id" },
+    { "name": "DLV - item_list_name", "type": "Data Layer Variable", "key": "item_list_name" },
+    { "name": "DLV - shipping_tier", "type": "Data Layer Variable", "key": "shipping_tier" },
+    { "name": "DLV - payment_type", "type": "Data Layer Variable", "key": "payment_type" },
+    { "name": "DLV - tax", "type": "Data Layer Variable", "key": "tax" },
+    { "name": "DLV - shipping", "type": "Data Layer Variable", "key": "shipping" },
+    { "name": "DLV - coupon", "type": "Data Layer Variable", "key": "coupon" },
+    { "name": "DLV - bundle_type", "type": "Data Layer Variable", "key": "bundle_type" },
+    { "name": "DLV - lead_offer", "type": "Data Layer Variable", "key": "lead_offer" },
+    { "name": "DLV - audience", "type": "Data Layer Variable", "key": "audience" },
+    { "name": "DLV - placement", "type": "Data Layer Variable", "key": "placement" },
+    { "name": "DLV - signup_method", "type": "Data Layer Variable", "key": "signup_method" },
+    { "name": "DLV - error_reason", "type": "Data Layer Variable", "key": "error_reason" },
+    { "name": "DLV - cta_id", "type": "Data Layer Variable", "key": "cta_id" },
+    { "name": "DLV - cta_placement", "type": "Data Layer Variable", "key": "cta_placement" },
+    { "name": "DLV - cta_destination_type", "type": "Data Layer Variable", "key": "cta_destination_type" },
+    { "name": "DLV - funnel_stage", "type": "Data Layer Variable", "key": "funnel_stage" },
+    { "name": "DLV - variant", "type": "Data Layer Variable", "key": "variant" }
+  ]
+}

@@ -65,7 +65,7 @@ Do not place provider credentials in theme files.
 
 ## Direct contact information
 
-The template currently uses Asignore19@icloud.com, matching the existing Brave Hearts footer contact. Override it with:
+The template currently uses Andrew's personal contact address (matching the existing Brave Hearts footer contact) as a fallback default — the actual address is not repeated here since it's personal, not business, contact info. Override it with the business address via:
 
 - bhp_contact_email
 
