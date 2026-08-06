@@ -154,6 +154,11 @@ require_once get_template_directory() . '/inc/class-bhp-gtm-loader.php';
 require_once get_template_directory() . '/inc/class-bhp-utm-attribution.php';
 require_once get_template_directory() . '/inc/class-bhp-analytics-debug.php';
 require_once get_template_directory() . '/inc/class-bhp-wpconsent-bridge.php';
+// Meta Pixel (theme 1.19.203). Loaded here, alongside the rest of the
+// analytics layer, because it shares the same two constraints: identical
+// rendered bytes for every cacheable visitor, and consent applied entirely in
+// the browser. It prints nothing when its pixel ID is empty.
+require_once get_template_directory() . '/inc/class-bhp-meta-pixel.php';
 require_once get_template_directory() . '/inc/checkout-experience.php';
 require_once get_template_directory() . '/inc/consent-banner-compact.php';
 
