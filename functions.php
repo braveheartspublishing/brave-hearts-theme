@@ -2035,6 +2035,122 @@ function bhp_should_show_parent_popup() {
 }
 
 /* =====================================================================
+ * PARENT-FUNNEL A/B EMAIL-CAPTURE POPUP (2026-08-06, theme 1.19.204)
+ * ===================================================================== */
+
+/**
+ * ⭐ Andrew Signore, current turn, verbatim: "I say build it now… Make it 15
+ *    second delay." This surface REPLACES the quiz modal in the automatic
+ *    popup slot. The quiz itself is untouched and stays reachable: its
+ *    launcher button still renders sitewide via bhp_should_show_quiz_cta(),
+ *    and /find-your-adventure/ is unchanged. Only the AUTO-OPEN is retired,
+ *    by one filter at the bottom of this file.
+ *
+ * ⛔ THE VARIANT MAP IS LOCKED APPROVED COPY. Headings, subheads and
+ *    `content_name` values are reproduced character-for-character from
+ *    Andrew's approved brief. `content_name` is the join key between the
+ *    popup, the Meta pixel's Lead event and the Mailchimp variant tag — it
+ *    is not a label, and renaming one of the three breaks the other two.
+ *
+ * ⛔ THE BROWSER NEVER SENDS A TAG, AN AUDIENCE OR A URL. It sends the short
+ *    key 'A' or 'B' in `bhp_variant`, resolved here against this fixed
+ *    whitelist. Same pattern, deliberately, as bhp_get_quiz_signup_routes()
+ *    and bhp_get_capture_segment_routes().
+ */
+const BHP_POPUP_AB_COOKIE = 'bhp_popup_ab';
+
+function bhp_get_popup_ab_variants() {
+    return [
+        'A' => [
+            'heading'      => __('It\'s Heartbreaking to Watch Them Fall Further Behind', 'brave-hearts'),
+            'sub'          => __('You can still change this. Get the Free 20-Minute Reluctant Reader Kit.', 'brave-hearts'),
+            'content_name' => 'popup_hook_heartbreak',
+        ],
+        'B' => [
+            'heading'      => __('Turn Reluctant Readers Into Willing Readers', 'brave-hearts'),
+            'sub'          => __('The Free 20-Minute Reluctant Reader Kit shows you exactly where to start.', 'brave-hearts'),
+            'content_name' => 'popup_hook_willing',
+        ],
+    ];
+}
+
+/**
+ * Resolve a submitted variant key, or '' if it is empty or unknown. Never
+ * guesses: an unrecognised key yields no variant tag rather than a wrong one.
+ */
+function bhp_resolve_popup_ab_variant($key) {
+    $key = strtoupper(preg_replace('/[^A-Za-z]/', '', (string) $key));
+    $variants = bhp_get_popup_ab_variants();
+    return isset($variants[$key]) ? $key : '';
+}
+
+/**
+ * QA ONLY, AND ONLY ON STAGING. `?bhp_ab=A` forces a variant so both can be
+ * reviewed without clearing cookies. Inert on production by construction —
+ * BHP_Analytics_Config::is_staging() compares the real HTTP host — and never
+ * persisted, so it cannot overwrite a real visitor's sticky assignment.
+ */
+function bhp_get_popup_ab_forced_variant() {
+    if (!class_exists('BHP_Analytics_Config') || !BHP_Analytics_Config::is_staging()) {
+        return '';
+    }
+    if (!isset($_GET['bhp_ab'])) {
+        return '';
+    }
+    return bhp_resolve_popup_ab_variant(wp_unslash($_GET['bhp_ab']));
+}
+
+/**
+ * Same surface rules as the timed parent popup it stands in for — including
+ * the absolute /teachers/ exclusion, which is enforced HERE, server-side.
+ * No offer PDF configured means no offer to make.
+ */
+function bhp_should_show_parent_ab_popup() {
+    if (!bhp_should_show_any_popup()) {
+        return false;
+    }
+
+    // ⛔ Parent funnel only. Never on the teacher page. `.claude/rules/funnels.md`.
+    if (is_page('teachers')) {
+        return false;
+    }
+
+    if (!bhp_get_reluctant_reader_download()['ready']) {
+        return false;
+    }
+
+    return (bool) apply_filters('bhp_show_parent_ab_popup', true);
+}
+
+/**
+ * The variant tag set. A SEPARATE add_filter call, not an edit to either
+ * existing one, so the proven Parent / Mariana / Wave 1 tag logic stays
+ * byte-untouched — the same reasoning recorded on both callbacks above.
+ *
+ * ⛔ NO TAG NAMES A RESOURCE THAT DOES NOT EXIST. Both variants deliver the
+ *    Reluctant Reader Adventure Kit, so that is the resource tag for both.
+ *    The variant adds ONE further tag and nothing else, and its value is the
+ *    same `content_name` the pixel's Lead event carries, so Mailchimp and
+ *    Meta can be joined without a lookup table.
+ */
+add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_type, $lead_magnet, $source_page) {
+    if ($context !== 'parent_popup_ab') {
+        return $tags;
+    }
+
+    $resolved = ['Reluctant Reader Adventure Kit', 'Audience: Parent/Grandparent', 'Source: Parent Popup A/B'];
+
+    $raw = isset($_POST['bhp_variant']) ? wp_unslash($_POST['bhp_variant']) : '';
+    $key = bhp_resolve_popup_ab_variant($raw);
+    if ($key) {
+        $variants = bhp_get_popup_ab_variants();
+        $resolved[] = 'Variant: ' . $variants[$key]['content_name'];
+    }
+
+    return $resolved;
+}, 10, 5);
+
+/* =====================================================================
  * WAVE 1 — EXIT-INTENT CAPTURE MODAL (2026-08-04, theme 1.19.168)
  * ===================================================================== */
 
@@ -2647,6 +2763,23 @@ add_action('wp_footer', function () {
         return;
     }
 
+    // 1.19.204 — the A/B capture popup. Andrew Signore, current turn: "I say
+    // build it now… Make it 15 second delay."
+    //
+    // ⛔ It follows the SAME precedence rule the block above states, for the
+    //    same reason and with the same words: a timed parent-funnel surface
+    //    outranks exit-intent, because both are the same funnel and the same
+    //    offer and one visitor should be asked once. This does NOT reverse
+    //    Andrew's 2026-08-04 "Turn it on" — `bhp_show_exit_intent_popup` is
+    //    still filtered true, the surface is still built and still renders
+    //    wherever this popup does not. Note also that the two could never
+    //    both be seen in one session anyway: this popup opens at 15s and
+    //    claims the shared session slot, and exit-intent's own floor is 20s.
+    if (bhp_should_show_parent_ab_popup()) {
+        get_template_part('template-parts/acquisition/parent-ab-popup');
+        return;
+    }
+
     // Wave 1 (2026-08-04): exit-intent, parent funnel, DEFAULT OFF. See the
     // block above bhp_should_show_exit_intent_popup() for why.
     if (bhp_should_show_exit_intent_popup()) {
@@ -2666,6 +2799,28 @@ add_action('wp_footer', function () {
  * are all left in place, not deleted.
  */
 add_filter('bhp_show_parent_popup', '__return_false');
+
+/**
+ * ⭐ 1.19.204 — RETIRE THE QUIZ MODAL'S AUTOMATIC OPEN. Andrew Signore,
+ *    current turn: build the A/B capture popup and "only the popup slot
+ *    changes". One automatic surface per page, and from this release it is
+ *    the capture popup.
+ *
+ * ⛔ WHAT THIS DOES NOT DO — and the distinction is the whole point:
+ *    the quiz REMAINS FULLY REACHABLE. `bhp_should_show_quiz_cta()` is
+ *    untouched, so the "Find My Best Next Step" launcher still renders
+ *    sitewide and still opens the quiz in place; /find-your-adventure/ is
+ *    unchanged; the quiz's own routing, copy and analytics are untouched.
+ *    Only `bhp_should_autoopen_quiz()` is filtered off, which is exactly the
+ *    surface the new popup takes over.
+ *
+ * Fully reversible in one line — remove this filter — and deliberately
+ * expressed as a filter rather than an edit to bhp_should_autoopen_quiz(),
+ * whose own body still records Andrew's 2026-07-19 reasoning and must stay
+ * legible. The existing collection-page filter in inc/audit-remediation.php
+ * is left in place and still runs; it is now redundant rather than wrong.
+ */
+add_filter('bhp_show_quiz_autoopen', '__return_false');
 
 /**
  * Sitewide "Find Your Adventure" quiz entry CTA (2026-07-17). Reuses the

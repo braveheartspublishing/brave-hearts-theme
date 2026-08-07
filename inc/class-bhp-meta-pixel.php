@@ -840,6 +840,12 @@ class BHP_Meta_Pixel {
 	// ⛔ Nothing here reads or writes ANY storage key belonging to either
 	// funnel -- see invariant 3.
 	function contentNameFor( mapped, payload ) {
+		// 1.19.204. An A/B experiment names its own hook, because that is the
+		// whole point of running one: 'popup_hook_heartbreak' and
+		// 'popup_hook_willing' must be separable in Meta. Nothing in
+		// 1.19.203 emits this field, so every existing event keeps the fixed
+		// per-funnel name below, byte for byte.
+		if ( payload && payload.content_name ) { return String( payload.content_name ); }
 		if ( mapped[ 1 ] ) { return mapped[ 1 ]; }
 		if ( payload && payload.lead_offer ) { return 'landing_' + String( payload.lead_offer ); }
 		return 'landing_page';

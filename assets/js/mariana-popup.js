@@ -62,6 +62,41 @@
  *    deferral, the focus trap and every storage/analytics key are byte-for-
  *    byte what they were in 1.19.171.
  * ---------------------------------------------------------------------
+ * 1.19.204 (2026-08-06) — `config.abTest`, ONE MORE CONFIG-SCHEMA EXTENSION.
+ *
+ * `.claude/rules/funnels.md`: "don't fork the engine ... extend the config
+ * schema instead." A popup that supplies no `abTest` block behaves exactly
+ * as it did in 1.19.203 — every line below is inside an `if (config.abTest)`
+ * guard or a helper only that branch calls.
+ *
+ * WHAT IT DOES, in the order it does it:
+ *   1. Assigns a variant ONCE PER VISITOR and remembers it in a FIRST-PARTY
+ *      COOKIE (`config.abTest.cookie`), not localStorage and not
+ *      sessionStorage. A cookie is the correct store here for two reasons
+ *      that are not interchangeable with the funnel's own keys: the
+ *      assignment must survive a new tab and a new session (sessionStorage
+ *      cannot), and it is a visitor-level bucketing value rather than
+ *      funnel suppression state, so it deliberately does NOT live under
+ *      `storagePrefix` and cannot move parent or teacher suppression.
+ *   2. Assignment happens at INIT, while the popup is still `hidden`, and
+ *      the losing variant's markup is REMOVED FROM THE DOM before anything
+ *      is ever painted. That is what makes "no flicker" true by
+ *      construction rather than by a CSS race.
+ *   3. ⭐ CACHE SAFETY. The server renders BOTH variants, byte-identically,
+ *      for every visitor. Nothing about the assignment exists in the HTML,
+ *      so a full-page cache cannot pin one variant to one cached page — the
+ *      same discipline the consent/pixel work uses (`test-consent-mode-
+ *      cache-safety.php`).
+ *   4. Stamps the assigned variant into the form's hidden
+ *      `config.abTest.field` input, so the server's Mailchimp tag map can
+ *      read it. The browser sends the SHORT KEY only ('A'/'B'); the tag
+ *      strings live server-side in `bhp_get_popup_ab_variants()`.
+ *   5. Carries `variant` and `content_name` on the view/submit/success
+ *      dataLayer events. `content_name` is what the Meta pixel's Lead event
+ *      reads, so each variant is separately attributable. The event PREFIX
+ *      is unchanged (`parent_popup`), so funnel isolation and every existing
+ *      analytics name are untouched.
+ * ---------------------------------------------------------------------
  */
 (function () {
     'use strict';
@@ -82,6 +117,7 @@
         storagePrefix: 'bhp_mariana_popup',
         thankYouPath: 'mariana-guide-thank-you',
         sessionGuard: [],
+        abTest: null,
         trigger: {
             mode: 'gated',
             desktop: { minDelay: 8000, fallbackDelay: 15000, scrollPct: 40 },
@@ -102,11 +138,93 @@
                 storagePrefix: parsed.storagePrefix || DEFAULT_CONFIG.storagePrefix,
                 thankYouPath: parsed.thankYouPath || DEFAULT_CONFIG.thankYouPath,
                 sessionGuard: Array.isArray(parsed.sessionGuard) ? parsed.sessionGuard : DEFAULT_CONFIG.sessionGuard,
+                abTest: parseAbTest(parsed.abTest),
                 trigger: parsed.trigger || DEFAULT_CONFIG.trigger
             };
         } catch (e) {
             return DEFAULT_CONFIG;
         }
+    }
+
+    /**
+     * An abTest block is accepted only when it is complete and internally
+     * consistent. A malformed block yields null, which puts the popup back on
+     * the 1.19.203 code path rather than half-applying an experiment — a
+     * half-applied experiment produces data nobody can read.
+     */
+    function parseAbTest(raw) {
+        if (!raw || typeof raw !== 'object') {
+            return null;
+        }
+        if (typeof raw.cookie !== 'string' || !raw.cookie) {
+            return null;
+        }
+        var keys = raw.variants && typeof raw.variants === 'object' ? Object.keys(raw.variants) : [];
+        if (keys.length < 2) {
+            return null;
+        }
+        return {
+            cookie: raw.cookie,
+            days: typeof raw.days === 'number' && raw.days > 0 ? raw.days : 180,
+            field: typeof raw.field === 'string' ? raw.field : '',
+            // QA only, and it can only ever arrive from the server, which
+            // emits it exclusively on staging. See the template.
+            force: typeof raw.force === 'string' ? raw.force : '',
+            keys: keys,
+            variants: raw.variants
+        };
+    }
+
+    function readCookie(name) {
+        try {
+            var parts = String(document.cookie || '').split(';');
+            for (var i = 0; i < parts.length; i++) {
+                var pair = parts[i];
+                var eq = pair.indexOf('=');
+                if (eq === -1) {
+                    continue;
+                }
+                if (pair.slice(0, eq).trim() === name) {
+                    return decodeURIComponent(pair.slice(eq + 1).trim());
+                }
+            }
+        } catch (e) {
+            /* cookies unavailable — treated as unassigned. */
+        }
+        return null;
+    }
+
+    function writeCookie(name, value, days) {
+        try {
+            document.cookie = name + '=' + encodeURIComponent(value) +
+                '; Max-Age=' + Math.round(days * 24 * 60 * 60) +
+                '; path=/; SameSite=Lax' +
+                (window.location.protocol === 'https:' ? '; Secure' : '');
+        } catch (e) {
+            /* fail silently — the visitor still sees a variant this page view. */
+        }
+    }
+
+    /**
+     * Sticky per visitor. An existing cookie always wins, and is only
+     * discarded when it names a variant this popup does not define (an
+     * experiment that has since been re-cut), in which case the visitor is
+     * re-bucketed once rather than shown nothing.
+     */
+    function assignVariant(ab) {
+        // A forced variant is for QA and is deliberately NOT persisted — it
+        // must not overwrite a real visitor's sticky assignment.
+        if (ab.force && ab.keys.indexOf(ab.force) !== -1) {
+            return ab.force;
+        }
+        var stored = readCookie(ab.cookie);
+        if (stored && ab.keys.indexOf(stored) !== -1) {
+            return stored;
+        }
+        // 50/50 across however many variants are declared; two, here.
+        var picked = ab.keys[Math.floor(Math.random() * ab.keys.length)] || ab.keys[0];
+        writeCookie(ab.cookie, picked, ab.days);
+        return picked;
     }
 
     function eventName(prefix, suffix) {
@@ -186,7 +304,18 @@
             return;
         }
         if (window.location.pathname.indexOf(pending.thankYouPath) !== -1) {
-            pushEvent(pending.source, eventName(pending.eventPrefix, 'success'), {});
+            // `content_name` rides along ONLY when the popup that submitted
+            // was running an experiment. The Meta pixel's Lead bridge reads
+            // it; when it is absent the pixel falls back to its own fixed
+            // per-funnel name exactly as before.
+            var extra = {};
+            if (pending.variant) {
+                extra.variant = pending.variant;
+            }
+            if (pending.contentName) {
+                extra.content_name = pending.contentName;
+            }
+            pushEvent(pending.source, eventName(pending.eventPrefix, 'success'), extra);
             writeLocal(pending.storagePrefix + '_signed_up', '1');
         }
     })();
@@ -229,6 +358,51 @@
                     return;
                 }
             }
+        }
+
+        // ---- A/B ASSIGNMENT (1.19.204) --------------------------------
+        //
+        // Runs BEFORE any listener is wired and long before `show()`, while
+        // the element is still `hidden`. By the time anything can paint, the
+        // losing variant is not in the document at all.
+        var variantKey = '';
+        var variantMeta = null;
+        if (config.abTest) {
+            variantKey = assignVariant(config.abTest);
+            variantMeta = config.abTest.variants[variantKey] || null;
+
+            var blocks = popup.querySelectorAll('[data-bhp-variant]');
+            for (var b = 0; b < blocks.length; b++) {
+                if (blocks[b].getAttribute('data-bhp-variant') !== variantKey) {
+                    blocks[b].parentNode.removeChild(blocks[b]);
+                }
+            }
+
+            if (config.abTest.field) {
+                var stamp = popup.querySelector('[name="' + config.abTest.field + '"]');
+                if (stamp) {
+                    stamp.value = variantKey;
+                }
+            }
+            popup.setAttribute('data-bhp-variant-assigned', variantKey);
+        }
+
+        var contentName = variantMeta && variantMeta.contentName ? String(variantMeta.contentName) : '';
+
+        /**
+         * Every event this popup pushes carries the same experiment fields —
+         * one function, so `view`, `submit` and `success` can never disagree
+         * about which variant a visitor saw.
+         */
+        function eventExtra(base) {
+            var extra = base || {};
+            if (variantKey) {
+                extra.variant = variantKey;
+            }
+            if (contentName) {
+                extra.content_name = contentName;
+            }
+            return extra;
         }
 
         var overlay = popup.querySelector('[data-bhp-popup-overlay]');
@@ -286,7 +460,7 @@
             // next capture surface (another popup, or the quiz modal) knows
             // not to stack on top of it.
             writeSession(SHARED_SESSION_SHOWN_KEY, '1');
-            pushEvent(config.source, eventName(config.eventPrefix, 'view'), { page_type: popup.getAttribute('data-page-type') || '' });
+            pushEvent(config.source, eventName(config.eventPrefix, 'view'), eventExtra({ page_type: popup.getAttribute('data-page-type') || '' }));
         }
 
         function close(wasDismissed) {
@@ -297,7 +471,7 @@
             if (wasDismissed) {
                 var until = Date.now() + DISMISS_DAYS * 24 * 60 * 60 * 1000;
                 writeLocal(STORAGE_DISMISSED_UNTIL, String(until));
-                pushEvent(config.source, eventName(config.eventPrefix, 'close'), { page_type: popup.getAttribute('data-page-type') || '' });
+                pushEvent(config.source, eventName(config.eventPrefix, 'close'), eventExtra({ page_type: popup.getAttribute('data-page-type') || '' }));
             }
 
             if (lastFocused && typeof lastFocused.focus === 'function') {
@@ -328,9 +502,11 @@
                     eventPrefix: config.eventPrefix,
                     source: config.source,
                     storagePrefix: config.storagePrefix,
-                    thankYouPath: config.thankYouPath
+                    thankYouPath: config.thankYouPath,
+                    variant: variantKey,
+                    contentName: contentName
                 }));
-                pushEvent(config.source, eventName(config.eventPrefix, 'submit'), { page_type: popup.getAttribute('data-page-type') || '' });
+                pushEvent(config.source, eventName(config.eventPrefix, 'submit'), eventExtra({ page_type: popup.getAttribute('data-page-type') || '' }));
             });
         }
 
