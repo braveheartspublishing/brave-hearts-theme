@@ -391,9 +391,29 @@ bhp_econ_test_assert( BHP_CPA_Model::is_seeded(), 'The acquisition-policy option
 bhp_econ_test_assert( 9 === count( BHP_CPA_Model::model_keys() ), 'The acquisition-policy contract lists 9 amounts', $failures );
 bhp_econ_test_assert( 'bhp_cpa_model' === BHP_CPA_Model::MODEL_OPTION, 'The acquisition-policy option name is unchanged', $failures );
 
-// Authorised as of 2026-08-06: Andrew's 2026-07-06 policy, carried over
-// byte-for-byte from the 1.8.29 build by the seed step, verified round-trip.
-$bhp_authorised_cpa_policy = '8ee4f98859f985bfe4c22610acd074e5f0c16bd21fa89285636b4f792b3ebcea';
+/*
+ * Authorised as of 2026-08-06 (1.8.31): Andrew's REVISED acquisition policy,
+ * decided by him directly on the re-approved contribution basis and seeded
+ * out of band. It SUPERSEDES the 2026-07-06 policy this constant pinned from
+ * 1.8.29 through 1.8.30.
+ *
+ * ⛔ THE VALUE BELOW WAS READ BACK FROM THE SEEDED OPTION, NOT COMPUTED.
+ *    The re-seed script prints it as READ_BACK_FINGERPRINT after verifying its
+ *    own round trip; that printed line is the only permitted source. Deriving
+ *    this digest from a document, a spreadsheet or a memory would prove that
+ *    the document and the constant agree, which is not the property this
+ *    assertion exists to establish. What it must prove is that the LOADED
+ *    OPTION matches what Andrew authorised.
+ *
+ * ⚠️ The two-causes warning above is unchanged and still governs: a failure
+ *    here is either an unauthorised policy change or a mis-seeded environment,
+ *    and neither is fixed by pasting in a new digest.
+ *
+ * SUPERSEDED, retained so the movement is visible rather than re-derived:
+ *   2026-07-06 policy, pinned 1.8.29 -> 1.8.30
+ *   8ee4f98859f985bfe4c22610acd074e5f0c16bd21fa89285636b4f792b3ebcea
+ */
+$bhp_authorised_cpa_policy = 'e03d29973408406178720c7c9f47c10d8c352157f4594fe2f81541c250726959';
 bhp_econ_test_assert(
 	$bhp_authorised_cpa_policy === BHP_CPA_Model::policy_fingerprint(),
 	'The loaded CPA policy (both approved targets, all four ceilings, all three banding ratios) matches the AUTHORISED fingerprint exactly -- an unauthorised change to any of them fails here',
@@ -409,7 +429,22 @@ bhp_econ_test_assert(
 	$failures
 );
 bhp_econ_test_assert( bhp_econ_close( $cpc['hard_stop_cpa'], $cpc['theoretical_breakeven_cpa'] ), 'Complete Paperback Collection hard stop equals break-even', $failures );
-bhp_econ_test_assert( true === $cpc['ceiling_exceeds_breakeven'], '1.8.23 CYCLE143-FIN-11: PB approved ceiling now exceeds break-even and the table says so', $failures );
+/*
+ * 1.8.31 — CYCLE143-FIN-11 IS FIXED, AND THIS ASSERTS THE FIXED STATE.
+ *
+ * This assertion read `true` from 1.8.23 to 1.8.30. It was not testing a
+ * desirable property: it was pinning a DEFECT so the defect could not be
+ * quietly lost. Free collection shipping lowered break-even below Andrew's
+ * 2026-07-06 ceilings, so spending to the approved ceiling lost money on every
+ * order, and only Andrew could set a replacement ceiling.
+ *
+ * He set one on 2026-08-06. The revised ceilings sit BELOW live break-even in
+ * both formats, which is the healthy state, so the flag now reads `false` and
+ * this asserts `false` deliberately. ⛔ Flipping it back to `true` would be
+ * re-pinning the defect.
+ */
+bhp_econ_test_assert( false === $cpc['ceiling_exceeds_breakeven'], '1.8.31 CYCLE143-FIN-11 FIXED: the PB approved ceiling sits BELOW break-even again and the table says so', $failures );
+bhp_econ_test_assert( (float) $cpc['safer_ceiling_high'] < (float) $cpc['hard_stop_cpa'], '1.8.31: the PB approved ceiling is strictly below the hard stop -- the invariant the approved rows had lost', $failures );
 
 $chc = $cpa_by_type[ BHP_Offer_Economics::COMPLETE_HARDCOVER_SET ];
 bhp_econ_test_assert( bhp_econ_close( $chc['theoretical_breakeven_cpa'], $complete_hc[0]['contribution_before_acquisition'] ), 'Complete Hardcover Collection theoretical break-even CPA equals its contribution before acquisition', $failures );
@@ -424,7 +459,9 @@ bhp_econ_test_assert(
 	'The hardcover collection is allowed a higher target and a higher ceiling than the paperback one -- a seed that collapsed or swapped the two would be silent otherwise',
 	$failures
 );
-bhp_econ_test_assert( true === $chc['ceiling_exceeds_breakeven'], '1.8.23 CYCLE143-FIN-11: HC approved ceiling now exceeds break-even and the table says so', $failures );
+// 1.8.31 — see the note on the paperback row above. Asserted `false` on purpose.
+bhp_econ_test_assert( false === $chc['ceiling_exceeds_breakeven'], '1.8.31 CYCLE143-FIN-11 FIXED: the HC approved ceiling sits BELOW break-even again and the table says so', $failures );
+bhp_econ_test_assert( (float) $chc['safer_ceiling_high'] < (float) $chc['hard_stop_cpa'], '1.8.31: the HC approved ceiling is strictly below the hard stop', $failures );
 
 // ==================== Approved company policy (2026-07-06): only the two Complete Collections have an approved cold-acquisition target ====================
 bhp_econ_test_assert( true === $cpc['cold_acquisition_approved'], 'Complete Paperback Collection is approved for cold acquisition', $failures );
@@ -498,7 +535,22 @@ $probe_green = (float) $cpc['target_cpa'] / 2;
 bhp_econ_test_assert( $probe_green < (float) $cpc['target_cpa'], 'The GREEN probe really does sit below the approved target', $failures );
 bhp_econ_test_assert( BHP_CPA_Model::STATUS_GREEN === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_green ), 'A CPA below target classifies GREEN', $failures );
 
-$probe_yellow = ( (float) $cpc['target_cpa'] + (float) $cpc['hard_stop_cpa'] ) / 2;
+/*
+ * 1.8.31 — THE YELLOW PROBE IS DERIVED FROM THE CEILING, NOT FROM BREAK-EVEN.
+ *
+ * It used to be the midpoint of [target, hard_stop]. That landed inside the
+ * yellow band only because the approved ceiling sat ABOVE break-even, so
+ * "under break-even" and "under the ceiling" were the same span. With the
+ * ceiling restored below break-even those are different spans, and the old
+ * midpoint lands in the RED band instead.
+ *
+ * ⭐ The correct derivation was always the midpoint of [target, ceiling_high],
+ *    because that IS the yellow band by definition. It is now derived that way
+ *    and no longer depends on which side of break-even the ceiling happens to
+ *    sit -- so this probe survives the next ceiling revision in either
+ *    direction. The self-check below still proves it landed where intended.
+ */
+$probe_yellow = ( (float) $cpc['target_cpa'] + (float) $cpc['safer_ceiling_high'] ) / 2;
 bhp_econ_test_assert(
 	$probe_yellow > (float) $cpc['target_cpa'] && $probe_yellow < (float) $cpc['hard_stop_cpa'] && $probe_yellow <= (float) $cpc['safer_ceiling_high'],
 	'The YELLOW probe really does sit above target, under break-even and within the safer ceiling',
@@ -507,21 +559,38 @@ bhp_econ_test_assert(
 bhp_econ_test_assert( BHP_CPA_Model::STATUS_YELLOW === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_yellow ), 'A CPA between target and safer ceiling, still under break-even, classifies YELLOW', $failures );
 
 /*
- * 1.8.23 — THE ASSERTION THAT WOULD HAVE HIDDEN A LIVE DEFECT.
+ * ═════════════════════════════════════════════════════════════════════════
+ * 1.8.31 — THE BAND BETWEEN THE APPROVED CEILING AND BREAK-EVEN NOW EXISTS
+ *          ON THE APPROVED ROWS, AND IT MUST GRADE RED.
+ * ═════════════════════════════════════════════════════════════════════════
  *
- * SUPERSEDED: a CPA sitting below the still-approved ceiling but above
- * break-even used to grade YELLOW under the pre-1.8.23 ordering — an
- * order-by-order loss reported as acceptable. It must now grade STOP, and
- * that is what this asserts. RED is exercised separately below on a row
- * where the ceiling still sits under break-even.
+ * From 1.8.23 to 1.8.30 this position was occupied by a STOP probe derived as
+ * the midpoint of [hard_stop, safer_ceiling_high] -- a span that only exists
+ * when the ceiling is ABOVE break-even, i.e. only while `CYCLE143-FIN-11` was
+ * live. That probe is not "fixed" here, it is RETIRED, because the state it
+ * exercised has been resolved by Andrew's revised ceilings. Asserting it would
+ * be asserting the defect.
  *
- * The probe is DERIVED from the table rather than pinned, so it stays in
- * the intended band without this file naming a break-even figure.
+ * ⛔ Retiring it would have surrendered the 1.8.23 ordering guard, so that
+ *    guard is re-established SYNTHETICALLY further down rather than dropped.
+ *    Read that block before concluding the ordering is untested.
+ *
+ * What is asserted here instead is the band the fix created: above the
+ * approved ceiling, still under break-even. It is a genuine loss-free-but-
+ * over-policy region, and RED is the correct grade for it. It did not exist on
+ * an approved row until 2026-08-06.
  */
-$probe_between = ( (float) $cpc['hard_stop_cpa'] + (float) $cpc['safer_ceiling_high'] ) / 2;
-bhp_econ_test_assert( $probe_between > (float) $cpc['hard_stop_cpa'] && $probe_between < (float) $cpc['safer_ceiling_high'], 'The STOP probe really does sit above break-even and below the approved ceiling', $failures );
-bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_between ), '1.8.23: a CPA under the stale approved ceiling but over break-even classifies STOP, not YELLOW', $failures );
-bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, (float) $cpc['safer_ceiling_high'] + 1.50 ), '1.8.23: a CPA past both the approved ceiling and break-even classifies STOP', $failures );
+$probe_red_approved = ( (float) $cpc['safer_ceiling_high'] + (float) $cpc['hard_stop_cpa'] ) / 2;
+bhp_econ_test_assert(
+	$probe_red_approved > (float) $cpc['safer_ceiling_high'] && $probe_red_approved < (float) $cpc['hard_stop_cpa'],
+	'The approved-row RED probe really does sit above the approved ceiling and below break-even',
+	$failures
+);
+bhp_econ_test_assert(
+	BHP_CPA_Model::STATUS_RED === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_red_approved ),
+	'1.8.31: on an approved row, a CPA above the approved ceiling but still under break-even classifies RED -- a band that did not exist while the ceiling sat above break-even',
+	$failures
+);
 
 // RED still exists and is still reachable: a model-estimate row keeps the
 // ceiling-below-break-even invariant, because its ceiling is a fraction of
@@ -545,6 +614,71 @@ $probe_stop = (float) $cpc['hard_stop_cpa'] * 2;
 bhp_econ_test_assert( $probe_stop > (float) $cpc['hard_stop_cpa'] && $probe_stop > (float) $cpc['safer_ceiling_high'], 'The STOP probe really does sit beyond both the hard stop and the ceiling', $failures );
 bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( BHP_Offer_Economics::COMPLETE_PAPERBACK_SET, $probe_stop ), 'A CPA beyond the hard stop classifies STOP', $failures );
 bhp_econ_test_assert( BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( 'not_a_real_offer_type', 1.00 ), 'An unrecognized offer type fails safe to STOP, never silently GREEN', $failures );
+
+/*
+ * ═════════════════════════════════════════════════════════════════════════
+ * 1.8.31 — THE 1.8.23 ORDERING GUARD, PRESERVED SYNTHETICALLY.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * 1.8.23 moved the hard-stop test to the FRONT of classify_cpa(). Before that,
+ * a CPA between break-even and the approved ceiling graded YELLOW -- an
+ * order-by-order loss reported as acceptable. That fix is still load-bearing
+ * and its regression must still be caught.
+ *
+ * ⛔ THE PROBLEM: from 1.8.31 the live policy no longer produces the state the
+ *    old test exercised, because the approved ceilings sit below break-even
+ *    again. A guard that can only fire while a defect is live stops guarding
+ *    the moment the defect is fixed -- and would silently pass forever after.
+ *
+ * ⭐ THE FIX: inject a PATHOLOGICAL policy through the same `bhp_cpa_model`
+ *    filter the unseeded tests already use, with the paperback ceilings pushed
+ *    above break-even. Nothing is written, the real option is never touched,
+ *    the pathological figures are DERIVED from the live hard stop rather than
+ *    named, and restoration is asserted rather than assumed.
+ *
+ *    This also re-exercises the 1.8.23 `ceiling_exceeds_breakeven` FLAG, whose
+ *    live value is now `false` -- so the flag's true branch keeps its coverage.
+ */
+$bhp_live_cpa_model  = BHP_CPA_Model::model(); // captured BEFORE the filter, so the closure cannot recurse
+$bhp_pb_type         = BHP_Offer_Economics::COMPLETE_PAPERBACK_SET;
+$bhp_pathological_be = (float) $cpc['hard_stop_cpa'];
+$bhp_pathological_cpa = function () use ( $bhp_live_cpa_model, $bhp_pb_type, $bhp_pathological_be ) {
+	$m = $bhp_live_cpa_model;
+	$m[ 'ceiling_low.'  . $bhp_pb_type ] = $bhp_pathological_be * 1.10;
+	$m[ 'ceiling_high.' . $bhp_pb_type ] = $bhp_pathological_be * 1.20;
+	return $m;
+};
+add_filter( 'bhp_cpa_model', $bhp_pathological_cpa, 999 );
+BHP_CPA_Model::flush_model_cache();
+
+$bhp_path_rows = array();
+foreach ( BHP_CPA_Model::build_table() as $row ) { $bhp_path_rows[ $row['offer_type'] ] = $row; }
+$bhp_path_pb = $bhp_path_rows[ $bhp_pb_type ];
+
+bhp_econ_test_assert(
+	true === $bhp_path_pb['ceiling_exceeds_breakeven'],
+	'1.8.23 flag, synthetic: with a ceiling forced above break-even the table reports ceiling_exceeds_breakeven=true -- the true branch keeps its coverage now that the live policy is healthy',
+	$failures
+);
+$bhp_path_probe = ( (float) $bhp_path_pb['hard_stop_cpa'] + (float) $bhp_path_pb['safer_ceiling_high'] ) / 2;
+bhp_econ_test_assert(
+	$bhp_path_probe > (float) $bhp_path_pb['hard_stop_cpa'] && $bhp_path_probe < (float) $bhp_path_pb['safer_ceiling_high'],
+	'1.8.23 ordering, synthetic: the probe really does sit above break-even and below the forced ceiling',
+	$failures
+);
+bhp_econ_test_assert(
+	BHP_CPA_Model::STATUS_STOP === BHP_CPA_Model::classify_cpa( $bhp_pb_type, $bhp_path_probe ),
+	'1.8.23 ordering, synthetic: a CPA under the ceiling but OVER break-even classifies STOP, not YELLOW -- the hard stop is still tested first',
+	$failures
+);
+
+remove_filter( 'bhp_cpa_model', $bhp_pathological_cpa, 999 );
+BHP_CPA_Model::flush_model_cache();
+bhp_econ_test_assert(
+	$bhp_authorised_cpa_policy === BHP_CPA_Model::policy_fingerprint(),
+	'The real acquisition policy is restored after the synthetic-pathology guard, byte for byte',
+	$failures
+);
 
 /*
  * 1.8.30 — AN UNSEEDED ACQUISITION POLICY MUST NOT GRADE ANYTHING.
