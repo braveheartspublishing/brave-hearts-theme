@@ -649,3 +649,61 @@
 		grid-template-columns: 1.45fr 1fr;
 	}
 }
+
+/* ==================================================================
+   ⭐ 1.8.32, second pass — TWO MEASURED CORRECTIONS. CYCLE147-LD-04/05.
+   ------------------------------------------------------------------
+   Both found by measuring the deployed build at 390x844 with
+   `innerWidth` asserted, not by reading the source.
+   ================================================================== */
+
+/*
+ * CORRECTION 1 — SPECIFICITY. The headline was painting at 36px, not at
+ * the 21px its own `clamp()` asks for.
+ *
+ * DIAGNOSED, not guessed: `CSS.getMatchedStylesForNode` over CDP on the
+ * live element returned the winning rule as the theme's sitewide
+ * `body:not(.home) h2 { font-size: clamp(2.25rem, 4.5vw, 4rem) }`. That
+ * selector is 0,1,2; `.bhp-landing-coldopen__headline` is 0,1,0, so the
+ * sitewide 64px section scale won on specificity at every width.
+ *
+ * ⚠ THIS IS A KNOWN TRAP ON THIS SITE, not a new one — the same sitewide
+ *   heading scale had to be overridden for the quiz modal headline in
+ *   1.19.95. Recorded here so the third occurrence is recognised on sight.
+ *
+ * `.bhp-landing` is the shortcode's own wrapper, so 0,2,0 wins without
+ * `!important` and without touching the sitewide rule, which every other
+ * H2 on the site still needs.
+ */
+.bhp-landing .bhp-landing-coldopen__headline {
+	font-size: clamp(1.32rem, 2.6vw, 1.85rem);
+	line-height: 1.18;
+}
+
+/*
+ * CORRECTION 2 — the phone fold.
+ *
+ * MEASURED on the first deployed build at 390x844: the primary CTA
+ * occupied y 813-879 against an 844 fold, so a third of the button was
+ * below it. Andrew's requirement is a buy button reachable WITHOUT
+ * scrolling, so "mostly above the fold" is a fail, not a near miss.
+ *
+ * The space is reclaimed from vertical rhythm only. No copy is cut, no
+ * claim is dropped, the gallery is not shrunk (Andrew asked for it to be
+ * BIGGER) and no font goes below 11px.
+ */
+@media (max-width: 640px) {
+	.bhp-landing .bhp-landing-coldopen__headline {
+		font-size: 1.35rem;
+		margin-bottom: .3rem;
+	}
+	.bhp-landing-coldopen { margin-bottom: .6rem; }
+	.bhp-landing-coldopen__subhead { margin-bottom: .45rem; }
+	.bhp-landing-coldopen__trust { padding-top: .45rem; }
+	.bhp-landing-coldopen__trust li {
+		font-size: .72rem;
+		line-height: 1.36;
+		margin-bottom: .18rem;
+	}
+	.bhp-landing-panel__form--lead { margin-bottom: .7rem; }
+}
