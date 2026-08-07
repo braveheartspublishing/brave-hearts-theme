@@ -20,6 +20,11 @@
  *   5. THE PIXEL JOIN. The Meta bridge must prefer an explicit
  *      `content_name`, or the two variants land in Meta under one name.
  *   6. THE QUIZ IS RETIRED FROM THE AUTO-OPEN SLOT BUT STILL REACHABLE.
+ *   7. (1.19.205) THE VISUAL POLISH, guarded as STRUCTURE — scope, laziness,
+ *      decorative marking, surviving labels, and the fact that the cover strip
+ *      and the "what's inside" trio sit outside both variant blocks so A and B
+ *      cannot drift apart visually. A suite cannot assert taste; it can assert
+ *      the five things whose silent removal would undo the pass.
  *
  * ⚠ This is a source- and render-level suite, not a browser. It cannot prove
  *   the popup actually appeared 15 seconds after page load — that was
@@ -329,6 +334,148 @@ bhp_ab_assert(
 bhp_ab_assert(
     false === apply_filters('bhp_show_quiz_autoopen', true),
     'bhp_show_quiz_autoopen resolves to false',
+    $failures
+);
+
+/* ---------------------------------------------------------------------
+ * 7. THE 1.19.205 VISUAL POLISH — GUARDED AS STRUCTURE, NOT AS TASTE
+ *
+ * A suite cannot assert that something is pleasing. It can assert the four
+ * things that would silently undo this pass:
+ *
+ *   a. the popup still carries its OWN modifier class, so the polish stays
+ *      scoped and the teacher/exit-intent/legacy popups keep their styling;
+ *   b. the cover strip is DECORATIVE and LAZY — the release's zero-LCP
+ *      property depends on the second of those, and the first is why three
+ *      book titles are not read out before the headline;
+ *   c. the labels are still in the DOM. They are hidden with CSS; a future
+ *      "cleanup" that deletes them would break the form for a screen reader
+ *      and nothing else would notice;
+ *   d. the trio and the cover strip sit OUTSIDE the variant blocks, so the
+ *      engine's removal of the losing variant cannot take them with it and
+ *      A and B cannot drift apart visually.
+ * ------------------------------------------------------------------ */
+
+bhp_ab_assert(
+    false !== strpos($rendered, 'class="mariana-popup mariana-popup--ab"'),
+    'the popup carries its own modifier class — the polish is scoped and cannot reach the teacher or exit-intent popups',
+    $failures
+);
+
+$css    = (string) file_get_contents($theme_dir . '/style.css');
+$polish = (string) strstr($css, 'PARENT A/B CAPTURE POPUP — VISUAL POLISH');
+
+bhp_ab_assert(
+    '' !== $polish && substr_count($polish, '.mariana-popup--ab') >= 20,
+    'the polish block exists in style.css',
+    $failures
+);
+
+// ⛔ EVERY reference to a SHARED `.mariana-popup__*` class inside the polish
+//    block must be preceded by the `--ab` scope. One unscoped rule here would
+//    restyle the teacher popup, the timed parent popup and the exit-intent
+//    modal — three surfaces this brief does not touch — and nothing else in
+//    the suite would catch it.
+bhp_ab_assert(
+    substr_count($polish, '.mariana-popup__') === substr_count($polish, '.mariana-popup--ab .mariana-popup__'),
+    'every shared .mariana-popup__* class in the polish block is scoped by .mariana-popup--ab',
+    $failures
+);
+
+bhp_ab_assert(
+    function_exists('bhp_get_popup_ab_covers'),
+    'bhp_get_popup_ab_covers() is defined',
+    $failures
+);
+
+$covers = function_exists('bhp_get_popup_ab_covers') ? bhp_get_popup_ab_covers() : [];
+bhp_ab_assert(
+    is_array($covers) && count($covers) === 3,
+    'the cover strip resolves to exactly three existing attachments (found ' . count((array) $covers) . ')',
+    $failures
+);
+
+$strip = '';
+if (preg_match('/<div class="popup-ab__covers"[^>]*>(.*?)<\/div>/s', $rendered, $mm)) {
+    $strip = $mm[1];
+}
+
+bhp_ab_assert(
+    1 === substr_count($rendered, 'class="popup-ab__covers"') &&
+    3 === substr_count($strip, 'class="popup-ab__cover"'),
+    'the rendered strip contains exactly three cover images in one wrapper',
+    $failures
+);
+
+// ⛔ THE ZERO-LCP GUARD. The popup is display:none until the timer fires, so a
+//    LAZY image inside it is never fetched during page load. An eager one
+//    would be — and would put three product covers on the critical path of
+//    every page on the site.
+bhp_ab_assert(
+    3 === substr_count($strip, 'loading="lazy"'),
+    'all three cover images are lazy — no popup asset is fetched during page load',
+    $failures
+);
+
+bhp_ab_assert(
+    1 === preg_match('/<div class="popup-ab__covers" aria-hidden="true">/', $rendered),
+    'the cover strip is hidden from assistive technology (decorative, and the dialog is already labelled)',
+    $failures
+);
+
+bhp_ab_assert(
+    3 === substr_count($strip, 'alt=""') && 0 === preg_match('/alt="[^"]+"/', $strip),
+    'every cover image carries an empty alt — decorative, matching the aria-hidden wrapper',
+    $failures
+);
+
+foreach (['20-minute activity', 'First chapter free', 'Parent quick-start'] as $item) {
+    bhp_ab_assert(
+        1 === substr_count($rendered, $item),
+        "the \"what's inside\" trio renders \"{$item}\" exactly once",
+        $failures
+    );
+}
+
+// (d) — identical for both variants, by position in the markup.
+bhp_ab_assert(
+    strpos($rendered, 'popup-ab__covers') < strpos($rendered, 'data-bhp-variant="A"') &&
+    strpos($rendered, 'popup-ab__inside') > strpos($rendered, 'data-bhp-variant="B"'),
+    'the cover strip and the trio sit OUTSIDE both variant blocks — A and B cannot differ except in headline and subhead',
+    $failures
+);
+
+// (c) — the labels are hidden by CSS, never deleted.
+bhp_ab_assert(
+    1 === substr_count($rendered, '>First name</label>') &&
+    1 === substr_count($rendered, '>Email address</label>'),
+    'both field labels are still in the DOM (hidden visually, not removed — screen readers still get them)',
+    $failures
+);
+
+bhp_ab_assert(
+    1 === preg_match('/placeholder="First name"/', $rendered) &&
+    1 === preg_match('/placeholder="Email address"/', $rendered),
+    'both fields carry the placeholder that replaces the visible label',
+    $failures
+);
+
+// The site's shipped CTA treatment, worn as a class rather than re-declared.
+bhp_ab_assert(
+    1 === preg_match('/class="btn btn-primary acquisition-form__submit btn-cta-primary"/', $rendered),
+    'the submit wears the established site CTA class rather than a copy of its colours',
+    $failures
+);
+
+// ⛔ AND THE SHARED FORM IS UNCHANGED FOR EVERY OTHER CALLER. `submit_class`
+//    defaults to '', so a form that does not opt in emits exactly the class
+//    list it emitted in 1.19.204.
+ob_start();
+get_template_part('template-parts/acquisition/signup-form', null, ['id' => 'bhp-submitclass-regression-probe']);
+$probe = (string) ob_get_clean();
+bhp_ab_assert(
+    1 === substr_count($probe, 'class="btn btn-primary acquisition-form__submit"'),
+    'a caller that passes no submit_class renders the 1.19.204 class list, byte for byte',
     $failures
 );
 

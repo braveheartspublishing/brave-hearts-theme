@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.204
+Version: 1.19.205
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -7744,4 +7744,236 @@ a.header-expedition-cta {
   color: #4a4436;
   text-decoration: underline;
   text-underline-offset: 0.18em;
+}
+
+/* ============================================================================
+   PARENT A/B CAPTURE POPUP — VISUAL POLISH (1.19.205, 2026-08-07)
+   ============================================================================
+
+   ⭐ Andrew Signore reviewed 1.19.204 on staging and ruled it "not pleasing to
+      the eye" (RELAYED by chief-of-staff, not witnessed by this file's author).
+      This block is the whole of the response. It is presentation only: no
+      trigger, timing, assignment, storage, analytics or copy behaviour is
+      reachable from a stylesheet, and none was touched elsewhere either.
+
+   ⛔ EVERY SELECTOR HERE IS SCOPED TO `.mariana-popup--ab`, AND THAT IS
+      LOAD-BEARING, NOT TIDINESS. Four surfaces share the `.mariana-popup`
+      block: the timed parent popup, the teacher popup, the exit-intent modal
+      and this one. Restyling the shared block to please one of them would
+      silently restyle the teacher funnel — a funnel this brief does not touch
+      and `.claude/rules/funnels.md` keeps isolated. The modifier class is
+      emitted by `parent-ab-popup.php` and by nothing else.
+
+   ⛔ THE BUTTON'S COLOUR IS NOT DECLARED HERE, DELIBERATELY. The submit wears
+      `btn-cta-primary` and takes the shipped sitewide CTA treatment from the
+      F1 palette block above. Re-declaring forest/ivory/gold here would create
+      a seventh place that decides what a primary button looks like, which is
+      the exact defect wave F1 spent a release collapsing.
+
+   ⛔ NOTHING HERE IS PAINTED BEFORE THE POPUP OPENS. `.mariana-popup[hidden]`
+      is `display: none` from the moment the document parses, so every rule
+      below — and every image the template lazy-loads inside it — costs the
+      page load nothing. The release's zero-LCP / zero-CLS property survives.
+   -------------------------------------------------------------------------- */
+
+/* 1 · THE SURFACE — cream, not clinical white.
+   `--color-surface` is #FFFFFF, which is what made a modal full of empty
+   inputs read as a form rather than as an offer. `--color-ivory` (#fffaf0) is
+   the site's own warm ground and is within a shade of the parent funnel
+   landing page's own card colour (#fffdf7), so the popup and the page it
+   delivers a visitor to now belong to each other. */
+.mariana-popup--ab .mariana-popup__dialog {
+  max-width: min(468px, calc(100vw - 2 * var(--space-4)));
+  background: var(--color-ivory);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+/* 2 · THE COVER STRIP — small, warm, and overlapped like books on a shelf
+   rather than three separate thumbnails in a row. The negative margins are
+   what make it a lockup; the middle cover sits forward and slightly larger,
+   the same arrangement the landing-page hero already uses. */
+.mariana-popup--ab .popup-ab__covers {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+}
+.mariana-popup--ab .popup-ab__cover {
+  width: auto;
+  height: 72px;
+  border-radius: 3px;
+  box-shadow: 0 4px 10px rgba(var(--color-jungle-rgb), 0.22);
+}
+.mariana-popup--ab .popup-ab__cover:first-child { transform: rotate(-4deg); margin-right: -10px; }
+.mariana-popup--ab .popup-ab__cover:last-child { transform: rotate(4deg); margin-left: -10px; }
+.mariana-popup--ab .popup-ab__cover:nth-child(2) { position: relative; z-index: 1; height: 82px; }
+
+/* 3 · THE HEADLINE — same serif, roughly three-fifths the size.
+   1.19.204 rendered 28px, which took two lines of a 600px dialog before the
+   offer had said anything. The face is unchanged: Cormorant Garamond is the
+   brand's display serif, and the point of the polish was never to make this
+   look like a different company. */
+.mariana-popup--ab .mariana-popup__dialog h2 {
+  margin-block: 0 var(--space-2);
+  font-size: clamp(1.15rem, 1.5vw, 1.25rem);
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+}
+.mariana-popup--ab .mariana-popup__text {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-text);
+}
+
+/* 4 · "WHAT'S INSIDE" — one line on desktop, wrapping gracefully on a phone.
+   `flex-wrap` plus a row/column gap is what makes the wrap graceful: the items
+   stay centred and evenly spaced at two lines exactly as at one, with no
+   orphaned bullet and no ragged left edge. */
+.mariana-popup--ab .popup-ab__inside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-1) var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+.mariana-popup--ab .popup-ab__inside li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.32em;
+  white-space: nowrap;
+}
+/* Forest, not gold: a glyph-sized gold mark measures 1.79:1 on cream and the
+   site already learned that once (see `--color-gold-deep`'s note at the top of
+   this file). Forest on ivory measures far above the 4.5:1 floor. */
+.mariana-popup--ab .popup-ab__check {
+  color: var(--color-forest);
+  font-weight: 700;
+}
+
+/* 5 · THE FORM — compact, placeholder-labelled, one column.
+   The labels are NOT removed from the document; they are moved out of sight by
+   the same technique `.screen-reader-text` uses, so the fields keep their
+   programmatic names. */
+.mariana-popup--ab .mariana-popup__form .acquisition-form__field { margin-bottom: var(--space-2); }
+.mariana-popup--ab .mariana-popup__form .acquisition-form__field label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.mariana-popup--ab .mariana-popup__form .acquisition-form__field input {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  background: var(--color-soft-white);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  text-align: center;
+}
+.mariana-popup--ab .mariana-popup__form .acquisition-form__field input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.85;
+}
+.mariana-popup--ab .mariana-popup__form .acquisition-form__submit {
+  width: 100%;
+  min-height: 46px;
+  margin-top: var(--space-1);
+  padding-block: var(--space-2);
+  white-space: normal;
+}
+
+/* 6 · THE FOOTER MICROCOPY — present, legible, and quiet.
+   Three separate lines of small print sat at body weight underneath the CTA in
+   1.19.204 and competed with it. They are the least important thing in the
+   dialog and now look like it, without dropping under the 4.5:1 floor:
+   `--color-text-muted` (#7A4E2D) measures 5.9:1 on #fffaf0. */
+.mariana-popup--ab .mariana-popup__form .acquisition-form__notes { margin-top: var(--space-2); }
+.mariana-popup--ab .mariana-popup__form .acquisition-form__privacy,
+.mariana-popup--ab .mariana-popup__trust {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-text-muted);
+}
+.mariana-popup--ab .mariana-popup__trust { margin-top: var(--space-1); }
+
+/* ⚠ THE STAGING-ONLY DISABLED STATE. `.acquisition-form__provider-note` renders
+   only when no Mailchimp audience is connected, which on staging is the normal
+   condition and on production has never been true. It is styled here so a
+   reviewer looking at staging is not distracted by a bold warning band in the
+   middle of a design review — it stays readable and stays honest, it simply
+   stops shouting. It is an ENVIRONMENT state, not a defect, and it must not be
+   hidden: a production regression that disabled the form has to remain visible
+   to whoever looks next. */
+.mariana-popup--ab .mariana-popup__form .acquisition-form__provider-note {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  opacity: 0.9;
+}
+
+.mariana-popup--ab .mariana-popup__dismiss {
+  margin-top: var(--space-2);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* The close control on a cream ground: the shared rule's hover fill is
+   `--color-surface-muted`, which IS the ivory this dialog is now made of, so
+   hovering it did nothing visible. */
+.mariana-popup--ab .mariana-popup__close:hover,
+.mariana-popup--ab .mariana-popup__close:focus-visible {
+  background: rgba(var(--color-forest-rgb), 0.08);
+}
+
+/* 7 · PHONE. Measured at 390x844, which is the viewport this release is judged
+   at. Everything steps down together; nothing is dropped, because a visitor on
+   a phone is being asked for the same two fields and deserves the same offer.
+   The 44px input floor is NOT reduced — it is the tap-target minimum. */
+@media (max-width: 600px) {
+  .mariana-popup--ab .mariana-popup__dialog {
+    max-width: min(23rem, calc(100vw - 2 * var(--space-3)));
+    padding: var(--space-6) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  }
+  .mariana-popup--ab .popup-ab__cover { height: 62px; }
+  .mariana-popup--ab .popup-ab__cover:nth-child(2) { height: 71px; }
+  .mariana-popup--ab .mariana-popup__dialog h2 {
+    font-size: 1.15rem;
+    line-height: 1.2;
+    margin-block: 0 var(--space-2);
+  }
+  .mariana-popup--ab .mariana-popup__text { font-size: 0.875rem; margin-bottom: var(--space-2); }
+  .mariana-popup--ab .popup-ab__inside {
+    gap: var(--space-1) var(--space-3);
+    margin-bottom: var(--space-3);
+    font-size: 0.75rem;
+  }
+  .mariana-popup--ab .mariana-popup__form .acquisition-form__field { margin-bottom: var(--space-2); }
+  /* 16px exactly. Anything below it and iOS Safari zooms the page on focus,
+     which on a fixed-position modal is the defect that makes a popup feel
+     broken rather than merely small. */
+  .mariana-popup--ab .mariana-popup__form .acquisition-form__field input { font-size: 1rem; }
 }

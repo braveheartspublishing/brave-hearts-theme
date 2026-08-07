@@ -2123,6 +2123,47 @@ function bhp_should_show_parent_ab_popup() {
 }
 
 /**
+ * 1.19.205 — the A/B popup's cover strip, as attachment IDs only.
+ *
+ * ⛔ WHY THIS IS CACHED, AND WHY THAT IS NOT PREMATURE. The popup renders in
+ *    `wp_footer` on essentially every page of the site. Its source,
+ *    `bhp_get_series_adventures()`, calls `bhp_get_homepage_books(-1)`, which
+ *    is a product `get_posts()` plus one `wc_get_product()` per result — a
+ *    perfectly reasonable cost on the three pages that were built around it,
+ *    and an unreasonable one to add to every blog post and every product page
+ *    for three decorative thumbnails. The transient reduces that to one
+ *    option read (none at all where an object cache is warm).
+ *
+ * ⛔ NO NEW MEDIA. These are the SAME attachments the homepage, the collection
+ *    page and the parent landing page already render. Nothing is uploaded,
+ *    composited or generated here — `.claude/rules` and the company memory
+ *    both forbid regenerating a real cover, and this does not come close to
+ *    it: it reuses an ID.
+ *
+ * An empty array is a valid answer and is what a site with no matching
+ * products returns; the template then renders no strip rather than a gap.
+ * Twelve hours, because a cover attachment changes on the order of never and
+ * a stale ID for half a day is a decorative image, not a fact.
+ */
+function bhp_get_popup_ab_covers() {
+    $cached = get_transient('bhp_popup_ab_covers');
+    if (is_array($cached)) {
+        return $cached;
+    }
+
+    $covers = [];
+    foreach (bhp_get_series_adventures() as $adventure) {
+        if (!empty($adventure['image_id'])) {
+            $covers[] = ['id' => (int) $adventure['image_id']];
+        }
+    }
+
+    set_transient('bhp_popup_ab_covers', $covers, 12 * HOUR_IN_SECONDS);
+
+    return $covers;
+}
+
+/**
  * The variant tag set. A SEPARATE add_filter call, not an edit to either
  * existing one, so the proven Parent / Mariana / Wave 1 tag logic stays
  * byte-untouched — the same reasoning recorded on both callbacks above.

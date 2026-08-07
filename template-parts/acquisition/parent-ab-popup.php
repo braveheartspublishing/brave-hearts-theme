@@ -50,6 +50,56 @@
  *   the server resolves against a fixed whitelist
  *   (`bhp_get_popup_ab_variants()`) exactly like the quiz's route map — the
  *   browser never sends a tag string, an audience or a URL.
+ *
+ * ---------------------------------------------------------------------
+ * 1.19.205 (2026-08-07) — VISUAL POLISH. NO BEHAVIOUR CHANGES.
+ *
+ * ⭐ Andrew Signore reviewed 1.19.204 on staging and ruled it "not pleasing
+ *    to the eye" (RELAYED by chief-of-staff; this file's author did not
+ *    witness it). Everything he approved is untouched: the engine, the
+ *    assignment, the tracking, the locked copy, the fifteen-second delay and
+ *    the suppression rules are unchanged in behaviour. What changed is
+ *    presentation only, and it is confined to this file, one optional
+ *    argument on the shared signup form, and one CSS block scoped to
+ *    `.mariana-popup--ab`.
+ *
+ *   1. A COVER STRIP. Three existing product-cover attachments — the SAME
+ *      media the homepage, the collection page and the parent landing page
+ *      already serve — at the `medium` size WordPress generated for them
+ *      when they were first uploaded. No new asset, no new upload, no new
+ *      image generation. They carry `loading="lazy"` and their intrinsic
+ *      dimensions: the popup is `display:none` until the timer fires, so a
+ *      lazy image inside it is never fetched during page load and the
+ *      release's zero-LCP / zero-CLS property is preserved by construction
+ *      rather than by hope. Measured after the change; see the release notes.
+ *
+ *   2. A "WHAT'S INSIDE" TRIO, and every item of it describes the resource
+ *      that is actually delivered. The Adventure Kit is already described
+ *      sitewide as "a complete sample chapter to read tonight, a printable
+ *      explorer activity, and simple tips for reading it with a 6 to 9 year
+ *      old" (`exit-intent-popup.php`, `footer-capture.php`) — which is what
+ *      the three items say in three words each.
+ *      ⚠ "20-minute" carries the SAME open duration-claim collision already
+ *        recorded at the top of this file (finding A6, 2026-08-03). It is
+ *        the same claim Andrew's approved subhead makes, not a new one. It
+ *        is flagged again here and again NOT silently resolved either way.
+ *
+ *   3. PLACEHOLDER-LABELLED FIELDS. The `<label>` elements are STILL IN THE
+ *      DOM and still correctly associated; they are visually hidden by CSS
+ *      and their text is repeated as the placeholder. Deleting them would
+ *      have made the form unusable with a screen reader to buy 48px.
+ *
+ *   4. THE SUBMIT TAKES THE SITE'S ESTABLISHED CTA TREATMENT by wearing the
+ *      real class (`btn-cta-primary`) rather than a copy of its
+ *      declarations — forest fill, ivory text, gold hairline: what the
+ *      header CTA, the bundle submit and the cart checkout button all use.
+ *      1.19.204 rendered `.btn-primary`, which computes to a flat gold fill
+ *      on navy text, and that is what "flat tan" named.
+ *
+ * ⛔ BOTH VARIANTS ARE STYLED IDENTICALLY. The cover strip and the trio sit
+ *    OUTSIDE the `[data-bhp-variant]` blocks precisely so the engine's
+ *    removal of the losing block cannot take either with it, and so nothing
+ *    but the headline and subhead can ever differ between A and B.
  */
 defined('ABSPATH') || exit;
 
@@ -118,10 +168,30 @@ foreach (array_keys($variants) as $key) {
     $title_ids[$key] = 'parent-ab-popup-title-' . strtolower($key);
     $desc_ids[$key]  = 'parent-ab-popup-desc-' . strtolower($key);
 }
+
+/**
+ * 1.19.205. Three existing cover attachments, cached so a decorative strip in
+ * a sitewide surface cannot put a product query on every page load. An empty
+ * result renders no strip at all rather than a broken or placeholder one.
+ */
+$covers = function_exists('bhp_get_popup_ab_covers') ? bhp_get_popup_ab_covers() : [];
+
+/**
+ * ⛔ LOCKED WITH THE HEADLINES, FOR THE SAME REASON. These three items are the
+ *    approved "what's inside" line and they are IDENTICAL for both variants —
+ *    an A/B test in which anything but the hook differs measures the wrong
+ *    thing. Each maps to a real component of the delivered Adventure Kit; see
+ *    the file header.
+ */
+$inside = [
+    __('20-minute activity', 'brave-hearts'),
+    __('First chapter free', 'brave-hearts'),
+    __('Parent quick-start', 'brave-hearts'),
+];
 ?>
 <div
   id="parent-ab-popup"
-  class="mariana-popup"
+  class="mariana-popup mariana-popup--ab"
   data-bhp-popup
   data-page-type="<?php echo esc_attr(bhp_get_page_type_for_analytics()); ?>"
   data-force-open="<?php echo $force_open ? '1' : '0'; ?>"
@@ -146,12 +216,37 @@ foreach (array_keys($variants) as $key) {
       <span aria-hidden="true">&times;</span>
     </button>
 
+    <?php if ($covers): ?>
+      <?php /* Decorative. The dialog is already labelled by the headline, and
+               three cover alt strings read before it would be noise, so the
+               strip is hidden from assistive technology and every image
+               carries an empty alt — the correct pairing, not one or the
+               other. */ ?>
+      <div class="popup-ab__covers" aria-hidden="true">
+        <?php foreach ($covers as $cover): ?>
+          <?php echo wp_get_attachment_image((int) $cover['id'], 'medium', false, [
+              'alt'      => '',
+              'class'    => 'popup-ab__cover',
+              'loading'  => 'lazy',
+              'decoding' => 'async',
+              'sizes'    => '(max-width: 600px) 44px, 54px',
+          ]); ?>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
     <?php foreach ($variants as $key => $variant): ?>
       <div data-bhp-variant="<?php echo esc_attr($key); ?>">
         <h2 id="<?php echo esc_attr($title_ids[$key]); ?>"><?php echo esc_html($variant['heading']); ?></h2>
         <p id="<?php echo esc_attr($desc_ids[$key]); ?>" class="mariana-popup__text"><?php echo esc_html($variant['sub']); ?></p>
       </div>
     <?php endforeach; ?>
+
+    <ul class="popup-ab__inside">
+      <?php foreach ($inside as $item): ?>
+        <li><span class="popup-ab__check" aria-hidden="true">&#10003;</span><?php echo esc_html($item); ?></li>
+      <?php endforeach; ?>
+    </ul>
 
     <?php get_template_part('template-parts/acquisition/signup-form', null, [
         'id'                   => $form_id,
@@ -161,7 +256,14 @@ foreach (array_keys($variants) as $key) {
         'source_page'          => $source_page,
         'success_redirect_key' => 'adventure_kit_thank_you',
         'require_name'         => true,
+        // 1.19.205: the labels stay in the DOM and are hidden visually; these
+        // repeat their text where the eye is, which is inside the field.
+        'name_placeholder'     => __('First name', 'brave-hearts'),
+        'email_placeholder'    => __('Email address', 'brave-hearts'),
         'submit_label'         => __('Send Me the Free Kit', 'brave-hearts'),
+        // The site's established converting-CTA treatment, by class rather
+        // than by a re-declaration of it. See the file header, point 4.
+        'submit_class'         => 'btn-cta-primary',
         'privacy_text'         => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
         'class'                => 'mariana-popup__form',
         // Stamped by the engine at assignment time. Empty in the served HTML,

@@ -25,6 +25,25 @@
  *                       (`bhp_get_capture_segment_routes()`), exactly like
  *                       the quiz's route map, so nothing about the audience
  *                       or the tags applied is attacker-controlled.
+ *
+ * 1.19.205 (2026-08-07) adds ONE further optional, backward-compatible
+ * argument. Every existing caller passes nothing and renders exactly as it
+ * did in 1.19.204 — the default is the empty string, so the emitted class
+ * list is byte-identical unless a caller opts in:
+ *
+ *   'submit_class'    — extra class(es) on the submit button. It exists so a
+ *                       placement can wear one of the site's SHIPPED CTA
+ *                       treatments (`btn-cta-primary`) instead of a
+ *                       component re-declaring those colours for itself,
+ *                       which is how the site ended up with six button
+ *                       specs before wave F1 collapsed them. `btn` and
+ *                       `btn-primary` are deliberately left in place: F1's
+ *                       geometry rules key off `.btn`, and the colour list
+ *                       that carries `btn-cta-primary` is declared LATER in
+ *                       `style.css` than `.btn-primary`'s, so with equal
+ *                       specificity and both `!important` the CTA treatment
+ *                       wins on source order. Verified in the browser, not
+ *                       inferred: computed background rgb(23, 63, 47).
  */
 defined('ABSPATH') || exit;
 
@@ -54,6 +73,7 @@ $args = wp_parse_args($args ?? [], [
     'class'                => '',
     'field_class'          => '',
     'privacy_class'        => '',
+    'submit_class'         => '',
 ]);
 
 $context       = sanitize_key($args['context']);
@@ -99,6 +119,7 @@ $is_multi_field  = $show_name || (bool) $segment_options;
 $form_classes    = trim('acquisition-form ' . ($is_multi_field ? 'acquisition-form--stacked ' : '') . $args['class']);
 $field_classes   = trim('acquisition-form__field ' . $args['field_class']);
 $privacy_classes = trim('acquisition-form__privacy ' . $args['privacy_class']);
+$submit_classes  = trim('btn btn-primary acquisition-form__submit ' . $args['submit_class']);
 $provider_note   = $args['provider_note'] ?: __('Signup is temporarily unavailable while the email connection is restored.', 'brave-hearts');
 $feedback        = bhp_get_signup_feedback($form_id);
 $preserved       = bhp_get_signup_preserved_values($form_id);
@@ -210,7 +231,7 @@ $success_redirect_key = sanitize_key($args['success_redirect_key']);
     >
   </div>
 
-  <button class="btn btn-primary acquisition-form__submit" type="submit" <?php disabled(!$form_ready); ?> aria-disabled="<?php echo $form_ready ? 'false' : 'true'; ?>">
+  <button class="<?php echo esc_attr($submit_classes); ?>" type="submit" <?php disabled(!$form_ready); ?> aria-disabled="<?php echo $form_ready ? 'false' : 'true'; ?>">
     <?php echo esc_html($args['submit_label'] ?: __('Join the Adventure Club', 'brave-hearts')); ?>
   </button>
 
