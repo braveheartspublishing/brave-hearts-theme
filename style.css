@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.206
+Version: 1.19.207
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -7850,6 +7850,20 @@ a.header-expedition-cta {
   font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--color-text);
+}
+
+/* ⭐ 1.19.207 — the word FREE, bolder and larger than the sentence carrying it.
+   Andrew Signore's instruction (RELAYED, not witnessed here). `1.18em` is
+   RELATIVE deliberately: this same span appears inside the subhead
+   (`--text-sm`) and inside the trust caption (much smaller), and a fixed size
+   would make one of the two look wrong. `line-height: 1` keeps the enlarged
+   word from opening up the line it sits in, which is what would otherwise cost
+   vertical space in a modal that has to fit one phone screen. */
+.mariana-popup--ab .popup-ab__free {
+  font-weight: 800;
+  font-size: 1.18em;
+  line-height: 1;
+  letter-spacing: 0.01em;
 }
 
 /* 4 · "WHAT'S INSIDE" — one line on desktop, wrapping gracefully on a phone.

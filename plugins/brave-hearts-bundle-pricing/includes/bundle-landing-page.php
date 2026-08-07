@@ -408,19 +408,83 @@ function bhp_bundle_render_landing_pricing_card() {
  *    source that leaves a fragment behind fails a suite instead of quietly
  *    publishing a quote nobody said.
  *
- * ⛔ NO star glyphs, no rating, no count, no aggregate, no "trusted by",
- *    no reading, literacy, classroom or developmental outcome.
+ * ⛔ NO rating expression, no count, no aggregate, no "trusted by", no
+ *    reading, literacy, classroom or developmental outcome.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.8.33 (2026-08-07) — ANDREW'S REVISION LIST. CYCLE147-LD-06..09.
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔ RELAYED through the Chief of Staff; NOT witnessed first-hand here.
+ *
+ * 1. THE SUBHEAD. "Short chapters · real places · ages 6–9" repeated the
+ *    headline directly above it, which already says both. Replaced with the
+ *    canonical brand promise — "Educational without feeling like homework"
+ *    is the company's own core-promise wording (`C:\BHP\CLAUDE.md`), so it
+ *    is claim-safe by construction: it describes the reading experience and
+ *    asserts no outcome, no measure and no third-party endorsement.
+ *
+ * 2. THE BOISE LINE IS GONE FROM THIS BAR. Andrew's instruction, and it
+ *    also buys back a line above the phone fold. ⚠ IT IS NOT DELETED FROM
+ *    THE PAGE: `bhp_bundle_render_landing_trust_row()` still publishes it,
+ *    unchanged, with its whole "placed, not used" history intact. His
+ *    instruction named the trust BAR (this block); the trust ROW further
+ *    down was not in scope and was deliberately left alone.
+ *
+ * 3. ⭐ THE FIVE-STAR LINE, ABOVE AND BELOW THE HEADLINE BLOCK.
+ *
+ *    ⛔ VERIFIED BEFORE BUILDING, NOT ASSUMED. `inc/amazon-reviews.php`
+ *       holds SIX approved reviews and EVERY ONE carries `'rating' => 5`
+ *       (four The Mariana Trench, two Mount Everest, ZERO The Amazon).
+ *       The claim is therefore recorded fact, not invention.
+ *
+ *    ⛔ IT IS GATED ON THAT DATA, NOT TYPED IN. It renders only when
+ *       `bhp_bundle_landing_five_star_reviews_exist()` finds approved
+ *       reviews AND every one of them is a 5. Downgrade a review in the
+ *       registry and the line removes itself; it does not have to be
+ *       remembered.
+ *
+ *    ⚠ ONE SCOPE TENSION IS RECORDED HERE RATHER THAN RESOLVED. On
+ *      2026-08-02 the trust-row badge was deliberately narrowed from the
+ *      unqualified "Five-star reader reviews" to "…on our first two
+ *      titles", because this page sells three books and The Amazon has
+ *      none. Andrew's 2026-08-07 instruction specifies the unqualified
+ *      wording "5-Star Reader Reviews" and is the later instruction, so it
+ *      is what shipped. The earlier narrowing is UNCHANGED where it lives.
+ *      Flagged for the decisions register; NOT silently reconciled in
+ *      either direction, in either direction's favour.
  */
+function bhp_bundle_landing_five_star_reviews_exist() {
+	if ( ! function_exists( 'bhp_get_approved_amazon_reviews_for_book' ) ) {
+		return false;
+	}
+	$found = 0;
+	foreach ( array( 'mariana_trench', 'mount_everest', 'amazon_rainforest' ) as $slug ) {
+		foreach ( (array) bhp_get_approved_amazon_reviews_for_book( $slug ) as $review ) {
+			if ( 5 !== (int) ( $review['rating'] ?? 0 ) ) {
+				return false; // one non-five and the claim stops being true as stated
+			}
+			$found++;
+		}
+	}
+	return $found > 0;
+}
+
 function bhp_bundle_render_landing_cold_open() {
-	$kirkus = bhp_get_kirkus_review_data();
+	$kirkus    = bhp_get_kirkus_review_data();
+	$five_star = bhp_bundle_landing_five_star_reviews_exist();
 	?>
 	<div class="bhp-landing-coldopen">
+		<?php if ( $five_star ) : ?>
+			<p class="bhp-landing-coldopen__stars"><span class="bhp-landing-coldopen__stars-glyphs" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span> 5-Star Reader Reviews</p>
+		<?php endif; ?>
 		<h2 class="bhp-landing-coldopen__headline">Real places. Short chapters. Stories that pull kids off screens.</h2>
-		<p class="bhp-landing-coldopen__subhead">Short chapters &middot; real places &middot; ages 6&ndash;9</p>
+		<p class="bhp-landing-coldopen__subhead">Educational without feeling like homework &middot; ages 6&ndash;9</p>
+		<?php if ( $five_star ) : ?>
+			<p class="bhp-landing-coldopen__stars bhp-landing-coldopen__stars--below"><span class="bhp-landing-coldopen__stars-glyphs" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span> 5-Star Reader Reviews</p>
+		<?php endif; ?>
 		<ul class="bhp-landing-coldopen__trust">
 			<li>&ldquo;&hellip;spark children&rsquo;s curiosity&rdquo; &mdash; <?php echo esc_html( $kirkus['attribution'] ); ?>, on <em>The Mariana Trench</em></li>
 			<li>&ldquo;Engaging, educational&rdquo; &mdash; elementary teacher, verified Amazon review</li>
-			<li>Placed in classrooms across Boise</li>
 		</ul>
 	</div>
 	<?php

@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 2a0d623a0d105526f6cc1a45b6518e28
+    source-md5: 6d5ab31053d0e3f3021e113489b19c21
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.206
+Version: 1.19.207
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5216,6 +5216,12 @@ a.header-expedition-cta {
   font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--color-text);
+}
+.mariana-popup--ab .popup-ab__free {
+  font-weight: 800;
+  font-size: 1.18em;
+  line-height: 1;
+  letter-spacing: 0.01em;
 }
 .mariana-popup--ab .popup-ab__inside {
   display: flex;

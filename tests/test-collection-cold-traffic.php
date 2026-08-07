@@ -127,6 +127,23 @@ bhp_cct_assert(
 	$failures
 );
 /*
+ * ⭐ 1.8.33 — the subhead is Andrew's 2026-08-07 replacement, and it is
+ * asserted verbatim BECAUSE it is the company's canonical core-promise
+ * wording ("educational without feeling like homework", `C:\BHP\CLAUDE.md`).
+ * The line it replaced repeated the headline directly above it.
+ */
+bhp_cct_assert(
+	strpos( $html, 'Educational without feeling like homework' ) !== false,
+	'1: the subhead carries the canonical brand promise, not a repeat of the headline',
+	$failures
+);
+bhp_cct_assert(
+	strpos( $html, 'Short chapters &middot; real places' ) === false
+		&& strpos( $html, 'Short chapters · real places' ) === false,
+	'1: the superseded, headline-repeating subhead is gone',
+	$failures
+);
+/*
  * Standing content constraint (BHP-AGENT-STANDING-RULES §9): the reading age
  * in copy is 6–9 and NEVER 5–9. Asserted on the whole document, not just on
  * the new block, because this page is where the copy would most plausibly be
@@ -230,14 +247,20 @@ bhp_cct_assert(
 );
 
 /*
- * "Placed in classrooms across Boise" — asserted as the SAME string the
- * trust row already publishes, not as a lookalike. The verb is "placed" and
- * not "used" for a reason recorded on
- * bhp_bundle_render_landing_trust_row(); a paraphrase would lose that.
+ * ⭐ 1.8.33 — SUPERSEDED ASSERTION, REWRITTEN RATHER THAN DELETED.
+ *
+ * This previously required "Placed in classrooms across Boise" to appear at
+ * least TWICE — once in the cold-open bar and once in the trust row below.
+ * Andrew Signore removed it from the cold-open bar on 2026-08-07 (⛔ RELAYED;
+ * NOT witnessed here). It is NOT removed from the page: the trust row still
+ * publishes it, with its whole "placed, not used" history intact, and that is
+ * now what is asserted. The guard is INVERTED, not dropped — the string must
+ * still exist exactly once, so neither a silent re-introduction into the
+ * cold open nor a silent deletion from the trust row can pass unnoticed.
  */
 bhp_cct_assert(
-	substr_count( $html, 'Placed in classrooms across Boise' ) >= 2,
-	'3: the Boise placement claim appears in BOTH the cold-open bar and the existing trust row, word for word',
+	substr_count( $html, 'Placed in classrooms across Boise' ) === 1,
+	'3: the Boise placement claim is gone from the cold-open bar and still published, word for word, in the trust row below',
 	$failures
 );
 /*
@@ -251,7 +274,51 @@ bhp_cct_assert(
  */
 if ( preg_match( '/<div class="bhp-landing-coldopen">(.*?)<\/div>/su', $html, $m ) ) {
 	$cold = $m[1];
-	bhp_cct_assert( strpos( $cold, '★' ) === false && strpos( $cold, '&#9733;' ) === false, '3: the cold-open block contains no star glyphs', $failures );
+	/*
+	 * ⭐ 1.8.33 — SUPERSEDED ASSERTION, REPLACED BY A STRICTER ONE.
+	 *
+	 * This previously banned star glyphs from the cold-open block outright.
+	 * Andrew Signore's 2026-08-07 instruction puts "★★★★★ 5-Star Reader
+	 * Reviews" above AND below the headline block (⛔ RELAYED; NOT witnessed
+	 * here). A blanket ban is therefore the wrong guard — the right guard is
+	 * that the glyphs may only appear while the RECORDED DATA still supports
+	 * them, which is what the render gate does and what is asserted here.
+	 *
+	 * ⛔ THE DATA WAS CHECKED BEFORE THE COPY WAS BUILT, not after:
+	 *    `inc/amazon-reviews.php` holds six approved reviews and every one
+	 *    carries `'rating' => 5`. This re-derives that from the registry on
+	 *    every run rather than trusting the reading.
+	 */
+	$bhp_cct_ratings = array();
+	if ( function_exists( 'bhp_get_approved_amazon_reviews_for_book' ) ) {
+		foreach ( array( 'mariana_trench', 'mount_everest', 'amazon_rainforest' ) as $bhp_cct_slug ) {
+			foreach ( (array) bhp_get_approved_amazon_reviews_for_book( $bhp_cct_slug ) as $bhp_cct_r ) {
+				$bhp_cct_ratings[] = (int) ( $bhp_cct_r['rating'] ?? 0 );
+			}
+		}
+	}
+	$bhp_cct_all_five = $bhp_cct_ratings && array( 5 ) === array_values( array_unique( $bhp_cct_ratings ) );
+	bhp_cct_assert(
+		$bhp_cct_all_five,
+		'3: every approved Amazon review in the registry is a 5 — the five-star claim is recorded fact, not copy (found ' . count( $bhp_cct_ratings ) . ' reviews)',
+		$failures
+	);
+	bhp_cct_assert(
+		function_exists( 'bhp_bundle_landing_five_star_reviews_exist' )
+			&& bhp_bundle_landing_five_star_reviews_exist() === $bhp_cct_all_five,
+		'3: the five-star line is GATED on that registry, so downgrading a review removes the claim by itself',
+		$failures
+	);
+	bhp_cct_assert(
+		substr_count( $cold, 'bhp-landing-coldopen__stars"' ) + substr_count( $cold, 'bhp-landing-coldopen__stars ' ) === 2,
+		'3: the five-star line renders exactly twice — once above and once below the headline block',
+		$failures
+	);
+	bhp_cct_assert(
+		substr_count( $cold, '5-Star Reader Reviews' ) === 2,
+		'3: both five-star lines carry Andrew\'s exact wording',
+		$failures
+	);
 	bhp_cct_assert( preg_match( '/\b\d+(\.\d+)?\s*(out of|\/)\s*5\b/i', $cold ) !== 1, '3: the cold-open block contains no rating expression', $failures );
 	bhp_cct_assert( preg_match( '/\b\d{2,}\s+(classrooms|schools|teachers|parents|readers|reviews)\b/i', $cold ) !== 1, '3: the cold-open block contains no invented count', $failures );
 	foreach ( array( 'Used in', 'adopted by', 'trusted by', 'proven', 'Lexile', 'grade level', 'award' ) as $forbidden ) {
@@ -286,6 +353,15 @@ bhp_cct_assert(
 	bhp_cct_before( $html, 'bhp-landing-coldopen__headline', 'bhp-landing-coldopen__subhead' )
 		&& bhp_cct_before( $html, 'bhp-landing-coldopen__subhead', 'bhp-landing-coldopen__trust' ),
 	'4: headline -> subhead -> trust bar, in that order',
+	$failures
+);
+/* ⭐ 1.8.33 — Andrew asked for the five-star line ABOVE *and* BELOW the
+   headline block. "Block" is headline + subhead, so the pair brackets both. */
+bhp_cct_assert(
+	bhp_cct_before( $html, 'bhp-landing-coldopen__stars"', 'bhp-landing-coldopen__headline' )
+		&& bhp_cct_before( $html, 'bhp-landing-coldopen__subhead', 'bhp-landing-coldopen__stars--below' )
+		&& bhp_cct_before( $html, 'bhp-landing-coldopen__stars--below', 'bhp-landing-coldopen__trust' ),
+	'4: five-star line -> headline -> subhead -> five-star line -> trust bar (Andrew\'s "above AND below the headline block")',
 	$failures
 );
 bhp_cct_assert(

@@ -557,10 +557,31 @@ body.bhp-gallery-lightbox-open {
 	max-height: var(--bhp-stage-h);
 }
 
+/*
+ * ⭐ 1.19.207 (2026-08-07) — THE STAGE GOES NAVY, TO MATCH THE HOME HERO.
+ *
+ * Andrew Signore's instruction (⛔ RELAYED through the Chief of Staff; NOT
+ * witnessed first-hand here): the collection carousel box should carry the
+ * home page's dark navy/blue rather than its own green, so the two hero
+ * treatments read as one brand.
+ *
+ * ⛔ THE TOKEN IS PULLED, NOT PICKED. `--color-navy` (#071522, declared in
+ *    style.css) is the exact custom property `.home-hero` itself sets as its
+ *    `background`, so re-theming the home hero re-themes this in the same
+ *    move. It is also the token the SHARED `.bhp-gallery__stage` rule at the
+ *    top of this file already uses — this `--collection` override was the one
+ *    place that diverged from it, so the change is a return to the shared
+ *    default with the collection's own radius and shadow kept.
+ *
+ * The shadow's tint follows the background: a green-tinted drop shadow under
+ * a navy box reads as a colour bug. The arrows (cream on dark), the counter
+ * and the thumbnails are unchanged and were all already designed against a
+ * dark stage.
+ */
 .bhp-media-gallery--collection .bhp-gallery__stage {
-	background: var(--bl-forest, #1e4331);
+	background: var(--color-navy, #071522);
 	border-radius: 14px;
-	box-shadow: 0 18px 36px rgba(30, 67, 49, 0.22);
+	box-shadow: 0 18px 36px rgba(7, 21, 34, 0.24);
 }
 
 .bhp-media-gallery--collection .bhp-gallery__arrow {
@@ -577,8 +598,11 @@ body.bhp-gallery-lightbox-open {
 	outline: 3px solid var(--color-gold, #D9A45F);
 }
 
+/* Follows the stage. A forest pill sitting on a navy stage is a colour bug,
+   not a highlight. 0.82 alpha and the white text are unchanged, and the pill
+   still measures far above the 4.5:1 floor on the darker ground. */
 .bhp-media-gallery--collection .bhp-gallery__counter {
-	background: rgba(30, 67, 49, 0.82);
+	background: rgba(7, 21, 34, 0.82);
 }
 
 .bhp-media-gallery--collection .bhp-gallery__thumb {
@@ -804,5 +828,35 @@ body.bhp-gallery-lightbox-open {
 	.audience-landing .bhp-look-inside {
 		max-width: 100%;
 		flex-basis: 100%;
+	}
+}
+
+/* ==================================================================
+   ⭐ 1.19.207 (2026-08-07) — THE COLLECTION GALLERY'S PHONE RHYTHM.
+   ------------------------------------------------------------------
+   Andrew Signore asked for the BEST VALUE box to sit as close as
+   possible under "A short preview of the printed edition", and for the
+   primary CTA to clear the consent banner at 390x844 (⛔ RELAYED
+   through the Chief of Staff; NOT witnessed first-hand here).
+
+   ⛔ SCOPED TO `--collection` AND TO PHONES. The product-page hero
+      gallery and every other placement are untouched at every width.
+   ⛔ THE STAGE HEIGHT IS NOT REDUCED. Andrew approved a BIGGER image
+      in 1.19.206 and this must not quietly undo it. What shrinks is the
+      thumbnail rail's leading and the caption's, never the picture.
+   ⛔ 44x44 IS THE FLOOR for the thumbnail target and is respected here.
+   ================================================================== */
+@media (max-width: 640px) {
+	.bhp-media-gallery--collection .bhp-gallery__thumb {
+		width: 44px;
+		height: 44px;
+	}
+	.bhp-media-gallery--collection .bhp-gallery__thumbs {
+		margin-top: 0.2rem;
+	}
+	.bhp-media-gallery--collection .bhp-look-inside__note {
+		margin-top: 0.2rem;
+		font-size: 0.74rem;
+		line-height: 1.3;
 	}
 }

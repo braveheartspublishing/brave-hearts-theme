@@ -2052,6 +2052,17 @@ function bhp_should_show_parent_popup() {
  *    popup, the Meta pixel's Lead event and the Mailchimp variant tag — it
  *    is not a label, and renaming one of the three breaks the other two.
  *
+ * ⭐ 1.19.207 (2026-08-07) — "Free" → "FREE" IN BOTH SUBHEADS, and only
+ *    that. Andrew Signore's own instruction (⛔ RELAYED through the Chief
+ *    of Staff, NOT witnessed here): the word must read ALL CAPS, bold and
+ *    larger wherever it appears in the popup copy. ONE WORD'S CASE CHANGED
+ *    IN EACH STRING — not a syllable of either hook, either heading or
+ *    either `content_name` moved, so the A/B test still measures the hook.
+ *    The BOLD and the LARGER are presentation and live in CSS, applied by
+ *    `bhp_popup_ab_emphasise_free()` at render time, which is why the map
+ *    stays plain text and the suite can still compare it character for
+ *    character.
+ *
  * ⛔ THE BROWSER NEVER SENDS A TAG, AN AUDIENCE OR A URL. It sends the short
  *    key 'A' or 'B' in `bhp_variant`, resolved here against this fixed
  *    whitelist. Same pattern, deliberately, as bhp_get_quiz_signup_routes()
@@ -2063,15 +2074,37 @@ function bhp_get_popup_ab_variants() {
     return [
         'A' => [
             'heading'      => __('It\'s Heartbreaking to Watch Them Fall Further Behind', 'brave-hearts'),
-            'sub'          => __('You can still change this. Get the Free 20-Minute Reluctant Reader Kit.', 'brave-hearts'),
+            'sub'          => __('You can still change this. Get the FREE 20-Minute Reluctant Reader Kit.', 'brave-hearts'),
             'content_name' => 'popup_hook_heartbreak',
         ],
         'B' => [
             'heading'      => __('Turn Reluctant Readers Into Willing Readers', 'brave-hearts'),
-            'sub'          => __('The Free 20-Minute Reluctant Reader Kit shows you exactly where to start.', 'brave-hearts'),
+            'sub'          => __('The FREE 20-Minute Reluctant Reader Kit shows you exactly where to start.', 'brave-hearts'),
             'content_name' => 'popup_hook_willing',
         ],
     ];
+}
+
+/**
+ * ⭐ 1.19.207 — the ONE word that gets a bigger, bolder treatment.
+ *
+ * Andrew's instruction is presentational, not editorial, so it is applied as
+ * presentation: the copy stays plain text in `bhp_get_popup_ab_variants()`
+ * (which is what lets `tests/test-popup-ab.php` keep asserting it character
+ * for character), and this wraps the standalone word FREE on the way out.
+ *
+ * ⛔ ESCAPE FIRST, THEN WRAP. The text is run through `esc_html()` before a
+ *    single character of markup is added, so the return value is safe to
+ *    echo unescaped and no copy string can ever inject HTML. Only the exact
+ *    standalone token `FREE` is matched — never a substring, so "freely" or
+ *    a stray "free" in future copy is left alone rather than half-shouted.
+ */
+function bhp_popup_ab_emphasise_free($text) {
+    return preg_replace(
+        '/\bFREE\b/',
+        '<span class="popup-ab__free">$0</span>',
+        esc_html($text)
+    );
 }
 
 /**

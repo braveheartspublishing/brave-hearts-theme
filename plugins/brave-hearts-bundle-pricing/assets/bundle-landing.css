@@ -707,3 +707,108 @@
 	}
 	.bhp-landing-panel__form--lead { margin-bottom: .7rem; }
 }
+
+/* ==================================================================
+   ⭐ 1.8.33 (2026-08-07) — ANDREW'S REVISION LIST. CYCLE147-LD-06..10.
+   ------------------------------------------------------------------
+   ⛔ RELAYED through the Chief of Staff; NOT witnessed first-hand here.
+   Additive only: not one declaration above this banner is deleted or
+   reworded, and nothing outside `.bhp-landing-*` / the collection
+   gallery is touched. This stylesheet is enqueued on this one page.
+
+   THE NUMBERS BELOW WERE MEASURED, NOT CHOSEN. The whole block was
+   simulated against the DEPLOYED 1.19.206/1.8.32 build over CDP at
+   390x844 with `innerWidth` asserted, and tuned until the primary CTA
+   cleared the consent banner, before a line of it was committed:
+
+     BEFORE   CTA y 738-804   note-bottom 447 -> badge-top 491 (44px gap)
+     AFTER    CTA y 667-721   note-bottom 410 -> badge-top 427 (17px gap)
+     BANNER   y 732-844, measured on a FRESH PROFILE in the same run
+              (it lives in an open shadow root on a 0x0 host, so it is
+              found by walking shadow roots — light-DOM queries miss it)
+   ================================================================== */
+
+/* ---- The five-star line, above and below the headline block -------- */
+/*
+ * ⛔ THE CLAIM IS GATED IN PHP on the review registry itself — see
+ *    `bhp_bundle_landing_five_star_reviews_exist()`. CSS only styles what
+ *    the data has already licensed.
+ *
+ * The glyphs are `--bl-gold-dark` (= `--color-gold-deep`), NOT `--bl-gold`.
+ * This site has already learned that a glyph-sized `--color-gold` measures
+ * 1.79:1 on cream — the note lives on `--color-gold-deep` in style.css and
+ * on the popup's check mark. The deep step clears the 4.5:1 floor on the
+ * ivory card. The words themselves stay forest, so the row reads as one
+ * statement rather than a gold banner.
+ */
+.bhp-landing-coldopen__stars {
+	display: flex;
+	align-items: center;
+	gap: .4rem;
+	font-family: var(--bl-sans);
+	font-size: .78rem;
+	font-weight: 800;
+	letter-spacing: .05em;
+	text-transform: uppercase;
+	color: var(--bl-forest);
+	line-height: 1.1;
+	margin: 0 0 .4rem;
+}
+.bhp-landing-coldopen__stars-glyphs {
+	color: var(--bl-gold-dark);
+	letter-spacing: .08em;
+	font-size: 1em;
+	line-height: 1;
+}
+.bhp-landing-coldopen__stars--below { margin: 0 0 .5rem; }
+
+/* ---- The phone fold, and the gap above the BEST VALUE badge -------- */
+/*
+ * Two of Andrew's asks are the same ask measured two ways: "move the BEST
+ * VALUE box up as close as possible to the preview caption" and "the CTA
+ * must sit above the consent banner". Every declaration here buys vertical
+ * space and nothing else.
+ *
+ * ⛔ THE GALLERY IS NOT SHRUNK. Its stage height is untouched — Andrew
+ *    approved it BIGGER two hours before this build and shrinking it back
+ *    would undo an approved change to pay for a different one. What moved
+ *    is rhythm: the page's own top padding, the caption's leading, the grid
+ *    gap between the gallery and the card, the card's top padding, and the
+ *    CTA's internal padding.
+ * ⛔ NO FONT GOES BELOW 11px (.7rem = 11.2px, .71rem = 11.36px) and the
+ *    thumbnail rail keeps a 44x44 touch target.
+ * ⛔ NO COPY IS CUT and no claim is dropped by this block.
+ */
+@media (max-width: 640px) {
+	.bhp-landing { padding-block: .3rem 2.5rem; }
+
+	.bhp-landing-hero--sales-first .bhp-landing-hero__main { gap: .25rem; }
+
+	.bhp-landing-card { padding: .45rem .9rem 1.1rem; }
+	.bhp-landing-card__badge { margin-bottom: .3rem; padding: 4px 10px; }
+
+	.bhp-landing .bhp-landing-coldopen__headline {
+		font-size: 1.22rem;
+		margin-bottom: .18rem;
+	}
+	.bhp-landing-coldopen__stars { font-size: .7rem; margin-bottom: .22rem; }
+	.bhp-landing-coldopen__stars--below { margin-bottom: .24rem; }
+	.bhp-landing-coldopen__subhead { font-size: .74rem; margin-bottom: .25rem; }
+	.bhp-landing-coldopen__trust { padding-top: .28rem; }
+	.bhp-landing-coldopen__trust li {
+		font-size: .71rem;
+		line-height: 1.3;
+		margin-bottom: .08rem;
+	}
+	.bhp-landing-coldopen { margin-bottom: .3rem; }
+
+	/* 0,2,0 so it outranks the base `.bhp-landing-cta` padding without
+	   `!important`. The label still wraps to two lines at 390px — this
+	   trims the box around it, not the words inside it. */
+	.bhp-landing .bhp-landing-cta--primary {
+		padding-block: .55rem;
+		font-size: .94rem;
+		line-height: 1.15;
+		min-height: 0;
+	}
+}

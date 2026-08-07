@@ -109,12 +109,12 @@ bhp_ab_assert(
 $expected = [
     'A' => [
         'heading'      => "It's Heartbreaking to Watch Them Fall Further Behind",
-        'sub'          => 'You can still change this. Get the Free 20-Minute Reluctant Reader Kit.',
+        'sub'          => 'You can still change this. Get the FREE 20-Minute Reluctant Reader Kit.',
         'content_name' => 'popup_hook_heartbreak',
     ],
     'B' => [
         'heading'      => 'Turn Reluctant Readers Into Willing Readers',
-        'sub'          => 'The Free 20-Minute Reluctant Reader Kit shows you exactly where to start.',
+        'sub'          => 'The FREE 20-Minute Reluctant Reader Kit shows you exactly where to start.',
         'content_name' => 'popup_hook_willing',
     ],
 ];

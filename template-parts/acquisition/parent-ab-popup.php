@@ -5,6 +5,17 @@
  * ⭐ Andrew Signore, current turn, verbatim: "I say build it now… Make it 15
  *    second delay." Two hooks, one offer, one form, 15 seconds.
  *
+ * ⭐ 1.19.207 (2026-08-07) — "FREE", AND NOTHING ELSE, CHANGED.
+ *    Andrew Signore's instruction (⛔ RELAYED through the Chief of Staff;
+ *    NOT witnessed here): the word FREE reads ALL CAPS, bold and larger
+ *    wherever it appears in this popup's copy. Three occurrences, one word
+ *    each: both variant subheads, the submit label and the trust caption.
+ *    The CASE is the only text edit; the WEIGHT and the SIZE are CSS
+ *    (`.popup-ab__free`), applied by `bhp_popup_ab_emphasise_free()`.
+ *    ⛔ The trio's "First chapter free" is deliberately UNTOUCHED — Andrew
+ *      ruled the trio keeps normal weight, and shouting one of three
+ *      parallel items would break the list's rhythm for no gain.
+ *
  * ⛔ THE TWO HEADINGS AND THE TWO SUBHEADS BELOW ARE LOCKED, APPROVED COPY.
  *    They are reproduced character-for-character from the brief. Do not
  *    rewrite, shorten, re-punctuate or "improve" either variant — an A/B
@@ -271,7 +282,10 @@ $inside = [
     <?php foreach ($variants as $key => $variant): ?>
       <div data-bhp-variant="<?php echo esc_attr($key); ?>">
         <h2 id="<?php echo esc_attr($title_ids[$key]); ?>"><?php echo esc_html($variant['heading']); ?></h2>
-        <p id="<?php echo esc_attr($desc_ids[$key]); ?>" class="mariana-popup__text"><?php echo esc_html($variant['sub']); ?></p>
+        <?php /* 1.19.207: escaped inside bhp_popup_ab_emphasise_free() BEFORE the
+                 one <span> is added, so this echo is safe and the copy is still
+                 the plain string the suite compares against. */ ?>
+        <p id="<?php echo esc_attr($desc_ids[$key]); ?>" class="mariana-popup__text"><?php echo bhp_popup_ab_emphasise_free($variant['sub']); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source, see the helper. ?></p>
       </div>
     <?php endforeach; ?>
 
@@ -293,7 +307,9 @@ $inside = [
         // repeat their text where the eye is, which is inside the field.
         'name_placeholder'     => __('First name', 'brave-hearts'),
         'email_placeholder'    => __('Email address', 'brave-hearts'),
-        'submit_label'         => __('Send Me the Free Kit', 'brave-hearts'),
+        // 1.19.207: caps only. The submit control is already the site's
+        // bold, large converting-CTA treatment, so it needs no extra span.
+        'submit_label'         => __('Send Me the FREE Kit', 'brave-hearts'),
         // The site's established converting-CTA treatment, by class rather
         // than by a re-declaration of it. See the file header, point 4.
         'submit_class'         => 'btn-cta-primary',
@@ -304,7 +320,7 @@ $inside = [
         'hidden_fields'        => ['bhp_variant' => ''],
     ]); ?>
 
-    <p class="mariana-popup__trust text-caption"><?php esc_html_e('Free printable PDF. No purchase required.', 'brave-hearts'); ?></p>
+    <p class="mariana-popup__trust text-caption"><?php echo bhp_popup_ab_emphasise_free(__('FREE printable PDF. No purchase required.', 'brave-hearts')); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source. ?></p>
     <button type="button" class="mariana-popup__dismiss" data-bhp-popup-dismiss><?php esc_html_e('No thanks', 'brave-hearts'); ?></button>
   </div>
 </div>
