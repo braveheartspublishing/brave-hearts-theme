@@ -538,7 +538,7 @@
 	font-family: var(--bl-serif);
 	font-size: clamp(1.32rem, 2.6vw, 1.85rem);
 	line-height: 1.18;
-	font-weight: 600;
+	font-weight: 700; /* 2026-08-07: Andrew — headline bold */
 	letter-spacing: -0.2px;
 	color: var(--bl-forest);
 	margin: 0 0 .4rem;

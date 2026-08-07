@@ -225,21 +225,13 @@ bhp_cct_assert(
 	$failures
 );
 
-$testimonial       = bhp_bundle_landing_testimonial_quote();
-$teacher_fragment  = 'engaging, educational';
+$testimonial = bhp_bundle_landing_testimonial_quote();
+/* 2026-08-07 (Andrew, current-turn): the teacher fragment left the cold-open
+   bar — replaced by the FREE offer line. The full testimonial remains
+   published further down (asserted below, unchanged). */
 bhp_cct_assert(
-	stripos( $testimonial, $teacher_fragment ) !== false,
-	'3: the teacher fragment is a literal substring of the approved testimonial',
-	$failures
-);
-bhp_cct_assert(
-	strpos( $html, 'Engaging, educational' ) !== false,
-	'3: the teacher fragment actually renders',
-	$failures
-);
-bhp_cct_assert(
-	preg_match( '/Engaging, educational.{0,120}verified Amazon review/su', $html ) === 1,
-	'3: the teacher fragment carries its "verified Amazon review" attribution',
+	preg_match( '/<strong>FREE<\/strong> Activity Book \+ <strong>FREE<\/strong> Shipping/', $html ) === 1,
+	'3: the FREE Activity Book + FREE Shipping line renders, FREE bold (2026-08-07 revision)',
 	$failures
 );
 bhp_cct_assert(
@@ -276,6 +268,11 @@ bhp_cct_assert(
  */
 if ( preg_match( '/<div class="bhp-landing-coldopen">(.*?)<\/div>/su', $html, $m ) ) {
 	$cold = $m[1];
+	bhp_cct_assert(
+		strpos( $cold, 'Engaging, educational' ) === false,
+		'3: the teacher fragment no longer renders in the cold-open bar (2026-08-07 revision; full testimonial still published below)',
+		$failures
+	);
 	/*
 	 * ⭐ 1.8.33 — SUPERSEDED ASSERTION, REPLACED BY A STRICTER ONE.
 	 *

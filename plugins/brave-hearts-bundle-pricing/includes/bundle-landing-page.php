@@ -484,9 +484,14 @@ function bhp_bundle_render_landing_cold_open() {
 		?>
 		<h2 class="bhp-landing-coldopen__headline">Real places. Short chapters.<br />Stories that pull kids off screens.</h2>
 		<p class="bhp-landing-coldopen__subhead">Educational without feeling like homework &middot; ages 6&ndash;9</p>
+		<?php
+		// 2026-08-07 revision (Andrew, current-turn): the teacher quote leaves
+		// the cold-open bar (still published in full further down the page);
+		// the FREE offer line takes its place, FREE bold per his standing rule.
+		?>
 		<ul class="bhp-landing-coldopen__trust">
 			<li>&ldquo;&hellip;spark children&rsquo;s curiosity&rdquo; &mdash; <?php echo esc_html( $kirkus['attribution'] ); ?>, on <em>The Mariana Trench</em></li>
-			<li>&ldquo;Engaging, educational&rdquo; &mdash; elementary teacher, verified Amazon review</li>
+			<li><strong>FREE</strong> Activity Book + <strong>FREE</strong> Shipping</li>
 		</ul>
 	</div>
 	<?php
