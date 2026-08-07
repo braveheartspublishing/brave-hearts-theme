@@ -410,17 +410,27 @@ bhp_ab_assert(
 /* ⛔⛔ THE PAGE-LOAD GUARD, AND IT IS THE ONE ASSERTION IN THIS SECTION THAT
  *     PROTECTS SOMETHING OTHER THAN APPEARANCE.
  *
- *     The first build of this strip used `<img loading="lazy">` on the
- *     reasoning that a lazy image inside a `display:none` popup is never
- *     fetched. A resource-timing read on staging disproved it: all three
- *     covers were requested at 4,450 ms while the popup opened at 19,599 ms.
- *     `loading="lazy"` falls back to EAGER for an element that is not being
- *     rendered, so the attribute bought nothing and put three requests on
- *     every page of the site.
+ *     ⚠ AN EARLIER VERSION OF THIS COMMENT SAID `loading="lazy"` HAD BEEN
+ *       DISPROVED, citing three cover requests at 4,450 ms against a popup
+ *       that opened at 19,599 ms. THAT CLAIM IS WITHDRAWN: those requests
+ *       were the HOMEPAGE's own covers, whose srcset carries a 196w candidate
+ *       resolving to the same file. Measured properly afterwards, this
+ *       Chromium defers a lazy <img> and a background-image IDENTICALLY
+ *       inside a `display:none` subtree. The withdrawal is written out in
+ *       `parent-ab-popup.php`; it is summarised here so nobody re-derives the
+ *       wrong conclusion from a test comment.
  *
- *     A background-image on a non-rendered element is never fetched. This
- *     assertion is what stops the next well-meaning pass from "improving"
- *     these back into <img> tags and silently restoring the cost. */
+ *     The assertion stands on the narrower, engine-independent ground: a
+ *     background on a non-rendered element is deferred BY DEFINITION — no box
+ *     is generated, so no background is ever needed — whereas lazy-image
+ *     deferral inside `display:none` was verified in Chromium ONLY, with
+ *     Safari and Firefox untested and unclaimed. On a surface that renders on
+ *     every page of the site, take the guarantee that needs no browser test.
+ *
+ *     Observed against the real popup on staging `/about/` (a page with no
+ *     covers of its own, so nothing can be misattributed a second time): zero
+ *     cover requests before the open, all three at 16,467 ms against an open
+ *     at 16,475 ms. */
 bhp_ab_assert(
     3 === substr_count($strip, 'background-image:url(') && false === strpos($strip, '<img'),
     'the covers are CSS backgrounds, not <img> — a non-rendered background is never fetched, and a lazy <img> IS (measured)',

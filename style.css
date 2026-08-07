@@ -7796,14 +7796,25 @@ a.header-expedition-cta {
    what make it a lockup; the middle cover sits forward and slightly larger,
    the same arrangement the landing-page hero already uses.
 
-   ⛔ THESE ARE BACKGROUNDS, NOT IMAGES, AND THE REASON IS MEASURED. An <img>
-      with `loading="lazy"` inside a `display:none` popup IS STILL FETCHED —
-      observed on staging at 4,450 ms against a popup that opened at 19,599 ms,
-      because lazy-loading falls back to eager for an element that is not being
-      rendered. A background-image on a non-rendered element is never fetched
-      at all. The full note is in `parent-ab-popup.php`. Each element carries
-      its attachment's real `aspect-ratio` inline, so the box is the right
-      shape before the background arrives and the strip cannot shift. */
+   ⛔ THESE ARE BACKGROUNDS, NOT IMAGES — and NOT because `loading="lazy"`
+      failed. It did not: measured directly, this Chromium defers a lazy <img>
+      and a background-image identically inside a `display:none` subtree, and
+      an earlier note here claiming otherwise was reading the HOMEPAGE's own
+      srcset requests. That withdrawal is written out in full in
+      `parent-ab-popup.php` and is not repeated here.
+
+      The real reason is narrower and holds without a browser test: a
+      background on a non-rendered element is deferred BY DEFINITION, because
+      no box is generated and no background is ever needed. Lazy-image
+      deferral inside `display:none` was verified in Chromium ONLY — Safari
+      and Firefox were not tested and are not claimed. On a surface that
+      renders on every page of the site, prefer the guarantee that does not
+      depend on an untested engine.
+
+      Each element carries its attachment's real `aspect-ratio` inline, so the
+      box is the right shape before the background arrives and the strip
+      cannot shift. Observed on staging `/about/`: zero cover requests before
+      the open, all three at 16,467 ms against an open at 16,475 ms. */
 .mariana-popup--ab .popup-ab__covers {
   display: flex;
   align-items: flex-end;

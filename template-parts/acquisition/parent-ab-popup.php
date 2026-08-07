@@ -218,27 +218,40 @@ $inside = [
     <?php if ($covers): ?>
       <?php
       /*
-       * ⛔ CSS BACKGROUNDS, NOT <img>, AND THE REASON IS MEASURED RATHER THAN
-       *    stylistic. The first build of this strip used `wp_get_attachment_image`
-       *    with `loading="lazy"`, on the reasoning that a lazy image inside a
-       *    `display:none` popup is never fetched during page load. THAT
-       *    REASONING WAS WRONG AND THE BROWSER SAID SO: a resource-timing read
-       *    on staging showed all three `medium` covers requested at 4,450 ms,
-       *    while the popup did not open until 19,599 ms. `loading="lazy"`
-       *    falls back to eager for an element that is not being rendered, so
-       *    the attribute bought nothing and three requests rode on every page
-       *    of the site.
+       * ⛔ CSS BACKGROUNDS, NOT <img>. The reason is narrower than an earlier
+       *    version of this comment claimed, and the correction is recorded
+       *    here rather than quietly applied, because the earlier claim was a
+       *    MISREAD MEASUREMENT and that is the more useful thing to leave
+       *    behind.
        *
-       *    A background-image on an element inside a `display:none` subtree is
-       *    never fetched — the element generates no box, so no background is
-       *    ever needed. That is the property this strip actually wanted, and
-       *    it needs no JavaScript, so the approved popup engine stays
-       *    untouched. Re-measured after the change; see the release notes.
+       *    WHAT WAS CLAIMED, AND WITHDRAWN: that an `<img loading="lazy">`
+       *    inside this popup was still fetched during page load — "observed"
+       *    at 4,450 ms against a popup that opened at 19,599 ms. ⛔ THOSE
+       *    REQUESTS WERE NOT THE POPUP'S. They were the HOMEPAGE's own book
+       *    covers, whose `srcset` carries a 196w candidate that resolves to
+       *    the very same file this strip uses. The probe could not tell the
+       *    two apart and the conclusion drawn from it was wrong.
        *
-       *    Decorative by construction: no <img>, no alt to get wrong, and the
-       *    wrapper is hidden from assistive technology because the dialog is
-       *    already labelled by the headline and three book titles read ahead
-       *    of it would be noise.
+       *    WHAT WAS ACTUALLY MEASURED, in a direct experiment: inside a
+       *    `display:none` subtree, this Chromium fetches NEITHER a
+       *    `loading="lazy"` image NOR a background-image, and fetches both
+       *    the moment the subtree is shown. Confirmed against the real popup
+       *    on `/about/` — a page with no covers of its own, so nothing can be
+       *    misattributed: ZERO cover requests before the open, all three at
+       *    16,467 ms against an open at 16,475 ms.
+       *
+       *    SO WHY BACKGROUNDS. Not because lazy failed — it did not. Because
+       *    a background on a non-rendered element is deferred BY DEFINITION
+       *    (no box is generated, so no background is ever needed), while
+       *    `loading="lazy"` deferral inside `display:none` is an engine
+       *    behaviour this session could verify in Chromium ONLY. Safari and
+       *    Firefox were NOT tested from this machine and are not claimed. On
+       *    a surface that renders on every page of the site, the guarantee
+       *    that does not depend on an untested engine is the right one — and
+       *    it costs nothing here, because these covers are decoration: no
+       *    <img> means no alt to get wrong, and the wrapper is hidden from
+       *    assistive technology since the dialog is already labelled by the
+       *    headline and three book titles read ahead of it would be noise.
        *
        *    `aspect-ratio` carries the attachment's real dimensions, so the box
        *    is the right shape before the background arrives and the strip
