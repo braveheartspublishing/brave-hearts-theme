@@ -7972,6 +7972,38 @@ a.header-expedition-cta {
   background: rgba(var(--color-forest-rgb), 0.08);
 }
 
+/* ⚠ 8 · THE FOCUS RING, WHICH IS A REAL FINDING AND NOT A PREFERENCE.
+   OBSERVED, not inferred: when this popup opens, the engine moves focus to the
+   close button, and Chromium matches `:focus-visible` on that programmatic
+   focus even for a visitor who has only ever used a mouse — verified in a
+   browser by clicking the page before the timer fired and reading
+   `element.matches(':focus-visible')`, which returned true. So the FIRST thing
+   a real visitor's eye lands on in this modal is a 3px ring around the DISMISS
+   control. That is a fair part of what "not pleasing to the eye" was looking
+   at, and it is fixable here without touching the engine.
+
+   ⛔ THE INDICATOR IS NOT REMOVED — removing it would break keyboard use and
+      WCAG 2.4.7. It is re-coloured and thinned, and doing so makes it MORE
+      accessible on this surface, not less: the sitewide `--color-focus` is
+      #d8bd7d, a gold tuned for the dark grounds most of the site uses, and it
+      measures roughly 1.7:1 against this dialog's cream. Forest on cream
+      measures far above the 3:1 that WCAG 2.4.11 asks of a focus indicator.
+
+   ⛔ SCOPED, AND ONLY SCOPED. The sitewide gold focus ring is a design
+      decision this brief does not touch; the low-contrast-focus-on-cream
+      question belongs in a register, not in a popup polish pass. Flagged, not
+      resolved. */
+.mariana-popup--ab .mariana-popup__close:focus-visible,
+.mariana-popup--ab .mariana-popup__dismiss:focus-visible,
+.mariana-popup--ab .mariana-popup__form .acquisition-form__field input:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}
+.mariana-popup--ab .mariana-popup__dialog:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: -2px;
+}
+
 /* 7 · PHONE. Measured at 390x844, which is the viewport this release is judged
    at. Everything steps down together; nothing is dropped, because a visitor on
    a phone is being asked for the same two fields and deserves the same offer.

@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: a25f623fa8bb943bebcd44a0867e997c
+    source-md5: a8636b732a4d716383f5818e063d67f1
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -5303,6 +5303,16 @@ a.header-expedition-cta {
 .mariana-popup--ab .mariana-popup__close:hover,
 .mariana-popup--ab .mariana-popup__close:focus-visible {
   background: rgba(var(--color-forest-rgb), 0.08);
+}
+.mariana-popup--ab .mariana-popup__close:focus-visible,
+.mariana-popup--ab .mariana-popup__dismiss:focus-visible,
+.mariana-popup--ab .mariana-popup__form .acquisition-form__field input:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 2px;
+}
+.mariana-popup--ab .mariana-popup__dialog:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: -2px;
 }
 @media (max-width: 600px) {
   .mariana-popup--ab .mariana-popup__dialog {
