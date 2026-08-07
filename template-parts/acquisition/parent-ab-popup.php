@@ -26,8 +26,11 @@
  *     exit-intent modal, deliberately: same funnel, same offer, so a visitor
  *     who signed up or dismissed through any of them is not asked again.
  *     Minting a new prefix would have created a second parent funnel.
- *   - ⛔ Nothing here reads or writes `bhp_mariana_popup_*`. The teacher
- *     funnel is untouched in both directions, and this popup never renders
+ *   - ⛔ Nothing here reads or writes the teacher funnel's own storage prefix
+ *     or thank-you path (deliberately not spelled out here — the suite
+ *     asserts their ABSENCE from this file, and quoting one in a comment
+ *     breaks that guard while changing no behaviour). The teacher funnel is
+ *     untouched in both directions, and this popup never renders
  *     on `/teachers/` — enforced server-side in
  *     `bhp_should_show_parent_ab_popup()`, not by CSS or JS.
  *
@@ -93,11 +96,16 @@ $popup_config = wp_json_encode([
         // A pure timer. No scroll trigger, no fallback, no exit gesture:
         // Andrew asked for a delay, and a delay is the whole rule.
         //
-        // ⚠ THE DELAY LITERAL MUST STAY `'delay' => 15000` ON ONE LINE, WITH
-        //   SINGLE SPACES AROUND ITS ARROW, IN BOTH DEVICE ARRAYS — AND THAT
-        //   EXACT STRING MUST APPEAR EXACTLY TWICE IN THIS FILE, ONCE PER
-        //   DEVICE. `tests/test-popup-ab.php` counts its occurrences to guard
-        //   Andrew's "Make it 15 second delay" against a silent edit.
+        // ⚠ THE TWO DELAY ASSIGNMENTS BELOW MUST STAY ON ONE LINE EACH, WITH
+        //   SINGLE SPACES AROUND THE ARROW, AND MUST BE THE ONLY TWO
+        //   OCCURRENCES IN THIS FILE — ONE PER DEVICE.
+        //   `tests/test-popup-ab.php` COUNTS THEM to guard Andrew's "Make it
+        //   15 second delay" against a silent edit. Aligning the arrows breaks
+        //   that guard while changing no behaviour, and SO DOES QUOTING THE
+        //   ASSIGNMENT IN A COMMENT — which is why this note describes it
+        //   instead of reproducing it. Both mistakes were made on the
+        //   equivalent guard in exit-intent-popup.php, and both were caught by
+        //   running the suite rather than by review.
         'mode'    => 'simple',
         'desktop' => ['delay' => 15000],
         'mobile'  => ['delay' => 15000],
