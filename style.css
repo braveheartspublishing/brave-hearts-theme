@@ -7794,7 +7794,16 @@ a.header-expedition-cta {
 /* 2 · THE COVER STRIP — small, warm, and overlapped like books on a shelf
    rather than three separate thumbnails in a row. The negative margins are
    what make it a lockup; the middle cover sits forward and slightly larger,
-   the same arrangement the landing-page hero already uses. */
+   the same arrangement the landing-page hero already uses.
+
+   ⛔ THESE ARE BACKGROUNDS, NOT IMAGES, AND THE REASON IS MEASURED. An <img>
+      with `loading="lazy"` inside a `display:none` popup IS STILL FETCHED —
+      observed on staging at 4,450 ms against a popup that opened at 19,599 ms,
+      because lazy-loading falls back to eager for an element that is not being
+      rendered. A background-image on a non-rendered element is never fetched
+      at all. The full note is in `parent-ab-popup.php`. Each element carries
+      its attachment's real `aspect-ratio` inline, so the box is the right
+      shape before the background arrives and the strip cannot shift. */
 .mariana-popup--ab .popup-ab__covers {
   display: flex;
   align-items: flex-end;
@@ -7802,9 +7811,12 @@ a.header-expedition-cta {
   margin-bottom: var(--space-3);
 }
 .mariana-popup--ab .popup-ab__cover {
-  width: auto;
+  display: block;
   height: 72px;
   border-radius: 3px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   box-shadow: 0 4px 10px rgba(var(--color-jungle-rgb), 0.22);
 }
 .mariana-popup--ab .popup-ab__cover:first-child { transform: rotate(-4deg); margin-right: -10px; }

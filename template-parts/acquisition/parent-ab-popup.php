@@ -67,11 +67,10 @@
  *      media the homepage, the collection page and the parent landing page
  *      already serve — at the `medium` size WordPress generated for them
  *      when they were first uploaded. No new asset, no new upload, no new
- *      image generation. They carry `loading="lazy"` and their intrinsic
- *      dimensions: the popup is `display:none` until the timer fires, so a
- *      lazy image inside it is never fetched during page load and the
- *      release's zero-LCP / zero-CLS property is preserved by construction
- *      rather than by hope. Measured after the change; see the release notes.
+ *      image generation. They are CSS BACKGROUNDS, not `<img>` elements, and
+ *      the difference is measured rather than stylistic: see the block
+ *      comment on the strip itself. Nothing about them is fetched until the
+ *      popup opens, so the release's zero-LCP / zero-CLS property survives.
  *
  *   2. A "WHAT'S INSIDE" TRIO, and every item of it describes the resource
  *      that is actually delivered. The Adventure Kit is already described
@@ -217,20 +216,41 @@ $inside = [
     </button>
 
     <?php if ($covers): ?>
-      <?php /* Decorative. The dialog is already labelled by the headline, and
-               three cover alt strings read before it would be noise, so the
-               strip is hidden from assistive technology and every image
-               carries an empty alt — the correct pairing, not one or the
-               other. */ ?>
+      <?php
+      /*
+       * ⛔ CSS BACKGROUNDS, NOT <img>, AND THE REASON IS MEASURED RATHER THAN
+       *    stylistic. The first build of this strip used `wp_get_attachment_image`
+       *    with `loading="lazy"`, on the reasoning that a lazy image inside a
+       *    `display:none` popup is never fetched during page load. THAT
+       *    REASONING WAS WRONG AND THE BROWSER SAID SO: a resource-timing read
+       *    on staging showed all three `medium` covers requested at 4,450 ms,
+       *    while the popup did not open until 19,599 ms. `loading="lazy"`
+       *    falls back to eager for an element that is not being rendered, so
+       *    the attribute bought nothing and three requests rode on every page
+       *    of the site.
+       *
+       *    A background-image on an element inside a `display:none` subtree is
+       *    never fetched — the element generates no box, so no background is
+       *    ever needed. That is the property this strip actually wanted, and
+       *    it needs no JavaScript, so the approved popup engine stays
+       *    untouched. Re-measured after the change; see the release notes.
+       *
+       *    Decorative by construction: no <img>, no alt to get wrong, and the
+       *    wrapper is hidden from assistive technology because the dialog is
+       *    already labelled by the headline and three book titles read ahead
+       *    of it would be noise.
+       *
+       *    `aspect-ratio` carries the attachment's real dimensions, so the box
+       *    is the right shape before the background arrives and the strip
+       *    cannot shift as it loads.
+       */
+      ?>
       <div class="popup-ab__covers" aria-hidden="true">
         <?php foreach ($covers as $cover): ?>
-          <?php echo wp_get_attachment_image((int) $cover['id'], 'medium', false, [
-              'alt'      => '',
-              'class'    => 'popup-ab__cover',
-              'loading'  => 'lazy',
-              'decoding' => 'async',
-              'sizes'    => '(max-width: 600px) 44px, 54px',
-          ]); ?>
+          <span
+            class="popup-ab__cover"
+            style="background-image:url('<?php echo esc_url($cover['url']); ?>');aspect-ratio:<?php echo (int) $cover['width']; ?>/<?php echo (int) $cover['height']; ?>;"
+          ></span>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>

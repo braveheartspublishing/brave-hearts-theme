@@ -345,7 +345,7 @@ bhp_ab_assert(
  *
  *   a. the popup still carries its OWN modifier class, so the polish stays
  *      scoped and the teacher/exit-intent/legacy popups keep their styling;
- *   b. the cover strip is DECORATIVE and LAZY — the release's zero-LCP
+ *   b. the cover strip is a DECORATIVE CSS BACKGROUND — the release's zero-cost
  *      property depends on the second of those, and the first is why three
  *      book titles are not read out before the headline;
  *   c. the labels are still in the DOM. They are hidden with CSS; a future
@@ -403,17 +403,33 @@ if (preg_match('/<div class="popup-ab__covers"[^>]*>(.*?)<\/div>/s', $rendered, 
 bhp_ab_assert(
     1 === substr_count($rendered, 'class="popup-ab__covers"') &&
     3 === substr_count($strip, 'class="popup-ab__cover"'),
-    'the rendered strip contains exactly three cover images in one wrapper',
+    'the rendered strip contains exactly three covers in one wrapper',
     $failures
 );
 
-// ⛔ THE ZERO-LCP GUARD. The popup is display:none until the timer fires, so a
-//    LAZY image inside it is never fetched during page load. An eager one
-//    would be — and would put three product covers on the critical path of
-//    every page on the site.
+/* ⛔⛔ THE PAGE-LOAD GUARD, AND IT IS THE ONE ASSERTION IN THIS SECTION THAT
+ *     PROTECTS SOMETHING OTHER THAN APPEARANCE.
+ *
+ *     The first build of this strip used `<img loading="lazy">` on the
+ *     reasoning that a lazy image inside a `display:none` popup is never
+ *     fetched. A resource-timing read on staging disproved it: all three
+ *     covers were requested at 4,450 ms while the popup opened at 19,599 ms.
+ *     `loading="lazy"` falls back to EAGER for an element that is not being
+ *     rendered, so the attribute bought nothing and put three requests on
+ *     every page of the site.
+ *
+ *     A background-image on a non-rendered element is never fetched. This
+ *     assertion is what stops the next well-meaning pass from "improving"
+ *     these back into <img> tags and silently restoring the cost. */
 bhp_ab_assert(
-    3 === substr_count($strip, 'loading="lazy"'),
-    'all three cover images are lazy — no popup asset is fetched during page load',
+    3 === substr_count($strip, 'background-image:url(') && false === strpos($strip, '<img'),
+    'the covers are CSS backgrounds, not <img> — a non-rendered background is never fetched, and a lazy <img> IS (measured)',
+    $failures
+);
+
+bhp_ab_assert(
+    3 === substr_count($strip, 'aspect-ratio:'),
+    'each cover carries its attachment\'s real aspect-ratio — the strip cannot shift as the backgrounds arrive',
     $failures
 );
 
@@ -423,9 +439,10 @@ bhp_ab_assert(
     $failures
 );
 
+// Decorative by construction: no <img>, so there is no alt text to get wrong.
 bhp_ab_assert(
-    3 === substr_count($strip, 'alt=""') && 0 === preg_match('/alt="[^"]+"/', $strip),
-    'every cover image carries an empty alt — decorative, matching the aria-hidden wrapper',
+    false === strpos($strip, 'alt='),
+    'the strip declares no alt text because it declares no image — decoration, matching the aria-hidden wrapper',
     $failures
 );
 

@@ -2153,9 +2153,19 @@ function bhp_get_popup_ab_covers() {
 
     $covers = [];
     foreach (bhp_get_series_adventures() as $adventure) {
-        if (!empty($adventure['image_id'])) {
-            $covers[] = ['id' => (int) $adventure['image_id']];
+        if (empty($adventure['image_id'])) {
+            continue;
         }
+        $src = wp_get_attachment_image_src((int) $adventure['image_id'], 'medium');
+        if (!$src || empty($src[0])) {
+            continue;
+        }
+        $covers[] = [
+            'id'     => (int) $adventure['image_id'],
+            'url'    => $src[0],
+            'width'  => (int) $src[1],
+            'height' => (int) $src[2],
+        ];
     }
 
     set_transient('bhp_popup_ab_covers', $covers, 12 * HOUR_IN_SECONDS);

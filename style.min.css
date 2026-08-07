@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: a97b9a1511a8f0e858d0bcdc5e15d1c3
+    source-md5: 279b2ac7c17f26109bbb3dcff4cbdbea
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -5194,9 +5194,12 @@ a.header-expedition-cta {
   margin-bottom: var(--space-3);
 }
 .mariana-popup--ab .popup-ab__cover {
-  width: auto;
+  display: block;
   height: 72px;
   border-radius: 3px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   box-shadow: 0 4px 10px rgba(var(--color-jungle-rgb), 0.22);
 }
 .mariana-popup--ab .popup-ab__cover:first-child { transform: rotate(-4deg); margin-right: -10px; }
