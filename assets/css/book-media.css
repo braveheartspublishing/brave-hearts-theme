@@ -506,6 +506,57 @@ body.bhp-gallery-lightbox-open {
 	max-width: 100%;
 }
 
+/*
+ * ⭐ 1.19.206 / CYCLE147-LD-03 (2026-08-07) — THE SLIDE FILLS ITS GREEN BOX.
+ *
+ * Andrew Signore, from his own mobile audit (⛔ RELAYED through the Chief of
+ * Staff, NOT witnessed here): the carousel image "looks too small for any
+ * audience".
+ *
+ * ⭐ THE CAUSE WAS NOT THE STAGE. MEASURED on staging 1.19.205 with
+ *    `innerWidth` asserted on both runs:
+ *
+ *      390 x 844   stage 358 x 240   image rendered 300 x 190
+ *      1440 x 900  stage 571 x 460   image rendered 560 x 355
+ *
+ *    300 and 560 are not coincidences and they are not the image's own size —
+ *    they are the two clauses of the `sizes` attribute in
+ *    `template-parts/commerce/look-inside.php`,
+ *    `(max-width: 1024px) 300px, 560px`.
+ *
+ *    ⚠ THIS IS THE TRAP, AND IT IS WORTH STATING ONCE: with `width: auto` an
+ *      `<img>` that carries `srcset` + `sizes` lays out at its
+ *      DENSITY-CORRECTED INTRINSIC SIZE, which the browser derives from
+ *      `sizes` — so `sizes` was silently acting as a layout width, not just
+ *      as a download hint. The phone was therefore painting a 300px picture
+ *      into a 358px box and letting 58px of forest green sit either side of
+ *      it. That is exactly the "too small" Andrew saw.
+ *
+ * The fix is one declaration: give the collection slide an EXPLICIT CSS width,
+ * which outranks intrinsic sizing entirely. `height: auto` keeps the aspect
+ * ratio; `max-height` still caps a tall slide against the stage; `object-fit:
+ * contain` is inherited from the base rule, so a PORTRAIT slide (a book cover,
+ * an interior spread) is letterboxed exactly as it is today and is never
+ * stretched or cropped. Verified against both a landscape composite and the
+ * portrait interior slides in the same rail.
+ *
+ * ⛔ SCOPED TO `--collection`. The product-page hero galleries and the funnel
+ *    placements keep the shared behaviour unchanged.
+ *
+ * MEASURED AFTER: 358 x 227 on the phone (+19.3% linear over 300 x 190) and
+ * 632 x 400 on desktop (+12.9% over 560 x 355, with the column widening in
+ * bundle-landing.css). The phone deliberately overshoots the 10-15% Andrew
+ * asked for, because the box's own width is the natural stopping point and
+ * stopping short of it would leave the dead green gutters that prompted the
+ * note in the first place.
+ */
+.bhp-media-gallery--collection .bhp-gallery__img,
+.bhp-media-gallery--collection .bhp-gallery__video {
+	width: 100%;
+	height: auto;
+	max-height: var(--bhp-stage-h);
+}
+
 .bhp-media-gallery--collection .bhp-gallery__stage {
 	background: var(--bl-forest, #1e4331);
 	border-radius: 14px;

@@ -515,3 +515,137 @@
 		margin-bottom: 0;
 	}
 }
+
+/* ==================================================================
+   ⭐ 1.8.32 (2026-08-07) — THE COLD-TRAFFIC OPENING. CYCLE147-LD-01/02/03.
+   ------------------------------------------------------------------
+   Andrew Signore's own mobile audit of /complete-collection/, RELAYED
+   through the Chief of Staff and NOT witnessed here. Three asks:
+   a bigger gallery image, an emotional case above the price, and the
+   buy button above the fold on a phone.
+
+   Everything below is ADDITIVE or a single declaration change. No
+   existing rule is deleted, and nothing outside `.bhp-landing-*` is
+   touched — this stylesheet is enqueued on this one page only
+   (`bhp_bundle_landing_enqueue_assets()` gates on the shortcode).
+   ================================================================== */
+
+/* ---- The cold open: headline, subhead, compact trust bar ---------- */
+.bhp-landing-coldopen {
+	margin: 0 0 1rem;
+}
+.bhp-landing-coldopen__headline {
+	font-family: var(--bl-serif);
+	font-size: clamp(1.32rem, 2.6vw, 1.85rem);
+	line-height: 1.18;
+	font-weight: 600;
+	letter-spacing: -0.2px;
+	color: var(--bl-forest);
+	margin: 0 0 .4rem;
+}
+.bhp-landing-coldopen__subhead {
+	font-family: var(--bl-sans);
+	font-size: .82rem;
+	font-weight: 700;
+	letter-spacing: .02em;
+	color: var(--bl-text-muted);
+	margin: 0 0 .6rem;
+}
+
+/*
+ * The trust bar is a LIST, not a row of pills. Three short lines read
+ * faster on a 390px phone than three wrapped pills do, and a list keeps
+ * the three claims separable in the accessibility tree — each one has a
+ * different source and only one of them is a professional review.
+ */
+.bhp-landing-coldopen__trust {
+	list-style: none;
+	margin: 0;
+	padding: 0 0 .1rem;
+	border-top: 1px solid var(--bl-border);
+	padding-top: .6rem;
+}
+.bhp-landing-coldopen__trust li {
+	position: relative;
+	padding-left: 1.05rem;
+	margin: 0 0 .22rem;
+	font-family: var(--bl-sans);
+	font-size: .76rem;
+	line-height: 1.42;
+	color: var(--bl-text-muted);
+}
+.bhp-landing-coldopen__trust li:last-child { margin-bottom: 0; }
+.bhp-landing-coldopen__trust li::before {
+	content: "\2713";               /* a check mark, matching the scan bars on the audience pages */
+	position: absolute;
+	left: 0;
+	top: 0;
+	font-weight: 700;
+	color: var(--bl-forest-mid);
+}
+.bhp-landing-coldopen__trust em { font-style: italic; }
+
+/* ---- The two benefit lines: bold, bulleted, one per line ---------- */
+/*
+ * `--benefit` only restyles. The row is still a `<dt>`/`<dd>` pair inside
+ * the same `<dl>`, so the label still labels the value.
+ */
+.bhp-landing-panel__price-rows--compact .bhp-landing-panel__price-row--benefit {
+	position: relative;
+	padding-left: 1.05rem;
+	font-size: .9rem;
+	font-weight: 700;
+	color: var(--bl-forest);
+}
+.bhp-landing-panel__price-rows--compact .bhp-landing-panel__price-row--benefit::before {
+	content: "\2713";
+	position: absolute;
+	left: 0;
+	top: .35rem;
+	font-weight: 700;
+	color: var(--bl-forest-mid);
+}
+.bhp-landing-panel__price-rows--compact .bhp-landing-panel__price-row--benefit dd {
+	font-weight: 800;
+	letter-spacing: .01em;
+	color: var(--bl-forest-mid);
+	text-transform: uppercase;
+	font-size: .82rem;
+}
+
+/* ---- The lead CTA now sits above the price block ------------------ */
+.bhp-landing-panel__form--lead { margin: 0 0 .85rem; }
+
+/*
+ * The format detail (binding, three titles) moved BELOW the price block,
+ * so its old top margin now faces the savings badge instead of the panel
+ * heading. One margin correction; the type is untouched.
+ */
+.bhp-landing-panel--compact .bhp-landing-panel__subtitle { margin-top: .1rem; }
+
+/* ==================================================================
+   ⭐ 1.8.32 — THE GALLERY COLUMN IS WIDER ON DESKTOP. CYCLE147-LD-03.
+   ------------------------------------------------------------------
+   Andrew: the carousel image "looks too small for any audience".
+
+   MEASURED FIRST, at 1440x900 on staging 1.19.205 with `innerWidth`
+   asserted: the green stage is 571px wide and the image inside it renders
+   at 560x355. So on desktop the image was already at the stage's width —
+   the stage itself was the constraint, and no amount of stage-height or
+   object-fit work could have made the picture bigger. The COLUMN had to
+   grow.
+
+   1.15fr -> 1.45fr moves the gallery from 53.5% to 59.2% of the hero row:
+   571px -> 632px, +10.7% linear. The purchase card goes 497px -> 436px,
+   which still clears the two format pills (2 x ~178px inside 372px of
+   content box) and the CTA.
+
+   Scoped to >=961px deliberately: at 960px and below `.bhp-landing-hero__main`
+   is already a single column, so this declaration is not in play there and
+   the phone layout is decided entirely by the rule in book-media.css.
+   ================================================================== */
+@media (min-width: 961px) {
+	.bhp-landing-hero__main {
+		grid-template-columns: 1.45fr 1fr;
+	}
+}

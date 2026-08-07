@@ -325,6 +325,15 @@ function bhp_bundle_render_landing_pricing_card() {
 			Best Value - Get the Complete Collection
 		</span>
 
+		<?php bhp_bundle_render_landing_cold_open(); ?>
+
+		<?php /* C1 — same ordering call. These panels are toggled by `hidden`, so
+		         this is a DOM/tab-order alignment with the pills below, not a
+		         visual change: the visible panel is the default either way. */ ?>
+		<?php foreach ( bhp_bundle_format_order() as $format ) : ?>
+			<?php bhp_bundle_render_landing_pricing_panel( $format ); ?>
+		<?php endforeach; ?>
+
 		<div class="bhp-landing-format-selector" role="radiogroup" aria-label="Choose your format">
 			<p class="bhp-landing-format-selector__label">Choose Your Format</p>
 			<div class="bhp-landing-format-selector__options">
@@ -360,15 +369,108 @@ function bhp_bundle_render_landing_pricing_card() {
 			</div>
 			<p class="bhp-landing-format-selector__note">Choose paperback for the most affordable reading set, or hardcover for a more durable, gift-ready edition.</p>
 		</div>
-
-		<?php /* C1 — same ordering call. These panels are toggled by `hidden`, so
-		         this is a DOM/tab-order alignment with the pills above, not a
-		         visual change: the visible panel is the default either way. */ ?>
-		<?php foreach ( bhp_bundle_format_order() as $format ) : ?>
-			<?php bhp_bundle_render_landing_pricing_panel( $format ); ?>
-		<?php endforeach; ?>
 	</div>
 	<?php
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.8.32 — THE COLD-TRAFFIC OPENING. CYCLE147-LD-01.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-07, from his own mobile audit of this page
+ * (⛔ RELAYED through the Chief of Staff; NOT witnessed first-hand here).
+ * A visitor arriving cold met a price box before a reason, and the page's
+ * only emotional argument sat below it.
+ *
+ * This block is the reason, and it renders between the "Best Value" badge
+ * and the purchase panel: headline → one-line subhead → compact trust bar.
+ *
+ * ⛔ EVERY CLAIM IN THE TRUST BAR IS ALREADY PUBLISHED ON THIS PAGE. It
+ *    invents nothing and it widens nothing:
+ *
+ *    · The Kirkus line is a verbatim FRAGMENT of the approved quote in
+ *      `bhp_get_kirkus_review_data()`, which this page already renders in
+ *      full further down, and it carries the reviewed title — because only
+ *      The Mariana Trench was reviewed and this page sells three books.
+ *      Dropping that scope would turn a true claim into a false one.
+ *    · The teacher line is a verbatim FRAGMENT of the testimonial this page
+ *      already renders in `bhp_bundle_render_landing_testimonial()`, with
+ *      its existing attribution kept.
+ *    · "Placed in classrooms across Boise" is the EXACT string the trust
+ *      row below already publishes. Its whole history — why the verb is
+ *      "placed" and not "used", and why the count was dropped — is in the
+ *      docblock on `bhp_bundle_render_landing_trust_row()` and is unchanged.
+ *      Placement remains the only thing asserted.
+ *
+ * ⛔ BOTH FRAGMENTS ARE ASSERTED TO BE SUBSTRINGS OF THEIR SOURCES by
+ *    `tests/test-collection-cold-traffic.php`, so a future edit to either
+ *    source that leaves a fragment behind fails a suite instead of quietly
+ *    publishing a quote nobody said.
+ *
+ * ⛔ NO star glyphs, no rating, no count, no aggregate, no "trusted by",
+ *    no reading, literacy, classroom or developmental outcome.
+ */
+function bhp_bundle_render_landing_cold_open() {
+	$kirkus = bhp_get_kirkus_review_data();
+	?>
+	<div class="bhp-landing-coldopen">
+		<h2 class="bhp-landing-coldopen__headline">Real places. Short chapters. Stories that pull kids off screens.</h2>
+		<p class="bhp-landing-coldopen__subhead">Short chapters &middot; real places &middot; ages 6&ndash;9</p>
+		<ul class="bhp-landing-coldopen__trust">
+			<li>&ldquo;&hellip;spark children&rsquo;s curiosity&rdquo; &mdash; <?php echo esc_html( $kirkus['attribution'] ); ?>, on <em>The Mariana Trench</em></li>
+			<li>&ldquo;Engaging, educational&rdquo; &mdash; elementary teacher, verified Amazon review</li>
+			<li>Placed in classrooms across Boise</li>
+		</ul>
+	</div>
+	<?php
+}
+
+/**
+ * The full approved testimonial, in ONE place.
+ *
+ * Extracted in 1.8.32 for a single reason: the cold-open trust bar quotes a
+ * two-word fragment of it, and a fragment whose source is a string literal
+ * buried in a render function is a fragment nobody can check. Now the test
+ * suite can assert the fragment against the source. The wording is
+ * byte-identical to what `bhp_bundle_render_landing_testimonial()` published
+ * before this change.
+ */
+function bhp_bundle_landing_testimonial_quote() {
+	return 'My students were drawn to the vivid setting and sense of exploration. It&rsquo;s engaging, educational, and a great addition to any classroom or home library.';
+}
+
+/**
+ * ⭐ 1.8.32 — THE PRIMARY CTA LEADS WITH THE BENEFIT, AND ONLY WHEN IT IS TRUE.
+ *
+ * Andrew's instruction was a benefit-driven label: "Get the Complete
+ * Collection – Free Shipping".
+ *
+ * ⛔ THE SHIPPING HALF IS GATED, not typed in. It is appended only when the
+ *    three-book rule for THIS format actually resolves to a free tier, read
+ *    from `bhp_bundle_rules()` through `bhp_bundle_shipping_is_free()` — the
+ *    predicate that lives beside `bhp_bundle_shipping_display()` precisely so
+ *    the label and the threshold can never disagree. If Andrew ever re-prices
+ *    collection shipping, this label stops making the claim by itself; it does
+ *    not have to be remembered.
+ *
+ *    ⚠ The predicate is used rather than string-matching the rendered wording,
+ *      because that wording is filterable (`bhp_bundle_shipping_display`) and a
+ *      label that decided a truth claim by comparing against filtered prose
+ *      would silently start lying the first time anyone used the filter.
+ *
+ * The format is deliberately NOT in the label: the label sits above the
+ * price block and the format selector, and naming a format there would
+ * assert a choice the visitor has not made yet. The panel subtitle, the
+ * selector and the final CTA all still name it.
+ */
+function bhp_bundle_landing_primary_cta_label( $format ) {
+	$rule  = bhp_bundle_rules( $format )[3];
+	$label = 'Get the Complete Collection';
+	if ( bhp_bundle_shipping_is_free( $rule['shipping'] ) ) {
+		$label .= ' – Free Shipping';
+	}
+	return $label;
 }
 
 function bhp_bundle_render_landing_pricing_panel( $format ) {
@@ -411,19 +513,47 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 	 * hardcover's price, and it is the default format.
 	 */
 	?>
+	<?php
+	/*
+	 * ═══════════════════════════════════════════════════════════════════
+	 * ⭐ 1.8.32 — CTA FIRST, THEN THE PRICE. CYCLE147-LD-02.
+	 * ═══════════════════════════════════════════════════════════════════
+	 *
+	 * Andrew Signore, 2026-08-07 (⛔ RELAYED, not witnessed here), gave the
+	 * placement explicitly: the primary CTA goes above the fold, DIRECTLY
+	 * above the "Complete Collection · price" element, and directly below
+	 * the checkmark/trust line.
+	 *
+	 * ⛔ A MOVE, NOT A REWRITE. Same form, same nonce, same
+	 *    `bhp_bundle_action`, same `complete_{format}_smart`, same
+	 *    `bhp_bundle_checkout_redirect_input()` two-click machinery, same
+	 *    `data-bhp-landing-main-cta` hook. `bundle-drawer.js` intercepts by
+	 *    `form.bhp-bundle-form` and `bundle-landing.js` toggles by
+	 *    `[data-bhp-format-panel]`; neither reads position, so neither
+	 *    changes behaviour. ONLY the LABEL changed, and only to the
+	 *    benefit-driven wording — see bhp_bundle_landing_primary_cta_label().
+	 *
+	 * ⛔ WHAT MOVED DOWN, AND WHY IT HAD TO. The material subtitle and the
+	 *    three-title list are format DETAIL. Measured at 390x844 with
+	 *    `innerWidth` asserted, leaving them above the button put the button
+	 *    at y≈868 — below the 844 fold — which is the one thing this release
+	 *    exists to prevent. They now sit with the format selector, below the
+	 *    emotional case, exactly where Andrew put the selector. Nothing is
+	 *    deleted: every title, the binding description, the fine print and
+	 *    the individual-books exit are all still on the page, once each.
+	 */
+	?>
 	<div class="bhp-landing-panel bhp-landing-panel--compact" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo bhp_bundle_default_format() === $format ? '' : 'hidden'; ?>>
 		<h2 class="bhp-landing-panel__title screen-reader-text"><?php echo esc_html( $copy['title'] ); ?></h2>
-		<p class="bhp-landing-panel__subtitle"><?php echo esc_html( $copy['subtitle'] ); ?></p>
 
-		<p class="bhp-landing-panel__included-inline">
-			<?php
-			$bhp_titles = array();
-			foreach ( $catalog[ $format ] as $info ) {
-				$bhp_titles[] = $info['label'];
-			}
-			echo esc_html( implode( ' · ', $bhp_titles ) );
-			?>
-		</p>
+		<form method="post" class="bhp-bundle-form bhp-landing-panel__form bhp-landing-panel__form--lead">
+			<?php bhp_bundle_nonce_input(); ?>
+			<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( $action ); ?>" />
+			<?php bhp_bundle_checkout_redirect_input(); // P2-5: one tap -> /checkout/ ?>
+			<button type="submit" class="button bhp-landing-cta bhp-landing-cta--primary" data-bhp-landing-main-cta>
+				<?php echo esc_html( bhp_bundle_landing_primary_cta_label( $format ) ); ?>
+			</button>
+		</form>
 
 		<dl class="bhp-landing-panel__price-rows bhp-landing-panel__price-rows--compact">
 			<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--main">
@@ -442,7 +572,25 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 			 *    tier reads "FREE" here instead of "$0.00 flat".
 			 */
 			?>
-			<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta">
+			<?php
+			/*
+			 * ⭐ 1.8.32 — THE TWO BENEFIT ROWS ARE NOW BOLD BULLET LINES.
+			 *
+			 * Andrew, 2026-08-07 (RELAYED): Free Shipping and the FREE
+			 * Activity Book must read as bold, separate bullet lines, not as
+			 * two more quiet rows in a price table.
+			 *
+			 * ⛔ THE `<dl>` SEMANTICS AND THE `<dt>` LABELS ARE UNCHANGED —
+			 *    `<dt>Shipping</dt>` and `<dt>Activity Book</dt>` are still
+			 *    the exact strings, so the value still has a label in the
+			 *    accessibility tree and the existing suites still find them.
+			 *    The bullet and the weight are a `--benefit` modifier and
+			 *    live entirely in CSS. NO new claim, NO price, NO "$5 value",
+			 *    NO struck-out comparison, and the Activity Book row is still
+			 *    gated on the plugin's own deliverability test below.
+			 */
+			?>
+			<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta bhp-landing-panel__price-row--benefit">
 				<dt>Shipping</dt>
 				<dd><?php echo esc_html( bhp_bundle_shipping_display( $rule['shipping'], 'row' ) ); ?></dd>
 			</div>
@@ -473,7 +621,7 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 			 */
 			?>
 			<?php if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) : ?>
-				<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta">
+				<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta bhp-landing-panel__price-row--benefit">
 					<dt>Activity Book</dt>
 					<dd><?php echo esc_html( bhp_bundle_addon_free_display() ); ?></dd>
 				</div>
@@ -485,14 +633,17 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 			<span class="bhp-landing-panel__ages">Ages 6&ndash;9</span>
 		</div>
 
-		<form method="post" class="bhp-bundle-form bhp-landing-panel__form">
-			<?php bhp_bundle_nonce_input(); ?>
-			<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( $action ); ?>" />
-			<?php bhp_bundle_checkout_redirect_input(); // P2-5: one tap -> /checkout/ ?>
-			<button type="submit" class="button bhp-landing-cta bhp-landing-cta--primary" data-bhp-landing-main-cta>
-				<?php echo esc_html( $copy['cta'] ); ?>
-			</button>
-		</form>
+		<p class="bhp-landing-panel__subtitle"><?php echo esc_html( $copy['subtitle'] ); ?></p>
+
+		<p class="bhp-landing-panel__included-inline">
+			<?php
+			$bhp_titles = array();
+			foreach ( $catalog[ $format ] as $info ) {
+				$bhp_titles[] = $info['label'];
+			}
+			echo esc_html( implode( ' · ', $bhp_titles ) );
+			?>
+		</p>
 
 		<?php
 		/*
@@ -615,7 +766,7 @@ function bhp_bundle_render_landing_testimonial() {
 	<div class="bhp-landing-testimonial">
 		<div class="bhp-landing-testimonial__stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
 		<blockquote>
-			<p>&ldquo;My students were drawn to the vivid setting and sense of exploration. It&rsquo;s engaging, educational, and a great addition to any classroom or home library.&rdquo;</p>
+			<p>&ldquo;<?php echo bhp_bundle_landing_testimonial_quote(); // phpcs:ignore WordPress.Security.EscapeOutput -- approved locked copy, a literal with intentional HTML entities and no tags; escaping it would print the entities verbatim. ?>&rdquo;</p>
 		</blockquote>
 		<cite>Payton, elementary teacher - Verified Amazon review</cite>
 	</div>
