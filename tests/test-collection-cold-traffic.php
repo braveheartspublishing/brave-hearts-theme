@@ -117,8 +117,10 @@ echo "\n=== 1. The cold-open block renders, exactly once ===\n";
 
 bhp_cct_assert( substr_count( $html, 'bhp-landing-coldopen"' ) === 1, '1: the cold-open block renders exactly once', $failures );
 bhp_cct_assert(
-	strpos( $html, 'Real places. Short chapters. Stories that pull kids off screens.' ) !== false,
-	'1: the emotional headline renders',
+	strpos( $html, 'Real places. Short chapters.' ) !== false
+		&& strpos( $html, 'Stories that pull kids off screens.' ) !== false
+		&& preg_match( '/Real places\. Short chapters\.\s*<br\s*\/?>\s*Stories that pull kids off screens\./', $html ) === 1,
+	'1: the emotional headline renders on two lines (2026-08-07 revision)',
 	$failures
 );
 bhp_cct_assert(
@@ -310,13 +312,13 @@ if ( preg_match( '/<div class="bhp-landing-coldopen">(.*?)<\/div>/su', $html, $m
 		$failures
 	);
 	bhp_cct_assert(
-		substr_count( $cold, 'bhp-landing-coldopen__stars"' ) + substr_count( $cold, 'bhp-landing-coldopen__stars ' ) === 2,
-		'3: the five-star line renders exactly twice — once above and once below the headline block',
+		substr_count( $cold, 'bhp-landing-coldopen__stars"' ) + substr_count( $cold, 'bhp-landing-coldopen__stars ' ) === 1,
+		'3: the five-star line renders exactly once, above the headline (2026-08-07: the duplicate below-line was removed on Andrew\'s order)',
 		$failures
 	);
 	bhp_cct_assert(
-		substr_count( $cold, '5-Star Reader Reviews' ) === 2,
-		'3: both five-star lines carry Andrew\'s exact wording',
+		substr_count( $cold, '5-Star Reader Reviews' ) === 1,
+		'3: the five-star line carries Andrew\'s exact wording, once',
 		$failures
 	);
 	bhp_cct_assert( preg_match( '/\b\d+(\.\d+)?\s*(out of|\/)\s*5\b/i', $cold ) !== 1, '3: the cold-open block contains no rating expression', $failures );
@@ -355,13 +357,13 @@ bhp_cct_assert(
 	'4: headline -> subhead -> trust bar, in that order',
 	$failures
 );
-/* ⭐ 1.8.33 — Andrew asked for the five-star line ABOVE *and* BELOW the
-   headline block. "Block" is headline + subhead, so the pair brackets both. */
+/* ⭐ 1.8.33 asked for stars above AND below; 2026-08-07 Andrew reversed the
+   duplicate on sight ("the 5 star reviews is on the page twice?!") — the
+   single line above the headline is the standing order. */
 bhp_cct_assert(
 	bhp_cct_before( $html, 'bhp-landing-coldopen__stars"', 'bhp-landing-coldopen__headline' )
-		&& bhp_cct_before( $html, 'bhp-landing-coldopen__subhead', 'bhp-landing-coldopen__stars--below' )
-		&& bhp_cct_before( $html, 'bhp-landing-coldopen__stars--below', 'bhp-landing-coldopen__trust' ),
-	'4: five-star line -> headline -> subhead -> five-star line -> trust bar (Andrew\'s "above AND below the headline block")',
+		&& strpos( $html, 'bhp-landing-coldopen__stars--below' ) === false,
+	'4: five-star line -> headline, once, with no below-headline duplicate (2026-08-07 revision)',
 	$failures
 );
 bhp_cct_assert(

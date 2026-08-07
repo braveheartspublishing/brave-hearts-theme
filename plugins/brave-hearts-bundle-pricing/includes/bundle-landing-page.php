@@ -477,11 +477,13 @@ function bhp_bundle_render_landing_cold_open() {
 		<?php if ( $five_star ) : ?>
 			<p class="bhp-landing-coldopen__stars"><span class="bhp-landing-coldopen__stars-glyphs" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span> 5-Star Reader Reviews</p>
 		<?php endif; ?>
-		<h2 class="bhp-landing-coldopen__headline">Real places. Short chapters. Stories that pull kids off screens.</h2>
+		<?php
+		// 2026-08-07 revision (Andrew, current-turn): headline split onto two
+		// lines, and the duplicate below-headline star line removed — the star
+		// line now renders once, above the headline only.
+		?>
+		<h2 class="bhp-landing-coldopen__headline">Real places. Short chapters.<br />Stories that pull kids off screens.</h2>
 		<p class="bhp-landing-coldopen__subhead">Educational without feeling like homework &middot; ages 6&ndash;9</p>
-		<?php if ( $five_star ) : ?>
-			<p class="bhp-landing-coldopen__stars bhp-landing-coldopen__stars--below"><span class="bhp-landing-coldopen__stars-glyphs" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span> 5-Star Reader Reviews</p>
-		<?php endif; ?>
 		<ul class="bhp-landing-coldopen__trust">
 			<li>&ldquo;&hellip;spark children&rsquo;s curiosity&rdquo; &mdash; <?php echo esc_html( $kirkus['attribution'] ); ?>, on <em>The Mariana Trench</em></li>
 			<li>&ldquo;Engaging, educational&rdquo; &mdash; elementary teacher, verified Amazon review</li>
