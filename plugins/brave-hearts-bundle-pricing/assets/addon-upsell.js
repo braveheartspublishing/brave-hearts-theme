@@ -140,13 +140,25 @@
 	 *    module falls back to the $5.00 label — the pre-1.8.27 behaviour,
 	 *    and a label that under-promises rather than one that lies.
 	 * ───────────────────────────────────────────────────────────────── */
+	/*
+	 * ⭐ 1.8.36 — RENAMED IN MEANING, NOT IN NAME. The question this asks is
+	 *    now "does this cart hold AT LEAST ONE book?", after Andrew
+	 *    Signore's 2026-08-06 ruling widened the offer from collections to
+	 *    any book purchase. The identifier is left alone deliberately: it
+	 *    is referenced from three call sites in this file and renaming it
+	 *    in the same change that moves the threshold would make the diff
+	 *    read as a refactor and hide the one line that matters.
+	 *
+	 * SUPERSEDED, kept so the movement is visible:
+	 *     return !!meta && meta.distinct_adventures >= 3;
+	 */
 	function cartIsCollection(cart) {
 		if (!FREE_ENABLED) { return false; }
 		var api = window.bhpBundleCrossSell;
 		if (!api || typeof api.compute !== 'function') { return false; }
 		try {
 			var meta = api.compute(cart || {});
-			return !!meta && meta.distinct_adventures >= 3;
+			return !!meta && meta.distinct_adventures >= 1;
 		} catch (e) { return false; }
 	}
 
@@ -255,9 +267,31 @@
 		 * First paint uses the server's view of the cart (`freeNow`). Every
 		 * render after this one re-decides from the live cart in syncPanel().
 		 */
-		applyCopy(box, FREE_ENABLED && !!(DATA && DATA.freeNow));
+		var freeAtLoad = FREE_ENABLED && !!(DATA && DATA.freeNow);
+		applyCopy(box, freeAtLoad);
+		/*
+		 * ⭐ 1.8.36 — FIRST PAINT HIDES TOO. Without this the panel would
+		 *    flash a checkbox for one frame on a cart that has not earned
+		 *    the book, before syncPanel() takes it away. `freeNow` is the
+		 *    server's view of the cart at page load, which is the only view
+		 *    available at this point; syncPanel() corrects it from the live
+		 *    Store API cart on the very next render.
+		 */
+		if (FREE_ENABLED) {
+			box.hidden = !freeAtLoad;
+			box.setAttribute('aria-hidden', freeAtLoad ? 'false' : 'true');
+		}
 
-		pushShownOnce(surface);
+		/*
+		 * ⛔ THE IMPRESSION EVENT FOLLOWS VISIBILITY, NOT CONSTRUCTION. Before
+		 *    1.8.36 the panel was always visible, so firing here was the same
+		 *    thing. It is not any more, and an `addon_upsell_shown` for a
+		 *    hidden panel would quietly inflate the denominator of the offer's
+		 *    own conversion rate — a fabricated measurement, which is the same
+		 *    failure class as a fabricated test result. `syncPanel()` fires it
+		 *    the first time the panel is genuinely on screen.
+		 */
+		if (!box.hidden) { pushShownOnce(surface); }
 		return box;
 	}
 
@@ -281,9 +315,35 @@
 		 * 1.8.27: the label follows the cart on every render, so completing
 		 * the collection turns "$5.00" into "FREE with your collection" in
 		 * the same frame the Bundle Savings row appears.
+		 *
+		 * ⭐ 1.8.36 — THE $5.00 STATE NO LONGER EXISTS ON THE PAGE. Andrew
+		 *    retired the paid upsell (it sold zero copies — his observation,
+		 *    recorded as an observation, not as a measured statistic), and
+		 *    the offer is now free with any book. So the control has exactly
+		 *    two states, not three:
+		 *
+		 *      cart holds a book  ->  visible, labelled FREE + the savings
+		 *      cart holds no book ->  HIDDEN, no offer of any kind
+		 *
+		 * ⛔ ONE EXCEPTION, AND IT IS A CUSTOMER-PROTECTION EXCEPTION: if the
+		 *    add-on is somehow IN the cart while the cart holds no book, the
+		 *    panel stays visible so the customer keeps a way to take it out.
+		 *    A control that can only add is a trap, and this file has said so
+		 *    since 1.8.20. (The server also refuses an add-on-only checkout
+		 *    via `bhp_bundle_cart_is_addon_only()`, so this is the second of
+		 *    two independent protections, not the only one.)
 		 */
-		applyCopy(box, cartIsCollection(cart));
-		input.checked = inCart(cart);
+		var qualifies = cartIsCollection(cart);
+		var present   = inCart(cart);
+		var offerable = qualifies || present || !FREE_ENABLED;
+		box.hidden = !offerable;
+		box.setAttribute('aria-hidden', offerable ? 'false' : 'true');
+		if (offerable) {
+			pushShownOnce(box.getAttribute('data-bhp-addon-upsell') || 'cart');
+		}
+
+		applyCopy(box, qualifies);
+		input.checked = present;
 		input.disabled = false;
 		input.removeAttribute('aria-busy');
 	}

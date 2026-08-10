@@ -162,9 +162,28 @@ function bhp_book_ship_note_collection($amount) {
  * @param float|int|string $amount Shipping figure, in dollars.
  * @return string Translated, unescaped.
  */
-function bhp_book_landing_ship_note($amount) {
+function bhp_book_landing_ship_note($amount, $exclude_free = false) {
     if (bhp_book_shipping_is_free($amount)) {
-        return __('+ FREE shipping · ages 6–9 · printed & shipped in the USA', 'brave-hearts');
+        /*
+         * ⭐ 1.19.210 (2026-08-09, CYCLE148-LD-03) — `$exclude_free`.
+         *
+         * Andrew Signore, 2026-08-06, relayed (⛔ NOT witnessed first-hand):
+         * "FREE-items emphasis on ALL funnel + collection pages: bold, each
+         * free item its own bullet line, NEVER COMBINED SENTENCES."
+         *
+         * This function's free branch IS a combined sentence — it welds
+         * "FREE shipping" to the reading age and the print origin — so a
+         * caller that has already printed FREE Shipping as its own bold
+         * bullet must not print it again inside a run-on line. Passing TRUE
+         * returns the remainder of the sentence with the free claim taken
+         * out, so the fact is stated exactly once, in the emphasised place.
+         *
+         * ⛔ DEFAULT FALSE, so every existing caller behaves exactly as it
+         *    did and this parameter changes nothing for them.
+         */
+        return $exclude_free
+            ? __('Ages 6–9 · printed & shipped in the USA', 'brave-hearts')
+            : __('+ FREE shipping · ages 6–9 · printed & shipped in the USA', 'brave-hearts');
     }
 
     /* translators: %s is a dollar amount, e.g. 3.99 */
@@ -320,6 +339,92 @@ function bhp_book_free_addon_badge() {
         return '';
     }
     return __('FREE Activity Book', 'brave-hearts');
+}
+
+// ============================================================
+// CYCLE148-LD-01 (2026-08-09) — THE FREE ITEMS, AS BULLET LINES
+// ============================================================
+/*
+ * Andrew Signore, 2026-08-06, relayed (⛔ NOT witnessed first-hand by this
+ * agent; carrier on disk `FOUNDER-VERBATIM-2026-08-05-PRODUCTION-DEPLOY-
+ * AUTHORIZATION.md`, Sunday-batch-2 addendum, item 3):
+ *
+ *   "FREE-items emphasis on ALL funnel + collection pages: bold, each free
+ *    item its own bullet line, never combined sentences."
+ *
+ * ⛔ THE RULE IS STRUCTURAL, NOT DECORATIVE, and that is why this returns a
+ *    LIST rather than a sentence. The failure it forbids is the combined
+ *    sentence ("Free shipping and a free activity book with your
+ *    collection") — so a helper that returns one string would make the
+ *    forbidden shape the easy one. A caller that gets an array can only
+ *    render bullets.
+ *
+ * ⛔ "FREE" IS UPPERCASE IN THE STRING, NEVER VIA `text-transform`. A CSS
+ *    transform leaves the accessible name, the plain-text fallback and any
+ *    copy audit reading "Free", which is exactly the emphasis the ruling
+ *    asks for and would not get. The BOLD is the caller's markup; the CAPS
+ *    are the string's.
+ *
+ * ⛔ EVERY LINE IS GATED ON ITS OWN LIVE PREDICATE, separately. Free
+ *    shipping is asked of `bhp_book_collection_ships_free()`; the activity
+ *    book is asked of the plugin. Neither is inferred from the other, so a
+ *    surface can never promise a free item that is not actually free on
+ *    this environment, and an environment missing one still prints the
+ *    other.
+ *
+ * @param string $scope 'collection' for a complete-collection context (both
+ *                      lines can apply) or 'any_book' for a context where
+ *                      only the always-on lines apply.
+ * @return string[] Zero or more bullet lines. Translated, unescaped.
+ */
+function bhp_book_free_bullet_lines($scope = 'collection') {
+    $lines = [];
+
+    if ('collection' === $scope && function_exists('bhp_book_collection_ships_free') && bhp_book_collection_ships_free()) {
+        $lines[] = __('FREE Shipping on the complete collection', 'brave-hearts');
+    }
+
+    if (bhp_book_collection_includes_free_addon()) {
+        /*
+         * The plugin owns this sentence, including the "$5.00 savings"
+         * phrase Andrew asked for, and builds the figure from WooCommerce's
+         * own price rather than a literal. The theme prints what it is
+         * given; it does not compose a savings claim of its own.
+         */
+        $lines[] = function_exists('bhp_bundle_addon_free_offer_line')
+            ? bhp_bundle_addon_free_offer_line()
+            : bhp_book_free_addon_badge();
+    }
+
+    return array_values(array_filter($lines, static function ($line) {
+        return is_string($line) && '' !== trim($line);
+    }));
+}
+
+/**
+ * The bullet list as markup, with the emphasis the ruling requires.
+ *
+ * Returns '' when there is nothing free to say, so every caller can echo it
+ * unconditionally and still print nothing.
+ *
+ * @param string $scope See bhp_book_free_bullet_lines().
+ * @param string $class Extra class on the <ul>.
+ * @return string Escaped, ready to echo.
+ */
+function bhp_book_free_bullets_markup($scope = 'collection', $class = '') {
+    $lines = bhp_book_free_bullet_lines($scope);
+    if (empty($lines)) {
+        return '';
+    }
+
+    $classes = trim('bhp-free-bullets ' . $class);
+    $out     = '<ul class="' . esc_attr($classes) . '">';
+    foreach ($lines as $line) {
+        $out .= '<li class="bhp-free-bullets__item"><strong>' . esc_html($line) . '</strong></li>';
+    }
+    $out .= '</ul>';
+
+    return $out;
 }
 
 /**

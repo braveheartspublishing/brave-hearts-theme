@@ -169,6 +169,27 @@ if (function_exists('bhp_get_amazon_review_registry')) {
   </div>
 </section>
 
+<?php
+/*
+ * ⭐ 1.19.210 (2026-08-09, CYCLE148-LD-02) — THE FAST-PURCHASE BAND, right
+ *    below the checkmarks. Andrew Signore's words and the reasoning for
+ *    building an ADDITION rather than moving the price card live in the
+ *    template part's own header — stated once, there, not repeated on every
+ *    funnel page.
+ *
+ * ⛔ MOBILE-ONLY BY CSS, never by a server-side device test: a
+ *    `wp_is_mobile()` branch would be cached wrong by SiteGround's page
+ *    cache the first time a desktop visitor warmed the page.
+ *
+ * ✅ SELF-GATING. With no `$formats` map on this page the part renders
+ *    nothing and the page is byte-identical to the release before it.
+ */
+$prefix = 'audience-landing';
+$event  = 'educator_fastbuy_cta_click';
+$source = 'educator_landing';
+require locate_template('template-parts/commerce/funnel-fast-purchase.php');
+?>
+
 <!-- ===================== COMPLETE COLLECTION ===================== -->
 <section id="collection" class="audience-landing__section audience-landing__section--major">
   <div class="audience-landing__inner">
@@ -262,17 +283,38 @@ if (function_exists('bhp_get_amazon_review_registry')) {
                * an environment without the product this pill does not render
                * and the card is byte-identical to 1.19.193.
                */
-              $bhp_free_addon_badge = function_exists('bhp_book_free_addon_badge') ? bhp_book_free_addon_badge() : '';
+              /*
+               * ⭐ 1.19.210 (2026-08-09, CYCLE148-LD-03) — THE FREE ITEMS COME
+               *    OUT OF THE PILL ROW AND BECOME BOLD BULLET LINES.
+               *
+               * Andrew Signore, 2026-08-06, relayed (⛔ NOT witnessed
+               * first-hand by this agent): "FREE-items emphasis on ALL funnel
+               * + collection pages: bold, each free item its own bullet line,
+               * never combined sentences."
+               *
+               * A muted pill in a row of three other muted pills is the exact
+               * opposite of emphasis. The pill is REMOVED here and the same
+               * fact is re-stated below, in bold, on its own line, with the
+               * "$5.00 savings" wording Andrew asked for in the same week.
+               *
+               * ⛔ REMOVED FROM THIS ROW, NOT FROM THE PAGE, and still gated
+               *    on the plugin's live offer state.
+               */
               ?>
-              <?php if ('' !== $bhp_free_addon_badge): ?>
-                <span class="audience-landing-pricecard__badge-pill audience-landing-pricecard__badge-pill--muted">&#10003; <?php echo esc_html($bhp_free_addon_badge); ?></span>
-              <?php endif; ?>
               </div>
+              <?php
+              $bhp_free_bullets = function_exists('bhp_book_free_bullets_markup')
+                  ? bhp_book_free_bullets_markup('collection', 'bhp-free-bullets--card')
+                  : '';
+              ?>
+              <?php if ('' !== $bhp_free_bullets): ?>
+                <?php echo $bhp_free_bullets; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built and escaped in bhp_book_free_bullets_markup(). ?>
+              <?php endif; ?>
               <div class="audience-landing-pricecard__price-row">
                 <span class="label"><?php esc_html_e('Complete Collection price', 'brave-hearts'); ?></span>
                 <span><span class="audience-landing-pricecard__price-strike">$<?php echo esc_html(number_format($f['combined'], 2)); ?></span><span class="audience-landing-pricecard__price-final">$<?php echo esc_html(number_format($f['collection'], 2)); ?></span></span>
               </div>
-              <p class="audience-landing-pricecard__ship-note"><?php echo esc_html(bhp_book_landing_ship_note($f['shipping'])); ?></p>
+              <p class="audience-landing-pricecard__ship-note"><?php echo esc_html(bhp_book_landing_ship_note($f['shipping'], '' !== $bhp_free_bullets)); ?></p>
               <?php
               /*
                * 2026-08-05 — Andrew: "2 click journey to purchase". This was an

@@ -675,7 +675,18 @@
 		if (parseInt(item.id, 10) !== parseInt(mod.productId, 10)) {
 			return false;
 		}
-		return !!meta && meta.distinct_adventures >= 3;
+		/*
+		 * ⭐ 1.8.36 — >= 1, NOT >= 3. The offer widened from collections to
+		 *    ANY book purchase on Andrew Signore's 2026-08-06 ruling. This
+		 *    is the JS mirror of `evaluate_cart()['has_any_book']`; the
+		 *    server-side threshold moved in the same release and the two
+		 *    must stay equal or the drawer will print "FREE" beside a line
+		 *    the invoice charges for, or the reverse.
+		 *
+		 * SUPERSEDED, kept so the movement is visible:
+		 *     return !!meta && meta.distinct_adventures >= 3;
+		 */
+		return !!meta && meta.distinct_adventures >= 1;
 	}
 
 	function freeAddonCopy(key, fallback) {

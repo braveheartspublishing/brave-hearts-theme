@@ -25,6 +25,48 @@
  *   in the same register block and implemented here as specified.
  *
  * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.36 (2026-08-09) — EVERYTHING ABOVE IS SUPERSEDED IN ONE RESPECT:
+ *     THE OFFER NOW ATTACHES TO ANY BOOK PURCHASE, NOT ONLY A COLLECTION.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * The text above is preserved verbatim rather than rewritten, because it
+ * records that the collection-only reading was an INTERPRETATION and the
+ * founder has now answered the question it was interpreting.
+ *
+ * Andrew Signore, 2026-08-06, verbatim (⛔ RELAYED through the Chief of
+ * Staff; NOT witnessed first-hand by the agent that wrote this change.
+ * Carrier on disk: `FOUNDER-VERBATIM-2026-08-05-PRODUCTION-DEPLOY-
+ * AUTHORIZATION.md`, addendum ~07:0x−0600 2026-08-06):
+ *
+ *   "make the activity book free with any book purchase - say its a $5.00
+ *    savings"
+ *
+ * WHAT CHANGED, EXHAUSTIVELY:
+ *
+ *   1. The predicate. `bhp_bundle_cart_earns_free_addon()` now asks
+ *      `has_any_book` (>= 1 distinct adventure) instead of
+ *      `is_complete_collection` (>= 3). Same count, lower threshold.
+ *   2. The copy. Every string says "with your book order" rather than
+ *      "with your collection", and carries the founder's own savings
+ *      phrase, built from WooCommerce's real price — never a literal.
+ *   3. THE $5.00 CHECKBOX UPSELL IS RETIRED. It sold zero copies (Andrew's
+ *      observation, recorded as his observation and not as a measured
+ *      statistic). The control survives ONLY as the free re-offer after a
+ *      customer removes a granted copy, and it is hidden entirely on a
+ *      cart that has not earned the book. Nobody is offered this product
+ *      at $5.00 anywhere on the site any more.
+ *
+ * ⛔ WHAT DID NOT CHANGE, and each was re-checked rather than assumed:
+ *      - product `BHP-ACTIVITY-BOOK-01` is UNTOUCHED and still a $5.00
+ *        record in WooCommerce on every environment. This is cart-line
+ *        pricing, the established pattern, and an Andrew gate is not
+ *        crossed by it;
+ *      - the never-sold-alone guard (`bhp_bundle_cart_is_addon_only()`);
+ *      - the download + thank-you email grant;
+ *      - removed-stays-removed for the session;
+ *      - auto-withdrawal when the last book leaves the cart.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
  * ⛔ NO PRODUCT RECORD IS TOUCHED. THIS IS CART-LINE PRICING.
  * ═══════════════════════════════════════════════════════════════════════
  *
@@ -160,8 +202,30 @@ function bhp_bundle_addon_free_with_collection() {
 /**
  * Does THIS cart earn the free copy?
  *
- * One line, deliberately: the answer is the existing collection flag and
- * nothing else. See the header note.
+ * ⭐ 1.8.36 — THE THRESHOLD MOVED FROM THREE ADVENTURES TO ONE. Andrew
+ *    Signore, 2026-08-06, verbatim (⛔ RELAYED through the Chief of Staff
+ *    and NOT witnessed first-hand by the agent that wrote this change; the
+ *    carrier on disk is `FOUNDER-VERBATIM-2026-08-05-PRODUCTION-DEPLOY-
+ *    AUTHORIZATION.md`, addendum ~07:0x−0600 2026-08-06):
+ *
+ *      "make the activity book free with any book purchase - say its a
+ *       $5.00 savings"
+ *
+ * ⛔ THE SUPERSEDED LINE IS PRESERVED HERE RATHER THAN DELETED, so a future
+ *    reader sees the movement instead of re-deriving it:
+ *
+ *      return ! empty( $eval['is_complete_collection'] );   // 1.8.27–1.8.35
+ *
+ *    That earlier reading — free only with the complete collection — was
+ *    itself recorded in this file's header as a DESIGN READING rather than
+ *    Andrew's words. His 2026-08-06 sentence resolves it, in the widening
+ *    direction, and supersedes the split.
+ *
+ * ⛔ STILL ONE PREDICATE, NOT A SECOND DEFINITION. `has_any_book` is derived
+ *    in `bhp_bundle_evaluate_cart()` from the SAME `distinct_adventures`
+ *    count `is_complete_collection` comes from, so the free add-on and the
+ *    free shipping shown on the same screen can never disagree about what
+ *    is in the cart.
  *
  * @param WC_Cart|object|null $cart Cart, or any object exposing get_cart().
  * @return bool
@@ -174,7 +238,7 @@ function bhp_bundle_cart_earns_free_addon( $cart ) {
 		return false;
 	}
 	$eval = bhp_bundle_evaluate_cart( $cart );
-	return ! empty( $eval['is_complete_collection'] );
+	return ! empty( $eval['has_any_book'] );
 }
 
 /**
@@ -526,21 +590,59 @@ function bhp_bundle_addon_free_item_data( $item_data, $cart_item ) {
  * @return array
  */
 function bhp_bundle_addon_free_copy() {
+	$savings = bhp_bundle_addon_free_savings();
+
+	/*
+	 * ⛔ NO SAVINGS FIGURE, NO SAVINGS SENTENCE. When the price cannot be
+	 *    read from WooCommerce every string below falls back to the plain
+	 *    "FREE" wording rather than rendering "a  savings" with a hole in
+	 *    it. Checked here, once, so no caller has to.
+	 */
+	if ( '' === $savings ) {
+		$plain = array(
+			'line_key'    => __( 'Included', 'bhp-bundle-pricing' ),
+			'line_value'  => __( 'FREE with your book order', 'bhp-bundle-pricing' ),
+			/* translators: %s: product title */
+			'label'       => __( 'Add %s - FREE with your book order', 'bhp-bundle-pricing' ),
+			'price'       => __( 'FREE', 'bhp-bundle-pricing' ),
+			'item_note'   => __( 'FREE with your book order', 'bhp-bundle-pricing' ),
+			/* translators: %s: product title */
+			'aria'        => __( 'Add %s to your order, free with your book order', 'bhp-bundle-pricing' ),
+			'offer_short' => __( 'FREE Activity Book', 'bhp-bundle-pricing' ),
+			'savings'     => '',
+			'savings_amt' => '',
+		);
+
+		/** This filter is documented at the end of this function. */
+		return apply_filters( 'bhp_bundle_addon_free_copy', $plain );
+	}
+
 	$copy = array(
 		// The cart/checkout line-item note.
 		'line_key'    => __( 'Included', 'bhp-bundle-pricing' ),
-		'line_value'  => __( 'FREE with your collection', 'bhp-bundle-pricing' ),
+		/* translators: %s: formatted price of the add-on, e.g. $5.00 */
+		'line_value'  => sprintf( __( 'FREE with your book order - a %s savings', 'bhp-bundle-pricing' ), $savings ),
 		// The checkbox label, replacing "Add %1$s - $5.00" while the cart qualifies.
-		/* translators: %s: product title */
-		'label'       => __( 'Add %s - FREE with your collection', 'bhp-bundle-pricing' ),
+		/* translators: %1$s: product title, %2$s: formatted price, e.g. $5.00 */
+		'label'       => sprintf( __( 'Add %%s - FREE with your book order (a %s savings)', 'bhp-bundle-pricing' ), $savings ),
 		// What the drawer prints in the price cell for a granted line.
 		'price'       => __( 'FREE', 'bhp-bundle-pricing' ),
 		// The line the drawer prints under the add-on's title.
-		'item_note'   => __( 'FREE with your collection', 'bhp-bundle-pricing' ),
+		/* translators: %s: formatted price of the add-on, e.g. $5.00 */
+		'item_note'   => sprintf( __( 'FREE - a %s savings', 'bhp-bundle-pricing' ), $savings ),
 		/* translators: %s: product title */
-		'aria'        => __( 'Add %s to your order, free with your collection', 'bhp-bundle-pricing' ),
-		// The collection-page and messaging clause.
+		'aria'        => __( 'Add %s to your order, free with your book order', 'bhp-bundle-pricing' ),
+		// The funnel/collection-page and messaging clause.
 		'offer_short' => __( 'FREE Activity Book', 'bhp-bundle-pricing' ),
+		/*
+		 * ⭐ 1.8.36 — THE FOUNDER'S OWN PHRASE, kept as its own key so every
+		 *    surface renders the SAME sentence rather than five near-misses.
+		 *    Andrew Signore, 2026-08-06: "say its a $5.00 savings".
+		 *
+		 * translators: %s: formatted price of the add-on, e.g. $5.00
+		 */
+		'savings'     => sprintf( __( 'a %s savings', 'bhp-bundle-pricing' ), $savings ),
+		'savings_amt' => $savings,
 	);
 
 	/**
@@ -549,6 +651,53 @@ function bhp_bundle_addon_free_copy() {
 	 * @param array $copy Free-offer strings.
 	 */
 	return apply_filters( 'bhp_bundle_addon_free_copy', $copy );
+}
+
+/**
+ * The formatted price the customer is NOT paying, read from WooCommerce.
+ *
+ * ⛔ NO "$5.00" LITERAL EXISTS ANYWHERE IN THIS FILE, and that is deliberate
+ *    under the same rule the paid copy was written under: the figure comes
+ *    from the real product record at render time, so it cannot drift from
+ *    what the store would otherwise charge. If Andrew ever reprices the
+ *    Activity Book, every "a $X savings" sentence on the site follows in the
+ *    same request with no copy edit.
+ *
+ * ⭐ IT FAILS TO THE EMPTY STRING, NOT TO A GUESS. With no resolvable
+ *    product there is no savings claim to make, and `bhp_bundle_addon_free_
+ *    with_collection()` is already false on that environment, so no surface
+ *    renders the sentence at all.
+ *
+ * @return string Formatted price, e.g. "$5.00", or '' when unavailable.
+ */
+function bhp_bundle_addon_free_savings() {
+	if ( ! function_exists( 'bhp_bundle_addon_product' ) || ! function_exists( 'wc_price' ) ) {
+		return '';
+	}
+	$product = bhp_bundle_addon_product();
+	if ( ! $product ) {
+		return '';
+	}
+	$price = (float) $product->get_regular_price();
+	if ( $price <= 0 ) {
+		$price = (float) $product->get_price();
+	}
+	if ( $price <= 0 ) {
+		return '';
+	}
+
+	/*
+	 * ⚠ `html_entity_decode()` IS LOAD-BEARING, for the reason already
+	 *   recorded in `bhp_bundle_addon_data()`: `wc_price()` emits the
+	 *   currency symbol as `&#36;`, and both `wp_strip_all_tags()` and the
+	 *   front end's `textContent` leave entities alone. Without this the
+	 *   page would read "a &#36;5.00 savings".
+	 */
+	return html_entity_decode(
+		wp_strip_all_tags( wc_price( $price ) ),
+		ENT_QUOTES,
+		'UTF-8'
+	);
 }
 
 /**
@@ -574,4 +723,38 @@ function bhp_bundle_addon_free_display() {
 function bhp_bundle_addon_free_offer_label() {
 	$copy = bhp_bundle_addon_free_copy();
 	return isset( $copy['offer_short'] ) ? $copy['offer_short'] : 'FREE Activity Book';
+}
+
+/**
+ * The offer as ONE bullet line, with the savings Andrew asked for.
+ *
+ * ⭐ 1.8.36. This is what the funnel pages and the collection page print,
+ *    and it exists so five surfaces cannot arrive at five slightly
+ *    different sentences. Renders as, e.g.:
+ *
+ *        FREE Activity Book - a $5.00 savings
+ *
+ * ⛔ THE WORD "FREE" IS UPPERCASE IN THE STRING ITSELF, not achieved with
+ *    `text-transform`. Andrew's ruling is that every free item is BOLD and
+ *    ALL-CAPS on its OWN bullet line; a CSS transform would leave the
+ *    accessible name, the plain-text fallback and any copy audit reading
+ *    "Free". The bold and the bullet are the caller's markup; the caps and
+ *    the wording are the string's.
+ *
+ * ⛔ IT DEGRADES RATHER THAN LYING. With no resolvable savings figure it
+ *    returns the bare label, never an invented number.
+ *
+ * @return string
+ */
+function bhp_bundle_addon_free_offer_line() {
+	$copy    = bhp_bundle_addon_free_copy();
+	$label   = bhp_bundle_addon_free_offer_label();
+	$savings = isset( $copy['savings'] ) ? $copy['savings'] : '';
+
+	if ( '' === $savings ) {
+		return $label;
+	}
+
+	/* translators: %1$s: "FREE Activity Book", %2$s: "a $5.00 savings" */
+	return sprintf( __( '%1$s - %2$s', 'bhp-bundle-pricing' ), $label, $savings );
 }

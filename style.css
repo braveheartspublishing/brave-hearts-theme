@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.209
+Version: 1.19.210
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -8045,4 +8045,157 @@ a.header-expedition-cta {
      which on a fixed-position modal is the defect that makes a popup feel
      broken rather than merely small. */
   .mariana-popup--ab .mariana-popup__form .acquisition-form__field input { font-size: 1rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 1.19.210 (2026-08-09, CYCLE148-LD-02/03) — FREE-ITEM BULLETS and the
+ * FUNNEL FAST-PURCHASE BAND.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-06, relayed (⛔ NOT witnessed first-hand by the
+ * agent that wrote this): "FREE-items emphasis on ALL funnel + collection
+ * pages: bold, each free item its own bullet line, never combined
+ * sentences."
+ *
+ * ⛔ THE WORD "FREE" IS UPPERCASE IN THE PHP STRING, NOT HERE. There is
+ *    deliberately no `text-transform: uppercase` in this block. A CSS
+ *    transform changes only the glyphs a sighted user sees — the accessible
+ *    name, the plain-text fallback, a copy audit and any string test all
+ *    still read "Free". The emphasis Andrew asked for has to survive all
+ *    four, so it lives in the string. See `bhp_book_free_bullet_lines()`.
+ *
+ * ⛔ `font-weight` IS ON THE <li>, NOT ONLY THE <strong>. The <strong> is
+ *    what carries the SEMANTIC emphasis (and is what a screen reader
+ *    announces); the rule here just stops a parent's lighter font-weight
+ *    from winning on specificity, which is what happened to the earlier
+ *    badge-pill treatment.
+ *
+ * These live in the ROOT stylesheet rather than in parent-landing.css and
+ * audience-landing.css because BOTH funnel families use them and both
+ * enqueue their sheet with `['bhp-style']` as a dependency. One copy, one
+ * place to change it -- duplicating the block into two sheets is how the
+ * two funnel families drift into two different treatments.
+ */
+
+.bhp-free-bullets {
+  list-style: none;
+  margin: 0 0 var(--space-3, 16px);
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+}
+.bhp-free-bullets__item {
+  position: relative;
+  padding-left: 26px;
+  font-weight: 800;
+  line-height: 1.35;
+  font-size: 0.9375rem;
+  color: var(--pl-text, #1f2d24);
+}
+/* The bullet glyph is a checkmark, matching the scanbar directly above the
+   band, so the two rows read as one system rather than two conventions. */
+.bhp-free-bullets__item::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 900;
+  color: #1f6b3a;
+}
+.bhp-free-bullets__item strong { font-weight: inherit; }
+
+/* ── The fast-purchase band ──────────────────────────────────────────── */
+/*
+ * ⛔ HIDDEN ON DESKTOP, AND THAT IS THE WHOLE POINT OF THE MEDIA QUERY.
+ *    Andrew's instruction was explicitly about MOBILE ("Just looked at
+ *    mobile ... needs to be done on all funnels for mobile"). On desktop
+ *    the same page's fold problem is a DIFFERENT problem -- the hero eating
+ *    the viewport -- and it is fixed by the hero spacing rules, not by a
+ *    second purchase control. Rendering the band on both would put two
+ *    add-to-cart forms for the same product on one desktop screen.
+ *
+ * ⭐ MOBILE-FIRST, so the band is visible by default and the DESKTOP rule
+ *    is the one that hides it. If the media query is ever dropped the
+ *    failure is a visible duplicate control, not a silently missing
+ *    purchase path on the viewport that needed it.
+ */
+.bhp-fastbuy {
+  background: #f6f2e8;
+  border-block: 1px solid rgba(31, 61, 41, 0.14);
+  padding-block: 22px;
+}
+.bhp-fastbuy__inner { text-align: center; }
+.bhp-fastbuy__eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a6a44;
+}
+.bhp-fastbuy__price {
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+.bhp-fastbuy__price-label { font-weight: 700; font-size: 1rem; }
+.bhp-fastbuy__price-strike {
+  text-decoration: line-through;
+  opacity: 0.6;
+  font-size: 0.9375rem;
+}
+.bhp-fastbuy__price-final { font-weight: 800; font-size: 1.375rem; }
+.bhp-fastbuy .bhp-free-bullets {
+  display: inline-grid;
+  margin-inline: auto;
+  margin-bottom: 14px;
+}
+.bhp-fastbuy__cta-form { margin: 0; }
+.bhp-fastbuy__cta { width: 100%; max-width: 420px; }
+.bhp-fastbuy__alt { margin: 10px 0 0; font-size: 0.8125rem; }
+
+@media (min-width: 861px) {
+  .bhp-fastbuy { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 1.19.210 — DESKTOP FUNNEL HERO: LESS AIR, CTA ABOVE THE FOLD.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-06, relayed, with a screenshot of the
+ * reluctant-reader page as his evidence: "All funnel pages: reduce excess
+ * vertical space; bring the 'Get the Free Chapter Activity' CTA above the
+ * fold".
+ *
+ * ⛔ THE FIX IS SPACING, NOT CONTENT. Nothing is deleted from the hero and
+ *    no copy is rewritten -- approved copy is locked and this build has no
+ *    authority to change it. What moves is padding, margin and the top of
+ *    the headline clamp, which is where the viewport was actually going.
+ *
+ * ⛔ SCOPED TO >=861px. The mobile hero is NOT touched: Andrew's own check
+ *    was that on mobile "the get the free chapter & activity is above the
+ *    fold" already, so the mobile spacing is a thing that currently works
+ *    and this release does not put a hand on it.
+ */
+@media (min-width: 861px) {
+  .parent-landing-hero__grid,
+  .audience-landing-hero__grid {
+    gap: 44px;
+    padding-block: clamp(1.6rem, 3vw, 2.6rem) clamp(1.8rem, 3.2vw, 3rem);
+  }
+  .parent-landing .parent-landing-hero h1,
+  .audience-landing .audience-landing-hero h1 {
+    font-size: clamp(38px, 4.2vw, 54px);
+    margin-top: 14px;
+  }
+  .parent-landing-hero p.parent-landing__lead,
+  .audience-landing-hero p.audience-landing__lead { margin-top: 16px; }
+  .parent-landing-hero__ctas,
+  .audience-landing-hero__ctas { margin-top: 22px; }
+  .parent-landing-hero__proof,
+  .audience-landing-hero__proof { margin-top: 18px; }
 }

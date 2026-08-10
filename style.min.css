@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: d52fc8ba978ae875607b342ba343a795
+    source-md5: ce6b4cc2a162a9a39c30a6ee7b6083f2
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.209
+Version: 1.19.210
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5340,4 +5340,87 @@ a.header-expedition-cta {
   }
   .mariana-popup--ab .mariana-popup__form .acquisition-form__field { margin-bottom: var(--space-2); }
 .mariana-popup--ab .mariana-popup__form .acquisition-form__field input { font-size: 1rem; }
+}
+.bhp-free-bullets {
+  list-style: none;
+  margin: 0 0 var(--space-3, 16px);
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+}
+.bhp-free-bullets__item {
+  position: relative;
+  padding-left: 26px;
+  font-weight: 800;
+  line-height: 1.35;
+  font-size: 0.9375rem;
+  color: var(--pl-text, #1f2d24);
+}
+.bhp-free-bullets__item::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 900;
+  color: #1f6b3a;
+}
+.bhp-free-bullets__item strong { font-weight: inherit; }
+.bhp-fastbuy {
+  background: #f6f2e8;
+  border-block: 1px solid rgba(31, 61, 41, 0.14);
+  padding-block: 22px;
+}
+.bhp-fastbuy__inner { text-align: center; }
+.bhp-fastbuy__eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a6a44;
+}
+.bhp-fastbuy__price {
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+.bhp-fastbuy__price-label { font-weight: 700; font-size: 1rem; }
+.bhp-fastbuy__price-strike {
+  text-decoration: line-through;
+  opacity: 0.6;
+  font-size: 0.9375rem;
+}
+.bhp-fastbuy__price-final { font-weight: 800; font-size: 1.375rem; }
+.bhp-fastbuy .bhp-free-bullets {
+  display: inline-grid;
+  margin-inline: auto;
+  margin-bottom: 14px;
+}
+.bhp-fastbuy__cta-form { margin: 0; }
+.bhp-fastbuy__cta { width: 100%; max-width: 420px; }
+.bhp-fastbuy__alt { margin: 10px 0 0; font-size: 0.8125rem; }
+@media (min-width: 861px) {
+  .bhp-fastbuy { display: none; }
+}
+@media (min-width: 861px) {
+  .parent-landing-hero__grid,
+  .audience-landing-hero__grid {
+    gap: 44px;
+    padding-block: clamp(1.6rem, 3vw, 2.6rem) clamp(1.8rem, 3.2vw, 3rem);
+  }
+  .parent-landing .parent-landing-hero h1,
+  .audience-landing .audience-landing-hero h1 {
+    font-size: clamp(38px, 4.2vw, 54px);
+    margin-top: 14px;
+  }
+  .parent-landing-hero p.parent-landing__lead,
+  .audience-landing-hero p.audience-landing__lead { margin-top: 16px; }
+  .parent-landing-hero__ctas,
+  .audience-landing-hero__ctas { margin-top: 22px; }
+  .parent-landing-hero__proof,
+  .audience-landing-hero__proof { margin-top: 18px; }
 }

@@ -651,6 +651,29 @@ function bhp_bundle_evaluate_cart( $cart ) {
 	// 1.8.23: the cart holds the whole series in some combination of formats.
 	// Stated once, here, so no surface has to re-derive it.
 	$result['is_complete_collection'] = $result['distinct_adventures'] >= 3;
+	/*
+	 * ⭐ 1.8.36 — DOES THIS CART CONTAIN AT LEAST ONE OF THE SIX APPROVED
+	 *    BOOK EDITIONS? This is the predicate the FREE Activity Book offer
+	 *    now runs on, after Andrew Signore's ruling of 2026-08-06 widened it
+	 *    from collections to ANY book purchase (⛔ RELAYED, not witnessed
+	 *    first-hand; verbatim on disk in the Chief of Staff's founder
+	 *    carrier: "make the activity book free with any book purchase - say
+	 *    its a $5.00 savings").
+	 *
+	 * ⛔ IT IS DERIVED FROM `distinct_adventures`, THE SAME QUANTITY
+	 *    `is_complete_collection` COMES FROM, and that is the whole point:
+	 *    one count, one definition of "a book", three thresholds (>=1 free
+	 *    add-on, ==2 free-shipping nudge, >=3 collection). A second count
+	 *    here would be a place where "you have a book" and "you have a
+	 *    collection" could disagree about the same cart.
+	 *
+	 * ⛔ AN ADD-ON-ONLY CART IS FALSE BY CONSTRUCTION. The Activity Book is
+	 *    not in the six-edition catalogue `bhp_bundle_distinct_titles_in_cart()`
+	 *    walks, so a cart holding only the add-on counts ZERO adventures.
+	 *    That is the never-sold-alone guard restated in data rather than a
+	 *    second rule that could drift from it.
+	 */
+	$result['has_any_book'] = $result['distinct_adventures'] >= 1;
 	// Mixed-format cart: paperback AND hardcover both present. The approved
 	// shipping table (Phase 6) only defines paperback-only or
 	// hardcover-only tiers, so this combination is intentionally left

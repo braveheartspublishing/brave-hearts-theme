@@ -260,6 +260,27 @@ if (function_exists('bhp_get_amazon_review_registry')) {
   </div>
 </section>
 
+<?php
+/*
+ * ⭐ 1.19.210 (2026-08-09, CYCLE148-LD-02) — THE FAST-PURCHASE BAND, right
+ *    below the checkmarks, exactly where Andrew asked for it after looking
+ *    at this page on his phone. His words, and the reasoning for building an
+ *    ADDITION rather than moving the price card, are in the template part's
+ *    own header — stated once, there, not repeated on five pages.
+ *
+ * ⛔ MOBILE-ONLY BY CSS, and deliberately not by a server-side device test.
+ *    The band is in the DOM on every viewport; `parent-landing.css` hides it
+ *    above the mobile breakpoint. A PHP `wp_is_mobile()` branch would be
+ *    cached wrong by SiteGround's page cache the first time a desktop
+ *    visitor warmed the page, which is the documented cache-safety rule this
+ *    theme already follows for consent mode.
+ */
+$prefix  = 'parent-landing';
+$event   = 'parent_fastbuy_cta_click';
+$source  = 'adventure_kit_landing';
+require locate_template('template-parts/commerce/funnel-fast-purchase.php');
+?>
+
 <!-- ===================== COMPLETE COLLECTION ===================== -->
 <section id="collection" class="parent-landing__section parent-landing__section--major">
   <div class="parent-landing__inner">
@@ -336,17 +357,51 @@ if (function_exists('bhp_get_amazon_review_registry')) {
                * an environment without the product this pill does not render
                * and the card is byte-identical to 1.19.193.
                */
-              $bhp_free_addon_badge = function_exists('bhp_book_free_addon_badge') ? bhp_book_free_addon_badge() : '';
+              /*
+               * ⭐ 1.19.210 (2026-08-09, CYCLE148-LD-03) — THE FREE ITEMS COME
+               *    OUT OF THE PILL ROW AND BECOME BOLD BULLET LINES.
+               *
+               * Andrew Signore, 2026-08-06, relayed (⛔ NOT witnessed
+               * first-hand by this agent): "FREE-items emphasis on ALL funnel
+               * + collection pages: bold, each free item its own bullet line,
+               * never combined sentences."
+               *
+               * A muted pill in a row of three other muted pills is the exact
+               * opposite of emphasis — it makes the free thing look like the
+               * least important of four equal facts. The pill is therefore
+               * REMOVED here and the same fact is re-stated below, in the
+               * bullet list, in bold, with the "$5.00 savings" wording Andrew
+               * asked for in the same week.
+               *
+               * ⛔ REMOVED FROM THIS ROW, NOT FROM THE PAGE. The claim still
+               *    renders, still gated on the plugin's live offer state, and
+               *    still disappears entirely on an environment where the
+               *    Activity Book does not resolve.
+               */
               ?>
-              <?php if ('' !== $bhp_free_addon_badge): ?>
-                <span class="parent-landing-pricecard__badge-pill parent-landing-pricecard__badge-pill--muted">&#10003; <?php echo esc_html($bhp_free_addon_badge); ?></span>
-              <?php endif; ?>
               </div>
+              <?php
+              $bhp_free_bullets = function_exists('bhp_book_free_bullets_markup')
+                  ? bhp_book_free_bullets_markup('collection', 'bhp-free-bullets--card')
+                  : '';
+              ?>
+              <?php if ('' !== $bhp_free_bullets): ?>
+                <?php echo $bhp_free_bullets; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built and escaped in bhp_book_free_bullets_markup(). ?>
+              <?php endif; ?>
               <div class="parent-landing-pricecard__price-row">
                 <span class="label"><?php esc_html_e('Complete Collection price', 'brave-hearts'); ?></span>
                 <span><span class="parent-landing-pricecard__price-strike">$<?php echo esc_html(number_format($f['combined'], 2)); ?></span><span class="parent-landing-pricecard__price-final">$<?php echo esc_html(number_format($f['collection'], 2)); ?></span></span>
               </div>
-              <p class="parent-landing-pricecard__ship-note"><?php echo esc_html(bhp_book_landing_ship_note($f['shipping'])); ?></p>
+              <?php
+              /*
+               * `true` = do not repeat "FREE shipping" here. It is already a
+               * bold bullet immediately above, and repeating it inside a
+               * run-on line is the "combined sentence" the ruling forbids.
+               * When shipping is NOT free this argument does nothing and the
+               * flat-rate sentence is unchanged.
+               */
+              ?>
+              <p class="parent-landing-pricecard__ship-note"><?php echo esc_html(bhp_book_landing_ship_note($f['shipping'], '' !== $bhp_free_bullets)); ?></p>
               <?php
               /*
                * 2026-08-05 — Andrew: "2 click journey to purchase". Was an <a>
