@@ -1174,14 +1174,80 @@ function bhp_bundle_render_landing_final_cta() {
 							<?php echo esc_html( $copy['cta'] ); ?>
 						</button>
 					</form>
+					<?php
+					/*
+					 * ═══════════════════════════════════════════════════════
+					 * ⭐ 1.8.37 (2026-08-09, `CYCLE148-LD-09`) — THE LOWER
+					 *    FINE-PRINT STOPS RUNNING THE FREE ITEMS TOGETHER.
+					 * ═══════════════════════════════════════════════════════
+					 *
+					 * The superseded markup, preserved so the movement is
+					 * visible rather than re-derived:
+					 *
+					 *   <p class="bhp-landing-final__fine-print">
+					 *     Paperback · $31.99 · FREE shipping ·
+					 *     FREE Activity Book · Save $3.98
+					 *   </p>
+					 *
+					 * ⛔ THE DEFECT. Andrew Signore's 2026-08-06 ruling
+					 *    (RELAYED, not witnessed first-hand) is "bold, each
+					 *    free item its own bullet line, NEVER COMBINED
+					 *    SENTENCES." 1.8.36 fixed the COLD-OPEN at the top of
+					 *    this page and left this one, at the bottom, still
+					 *    chaining both free items into a middot run with the
+					 *    format, the price and the savings — five claims in one
+					 *    grey 0.78rem line, where the two that matter most are
+					 *    the two nobody reads. This is the last surface on the
+					 *    page before the visitor decides.
+					 *
+					 * ⭐ THE SHAPE IS THE COLD-OPEN'S, deliberately: same
+					 *    gated-array construction, same `<li><strong>` bullet,
+					 *    same all-caps-in-the-string rule, same helpers. The
+					 *    two ends of the page now make the same promise in the
+					 *    same words, which is the whole point of routing both
+					 *    through `bhp_bundle_addon_free_offer_line()`.
+					 *
+					 * ⛔ GATED, NOT TYPED. Shipping earns a bullet only when
+					 *    THIS format's three-book rule actually resolves free
+					 *    (`bhp_bundle_shipping_is_free()`); the Activity Book
+					 *    earns one only when the offer is live on THIS
+					 *    environment. When shipping is NOT free it keeps its
+					 *    place in the fine-print line below with its real
+					 *    amount — the claim moves, it never silently vanishes,
+					 *    and no line ever promises something the cart will
+					 *    charge for.
+					 *
+					 * ⛔ THE FINE PRINT KEEPS EXACTLY WHAT IS ACTUALLY FINE
+					 *    PRINT: format, price, savings. Nothing was deleted;
+					 *    two claims were promoted out of it.
+					 */
+					$bhp_final_free = array();
+					if ( bhp_bundle_shipping_is_free( $rule['shipping'] ) ) {
+						$bhp_final_free[] = 'FREE Shipping on the complete collection';
+					}
+					if ( function_exists( 'bhp_bundle_addon_free_with_collection' )
+						&& bhp_bundle_addon_free_with_collection()
+						&& function_exists( 'bhp_bundle_addon_free_offer_line' ) ) {
+						$bhp_final_free[] = bhp_bundle_addon_free_offer_line();
+					}
+					?>
+					<?php if ( $bhp_final_free ) : ?>
+						<ul class="bhp-landing-final__free">
+							<?php foreach ( $bhp_final_free as $bhp_final_line ) : ?>
+								<li><strong><?php echo esc_html( $bhp_final_line ); ?></strong></li>
+							<?php endforeach; ?>
+						</ul>
+					<?php endif; ?>
 					<p class="bhp-landing-final__fine-print">
 						<?php echo esc_html( $copy['material_tag'] ); ?> &middot;
 						$<?php echo esc_html( number_format( $price, 2 ) ); ?> &middot;
-						<?php // 1.8.23: same figure, centralised wording. "FREE shipping" at $0.00. ?>
-						<?php echo esc_html( bhp_bundle_shipping_display( $rule['shipping'] ) ); ?> &middot;
-						<?php /* 1.8.27: same gate as the price-box row above. */ ?>
-						<?php if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) : ?>
-							<?php echo esc_html( bhp_bundle_addon_free_offer_label() ); ?> &middot;
+						<?php
+						// 1.8.23: same figure, centralised wording. 1.8.37: it
+						// prints here ONLY when it is not already a bullet
+						// above, so the page never states shipping twice.
+						?>
+						<?php if ( ! bhp_bundle_shipping_is_free( $rule['shipping'] ) ) : ?>
+							<?php echo esc_html( bhp_bundle_shipping_display( $rule['shipping'] ) ); ?> &middot;
 						<?php endif; ?>
 						<?php echo esc_html( $rule['save'] ); ?>
 					</p>

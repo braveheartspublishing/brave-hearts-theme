@@ -229,9 +229,41 @@ $testimonial = bhp_bundle_landing_testimonial_quote();
 /* 2026-08-07 (Andrew, current-turn): the teacher fragment left the cold-open
    bar — replaced by the FREE offer line. The full testimonial remains
    published further down (asserted below, unchanged). */
+/*
+ * ⭐ 1.8.37 (2026-08-09, `CYCLE148-LD-09`) — THIS ASSERTION WAS FAILING ON THE
+ *    BASELINE, AND IT WAS THE TEST THAT WAS WRONG, NOT THE PAGE.
+ *
+ * The superseded assertion, preserved verbatim so the movement is visible:
+ *
+ *   preg_match( '/<strong>FREE<\/strong> Activity Book \+ <strong>FREE<\/strong> Shipping/', $html ) === 1
+ *   '3: the FREE Activity Book + FREE Shipping line renders, FREE bold (2026-08-07 revision)'
+ *
+ * It required the COMBINED "FREE Activity Book + FREE Shipping" sentence —
+ * exactly the shape Andrew Signore's 2026-08-06 ruling forbids ("bold, each
+ * free item its own bullet line, NEVER COMBINED SENTENCES") and exactly what
+ * plugin 1.8.36 deliberately split into two gated bullets on 2026-08-09. The
+ * guard was left behind by that change and has been red ever since, one of the
+ * 8 failures in the 54/8 baseline.
+ *
+ * ⛔ IT IS INVERTED, NOT DELETED. Deleting it would leave the policy
+ *    unguarded, and a silent re-combination is precisely the regression worth
+ *    catching. It now asserts the policy that actually governs: two separate
+ *    bold bullets, and the combined form ABSENT.
+ *
+ * ⛔ THE BULLETS ARE GATED, so this asserts "at least one" rather than exactly
+ *    two: on an environment where the Activity Book product does not resolve,
+ *    one bullet is the CORRECT output and a hard `=== 2` would fail an
+ *    environment that is behaving properly.
+ */
+$cct_free_bullets = preg_match_all( '/<li><strong>FREE [^<]*<\/strong><\/li>/', $html );
 bhp_cct_assert(
-	preg_match( '/<strong>FREE<\/strong> Activity Book \+ <strong>FREE<\/strong> Shipping/', $html ) === 1,
-	'3: the FREE Activity Book + FREE Shipping line renders, FREE bold (2026-08-07 revision)',
+	$cct_free_bullets >= 1,
+	"3: every FREE item renders as its own bold bullet line ({$cct_free_bullets} found, 1.8.36 policy)",
+	$failures
+);
+bhp_cct_assert(
+	preg_match( '/<strong>FREE<\/strong> Activity Book \+ <strong>FREE<\/strong> Shipping/', $html ) === 0,
+	'3: the COMBINED "FREE Activity Book + FREE Shipping" sentence is gone and stays gone',
 	$failures
 );
 bhp_cct_assert(

@@ -305,6 +305,50 @@
 .bhp-landing-final__panel .bhp-landing-cta { display: inline-block; width: auto; padding-inline: 2rem; }
 .bhp-landing-final__fine-print { color: rgba(255, 255, 255, 0.7); font-size: 0.78rem; margin-top: 0.85rem; }
 
+/*
+ * 1.8.37 (CYCLE148-LD-09) — the two FREE bullets under the closing CTA.
+ *
+ * Same construction as `.bhp-landing-coldopen__trust` at the top of the page:
+ * a real list, one claim per row, a check-mark pseudo-element rather than a
+ * list marker. Two differences, and both are forced by the surface rather than
+ * chosen: this band is `--bl-forest` (dark), so the ink is white and the check
+ * is the light gold that already carries emphasis elsewhere on dark here; and
+ * the section is centre-aligned, so the rows are centred as a group while each
+ * row's own text stays left-aligned against its check — a centred check-and-text
+ * pair drifts on every wrap and the two rows stop lining up.
+ *
+ * The size is UP from the 0.78rem fine print it was buried in, not down: these
+ * are the two claims the visitor is being asked to act on.
+ */
+.bhp-landing-final__free {
+	list-style: none;
+	margin: 1rem 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.bhp-landing-final__free li {
+	position: relative;
+	padding-left: 1.4rem;
+	margin: 0 0 0.3rem;
+	text-align: left;
+	font-family: var(--bl-sans);
+	font-size: 0.92rem;
+	line-height: 1.4;
+	color: #fff;
+}
+.bhp-landing-final__free li:last-child { margin-bottom: 0; }
+.bhp-landing-final__free li strong { font-weight: 700; }
+.bhp-landing-final__free li::before {
+	content: "\2713";
+	position: absolute;
+	left: 0;
+	top: 0;
+	font-weight: 700;
+	color: var(--bl-gold-light);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
 	.bhp-landing-hero__main { grid-template-columns: 1fr; }
