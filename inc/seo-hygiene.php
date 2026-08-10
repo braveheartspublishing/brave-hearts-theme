@@ -105,12 +105,41 @@
  *    suite can prove that property against real captured output rather than
  *    inferring it.
  *
- * ⚠ `Disallow: /search/` is honest here because search result URLs on this
- *   site really are `/search/<query>/` (verified: `get_search_link('reading')`
+ * ⚠ `Disallow: /search/` is well-targeted here because search result URLs on
+ *   this site really are `/search/<query>/` (verified: `get_search_link('reading')`
  *   returns `https://braveheartspublishing.com/search/reading/`) and no page
  *   uses the slug `search` (verified: 0 pages). Search pages are already
  *   `noindex` (`noindex_search: on`); the disallow saves the crawl of a
  *   combinatorially unbounded URL space.
+ *
+ * ⛔⛔ AND IT CONTRADICTS THIS REPOSITORY'S OWN SEO GUIDANCE. RECORDED, NOT
+ *   RESOLVED, BECAUSE THE CONTRADICTION IS NOT THIS CODE'S TO SETTLE.
+ *
+ *   `docs/Technical-SEO-Analytics-Setup.md` says, in its robots.txt section:
+ *   *"Do not block CSS, JavaScript, images, wp-content, or pages carrying
+ *   noindex; crawlers must be able to render pages and see their robots
+ *   directives. Do not use robots.txt as a substitute for noindex."*
+ *   Search pages carry noindex. This rule blocks them. Those two sentences
+ *   cannot both be followed.
+ *
+ *   **Both sides are real.** The doc's rule is standard guidance and its
+ *   reasoning is sound: a URL Google cannot fetch is a URL whose `noindex` it
+ *   cannot re-read, and a blocked URL with inbound links can still surface as
+ *   a bare result. The counter-argument is that Search Console already reports
+ *   these URLs under "Excluded by noindex", so the directive has been seen and
+ *   applied, and search result pages here carry no inbound links from anywhere.
+ *
+ *   ⭐ **REMOVING IT IS ONE LINE** — delete `'Disallow: /search/'` from
+ *   `bhp_seo_robots_rules()` below. The `?wc-ajax=` rules carry no such
+ *   tension: those are transport endpoints, not noindexed pages, and they stay
+ *   either way.
+ *
+ * ⚠ SEPARATELY, `docs/Technical-SEO-Analytics-Setup.md` also states *"No
+ *   theme-level noindex, nofollow, robots.txt rule, canonical, social tag, or
+ *   schema output exists."* That sentence is now stale in two ways — this file
+ *   adds a theme-level robots.txt rule, and `inc/reviews.php` has emitted
+ *   theme-level noindex since before this release. Flagged for the
+ *   documentation owner; not edited here.
  *
  * ⚠ `Disallow: /*?wc-ajax=` blocks a WooCommerce transport endpoint from
  *   CRAWLERS ONLY. It has no effect on a real browser, on the Store API, or on
