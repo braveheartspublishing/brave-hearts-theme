@@ -73,6 +73,17 @@
  *    feed. We remove the first entirely and suppress only the comments half of
  *    the second, which is exactly the split we want.
  *
+ *    ⚠ MEASURED ON PRODUCTION AT 1.19.216, BEFORE THIS RELEASE, AND RECORDED
+ *      SO NOBODY LATER READS IT AS THIS RELEASE'S DOING: this theme has never
+ *      called `add_theme_support('automatic-feed-links')`, and `feed_links()`
+ *      returns early without it — so the site-feed `<link>` was ALREADY absent
+ *      from every page. `feed_links_extra()` carries no such guard, which is
+ *      why the only feed links this site was ever publishing were the thin
+ *      taxonomy ones. `feed_links` is deliberately left hooked at priority 2:
+ *      the day someone adds theme support, the site feed link comes back and
+ *      this file will not be in its way. The URL is unaffected regardless —
+ *      `/feed/` serves the real feed before and after.
+ *
  * ─────────────────────────────────────────────────────────────────────────
  * ⭐ ROBOTS.TXT — EXTEND, NEVER CLOBBER
  * ─────────────────────────────────────────────────────────────────────────

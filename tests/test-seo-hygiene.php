@@ -105,11 +105,29 @@ $rss2 = get_bloginfo('rss2_url');
 bhp_seoh_assert($failures, "the site feed URL is still /feed/ ({$rss2})",
     (bool) preg_match('#/feed/?$#', (string) $rss2));
 
-bhp_seoh_assert($failures, 'the site feed link is still emitted (feed_links hooked at 2)',
+bhp_seoh_assert($failures, 'feed_links is STILL hooked at wp_head priority 2 — this release does not unhook it',
     2 === has_action('wp_head', 'feed_links'));
 
 bhp_seoh_assert($failures, 'the posts-feed link is NOT suppressed',
     true === apply_filters('feed_links_show_posts_feed', true));
+
+/*
+ * ⚠ OBSERVED, PRE-EXISTING, AND RECORDED SO IT IS NOT MISREAD AS THIS
+ *   RELEASE'S DOING. `feed_links()` returns early unless the theme declares
+ *   `add_theme_support('automatic-feed-links')`, and this theme never has —
+ *   verified on PRODUCTION at 1.19.216, before this release, where
+ *   `current_theme_supports('automatic-feed-links')` is false and no page
+ *   carries a site-feed <link>. `feed_links_extra()` has no such guard, which
+ *   is why the ONLY feed links this site was ever emitting were the thin
+ *   taxonomy ones this release removes.
+ *
+ *   The URL itself is unaffected either way: /feed/ still serves the real feed.
+ *   Printed rather than asserted, because adding theme support later would be
+ *   an improvement and must not turn into a red test.
+ */
+echo 'INFO: automatic-feed-links theme support = '
+    . var_export(current_theme_supports('automatic-feed-links'), true)
+    . " (pre-existing; false means no site-feed <link> is printed, by core's own guard)\n";
 
 /* ------------------------------------------------------------------ *
  * 3. THE EXTRA FEED LINKS ARE GONE.
