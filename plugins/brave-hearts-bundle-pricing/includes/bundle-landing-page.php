@@ -491,7 +491,64 @@ function bhp_bundle_render_landing_cold_open() {
 		?>
 		<ul class="bhp-landing-coldopen__trust">
 			<li>&ldquo;&hellip;spark children&rsquo;s curiosity&rdquo; &mdash; <?php echo esc_html( $kirkus['attribution'] ); ?>, on <em>The Mariana Trench</em></li>
-			<li><strong>FREE</strong> Activity Book + <strong>FREE</strong> Shipping</li>
+			<?php
+			/*
+			 * ═══════════════════════════════════════════════════════════════
+			 * ⭐⭐ 1.8.36 (2026-08-09, CYCLE148-LD-06) — TWO DEFECTS FIXED IN
+			 *     ONE LINE, and the second was not in the brief.
+			 * ═══════════════════════════════════════════════════════════════
+			 *
+			 * The superseded markup, preserved so the movement is visible:
+			 *
+			 *   <li><strong>FREE</strong> Activity Book + <strong>FREE</strong> Shipping</li>
+			 *
+			 * ⛔ DEFECT 1 — IT IS A COMBINED SENTENCE, which is the exact
+			 *    shape Andrew Signore's 2026-08-06 ruling forbids (relayed,
+			 *    NOT witnessed first-hand): "bold, each free item its own
+			 *    bullet line, NEVER COMBINED SENTENCES." Two free items
+			 *    welded together with a "+" on one line is one bullet doing
+			 *    the work of two, and it is why the second one reads as an
+			 *    afterthought.
+			 *
+			 * ⛔ DEFECT 2 — IT WAS HARDCODED AND UNGATED, and this one was
+			 *    found rather than briefed. Every other free-offer surface in
+			 *    this plugin and in the theme asks whether the offer is
+			 *    actually live on THIS environment before saying the word;
+			 *    this line asserted both promises unconditionally. On an
+			 *    environment where `BHP-ACTIVITY-BOOK-01` stops resolving —
+			 *    which is precisely the state production was in before the
+			 *    product existed — the highest, coldest line on the
+			 *    highest-traffic purchase page would have promised a free
+			 *    book the cart then charges for. It now routes through the
+			 *    same gated helper as everything else and disappears with no
+			 *    copy edit.
+			 *
+			 * ⭐ AND IT NOW CARRIES THE SAVINGS. Andrew, same week: "say its
+			 *    a $5.00 savings". The figure is WooCommerce's own, never a
+			 *    literal.
+			 *
+			 * ⛔ BUILT FROM PLUGIN-NATIVE CALLS ONLY. The theme has an
+			 *    equivalent helper (`bhp_book_free_bullet_lines()`) and it is
+			 *    deliberately NOT used here: the dependency in this codebase
+			 *    runs theme -> plugin, never the reverse, because the plugin
+			 *    has to keep working under a theme that does not define it.
+			 *    Both helpers read the same two live predicates, so they
+			 *    cannot disagree about whether an item is free.
+			 */
+			$bhp_coldopen_free = array();
+			$bhp_coldopen_ship = bhp_bundle_rules( bhp_bundle_default_format() );
+			if ( isset( $bhp_coldopen_ship[3]['shipping'] ) && 0.0 === (float) $bhp_coldopen_ship[3]['shipping'] ) {
+				$bhp_coldopen_free[] = 'FREE Shipping on the complete collection';
+			}
+			if ( function_exists( 'bhp_bundle_addon_free_with_collection' )
+				&& bhp_bundle_addon_free_with_collection()
+				&& function_exists( 'bhp_bundle_addon_free_offer_line' ) ) {
+				$bhp_coldopen_free[] = bhp_bundle_addon_free_offer_line();
+			}
+			?>
+			<?php foreach ( $bhp_coldopen_free as $bhp_coldopen_line ) : ?>
+				<li><strong><?php echo esc_html( $bhp_coldopen_line ); ?></strong></li>
+			<?php endforeach; ?>
 		</ul>
 	</div>
 	<?php
