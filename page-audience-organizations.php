@@ -168,10 +168,8 @@ $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format
       }
       ?>
       <div class="audience-landing-hero__proof">
-        <span>&#9733; <?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
-        <?php /* N4 (2026-08-03) — numberless standing form. See front-page.php's
-                 N4 note for Andrew's wording and why the count is dropped. */ ?>
-        <span><?php esc_html_e('Placed in classrooms across Boise', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
+        <?php /* 2026-08-10 (Andrew): Kirkus moved into the scanbar checkmarks;
+                 "Placed in classrooms across Boise" removed. */ ?>
         <span><?php esc_html_e('Paperback & hardcover options', 'brave-hearts'); ?></span>
       </div>
       <?php
@@ -195,6 +193,7 @@ $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format
     <span class="audience-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('12 short chapters', 'brave-hearts'); ?></span>
     <span class="audience-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Group read-aloud friendly', 'brave-hearts'); ?></span>
     <span class="audience-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Bulk & partnership inquiries welcome', 'brave-hearts'); ?></span>
+    <span class="audience-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span>
   </div>
 </section>
 
@@ -213,10 +212,10 @@ $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format
  * ✅ SELF-GATING. With no `$formats` map on this page the part renders
  *    nothing and the page is byte-identical to the release before it.
  */
-$prefix = 'audience-landing';
-$event  = 'org_fastbuy_cta_click';
-$source = 'organization_landing';
-require locate_template('template-parts/commerce/funnel-fast-purchase.php');
+/* 2026-08-10 (Andrew, current-turn): the mobile fast-purchase band is RETIRED
+   on this page - its 'Best value' box and 'Add the ... Collection' CTA duplicated
+   the raised Best Value pricing card directly below (his words: 'very redundant').
+   The band template itself is preserved unused. */
 ?>
 
 <!-- ===================== BULK PURCHASES ===================== -->

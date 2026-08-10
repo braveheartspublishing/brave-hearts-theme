@@ -212,13 +212,14 @@ if (function_exists('bhp_get_amazon_review_registry')) {
           echo '</div>';
       }
       ?>
-      <div class="parent-landing-hero__proof">
-        <span>&#9733; <?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
-        <?php /* N4 (2026-08-03) — numberless standing form. See front-page.php's
-                 N4 note for Andrew's wording and why the count is dropped. */ ?>
-        <span><?php esc_html_e('Placed in classrooms across Boise', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
-        <span><?php esc_html_e('Read-aloud & independent friendly', 'brave-hearts'); ?></span>
-      </div>
+      <?php
+      /*
+       * 2026-08-10 (Andrew, current-turn): the hero proof strip is retired on
+       * this page — Kirkus moved into the scanbar checkmarks, "Placed in
+       * classrooms across Boise" removed, "Read-aloud & independent friendly"
+       * removed as redundant with the scanbar's own "Read aloud or independent".
+       */
+      ?>
       <?php
       /*
        * ⭐ 1.19.213 — THE STATIC THREE-COVER HERO ART COLUMN IS REMOVED.
@@ -302,6 +303,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
              claim was pretending to say. */ ?>
     <span class="parent-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Your reader sets the pace', 'brave-hearts'); ?></span>
     <span class="parent-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Read aloud or independent', 'brave-hearts'); ?></span>
+    <span class="parent-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span>
   </div>
 </section>
 
@@ -320,10 +322,10 @@ if (function_exists('bhp_get_amazon_review_registry')) {
  *    visitor warmed the page, which is the documented cache-safety rule this
  *    theme already follows for consent mode.
  */
-$prefix  = 'parent-landing';
-$event   = 'parent_fastbuy_cta_click';
-$source  = 'adventure_kit_landing';
-require locate_template('template-parts/commerce/funnel-fast-purchase.php');
+/* 2026-08-10 (Andrew, current-turn): the mobile fast-purchase band is RETIRED
+   on this page - its 'Best value' box and 'Add the ... Collection' CTA duplicated
+   the raised Best Value pricing card directly below (his words: 'very redundant').
+   The band template itself is preserved unused. */
 ?>
 
 <!-- ===================== COMPLETE COLLECTION ===================== -->

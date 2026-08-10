@@ -173,7 +173,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
       }
       ?>
       <div class="audience-landing-hero__proof">
-        <span>&#9733; <?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
+        <?php /* 2026-08-10 (Andrew): Kirkus moved into the scanbar checkmarks. */ ?>
         <span><?php esc_html_e('Three complete adventures', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
         <span><?php esc_html_e('A keepsake, not a throwaway gift', 'brave-hearts'); ?></span>
       </div>
@@ -201,6 +201,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
     <span class="audience-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Hardcover keepsake option', 'brave-hearts'); ?></span>
     <span class="audience-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('One shipment, gift-ready', 'brave-hearts'); ?></span>
     <span class="audience-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Three complete adventures', 'brave-hearts'); ?></span>
+    <span class="audience-landing-scanbar__item"><span class="check">&#10003;</span><?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span>
   </div>
 </section>
 
@@ -219,10 +220,10 @@ if (function_exists('bhp_get_amazon_review_registry')) {
  * ✅ SELF-GATING. With no `$formats` map on this page the part renders
  *    nothing and the page is byte-identical to the release before it.
  */
-$prefix = 'audience-landing';
-$event  = 'gift_fastbuy_cta_click';
-$source = 'gift_landing';
-require locate_template('template-parts/commerce/funnel-fast-purchase.php');
+/* 2026-08-10 (Andrew, current-turn): the mobile fast-purchase band is RETIRED
+   on this page - its 'Best value' box and 'Add the ... Collection' CTA duplicated
+   the raised Best Value pricing card directly below (his words: 'very redundant').
+   The band template itself is preserved unused. */
 ?>
 
 <!-- ===================== COMPLETE COLLECTION (PRIMARY GIFT) ===================== -->
