@@ -517,3 +517,85 @@
 @media print {
 	.parent-landing__section.pl-fade-init { opacity: 1 !important; transform: none !important; }
 }
+
+
+/* ==========================================================================
+   1.19.213 — THE DEFINITIVE FUNNEL HERO  (CYCLE150-LD)
+   ==========================================================================
+
+   The parent Adventure Kit landing page is the funnel Andrew's example named.
+   The full founder spec, the reason the static three-cover lockup was deleted
+   rather than moved, and the reason the hero is now centred are all stated
+   ONCE in `assets/css/audience-landing.css` under the same heading — this
+   file carries the same treatment for `.parent-landing`, which is a separate
+   design system with its own class prefix, not a copy of that one.
+
+   ⛔ NO `--funnel` MODIFIER IS NEEDED HERE. `.parent-landing-hero` has exactly
+      one consumer, `page-reluctant-reader-adventure-kit.php`, so these rules
+      cannot reach a page that still renders an art column. (The audience
+      stylesheet needs the modifier because the retailers page shares it.)
+
+   ⚠ THE `.parent-landing-hero__art` / `__covers` / `__cover--*` / `__caption`
+     RULES ABOVE ARE NOW DEAD ON THIS PAGE AND ARE DELIBERATELY LEFT IN PLACE,
+     exactly as WAVE G left the dead `__logo` rule on 2026-08-03 and for the
+     same reason: they are the only remaining record of the intended treatment,
+     and restoring the lockup is a markup change with the styling already
+     written. Deleting them would make a revert a rewrite.
+   ========================================================================== */
+
+/* See the `justify-items: center` warning under the same heading in
+   `assets/css/audience-landing.css` — it is stated once, there. Short form:
+   centring the GRID ITEM lets the gallery's non-shrinking thumb rail set its
+   width and the whole hero overflows a 390px viewport. Stretch + `min-width:
+   0` + per-child `margin-inline: auto` instead. */
+.parent-landing-hero__grid {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0;
+	align-items: start;
+	text-align: center;
+	padding-block: clamp(1.25rem, 2.2vw, 2rem) clamp(1.5rem, 2.6vw, 2.5rem);
+}
+
+.parent-landing-hero__grid > * { min-width: 0; }
+
+@media (min-width: 860px) {
+	.parent-landing-hero__grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.parent-landing .parent-landing-hero h1 {
+	font-size: clamp(30px, 3.4vw, 44px);
+	line-height: 1.12;
+	margin: 12px auto 0;
+	max-width: 20ch;
+}
+
+.parent-landing-hero p.parent-landing__lead {
+	font-size: clamp(16px, 1.35vw, 18px);
+	line-height: 1.5;
+	max-width: 56ch;
+	margin: 12px auto 0;
+}
+
+.parent-landing-hero__ctas { justify-content: center; margin-top: 18px; }
+.parent-landing-hero__ctas .btn { font-size: 16px; padding: 16px 28px; }
+
+.parent-landing-hero__gallery {
+	width: 100%;
+	max-width: 940px;
+	margin: 18px auto 0;
+	text-align: left;
+}
+
+.parent-landing-hero__gallery .bhp-media-gallery--collection .bhp-gallery {
+	--bhp-stage-h: min(44vh, 400px);
+}
+
+.parent-landing-hero__proof { justify-content: center; margin-top: 16px; font-size: 13px; }
+
+@media (max-width: 640px) {
+	.parent-landing-hero__grid { padding-top: 1rem; }
+	.parent-landing-hero__ctas .btn { width: 100%; }
+	.parent-landing-hero__gallery .bhp-media-gallery--collection .bhp-gallery {
+		--bhp-stage-h: min(42vh, 340px);
+	}
+}

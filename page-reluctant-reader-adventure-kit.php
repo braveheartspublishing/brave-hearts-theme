@@ -178,10 +178,40 @@ if (function_exists('bhp_get_amazon_review_registry')) {
       <span class="parent-landing-eyebrow parent-landing-hero__badge"><?php esc_html_e('For parents of readers ages 6–9', 'brave-hearts'); ?></span>
       <h1><?php esc_html_e('Help your child see reading as an adventure.', 'brave-hearts'); ?></h1>
       <p class="parent-landing__lead"><?php esc_html_e('Short chapters, illustrated discoveries, and real-world adventures - designed to give a young reader a reason to keep turning the page.', 'brave-hearts'); ?></p>
+      <?php
+      /*
+       * ⭐ 1.19.213 (CYCLE150-LD) — ONE CTA, NOT TWO. The secondary
+       *    "Explore the collection" outline button is REMOVED, not hidden:
+       *    Andrew Signore, relayed by `chief-of-staff` (⛔ not witnessed
+       *    here), "it will distract from the main CTA." This is the page his
+       *    example named — the kit funnel's primary CTA stays exactly as it
+       *    is, "Get the free chapter & activity", with its event, source and
+       *    `data-parent-free-cta` scroll hook byte-unchanged.
+       *
+       *    Its `parent_hero_secondary_cta_click` event goes with it. The
+       *    collection is still reachable from the mobile fast-purchase band,
+       *    the raised Best Value card, the #collection section itself and the
+       *    sticky mini-CTA.
+       */
+      ?>
       <div class="parent-landing-hero__ctas">
         <a class="btn btn-primary" href="#free" data-parent-free-cta data-bhp-event="parent_hero_primary_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Get the free chapter & activity', 'brave-hearts'); ?></a>
-        <a class="btn btn-outline" href="#collection" data-bhp-event="parent_hero_secondary_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Explore the collection', 'brave-hearts'); ?></a>
       </div>
+      <?php
+      /*
+       * ⭐ 1.19.213 — THE COLLECTION CAROUSEL, DIRECTLY UNDER THE PRIMARY CTA.
+       *    Founder slot 4. Full spec and the two new placement keys are stated
+       *    ONCE in `inc/collection-gallery.php`, not repeated per template.
+       * ⛔ A MOVE, NOT AN ADDITION — the identical call that used to sit in the
+       *    SEE INSIDE section further down is gone. Still exactly one
+       *    instance, one DOM id, one lightbox per request.
+       */
+      if (function_exists('bhp_cx_render_collection_gallery')) {
+          echo '<div class="parent-landing-hero__gallery">';
+          bhp_cx_render_collection_gallery();
+          echo '</div>';
+      }
+      ?>
       <div class="parent-landing-hero__proof">
         <span>&#9733; <?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
         <?php /* N4 (2026-08-03) — numberless standing form. See front-page.php's
@@ -189,9 +219,30 @@ if (function_exists('bhp_get_amazon_review_registry')) {
         <span><?php esc_html_e('Placed in classrooms across Boise', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
         <span><?php esc_html_e('Read-aloud & independent friendly', 'brave-hearts'); ?></span>
       </div>
-    </div>
-    <div class="parent-landing-hero__art">
       <?php
+      /*
+       * ⭐ 1.19.213 — THE STATIC THREE-COVER HERO ART COLUMN IS REMOVED.
+       *    Andrew Signore, relayed by `chief-of-staff` (⛔ not witnessed
+       *    here): slide 1 of the carousel above IS the three-book image, so
+       *    the lockup was the same picture twice in one eyeful — and it was
+       *    the single largest thing pushing the CTA under the fold.
+       *
+       * ⛔ WHAT WENT WITH IT, NAMED RATHER THAN LEFT TO BE DISCOVERED: the
+       *    `.parent-landing-hero__covers` block and the "Ocean · Mountain ·
+       *    Rainforest" caption. ⚠ WAVE G's note below says explicitly "THE
+       *    CAPTION STAYS" — that instruction was about the LOGO removal of
+       *    2026-08-03 and is superseded here only because the whole column it
+       *    lived in is gone. It is flagged, not absorbed: if Andrew wants that
+       *    line back it belongs under the carousel and is a one-line addition.
+       *
+       * ⚠ The three covers are NOT gone from the page — they are still the
+       *   `parent-landing-books` grid inside #collection, and still every
+       *   slide of the carousel.
+       *
+       * WAVE G's note is preserved verbatim below because it is the only
+       * remaining record of why the hero logo left and why the dead
+       * `.parent-landing-hero__logo` rule in `parent-landing.css` was kept.
+       */
       /*
        * WAVE G (2026-08-03) — THE HERO LOCKUP IS REMOVED, NOT RESIZED.
        * Andrew Signore, relayed via chief-of-staff: the large logo was
@@ -235,12 +286,6 @@ if (function_exists('bhp_get_amazon_review_registry')) {
        * two-line change (emit the class, keep the rule).
        */
       ?>
-      <div class="parent-landing-hero__covers">
-        <?php if ($mariana): ?><div class="parent-landing-hero__cover--side parent-landing-hero__cover--left"><?php echo bhp_parent_landing_cover($mariana); ?></div><?php endif; ?>
-        <?php if ($everest): ?><div class="parent-landing-hero__cover--center"><?php echo bhp_parent_landing_cover($everest); ?></div><?php endif; ?>
-        <?php if ($amazon): ?><div class="parent-landing-hero__cover--side parent-landing-hero__cover--right"><?php echo bhp_parent_landing_cover($amazon); ?></div><?php endif; ?>
-      </div>
-      <p class="parent-landing-hero__caption"><?php esc_html_e('Ocean &middot; Mountain &middot; Rainforest', 'brave-hearts'); ?></p>
     </div>
   </div>
 </section>
@@ -290,18 +335,19 @@ require locate_template('template-parts/commerce/funnel-fast-purchase.php');
       <p class="parent-landing__lead"><?php echo wp_kses_post(__('Beneath the ocean, to the highest mountain, and deep into the rainforest - the full <em>Adventures of Charlotte &amp; Henry</em> collection in one shipment.', 'brave-hearts')); ?></p>
     </div>
 
-    <div class="parent-landing-books">
-      <?php if ($mariana): ?>
-        <div class="parent-landing-book"><?php echo bhp_parent_landing_cover($mariana); ?><p class="eyebrow-line"><?php esc_html_e('Book One · Ocean', 'brave-hearts'); ?></p><h3><?php echo esc_html($mariana['title'] ?? 'The Mariana Trench'); ?></h3><p class="desc"><?php esc_html_e('Deep-sea science and courage in the unknown.', 'brave-hearts'); ?></p></div>
-      <?php endif; ?>
-      <?php if ($everest): ?>
-        <div class="parent-landing-book"><?php echo bhp_parent_landing_cover($everest); ?><p class="eyebrow-line"><?php esc_html_e('Book Two · Mountain', 'brave-hearts'); ?></p><h3><?php echo esc_html($everest['title'] ?? 'Mount Everest'); ?></h3><p class="desc"><?php esc_html_e('Historic explorers, teamwork, and perseverance.', 'brave-hearts'); ?></p></div>
-      <?php endif; ?>
-      <?php if ($amazon): ?>
-        <div class="parent-landing-book"><?php echo bhp_parent_landing_cover($amazon); ?><p class="eyebrow-line"><?php esc_html_e('Book Three · Rainforest', 'brave-hearts'); ?></p><h3><?php echo esc_html($amazon['title'] ?? 'The Amazon'); ?></h3><p class="desc"><?php esc_html_e('Rainforest wildlife, river systems, and kindness.', 'brave-hearts'); ?></p></div>
-      <?php endif; ?>
-    </div>
-
+    <?php
+    /*
+     * ⭐ 1.19.213 — THE BOOKS GRID MOVES BELOW THE PRICE CARD, so the Best
+     *    Value buy section follows the checkmark scanbar directly. Founder
+     *    slot 6, relayed: "So they can buy easier on the page."
+     *
+     * ⛔ MOVED STRUCTURALLY, NOT WITH CSS `order` — keyboard and reading order
+     *    still match the visible order, which this theme has kept true through
+     *    every hero reordering (see the 1.19.120 note in `docs/RELEASES/`).
+     *    Nothing is deleted: the grid renders unchanged immediately after the
+     *    card, with the same covers and the same copy.
+     */
+    ?>
     <?php if ($bundle_available): ?>
       <div class="parent-landing-pricecard" data-parent-pricing-card>
         <span class="parent-landing-pricecard__badge">&#9733; <?php esc_html_e('Best value - all three books', 'brave-hearts'); ?></span>
@@ -428,6 +474,21 @@ require locate_template('template-parts/commerce/funnel-fast-purchase.php');
         <a class="btn btn-primary" href="<?php echo esc_url($complete_collection_url); ?>"><?php esc_html_e('Explore the Complete Collection', 'brave-hearts'); ?></a>
       </p>
     <?php endif; ?>
+
+    <?php /* 1.19.213 — the three-book grid, relocated to sit AFTER the price
+             card. Same markup, same covers, same copy; only its position in
+             the section changed. See the note above the price card. */ ?>
+    <div class="parent-landing-books">
+      <?php if ($mariana): ?>
+        <div class="parent-landing-book"><?php echo bhp_parent_landing_cover($mariana); ?><p class="eyebrow-line"><?php esc_html_e('Book One · Ocean', 'brave-hearts'); ?></p><h3><?php echo esc_html($mariana['title'] ?? 'The Mariana Trench'); ?></h3><p class="desc"><?php esc_html_e('Deep-sea science and courage in the unknown.', 'brave-hearts'); ?></p></div>
+      <?php endif; ?>
+      <?php if ($everest): ?>
+        <div class="parent-landing-book"><?php echo bhp_parent_landing_cover($everest); ?><p class="eyebrow-line"><?php esc_html_e('Book Two · Mountain', 'brave-hearts'); ?></p><h3><?php echo esc_html($everest['title'] ?? 'Mount Everest'); ?></h3><p class="desc"><?php esc_html_e('Historic explorers, teamwork, and perseverance.', 'brave-hearts'); ?></p></div>
+      <?php endif; ?>
+      <?php if ($amazon): ?>
+        <div class="parent-landing-book"><?php echo bhp_parent_landing_cover($amazon); ?><p class="eyebrow-line"><?php esc_html_e('Book Three · Rainforest', 'brave-hearts'); ?></p><h3><?php echo esc_html($amazon['title'] ?? 'The Amazon'); ?></h3><p class="desc"><?php esc_html_e('Rainforest wildlife, river systems, and kindness.', 'brave-hearts'); ?></p></div>
+      <?php endif; ?>
+    </div>
   </div>
 </section>
 
@@ -491,21 +552,37 @@ require locate_template('template-parts/commerce/funnel-fast-purchase.php');
     </div>
     <?php
     /*
-     * The evidence for this section's own promise. Its <h2> is literally
-     * "You can tell in one flip-through." and the page carried no
-     * flip-through — the claim was made in text and never shown. The real
-     * flip-through video leads the subset for that reason.
+     * ⭐ 1.19.213 — THE CAROUSEL CALL THAT STOOD HERE HAS MOVED TO THE HERO,
+     *    directly under the primary CTA (founder slot 4). A MOVE: still one
+     *    call, one instance, one DOM id per request — the one-gallery-per-page
+     *    constraint the note below names is unchanged and still enforced by
+     *    `bhp_cx_render_collection_gallery()`'s render-once guard.
      *
-     * Deliberately NOT placed in the #collection section further down: exactly
-     * one gallery instance may exist per page, because the component derives
-     * its DOM id from the media key. See `inc/collection-gallery.php`.
+     * ⚠ THE COST, STATED RATHER THAN HIDDEN. This section's <h2> is literally
+     *   "You can tell in one flip-through.", and the 2026-08-03 note preserved
+     *   below put the gallery here precisely because that claim was made in
+     *   text and never shown. Moving the gallery to the hero re-opens that
+     *   gap: the flip-through is now ABOVE this heading rather than under it.
+     *   The founder's structure is explicit that the carousel goes directly
+     *   under the primary CTA and that there is exactly one per page, so this
+     *   is a deliberate trade, not an oversight. ⭐ Flagged for Andrew: the
+     *   clean fix is a copy change to this section's heading, and copy is
+     *   locked, so nothing was rewritten here.
+     *
+     * The 2026-08-03 note, preserved verbatim:
+     *
+     *   "The evidence for this section's own promise. Its <h2> is literally
+     *    'You can tell in one flip-through.' and the page carried no
+     *    flip-through — the claim was made in text and never shown. The real
+     *    flip-through video leads the subset for that reason.
+     *
+     *    Deliberately NOT placed in the #collection section further down:
+     *    exactly one gallery instance may exist per page, because the
+     *    component derives its DOM id from the media key."
      *
      * The #free lead-magnet block and the parent funnel's popup, storage keys
-     * and analytics prefixes are untouched by this.
+     * and analytics prefixes remain untouched.
      */
-    if (function_exists('bhp_cx_render_collection_gallery')) {
-        bhp_cx_render_collection_gallery();
-    }
     ?>
     <div class="parent-landing-grid parent-landing-grid--features" style="margin-top:32px;">
       <?php foreach ($feature_grid as $feature): ?>

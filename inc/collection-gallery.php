@@ -307,15 +307,100 @@ function bhp_cx_collection_gallery_map() {
         ],
 
         /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.213 (2026-08-09/10, `CYCLE150-LD-01`) — THE FOUR FUNNEL
+         *     ENTRIES BELOW MOVE INTO THE HERO, DIRECTLY UNDER THE PRIMARY CTA.
+         *     Stated ONCE, here, because it is one decision applying to four
+         *     entries and repeating it four times is how these files drift.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ THE SPEC. Andrew Signore, relayed verbatim by `chief-of-staff`
+         *    in the build brief (⛔ NOT witnessed first-hand by this agent) —
+         *    the definitive structure for every funnel page, in order:
+         *
+         *      1. Heading   2. Paragraph   3. Primary CTA (each funnel's own)
+         *      4. THE UNIVERSAL COLLECTION CAROUSEL, DIRECTLY UNDER THE CTA,
+         *         "mostly visible" on landing
+         *      5. The checkmark selling angles
+         *      6. The Best Value buy section, raised to follow directly —
+         *         "So they can buy easier on the page."
+         *
+         *    …plus: the secondary "Explore the Collection" CTA is REMOVED
+         *    ("it will distract from the main CTA"), and the static three-book
+         *    hero image is REMOVED because slide 1 of this very carousel IS
+         *    that three-book image. His words: "This needs to be on every
+         *    funnel now."
+         *
+         * ⛔ NOTHING ABOUT THE MEDIA CHANGES. Every funnel entry still takes
+         *    `$universal` — the same ten slides as /complete-collection/, from
+         *    the same `bhp_collection_carousel_slugs()` call. The 2026-08-09
+         *    parity ruling is untouched. What moved is WHERE the one instance
+         *    renders, which this file has always owned (see the head note:
+         *    "WHERE in that page it renders (the template's own call site)").
+         *
+         * ⛔ STILL EXACTLY ONE INSTANCE PER PAGE. `bhp_cx_render_collection_
+         *    gallery()` is a render-once no-op, and the four templates each
+         *    moved their single call site rather than adding a second one —
+         *    which is the defect head-note point 4 exists to prevent (two
+         *    elements sharing a DOM id, two `aria-labelledby` targets, two
+         *    lightboxes, all of it invisible on screen and wrong underneath).
+         *
+         * ⭐ TWO PLACEMENT KEYS ARE ADDED, and they are placement DATA exactly
+         *    like `heading` and `collection` — the template still passes no
+         *    arguments, so the enqueue gate and the render call cannot drift:
+         *
+         *    `eager_first` — ⛔ THIS ONE IS LOAD-BEARING AND IS NOT COSMETIC.
+         *      `bhp_cx_render_collection_gallery()` hardcoded `false` with the
+         *      comment "Below the fold on every one of these six pages". ⚠ THAT
+         *      SENTENCE IS NOW FALSE for these four. Leaving it false would
+         *      lazy-load the LCP element of every funnel page and cost exactly
+         *      the metric the placement is meant to win. `true` here, and
+         *      deliberately still ABSENT (false) on `front-page.php` and
+         *      `page-books.php`, where the gallery genuinely is below the fold
+         *      and eager-loading it would steal priority from their real LCP.
+         *
+         *    `heading_level` — in the hero the nearest preceding heading is the
+         *      page `<h1>`, not an `<h2>`, so the old blanket `h3` skipped a
+         *      level. `h2` here; the two below-the-fold entries keep `h3`,
+         *      whose insertion points do still sit under an `<h2>`.
+         *
+         * ⭐ `heading_hidden` IS SET ON ALL FOUR, and the homepage's own note
+         *    (above) is the precedent, not a new idea. The founder's ordered
+         *    list runs CTA → carousel with nothing between them, and a visible
+         *    section title in that gap both contradicts the order and spends
+         *    ~40px of the fold budget the same brief requires. ⛔ THE STRING IS
+         *    NOT DELETED AND THE ELEMENT IS NOT REMOVED — the gallery region is
+         *    `aria-labelledby` this heading, so removing it would strip the
+         *    region's accessible name. It stays in the DOM, stays the aria
+         *    target, stays announced. Each page keeps its OWN heading text, so
+         *    the audience-specific accessible names survive intact.
+         *
+         * ⚠ FLAGGED, NOT ABSORBED: the section headings below ("One
+         *   flip-through", "What arrives", "What your program receives",
+         *   "Inside the books") were written to be READ on screen inside a
+         *   framed section. They are now screen-reader-only. Making any of them
+         *   visible again is a one-line change per entry, and it is Andrew's
+         *   call, not this file's.
+         */
+
+        /*
          * ---- /reluctant-reader-adventure-kit/
          * The section's own <h2> is "You can tell in one flip-through." and
          * the page contained no flip-through. Both flip-throughs are now in
          * the uniform set, so the claim is over-satisfied rather than unmet.
+         *
+         * ⚠ 1.19.213: that <h2> is on the SEE INSIDE section further down the
+         *   page, which is where this gallery used to render. The gallery has
+         *   moved to the hero; the section and its heading are untouched and
+         *   still stand on their own copy.
          */
         'page-reluctant-reader-adventure-kit.php' => [
-            'items'      => $universal,
-            'heading'    => __('One flip-through', 'brave-hearts'),
-            'collection' => true,
+            'items'         => $universal,
+            'heading'       => __('One flip-through', 'brave-hearts'),
+            'heading_hidden' => true,
+            'heading_level' => 'h2',
+            'eager_first'   => true,
+            'collection'    => true,
         ],
 
         /*
@@ -325,9 +410,12 @@ function bhp_cx_collection_gallery_map() {
          * giver's actual question about an object they hand over unseen.
          */
         'page-audience-gift-buyers.php' => [
-            'items'      => $universal,
-            'heading'    => __('What arrives', 'brave-hearts'),
-            'collection' => true,
+            'items'         => $universal,
+            'heading'       => __('What arrives', 'brave-hearts'),
+            'heading_hidden' => true,
+            'heading_level' => 'h2',
+            'eager_first'   => true,
+            'collection'    => true,
         ],
 
         /*
@@ -337,9 +425,12 @@ function bhp_cx_collection_gallery_map() {
          * defensible to whoever signs off.
          */
         'page-audience-organizations.php' => [
-            'items'      => $universal,
-            'heading'    => __('What your program receives', 'brave-hearts'),
-            'collection' => true,
+            'items'         => $universal,
+            'heading'       => __('What your program receives', 'brave-hearts'),
+            'heading_hidden' => true,
+            'heading_level' => 'h2',
+            'eager_first'   => true,
+            'collection'    => true,
         ],
 
         /*
@@ -450,9 +541,12 @@ function bhp_cx_collection_gallery_map() {
          *    now has ten slides, so its arrows, counter and thumb rail return.
          */
         'page-audience-educators.php' => [
-            'items'      => $universal,
-            'heading'    => __('Inside the books', 'brave-hearts'),
-            'collection' => true,
+            'items'         => $universal,
+            'heading'       => __('Inside the books', 'brave-hearts'),
+            'heading_hidden' => true,
+            'heading_level' => 'h2',
+            'eager_first'   => true,
+            'collection'    => true,
         ],
 
         // ---- /books/ — inside the Collection banner.
@@ -644,6 +738,16 @@ function bhp_cx_render_collection_gallery() {
      * NOT be eager/high-priority — that flag exists for the hero placements,
      * where item 0 genuinely is the LCP element. Passing it here would fetch a
      * large below-fold image at high priority and cost the homepage its LCP.
+     *
+     * ⭐ 1.19.213 — THE PARAGRAPH ABOVE IS PRESERVED AND IS NOW TRUE OF ONLY
+     *    TWO OF THE SIX. It is deliberately not rewritten: its REASONING is
+     *    still exactly right, and it is the reason `eager_first` is per-entry
+     *    data rather than a blanket `true`. On the four funnel pages the
+     *    gallery now renders in the hero directly under the primary CTA, so
+     *    item 0 IS the LCP element there and lazy-loading it would be the
+     *    mirror-image of the mistake this note warns about. `front-page.php`
+     *    and `page-books.php` declare no `eager_first`, so they keep `false`
+     *    and their own LCP keeps its priority.
      */
     $media       = $config['media'];
     $heading     = $config['heading'];
@@ -656,8 +760,20 @@ function bhp_cx_render_collection_gallery() {
     $collection  = !empty($config['collection']);
     $compact     = true;
     $hero        = false;
-    $eager_first = false;
-    $level       = 'h3';   // every insertion point already sits under an <h2>
+    /*
+     * 1.19.213 — both of these are placement data now. Absent on the two
+     * below-the-fold entries, so they keep the pre-1.19.213 behaviour with no
+     * per-entry edit — the same shape `heading_hidden` already uses.
+     *
+     * `$hero` stays FALSE even for the four hero placements: it is not "is
+     * this in a hero", it selects `look-inside.php`'s PRODUCT-hero markup mode,
+     * which drops the heading element entirely and would take the gallery
+     * region's accessible name with it. The visual hero treatment is CSS.
+     */
+    $eager_first = !empty($config['eager_first']);
+    $level       = isset($config['heading_level']) && 'h2' === $config['heading_level']
+        ? 'h2'     // hero placements: the nearest preceding heading is the <h1>
+        : 'h3';    // below-the-fold placements already sit under an <h2>
     $intro       = '';
 
     include $bhp_tpl;

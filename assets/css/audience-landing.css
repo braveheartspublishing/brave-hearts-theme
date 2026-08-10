@@ -696,3 +696,145 @@
 @media print {
 	.bhp-compass, .bhp-compass * { opacity: 1 !important; transform: none !important; }
 }
+
+
+/* ==========================================================================
+   1.19.213 — THE DEFINITIVE FUNNEL HERO  (CYCLE150-LD)
+   ==========================================================================
+
+   Andrew Signore, relayed verbatim by `chief-of-staff` in the build brief
+   (⛔ NOT witnessed first-hand by the agent that wrote this): every funnel
+   page runs, in this order —
+
+     1. Heading  2. Paragraph  3. Primary CTA (each funnel's own)
+     4. THE UNIVERSAL COLLECTION CAROUSEL, DIRECTLY UNDER THE PRIMARY CTA,
+        "mostly visible" on landing
+     5. The checkmark selling angles
+     6. The Best Value buy section, raised to follow directly
+
+   — with the secondary CTA removed ("it will distract from the main CTA")
+   and the static three-book hero lockup removed, because slide 1 of that
+   carousel IS the three-book image.
+
+   ⛔ SCOPED TO `--funnel`, AND THAT IS THE POINT OF THE MODIFIER.
+      `page-audience-retailers.php` shares this stylesheet, still renders a
+      two-column hero with `.audience-landing-hero__art`, and is NOT part of
+      this change (it has no collection-carousel placement and no Best Value
+      card, so slots 4 and 6 have nothing to attach to — flagged for Andrew,
+      not silently converted). Changing the unmodified `__grid` rule would
+      have collapsed its art column into a stacked orphan. Every rule below
+      therefore hangs off `.audience-landing-hero--funnel`, and the retailer
+      hero is byte-for-byte the layout it was in 1.19.212.
+
+   ⚠ ONE VISIBLE DEVIATION, STATED RATHER THAN BURIED: the funnel hero is now
+     CENTRED. It was left-aligned because it was the left column of a 1.35:1
+     two-column grid. With the art column gone there is no second column to
+     balance against, and a left-aligned 22ch headline above a centred 940px
+     carousel reads as a layout bug. Centring is the consequence of the
+     founder's structure, not an independent design change — but it IS
+     visible, and it is Andrew's to reject.
+
+   ⚠ THE CLAMP CEILINGS BELOW ARE COMPRESSION, AND COMPRESSION ONLY. No copy
+     is changed, shortened or reworded anywhere in this release. The headline
+     ceiling drops 66px → 44px and the lead 21px → 18px so that heading +
+     paragraph + CTA clear the fold at 1920x1080, 1440x900 and 390x844 with
+     the carousel's top edge cutting into the first viewport. Measured on
+     staging with `window.innerWidth` asserted on every run — never inferred
+     from a resize that may not have taken.
+   ========================================================================== */
+
+
+/*
+ * ⛔ `justify-items: center` WAS TRIED HERE AND IT BROKE THE PHONE. Recorded
+ *    rather than silently replaced, because the mechanism is non-obvious and
+ *    the next person to reach for it will reach for it for the same reason.
+ *
+ *    In CSS Grid, `justify-items: center` takes a grid item OFF `stretch` and
+ *    sizes it to fit-content — and this item now contains the gallery, whose
+ *    thumb rail is a flex row of non-shrinking thumbs. `book-media.css` states
+ *    the trap in its own head note: that rail's MIN-CONTENT is the sum of every
+ *    thumb (10 x 64px + gaps), even though the rail scrolls. So the item sized
+ *    itself to ~700px inside a 390px viewport and centred the overflow, which
+ *    is why the paragraph, the CTA and the carousel were all clipped on BOTH
+ *    edges at 390x844 — observed in a real browser, not predicted.
+ *
+ *    The item therefore stays STRETCHED, `min-width: 0` lets it actually honour
+ *    the track (the same one-declaration fix `book-media.css` already uses for
+ *    the product column), and the centring is done by `text-align: center` plus
+ *    `margin-inline: auto` on the individual children, none of which can be
+ *    widened by a descendant's min-content.
+ */
+.audience-landing-hero--funnel .audience-landing-hero__grid {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0;
+	align-items: start;
+	text-align: center;
+	padding-block: clamp(1.25rem, 2.2vw, 2rem) clamp(1.5rem, 2.6vw, 2.5rem);
+}
+
+.audience-landing-hero--funnel .audience-landing-hero__grid > * { min-width: 0; }
+
+/* The 860px two-column rule above this block is explicit, so it has to be
+   explicitly undone rather than left to source order inside the same query. */
+@media (min-width: 860px) {
+	.audience-landing-hero--funnel .audience-landing-hero__grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Same selector shape (2 classes + 1 element) as the rule it replaces, so it
+   wins on source order rather than on an escalated selector — and still
+   outranks the sitewide `body:not(.home) h1` rule for the same reason the
+   original comment gives. */
+.audience-landing .audience-landing-hero--funnel h1 {
+	font-size: clamp(30px, 3.4vw, 44px);
+	line-height: 1.12;
+	margin: 12px auto 0;
+	max-width: 20ch;
+}
+
+.audience-landing-hero--funnel p.audience-landing__lead {
+	font-size: clamp(16px, 1.35vw, 18px);
+	line-height: 1.5;
+	max-width: 56ch;
+	margin: 12px auto 0;
+}
+
+.audience-landing-hero--funnel .audience-landing-hero__ctas {
+	justify-content: center;
+	margin-top: 18px;
+}
+
+.audience-landing-hero--funnel .audience-landing-hero__ctas .btn {
+	font-size: 16px;
+	padding: 16px 28px;
+}
+
+/* Slot 4. `width: 100%` (not `max-width` alone) because the grid's
+   `justify-items: center` would otherwise shrink-to-fit the wrapper and the
+   gallery would render at its own min-content width. */
+.audience-landing-hero--funnel .audience-landing-hero__gallery {
+	width: 100%;
+	max-width: 940px;
+	margin: 18px auto 0;
+	text-align: left;
+}
+
+/* A shorter stage than the /complete-collection/ hero uses. "Mostly visible"
+   is a height requirement, not a width one: at 390x844 a 460px stage leaves
+   the rail and counter under the fold no matter how high the CTA sits. */
+.audience-landing-hero--funnel .bhp-media-gallery--collection .bhp-gallery {
+	--bhp-stage-h: min(44vh, 400px);
+}
+
+.audience-landing-hero--funnel .audience-landing-hero__proof {
+	justify-content: center;
+	margin-top: 16px;
+	font-size: 13px;
+}
+
+@media (max-width: 640px) {
+	.audience-landing-hero--funnel .audience-landing-hero__grid { padding-top: 1rem; }
+	.audience-landing-hero--funnel .audience-landing-hero__ctas .btn { width: 100%; }
+	.audience-landing-hero--funnel .bhp-media-gallery--collection .bhp-gallery {
+		--bhp-stage-h: min(42vh, 340px);
+	}
+}

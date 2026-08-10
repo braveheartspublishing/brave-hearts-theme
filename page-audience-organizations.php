@@ -117,17 +117,56 @@ $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format
 <div class="audience-landing" data-audience-landing>
 
 <!-- ===================== HERO ===================== -->
-<section class="audience-landing-hero">
+<section class="audience-landing-hero audience-landing-hero--funnel">
   <div class="audience-landing-hero__bg" aria-hidden="true"></div>
   <div class="audience-landing__inner audience-landing-hero__grid">
     <div>
       <span class="audience-landing-eyebrow audience-landing-hero__badge"><?php esc_html_e('For literacy programs, nonprofits & youth organizations', 'brave-hearts'); ?></span>
       <h1><?php esc_html_e('Story-led adventure, built for community programs.', 'brave-hearts'); ?></h1>
       <p class="audience-landing__lead"><?php esc_html_e('Approachable chapter books that support literacy programs, read-alouds, events, and bulk gifting - for hospitals, nonprofits, youth clubs, and libraries.', 'brave-hearts'); ?></p>
+      <?php
+      /*
+       * ⭐ 1.19.213 (CYCLE150-LD) — ONE CTA, NOT TWO.
+       *
+       * ⚠️ FLAGGED FOR ANDREW, NOT ABSORBED — THIS PAGE IS THE ONE PLACE THE
+       *    INSTRUCTION HAD TO BE INTERPRETED, so the interpretation is written
+       *    here rather than left to be inferred from a diff.
+       *
+       *    The relayed instruction names the secondary "Explore the
+       *    Collection" CTA and gives the reason: "it will distract from the
+       *    main CTA." ⛔ THIS PAGE'S SECONDARY WAS NOT A COLLECTION LINK — it
+       *    was "Start a Partnership Conversation" → #contact, a genuinely
+       *    different conversion path, not a duplicate of the primary.
+       *
+       *    It is removed anyway, because the founder's structure is stated as
+       *    applying to every funnel ("This needs to be on every funnel now")
+       *    and its slot 3 is a single primary CTA. ⭐ THE PARTNERSHIP PATH IS
+       *    NOT LOST: #contact is still reachable from the sticky bar's
+       *    "Contact" button, from the page's own CONTACT / PARTNERSHIP section
+       *    and its final CTA. ⚠ Restoring this one button is a one-line
+       *    change and it is Andrew's call.
+       *
+       *    Its `org_hero_secondary_cta_click` event goes with it. The primary
+       *    CTA's event, source and href are byte-unchanged.
+       */
+      ?>
       <div class="audience-landing-hero__ctas">
         <a class="btn btn-primary" href="#free" data-audience-free-cta data-bhp-event="org_hero_primary_cta_click" data-bhp-source="organization_landing"><?php esc_html_e('Get the Community Reading Kit', 'brave-hearts'); ?></a>
-        <a class="btn btn-outline" href="#contact" data-bhp-event="org_hero_secondary_cta_click" data-bhp-source="organization_landing"><?php esc_html_e('Start a Partnership Conversation', 'brave-hearts'); ?></a>
       </div>
+      <?php
+      /*
+       * ⭐ 1.19.213 — THE COLLECTION CAROUSEL, DIRECTLY UNDER THE PRIMARY CTA.
+       *    Founder slot 4. Full spec and the two new placement keys are stated
+       *    ONCE in `inc/collection-gallery.php`, not repeated per template.
+       * ⛔ A MOVE, NOT AN ADDITION — the identical call inside #collection is
+       *    gone. Still exactly one instance, one DOM id, one lightbox.
+       */
+      if (function_exists('bhp_cx_render_collection_gallery')) {
+          echo '<div class="audience-landing-hero__gallery">';
+          bhp_cx_render_collection_gallery();
+          echo '</div>';
+      }
+      ?>
       <div class="audience-landing-hero__proof">
         <span>&#9733; <?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
         <?php /* N4 (2026-08-03) — numberless standing form. See front-page.php's
@@ -135,15 +174,16 @@ $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format
         <span><?php esc_html_e('Placed in classrooms across Boise', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
         <span><?php esc_html_e('Paperback & hardcover options', 'brave-hearts'); ?></span>
       </div>
-    </div>
-    <div class="audience-landing-hero__art">
-      <?php if (has_custom_logo()): the_custom_logo(); endif; ?>
-      <div class="audience-landing-hero__covers">
-        <?php if ($mariana): ?><div class="audience-landing-hero__cover--side audience-landing-hero__cover--left"><?php echo bhp_parent_landing_cover($mariana); ?></div><?php endif; ?>
-        <?php if ($everest): ?><div class="audience-landing-hero__cover--center"><?php echo bhp_parent_landing_cover($everest); ?></div><?php endif; ?>
-        <?php if ($amazon): ?><div class="audience-landing-hero__cover--side audience-landing-hero__cover--right"><?php echo bhp_parent_landing_cover($amazon); ?></div><?php endif; ?>
-      </div>
-      <p class="audience-landing-hero__caption"><?php esc_html_e('Ocean &middot; Mountain &middot; Rainforest', 'brave-hearts'); ?></p>
+      <?php
+      /*
+       * ⭐ 1.19.213 — THE STATIC THREE-COVER HERO ART IS REMOVED. Slide 1 of
+       *    the carousel above IS the three-book image, so the lockup was the
+       *    same picture twice in one eyeful and was the single largest thing
+       *    pushing the CTA under the fold. ⚠ The covers are NOT gone from the
+       *    page — still the `audience-landing-books` grid in #collection, and
+       *    still every slide of the carousel.
+       */
+      ?>
     </div>
   </div>
 </section>
@@ -190,32 +230,24 @@ require locate_template('template-parts/commerce/funnel-fast-purchase.php');
 
     <?php
     /*
-     * A programme lead is spending someone else's money and has to justify it.
-     * What was missing here was not more copy but proof the product is
-     * finished and real: the composite shows what a set looks like, the
-     * flip-through shows it is a printed book rather than a PDF, and the
-     * diagram shows there is genuine instructional content inside.
+     * ⭐ 1.19.213 — THE CAROUSEL CALL THAT STOOD HERE HAS MOVED TO THE HERO,
+     *    directly under the primary CTA (founder slot 4). A MOVE: still one
+     *    call, one instance, one DOM id per request.
      *
-     * Fails closed. The #contact partnership CTA, the sponsored-book FAQ row
-     * and the bulk-ordering link are untouched. See `inc/collection-gallery.php`.
+     * The 2026-08-03 reasoning is preserved because it is still live — "a
+     * programme lead is spending someone else's money and has to justify it…
+     * proof the product is finished and real". ⚠ Under the founder's structure
+     * that proof now sits in the hero, where the justification actually starts.
+     *
+     * ⭐ AND THE BOOKS GRID MOVES BELOW THE PRICE CARD — founder slot 6, "the
+     *    Best Value buy section, raised… So they can buy easier on the page."
+     *    Moved STRUCTURALLY, not with CSS `order`, so keyboard and reading
+     *    order still match the visible order. Nothing is deleted.
+     *
+     * Still untouched, and deliberately named: the #contact partnership CTA,
+     * the sponsored-book FAQ row and the bulk-ordering link.
      */
-    if (function_exists('bhp_cx_render_collection_gallery')) {
-        bhp_cx_render_collection_gallery();
-    }
     ?>
-
-    <div class="audience-landing-books">
-      <?php if ($mariana): ?>
-        <div class="audience-landing-book"><?php echo bhp_parent_landing_cover($mariana); ?><p class="eyebrow-line"><?php esc_html_e('Book One · Ocean', 'brave-hearts'); ?></p><h3><?php echo esc_html($mariana['title'] ?? 'The Mariana Trench'); ?></h3><p class="desc"><?php esc_html_e('Deep-sea science and courage in the unknown.', 'brave-hearts'); ?></p></div>
-      <?php endif; ?>
-      <?php if ($everest): ?>
-        <div class="audience-landing-book"><?php echo bhp_parent_landing_cover($everest); ?><p class="eyebrow-line"><?php esc_html_e('Book Two · Mountain', 'brave-hearts'); ?></p><h3><?php echo esc_html($everest['title'] ?? 'Mount Everest'); ?></h3><p class="desc"><?php esc_html_e('Historic explorers, teamwork, and perseverance.', 'brave-hearts'); ?></p></div>
-      <?php endif; ?>
-      <?php if ($amazon): ?>
-        <div class="audience-landing-book"><?php echo bhp_parent_landing_cover($amazon); ?><p class="eyebrow-line"><?php esc_html_e('Book Three · Rainforest', 'brave-hearts'); ?></p><h3><?php echo esc_html($amazon['title'] ?? 'The Amazon'); ?></h3><p class="desc"><?php esc_html_e('Rainforest wildlife, river systems, and kindness.', 'brave-hearts'); ?></p></div>
-      <?php endif; ?>
-    </div>
-
     <?php if ($bundle_available): ?>
       <div class="audience-landing-pricecard" data-audience-pricing-card>
         <span class="audience-landing-pricecard__badge">&#9733; <?php esc_html_e('Standard collection pricing - all three books', 'brave-hearts'); ?></span>
@@ -330,6 +362,21 @@ require locate_template('template-parts/commerce/funnel-fast-purchase.php');
         <a class="btn btn-primary" href="<?php echo esc_url($complete_collection_url); ?>"><?php esc_html_e('Explore the Complete Collection', 'brave-hearts'); ?></a>
       </p>
     <?php endif; ?>
+
+    <?php /* 1.19.213 — the three-book grid, relocated to sit AFTER the price
+             card. Same markup, same covers, same copy; only its position in
+             the section changed. See the note above the price card. */ ?>
+    <div class="audience-landing-books">
+      <?php if ($mariana): ?>
+        <div class="audience-landing-book"><?php echo bhp_parent_landing_cover($mariana); ?><p class="eyebrow-line"><?php esc_html_e('Book One · Ocean', 'brave-hearts'); ?></p><h3><?php echo esc_html($mariana['title'] ?? 'The Mariana Trench'); ?></h3><p class="desc"><?php esc_html_e('Deep-sea science and courage in the unknown.', 'brave-hearts'); ?></p></div>
+      <?php endif; ?>
+      <?php if ($everest): ?>
+        <div class="audience-landing-book"><?php echo bhp_parent_landing_cover($everest); ?><p class="eyebrow-line"><?php esc_html_e('Book Two · Mountain', 'brave-hearts'); ?></p><h3><?php echo esc_html($everest['title'] ?? 'Mount Everest'); ?></h3><p class="desc"><?php esc_html_e('Historic explorers, teamwork, and perseverance.', 'brave-hearts'); ?></p></div>
+      <?php endif; ?>
+      <?php if ($amazon): ?>
+        <div class="audience-landing-book"><?php echo bhp_parent_landing_cover($amazon); ?><p class="eyebrow-line"><?php esc_html_e('Book Three · Rainforest', 'brave-hearts'); ?></p><h3><?php echo esc_html($amazon['title'] ?? 'The Amazon'); ?></h3><p class="desc"><?php esc_html_e('Rainforest wildlife, river systems, and kindness.', 'brave-hearts'); ?></p></div>
+      <?php endif; ?>
+    </div>
   </div>
 </section>
 
