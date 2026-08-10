@@ -242,31 +242,71 @@ foreach ( array(
 	$src  = bhp_fab_read( $tpl );
 	$code = '' === $src ? '' : bhp_fab_code( $src );
 
+	/*
+	 * ===================================================================
+	 * *** 1.19.210 - THE TREATMENT CHANGED FROM A PILL TO A BOLD BULLET,
+	 *     SO THE ASSERTIONS CHANGED WITH IT. THE GATE DID NOT MOVE.
+	 * ===================================================================
+	 *
+	 * Andrew Signore, 2026-08-06, relayed (NOT witnessed first-hand):
+	 * "FREE-items emphasis on ALL funnel + collection pages: bold, each
+	 * free item its own bullet line, never combined sentences."
+	 *
+	 * A muted pill among three other muted pills is not emphasis, so the
+	 * pill is gone and the same fact is rendered as a bold bullet by
+	 * `bhp_book_free_bullets_markup()`.
+	 *
+	 * THE SUPERSEDED ASSERTIONS, preserved so this reads as a treatment
+	 * change rather than a deleted guard:
+	 *
+	 *     strpos( $code, "bhp_book_free_addon_badge()" ) !== false
+	 *     preg_match on function_exists( "bhp_book_free_addon_badge" )
+	 *     preg_match on if ( "" !== $bhp_free_addon_badge )
+	 *
+	 * EVERY PROPERTY THEY PROTECTED IS STILL PROTECTED, one-for-one: the
+	 * string still comes from a shared helper and never from a literal in
+	 * the template; the call is still function_exists-guarded; and the
+	 * TEMPLATE still carries its own empty-string gate on top of the
+	 * helper's, so a helper that starts returning markup unconditionally
+	 * cannot put an empty list on the page.
+	 */
 	bhp_fab_assert( '' !== $src, "§4 {$tpl}: readable", $failures );
 	bhp_fab_assert(
-		false !== strpos( $code, 'bhp_book_free_addon_badge()' ),
-		"§4 {$tpl}: renders the badge through the shared helper (never its own copy of the string)",
+		false !== strpos( $code, 'bhp_book_free_bullets_markup(' ),
+		"§4 {$tpl}: renders the free items through the shared helper (never its own copy of the string)",
 		$failures
 	);
 	bhp_fab_assert(
-		1 === preg_match( '/function_exists\(\x27bhp_book_free_addon_badge\x27\)/', $code ),
+		1 === preg_match( '/function_exists\(\x27bhp_book_free_bullets_markup\x27\)/', $code ),
 		"§4 {$tpl}: the call is function_exists-guarded",
 		$failures
 	);
 	bhp_fab_assert(
-		1 === preg_match( '/if\s*\(\x27\x27\s*!==\s*\$bhp_free_addon_badge\)/', $code ),
-		"§4 {$tpl}: ⭐ the pill only renders when the helper returned something - the gate is in the TEMPLATE as well as in the helper",
+		1 === preg_match( '/if\s*\(\x27\x27\s*!==\s*\$bhp_free_bullets\)/', $code ),
+		"§4 {$tpl}: the list only renders when the helper returned something - the gate is in the TEMPLATE as well as in the helper",
 		$failures
 	);
 	bhp_fab_assert(
 		false === stripos( $code, 'Free Activity Book</span>' ),
-		"§4 {$tpl}: ⛔ no hardcoded 'Free Activity Book' literal in the markup",
+		"§4 {$tpl}: no hardcoded 'Free Activity Book' literal in the markup",
 		$failures
 	);
-	// The existing ship-note routing must not have been disturbed.
+	/*
+	 * The ship-note still routes through the helper. It now passes a
+	 * second argument - $exclude_free - so a card that has already printed
+	 * "FREE Shipping" as its own bold bullet does not repeat it inside a
+	 * run-on sentence, which is the combined-sentence shape the ruling
+	 * forbids. The assertion matches the CALL, not one argument list, for
+	 * the reason recorded at the matching guard in test-book-formats.php.
+	 */
 	bhp_fab_assert(
-		false !== strpos( $code, "bhp_book_landing_ship_note(\$f['shipping'])" ),
+		1 === preg_match( '/bhp_book_landing_ship_note\(\s*\$f\[\s*\x27shipping\x27\s*\]\s*[,)]/', $code ),
 		"§4 {$tpl}: the shipping note still routes through bhp_book_landing_ship_note()",
+		$failures
+	);
+	bhp_fab_assert(
+		1 === preg_match( '/bhp_book_landing_ship_note\(\s*\$f\[\s*\x27shipping\x27\s*\]\s*,\s*\x27\x27\s*!==\s*\$bhp_free_bullets\s*\)/', $code ),
+		"§4 {$tpl}: and it suppresses the duplicate FREE-shipping clause when the bullet already carried it (never combined sentences)",
 		$failures
 	);
 }

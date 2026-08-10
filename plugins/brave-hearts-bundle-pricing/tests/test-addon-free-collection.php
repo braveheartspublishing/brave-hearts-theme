@@ -191,12 +191,41 @@ $afc_empty      = new BHP_AFC_Cart( array() );
 bhp_afc_assert( true === bhp_bundle_cart_earns_free_addon( $afc_three_pb ), '§1 3 distinct paperbacks EARN the free copy', $failures );
 bhp_afc_assert( true === bhp_bundle_cart_earns_free_addon( $afc_three_hc ), '§1 3 distinct hardcovers EARN the free copy', $failures );
 bhp_afc_assert( true === bhp_bundle_cart_earns_free_addon( $afc_mixed_coll ), '§1 3 distinct adventures ACROSS formats EARN it (same rule as free shipping)', $failures );
-bhp_afc_assert( false === bhp_bundle_cart_earns_free_addon( $afc_two_pb ), '§1 2 adventures do NOT', $failures );
-bhp_afc_assert( false === bhp_bundle_cart_earns_free_addon( $afc_one_pb ), '§1 1 adventure does NOT', $failures );
-bhp_afc_assert( false === bhp_bundle_cart_earns_free_addon( $afc_empty ), '§1 an empty cart does NOT', $failures );
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.36 — THESE ASSERTIONS ARE INVERTED, AND THAT IS THE POINT.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Until 1.8.35 the four assertions below required 1 adventure, 2
+ * adventures and the duplicate-title trap to NOT earn the free copy. They
+ * were correct, they were guarding a real policy, and they FAILED THE
+ * MOMENT THE POLICY CHANGED -- which is exactly what a guard is for.
+ *
+ * Andrew Signore, 2026-08-06, verbatim (⛔ RELAYED, not witnessed
+ * first-hand): "make the activity book free with any book purchase - say
+ * its a $5.00 savings". The offer now attaches to ANY cart holding at
+ * least one of the six approved editions.
+ *
+ * ⛔ THE SUPERSEDED EXPECTATIONS ARE PRESERVED HERE RATHER THAN DELETED,
+ *    so a future reader sees a policy change rather than a loosened test:
+ *
+ *      false === ...( $afc_two_pb )   // 1.8.27-1.8.35: 2 adventures do NOT
+ *      false === ...( $afc_one_pb )   // 1.8.27-1.8.35: 1 adventure does NOT
+ *      false === ...( $afc_dupe )     // 1.8.27-1.8.35: the 2-adventure trap does NOT
+ *
+ * ⛔ ONE EXPECTATION IS DELIBERATELY UNCHANGED AND IS NOW THE LOAD-BEARING
+ *    ONE: an EMPTY cart still does not earn it. So does a cart holding
+ *    only the add-on -- asserted separately below -- because the Activity
+ *    Book is not in the six-edition catalogue the count walks. That is the
+ *    never-sold-alone guard, restated in data, and widening the offer must
+ *    not widen it.
+ */
+bhp_afc_assert( true === bhp_bundle_cart_earns_free_addon( $afc_two_pb ), '§1 2 adventures EARN it (1.8.36: any book purchase)', $failures );
+bhp_afc_assert( true === bhp_bundle_cart_earns_free_addon( $afc_one_pb ), '§1 ⭐ ONE book EARNS it - the whole point of 1.8.36', $failures );
+bhp_afc_assert( false === bhp_bundle_cart_earns_free_addon( $afc_empty ), '§1 ⛔ an empty cart STILL does not', $failures );
 bhp_afc_assert(
-	false === bhp_bundle_cart_earns_free_addon( $afc_dupe ),
-	'§1 ⭐ THE TRAP: 3 BOOKS but only 2 ADVENTURES (2x Everest PB + Mariana HC) does NOT earn it - same answer free shipping gives',
+	true === bhp_bundle_cart_earns_free_addon( $afc_dupe ),
+	'§1 3 BOOKS / 2 ADVENTURES now EARNS it too - it is a book purchase, which is the only question 1.8.36 asks',
 	$failures
 );
 
@@ -212,8 +241,8 @@ foreach ( array(
 ) as $name => $cart ) {
 	$eval = bhp_bundle_evaluate_cart( $cart );
 	bhp_afc_assert(
-		bhp_bundle_cart_earns_free_addon( $cart ) === (bool) $eval['is_complete_collection'],
-		"§1 ⭐ '{$name}': the free-addon predicate IS bhp_bundle_evaluate_cart()['is_complete_collection'], not a copy of it",
+		bhp_bundle_cart_earns_free_addon( $cart ) === (bool) $eval['has_any_book'],
+		"§1 ⭐ '{$name}': the free-addon predicate IS bhp_bundle_evaluate_cart()['has_any_book'], not a copy of it",
 		$failures
 	);
 }
@@ -308,9 +337,62 @@ foreach ( array( 'line_key', 'line_value', 'label', 'price', 'item_note', 'aria'
 	bhp_afc_assert( ! empty( $afc_copy[ $key ] ), "§5 the free copy carries '{$key}'", $failures );
 }
 
+/*
+ * ⭐⭐ 1.8.36 — THE DOLLAR-FIGURE BAN IS REPLACED, NOT DROPPED.
+ *
+ * The superseded assertion, preserved so this reads as a policy change:
+ *
+ *     false === strpos( $string, '$' )   // 1.8.27-1.8.35
+ *
+ * It was right while the copy said only "FREE". Andrew's 2026-08-06 ruling
+ * is explicitly that it must now "say its a $5.00 savings", so a blanket
+ * ban on the dollar sign would forbid the thing the owner asked for.
+ *
+ * ⛔ WHAT REPLACES IT IS STRICTER WHERE IT MATTERS: any dollar figure that
+ *    appears must be THE PRODUCT'S OWN PRICE, read from WooCommerce at
+ *    render time. A hardcoded "$5.00" in a string would pass the old test
+ *    (no, it would fail it) and would pass a naive new one -- this asserts
+ *    the figure MATCHES `bhp_bundle_addon_free_savings()`, which is
+ *    derived from the live product record. Reprice the product and the
+ *    copy follows; hardcode it and this fails.
+ */
+$afc_savings_amt = bhp_bundle_addon_free_savings();
 foreach ( $afc_copy as $key => $string ) {
 	bhp_afc_assert( false === strpos( $string, '—' ), "§5 '{$key}': no em dash", $failures );
-	bhp_afc_assert( false === strpos( $string, '$' ), "§5 '{$key}': no dollar figure (the word FREE is not a price)", $failures );
+	if ( false !== strpos( $string, '$' ) ) {
+		bhp_afc_assert(
+			'' !== $afc_savings_amt && false !== strpos( $string, $afc_savings_amt ),
+			"§5 '{$key}': any dollar figure is WooCommerce's OWN price for the add-on, never a literal",
+			$failures
+		);
+	}
+}
+
+/*
+ * ⛔ AND THE FIGURE ITSELF IS NOT WRITTEN DOWN ANYWHERE IN THE MODULE. This
+ *    is the assertion that actually stops a future copy edit pinning "$5.00"
+ *    into a string, which would then keep saying $5.00 after a reprice.
+ */
+$afc_module_src = @file_get_contents( BHP_BUNDLE_PRICING_DIR . 'includes/addon-free-with-collection.php' );
+bhp_afc_assert(
+	is_string( $afc_module_src ) && '' !== $afc_module_src,
+	'§5 the free-offer module is readable for the hardcoded-price scan',
+	$failures
+);
+if ( is_string( $afc_module_src ) && '' !== $afc_module_src ) {
+	/*
+	 * Comments are stripped first, deliberately: this file's own header
+	 * QUOTES Andrew's ruling, which contains the characters "$5.00". A scan
+	 * that did not strip comments would fail on the sentence that authorises
+	 * the feature, which is the least useful possible false positive.
+	 */
+	$afc_code_only = (string) preg_replace( '#/\*.*?\*/#s', '', $afc_module_src );
+	$afc_code_only = (string) preg_replace( '#//[^\n]*#', '', $afc_code_only );
+	bhp_afc_assert(
+		0 === preg_match( '/\'[^\']*\$[0-9]/', $afc_code_only ),
+		'§5 ⭐ NO hardcoded dollar amount in any string literal in the module - the figure comes from the product record',
+		$failures
+	);
 }
 
 /*
@@ -385,9 +467,21 @@ if ( empty( $afc_ids ) ) {
 		'§6 ⭐ on a COLLECTION cart the add-on line is priced $0.00',
 		$failures
 	);
+	/*
+	 * ⭐⭐ 1.8.36 — INVERTED. The superseded expectation, preserved:
+	 *
+	 *     5.0 === (float) $afc_p_addon['data']->get_price();
+	 *     // "on a NON-collection cart the add-on line is STILL $5.00 -
+	 *     //  the paid checkbox is exactly as it was"
+	 *
+	 * That WAS the policy, and it is the exact half of it Andrew reversed:
+	 * the $5.00 checkbox never sold a copy (his observation, recorded as an
+	 * observation and not as a measured statistic) and is retired. A cart
+	 * with one book gets the Activity Book at $0.00 like any other.
+	 */
 	bhp_afc_assert(
-		5.0 === (float) $afc_p_addon['data']->get_price(),
-		'§6 ⭐ on a NON-collection cart the add-on line is STILL $5.00 - the paid checkbox is exactly as it was',
+		0.0 === (float) $afc_p_addon['data']->get_price(),
+		'§6 ⭐ on a ONE-BOOK cart the add-on line is ALSO $0.00 - the $5.00 checkbox is retired',
 		$failures
 	);
 

@@ -467,10 +467,32 @@ foreach ([
 ] as $tpl) {
     $src = @file_get_contents(get_template_directory() . '/' . $tpl);
     bhp_test_assert($failures, "{$tpl}: readable", is_string($src) && $src !== '');
+    /*
+     * ⭐ 1.19.210 (2026-08-09, CYCLE148-LD-05) — the assertion now matches the
+     *    CALL, not one exact argument list.
+     *
+     * It used to require the literal `bhp_book_landing_ship_note($f['shipping'])`.
+     * That is a stricter test than the thing it exists to protect: what must
+     * be true is that the template routes through the helper rather than
+     * carrying its own sprintf. When the helper gained the `$exclude_free`
+     * parameter (so a card that has already printed "FREE Shipping" as its
+     * own bold bullet does not repeat it inside a run-on sentence) all four
+     * templates started passing a second argument, and four guards failed
+     * for a change that did not weaken anything they guard.
+     *
+     * ⛔ THE GUARD IS NOT LOOSENED IN SUBSTANCE. It still requires the call,
+     *    still requires `$f['shipping']` to be the figure passed, and the
+     *    companion assertion below still forbids a hand-rolled dollar-only
+     *    sprintf. What is removed is the requirement that the call have
+     *    EXACTLY one argument, which was never the property under test.
+     */
     bhp_test_assert(
         $failures,
         "{$tpl}: renders its ship-note through bhp_book_landing_ship_note()",
-        is_string($src) && strpos($src, "bhp_book_landing_ship_note(\$f['shipping'])") !== false
+        is_string($src) && preg_match(
+            '/bhp_book_landing_ship_note\(\s*\$f\[\s*\x27shipping\x27\s*\]\s*[,)]/',
+            $src
+        ) === 1
     );
     bhp_test_assert(
         $failures,
