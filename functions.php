@@ -3186,6 +3186,14 @@ require_once get_template_directory() . '/inc/class-bhp-content-feedback-loop.ph
 require_once get_template_directory() . '/inc/class-bhp-content-engine-admin.php';
 require_once get_template_directory() . '/inc/class-bhp-content-engine-cli.php';
 
+// Crawl hygiene for thin, machine-generated URLs (added 2026-08-10,
+// CYCLE152-LD-SEO-FEED-HYGIENE, from the founder-supplied Search Console
+// export): taxonomy/author/search feeds 301 to their parent archive and stop
+// being advertised in <head>, and robots.txt gains the `?wc-ajax=` and
+// `/search/` disallows. The MAIN post feed is untouched. See the file header
+// for why 301 and not 404, and for what was deliberately left alone.
+require_once get_template_directory() . '/inc/seo-hygiene.php';
+
 // ============================================================
 // EXPLORER PASSPORT FOUNDATION
 // ============================================================
