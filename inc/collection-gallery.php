@@ -21,6 +21,43 @@
  * 2026-08-02). Placements, subsets, headings and "do not disturb" lists are
  * that document's, not this file's.
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 2026-08-09 (`CYCLE148-LD-16`) — THE WORD "SUBSET" NO LONGER APPLIES.
+ *     The two paragraphs above are PRESERVED VERBATIM and are now HISTORY.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE RULING. Andrew Signore, 2026-08-09, verbatim (⚠ RELAYED through
+ *    `chief-of-staff`; NOT witnessed first-hand by this session):
+ *
+ *        "do a pass on all pages that have a carosel of the ecollection they
+ *         need to be all exactly the same as the collection page- that has
+ *         all the photos"
+ *
+ * ⛔ THIS FILE NO LONGER CHOOSES WHICH SLIDES A PAGE SEES. Every entry in the
+ *    placement map now takes `bhp_collection_carousel_slugs()`, which reads
+ *    the `complete_collection` registry entry in `inc/book-media.php`. That
+ *    registry entry is the single source of truth for all seven surfaces —
+ *    /complete-collection/ (which renders it directly, unchanged) plus the six
+ *    pages in the map below.
+ *
+ * ⭐ WHAT THIS FILE STILL DECIDES, and it is worth being exact about, because
+ *    "make them all the same" could be over-read into deleting the file:
+ *      - WHETHER a page carries the carousel at all (the map's keys);
+ *      - WHERE in that page it renders (the template's own call site);
+ *      - the section HEADING, which is that section's own introduction and
+ *        genuinely differs per audience;
+ *      - whether the heading is visible (`heading_hidden`, homepage only);
+ *      - whether the cream/forest/gold chrome applies (`collection`).
+ *    None of those is media selection. The MEDIA is now uniform by
+ *    construction.
+ *
+ * ⛔ POINT 1 BELOW ("THE SUBSET IS SLICED IN THE CALLER") STILL BINDS AND IS
+ *    NOT RELAXED. The registry is still never altered by this file, and the
+ *    selection still happens on already-resolved items. What changed is the
+ *    CONTENT of the selection, not the mechanism — which is why the fail-closed
+ *    behaviour, the slug-not-position rule and the one-instance-per-page rule
+ *    all continue to hold with no change.
+ *
  * ---------------------------------------------------------------------------
  * FOUR THINGS THIS FILE EXISTS TO GET RIGHT. Each was a predicted failure.
  * ---------------------------------------------------------------------------
@@ -110,6 +147,46 @@ function bhp_cx_collection_gallery_map() {
         'everest-look-01-poster-v2',           // video: Mount Everest flip-through
     ];
 
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 2026-08-09 (`CYCLE148-LD-16`) — `$uniform` ABOVE IS SUPERSEDED.
+     *     It is PRESERVED, UNUSED, and deliberately NOT deleted: FD-40's
+     *     standing rule ("funnel media stays consistent across audiences
+     *     unless there is a stated reason to differ") is not repealed by the
+     *     2026-08-09 ruling — it is satisfied more strictly than it asked for,
+     *     and a future reader tracing FD-40 needs to find the list it created.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ THE SET IS NOW WHATEVER THE COLLECTION PAGE SHOWS. One call, one
+     *    list, every entry below. `bhp_collection_carousel_slugs()` derives it
+     *    from the `complete_collection` registry entry in `inc/book-media.php`,
+     *    so the order the founder specified on 2026-08-09 — three-book image,
+     *    Mariana video, Everest video, Amazon video, then the dark-ground
+     *    stills — lives in exactly one array, and this file cannot disagree
+     *    with the Collection page even by accident.
+     *
+     * ⛔ FAIL-CLOSED IS UNCHANGED, and this matters more now than it did with
+     *    three-slide lists. `bhp_cx_collection_media_subset()` drops any slug
+     *    that does not resolve on the current environment, so an environment
+     *    missing the new Amazon video renders the other nine slides rather
+     *    than an error — which is exactly what production will do between the
+     *    theme deploy and the media import if they are ever run out of order.
+     *    ⚠ The production packet therefore imports media FIRST. That ordering
+     *      is a deploy-sequence requirement, not a code requirement.
+     *
+     * ⛔ IF THE FUNCTION IS MISSING, this file degrades to `$uniform` rather
+     *    than to nothing. That branch is unreachable in a correctly-deployed
+     *    theme (both files are loaded by `functions.php` in the same request);
+     *    it exists so a partial deploy shows the previous, approved gallery
+     *    instead of an empty section.
+     */
+    $universal = function_exists('bhp_collection_carousel_slugs')
+        ? bhp_collection_carousel_slugs()
+        : $uniform;
+    if (!$universal) {
+        $universal = $uniform;
+    }
+
     $map = [
 
         /*
@@ -182,14 +259,18 @@ function bhp_cx_collection_gallery_map() {
              * still governs why this list departs from `$uniform`; walk-3
              * narrows WHICH pictures, not whether there are extra ones.
              */
-            'items'      => [
-                'collection-look-01-three-books-v2',   // composite: all three books
-                'mariana-look-01-poster',              // video: The Mariana Trench flip-through
-                'everest-look-01-poster-v2',           // video: Mount Everest flip-through
-                'mariana-look-05-front-cover',
-                'everest-look-05-front-cover',
-                'everest-look-03-how-tall-diagram',
-            ],
+            /*
+             * ⭐ 2026-08-09 — F18's and B2's six-slug homepage list is
+             *    SUPERSEDED by the parity ruling and replaced by `$universal`.
+             *    Both notes above are preserved because they record why the
+             *    wood-table Amazon photographs left this carousel, and that
+             *    reasoning is still live: those two slugs are not in
+             *    `$universal` either, because the Amazon slides moved to the
+             *    studio-navy renders on 2026-08-09. The homepage gains the
+             *    Mariana Brave Learning spread, the two navy Amazon slides and
+             *    the new Amazon video; it loses nothing it had.
+             */
+            'items'      => $universal,
             'heading'    => __('All three books', 'brave-hearts'),
             /*
              * ⭐ 1.19.182 (2026-08-05) — CYCLE144-LD-111. HOMEPAGE ONLY: the
@@ -232,7 +313,7 @@ function bhp_cx_collection_gallery_map() {
          * the uniform set, so the claim is over-satisfied rather than unmet.
          */
         'page-reluctant-reader-adventure-kit.php' => [
-            'items'      => $uniform,
+            'items'      => $universal,
             'heading'    => __('One flip-through', 'brave-hearts'),
             'collection' => true,
         ],
@@ -244,7 +325,7 @@ function bhp_cx_collection_gallery_map() {
          * giver's actual question about an object they hand over unseen.
          */
         'page-audience-gift-buyers.php' => [
-            'items'      => $uniform,
+            'items'      => $universal,
             'heading'    => __('What arrives', 'brave-hearts'),
             'collection' => true,
         ],
@@ -256,7 +337,7 @@ function bhp_cx_collection_gallery_map() {
          * defensible to whoever signs off.
          */
         'page-audience-organizations.php' => [
-            'items'      => $uniform,
+            'items'      => $universal,
             'heading'    => __('What your program receives', 'brave-hearts'),
             'collection' => true,
         ],
@@ -326,17 +407,57 @@ function bhp_cx_collection_gallery_map() {
          * The remaining slide was viewed at full size and found clean, every
          * word legible.
          */
+        /*
+         * ⭐⭐ 2026-08-09 (`CYCLE148-LD-14`) — THE EDUCATOR EXCEPTION IS
+         *     RESOLVED BY THE PARITY RULING. This is the only entry where the
+         *     ruling costs something, so it is stated plainly rather than
+         *     absorbed into a one-line diff.
+         *
+         * ⛔ WHAT IS LOST. The interiors-only rationale above ("a teacher does
+         *    not need to be sold the object; they need to see the page a
+         *    student will be looking at") was a good argument and it is now
+         *    overruled by an explicit founder instruction that names every
+         *    page with a collection carousel. This page now shows the same ten
+         *    slides as every other surface, covers and composite included.
+         *
+         * ⭐ WHAT COMES BACK, AND WHY THE 2026-08-03 REMOVAL REASON IS GONE.
+         *    B2 and `CYCLE142-DEV-21` removed `amazon-look-02-brave-learning`
+         *    from this page because it was a WOOD-TABLE photograph and Andrew
+         *    had said "take out the old amazon photos with the wood table
+         *    behind it". That instruction is fully honoured by `$universal`:
+         *    the wood-table slug is not in it. What returns here is
+         *    `amazon-look-02-brave-learning-navy-v2` — the STUDIO-NAVY render
+         *    of the same spread, which is a different asset on the approved
+         *    dark ground. ⭐ The removal reason is therefore not overridden;
+         *    it no longer applies to anything in the list.
+         *
+         * ⚠ ONE ARTEFACT RETURNS TO THIS PAGE AND IT IS FLAGGED, NOT HIDDEN.
+         *   `mariana-look-03-depth-diagram-brave-learning` was dropped from
+         *   THIS page on 2026-08-03 (`CYCLE141-CX-40`) for four visible text
+         *   artefacts on its left page — "Mount Ererest", "Hodal Zone", "Very
+         *   few creatures lire here", "The despert spet of all". ⭐ RE-VERIFIED
+         *   BY VIEWING THE FULL-SIZE FILE ON 2026-08-09, not taken on trust:
+         *   all four are still present. It has been live on
+         *   /complete-collection/ and the Mariana product page throughout, so
+         *   this is a change of exposure, not a new defect — but educators are
+         *   the one audience that reads the printed words in the photograph,
+         *   which is why it was pulled from here in the first place. The
+         *   queued authentic Mariana reshoot (`docs/ROADMAP.md`) is the fix.
+         *   Escalated to Andrew through Gandalf; restoring the exception is a
+         *   one-line change back to a literal list.
+         *
+         * ⭐ The single-slide consequence noted above is also gone: this page
+         *    now has ten slides, so its arrows, counter and thumb rail return.
+         */
         'page-audience-educators.php' => [
-            'items' => [
-                'everest-look-03-how-tall-diagram',
-            ],
+            'items'      => $universal,
             'heading'    => __('Inside the books', 'brave-hearts'),
             'collection' => true,
         ],
 
         // ---- /books/ — inside the Collection banner.
         'page-books.php' => [
-            'items'      => $uniform,
+            'items'      => $universal,
             'heading'    => __('All three books', 'brave-hearts'),
             'collection' => false,
         ],

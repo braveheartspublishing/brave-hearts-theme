@@ -459,6 +459,54 @@ function bhp_book_media_registry() {
          * gallery, because no navy-ground version exists; re-introducing it
          * here would place a wood-table clip directly beside two navy ones.
          * Slot reserved below.
+         *
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 2026-08-09 — TWO THINGS ABOUT THIS ENTRY CHANGED, AND THE
+         *     PARAGRAPH IMMEDIATELY ABOVE IS THE FIRST OF THEM. It is
+         *     PRESERVED VERBATIM rather than rewritten, because its reasoning
+         *     ("no navy-ground version exists") is exactly the condition that
+         *     has now been met, and a future reader needs to see the condition
+         *     to understand why the video is here.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔ 1. THE AMAZON FLIP-THROUGH IS NOW INCLUDED — see slide 4 and its
+         *       note. A navy-ground, landscape, real-camera clip now exists;
+         *       the reserved slot below is therefore obsolete and is left in
+         *       place only as the record of what was reserved.
+         *
+         * ⭐⭐ 2. THIS ENTRY IS NOW THE SINGLE SOURCE OF TRUTH FOR EVERY
+         *        COLLECTION CAROUSEL ON THE SITE. It is no longer "the
+         *        Collection page's gallery, which other pages sample from".
+         *
+         *     THE RULING. Andrew Signore, 2026-08-09, verbatim (⚠ RELAYED
+         *     through `chief-of-staff`, not witnessed here):
+         *
+         *         "do a pass on all pages that have a carosel of the
+         *          ecollection they need to be all exactly the same as the
+         *          collection page- that has all the photos"
+         *
+         *     ⛔ WHAT THAT MEANS MECHANICALLY: `inc/collection-gallery.php` no
+         *        longer keeps per-page slug lists. Every surface that renders
+         *        a Collection carousel — /complete-collection/, the homepage,
+         *        /books/, the parent Adventure Kit page and the three audience
+         *        landing pages — reads THIS list, in THIS order, through
+         *        `bhp_collection_carousel_slugs()` below. Editing this array
+         *        is the only edit needed to change all seven surfaces, and it
+         *        is no longer possible for them to drift apart by being edited
+         *        one at a time, because there is nothing else to edit.
+         *
+         *     ⛔ SUPERSEDED BY THAT RULING, named rather than silently
+         *        deleted, all in `inc/collection-gallery.php`:
+         *          - FD-40's three-slide `$uniform` funnel set (2026-08-03);
+         *          - F18's six-slide homepage list (2026-08-03);
+         *          - B2's homepage-only removal of two wood-table Amazon
+         *            slugs (2026-08-03) — MOOT, not reversed: both slugs left
+         *            this gallery entirely on 2026-08-09 when the Amazon
+         *            slides moved to the studio-navy renders, so the wood
+         *            table is not on any collection carousel by any route;
+         *          - the educator page's single-slide interiors-only exception
+         *            (`CYCLE142-DEV-21`, `CYCLE141-CX-40`), which is the one
+         *            genuine loss of intent — see the note on that entry.
          */
         'complete_collection' => [
             'items' => [
@@ -506,6 +554,104 @@ function bhp_book_media_registry() {
                     'thumb'  => 'everest-look-02-chapter-spread',
                     'group'  => __('Flip Through', 'brave-hearts'),
                     'label'  => __('Mount Everest, cover to cover', 'brave-hearts'),
+                ],
+
+                /*
+                 * ⭐⭐ 2026-08-09 (`CYCLE148-LD-15`) — THE THIRD FLIP-THROUGH.
+                 *
+                 * ⭐ THE INSTRUCTION. Andrew Signore, 2026-08-09, verbatim:
+                 *
+                 *        "Also need to add 'amazon-fast-flip-edited.mov' to
+                 *         all the carosels as well- the order should be -3
+                 *         book image- MT video, Everest video, Amazon video-
+                 *         then all the pictures with the dark blue gray
+                 *         background"
+                 *
+                 *    ⚠ RELAYED through `chief-of-staff` (Gandalf) in the build
+                 *      brief. NOT witnessed first-hand by this session. The
+                 *      durable record is the founder-decision entry handed to
+                 *      `business-ops-knowledge` in the same sitting — a code
+                 *      comment is not a decision record (see the 2026-08-02
+                 *      revert preserved in The Amazon's block above, which
+                 *      exists precisely because someone once treated one as
+                 *      though it were).
+                 *
+                 * ⭐ THIS SLIDE IS THE ONLY ORDER-BEARING CHANGE in this entry.
+                 *    Slides 1-3 and 5-10 are byte-identical to 1.19.211; the
+                 *    Amazon video is inserted at position 4 and nothing else
+                 *    moved. That satisfies the instruction's stated order —
+                 *    three-book image, MT video, Everest video, Amazon video,
+                 *    then the dark-ground stills — without re-sequencing an
+                 *    approved set on inference.
+                 *
+                 * ⭐ WHAT THE ASSET IS, AND WHY IT CLEARS THE 2026-08-02 BAR.
+                 *    Source: `02 - Marketing Materials\PRODUCT-FOOTAGE-2026-08\
+                 *    Amazon-fast-flip-edited.mp4` (1920x1080, 24 fps, 10.10 s,
+                 *    43.4 Mb/s, 54.6 MB). It is a REAL CAMERA CAPTURE of the
+                 *    real printed paperback — real hands, real pages, no
+                 *    Higgsfield job ID, no generated frame, nothing to
+                 *    misspell. Reviewed frame by frame at 2 fps before
+                 *    encoding: cover -> title page -> chapter openings ->
+                 *    interior illustrations -> back to cover.
+                 *
+                 * ⛔ THIS IS THE CLIP THE 2026-08-02 WITHDRAWAL WAS WAITING
+                 *    FOR. That note (in The Amazon's block above) withdrew the
+                 *    wood-table clip because "The Amazon page is stills-only
+                 *    until a navy-ground video matching the Everest and Mariana
+                 *    treatment exists." This one is shot on the same dark navy
+                 *    studio ground and is LANDSCAPE 16:9 like the other two,
+                 *    where the withdrawn clip was portrait. ⚠ THE AMAZON
+                 *    PRODUCT PAGE IS DELIBERATELY NOT CHANGED BY THIS PASS —
+                 *    the brief scopes this work to COLLECTION carousels, and
+                 *    restoring a video to a single-book PDP is a different
+                 *    decision. It is flagged to Andrew, not taken. Restoring
+                 *    it there is a four-line uncomment in that block using the
+                 *    `-v2` slugs below.
+                 *
+                 * ⭐ THE WEB DERIVATIVES MATCH THE EXISTING TWO, MEASURED
+                 *    RATHER THAN ASSUMED (ffmpeg 7.1, two-pass, 2026-08-09):
+                 *
+                 *      mp4  H.264 High / yuv420p / 1280x720 / 24 fps /
+                 *           1384 kb/s video + AAC-LC 44.1 kHz stereo,
+                 *           +faststart, 1.83 MB
+                 *      webm VP9 Profile 0 / yuv420p / 1280x720 / 24 fps /
+                 *           ~1330 kb/s video + Opus 48 kHz stereo, 1.80 MB
+                 *
+                 *    Against Everest (1271 kb/s mp4 / 1305 kb/s webm) and
+                 *    Mariana (1406 / 1486). Every parameter that matters —
+                 *    codec, profile, pixel format, frame size, frame rate,
+                 *    bitrate band, audio codec and channel layout — sits inside
+                 *    the band the two approved clips already define, so this
+                 *    adds no new decode path and no new page-weight class.
+                 *
+                 * ⭐ THE POSTER IS THE CLIP'S OWN FIRST FRAME (t = 0.000 s),
+                 *    1280x720, chosen the same way Everest's was: whole cover
+                 *    visible, evenly lit, no motion blur, title and byline
+                 *    fully legible. Taking frame 0 also means the poster and
+                 *    the first decoded frame are the same picture, so playback
+                 *    starts with no visible jump.
+                 *
+                 * ⭐ THE THUMB IS AN INTERIOR SPREAD, not a cover, exactly like
+                 *    the two videos above it — on this page the title's cover
+                 *    already occupies its own tile further along the rail, so a
+                 *    cover thumbnail would read as a duplicate.
+                 *
+                 * ⛔ COSTS ZERO BYTES UNTIL PLAYED. Like every other video
+                 *    here, its <source> elements ship with no `src` and its
+                 *    poster is not emitted until the slide is first activated
+                 *    (`look-inside.php`, LAZY MOUNTING). It is slide 4, so it
+                 *    is never the initially-mounted slide on any surface.
+                 *
+                 * Staging attachments 1766 (mp4), 1767 (webm), 1768 (poster).
+                 */
+                [
+                    'type'   => 'video',
+                    'mp4'    => 'amazon-look-01-flip-through-v2',
+                    'webm'   => 'amazon-look-01-flip-through-v2-vp9',
+                    'poster' => 'amazon-look-01-poster-v2',
+                    'thumb'  => 'amazon-look-03-chapter-jaguar-navy-v2',
+                    'group'  => __('Flip Through', 'brave-hearts'),
+                    'label'  => __('The Amazon, cover to cover', 'brave-hearts'),
                 ],
 
                 [
@@ -573,6 +719,70 @@ function bhp_book_media_registry() {
             ],
         ],
     ]);
+}
+
+/**
+ * ⭐ THE COLLECTION CAROUSEL, AS AN ORDERED LIST OF ATTACHMENT SLUGS.
+ *
+ * `CYCLE148-LD-16` (2026-08-09). One function, one list, seven surfaces.
+ *
+ * WHAT IT IS FOR. Andrew's 2026-08-09 parity ruling requires every Collection
+ * carousel on the site to be "exactly the same as the collection page". This
+ * returns the Collection page's own set, in the Collection page's own order,
+ * derived FROM the registry above rather than restated anywhere — so the
+ * parity is structural. There is no second list that could be forgotten.
+ *
+ * ⛔ WHY SLUGS AND NOT RESOLVED ITEMS. The consumer,
+ * `bhp_cx_collection_media_subset()`, selects by attachment id from an
+ * already-resolved set, and that machinery is what makes the funnel galleries
+ * fail closed on an environment where an asset is missing. Handing it slugs
+ * keeps that behaviour exactly as it is instead of routing around it. It also
+ * means this function performs NO database work: it reads the static registry
+ * array and nothing else.
+ *
+ * ⛔ WHY A VIDEO IS NAMED BY ITS POSTER. A resolved video item carries no `id`
+ * of its own — the subset selector keys videos by `poster_id`, because a
+ * poster is unique per video. Returning the poster slug is what makes a video
+ * addressable at all. This is the same convention the per-page lists used
+ * before they were removed, so nothing about it is new.
+ *
+ * ⛔ IT DOES NOT FILTER, TRIM OR REORDER. Whatever the registry says, in
+ * whatever order, is what comes out. A surface that wants fewer slides is a
+ * decision for Andrew, not a slice taken here — that is precisely the pattern
+ * the parity ruling ended.
+ *
+ * @return string[] Ordered attachment slugs; empty if the entry is missing.
+ */
+function bhp_collection_carousel_slugs() {
+    static $slugs = null;
+
+    if (null !== $slugs) {
+        return $slugs;
+    }
+
+    $registry = bhp_book_media_registry();
+    $items    = isset($registry['complete_collection']['items']) && is_array($registry['complete_collection']['items'])
+        ? $registry['complete_collection']['items']
+        : [];
+
+    $slugs = [];
+
+    foreach ($items as $item) {
+        $type = isset($item['type']) ? $item['type'] : '';
+
+        if ('video' === $type) {
+            if (!empty($item['poster'])) {
+                $slugs[] = $item['poster'];
+            }
+            continue;
+        }
+
+        if ('image' === $type && !empty($item['slug'])) {
+            $slugs[] = $item['slug'];
+        }
+    }
+
+    return $slugs;
 }
 
 /**
