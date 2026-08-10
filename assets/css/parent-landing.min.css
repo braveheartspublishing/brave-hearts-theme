@@ -1,5 +1,5 @@
 /*! Built from parent-landing.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 14bb3878649c07bf537ef86d4f6733f6
+    source-md5: 8fa02bb5a018eaaa647502f00580820b
     Comments stripped for transfer size; the source file is canonical. */
 .parent-landing {
 	--bl-forest: var(--pl-forest);
@@ -409,3 +409,5 @@ padding-bottom: env(safe-area-inset-bottom, 0px);
 		--bhp-stage-h: min(42vh, 340px);
 	}
 }
+
+.parent-landing-stat__num--word{font-size:38px;margin-top:7px}

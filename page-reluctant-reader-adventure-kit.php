@@ -693,7 +693,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
                "Verified / Amazon reviews" already uses a word in this slot, so
                no CSS changes. See page-audience-organizations.php's N4 note. */ ?>
       <div class="parent-landing-stat"><div class="parent-landing-stat__num"><?php esc_html_e('Boise', 'brave-hearts'); ?></div><p class="parent-landing-stat__label"><?php esc_html_e('classrooms with the series', 'brave-hearts'); ?></p></div>
-      <div class="parent-landing-stat"><div class="parent-landing-stat__num"><?php esc_html_e('Verified', 'brave-hearts'); ?></div><p class="parent-landing-stat__label"><?php esc_html_e('Amazon reviews', 'brave-hearts'); ?></p></div>
+      <div class="parent-landing-stat"><div class="parent-landing-stat__num parent-landing-stat__num--word"><?php esc_html_e('Verified', 'brave-hearts'); ?></div><p class="parent-landing-stat__label"><?php esc_html_e('Amazon reviews', 'brave-hearts'); ?></p></div>
       <div class="parent-landing-stat"><div class="parent-landing-stat__num"><?php esc_html_e('Kirkus', 'brave-hearts'); ?></div><p class="parent-landing-stat__label"><?php esc_html_e('reviewed title', 'brave-hearts'); ?></p></div>
       <div class="parent-landing-stat"><div class="parent-landing-stat__num">6&ndash;9</div><p class="parent-landing-stat__label"><?php esc_html_e('read-aloud & independent', 'brave-hearts'); ?></p></div>
     </div>

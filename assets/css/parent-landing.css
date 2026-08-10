@@ -599,3 +599,8 @@
 		--bhp-stage-h: min(42vh, 340px);
 	}
 }
+
+/* 2026-08-10 (Andrew): "Verified" (8 glyphs) overflowed the stat tile at the
+   numeral-sized 51px and read as off-centre in the dark trust band. Long-word
+   tiles take a snug size that fits the tile at every grid width. */
+.parent-landing-stat__num--word { font-size: 38px; margin-top: 7px; }
