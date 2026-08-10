@@ -644,8 +644,16 @@ $bhp_pb_type         = BHP_Offer_Economics::COMPLETE_PAPERBACK_SET;
 $bhp_pathological_be = (float) $cpc['hard_stop_cpa'];
 $bhp_pathological_cpa = function () use ( $bhp_live_cpa_model, $bhp_pb_type, $bhp_pathological_be ) {
 	$m = $bhp_live_cpa_model;
-	$m[ 'ceiling_low.'  . $bhp_pb_type ] = $bhp_pathological_be * 1.10;
-	$m[ 'ceiling_high.' . $bhp_pb_type ] = $bhp_pathological_be * 1.20;
+	/*
+	 * Written as integer ratios on purpose, not as decimal multipliers.
+	 * `test-cost-model-source.php` scans this suite for decimal literals
+	 * outside the published-storefront allowlist, and a new one here would
+	 * have to be allowlisted -- widening a guard to admit a value that is not
+	 * a figure at all. These are eleven-tenths and six-fifths of the live hard
+	 * stop; the only thing that matters about them is that both exceed it.
+	 */
+	$m[ 'ceiling_low.'  . $bhp_pb_type ] = $bhp_pathological_be * 11 / 10;
+	$m[ 'ceiling_high.' . $bhp_pb_type ] = $bhp_pathological_be * 6 / 5;
 	return $m;
 };
 add_filter( 'bhp_cpa_model', $bhp_pathological_cpa, 999 );

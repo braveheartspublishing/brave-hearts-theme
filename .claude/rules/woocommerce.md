@@ -25,12 +25,47 @@
   |---|---|
   | 1 paperback | **$1.99** |
   | 2 distinct paperbacks | **$2.99** |
-  | 3 distinct paperbacks | **$3.99** |
+  | 3 distinct paperbacks (complete collection) | **$0.00** |
   | 1 hardcover | **$2.99** |
   | 2 distinct hardcovers | **$3.99** |
-  | 3 distinct hardcovers | **$4.99** |
+  | 3 distinct hardcovers (complete collection) | **$0.00** |
+  | 3 distinct adventures, mixed formats | **$0.00** |
   | mixed formats, ≤2 items | **$3.99** |
-  | mixed formats, ≥3 items | **$4.99** |
+  | mixed formats, ≥3 items but <3 distinct adventures | **$4.99** |
+
+  > ### ⛔ CORRECTED 2026-08-09 (`CYCLE148-LD-04`) — two rows in this table
+  > ### had been WRONG since 2026-08-04, and they were wrong in the
+  > ### direction that makes a correct $0.00 look like a regression.
+  >
+  > **The superseded rows, preserved verbatim so the movement is visible and
+  > is not re-derived:**
+  >
+  > | Cart | Rendered shipping (SUPERSEDED) |
+  > |---|---|
+  > | 3 distinct paperbacks | **$3.99** |
+  > | 3 distinct hardcovers | **$4.99** |
+  >
+  > **What actually happened:** plugin **1.8.23** (2026-08-04) took both
+  > tier-3 shipping figures to **$0.00** under Andrew Signore's *"Option B
+  > approved, CPA table adjusted"* ruling. Exactly one number moved per
+  > format. This rules file was never updated to match, so it has been
+  > describing a pre-1.8.23 store for five days.
+  >
+  > **VERIFIED BY READING THE CODE, 2026-08-09**, not by trusting the prior
+  > table: `bhp_bundle_rules('paperback')[3]['shipping'] === 0.00` and
+  > `bhp_bundle_rules('hardcover')[3]['shipping'] === 0.00` in
+  > `bundle-data.php`, with the mixed-adventure route
+  > (`bhp_bundle_shipping_amount()`'s `is_complete_collection` branch, which
+  > is deliberately FIRST so it outranks the mixed-format tier) returning
+  > `0.00` as well. ⚠️ **This is a source read, not a live cart
+  > observation** — the $1.99 single-paperback row above IS live-observed
+  > (2026-08-02, both environments, real Blocks cart); the $0.00 rows are
+  > not yet, and should be confirmed in a real cart before being quoted as
+  > observed.
+  >
+  > **This is a DOCUMENTATION correction only. No shipping setting, zone,
+  > method or tier number was changed on any environment by the pass that
+  > wrote it** — that is an Andrew gate and was not crossed.
 
   Source of the numbers: `bhp_bundle_single_shipping()` and
   `bhp_bundle_rules()` in `plugins/brave-hearts-bundle-pricing/includes/
