@@ -185,9 +185,21 @@ bhp_seoh_assert($failures, 'robots: our rules sit inside the User-agent group, a
 bhp_seoh_assert($failures, 'robots: injection is idempotent',
     bhp_seo_inject_robots_rules($injected) === $injected);
 
-// A discouraged site must keep core's `Disallow: /` undiluted.
-bhp_seoh_assert($failures, 'robots: a non-public site is left completely alone',
-    bhp_seo_filter_robots_txt("User-agent: *\nDisallow: /\n", false) === "User-agent: *\nDisallow: /\n");
+// A body that already blocks the whole site must be left undiluted, and the
+// guard must key on the BODY, not on blog_public — staging is blog_public='0'
+// and still receives a public-form body from Rank Math.
+$blocked = "User-agent: *\nDisallow: /\n";
+bhp_seoh_assert($failures, 'robots: a site-wide block is detected',
+    true === bhp_seo_robots_is_site_blocked($blocked));
+bhp_seoh_assert($failures, 'robots: a normal body is not mistaken for a site-wide block',
+    false === bhp_seo_robots_is_site_blocked($captured));
+bhp_seoh_assert($failures, 'robots: `Disallow: /wp-admin/` is NOT mistaken for a site-wide block',
+    false === bhp_seo_robots_is_site_blocked("User-agent: *\nDisallow: /wp-admin/\n"));
+bhp_seoh_assert($failures, 'robots: a body that already blocks the whole site is left completely alone',
+    bhp_seo_filter_robots_txt($blocked, true) === $blocked
+    && bhp_seo_filter_robots_txt($blocked, false) === $blocked);
+bhp_seoh_assert($failures, 'robots: the guard does NOT key on blog_public',
+    bhp_seo_filter_robots_txt($captured, false) === bhp_seo_filter_robots_txt($captured, true));
 
 // No wildcard group present: append our own rather than mis-scoping someone else's.
 $no_anchor = bhp_seo_inject_robots_rules("User-agent: Googlebot\nDisallow: /private/\n");

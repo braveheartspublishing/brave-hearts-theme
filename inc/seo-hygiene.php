@@ -344,17 +344,56 @@ function bhp_seo_inject_robots_rules($output) {
     return rtrim($output, "\n") . "\n\nUser-agent: *\n" . $block;
 }
 
+/**
+ * Is this body already a site-wide block?
+ *
+ * ⭐ THIS FUNCTION EXISTS BECAUSE THE OBVIOUS TEST WAS WRONG, AND STAGING
+ *    PROVED IT. The first version of the filter below guarded on the `$public`
+ *    argument (`blog_public`), on the reasoning that a discouraged site emits
+ *    `Disallow: /` and must not have that diluted. That reasoning is sound and
+ *    the implementation was still wrong, because on this site `$public` does
+ *    not describe the body being filtered.
+ *
+ *    Measured on staging 2026-08-10: `blog_public` is `'0'`, and the robots.txt
+ *    body arriving at this filter contains **no `Disallow: /` at all** — Rank
+ *    Math (priority 10) has already rewritten it into the public form,
+ *    `Disallow: /wp-admin/` and `Allow: /wp-admin/admin-ajax.php` included.
+ *    Guarding on `$public` therefore skipped the injection on the one
+ *    environment where the change had to be verified before production.
+ *
+ *    So the guard now tests the thing it actually cares about: does this body
+ *    contain a literal site-wide `Disallow: /`? If it does, we add nothing —
+ *    additional narrower rules next to a total block are noise at best and a
+ *    contradictory signal at worst. If it does not, our three rules apply.
+ *
+ * ⚠ SEPARATE FINDING, FLAGGED NOT FIXED: this means `staging2`'s robots.txt
+ *   does not discourage crawlers even though WordPress is set to discourage
+ *   them. Staging's protection against indexing rests on its `noindex` meta
+ *   tag, not on robots.txt. That is a pre-existing condition of the Rank Math
+ *   configuration, it is not this release's to change, and it is reported
+ *   rather than silently corrected.
+ *
+ * @param string $output Robots.txt body.
+ * @return bool
+ */
+function bhp_seo_robots_is_site_blocked($output) {
+    return 1 === preg_match('/^\s*Disallow:\s*\/\s*$/m', (string) $output);
+}
+
 add_filter('robots_txt', 'bhp_seo_filter_robots_txt', 20, 2);
 /**
  * @param string $output Robots.txt body.
- * @param bool   $public `blog_public` — false on a discouraged site, where core
- *                       emits `Disallow: /` and we must not dilute it.
+ * @param bool   $public `blog_public`. Received for signature completeness and
+ *                       deliberately not used as the guard — see above.
  * @return string
  */
 function bhp_seo_filter_robots_txt($output, $public) {
-    if (!$public) {
+    unset($public);
+
+    if (bhp_seo_robots_is_site_blocked($output)) {
         return $output;
     }
+
     return bhp_seo_inject_robots_rules($output);
 }
 
