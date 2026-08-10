@@ -73,8 +73,22 @@ if ( '' !== trim( (string) $copy['email']['download_lead'] ) ) :
 		<td align="center" bgcolor="#173f2f" style="background-color:#173f2f;border:1.5px solid #D9A45F;border-radius:8px;padding:14px 26px;mso-padding-alt:14px 26px;">
 			<a href="<?php echo esc_url( $bhp_download['download_url'] ); ?>" target="_blank" rel="noopener" style="color:#fffaf0;font-family:Archivo,Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.06em;line-height:20px;text-decoration:none;">
 			<?php
+			/*
+			 * ⭐ 1.8.38 - ONE LABEL PER FILE, not one label for the loop.
+			 *    The order can now carry the activity book AND the
+			 *    Vocabulary Card Activity, and two buttons both reading
+			 *    "Download the Activity Book (PDF)" would be worse than one.
+			 *    The resolver keys on the download id (the file hash) and
+			 *    falls back to the activity book's own label for anything it
+			 *    does not recognise, so this loop can never render an empty
+			 *    button.
+			 */
 			printf(
-				esc_html( $copy['email']['download_button'] ),
+				esc_html(
+					function_exists( 'bhp_bundle_addon_download_button_label' )
+						? bhp_bundle_addon_download_button_label( $bhp_download, $copy )
+						: $copy['email']['download_button']
+				),
 				esc_html( $bhp_download['download_name'] )
 			);
 			?>

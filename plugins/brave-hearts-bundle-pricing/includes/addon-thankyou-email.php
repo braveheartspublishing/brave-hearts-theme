@@ -188,7 +188,65 @@ function bhp_bundle_addon_order_downloads( $order ) {
 		$found[] = $row;
 	}
 
+	/*
+	 * ⭐ 1.8.38 - DETERMINISTIC ORDER: the activity book first, the
+	 *    vocabulary cards second. Andrew's ruling delivers the cards
+	 *    "ALONGSIDE the activity book", and alongside has a reading order.
+	 *
+	 * ⚠ IT IS SORTED RATHER THAN TRUSTED. Core returns these rows in
+	 *   permission-row order, which today happens to put the activity book
+	 *   first because its permission is granted first. That is an accident
+	 *   of insertion order, not a guarantee: a re-grant, a manual
+	 *   permission repair in wp-admin, or a future third file could reorder
+	 *   them silently. A stable sort costs four lines and removes the
+	 *   question.
+	 */
+	if ( count( $found ) > 1 && function_exists( 'bhp_bundle_vocab_is_download_row' ) ) {
+		$books = array();
+		$cards = array();
+		foreach ( $found as $row ) {
+			if ( bhp_bundle_vocab_is_download_row( $row ) ) {
+				$cards[] = $row;
+			} else {
+				$books[] = $row;
+			}
+		}
+		$found = array_merge( $books, $cards );
+	}
+
 	return $found;
+}
+
+/**
+ * The button label for ONE download row.
+ *
+ * ⛔ MATCHED ON THE DOWNLOAD ID, WHICH IS THE FILE HASH, NEVER ON THE
+ *    DISPLAY NAME. A name is copy; copy changes; a label that switched on
+ *    a copy string would silently mislabel the file the day somebody
+ *    reworded it.
+ *
+ * ⛔ IT FALLS BACK TO THE ACTIVITY BOOK'S OWN LABEL, which is the label
+ *    every row carried before 1.8.38. An unrecognised future file is
+ *    therefore labelled exactly as it would have been, never blank.
+ *
+ * @param array|mixed $row  Row from `WC_Order::get_downloadable_items()`.
+ * @param array|null  $copy Copy array, or null to load it.
+ * @return string
+ */
+function bhp_bundle_addon_download_button_label( $row, $copy = null ) {
+	if ( ! is_array( $copy ) ) {
+		$copy = bhp_bundle_addon_thankyou_copy();
+	}
+
+	$default = isset( $copy['email']['download_button'] ) ? (string) $copy['email']['download_button'] : '';
+
+	if ( function_exists( 'bhp_bundle_vocab_is_download_row' )
+		&& bhp_bundle_vocab_is_download_row( $row )
+		&& ! empty( $copy['email']['download_button_vocab'] ) ) {
+		return (string) $copy['email']['download_button_vocab'];
+	}
+
+	return $default;
 }
 
 /**

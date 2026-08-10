@@ -396,6 +396,33 @@ function bhp_book_free_bullet_lines($scope = 'collection') {
             : bhp_book_free_addon_badge();
     }
 
+    /*
+     * CYCLE151-LD-01 (2026-08-09/10) - THE THIRD LINE. Andrew's
+     * vocabulary-cards ruling, RELAYED through the Chief of Staff and ⛔ NOT
+     * witnessed first-hand by this agent: "FREE Vocabulary Card Activity"
+     * joins the FREE bullet lists on ALL collection and funnel pages,
+     * wherever the current two FREE bullets render.
+     *
+     * ⛔ ORDER IS FIXED AND IS THE BRIEF'S: Shipping, then Activity Book,
+     *    then Vocabulary Cards. It is achieved by APPENDING here rather than
+     *    by sorting, because there is nothing to sort by that is not a copy
+     *    string.
+     *
+     * ⛔ NO DOLLAR ANCHOR ON THIS LINE, DELIBERATELY, and it is the brief's
+     *    own word. The activity book's line carries "a $5.00 savings"
+     *    because WooCommerce holds a real $5.00 record behind it. The cards
+     *    have no price record, so a savings figure here would be invented.
+     *
+     * ⛔ ITS OWN LIVE PREDICATE, like both lines above it. The plugin owns
+     *    the answer and the theme prints what it is given; a theme that
+     *    never asks would promise a file the environment cannot deliver.
+     */
+    if (function_exists('bhp_bundle_vocab_cards_live')
+        && bhp_bundle_vocab_cards_live()
+        && function_exists('bhp_bundle_vocab_free_offer_line')) {
+        $lines[] = bhp_bundle_vocab_free_offer_line();
+    }
+
     return array_values(array_filter($lines, static function ($line) {
         return is_string($line) && '' !== trim($line);
     }));

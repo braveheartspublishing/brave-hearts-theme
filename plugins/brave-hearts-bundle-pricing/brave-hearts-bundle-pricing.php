@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Brave Hearts Bundle Pricing
  * Description: Fixed-dollar bundle discounts, shipping, and storefront offers for the six approved Adventures of Charlotte and Henry editions. Every bundle purchase adds the real, individually-mapped WooCommerce products as separate cart line items — Bookvault fulfillment routing and per-book tax are never altered.
- * Version: 1.8.37
+ * Version: 1.8.38
  * Author: Brave Hearts Publishing
  * Requires Plugins: woocommerce
  * Text Domain: bhp-bundle-pricing
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.37' );
+define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.38' );
 define( 'BHP_BUNDLE_PRICING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BHP_BUNDLE_PRICING_URL', plugin_dir_url( __FILE__ ) );
 
@@ -68,6 +68,14 @@ function bhp_bundle_pricing_init() {
 	// because it gates on bhp_bundle_evaluate_cart()'s existing
 	// is_complete_collection flag rather than defining a second predicate.
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/addon-free-with-collection.php';
+	// 1.8.38 (2026-08-09/10, Andrew's vocabulary-cards ruling, relayed): the
+	// Vocabulary Card Activity is the SECOND free giveaway. It rides on the
+	// activity book's existing product and grant as a second downloadable
+	// FILE, injected at read time - no second product, no product record
+	// touched. Loaded after addon-free-with-collection.php because its
+	// messaging gate defers to that file's live-offer predicate, and after
+	// addon-upsell.php because it resolves the same SKU allowlist.
+	require_once BHP_BUNDLE_PRICING_DIR . 'includes/addon-vocab-cards.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/bundle-analytics.php';
 	bhp_bundle_pricing_load_dashboard_module();
 

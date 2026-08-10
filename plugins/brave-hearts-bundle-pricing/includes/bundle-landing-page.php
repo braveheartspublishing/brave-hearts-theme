@@ -545,6 +545,19 @@ function bhp_bundle_render_landing_cold_open() {
 				&& function_exists( 'bhp_bundle_addon_free_offer_line' ) ) {
 				$bhp_coldopen_free[] = bhp_bundle_addon_free_offer_line();
 			}
+			/*
+			 * ⭐ 1.8.38 - THE THIRD BULLET. Andrew's vocabulary-cards ruling
+			 *    (RELAYED, ⛔ not witnessed first-hand) adds "FREE Vocabulary
+			 *    Card Activity" wherever the other two FREE bullets render.
+			 *    Order is Shipping, Activity Book, Vocabulary Cards, achieved
+			 *    by append. Gated on its own live predicate, never inferred
+			 *    from the activity book's - though the predicate itself
+			 *    defers to it, because the cards ride on that grant.
+			 */
+			if ( function_exists( 'bhp_bundle_vocab_cards_live' )
+				&& bhp_bundle_vocab_cards_live() ) {
+				$bhp_coldopen_free[] = bhp_bundle_vocab_free_offer_line();
+			}
 			?>
 			<?php foreach ( $bhp_coldopen_free as $bhp_coldopen_line ) : ?>
 				<li><strong><?php echo esc_html( $bhp_coldopen_line ); ?></strong></li>
@@ -1229,6 +1242,18 @@ function bhp_bundle_render_landing_final_cta() {
 						&& bhp_bundle_addon_free_with_collection()
 						&& function_exists( 'bhp_bundle_addon_free_offer_line' ) ) {
 						$bhp_final_free[] = bhp_bundle_addon_free_offer_line();
+					}
+					/*
+					 * ⭐ 1.8.38 - THE THIRD BULLET, same rule and same order
+					 *    as the cold-open at the top of this page: Shipping,
+					 *    Activity Book, Vocabulary Cards. Both ends of the
+					 *    page make the same three promises in the same words,
+					 *    which is the whole reason both route through the
+					 *    plugin's own offer-line helpers.
+					 */
+					if ( function_exists( 'bhp_bundle_vocab_cards_live' )
+						&& bhp_bundle_vocab_cards_live() ) {
+						$bhp_final_free[] = bhp_bundle_vocab_free_offer_line();
 					}
 					?>
 					<?php if ( $bhp_final_free ) : ?>

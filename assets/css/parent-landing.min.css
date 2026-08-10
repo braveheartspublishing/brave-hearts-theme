@@ -409,5 +409,4 @@ padding-bottom: env(safe-area-inset-bottom, 0px);
 		--bhp-stage-h: min(42vh, 340px);
 	}
 }
-
-.parent-landing-stat__num--word{font-size:38px;margin-top:7px}
+.parent-landing-stat__num--word { font-size: 38px; margin-top: 7px; }

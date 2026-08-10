@@ -70,9 +70,17 @@ if ( '' !== trim( (string) $copy['email']['download_lead'] ) ) {
 }
 
 foreach ( $addon_downloads as $bhp_download ) {
+	/*
+	 * ⭐ 1.8.38 - ONE LABEL PER FILE. Same resolver as the HTML twin, so a
+	 *    plain-text reader gets the same two distinct labels and the same
+	 *    order: the activity book, then the Vocabulary Card Activity.
+	 */
+	$bhp_download_label = function_exists( 'bhp_bundle_addon_download_button_label' )
+		? bhp_bundle_addon_download_button_label( $bhp_download, $copy )
+		: $copy['email']['download_button'];
 	echo wp_strip_all_tags( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text stream; esc_html() would emit HTML entities a plain reader cannot decode.
 		sprintf(
-			$copy['email']['download_button'],
+			$bhp_download_label,
 			$bhp_download['download_name']
 		)
 	) . "\n";

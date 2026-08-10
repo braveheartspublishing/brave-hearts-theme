@@ -264,6 +264,34 @@ function bhp_bundle_addon_thankyou_copy() {
 			 */
 			'download_button'  => __( 'Download the Activity Book (PDF)', 'bhp-bundle-pricing' ),
 
+			/*
+			 * ⭐ 1.8.38 - THE SECOND BUTTON. Andrew's vocabulary-cards ruling
+			 *    (RELAYED through the Chief of Staff, ⛔ not witnessed
+			 *    first-hand) makes the Vocabulary Card Activity a second free
+			 *    giveaway delivered in THIS email, "ALONGSIDE the activity
+			 *    book", with the label "Vocabulary Card Activity (printable
+			 *    PDF)".
+			 *
+			 * ⛔ NOT ONE EXISTING STRING IN THIS FILE CHANGED TO ADD IT. The
+			 *    subject, the heading, all four paragraphs, the licence
+			 *    sentence, the closing, the sign-off, the tagline and both
+			 *    cart-guard strings are byte-identical to 1.8.37. The approved
+			 *    copy is locked and was not reopened; this is an addition
+			 *    beside it, which is exactly what the brief asks for.
+			 *
+			 * ⛔ NO `%s`, for the same reason `download_button` has none: the
+			 *    label names the artefact, so a file renamed in the product's
+			 *    Downloads panel can never rewrite a customer-facing string.
+			 *    The templates still `printf()` with the file name passed;
+			 *    PHP ignores a surplus argument.
+			 *
+			 * ⛔ IT CLAIMS NOTHING. No price, no savings figure (the cards
+			 *    carry no price record, so any figure would be invented), no
+			 *    page count, no reading age, no card count, no outcome claim,
+			 *    and nothing on the never-invent list.
+			 */
+			'download_button_vocab' => __( 'Download the Vocabulary Card Activity (printable PDF)', 'bhp-bundle-pricing' ),
+
 			/* Body paragraphs rendered AFTER the download. */
 			'paragraphs_after' => array(
 				/*
