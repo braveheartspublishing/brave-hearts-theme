@@ -472,6 +472,162 @@ bhp_w1_assert(
 	$failures
 );
 
+// ============ 5e. TRAFFIC-SOURCE MERGE FIELD (CYCLE148-FIN-002) ============
+/*
+ * ⭐ WHY THIS SECTION EXISTS. Before 1.19.211 a signup driven by a UTM-tagged
+ *    probe and a signup from the organic sitewide popup reached Mailchimp
+ *    looking identical — every merge field described the FORM or the PAGE, none
+ *    described where the visitor came from. Monday's measurement depends on
+ *    telling those two apart, so the mapping is asserted here rather than
+ *    eyeballed in the Mailchimp UI after the fact.
+ *
+ * ⛔ WHAT THIS CANNOT PROVE, stated so a PASS is not over-read: it never calls
+ *    Mailchimp. It proves the map, the merge-tag shape and the cookie->value
+ *    derivation. Whether the `TRAFFIC` field EXISTS in the audience is a
+ *    console fact, not a code fact, and it is verified by Andrew/Gimli in
+ *    Mailchimp — see the deploy packet.
+ */
+$w1_map = bhp_get_mailchimp_merge_field_map();
+
+// The three pre-existing rows are byte-identical. This is an ADDITIVE change,
+// and a renamed merge tag would orphan every existing contact's data.
+foreach ( array(
+	'audience_type' => 'AUDIENCE',
+	'lead_magnet'   => 'LEADMAG',
+	'source_page'   => 'SOURCE',
+) as $w1_field => $w1_tag ) {
+	bhp_w1_assert(
+		isset( $w1_map[ $w1_field ] ) && $w1_map[ $w1_field ] === $w1_tag,
+		"REGRESSION: merge field '{$w1_field}' still maps to {$w1_tag} (additive change, nothing renamed)",
+		$failures
+	);
+}
+bhp_w1_assert(
+	isset( $w1_map['traffic_source'] ) && $w1_map['traffic_source'] === 'TRAFFIC',
+	'traffic_source maps to the TRAFFIC merge tag',
+	$failures
+);
+// Mailchimp caps a merge tag at 10 characters and bhp_process_signup()
+// truncates to 10 as well. A longer name would be silently cut and would then
+// never match the field in the audience — which fails SILENTLY, the worst kind.
+foreach ( $w1_map as $w1_field => $w1_tag ) {
+	bhp_w1_assert(
+		strlen( $w1_tag ) <= 10 && preg_match( '/\A[A-Z0-9_]+\z/', $w1_tag ) === 1,
+		"merge tag '{$w1_tag}' survives the 10-char uppercase sanitiser intact",
+		$failures
+	);
+}
+
+$w1_saved_cookie = $_COOKIE;
+
+// -- No attribution cookie at all: UNKNOWN, and unknown must not be reported
+//    as "direct". No cookie is written until analytics consent is granted, so
+//    calling a consent-decliner "direct" would invent a fact about them. An
+//    empty value is dropped by the merge-field loop, so nothing is sent.
+unset( $_COOKIE['bhp_attr_last'], $_COOKIE['bhp_attr_first'] );
+bhp_w1_assert(
+	'' === bhp_get_signup_traffic_source(),
+	'no attribution cookie -> empty value (unknown is NOT reported as "direct")',
+	$failures
+);
+
+// -- A cookie with no campaign signal. This one genuinely IS direct/organic:
+//    the visitor consented, the first-touch cookie was written, and no UTM or
+//    click ID ever arrived. This is the ORGANIC POPUP SIGNUP case.
+$_COOKIE['bhp_attr_first'] = wp_json_encode( array( 'landing_page' => '/', 'timestamp' => '2026-08-09' ) );
+bhp_w1_assert(
+	'direct' === bhp_get_signup_traffic_source(),
+	'cookie present, no campaign signal -> "direct" (the organic popup signup)',
+	$failures
+);
+
+// -- The probe case. A UTM-tagged last touch must be distinguishable from the
+//    line above at a glance in Mailchimp — that is the entire point.
+$_COOKIE['bhp_attr_last'] = wp_json_encode( array(
+	'utm_source'   => 'reddit',
+	'utm_medium'   => 'paid_social',
+	'utm_campaign' => 'probe-monday',
+	'landing_page' => '/complete-collection/',
+) );
+$w1_probe = bhp_get_signup_traffic_source();
+bhp_w1_assert(
+	'reddit / paid_social / probe-monday' === $w1_probe,
+	'UTM-tagged last touch -> "reddit / paid_social / probe-monday"',
+	$failures
+);
+bhp_w1_assert(
+	'direct' !== $w1_probe,
+	'THE POINT: a probe-driven signup is distinguishable from an organic one',
+	$failures
+);
+// ⛔ No PII and no URL reaches the third-party platform. The cookie carries
+//    landing_page; the merge value deliberately does not.
+bhp_w1_assert(
+	false === strpos( $w1_probe, '/complete-collection/' ),
+	'the landing page URL is NOT sent to Mailchimp (campaign identifiers only)',
+	$failures
+);
+
+// -- Last touch outranks first touch: it is the campaign that produced THIS
+//    visit, and therefore this signup.
+bhp_w1_assert(
+	'reddit / paid_social / probe-monday' === bhp_get_signup_traffic_source(),
+	'last touch outranks first touch when both are present',
+	$failures
+);
+
+// -- Auto-tagged paid click with no utm_source. Naming the platform keeps the
+//    value groupable; printing the per-click ID would make every contact unique.
+unset( $_COOKIE['bhp_attr_last'] );
+$_COOKIE['bhp_attr_first'] = wp_json_encode( array( 'gclid' => 'EAIaIQobCh_TEST', 'landing_page' => '/' ) );
+$w1_click = bhp_get_signup_traffic_source();
+bhp_w1_assert(
+	'google / cpc' === $w1_click,
+	'a bare gclid -> "google / cpc" (the platform, never the opaque click ID)',
+	$failures
+);
+bhp_w1_assert(
+	false === strpos( $w1_click, 'EAIaIQobCh_TEST' ),
+	'the raw click ID is never written into the merge field',
+	$failures
+);
+
+// -- The value is capped. A merge field is not a place for unbounded input.
+$_COOKIE['bhp_attr_first'] = wp_json_encode( array( 'utm_source' => str_repeat( 'x', 400 ), 'utm_medium' => 'cpc' ) );
+bhp_w1_assert(
+	strlen( bhp_get_signup_traffic_source() ) <= 100,
+	'the traffic-source value is capped at 100 characters',
+	$failures
+);
+
+$_COOKIE = $w1_saved_cookie;
+
+// -- The graceful no-op. The TRAFFIC field must be created by hand in the
+//    Mailchimp console; until it is, a signup must never fail BECAUSE of it.
+//    That safety is structural (drop the optional tag, retry once), so it is
+//    asserted against the source rather than against a belief about the API.
+$w1_mc_src = (string) bhp_w1_read( 'inc/mailchimp.php' );
+bhp_w1_assert(
+	'' !== $w1_mc_src,
+	'inc/mailchimp.php is readable in the deployed artefact (guards the three source assertions below)',
+	$failures
+);
+bhp_w1_assert(
+	false !== strpos( $w1_mc_src, '$optional_merge_tags' ) && false !== strpos( $w1_mc_src, "'TRAFFIC'" ),
+	'TRAFFIC is registered as an OPTIONAL merge tag in the signup path',
+	$failures
+);
+bhp_w1_assert(
+	false !== strpos( $w1_mc_src, 'bhp_mailchimp_optional_merge_field_dropped' ),
+	'dropping the optional field fires an observable action rather than failing silently',
+	$failures
+);
+bhp_w1_assert(
+	false !== strpos( $w1_mc_src, 'throw $merge_exception' ),
+	'a genuine outage still fails (the retry does not swallow real errors)',
+	$failures
+);
+
 // ==================== 6. THE GIFT LANE PROMISES NOTHING ====================
 
 $footer_copy = implode( ' | ', bhp_w1_customer_strings( $footer_src ) );

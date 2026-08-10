@@ -82,13 +82,134 @@ function bhp_get_signup_form_action($requested_action, $audience_type, $context)
 
 /**
  * Map theme segmentation fields to Mailchimp audience merge tags.
+ *
+ * ⭐ 1.19.211 (2026-08-09, `CYCLE148-FIN-002`) — `traffic_source` -> `TRAFFIC`.
+ *    Measurement-critical: without it, a signup driven by a paid/UTM-tagged
+ *    probe and a signup from the organic sitewide popup arrive in Mailchimp
+ *    looking IDENTICAL, because every existing merge field describes the FORM
+ *    (`AUDIENCE`, `LEADMAG`) or the PAGE (`SOURCE`) and none of them describes
+ *    where the visitor came from before they got there.
+ *
+ * ⛔ ADDITIVE ONLY. The three existing rows are byte-unchanged and their merge
+ *    tags are untouched — a renamed merge tag would orphan every existing
+ *    contact's data, which is not a reversible mistake.
+ *
+ * ⛔ MERGE-TAG LENGTH IS A REAL CONSTRAINT, not a style choice. The sanitiser
+ *    in `bhp_process_signup()` truncates every tag to 10 characters, and
+ *    Mailchimp itself caps a merge tag at 10. `TRAFFIC` is 7, so it survives
+ *    both intact. A longer name would be silently cut and would then never
+ *    match the field in the audience.
  */
 function bhp_get_mailchimp_merge_field_map() {
     return apply_filters('bhp_mailchimp_merge_field_map', [
         'audience_type' => 'AUDIENCE',
         'lead_magnet'   => 'LEADMAG',
         'source_page'   => 'SOURCE',
+        'traffic_source' => 'TRAFFIC',
     ]);
+}
+
+/**
+ * The visitor's traffic source, as one short string, for the `TRAFFIC` merge
+ * field above. `CYCLE148-FIN-002`.
+ *
+ * ⭐ IT READS THE COOKIES THAT ALREADY EXIST. `bhp_attr_last` / `bhp_attr_first`
+ *    are written by `assets/js/bhp-attribution.js` and read back by
+ *    `BHP_UTM_Attribution`, which already sanitises, caps and whitelists every
+ *    field. This function adds NO new capture, NO new cookie, NO new request
+ *    parsing and no second copy of the attribution rules — it formats what the
+ *    checkout path has been recording on orders since Phase 1B.
+ *
+ * ⛔ LAST TOUCH WINS, FIRST TOUCH IS THE FALLBACK. Last touch is the campaign
+ *    that produced THIS visit and therefore this signup; first touch answers a
+ *    different question and is only used when the last-touch cookie carries no
+ *    campaign signal at all (a direct visit deliberately leaves it untouched).
+ *
+ * ⛔ THREE OUTCOMES, AND THE DIFFERENCE BETWEEN TWO OF THEM MATTERS:
+ *      - a campaign signal exists  -> "source / medium / campaign"
+ *      - a cookie exists with no campaign signal -> "direct"
+ *      - NO cookie exists at all   -> '' and the field is not sent
+ *    The third case is NOT "direct". No attribution cookie is written until the
+ *    visitor grants analytics consent (asserted by `tests/js/
+ *    consent-bridge-harness.js`), so a consent-declining visitor has no cookie
+ *    — and recording them as "direct" would be inventing a fact about where
+ *    they came from. Unknown stays unknown, and an empty value is dropped by
+ *    the loop in `bhp_process_signup()` exactly like an empty lead magnet.
+ *
+ * ⛔ NO PII, BY CONSTRUCTION. Only the campaign/click identifiers are read.
+ *    `landing_page` is deliberately NOT included even though the cookie carries
+ *    it: it is a URL that can pick up arbitrary query parameters, and this
+ *    value is going to a third-party marketing platform.
+ *
+ * @return string '' when nothing is known.
+ */
+function bhp_get_signup_traffic_source() {
+    if (!class_exists('BHP_UTM_Attribution')) {
+        return '';
+    }
+
+    $attribution = BHP_UTM_Attribution::current_visitor_attribution();
+    $last  = isset($attribution['last_touch']) && is_array($attribution['last_touch']) ? $attribution['last_touch'] : [];
+    $first = isset($attribution['first_touch']) && is_array($attribution['first_touch']) ? $attribution['first_touch'] : [];
+
+    if (!$last && !$first) {
+        return '';
+    }
+
+    $describe = static function (array $touch) {
+        $source   = isset($touch['utm_source']) ? trim((string) $touch['utm_source']) : '';
+        $medium   = isset($touch['utm_medium']) ? trim((string) $touch['utm_medium']) : '';
+        $campaign = isset($touch['utm_campaign']) ? trim((string) $touch['utm_campaign']) : '';
+
+        /*
+         * A click ID with no utm_source is still a paid click, and it is the
+         * shape an ad platform's auto-tagging produces. Naming the platform is
+         * more useful than printing the opaque ID, which is per-click and would
+         * make every contact's value unique and un-groupable.
+         */
+        if ('' === $source) {
+            $click_ids = [
+                'gclid'   => 'google',
+                'fbclid'  => 'facebook',
+                'ttclid'  => 'tiktok',
+                'msclkid' => 'microsoft',
+            ];
+            foreach ($click_ids as $param => $platform) {
+                if (!empty($touch[$param])) {
+                    $source = $platform;
+                    if ('' === $medium) {
+                        $medium = 'cpc';
+                    }
+                    break;
+                }
+            }
+        }
+
+        if ('' === $source && '' === $medium && '' === $campaign) {
+            return '';
+        }
+
+        $parts = [
+            '' !== $source ? $source : 'unknown',
+            '' !== $medium ? $medium : 'unknown',
+        ];
+        if ('' !== $campaign) {
+            $parts[] = $campaign;
+        }
+
+        return implode(' / ', $parts);
+    };
+
+    $value = $describe($last);
+    if ('' === $value) {
+        $value = $describe($first);
+    }
+    if ('' === $value) {
+        // A cookie exists and carries no campaign signal. That IS direct.
+        $value = 'direct';
+    }
+
+    return substr(sanitize_text_field($value), 0, 100);
 }
 
 /**
@@ -309,6 +430,10 @@ function bhp_process_signup(array $input) {
         'audience_type' => substr($audience_type, 0, 100),
         'lead_magnet'   => substr($lead_magnet, 0, 100),
         'source_page'   => substr($source_page, 0, 255),
+        // CYCLE148-FIN-002. '' when unknown, and an empty value is skipped
+        // below exactly like an empty lead magnet — see the long note on
+        // bhp_get_signup_traffic_source().
+        'traffic_source' => bhp_get_signup_traffic_source(),
     ];
     $merge_fields = [];
 
@@ -324,17 +449,57 @@ function bhp_process_signup(array $input) {
         $merge_fields['FNAME'] = substr($name, 0, 100);
     }
 
+    /*
+     * ⭐ CYCLE148-FIN-002 — THE GRACEFUL NO-OP, BUILT RATHER THAN ASSUMED.
+     *
+     * The `TRAFFIC` merge field has to be created once, by hand, in the
+     * Mailchimp audience console. Until somebody does that, this code is
+     * sending a merge tag the audience does not have.
+     *
+     * ⛔ The tempting version of this comment is "Mailchimp ignores unknown
+     *    merge tags." That may well be true — but this session did not test it
+     *    against the live API, and a signup is the one path on this site where
+     *    being wrong costs a real subscriber. So the safety is STRUCTURAL, not
+     *    a belief: if the write fails AND the new field was part of it, drop
+     *    that one field and try once more. The visitor's signup can therefore
+     *    never fail *because* of the new field, whatever the API does with it.
+     *
+     * ⛔ EXACTLY ONE RETRY, and only when the new field was actually present.
+     *    A genuine outage still fails, still reaches the existing
+     *    `bhp_mailchimp_signup_failed` action and still returns 'error' — this
+     *    must not turn a broken integration into a silent one.
+     */
+    $optional_merge_tags = ['TRAFFIC'];
+
     try {
         $api = mc4wp_get_api_v3();
-        $subscriber = $api->add_list_member(
-            bhp_get_mailchimp_list_id(),
-            [
-                'email_address' => $email,
-                'status'        => 'subscribed',
-                'merge_fields'  => $merge_fields,
-            ],
-            true
-        );
+        try {
+            $subscriber = $api->add_list_member(
+                bhp_get_mailchimp_list_id(),
+                [
+                    'email_address' => $email,
+                    'status'        => 'subscribed',
+                    'merge_fields'  => $merge_fields,
+                ],
+                true
+            );
+        } catch (Throwable $merge_exception) {
+            $reduced = array_diff_key($merge_fields, array_flip($optional_merge_tags));
+            if ($reduced === $merge_fields) {
+                throw $merge_exception; // Nothing optional was in play; a real failure.
+            }
+            do_action('bhp_mailchimp_optional_merge_field_dropped', $merge_exception, array_keys(array_diff_key($merge_fields, $reduced)));
+            $merge_fields = $reduced;
+            $subscriber = $api->add_list_member(
+                bhp_get_mailchimp_list_id(),
+                [
+                    'email_address' => $email,
+                    'status'        => 'subscribed',
+                    'merge_fields'  => $merge_fields,
+                ],
+                true
+            );
+        }
 
         $tags = bhp_get_mailchimp_signup_tags($context, $audience_type, $lead_magnet, $source_page);
         if ($tags) {
