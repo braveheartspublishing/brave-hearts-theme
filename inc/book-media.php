@@ -241,6 +241,99 @@ function bhp_book_media_registry() {
                  *   'label'  => __('The Amazon, cover to cover', 'brave-hearts') ],
                  */
                 /*
+                 * ═══════════════════════════════════════════════════════════
+                 * ⭐⭐ 2026-08-09 (`CYCLE148-LD-11`) — THE STUDIO-NAVY SET IS
+                 *     BACK, ON A FOUNDER DECISION, AND THE 2026-08-02 REVERT
+                 *     BELOW IS THEREFORE SUPERSEDED — NOT DELETED.
+                 * ═══════════════════════════════════════════════════════════
+                 *
+                 * ⭐ THE DECISION. Andrew Signore, 2026-08-09, verbatim:
+                 *
+                 *        "Ship them- I cant even tell they have spelling
+                 *         issues"
+                 *
+                 *    ⚠ RELAYED, NOT WITNESSED FIRST-HAND. It reached this
+                 *      session through `chief-of-staff` (Gandalf) in the build
+                 *      brief, and it is described here as a relay rather than
+                 *      dressed up as a direct observation.
+                 *
+                 * ⛔ AND A COMMENT IS STILL NOT A DECISION RECORD — that is the
+                 *    exact lesson of the 2026-08-02 revert preserved below, and
+                 *    re-applying the set would be worthless if it repeated the
+                 *    defect. This block therefore POINTS AT the durable record
+                 *    rather than being it: the founder-decision entry handed to
+                 *    `business-ops-knowledge` for `docs/DECISIONS.md` in the
+                 *    same sitting, plus `docs/ROADMAP.md`'s existing
+                 *    Higgsfield-artefact queue entry. ⚠ IF THAT RECORD IS NOT
+                 *    PRESENT WHEN YOU READ THIS, TREAT THIS SWAP AS UNRECORDED
+                 *    AND ESCALATE — do not re-derive approval from these words.
+                 *
+                 * ⭐ WHAT THE FOUR SLUGS ARE. Re-encoded 2026-08-09 from the
+                 *    ORIGINAL Higgsfield PNG masters (`Higgsfield\Amazon\
+                 *    archive\hf_20260802_0*.png`, 896x1200, 1.17-1.63 MB each),
+                 *    NOT from the already-uploaded 2026-08-02 JPEGs — so this
+                 *    set is one generation of compression better than the
+                 *    `-navy` attachments it replaces. Verified pixel-identical
+                 *    in content to those attachments before encoding (mean
+                 *    absolute channel difference 1.18 and 1.39 of 255 against
+                 *    659-662, i.e. JPEG noise and nothing else), so this is a
+                 *    RE-APPLICATION of a known set, not a new one nobody has
+                 *    seen. Native size preserved at 896x1200 — no upscaling,
+                 *    no retouching, no regeneration, no "fixing" of anything
+                 *    inside the frame. Each JPEG carries its Higgsfield job ID
+                 *    in the file comment so the AI-pipeline provenance travels
+                 *    with the asset, matching the Everest precedent above.
+                 *    Staging attachments 1728-1731.
+                 *
+                 * ⛔⛔ ONE DEFECT IS SHIPPING WITH THEM AND IT IS *NOT* A
+                 *     SPELLING ISSUE — READ THIS BEFORE ANY PRODUCTION DEPLOY.
+                 *
+                 *     `amazon-look-05-back-cover-navy-v2` renders the printed
+                 *     ISBN as **879-8-8886-1080-2** with barcode digits
+                 *     **9 796986 518002**. The real book's ISBN is
+                 *     **979-8-9968-1080-2**, barcode **9 798996 810802** —
+                 *     OBSERVED 2026-08-09 by reading both barcodes at 2x from
+                 *     the render and from `amazon-look-05-back-cover` (the
+                 *     authentic photograph, staging attachment 653), not
+                 *     inferred from the 2026-08-02 note.
+                 *
+                 *     An ISBN is a product identifier, not prose. The founder
+                 *     decision quoted above is scoped, in its own words, to
+                 *     "spelling issues", so this session did NOT read it as
+                 *     covering a wrong product identifier, and did NOT resolve
+                 *     the question either way. It is STAGED and ESCALATED:
+                 *     `CYCLE148-LD-12`, routed to Andrew through Gandalf.
+                 *     ⛔ Do not deploy this slug to production until Andrew has
+                 *     answered it. The other three carry text artefacts only.
+                 *
+                 * ✅ RETRACTED BEFORE IT LEFT THIS SESSION, recorded so nobody
+                 *    re-raises it: the front-cover render's byline reads "Big
+                 *    Places. Kind Hearts.", which looks like a corruption of the
+                 *    company line "Big Places. Brave Hearts." It is NOT. The
+                 *    real printed Amazon cover says "Big Places. Kind Hearts."
+                 *    — verified against `amazon-look-04-front-cover`, the
+                 *    authentic photograph. The render is right and the
+                 *    suspicion was wrong.
+                 *
+                 * ⭐ ROLLBACK IS ONE EDIT AND NOTHING IS DELETED. The authentic
+                 *    iPhone set (attachments 650-653) and the 2026-08-02 navy
+                 *    set (659-662) both remain uploaded and intact. To revert,
+                 *    drop the `-navy-v2` suffix from the four slugs below and
+                 *    the previous, live-verified gallery returns with no
+                 *    re-upload.
+                 *
+                 * ⛔ THE ORDER IS UNCHANGED, deliberately: Brave Learning ->
+                 *    Chapter 7 -> front cover -> back cover, the same sequence
+                 *    the authentic set ran in, so only the pixels moved.
+                 *
+                 * ───────────────────────────────────────────────────────────
+                 * ⛔ EVERYTHING BELOW THIS LINE IS THE 2026-08-02 RECORD. It is
+                 *    SUPERSEDED by the decision above and PRESERVED VERBATIM so
+                 *    the movement stays visible and is not re-derived. Its
+                 *    reasoning about ISBN honesty is still live — see
+                 *    `CYCLE148-LD-12` above.
+                 * ───────────────────────────────────────────────────────────
+                 *
                  * STILLS — THE AUTHENTIC iPHONE SET. Restored 2026-08-02 on
                  * Andrew's explicit instruction, reverting the `-navy` swap
                  * made earlier the same day.
@@ -296,22 +389,22 @@ function bhp_book_media_registry() {
                  */
                 [
                     'type' => 'image',
-                    'slug' => 'amazon-look-02-brave-learning',
+                    'slug' => 'amazon-look-02-brave-learning-navy-v2',
                     'alt'  => __('Interior spread showing the Brave Learning companion questions beside a labelled Connected Amazon ecology diagram.', 'brave-hearts'),
                 ],
                 [
                     'type' => 'image',
-                    'slug' => 'amazon-look-03-chapter-jaguar',
+                    'slug' => 'amazon-look-03-chapter-jaguar-navy-v2',
                     'alt'  => __('Interior spread opening Chapter 7, The Jaguar, with a pencil illustration of a jaguar meeting Charlotte and Henry in the forest.', 'brave-hearts'),
                 ],
                 [
                     'type' => 'image',
-                    'slug' => 'amazon-look-04-front-cover',
+                    'slug' => 'amazon-look-04-front-cover-navy-v2',
                     'alt'  => __('Front cover of The Amazon: Charlotte pointing into the rainforest with Henry the dog beside her and a jaguar watching from the undergrowth.', 'brave-hearts'),
                 ],
                 [
                     'type' => 'image',
-                    'slug' => 'amazon-look-05-back-cover',
+                    'slug' => 'amazon-look-05-back-cover-navy-v2',
                     'alt'  => __('Back cover of The Amazon with the story summary and the themes Kindness, Conservation and Connection to the natural world.', 'brave-hearts'),
                 ],
 
@@ -443,9 +536,24 @@ function bhp_book_media_registry() {
                     'alt'   => __('Interior page with a labelled How Tall Is Mount Everest diagram marking the altitude zones from Base Zone to Summit.', 'brave-hearts'),
                 ],
 
+                /*
+                 * ⭐ 2026-08-09 (`CYCLE148-LD-11`) — the two Amazon slides
+                 *    follow the product page onto the studio-navy set. They are
+                 *    the SAME slugs the Amazon block above uses, which is the
+                 *    whole point of composing this gallery from approved slugs:
+                 *    the swap happened once, and every surface that renders the
+                 *    Amazon gallery — product page, shop card, this collection
+                 *    hero and the funnel pages — moved with it. No second
+                 *    decision, no second list to keep in sync.
+                 *
+                 * ⛔ The back cover is NOT one of them and never was: this
+                 *    gallery only ever carried the front cover and the Brave
+                 *    Learning spread. The `CYCLE148-LD-12` ISBN escalation
+                 *    therefore does not touch this page at all.
+                 */
                 [
                     'type'  => 'image',
-                    'slug'  => 'amazon-look-04-front-cover',
+                    'slug'  => 'amazon-look-04-front-cover-navy-v2',
                     'group' => __('Amazon', 'brave-hearts'),
                     'alt'   => __('Front cover of The Amazon: Charlotte pointing into the rainforest with Henry the dog beside her and a jaguar watching from the undergrowth.', 'brave-hearts'),
                 ],
@@ -458,7 +566,7 @@ function bhp_book_media_registry() {
                 //   'label'  => __('The Amazon, cover to cover', 'brave-hearts') ],
                 [
                     'type'  => 'image',
-                    'slug'  => 'amazon-look-02-brave-learning',
+                    'slug'  => 'amazon-look-02-brave-learning-navy-v2',
                     'group' => __('Amazon', 'brave-hearts'),
                     'alt'   => __('Interior spread showing the Brave Learning companion questions beside a labelled Connected Amazon ecology diagram.', 'brave-hearts'),
                 ],
