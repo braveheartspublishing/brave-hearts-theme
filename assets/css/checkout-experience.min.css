@@ -1,5 +1,5 @@
 /*! Built from checkout-experience.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 69f9e4e1822fd9fba5d27e9edc2490a3
+    source-md5: 74a5df6d2ce9c40d1edfb59b26639ad3
     Comments stripped for transfer size; the source file is canonical. */
 .wc-block-checkout.is-mobile > .wc-block-checkout__sidebar,
 .wc-block-cart.is-mobile > .wc-block-cart__sidebar.is-duplicate {
@@ -352,4 +352,16 @@
 .wc-block-checkout .wp-block-woocommerce-checkout-order-summary-block .wc-block-components-checkout-order-summary__title-text {
   font-weight: 700;
   font-variation-settings: 'wght' 700;
+}
+.bhp-checkout-free {
+  margin: 0 auto var(--space-4, 24px);
+  max-width: 34rem;
+  padding: 14px 18px;
+  background: #f6f2e8;
+  border: 1px solid rgba(31, 61, 41, 0.14);
+  border-radius: 8px;
+}
+.bhp-checkout-free .bhp-free-bullets {
+  display: inline-grid;
+  margin: 0;
 }

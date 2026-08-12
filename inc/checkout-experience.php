@@ -418,6 +418,104 @@ function bhp_empty_cart_invitation($block_content, $block) {
 add_filter('render_block', 'bhp_empty_cart_invitation', 10, 2);
 
 /* =====================================================================
+ * ⭐ 1.19.220 (2026-08-12) — THE THREE FREE BULLETS REACH THE CHECKOUT PAGE.
+ *    CYCLE155-LD-01.
+ * =====================================================================
+ *
+ * Andrew Signore, 2026-08-12, verbatim (⛔ RELAYED through the Chief of Staff
+ * in the build brief and NOT witnessed first-hand by this agent):
+ *
+ *   "Oh the FREE vocab stuff isnt on the checkout page either- sorry!"
+ *
+ * ⭐ WHAT THE CHECKOUT ACTUALLY SHOWED BEFORE THIS, MEASURED RATHER THAN
+ *    ASSUMED. Staging 1.19.219 / plugin 1.8.40, real Blocks checkout, real
+ *    headless Chromium, 1440px, cart = one Everest paperback plus the
+ *    auto-granted activity book. Every visible node on the page containing
+ *    the string "free" was enumerated. There were exactly two, and both were
+ *    the SAME free item:
+ *
+ *      .bhp-addon-upsell__head       "Add The Adventure Activity Book - FREE
+ *                                     with your book order (a $5.00 savings)"
+ *      order-summary item detail     "Included: FREE with your book order -
+ *                                     a $5.00 savings"
+ *
+ *    ⛔ ZERO `.bhp-free-bullets` elements. ⛔ ZERO occurrences of "FREE
+ *       Vocabulary Card Activity". ⛔ ZERO free-shipping line. The one page
+ *       every buyer must pass through was the only commerce surface still
+ *       carrying the pre-2026-08-06 shape of this message.
+ *
+ * ⭐ WHY THE SHARED HELPER AND NOTHING ELSE. `bhp_book_free_bullets_markup()`
+ *    is the single author of this list on the homepage, the collection
+ *    feature, the fast-purchase band and all four funnel pages. Writing the
+ *    three lines out here would have created a seventh copy of the copy and a
+ *    seventh place for the next free item to be forgotten — which is exactly
+ *    the drift that produced this instruction. One helper, one list.
+ *
+ * ⭐ EVERY LINE KEEPS ITS OWN LIVE PREDICATE, because the helper keeps them.
+ *    Verified on staging by `wp eval` before this was written, not inferred:
+ *    `bhp_book_collection_ships_free()` = true, `bhp_bundle_addon_free_with_
+ *    collection()` = true, `bhp_bundle_vocab_cards_live()` = true, and
+ *    `bhp_book_free_bullet_lines('collection')` returns the three approved
+ *    lines in the fixed order. On an environment where the vocabulary-cards
+ *    PDF is absent the third bullet disappears here with no code change, and
+ *    if nothing at all is free the helper returns '' and this panel does not
+ *    render — the same fail-closed shape every other caller relies on.
+ *
+ * ⛔ NO NEW CUSTOMER-FACING COPY IS WRITTEN BY THIS BLOCK. Not one word. No
+ *    heading, no eyebrow, no framing sentence. That is a deliberate choice
+ *    rather than an omission: the first bullet is conditional by its own
+ *    wording ("FREE Shipping on the complete collection"), so any heading
+ *    general enough to sit above all three — "included with your order",
+ *    "your free extras" — would assert of a one-book cart something the
+ *    totals column does not agree with. The bullets each state their own
+ *    condition and claim nothing beyond it, so they are shipped alone.
+ *
+ * ⛔ NO WOOCOMMERCE RECORD IS TOUCHED, AND THE CHECKOUT PAGE'S OWN CONTENT IS
+ *    NOT EDITED. Placing this by editing the checkout page would be a
+ *    checkout-configuration change on a live environment, which is an Andrew
+ *    gate. It is prepended to the outermost `woocommerce/checkout` block's
+ *    rendered output instead — the identical mechanism B5 already uses to
+ *    move the print-on-demand notice (see class-bhp-printed-for-you.php).
+ *    It reverses by deleting one function and one `add_filter`, and
+ *    `wp post get <checkout_page_id> --field=post_content` is byte-identical
+ *    afterwards.
+ *
+ * ⛔ IT SITS OUTSIDE THE REACT ROOT, ON PURPOSE. `$block_content` for the
+ *    outer `woocommerce/checkout` block is the server-rendered wrapper that
+ *    Blocks hydrates; prepending BEFORE it puts this panel outside anything
+ *    React owns, so no re-render can remove it and this code never has to
+ *    fight a hydration pass. It touches no field, no total, no shipping rate,
+ *    no coupon, no payment method and no submit handler.
+ *
+ * ⛔ THE ORDER-RECEIVED ENDPOINT IS EXCLUDED, for the reason recorded twice
+ *    already in this codebase: `is_checkout()` returns TRUE on the thank-you
+ *    page. Without the exclusion, somebody who had already paid would be
+ *    shown an offer list for a cart that no longer exists.
+ */
+function bhp_checkout_free_bullets_panel($block_content, $block) {
+    if (empty($block['blockName']) || 'woocommerce/checkout' !== $block['blockName']) {
+        return $block_content;
+    }
+    if (!function_exists('is_checkout') || !is_checkout()) {
+        return $block_content;
+    }
+    if (function_exists('is_order_received_page') && is_order_received_page()) {
+        return $block_content;
+    }
+    if (!function_exists('bhp_book_free_bullets_markup')) {
+        return $block_content;
+    }
+
+    $bullets = bhp_book_free_bullets_markup('collection', 'bhp-free-bullets--checkout');
+    if ('' === trim($bullets)) {
+        return $block_content;
+    }
+
+    return '<div class="bhp-checkout-free">' . $bullets . '</div>' . $block_content;
+}
+add_filter('render_block', 'bhp_checkout_free_bullets_panel', 10, 2);
+
+/* =====================================================================
  * PRESENTATION AND FIELD BEHAVIOUR — F3, F9, F10, D3's rendering
  * =====================================================================
  *

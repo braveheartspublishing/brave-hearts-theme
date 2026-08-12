@@ -834,3 +834,54 @@
   font-weight: 700;
   font-variation-settings: 'wght' 700;
 }
+
+/* ==================================================================
+   ⭐ 1.19.220 (2026-08-12) — THE THREE FREE BULLETS ON /checkout/.
+   CYCLE155-LD-01.
+
+   Andrew Signore, 2026-08-12, relayed through the Chief of Staff and ⛔ NOT
+   witnessed first-hand by this agent: "Oh the FREE vocab stuff isnt on the
+   checkout page either- sorry!"
+
+   The markup is `bhp_book_free_bullets_markup('collection',
+   'bhp-free-bullets--checkout')`, prepended to the outer
+   `woocommerce/checkout` block by `bhp_checkout_free_bullets_panel()` in
+   inc/checkout-experience.php.
+
+   ⛔ NO NEW BULLET TREATMENT IS INVENTED HERE, and that is the whole point of
+      the modifier class. `.bhp-free-bullets`, `.bhp-free-bullets__item` and
+      the green checkmark `::before` all live in style.css (~line 8080) and are
+      already loaded on this page — `bhp-checkout-experience` declares
+      `bhp-style` as a dependency. The rules below set the panel's box and the
+      list's alignment inside it. Nothing here restates a font-weight, a colour
+      or a glyph that the sitewide treatment already owns, so the checkout can
+      never drift into a fourth FREE-bullet look.
+
+   ⛔ NO `text-transform`. The capitals in "FREE" are in the PHP string, for
+      the reason recorded at style.css ~8060: a CSS transform leaves the
+      accessible name and the plain-text fallback reading "Free".
+
+   ⛔ NOTHING HERE TOUCHES A PAYMENT PATH, A TOTAL, A SHIPPING RATE, A COUPON
+      OR ANY WOOCOMMERCE SETTING, on any environment. It is one box and a
+      list alignment, above the checkout form.
+
+   The panel is centred and capped at 34rem so the three lines sit as one
+   readable column at 1440px (where the checkout container is 1240px, see the
+   block above) instead of stretching the full width; on a 390px phone the cap
+   never binds and the panel is simply full width.
+
+   Asserted against the rendered checkout by
+   tests/test-checkout-free-bullets.php.
+   ================================================================== */
+.bhp-checkout-free {
+  margin: 0 auto var(--space-4, 24px);
+  max-width: 34rem;
+  padding: 14px 18px;
+  background: #f6f2e8;
+  border: 1px solid rgba(31, 61, 41, 0.14);
+  border-radius: 8px;
+}
+.bhp-checkout-free .bhp-free-bullets {
+  display: inline-grid;
+  margin: 0;
+}
