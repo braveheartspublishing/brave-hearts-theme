@@ -281,11 +281,36 @@ bhp_cct_assert(
  *    Kirkus attribution that shares the same `<ul>`. Asserting the count
  *    match is what stops a future edit from moving the class onto the
  *    `<ul>` (which would silently restyle the review fragment too).
+ *
+ * ⚠ CORRECTED AFTER THIS ASSERTION'S FIRST RUN ON STAGING, and recorded
+ *   rather than quietly patched. Its first form compared the hook count
+ *   against the PAGE-WIDE FREE-bullet count and read "3 hooked of 9" —
+ *   a FAILURE on a correct build. The page was right and the test was
+ *   wrong: the closing CTA renders the same three bullets again inside
+ *   `.bhp-landing-final__free`, once per format panel, which is six more
+ *   `<li><strong>FREE …` that are NOT cold-open items and must NOT carry
+ *   a cold-open class. The count is now taken inside the cold-open trust
+ *   list itself, which is the only scope the claim was ever about.
  */
-$cct_free_hooked = preg_match_all( '/<li class="bhp-landing-coldopen__free"><strong>FREE [^<]*<\/strong><\/li>/', $html );
+$cct_trust_ul = preg_match( '/<ul class="bhp-landing-coldopen__trust">(.*?)<\/ul>/su', $html, $cct_ul_m ) ? $cct_ul_m[1] : '';
+bhp_cct_assert( '' !== $cct_trust_ul, '3: the cold-open trust list is extractable for scoped assertions', $failures );
+$cct_trust_free   = preg_match_all( '/<li(?: [^>]*)?><strong>FREE [^<]*<\/strong><\/li>/', $cct_trust_ul );
+$cct_trust_hooked = preg_match_all( '/<li class="bhp-landing-coldopen__free"><strong>FREE [^<]*<\/strong><\/li>/', $cct_trust_ul );
 bhp_cct_assert(
-	$cct_free_hooked === $cct_free_bullets && $cct_free_hooked >= 1,
-	"3: every FREE bullet — and only the FREE bullets — carries the size hook ({$cct_free_hooked} hooked of {$cct_free_bullets})",
+	$cct_trust_hooked === $cct_trust_free && $cct_trust_hooked >= 1,
+	"3: inside the cold-open list, every FREE bullet carries the size hook ({$cct_trust_hooked} hooked of {$cct_trust_free})",
+	$failures
+);
+/*
+ * ⛔ AND THE HOOK STOPS AT THE FREE LINES. The Kirkus fragment is the one
+ *    non-FREE item in this list; it must still be there and must NOT be
+ *    hooked, which is the property that keeps the review attribution out
+ *    of the 15px/800 offer-bullet treatment.
+ */
+bhp_cct_assert(
+	substr_count( $cct_trust_ul, '<li' ) > $cct_trust_hooked
+	&& preg_match( '/<li class="bhp-landing-coldopen__free">(?!<strong>FREE)/', $cct_trust_ul ) === 0,
+	'3: the review fragment shares the list but not the hook (' . substr_count( $cct_trust_ul, '<li' ) . " items, {$cct_trust_hooked} hooked)",
 	$failures
 );
 bhp_cct_assert(
