@@ -1120,14 +1120,35 @@ bhp_w1_assert(
  *        preg_match( '/bhp_book_collection_ships_free\(\).{0,400}The complete collection ships %s\./s', $cc_code )
  *    The dedicated suite is tests/test-collection-band-freeship.php §3–3g.
  */
+/*
+ * ⭐ RETARGETED AGAIN 1.19.218 (2026-08-11, CYCLE154-LD-01). Andrew Signore,
+ *    2026-08-11 (⛔ RELAYED through the Chief of Staff): the FREE items in the
+ *    Best Value box become bullet points. The two sentences these assertions
+ *    were written around are gone, replaced by the shared
+ *    `bhp_book_free_bullets_markup()` list. Superseded assertions, verbatim:
+ *
+ *      preg_match( '/bhp_book_collection_ships_free\(\).{0,1200}The complete collection ships %s\./s', $cc_code )
+ *      preg_match( '/bhp_book_collection_includes_free_addon\(\).{0,300}The complete collection ships %1\$s and includes the Activity Book %2\$s\./s', $cc_code )
+ *
+ * ⛔ THE GATES DID NOT GO AWAY — THEY MOVED INTO THE HELPER, one per line, and
+ *    are asserted there. The property this file needs is that the band gets
+ *    its free-item copy from the shared helper rather than printing it
+ *    unconditionally, which is what is asserted now. The dedicated suite is
+ *    tests/test-collection-band-freeship.php §3–§3j and §4.
+ */
 bhp_w1_assert(
-	1 === preg_match( '/bhp_book_collection_ships_free\(\).{0,1200}The complete collection ships %s\./s', $cc_code ),
-	'and the free-shipping SENTENCE is gated on bhp_book_collection_ships_free(), never printed unconditionally',
+	false !== strpos( $cc_code, 'bhp_book_free_bullets_markup(' )
+	&& 1 === preg_match( '/function_exists\(\x27bhp_book_free_bullets_markup\x27\)/', $cc_code ),
+	'the free items are rendered through the SHARED gated helper, never printed unconditionally by the band',
 	$failures
 );
 bhp_w1_assert(
-	1 === preg_match( '/bhp_book_collection_includes_free_addon\(\).{0,300}The complete collection ships %1\$s and includes the Activity Book %2\$s\./s', $cc_code ),
-	'and the free-ACTIVITY-BOOK sentence is gated on bhp_book_collection_includes_free_addon(), never printed unconditionally',
+	function_exists( 'bhp_book_free_bullet_lines' )
+	&& 1 === preg_match(
+		'/function bhp_book_free_bullet_lines.{0,900}bhp_book_collection_ships_free\(\).{0,900}bhp_book_collection_includes_free_addon\(\).{0,900}bhp_bundle_vocab_cards_live\(\)/s',
+		bhp_w1_strip_comments( (string) bhp_w1_read( 'inc/book-formats.php' ) )
+	),
+	'and the helper gates each free item on its own live predicate (shipping, activity book, vocabulary cards)',
 	$failures
 );
 
@@ -1402,30 +1423,53 @@ if ( '' !== $w1_home_html ) {
 	 *    predicate. The dedicated suite is
 	 *    tests/test-collection-band-freeship.php §4.
 	 */
-	bhp_w1_assert(
-		1 === preg_match(
-			'#The complete collection ships <strong[^>]*>FREE</strong>(\.| and includes the Activity Book <strong[^>]*>FREE</strong>\.)#',
-			$w1_home_html
-		),
-		'11. ⭐ RENDERED ON THE HOMEPAGE: "The complete collection ships FREE." with FREE in a real <strong>',
-		$failures
-	);
-	bhp_w1_assert(
-		false === strpos( $w1_home_html, 'The complete collection ships free.' ),
-		'11. and the old lowercase sentence is gone from the page (no stale duplicate)',
-		$failures
-	);
 	/*
-	 * ⭐ ADDED 1.19.198 — what makes the alternation above safe. The
-	 *    activity-book clause must be on the real homepage EXACTLY when the
-	 *    plugin says the offer is deliverable, so neither a missing clause
-	 *    nor an ungated promise can pass.
+	 * ═════════════════════════════════════════════════════════════════
+	 * ⭐⭐ RETARGETED 1.19.218 (2026-08-11, CYCLE154-LD-01) — THE HOMEPAGE
+	 *     NOW RENDERS BULLETS, on Andrew Signore's 2026-08-11 instruction
+	 *     (⛔ RELAYED through the Chief of Staff).
+	 * ═════════════════════════════════════════════════════════════════
+	 *
+	 * Superseded needles, verbatim:
+	 *
+	 *   preg_match( '#The complete collection ships <strong[^>]*>FREE</strong>(\.| and includes the Activity Book <strong[^>]*>FREE</strong>\.)#', $w1_home_html )
+	 *   false === strpos( $w1_home_html, 'The complete collection ships free.' )
+	 *   $w1_addon_live === ( false !== strpos( $w1_home_html, 'includes the Activity Book <strong' ) )
+	 *
+	 * ⛔ THIS IS A REAL PAGE FETCH, which is what makes it worth keeping: the
+	 *    dedicated suite renders the PARTIAL, this renders the HOMEPAGE. The
+	 *    three properties are carried over one-for-one and a fourth is added
+	 *    for the vocabulary line the sentence could never carry.
 	 */
+	preg_match_all( '#<li class="bhp-free-bullets__item"><strong>(.*?)</strong></li>#s', $w1_home_html, $w1_free_items );
+	$w1_free_joined = implode( ' | ', $w1_free_items[1] );
+	bhp_w1_assert(
+		false !== strpos( $w1_home_html, '<ul class="bhp-free-bullets' ) && count( $w1_free_items[1] ) >= 1,
+		sprintf( '11. ⭐ RENDERED ON THE HOMEPAGE: the FREE items are BULLET LINES, one <li><strong> each (found %d)', count( $w1_free_items[1] ) ),
+		$failures
+	);
+	bhp_w1_assert(
+		false === strpos( $w1_home_html, 'The complete collection ships' ),
+		'11. and the superseded COMBINED SENTENCE is gone from the page (no stale duplicate alongside the bullets)',
+		$failures
+	);
+	$w1_ship_live = function_exists( 'bhp_book_collection_ships_free' ) && bhp_book_collection_ships_free();
+	bhp_w1_assert(
+		$w1_ship_live === ( false !== stripos( $w1_free_joined, 'shipping' ) ),
+		'11. ⭐ RENDERED ON THE HOMEPAGE: the FREE-shipping bullet is present EXACTLY when the plugin says the collection ships free (live=' . var_export( $w1_ship_live, true ) . ')',
+		$failures
+	);
 	$w1_addon_live = function_exists( 'bhp_book_collection_includes_free_addon' )
 		&& bhp_book_collection_includes_free_addon();
 	bhp_w1_assert(
-		$w1_addon_live === ( false !== strpos( $w1_home_html, 'includes the Activity Book <strong' ) ),
-		'11. ⭐ RENDERED ON THE HOMEPAGE: the free-activity-book clause is present EXACTLY when the plugin says the offer is live (live=' . var_export( $w1_addon_live, true ) . ')',
+		$w1_addon_live === ( false !== stripos( $w1_free_joined, 'Activity Book' ) ),
+		'11. ⭐ RENDERED ON THE HOMEPAGE: the free-activity-book bullet is present EXACTLY when the plugin says the offer is live (live=' . var_export( $w1_addon_live, true ) . ')',
+		$failures
+	);
+	$w1_vocab_live = function_exists( 'bhp_bundle_vocab_cards_live' ) && bhp_bundle_vocab_cards_live();
+	bhp_w1_assert(
+		$w1_vocab_live === ( false !== stripos( $w1_free_joined, 'Vocabulary Card' ) ),
+		'11. ⭐ RENDERED ON THE HOMEPAGE: the free-vocabulary-cards bullet — the third item Andrew named — is present EXACTLY when the plugin says so (live=' . var_export( $w1_vocab_live, true ) . ')',
 		$failures
 	);
 
