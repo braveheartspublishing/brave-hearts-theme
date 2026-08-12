@@ -938,3 +938,137 @@
 	font-weight: 900;
 	color: var(--bl-forest-mid);
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ⭐ 1.8.40 (2026-08-12) — MOBILE BREATHING ROOM BETWEEN SECTIONS.
+      CYCLE154-LD-COLLECTION-BUFFER.
+   ------------------------------------------------------------------
+   Andrew Signore, 2026-08-12, VERBATIM as relayed in the brief
+   (⛔ RELAYED through the Chief of Staff; NOT witnessed first-hand):
+   "I think on the collection page we give a little more buffer space
+   in between sections - just a little bit... in mobile view?"
+
+   ⛔ MOBILE ONLY. Every declaration below sits inside ONE
+      `max-width: 640px` block. Desktop is byte-unchanged, and that was
+      VERIFIED by re-measuring 1440x900 after the deploy, not assumed.
+   ⛔ ADDITIVE. Not one declaration above this banner is edited or
+      deleted. No copy, no claim, no price, no gate and no font size is
+      touched — this block changes margins and one padding, nothing else.
+
+   ── WHY THE NUMBERS ARE WHAT THEY ARE ───────────────────────────────
+   MEASURED FIRST on the deployed 1.19.219/1.8.39 build, staging,
+   390x844, `window.innerWidth` asserted 390, 2026-08-12. The four
+   boundaries between the groups Andrew named were:
+
+       BEST VALUE badge  -> headline block        4.8px
+       Kirkus review line -> the three FREE lines  1.3px   <- the worst
+       FREE lines        -> the buy button        4.8px
+       buy button        -> the price box        11.2px
+
+   1.3px is not a gap; the review line and the first offer bullet are
+   touching, which is exactly why the block reads as one grey slab
+   instead of four statements.
+
+   ⛔⛔ THE CONSTRAINT THAT SET THE CEILING IS NOT THE 844px FOLD.
+       The brief's hard constraint was "the primary CTA stays above the
+       844px fold", measured at 116.8px of clearance, which would have
+       allowed ~77px of new space above the button. IT IS NOT THE
+       BINDING CONSTRAINT. Re-measured on a FRESH PROFILE in the same
+       run: the WPConsent banner occupies **y 732-844** (it lives in an
+       open shadow root on a 0x0 host, so it is found by walking shadow
+       roots — a light-DOM query misses it, and 1.8.33 recorded the same
+       trap). The button's bottom edge sat at y=727.2. The REAL headroom
+       above the button was therefore **4.8px, not 116.8px**, and the
+       page has been that close to the banner since 1.8.33.
+
+       So the above-button spend is capped at **10.7px**, not 77px, and
+       the cap was chosen so the button keeps a full 44px touch target
+       and its entire two-line label visible above the first-visit
+       banner. AFTER, measured: button y 683.9-738.0; 48.1px of its
+       54.1px height above the banner; 106.0px of clearance to the 844
+       fold. ⚠ The bottom ~6px of the button IS overlapped by the
+       consent banner on a FIRST visit only — that is a real, reported
+       trade, not an oversight. It is flagged for Andrew rather than
+       decided here.
+
+   ⭐ EVERYTHING BELOW THE BUTTON IS FREE. The button is the FIRST child
+      of the panel, so space added under it extends the card downward and
+      moves the button not at all. That is why the price-box boundaries
+      get the full 16px and the boundaries above the button do not.
+
+   ⚠ A NARROWER PHONE WAS CHECKED AND IT IS ALREADY BROKEN, INDEPENDENTLY
+     OF THIS BLOCK. At 360x800 the BEST VALUE badge and the ages line each
+     wrap to a second line, the consent banner moves up to y 688-800, and
+     the button sat at y 727.0-781.1 — i.e. ENTIRELY behind the banner on
+     a first visit — BEFORE this block existed. Measured by deleting this
+     very rule at runtime over CDP and re-reading the box, 2026-08-12, so
+     the before number is an observation and not an inference. This block
+     moves it to 737.7-791.8, which takes the 800px fold clearance from
+     18.9px to 8.2px. The button is still above the fold at 360; it is
+     still under the banner at 360; and it was under the banner at 360
+     already. ⛔ THAT IS A REPORTED, UNRESOLVED FINDING FOR ANDREW, NOT
+     something this block created and not something it fixes.
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+	/* ---- 1. Inside the purchase card, ABOVE the button (capped) ---- */
+
+	/*
+	 * The Kirkus review line and the three FREE offer lines share one
+	 * <ul> by design (see `bhp_bundle_render_landing_cold_open()`), so
+	 * the separation has to be built at the ONE boundary between them
+	 * rather than on the list. The adjacent-sibling form does that
+	 * exactly: it applies only where a non-FREE row is followed by a
+	 * FREE row, so if the Kirkus fragment is ever ungated the rule
+	 * disappears with it instead of leaving a stray 8px hole.
+	 *
+	 * ⚠ ADJACENT SIBLING MARGINS COLLAPSE. The resulting gap is
+	 *   max(1.28px bottom, 8px top) = 8px, NOT 9.28px. Measured after
+	 *   deploy at 8.0px, which is the collapsed value — if a future
+	 *   reader expects additive here, this is why it is not.
+	 */
+	.bhp-landing-coldopen__trust li:not(.bhp-landing-coldopen__free) + li.bhp-landing-coldopen__free {
+		margin-top: .5rem;   /* 8px; was a 1.28px collapsed gap */
+	}
+
+	/*
+	 * The offer bullets stop touching the button. `.bhp-landing-coldopen`
+	 * is the last thing before `.bhp-landing-panel`, whose first child
+	 * (the lead form) carries no top margin, so this margin IS the gap —
+	 * no collapse-through to reason about.
+	 */
+	.bhp-landing-coldopen { margin-bottom: .55rem; }   /* 8.8px; was 4.8px */
+
+	/* ---- 2. Inside the purchase card, BELOW the button (free) ------- */
+	.bhp-landing-panel__form--lead { margin-bottom: 1rem; }   /* 16px; was 11.2px */
+	.bhp-landing-panel__price-rows--compact { margin-bottom: 1rem; }   /* 16px; was 13.6px */
+	.bhp-landing-panel__savings { margin-bottom: 1rem; }   /* 16px; was 12.8px */
+
+	/* ---- 3. Between the page's own sections ------------------------ */
+	/*
+	 * Every one of these resolves to 40px at 390px today, because
+	 * `clamp(2.5rem, 6vw, 4rem)` bottoms out at its 2.5rem floor once
+	 * 6vw drops under 40px — i.e. at every phone width. 3.125rem lifts
+	 * the whole rhythm by a uniform 10px. The outcomes list is the one
+	 * exception at 1.75rem/28px, and it moves by the same 10px rather
+	 * than up to 50px, so it stays deliberately tighter than its
+	 * neighbours the way it already was.
+	 *
+	 * The hero intro is the tightest boundary on the page at 17.6px and
+	 * takes the same +10.4px. Its selector must stay at 0,2,0 to beat
+	 * `.bhp-landing-hero--sales-first .bhp-landing-hero__intro` in the
+	 * 640px block above; equal specificity plus later source order is
+	 * what wins here, so this block must never be moved above that one.
+	 *
+	 * ⛔ ALL OF THIS IS BELOW THE FOLD. It cannot move the buy button.
+	 */
+	.bhp-landing-hero--sales-first .bhp-landing-hero__intro { margin-top: 1.75rem; }   /* 28px; was 17.6px */
+	.bhp-landing-trust-row { margin-top: 3.125rem; }    /* 50px; was 40px */
+	.bhp-landing-outcomes { margin-top: 2.375rem; }     /* 38px; was 28px */
+	.bhp-landing-testimonial { margin-top: 3.125rem; }  /* 50px; was 40px */
+	.bhp-landing-story { margin-top: 3.125rem; }        /* 50px; was 40px */
+	.bhp-landing-kirkus { margin-top: 3.125rem; }       /* 50px; was 40px */
+	.bhp-landing-value { margin-top: 3.125rem; }        /* 50px; was 40px */
+	.bhp-landing-gift { margin-top: 3.125rem; }         /* 50px; was 40px */
+	.bhp-landing-final { margin-top: 3.125rem; }        /* 50px; was 40px */
+}
