@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.217
+Version: 1.19.218
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -8198,4 +8198,46 @@ a.header-expedition-cta {
   .audience-landing-hero__ctas { margin-top: 22px; }
   .parent-landing-hero__proof,
   .audience-landing-hero__proof { margin-top: 18px; }
+}
+
+/* ==========================================================================
+   1.19.218 (2026-08-11) — CYCLE154-LD-01. THE BEST VALUE BOX'S FREE ITEMS
+   ARE BULLET LINES, AND THEY CENTRE LIKE THE REST OF THE BOX
+   ==========================================================================
+
+   Andrew Signore, 2026-08-11 (⛔ RELAYED through the Chief of Staff; not
+   witnessed by the agent that made this change), verbatim: "On the home
+   page- in the best value - the complete collection box - the FREE Activity
+   Book, Free Vocab, and FREE Shipping needs to be in bullet points."
+
+   ⭐ NO NEW BULLET TREATMENT IS INVENTED HERE. `.bhp-free-bullets` and its
+      checkmark `::before` already exist above (CYCLE148-LD-01) and already
+      ship on all four funnel offer surfaces and on /complete-collection/.
+      This block adds ONLY the centring the surrounding box needs, and it is
+      a copy of the treatment `.bhp-fastbuy .bhp-free-bullets` already uses
+      for the identical problem: a left-aligned list inside a `text-align:
+      center` container.
+
+   ⛔ THE LIST ITSELF STAYS LEFT-ALIGNED. `inline-grid` + `margin-inline:
+      auto` centres the BLOCK while every line still starts on the same
+      x-position, so three checkmarks form one column instead of a ragged
+      centred stack. Centring the text as well is what makes a bullet list
+      stop reading as a list.
+
+   ⛔ NOT ONE EXISTING RULE IN THIS FILE WAS EDITED OR DELETED FOR THIS,
+      including `.home-collection-feature__free`, which is now inert (its
+      element left with the sentence it emphasised). It is left in place
+      deliberately, exactly as `.home-collection-feature__primacy` was, so
+      restoring the sentence is a one-file revert of the markup rather than
+      a two-file change. Flagged, not absorbed.
+
+   ⛔ NO `text-transform` ANYWHERE IN THIS BLOCK. The capitals in "FREE" are
+      typed into the translated string by `bhp_book_free_bullet_lines()`; a
+      CSS transform would leave the DOM text lowercase for copy-paste,
+      translation and assistive technology. That property is asserted by
+      tests/test-collection-band-freeship.php and must stay true. */
+.home-collection-feature .bhp-free-bullets {
+  display: inline-grid;
+  margin-inline: auto;
+  margin-bottom: var(--space-4, 24px);
 }

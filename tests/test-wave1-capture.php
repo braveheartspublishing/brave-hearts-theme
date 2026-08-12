@@ -858,11 +858,26 @@ bhp_w1_assert(
  *    carries the actual numbers with it — that is the whole risk of a
  *    redundancy pass, and it is asserted rather than trusted.
  */
+/*
+ * ⭐ RETARGETED 1.19.218 (2026-08-11, CYCLE154-LD-01), NOT WEAKENED.
+ *
+ * Superseded needle, verbatim, so the guard is seen to move rather than lapse:
+ *
+ *     && false !== strpos( $cc_code, 'The complete collection ships %s.' )
+ *
+ * Andrew Signore, 2026-08-11 (⛔ RELAYED through the Chief of Staff): the FREE
+ * items in the Best Value box become bullet points. The combined sentence was
+ * replaced by the shared `bhp_book_free_bullets_markup()` list, so the needle
+ * is now the helper call. ⭐ THE PROPERTY THIS ASSERTION EXISTS FOR IS
+ * UNCHANGED and is the counterweight to a redundancy pass: cutting copy must
+ * never take the line that carries the actual NUMBERS with it, and the
+ * free-item claim must still be present and still gated. Both are checked.
+ */
 bhp_w1_assert(
 	false !== strpos( $cc_code, 'Save $4.98 in hardcover, $3.98 in paperback.' )
-	&& false !== strpos( $cc_code, 'The complete collection ships %s.' )
+	&& false !== strpos( $cc_code, 'bhp_book_free_bullets_markup(' )
 	&& false !== strpos( $cc_code, 'home-collection-feature__savings' ),
-	'the savings line SURVIVES the cut, with both approved literals and the gated FREE-shipping sentence intact',
+	'the savings line SURVIVES the cut, with both approved literals intact and the gated FREE-items list still rendered (1.19.218: bullets, not a sentence)',
 	$failures
 );
 

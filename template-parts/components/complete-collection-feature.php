@@ -203,6 +203,80 @@ $bhp_cc_format_order = function_exists('bhp_book_format_order')
  * its own label id. Derived from the section id so it cannot collide.
  */
 $bhp_cc_toggle_id = $bhp_cc['section_id'] . '-format-label';
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.218 (2026-08-11) — CYCLE154-LD-01. THE FREE ITEMS BECOME BULLETS.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-11, verbatim (⛔ RELAYED through the Chief of
+ * Staff; NOT witnessed first-hand by this agent):
+ *
+ *   "On the home page- in the best value - the complete collection box -
+ *    the FREE Activity Book, Free Vocab, and FREE Shipping needs to be in
+ *    bullet points."
+ *
+ * ⭐ THIS IS NOT A NEW RULE, IT IS THIS BOX FINALLY OBEYING AN OLD ONE.
+ *    Andrew's 2026-08-06 standing ruling already says it, and it is quoted
+ *    in `bhp_book_free_bullet_lines()` in inc/book-formats.php:
+ *
+ *      "FREE-items emphasis on ALL funnel + collection pages: bold, each
+ *       free item its own bullet line, never combined sentences."
+ *
+ *    Every funnel offer surface and both ends of /complete-collection/ have
+ *    rendered that shared bullet list since CYCLE148-LD-01. This band —
+ *    the Best Value box on the homepage AND on /books/ — was the one
+ *    surface still printing the COMBINED SENTENCE the ruling forbids:
+ *
+ *      "The complete collection ships FREE and includes the Activity Book
+ *       FREE."
+ *
+ *    ⭐ OBSERVED, NOT INFERRED: that sentence was read off the LIVE
+ *       PRODUCTION homepage at 390px on 2026-08-11 (headless Chrome,
+ *       `window.innerWidth` confirmed 390), inside `.home-collection-feature`,
+ *       and it carried NO Vocabulary Card line at all.
+ *
+ * ⭐ THE FIX IS TO CALL THE SHARED HELPER, NOT TO HAND-BUILD A LIST HERE.
+ *    `bhp_book_free_bullets_markup()` is the single source of the three
+ *    lines, their fixed order (Shipping, Activity Book, Vocabulary Cards),
+ *    their per-item live predicates and their <strong> emphasis. Rebuilding
+ *    the list locally would re-create exactly the drift that made this box
+ *    the odd one out, and it would have to be corrected again the next time
+ *    a fourth free item is added.
+ *
+ * ⭐ THE VOCABULARY CARD LINE ARRIVES AS A CONSEQUENCE, NOT AS AN EXTRA.
+ *    It is the third line the helper has returned since 1.19.216
+ *    (CYCLE151-LD-01) and it is the "Free Vocab" in Andrew's sentence. This
+ *    file adds no copy of its own: every string comes from the helper or
+ *    from the plugin, exactly as it does on the funnels.
+ *
+ * ⛔ EACH LINE STILL CARRIES ITS OWN LIVE PREDICATE, and none is inferred
+ *    from another: shipping from `bhp_book_collection_ships_free()`, the
+ *    activity book from the plugin, the cards from
+ *    `bhp_bundle_vocab_cards_live()`. An environment where one of them
+ *    stops being true drops that line and keeps the others, with no edit
+ *    here and no deploy.
+ *
+ * ⛔ STILL NO SHIPPING DOLLAR FIGURE IS PRINTED BY THIS FILE. The header
+ *    note above is intact: the shipping line says "FREE Shipping on the
+ *    complete collection" and quotes no amount. The one dollar figure that
+ *    now reaches this band from the helper is the activity book's "$5.00
+ *    savings", which the PLUGIN composes from WooCommerce's own price
+ *    record — this file neither writes it nor knows it.
+ *
+ * ⛔ THE OWNER GATE IS UNCHANGED AND THE BULLETS STAY INSIDE IT. They render
+ *    only while `bhp_home_price_cues_enabled()` is on, which is exactly
+ *    where the sentence they replace lived. Moving free-item copy OUT of an
+ *    owner gate would be a scope expansion wearing a formatting change's
+ *    clothes, and it is deliberately not done here.
+ *
+ * ⛔ `.home-collection-feature__free` IS LEFT IN style.css, inert. Same
+ *    reasoning as the `__primacy` rule two changes ago: leaving it makes a
+ *    revert a one-file change. Flagged, not absorbed.
+ */
+$bhp_cc_free_bullets = function_exists('bhp_book_free_bullets_markup')
+    ? bhp_book_free_bullets_markup('collection', 'bhp-free-bullets--band')
+    : '';
 ?>
 <?php
 /*
@@ -333,9 +407,90 @@ $bhp_cc_classes = trim('homepage-section home-sales-paths section ' . $bhp_cc['s
       <?php if ($bhp_cc_price_cues_on): ?>
         <p class="home-collection-feature__savings">
           <?php esc_html_e('Save $4.98 in hardcover, $3.98 in paperback.', 'brave-hearts'); ?>
-          <?php if (function_exists('bhp_book_collection_ships_free') && bhp_book_collection_ships_free()): ?>
-            <?php
-            /*
+        </p>
+        <?php
+        /*
+         * ⭐ 1.19.218 — THE FREE ITEMS, ONE BULLET EACH. See the block at the
+         *    top of this file for the instruction and the reasoning.
+         *
+         * ⛔ THE <ul> IS A SIBLING OF THE SAVINGS <p>, NOT A CHILD OF IT, and
+         *    that is not a style preference: a <ul> inside a <p> is invalid
+         *    HTML and browsers silently close the paragraph before it,
+         *    producing a DOM that does not match the source anyone reads.
+         *
+         * ⭐ `bhp_book_free_bullets_markup()` RETURNS '' WHEN NOTHING IS
+         *    ACTUALLY FREE on this environment, so this prints nothing rather
+         *    than an empty list — the same fail-closed shape the sentence it
+         *    replaces had.
+         *
+         * ═════════════════════════════════════════════════════════════════
+         * SUPERSEDED MARKUP, PRESERVED VERBATIM RATHER THAN DELETED so a
+         * future reader sees that the sentence was replaced by an owner
+         * instruction and not lost to drift. The PHP open/close tags are
+         * written out in words on purpose: a literal pair inside a block
+         * comment is legal PHP but is a trap for the comment-stripping
+         * regex the test suites run over this file.
+         *
+         * It rendered, inside the paragraph above and inside this same
+         * `$bhp_cc_price_cues_on` gate:
+         *
+         *   "The complete collection ships FREE and includes the Activity
+         *    Book FREE."          (1.19.194, both FREEs in a <strong>)
+         *
+         * and, when the activity-book offer was not live:
+         *
+         *   "The complete collection ships FREE."      (1.19.179)
+         *
+         * The code was:
+         *
+         *   [php] if (function_exists('bhp_book_collection_ships_free')
+         *             && bhp_book_collection_ships_free()): [/php]
+         *     [php]
+         *       $bhp_cc_free_bold = '<strong class="home-collection-feature__free">'
+         *           . esc_html__('FREE', 'brave-hearts') . '</strong>';
+         *       if (function_exists('bhp_book_collection_includes_free_addon')
+         *           && bhp_book_collection_includes_free_addon()) {
+         *           printf(
+         *               esc_html__('The complete collection ships %1[dollar]s and includes the Activity Book %2[dollar]s.', 'brave-hearts'),
+         *               $bhp_cc_free_bold,
+         *               $bhp_cc_free_bold
+         *           );
+         *       } else {
+         *           printf(
+         *               esc_html__('The complete collection ships %s.', 'brave-hearts'),
+         *               $bhp_cc_free_bold
+         *           );
+         *       }
+         *     [/php]
+         *   [php] endif; [/php]
+         *
+         * ⭐ NOTHING IS LOST BY THE REPLACEMENT AND ONE THING IS GAINED. Both
+         *    facts the sentence carried are still stated, still bold, still
+         *    typed in capitals, still behind their own live predicates — and
+         *    the Vocabulary Card Activity, which the sentence never mentioned,
+         *    is now stated too.
+         * ═════════════════════════════════════════════════════════════════
+         */
+        if ('' !== $bhp_cc_free_bullets) {
+            echo $bhp_cc_free_bullets; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built and escaped in bhp_book_free_bullets_markup().
+        }
+        ?>
+      <?php endif; ?>
+      <?php
+        /*
+         * ⛔⛔ EVERYTHING IN THE TWO BLOCKS BELOW DESCRIBES THE SENTENCE THAT
+         *     1.19.218 REPLACED WITH BULLET LINES. IT IS HISTORY, NOT CURRENT
+         *     BEHAVIOUR, AND IT IS PRESERVED DELIBERATELY RATHER THAN DELETED:
+         *     it is the record of the two owner instructions (2026-08-05) that
+         *     put the bold FREE and the activity-book clause there in the first
+         *     place, and a reader who deleted it would re-derive them wrongly.
+         *     ➡ The current behaviour, and Andrew's 2026-08-11 instruction that
+         *       produced it, are at the top of this file and at the savings
+         *       line above. The bold, the typed capitals and the per-item live
+         *       predicates all SURVIVE the change — they moved into the shared
+         *       `bhp_book_free_bullets_markup()` helper.
+         */
+        /*
              * ⭐ 1.19.179 (2026-08-05) — CYCLE144-LD-70. "free" → "FREE", BOLD.
              *
              * Andrew Signore, 2026-08-05, current-turn order (⛔ RELAYED
@@ -403,26 +558,7 @@ $bhp_cc_classes = trim('homepage-section home-sales-paths section ' . $bhp_cc['s
              *    the DOM text lowercase for a screen reader and a copy
              *    -paste).
              */
-            $bhp_cc_free_bold = '<strong class="home-collection-feature__free">' . esc_html__('FREE', 'brave-hearts') . '</strong>';
-
-            if (function_exists('bhp_book_collection_includes_free_addon') && bhp_book_collection_includes_free_addon()) {
-                printf(
-                    /* translators: 1: the word FREE, rendered bold. 2: the word FREE, rendered bold. */
-                    esc_html__('The complete collection ships %1$s and includes the Activity Book %2$s.', 'brave-hearts'),
-                    $bhp_cc_free_bold,
-                    $bhp_cc_free_bold
-                );
-            } else {
-                printf(
-                    /* translators: %s: the word FREE, rendered bold. */
-                    esc_html__('The complete collection ships %s.', 'brave-hearts'),
-                    $bhp_cc_free_bold
-                );
-            }
-            ?>
-          <?php endif; ?>
-        </p>
-      <?php endif; ?>
+        ?>
       <?php
       /*
        * The composite photograph of all three printed books, between the claim
