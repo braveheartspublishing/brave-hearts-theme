@@ -143,11 +143,70 @@ bhp_chw_assert( 'the 1.19.194 block is present', false !== $at, 'marker: ' . $ma
  *   delimiter — and the comment-stripper below then finds nothing to strip
  *   and hands prose to the selector parser. Rewind to the delimiter first.
  */
+/*
+ * ⭐ CORRECTED 2026-08-12 (theme 1.19.220, CYCLE155-LD-02) — THE SLICE IS
+ *    NOW BOUNDED AT THE END OF THIS BLOCK'S OWN RULE. It used to run to the
+ *    END OF THE FILE.
+ *
+ *    THE SUPERSEDED LINE, preserved verbatim so this reads as a repair and
+ *    not as a silent rewrite:
+ *
+ *        $block = substr( $css, false === $open ? $at : $open );
+ *
+ *    That was harmless for exactly as long as the heading-weight rule was
+ *    the LAST thing in checkout-experience.css — which it was, from 1.19.194
+ *    until 1.19.220 appended the `.bhp-checkout-free` panel after it.
+ *    The moment anything followed, this suite began parsing the NEXT
+ *    author's selectors and reporting them as its own §4 and §5 failures:
+ *
+ *        FAIL  every selector is scoped under .wc-block-checkout
+ *              -- unscoped: .bhp-checkout-free | .bhp-checkout-free .bhp-free-bullets
+ *        FAIL  EVERY selector carries 3+ classes
+ *              -- under-specified: .bhp-checkout-free | .bhp-checkout-free .bhp-free-bullets
+ *
+ *    ⭐ THE TWO FAILURES WERE REAL OUTPUT AND ARE QUOTED RATHER THAN
+ *       PARAPHRASED. Both were FALSE POSITIVES — measured, not assumed:
+ *       this same suite passes 22/0 against PRODUCTION 1.19.219, whose
+ *       stylesheet ends at the heading rule. Nothing about the heading
+ *       weight changed; the suite's reach did.
+ *
+ *    ⛔ NOT ONE ASSERTION IS WEAKENED OR DELETED BY THE BOUND. §4 still
+ *       demands every selector be scoped under `.wc-block-checkout`, §5
+ *       still demands three classes each, and both still run over the same
+ *       three selectors they always did. What changes is only which text is
+ *       handed to them. The `.bhp-checkout-free` panel is deliberately NOT
+ *       scoped under `.wc-block-checkout` — it renders OUTSIDE that
+ *       element, above it — and it is owned by
+ *       tests/test-checkout-free-bullets.php, which asserts its scope,
+ *       its classes and its anti-drift properties in §5 there.
+ *
+ *    THE BOUND: the block is one comment plus exactly one rule, so it ends
+ *    at the first `}` after the comment closes. A bound on "the next `/*`"
+ *    would break the moment somebody wrote a comment inside the rule.
+ */
 $block = '';
 if ( false !== $at ) {
 	$open  = strrpos( substr( $css, 0, $at ), '/*' );
-	$block = substr( $css, false === $open ? $at : $open );
+	$start = false === $open ? $at : $open;
+	$block = substr( $css, $start );
+
+	$comment_end = strpos( $block, '*/' );
+	$rule_end    = false === $comment_end ? false : strpos( $block, '}', $comment_end );
+	if ( false !== $rule_end ) {
+		$block = substr( $block, 0, $rule_end + 1 );
+	}
 }
+
+/*
+ * ⭐ THE BOUND IS ITSELF ASSERTED, so a future edit that removes it fails
+ *    here — one clear failure — instead of at §4 and §5, where it looks
+ *    like somebody else's selector broke this rule's scoping.
+ */
+bhp_chw_assert(
+	'⭐ the slice stops at this block\'s own rule and does not reach later authors',
+	'' !== $block && false === strpos( $block, '.bhp-checkout-free' ) && substr_count( $block, '}' ) === 1,
+	'braces in slice: ' . substr_count( $block, '}' )
+);
 
 $selectors = array(
 	'the checkout step titles (Contact information, Shipping address, Shipping options, Payment options, Additional order information, and Order summary when stacked)'
