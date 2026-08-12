@@ -559,8 +559,43 @@ function bhp_bundle_render_landing_cold_open() {
 				$bhp_coldopen_free[] = bhp_bundle_vocab_free_offer_line();
 			}
 			?>
+			<?php
+			/*
+			 * ═══════════════════════════════════════════════════════════
+			 * ⭐ 1.8.39 (2026-08-12, `CYCLE154-LD-COLLECTION-TRIM`) — THE
+			 *    FREE BULLETS GET A CLASS, SO THEY CAN BE SIZED LIKE EVERY
+			 *    OTHER FREE BULLET ON THE SITE.
+			 * ═══════════════════════════════════════════════════════════
+			 *
+			 * Andrew Signore, 2026-08-11/12, VERBATIM as relayed in the
+			 * brief (⛔ RELAYED through Gandalf; NOT witnessed here):
+			 * "the FREE lines need to be a bit bigger as well they are tiny
+			 * on mobile lets match it".
+			 *
+			 * The superseded markup, preserved so the movement is visible:
+			 *
+			 *   <li><strong>{line}</strong></li>
+			 *
+			 * ⛔ THE CLASS IS ON THE FREE LINES ONLY, NOT ON THE `<ul>`, and
+			 *    that is the whole reason it exists rather than a rule on
+			 *    `.bhp-landing-coldopen__trust li`. The first item in this
+			 *    list is the Kirkus review fragment — a quiet attribution in
+			 *    a different claim class, with its own italics and its own
+			 *    source. Andrew named "the FREE lines"; the standing
+			 *    treatment being matched (`.bhp-free-bullets__item`, theme
+			 *    `style.css`) is likewise the FREE-item treatment defined by
+			 *    his 2026-08-06 ruling. Sizing the review fragment up to a
+			 *    15px/800 offer bullet would restyle copy nobody asked to
+			 *    restyle and would cost the mobile fold three more lines.
+			 *
+			 * ⛔ THE STRING IS UNTOUCHED. No word, no capital and no gate
+			 *    changes here — `$bhp_coldopen_free` is built exactly as
+			 *    1.8.38 built it, from the same three live predicates, in the
+			 *    same order. This adds one attribute.
+			 */
+			?>
 			<?php foreach ( $bhp_coldopen_free as $bhp_coldopen_line ) : ?>
-				<li><strong><?php echo esc_html( $bhp_coldopen_line ); ?></strong></li>
+				<li class="bhp-landing-coldopen__free"><strong><?php echo esc_html( $bhp_coldopen_line ); ?></strong></li>
 			<?php endforeach; ?>
 		</ul>
 	</div>
@@ -604,14 +639,54 @@ function bhp_bundle_landing_testimonial_quote() {
  * price block and the format selector, and naming a format there would
  * assert a choice the visitor has not made yet. The panel subtitle, the
  * selector and the final CTA all still name it.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.8.39 (2026-08-12, `CYCLE154-LD-COLLECTION-TRIM`) — THE SHIPPING HALF
+ *    COMES OFF THE BUTTON. "SHORTEN B."
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-11/12, on the reviewed options for this page:
+ * "I agree with all changes" — of which B was, verbatim in the brief,
+ * `GET THE COMPLETE COLLECTION – FREE SHIPPING` → `GET THE COMPLETE
+ * COLLECTION`. ⛔ RELAYED through `chief-of-staff` (Gandalf); NOT
+ * witnessed first-hand by this agent.
+ *
+ * The superseded body, preserved verbatim so the movement is visible:
+ *
+ *   $rule  = bhp_bundle_rules( $format )[3];
+ *   $label = 'Get the Complete Collection';
+ *   if ( bhp_bundle_shipping_is_free( $rule['shipping'] ) ) {
+ *       $label .= ' – Free Shipping';
+ *   }
+ *   return $label;
+ *
+ * ⛔ NO CLAIM IS LOST, AND THAT IS THE ONLY REASON THIS IS SAFE TO CUT.
+ *    Free shipping is still stated twice on this page, in the two places
+ *    a visitor actually reads it: the cold-open bullet list at the very
+ *    top (`bhp_bundle_render_landing_cold_open()`), and the bullet list
+ *    under the closing CTA (`.bhp-landing-final__free`). Both are GATED on
+ *    the same `bhp_bundle_shipping_is_free()` / `bhp_bundle_rules()`
+ *    predicate this function used, so the page still stops making the
+ *    claim by itself the day collection shipping is re-priced. Measured on
+ *    staging at 390px with `window.innerWidth` asserted before the cut: the
+ *    words FREE SHIPPING appeared THREE times above the fold — the
+ *    cold-open bullet, this button, and the price-box row that 1.8.39 also
+ *    removes. The button was the middle of three.
+ *
+ * ⭐ IT ALSO KILLS THE LAST NON-RANGE EN DASH ON THE PAGE. The rendered
+ *    document at 390px carried five `–` characters; four are the `ages 6–9`
+ *    range, which is correct typography and is left alone. The fifth was
+ *    this label's separator.
+ *
+ * ⛔ THE `$format` PARAMETER IS KEPT DELIBERATELY. Every caller and the two
+ *    test suites pass it, and the label is still a per-format lookup as far
+ *    as the interface is concerned. Dropping it would be a signature change
+ *    for a copy edit, and it would remove the seam a future format-specific
+ *    label needs. It is simply not consulted while the label is a constant.
  */
 function bhp_bundle_landing_primary_cta_label( $format ) {
-	$rule  = bhp_bundle_rules( $format )[3];
-	$label = 'Get the Complete Collection';
-	if ( bhp_bundle_shipping_is_free( $rule['shipping'] ) ) {
-		$label .= ' – Free Shipping';
-	}
-	return $label;
+	unset( $format ); // see the note above: kept in the signature on purpose.
+	return 'Get the Complete Collection';
 }
 
 function bhp_bundle_render_landing_pricing_panel( $format ) {
@@ -706,67 +781,67 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 			</div>
 			<?php
 			/*
-			 * ⭐ 1.8.23 — rendered through bhp_bundle_shipping_display(), not
-			 *    number_format(). The figure is still read from
-			 *    bhp_bundle_rules() and is still the same figure the cart
-			 *    charges; only its WORDING is now centralised, so a $0.00
-			 *    tier reads "FREE" here instead of "$0.00 flat".
-			 */
-			?>
-			<?php
-			/*
-			 * ⭐ 1.8.32 — THE TWO BENEFIT ROWS ARE NOW BOLD BULLET LINES.
-			 *
-			 * Andrew, 2026-08-07 (RELAYED): Free Shipping and the FREE
-			 * Activity Book must read as bold, separate bullet lines, not as
-			 * two more quiet rows in a price table.
-			 *
-			 * ⛔ THE `<dl>` SEMANTICS AND THE `<dt>` LABELS ARE UNCHANGED —
-			 *    `<dt>Shipping</dt>` and `<dt>Activity Book</dt>` are still
-			 *    the exact strings, so the value still has a label in the
-			 *    accessibility tree and the existing suites still find them.
-			 *    The bullet and the weight are a `--benefit` modifier and
-			 *    live entirely in CSS. NO new claim, NO price, NO "$5 value",
-			 *    NO struck-out comparison, and the Activity Book row is still
-			 *    gated on the plugin's own deliverability test below.
-			 */
-			?>
-			<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta bhp-landing-panel__price-row--benefit">
-				<dt>Shipping</dt>
-				<dd><?php echo esc_html( bhp_bundle_shipping_display( $rule['shipping'], 'row' ) ); ?></dd>
-			</div>
-			<?php
-			/*
 			 * ═══════════════════════════════════════════════════════════
-			 * ⭐ 1.8.27 — THE ACTIVITY BOOK ROW. CYCLE144-LD-221.
+			 * ⛔⭐ 1.8.39 (2026-08-12, `CYCLE154-LD-COLLECTION-TRIM`) — THE
+			 *     TWO CHECKMARK BENEFIT ROWS ARE REMOVED FROM THIS BOX.
+			 *     "TRIM C." THIS IS A DE-DUPLICATION, NOT A RETRACTION.
 			 * ═══════════════════════════════════════════════════════════
 			 *
-			 * Andrew Signore, 2026-08-05 (relayed): "I want it clear that
-			 * you get Free Shipping and a Free Activity book with
-			 * Collection purchase- on all collection pages and boxes".
-			 * This is the collection page's price box, immediately under
-			 * the Shipping row it pairs with.
+			 * Andrew Signore, 2026-08-11/12, on the reviewed options for this
+			 * page: "I agree with all changes". ⛔ RELAYED through
+			 * `chief-of-staff` (Gandalf); NOT witnessed first-hand here.
 			 *
-			 * ⛔ GATED ON THE PLUGIN'S OWN DELIVERABILITY TEST, exactly
-			 *    like the free-shipping wording above it.
-			 *    `bhp_bundle_addon_free_with_collection()` is false unless
-			 *    the offer is enabled AND `BHP-ACTIVITY-BOOK-01` resolves
-			 *    to a real, purchasable, in-stock product on THIS
-			 *    environment. On an environment without the product this
-			 *    row does not render and the page is byte-identical to
-			 *    1.8.26.
+			 * The superseded markup, preserved verbatim so the movement is
+			 * visible and is not re-derived — it is the 1.8.32 bold-bullet
+			 * treatment of the 1.8.23 Shipping row and the 1.8.27 Activity
+			 * Book row, both of which did exactly what they were asked to do:
 			 *
-			 * ⛔ NO PRICE, no "$5 value", no "normally $5". A struck-out
-			 *    comparison would be a claim about what someone else pays,
-			 *    and this row makes no claim beyond what the cart does.
+			 *   <div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta bhp-landing-panel__price-row--benefit">
+			 *     <dt>Shipping</dt>
+			 *     <dd><?php echo esc_html( bhp_bundle_shipping_display( $rule['shipping'], 'row' ) ); ?></dd>
+			 *   </div>
+			 *   <?php if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) : ?>
+			 *     <div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta bhp-landing-panel__price-row--benefit">
+			 *       <dt>Activity Book</dt>
+			 *       <dd><?php echo esc_html( bhp_bundle_addon_free_display() ); ?></dd>
+			 *     </div>
+			 *   <?php endif; ?>
+			 *
+			 * ⛔ WHY THEY GO, AND WHY NOTHING IS LOST. MEASURED on staging at
+			 *    390x844 with `window.innerWidth` asserted, 2026-08-12: the
+			 *    words FREE SHIPPING rendered THREE times inside the first
+			 *    screen and a half — the cold-open bullet at y=596, the CTA
+			 *    label at y=662, and this row at y=793 — and FREE ACTIVITY
+			 *    BOOK twice (y=617 and y=828). The cold-open bullet list is
+			 *    the canonical statement of the free items on this page: it
+			 *    is FIRST, it is the shared three-item list (Shipping,
+			 *    Activity Book, Vocabulary Cards), and it is gated
+			 *    item-by-item on the same live predicates these rows used.
+			 *    The closing CTA repeats the same three. This box was the
+			 *    THIRD statement of a subset of them, and it is the one a
+			 *    visitor reads as filler between the price and the button.
+			 *
+			 * ⛔ THE PRICE BOX KEEPS EVERY NUMBER IT EVER CARRIED: the
+			 *    "Complete Collection" row with the struck-through combined
+			 *    price and the collection price, and below it the savings
+			 *    badge and the ages line. No price, discount, saving, tax or
+			 *    total is changed, computed differently, or dropped by this
+			 *    edit — it deletes two presentational rows whose values were
+			 *    both the word FREE.
+			 *
+			 * ⛔ NOT A GATE CHANGE. `bhp_bundle_shipping_display()`,
+			 *    `bhp_bundle_addon_free_with_collection()` and
+			 *    `bhp_bundle_addon_free_display()` are untouched and are all
+			 *    still called on this page by the cold-open and the closing
+			 *    CTA. If the Activity Book stops resolving on an environment,
+			 *    both surviving surfaces still fall silent by themselves.
+			 *
+			 * ⭐ THE `--benefit` CSS IS DELIBERATELY LEFT IN PLACE, INERT, in
+			 *    `bundle-landing.css`. Nothing else uses it today, so it
+			 *    renders nothing; keeping it makes a revert a one-file change
+			 *    and keeps the 1.8.32 treatment recoverable verbatim.
 			 */
 			?>
-			<?php if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) : ?>
-				<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--meta bhp-landing-panel__price-row--benefit">
-					<dt>Activity Book</dt>
-					<dd><?php echo esc_html( bhp_bundle_addon_free_display() ); ?></dd>
-				</div>
-			<?php endif; ?>
 		</dl>
 
 		<div class="bhp-landing-panel__savings">

@@ -201,18 +201,75 @@ foreach ( array( 'paperback', 'hardcover' ) as $format ) {
 	);
 }
 
-// The two FREE rows Andrew named explicitly.
-bhp_csf_assert( strpos( $html, '<dt>Shipping</dt>' ) !== false, '2: the Shipping price row is still on the page', $failures );
-if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) {
-	bhp_csf_assert( strpos( $html, '<dt>Activity Book</dt>' ) !== false, '2: the Activity Book price row is still on the page', $failures );
+/*
+ * ═════════════════════════════════════════════════════════════════════
+ * ⛔⭐ 1.8.39 (2026-08-12, `CYCLE154-LD-COLLECTION-TRIM`) — THE TWO FREE
+ *     PRICE ROWS ARE GONE FROM THE BOX, SO THESE GUARDS FOLLOW THE CLAIM
+ *     INSTEAD OF THE ROW. INVERTED AND RETARGETED, NOT DELETED.
+ * ═════════════════════════════════════════════════════════════════════
+ *
+ * The superseded assertions, preserved verbatim:
+ *
+ *   strpos( $html, '<dt>Shipping</dt>' ) !== false
+ *   '2: the Shipping price row is still on the page'
+ *
+ *   strpos( $html, '<dt>Activity Book</dt>' ) !== false
+ *   '2: the Activity Book price row is still on the page'
+ *
+ *   substr_count( $html, '<dt>Activity Book</dt>' ) === substr_count( $html, '<dt>Shipping</dt>' )
+ *   '2: the Activity Book row appears exactly as often as the Shipping row it pairs with'
+ *
+ * ⛔ WHY THE ORIGINAL SHAPE NO LONGER FITS. This suite's job is "the sales
+ *    unit was MOVED, nothing was DELETED" (2026-08-05). It proved that by
+ *    naming the two `<dt>` rows Andrew had named. Andrew has since removed
+ *    those two rows deliberately (2026-08-11/12, "I agree with all changes",
+ *    ⛔ RELAYED through the Chief of Staff, NOT witnessed first-hand) — so
+ *    a guard on the ROW would now fail a correct build, which is the same
+ *    false-failure class this file already corrected once for
+ *    `bhp_bundle_checkout_redirect`.
+ *
+ * ⭐ THE ZERO-LOSS PROPERTY IS UNCHANGED AND IS STILL ENFORCED — it is just
+ *    enforced against the CLAIM rather than against the row. Both free
+ *    items must still be stated on this page, by the cold-open bullets at
+ *    the top and the closing-CTA bullets at the bottom, and each must still
+ *    be gated on its own live predicate.
+ */
+bhp_csf_assert(
+	strpos( $html, '<dt>Shipping</dt>' ) === false && strpos( $html, '<dt>Activity Book</dt>' ) === false,
+	'2: the two FREE price rows are gone from the price box (1.8.39 TRIM C)',
+	$failures
+);
+$csf_default_rule = bhp_bundle_rules( bhp_bundle_default_format() )[3];
+if ( bhp_bundle_shipping_is_free( $csf_default_rule['shipping'] ) ) {
 	bhp_csf_assert(
-		substr_count( $html, '<dt>Activity Book</dt>' ) === substr_count( $html, '<dt>Shipping</dt>' ),
-		'2: the Activity Book row appears exactly as often as the Shipping row it pairs with',
+		substr_count( $html, 'FREE Shipping on the complete collection' ) >= 2,
+		'2: free shipping is still stated by the cold-open AND the closing CTA',
 		$failures
 	);
 } else {
-	echo "SKIP: the free-activity-book offer is not deliverable on this environment; its row is correctly absent\n";
+	echo "SKIP: collection shipping is not free on this environment; the free-shipping bullet is correctly absent\n";
 }
+if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) {
+	$csf_addon_line = bhp_bundle_addon_free_offer_line();
+	bhp_csf_assert(
+		substr_count( $html, esc_html( $csf_addon_line ) ) >= 2,
+		"2: the free Activity Book is still stated twice (\"{$csf_addon_line}\")",
+		$failures
+	);
+} else {
+	echo "SKIP: the free-activity-book offer is not deliverable on this environment; its bullet is correctly absent\n";
+}
+/*
+ * ⭐ AND THE PRICE BOX STILL CARRIES WHAT THE TRIM PROMISED TO KEEP.
+ */
+bhp_csf_assert(
+	strpos( $html, '<dt>Complete Collection</dt>' ) !== false
+	&& strpos( $html, 'bhp-landing-panel__price-strike' ) !== false
+	&& strpos( $html, 'bhp-landing-panel__savings-badge' ) !== false
+	&& strpos( $html, 'bhp-landing-panel__ages' ) !== false,
+	'2: the price box keeps its price, strike-through, savings badge and ages line',
+	$failures
+);
 
 // The 2-click CTA path: primary button + the checkout-redirect input that
 // makes it one tap to /checkout/.

@@ -255,10 +255,42 @@ $testimonial = bhp_bundle_landing_testimonial_quote();
  *    one bullet is the CORRECT output and a hard `=== 2` would fail an
  *    environment that is behaving properly.
  */
-$cct_free_bullets = preg_match_all( '/<li><strong>FREE [^<]*<\/strong><\/li>/', $html );
+/*
+ * ⭐ 1.8.39 (2026-08-12, `CYCLE154-LD-COLLECTION-TRIM`) — THE NEEDLE GAINS
+ *    THE CLASS THE BULLETS NOW CARRY. The superseded needle, verbatim:
+ *
+ *      '/<li><strong>FREE [^<]*<\/strong><\/li>/'
+ *
+ *    1.8.39 puts `class="bhp-landing-coldopen__free"` on the cold-open FREE
+ *    lines so they can be sized to the sitewide `.bhp-free-bullets__item`
+ *    treatment. The needle is WIDENED to tolerate an optional class rather
+ *    than pinned to the new one, because the property being guarded is
+ *    "one FREE claim per bold bullet", not the attribute list. The class
+ *    itself gets its own dedicated assertion below, so a silent removal of
+ *    the sizing hook still fails.
+ */
+$cct_free_bullets = preg_match_all( '/<li(?: [^>]*)?><strong>FREE [^<]*<\/strong><\/li>/', $html );
 bhp_cct_assert(
 	$cct_free_bullets >= 1,
 	"3: every FREE item renders as its own bold bullet line ({$cct_free_bullets} found, 1.8.36 policy)",
+	$failures
+);
+/*
+ * ⭐ 1.8.39 — THE SIZING HOOK, AND THE FACT THAT IT IS NOT ON THE REVIEW
+ *    FRAGMENT. Andrew asked for "the FREE lines" to be bigger, not the
+ *    Kirkus attribution that shares the same `<ul>`. Asserting the count
+ *    match is what stops a future edit from moving the class onto the
+ *    `<ul>` (which would silently restyle the review fragment too).
+ */
+$cct_free_hooked = preg_match_all( '/<li class="bhp-landing-coldopen__free"><strong>FREE [^<]*<\/strong><\/li>/', $html );
+bhp_cct_assert(
+	$cct_free_hooked === $cct_free_bullets && $cct_free_hooked >= 1,
+	"3: every FREE bullet — and only the FREE bullets — carries the size hook ({$cct_free_hooked} hooked of {$cct_free_bullets})",
+	$failures
+);
+bhp_cct_assert(
+	preg_match( '/<ul class="bhp-landing-coldopen__trust[^"]*bhp-landing-coldopen__free/', $html ) === 0,
+	'3: the size hook is on the FREE items, never on the list itself (the review fragment keeps its own treatment)',
 	$failures
 );
 bhp_cct_assert(
@@ -401,48 +433,129 @@ bhp_cct_assert(
 	$failures
 );
 
-echo "\n=== 5. The benefit lines, and the gated CTA label ===\n";
+echo "\n=== 5. The trimmed price box, and the shortened CTA label ===\n";
 
+/*
+ * ═════════════════════════════════════════════════════════════════════
+ * ⛔⭐ 1.8.39 (2026-08-12, `CYCLE154-LD-COLLECTION-TRIM`) — FIVE ASSERTIONS
+ *     IN THIS SECTION ARE INVERTED, NOT DELETED. They guarded the price
+ *     box's two checkmark benefit rows, which "TRIM C" removes.
+ * ═════════════════════════════════════════════════════════════════════
+ *
+ * The superseded assertions, preserved verbatim so the movement is visible
+ * and so a future reader can see exactly what stopped being true:
+ *
+ *   strpos( $html, '<dt>Shipping</dt>' ) !== false
+ *   '5: the Shipping row still carries its <dt> label (restyled, not replaced)'
+ *
+ *   substr_count( $html, 'bhp-landing-panel__price-row--benefit' ) >= 1
+ *   '5: the benefit rows carry the bold-bullet modifier'
+ *
+ *   strpos( $html, '<dt>Activity Book</dt>' ) !== false
+ *   '5: the free Activity Book row still renders'
+ *
+ *   substr_count( $html, 'bhp-landing-panel__price-row--benefit' ) === 2 * substr_count( $html, '<dt>Shipping</dt>' )
+ *   '5: BOTH benefit rows carry the modifier in every panel'
+ *
+ *   $promises === $is_free      // the CTA label's free-shipping claim gate
+ *   '5: the {$format} CTA label promises free shipping only when it IS free'
+ *
+ * ⛔ DELETING THEM WOULD LEAVE THE TRIM UNGUARDED. The regression worth
+ *    catching is not "the rows came back" on its own — it is "the rows came
+ *    back AND the page now states free shipping three times above the fold
+ *    again". So the guards are inverted to require ABSENCE from the price
+ *    box, and paired with new guards requiring the claim to still be
+ *    PRESENT in the two surfaces that are supposed to carry it. A claim
+ *    that quietly disappeared from the whole page would fail here just as
+ *    loudly as one that came back to the box.
+ */
 bhp_cct_assert(
-	strpos( $html, '<dt>Shipping</dt>' ) !== false,
-	'5: the Shipping row still carries its <dt> label (restyled, not replaced)',
+	strpos( $html, '<dt>Shipping</dt>' ) === false,
+	'5: the price box no longer carries a Shipping benefit row (TRIM C)',
 	$failures
 );
 bhp_cct_assert(
-	substr_count( $html, 'bhp-landing-panel__price-row--benefit' ) >= 1,
-	'5: the benefit rows carry the bold-bullet modifier',
+	strpos( $html, '<dt>Activity Book</dt>' ) === false,
+	'5: the price box no longer carries an Activity Book benefit row (TRIM C)',
 	$failures
 );
-if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_addon_free_with_collection() ) {
-	bhp_cct_assert( strpos( $html, '<dt>Activity Book</dt>' ) !== false, '5: the free Activity Book row still renders', $failures );
+bhp_cct_assert(
+	substr_count( $html, 'bhp-landing-panel__price-row--benefit' ) === 0,
+	'5: no benefit-row modifier is rendered anywhere on the page',
+	$failures
+);
+/*
+ * ⭐ THE PRICE BOX STILL CARRIES EVERY NUMBER IT EVER CARRIED. This is the
+ *    half of "TRIM C" a source diff proves badly: the brief was explicit
+ *    that the box keeps price, strike-through, savings and ages.
+ */
+bhp_cct_assert(
+	substr_count( $html, 'bhp-landing-panel__price-row--main' ) >= 1
+	&& strpos( $html, '<dt>Complete Collection</dt>' ) !== false,
+	'5: the Complete Collection price row survives the trim',
+	$failures
+);
+bhp_cct_assert(
+	strpos( $html, 'bhp-landing-panel__price-strike' ) !== false,
+	'5: the struck-through combined price survives the trim',
+	$failures
+);
+bhp_cct_assert(
+	strpos( $html, 'bhp-landing-panel__savings-badge' ) !== false
+	&& strpos( $html, 'bhp-landing-panel__ages' ) !== false,
+	'5: the savings badge and the ages line survive the trim',
+	$failures
+);
+foreach ( array( 'paperback', 'hardcover' ) as $cct_fmt ) {
+	$cct_rule = bhp_bundle_rules( $cct_fmt )[3];
 	bhp_cct_assert(
-		substr_count( $html, 'bhp-landing-panel__price-row--benefit' ) === 2 * substr_count( $html, '<dt>Shipping</dt>' ),
-		'5: BOTH benefit rows carry the modifier in every panel',
+		strpos( $html, $cct_rule['save'] ) !== false,
+		"5: the {$cct_fmt} savings figure (\"{$cct_rule['save']}\") is still printed",
 		$failures
 	);
-} else {
-	echo "SKIP: the free-activity-book offer is not deliverable on this environment; its row is correctly absent\n";
 }
 
 /*
- * ⭐ THE CLAIM GATE. "Free Shipping" is in the button label ONLY when the
- *    three-book rule for that format actually resolves free. This asserts
- *    the label AGAINST bundle-data.php rather than against itself, so a
- *    future shipping change cannot leave a false promise on the button.
+ * ⭐ THE CLAIM DID NOT VANISH — IT MOVED, AND IT IS STILL GATED. Free
+ *    shipping left the button and the price box; it must still be stated by
+ *    the cold-open bullets and by the closing CTA's bullets, and it must
+ *    still be stated ONLY when `bundle-data.php` actually resolves free.
+ *    This asserts the rendered page against the data file, exactly as the
+ *    superseded button gate did, so a future re-pricing still cannot leave
+ *    a false promise anywhere on this page.
+ */
+$cct_default_rule = bhp_bundle_rules( $bhp_cct_default )[3];
+$cct_ship_is_free = bhp_bundle_shipping_is_free( $cct_default_rule['shipping'] );
+$cct_ship_claims  = substr_count( $html, 'FREE Shipping on the complete collection' );
+bhp_cct_assert(
+	$cct_ship_is_free ? $cct_ship_claims >= 2 : 0 === $cct_ship_claims,
+	'5: free shipping is stated by the surviving bullet surfaces only when it IS free'
+		. " (claims={$cct_ship_claims}, shipping=" . number_format( (float) $cct_default_rule['shipping'], 2 ) . ')',
+	$failures
+);
+
+/*
+ * ⭐ 1.8.39 — THE LABEL IS NOW A CONSTANT, AND THE GUARD IS STRICTER FOR IT.
+ *    "SHORTEN B": `GET THE COMPLETE COLLECTION – FREE SHIPPING` becomes
+ *    `GET THE COMPLETE COLLECTION`. The old gate allowed the shipping half
+ *    when it was true; this one forbids it outright, in either case, so the
+ *    shortening cannot be silently undone by a future shipping change.
  */
 foreach ( array( 'paperback', 'hardcover' ) as $format ) {
-	$rule     = bhp_bundle_rules( $format )[3];
-	$is_free  = bhp_bundle_shipping_is_free( $rule['shipping'] );
-	$label    = bhp_bundle_landing_primary_cta_label( $format );
-	$promises = ( stripos( $label, 'free shipping' ) !== false );
+	$label = bhp_bundle_landing_primary_cta_label( $format );
 	bhp_cct_assert(
-		$promises === $is_free,
-		"5: the {$format} CTA label promises free shipping only when it IS free (label=\"{$label}\", shipping=" . number_format( (float) $rule['shipping'], 2 ) . ')',
+		$label === 'Get the Complete Collection',
+		"5: the {$format} CTA label is the shortened constant (label=\"{$label}\")",
 		$failures
 	);
 	bhp_cct_assert(
-		strpos( $label, 'Get the Complete Collection' ) === 0,
-		"5: the {$format} CTA label leads with the benefit-driven wording",
+		stripos( $label, 'free shipping' ) === false,
+		"5: the {$format} CTA label makes no shipping claim at all",
+		$failures
+	);
+	bhp_cct_assert(
+		strpos( $label, "\u{2013}" ) === false && strpos( $label, "\u{2014}" ) === false,
+		"5: the {$format} CTA label carries no en or em dash",
 		$failures
 	);
 }
@@ -451,6 +564,20 @@ bhp_cct_assert(
 	'5: the benefit-driven CTA label actually renders',
 	$failures
 );
+/*
+ * ⭐ 1.8.39 — AND IT RENDERS SHORT. Asserted against the REAL DOCUMENT, not
+ *    only against the function, because the label reaches the page through
+ *    `esc_html()` and an HTML-entity form of the en dash would slip past a
+ *    string comparison on the function's return value. Both the literal
+ *    character and its two entity spellings are checked.
+ */
+foreach ( array( "Collection \u{2013} Free Shipping", 'Collection &#8211; Free Shipping', 'Collection &ndash; Free Shipping' ) as $cct_needle ) {
+	bhp_cct_assert(
+		stripos( $html, $cct_needle ) === false,
+		'5: the rendered CTA no longer carries "' . $cct_needle . '" (SHORTEN B, and the en dash with it)',
+		$failures
+	);
+}
 /*
  * Nothing factual was dropped when the material subtitle and the title list
  * moved below the price block.

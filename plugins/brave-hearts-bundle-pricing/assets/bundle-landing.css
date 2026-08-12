@@ -863,3 +863,78 @@
 		min-height: 0;
 	}
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ⭐ 1.8.39 (2026-08-12) — THE COLD-OPEN'S FREE LINES ARE SIZED LIKE
+      EVERY OTHER FREE BULLET ON THE SITE. CYCLE154-LD-COLLECTION-TRIM.
+   ------------------------------------------------------------------
+   Andrew Signore, 2026-08-11/12, VERBATIM as relayed in the brief
+   (⛔ RELAYED through the Chief of Staff; NOT witnessed first-hand):
+   "the FREE lines need to be a bit bigger as well they are tiny on
+   mobile lets match it".
+
+   ⛔ THE NUMBERS ARE COPIED FROM THE SITE'S EXISTING TREATMENT, NOT
+      CHOSEN. `.bhp-free-bullets__item` in the theme's `style.css` is the
+      shared FREE-item bullet used by every funnel page and by the
+      Best Value / complete-collection band on the home page and
+      `/books/`. MEASURED off the rendered staging home page at 390px
+      with `window.innerWidth` asserted, 2026-08-12, inside
+      `.home-collection-feature`:
+
+          font-size    15px      (0.9375rem at the 16px root)
+          font-weight  800
+          line-height  20.25px   (1.35)
+          padding-left 26px
+          colour       rgb(31, 45, 36)
+
+      The same list MEASURED here, before this rule, at the same
+      viewport: 11.36px / 400 / 19.08px / 16.8px. That is Andrew's
+      "tiny", and it is 3.64px smaller than the site standard.
+
+   ⛔ THE RULE IS DELIBERATELY NOT INSIDE A MEDIA QUERY, even though the
+      instruction says "on mobile". The base size here was .76rem
+      (12.16px, measured at 1440) and the two `max-width: 640px` blocks
+      above took it DOWN to .72rem and .71rem. Fixing only the mobile
+      value would leave the desktop list SMALLER than the phone list —
+      an inversion this page does not have anywhere else, and one that
+      would read as a defect the first time anyone opened it on a
+      laptop. The standard being matched has no responsive variation
+      either. Desktop cost, measured: about 3.5px of extra block height.
+
+   ⛔ IT IS SCOPED TO `.bhp-landing-coldopen__free`, the class 1.8.39
+      puts on the FREE lines only. The Kirkus review fragment sharing
+      this `<ul>` keeps the quiet muted treatment it already had — see
+      the note in `bhp_bundle_render_landing_cold_open()`.
+
+   ⭐ SPECIFICITY, NOT ORDER, IS WHAT MAKES THIS WORK. 0,2,1 against the
+      0,1,1 of `.bhp-landing-coldopen__trust li` inside the two
+      `max-width: 640px` blocks, so no `!important` is needed and the
+      two mobile blocks are left byte-untouched. Nothing above this
+      banner is edited or deleted.
+
+   ⛔ THE COLOUR IS THE STANDARD'S, NOT THE MUTED ROW COLOUR. A 15px/800
+      line in `--bl-text-muted` reads as bold grey rather than as the
+      offer bullet it is on every other page. `--bl-forest` is this
+      page's own token for that ink (#1E4331 vs the theme's #1f2d24 on a
+      cream card) — the palette stays scoped to `.bhp-landing`, which is
+      the whole contract of this stylesheet.
+   ══════════════════════════════════════════════════════════════════ */
+.bhp-landing-coldopen__trust li.bhp-landing-coldopen__free {
+	font-size: .9375rem;
+	font-weight: 800;
+	line-height: 1.35;
+	padding-left: 26px;
+	margin-bottom: .3rem;
+	color: var(--bl-forest);
+}
+.bhp-landing-coldopen__trust li.bhp-landing-coldopen__free:last-child { margin-bottom: 0; }
+/* The <strong> carries the SEMANTIC emphasis and is what a screen reader
+   announces; `inherit` stops its default 700 from undercutting the 800
+   above. Identical to `.bhp-free-bullets__item strong` in style.css. */
+.bhp-landing-coldopen__trust li.bhp-landing-coldopen__free strong { font-weight: inherit; }
+/* The check keeps its position at the new padding and grows with the text
+   it labels; colour unchanged from the rest of this list. */
+.bhp-landing-coldopen__trust li.bhp-landing-coldopen__free::before {
+	font-weight: 900;
+	color: var(--bl-forest-mid);
+}
