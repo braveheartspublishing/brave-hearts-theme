@@ -26,9 +26,25 @@
  * ⛔ WHAT THIS SUITE CAN AND CANNOT PROVE — read before trusting a green run
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * It runs the REAL `rank_math/json_ld` filter chain against a REAL product
- * query, so it proves what the filters produce. That is stronger than reading
- * the filter source, and weaker than reading the page.
+ * It invokes the THEME's REAL registered `rank_math/json_ld` callbacks, in
+ * their REAL registration order, against a REAL product query. It proves what
+ * those callbacks produce. That is stronger than reading their source, and
+ * weaker than reading the page.
+ *
+ * ⚠ IT DOES NOT RUN RANK MATH'S OWN CALLBACKS, and the reason is recorded
+ *   rather than left as a design mystery. A plain
+ *   `apply_filters('rank_math/json_ld', $seed, null)` from WP-CLI FATALS:
+ *   Rank Math's Local SEO module calls `$jsonld->can_add_global_entities()`
+ *   on the second argument, and there is no real `JsonLD` instance to pass
+ *   outside a front-end request. Observed, not assumed — it is what the first
+ *   version of this suite did, and it died at
+ *   `class-local-seo.php:98` on the first assertion.
+ *
+ *   So the harness resolves the priority-999 callbacks straight off
+ *   `$wp_filter` and invokes only the ones defined inside this theme. Rank
+ *   Math's contribution is supplied as the SEED instead — the single
+ *   associative Offer it hands downstream callbacks — which is the input the
+ *   theme's callbacks actually receive in production.
  *
  * ⛔ IT IS NOT A SUBSTITUTE FOR INSPECTING THE RENDERED
  *    `<script class="rank-math-schema">` BLOCK ON A REAL PAGE LOAD, which
@@ -79,15 +95,62 @@ function bhp_pos_skip( $label, $why = '' ) {
 }
 
 /**
- * Run the real `rank_math/json_ld` filter chain with the main query pointed at
+ * The theme's own `rank_math/json_ld` callbacks at priority 999, in
+ * registration order.
+ *
+ * Resolved from `$wp_filter` rather than named in a list, so a callback added
+ * later is exercised automatically instead of being silently untested — and so
+ * this suite cannot drift out of date by omission. Rank Math's own callbacks
+ * are excluded because they need a real `JsonLD` instance that does not exist
+ * under WP-CLI (see the header note).
+ *
+ * @return callable[]
+ */
+function bhp_pos_theme_callbacks() {
+	global $wp_filter;
+
+	$theme_dir = wp_normalize_path( get_template_directory() );
+	$out       = array();
+
+	if ( ! isset( $wp_filter['rank_math/json_ld'][999] ) ) {
+		return $out;
+	}
+
+	foreach ( $wp_filter['rank_math/json_ld'][999] as $registered ) {
+		$fn = $registered['function'];
+
+		if ( is_string( $fn ) && 0 === strpos( $fn, 'bhp_' ) ) {
+			$out[] = $fn;
+			continue;
+		}
+
+		// An anonymous closure — the shippingDetails/GTIN filter is one. Keep
+		// it only if it was declared inside this theme, so a plugin's closure
+		// registered at the same priority is never dragged in.
+		if ( $fn instanceof Closure ) {
+			try {
+				$file = wp_normalize_path( ( new ReflectionFunction( $fn ) )->getFileName() );
+			} catch ( \Throwable $e ) {
+				continue;
+			}
+			if ( $file && 0 === strpos( $file, $theme_dir ) ) {
+				$out[] = $fn;
+			}
+		}
+	}
+
+	return $out;
+}
+
+/**
+ * Run the theme's `rank_math/json_ld` callbacks with the main query pointed at
  * $product_id and $_GET set to $get, then restore both.
  *
  * The seed is the shape Rank Math itself hands downstream callbacks at
  * priority 999: a `@graph`-less flat array of entities, the Product entity
- * carrying a SINGLE associative Offer. Seeding it explicitly rather than
- * asking Rank Math to build one keeps the suite honest about what is being
- * tested — the theme's two callbacks, in their real registration order, on the
- * real filter — without depending on Rank Math's internal build order.
+ * carrying a SINGLE associative Offer with `seller` and `priceValidUntil`.
+ * That is exactly what was observed in the rendered page before the change,
+ * so the input is real even though it is constructed here.
  */
 function bhp_pos_graph( $product_id, array $get, array $seed_offer = array() ) {
 	global $wp_query, $wp_the_query;
@@ -136,7 +199,13 @@ function bhp_pos_graph( $product_id, array $get, array $seed_offer = array() ) {
 	);
 
 	try {
-		return apply_filters( 'rank_math/json_ld', $seed, null );
+		foreach ( bhp_pos_theme_callbacks() as $callback ) {
+			// Both accept ($data) or ($data, $jsonld); the second argument is
+			// unused by either, and is passed as null exactly as it would be
+			// ignored on a real request.
+			$seed = call_user_func( $callback, $seed, null );
+		}
+		return $seed;
 	} finally {
 		$_GET         = $prev_get;
 		$wp_query     = $prev_query;
@@ -185,6 +254,31 @@ bhp_pos_assert(
 	999 === has_filter( 'rank_math/json_ld', 'bhp_book_add_hardcover_offer' ),
 	var_export( has_filter( 'rank_math/json_ld', 'bhp_book_add_hardcover_offer' ), true )
 );
+
+/*
+ * ⛔ THE ASSERTION THAT KEEPS THE REST OF THIS FILE HONEST. If the harness
+ *    resolved ZERO theme callbacks, every section below would run against an
+ *    untouched seed and a handful of them would still pass by coincidence —
+ *    a green suite testing nothing at all. Both callbacks must be found:
+ *    bhp_book_add_hardcover_offer() and the anonymous shippingDetails/GTIN
+ *    closure in functions.php.
+ */
+$pos_callbacks = bhp_pos_theme_callbacks();
+bhp_pos_assert(
+	'the harness resolved BOTH theme callbacks at priority 999',
+	2 === count( $pos_callbacks ),
+	'found ' . count( $pos_callbacks )
+);
+bhp_pos_assert(
+	'the hardcover-offer callback runs FIRST — the order that created the dead-code defect',
+	isset( $pos_callbacks[0] ) && 'bhp_book_add_hardcover_offer' === $pos_callbacks[0],
+	var_export( $pos_callbacks[0] ?? null, true )
+);
+bhp_pos_assert(
+	'the shippingDetails/GTIN callback runs SECOND, and is a closure declared in this theme',
+	isset( $pos_callbacks[1] ) && $pos_callbacks[1] instanceof Closure
+);
+
 bhp_pos_assert(
 	'bhp_bundle_single_shipping() is available — the schema rate has an authoritative source',
 	function_exists( 'bhp_bundle_single_shipping' )
@@ -218,15 +312,41 @@ if ( function_exists( 'bhp_bundle_single_shipping' ) ) {
  *    rate — conflating the two is the documented failure `CYCLE140-DEV-2`.
  *    This pins the literal out of the file so it cannot creep back in.
  */
+/*
+ * ⚠ COMMENTS ARE STRIPPED BEFORE THIS SEARCH, and that is not a convenience —
+ *   the first version of this assertion FAILED against correct code. The
+ *   docblock above the filter necessarily quotes the literal it removed
+ *   ("The rate was a literal '3.99'"), and a raw substring search cannot tell
+ *   an explanation from an instruction. token_get_all() can. Stripping the
+ *   comments is the difference between a guard and a false alarm that the
+ *   next session learns to ignore.
+ */
 $functions_src = (string) file_get_contents( get_template_directory() . '/functions.php' );
-if ( preg_match( "/PRODUCT STRUCTURED DATA.*?add_filter\('rank_math\/json_ld'.*?\}, 999, 2\);/s", $functions_src, $m ) ) {
+$code_only     = '';
+foreach ( token_get_all( $functions_src ) as $token ) {
+	if ( is_array( $token ) ) {
+		if ( in_array( $token[0], array( T_COMMENT, T_DOC_COMMENT ), true ) ) {
+			continue;
+		}
+		$code_only .= $token[1];
+		continue;
+	}
+	$code_only .= $token;
+}
+
+if ( preg_match( "/add_filter\('rank_math\/json_ld', function \(\\\$data, \\\$jsonld\).*?\}, 999, 2\);/s", $code_only, $m ) ) {
 	bhp_pos_assert(
-		"the schema filter contains no hardcoded '3.99' shipping literal",
-		false === strpos( $m[0], "'3.99'" ) && false === strpos( $m[0], '"3.99"' )
+		"the schema filter's CODE contains no hardcoded '3.99' shipping literal",
+		false === strpos( $m[0], '3.99' ),
+		'block length ' . strlen( $m[0] )
 	);
 	bhp_pos_assert(
 		'the schema filter reads its rate from bhp_bundle_single_shipping()',
 		false !== strpos( $m[0], 'bhp_bundle_single_shipping' )
+	);
+	bhp_pos_assert(
+		'the schema filter is allowlisted via bhp_book_lookup_product()',
+		false !== strpos( $m[0], 'bhp_book_lookup_product' )
 	);
 } else {
 	bhp_pos_skip( 'the $3.99 literal guard', 'could not isolate the filter block in functions.php' );
@@ -332,11 +452,61 @@ foreach ( $registry as $key => $book ) {
 		continue;
 	}
 
-	foreach ( array( 'paperback', 'audiobook', '', 'HARDCOVER ' ) as $value ) {
+	foreach ( array( 'paperback', 'audiobook', '', 'hardcovers', 'hardcove', 'h-a-r-d-c-o-v-e-r', '17.99' ) as $value ) {
 		$offers = bhp_pos_offers( bhp_pos_graph( $pb, array( 'bhp_format' => $value ) ) );
 		bhp_pos_assert(
 			sprintf( "%s (?bhp_format='%s'): the PAPERBACK still leads", $key, $value ),
 			isset( $offers[0]['price'] ) && (float) $offers[0]['price'] === (float) $pb_prod->get_price(),
+			'got ' . var_export( $offers[0]['price'] ?? null, true )
+		);
+	}
+}
+
+/*
+ * ⭐ A PRE-EXISTING BEHAVIOUR, FOUND BY THIS SUITE AND ASSERTED RATHER THAN
+ *    "FIXED". `bhp_book_incoming_format()` runs the raw parameter through
+ *    `sanitize_key()` BEFORE the whitelist test, and sanitize_key() lower-cases
+ *    the value and DELETES — rather than rejects — every character outside
+ *    `[a-z0-9_-]`. So all of these select hardcover:
+ *
+ *        HARDCOVER      (case)
+ *        Hardcover      (case)
+ *        " hardcover"   (leading space deleted)
+ *        "hard cover"   (inner space deleted)
+ *        'hardcover"'   (quote deleted)
+ *
+ *    ⚠ THIS SUITE'S FIRST TWO DRAFTS BOTH ASSERTED THE OPPOSITE AND FAILED —
+ *      three times, then six — on CORRECT code. The code was right and the
+ *      expectation was wrong, twice, and the second draft under-estimated
+ *      sanitize_key() again (assuming case-folding only, when it also strips).
+ *      Both corrections are recorded here rather than quietly deleting the
+ *      cases that exposed them.
+ *
+ *    ⛔ NOT INTRODUCED BY 1.19.222, AND NOT A HOLE. It long predates this
+ *      change; the visible format selector has behaved identically since
+ *      1.19.166 — which is exactly the between-surfaces agreement 1.19.222
+ *      exists to protect, so the schema matching it is correct. The whitelist
+ *      is still closed: after normalisation the value must equal one of four
+ *      literals, and `hardcovers`, `hardcove`, `h-a-r-d-c-o-v-e-r` and `17.99`
+ *      are all rejected above. The parameter still carries no commerce
+ *      authority — it chooses which card is pre-pressed and which offer leads,
+ *      and every price on both surfaces is read live from WooCommerce.
+ *
+ *    ➡ FLAGGED FOR THE RECORD, NOT CHANGED HERE: tightening the parameter to
+ *      an exact-match test would be a behaviour change outside this brief, and
+ *      it touches the legacy hardcover 301's landing path. Gandalf's call.
+ */
+foreach ( $registry as $key => $book ) {
+	$pb = (int) $book['pb_product'];
+	$hc = wc_get_product( (int) $book['hc_product'] );
+	if ( ! $hc ) {
+		continue;
+	}
+	foreach ( array( 'HARDCOVER ', 'Hardcover', ' hardcover', 'hard cover', 'hardcover"' ) as $value ) {
+		$offers = bhp_pos_offers( bhp_pos_graph( $pb, array( 'bhp_format' => $value ) ) );
+		bhp_pos_assert(
+			sprintf( "%s (?bhp_format='%s'): sanitize_key() normalises it, so the HARDCOVER leads — documented, pre-existing", $key, $value ),
+			isset( $offers[0]['price'] ) && (float) $offers[0]['price'] === (float) $hc->get_price(),
 			'got ' . var_export( $offers[0]['price'] ?? null, true )
 		);
 	}
