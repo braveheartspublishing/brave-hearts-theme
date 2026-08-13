@@ -559,6 +559,98 @@ bhp_test_assert(
 );
 
 // ---------------------------------------------------------------------
+// 9. ⭐ 1.19.222 (2026-08-13) — THE VISIBLE PAGE AND THE STRUCTURED DATA MUST
+//    AGREE. `CYCLE156-LD-01`, "Option B" from the Google product feed audit.
+//
+//    THE DEFECT THIS PINS, verified live 2026-08-13 on the rendered JSON-LD of
+//    the Mariana canonical page BEFORE the change: with `?bhp_format=hardcover`
+//    the visible page showed the HARDCOVER card pressed at $17.99 (§6 above
+//    already asserted that, and it was already true), while the page's
+//    structured data still led with the $11.99 PAPERBACK offer. A Google feed
+//    item priced $17.99 landed on a page whose primary offer said $11.99 — a
+//    $6.00 contradiction between two surfaces of the same page.
+//
+//    ⭐ THIS SECTION LIVES HERE, not only in tests/test-product-offer-schema.php,
+//      ON PURPOSE. That suite asserts the schema is correct. This one asserts
+//      the schema AGREES WITH THE MARKUP — the defect was never that either
+//      surface was wrong on its own; it was that they disagreed. Only a test
+//      that reads both in the same breath can catch that class again.
+//
+//    ⛔ ASSERTS NOTHING ABOUT GOOGLE. Whether Merchant Center accepts the
+//      product is Google's verdict after a re-sync and an Andrew-submitted
+//      review request, and is not knowable from here.
+// ---------------------------------------------------------------------
+if (!function_exists('bhp_book_add_hardcover_offer')) {
+    bhp_test_assert($failures, 'bhp_book_add_hardcover_offer() is defined', false);
+} else {
+    foreach ($registry as $key => $book) {
+        $pb      = (int) $book['pb_product'];
+        $hc_prod = wc_get_product((int) $book['hc_product']);
+        $pb_prod = wc_get_product((int) ($book['pb_variation'] ? $book['pb_variation'] : $book['pb_product']));
+        if (!$hc_prod || !$pb_prod) {
+            continue;
+        }
+
+        foreach ([
+            ''          => ['label' => 'no param',              'lead' => 'paperback'],
+            'hardcover' => ['label' => '?bhp_format=hardcover', 'lead' => 'hardcover'],
+            'paperback' => ['label' => '?bhp_format=paperback', 'lead' => 'paperback'],
+        ] as $param => $case) {
+            $get = '' === $param ? [] : ['bhp_format' => $param];
+
+            // Read BOTH surfaces inside ONE context, so they cannot be
+            // compared across two different requests and appear to agree.
+            $both = bhp_test_with_product_context($pb, $get, function () use ($pb) {
+                ob_start();
+                bhp_book_render_format_selector();
+                $markup = ob_get_clean();
+
+                // The shape Rank Math hands downstream callbacks at 999.
+                $seed = ['product' => [
+                    '@type'  => 'Product',
+                    'offers' => [
+                        '@type'         => 'Offer',
+                        'price'         => wc_format_decimal(wc_get_product($pb)->get_price(), wc_get_price_decimals()),
+                        'priceCurrency' => get_woocommerce_currency(),
+                        'url'           => get_permalink($pb),
+                    ],
+                ]];
+
+                return ['markup' => $markup, 'graph' => bhp_book_add_hardcover_offer($seed)];
+            });
+
+            $offers = $both['graph']['product']['offers'];
+            $offers = isset($offers['@type']) ? [$offers] : array_values((array) $offers);
+            $lead   = $offers[0] ?? [];
+
+            $expected_lead_price = 'hardcover' === $case['lead']
+                ? (float) $hc_prod->get_price()
+                : (float) $pb_prod->get_price();
+
+            bhp_test_assert(
+                $failures,
+                "{$key} ({$case['label']}): the markup presses the {$case['lead']} card",
+                (bool) preg_match(
+                    '/class="bhp-format-card is-selected" data-bhp-format="' . $case['lead'] . '" aria-pressed="true"/',
+                    $both['markup']
+                )
+            );
+            bhp_test_assert(
+                $failures,
+                "{$key} ({$case['label']}): the PRIMARY structured-data offer is the {$case['lead']} price",
+                isset($lead['price']) && (float) $lead['price'] === $expected_lead_price
+            );
+            // Both editions remain purchasable and remain in the graph either way.
+            bhp_test_assert(
+                $failures,
+                "{$key} ({$case['label']}): both editions are still offered — nothing was dropped",
+                2 === count($offers)
+            );
+        }
+    }
+}
+
+// ---------------------------------------------------------------------
 // Result
 // ---------------------------------------------------------------------
 if ($failures) {

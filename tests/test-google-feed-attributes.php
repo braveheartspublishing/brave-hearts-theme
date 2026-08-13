@@ -20,11 +20,19 @@
  * ⛔ WHAT THIS FILE CAN AND CANNOT PROVE — READ BEFORE TRUSTING A PASS
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * §1–§4 are pure PHP and prove the filter's logic and its allowlist.
+ * §1–§4b are pure PHP and prove the filter's logic and its allowlist.
  *
  * §5 constructs GLA's REAL WCProductAdapter and reads the REAL outgoing
  * payload. That is the only assertion in this file that proves what Google
  * actually receives. It SKIPS, loudly, when GLA is not installed.
+ *
+ * ⭐ EXTENDED 2026-08-13, theme 1.19.222 (`CYCLE156-LD-01`): §4b covers the
+ *    feed `link` override (audit F5) — hardcover items now carry the canonical
+ *    page + `?bhp_format=hardcover` instead of a permalink that 301s. §5 was
+ *    extended to assert the same value in the real payload. One existing §4
+ *    assertion was RETARGETED and one guard entry (`link`) was deliberately
+ *    removed from the Andrew-gate list; both movements are annotated in place
+ *    rather than made quietly.
  *
  * ⛔ NOTHING HERE PROVES GOOGLE ACCEPTS THE PRODUCTS. A green run means the
  * feed now carries the three attributes. Whether that clears the
@@ -243,6 +251,7 @@ if ( ! function_exists( 'wc_get_product' ) ) {
 	$reg      = bhp_book_registry();
 	$first    = reset( $reg );
 	$sample   = wc_get_product( (int) $first['hc_product'] );
+	$sample_pb = wc_get_product( (int) ( $first['pb_variation'] ? $first['pb_variation'] : $first['pb_product'] ) );
 
 	if ( ! $sample ) {
 		bhp_gfa_skip( '§4 entirely', 'no sample book product on this environment' );
@@ -255,8 +264,31 @@ if ( ! function_exists( 'wc_get_product' ) ) {
 			isset( $out['condition'] ) && 'new' === $out['condition'] );
 		bhp_gfa_assert( 'a book receives brand',
 			isset( $out['brand'] ) && 'Brave Hearts Publishing' === $out['brand'] );
-		bhp_gfa_assert( 'exactly three keys are added and nothing else',
-			3 === count( $out ), 'keys: ' . implode( ',', array_keys( $out ) ) );
+
+		/*
+		 * ⚠ CHANGED 2026-08-13 (theme 1.19.222, `CYCLE156-LD-01`). This
+		 *   assertion read "exactly three keys are added and nothing else" and
+		 *   the $sample is a HARDCOVER, which now also receives `link`. The
+		 *   assertion is RETARGETED rather than deleted or loosened to
+		 *   `>= 3`: the point of it was that the filter adds a KNOWN, CLOSED
+		 *   set of keys and never grows silently, and that point is preserved
+		 *   by naming the set. A paperback still gets exactly three.
+		 */
+		bhp_gfa_assert( 'a hardcover gets exactly the four known keys and nothing else',
+			[ 'brand', 'condition', 'googleProductCategory', 'link' ] === ( function ( $k ) {
+				sort( $k );
+				return $k;
+			} )( array_keys( $out ) ),
+			'keys: ' . implode( ',', array_keys( $out ) ) );
+
+		if ( $sample_pb ) {
+			$out_pb = bhp_google_feed_attributes( [], $sample_pb );
+			bhp_gfa_assert( 'a PAPERBACK still gets exactly three keys — its link already resolves cleanly',
+				3 === count( $out_pb ) && ! isset( $out_pb['link'] ),
+				'keys: ' . implode( ',', array_keys( $out_pb ) ) );
+		} else {
+			bhp_gfa_skip( 'paperback three-key check', 'no sample paperback on this environment' );
+		}
 
 		/*
 		 * ⛔ THE NEVER-INVENT GUARD. Zero real reviews exist on any product.
@@ -270,8 +302,18 @@ if ( ! function_exists( 'wc_get_product' ) ) {
 		 * ⛔ THE ANDREW-GATE GUARD. This filter must never touch commerce
 		 * configuration. If someone later adds price/shipping/availability
 		 * handling here, that is a gated change and this assertion fails first.
+		 *
+		 * ⚠ `link` WAS ON THIS LIST UNTIL 1.19.222 AND HAS BEEN REMOVED FROM
+		 *   IT DELIBERATELY, which is a real weakening of a guard and is
+		 *   recorded rather than done quietly. `link` is NOT commerce
+		 *   configuration — it is the destination URL of a feed item, and F5
+		 *   of the 2026-08-13 audit is specifically about it being wrong. It
+		 *   is now covered by its own dedicated section, §4b, which asserts
+		 *   what the value must be rather than that it is absent. Price,
+		 *   shipping, availability, tax and title remain absolutely off
+		 *   limits and are still asserted here.
 		 */
-		foreach ( [ 'price', 'salePrice', 'shipping', 'availability', 'tax', 'link', 'title' ] as $gated ) {
+		foreach ( [ 'price', 'salePrice', 'shipping', 'availability', 'tax', 'title' ] as $gated ) {
 			bhp_gfa_assert( "no {$gated} is overridden by this filter", ! isset( $out[ $gated ] ) );
 		}
 
@@ -282,6 +324,81 @@ if ( ! function_exists( 'wc_get_product' ) ) {
 		bhp_gfa_assert( 'the other two are still filled in alongside it',
 			'Media > Books' === $pre['googleProductCategory'] && 'new' === $pre['condition'] );
 	}
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * §4b  ⭐ THE FEED `link` — F5, added 1.19.222 (`CYCLE156-LD-01`).
+ *
+ * ⭐ THE DEFECT, VERIFIED LIVE ON PRODUCTION 2026-08-13: all three hardcover
+ *    feed links returned ONE redirect. GLA sets `link` from
+ *    `get_permalink()`, which for products 14/17/20 is the hardcover product
+ *    URL, and that URL 301s to the canonical paperback page carrying
+ *    `?bhp_format=hardcover`. Google's spec wants a link that resolves without
+ *    a hop, and Google price-checks whatever it lands on.
+ *
+ * ⛔ WHAT MUST STAY TRUE, and why each assertion exists:
+ *      · hardcovers get the 301's OWN destination — not a new URL;
+ *      · paperbacks are untouched, because theirs already resolve cleanly;
+ *      · nothing outside the registry ever gets a link override;
+ *      · the value is absolute and same-origin, because a relative or
+ *        off-domain link in a Merchant Center feed is a rejection.
+ * ────────────────────────────────────────────────────────────────────────── */
+WP_CLI::log( '' );
+WP_CLI::log( '§4b  THE FEED `link` — hardcovers stop redirecting' );
+
+if ( ! function_exists( 'wc_get_product' ) || ! function_exists( 'bhp_google_feed_link' ) ) {
+	bhp_gfa_skip( '§4b entirely', 'WooCommerce or bhp_google_feed_link() is unavailable' );
+} else {
+	bhp_gfa_assert( 'bhp_google_feed_link() is defined', function_exists( 'bhp_google_feed_link' ) );
+	bhp_gfa_assert( 'bhp_google_feed_lookup() is defined', function_exists( 'bhp_google_feed_lookup' ) );
+
+	$home = untrailingslashit( home_url() );
+
+	foreach ( bhp_book_registry() as $key => $book ) {
+		$hc_id   = (int) $book['hc_product'];
+		$hc      = wc_get_product( $hc_id );
+		$pb_id   = (int) $book['pb_product'];
+		$pb_feed = wc_get_product( (int) ( $book['pb_variation'] ? $book['pb_variation'] : $pb_id ) );
+
+		if ( ! $hc || ! $pb_feed ) {
+			bhp_gfa_skip( "{$key} link override", 'a product record is missing on this environment' );
+			continue;
+		}
+
+		$out      = bhp_google_feed_attributes( [], $hc );
+		$expected = add_query_arg( 'bhp_format', 'hardcover', get_permalink( $pb_id ) );
+
+		bhp_gfa_assert( "{$key} hardcover ({$hc_id}): link is overridden",
+			isset( $out['link'] ), 'keys: ' . implode( ',', array_keys( $out ) ) );
+		bhp_gfa_assert( "{$key} hardcover ({$hc_id}): link is the canonical page + ?bhp_format=hardcover",
+			( $out['link'] ?? '' ) === $expected,
+			'got ' . var_export( $out['link'] ?? null, true ) . ', expected ' . $expected );
+		bhp_gfa_assert( "{$key} hardcover ({$hc_id}): link is NOT the redirecting hardcover permalink",
+			( $out['link'] ?? '' ) !== $hc->get_permalink() );
+		bhp_gfa_assert( "{$key} hardcover ({$hc_id}): link is absolute and same-origin",
+			0 === strpos( (string) ( $out['link'] ?? '' ), $home ) );
+		bhp_gfa_assert( "{$key} hardcover ({$hc_id}): link carries exactly one query string",
+			1 === substr_count( (string) ( $out['link'] ?? '' ), '?' ) );
+
+		// The paperback is deliberately left alone.
+		$out_pb = bhp_google_feed_attributes( [], $pb_feed );
+		bhp_gfa_assert( "{$key} paperback: link is NOT overridden — it already resolves with zero hops",
+			! isset( $out_pb['link'] ) );
+	}
+
+	// Nothing outside the registry may ever receive a link override.
+	$activity_id = (int) wc_get_product_id_by_sku( 'BHP-ACTIVITY-BOOK-01' );
+	if ( $activity_id > 0 ) {
+		bhp_gfa_assert( "the Activity Book ({$activity_id}) gets no link override",
+			! isset( bhp_google_feed_attributes( [], wc_get_product( $activity_id ) )['link'] ) );
+	} else {
+		bhp_gfa_skip( 'Activity Book link-override exclusion', 'SKU BHP-ACTIVITY-BOOK-01 not found here' );
+	}
+
+	// Defensive: a lookup miss must return '' rather than fatal or invent a URL.
+	bhp_gfa_assert( 'a paperback entry yields no link', '' === bhp_google_feed_link( [ 'key' => 'mariana_trench', 'format' => 'paperback' ] ) );
+	bhp_gfa_assert( 'an unknown key yields no link', '' === bhp_google_feed_link( [ 'key' => 'not_a_book', 'format' => 'hardcover' ] ) );
+	bhp_gfa_assert( 'an entry with no format yields no link', '' === bhp_google_feed_link( [ 'key' => 'mariana_trench' ] ) );
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
@@ -332,6 +449,31 @@ if ( ! class_exists( $adapter_class ) ) {
 		bhp_gfa_assert( "payload {$pid}: googleProductCategory = Media > Books",
 			'Media > Books' === $adapter->getGoogleProductCategory(),
 			var_export( $adapter->getGoogleProductCategory(), true ) );
+
+		/*
+		 * ⭐ 1.19.222 — THE `link` IN THE REAL PAYLOAD. §4b proves the filter's
+		 *    return value; this proves the value survives all the way through
+		 *    WCProductAdapter::override_attributes() → mapTypes() and is what
+		 *    Google is actually handed. That is the assertion that matters.
+		 *
+		 * ⛔ IT DOES NOT PROVE THE LINK RESOLVES WITHOUT A REDIRECT. Only an
+		 *    HTTP request can prove that, and it is a separate QA step
+		 *    (`curl -sL -w '%{num_redirects}'`, expected 0). A test that
+		 *    claimed otherwise would be asserting a check it never ran.
+		 */
+		$entry = bhp_google_feed_lookup( $p );
+		if ( $entry && 'hardcover' === $entry['format'] ) {
+			$expected_link = add_query_arg( 'bhp_format', 'hardcover', get_permalink( bhp_book_canonical_id( $entry['key'] ) ) );
+			bhp_gfa_assert( "payload {$pid}: link is the canonical page + ?bhp_format=hardcover (no 301 hop)",
+				$expected_link === $adapter->getLink(),
+				var_export( $adapter->getLink(), true ) );
+			bhp_gfa_assert( "payload {$pid}: link is no longer the redirecting hardcover permalink",
+				$p->get_permalink() !== $adapter->getLink() );
+		} elseif ( $entry ) {
+			bhp_gfa_assert( "payload {$pid}: paperback link is left exactly as WooCommerce built it",
+				$p->get_permalink() === $adapter->getLink(),
+				var_export( $adapter->getLink(), true ) );
+		}
 		bhp_gfa_assert( "payload {$pid}: condition = new",
 			'new' === $adapter->getCondition(),
 			var_export( $adapter->getCondition(), true ) );
