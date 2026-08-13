@@ -1307,6 +1307,64 @@ add_filter('woocommerce_product_loop_end', 'bhp_book_shop_collection_card');
  * calls to this same filter, so a default-priority callback would see an
  * empty array. See .claude/rules/schema.md.
  */
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.222 (2026-08-13) — THE PRIMARY OFFER NOW FOLLOWS `?bhp_format=`.
+ *    "OPTION B" from the 2026-08-13 Google feed audit, F5 option (iii).
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE DEFECT, VERIFIED LIVE 2026-08-13 (rendered JSON-LD on staging and, per
+ *    the audit, on production): a hardcover feed link 301s to
+ *    `…-paperback/?bhp_format=hardcover`, and the page it lands on emitted
+ *    `offers[0].price = 11.99` while the Google feed for that item said
+ *    `17.99`. A $6.00 feed-vs-landing-page contradiction, on all three
+ *    hardcovers. Google's product data specification requires the feed price
+ *    to match the landing page.
+ *
+ * ⛔ EXACTLY ONE THING MOVED: the ORDER of the two offers, and only when the
+ *    URL explicitly asks for hardcover. Both offers were already emitted, both
+ *    already carried their own live price, and both still do. No price, no
+ *    availability, no SKU, no URL and no product record is touched by this —
+ *    every figure is still read live from WooCommerce on every request.
+ *
+ * ✅ WHY THE VISIBLE STATE DID NOT HAVE TO CHANGE: it already followed the
+ *    parameter. `bhp_book_incoming_format()` has driven the pressed card, the
+ *    card ORDER, the CTA label, the CTA href, the spec line and the shipping
+ *    note since 1.19.166 (`CYCLE143-CX-2`). The structured data was the one
+ *    surface still contradicting the visible page. This aligns it with what
+ *    the customer was already being shown; it does not introduce a new
+ *    behaviour for the customer to notice.
+ *
+ * ⭐ CACHE SAFETY — MEASURED, NOT ASSUMED. This is the constraint that would
+ *    make the change unsafe if it were wrong, so it was tested rather than
+ *    reasoned about (`CYCLE143-GIM-51` is the standing prohibition on
+ *    per-visitor server-rendered variance in front of a full-page cache).
+ *
+ *      · The variance here is a function of the URL, NOT of the visitor. Two
+ *        different people requesting the same URL always get the same bytes.
+ *        That is categorically different from `CYCLE143-GIM-51`, which was
+ *        per-visitor variance on ONE cache key.
+ *      · OBSERVED ON PRODUCTION 2026-08-13 (read-only GETs, no writes), on
+ *        the Mariana canonical URL, using the `x-proxy-cache` response header
+ *        and the served `data-bhp-format-initial` value:
+ *            ?bhp_format=hardcover  → MISS, then HIT, body reads "hardcover"
+ *            (no parameter)         → HIT,  body reads "paperback"
+ *            ?bhp_format=paperback  → MISS, body reads "paperback"
+ *        Three URLs, three separate cache entries, each serving its own body,
+ *        and the parameterless entry was NOT poisoned by the parameterised
+ *        request that immediately preceded it.
+ *      ➡ SiteGround's dynamic cache keys on the full request URI including the
+ *        query string. A parameterised page therefore cannot poison the
+ *        parameterless one, and no `DONOTCACHEPAGE` or cache exclusion is
+ *        needed — which is why none was added.
+ *
+ * ⚠ WHAT THIS STILL DOES NOT FIX, stated so a green QA run is not over-read:
+ *    `Product.name` still ends "(Paperback)" and `Product.category` still
+ *    reads "Paperback Books" on the parameterised URL, because both come from
+ *    the canonical WooCommerce record and changing either is a product-record
+ *    decision that belongs to Andrew. The offer that Google price-checks now
+ *    matches the feed; the entity's own name does not.
+ */
 function bhp_book_add_hardcover_offer($data) {
     if (!function_exists('is_product') || !is_product()) {
         return $data;
@@ -1322,6 +1380,13 @@ function bhp_book_add_hardcover_offer($data) {
     if (!$hc || '' === $hc->get_price()) {
         return $data; // No live price -> no offer, rather than a guess.
     }
+
+    // The one resolver the whole theme already uses for "which format did this
+    // request ask for" — the same call that drives the pressed card and the CTA.
+    // Re-deriving it here would create a second definition that can drift, and
+    // the visible page and the structured data disagreeing is the exact defect
+    // this function is fixing.
+    $hardcover_leads = 'hardcover' === bhp_book_incoming_format();
 
     foreach ($data as $key => $node) {
         if (!isset($node['@type']) || false === strpos((string) wp_json_encode($node['@type']), 'Product')) {
@@ -1353,7 +1418,34 @@ function bhp_book_add_hardcover_offer($data) {
             }
         }
 
-        $existing[] = $offer;
+        /*
+         * A LEADING offer must not be structurally thinner than the one it
+         * leads. Rank Math gives its own (paperback) offer `seller` and
+         * `priceValidUntil`; a hardcover offer promoted to first position
+         * without them would look like a lesser record of the same shop to
+         * anything reading the graph in order.
+         *
+         * ⛔ COPIED, NEVER INVENTED. Both values are taken from the sibling
+         *    offer Rank Math already built on this same page — same shop, same
+         *    validity window. If Rank Math did not emit one, neither does this;
+         *    a fabricated `priceValidUntil` would be a made-up commercial fact.
+         */
+        if ($hardcover_leads) {
+            foreach (['seller', 'priceValidUntil'] as $carry) {
+                if (!isset($offer[$carry])) {
+                    foreach ($existing as $sibling) {
+                        if (is_array($sibling) && isset($sibling[$carry])) {
+                            $offer[$carry] = $sibling[$carry];
+                            break;
+                        }
+                    }
+                }
+            }
+            array_unshift($existing, $offer);
+        } else {
+            $existing[] = $offer;
+        }
+
         $data[$key]['offers'] = $existing;
         break;
     }

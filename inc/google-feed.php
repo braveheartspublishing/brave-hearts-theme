@@ -105,11 +105,26 @@ const BHP_GOOGLE_FEED_BRAND = 'Brave Hearts Publishing';
  * @return bool
  */
 function bhp_google_feed_is_book($product) {
+    return bhp_google_feed_lookup($product) !== null;
+}
+
+/**
+ * Resolve a feed product to its registry entry, or null.
+ *
+ * Split out of bhp_google_feed_is_book() in 1.19.222 because the feed `link`
+ * override below needs the entry itself (which title, which format), not just
+ * a yes/no. The resolution rule — variation resolves upward to its parent — is
+ * unchanged and now lives in exactly one place instead of two.
+ *
+ * @param WC_Product|mixed $product
+ * @return array|null ['key' => string, 'format' => string, 'canonical' => bool]
+ */
+function bhp_google_feed_lookup($product) {
     if (!function_exists('bhp_book_lookup_product')) {
-        return false;
+        return null;
     }
     if (!is_object($product) || !method_exists($product, 'get_id')) {
-        return false;
+        return null;
     }
 
     $id = (int) $product->get_id();
@@ -122,7 +137,74 @@ function bhp_google_feed_is_book($product) {
         }
     }
 
-    return bhp_book_lookup_product($id) !== null;
+    return bhp_book_lookup_product($id);
+}
+
+/**
+ * The feed `link` for one book edition — the URL Google should land on.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.222 (2026-08-13) — THE HARDCOVER FEED LINK STOPS REDIRECTING.
+ *    F5 option (i) from the 2026-08-13 audit, paired with "Option B".
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE DEFECT, VERIFIED LIVE ON PRODUCTION 2026-08-13 (`curl -sL -w
+ *    '%{num_redirects}'`): all three hardcover feed links returned **1**
+ *    redirect. GLA sets `link` from `$wc_product->get_permalink()`, which for
+ *    products 14 / 17 / 20 is the hardcover product URL; that URL 301s to the
+ *    canonical paperback page carrying `?bhp_format=hardcover`
+ *    (`bhp_book_redirect_legacy_format_urls()`). Google's product data
+ *    specification wants a feed link that resolves without a hop, and Google
+ *    price-checks whatever it finally lands on.
+ *
+ * ✅ THIS SENDS THE REDIRECT'S OWN DESTINATION AS THE LINK. It is not a new
+ *    URL and not a new page: it is byte-for-byte the `Location` the 301 has
+ *    been issuing all along, so the visitor experience, the canonical tag, the
+ *    format selector and the analytics passthrough are all untouched. One hop
+ *    is removed; nothing is redirected anywhere new.
+ *
+ * ⭐ WHY THIS AND OPTION B ARE ONE CHANGE, NOT TWO. Sending Google straight to
+ *    `?bhp_format=hardcover` is only an improvement if that page's PRIMARY
+ *    structured-data offer is the $17.99 hardcover — otherwise the redirect
+ *    hop is traded for the same $6.00 price contradiction, arriving faster.
+ *    `bhp_book_add_hardcover_offer()` in `inc/book-formats.php` is the other
+ *    half; neither should be deployed without the other.
+ *
+ * ⛔ THE PAPERBACKS ARE DELIBERATELY LEFT ALONE. Their feed links already
+ *    return 200 with zero redirects and land on a paperback-primary page. A
+ *    `?bhp_format=paperback` link would add a query string to a clean canonical
+ *    URL for no gain and would split the page cache for no reason.
+ *
+ * ⛔ NO PRODUCT RECORD, PERMALINK, SLUG OR REDIRECT RULE IS CHANGED. This is a
+ *    read-time override on the outgoing feed payload only. The hardcover
+ *    product URL still exists, still resolves, still 301s for anyone who has
+ *    it bookmarked or linked.
+ *
+ * @param array $entry ['key' => …, 'format' => …, 'canonical' => …]
+ * @return string Absolute URL, or '' when it cannot be resolved.
+ */
+function bhp_google_feed_link(array $entry) {
+    if ('hardcover' !== ($entry['format'] ?? '')) {
+        return ''; // Paperbacks already resolve cleanly — leave GLA's own link.
+    }
+    if (!function_exists('bhp_book_canonical_id')) {
+        return '';
+    }
+
+    $canonical_id = (int) bhp_book_canonical_id($entry['key']);
+    if ($canonical_id <= 0) {
+        return '';
+    }
+
+    $permalink = get_permalink($canonical_id);
+    if (!$permalink) {
+        return '';
+    }
+
+    // add_query_arg rather than string concatenation: the canonical permalink
+    // is pretty today, but a plain-permalinks environment would make it
+    // `?p=333`, and `?p=333?bhp_format=hardcover` is not a URL.
+    return add_query_arg('bhp_format', 'hardcover', $permalink);
 }
 
 /**
@@ -149,7 +231,8 @@ function bhp_google_feed_attributes($attributes, $product = null) {
         $attributes = [];
     }
 
-    if (!bhp_google_feed_is_book($product)) {
+    $entry = bhp_google_feed_lookup($product);
+    if (null === $entry) {
         return $attributes;
     }
 
@@ -158,6 +241,14 @@ function bhp_google_feed_attributes($attributes, $product = null) {
         'condition'             => BHP_GOOGLE_FEED_CONDITION,
         'brand'                 => BHP_GOOGLE_FEED_BRAND,
     ];
+
+    // 1.19.222: hardcovers only, and only when a real URL resolves. An empty
+    // return leaves GLA's own permalink in place rather than blanking the
+    // link, because a feed item with no link is worse than one with a hop.
+    $link = bhp_google_feed_link($entry);
+    if ('' !== $link) {
+        $additions['link'] = $link;
+    }
 
     foreach ($additions as $key => $value) {
         if (!isset($attributes[$key]) || '' === $attributes[$key]) {

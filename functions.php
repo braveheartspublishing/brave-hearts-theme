@@ -4052,14 +4052,75 @@ function bhp_get_contact_form_action($requested_action = '') {
  * variation's own Global Unique ID is set. Simple products already get
  * gtin natively from _global_unique_id and are left untouched here.
  *
- * Shipping values mirror the one configured WooCommerce shipping zone
- * (Contiguous United States, flat rate $3.99) and the published Shipping
- * Policy page — change both places together if the policy ever changes.
+ * addressRegion lists the exact 48 contiguous-US states/DC from the one
+ * configured zone rather than a bare "US" addressCountry, so the schema
+ * doesn't imply shipping to Alaska, Hawaii, territories, or internationally
+ * when checkout does not actually support those destinations.
+ */
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔ 1.19.222 (2026-08-13) — THIS FILTER HAD BEEN DEAD CODE. F6 / CYCLEX-CX-G04.
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * addressRegion lists the exact 48 contiguous-US states/DC from that zone
- * rather than a bare "US" addressCountry, so the schema doesn't imply
- * shipping to Alaska, Hawaii, territories, or internationally when
- * checkout does not actually support those destinations.
+ * ⭐ HOW IT DIED, verified by source read AND by the rendered page: this
+ *    callback and `bhp_book_add_hardcover_offer()` in `inc/book-formats.php`
+ *    are BOTH registered on `rank_math/json_ld` at priority 999. The hardcover
+ *    callback runs first (its file is required first) and converts `offers`
+ *    from a single associative Offer into a LIST in order to append the second
+ *    edition. The guard below then read:
+ *
+ *        if (… || !isset($entity['offers']['@type'])) { continue; }
+ *
+ *    `isset($entity['offers']['@type'])` is true only for a SINGLE Offer. Once
+ *    `offers` is a list it is false, the loop `continue`d, and BOTH the
+ *    shippingDetails injection and the variable-product GTIN patch were skipped
+ *    on every canonical product page — silently, with no error and no test.
+ *
+ * ⭐ OBSERVED BEFORE THE FIX (rendered `<script class="rank-math-schema">` on
+ *    staging 1.19.221, Mariana canonical page, both parameter states):
+ *    `offers` LIST(2) · `shippingDetails` ABSENT on both offers ·
+ *    `Product.gtin` absent. Exactly what the audit reported on production.
+ *    `.claude/rules/schema.md` described this filter as working; it described
+ *    intent, not behaviour.
+ *
+ * ✅ THE FIX: normalise both shapes to a list, operate per offer, write back in
+ *    the shape it was found in. A single Offer stays a single Offer.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔ THE SECOND DEFECT INSIDE THE SAME DEAD CODE — the hardcoded $3.99.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * The rate was a literal `'3.99'`, with a comment calling it "the customer-
+ * facing rate". It is not, and reviving the filter without correcting it would
+ * have published a wrong shipping figure into structured data — a number a
+ * shopper could hold the checkout to.
+ *
+ *   · **$3.99 is the ZONE configuration** — the single `flat_rate` instance's
+ *     stored cost, which is real and is not being changed by anything here.
+ *   · **What the customer actually pays is TIERED**, per Andrew Signore's
+ *     owner ruling of 2026-08-02 ("Shipping is tiered per amount of books
+ *     ordered"), implemented in the bundle plugin. Conflating the two is the
+ *     documented failure `CYCLE140-DEV-2`.
+ *
+ * ⭐ AN `Offer` DESCRIBES ONE ITEM, so the honest figure for it is the
+ *    single-item rate for THAT format, read live from the bundle plugin's own
+ *    `bhp_bundle_single_shipping()` — $1.99 paperback / $2.99 hardcover. Never
+ *    re-derived here; the plugin is the single source of truth for every
+ *    shipping number on this site, and the published Shipping Policy page says
+ *    the same words: "$1.99 for a single paperback and $2.99 for a single
+ *    hardcover".
+ *
+ * ⛔ NO SHIPPING SETTING, ZONE, METHOD, INSTANCE, COST OR TIER IS CHANGED BY
+ *    THIS FILTER ON ANY ENVIRONMENT. It reads a number and prints it into a
+ *    JSON-LD document. It is a display artefact. Those settings are an Andrew
+ *    gate and were not touched.
+ *
+ * ⛔ ALLOWLISTED TO THE SIX BOOK EDITIONS, deliberately. The previous code
+ *    stamped its shipping block onto EVERY single product page, which would
+ *    now include the $5.00 downloadable Activity Book — claiming a physical
+ *    contiguous-US shipping rate and a 3–8 day transit time for a PDF. For any
+ *    product outside the registry the honest output is silence, not a guessed
+ *    rate, so nothing is emitted at all.
  */
 // Runs at a very late priority so Rank Math's own Product entity has
 // already been added to $data by the time this callback inspects it —
@@ -4076,6 +4137,15 @@ add_filter('rank_math/json_ld', function ($data, $jsonld) {
         return $data;
     }
 
+    // Only the six approved printed editions get a physical shipping claim.
+    // bhp_book_lookup_product() is the theme's one definition of "is this one
+    // of them"; re-deriving it by SKU or category would create a second
+    // definition that drifts, and the SKUs differ between environments.
+    if (!function_exists('bhp_book_lookup_product')
+        || null === bhp_book_lookup_product(get_queried_object_id())) {
+        return $data;
+    }
+
     $contiguous_us_states = [
         'AL', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'ID', 'IL',
         'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO',
@@ -4083,63 +4153,115 @@ add_filter('rank_math/json_ld', function ($data, $jsonld) {
         'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
     ];
 
-    $shipping_details = [
-        '@type'               => 'OfferShippingDetails',
-        'shippingRate'        => [
-            '@type'    => 'MonetaryAmount',
-            'value'    => '3.99',
-            'currency' => 'USD',
-        ],
-        'shippingDestination' => [
-            '@type'         => 'DefinedRegion',
-            'addressCountry' => 'US',
-            'addressRegion' => $contiguous_us_states,
-        ],
-        'deliveryTime'        => [
-            '@type'        => 'ShippingDeliveryTime',
-            'handlingTime' => [
-                '@type'    => 'QuantitativeValue',
-                'minValue' => 2,
-                'maxValue' => 5,
-                'unitCode' => 'DAY',
+    /**
+     * The OfferShippingDetails block for ONE offer of one format.
+     *
+     * The rate is read from the bundle plugin every time rather than cached in
+     * a literal, so an approved tier change reaches the structured data on the
+     * next request with no second edit in this file. If the plugin is not
+     * loaded there is no authoritative number available, and the block is
+     * omitted rather than guessed.
+     */
+    $build_shipping = static function ($format) use ($contiguous_us_states) {
+        if (!function_exists('bhp_bundle_single_shipping')) {
+            return null;
+        }
+        $rate = bhp_bundle_single_shipping($format);
+        if (!is_numeric($rate)) {
+            return null;
+        }
+
+        return [
+            '@type'               => 'OfferShippingDetails',
+            'shippingRate'        => [
+                '@type'    => 'MonetaryAmount',
+                'value'    => number_format((float) $rate, 2, '.', ''),
+                'currency' => 'USD',
             ],
-            'transitTime'  => [
-                '@type'    => 'QuantitativeValue',
-                'minValue' => 3,
-                'maxValue' => 8,
-                'unitCode' => 'DAY',
+            'shippingDestination' => [
+                '@type'         => 'DefinedRegion',
+                'addressCountry' => 'US',
+                'addressRegion' => $contiguous_us_states,
             ],
-        ],
-    ];
+            'deliveryTime'        => [
+                '@type'        => 'ShippingDeliveryTime',
+                'handlingTime' => [
+                    '@type'    => 'QuantitativeValue',
+                    'minValue' => 2,
+                    'maxValue' => 5,
+                    'unitCode' => 'DAY',
+                ],
+                'transitTime'  => [
+                    '@type'    => 'QuantitativeValue',
+                    'minValue' => 3,
+                    'maxValue' => 8,
+                    'unitCode' => 'DAY',
+                ],
+            ],
+        ];
+    };
+
+    // The hardcover Offer is the one bhp_book_add_hardcover_offer() built, and
+    // it is identifiable by the `?bhp_format=hardcover` URL that same function
+    // wrote into it. Everything else on a canonical book page is the paperback.
+    $format_of_offer = static function ($offer) {
+        return (is_array($offer) && isset($offer['url'])
+            && false !== strpos((string) $offer['url'], 'bhp_format=hardcover'))
+            ? 'hardcover'
+            : 'paperback';
+    };
+
+    // The one variation's GTIN, for the exactly-one-variation case that matches
+    // the scope of Rank Math's own get_single_variable_offer(). Rank Math never
+    // includes gtin there even though the variation's Global Unique ID is set.
+    // find_matching_product_variation() needs real $_GET attribute values to
+    // resolve anything and is empty on a normal page load with no variation
+    // selected in the URL, so this fetches the one child directly instead.
+    $variation_gtin = '';
+    if ($product->is_type('variable')) {
+        $children = $product->get_children();
+        if (count($children) === 1) {
+            $variation = wc_get_product($children[0]);
+            $variation_gtin = $variation ? (string) $variation->get_global_unique_id() : '';
+        }
+    }
 
     foreach ($data as $key => $entity) {
         if (!is_array($entity) || ($entity['@type'] ?? '') !== 'Product') {
             continue;
         }
-        if (empty($entity['offers']) || !is_array($entity['offers']) || !isset($entity['offers']['@type'])) {
+        if (empty($entity['offers']) || !is_array($entity['offers'])) {
             continue;
         }
 
-        // Only handles the exactly-one-variation case, matching the scope of
-        // Rank Math's own get_single_variable_offer() (a product with more
-        // than one variation produces a different offers structure — a
-        // list, not a single associative Offer — which the isset() check
-        // above already causes this loop to skip). find_matching_product_
-        // variation() needs real $_GET attribute values to resolve anything
-        // and is empty on a normal page load with no variation selected in
-        // the URL, so this fetches the one child directly instead.
-        if ($product->is_type('variable') && empty($entity['offers']['gtin'])) {
-            $children = $product->get_children();
-            if (count($children) === 1) {
-                $variation = wc_get_product($children[0]);
-                $gtin = $variation ? $variation->get_global_unique_id() : '';
-                if ($gtin) {
-                    $data[$key]['offers']['gtin'] = $gtin;
-                }
+        // ⭐ THE FIX ITSELF. Both shapes are handled: a single associative
+        // Offer (what Rank Math emits alone) and a list of Offers (what the
+        // page actually carries once the hardcover edition is appended). The
+        // shape is remembered and restored, so a single Offer is never
+        // silently promoted into a one-element list.
+        $was_single = isset($entity['offers']['@type']);
+        $offers     = $was_single ? [$entity['offers']] : array_values($entity['offers']);
+
+        foreach ($offers as $i => $offer) {
+            if (!is_array($offer)) {
+                continue;
+            }
+
+            $format   = $format_of_offer($offer);
+            $shipping = $build_shipping($format);
+            if (null !== $shipping) {
+                $offers[$i]['shippingDetails'] = $shipping;
+            }
+
+            // The GTIN belongs to the paperback variation, so it is only ever
+            // written onto the paperback offer — never onto the hardcover,
+            // which is a separate simple product with its own ISBN.
+            if ('paperback' === $format && '' !== $variation_gtin && empty($offer['gtin'])) {
+                $offers[$i]['gtin'] = $variation_gtin;
             }
         }
 
-        $data[$key]['offers']['shippingDetails'] = $shipping_details;
+        $data[$key]['offers'] = $was_single ? $offers[0] : $offers;
     }
 
     return $data;
