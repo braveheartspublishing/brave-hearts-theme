@@ -35,6 +35,28 @@
  *
  * ⛔ THIS SUITE MUTATES NOTHING. It reads products and builds throwaway
  * in-memory objects. No product record, no meta, no option, no cart.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ PASS / FAIL / SKIP / DATA — four result classes, and DATA is the unusual one
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Two of the three fixes in this package are PRODUCTION DATA changes, not code:
+ * the six cover images were renamed in the media library, and the Activity
+ * Book's GLA visibility was pinned to dont-sync-and-show. Both are WooCommerce
+ * record mutations, which are Andrew-gated on EVERY environment including
+ * staging — so they were deliberately not applied to staging.
+ *
+ * A code suite that asserts production data state can therefore never go green
+ * on staging. Two bad answers were available and both were rejected: deleting
+ * the assertions (which would stop protecting the fix) and softening them into
+ * something that always passes (which is the fabricated-verification failure
+ * class). The third answer is the DATA class:
+ *
+ *   - on PRODUCTION it is a hard assertion and fails the suite;
+ *   - elsewhere it prints the REAL OBSERVED VALUE under a DATA label and does
+ *     not fail, saying plainly that the fix was not applied there.
+ *
+ * The observed value is printed either way. Only the exit code differs.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -66,6 +88,44 @@ function bhp_gfa_assert( $label, $ok, $detail = '' ) {
 function bhp_gfa_skip( $label, $why = '' ) {
 	$GLOBALS['bhp_gfa_skip']++;
 	WP_CLI::log( "  SKIP  {$label}" . ( $why ? "  --  {$why}" : '' ) );
+}
+
+/**
+ * Is this the production environment?
+ *
+ * Two of the fixes in this package are PRODUCTION DATA changes, not code:
+ * the six cover images were renamed in the media library, and the Activity
+ * Book's GLA visibility was pinned. Both are WooCommerce record mutations and
+ * therefore Andrew-gated on EVERY environment — so they were deliberately NOT
+ * applied to staging, and staging's data still carries the old state.
+ */
+function bhp_gfa_is_production() {
+	return false === stripos( (string) home_url(), 'staging' );
+}
+
+/**
+ * A DATA-STATE check, as opposed to a code check.
+ *
+ * ⛔ THIS IS NOT A SOFTENED ASSERTION AND MUST NOT BECOME ONE. On production
+ *   it is a hard assertion and fails the suite. Off production it prints the
+ *   real observed value under a DATA label and does not fail, because the fix
+ *   it checks was deliberately never applied there — failing would train a
+ *   reader to ignore a red run, which is worse than not asserting.
+ *
+ *   The observed value is ALWAYS printed either way. A reader can therefore
+ *   see the true state on any environment; only the exit code differs.
+ */
+function bhp_gfa_data_state( $label, $ok, $observed = '' ) {
+	if ( bhp_gfa_is_production() ) {
+		bhp_gfa_assert( "[prod data] {$label}", $ok, $observed );
+		return;
+	}
+	WP_CLI::log( sprintf(
+		'  DATA  %s  --  %s  --  observed: %s',
+		$label,
+		$ok ? 'already true here' : 'NOT APPLIED on this environment (production-only, Andrew-gated product change)',
+		$observed
+	) );
 }
 
 WP_CLI::log( '' );
@@ -287,7 +347,7 @@ if ( ! class_exists( $adapter_class ) ) {
 		 * Merchant Center rejection three days later.
 		 */
 		$img = (string) $adapter->getImageLink();
-		bhp_gfa_assert( "payload {$pid}: imageLink carries no form of 'ebook'",
+		bhp_gfa_data_state( "payload {$pid}: imageLink carries no form of 'ebook'",
 			'' !== $img && false === stripos( $img, 'ebook' ), $img );
 
 		// The identifier must survive untouched — it is the healthy part of this feed.
@@ -306,9 +366,9 @@ if ( ! class_exists( $adapter_class ) ) {
 	$activity_id = (int) wc_get_product_id_by_sku( 'BHP-ACTIVITY-BOOK-01' );
 	if ( $activity_id > 0 ) {
 		$vis = get_post_meta( $activity_id, '_wc_gla_visibility', true );
-		bhp_gfa_assert( "the Activity Book ({$activity_id}) is pinned to dont-sync-and-show, not merely hidden",
+		bhp_gfa_data_state( "the Activity Book ({$activity_id}) is pinned to dont-sync-and-show, not merely hidden",
 			'dont-sync-and-show' === $vis,
-			var_export( $vis, true ) . ' — an empty value here means it is sync-eligible by default' );
+			var_export( $vis, true ) . ' — an empty value means it is sync-eligible BY DEFAULT and is kept out of the feed only by catalog-visibility exclusion, which is a side effect and not a control' );
 	} else {
 		bhp_gfa_skip( 'Activity Book GLA pin', 'SKU BHP-ACTIVITY-BOOK-01 not found here' );
 	}
@@ -317,10 +377,11 @@ if ( ! class_exists( $adapter_class ) ) {
 /* ───────────────────────────────────────────────────────────────────────── */
 WP_CLI::log( '' );
 WP_CLI::log( sprintf(
-	'=== %d passed, %d failed, %d skipped ===',
+	'=== %d passed, %d failed, %d skipped  (environment: %s) ===',
 	$GLOBALS['bhp_gfa_pass'],
 	$GLOBALS['bhp_gfa_fail'],
-	$GLOBALS['bhp_gfa_skip']
+	$GLOBALS['bhp_gfa_skip'],
+	bhp_gfa_is_production() ? 'PRODUCTION — DATA lines are hard assertions' : 'NON-PRODUCTION — DATA lines report only, read them'
 ) );
 WP_CLI::log( '' );
 
