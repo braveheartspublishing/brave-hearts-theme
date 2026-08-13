@@ -3059,6 +3059,12 @@ require_once get_template_directory() . '/inc/lead-magnet-settings.php';
 // Presentation layer only — no product record is merged or altered.
 require_once get_template_directory() . '/inc/book-formats.php';
 require_once get_template_directory() . '/inc/book-media.php';
+// Google Merchant Center feed attributes. Loaded AFTER book-formats.php because
+// it keys its allowlist on bhp_book_lookup_product() and must not re-derive
+// "is this one of the six editions" a second way. Read-time feed filter only —
+// it changes no WooCommerce product record. See the file header for the
+// ebooks_policy_violation disapproval it answers.
+require_once get_template_directory() . '/inc/google-feed.php';
 // Collection gallery subsets on the six funnel pages that pitch it in words
 // only. Reuses the same component and the same registry — see the file header.
 require_once get_template_directory() . '/inc/collection-gallery.php';
