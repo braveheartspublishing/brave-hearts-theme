@@ -1133,8 +1133,9 @@
 .bhp-landing-coldopen__price-was {
 	font-family: var(--bl-sans);
 	font-size: .8rem;
-	font-weight: 600;
-	color: var(--bl-text-light);
+	font-weight: 700;
+	/* 2026-08-14 Andrew: red strikethrough so the discount reads at a glance. */
+	color: #b3261e;
 	text-decoration: line-through;
 }
 .bhp-landing-coldopen__price-now {
