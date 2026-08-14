@@ -61,6 +61,67 @@ function bhp_sm_read( $relative ) {
 	return (string) file_get_contents( $path );
 }
 
+/**
+ * ⭐ COMMENTS ARE STRIPPED BEFORE EVERY BEHAVIOURAL ASSERTION, AND THIS IS
+ *    THE MOST IMPORTANT HELPER IN THE FILE.
+ *
+ * The first run of this suite reported ten failures. NINE of them were the
+ * suite reading its own subject's PROSE: `signup-modal.php`'s docblock says
+ * the words `data-bhp-popup`, `bhp_parent_popup_*`, `bhp_mariana_popup_*`
+ * and `bhp_process_signup()` in order to explain that the file does NOT use
+ * them, and a naive `strpos()` cannot tell an explanation from a use. A
+ * negative assertion that a well-documented file can never pass is worse
+ * than no assertion: it trains a reader to expect red.
+ *
+ * (The tenth failure was real — a fourth `href="#free"` anchor on the
+ * retailers page with no free-CTA hook, which the hook-based inventory
+ * missed entirely. That is why the section-1 assertions below key off the
+ * ANCHOR rather than off the hook.)
+ *
+ * PHP is tokenised rather than regex-stripped, because `href="#free"` starts
+ * with a `#` and any regex that treats `#` as a line comment destroys the
+ * exact string this suite has to count.
+ */
+function bhp_sm_code_php( $src ) {
+	if ( '' === $src || ! function_exists( 'token_get_all' ) ) {
+		return $src;
+	}
+	$out = '';
+	foreach ( token_get_all( $src ) as $token ) {
+		if ( is_array( $token ) ) {
+			if ( T_COMMENT === $token[0] || T_DOC_COMMENT === $token[0] ) {
+				continue;
+			}
+			$out .= $token[1];
+			continue;
+		}
+		$out .= $token;
+	}
+	return $out;
+}
+
+/**
+ * JS: block comments removed, then any line that is entirely a `//` or `*`
+ * comment. Deliberately conservative — it never touches a trailing comment
+ * on a code line, so a token inside real code can still be found.
+ */
+function bhp_sm_code_js( $src ) {
+	if ( '' === $src ) {
+		return $src;
+	}
+	$src   = preg_replace( '#/\*.*?\*/#s', '', $src );
+	$lines = preg_split( '/\R/', $src );
+	$keep  = array();
+	foreach ( $lines as $line ) {
+		$trimmed = ltrim( $line );
+		if ( 0 === strpos( $trimmed, '//' ) || 0 === strpos( $trimmed, '*' ) ) {
+			continue;
+		}
+		$keep[] = $line;
+	}
+	return implode( "\n", $keep );
+}
+
 /*
  * The five funnel templates, their modal id, their lead magnet, and the CTA
  * hook their own landing script binds. Retailers has two CTAs; the other four
@@ -77,6 +138,7 @@ $bhp_sm_pages = array(
 		'magnet'   => 'reluctant_reader_adventure_kit',
 		'audience' => 'parents_families',
 		'ctas'     => 3,
+		'anchors'  => 3,
 		'ready_fn' => 'bhp_get_reluctant_reader_download',
 	),
 	'page-audience-educators.php'             => array(
@@ -86,6 +148,7 @@ $bhp_sm_pages = array(
 		'magnet'   => 'teacher_adventure_toolkit',
 		'audience' => 'educators',
 		'ctas'     => 3,
+		'anchors'  => 3,
 		'ready_fn' => 'bhp_get_teacher_toolkit_download',
 	),
 	'page-audience-gift-buyers.php'           => array(
@@ -95,6 +158,7 @@ $bhp_sm_pages = array(
 		'magnet'   => 'meaningful_gift_guide',
 		'audience' => 'gift_buyers',
 		'ctas'     => 3,
+		'anchors'  => 3,
 		'ready_fn' => 'bhp_get_gift_guide_download',
 	),
 	'page-audience-organizations.php'         => array(
@@ -104,6 +168,7 @@ $bhp_sm_pages = array(
 		'magnet'   => 'community_reading_kit',
 		'audience' => 'organizations',
 		'ctas'     => 3,
+		'anchors'  => 3,
 		'ready_fn' => 'bhp_get_community_kit_download',
 	),
 	'page-audience-retailers.php'             => array(
@@ -113,18 +178,20 @@ $bhp_sm_pages = array(
 		'magnet'   => 'bookstore_wholesale_guide',
 		'audience' => 'retailers',
 		'ctas'     => 2,
+		'anchors'  => 3,
 		'ready_fn' => 'bhp_get_bookstore_guide_download',
 	),
 );
 
 $bhp_sm_src = array();
 foreach ( $bhp_sm_pages as $tpl => $meta ) {
-	$bhp_sm_src[ $tpl ] = bhp_sm_read( $tpl );
+	// Comments stripped: every assertion below is about code and markup.
+	$bhp_sm_src[ $tpl ] = bhp_sm_code_php( bhp_sm_read( $tpl ) );
 }
-$bhp_sm_modal_php = bhp_sm_read( 'template-parts/acquisition/signup-modal.php' );
-$bhp_sm_modal_js  = bhp_sm_read( 'assets/js/signup-modal.js' );
+$bhp_sm_modal_php = bhp_sm_code_php( bhp_sm_read( 'template-parts/acquisition/signup-modal.php' ) );
+$bhp_sm_modal_js  = bhp_sm_code_js( bhp_sm_read( 'assets/js/signup-modal.js' ) );
 $bhp_sm_style     = bhp_sm_read( 'style.css' );
-$bhp_sm_functions = bhp_sm_read( 'functions.php' );
+$bhp_sm_functions = bhp_sm_code_php( bhp_sm_read( 'functions.php' ) );
 
 echo "=== 0. The new files exist and are non-trivial ===\n";
 
@@ -140,40 +207,71 @@ foreach ( $bhp_sm_pages as $tpl => $meta ) {
 	$html = $bhp_sm_src[ $tpl ];
 
 	/*
-	 * The count that matters. Every CTA carrying the page's own free-CTA hook
-	 * must ALSO carry the modal-open hook pointing at this page's modal. If
-	 * the two numbers ever disagree, one CTA still scrolls while the rest
-	 * open the dialog.
+	 * ⭐ THE ASSERTION KEYS OFF THE ANCHOR, NOT OFF THE HOOK, AND THAT CHOICE
+	 *    IS THE POINT OF THIS SECTION.
+	 *
+	 *    "Convert every CTA that scrolls to the signup panel" is a statement
+	 *    about `href="#free"`. It is NOT a statement about
+	 *    `data-*-free-cta`, which is an ANALYTICS hook that most — but
+	 *    provably not all — of those anchors happen to carry. Inventorying by
+	 *    the hook missed `page-audience-retailers.php`'s final-CTA "Get the
+	 *    Wholesale Guide", which scrolled to #free and carried no hook at all.
+	 *
+	 *    So: find every `<a ... href="#free" ...>` in the template and require
+	 *    that EACH ONE carries this page's modal-open hook. A future release
+	 *    that adds a sixth CTA is caught by construction, whether or not
+	 *    whoever adds it remembers the analytics hook.
 	 */
-	$hook_count  = substr_count( $html, $meta['hook'] . ' data-bhp-signup-modal-open="' . $meta['modal_id'] . '"' );
-	$plain_hooks = substr_count( $html, $meta['hook'] );
+	$anchors = array();
+	preg_match_all( '/<a\b[^>]*href="#free"[^>]*>/i', $html, $anchors );
+	$anchors     = $anchors[0];
+	$anchor_n    = count( $anchors );
+	$wired       = 0;
+	$attributed  = 0;
+	foreach ( $anchors as $anchor ) {
+		if ( strpos( $anchor, 'data-bhp-signup-modal-open="' . $meta['modal_id'] . '"' ) !== false ) {
+			$wired++;
+		}
+		if ( strpos( $anchor, 'data-bhp-signup-modal-source="' ) !== false ) {
+			$attributed++;
+		}
+	}
 
 	bhp_sm_assert(
-		$hook_count === $meta['ctas'],
-		"1: {$meta['label']} — all {$meta['ctas']} free CTAs carry the modal-open hook (found {$hook_count})",
+		$anchor_n === $meta['anchors'],
+		"1: {$meta['label']} — {$meta['anchors']} scroll-to-signup anchors found (found {$anchor_n})",
 		$failures
 	);
 	bhp_sm_assert(
-		$plain_hooks === $meta['ctas'],
-		"1: {$meta['label']} — the free-CTA hook count is unchanged at {$meta['ctas']} (found {$plain_hooks})",
+		$anchor_n > 0 && $wired === $anchor_n,
+		"1: {$meta['label']} — EVERY #free anchor opens this page's modal ({$wired}/{$anchor_n})",
+		$failures
+	);
+	bhp_sm_assert(
+		$anchor_n > 0 && $attributed === $anchor_n,
+		"1: {$meta['label']} — every #free anchor declares its own source label ({$attributed}/{$anchor_n})",
 		$failures
 	);
 
 	/*
-	 * NO-JS FALLBACK. Every one of those CTAs must still be an anchor to
-	 * #free. Counted as `href="#free"` occurrences, which is exactly the CTA
-	 * count on all five templates.
+	 * NO-JS FALLBACK. Every one of those anchors must still point at #free —
+	 * proven by the regex above, which matched on exactly that. Asserted
+	 * separately here so a future edit that swaps `href` for a `button`
+	 * cannot pass by making the regex match nothing.
 	 */
 	bhp_sm_assert(
-		substr_count( $html, 'href="#free"' ) === $meta['ctas'],
+		substr_count( $html, 'href="#free"' ) === $meta['anchors'],
 		"1: {$meta['label']} — every CTA keeps href=\"#free\" for the no-JS path",
 		$failures
 	);
 
-	// Each CTA is attributed, so `source_cta` in the dataLayer is never blank.
+	/*
+	 * The page's own analytics hook count is UNCHANGED by this release. A
+	 * changed count would mean an existing event's volume moved.
+	 */
 	bhp_sm_assert(
-		substr_count( $html, 'data-bhp-signup-modal-source="' ) === $meta['ctas'],
-		"1: {$meta['label']} — every CTA declares its own source label",
+		substr_count( $html, $meta['hook'] ) === $meta['ctas'],
+		"1: {$meta['label']} — the {$meta['hook']} analytics-hook count is unchanged at {$meta['ctas']}",
 		$failures
 	);
 }

@@ -285,7 +285,28 @@ $faqs = [
     <p><?php esc_html_e('Start a wholesale conversation and we’ll follow up with current details.', 'brave-hearts'); ?></p>
     <div class="audience-landing-final__ctas">
       <a class="btn btn-gold" href="<?php echo esc_url($contact_url); ?>" data-bhp-event="retailer_wholesale_contact_click" data-bhp-source="retailer_landing"><?php esc_html_e('Start a Wholesale Inquiry', 'brave-hearts'); ?></a>
-      <a class="btn btn-outline-light" href="#free"><?php esc_html_e('Get the Wholesale Guide', 'brave-hearts'); ?></a>
+      <?php
+      /*
+       * 1.19.223 (`CYCLE158-LD-SIGNUP-POPUP`) — this CTA opens the signup
+       * modal like every other "#free" control on the page.
+       *
+       * ⚠ FOUND BY THE NEW SUITE, NOT BY THE INVENTORY. It is the ONLY
+       *   `href="#free"` anchor on any of the five funnel templates that
+       *   does NOT carry a `data-audience-free-cta` hook, so an inventory
+       *   taken by that hook — which is how the brief's inventory was
+       *   framed — misses it, and it would have been left scrolling while
+       *   its three siblings opened the dialog.
+       *
+       * ⛔ THE MISSING `data-audience-free-cta` HOOK IS LEFT ALONE, ON
+       *   PURPOSE. Adding it would start firing `audience_landing_free_cta_
+       *   click` for a control that has never fired it, changing an existing
+       *   event's volume, and would change the hook count that
+       *   `tests/test-funnel-definitive-structure.php` asserts. That is a
+       *   pre-existing analytics gap, it is recorded in the release handoff,
+       *   and it is not this release's to silently absorb.
+       */
+      ?>
+      <a class="btn btn-outline-light" href="#free" data-bhp-signup-modal-open="retailer-wholesale-guide-modal" data-bhp-signup-modal-source="final_cta"><?php esc_html_e('Get the Wholesale Guide', 'brave-hearts'); ?></a>
     </div>
   </div>
 </section>
