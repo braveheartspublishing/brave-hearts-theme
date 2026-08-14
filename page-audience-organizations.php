@@ -151,7 +151,7 @@ $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format
        */
       ?>
       <div class="audience-landing-hero__ctas">
-        <a class="btn btn-primary" href="#free" data-audience-free-cta data-bhp-event="org_hero_primary_cta_click" data-bhp-source="organization_landing"><?php esc_html_e('Get the Community Reading Kit', 'brave-hearts'); ?></a>
+        <a class="btn btn-primary" href="#free" data-audience-free-cta data-bhp-signup-modal-open="org-reading-kit-modal" data-bhp-signup-modal-source="hero" data-bhp-event="org_hero_primary_cta_click" data-bhp-source="organization_landing"><?php esc_html_e('Get the Community Reading Kit', 'brave-hearts'); ?></a>
       </div>
       <?php
       /*
@@ -545,7 +545,7 @@ $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format
     <p><?php esc_html_e('Start the free Community Reading Kit - or reach out to talk through bulk orders and partnership opportunities.', 'brave-hearts'); ?></p>
     <p><?php esc_html_e('Organizations are welcome to contact us about literacy programs, classroom or community sponsorships, reading initiatives, event or program partnerships, and bulk book purchases. Every request is reviewed individually.', 'brave-hearts'); ?></p>
     <div class="audience-landing-final__ctas">
-      <a class="btn btn-gold" href="#free" data-audience-free-cta data-bhp-event="org_final_cta_click" data-bhp-source="organization_landing"><?php esc_html_e('Get the Community Reading Kit', 'brave-hearts'); ?></a>
+      <a class="btn btn-gold" href="#free" data-audience-free-cta data-bhp-signup-modal-open="org-reading-kit-modal" data-bhp-signup-modal-source="final_cta" data-bhp-event="org_final_cta_click" data-bhp-source="organization_landing"><?php esc_html_e('Get the Community Reading Kit', 'brave-hearts'); ?></a>
       <a class="btn btn-outline-light" href="<?php echo esc_url($contact_url); ?>"><?php esc_html_e('Start a Partnership Conversation', 'brave-hearts'); ?></a>
     </div>
   </div>
@@ -556,11 +556,58 @@ $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format
   <div class="audience-landing-stickybar__row">
     <span class="audience-landing-stickybar__text"><?php esc_html_e('Free Community Reading Kit - no purchase needed.', 'brave-hearts'); ?></span>
     <div class="audience-landing-stickybar__ctas">
-      <a class="btn btn-gold" href="#free" data-audience-free-cta><?php esc_html_e('Get it free', 'brave-hearts'); ?></a>
+      <a class="btn btn-gold" href="#free" data-audience-free-cta data-bhp-signup-modal-open="org-reading-kit-modal" data-bhp-signup-modal-source="sticky_bar"><?php esc_html_e('Get it free', 'brave-hearts'); ?></a>
       <a class="btn btn-outline-light" href="#contact"><?php esc_html_e('Contact', 'brave-hearts'); ?></a>
     </div>
   </div>
 </div>
+
+<?php
+/*
+ * ===================== CTA-TRIGGERED SIGNUP MODAL =====================
+ * theme 1.19.223, 2026-08-13, `CYCLE158-LD-SIGNUP-POPUP`.
+ *
+ * Every "Get the Community Reading Kit" CTA on this page now OPENS this dialog with the caret
+ * already in the email field, instead of scrolling the visitor down to
+ * #free. Andrew Signore, current turn, relayed by `chief-of-staff`: "no
+ * scrolling, immediate capture".
+ *
+ * THE INLINE #free PANEL ABOVE IS NOT REMOVED AND MUST NOT BE. It is the
+ * no-JS fallback, it is what the CTAs' `href="#free"` still points at, it
+ * keeps the `#free` deep link working, and it keeps the capture copy in the
+ * indexable page body.
+ *
+ * GATED ON THE SAME `$download['ready']` FLAG AS THE PANEL. If the PDF is
+ * ever unset under Settings -> Lead Magnets, this modal does not render at
+ * all, the CTAs find no modal to open, and they fall back to scrolling to
+ * the "coming soon" block -- which is the correct behaviour, and is why the
+ * JS resolves its target BEFORE it calls preventDefault().
+ *
+ * NOT A LEAD-MAGNET POPUP. No timer, no scroll trigger, no exit trigger; it
+ * opens only on a deliberate CTA click, so it does not reverse the
+ * 2026-07-19 one-popup ruling. It renders the SAME signup-form.php handler
+ * with the SAME lead-magnet key, audience type and Mailchimp tags as the
+ * inline panel -- never a fork of that pipeline.
+ *
+ * Copy is reused VERBATIM from the inline panel above. The same offer must
+ * not be described in two different ways, and no new claim, number,
+ * duration or count is introduced here.
+ */
+if ($download['ready']) {
+    get_template_part('template-parts/acquisition/signup-modal', null, [
+        'id'                   => 'org-reading-kit-modal',
+        'lead_magnet'          => 'community_reading_kit',
+        'audience_type'        => 'organizations',
+        'source_page'          => $source_page,
+        'eyebrow'              => __('Free for programs', 'brave-hearts'),
+        'title'                => __('Send Me the Community Reading Kit', 'brave-hearts'),
+        'text'                 => __('Resources for literacy programs, events, and bulk gifting.', 'brave-hearts'),
+        'submit_label'         => __('Get the Community Reading Kit', 'brave-hearts'),
+        'privacy_text'         => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
+        'trust_text'           => __('Free PDF. No purchase required.', 'brave-hearts'),
+    ]);
+}
+?>
 
 </div>
 <?php get_footer(); ?>

@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.222
+Version: 1.19.223
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5045,6 +5045,81 @@ body:not(.home) .home-hero__eyebrow { margin-top: 0 !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .mariana-popup, .mariana-popup__dialog { transition: none !important; animation: none !important; }
+}
+
+/* ============================================================
+   CTA-TRIGGERED SIGNUP MODAL — variant of the popup system above
+   theme 1.19.223, 2026-08-13, CYCLE158-LD-SIGNUP-POPUP
+   ------------------------------------------------------------
+   Everything above styles this modal already. This block adds ONLY what
+   differs because a visitor OPENED this one on purpose, rather than it
+   opening on them. It is a variant class, so no rule here can reach the
+   teacher popup, the parent popup or the exit-intent popup.
+   ============================================================ */
+
+/* ⭐ STACKING. The base .mariana-popup sits at z-index 2000. Two fixed
+   elements on the funnel pages sit ABOVE that and would otherwise remain
+   interactive through this modal's overlay:
+     - WPConsent's settings gear, a shadow-root child at z-index 9999. The
+       quiz modal already had to be raised to 10000 for exactly this reason
+       (theme 1.19.121, fix E) — same number here, same reason.
+     - the bundle plugin's floating cart button at z-index 99000.
+   Raising only the variant leaves the other three popups untouched. */
+.mariana-popup--signup { z-index: 10000; }
+
+/* The two page-level fixed elements step aside while the dialog is open.
+   `!important` is confined to this state and to elements the theme does not
+   own: the plugin's own stylesheet load order is not guaranteed relative to
+   this one, and audience-landing.js already sets an !important transform on
+   the same button for the same reason. */
+body.bhp-signup-modal-open .bhp-floating-cart {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+body.bhp-signup-modal-open .parent-landing-stickybar,
+body.bhp-signup-modal-open .audience-landing-stickybar {
+  visibility: hidden;
+}
+
+/* Background scroll lock. The dialog is the only scrollable region while
+   open; `.mariana-popup__dialog` already carries `overflow-y: auto`. */
+body.bhp-signup-modal-open { overflow: hidden; }
+
+/* ⭐ MOBILE ON-SCREEN KEYBOARD — the requirement CSS alone cannot satisfy.
+   `inset: 0` sizes the overlay to the LAYOUT viewport, which on iOS Safari
+   does not shrink when the keyboard appears; only the VISUAL viewport does.
+   A dialog centred against the layout viewport is therefore centred against
+   an area whose lower half is behind the keyboard, and the email input the
+   visitor was just asked to type in can sit under it. `100dvh` does not help
+   — the dynamic viewport tracks browser chrome, not the virtual keyboard.
+
+   `assets/js/signup-modal.js` writes the three custom properties below from
+   `window.visualViewport` while the modal is open, and adds
+   `.has-visual-viewport`. Both halves are required, and the class is what
+   makes this inert on any engine without the API: with no class, none of
+   these declarations apply and the modal behaves exactly like every other
+   .mariana-popup does today. */
+.mariana-popup--signup.has-visual-viewport {
+  top: var(--bhp-modal-vv-top, 0px);
+  left: var(--bhp-modal-vv-left, 0px);
+  right: auto;
+  bottom: auto;
+  width: 100vw;
+  height: var(--bhp-modal-vv-height, 100%);
+  align-items: center;
+}
+.mariana-popup--signup.has-visual-viewport .mariana-popup__dialog {
+  /* Measured against the VISIBLE box, so the dialog shrinks and scrolls
+     internally rather than being pushed under the keyboard. */
+  max-height: calc(var(--bhp-modal-vv-height, 100vh) - 2 * var(--space-3));
+}
+
+/* The dialog's own scroll region gets momentum scrolling and stops a
+   scroll-chain from reaching the locked page behind it. */
+.mariana-popup--signup .mariana-popup__dialog {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ============================================================

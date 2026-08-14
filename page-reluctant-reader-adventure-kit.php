@@ -20,12 +20,28 @@
  * bhp_mailchimp_signup), the real Mailchimp tag mapping in functions.php
  * (bhp_mailchimp_signup_tags filter, lead_magnet = 'reluctant_reader_
  * adventure_kit'), and the same thank-you redirect -- nothing here
- * duplicates or forks that wiring. "Get the free chapter" CTAs scroll to
- * the embedded signup panel rather than opening a popup: this page is
- * already excluded from the sitewide parent popup (see
- * bhp_should_show_any_popup()) because it IS the dedicated signup
- * destination, and the funnel-isolation rule in .claude/rules/funnels.md
- * says not to fork mariana-popup.js for a third use.
+ * duplicates or forks that wiring.
+ *
+ * ⭐ CORRECTED 2026-08-13, theme 1.19.223 (`CYCLE158-LD-SIGNUP-POPUP`). The
+ *    superseded sentence here read: *"'Get the free chapter' CTAs scroll to
+ *    the embedded signup panel rather than opening a popup."* It is
+ *    preserved verbatim in this note rather than silently deleted, because
+ *    a reader who finds it elsewhere needs to know it has moved.
+ *
+ *    Those CTAs now OPEN A SIGNUP MODAL with focus in the email field —
+ *    Andrew Signore, current turn, relayed by `chief-of-staff`: "no
+ *    scrolling, immediate capture". See the block above the
+ *    `signup-modal` template part at the foot of this file.
+ *
+ *    THE TWO CLAUSES THAT DID NOT CHANGE, and both still govern:
+ *      - This page is still excluded from the sitewide parent popup by
+ *        `bhp_should_show_any_popup()`, because it IS the dedicated signup
+ *        destination. The new modal is not a lead-magnet popup: it has no
+ *        timer, no scroll trigger and no exit trigger, and opens only on a
+ *        deliberate CTA click.
+ *      - `assets/js/mariana-popup.js` is still not forked. The modal binds
+ *        `[data-bhp-signup-modal]`, that engine binds `[data-bhp-popup]`,
+ *        and no funnel storage prefix or analytics prefix is minted.
  */
 defined('ABSPATH') || exit;
 get_header();
@@ -195,7 +211,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
        */
       ?>
       <div class="parent-landing-hero__ctas">
-        <a class="btn btn-primary" href="#free" data-parent-free-cta data-bhp-event="parent_hero_primary_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Get the free chapter & activity', 'brave-hearts'); ?></a>
+        <a class="btn btn-primary" href="#free" data-parent-free-cta data-bhp-signup-modal-open="adventure-kit-modal" data-bhp-signup-modal-source="hero" data-bhp-event="parent_hero_primary_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Get the free chapter & activity', 'brave-hearts'); ?></a>
       </div>
       <?php
       /*
@@ -775,7 +791,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
     <h2><?php esc_html_e('Tonight’s chapter could be the one that changes how they feel about reading.', 'brave-hearts'); ?></h2>
     <p><?php esc_html_e('Start with one free chapter tonight - or bring home all three adventures at once.', 'brave-hearts'); ?></p>
     <div class="parent-landing-final__ctas">
-      <a class="btn btn-gold" href="#free" data-parent-free-cta data-bhp-event="parent_final_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Get the free chapter & activity', 'brave-hearts'); ?></a>
+      <a class="btn btn-gold" href="#free" data-parent-free-cta data-bhp-signup-modal-open="adventure-kit-modal" data-bhp-signup-modal-source="final_cta" data-bhp-event="parent_final_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Get the free chapter & activity', 'brave-hearts'); ?></a>
       <?php
       /*
        * 2026-08-05 — was `href="#collection"`. The collection section now sits
@@ -801,7 +817,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
   <div class="parent-landing-stickybar__row">
     <span class="parent-landing-stickybar__text"><?php esc_html_e('Free Chapter 7 + explorer activity - no purchase needed.', 'brave-hearts'); ?></span>
     <div class="parent-landing-stickybar__ctas">
-      <a class="btn btn-gold" href="#free" data-parent-free-cta><?php esc_html_e('Get it free', 'brave-hearts'); ?></a>
+      <a class="btn btn-gold" href="#free" data-parent-free-cta data-bhp-signup-modal-open="adventure-kit-modal" data-bhp-signup-modal-source="sticky_bar"><?php esc_html_e('Get it free', 'brave-hearts'); ?></a>
       <?php
       /*
        * 2026-08-05 — the footer-bar "Collection" control Andrew named. Was an
@@ -820,6 +836,53 @@ if (function_exists('bhp_get_amazon_review_registry')) {
     </div>
   </div>
 </div>
+
+<?php
+/*
+ * ===================== CTA-TRIGGERED SIGNUP MODAL =====================
+ * theme 1.19.223, 2026-08-13, `CYCLE158-LD-SIGNUP-POPUP`.
+ *
+ * Every "get the free chapter" CTA on this page now OPENS this dialog with
+ * the caret already in the email field, instead of scrolling the visitor
+ * down to #free. Andrew Signore, current turn, relayed by `chief-of-staff`:
+ * "no scrolling, immediate capture".
+ *
+ * ⛔ THE INLINE #free PANEL ABOVE IS NOT REMOVED AND MUST NOT BE. It is the
+ *    no-JS fallback, it is what the CTAs' `href="#free"` still points at, it
+ *    keeps the `/reluctant-reader-adventure-kit/#free` deep link working,
+ *    and it keeps the capture copy in the indexable page body.
+ *
+ * ⛔ GATED ON THE SAME `$download['ready']` FLAG AS THE PANEL. If the kit PDF
+ *    is ever unset, this modal does not render at all, the CTAs find no
+ *    modal to open, and they fall back to scrolling to the "coming soon"
+ *    block — which is the correct behaviour and is why the JS resolves its
+ *    target before it calls preventDefault().
+ *
+ * ⛔ NOT A LEAD-MAGNET POPUP. It has no timer, no scroll trigger and no exit
+ *    trigger, so it does not reverse the 2026-07-19 one-popup ruling. This
+ *    page is still excluded from the sitewide parent popup by
+ *    `bhp_should_show_any_popup()`, unchanged.
+ *
+ * Copy is reused VERBATIM from the inline panel and the shipped exit-intent
+ * modal — the same offer must not be described in two different ways, and no
+ * new claim, number or duration is introduced here.
+ */
+if ($download['ready']) {
+    get_template_part('template-parts/acquisition/signup-modal', null, [
+        'id'                   => 'adventure-kit-modal',
+        'lead_magnet'          => 'reluctant_reader_adventure_kit',
+        'audience_type'        => 'parents_families',
+        'source_page'          => $source_page,
+        'success_redirect_key' => 'adventure_kit_thank_you',
+        'eyebrow'              => __('Free for parents', 'brave-hearts'),
+        'title'                => __('Send Me the Free Adventure Kit', 'brave-hearts'),
+        'text'                 => __('A free reading adventure with a sample chapter, an explorer activity, and simple ways to make reading feel fun again.', 'brave-hearts'),
+        'submit_label'         => __('Send me the free chapter & activity', 'brave-hearts'),
+        'privacy_text'         => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
+        'trust_text'           => __('Free printable PDF. No purchase required.', 'brave-hearts'),
+    ]);
+}
+?>
 
 </div>
 <?php get_footer(); ?>

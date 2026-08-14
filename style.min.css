@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 01c16fcfc18ef924430d3724347bb048
+    source-md5: 1e76a72749d865b5dcc9adabf45ddf3c
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.222
+Version: 1.19.223
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4178,6 +4178,33 @@ max-width: min(32rem, calc(100vw - 2 * var(--space-3)));
 }
 @media (prefers-reduced-motion: reduce) {
   .mariana-popup, .mariana-popup__dialog { transition: none !important; animation: none !important; }
+}
+.mariana-popup--signup { z-index: 10000; }
+body.bhp-signup-modal-open .bhp-floating-cart {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+body.bhp-signup-modal-open .parent-landing-stickybar,
+body.bhp-signup-modal-open .audience-landing-stickybar {
+  visibility: hidden;
+}
+body.bhp-signup-modal-open { overflow: hidden; }
+.mariana-popup--signup.has-visual-viewport {
+  top: var(--bhp-modal-vv-top, 0px);
+  left: var(--bhp-modal-vv-left, 0px);
+  right: auto;
+  bottom: auto;
+  width: 100vw;
+  height: var(--bhp-modal-vv-height, 100%);
+  align-items: center;
+}
+.mariana-popup--signup.has-visual-viewport .mariana-popup__dialog {
+max-height: calc(var(--bhp-modal-vv-height, 100vh) - 2 * var(--space-3));
+}
+.mariana-popup--signup .mariana-popup__dialog {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 :root {
   --cta-primary-bg: var(--color-forest);

@@ -557,6 +557,43 @@ function bhp_enqueue_parent_landing_assets() {
 add_action('wp_enqueue_scripts', 'bhp_enqueue_parent_landing_assets');
 
 /**
+ * CTA-triggered signup modal (theme 1.19.223, 2026-08-13,
+ * `CYCLE158-LD-SIGNUP-POPUP`). Loaded on exactly the five funnel templates
+ * that render `template-parts/acquisition/signup-modal.php`.
+ *
+ * ⛔ NOT SITEWIDE, DELIBERATELY. The script does nothing at all on a page
+ *    with no `[data-bhp-signup-modal]` element, and shipping it to the cart,
+ *    the checkout or a blog post would put a file on those pages that has no
+ *    business being there — the same reasoning recorded above
+ *    `bhp_enqueue_collection_band_assets()`.
+ *
+ * ⛔ NO STYLESHEET IS ENQUEUED HERE. The modal's CSS lives in `style.css`
+ *    beside the `.mariana-popup` system it is a variant of, so the deploy
+ *    artefact's `*.min.css` file count is unchanged and the RUNBOOK's
+ *    "MUST be 10" assertion still holds.
+ */
+function bhp_enqueue_signup_modal_assets() {
+    $signup_modal_templates = [
+        'page-reluctant-reader-adventure-kit.php',
+        'page-audience-educators.php',
+        'page-audience-gift-buyers.php',
+        'page-audience-retailers.php',
+        'page-audience-organizations.php',
+    ];
+    if (!is_page_template($signup_modal_templates)) {
+        return;
+    }
+    wp_enqueue_script(
+        'bhp-signup-modal',
+        get_template_directory_uri() . '/assets/js/signup-modal.js',
+        [],
+        wp_get_theme()->get('Version'),
+        true
+    );
+}
+add_action('wp_enqueue_scripts', 'bhp_enqueue_signup_modal_assets');
+
+/**
  * Find Your Adventure — audience-routing quiz for organic traffic (Phase
  * 12, 2026-07-17). Registered as a shortcode so it can be placed on any
  * organic-entry page (homepage, resource hub, ambiguous blog posts)

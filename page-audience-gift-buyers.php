@@ -150,7 +150,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
        */
       ?>
       <div class="audience-landing-hero__ctas">
-        <a class="btn btn-primary" href="#free" data-audience-free-cta data-bhp-event="gift_hero_primary_cta_click" data-bhp-source="gift_landing"><?php esc_html_e('Get the Meaningful Gift Guide', 'brave-hearts'); ?></a>
+        <a class="btn btn-primary" href="#free" data-audience-free-cta data-bhp-signup-modal-open="gift-guide-modal" data-bhp-signup-modal-source="hero" data-bhp-event="gift_hero_primary_cta_click" data-bhp-source="gift_landing"><?php esc_html_e('Get the Meaningful Gift Guide', 'brave-hearts'); ?></a>
       </div>
       <?php
       /*
@@ -611,7 +611,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
     <h2><?php esc_html_e('Give a gift they’ll still be talking about next year.', 'brave-hearts'); ?></h2>
     <p><?php esc_html_e('Start with the free gift guide - or give all three adventures at once.', 'brave-hearts'); ?></p>
     <div class="audience-landing-final__ctas">
-      <a class="btn btn-gold" href="#free" data-audience-free-cta data-bhp-event="gift_final_cta_click" data-bhp-source="gift_landing"><?php esc_html_e('Get the Meaningful Gift Guide', 'brave-hearts'); ?></a>
+      <a class="btn btn-gold" href="#free" data-audience-free-cta data-bhp-signup-modal-open="gift-guide-modal" data-bhp-signup-modal-source="final_cta" data-bhp-event="gift_final_cta_click" data-bhp-source="gift_landing"><?php esc_html_e('Get the Meaningful Gift Guide', 'brave-hearts'); ?></a>
       <?php
       /*
        * 2026-08-05 — was `href="#collection"`. The collection section now sits
@@ -637,7 +637,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
   <div class="audience-landing-stickybar__row">
     <span class="audience-landing-stickybar__text"><?php esc_html_e('Free Meaningful Gift Guide - no purchase needed.', 'brave-hearts'); ?></span>
     <div class="audience-landing-stickybar__ctas">
-      <a class="btn btn-gold" href="#free" data-audience-free-cta><?php esc_html_e('Get it free', 'brave-hearts'); ?></a>
+      <a class="btn btn-gold" href="#free" data-audience-free-cta data-bhp-signup-modal-open="gift-guide-modal" data-bhp-signup-modal-source="sticky_bar"><?php esc_html_e('Get it free', 'brave-hearts'); ?></a>
       <?php
       /*
        * 2026-08-05 — the footer-bar "Collection" control Andrew named. Was an
@@ -656,6 +656,54 @@ if (function_exists('bhp_get_amazon_review_registry')) {
     </div>
   </div>
 </div>
+
+<?php
+/*
+ * ===================== CTA-TRIGGERED SIGNUP MODAL =====================
+ * theme 1.19.223, 2026-08-13, `CYCLE158-LD-SIGNUP-POPUP`.
+ *
+ * Every "Get the Meaningful Gift Guide" CTA on this page now OPENS this dialog with the caret
+ * already in the email field, instead of scrolling the visitor down to
+ * #free. Andrew Signore, current turn, relayed by `chief-of-staff`: "no
+ * scrolling, immediate capture".
+ *
+ * THE INLINE #free PANEL ABOVE IS NOT REMOVED AND MUST NOT BE. It is the
+ * no-JS fallback, it is what the CTAs' `href="#free"` still points at, it
+ * keeps the `#free` deep link working, and it keeps the capture copy in the
+ * indexable page body.
+ *
+ * GATED ON THE SAME `$download['ready']` FLAG AS THE PANEL. If the PDF is
+ * ever unset under Settings -> Lead Magnets, this modal does not render at
+ * all, the CTAs find no modal to open, and they fall back to scrolling to
+ * the "coming soon" block -- which is the correct behaviour, and is why the
+ * JS resolves its target BEFORE it calls preventDefault().
+ *
+ * NOT A LEAD-MAGNET POPUP. No timer, no scroll trigger, no exit trigger; it
+ * opens only on a deliberate CTA click, so it does not reverse the
+ * 2026-07-19 one-popup ruling. It renders the SAME signup-form.php handler
+ * with the SAME lead-magnet key, audience type and Mailchimp tags as the
+ * inline panel -- never a fork of that pipeline.
+ *
+ * Copy is reused VERBATIM from the inline panel above. The same offer must
+ * not be described in two different ways, and no new claim, number,
+ * duration or count is introduced here.
+ */
+if ($download['ready']) {
+    get_template_part('template-parts/acquisition/signup-modal', null, [
+        'id'                   => 'gift-guide-modal',
+        'lead_magnet'          => 'meaningful_gift_guide',
+        'audience_type'        => 'gift_buyers',
+        'source_page'          => $source_page,
+        'success_redirect_key' => 'gift_guide_thank_you',
+        'eyebrow'              => __('Free for gift buyers', 'brave-hearts'),
+        'title'                => __('Send Me the Meaningful Gift Guide', 'brave-hearts'),
+        'text'                 => __('A free guide to choosing a gift that sparks curiosity and creates a shared memory.', 'brave-hearts'),
+        'submit_label'         => __('Get the Meaningful Gift Guide', 'brave-hearts'),
+        'privacy_text'         => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
+        'trust_text'           => __('Free printable PDF. No purchase required.', 'brave-hearts'),
+    ]);
+}
+?>
 
 </div>
 <?php get_footer(); ?>
