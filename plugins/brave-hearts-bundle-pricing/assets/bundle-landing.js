@@ -155,6 +155,39 @@
 		render();
 	}
 
+	/**
+	 * ⭐ 1.8.41 (2026-08-14, `CYCLE160-LD-COLLECTION-PRICE-BOX`) — the quiet
+	 *    "Hardcover available" / "Paperback available" control inside the FREE
+	 *    box's price display.
+	 *
+	 * ⛔ IT IS A SEPARATE ATTRIBUTE FROM `data-bhp-format-btn` ON PURPOSE, and
+	 *    the reason is concrete rather than stylistic. Every `[data-bhp-format-
+	 *    btn]` element is (a) enrolled in the radiogroup's arrow-key loop and
+	 *    (b) queried by `syncStickyBar()` as
+	 *    `[data-bhp-format-btn="x"] .bhp-landing-format-btn__price`. Reusing
+	 *    the attribute would put a third element in a two-radio group AND —
+	 *    because this one renders EARLIER in the document than the pills —
+	 *    would make `syncStickyBar()` read a node that has no price child, so
+	 *    the sticky buy bar would silently stop updating its price. Found by
+	 *    reading the two call sites, not by hitting it.
+	 *
+	 * ⛔ NO NEW ANALYTICS EVENT NAME AND NO NEW PREFIX. It pushes the SAME
+	 *    `bundle_format_selected` with the SAME `{ format: … }` payload the
+	 *    pills have pushed since the selector existed, because it does the
+	 *    same thing to the page.
+	 */
+	function initFormatLinks() {
+		qsa('[data-bhp-format-link]').forEach(function (el) {
+			el.addEventListener('click', function (e) {
+				e.preventDefault();
+				var format = el.getAttribute('data-bhp-format-link');
+				if (!format) { return; }
+				setFormat(format);
+				pushEvent('bundle_format_selected', { format: format });
+			});
+		});
+	}
+
 	function initFormatSelector() {
 		var buttons = qsa('[data-bhp-format-btn]');
 		if (!buttons.length) {
@@ -214,6 +247,7 @@
 			return;
 		}
 		initFormatSelector();
+		initFormatLinks();
 		initScrollToCard();
 		initStickyBar();
 		var current = qs('[data-bhp-format-btn][aria-checked="true"]');

@@ -90,6 +90,132 @@ function bhp_bundle_landing_format_copy( $format ) {
 	);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.41 (2026-08-14, `CYCLE160-LD-COLLECTION-PRICE-BOX`) — THE
+ *     COLLECTION PAGE OPENS ON PAPERBACK. IT IS PAGE-SCOPED ON PURPOSE.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-14, as relayed in the build brief (⛔ RELAYED
+ * through `chief-of-staff` (Gandalf); NOT witnessed first-hand by the agent
+ * that wrote this file):
+ *
+ *   "the collection price display goes INSIDE the existing FREE box …
+ *    it shows the paperback collection price with a true strikethrough of
+ *    the sum-of-singles; and clicking the box's CTA must land the visitor
+ *    on the PAPERBACK purchase path (paperback preselected), not hardcover."
+ *
+ * ⛔ `bhp_bundle_default_format()` IS NOT CHANGED AND MUST NOT BE. It still
+ *    returns `'hardcover'` (bundle-data.php, Andrew's 2026-07-30 decision)
+ *    and it is read by SIX surfaces outside this page — `inc/book-formats.php`
+ *    twice, `inc/collection-cta.php`, `template-parts/commerce/format-cards.php`,
+ *    `template-parts/components/complete-collection-feature.php` and
+ *    `bundle-shortcode.php`. Flipping it globally would silently re-default
+ *    every product page and every collection card on the site, which is a
+ *    commercial decision nobody made. The 2026-08-14 instruction names ONE
+ *    page, so the override is scoped to ONE page.
+ *
+ * ⚠ THIS IS NEVERTHELESS A REAL COMMERCIAL MOVEMENT AND IT IS REPORTED AS
+ *   ONE: the default add-to-cart from this page goes from the $48.99
+ *   hardcover collection to the $31.99 paperback collection. Both figures
+ *   are live-verified (staging AND production, 2026-08-14, by WP-CLI). It
+ *   is the founder's own instruction, applied as given; it is flagged for
+ *   his gate rather than presented as a neutral display change.
+ *
+ * ⛔ NO PRICE, DISCOUNT, SHIPPING TIER, COUPON, PRODUCT OR VARIATION RECORD
+ *    IS TOUCHED BY ANY OF THIS. Only which control starts selected.
+ *
+ * @return string 'paperback'|'hardcover'
+ */
+function bhp_bundle_landing_default_format() {
+	/**
+	 * The format the Complete Collection LANDING PAGE opens on.
+	 *
+	 * Deliberately separate from `bhp_bundle_default_format()` so this page
+	 * can lead with paperback without moving any other surface.
+	 *
+	 * @param string $format 'paperback'|'hardcover'.
+	 */
+	$format = (string) apply_filters( 'bhp_bundle_landing_default_format', 'paperback' );
+	return 'hardcover' === $format ? 'hardcover' : 'paperback';
+}
+
+/**
+ * Both formats, the landing page's default first.
+ *
+ * The page-scoped twin of `bhp_bundle_format_order()`, and it exists for the
+ * same reason that one does: the pills, the panels, the price display and the
+ * final CTA must all read ONE source for "which format leads", or the selected
+ * pill and the visible panel drift apart (`C1`, 2026-08-03).
+ *
+ * @return string[]
+ */
+function bhp_bundle_landing_format_order() {
+	$default = bhp_bundle_landing_default_format();
+	return array( $default, 'hardcover' === $default ? 'paperback' : 'hardcover' );
+}
+
+/**
+ * The three numbers the price display prints, READ FROM WOOCOMMERCE.
+ *
+ * ⛔ THE STRIKETHROUGH HAS TO BE TRUE OR IT MUST NOT SHIP. A struck-through
+ *    former price is an FTC-class claim, so the anchor here is the REAL sum
+ *    of buying the three books separately today — `get_price()` on each of
+ *    the three live product records — never a higher invented "list price"
+ *    and never a hardcoded literal.
+ *
+ *    VERIFIED LIVE 2026-08-14 on staging AND production by WP-CLI:
+ *      paperback  11.99 + 11.99 + 11.99 = 35.97, discount 3.98 -> 31.99
+ *      hardcover  17.99 + 17.99 + 17.99 = 53.97, discount 4.98 -> 48.99
+ *
+ * ⛔ IT FAILS CLOSED, TO THE APPROVED CONSTANT, NOT TO A GUESS. If any of the
+ *    three products cannot be resolved or reads a non-positive price, the sum
+ *    falls back to `3 * bhp_bundle_expected_price()` — the same sanity-check
+ *    figure `bundle-data.php` already documents — rather than publishing a
+ *    partial sum, which would understate the strike and turn a true saving
+ *    into a false one.
+ *
+ * ⭐ THE BUNDLE PRICE IS DERIVED, NOT DECLARED. `separate - discount` is
+ *    exactly what `bhp_bundle_apply_discount()` charges the cart, so the page
+ *    and the cart cannot disagree. If Andrew ever re-prices a single title,
+ *    both numbers and the saving follow in the same request.
+ *
+ * @param string $format 'paperback'|'hardcover'.
+ * @return array{separate:float,bundle:float,save:float,live:bool}
+ */
+function bhp_bundle_landing_price_facts( $format ) {
+	$catalog  = bhp_bundle_catalog();
+	$discount = (float) bhp_bundle_rules( $format )[3]['discount'];
+	$sum      = 0.0;
+	$found    = 0;
+
+	if ( isset( $catalog[ $format ] ) && function_exists( 'wc_get_product' ) ) {
+		foreach ( $catalog[ $format ] as $info ) {
+			$product = wc_get_product( (int) $info['product_id'] );
+			if ( ! $product ) {
+				continue;
+			}
+			$price = (float) $product->get_price();
+			if ( $price <= 0 ) {
+				continue;
+			}
+			$sum += $price;
+			$found++;
+		}
+	}
+
+	$live = ( 3 === $found );
+	if ( ! $live ) {
+		$sum = 3 * (float) bhp_bundle_expected_price( $format );
+	}
+
+	return array(
+		'separate' => $sum,
+		'bundle'   => $sum - $discount,
+		'save'     => $discount,
+		'live'     => $live,
+	);
+}
+
 /**
  * F14 / CYCLE142-CX-013 / KNOWN_ISSUES CYCLE141-LD-33 — ONE nonce id, not four.
  *
@@ -330,7 +456,7 @@ function bhp_bundle_render_landing_pricing_card() {
 		<?php /* C1 — same ordering call. These panels are toggled by `hidden`, so
 		         this is a DOM/tab-order alignment with the pills below, not a
 		         visual change: the visible panel is the default either way. */ ?>
-		<?php foreach ( bhp_bundle_format_order() as $format ) : ?>
+		<?php foreach ( bhp_bundle_landing_format_order() as $format ) : ?>
 			<?php bhp_bundle_render_landing_pricing_panel( $format ); ?>
 		<?php endforeach; ?>
 
@@ -345,14 +471,14 @@ function bhp_bundle_render_landing_pricing_card() {
 				 * the first one. Order only; no price, product or default
 				 * SELECTION changes. See bundle-data.php for the full note.
 				 */
-				foreach ( bhp_bundle_format_order() as $format ) :
+				foreach ( bhp_bundle_landing_format_order() as $format ) :
 					$price = bhp_bundle_rules( $format )[3]['discount'];
 					$bundle_price = ( 3 * bhp_bundle_expected_price( $format ) ) - bhp_bundle_rules( $format )[3]['discount'];
 					// 2026-07-30: the initially-selected format now comes from
 					// bhp_bundle_default_format() instead of being hardcoded to
 					// paperback, so the selector, the pricing panel and the final
 					// CTA panel below can never disagree about the default.
-					$is_default = bhp_bundle_default_format() === $format;
+					$is_default = bhp_bundle_landing_default_format() === $format;
 				?>
 				<button
 					type="button"
@@ -536,7 +662,7 @@ function bhp_bundle_render_landing_cold_open() {
 			 *    cannot disagree about whether an item is free.
 			 */
 			$bhp_coldopen_free = array();
-			$bhp_coldopen_ship = bhp_bundle_rules( bhp_bundle_default_format() );
+			$bhp_coldopen_ship = bhp_bundle_rules( bhp_bundle_landing_default_format() );
 			if ( isset( $bhp_coldopen_ship[3]['shipping'] ) && 0.0 === (float) $bhp_coldopen_ship[3]['shipping'] ) {
 				$bhp_coldopen_free[] = 'FREE Shipping on the complete collection';
 			}
@@ -598,7 +724,102 @@ function bhp_bundle_render_landing_cold_open() {
 				<li class="bhp-landing-coldopen__free"><strong><?php echo esc_html( $bhp_coldopen_line ); ?></strong></li>
 			<?php endforeach; ?>
 		</ul>
+		<?php
+		/*
+		 * ⭐ 1.8.41 — THE PRICE, IN THE BOTTOM-RIGHT OF THIS BOX. One block per
+		 *    format; the non-default one carries `hidden` and is swapped by the
+		 *    EXISTING `setFormat()` in `bundle-landing.js`, which already
+		 *    toggles every `[data-bhp-format-panel]` on the page. No new
+		 *    toggling mechanism, no second definition of "the selected format".
+		 */
+		foreach ( bhp_bundle_landing_format_order() as $bhp_coldopen_fmt ) {
+			bhp_bundle_render_landing_coldopen_price( $bhp_coldopen_fmt );
+		}
+		?>
 	</div>
+	<?php
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.41 (2026-08-14, `CYCLE160-LD-COLLECTION-PRICE-BOX`) — THE PRICE
+ *     MOVES INTO THE FREE BOX, BOTTOM-RIGHT, ABOVE THE FOLD.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-14, as relayed in the build brief (⛔ RELAYED
+ * through `chief-of-staff`; NOT witnessed first-hand here): the collection
+ * price display goes INSIDE the existing FREE box, bottom-right region,
+ * above the fold on desktop AND mobile, paperback-first, with a TRUE
+ * strikethrough of the sum-of-singles.
+ *
+ * ⛔ WHY IT HAD TO MOVE, MEASURED RATHER THAN ASSUMED. On staging 1.19.225 /
+ *    1.8.40, 390x844, `window.innerWidth` asserted 390, fresh profile, the
+ *    old price row rendered at y 767-819 — and the WPConsent banner occupies
+ *    y 732-844 on a first visit (it lives in an open shadow root on a 0x0
+ *    host; a light-DOM query misses it, the same trap 1.8.33 and 1.8.40 both
+ *    record). The price was therefore ENTIRELY BEHIND the consent banner for
+ *    every first-time mobile visitor, which is exactly the complaint. The new
+ *    block renders at y 681-711 — above the banner and above the fold.
+ *
+ * ⛔ EVERY NUMBER IS DERIVED, NONE IS TYPED IN. See
+ *    `bhp_bundle_landing_price_facts()`. There is no `$31.99`, `$35.97`,
+ *    `$48.99` or `$53.97` literal anywhere in this function, and
+ *    `tests/test-collection-price-box.php` asserts that there is not.
+ *
+ * ⭐ THE VISIBLE SAVINGS PHRASE IS "Save $X", NOT "save $X buying together",
+ *    AND THAT TRIM IS REPORTED RATHER THAN QUIET. The brief's example wording
+ *    was "e.g."; the longer phrase MEASURED 45px tall at 390 and 360 (it
+ *    wraps) against 25px for the short one, and every pixel above the buy
+ *    button is spent against the 732px consent-banner ceiling described
+ *    above. The "buying together" meaning is not dropped — it is carried by
+ *    the struck sum-of-singles standing immediately beside the bundle price,
+ *    and stated in full in the visually-hidden sentence below, which is what
+ *    a screen reader announces.
+ *
+ * ⛔ THE STRIKE IS A REAL `<s>`, NOT `text-decoration` ON A BARE SPAN, so the
+ *    "this is a former/comparison price" semantic survives CSS being off and
+ *    is present in the accessibility tree rather than only in the paint.
+ *
+ * ⛔ THE ALTERNATE-FORMAT LINE IS QUIET AND CARRIES NO PRICE. Andrew: "a
+ *    quieter 'hardcover available' line (do NOT lead with $48.99)". The
+ *    format pills below the box already print both collection prices; this
+ *    line states availability only.
+ *
+ * @param string $format 'paperback'|'hardcover'.
+ * @return void
+ */
+function bhp_bundle_render_landing_coldopen_price( $format ) {
+	$facts   = bhp_bundle_landing_price_facts( $format );
+	$other   = 'hardcover' === $format ? 'paperback' : 'hardcover';
+	$is_open = bhp_bundle_landing_default_format() === $format;
+
+	$separate = '$' . number_format( $facts['separate'], 2 );
+	$bundle   = '$' . number_format( $facts['bundle'], 2 );
+	$save     = '$' . number_format( $facts['save'], 2 );
+	?>
+	<p class="bhp-landing-coldopen__price" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo $is_open ? '' : 'hidden'; ?>>
+		<span class="screen-reader-text">
+			<?php
+			printf(
+				/* translators: 1: format, 2: sum of the three books bought separately, 3: collection price, 4: amount saved */
+				esc_html__( 'The three %1$s books bought separately cost %2$s. The Complete Collection is %3$s, so you save %4$s buying them together.', 'bhp-bundle-pricing' ),
+				esc_html( $format ),
+				esc_html( $separate ),
+				esc_html( $bundle ),
+				esc_html( $save )
+			);
+			?>
+		</span>
+		<s class="bhp-landing-coldopen__price-was" aria-hidden="true"><?php echo esc_html( $separate ); ?></s>
+		<span class="bhp-landing-coldopen__price-now" aria-hidden="true"><?php echo esc_html( $bundle ); ?></span>
+		<span class="bhp-landing-coldopen__price-save" aria-hidden="true"><?php echo esc_html( 'Save ' . $save ); ?></span>
+		<span class="bhp-landing-coldopen__price-alt">
+			<span aria-hidden="true">&middot;</span>
+			<button type="button" class="bhp-landing-coldopen__price-altbtn" data-bhp-format-link="<?php echo esc_attr( $other ); ?>">
+				<?php echo esc_html( ucfirst( $other ) . ' available' ); ?>
+			</button>
+		</span>
+	</p>
 	<?php
 }
 
@@ -759,7 +980,7 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 	 *    the individual-books exit are all still on the page, once each.
 	 */
 	?>
-	<div class="bhp-landing-panel bhp-landing-panel--compact" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo bhp_bundle_default_format() === $format ? '' : 'hidden'; ?>>
+	<div class="bhp-landing-panel bhp-landing-panel--compact" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo bhp_bundle_landing_default_format() === $format ? '' : 'hidden'; ?>>
 		<h2 class="bhp-landing-panel__title screen-reader-text"><?php echo esc_html( $copy['title'] ); ?></h2>
 
 		<form method="post" class="bhp-bundle-form bhp-landing-panel__form bhp-landing-panel__form--lead">
@@ -771,15 +992,55 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 			</button>
 		</form>
 
-		<dl class="bhp-landing-panel__price-rows bhp-landing-panel__price-rows--compact">
-			<div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--main">
-				<dt>Complete Collection</dt>
-				<dd>
-					<span class="bhp-landing-panel__price-strike">$<?php echo esc_html( number_format( $combined, 2 ) ); ?></span>
-					<?php echo esc_html( '$' . number_format( $bundle_price, 2 ) ); ?>
-				</dd>
-			</div>
-			<?php
+		<?php
+		/*
+		 * ═══════════════════════════════════════════════════════════════
+		 * ⛔⭐ 1.8.41 (2026-08-14, `CYCLE160-LD-COLLECTION-PRICE-BOX`) — THE
+		 *     PRICE ROW AND THE SAVINGS BADGE ARE GONE FROM THIS BOX. THEY
+		 *     ARE NOT DELETED FROM THE PAGE — THEY MOVED UP, INTO THE FREE
+		 *     BOX, ABOVE THE FOLD, WHICH IS WHERE ANDREW ASKED FOR THEM.
+		 * ═══════════════════════════════════════════════════════════════
+		 *
+		 * The superseded markup, preserved verbatim so the movement is
+		 * visible and is not re-derived:
+		 *
+		 *   <dl class="bhp-landing-panel__price-rows bhp-landing-panel__price-rows--compact">
+		 *     <div class="bhp-landing-panel__price-row bhp-landing-panel__price-row--main">
+		 *       <dt>Complete Collection</dt>
+		 *       <dd>
+		 *         <span class="bhp-landing-panel__price-strike">$<?php echo esc_html( number_format( $combined, 2 ) ); ?></span>
+		 *         <?php echo esc_html( '$' . number_format( $bundle_price, 2 ) ); ?>
+		 *       </dd>
+		 *     </div>
+		 *   </dl>
+		 *   …and, in the savings block below:
+		 *   <span class="bhp-landing-panel__savings-badge"><?php echo esc_html( $rule['save'] ); ?></span>
+		 *
+		 * ⛔ WHY IT IS A DE-DUPLICATION AND NOT A RETRACTION. After 1.8.41
+		 *    the SAME three numbers — the struck sum-of-singles, the
+		 *    collection price and the saving — render in
+		 *    `bhp_bundle_render_landing_coldopen_price()`, roughly 60px
+		 *    ABOVE this point and above both the fold and the consent
+		 *    banner. Leaving these rows in place would restate all three
+		 *    inside the same card, which is the exact defect 1.8.39
+		 *    removed from this same box ("the one a visitor reads as filler
+		 *    between the price and the button").
+		 *
+		 * ⛔ NOTHING FACTUAL LEAVES THE PAGE. Price, strike, saving: above.
+		 *    Ages line: still here. Titles, binding subtitle, fine print,
+		 *    individual-books exit: all still here, once each. The
+		 *    format pills below still print BOTH collection prices, and
+		 *    `bhp_bundle_render_landing_value_comparison()` still prints the
+		 *    full combined-vs-bundle table for both formats.
+		 *
+		 * ⚠ `$combined` and `$bundle_price` remain computed above and are
+		 *   deliberately left in place: they are what the two test suites
+		 *   compare the cold-open block's numbers against, and removing
+		 *   them would make a future reader think the panel never knew the
+		 *   price.
+		 */
+		?>
+		<?php
 			/*
 			 * ═══════════════════════════════════════════════════════════
 			 * ⛔⭐ 1.8.39 (2026-08-12, `CYCLE154-LD-COLLECTION-TRIM`) — THE
@@ -842,10 +1103,8 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 			 *    and keeps the 1.8.32 treatment recoverable verbatim.
 			 */
 			?>
-		</dl>
 
 		<div class="bhp-landing-panel__savings">
-			<span class="bhp-landing-panel__savings-badge"><?php echo esc_html( $rule['save'] ); ?></span>
 			<span class="bhp-landing-panel__ages">Ages 6&ndash;9</span>
 		</div>
 
@@ -1215,7 +1474,7 @@ function bhp_bundle_render_landing_gift_section() {
  * The label carries the live price so the bar is an offer, not a nag.
  */
 function bhp_bundle_render_landing_sticky_bar() {
-	$default = bhp_bundle_default_format();
+	$default = bhp_bundle_landing_default_format();
 	$rule    = bhp_bundle_rules( $default )[3];
 	$price   = ( 3 * bhp_bundle_expected_price( $default ) ) - $rule['discount'];
 	?>
@@ -1247,13 +1506,13 @@ function bhp_bundle_render_landing_final_cta() {
 			<p>Choose paperback or hardcover and bring home the complete Adventures of Charlotte and Henry collection.</p>
 
 			<?php /* C1 — same ordering call, same reasoning as the pricing panels. */ ?>
-			<?php foreach ( bhp_bundle_format_order() as $format ) :
+			<?php foreach ( bhp_bundle_landing_format_order() as $format ) :
 				$copy   = bhp_bundle_landing_format_copy( $format );
 				$rule   = bhp_bundle_rules( $format )[3];
 				$price  = ( 3 * bhp_bundle_expected_price( $format ) ) - $rule['discount'];
 				$action = 'complete_' . $format . '_smart';
 			?>
-				<div class="bhp-landing-final__panel" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo bhp_bundle_default_format() === $format ? '' : 'hidden'; ?>>
+				<div class="bhp-landing-final__panel" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo bhp_bundle_landing_default_format() === $format ? '' : 'hidden'; ?>>
 					<form method="post" class="bhp-bundle-form">
 						<?php bhp_bundle_nonce_input(); ?>
 						<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( $action ); ?>" />

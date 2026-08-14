@@ -1072,3 +1072,142 @@
 	.bhp-landing-gift { margin-top: 3.125rem; }         /* 50px; was 40px */
 	.bhp-landing-final { margin-top: 3.125rem; }        /* 50px; was 40px */
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.8.41 (2026-08-14) — THE COLLECTION PRICE, IN THE BOTTOM-RIGHT
+       OF THE FREE BOX. `CYCLE160-LD-COLLECTION-PRICE-BOX`.
+   ------------------------------------------------------------------
+   Andrew Signore, 2026-08-14, as relayed in the build brief (⛔ RELAYED
+   through `chief-of-staff`; NOT witnessed first-hand): the price display
+   goes INSIDE the existing FREE box, bottom-right region, above the fold
+   on desktop AND mobile, paperback-first, with a true strikethrough of
+   the sum-of-singles.
+
+   ── THE HEIGHT BUDGET, AND WHY EVERY DECLARATION HERE IS TIGHT ──────
+   MEASURED FIRST on the deployed 1.19.225/1.8.40 build, staging, fresh
+   profile, `window.innerWidth` asserted, 2026-08-14:
+
+       390x844   purchase card top 412 · buy button 684-738
+                 WPConsent banner 732-844  (open shadow root, 0x0 host)
+       360x740   purchase card top 412 · buy button 738-792
+                 WPConsent banner 628-740
+
+   ⛔⛔ THE MOBILE CEILING IS THE CONSENT BANNER, NOT THE FOLD. On a first
+       visit at 390 the visible page ends at y=732, not 844. The OLD price
+       row rendered at 767-819 — entirely behind the banner — which is
+       exactly the "hidden below the fold" the founder reported. There are
+       therefore only a handful of spare pixels above the button, and the
+       whole reason this block is one flex ROW rather than a stacked
+       two-line card is that the stacked form MEASURED 50px and this one
+       measures 25px.
+
+   ⛔ THE SAVINGS PHRASE IS SHORT FOR THE SAME REASON, and it was measured
+      rather than guessed. At 390 and 360, "Save $3.98 buying together"
+      wraps and costs 45px; "Save $3.98" stays on one line at 25px. The
+      comparison meaning is carried by the struck sum-of-singles sitting
+      immediately beside the bundle price, and stated in full in the
+      visually-hidden sentence the markup emits for screen readers.
+
+   ⛔ `justify-content: flex-end` IS THE "bottom-right region" — the block
+      is the last child of `.bhp-landing-coldopen` and its content is
+      right-aligned, so it lands in the corner of the FREE box, opposite
+      the check-marked offer bullets.
+
+   ⛔ NO COLOUR, TOKEN OR FACE IS INVENTED. `--bl-text-light`,
+      `--bl-forest`, `--bl-gold-dark`, `--bl-serif` and `--bl-sans` are
+      the same tokens the price row it replaces used, so the treatment is
+      recognisably the same price, moved.
+   ══════════════════════════════════════════════════════════════════ */
+.bhp-landing-coldopen__price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: flex-end;
+	column-gap: .35rem;
+	row-gap: 0;
+	margin: .3rem 0 0;
+	text-align: right;
+}
+/* A real <s>, so the comparison survives CSS being off; the rule only
+   restates the element's own default so the intent is explicit. */
+.bhp-landing-coldopen__price-was {
+	font-family: var(--bl-sans);
+	font-size: .8rem;
+	font-weight: 600;
+	color: var(--bl-text-light);
+	text-decoration: line-through;
+}
+.bhp-landing-coldopen__price-now {
+	font-family: var(--bl-serif);
+	font-size: 1.3rem;
+	font-weight: 700;
+	line-height: 1.15;
+	color: var(--bl-forest);
+}
+.bhp-landing-coldopen__price-save {
+	font-family: var(--bl-sans);
+	font-size: .72rem;
+	font-weight: 800;
+	color: var(--bl-gold-dark);
+}
+.bhp-landing-coldopen__price-alt {
+	font-family: var(--bl-sans);
+	font-size: .72rem;
+	font-weight: 600;
+	color: var(--bl-text-light);
+}
+/* The quiet alternate-format control is a real <button>, not a styled
+   span: it changes page state, so it has to be reachable by keyboard and
+   announced as a control. It carries NO price — Andrew: "do NOT lead with
+   $48.99". The pills below print both collection prices already. */
+.bhp-landing-coldopen__price-altbtn {
+	appearance: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	cursor: pointer;
+}
+.bhp-landing-coldopen__price-altbtn:hover,
+.bhp-landing-coldopen__price-altbtn:focus-visible {
+	color: var(--bl-forest);
+}
+.bhp-landing-coldopen__price-altbtn:focus-visible {
+	outline: 2px solid var(--bl-forest-mid);
+	outline-offset: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ⚠ 380px AND NARROWER — TWO PRE-EXISTING WRAPS, FIXED IN PASSING.
+   ------------------------------------------------------------------
+   These are NOT new defects and they are NOT caused by the price block.
+   `bundle-landing.css`'s own 1.8.40 banner already records that "At
+   360x800 the BEST VALUE badge and the ages line each wrap to a second
+   line" and files it as an unresolved finding.
+
+   MEASURED on 1.19.225/1.8.40, staging, 2026-08-14, `innerWidth`
+   asserted 360: the badge rendered 45px (2 lines, 26px at 390) and the
+   cold-open subhead rendered 40px (2 lines, 20px at 390) — 39px of pure
+   wrap, spent above the buy button, on the narrowest common phone.
+
+   Reclaiming those 39px is what lets the price block sit ABOVE the 740
+   fold at 360x740 instead of 40px below it. Nothing above 380px is
+   touched: at 390 neither element wraps, so neither rule can fire, and
+   1440/1366 are byte-unaffected.
+
+   ⛔ COPY IS UNTOUCHED. Not one word, capital or claim changes here —
+      these are two font-size/tracking values inside one media query.
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 380px) {
+	.bhp-landing-card__badge {
+		font-size: .62rem;
+		letter-spacing: .06em;
+	}
+	.bhp-landing-coldopen__subhead {
+		font-size: .7rem;
+	}
+}

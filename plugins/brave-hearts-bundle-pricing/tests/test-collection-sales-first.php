@@ -262,12 +262,43 @@ if ( function_exists( 'bhp_bundle_addon_free_with_collection' ) && bhp_bundle_ad
 /*
  * ⭐ AND THE PRICE BOX STILL CARRIES WHAT THE TRIM PROMISED TO KEEP.
  */
+/*
+ * ⛔⭐ UPDATED 1.8.41 (2026-08-14, `CYCLE160-LD-COLLECTION-PRICE-BOX`).
+ *     The superseded assertion, preserved verbatim:
+ *
+ *       strpos( $html, '<dt>Complete Collection</dt>' ) !== false
+ *       && strpos( $html, 'bhp-landing-panel__price-strike' ) !== false
+ *       && strpos( $html, 'bhp-landing-panel__savings-badge' ) !== false
+ *       && strpos( $html, 'bhp-landing-panel__ages' ) !== false
+ *
+ *     The price, the strike-through and the saving did not leave the page —
+ *     they moved UP, into the FREE box above the buy button, on Andrew's
+ *     2026-08-14 instruction. The ages line stayed where it was. This
+ *     asserts the same four things at their current locations.
+ */
 bhp_csf_assert(
-	strpos( $html, '<dt>Complete Collection</dt>' ) !== false
-	&& strpos( $html, 'bhp-landing-panel__price-strike' ) !== false
-	&& strpos( $html, 'bhp-landing-panel__savings-badge' ) !== false
+	strpos( $html, 'bhp-landing-coldopen__price-now' ) !== false
+	&& strpos( $html, '<s class="bhp-landing-coldopen__price-was"' ) !== false
+	&& strpos( $html, 'bhp-landing-coldopen__price-save' ) !== false
 	&& strpos( $html, 'bhp-landing-panel__ages' ) !== false,
-	'2: the price box keeps its price, strike-through, savings badge and ages line',
+	'2: the card keeps its price, strike-through, savings figure and ages line',
+	$failures
+);
+/*
+ * ⭐ AND THE PAPERBACK-FIRST RULING IS ASSERTED HERE, not just documented.
+ *    Andrew, 2026-08-14: the box CTA must land the visitor on the PAPERBACK
+ *    purchase path. ⛔ RELAYED through `chief-of-staff`; NOT witnessed here.
+ */
+bhp_csf_assert(
+	function_exists( 'bhp_bundle_landing_default_format' )
+	&& 'paperback' === bhp_bundle_landing_default_format(),
+	'2: the collection landing page opens on PAPERBACK',
+	$failures
+);
+bhp_csf_assert(
+	function_exists( 'bhp_bundle_default_format' )
+	&& 'hardcover' === bhp_bundle_default_format(),
+	'2: the SITEWIDE default format is still hardcover (page-scoped override only)',
 	$failures
 );
 

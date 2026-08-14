@@ -514,28 +514,75 @@ bhp_cct_assert(
  *    half of "TRIM C" a source diff proves badly: the brief was explicit
  *    that the box keeps price, strike-through, savings and ages.
  */
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⭐ UPDATED 1.8.41 / theme 1.19.226 (2026-08-14,
+ *     `CYCLE160-LD-COLLECTION-PRICE-BOX`) — THESE THREE ASSERTIONS NOW
+ *     POINT AT THE COLD-OPEN PRICE BLOCK. THE GUARANTEE IS UNCHANGED AND
+ *     THE GUARD IS STRICTER, NOT WEAKER.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * The superseded assertions, preserved verbatim so the movement is visible
+ * and so nobody re-derives them as a regression:
+ *
+ *   substr_count( $html, 'bhp-landing-panel__price-row--main' ) >= 1
+ *     && strpos( $html, '<dt>Complete Collection</dt>' ) !== false
+ *   strpos( $html, 'bhp-landing-panel__price-strike' ) !== false
+ *   strpos( $html, 'bhp-landing-panel__savings-badge' ) !== false
+ *     && strpos( $html, 'bhp-landing-panel__ages' ) !== false
+ *
+ * ⛔ WHAT MOVED: the price row and the savings badge left the purchase
+ *    panel (which sits BELOW the buy button, and below the WPConsent
+ *    banner on a first mobile visit) and now render inside the FREE box
+ *    ABOVE the button, where Andrew asked for them on 2026-08-14.
+ *
+ * ⛔ WHAT IS STRICTER: the old form only asked that a strike-through class
+ *    existed SOMEWHERE. These ask that the struck figure equals the REAL
+ *    sum of the three live product prices and that the collection figure
+ *    equals that sum minus the live discount — i.e. that the comparison is
+ *    TRUE, not merely present. The ages line is still asserted.
+ */
 bhp_cct_assert(
-	substr_count( $html, 'bhp-landing-panel__price-row--main' ) >= 1
-	&& strpos( $html, '<dt>Complete Collection</dt>' ) !== false,
-	'5: the Complete Collection price row survives the trim',
+	substr_count( $html, 'class="bhp-landing-coldopen__price"' ) === 2,
+	'5: the cold-open price block renders exactly twice (one per format)',
 	$failures
 );
 bhp_cct_assert(
-	strpos( $html, 'bhp-landing-panel__price-strike' ) !== false,
-	'5: the struck-through combined price survives the trim',
+	strpos( $html, 'bhp-landing-coldopen__price-was' ) !== false
+	&& strpos( $html, '<s class="bhp-landing-coldopen__price-was"' ) !== false,
+	'5: the struck-through sum-of-singles is a real <s>, in the cold-open block',
 	$failures
 );
 bhp_cct_assert(
-	strpos( $html, 'bhp-landing-panel__savings-badge' ) !== false
+	strpos( $html, 'bhp-landing-coldopen__price-save' ) !== false
 	&& strpos( $html, 'bhp-landing-panel__ages' ) !== false,
-	'5: the savings badge and the ages line survive the trim',
+	'5: the savings figure moved to the cold-open block and the ages line stayed',
+	$failures
+);
+bhp_cct_assert(
+	strpos( $html, 'bhp-landing-panel__price-row--main' ) === false
+	&& strpos( $html, 'bhp-landing-panel__savings-badge' ) === false,
+	'5: the purchase panel no longer restates the price or the saving (de-duplication)',
 	$failures
 );
 foreach ( array( 'paperback', 'hardcover' ) as $cct_fmt ) {
-	$cct_rule = bhp_bundle_rules( $cct_fmt )[3];
+	$cct_facts = bhp_bundle_landing_price_facts( $cct_fmt );
+	$cct_sep   = '$' . number_format( $cct_facts['separate'], 2 );
+	$cct_bun   = '$' . number_format( $cct_facts['bundle'], 2 );
+	$cct_sav   = '$' . number_format( $cct_facts['save'], 2 );
 	bhp_cct_assert(
-		strpos( $html, $cct_rule['save'] ) !== false,
-		"5: the {$cct_fmt} savings figure (\"{$cct_rule['save']}\") is still printed",
+		strpos( $html, '<s class="bhp-landing-coldopen__price-was" aria-hidden="true">' . $cct_sep . '</s>' ) !== false,
+		"5: the {$cct_fmt} strike-through is the REAL sum of singles ({$cct_sep})",
+		$failures
+	);
+	bhp_cct_assert(
+		strpos( $html, '>' . $cct_bun . '</span>' ) !== false,
+		"5: the {$cct_fmt} collection price ({$cct_bun}) is printed",
+		$failures
+	);
+	bhp_cct_assert(
+		strpos( $html, 'Save ' . $cct_sav ) !== false,
+		"5: the {$cct_fmt} savings figure (\"Save {$cct_sav}\") is still printed",
 		$failures
 	);
 }
