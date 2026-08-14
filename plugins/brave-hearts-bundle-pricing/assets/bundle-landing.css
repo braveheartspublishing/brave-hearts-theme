@@ -1139,9 +1139,14 @@
 }
 .bhp-landing-coldopen__price-now {
 	font-family: var(--bl-serif);
-	font-size: 1.3rem;
+	/* 2026-08-14 Andrew, current-turn: "and the price should be much bigger".
+	   1.3rem -> 1.9rem. Applied by Gandalf in the FD-304 review pass (the
+	   ruling arrived after iteration 2 was dispatched). line-height trimmed
+	   so the taller glyphs cost the fold as little as possible; the 390x844
+	   button-vs-banner clearance was re-measured after this change. */
+	font-size: 1.9rem;
 	font-weight: 700;
-	line-height: 1.15;
+	line-height: 1.05;
 	color: var(--bl-forest);
 }
 .bhp-landing-coldopen__price-save {
