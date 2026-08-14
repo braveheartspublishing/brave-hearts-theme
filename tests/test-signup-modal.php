@@ -735,10 +735,17 @@ bhp_sm_assert(
 	'12: the controller warms the cover on first intent, not on page load',
 	$failures
 );
+/*
+ * ⚠️ RENAMED IN 1.19.225. This assertion named `ensureSubmitVisible` until
+ *    iteration 3 replaced it with `ensureCaptureVisible()`, which anchors on
+ *    the email field AND the submit button rather than the button alone. The
+ *    guarantee being asserted is unchanged: when the visible box is short, the
+ *    DIALOG's own scroll region moves so the capture controls stay reachable.
+ */
 bhp_sm_assert(
-	strpos( $bhp_sm_modal_js, 'ensureSubmitVisible' ) !== false
+	strpos( $bhp_sm_modal_js, 'ensureCaptureVisible' ) !== false
 		&& strpos( $bhp_sm_modal_js, 'dialog.scrollTop' ) !== false,
-	'12: the controller keeps the submit button in view when the visible box is short',
+	'12: the controller keeps the capture controls in view when the visible box is short',
 	$failures
 );
 /*
@@ -841,6 +848,171 @@ foreach ( preg_split( '/\R/', (string) $bhp_sm_block_12 ) as $line ) {
 bhp_sm_assert(
 	empty( $bhp_sm_unscoped ),
 	'12: every selector in the signup block is scoped to the variant (' . ( $bhp_sm_unscoped ? implode( ' | ', $bhp_sm_unscoped ) : 'all scoped' ) . ')',
+	$failures
+);
+
+/* ============================================================================
+ * 13. ITERATION 3 (theme 1.19.225) — NO AUTOFOCUS ON A COARSE POINTER
+ * ----------------------------------------------------------------------------
+ * ⛔ WHAT THIS SECTION CAN AND CANNOT PROVE, STATED BEFORE THE ASSERTIONS.
+ *    Everything here is STATIC ANALYSIS of the shipped controller. It proves
+ *    the predicate exists, that it is capability detection rather than
+ *    user-agent sniffing, that the two focus targets are wired, and that the
+ *    scroll adjustment is gated. It proves NOTHING about what iOS Safari does
+ *    on real hardware — no PHP assertion can, and the iteration-2 failure was
+ *    precisely a case where a green synthetic result stood in for a device
+ *    that had not been tested. The device evidence is Andrew's own re-test and
+ *    lives in the QA packet, not here.
+ * ========================================================================== */
+echo "\n=== 13. Coarse-pointer devices are not autofocused (1.19.225) ===\n";
+
+// The predicate itself, and the ONE media feature it is allowed to use.
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'hasCoarsePointer' ) !== false,
+	'13: the controller defines a pointer-capability predicate',
+	$failures
+);
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, "matchMedia('(any-pointer: coarse)')" ) !== false,
+	'13: the predicate is (any-pointer: coarse) — so a hybrid touch laptop gets the safe path',
+	$failures
+);
+/*
+ * `(pointer: coarse)` describes only the PRIMARY device and would autofocus a
+ * touchscreen laptop. If a future pass swaps the query, this fails loudly.
+ */
+bhp_sm_assert(
+	false === strpos( $bhp_sm_modal_js, "matchMedia('(pointer: coarse)')" ),
+	'13: the narrower (pointer: coarse) query is NOT used — hybrids must not be autofocused',
+	$failures
+);
+// The unparseable-query fallback, so an engine without the feature is not
+// silently treated as a desktop.
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, "mq.media !== 'not all'" ) !== false
+		&& strpos( $bhp_sm_modal_js, 'maxTouchPoints' ) !== false,
+	'13: an engine that cannot parse the query falls back to touch-point detection, not to autofocus',
+	$failures
+);
+
+/*
+ * ⛔ NO USER-AGENT SNIFFING, AT ALL. The brief required capability detection.
+ *    These tokens must never appear in this controller.
+ */
+foreach ( array( 'userAgent', 'navigator.platform', 'iPhone', 'iPad', 'Android', 'vendor' ) as $needle ) {
+	bhp_sm_assert(
+		false === stripos( $bhp_sm_modal_js, $needle ),
+		"13: no user-agent sniffing — \"{$needle}\" does not appear in the controller",
+		$failures
+	);
+}
+
+// The two focus targets, and the dialog's tabindex that makes one of them work.
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'var coarse = hasCoarsePointer();' ) !== false
+		&& strpos( $bhp_sm_modal_js, 'var target = coarse ? dialog :' ) !== false,
+	'13: open() sends focus to the dialog on a coarse pointer and to the email input otherwise',
+	$failures
+);
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_php, 'tabindex="-1"' ) !== false,
+	'13: the dialog still carries tabindex="-1" — the coarse-pointer focus target is load-bearing',
+	$failures
+);
+
+/*
+ * The focus trap must hold when initial focus is the CONTAINER. Before 1.19.225
+ * SHIFT+Tab from a container-focused dialog walked backwards into the page.
+ */
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'active === dialog || focusable.indexOf(active) === -1' ) !== false,
+	'13: the trap catches Tab and Shift+Tab from the dialog container itself',
+	$failures
+);
+// Focus return on close is unchanged and still asserted from this section too.
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'lastFocused.focus' ) !== false,
+	'13: focus still returns to the triggering CTA on close',
+	$failures
+);
+
+/*
+ * ⭐ THE GATE THAT PREVENTS THE PHOTOGRAPHED DEFECT. The scroll adjustment must
+ *    run ONLY while a field inside the dialog holds focus. Ungated, it scrolls
+ *    a freshly-opened modal down to the subscribe button and clips the eyebrow,
+ *    the headline and the cover out of the dialog's visible region — which is
+ *    exactly what Andrew's iPhone screenshot shows.
+ */
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'aFieldIsFocused' ) !== false
+		&& strpos( $bhp_sm_modal_js, 'if (!isOpen || !aFieldIsFocused())' ) !== false,
+	'13: the capture-visibility scroll runs only while a field is focused (never on a keyboard-less open)',
+	$failures
+);
+// It anchors on the email field AND the submit button, not the button alone.
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'var topAnchor = emailInput || submitBtn;' ) !== false
+		&& strpos( $bhp_sm_modal_js, 'var bottomAnchor = submitBtn || emailInput;' ) !== false,
+	'13: both the email input and the submit button are kept above the keyboard',
+	$failures
+);
+// And it is scheduled after the browser's own scroll-into-view pass.
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'scheduleCaptureCheck' ) !== false
+		&& strpos( $bhp_sm_modal_js, 'requestAnimationFrame' ) !== false,
+	'13: the adjustment is scheduled after the browser settles, so it cannot fight iOS',
+	$failures
+);
+// The dialog must stay scrollable within itself while the keyboard is up.
+bhp_sm_assert(
+	strpos( $bhp_sm_style, '.mariana-popup__dialog {' ) !== false
+		&& preg_match( '/\.mariana-popup__dialog\s*\{[^}]*overflow-y:\s*auto/s', $bhp_sm_style ),
+	'13: the dialog keeps its own scroll region, so top content stays reachable with the keyboard up',
+	$failures
+);
+
+/*
+ * ⛔ ANALYTICS: NO NEW EVENT NAME. Iteration 3 distinguishes the two focus
+ *    behaviours INSIDE the event that already shipped.
+ */
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, "pushEvent('signup_modal_opened'" ) !== false
+		&& strpos( $bhp_sm_modal_js, 'initial_focus: initialFocus' ) !== false,
+	'13: autofocus vs not is reported as a param of signup_modal_opened, not as a new event',
+	$failures
+);
+$bhp_sm_event_names = array();
+if ( preg_match_all( "/pushEvent\('([a-z_]+)'/", $bhp_sm_modal_js, $bhp_sm_ev ) ) {
+	$bhp_sm_event_names = array_values( array_unique( $bhp_sm_ev[1] ) );
+}
+sort( $bhp_sm_event_names );
+bhp_sm_assert(
+	array( 'signup_modal_closed', 'signup_modal_opened', 'signup_modal_submit' ) === $bhp_sm_event_names,
+	'13: the controller still emits exactly three events (' . implode( ', ', $bhp_sm_event_names ) . ')',
+	$failures
+);
+
+/*
+ * ⭐ FOUNDER RULING 2026-08-13 — the gift guide's canonical name.
+ *    The cover ARTWORK is unchanged ("Leave it"), the PDF is unchanged, and
+ *    the asset filename still names the source artefact. Only the alt text
+ *    moved to the canonical name.
+ */
+$bhp_sm_gift_cover = function_exists( 'bhp_get_lead_magnet_cover' ) ? bhp_get_lead_magnet_cover( 'meaningful_gift_guide' ) : array();
+bhp_sm_assert(
+	isset( $bhp_sm_gift_cover['alt'] ) && 'Front cover of The Meaningful Gift Guide' === $bhp_sm_gift_cover['alt'],
+	'13: the gift guide cover alt text uses the canonical name ("' . ( isset( $bhp_sm_gift_cover['alt'] ) ? $bhp_sm_gift_cover['alt'] : 'MISSING' ) . '")',
+	$failures
+);
+bhp_sm_assert(
+	false === strpos( $bhp_sm_functions, 'The Ultimate Children' ),
+	'13: no "Ultimate" title string remains in the cover registry',
+	$failures
+);
+// The artwork itself is untouched — same two files, same slug.
+bhp_sm_assert(
+	isset( $bhp_sm_gift_cover['url'] ) && false !== strpos( $bhp_sm_gift_cover['url'], 'ultimate-gift-guide-cover.webp' ),
+	'13: the cover ARTWORK and its filename are unchanged — the founder ruled "leave it"',
 	$failures
 );
 

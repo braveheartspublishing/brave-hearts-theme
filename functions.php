@@ -1843,11 +1843,41 @@ function bhp_get_lead_magnets() {
  *    is deliberately no entry for it below. An absent cover returns an empty
  *    array and the caller renders no image — never a placeholder.
  *
- * The alt text names what is PRINTED ON THE COVER, which is not always the
- * site-facing title of the magnet (the gift guide's cover reads "The Ultimate
- * Children's Book Gift Guide"; the site calls it "The Meaningful Gift Guide").
- * Alt text describes the image, so the printed title is the honest value; the
- * divergence is a copy question for Andrew, not something to paper over here.
+ * ⭐ THE ALT TEXT NAMES THE DOCUMENT BY ITS CANONICAL NAME — CORRECTED
+ *    2026-08-13 (1.19.225) BY A FOUNDER RULING, AND THE SUPERSEDED REASONING
+ *    IS PRESERVED HERE RATHER THAN DELETED.
+ *
+ *    WHAT THIS DOCBLOCK SAID IN 1.19.224, verbatim: "The alt text names what
+ *    is PRINTED ON THE COVER, which is not always the site-facing title of the
+ *    magnet (the gift guide's cover reads 'The Ultimate Children's Book Gift
+ *    Guide'; the site calls it 'The Meaningful Gift Guide'). Alt text
+ *    describes the image, so the printed title is the honest value; the
+ *    divergence is a copy question for Andrew, not something to paper over
+ *    here."
+ *
+ *    That flagged the divergence to Andrew, which was the right move. ⭐ HE
+ *    RULED ON IT, 2026-08-13: the canonical name of this lead magnet is
+ *    **"The Meaningful Gift Guide"**, and the alt text is to read "Front cover
+ *    of The Meaningful Gift Guide". So the value below is now the canonical
+ *    name, not the string printed on the artwork.
+ *
+ * ⛔ NOTHING ELSE MOVED, AND THE OMISSIONS ARE DELIBERATE. The PDF is not
+ *    touched. The cover ARTWORK is not touched — Andrew's ruling in the same
+ *    turn was "Leave it", so the rendered image still reads "The Ultimate
+ *    Children's Book Gift Guide" and that is approved, not an oversight. The
+ *    asset FILENAME stays `ultimate-gift-guide-cover.*`: it names the source
+ *    artefact, it is not visitor-facing, and renaming two shipped binaries to
+ *    match a copy decision would risk a broken image on staging to change a
+ *    string nobody reads. The gift-buyers page's own pre-existing copy, alt
+ *    text and 2026-07-17 comment are outside this release's scope and were
+ *    not edited.
+ *
+ * ⚠️ CONSEQUENCE, STATED PLAINLY: the alt text now differs from the words
+ *    visible in the image. That is the founder's call on his own product's
+ *    name, and it is recorded here so a future session does not "fix" it back.
+ *
+ * The alt text for the other three magnets is unchanged and still matches
+ * both their cover art and their site-facing names.
  *
  * @param string $magnet_key Lead-magnet registry key.
  * @return array{url:string,fallback:string,width:int,height:int,alt:string}|array{}
@@ -1863,8 +1893,11 @@ function bhp_get_lead_magnet_cover($magnet_key) {
             'title' => __('The Adventure Learning Toolkit', 'brave-hearts'),
         ],
         'meaningful_gift_guide' => [
+            // Founder ruling 2026-08-13: the canonical name is "The Meaningful
+            // Gift Guide". The FILE key still names the source artefact; only
+            // the visitor-facing title changed. See the docblock above.
             'file'  => 'ultimate-gift-guide-cover',
-            'title' => __('The Ultimate Children\'s Book Gift Guide', 'brave-hearts'),
+            'title' => __('The Meaningful Gift Guide', 'brave-hearts'),
         ],
         'community_reading_kit' => [
             'file'  => 'community-reading-kit-cover',
