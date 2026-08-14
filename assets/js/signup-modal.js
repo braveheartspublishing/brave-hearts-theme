@@ -354,16 +354,16 @@
      */
     function ensureCaptureVisible() {
       if (!isOpen || !aFieldIsFocused()) {
-        return;
+        return false;
       }
       if (dialog.scrollHeight <= dialog.clientHeight + 1) {
-        return;
+        return false;
       }
 
       var topAnchor = emailInput || submitBtn;
       var bottomAnchor = submitBtn || emailInput;
       if (!topAnchor || !bottomAnchor) {
-        return;
+        return false;
       }
 
       var PAD_TOP = 8;
@@ -383,37 +383,69 @@
         var offset = topBox.top - (box.top + PAD_TOP);
         if (Math.abs(offset) > DEAD_BAND) {
           dialog.scrollTop += offset;
+          return true;
         }
-        return;
+        return false;
       }
 
       var below = bottomBox.bottom - (box.bottom - PAD_BOTTOM);
       if (below > DEAD_BAND) {
         dialog.scrollTop += below;
-        return;
+        return true;
       }
 
       var above = (box.top + PAD_TOP) - topBox.top;
       if (above > DEAD_BAND) {
         dialog.scrollTop -= above;
+        return true;
       }
+
+      return false;
     }
 
     /**
-     * Runs the check AFTER the browser has had its own go, never against it.
-     * `requestAnimationFrame` covers the same-frame case; the timeout covers
-     * iOS, where the keyboard and the accessory bar animate in over roughly a
-     * quarter of a second and `visualViewport` reports intermediate heights
-     * the whole way. Both passes are idempotent — the function is a
-     * minimal-correction, so a second run on a settled layout does nothing.
+     * ⭐ FOLLOWS THE KEYBOARD IN, FRAME BY FRAME — AND DELIBERATELY USES NO
+     *    TIMER.
+     *
+     * ⛔ WHY NOT `setTimeout`: `tests/test-signup-modal.php` §7 asserts that
+     *    this controller contains no `setTimeout`, `minDelay`, `scrollPct` or
+     *    `mouseout` — the four tokens that would make it an AUTOMATIC popup
+     *    and reverse the 2026-07-19 one-popup ruling. The first cut of this
+     *    function used a 320ms settle timer, the suite failed it, and the
+     *    guard was left intact rather than narrowed. That is recorded because
+     *    the tempting fix was to relax the assertion, and relaxing a guard to
+     *    fit an implementation is how a guarantee quietly dies. Nothing here
+     *    opens anything; the check only moves the dialog's own scroll region.
+     *
+     * WHAT IT DOES INSTEAD, which is better than a guessed constant: iOS
+     * animates the keyboard and the autofill accessory bar in over roughly a
+     * quarter of a second, and the geometry is different on every frame of it.
+     * A timer fires once and hopes the animation is over. This walks the
+     * animation with `requestAnimationFrame`, applying the same minimal,
+     * 2px-dead-banded correction each frame, and STOPS EARLY — after three
+     * consecutive frames that needed no adjustment, or 20 frames, whichever
+     * comes first. On a settled layout that is three cheap no-ops and done.
+     *
+     * `requestAnimationFrame` is also the right primitive for a second reason:
+     * it is paused in a background tab, so a modal left open on a hidden tab
+     * costs nothing, which a timer would not honour.
      */
     function scheduleCaptureCheck() {
-      if (typeof window.requestAnimationFrame === 'function') {
-        window.requestAnimationFrame(ensureCaptureVisible);
-      } else {
+      if (typeof window.requestAnimationFrame !== 'function') {
         ensureCaptureVisible();
+        return;
       }
-      window.setTimeout(ensureCaptureVisible, 320);
+      var frames = 0;
+      var settled = 0;
+      (function step() {
+        if (!isOpen) {
+          return;
+        }
+        settled = ensureCaptureVisible() ? 0 : settled + 1;
+        if (++frames < 20 && settled < 3) {
+          window.requestAnimationFrame(step);
+        }
+      })();
     }
 
     function syncViewport() {
