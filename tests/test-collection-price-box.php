@@ -238,6 +238,36 @@ bhp_cpb_assert(
 	'3: the HARDCOVER price block is rendered but hidden',
 	$failures
 );
+/*
+ * ⛔⛔ THE ASSERTION ABOVE PASSED ON A BUILD WHERE `hidden` DID NOTHING, and
+ *     that is why this one exists. `.bhp-landing-coldopen__price { display:
+ *     flex }` outweighs the user agent's `[hidden] { display: none }`, so
+ *     the hardcover block rendered anyway and the box showed BOTH prices
+ *     stacked — the exact "do NOT lead with $48.99" failure the 2026-08-14
+ *     instruction forbids. Found by screenshotting staging, not by reading
+ *     the markup.
+ *
+ *     A rendered-document suite cannot evaluate computed style, so this
+ *     asserts the COMPANION RULE exists in the stylesheet that ships. It is
+ *     a weaker guarantee than a browser check and is deliberately labelled
+ *     as such: the browser check lives in the CYCLE160 QA evidence.
+ */
+$cpb_css_path = dirname( __DIR__, 3 ) . '/plugins/brave-hearts-bundle-pricing/assets/bundle-landing.css';
+if ( ! is_readable( $cpb_css_path ) ) {
+	$cpb_css_path = WP_PLUGIN_DIR . '/brave-hearts-bundle-pricing/assets/bundle-landing.css';
+}
+$cpb_css = is_readable( $cpb_css_path ) ? (string) file_get_contents( $cpb_css_path ) : '';
+bhp_cpb_assert(
+	'' !== $cpb_css,
+	'3: bundle-landing.css is readable for the [hidden] guard',
+	$failures
+);
+bhp_cpb_assert(
+	strpos( $cpb_css, '.bhp-landing-coldopen__price[hidden]' ) !== false
+	&& preg_match( '/\.bhp-landing-coldopen__price\[hidden\]\s*\{[^}]*display:\s*none/s', $cpb_css ) === 1,
+	'3: the stylesheet restores `[hidden] { display: none }` for the price block',
+	$failures
+);
 
 /* The struck figure and the collection figure, per format, from live data. */
 foreach ( array( 'paperback', 'hardcover' ) as $cpb_fmt ) {

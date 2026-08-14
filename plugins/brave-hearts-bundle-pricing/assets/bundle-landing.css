@@ -1211,3 +1211,55 @@
 		font-size: .7rem;
 	}
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ⛔⛔ 1.8.41 HOTFIX — `[hidden]` MUST STILL HIDE. FOUND BY LOOKING AT
+       THE RENDERED PAGE, NOT BY READING THE SOURCE.
+   ------------------------------------------------------------------
+   `.bhp-landing-coldopen__price { display: flex }` has higher weight than
+   the user-agent's `[hidden] { display: none }`, so the HARDCOVER price
+   block — correctly marked `hidden` by PHP and correctly toggled by
+   `setFormat()` — rendered anyway. The FREE box showed BOTH prices
+   stacked ($35.97/$31.99 above $53.97/$48.99), which is precisely the
+   "do NOT lead with $48.99" failure the brief forbids.
+
+   ⛔ THE TEST SUITE COULD NOT HAVE CAUGHT THIS. It asserts the `hidden`
+      ATTRIBUTE is present in the markup — and it WAS present, and PASSED.
+      Whether the attribute has any effect is a computed-style question and
+      needs a browser. Observed at 390x844 on staging 1.19.226/1.8.41,
+      `window.innerWidth` asserted, screenshot in the CYCLE160 QA evidence.
+
+   ⭐ WHY THIS RULE AND NOT `display: none` ON THE SELECTOR: the panels
+      elsewhere on this page are block-level and never hit the problem, so
+      the general lesson is narrow — any element this stylesheet gives a
+      `display` value to AND that the format toggle drives needs its own
+      `[hidden]` companion. Written as its own rule so it is impossible to
+      delete the `display: flex` without seeing this.
+   ══════════════════════════════════════════════════════════════════ */
+.bhp-landing-coldopen__price[hidden] {
+	display: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   1.8.41 — the savings bar now holds only the ages line, so it stops
+   presenting itself as a savings badge.
+   ------------------------------------------------------------------
+   The gold-tinted plate existed to frame "Save $4.98". That figure moved
+   into the FREE box above the button, and a wide gold plate containing
+   nothing but "Ages 6–9" reads as a badge that lost its badge — observed
+   in the 390x844 card screenshot before this rule.
+
+   ⛔ THE ELEMENT AND THE COPY ARE UNTOUCHED. `.bhp-landing-panel__ages`
+      still renders, still says the same thing, and both test suites still
+      assert it. This changes background, border, padding and alignment —
+      nothing else — and only while the badge is absent, so restoring the
+      badge restores the plate with no second edit.
+   ══════════════════════════════════════════════════════════════════ */
+.bhp-landing-panel__savings:not(:has(.bhp-landing-panel__savings-badge)) {
+	background: none;
+	border: 0;
+	border-radius: 0;
+	padding: 0;
+	justify-content: flex-start;
+	margin-bottom: .6rem;
+}
