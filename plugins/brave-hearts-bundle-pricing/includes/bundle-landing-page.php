@@ -895,7 +895,19 @@ function bhp_bundle_render_landing_coldopen_price( $format ) {
 			?>
 		</span>
 		<s class="bhp-landing-coldopen__price-was" aria-hidden="true"><?php echo esc_html( $separate ); ?></s>
-		<span class="bhp-landing-coldopen__price-now" aria-hidden="true"><?php echo esc_html( $bundle ); ?></span>
+		<span class="bhp-landing-coldopen__price-now" aria-hidden="true"><?php
+			// 2026-08-14 Andrew: clean (sans) font for the price, cents smaller.
+			// $bundle is always a derived "$NN.NN" string (never hardcoded); split
+			// dollars/cents for display only — screen readers still get the full
+			// price from the visually-hidden sentence above, and this span stays
+			// aria-hidden as before. Falls back to the whole string un-split if
+			// the format is ever not D.DD.
+			if ( preg_match( '/^(.*)\.(\d{2})$/', $bundle, $m ) ) {
+				echo esc_html( $m[1] ) . '<span class="bhp-landing-coldopen__price-cents">.' . esc_html( $m[2] ) . '</span>';
+			} else {
+				echo esc_html( $bundle );
+			}
+		?></span>
 		<span class="bhp-landing-coldopen__price-save" aria-hidden="true"><?php echo esc_html( 'Save ' . $save ); ?></span>
 		<span class="bhp-landing-coldopen__price-alt">
 			<span aria-hidden="true">&middot;</span>

@@ -1138,7 +1138,9 @@
 	text-decoration: line-through;
 }
 .bhp-landing-coldopen__price-now {
-	font-family: var(--bl-serif);
+	/* 2026-08-14 Andrew: serif numerals read skewed; price moves to the clean
+	   sans, cents rendered smaller via __price-cents. */
+	font-family: var(--bl-sans);
 	/* 2026-08-14 Andrew, current-turn: "and the price should be much bigger".
 	   1.3rem -> 1.9rem -> 2.2rem (Andrew again, same turn family: a little bigger). Applied by Gandalf in the FD-304 review pass (the
 	   ruling arrived after iteration 2 was dispatched). line-height trimmed
@@ -1148,6 +1150,11 @@
 	font-weight: 700;
 	line-height: 1.05;
 	color: var(--bl-forest);
+}
+.bhp-landing-coldopen__price-cents {
+	font-size: .55em;
+	font-weight: 800;
+	letter-spacing: .01em;
 }
 .bhp-landing-coldopen__price-save {
 	font-family: var(--bl-sans);
