@@ -5176,30 +5176,51 @@ body.bhp-signup-modal-open { overflow: hidden; }
    control that dismisses the dialog. */
 .mariana-popup--signup .mariana-popup__close { z-index: 2; }
 
-/* 2 · THE HEAD LOCKUP — eyebrow and headline left, the PDF's own front cover
-   right. A ROW, not a stacked block, because a cover placed above the
-   headline costs its full height on every viewport, while a cover beside it
-   costs only the amount by which it exceeds two lines of type. That
-   difference is what keeps the submit button on screen at 1366x768.
+/* 2 · THE HEAD LOCKUP — three cells, two arrangements, one set of markup.
+   A cover placed ABOVE the headline costs its full height at every viewport;
+   a cover BESIDE it costs only the amount by which it exceeds the type next
+   to it. That difference is what keeps the submit button on screen at
+   1366x768.
+
+     desktop   [ eyebrow + headline ][ cover ]     cover spans both rows, so
+               [ description        ][ cover ]     the description wraps
+                                                   alongside it and there is
+                                                   no dead band under a
+                                                   one-line headline
+     phone     [ eyebrow + headline ][ cover ]     a ~194px column at 360px
+               [ description, full width  ]        turns body copy into
+                                                   five-word lines
 
    `padding-right` reserves the close button's corner rather than pushing the
    whole dialog down with extra top padding. Horizontal room is what this
    layout has spare; vertical room is what it does not. */
 .mariana-popup--signup .signup-modal__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding-right: var(--space-8);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--space-4);
   margin-bottom: var(--space-2);
 }
 .mariana-popup--signup .signup-modal__intro {
-  flex: 1 1 auto;
+  grid-column: 1;
+  grid-row: 1;
   min-width: 0;
 }
+.mariana-popup--signup .signup-modal__desc {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+}
+/* The close-button reservation lives on the COVER, not on the head's padding.
+   Padding on the grid would also indent the full-width description on a
+   phone, costing 40px of text width in the one place the layout has none to
+   spare — and the description sits in row 2, safely below the close button's
+   band, so it never needed the reservation in the first place. */
 .mariana-popup--signup .signup-modal__cover {
   display: block;
-  flex: 0 0 auto;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin-right: var(--space-8);
   line-height: 0;
 }
 /* Height-driven, width auto: the intrinsic width/height attributes on the
@@ -5282,10 +5303,15 @@ body.bhp-signup-modal-open { overflow: hidden; }
     max-height: calc(100dvh - 2 * var(--space-4));
     padding: var(--space-4) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
   }
-  .mariana-popup--signup .signup-modal__head {
-    gap: var(--space-3);
-    padding-right: var(--space-10);
+  .mariana-popup--signup .signup-modal__head { column-gap: var(--space-3); }
+  /* The description leaves the narrow column and takes the full width. The
+     cover stays in row 1 beside the headline — it scales down, it does not
+     disappear: a visitor on a phone is being shown the same document. */
+  .mariana-popup--signup .signup-modal__cover {
+    grid-row: 1;
+    margin-right: var(--space-10);
   }
+  .mariana-popup--signup .signup-modal__desc { grid-column: 1 / -1; }
   .mariana-popup--signup .signup-modal__cover img { height: 76px; }
   .mariana-popup--signup .mariana-popup__dialog h2 {
     font-size: 1.15rem;

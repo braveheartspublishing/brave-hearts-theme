@@ -147,18 +147,26 @@ $cover = function_exists('bhp_get_lead_magnet_cover') ? bhp_get_lead_magnet_cove
 
     <?php
     /*
-     * THE HEAD LOCKUP — 1.19.224. The eyebrow and headline occupy the left
-     * column; the PDF's front cover occupies the right. Two consequences are
-     * deliberate and are the reason this is a flex row rather than a floated
-     * image:
+     * THE HEAD LOCKUP — 1.19.224. A three-cell grid: eyebrow + headline, the
+     * PDF's front cover, and the description. It is a grid rather than a row
+     * or a float because the two viewports want DIFFERENT arrangements of the
+     * same three cells, and a grid gives both without duplicating any markup:
      *
-     *   - The cover costs vertical space ONLY where it is taller than the two
-     *     lines of text beside it, which is what keeps the submit button above
-     *     the fold at 1366x768 and at 360x740. A block-level image above the
-     *     headline would have cost its full height on every viewport.
-     *   - The description stays OUTSIDE the row, full width. Wrapping body
-     *     copy into a ~60%-width column at 360px produces five-word lines and
-     *     costs more height than the cover saves.
+     *   - Desktop: the cover spans BOTH rows on the right, and the
+     *     description sits in the left column beneath the headline, wrapping
+     *     alongside the cover. This is what removes the dead white band that
+     *     appeared under a one-line headline in the first cut of this layout
+     *     (observed at 1366x768 on the parent page, ~50px of nothing between
+     *     the headline and the description).
+     *   - Phone: the cover keeps row 1 beside the headline, and the
+     *     description spans the full width in row 2. A ~194px column at 360px
+     *     turns body copy into five-word lines and costs more height than the
+     *     cover ever saves.
+     *
+     * The cover costs vertical space ONLY where it exceeds the text beside
+     * it, which is what keeps the submit button above the fold at 1366x768
+     * and at 360x740. A block-level image above the headline would have cost
+     * its full height at every viewport.
      *
      * ⛔ NO COPY WAS REMOVED TO MAKE ROOM. Eyebrow, headline, description,
      *    optional first name, email, submit, privacy line and trust line are
@@ -166,6 +174,11 @@ $cover = function_exists('bhp_get_lead_magnet_cover') ? bhp_get_lead_magnet_cove
      *    requirement was met by compaction in style.css, not by deletion.
      *    Nothing in the indexable page body was touched at all — this modal
      *    adds, it never replaces.
+     *
+     * ⛔ THE DESCRIPTION KEEPS ITS ID AND ITS `.mariana-popup__text` CLASS.
+     *    It moved inside this wrapper; it did not change identity. The
+     *    dialog's `aria-describedby` still resolves to it, so the accessible
+     *    description is exactly what it was in 1.19.223.
      */
     ?>
     <div class="signup-modal__head">
@@ -189,16 +202,33 @@ $cover = function_exists('bhp_get_lead_magnet_cover') ? bhp_get_lead_magnet_cove
          *    shape before the bytes arrive and the head row cannot reflow as
          *    it loads.
          *
-         * ⭐ IT COSTS THE PAGE LOAD NOTHING. The modal root is `hidden`, i.e.
-         *    `display: none` from the moment the document parses, and no image
-         *    inside a non-rendered subtree is fetched. `assets/js/signup-modal.js`
-         *    warms it on the FIRST hover/focus/touch of any CTA that opens this
-         *    dialog, so by the time the click lands the bytes are in cache —
-         *    measured, not assumed; see the QA evidence folder.
+         * ⭐ IT COSTS THE PAGE LOAD NOTHING — AND `loading="lazy"` IS WHAT
+         *    MAKES THAT TRUE. This is a CORRECTION, written out rather than
+         *    quietly applied, because the first cut of this file asserted the
+         *    opposite and a measurement disproved it.
          *
-         *    `loading="eager"` is explicit rather than default because the
-         *    element must never be treated as below-the-fold once the dialog
-         *    is shown: at that point it IS the fold.
+         *    WHAT WAS CLAIMED, AND WITHDRAWN: that `loading="eager"` was safe
+         *    here "because the modal root is `hidden`, and no image inside a
+         *    non-rendered subtree is fetched." ⛔ THE SECOND HALF IS TRUE OF
+         *    LAYOUT AND FALSE OF PARSING. Chromium's HTML preload scanner
+         *    speculatively fetches `<img src>` and `<picture><source srcset>`
+         *    while the document is still being parsed — before any stylesheet
+         *    has told it this subtree is `display: none`. MEASURED on staging
+         *    at all four QA viewports and on all four funnel pages: exactly
+         *    one cover request landed during page load, every time, before any
+         *    visitor interaction.
+         *
+         *    `loading="lazy"` is what actually defers it: the scanner leaves a
+         *    lazy image to the lazy-loading machinery, which never schedules
+         *    an image inside a `display: none` subtree. Re-measured after the
+         *    change: ZERO requests at page load.
+         *
+         *    The bytes are then warmed by `assets/js/signup-modal.js` on the
+         *    FIRST hover, focus or touch of any CTA that opens this dialog, so
+         *    the cover is in cache before the click lands. Both halves are
+         *    measured, both are in the QA evidence folder, and the lazy
+         *    attribute is doing the deferral rather than an assumption about
+         *    `display: none`.
          */
         ?>
         <picture class="signup-modal__cover">
@@ -208,14 +238,14 @@ $cover = function_exists('bhp_get_lead_magnet_cover') ? bhp_get_lead_magnet_cove
             width="<?php echo (int) $cover['width']; ?>"
             height="<?php echo (int) $cover['height']; ?>"
             alt="<?php echo esc_attr($cover['alt']); ?>"
-            loading="eager"
+            loading="lazy"
             decoding="async"
           >
         </picture>
       <?php endif; ?>
-    </div>
 
-    <div id="<?php echo esc_attr($desc_id); ?>" class="mariana-popup__text"><?php echo wp_kses_post($args['text'] ?: $magnet['description']); ?></div>
+      <div id="<?php echo esc_attr($desc_id); ?>" class="mariana-popup__text signup-modal__desc"><?php echo wp_kses_post($args['text'] ?: $magnet['description']); ?></div>
+    </div>
 
     <?php get_template_part('template-parts/acquisition/signup-form', null, [
         'id'                   => $form_id,

@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 38b93d84d1a3826b3dcab94533182e58
+    source-md5: e188b0bb722d5b8207abeb59daab0914
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -4213,20 +4213,27 @@ max-height: calc(var(--bhp-modal-vv-height, 100vh) - 2 * var(--space-4));
 }
 .mariana-popup--signup .mariana-popup__close { z-index: 2; }
 .mariana-popup--signup .signup-modal__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding-right: var(--space-8);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--space-4);
   margin-bottom: var(--space-2);
 }
 .mariana-popup--signup .signup-modal__intro {
-  flex: 1 1 auto;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+.mariana-popup--signup .signup-modal__desc {
+  grid-column: 1;
+  grid-row: 2;
   min-width: 0;
 }
 .mariana-popup--signup .signup-modal__cover {
   display: block;
-  flex: 0 0 auto;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin-right: var(--space-8);
   line-height: 0;
 }
 .mariana-popup--signup .signup-modal__cover img {
@@ -4290,10 +4297,12 @@ max-height: calc(var(--bhp-modal-vv-height, 100vh) - 2 * var(--space-4));
     max-height: calc(100dvh - 2 * var(--space-4));
     padding: var(--space-4) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
   }
-  .mariana-popup--signup .signup-modal__head {
-    gap: var(--space-3);
-    padding-right: var(--space-10);
+  .mariana-popup--signup .signup-modal__head { column-gap: var(--space-3); }
+.mariana-popup--signup .signup-modal__cover {
+    grid-row: 1;
+    margin-right: var(--space-10);
   }
+  .mariana-popup--signup .signup-modal__desc { grid-column: 1 / -1; }
   .mariana-popup--signup .signup-modal__cover img { height: 76px; }
   .mariana-popup--signup .mariana-popup__dialog h2 {
     font-size: 1.15rem;
