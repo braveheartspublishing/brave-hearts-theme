@@ -595,8 +595,61 @@ function bhp_bundle_landing_five_star_reviews_exist() {
 	return $found > 0;
 }
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.42 (2026-08-14, `CYCLE160-LD-COLLECTION-PRICE-BOX` ITERATION 2)
+ *     — THE KIRKUS FRAGMENT LEAVES THIS BOX. THE FREE BULLETS COME UP.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-14, VERBATIM as relayed in the iteration-2 brief
+ * (⛔ RELAYED through `chief-of-staff`; NOT witnessed first-hand here):
+ * "i think we remove the kirkus review and bring up the FREEx3 - make the
+ * price visible and make sure the CTA is above the url shadow that covers
+ * the bottom of the fold."
+ *
+ * ⛔ THIS IS A REMOVAL FROM ONE BOX, NOT FROM THE PAGE, AND THE DIFFERENCE
+ *    IS THE WHOLE POINT. `bhp_bundle_render_landing_kirkus()` still renders
+ *    the FULL approved Kirkus quote, its attribution, the reviewed title and
+ *    the review link further down this same page, from the same
+ *    `bhp_get_kirkus_review_data()` source, byte-unchanged. NOTHING FACTUAL
+ *    LEAVES THE PAGE — a fragment of a quote stops being repeated above a
+ *    quote that is published in full 3,000px below it.
+ *    `tests/test-collection-cold-traffic.php` §3 asserts BOTH halves: absent
+ *    from the cold-open block, present in the Kirkus section.
+ *
+ * ⛔ WHY IT WAS THE LINE THAT COULD GO, AND WHY THAT WAS ANDREW'S CALL AND
+ *    NOT THIS FILE'S. MEASURED on staging 1.19.226/1.8.41, fresh profile,
+ *    `window.innerWidth` asserted, 2026-08-14:
+ *
+ *      390x844   fragment y 557-595 · next line starts 603  → 46px
+ *      360x740   fragment y 555-593 · next line starts 601  → 46px
+ *
+ *    46px is the single largest reclaimable block above the buy button that
+ *    is not a price element, not the five-star line and not a FREE bullet.
+ *    Iteration 1 quantified it and did NOT spend it, because spending it is
+ *    a copy decision. The founder then ruled. This implements his ruling; it
+ *    did not make it.
+ *
+ * ⭐ "BRING UP THE FREEx3" IS SATISFIED BY THE REMOVAL ITSELF. The FREE
+ *    bullets were already the 2nd-4th items of this list; deleting the 1st
+ *    makes them the 1st-3rd and lifts them 46px. No bullet is reordered, no
+ *    bullet is reworded, and the three gates (`bhp_bundle_rules()[3]`,
+ *    `bhp_bundle_addon_free_with_collection()`, `bhp_bundle_vocab_cards_live()`)
+ *    are byte-untouched, so an environment where an offer is not live still
+ *    drops that bullet by itself.
+ *
+ * ⚠ THE `<ul>` NOW HOLDS ONLY FREE BULLETS, and two rules elsewhere were
+ *   written for a mixed list. Both were designed to self-retire and both do:
+ *     · `li:not(.__free) + li.__free { margin-top: .5rem }` (1.8.40) has no
+ *       match left and contributes 0px, exactly as its own comment predicted
+ *       ("if the Kirkus fragment is ever ungated the rule disappears with it
+ *       instead of leaving a stray 8px hole").
+ *     · the `__free`-scoped 15px/800 sizing (1.8.39) is unchanged and still
+ *       deliberately class-scoped rather than moved onto the `<ul>`.
+ *   ⛔ NEITHER IS DELETED. Restoring the fragment restores both behaviours
+ *      with no second edit.
+ */
 function bhp_bundle_render_landing_cold_open() {
-	$kirkus    = bhp_get_kirkus_review_data();
 	$five_star = bhp_bundle_landing_five_star_reviews_exist();
 	?>
 	<div class="bhp-landing-coldopen">
@@ -616,7 +669,27 @@ function bhp_bundle_render_landing_cold_open() {
 		// the FREE offer line takes its place, FREE bold per his standing rule.
 		?>
 		<ul class="bhp-landing-coldopen__trust">
-			<li>&ldquo;&hellip;spark children&rsquo;s curiosity&rdquo; &mdash; <?php echo esc_html( $kirkus['attribution'] ); ?>, on <em>The Mariana Trench</em></li>
+			<?php
+			/*
+			 * ⛔⭐ 1.8.42 — THE KIRKUS FRAGMENT WAS THE FIRST ITEM OF THIS LIST
+			 *     AND IS REMOVED ON ANDREW SIGNORE'S 2026-08-14 INSTRUCTION.
+			 *     The superseded markup, preserved verbatim so the movement is
+			 *     visible and is not re-derived:
+			 *
+			 *   <li>&ldquo;&hellip;spark children&rsquo;s curiosity&rdquo;
+			 *   &mdash; <?php echo esc_html( $kirkus['attribution'] ); ?>,
+			 *   on <em>The Mariana Trench</em></li>
+			 *
+			 *     …together with the `$kirkus = bhp_get_kirkus_review_data();`
+			 *     lookup at the top of this function, which had no other reader.
+			 *
+			 * ⛔ IT IS STILL PUBLISHED ON THIS PAGE, in full, with its
+			 *    attribution, its reviewed title and its link, by
+			 *    `bhp_bundle_render_landing_kirkus()` — same source function,
+			 *    byte-unchanged. See this function's docblock for the measured
+			 *    46px the removal buys and for why it was the founder's call.
+			 */
+			?>
 			<?php
 			/*
 			 * ═══════════════════════════════════════════════════════════════

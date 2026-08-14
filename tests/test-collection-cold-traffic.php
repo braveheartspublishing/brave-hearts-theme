@@ -204,24 +204,72 @@ bhp_cct_assert(
 	'3: the Kirkus fragment is a literal substring of the approved Kirkus quote',
 	$failures
 );
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⭐ SUPERSEDED 2026-08-14 (`CYCLE160-LD-COLLECTION-PRICE-BOX` ITERATION 2)
+ *     — THE KIRKUS FRAGMENT LEAVES THE COLD-OPEN BOX. THESE ASSERTIONS ARE
+ *     RE-SCOPED, NOT DELETED, BECAUSE THE THING THEY GUARD STILL EXISTS —
+ *     IT JUST LIVES IN ONE PLACE ON THIS PAGE INSTEAD OF TWO.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-14, VERBATIM as relayed in the iteration-2 brief
+ * (⛔ RELAYED through `chief-of-staff`; NOT witnessed first-hand here):
+ * "i think we remove the kirkus review and bring up the FREEx3".
+ *
+ * The superseded assertions, preserved verbatim so the movement is visible:
+ *
+ *   strpos( $html, 'spark children&rsquo;s curiosity' ) !== false || strpos( $html, 'spark children’s curiosity' ) !== false
+ *     '3: the Kirkus fragment actually renders'
+ *   strpos( $html, $kirkus_data['attribution'] ) !== false
+ *     '3: the Kirkus fragment carries its attribution'
+ *   preg_match( '/spark children(?:&rsquo;|’)s curiosity.{0,120}Mariana Trench/su', $html ) === 1
+ *     '3: the Kirkus line still names the reviewed title (it does not claim the whole collection was reviewed)'
+ *
+ * ⛔ WHY EACH ONE HAD TO CHANGE SHAPE RATHER THAN BE DROPPED. All three were
+ *    page-wide `strpos` calls, so all three would still have PASSED after the
+ *    removal — on the strength of the FULL Kirkus block further down the
+ *    page. A guard that passes whether or not the thing it guards moved is
+ *    not a guard. Each is now asserted TWICE and in opposite directions:
+ *    ABSENT from the cold-open block, PRESENT in the Kirkus section. That
+ *    pair fails if the fragment creeps back into the box, AND fails if the
+ *    full review is ever quietly dropped from the page — which is the claim
+ *    that actually matters, because it is the only thing making the removal
+ *    a de-duplication rather than a retraction.
+ *
+ * ⛔ THE SUBSTRING GUARD ABOVE IS UNTOUCHED and still runs on every pass. It
+ *    is the anti-fabrication assertion this whole section exists for.
+ */
+$cct_kirkus_section = preg_match( '/<section class="bhp-landing-kirkus".*?<\/section>/su', $html, $cct_k_m ) ? $cct_k_m[0] : '';
 bhp_cct_assert(
-	strpos( $html, 'spark children&rsquo;s curiosity' ) !== false || strpos( $html, 'spark children’s curiosity' ) !== false,
-	'3: the Kirkus fragment actually renders',
+	'' !== $cct_kirkus_section,
+	'3: the full Kirkus section is still on the page and is extractable for scoped assertions',
 	$failures
 );
 bhp_cct_assert(
-	strpos( $html, $kirkus_data['attribution'] ) !== false,
-	'3: the Kirkus fragment carries its attribution',
+	strpos( $cct_kirkus_section, 'spark children&rsquo;s curiosity' ) !== false
+		|| strpos( $cct_kirkus_section, 'spark children’s curiosity' ) !== false,
+	'3: the Kirkus quote still renders IN FULL further down the page (the removal is a de-duplication, not a retraction)',
+	$failures
+);
+bhp_cct_assert(
+	strpos( $cct_kirkus_section, $kirkus_data['attribution'] ) !== false,
+	'3: the full Kirkus quote still carries its attribution',
 	$failures
 );
 /*
  * The scope qualifier. Only The Mariana Trench was reviewed by Kirkus; this
- * page sells three books. Without the title the line reads as a review of
+ * page sells three books. Without the title the block reads as a review of
  * the collection, which would be false.
  */
 bhp_cct_assert(
-	preg_match( '/spark children(?:&rsquo;|’)s curiosity.{0,120}Mariana Trench/su', $html ) === 1,
-	'3: the Kirkus line still names the reviewed title (it does not claim the whole collection was reviewed)',
+	strpos( $cct_kirkus_section, 'Mariana Trench' ) !== false,
+	'3: the Kirkus section still names the reviewed title (it does not claim the whole collection was reviewed)',
+	$failures
+);
+bhp_cct_assert(
+	strpos( $cct_kirkus_section, $kirkus_data['review_url'] ) !== false,
+	'3: the Kirkus section still links to the official review',
 	$failures
 );
 
@@ -302,15 +350,39 @@ bhp_cct_assert(
 	$failures
 );
 /*
- * ⛔ AND THE HOOK STOPS AT THE FREE LINES. The Kirkus fragment is the one
- *    non-FREE item in this list; it must still be there and must NOT be
- *    hooked, which is the property that keeps the review attribution out
- *    of the 15px/800 offer-bullet treatment.
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⭐ SUPERSEDED 2026-08-14 (ITERATION 2) — THIS ASSERTION IS INVERTED,
+ *     NOT DELETED, AND IT IS THE ONE THAT WOULD HAVE GONE RED ON A CORRECT
+ *     BUILD.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * The superseded assertion, preserved verbatim so the movement is visible:
+ *
+ *   substr_count( $cct_trust_ul, '<li' ) > $cct_trust_hooked
+ *   && preg_match( '/<li class="bhp-landing-coldopen__free">(?!<strong>FREE)/', $cct_trust_ul ) === 0
+ *     '3: the review fragment shares the list but not the hook'
+ *
+ * It required a NON-FREE item to exist in this list — i.e. it required the
+ * Kirkus fragment. Andrew's 2026-08-14 removal makes the list all-FREE, so
+ * the old form asserts the absence of the change he asked for.
+ *
+ * ⛔ WHAT IS STILL GUARDED, AND IT IS THE PART THAT MATTERED: the 15px/800
+ *    offer-bullet hook must sit on the FREE `<li>`s and NEVER on the `<ul>`.
+ *    That property is unchanged, is asserted immediately below and above,
+ *    and is what keeps the treatment restorable verbatim if the fragment
+ *    ever comes back. The list is now asserted to be ENTIRELY FREE bullets,
+ *    which is the new invariant — a stray unhooked `<li>` appearing here
+ *    (a re-introduced quote, a stray claim) fails the suite.
  */
+$cct_trust_li_total = substr_count( $cct_trust_ul, '<li' );
 bhp_cct_assert(
-	substr_count( $cct_trust_ul, '<li' ) > $cct_trust_hooked
-	&& preg_match( '/<li class="bhp-landing-coldopen__free">(?!<strong>FREE)/', $cct_trust_ul ) === 0,
-	'3: the review fragment shares the list but not the hook (' . substr_count( $cct_trust_ul, '<li' ) . " items, {$cct_trust_hooked} hooked)",
+	$cct_trust_li_total === $cct_trust_hooked && $cct_trust_hooked >= 1,
+	"3: after the 2026-08-14 removal the cold-open list holds FREE bullets and nothing else ({$cct_trust_li_total} items, {$cct_trust_hooked} hooked)",
+	$failures
+);
+bhp_cct_assert(
+	preg_match( '/<li class="bhp-landing-coldopen__free">(?!<strong>FREE)/', $cct_trust_ul ) === 0,
+	'3: nothing that is not a FREE claim carries the FREE offer-bullet hook',
 	$failures
 );
 bhp_cct_assert(
@@ -360,6 +432,31 @@ if ( preg_match( '/<div class="bhp-landing-coldopen">(.*?)<\/div>/su', $html, $m
 	bhp_cct_assert(
 		strpos( $cold, 'Engaging, educational' ) === false,
 		'3: the teacher fragment no longer renders in the cold-open bar (2026-08-07 revision; full testimonial still published below)',
+		$failures
+	);
+	/*
+	 * ⭐ 1.8.42 (2026-08-14, ITERATION 2) — THE OTHER HALF OF THE RE-SCOPED
+	 *    KIRKUS GUARD ABOVE. The fragment, the attribution and the reviewed
+	 *    title must all be ABSENT from this box; all three are asserted
+	 *    PRESENT in the full Kirkus section further up this file. Both
+	 *    directions are needed: absence alone would pass if the whole review
+	 *    were deleted from the page, and presence alone would pass if it were
+	 *    still duplicated here.
+	 */
+	bhp_cct_assert(
+		strpos( $cold, 'spark children&rsquo;s curiosity' ) === false
+			&& strpos( $cold, 'spark children’s curiosity' ) === false,
+		'3: the Kirkus fragment no longer renders in the cold-open box (Andrew, 2026-08-14)',
+		$failures
+	);
+	bhp_cct_assert(
+		stripos( $cold, 'Kirkus' ) === false,
+		'3: the cold-open box carries no Kirkus attribution at all — the review is published once, in full, further down',
+		$failures
+	);
+	bhp_cct_assert(
+		strpos( $cold, 'Mariana Trench' ) === false,
+		'3: the reviewed-title qualifier leaves the box with the fragment it qualified (a qualifier with nothing to qualify is worse than neither)',
 		$failures
 	);
 	/*
@@ -478,6 +575,47 @@ bhp_cct_assert(
 	bhp_cct_before( $html, 'bhp-landing-coldopen__headline', 'bhp-landing-coldopen__subhead' )
 		&& bhp_cct_before( $html, 'bhp-landing-coldopen__subhead', 'bhp-landing-coldopen__trust' ),
 	'4: headline -> subhead -> trust bar, in that order',
+	$failures
+);
+/*
+ * ⭐ 1.8.42 (2026-08-14, ITERATION 2) — THE WHOLE BOX ORDER, IN ONE
+ *    ASSERTION, BECAUSE THAT ORDER IS NOW A FOUNDER INSTRUCTION AND NOT
+ *    JUST AN EMERGENT PROPERTY OF SIX SEPARATE ONES.
+ *
+ * Andrew Signore, 2026-08-14 (⛔ RELAYED; NOT witnessed first-hand):
+ * "bring up the FREEx3 - make the price visible". The order shipped is
+ *   BEST VALUE badge -> five-star line -> headline -> subhead
+ *   -> FREE x3 -> price row -> buy button.
+ *
+ * ⚠ THE SUBHEAD IS DELIBERATELY STILL IN THAT CHAIN. The brief's proposed
+ *   order did not list it — and it did not list it in the BEFORE state
+ *   either, so its omission is a shorthand and not an instruction to cut
+ *   it. Removing an approved line nobody asked to remove is exactly the
+ *   silent cut the brief forbids, so it stays and is reported.
+ *
+ * ⛔ THIS IS DOCUMENT ORDER ONLY. Whether the button clears the consent
+ *    banner is a painted-box question at a named viewport, is NOT provable
+ *    from a document fetch, and is measured in a real browser with
+ *    `window.innerWidth` asserted — see the CYCLE160 iteration-2 QA
+ *    evidence. Claiming it here would be a fabricated verification.
+ */
+bhp_cct_assert(
+	bhp_cct_before( $html, 'bhp-landing-card__badge', 'bhp-landing-coldopen__stars' )
+		&& bhp_cct_before( $html, 'bhp-landing-coldopen__stars', 'bhp-landing-coldopen__headline' )
+		&& bhp_cct_before( $html, 'bhp-landing-coldopen__subhead', 'bhp-landing-coldopen__free' )
+		&& bhp_cct_before( $html, 'bhp-landing-coldopen__free', 'bhp-landing-coldopen__price' )
+		&& bhp_cct_before( $html, 'bhp-landing-coldopen__price', 'data-bhp-landing-main-cta' ),
+	'4: badge -> five-star -> headline -> subhead -> FREE x3 -> price -> CTA (Andrew, 2026-08-14 iteration 2)',
+	$failures
+);
+/*
+ * "bring up the FREEx3" made concrete: the FREE bullets are now the FIRST
+ * thing inside the trust list, with nothing between the rule and them.
+ * Before this release the Kirkus fragment held that position.
+ */
+bhp_cct_assert(
+	preg_match( '/<ul class="bhp-landing-coldopen__trust">\s*<li class="bhp-landing-coldopen__free">/su', $html ) === 1,
+	'4: the first item of the cold-open list is a FREE bullet (the FREE block came up on Andrew\'s 2026-08-14 instruction)',
 	$failures
 );
 /* ⭐ 1.8.33 asked for stars above AND below; 2026-08-07 Andrew reversed the

@@ -1263,3 +1263,89 @@
 	justify-content: flex-start;
 	margin-bottom: .6rem;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.8.42 (2026-08-14) — THE LAST ~17px ABOVE THE BUY BUTTON.
+       `CYCLE160-LD-COLLECTION-PRICE-BOX` ITERATION 2.
+   ------------------------------------------------------------------
+   Andrew Signore, 2026-08-14, VERBATIM as relayed in the iteration-2
+   brief (⛔ RELAYED through `chief-of-staff`; NOT witnessed first-hand):
+   "…make sure the CTA is above the url shadow that covers the bottom
+   of the fold."
+
+   ── WHY THIS BLOCK EXISTS AT ALL, IN NUMBERS ────────────────────────
+   Removing the Kirkus fragment (see `bhp_bundle_render_landing_cold_open()`)
+   buys 46px. MEASURED by deleting that one `<li>` at runtime over CDP on
+   the deployed 1.19.226/1.8.41 staging build and re-reading the box —
+   an observation of a real render, not an arithmetic guess:
+
+       390x844   buy button 714-768  ->  668-722   consent banner top 732
+       360x740   buy button 733-787  ->  686-740   consent banner top 628
+
+   46px alone clears the banner at 390 by 10px, which is inside the
+   noise of a font fallback. The brief's practical target is a button
+   bottom at or under **720**, and 722 misses it by 2px. This block is
+   the difference, and it is deliberately built from many small
+   boundary trims rather than one visible cut.
+
+   ⛔ NOT ONE FONT SIZE CHANGES HERE. No copy, no claim, no gate, no
+      price, no colour and no touch target is touched. Every declaration
+      is a margin, a padding or a line-height, and the buy button keeps
+      its full 54px height and its whole two-line label.
+   ⛔ MOBILE ONLY — one `max-width: 640px` block. 1440x900 and 1366x768
+      are byte-unaffected, and that was re-measured after deploy rather
+      than assumed.
+   ⛔ 1.8.40's MOBILE BUFFER IS DELIBERATELY LEFT ALONE.
+      `.bhp-landing-coldopen { margin-bottom: .55rem }` and the four
+      below-the-button 16px boundaries are Andrew's own 2026-08-12 "a
+      little more buffer space in between sections" and are NOT reduced
+      to pay for this. Trimming them was measured at a further 2.4px and
+      was rejected as not worth reversing an approved change for.
+
+   ⚠ WHAT THIS BLOCK CANNOT DO, STATED HERE SO IT IS NOT MISREAD AS A
+     FIX FOR IT: at **360x740 the CTA still sits 93px below the consent
+     banner's top edge**, and no combination of the trims here reaches
+     it. The banner is 112px tall on a 740px viewport and the purchase
+     card does not begin until y=412, because the header (93px) and the
+     hero gallery (311px) come first. The arithmetic is closed: the box's
+     own contents — badge 25 + five-star 18 + headline 44 + subhead 19 +
+     three FREE bullets 81 + price 26 + button 54 = 267px of INK — cannot
+     fit in the 216px between y=412 and y=628 even at zero spacing.
+     ⛔ The only lever that reaches it is the hero gallery's mobile
+        height, and MEASURED at runtime a 200px cap makes 360x740 pass
+        with 17px to spare. THAT IS NOT DONE HERE: this stylesheet's own
+        1.8.40 banner records that Andrew approved the gallery BIGGER,
+        and reversing an approved change to pay for a different one is
+        his decision, not this file's. Reported, not taken.
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+	/* card shell: 7.2 -> 4.8px of top padding above the BEST VALUE badge */
+	.bhp-landing-card { padding-top: .3rem; }
+	/* badge -> five-star line: 4.8 -> 3.52px */
+	.bhp-landing-card__badge { margin-bottom: .22rem; }
+	/* five-star line -> headline: 3.52 -> 2.56px */
+	.bhp-landing-coldopen__stars { margin-bottom: .16rem; }
+	/* the two-line headline's own leading, 1.18 -> 1.12, and its
+	   margin 2.88 -> 1.92px. 0,2,0 to match the 640px block above it. */
+	.bhp-landing .bhp-landing-coldopen__headline {
+		line-height: 1.12;
+		margin-bottom: .12rem;
+	}
+	/* subhead -> rule: 4 -> 2.88px */
+	.bhp-landing-coldopen__subhead { margin-bottom: .18rem; }
+	/* the rule above the FREE bullets, and the list's own tail */
+	.bhp-landing-coldopen__trust {
+		padding-top: .22rem;      /* 4.48 -> 3.52px */
+		padding-bottom: 0;        /* 1.6 -> 0px */
+	}
+	/* between the three FREE bullets only — 4.8 -> 2.88px, twice.
+	   0,2,1, EQUAL to the 1.8.39 base rule, so it wins on source order
+	   alone and this block must never be moved above that one. The
+	   1.8.39 `…__free:last-child { margin-bottom: 0 }` is 0,3,1 and
+	   still outranks this, so the third bullet keeps its zero. */
+	.bhp-landing-coldopen__trust li.bhp-landing-coldopen__free {
+		margin-bottom: .18rem;
+	}
+	/* last FREE bullet -> price row: 4.8 -> 3.52px */
+	.bhp-landing-coldopen__price { margin-top: .22rem; }
+}
