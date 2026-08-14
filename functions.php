@@ -1815,6 +1815,90 @@ function bhp_get_lead_magnets() {
 }
 
 /**
+ * Front-cover thumbnail for a lead magnet — theme 1.19.224, 2026-08-13,
+ * `CYCLE158-LD-SIGNUP-POPUP` iteration 2.
+ *
+ * ⭐ EVERY IMAGE THIS RETURNS IS A PAGE-1 RENDER OF THE REAL PDF, AND THAT
+ *    PROVENANCE IS THE WHOLE POINT OF THE FUNCTION. Andrew Signore, relayed
+ *    through Gandalf: each funnel's popup carries "the front cover of its own
+ *    PDF". Nothing here is illustrated, generated, mocked up or borrowed from
+ *    a neighbouring magnet — the never-invent rule covers imagery that claims
+ *    to be a real artefact exactly as it covers a claim in prose.
+ *
+ *    HOW THE FILES WERE MADE, recorded so a future session can reproduce them
+ *    rather than re-derive them: the four PDFs registered under Settings →
+ *    Lead Magnets were copied off the PRODUCTION document root, rendered page
+ *    1 with PyMuPDF at 4x and downsampled (Lanczos) to 173x224, then written
+ *    as WebP q86 plus a PNG fallback into assets/images/lead-magnets/. The
+ *    three magnets that already had a full-size cover asset in the repo
+ *    (assets/images/handoff/*-cover.webp) were checked against the same
+ *    renders first and matched to a mean absolute difference of 1.4–1.9/255,
+ *    i.e. lossy-compression noise — so these small files are the SAME
+ *    artwork at a size appropriate to a 112px slot, not a second source of
+ *    truth. Production and staging carry byte-identical PDFs for all four
+ *    (md5-compared 2026-08-13); only two of the filenames differ.
+ *
+ * ⛔ NO COVER FOR A MAGNET WITHOUT A PDF. `bookstore_wholesale_guide` has no
+ *    PDF on either environment, its modal does not render at all, and there
+ *    is deliberately no entry for it below. An absent cover returns an empty
+ *    array and the caller renders no image — never a placeholder.
+ *
+ * The alt text names what is PRINTED ON THE COVER, which is not always the
+ * site-facing title of the magnet (the gift guide's cover reads "The Ultimate
+ * Children's Book Gift Guide"; the site calls it "The Meaningful Gift Guide").
+ * Alt text describes the image, so the printed title is the honest value; the
+ * divergence is a copy question for Andrew, not something to paper over here.
+ *
+ * @param string $magnet_key Lead-magnet registry key.
+ * @return array{url:string,fallback:string,width:int,height:int,alt:string}|array{}
+ */
+function bhp_get_lead_magnet_cover($magnet_key) {
+    $covers = apply_filters('bhp_lead_magnet_covers', [
+        'reluctant_reader_adventure_kit' => [
+            'file'  => 'reluctant-reader-adventure-kit-cover',
+            'title' => __('The Reluctant Reader Adventure Kit', 'brave-hearts'),
+        ],
+        'teacher_adventure_toolkit' => [
+            'file'  => 'adventure-learning-toolkit-cover',
+            'title' => __('The Adventure Learning Toolkit', 'brave-hearts'),
+        ],
+        'meaningful_gift_guide' => [
+            'file'  => 'ultimate-gift-guide-cover',
+            'title' => __('The Ultimate Children\'s Book Gift Guide', 'brave-hearts'),
+        ],
+        'community_reading_kit' => [
+            'file'  => 'community-reading-kit-cover',
+            'title' => __('The Community Reading Kit', 'brave-hearts'),
+        ],
+    ]);
+
+    $key = sanitize_key($magnet_key);
+    if (!isset($covers[$key]['file'])) {
+        return [];
+    }
+
+    $base     = 'assets/images/lead-magnets/' . sanitize_file_name($covers[$key]['file']);
+    $webp_rel = $base . '.webp';
+    $png_rel  = $base . '.png';
+
+    // A missing file renders nothing rather than a broken image. This runs on
+    // a hidden modal on five pages, so it is cheap, but it is still the only
+    // guard between a mis-deployed artefact and a broken box on a funnel page.
+    if (!file_exists(get_theme_file_path($webp_rel)) || !file_exists(get_theme_file_path($png_rel))) {
+        return [];
+    }
+
+    return [
+        'url'      => get_theme_file_uri($webp_rel),
+        'fallback' => get_theme_file_uri($png_rel),
+        'width'    => 173,
+        'height'   => 224,
+        /* translators: %s: the title printed on the PDF's front cover. */
+        'alt'      => sprintf(__('Front cover of %s', 'brave-hearts'), $covers[$key]['title']),
+    ];
+}
+
+/**
  * Mariana Trench guide download state, keyed by audience. Mirrors
  * bhp_get_explorer_passport_download(): empty URL always means "not ready",
  * regardless of what a filter might otherwise try to force.

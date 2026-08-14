@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.223
+Version: 1.19.224
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5111,8 +5111,14 @@ body.bhp-signup-modal-open { overflow: hidden; }
 }
 .mariana-popup--signup.has-visual-viewport .mariana-popup__dialog {
   /* Measured against the VISIBLE box, so the dialog shrinks and scrolls
-     internally rather than being pushed under the keyboard. */
-  max-height: calc(var(--bhp-modal-vv-height, 100vh) - 2 * var(--space-3));
+     internally rather than being pushed under the keyboard.
+     1.19.224: the subtraction moved from `--space-3` to `--space-4` so this
+     rule agrees with the two max-height rules below it. It is the MOST
+     specific of the three and therefore decides the box's real margin on
+     every engine that has the API — which is every engine QA runs on — so
+     leaving it 4px tighter than the others meant the visible margin the
+     requirement asks for was set here and nowhere else, by accident. */
+  max-height: calc(var(--bhp-modal-vv-height, 100vh) - 2 * var(--space-4));
 }
 
 /* The dialog's own scroll region gets momentum scrolling and stops a
@@ -5120,6 +5126,177 @@ body.bhp-signup-modal-open { overflow: hidden; }
 .mariana-popup--signup .mariana-popup__dialog {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================
+   1.19.224 — THE BOX FITS THE SCREEN, AND THE CTA IS ABOVE THE FOLD
+   CYCLE158-LD-SIGNUP-POPUP iteration 2, 2026-08-13
+   ------------------------------------------------------------
+   Andrew Signore, relayed through Gandalf, three requirements:
+     1. the subscribe button fully visible on open, with NO scrolling,
+        desktop and mobile;
+     2. each page's popup carries the front cover of its own PDF, top right;
+     3. the box's lines sit fully inside the viewport with a visible margin
+        on all four sides.
+
+   ⛔ NOT ONE WORD OF COPY WAS REMOVED TO ACHIEVE (1). The eyebrow, headline,
+      description, optional first-name field, email field, submit button,
+      privacy line and trust line all still render, on every viewport. The
+      fold requirement is met by tighter type and tighter spacing — which is
+      reversible in this block alone — and never by deletion. The page's own
+      indexable copy is untouched entirely; this modal adds and never
+      replaces, which is what keeps the crawlable body intact.
+
+   ⛔ EVERY SELECTOR IS SCOPED TO `.mariana-popup--signup`. Four surfaces
+      share the `.mariana-popup` block: the timed parent popup, the teacher
+      popup, the exit-intent modal and this one. Compacting the shared block
+      to please this one would silently restyle the teacher funnel, which
+      `.claude/rules/funnels.md` keeps isolated and this release does not
+      touch.
+
+   ⛔ THE 16px INPUT FLOOR IS NOT REDUCED, AT ANY VIEWPORT. Below it, iOS
+      Safari zooms the page on focus, which throws the visitor's view off the
+      dialog at the exact moment they start typing — the opposite of the
+      requirement. Nor is the 44px tap-target minimum reduced.
+   ============================================================ */
+
+/* 1 · THE BOX. Bounded on BOTH axes against the real viewport and narrower
+   than the gutter the flex container already provides, so the border is
+   always inside the screen with room to spare rather than flush against it.
+   The double subtraction is deliberate — the container's own padding is the
+   second guard, not a duplicate of the first. */
+.mariana-popup--signup .mariana-popup__dialog {
+  max-width: min(34rem, calc(100vw - 2 * var(--space-6)));
+  max-height: calc(100vh - 2 * var(--space-6));
+  padding: var(--space-6) var(--space-6) var(--space-4);
+}
+
+/* The close control gets a stacking context of its own: the cover below sits
+   in the same corner, and a decorative image must never paint over the one
+   control that dismisses the dialog. */
+.mariana-popup--signup .mariana-popup__close { z-index: 2; }
+
+/* 2 · THE HEAD LOCKUP — eyebrow and headline left, the PDF's own front cover
+   right. A ROW, not a stacked block, because a cover placed above the
+   headline costs its full height on every viewport, while a cover beside it
+   costs only the amount by which it exceeds two lines of type. That
+   difference is what keeps the submit button on screen at 1366x768.
+
+   `padding-right` reserves the close button's corner rather than pushing the
+   whole dialog down with extra top padding. Horizontal room is what this
+   layout has spare; vertical room is what it does not. */
+.mariana-popup--signup .signup-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-right: var(--space-8);
+  margin-bottom: var(--space-2);
+}
+.mariana-popup--signup .signup-modal__intro {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.mariana-popup--signup .signup-modal__cover {
+  display: block;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+/* Height-driven, width auto: the intrinsic width/height attributes on the
+   element hold the aspect ratio, so the slot is the right shape before the
+   bytes arrive and the row cannot reflow as the cover loads. */
+.mariana-popup--signup .signup-modal__cover img {
+  display: block;
+  height: 112px;
+  width: auto;
+  border-radius: 3px;
+  box-shadow: 0 4px 10px rgba(var(--color-jungle-rgb), 0.22);
+}
+
+/* 3 · THE TYPE, STEPPED DOWN TOGETHER. The shared block renders the headline
+   at up to 1.75rem, which took two full lines of a 600px dialog before the
+   offer had said anything and pushed the button toward the fold. */
+.mariana-popup--signup .component-heading__eyebrow { margin: 0 0 var(--space-1); }
+.mariana-popup--signup .mariana-popup__dialog h2 {
+  margin-block: 0 var(--space-1);
+  font-size: clamp(1.2rem, 1.9vw, 1.45rem);
+  line-height: 1.18;
+}
+.mariana-popup--signup .mariana-popup__text {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+/* 4 · THE FIELDS. Tighter gaps, smaller labels, unchanged tap targets. */
+.mariana-popup--signup .mariana-popup__form .acquisition-form__field {
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+.mariana-popup--signup .mariana-popup__form .acquisition-form__field label {
+  font-size: var(--text-xs);
+}
+.mariana-popup--signup .mariana-popup__form .acquisition-form__field input {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  font-size: 1rem;
+}
+.mariana-popup--signup .mariana-popup__form .acquisition-form__submit {
+  width: 100%;
+  min-height: 46px;
+  margin-top: var(--space-1);
+  padding-block: var(--space-2);
+  white-space: normal;
+  line-height: 1.2;
+}
+
+/* 5 · THE MICROCOPY — present, legible, and quiet. The trust line wears
+   `.text-caption`, whose uppercase treatment cost it a second wrapped line
+   on a phone for no gain in meaning. Case is presentation; the sentence is
+   unchanged and still rendered. */
+.mariana-popup--signup .mariana-popup__form .acquisition-form__notes { margin-top: var(--space-2); }
+.mariana-popup--signup .mariana-popup__form .acquisition-form__privacy,
+.mariana-popup--signup .mariana-popup__trust {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mariana-popup--signup .mariana-popup__trust { margin-top: var(--space-1); }
+.mariana-popup--signup .mariana-popup__form .acquisition-form__provider-note {
+  margin: var(--space-1) 0 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* 6 · PHONE. Measured at 390x844 AND at 360x740, which is the shorter of the
+   two and therefore the one that decides whether the button clears the fold.
+   The cover scales down; it does NOT disappear. A visitor on a phone is
+   being shown the same document and asked for the same two fields. */
+@media (max-width: 600px) {
+  .mariana-popup--signup .mariana-popup__dialog {
+    max-width: min(23rem, calc(100vw - 2 * var(--space-4)));
+    max-height: calc(100dvh - 2 * var(--space-4));
+    padding: var(--space-4) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  }
+  .mariana-popup--signup .signup-modal__head {
+    gap: var(--space-3);
+    padding-right: var(--space-10);
+  }
+  .mariana-popup--signup .signup-modal__cover img { height: 76px; }
+  .mariana-popup--signup .mariana-popup__dialog h2 {
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+  .mariana-popup--signup .mariana-popup__text {
+    margin-bottom: var(--space-2);
+    line-height: 1.4;
+  }
+  .mariana-popup--signup .mariana-popup__form .acquisition-form__privacy,
+  .mariana-popup--signup .mariana-popup__trust { font-size: 0.72rem; }
 }
 
 /* ============================================================

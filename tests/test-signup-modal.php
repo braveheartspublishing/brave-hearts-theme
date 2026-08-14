@@ -1,6 +1,6 @@
 <?php
 /**
- * CTA-triggered signup modal suite — theme 1.19.223, 2026-08-13,
+ * CTA-triggered signup modal suite — theme 1.19.224, 2026-08-13,
  * `CYCLE158-LD-SIGNUP-POPUP`.
  *
  * Run on staging (never production) via:
@@ -25,6 +25,12 @@
  *     adopt it.
  *   - Collision control: the modal wears `.mariana-popup`, which both
  *     existing overlay engines already treat as an active overlay.
+ *   - (1.19.224, section 12) Each modal carries the front cover of its OWN
+ *     lead magnet, resolved from files that exist in the theme, with real alt
+ *     text; the wholesale guide — which has no PDF on either environment —
+ *     has no cover and cannot acquire one by accident; no copy was removed to
+ *     meet the above-the-fold requirement; and every compaction selector is
+ *     scoped to the variant so the other three popups are untouched.
  *
  * WHAT IT DOES NOT PROVE, stated so no one over-reads a PASS:
  *   It is a PHP + source-level suite, not a browser. It cannot observe a
@@ -621,6 +627,222 @@ foreach ( $bhp_sm_pages as $tpl => $meta ) {
 		$failures
 	);
 }
+
+echo "\n=== 12. ITERATION 2 — the cover, the fold and the box (1.19.224) ===\n";
+
+/*
+ * ⭐ WHAT THIS SECTION CAN AND CANNOT PROVE, STATED FIRST.
+ *
+ * It proves the cover files EXIST, are wired to the right magnets, carry real
+ * alt text, and that the markup and the compaction CSS are present. It CANNOT
+ * prove the submit button is above the fold, that the box has a visible margin
+ * on four sides, or that the cover is in cache before the dialog opens —
+ * those are measurements of a painted layout at a named viewport, they belong
+ * to the browser harness, and they are recorded there with screenshots. A PASS
+ * here is not evidence for requirement 1 or requirement 3.
+ */
+
+/*
+ * The four magnets whose PDF is registered on both environments get a cover;
+ * the wholesale guide has no PDF anywhere and must have NO cover entry, so a
+ * future session cannot quietly invent one for it.
+ */
+$bhp_sm_covered = array(
+	'reluctant_reader_adventure_kit' => 'reluctant-reader-adventure-kit-cover',
+	'teacher_adventure_toolkit'      => 'adventure-learning-toolkit-cover',
+	'meaningful_gift_guide'          => 'ultimate-gift-guide-cover',
+	'community_reading_kit'          => 'community-reading-kit-cover',
+);
+
+bhp_sm_assert(
+	function_exists( 'bhp_get_lead_magnet_cover' ),
+	'12: bhp_get_lead_magnet_cover() exists',
+	$failures
+);
+
+foreach ( $bhp_sm_covered as $magnet => $slug ) {
+	$cover = function_exists( 'bhp_get_lead_magnet_cover' ) ? bhp_get_lead_magnet_cover( $magnet ) : array();
+
+	bhp_sm_assert(
+		! empty( $cover['url'] ) && ! empty( $cover['fallback'] ),
+		"12: {$magnet} — resolves a cover (webp + fallback)",
+		$failures
+	);
+	bhp_sm_assert(
+		! empty( $cover['url'] ) && false !== strpos( $cover['url'], $slug . '.webp' )
+			&& ! empty( $cover['fallback'] ) && false !== strpos( $cover['fallback'], $slug . '.png' ),
+		"12: {$magnet} — points at its OWN magnet's cover files ({$slug})",
+		$failures
+	);
+	/*
+	 * The files themselves, on disk, in the theme. A URL that resolves in PHP
+	 * and a file that ships in the deploy artefact are different claims, and
+	 * this is the one that catches a ZIP built before the assets were added.
+	 */
+	foreach ( array( 'webp', 'png' ) as $ext ) {
+		$path = get_template_directory() . '/assets/images/lead-magnets/' . $slug . '.' . $ext;
+		bhp_sm_assert(
+			file_exists( $path ) && filesize( $path ) > 1000,
+			"12: {$slug}.{$ext} is present in the theme and non-trivial",
+			$failures
+		);
+	}
+	// Real alt text, naming a real document. Never empty, never "image".
+	bhp_sm_assert(
+		! empty( $cover['alt'] ) && strlen( $cover['alt'] ) > 20 && false === stripos( $cover['alt'], 'placeholder' ),
+		"12: {$magnet} — alt text names the document (\"" . ( isset( $cover['alt'] ) ? $cover['alt'] : '' ) . '")',
+		$failures
+	);
+	bhp_sm_assert(
+		isset( $cover['width'], $cover['height'] ) && (int) $cover['width'] > 0 && (int) $cover['height'] > 0,
+		"12: {$magnet} — intrinsic width/height are declared, so the head row cannot reflow",
+		$failures
+	);
+}
+
+/*
+ * ⛔ THE RETAILERS GATE, ASSERTED FROM BOTH ENDS. Its modal does not render
+ *    (no PDF), and even if a future release rendered it, there is no cover to
+ *    put in it. Inventing one would be a §3 violation, not a nicety.
+ */
+bhp_sm_assert(
+	array() === ( function_exists( 'bhp_get_lead_magnet_cover' ) ? bhp_get_lead_magnet_cover( 'bookstore_wholesale_guide' ) : array( 'x' ) ),
+	'12: bookstore_wholesale_guide has NO cover — the gate holds from the asset side too',
+	$failures
+);
+bhp_sm_assert(
+	array() === ( function_exists( 'bhp_get_lead_magnet_cover' ) ? bhp_get_lead_magnet_cover( 'not_a_real_magnet' ) : array( 'x' ) ),
+	'12: an unknown magnet key resolves to no cover rather than to someone else\'s',
+	$failures
+);
+
+// The markup: a <picture> with a webp source and an <img> that has real alt.
+foreach ( array( '<picture class="signup-modal__cover">', 'type="image/webp"', 'signup-modal__head', 'signup-modal__intro', 'esc_attr($cover[\'alt\'])' ) as $needle ) {
+	bhp_sm_assert(
+		strpos( $bhp_sm_modal_php, $needle ) !== false,
+		"12: the modal template renders {$needle}",
+		$failures
+	);
+}
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_php, 'data-bhp-cover-preload' ) !== false
+		&& strpos( $bhp_sm_modal_js, 'data-bhp-cover-preload' ) !== false,
+	'12: the cover is warmed from a data attribute the controller reads',
+	$failures
+);
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'warmCover' ) !== false && strpos( $bhp_sm_modal_js, 'new Image()' ) !== false,
+	'12: the controller warms the cover on first intent, not on page load',
+	$failures
+);
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_js, 'ensureSubmitVisible' ) !== false
+		&& strpos( $bhp_sm_modal_js, 'dialog.scrollTop' ) !== false,
+	'12: the controller keeps the submit button in view when the visible box is short',
+	$failures
+);
+/*
+ * And it must scroll the DIALOG, never the page. `window.scrollTo` /
+ * `scrollIntoView` in this file would move the visitor's position behind the
+ * modal, which is the "the page moved on me" defect the release already
+ * avoided once.
+ */
+foreach ( array( 'window.scrollTo', 'scrollIntoView' ) as $needle ) {
+	bhp_sm_assert(
+		false === strpos( $bhp_sm_modal_js, $needle ),
+		"12: the controller never calls {$needle} — only the dialog's own scroll region moves",
+		$failures
+	);
+}
+
+/*
+ * ⛔ COMPACTION MUST NOT HAVE REMOVED COPY. Every element the 1.19.223 modal
+ *    rendered is still rendered. This is the assertion that stops a future
+ *    "make it fit" pass from deleting the privacy line or the description
+ *    instead of tightening them.
+ */
+foreach ( array(
+	'component-heading__eyebrow' => 'the eyebrow',
+	'mariana-popup__text'        => 'the description',
+	'mariana-popup__trust'       => 'the trust line',
+	"'privacy_text'"             => 'the privacy line',
+	"'show_name'"                => 'the first-name field argument',
+) as $needle => $what ) {
+	bhp_sm_assert(
+		strpos( $bhp_sm_modal_php, $needle ) !== false,
+		"12: {$what} still renders — no copy was removed to meet the fold",
+		$failures
+	);
+}
+// The first-name field stays PRESENT and stays OPTIONAL.
+bhp_sm_assert(
+	strpos( $bhp_sm_modal_php, "'show_name'            => true," ) !== false
+		&& strpos( $bhp_sm_modal_php, "'require_name'         => false," ) !== false,
+	'12: the first-name field is still present and still optional',
+	$failures
+);
+
+/*
+ * The compaction CSS, and the two floors it must never cross:
+ *   - inputs stay at 1rem (16px). Below it, iOS Safari zooms the page on
+ *     focus and throws the visitor off the dialog as they start typing.
+ *   - the box is bounded on BOTH axes against the real viewport, which is
+ *     what gives requirement 3 its margin on all four sides.
+ */
+$bhp_sm_block_start_12 = strpos( $bhp_sm_style, 'CTA-TRIGGERED SIGNUP MODAL' );
+$bhp_sm_block_end_12   = false === $bhp_sm_block_start_12 ? false : strpos( $bhp_sm_style, 'OVERNIGHT CONVERSION SPRINT', $bhp_sm_block_start_12 );
+$bhp_sm_block_12       = ( false === $bhp_sm_block_start_12 || false === $bhp_sm_block_end_12 )
+	? ''
+	: substr( $bhp_sm_style, $bhp_sm_block_start_12, $bhp_sm_block_end_12 - $bhp_sm_block_start_12 );
+
+/*
+ * ⭐ COMMENTS ARE STRIPPED BEFORE THE SELECTOR SCAN BELOW, for the same reason
+ *    bhp_sm_code_php() exists at the top of this file: a prose line that
+ *    happens to end in a comma reads exactly like a selector list to a
+ *    line-based scanner. The first draft of this section failed on the
+ *    sentence "1. the subscribe button fully visible on open, with NO
+ *    scrolling," — which is documentation, not CSS.
+ */
+$bhp_sm_block_12 = (string) preg_replace( '#/\*.*?\*/#s', '', $bhp_sm_block_12 );
+
+foreach ( array( '.signup-modal__head', '.signup-modal__intro', '.signup-modal__cover', 'max-height: calc(100dvh' ) as $needle ) {
+	bhp_sm_assert(
+		'' !== $bhp_sm_block_12 && strpos( $bhp_sm_block_12, $needle ) !== false,
+		"12: the signup block carries {$needle}",
+		$failures
+	);
+}
+bhp_sm_assert(
+	'' !== $bhp_sm_block_12 && ! preg_match( '/acquisition-form__field input\s*\{[^}]*font-size:\s*0?\.\d+rem/s', $bhp_sm_block_12 ),
+	'12: no rule in the signup block drops an input below 1rem (the iOS zoom floor)',
+	$failures
+);
+/*
+ * ⛔ EVERY SELECTOR IN THE BLOCK IS SCOPED. An unscoped `.mariana-popup__*`
+ *    rule here would restyle the teacher popup, the parent popup and the
+ *    exit-intent modal — three surfaces this release does not touch and
+ *    `.claude/rules/funnels.md` keeps isolated.
+ */
+$bhp_sm_unscoped = array();
+foreach ( preg_split( '/\R/', (string) $bhp_sm_block_12 ) as $line ) {
+	$trimmed = trim( $line );
+	if ( '' === $trimmed || 0 === strpos( $trimmed, '/*' ) || 0 === strpos( $trimmed, '*' ) ) {
+		continue;
+	}
+	if ( ! preg_match( '/^[.\w][^{}@]*[,{]\s*$/', $trimmed ) ) {
+		continue;
+	}
+	$selector = rtrim( $trimmed, " ,{\t" );
+	if ( false === strpos( $selector, '.mariana-popup--signup' )
+		&& false === strpos( $selector, 'body.bhp-signup-modal-open' ) ) {
+		$bhp_sm_unscoped[] = $selector;
+	}
+}
+bhp_sm_assert(
+	empty( $bhp_sm_unscoped ),
+	'12: every selector in the signup block is scoped to the variant (' . ( $bhp_sm_unscoped ? implode( ' | ', $bhp_sm_unscoped ) : 'all scoped' ) . ')',
+	$failures
+);
 
 echo "\n";
 if ( $failures ) {

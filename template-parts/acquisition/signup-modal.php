@@ -1,6 +1,6 @@
 <?php
 /**
- * CTA-triggered signup modal — theme 1.19.223, 2026-08-13,
+ * CTA-triggered signup modal — theme 1.19.224, 2026-08-13,
  * `CYCLE158-LD-SIGNUP-POPUP`.
  *
  * WHAT IT IS. A modal that a visitor OPENS BY CLICKING A CTA, so they can
@@ -105,6 +105,21 @@ $source_page   = $args['source_page'] ?: (get_permalink(get_queried_object_id())
 $submitted_form   = isset($_GET['bhp_form']) ? sanitize_html_class(wp_unslash($_GET['bhp_form'])) : '';
 $submitted_status = isset($_GET['bhp_signup']) ? sanitize_key(wp_unslash($_GET['bhp_signup'])) : '';
 $force_open       = ($submitted_form === $form_id && $submitted_status && $submitted_status !== 'success');
+
+/*
+ * ⭐ THE FRONT COVER OF THIS FUNNEL'S OWN PDF. Andrew Signore, relayed through
+ *    Gandalf, 2026-08-13: each page's popup carries the front cover of its own
+ *    lead magnet, top right. `bhp_get_lead_magnet_cover()` resolves it from a
+ *    page-1 render of the REAL PDF and returns [] when there is no cover — the
+ *    retailers modal never renders at all (no PDF on either environment), so
+ *    this is a guard, not a code path anyone reaches today.
+ *
+ * ⛔ NEVER A PLACEHOLDER. An absent cover renders no <picture> element; it does
+ *    not fall back to a book cover, a neighbouring magnet's cover, or generic
+ *    art. Substituting imagery would make the modal claim to show a document
+ *    it is not showing.
+ */
+$cover = function_exists('bhp_get_lead_magnet_cover') ? bhp_get_lead_magnet_cover($magnet_key) : [];
 ?>
 <div
   id="<?php echo esc_attr($modal_id); ?>"
@@ -114,6 +129,7 @@ $force_open       = ($submitted_form === $form_id && $submitted_status && $submi
   data-bhp-form-audience="<?php echo esc_attr($audience_type); ?>"
   data-page-type="<?php echo esc_attr(bhp_get_page_type_for_analytics()); ?>"
   data-force-open="<?php echo $force_open ? '1' : '0'; ?>"
+  <?php if ($cover): ?>data-bhp-cover-preload="<?php echo esc_url($cover['url']); ?>"<?php endif; ?>
   hidden
 >
   <div class="mariana-popup__overlay" data-bhp-signup-modal-overlay></div>
@@ -129,8 +145,76 @@ $force_open       = ($submitted_form === $form_id && $submitted_status && $submi
       <span aria-hidden="true">&times;</span>
     </button>
 
-    <p class="component-heading__eyebrow"><?php echo esc_html($args['eyebrow'] ?: __('Free printable resource', 'brave-hearts')); ?></p>
-    <h2 id="<?php echo esc_attr($title_id); ?>"><?php echo esc_html($args['title'] ?: $magnet['title']); ?></h2>
+    <?php
+    /*
+     * THE HEAD LOCKUP — 1.19.224. The eyebrow and headline occupy the left
+     * column; the PDF's front cover occupies the right. Two consequences are
+     * deliberate and are the reason this is a flex row rather than a floated
+     * image:
+     *
+     *   - The cover costs vertical space ONLY where it is taller than the two
+     *     lines of text beside it, which is what keeps the submit button above
+     *     the fold at 1366x768 and at 360x740. A block-level image above the
+     *     headline would have cost its full height on every viewport.
+     *   - The description stays OUTSIDE the row, full width. Wrapping body
+     *     copy into a ~60%-width column at 360px produces five-word lines and
+     *     costs more height than the cover saves.
+     *
+     * ⛔ NO COPY WAS REMOVED TO MAKE ROOM. Eyebrow, headline, description,
+     *    optional first name, email, submit, privacy line and trust line are
+     *    all still here and all still rendered on every viewport; the fold
+     *    requirement was met by compaction in style.css, not by deletion.
+     *    Nothing in the indexable page body was touched at all — this modal
+     *    adds, it never replaces.
+     */
+    ?>
+    <div class="signup-modal__head">
+      <div class="signup-modal__intro">
+        <p class="component-heading__eyebrow"><?php echo esc_html($args['eyebrow'] ?: __('Free printable resource', 'brave-hearts')); ?></p>
+        <h2 id="<?php echo esc_attr($title_id); ?>"><?php echo esc_html($args['title'] ?: $magnet['title']); ?></h2>
+      </div>
+
+      <?php if ($cover): ?>
+        <?php
+        /*
+         * ⭐ AN <img>, NOT A CSS BACKGROUND — and the difference from
+         *    `parent-ab-popup.php`'s cover strip is intentional, not an
+         *    inconsistency. That strip is DECORATION (three book covers,
+         *    `aria-hidden`, no information a screen-reader user loses). This
+         *    one is the OFFER: it is the visitor's only sight of the document
+         *    they are handing over an email address for, so it needs a real
+         *    accessible name, and only an <img> has one.
+         *
+         *    Width and height are on the element, so the box is the right
+         *    shape before the bytes arrive and the head row cannot reflow as
+         *    it loads.
+         *
+         * ⭐ IT COSTS THE PAGE LOAD NOTHING. The modal root is `hidden`, i.e.
+         *    `display: none` from the moment the document parses, and no image
+         *    inside a non-rendered subtree is fetched. `assets/js/signup-modal.js`
+         *    warms it on the FIRST hover/focus/touch of any CTA that opens this
+         *    dialog, so by the time the click lands the bytes are in cache —
+         *    measured, not assumed; see the QA evidence folder.
+         *
+         *    `loading="eager"` is explicit rather than default because the
+         *    element must never be treated as below-the-fold once the dialog
+         *    is shown: at that point it IS the fold.
+         */
+        ?>
+        <picture class="signup-modal__cover">
+          <source srcset="<?php echo esc_url($cover['url']); ?>" type="image/webp">
+          <img
+            src="<?php echo esc_url($cover['fallback']); ?>"
+            width="<?php echo (int) $cover['width']; ?>"
+            height="<?php echo (int) $cover['height']; ?>"
+            alt="<?php echo esc_attr($cover['alt']); ?>"
+            loading="eager"
+            decoding="async"
+          >
+        </picture>
+      <?php endif; ?>
+    </div>
+
     <div id="<?php echo esc_attr($desc_id); ?>" class="mariana-popup__text"><?php echo wp_kses_post($args['text'] ?: $magnet['description']); ?></div>
 
     <?php get_template_part('template-parts/acquisition/signup-form', null, [

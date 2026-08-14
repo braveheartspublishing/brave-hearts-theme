@@ -1,5 +1,5 @@
 /**
- * CTA-triggered signup modal controller — theme 1.19.223, 2026-08-13,
+ * CTA-triggered signup modal controller — theme 1.19.224, 2026-08-13,
  * `CYCLE158-LD-SIGNUP-POPUP`.
  *
  * Drives `template-parts/acquisition/signup-modal.php`. A visitor clicks a
@@ -126,6 +126,7 @@
     var closeBtn = modal.querySelector('[data-bhp-signup-modal-close]');
     var form = modal.querySelector('form.acquisition-form');
     var emailInput = form ? form.querySelector('input[type="email"]') : null;
+    var submitBtn = form ? form.querySelector('.acquisition-form__submit') : null;
 
     var leadOffer = modal.getAttribute('data-bhp-lead-offer') || '';
     var audience = modal.getAttribute('data-bhp-form-audience') || '';
@@ -189,6 +190,38 @@
      */
     var vv = window.visualViewport || null;
 
+    /**
+     * ⭐ 1.19.224 — THE SUBSCRIBE BUTTON STAYS ON SCREEN, EVEN WHEN THE BOX
+     *    CANNOT. Requirement 1 is "the submit button is fully visible without
+     *    any scrolling", and style.css satisfies it by compaction at all four
+     *    QA viewports. This is the guard for the case CSS cannot reach: a
+     *    short visual viewport (a phone keyboard on a 740px-tall screen, a
+     *    landscape phone, a 200% browser zoom) where the dialog is genuinely
+     *    taller than the visible box and therefore scrolls internally.
+     *
+     *    In that case the dialog is scrolled — by exactly the deficit, once —
+     *    so the button's bottom edge sits inside the dialog's own visible
+     *    region. The visitor still never scrolls; the box does it for them.
+     *
+     * ⛔ THE PAGE IS NEVER SCROLLED. `dialog.scrollTop` moves the dialog's own
+     *    overflow region and nothing else. The visitor's position on the page
+     *    behind the modal is not touched here or anywhere in this file.
+     */
+    function ensureSubmitVisible() {
+      if (!isOpen || !submitBtn) {
+        return;
+      }
+      if (dialog.scrollHeight <= dialog.clientHeight) {
+        return;
+      }
+      var dialogBox = dialog.getBoundingClientRect();
+      var submitBox = submitBtn.getBoundingClientRect();
+      var deficit = submitBox.bottom - (dialogBox.bottom - 12);
+      if (deficit > 0) {
+        dialog.scrollTop += deficit;
+      }
+    }
+
     function syncViewport() {
       if (!vv || !isOpen) {
         return;
@@ -196,6 +229,7 @@
       modal.style.setProperty('--bhp-modal-vv-height', vv.height + 'px');
       modal.style.setProperty('--bhp-modal-vv-top', (vv.offsetTop || 0) + 'px');
       modal.style.setProperty('--bhp-modal-vv-left', (vv.offsetLeft || 0) + 'px');
+      ensureSubmitVisible();
     }
 
     function clearViewport() {
@@ -261,6 +295,8 @@
         target.focus();
       }
 
+      ensureSubmitVisible();
+
       // Claims the shared session slot, so the exit-intent engine's
       // `sessionGuard` blocks it for the rest of this tab's session. This is
       // the mechanism `mariana-popup.js` already defines; no new key.
@@ -285,6 +321,10 @@
       modal.classList.remove('is-open');
       modal.hidden = true;
       document.body.classList.remove(BODY_OPEN_CLASS);
+
+      // A reopen starts at the top of the offer, never wherever
+      // ensureSubmitVisible() left the previous session's scroll region.
+      dialog.scrollTop = 0;
 
       detachViewportSync();
       document.removeEventListener('keydown', onKeydown, true);
@@ -349,8 +389,43 @@
       el: modal,
       open: open,
       close: close,
+      coverWarmed: false,
       hasForceOpen: modal.getAttribute('data-force-open') === '1'
     };
+  }
+
+  /**
+   * ⭐ 1.19.224 — THE COVER IS IN CACHE BEFORE THE DIALOG OPENS.
+   *
+   * The modal root is `hidden`, i.e. `display: none` from the moment the
+   * document parses, and no image inside a non-rendered subtree is fetched.
+   * That is exactly what the funnel pages want — the cover must cost their
+   * LCP nothing — but it means a cold visitor would watch the cover appear a
+   * beat after the box does.
+   *
+   * So the bytes are warmed on the visitor's FIRST hover, focus or touch of
+   * any CTA that opens this dialog, which on every input method precedes the
+   * click that opens it. Exactly one request, only for visitors who show
+   * intent, and never on page load.
+   *
+   * ⛔ IT WARMS THE WEBP ONLY. The <picture> element's PNG is a fallback for
+   *    engines that cannot decode WebP; on those engines this preload is a
+   *    no-op that fails silently and the PNG loads at open time. Warming both
+   *    would double the request for every visitor to save a rounding error of
+   *    them.
+   */
+  function warmCover(api) {
+    if (!api || api.coverWarmed) {
+      return;
+    }
+    api.coverWarmed = true;
+    var src = api.el.getAttribute('data-bhp-cover-preload');
+    if (!src) {
+      return;
+    }
+    var warm = new Image();
+    warm.decoding = 'async';
+    warm.src = src;
   }
 
   function ready(fn) {
@@ -390,6 +465,14 @@
         trigger.setAttribute('aria-haspopup', 'dialog');
         trigger.setAttribute('aria-controls', targetId);
         trigger.setAttribute('aria-expanded', 'false');
+
+        // One-shot cover warm-up on the first sign of intent, whatever the
+        // input method. `once` means these unbind themselves; `passive` means
+        // a touch listener can never delay a scroll.
+        var warm = function () { warmCover(api); };
+        trigger.addEventListener('pointerenter', warm, { once: true, passive: true });
+        trigger.addEventListener('focus', warm, { once: true, passive: true });
+        trigger.addEventListener('touchstart', warm, { once: true, passive: true });
 
         trigger.addEventListener('click', function (event) {
           // Never swallow a modified click — a visitor deliberately opening
