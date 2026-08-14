@@ -1,10 +1,18 @@
 /**
- * CTA-triggered signup modal controller — theme 1.19.224, 2026-08-13,
- * `CYCLE158-LD-SIGNUP-POPUP`.
+ * CTA-triggered signup modal controller — theme 1.19.225, 2026-08-13,
+ * `CYCLE158-LD-SIGNUP-POPUP` iteration 3.
  *
  * Drives `template-parts/acquisition/signup-modal.php`. A visitor clicks a
  * funnel CTA that used to scroll down to the inline capture panel; instead
- * the modal opens with the caret already in the email field.
+ * the modal opens over the page.
+ *
+ * ⭐ 1.19.225 — WHERE THE CARET GOES DEPENDS ON THE POINTER, AND THAT IS THE
+ *    WHOLE OF THIS ITERATION. On a fine-pointer device the caret is in the
+ *    email field on open, unchanged from 1.19.223. On a coarse-pointer device
+ *    it is in the dialog container, so no virtual keyboard is summoned by the
+ *    same gesture that opened the box. See `hasCoarsePointer()` below for the
+ *    predicate, the hybrid-device ruling and the real-device defect that
+ *    forced it.
  *
  * ---------------------------------------------------------------------
  * WHY THIS IS A SEPARATE FILE FROM `mariana-popup.js`, STATED SO IT IS NOT
@@ -72,6 +80,73 @@
   var FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]),' +
     ' select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+  /**
+   * ⭐ 1.19.225 — THE ONE PREDICATE THAT DECIDES WHETHER WE AUTOFOCUS.
+   *
+   * WHY THIS EXISTS. Iteration 2 focused the email input on every device.
+   * Andrew Signore re-tested on his own iPhone (iOS Safari, real hardware,
+   * screenshot supplied) and it failed: one tap on the CTA opened the dialog
+   * AND summoned the keyboard AND the autofill accessory bar in a single
+   * gesture. Between them they took roughly the lower 60% of the screen, the
+   * dialog was left taller than what remained visible, and the visitor landed
+   * in a cramped, clipped box with the eyebrow gone, the cover half hidden
+   * and only the word "Kit" left of the headline. Verbatim: "you click the
+   * CTA and this happens - not a good UX."
+   *
+   * ⛔ THE SIMULATED-visualViewport QA PASSED WHILE THE REAL DEVICE FAILED.
+   *    A synthetic `visualViewport.height` shrink reproduces the geometry and
+   *    reproduces NONE of iOS's own behaviour: it does not raise an accessory
+   *    bar, it does not run WebKit's scroll-the-focused-input-into-view pass,
+   *    and it does not reflow a `position: fixed` element mid-keyboard-
+   *    animation. Simulation is evidence about layout arithmetic and is NOT
+   *    evidence about a device. That is recorded here, not just in the QA
+   *    packet, because the next person to touch this file will be tempted by
+   *    the same shortcut.
+   *
+   * THE PREDICATE, AND WHY IT IS `any-pointer` RATHER THAN `pointer`:
+   *
+   *   `(pointer: coarse)`     describes the PRIMARY pointing device. A Windows
+   *                           laptop with a touchscreen reports `fine`, so a
+   *                           hybrid device would still be autofocused — and a
+   *                           hybrid device with the keyboard folded away is
+   *                           exactly a tablet.
+   *   `(any-pointer: coarse)` is true when ANY available pointing device is
+   *                           coarse. Phones and tablets match. Touch laptops
+   *                           and 2-in-1s match. A plain desktop with a mouse
+   *                           or trackpad does not.
+   *
+   * So hybrids get the SAFE behaviour (no autofocus), which is the deliberate
+   * choice: the cost of not autofocusing on a machine that has a hardware
+   * keyboard is one extra click; the cost of autofocusing on a machine that
+   * raises a virtual keyboard is the defect above.
+   *
+   * ⛔ NO USER-AGENT SNIFFING. Nothing here reads `navigator.userAgent`, and
+   *    nothing here names a vendor, a browser or an OS.
+   *
+   * The `mq.media !== 'not all'` test is the feature detection: an engine that
+   * cannot parse `any-pointer` returns a MediaQueryList whose `media` is
+   * normalised to `'not all'` and whose `matches` is a meaningless `false`.
+   * Trusting that `false` would autofocus every visitor on such an engine,
+   * which is the failure we are removing — so we fall through to touch-point
+   * detection instead, which is capability detection too, not sniffing.
+   *
+   * Evaluated on every open rather than cached at load: a tablet can gain and
+   * lose a pointing device (a keyboard folio, a paired mouse) inside one page
+   * view, and this call costs nothing.
+   */
+  function hasCoarsePointer() {
+    if (typeof window.matchMedia === 'function') {
+      var mq = window.matchMedia('(any-pointer: coarse)');
+      if (mq && mq.media !== 'not all') {
+        return !!mq.matches;
+      }
+    }
+    if (typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0) {
+      return true;
+    }
+    return 'ontouchstart' in window;
+  }
+
   function pushEvent(name, payload) {
     if (typeof window.dataLayer === 'undefined' || !Array.isArray(window.dataLayer)) {
       return;
@@ -135,6 +210,10 @@
     var isOpen = false;
     var lastFocused = null;
     var openedFrom = '';
+    // 'email' on a fine-pointer device, 'dialog' on a coarse-pointer one.
+    // Reported inside the EXISTING `signup_modal_opened` event — no new event
+    // name is minted for this, deliberately.
+    var initialFocus = '';
 
     function getFocusable() {
       var nodes = dialog.querySelectorAll(FOCUSABLE_SELECTOR);
@@ -158,10 +237,34 @@
       }
       var first = focusable[0];
       var last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      var active = document.activeElement;
+
+      /*
+       * ⭐ 1.19.225 — THE TRAP NOW HOLDS FROM THE DIALOG CONTAINER TOO.
+       *
+       * On a coarse-pointer device the initial focus is the dialog element
+       * itself, which carries `tabindex="-1"` and is therefore deliberately
+       * NOT in `focusable`. Forward Tab from there happened to work (the
+       * browser's own order walks into the dialog's children), but SHIFT+Tab
+       * walked BACKWARDS out of the dialog and into the page behind it — a
+       * real trap leak, introduced the moment initial focus stopped being the
+       * email input. It is closed here rather than by adding the dialog to
+       * the focusable set, because a `tabindex="-1"` element must not be a
+       * tab stop the visitor can cycle through.
+       *
+       * `indexOf === -1` also covers the case where focus has ended up on
+       * <body> (Safari after a click on a non-focusable region).
+       */
+      if (active === dialog || focusable.indexOf(active) === -1) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
+
+      if (event.shiftKey && active === first) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (!event.shiftKey && active === last) {
         event.preventDefault();
         first.focus();
       }
@@ -191,35 +294,126 @@
     var vv = window.visualViewport || null;
 
     /**
-     * ⭐ 1.19.224 — THE SUBSCRIBE BUTTON STAYS ON SCREEN, EVEN WHEN THE BOX
-     *    CANNOT. Requirement 1 is "the submit button is fully visible without
-     *    any scrolling", and style.css satisfies it by compaction at all four
-     *    QA viewports. This is the guard for the case CSS cannot reach: a
-     *    short visual viewport (a phone keyboard on a 740px-tall screen, a
-     *    landscape phone, a 200% browser zoom) where the dialog is genuinely
-     *    taller than the visible box and therefore scrolls internally.
+     * ⭐ 1.19.225 — IS THE VISITOR ACTUALLY TYPING?
      *
-     *    In that case the dialog is scrolled — by exactly the deficit, once —
-     *    so the button's bottom edge sits inside the dialog's own visible
-     *    region. The visitor still never scrolls; the box does it for them.
+     * This is the gate that makes the whole iteration-3 fix hold together.
+     * The capture-visibility scroll below is CORRECT while a virtual keyboard
+     * is up and WRONG at every other moment: with no keyboard, scrolling the
+     * dialog down to the subscribe button is precisely what hides the
+     * eyebrow, the headline and the cover — the exact clipped view Andrew
+     * photographed. So the adjustment now runs only while a field inside this
+     * dialog holds focus, which is the only state in which a virtual keyboard
+     * can be on screen.
+     */
+    function aFieldIsFocused() {
+      var active = document.activeElement;
+      if (!active || !form || !form.contains(active)) {
+        return false;
+      }
+      return /^(input|textarea|select)$/i.test(active.tagName || '');
+    }
+
+    /**
+     * ⭐ 1.19.225 — THE EMAIL FIELD **AND** THE SUBSCRIBE BUTTON STAY ABOVE
+     *    THE KEYBOARD. Supersedes 1.19.224's `ensureSubmitVisible()`, which
+     *    optimised for the button alone.
+     *
+     * 1.19.224 scrolled the dialog until the submit button's bottom edge sat
+     * inside the dialog's visible region, and called that on open. Two things
+     * were wrong with it, both proven by the real-device failure:
+     *
+     *   1. It ran on OPEN, before any keyboard existed. On a short phone the
+     *      dialog can overflow by a few pixels with no keyboard at all, and
+     *      the response — scroll to the button — threw away the top of the
+     *      offer for no benefit. It is now gated on `aFieldIsFocused()`.
+     *   2. It anchored on ONE element. With the keyboard AND iOS's autofill
+     *      accessory bar up, "the button is visible" and "the field I am
+     *      typing in is visible" are different claims, and the visitor needs
+     *      both.
+     *
+     * WHAT IT DOES NOW: treats [email input top → submit button bottom] as one
+     * band and moves the dialog's own scroll region by the SMALLEST amount
+     * that brings that band inside the visible box. If the band is taller than
+     * the box — a landscape phone, a very short viewport, 200% zoom — it pins
+     * the field being typed in to the top of the visible region and leaves the
+     * button one short scroll away INSIDE the dialog, which is reachable,
+     * rather than clipping the dialog, which is not.
+     *
+     * ⛔ IT NEVER FIGHTS iOS. WebKit runs its own scroll-the-focused-input-
+     *    into-view pass when a keyboard appears, and two controllers pushing
+     *    the same scroll container in the same frame is what produces the
+     *    jitter this release is meant to remove. Three things prevent that:
+     *    the adjustment is MINIMAL (zero when the band is already inside the
+     *    box), it has a 2px dead band so sub-pixel disagreement is not a
+     *    correction, and it is scheduled AFTER the browser's own pass rather
+     *    than racing it (see `scheduleCaptureCheck()`).
      *
      * ⛔ THE PAGE IS NEVER SCROLLED. `dialog.scrollTop` moves the dialog's own
      *    overflow region and nothing else. The visitor's position on the page
      *    behind the modal is not touched here or anywhere in this file.
      */
-    function ensureSubmitVisible() {
-      if (!isOpen || !submitBtn) {
+    function ensureCaptureVisible() {
+      if (!isOpen || !aFieldIsFocused()) {
         return;
       }
-      if (dialog.scrollHeight <= dialog.clientHeight) {
+      if (dialog.scrollHeight <= dialog.clientHeight + 1) {
         return;
       }
-      var dialogBox = dialog.getBoundingClientRect();
-      var submitBox = submitBtn.getBoundingClientRect();
-      var deficit = submitBox.bottom - (dialogBox.bottom - 12);
-      if (deficit > 0) {
-        dialog.scrollTop += deficit;
+
+      var topAnchor = emailInput || submitBtn;
+      var bottomAnchor = submitBtn || emailInput;
+      if (!topAnchor || !bottomAnchor) {
+        return;
       }
+
+      var PAD_TOP = 8;
+      var PAD_BOTTOM = 12;
+      var DEAD_BAND = 2;
+
+      var box = dialog.getBoundingClientRect();
+      var topBox = topAnchor.getBoundingClientRect();
+      var bottomBox = bottomAnchor.getBoundingClientRect();
+
+      var bandHeight = bottomBox.bottom - topBox.top;
+      var roomAvailable = box.height - PAD_TOP - PAD_BOTTOM;
+
+      // The band does not fit. Show the field being typed in; the button is
+      // reachable by scrolling the dialog, and the dialog is never clipped.
+      if (bandHeight > roomAvailable) {
+        var offset = topBox.top - (box.top + PAD_TOP);
+        if (Math.abs(offset) > DEAD_BAND) {
+          dialog.scrollTop += offset;
+        }
+        return;
+      }
+
+      var below = bottomBox.bottom - (box.bottom - PAD_BOTTOM);
+      if (below > DEAD_BAND) {
+        dialog.scrollTop += below;
+        return;
+      }
+
+      var above = (box.top + PAD_TOP) - topBox.top;
+      if (above > DEAD_BAND) {
+        dialog.scrollTop -= above;
+      }
+    }
+
+    /**
+     * Runs the check AFTER the browser has had its own go, never against it.
+     * `requestAnimationFrame` covers the same-frame case; the timeout covers
+     * iOS, where the keyboard and the accessory bar animate in over roughly a
+     * quarter of a second and `visualViewport` reports intermediate heights
+     * the whole way. Both passes are idempotent — the function is a
+     * minimal-correction, so a second run on a settled layout does nothing.
+     */
+    function scheduleCaptureCheck() {
+      if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(ensureCaptureVisible);
+      } else {
+        ensureCaptureVisible();
+      }
+      window.setTimeout(ensureCaptureVisible, 320);
     }
 
     function syncViewport() {
@@ -229,7 +423,7 @@
       modal.style.setProperty('--bhp-modal-vv-height', vv.height + 'px');
       modal.style.setProperty('--bhp-modal-vv-top', (vv.offsetTop || 0) + 'px');
       modal.style.setProperty('--bhp-modal-vv-left', (vv.offsetLeft || 0) + 'px');
-      ensureSubmitVisible();
+      ensureCaptureVisible();
     }
 
     function clearViewport() {
@@ -283,32 +477,70 @@
       attachViewportSync();
       document.addEventListener('keydown', onKeydown, true);
 
-      // ⭐ THE REQUIREMENT, IN ONE LINE. Focus goes to the email input, not
-      //    to the dialog and not to the close button, so the visitor can
-      //    type immediately. The name field above it is optional and is
-      //    deliberately skipped. `preventScroll` keeps the page behind the
-      //    modal exactly where it was on engines that honour it.
-      var target = emailInput || getFocusable()[0] || dialog;
+      /*
+       * ⭐ 1.19.225 — WHERE FOCUS LANDS, AND WHY IT IS NOT THE SAME EVERYWHERE.
+       *
+       * DESKTOP (fine pointer, no virtual keyboard): focus goes to the EMAIL
+       * INPUT, exactly as 1.19.223 shipped it. Andrew's original "instant
+       * type" requirement is untouched where it works — the caret is in the
+       * field, the visitor types, presses Enter, done. The optional first-name
+       * field above it is deliberately skipped.
+       *
+       * TOUCH / COARSE POINTER: focus goes to the DIALOG CONTAINER, which
+       * already carries `tabindex="-1"` in signup-modal.php. No virtual
+       * keyboard is summoned, so the modal opens fully visible and stable —
+       * eyebrow, headline, cover, both fields and the subscribe button all on
+       * screen, which is what the iteration-2 fold measurements actually
+       * proved before the keyboard wrecked them. The visitor then taps the
+       * email field themselves: one natural tap, the standard iOS pattern,
+       * and iOS runs its own well-tuned scroll-into-view for a tap it
+       * initiated.
+       *
+       * ⭐ FOCUSING THE CONTAINER IS NOT "NO FOCUS MANAGEMENT". It keeps the
+       *    focus trap live, keeps ESC working, moves the screen reader's
+       *    cursor into the dialog so `aria-labelledby`/`aria-describedby` are
+       *    announced, and preserves focus return to the triggering CTA on
+       *    close. A modal that left focus on the page behind it would be a
+       *    different and worse defect.
+       *
+       * `preventScroll` keeps the page behind the modal exactly where it was
+       * on engines that honour it.
+       */
+      var coarse = hasCoarsePointer();
+      initialFocus = coarse ? 'dialog' : 'email';
+
+      var target = coarse ? dialog : (emailInput || getFocusable()[0] || dialog);
       try {
         target.focus({ preventScroll: true });
       } catch (e) {
         target.focus();
       }
 
-      ensureSubmitVisible();
+      // No-op on touch: no field is focused, so the offer opens at its top
+      // rather than scrolled down to the button. That difference IS the fix.
+      ensureCaptureVisible();
 
       // Claims the shared session slot, so the exit-intent engine's
       // `sessionGuard` blocks it for the rest of this tab's session. This is
       // the mechanism `mariana-popup.js` already defines; no new key.
       writeSession(SHARED_SESSION_SHOWN_KEY, '1');
 
+      /*
+       * ⛔ THE EVENT NAME IS UNCHANGED, AND SO IS EVERY EXISTING PARAMETER.
+       *    `initial_focus` is a new PARAM inside the event that already
+       *    shipped, which is what the brief asked for: no new event name, so
+       *    nothing downstream in GA4/GTM has to be reconfigured to keep
+       *    counting opens. It is 'email' or 'dialog' and carries no personal
+       *    data, no device identifier and no user-agent string.
+       */
       pushEvent('signup_modal_opened', {
         source_cta: openedFrom,
         open_reason: reason || 'cta_click',
         lead_offer: leadOffer,
         audience: audience,
         placement: 'signup_modal',
-        page_type: pageType
+        page_type: pageType,
+        initial_focus: initialFocus
       });
     }
 
@@ -354,6 +586,28 @@
         }
       }
     }
+
+    /*
+     * ⭐ 1.19.225 — THE VISITOR TAPPED THE FIELD, SO THE KEYBOARD IS COMING.
+     *
+     * `visualViewport`'s `resize` is the authoritative signal and it does fire
+     * on iOS and Android — but it fires several times during the keyboard's
+     * animation and, on some Android builds with the resizes-visual behaviour
+     * disabled, it does not fire at all. This listener is the belt to that
+     * braces: whenever a field inside this dialog takes focus, the capture
+     * band is re-checked once the browser has finished its own scroll pass.
+     *
+     * ⛔ It never focuses anything. It observes focus and adjusts the dialog's
+     *    own scroll region, which is the same minimal, dead-banded correction
+     *    `syncViewport()` makes.
+     */
+    dialog.addEventListener('focusin', function (event) {
+      var el = event.target;
+      if (!el || !/^(input|textarea|select)$/i.test(el.tagName || '')) {
+        return;
+      }
+      scheduleCaptureCheck();
+    });
 
     if (closeBtn) {
       closeBtn.addEventListener('click', function () {

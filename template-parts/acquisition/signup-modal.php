@@ -47,8 +47,16 @@
  *
  * ACCESSIBILITY. `role="dialog"`, `aria-modal="true"`, a labelled and
  * described dialog, a focus trap, ESC and overlay-click close, focus
- * returned to the triggering CTA, and background scroll lock. Focus lands
- * in the EMAIL input on open, which is the whole point of the change.
+ * returned to the triggering CTA, and background scroll lock.
+ *
+ * ⭐ 1.19.225 — WHERE INITIAL FOCUS LANDS IS DECIDED AT RUNTIME BY THE
+ *    POINTER, NOT HERE. On a fine-pointer device it is the email input
+ *    ("instant type"); on a coarse-pointer device it is THIS dialog element,
+ *    which is why its `tabindex="-1"` below is load-bearing and must not be
+ *    removed. Focusing the container keeps the trap, ESC and the screen-
+ *    reader announcement working without summoning a virtual keyboard in the
+ *    same gesture that opened the box. The predicate and the real-device
+ *    defect behind it are documented in `assets/js/signup-modal.js`.
  *
  * NO-JS FALLBACK. The element is `hidden` and stays hidden without
  * JavaScript. Every CTA keeps its original `href="#free"`, so with JS off
