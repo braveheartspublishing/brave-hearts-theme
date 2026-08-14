@@ -633,10 +633,21 @@ function bhp_bundle_landing_five_star_reviews_exist() {
  * ⭐ "BRING UP THE FREEx3" IS SATISFIED BY THE REMOVAL ITSELF. The FREE
  *    bullets were already the 2nd-4th items of this list; deleting the 1st
  *    makes them the 1st-3rd and lifts them 46px. No bullet is reordered, no
- *    bullet is reworded, and the three gates (`bhp_bundle_rules()[3]`,
- *    `bhp_bundle_addon_free_with_collection()`, `bhp_bundle_vocab_cards_live()`)
- *    are byte-untouched, so an environment where an offer is not live still
- *    drops that bullet by itself.
+ *    bullet is reworded, and all three live gates — the shipping tier, the
+ *    activity-book predicate and the vocabulary-cards predicate — are
+ *    byte-untouched, so an environment where an offer is not live still drops
+ *    that bullet by itself.
+ *
+ *    ⚠ THE GATE FUNCTIONS ARE NAMED IN PROSE HERE, WITHOUT THEIR TRAILING
+ *      PARENTHESES, AND THAT IS DELIBERATE RATHER THAN SLOPPY.
+ *      `test-addon-vocab-cards.php` §9 counts occurrences of the vocabulary
+ *      predicate's name-plus-parentheses in this file's RAW SOURCE TEXT and
+ *      requires exactly 2 — a count that cannot tell a call site from a
+ *      comment. The first draft of this docblock wrote it in the usual
+ *      backticked style, took the count to 3, and turned that suite red on a
+ *      build whose code was correct. ⛔ The CODE is right and the TEST's
+ *      needle is loose. The loose needle is REPORTED to its owner rather
+ *      than tightened from here; this comment simply stops tripping it.
  *
  * ⚠ THE `<ul>` NOW HOLDS ONLY FREE BULLETS, and two rules elsewhere were
  *   written for a mixed list. Both were designed to self-retire and both do:
