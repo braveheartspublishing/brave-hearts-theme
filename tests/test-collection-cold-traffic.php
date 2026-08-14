@@ -427,14 +427,51 @@ bhp_cct_assert(
 	'4: the primary CTA renders directly BELOW the trust line (Andrew\'s mobile ruling)',
 	$failures
 );
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⭐ SUPERSEDED 2026-08-14 (`CYCLE160-LD-COLLECTION-PRICE-BOX`) — THE CTA
+ *     AND THE PRICE SWAPPED PLACES, ON A LATER FOUNDER INSTRUCTION. THIS IS
+ *     A CONFLICT BETWEEN TWO OF ANDREW'S OWN RULINGS AND IT IS RECORDED
+ *     RATHER THAN QUIETLY RESOLVED.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * The superseded assertions, preserved verbatim:
+ *
+ *   bhp_cct_before( $html, 'data-bhp-landing-main-cta', '<dt>Complete Collection</dt>' )
+ *     '4: the primary CTA renders directly ABOVE the "Complete Collection -
+ *      price" element (Andrew's explicit placement)'
+ *   bhp_cct_before( $html, '<dt>Complete Collection</dt>', 'bhp-landing-format-selector' )
+ *     '4: the format selector renders BELOW the emotional case and the price block'
+ *
+ * ⚠ THE TWO INSTRUCTIONS, BOTH ANDREW'S, BOTH RELAYED THROUGH THE CHIEF OF
+ *   STAFF AND NEITHER WITNESSED FIRST-HAND HERE:
+ *
+ *   2026-08-07 (1.8.32) — "the primary CTA goes above the fold, DIRECTLY
+ *   above the 'Complete Collection · price' element".
+ *
+ *   2026-08-14 (1.8.41) — "the collection price display goes INSIDE the
+ *   existing FREE box … bottom-right region, ABOVE THE FOLD on desktop AND
+ *   mobile".
+ *
+ *   The FREE box sits ABOVE the button, so the second instruction
+ *   necessarily inverts the first. ⭐ THE LATER INSTRUCTION IS THE ONE THAT
+ *   SHIPPED, and the earlier one is preserved above so a reader can see the
+ *   movement instead of reading the new order as a regression. It is flagged
+ *   in the CYCLE160 handoff for Andrew rather than treated as settled here.
+ *
+ * ⛔ WHAT IS STILL ASSERTED, UNCHANGED IN SUBSTANCE: the price and the CTA
+ *    are still adjacent, still both inside the purchase card, still both
+ *    ahead of the format selector, and the price is still ABOVE the fold —
+ *    which is the point of the 2026-08-07 ruling and of this one.
+ */
 bhp_cct_assert(
-	bhp_cct_before( $html, 'data-bhp-landing-main-cta', '<dt>Complete Collection</dt>' ),
-	'4: the primary CTA renders directly ABOVE the "Complete Collection - price" element (Andrew\'s explicit placement)',
+	bhp_cct_before( $html, 'bhp-landing-coldopen__price', 'data-bhp-landing-main-cta' ),
+	'4: the price display renders directly ABOVE the primary CTA (Andrew, 2026-08-14)',
 	$failures
 );
 bhp_cct_assert(
-	bhp_cct_before( $html, '<dt>Complete Collection</dt>', 'bhp-landing-format-selector' ),
-	'4: the format selector renders BELOW the emotional case and the price block',
+	bhp_cct_before( $html, 'data-bhp-landing-main-cta', 'bhp-landing-format-selector' ),
+	'4: the format selector renders BELOW the emotional case, the price block and the CTA',
 	$failures
 );
 bhp_cct_assert(

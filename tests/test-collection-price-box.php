@@ -279,9 +279,17 @@ bhp_cpb_assert(
 	'4: exactly one alternate-format control per price block',
 	$failures
 );
+/*
+ * ⚠ CORRECTED after this suite's first run on staging, and recorded rather
+ *   than quietly patched. The first version asserted the literal
+ *   `>Hardcover available`, which FAILED on a correct build: the label sits
+ *   on its own indented line inside the button, so the character before it
+ *   is a tab, not `>`. An assertion that encodes template whitespace tests
+ *   the indenter, not the copy.
+ */
 bhp_cpb_assert(
-	strpos( $html, '>Hardcover available' ) !== false
-	&& strpos( $html, '>Paperback available' ) !== false,
+	preg_match( '/data-bhp-format-link="hardcover"[^>]*>\s*Hardcover available\s*<\/button>/su', $html ) === 1
+	&& preg_match( '/data-bhp-format-link="paperback"[^>]*>\s*Paperback available\s*<\/button>/su', $html ) === 1,
 	'4: the alternate-format line states availability',
 	$failures
 );
