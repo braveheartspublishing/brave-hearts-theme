@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 286baca73e5ecc7eed10b439fb7cbdc1
+    source-md5: 8faeb55ebeb941c4948d6bb9393a6fc4
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.227
+Version: 1.19.228
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5564,4 +5564,52 @@ a.header-expedition-cta {
   display: inline-grid;
   margin-inline: auto;
   margin-bottom: var(--space-4, 24px);
+}
+.bhp-kit-upsell__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: .4rem;
+  row-gap: 0;
+  margin: var(--space-3, 16px) 0 0;
+  text-align: center;
+}
+.bhp-kit-upsell__price-was {
+  font-family: var(--font-ui);
+  font-size: .85rem;
+  font-weight: 700;
+  color: #b3261e;
+  text-decoration: line-through;
+}
+.bhp-kit-upsell__price-now {
+  font-family: var(--font-ui);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--color-forest);
+}
+.bhp-kit-upsell__price-cents {
+  font-size: .55em;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+.bhp-kit-upsell__price-save {
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  font-weight: 800;
+  color: var(--color-gold-deep);
+}
+.bhp-kit-upsell__coupon {
+  font-family: var(--font-ui);
+  font-size: .82rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: var(--space-2, 8px) 0 0;
+}
+.bhp-kit-upsell__coupon strong {
+  color: var(--color-forest);
+  font-weight: 800;
+  letter-spacing: .02em;
 }

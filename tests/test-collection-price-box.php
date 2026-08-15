@@ -281,8 +281,41 @@ foreach ( array( 'paperback', 'hardcover' ) as $cpb_fmt ) {
 		"3: {$cpb_fmt} — the strike is a real <s> carrying {$sep}",
 		$failures
 	);
+	/*
+	 * ⚠ CORRECTED 2026-08-14 (`CYCLE161-LD-01`) — THIS ASSERTION WAS STALE
+	 *   AND HAD BEEN FAILING ON A CORRECT BUILD SINCE PLUGIN 1.8.43.
+	 *
+	 *   It asserted the price as one flat text node:
+	 *
+	 *     '<span class="bhp-landing-coldopen__price-now" aria-hidden="true">' . $bun . '</span>'
+	 *
+	 *   1.8.43 split the cents into a nested `__price-cents` span on
+	 *   Andrew's 2026-08-14 instruction ("make the 99 smaller"), so the real
+	 *   markup is `>$31<span class="…__price-cents">.99</span></span>`. The
+	 *   suite was not updated in that pass, and it has been reporting a FAIL
+	 *   against shipped, correct, founder-approved markup ever since —
+	 *   measured on staging 1.19.227/1.8.45 before this fix, 2 failures,
+	 *   both this assertion.
+	 *
+	 *   ⛔ THE FIX DOES NOT WEAKEN THE TEST. It still requires the exact
+	 *      derived figure, still requires it inside the `__price-now` span,
+	 *      and still requires `aria-hidden`. It now accepts EITHER the flat
+	 *      form or the dollars/cents split, and in the split case it
+	 *      re-assembles the two nodes and compares the RESULT to `$bun`, so
+	 *      a wrong number in either half still fails.
+	 */
+	$cpb_now_ok = strpos( $html, '<span class="bhp-landing-coldopen__price-now" aria-hidden="true">' . $bun . '</span>' ) !== false;
+	if ( ! $cpb_now_ok && preg_match_all( '/<span class="bhp-landing-coldopen__price-now" aria-hidden="true">(.*?)<\/span>\s*<\/span>/su', $html, $cpb_nm ) ) {
+		foreach ( $cpb_nm[1] as $cpb_inner ) {
+			$cpb_flat = preg_replace( '/<span class="bhp-landing-coldopen__price-cents">(.*?)$/su', '$1', $cpb_inner );
+			if ( trim( (string) $cpb_flat ) === $bun ) {
+				$cpb_now_ok = true;
+				break;
+			}
+		}
+	}
 	bhp_cpb_assert(
-		strpos( $html, '<span class="bhp-landing-coldopen__price-now" aria-hidden="true">' . $bun . '</span>' ) !== false,
+		$cpb_now_ok,
 		"3: {$cpb_fmt} — the collection price {$bun} is printed",
 		$failures
 	);

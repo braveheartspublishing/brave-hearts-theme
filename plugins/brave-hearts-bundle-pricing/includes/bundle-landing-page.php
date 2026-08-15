@@ -1006,6 +1006,115 @@ function bhp_bundle_landing_primary_cta_label( $format ) {
 	return 'Get the Complete Collection';
 }
 
+/**
+ * The URL of the Refund and Returns Policy page, resolved LIVE.
+ *
+ * ⛔ NO PATH LITERAL IS TRUSTED FIRST. WooCommerce owns this page through
+ *    `woocommerce_refund_returns_page_id`, which is what the store actually
+ *    installed and what an editor changing the page keeps in sync. The slug
+ *    lookup is the second try, and the hardcoded path is only a last resort
+ *    so the badge is never rendered with an empty `href`.
+ *
+ * VERIFIED LIVE 2026-08-14 by WP-CLI on staging:
+ *   `wp option get woocommerce_refund_returns_page_id` -> 10
+ *   `get_permalink(10)` -> https://staging2.braveheartspublishing.com/refund_returns/
+ * and on production (read-only) `get_page_by_path('refund_returns')` -> ID 10.
+ *
+ * @return string
+ */
+function bhp_bundle_guarantee_policy_url() {
+	$page_id = 0;
+
+	if ( function_exists( 'wc_get_page_id' ) ) {
+		$page_id = (int) get_option( 'woocommerce_refund_returns_page_id', 0 );
+	}
+	if ( $page_id <= 0 ) {
+		$page = get_page_by_path( 'refund_returns' );
+		$page_id = $page ? (int) $page->ID : 0;
+	}
+	if ( $page_id > 0 && 'publish' === get_post_status( $page_id ) ) {
+		$permalink = get_permalink( $page_id );
+		if ( $permalink ) {
+			return $permalink;
+		}
+	}
+
+	return home_url( '/refund_returns/' );
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.46 (2026-08-14, `CYCLE161-LD-TYP-AND-GUARANTEE`) — THE 30-DAY
+ *     GUARANTEE BADGE, DIRECTLY BELOW THE BUY BUTTON.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SOURCE OF THE CLAIM IS THE LIVE POLICY PAGE, AND IT WAS READ, NOT
+ *    REMEMBERED. Verified by WP-CLI on PRODUCTION 2026-08-14 (read-only;
+ *    `get_page_by_path('refund_returns')`, `post_modified 2026-08-14
+ *    12:55:42`). The policy section reads, VERBATIM:
+ *
+ *      "Our 30-Day Guarantee
+ *       If the books don't fit your reader, contact us within 30 days of
+ *       delivery and we will refund your purchase in full to your original
+ *       payment method. Because every book is printed on demand, there is
+ *       nothing to send back - keep the books or pass them along. This
+ *       guarantee applies to books purchased directly from
+ *       BraveHeartsPublishing.com. Damaged, defective, incorrect, or
+ *       missing orders are handled as described above, as always."
+ *
+ * ⚠⚠ TWO DEVIATIONS FROM THE BRIEF'S SHORT FORM ARE REPORTED, NOT HIDDEN:
+ *
+ *    1. THE BRIEF SAID "tell me within 30 days". THE POLICY SAYS "within 30
+ *       days OF DELIVERY". The two words are restored here because dropping
+ *       the anchor changes when the clock starts, and a guarantee whose
+ *       clock starts earlier than the policy's is a claim the policy does
+ *       not support. This is a truthfulness correction, not a copy edit.
+ *    2. THE FIRST-PERSON VOICE ("tell me … I'll") IS THE BRIEF'S, NOT THE
+ *       POLICY'S ("contact us … we will"), AND NOTHING ELSE ON THIS PAGE
+ *       SPEAKS IN THE FIRST PERSON SINGULAR. It is rendered as briefed
+ *       rather than silently rewritten — approved copy is locked, and the
+ *       voice question is Andrew's, not this agent's. FLAGGED for his gate.
+ *
+ * ⛔ THE POLICY PAGE ON STAGING IS STALE AND THIS IS THE LOUDEST FLAG IN THE
+ *    FILE. Staging's page 10 (post_modified 2026-08-03) still carries the
+ *    SUPERSEDED "Returns and Buyer's Remorse … we generally do not accept
+ *    returns" section and has NO guarantee section at all. So on STAGING
+ *    this badge links to copy that contradicts it. That is a CONTENT-PARITY
+ *    gap, not a code defect, and it was deliberately NOT fixed here: page
+ *    copy is Andrew's and syncing production content into staging is
+ *    outside this brief. On PRODUCTION the badge and the policy agree.
+ *
+ * ⛔ NO NEW COLOUR, NO NEW TOKEN. `--bl-forest`, `--bl-text-light` and
+ *    `--bl-sans` already exist in this stylesheet and are already used by
+ *    the price block immediately above.
+ *
+ * ⛔ IT RENDERS BELOW THE BUY BUTTON, WHICH IS WHY IT CANNOT MOVE THE FOLD
+ *    MEASUREMENTS 1.8.41 BOUGHT. Everything the CYCLE160 pass measured —
+ *    the cold-open price block and the primary CTA — is ABOVE this node in
+ *    document order, so nothing above it can be displaced. Re-measured at
+ *    four viewports after the change; see the CYCLE161 QA evidence.
+ *
+ * ⭐ WHY IT RENDERS INSIDE THE PER-FORMAT PANEL (twice in the DOM, once
+ *    visible) RATHER THAN ONCE OUTSIDE IT: the only single-render position
+ *    that is still "below the CTA" sits after the subtitle, the title list,
+ *    the fine print and the individual-books exit — roughly 150px away from
+ *    the button it is meant to reassure. The hidden panel is `hidden`, so
+ *    its copy is out of the accessibility tree and is not announced twice.
+ *    This is the same pattern the price block already uses on this page.
+ *
+ * @return void
+ */
+function bhp_bundle_render_landing_guarantee() {
+	?>
+	<p class="bhp-landing-guarantee">
+		<span class="bhp-landing-guarantee__label">30-Day Guarantee</span>
+		<span class="bhp-landing-guarantee__sep" aria-hidden="true">&mdash;</span>
+		<span class="bhp-landing-guarantee__text">if these books don&rsquo;t fit your reader, tell me within 30 days of delivery and I&rsquo;ll refund you in full. Keep the books.</span>
+		<a class="bhp-landing-guarantee__link" href="<?php echo esc_url( bhp_bundle_guarantee_policy_url() ); ?>">Read the policy</a>
+	</p>
+	<?php
+}
+
 function bhp_bundle_render_landing_pricing_panel( $format ) {
 	$catalog       = bhp_bundle_catalog();
 	$copy          = bhp_bundle_landing_format_copy( $format );
@@ -1087,6 +1196,16 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 				<?php echo esc_html( bhp_bundle_landing_primary_cta_label( $format ) ); ?>
 			</button>
 		</form>
+
+		<?php
+		/*
+		 * 1.8.46 — the guarantee sits DIRECTLY below the buy button and
+		 * nowhere else. See bhp_bundle_render_landing_guarantee() for the
+		 * verbatim policy source, the two reported wording deviations and
+		 * the staging content-parity flag.
+		 */
+		bhp_bundle_render_landing_guarantee();
+		?>
 
 		<?php
 		/*

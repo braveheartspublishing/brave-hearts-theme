@@ -1254,6 +1254,55 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   1.8.46 (2026-08-14, `CYCLE161-LD-TYP-AND-GUARANTEE`) — THE 30-DAY
+   GUARANTEE BADGE, DIRECTLY BELOW THE BUY BUTTON.
+   ------------------------------------------------------------------
+   ⛔ QUIET BY CONSTRUCTION. No background plate, no border, no badge
+      shape and NO NEW COLOUR — `--bl-forest` and `--bl-text-light` are
+      already used by the price block sitting immediately above, and
+      `--bl-sans` is the same face. A trust line that shouts competes
+      with the button it is supposed to reassure.
+
+   ⛔ IT MUST NOT MOVE ANYTHING ABOVE IT. The node is a sibling AFTER
+      the CTA form, so by document order nothing above it can shift.
+      `margin-top` is deliberately small and `margin-bottom` is 0 so the
+      existing `.bhp-landing-panel__savings` spacing still governs the
+      gap below. Re-measured at 1440/1024/768/390 after the change.
+   ══════════════════════════════════════════════════════════════════ */
+.bhp-landing-guarantee {
+	font-family: var(--bl-sans);
+	font-size: .74rem;
+	line-height: 1.45;
+	color: var(--bl-text-light);
+	margin: .5rem 0 0;
+	text-align: center;
+	text-wrap: pretty;
+}
+.bhp-landing-guarantee__label {
+	font-weight: 800;
+	color: var(--bl-forest);
+	letter-spacing: .01em;
+}
+.bhp-landing-guarantee__sep {
+	color: var(--bl-text-light);
+}
+.bhp-landing-guarantee__link {
+	color: var(--bl-forest);
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	white-space: nowrap;
+}
+.bhp-landing-guarantee__link:hover,
+.bhp-landing-guarantee__link:focus-visible {
+	color: var(--bl-forest-mid);
+}
+.bhp-landing-guarantee__link:focus-visible {
+	outline: 2px solid var(--bl-forest-mid);
+	outline-offset: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    1.8.41 — the savings bar now holds only the ages line, so it stops
    presenting itself as a savings badge.
    ------------------------------------------------------------------

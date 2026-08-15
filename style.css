@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.227
+Version: 1.19.228
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -8518,4 +8518,89 @@ a.header-expedition-cta {
   display: inline-grid;
   margin-inline: auto;
   margin-bottom: var(--space-4, 24px);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   1.19.228 (2026-08-14, `CYCLE161-LD-TYP-AND-GUARANTEE`) — THE ADVENTURE
+   KIT THANK-YOU PAGE'S COLLECTION UPSELL NOW SHOWS A PRICE.
+   ----------------------------------------------------------------------
+   ⛔ THIS IS THE COLLECTION PAGE'S OWN TREATMENT, PORTED — NOT A SECOND
+      DESIGN FOR THE SAME NUMBER. The plugin's `.bhp-landing-coldopen__
+      price-*` rules (bundle-landing.css, 1.8.41/1.8.43/1.8.45) are the
+      original; these are the same sizes, weights and roles expressed in
+      THEME tokens, because `bundle-landing.css` is enqueued only on
+      /complete-collection/ and its `--bl-*` variables do not exist here.
+
+      Token mapping, one-for-one:
+        --bl-sans      -> --font-ui        (both resolve to 'Archivo')
+        --bl-forest    -> --color-forest   (--bl-forest IS var(--color-forest))
+        --bl-gold-dark -> --color-gold-deep(--bl-gold-dark IS that token)
+      So two of the three are literally the same custom property reached by
+      its theme-side name, and the third is the same font stack.
+
+   ⛔ THE ONE RAW HEX IS DELIBERATE AND IS THE SAME RAW HEX. `#b3261e` is
+      the strikethrough red Andrew approved on 2026-08-14 ("red font so its
+      more visible as a discount", plugin 1.8.45). It is not a theme token
+      YET on either side — inventing a token here would create a second
+      definition of the same colour and let the two surfaces drift. If it is
+      ever tokenised, both files change together.
+
+   ⛔ CENTRED, NOT RIGHT-ALIGNED, AND THAT IS THE ONLY LAYOUT DIFFERENCE.
+      On the collection page the block is `justify-content: flex-end`
+      because it sits in the bottom-right corner of the FREE box. Here it is
+      a standalone row in a centred `.component-heading` column, where
+      right-aligning it would leave it hanging off the axis of the headline
+      above and the button below.
+   ══════════════════════════════════════════════════════════════════════ */
+.bhp-kit-upsell__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: .4rem;
+  row-gap: 0;
+  margin: var(--space-3, 16px) 0 0;
+  text-align: center;
+}
+/* A real <s>, so "this is a comparison price" survives CSS being off and is
+   present in the accessibility tree, not only in the paint. */
+.bhp-kit-upsell__price-was {
+  font-family: var(--font-ui);
+  font-size: .85rem;
+  font-weight: 700;
+  color: #b3261e;
+  text-decoration: line-through;
+}
+.bhp-kit-upsell__price-now {
+  font-family: var(--font-ui);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--color-forest);
+}
+.bhp-kit-upsell__price-cents {
+  font-size: .55em;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+.bhp-kit-upsell__price-save {
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  font-weight: 800;
+  color: var(--color-gold-deep);
+}
+/* The coupon line is quiet on purpose: it is a reminder of something the
+   visitor was just emailed, not a second offer competing with the price. */
+.bhp-kit-upsell__coupon {
+  font-family: var(--font-ui);
+  font-size: .82rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: var(--space-2, 8px) 0 0;
+}
+.bhp-kit-upsell__coupon strong {
+  color: var(--color-forest);
+  font-weight: 800;
+  letter-spacing: .02em;
 }

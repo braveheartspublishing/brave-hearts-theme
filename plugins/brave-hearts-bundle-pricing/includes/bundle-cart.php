@@ -79,6 +79,116 @@ function bhp_is_audience_coupon_code( $code ) {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.8.46 (2026-08-14, `CYCLE161-LD-TYP-AND-GUARANTEE`) — RENDERING AN
+ *     AUDIENCE COUPON CODE ON A PAGE. READ ALL OF THIS BEFORE CALLING IT.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THIS FUNCTION EXISTS AGAINST A FROZEN POLICY, AND THAT IS WHY IT IS
+ *    OFF EVERYWHERE BY DEFAULT AND WHY THIS COMMENT IS THIS LONG.
+ *
+ *    `brave-hearts-theme/docs/ENGINEERING/FUNNEL_CONSTITUTION.md`, Frozen
+ *    2026-07-14, VERBATIM: "Do not hardcode or publicly render
+ *    audience-specific coupon codes in themes, plugins, landing pages,
+ *    posts, or navigation. … No product page, collection page, homepage,
+ *    navigation, footer, blog article, landing page, banner, or static
+ *    promotional copy may advertise a coupon code."
+ *
+ *    The same document records the WORKED PRECEDENT: on 2026-07-14 the
+ *    Complete Collection page rendered exactly such a line and it was
+ *    REMOVED as a defect (plugin 1.8.2 -> 1.8.3). The 2026-08-04 owner
+ *    amendment moved the code to Emails 1 and 2 — still EMAIL ONLY — and
+ *    restated that "mandatory purchase suppression stands in full and must
+ *    gate the coupon wherever it appears."
+ *
+ *    The 2026-08-14 build brief asks for a coupon line on the Adventure Kit
+ *    thank-you page, which is a page template. ⛔ THAT CONFLICT IS NOT
+ *    RESOLVED HERE AND MUST NOT BE. Per the standing refusal duty, both
+ *    sources are recorded and the decision is routed to Andrew. What is
+ *    built is the mechanism, wired, tested, and STOPPED WITH A FINGER OVER
+ *    THE BUTTON: it renders nothing at all until an environment operator
+ *    sets the option below, and no environment ships with it set.
+ *
+ * ⛔ NO COUPON CODE LITERAL ENTERS THIS PUBLIC REPOSITORY. The code is read
+ *    from a per-environment site option — the same shape 1.8.29 used to get
+ *    the literal code list and the unit-economics amounts out of the
+ *    published source tree, and required by BHP-AGENT-STANDING-RULES §4.1
+ *    ("coupon codes and values" are PRIVATE) and by conflict C6.
+ *
+ * ⛔ IT FAILS CLOSED ON EVERY DISAGREEMENT WITH LIVE STATE, so a page can
+ *    never advertise a coupon the cart will refuse. Every one of these is
+ *    read from the live coupon record at render time, never remembered:
+ *      - the option is set and non-empty;
+ *      - a coupon record with that code exists;
+ *      - it is `publish` (not draft, not trashed);
+ *      - it is not expired;
+ *      - its type is `percent` and its amount is > 0  (the percentage
+ *        PRINTED is this number — it is never typed into copy);
+ *      - it carries the audience-coupon opt-in meta flag, i.e. it is one of
+ *        the coupons this plugin actually lets stack on the collection;
+ *      - its minimum spend, if any, does not exceed the price of the
+ *        Complete Collection in the format being advertised — otherwise the
+ *        offer is unreachable on the very cart it is being shown beside.
+ *
+ * VERIFIED LIVE ON STAGING 2026-08-14 by WP-CLI (`wp post list
+ * --post_type=shop_coupon`, `wp post meta list <id>`) for the parent
+ * audience coupon record: `post_status` publish · `discount_type` percent ·
+ * `coupon_amount` 10 · `individual_use` yes · `usage_limit` 0 ·
+ * `usage_limit_per_user` 1 · `exclude_sale_items` yes ·
+ * `_bhp_audience_coupon` yes · NO `minimum_amount` meta · NO `date_expires`
+ * meta. So: 10%, no minimum spend, no expiry.
+ *
+ * ⚠ ITS REAL FLOOR IS NOT A DOLLAR AMOUNT, IT IS A CART SHAPE, and that is
+ *   worth more than the missing `minimum_amount`: `bhp_audience_coupon_
+ *   cart_qualifies()` above requires a complete, single-format,
+ *   three-title collection with no unrelated and no sale items. Any copy
+ *   this function feeds must therefore say what the discount applies TO.
+ *
+ * @param string $format 'paperback'|'hardcover' — the collection the copy
+ *                       sits beside, used for the minimum-spend check.
+ * @return array{code:string,percent:float,minimum:float}|null
+ */
+function bhp_audience_coupon_public_notice( $format = 'paperback' ) {
+	$code = trim( (string) get_option( 'bhp_audience_coupon_public_code', '' ) );
+	if ( '' === $code || ! class_exists( 'WC_Coupon' ) ) {
+		return null;
+	}
+
+	$coupon = new WC_Coupon( $code );
+	if ( ! $coupon->get_id() || 'publish' !== get_post_status( $coupon->get_id() ) ) {
+		return null;
+	}
+	if ( ! bhp_is_audience_coupon( $coupon ) ) {
+		return null;
+	}
+	if ( 'percent' !== $coupon->get_discount_type() ) {
+		return null;
+	}
+	$percent = (float) $coupon->get_amount();
+	if ( $percent <= 0 ) {
+		return null;
+	}
+	$expiry = $coupon->get_date_expires();
+	if ( $expiry && $expiry->getTimestamp() < time() ) {
+		return null;
+	}
+
+	$minimum = (float) $coupon->get_minimum_amount();
+	if ( $minimum > 0 && function_exists( 'bhp_bundle_landing_price_facts' ) ) {
+		$facts = bhp_bundle_landing_price_facts( 'hardcover' === $format ? 'hardcover' : 'paperback' );
+		if ( $minimum > (float) $facts['bundle'] ) {
+			return null; // unreachable on the cart this copy sits beside.
+		}
+	}
+
+	return array(
+		'code'    => strtoupper( $coupon->get_code() ),
+		'percent' => $percent,
+		'minimum' => $minimum,
+	);
+}
+
+/**
  * True only if the cart is a genuine, single-format Complete Collection:
  * all three distinct titles present in exactly one format, no opposite
  * format present, no non-catalog item present, and no on-sale item
