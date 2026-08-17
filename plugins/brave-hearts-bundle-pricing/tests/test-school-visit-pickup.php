@@ -25,12 +25,15 @@
  *    `WC_Webhook::should_deliver()` returns through, which is the exact
  *    decision point, and reads the answer. No HTTP request is made to any
  *    external host by this file, and none may ever be added to it.
- * ⛔ It writes NO order, NO product, NO coupon, NO shipping setting and NO
- *    zone. The registry option is the ONLY thing it writes, it snapshots the
- *    prior value first, and it restores that exact value in a shutdown
- *    handler so an aborted run cannot leave a seeded visit behind.
- * ⛔ It creates no database rows: order fixtures are in-memory `WC_Order`
- *    objects, whose `get_id()` is 0 and which are never saved.
+ * ⛔ It writes NO product, NO coupon, NO shipping setting and NO zone. It
+ *    writes exactly two things and restores both: the registry option (value
+ *    snapshotted first, restored exactly) and two zero-total `pending` probe
+ *    orders, which are permanently deleted in the same run.
+ * ⚠ CORRECTED: an earlier version of this header claimed the suite "creates no
+ *   database rows" and cleans up "in a shutdown handler". Both were false —
+ *   see the cleanup block below for what actually happens and what was
+ *   observed. The claim is corrected here rather than deleted so that a reader
+ *   who saw the old wording knows it was wrong.
  *
  * ⚠ ONE ASSERTION IS ENVIRONMENT-DEPENDENT AND SAYS SO WHEN IT SKIPS: the
  *   live-webhook assertions need at least one webhook row pointing at the
@@ -111,11 +114,27 @@ if ( ! defined( 'BHP_SCHOOL_VISIT_OPTION' ) ) {
  *   leaking too. Reported rather than fixed here — out of this build's scope.
  */
 
-$bhp_svp_original_visits = get_option( BHP_SCHOOL_VISIT_OPTION, null );
-$bhp_svp_probe_ids       = array();
+/*
+ * ⛔ `$GLOBALS[...]`, NOT a plain file-scope variable, AND THAT IS NOT STYLE.
+ *
+ * `wp eval-file` `include`s this file from INSIDE A METHOD. Everything that
+ * looks like file scope here is therefore FUNCTION scope, and a `global $x`
+ * declaration inside `bhp_svp_cleanup()` binds to a genuinely global `$x`
+ * that was never written.
+ *
+ * ⭐ OBSERVED, not reasoned about: the second run of this suite reported
+ *    "visit registry deleted (it did not exist before this run)" — cleanup ran,
+ *    read null, and deleted the operator's seeded registry — and silently
+ *    skipped both probe orders, leaving 2571 and 2572 behind. Both were then
+ *    cleaned up by hand. This is the second cleanup defect in this file and
+ *    the second one caused by the RUNNER rather than by the assertions.
+ */
+$GLOBALS['bhp_svp_original_visits'] = get_option( BHP_SCHOOL_VISIT_OPTION, null );
+$GLOBALS['bhp_svp_probe_ids']       = array();
 
 function bhp_svp_cleanup() {
-	global $bhp_svp_original_visits, $bhp_svp_probe_ids;
+	$bhp_svp_original_visits = isset( $GLOBALS['bhp_svp_original_visits'] ) ? $GLOBALS['bhp_svp_original_visits'] : null;
+	$bhp_svp_probe_ids       = isset( $GLOBALS['bhp_svp_probe_ids'] ) ? $GLOBALS['bhp_svp_probe_ids'] : array();
 
 	foreach ( (array) $bhp_svp_probe_ids as $pid ) {
 		$o = function_exists( 'wc_get_order' ) ? wc_get_order( $pid ) : null;
@@ -128,7 +147,7 @@ function bhp_svp_cleanup() {
 			echo "CLEANUP: ⛔ REFUSED to delete order {$pid} -- it is not a zero-total pending probe. Delete it by hand after checking it.\n";
 		}
 	}
-	$bhp_svp_probe_ids = array();
+	$GLOBALS['bhp_svp_probe_ids'] = array();
 
 	if ( null === $bhp_svp_original_visits ) {
 		delete_option( BHP_SCHOOL_VISIT_OPTION );
@@ -415,7 +434,7 @@ if ( function_exists( 'wc_create_order' ) && ! empty( $live_bv_order_hooks ) ) {
 	// (a) A real PICKUP order.
 	$probe_pickup = wc_create_order( array( 'status' => 'pending' ) );
 	if ( $probe_pickup && ! is_wp_error( $probe_pickup ) ) {
-		$bhp_svp_probe_ids[] = $probe_pickup->get_id();
+		$GLOBALS['bhp_svp_probe_ids'][] = $probe_pickup->get_id();
 
 		$pi = new WC_Order_Item_Shipping();
 		$pi->set_method_id( BHP_SCHOOL_PICKUP_METHOD_ID );
@@ -452,7 +471,7 @@ if ( function_exists( 'wc_create_order' ) && ! empty( $live_bv_order_hooks ) ) {
 	// (b) A real NORMAL order -- must NOT be blocked.
 	$probe_normal = wc_create_order( array( 'status' => 'pending' ) );
 	if ( $probe_normal && ! is_wp_error( $probe_normal ) ) {
-		$bhp_svp_probe_ids[] = $probe_normal->get_id();
+		$GLOBALS['bhp_svp_probe_ids'][] = $probe_normal->get_id();
 
 		$ni = new WC_Order_Item_Shipping();
 		$ni->set_method_id( 'flat_rate' );
