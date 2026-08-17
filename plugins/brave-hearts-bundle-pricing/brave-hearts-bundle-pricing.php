@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Brave Hearts Bundle Pricing
  * Description: Fixed-dollar bundle discounts, shipping, and storefront offers for the six approved Adventures of Charlotte and Henry editions. Every bundle purchase adds the real, individually-mapped WooCommerce products as separate cart line items — Bookvault fulfillment routing and per-book tax are never altered.
- * Version: 1.8.48
+ * Version: 1.8.49
  * Author: Brave Hearts Publishing
  * Requires Plugins: woocommerce
  * Text Domain: bhp-bundle-pricing
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.48' );
+define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.49' );
 define( 'BHP_BUNDLE_PRICING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BHP_BUNDLE_PRICING_URL', plugin_dir_url( __FILE__ ) );
 
@@ -77,6 +77,14 @@ function bhp_bundle_pricing_init() {
 	// addon-upsell.php because it resolves the same SKU allowlist.
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/addon-vocab-cards.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/bundle-analytics.php';
+	// 1.8.49 (2026-08-17, CYCLE162-LD-SCHOOL-PICKUP): author hand-delivery at a
+	// school visit. Loaded LAST of the storefront includes because its shipping
+	// filter deliberately runs at priority 25 -- after the theme's Bookvault
+	// live-rate strip (10) and after bhp_bundle_override_shipping_cost() (20) --
+	// and because its order-marking reads the shipping line those two produce.
+	// It is self-contained: with the `bhp_school_visits` option unset it
+	// registers its hooks and every one of them returns its input untouched.
+	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-pickup.php';
 	bhp_bundle_pricing_load_dashboard_module();
 
 	add_action( 'wp_enqueue_scripts', 'bhp_bundle_pricing_assets' );

@@ -60,6 +60,52 @@ do_action( 'woocommerce_email_customer_details', $order, $sent_to_admin, $plain_
 
 echo "\n----------------------------------------\n\n";
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.231 (2026-08-17, `CYCLE162-LD-SCHOOL-PICKUP`) — THE HAND-DELIVERY
+ *    BRANCH, MIRRORING THE HTML SIBLING EXACTLY.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THIS FILE'S OWN HEADER RECORDS THAT THESE TWO TEMPLATES HAVE DRIFTED
+ *    APART BEFORE (C10, 2026-08-03 — the plain twin was one sentence
+ *    short, so plain-text and HTML recipients of the same order read two
+ *    different promises). That is exactly the failure a shipping-vs-
+ *    hand-delivery branch would repeat at ten times the cost, so the
+ *    branch is added here in the same sitting, with the same predicate,
+ *    the same guard and the same strings.
+ *
+ * ⛔ THE `else` BRANCH IS THE APPROVED, LOCKED COPY, BYTE-FOR-BYTE
+ *    UNCHANGED. Every ordinary order still reads exactly what it read
+ *    before this release.
+ */
+$bhp_is_pickup = function_exists( 'bhp_school_pickup_order_is_pickup' ) && bhp_school_pickup_order_is_pickup( $order );
+
+if ( $bhp_is_pickup ) {
+	$bhp_pickup_school = (string) $order->get_meta( '_bhp_school_visit_school' );
+	$bhp_pickup_date   = (string) $order->get_meta( '_bhp_school_visit_date' );
+	$bhp_pickup_ts     = $bhp_pickup_date ? strtotime( $bhp_pickup_date . ' 12:00:00' ) : false;
+	$bhp_pickup_pretty = $bhp_pickup_ts ? wp_date( 'l, F j', $bhp_pickup_ts ) : $bhp_pickup_date;
+
+	echo esc_html__( 'HOW YOU’LL GET YOUR BOOKS', 'brave-hearts' ) . "\n\n";
+	echo esc_html__( 'Nothing is being posted, and you have not been charged for shipping. Andrew is bringing your books to the school visit by hand, signed.', 'brave-hearts' ) . "\n\n";
+
+	if ( '' !== $bhp_pickup_school && '' !== $bhp_pickup_pretty ) {
+		echo esc_html( $bhp_pickup_school ) . ' - ' . esc_html( $bhp_pickup_pretty ) . "\n\n";
+	}
+
+	echo esc_html__( 'You don’t need to collect anything from us, arrange anything, or do anything before the visit.', 'brave-hearts' ) . "\n\n";
+
+	echo "----------------------------------------\n\n";
+
+	echo esc_html__( 'WHILE YOU WAIT', 'brave-hearts' ) . "\n\n";
+	echo esc_html__( 'If this is a first chapter book in your house, one small thing helps more than anything else: read the first chapter together. Not the whole book - just the first one. Starting together and handing over later is how these were built to be read.', 'brave-hearts' ) . "\n\n";
+
+	echo "----------------------------------------\n\n";
+
+	echo esc_html__( 'SOMETHING CHANGED? NEED US?', 'brave-hearts' ) . "\n\n";
+	echo esc_html__( 'Reply to this email - it comes to a real person. If your plans have changed and you won’t be at the visit, tell us as soon as you can and we’ll sort it out.', 'brave-hearts' ) . "\n\n";
+} else {
+
 echo esc_html__( 'HOW YOUR BOOKS ARE MADE', 'brave-hearts' ) . "\n\n";
 echo esc_html__( 'Your books aren’t sitting in a warehouse waiting. They’re printed for you after you order, by our print partner Bookvault, and then packed and sent to you.', 'brave-hearts' ) . "\n\n";
 
@@ -111,6 +157,8 @@ echo "----------------------------------------\n\n";
 
 echo esc_html__( 'SOMETHING CHANGED? NEED US?', 'brave-hearts' ) . "\n\n";
 echo esc_html__( 'Reply to this email - it comes to a real person. If you need to change your address or cancel, tell us as soon as you can, because once a book is in production we may not be able to stop it.', 'brave-hearts' ) . "\n\n";
+
+} // End of the 1.19.231 hand-delivery branch. Everything between `else {` and here is the untouched locked copy.
 
 echo esc_html__( 'Thanks for taking a chance on us.', 'brave-hearts' ) . "\n\n";
 echo esc_html__( 'Andrew', 'brave-hearts' ) . "\n";
