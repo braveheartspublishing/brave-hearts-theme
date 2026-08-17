@@ -1,0 +1,10 @@
+SUITE-FAIL rc=1 failing_asserts=6 test-collection-purchase-path.php
+SUITE-FAIL rc=1 failing_asserts=1 test-content-intelligence-engine.php
+SUITE-FAIL rc=1 failing_asserts=2 test-cta-collision-detector.php
+SUITE-FAIL rc=1 failing_asserts=2 test-draft-package.php
+SUITE-FAIL rc=1 failing_asserts=2 test-header-collection-cta.php
+SUITE-FAIL rc=1 failing_asserts=1 test-lead-event-log.php
+SUITE-FAIL rc=0 failing_asserts=1 test-seo-hygiene.php
+SUITE-FAIL rc=1 failing_asserts=2 test-wave1-capture.php
+SUITE-FAIL rc=1 failing_asserts=0 test-purchase-validation-harness.php
+TOTAL pass=65 fail=9 total=74 failing_assertions=17

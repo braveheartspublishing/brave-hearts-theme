@@ -1,0 +1,121 @@
+LINKS, SCHEMA AND LIVE-STATE CHECKS — 2026-08-17, staging, theme 1.19.233 / bundle 1.8.51
+All commands run over SSH against the staging document root. VERIFIED LIVE unless marked otherwise.
+
+==========================================================================
+1. DEPLOYED VERSIONS — read back from the live install, not from the ZIP
+==========================================================================
+$ wp theme list --status=active --format=csv --user=1
+name,status,update,version,update_version,auto_update
+brave-hearts-theme-deploy-explorer-expedition-guides,active,none,1.19.233,,off
+
+$ wp plugin list --format=csv --user=1 | grep bundle
+brave-hearts-bundle-pricing,active,none,1.8.51,,off
+
+$ wp eval 'echo "php-ok";' --user=1
+php-ok                                  <- no fatal, no syntax error
+
+$ wp sg purge --user=1
+Success: Speed Optimizer by SiteGround assets folder purged successfully.
+Warning: Unable to Purge File Cache. Please make sure it is enabled.
+Success: Dynamic Cache Successfully Purged.
+
+==========================================================================
+2. THE PAGE
+==========================================================================
+$ wp post get 2704 --fields=ID,post_title,post_name,post_status,post_type --format=csv --user=1
+ID,2704
+post_title,"Author Visits"
+post_status,publish
+post_name,author-visits
+post_type,page
+
+$ wp post meta get 2704 _wp_page_template --user=1
+page-author-visits.php
+
+URL: https://staging2.braveheartspublishing.com/author-visits/     HTTP 200
+
+⛔ IT IS IN NO NAV MENU. Nothing was added to any menu, per the brief -- placement
+   is Andrew's decision. Reachable only by URL until he places it.
+
+==========================================================================
+3. ⛔ THE BUTTON AND THE ENTITLEMENT AGREE, ON THE REAL SLUGS
+==========================================================================
+The page shows an order button for a visit only when the SITE would actually grant
+hand-delivery for that visit. Checked against the live resolver, not inferred:
+
+$ wp eval 'foreach(array("adams-2026-08-28","dallas-harris-2026-09-03","liberty-2026-09-04") as $s){ $r=bhp_school_visit_resolve($s); ... }' --user=1
+adams-2026-08-28         => RESOLVES (Adams Elementary, time=8:50 AM)
+dallas-harris-2026-09-03 => RESOLVES (Dallas Harris Elementary, time=10:10 AM)
+liberty-2026-09-04       => RESOLVES (Liberty Elementary, time=9:00 AM)
+
+All three render a button. All three resolve. No disagreement.
+(The same property is asserted across the cutoff boundary in
+ tests/test-author-visits-page.php section 3, against a seeded fixture.)
+
+==========================================================================
+4. THE LINKS THEMSELVES
+==========================================================================
+Rendered hrefs (from the live page HTML; &#038; is WordPress's HTML-escaped &):
+
+  /shop/?bhp_visit=adams-2026-08-28&utm_source=author-visits&utm_medium=onsite&utm_campaign=visit-adams-2026-08-28
+  /shop/?bhp_visit=dallas-harris-2026-09-03&utm_source=author-visits&utm_medium=onsite&utm_campaign=visit-dallas-harris-2026-09-03
+  /shop/?bhp_visit=liberty-2026-09-04&utm_source=author-visits&utm_medium=onsite&utm_campaign=visit-liberty-2026-09-04
+
+$ curl -o /dev/null -w '%{http_code}' '.../shop/?bhp_visit=adams-2026-08-28&utm_source=author-visits&utm_medium=onsite&utm_campaign=visit-adams-2026-08-28'
+200
+
+$ curl -o /dev/null -w '%{http_code}' '.../reluctant-reader-adventure-kit/'      (the empty-state target)
+200
+
+⚠ NOT VERIFIED IN A REAL BROWSER, AND STATED RATHER THAN IMPLIED: that clicking one
+  of these links sets the WooCommerce session flag and makes the free hand-delivery
+  option appear at checkout was verified by the PREVIOUS build (1.8.49/1.8.50) with
+  real Blocks cart walks, and NOTHING about that path changed in 1.8.51. This build
+  re-verified only that the slugs in the buttons are slugs the resolver accepts.
+
+==========================================================================
+5. SCHEMA — NO NEW STRUCTURED DATA
+==========================================================================
+@type counts in the rendered page, compared against an existing page:
+
+  /author-visits/   1 Article, 3 ImageObject, 1 Person, 1 WebPage, 1 WebSite
+  /contact/         1 Article, 3 ImageObject, 1 Person, 1 WebPage, 1 WebSite
+
+IDENTICAL. The one ld+json block is Rank Math's ordinary page graph, present on every
+page of the site. The template emits no JSON-LD of its own and registers no
+rank_math filter -- asserted on the source in the suite, and confirmed here on the
+RENDERED output as .claude/rules/schema.md requires.
+
+⛔ NO Event schema was added. A read-aloud in someone else's classroom is not a public
+   event, and publishing a schema.org Event for one would make a public claim about a
+   school's timetable. If that is ever wanted it is a fresh decision, not a tidy-up.
+
+==========================================================================
+6. JAVASCRIPT / CONSOLE
+==========================================================================
+$ grep -c '<script'  on each page
+  /author-visits/  45
+  /contact/        45
+  /about/          45
+$ grep -c 'src=".*author-visits.*"' inside script tags on /author-visits/
+  0
+
+The template enqueues NO script and NO style handle of its own. The 45 tags are the
+site-wide set that every page carries.
+
+⚠ NOT CHECKED, AND NOT CLAIMED: a real browser console. No browser-automation tool was
+  available to this build session. What IS established is that this build adds zero
+  JavaScript to the page, so any console error present would be pre-existing and
+  site-wide rather than introduced here. A browser pass at both viewports is the one
+  QA step still outstanding and is named as such in the handoff.
+
+==========================================================================
+7. MOBILE
+==========================================================================
+⚠ NOT VISUALLY VERIFIED -- no browser tool in this session. What the build guarantees
+  structurally instead: the layout is a single column at EVERY width (the list is a
+  one-column grid with no column rule at any breakpoint), the only media query raises
+  card padding and lets the button shrink to its content above 40rem, the CTA is a
+  full-width tap target below 40rem, there is no image, no table, no fixed width and
+  no horizontal scroll source in the page's own CSS. Every value is an existing theme
+  custom property.

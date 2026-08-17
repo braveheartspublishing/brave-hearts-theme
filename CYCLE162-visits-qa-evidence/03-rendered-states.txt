@@ -1,0 +1,141 @@
+RENDERED /author-visits/ ON STAGING — theme 1.19.233 / bundle 1.8.51
+Fetched server-side over SSH with curl, 2026-08-17. HTTP 200.
+
+⛔ WHY curl IS SUFFICIENT HERE AND IS NOT ELSEWHERE ON THIS SITE:
+this page is 100% server-rendered PHP. It enqueues NO script and NO style
+handle of its own; the page carries exactly 45 <script> tags, which is the
+same site-wide count as /contact/ and /about/. There is no React, no Store
+API and no cart on it. curl therefore proves the rendered output, unlike on
+cart/checkout where it proves only that the shell loaded.
+
+==================================================================
+STATE 1 — THE LIVE REGISTRY (3 open visits, all with times)
+==================================================================
+<section class="section section--dark author-visits-hero" aria-labelledby="author-visits-title">
+<div class="container container--content">
+<p class="component-heading__eyebrow">Read-alouds in Idaho classrooms</p>
+<h1 id="author-visits-title" class="text-hero">Where I Am Reading Next</h1>
+<p class="text-lead">
+I visit Idaho classrooms to read aloud. If your child’s school is on this list, you can order books before the visit. I sign each book to your child by name and hand it to them at the visit.    </p>
+</div>
+</section>
+<section class="section author-visits-list-section" aria-labelledby="author-visits-list-title">
+<div class="container container--content">
+<header class="component-heading">
+<h2 id="author-visits-list-title" class="text-section-title">Upcoming Visits</h2>
+</header>
+<ul class="author-visits-list">
+<li class="author-visits-card">
+<h3 class="author-visits-card__school">Adams Elementary</h3>
+<p class="author-visits-card__when">
+<span class="author-visits-card__date">Friday, August 28</span>
+<span class="author-visits-card__sep" aria-hidden="true">&middot;</span>
+<span class="author-visits-card__time">8:50 AM</span>
+</p>
+<p class="author-visits-card__note">
+Order by Tuesday, August 25 and I will have your child’s book signed and in my bag on the day.              </p>
+<p class="author-visits-card__cta">
+<a class="btn btn-primary" href="https://staging2.braveheartspublishing.com/shop/?bhp_visit=adams-2026-08-28&#038;utm_source=author-visits&#038;utm_medium=onsite&#038;utm_campaign=visit-adams-2026-08-28">Order signed books for this visit</a>
+</p>
+</li>
+<li class="author-visits-card">
+<h3 class="author-visits-card__school">Dallas Harris Elementary</h3>
+<p class="author-visits-card__when">
+<span class="author-visits-card__date">Thursday, September 3</span>
+<span class="author-visits-card__sep" aria-hidden="true">&middot;</span>
+<span class="author-visits-card__time">10:10 AM</span>
+</p>
+<p class="author-visits-card__note">
+Order by Monday, August 31 and I will have your child’s book signed and in my bag on the day.              </p>
+<p class="author-visits-card__cta">
+<a class="btn btn-primary" href="https://staging2.braveheartspublishing.com/shop/?bhp_visit=dallas-harris-2026-09-03&#038;utm_source=author-visits&#038;utm_medium=onsite&#038;utm_campaign=visit-dallas-harris-2026-09-03">Order signed books for this visit</a>
+</p>
+</li>
+<li class="author-visits-card">
+<h3 class="author-visits-card__school">Liberty Elementary</h3>
+<p class="author-visits-card__when">
+<span class="author-visits-card__date">Friday, September 4</span>
+<span class="author-visits-card__sep" aria-hidden="true">&middot;</span>
+<span class="author-visits-card__time">9:00 AM</span>
+</p>
+<p class="author-visits-card__note">
+Order by Tuesday, September 1 and I will have your child’s book signed and in my bag on the day.              </p>
+<p class="author-visits-card__cta">
+<a class="btn btn-primary" href="https://staging2.braveheartspublishing.com/shop/?bhp_visit=liberty-2026-09-04&#038;utm_source=author-visits&#038;utm_medium=onsite&#038;utm_campaign=visit-liberty-2026-09-04">Order signed books for this visit</a>
+</p>
+</li>
+</ul>
+<div class="author-visits-how">
+<h2 class="author-visits-how__title">How It Works</h2>
+<ol class="author-visits-how__steps">
+<li>Find your child’s school above and open the shop from that button.</li>
+<li>At checkout, choose the free author hand-delivery option and tell me your child’s first name.</li>
+<li>I sign the books and hand them to your child at the school on the day of the visit.</li>
+</ol>
+</div>
+</div>
+</section>
+
+==================================================================
+STATE 2 — MISSING TIME (date only, no separator) + CLOSED CUTOFF
+          + PAST VISIT (absent). Temporary QA registry, restored.
+==================================================================
+<section class="section author-visits-list-section" aria-labelledby="author-visits-list-title">
+<div class="container container--content">
+<header class="component-heading">
+<h2 id="author-visits-list-title" class="text-section-title">Upcoming Visits</h2>
+</header>
+<ul class="author-visits-list">
+<li class="author-visits-card author-visits-card--closed">
+<h3 class="author-visits-card__school">QA Closed School</h3>
+<p class="author-visits-card__when">
+<span class="author-visits-card__date">Thursday, August 20</span>
+<span class="author-visits-card__sep" aria-hidden="true">&middot;</span>
+<span class="author-visits-card__time">1:15 PM</span>
+</p>
+<p class="author-visits-card__note author-visits-card__note--closed">
+Ordering for this visit has closed.              </p>
+</li>
+<li class="author-visits-card">
+<h3 class="author-visits-card__school">QA No Time School</h3>
+<p class="author-visits-card__when">
+<span class="author-visits-card__date">Sunday, August 30</span>
+</p>
+<p class="author-visits-card__note">
+Order by Thursday, August 27 and I will have your child’s book signed and in my bag on the day.              </p>
+<p class="author-visits-card__cta">
+<a class="btn btn-primary" href="https://staging2.braveheartspublishing.com/shop/?bhp_visit=qa-notime&#038;utm_source=author-visits&#038;utm_medium=onsite&#038;utm_campaign=visit-qa-notime">Order signed books for this visit</a>
+</p>
+</li>
+</ul>
+<div class="author-visits-how">
+<h2 class="author-visits-how__title">How It Works</h2>
+<ol class="author-visits-how__steps">
+<li>Find your child’s school above and open the shop from that button.</li>
+<li>At checkout, choose the free author hand-delivery option and tell me your child’s first name.</li>
+<li>I sign the books and hand them to your child at the school on the day of the visit.</li>
+</ol>
+</div>
+</div>
+</section>
+
+occurrences of the past-visit school on the page: 0
+occurrences of <a in the CLOSED card: 0 (the card renders no link element at all)
+
+==================================================================
+STATE 3 — EMPTY (no upcoming visits). 'How It Works' is suppressed.
+==================================================================
+<section class="section author-visits-list-section" aria-labelledby="author-visits-list-title">
+<div class="container container--content">
+<header class="component-heading">
+<h2 id="author-visits-list-title" class="text-section-title">Upcoming Visits</h2>
+</header>
+<div class="author-visits-empty">
+<p>No visits are on the calendar right now.</p>
+<p>While you wait, the Reluctant Reader Adventure Kit is free to download.</p>
+<p class="author-visits-empty__cta">
+<a class="btn btn-primary" href="https://staging2.braveheartspublishing.com/reluctant-reader-adventure-kit/">Get the free Adventure Kit</a>
+</p>
+</div>
+</div>
+</section>

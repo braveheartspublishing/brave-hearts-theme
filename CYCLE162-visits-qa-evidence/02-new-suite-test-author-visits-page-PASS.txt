@@ -1,0 +1,70 @@
+PASS: inc/author-visits.php is loaded by the theme (bhp_author_visits_build_rows exists)
+PASS: The shop-URL builder is defined
+PASS: The live row reader is defined
+PASS: The site-timezone "today" helper is defined
+PASS: An upcoming visit inside its cutoff is LISTED
+PASS: A visit whose DATE has passed is HIDDEN
+PASS: A visit happening TODAY is still listed (the date comparison is inclusive)
+PASS: A visit whose CUTOFF has passed but whose DATE has not is STILL LISTED -- cutoff and date answer different questions
+PASS: A row with an empty school name is dropped
+PASS: A row with no cutoff is dropped
+PASS: A past-cutoff visit is marked open=false
+PASS: A past-cutoff visit carries NO URL AT ALL -- a template cannot render a link that does not exist
+PASS: A visit happening today whose cutoff has passed is listed but closed to ordering
+PASS: THE CUTOFF IS INCLUSIVE: on the cutoff date itself, ordering is still open
+PASS: The last-day row still carries an order URL
+PASS: ONE DAY AFTER the cutoff, the same row is closed -- the boundary moves with the date, not with a deploy
+PASS: A visit that happened yesterday has disappeared by the following day
+PASS: A row with NO time is a COMPLETE row and is listed
+PASS: A row with no time reports an EMPTY time, so the template renders the date alone
+PASS: A time round-trips to the row exactly as seeded
+PASS: A row with no time still gets its order button -- the time is decoration, never a gate
+PASS: Rows are ordered SOONEST FIRST
+PASS: A date is rendered for a human ("August"), not as 2026-08-28
+PASS: An empty date formats to an empty string rather than to today
+PASS: An unparseable date falls back to the raw value rather than to a blank
+PASS: A slug produces a URL
+PASS: The URL is absolute
+PASS: The URL points at the shop page
+PASS: The URL carries the visit param -- this is the only part that changes behaviour
+PASS: The URL carries utm_campaign=visit-<slug>
+PASS: The URL carries a utm_source (a campaign with no source is (not set) in GA4)
+PASS: The URL carries a utm_medium
+PASS: An empty slug produces no URL
+PASS: A path-traversal-shaped slug is sanitised out of the URL
+PASS: The row builder uses the same URL builder -- there is one place a visit link is constructed
+PASS: ⛔ THE BUTTON AND THE ENTITLEMENT AGREE: for every seeded visit, "the page shows an order button" and "the site would grant hand-delivery" give the same answer on the same day
+PASS: THE REGISTRY carries the new time field through the plugin sanitiser
+PASS: A registry row with NO time survives sanitisation and reports an empty time -- rows seeded before 1.8.51 are not dropped
+PASS: A row with no time keeps every other field intact
+PASS: The time sanitiser refuses a non-scalar
+PASS: The time sanitiser strips tags -- the value is echoed to a public page
+PASS: The time sanitiser collapses whitespace and accepts a plain-English time, because "8:50 AM" is not the only legitimate value
+PASS: The time sanitiser caps length -- a time, not a paragraph
+PASS: bhp_author_visits_rows() returns an array against the real option
+CLEANUP: the visit registry has been restored to its pre-run value.
+PASS: inc/author-visits.php is readable for the structural audit
+PASS: page-author-visits.php is readable for the structural audit
+PASS: The template declares "Template Name: Author Visits" so it can be assigned to a page
+PASS: NO structured data is emitted by the template
+PASS: The template registers no Rank Math schema filter
+PASS: NO real visit slug appears anywhere in the page source
+PASS: NO literal visit row exists in the page source -- the registry is data, never code
+PASS: NO literal clock time is hardcoded -- every time comes from the registry
+PASS: NO school name is hardcoded
+PASS: The template copy was extracted for auditing (14 translatable strings found)
+PASS: NO em dash in any customer-facing string
+PASS: NO en dash in any customer-facing string
+PASS: FOUNDER VOICE: no "we", "us" or "our" anywhere in the copy -- Andrew speaks as I/me
+PASS: The reading age is never stated as 5-9
+PASS: NO superlative, award, ranking, sales figure or reader-reaction claim appears in the copy
+PASS: NO reading-level claim appears in the copy
+PASS: NO price appears in the copy -- prices drift and this page is destined for print
+PASS: The order button carries the briefed label
+PASS: The closed state says so in words
+PASS: style.css carries the page's scoped rules
+PASS: style.min.css -- the artefact actually served -- was REBUILT after the CSS change
+
+--------------------------------------------------
+RESULT: ALL ASSERTIONS PASSED (0 skipped)
+RC=0
