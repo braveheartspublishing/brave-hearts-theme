@@ -215,11 +215,24 @@ foreach ( $scc_covers as $scc_i => $scc_cover ) {
 		"3: cover {$scc_pos} (ID {$scc_id}) has a file on disk",
 		$failures
 	);
-	/* The rendered document must actually reference this attachment, not some
-	   other image — otherwise the source and the output could drift apart. */
+	/*
+	 * The rendered document must actually serve THIS attachment's file, not
+	 * some other image — otherwise the source helper and the output could
+	 * drift apart and every other check here would still pass.
+	 *
+	 * ⛔ MATCHED ON THE FILE URL, NOT ON A `wp-image-<id>` CLASS. The first
+	 *    version of this assertion looked for `wp-image-13` and failed against
+	 *    correct markup. `wp-image-<id>` is written by the BLOCK EDITOR, not
+	 *    by `wp_get_attachment_image()`; and passing a `class` attribute to
+	 *    that function REPLACES its default `attachment-medium size-medium`
+	 *    classes rather than appending to them, so no ID ever appears in the
+	 *    tag. The attachment's own resized filename is the durable link
+	 *    between the ID and the rendered pixel, so that is what is asserted.
+	 */
+	$scc_src = wp_get_attachment_image_url( $scc_id, 'medium' );
 	bhp_scc_assert(
-		false !== strpos( $scc_shop_html, 'wp-image-' . $scc_id ),
-		"3: cover {$scc_pos} (ID {$scc_id}) appears in the rendered shop archive",
+		is_string( $scc_src ) && '' !== $scc_src && false !== strpos( $scc_shop_html, basename( $scc_src ) ),
+		"3: cover {$scc_pos} (ID {$scc_id}) is the file served in the rendered shop archive",
 		$failures
 	);
 }
