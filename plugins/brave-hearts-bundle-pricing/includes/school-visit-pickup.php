@@ -35,6 +35,13 @@
  *   6. `bhp_school_pickup_block_bookvault_webhook()` stops the order ever
  *      reaching the print partner. THIS IS THE SAFETY-CRITICAL ONE.
  *
+ * ⭐ 1.8.50 (2026-08-17, `CYCLE162-LD-PICKUP-FIELDS`) EXTENDS THIS FILE from
+ *    `school-visit-fields.php`: two checkout fields (the child's first name for
+ *    the signed dedication, and an unchecked newsletter opt-in) that exist only
+ *    for a flagged session. The ONLY change inside THIS file is that the
+ *    packing-list note now carries a "SIGN TO:" clause. Read that file before
+ *    changing the note, the meta keys or the session helpers.
+ *
  * ---------------------------------------------------------------------------
  * ⛔⛔ THE DUPLICATE-PRINT PROTECTION — READ THIS BEFORE CHANGING ANYTHING
  * ---------------------------------------------------------------------------
@@ -511,19 +518,50 @@ function bhp_school_pickup_mark_order( $order ) {
 	 *    neither a session nor rate meta, and the first wording produced
 	 *    exactly the pleasant-sounding non-answer described here.)
 	 */
+	/*
+	 * ⭐ 1.8.50 (`CYCLE162-LD-PICKUP-FIELDS`) — THE CHILD'S NAME JOINS THE NOTE.
+	 *
+	 * Andrew's whole reason for the field is the signing, so the name belongs in
+	 * the ONE artefact he actually reads while packing a bag, next to the school
+	 * and the date — not only in a field panel further down the order screen.
+	 *
+	 * ⛔ IT IS A SEPARATE CLAUSE, NOT A SUBSTITUTION. The note says what it said
+	 *    before, byte for byte, and gains a sentence. An order with no child name
+	 *    (a classic-checkout order, an order placed before 1.8.50, a failed field
+	 *    write) says so IN WORDS rather than printing "Sign to:" followed by
+	 *    nothing — the same rule as the degraded school/date note below.
+	 *
+	 * ⛔ THE `function_exists()` GUARD IS REQUIRED and is not defensive padding:
+	 *    `school-visit-fields.php` is required AFTER this file, and this function
+	 *    also runs on orders created before that file existed.
+	 */
+	$child        = function_exists( 'bhp_school_visit_child_name' ) ? bhp_school_visit_child_name( $order ) : '';
+	$child_clause = '' !== $child
+		? sprintf(
+			/* translators: %s: the child's first name */
+			__( ' SIGN TO: %s.', 'brave-hearts' ),
+			$child
+		)
+		: __( ' ⚠ No child name was captured on this order — ask before signing.', 'brave-hearts' );
+
 	if ( '' !== $school && '' !== $date ) {
 		$order->add_order_note(
 			sprintf(
-				/* translators: 1: school name, 2: visit date, 3: visit slug */
-				__( 'HAND DELIVERY — DO NOT SHIP. Author hand-delivery at %1$s on %2$s (visit: %3$s). This order is excluded from the Bookvault print/fulfilment push.', 'brave-hearts' ),
+				/* translators: 1: school name, 2: visit date, 3: visit slug, 4: the signing clause */
+				__( 'HAND DELIVERY — DO NOT SHIP. Author hand-delivery at %1$s on %2$s (visit: %3$s).%4$s This order is excluded from the Bookvault print/fulfilment push.', 'brave-hearts' ),
 				$school,
 				$date,
-				'' !== $slug ? $slug : __( 'slug unresolved', 'brave-hearts' )
+				'' !== $slug ? $slug : __( 'slug unresolved', 'brave-hearts' ),
+				$child_clause
 			)
 		);
 	} else {
 		$order->add_order_note(
-			__( 'HAND DELIVERY — DO NOT SHIP. ⚠ THE SCHOOL AND VISIT DATE COULD NOT BE RESOLVED for this order — read the shipping method on the order itself to find out which visit it belongs to. This order is excluded from the Bookvault print/fulfilment push.', 'brave-hearts' )
+			sprintf(
+				/* translators: %s: the signing clause */
+				__( 'HAND DELIVERY — DO NOT SHIP. ⚠ THE SCHOOL AND VISIT DATE COULD NOT BE RESOLVED for this order — read the shipping method on the order itself to find out which visit it belongs to.%s This order is excluded from the Bookvault print/fulfilment push.', 'brave-hearts' ),
+				$child_clause
+			)
 		);
 	}
 

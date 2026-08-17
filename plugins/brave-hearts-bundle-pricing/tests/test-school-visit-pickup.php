@@ -575,6 +575,346 @@ if ( is_string( $src ) ) {
 }
 
 /* =========================================================================
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 10–15. THE CHECKOUT FIELDS — 1.8.50, `CYCLE162-LD-PICKUP-FIELDS`
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ NOT ONE ASSERTION BELOW TOUCHES MAILCHIMP. The subscribe path is
+ *     short-circuited at `bhp_school_visit_pre_subscribe`, which is a real
+ *     production filter and not a test-only hack, and every assertion about
+ *     "what would have been sent" is made against the PAYLOAD that filter
+ *     receives. No HTTP request leaves this file, and none may ever be added
+ *     to it. The same rule as the webhook section above, for the same reason.
+ * ====================================================================== */
+
+bhp_svp_assert( function_exists( 'bhp_school_visit_field_definitions' ), 'school-visit-fields.php is loaded by the plugin bootstrap', $failures );
+
+if ( ! function_exists( 'bhp_school_visit_field_definitions' ) ) {
+	bhp_svp_skip( 'ALL checkout-field assertions', 'school-visit-fields.php is not loaded', $skips );
+} else {
+
+	/* =====================================================================
+	 * 10. THE DEFINITIONS, AND THE CONSENT RAIL IN THE SHIPPED CODE
+	 * ================================================================== */
+
+	$defs = bhp_school_visit_field_definitions();
+
+	bhp_svp_assert( 2 === count( $defs ), 'Exactly TWO fields are defined -- a third would be a scope change, not a refinement', $failures );
+	bhp_svp_assert( isset( $defs['child_name'], $defs['newsletter'] ), 'Both fields are present under their documented keys', $failures );
+
+	$child_def = isset( $defs['child_name'] ) ? $defs['child_name'] : array();
+	$optin_def = isset( $defs['newsletter'] ) ? $defs['newsletter'] : array();
+
+	bhp_svp_assert( 'brave-hearts/school-visit-child-name' === $child_def['id'], 'Child field id is the namespaced id the API requires', $failures );
+	bhp_svp_assert( 'text' === $child_def['type'], 'Child field is a TEXT field', $failures );
+	bhp_svp_assert( 'order' === $child_def['location'], 'Child field is in the ORDER location', $failures );
+	bhp_svp_assert( true === $child_def['required'], 'Child field is REQUIRED -- a hard true, not a rules array that degrades to optional when malformed', $failures );
+	bhp_svp_assert( false !== strpos( $child_def['label'], 'signed dedication' ), 'Child field label names WHY the name is being asked for', $failures );
+	bhp_svp_assert( false !== stripos( $child_def['label'], 'first name' ), 'Child field label asks for a FIRST name only -- privacy minimalism, in the label itself', $failures );
+	bhp_svp_assert( isset( $child_def['description'] ) && false !== strpos( $child_def['description'], 'signs each book' ), 'Child field carries the help sentence', $failures );
+	bhp_svp_assert( isset( $child_def['attributes']['data-bhp-field'] ) && 'school-visit-child-name' === $child_def['attributes']['data-bhp-field'], 'Child field carries a STABLE data- selector for browser QA', $failures );
+
+	bhp_svp_assert( 'brave-hearts/school-visit-newsletter' === $optin_def['id'], 'Opt-in field id is the namespaced id the API requires', $failures );
+	bhp_svp_assert( 'checkbox' === $optin_def['type'], 'Opt-in field is a CHECKBOX', $failures );
+	bhp_svp_assert( false === $optin_def['required'], '⛔ CONSENT RAIL: the opt-in checkbox is NOT required, so it renders UNCHECKED and consent can only ever be affirmative', $failures );
+	bhp_svp_assert( isset( $optin_def['attributes']['data-bhp-field'] ) && 'school-visit-newsletter' === $optin_def['attributes']['data-bhp-field'], 'Opt-in field carries a STABLE data- selector for browser QA', $failures );
+
+	/* =====================================================================
+	 * 11. REGISTRATION IS GATED BY THE FLAG
+	 * ================================================================== */
+
+	$bhp_cf = null;
+	if ( class_exists( '\Automattic\WooCommerce\Blocks\Package' ) && class_exists( '\Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFields' ) ) {
+		try {
+			$bhp_cf = \Automattic\WooCommerce\Blocks\Package::container()->get( \Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFields::class );
+		} catch ( Throwable $e ) {
+			$bhp_cf = null;
+		}
+	}
+
+	if ( ! $bhp_cf ) {
+		bhp_svp_skip( 'Field REGISTRATION assertions', 'the WooCommerce Blocks CheckoutFields container is not reachable in this context', $skips );
+	} else {
+		/*
+		 * ⭐ THIS IS THE REAL "NORMAL CHECKOUT IS UNCHANGED" ASSERTION, and it
+		 *    is stronger than a rendering check: `woocommerce_init` has ALREADY
+		 *    FIRED by the time this suite runs, with no session and no flag. So
+		 *    the registry is being read in exactly the state an ordinary
+		 *    visitor's request produces, and neither field may be in it.
+		 */
+		$registered_before = $bhp_cf->get_additional_fields();
+		bhp_svp_assert( ! isset( $registered_before[ BHP_SCHOOL_VISIT_FIELD_CHILD ] ), '⛔ UNFLAGGED request: the child-name field is NOT registered -- an ordinary customer\'s checkout does not have it at all', $failures );
+		bhp_svp_assert( ! isset( $registered_before[ BHP_SCHOOL_VISIT_FIELD_OPTIN ] ), '⛔ UNFLAGGED request: the newsletter field is NOT registered -- an ordinary customer\'s checkout does not have it at all', $failures );
+
+		// And the gate itself, called directly, still registers nothing.
+		bhp_school_visit_register_checkout_fields();
+		$registered_after_unflagged = $bhp_cf->get_additional_fields();
+		bhp_svp_assert( ! isset( $registered_after_unflagged[ BHP_SCHOOL_VISIT_FIELD_CHILD ] ), 'UNFLAGGED: calling the registrar directly STILL registers nothing', $failures );
+		bhp_svp_assert( count( $registered_before ) === count( $registered_after_unflagged ), 'UNFLAGGED: the additional-field registry is unchanged in size -- no other field was disturbed either', $failures );
+
+		if ( function_exists( 'WC' ) && WC()->session ) {
+			WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, 'bhpsvptest-live' );
+			bhp_school_visit_register_checkout_fields();
+			$registered_flagged = $bhp_cf->get_additional_fields();
+
+			bhp_svp_assert( isset( $registered_flagged[ BHP_SCHOOL_VISIT_FIELD_CHILD ] ), 'FLAGGED: the child-name field IS registered', $failures );
+			bhp_svp_assert( isset( $registered_flagged[ BHP_SCHOOL_VISIT_FIELD_OPTIN ] ), 'FLAGGED: the newsletter field IS registered', $failures );
+
+			if ( isset( $registered_flagged[ BHP_SCHOOL_VISIT_FIELD_CHILD ] ) ) {
+				$rc = $registered_flagged[ BHP_SCHOOL_VISIT_FIELD_CHILD ];
+				bhp_svp_assert( true === $rc['required'], 'FLAGGED: WooCommerce holds the child field as required === true', $failures );
+				bhp_svp_assert( 'order' === $rc['location'], 'FLAGGED: WooCommerce holds the child field in the order location', $failures );
+				bhp_svp_assert( isset( $rc['attributes']['data-bhp-field'] ), 'FLAGGED: the data- selector survived WooCommerce\'s attribute whitelist', $failures );
+			}
+			if ( isset( $registered_flagged[ BHP_SCHOOL_VISIT_FIELD_OPTIN ] ) ) {
+				bhp_svp_assert( false === $registered_flagged[ BHP_SCHOOL_VISIT_FIELD_OPTIN ]['required'], '⛔ CONSENT RAIL, as WooCommerce actually holds it: the checkbox is not required', $failures );
+			}
+
+			WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, null );
+		} else {
+			bhp_svp_skip( 'FLAGGED registration assertions', 'no WC session in this CLI context', $skips );
+		}
+	}
+
+	/* =====================================================================
+	 * 12. SANITISATION AND VALIDATION
+	 * ================================================================== */
+
+	bhp_svp_assert( 'Ada' === bhp_school_visit_sanitize_child_name( '  Ada  ' ), 'Sanitiser trims', $failures );
+	bhp_svp_assert( 'Ada Mae' === bhp_school_visit_sanitize_child_name( "Ada\n\t  Mae" ), 'Sanitiser collapses internal whitespace', $failures );
+	bhp_svp_assert( false === strpos( bhp_school_visit_sanitize_child_name( '<script>x</script>Ada' ), '<' ), 'Sanitiser strips tags', $failures );
+	bhp_svp_assert( BHP_SCHOOL_VISIT_CHILD_MAXLEN >= strlen( bhp_school_visit_sanitize_child_name( str_repeat( 'a', 300 ) ) ), 'Sanitiser caps the length', $failures );
+	bhp_svp_assert( '' === bhp_school_visit_sanitize_child_name( array( 'x' ) ), 'Sanitiser returns \'\' for a non-scalar rather than fatalling', $failures );
+
+	bhp_svp_assert( is_wp_error( bhp_school_visit_validate_child_name( '', array( 'required' => true ) ) ), 'Validator REJECTS an empty required value -- supplying a validate_callback replaces WooCommerce\'s default one, and dropping the required check would make the field silently optional', $failures );
+	bhp_svp_assert( is_wp_error( bhp_school_visit_validate_child_name( 'parent@example.com', array( 'required' => true ) ) ), 'Validator REJECTS an email address in the child-name field -- it sits under an email field and a mistyped row would put a child\'s contact detail on an order', $failures );
+	bhp_svp_assert( null === bhp_school_visit_validate_child_name( 'Ada', array( 'required' => true ) ), 'Validator ACCEPTS an ordinary first name', $failures );
+	bhp_svp_assert( null === bhp_school_visit_validate_child_name( 'Ada-Mae O’Brien', array( 'required' => true ) ), 'Validator does NOT police name characters -- hyphens, apostrophes and spaces are names, not errors', $failures );
+
+	bhp_svp_assert( true === bhp_school_visit_is_affirmative( '1' ), 'Checkbox: "1" is a yes', $failures );
+	bhp_svp_assert( true === bhp_school_visit_is_affirmative( true ), 'Checkbox: boolean true is a yes', $failures );
+	bhp_svp_assert( true === bhp_school_visit_is_affirmative( 'yes' ), 'Checkbox: "yes" is a yes', $failures );
+	bhp_svp_assert( false === bhp_school_visit_is_affirmative( '0' ), '⛔ CONSENT RAIL: "0" is NOT a yes', $failures );
+	bhp_svp_assert( false === bhp_school_visit_is_affirmative( '' ), '⛔ CONSENT RAIL: an empty value is NOT a yes', $failures );
+	bhp_svp_assert( false === bhp_school_visit_is_affirmative( null ), '⛔ CONSENT RAIL: null is NOT a yes', $failures );
+	bhp_svp_assert( false === bhp_school_visit_is_affirmative( 'maybe' ), '⛔ CONSENT RAIL: anything unrecognised is NOT a yes', $failures );
+
+	/* =====================================================================
+	 * 13. META PERSISTENCE, ON REAL SAVED ORDERS
+	 * ================================================================== */
+
+	if ( ! function_exists( 'wc_create_order' ) ) {
+		bhp_svp_skip( 'Field meta-persistence assertions', 'wc_create_order() is unavailable', $skips );
+	} else {
+
+		/*
+		 * The conspicuous child name below is deliberate: every later assertion
+		 * that the child's name did NOT reach a Mailchimp payload searches for
+		 * this exact string, so a leak cannot hide behind a common first name.
+		 */
+		$bhp_child_probe_name = 'Zzchildprobe';
+
+		// (a) A flagged order that OPTED IN.
+		$fo = wc_create_order( array( 'status' => 'pending' ) );
+		if ( $fo && ! is_wp_error( $fo ) ) {
+			$GLOBALS['bhp_svp_probe_ids'][] = $fo->get_id();
+
+			$foi = new WC_Order_Item_Shipping();
+			$foi->set_method_id( BHP_SCHOOL_PICKUP_METHOD_ID );
+			$foi->set_method_title( 'Author hand-delivery (fields probe)' );
+			$foi->set_total( 0 );
+			$foi->add_meta_data( __( 'School', 'brave-hearts' ), 'Fields Probe School', true );
+			$foi->add_meta_data( __( 'Visit date', 'brave-hearts' ), '2099-02-02', true );
+			$fo->add_item( $foi );
+
+			// Exactly what WooCommerce's additional-fields API writes.
+			$fo->update_meta_data( '_wc_other/' . BHP_SCHOOL_VISIT_FIELD_CHILD, '  ' . $bhp_child_probe_name . '  ' );
+			$fo->update_meta_data( '_wc_other/' . BHP_SCHOOL_VISIT_FIELD_OPTIN, '1' );
+			$fo->set_billing_email( 'bhp-svp-probe@example.com' );
+			$fo->set_billing_first_name( 'ProbeParent' );
+			$fo->save();
+
+			bhp_school_visit_store_field_meta( $fo->get_id() );
+			$fo_reloaded = wc_get_order( $fo->get_id() );
+
+			bhp_svp_assert( $bhp_child_probe_name === $fo_reloaded->get_meta( BHP_SCHOOL_VISIT_META_CHILD ), 'META: the child\'s name is mirrored into an explicit, stable meta key (trimmed)', $failures );
+			bhp_svp_assert( 'yes' === $fo_reloaded->get_meta( BHP_SCHOOL_VISIT_META_OPTIN ), 'META: an affirmative opt-in is recorded as "yes"', $failures );
+			bhp_svp_assert( '' !== (string) $fo_reloaded->get_meta( '_bhp_school_visit_optin_timestamp' ), 'META: an affirmative opt-in carries a consent timestamp', $failures );
+			bhp_svp_assert( $bhp_child_probe_name === bhp_school_visit_child_name( $fo_reloaded ), 'READ-BACK: the accessor returns the stored child name', $failures );
+			bhp_svp_assert( true === bhp_school_visit_optin_given( $fo_reloaded ), 'READ-BACK: the opt-in predicate reads true', $failures );
+
+			// The packing-list note must carry the name, in the same note.
+			bhp_school_pickup_mark_order( $fo->get_id() );
+			$fo_notes = wc_get_order_notes( array( 'order_id' => $fo->get_id() ) );
+			$fo_text  = '';
+			foreach ( $fo_notes as $n ) {
+				$fo_text .= $n->content;
+			}
+			bhp_svp_assert( false !== strpos( $fo_text, 'DO NOT SHIP' ), 'NOTE: the packing-list note is still the packing-list note', $failures );
+			bhp_svp_assert( false !== strpos( $fo_text, 'SIGN TO: ' . $bhp_child_probe_name ), 'NOTE: school, date AND child are in ONE note -- Andrew reads one line to pack one bag', $failures );
+			bhp_svp_assert( false !== strpos( $fo_text, 'Fields Probe School' ), 'NOTE: the school clause is unchanged by the addition of the child clause', $failures );
+
+			/* -----------------------------------------------------------------
+			 * 14. THE SUBSCRIBE DECISION — MOCKED, NEVER LIVE
+			 * -------------------------------------------------------------- */
+
+			$GLOBALS['bhp_svp_sub_calls'] = array();
+			$bhp_svp_spy                  = static function ( $pre, $payload, $order ) {
+				$GLOBALS['bhp_svp_sub_calls'][] = $payload;
+				return array( 'ok' => true, 'code' => 'success', 'redirect' => '' );
+			};
+			add_filter( 'bhp_school_visit_pre_subscribe', $bhp_svp_spy, 10, 3 );
+
+			bhp_school_visit_subscribe_parent( $fo->get_id() );
+
+			bhp_svp_assert( 1 === count( $GLOBALS['bhp_svp_sub_calls'] ), 'OPT-IN GIVEN: the subscribe path is entered exactly ONCE', $failures );
+
+			$payload = ! empty( $GLOBALS['bhp_svp_sub_calls'] ) ? $GLOBALS['bhp_svp_sub_calls'][0] : array();
+			$flat    = wp_json_encode( $payload );
+
+			bhp_svp_assert( 'bhp-svp-probe@example.com' === ( isset( $payload['email'] ) ? $payload['email'] : '' ), 'PAYLOAD: the subscriber email is the order\'s BILLING email -- no new field was asked for', $failures );
+			bhp_svp_assert( 'ProbeParent' === ( isset( $payload['name'] ) ? $payload['name'] : '' ), 'PAYLOAD: the subscriber name is the order\'s BILLING first name', $failures );
+			bhp_svp_assert( 'school_visit' === ( isset( $payload['context'] ) ? $payload['context'] : '' ), 'PAYLOAD: the context is school_visit, which is what the tag filter keys on', $failures );
+			bhp_svp_assert( 'parents_families' === ( isset( $payload['audience_type'] ) ? $payload['audience_type'] : '' ), 'PAYLOAD: the audience is the PARENT audience', $failures );
+			bhp_svp_assert( '' === ( isset( $payload['lead_magnet'] ) ? $payload['lead_magnet'] : 'x' ), 'PAYLOAD: NO lead magnet is claimed -- this checkbox promises no downloadable resource', $failures );
+
+			bhp_svp_assert( false === strpos( (string) $flat, $bhp_child_probe_name ), '⛔⛔ CONSENT RAIL: the CHILD\'S NAME does not appear ANYWHERE in the Mailchimp payload', $failures );
+			bhp_svp_assert( false === stripos( (string) $flat, 'child' ), '⛔⛔ CONSENT RAIL: no payload key or value even mentions a child', $failures );
+
+			$fo_after = wc_get_order( $fo->get_id() );
+			bhp_svp_assert( 'yes' === $fo_after->get_meta( BHP_SCHOOL_VISIT_META_SYNCED ), 'SYNC STATE: a successful subscribe is recorded on the order', $failures );
+
+			// Idempotency: the two order-processed hooks can both fire.
+			bhp_school_visit_subscribe_parent( $fo->get_id() );
+			bhp_svp_assert( 1 === count( $GLOBALS['bhp_svp_sub_calls'] ), 'IDEMPOTENT: a second call does NOT subscribe again -- both checkout hooks can fire in one request', $failures );
+
+			remove_filter( 'bhp_school_visit_pre_subscribe', $bhp_svp_spy, 10 );
+		} else {
+			bhp_svp_skip( 'Opt-in field/meta/subscribe assertions', 'wc_create_order() did not return an order', $skips );
+		}
+
+		// (b) A flagged order that did NOT opt in.
+		$no = wc_create_order( array( 'status' => 'pending' ) );
+		if ( $no && ! is_wp_error( $no ) ) {
+			$GLOBALS['bhp_svp_probe_ids'][] = $no->get_id();
+			$no->update_meta_data( '_wc_other/' . BHP_SCHOOL_VISIT_FIELD_CHILD, 'Zznooptin' );
+			$no->update_meta_data( '_wc_other/' . BHP_SCHOOL_VISIT_FIELD_OPTIN, '0' );
+			$no->set_billing_email( 'bhp-svp-nooptin@example.com' );
+			$no->set_billing_first_name( 'NoOptIn' );
+			$no->save();
+
+			bhp_school_visit_store_field_meta( $no->get_id() );
+			$no_reloaded = wc_get_order( $no->get_id() );
+
+			bhp_svp_assert( 'no' === $no_reloaded->get_meta( BHP_SCHOOL_VISIT_META_OPTIN ), 'META: a declined opt-in is recorded EXPLICITLY as "no" -- "we never asked" and "they said no" must not be the same stored state', $failures );
+			bhp_svp_assert( '' === (string) $no_reloaded->get_meta( '_bhp_school_visit_optin_timestamp' ), 'META: a declined opt-in carries NO consent timestamp', $failures );
+			bhp_svp_assert( 'Zznooptin' === $no_reloaded->get_meta( BHP_SCHOOL_VISIT_META_CHILD ), 'META: the child\'s name is still stored on a no-opt-in order -- the two fields are independent', $failures );
+
+			$GLOBALS['bhp_svp_sub_calls_b'] = array();
+			$bhp_svp_spy_b                  = static function ( $pre, $payload, $order ) {
+				$GLOBALS['bhp_svp_sub_calls_b'][] = $payload;
+				return array( 'ok' => true, 'code' => 'success', 'redirect' => '' );
+			};
+			add_filter( 'bhp_school_visit_pre_subscribe', $bhp_svp_spy_b, 10, 3 );
+
+			bhp_school_visit_subscribe_parent( $no->get_id() );
+
+			bhp_svp_assert( 0 === count( $GLOBALS['bhp_svp_sub_calls_b'] ), '⛔⛔ CONSENT RAIL: NO opt-in means the subscribe path is NEVER entered -- not attempted, not queued, not logged as pending', $failures );
+			$no_after = wc_get_order( $no->get_id() );
+			bhp_svp_assert( '' === (string) $no_after->get_meta( BHP_SCHOOL_VISIT_META_SYNCED ), 'NO OPT-IN: no sync state is written either -- there is nothing to sync', $failures );
+
+			remove_filter( 'bhp_school_visit_pre_subscribe', $bhp_svp_spy_b, 10 );
+		} else {
+			bhp_svp_skip( 'No-opt-in assertions', 'wc_create_order() did not return an order', $skips );
+		}
+
+		// (c) An ORDINARY order that never had the fields at all.
+		$plain = wc_create_order( array( 'status' => 'pending' ) );
+		if ( $plain && ! is_wp_error( $plain ) ) {
+			$GLOBALS['bhp_svp_probe_ids'][] = $plain->get_id();
+			$plain->set_billing_email( 'bhp-svp-plain@example.com' );
+			$plain->save();
+
+			bhp_school_visit_store_field_meta( $plain->get_id() );
+			$plain_reloaded = wc_get_order( $plain->get_id() );
+
+			$plain_bhp_keys = array();
+			foreach ( $plain_reloaded->get_meta_data() as $m ) {
+				$mk = $m->get_data();
+				if ( isset( $mk['key'] ) && 0 === strpos( (string) $mk['key'], '_bhp_school_visit' ) ) {
+					$plain_bhp_keys[] = $mk['key'];
+				}
+			}
+
+			bhp_svp_assert( '' === (string) $plain_reloaded->get_meta( BHP_SCHOOL_VISIT_META_OPTIN ), '⛔ ORDINARY ORDER: the mirror writes NOTHING -- an order with neither field is left completely alone', $failures );
+			bhp_svp_assert( '' === (string) $plain_reloaded->get_meta( BHP_SCHOOL_VISIT_META_CHILD ), 'ORDINARY ORDER: no child-name meta is invented', $failures );
+			bhp_svp_assert( array() === $plain_bhp_keys, 'ORDINARY ORDER: NOT ONE `_bhp_school_visit*` meta key exists on the order', $failures );
+			bhp_svp_assert( '' === bhp_school_visit_child_name( $plain_reloaded ), 'ORDINARY ORDER: the child-name accessor returns \'\', never a placeholder', $failures );
+			bhp_svp_assert( false === bhp_school_visit_optin_given( $plain_reloaded ), 'ORDINARY ORDER: the opt-in predicate is false', $failures );
+
+			$GLOBALS['bhp_svp_sub_calls_c'] = array();
+			$bhp_svp_spy_c                  = static function ( $pre, $payload, $order ) {
+				$GLOBALS['bhp_svp_sub_calls_c'][] = $payload;
+				return array( 'ok' => true, 'code' => 'success', 'redirect' => '' );
+			};
+			add_filter( 'bhp_school_visit_pre_subscribe', $bhp_svp_spy_c, 10, 3 );
+			bhp_school_visit_subscribe_parent( $plain->get_id() );
+			bhp_svp_assert( 0 === count( $GLOBALS['bhp_svp_sub_calls_c'] ), '⛔ ORDINARY ORDER: never subscribed to anything', $failures );
+			remove_filter( 'bhp_school_visit_pre_subscribe', $bhp_svp_spy_c, 10 );
+		} else {
+			bhp_svp_skip( 'Ordinary-order assertions', 'wc_create_order() did not return an order', $skips );
+		}
+	}
+
+	/* =====================================================================
+	 * 15. THE TAGS — THROUGH THE THEME'S OWN FILTER, NOT A NEW ONE
+	 * ================================================================== */
+
+	bhp_school_visit_current_signup_slug( 'bhpsvptest-live' );
+	$tags = apply_filters( 'bhp_mailchimp_signup_tags', array( 'Adventure Club' ), 'school_visit', 'parents_families', '', home_url( '/' ) );
+	bhp_school_visit_current_signup_slug( '' );
+
+	bhp_svp_assert( is_array( $tags ) && in_array( 'Source: School Visit', $tags, true ), 'TAGS: "Source: School Visit" is applied', $failures );
+	bhp_svp_assert( is_array( $tags ) && in_array( 'Visit: bhpsvptest-live', $tags, true ), 'TAGS: the SCHOOL SLUG is applied as its own tag, so one visit can be segmented from another', $failures );
+	bhp_svp_assert( is_array( $tags ) && in_array( 'Audience: Parent/Grandparent', $tags, true ), 'TAGS: the parent audience tag matches the account\'s existing Title Case convention', $failures );
+	bhp_svp_assert( is_array( $tags ) && ! in_array( 'Adventure Club', $tags, true ), 'TAGS: the generic fallback tag is replaced, not appended to', $failures );
+
+	// The filter must be inert for every other context on the site.
+	$other = apply_filters( 'bhp_mailchimp_signup_tags', array(), 'parent_popup', 'parents_families', 'reluctant_reader_adventure_kit', home_url( '/' ) );
+	bhp_svp_assert( in_array( 'Source: Parent Popup', $other, true ), '⛔ TAGS: the PARENT POPUP\'s proven tag set is completely unaffected by this build', $failures );
+	bhp_svp_assert( ! in_array( 'Source: School Visit', $other, true ), '⛔ TAGS: no school-visit tag leaks into another funnel', $failures );
+
+	$teacher = apply_filters( 'bhp_mailchimp_signup_tags', array(), 'teacher_popup', 'educators', 'mariana_trench_classroom_guide', home_url( '/' ) );
+	bhp_svp_assert( ! in_array( 'Source: School Visit', $teacher, true ), '⛔ FUNNEL ISOLATION: the teacher funnel\'s tags are untouched', $failures );
+
+	// With no slug resolved, the tag set degrades honestly rather than inventing one.
+	bhp_school_visit_current_signup_slug( '' );
+	$noslug = apply_filters( 'bhp_mailchimp_signup_tags', array(), 'school_visit', 'parents_families', '', home_url( '/' ) );
+	bhp_svp_assert( ! in_array( 'Visit: ', $noslug, true ), 'TAGS: an unresolved slug produces NO "Visit:" tag at all rather than an empty one', $failures );
+	bhp_svp_assert( in_array( 'Source: School Visit', $noslug, true ), 'TAGS: the source tag still applies when the slug is unresolved', $failures );
+
+	/* =====================================================================
+	 * 16. STRUCTURAL AUDIT OF THE NEW FILE
+	 * ================================================================== */
+
+	$fsrc = @file_get_contents( BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-fields.php' );
+	bhp_svp_assert( is_string( $fsrc ) && '' !== $fsrc, 'The fields source file is readable for the structural audit', $failures );
+	if ( is_string( $fsrc ) && '' !== $fsrc ) {
+		bhp_svp_assert( ! preg_match( '/adams-20\d\d|dallas-harris|liberty-20\d\d/i', $fsrc ), 'NO real visit slug appears anywhere in the fields source', $failures );
+		bhp_svp_assert( ! preg_match( '/update_option\s*\(\s*[\'"]woocommerce_/', $fsrc ), 'The fields source writes NO woocommerce_* option', $failures );
+		bhp_svp_assert( ! preg_match( '/woocommerce_shipping_zone|WC_Shipping_Zones|woocommerce_flat_rate_\d+_settings/', $fsrc ), 'The fields source touches NO shipping zone or flat_rate setting', $failures );
+		bhp_svp_assert( ! preg_match( '/wp_remote_(get|post|request)|curl_exec|file_get_contents\s*\(\s*[\'"]https?:/', $fsrc ), 'The fields source makes NO direct HTTP call of its own -- the ONE outbound path is the theme\'s existing signup core', $failures );
+		// `=\s*` deliberately, so the prose references in the docblocks are not
+		// counted as call sites. There must be exactly one real invocation.
+		bhp_svp_assert( 1 === preg_match_all( '/=\s*bhp_process_signup\s*\(/', $fsrc ), 'There is EXACTLY ONE call to the theme\'s signup core, so there is one gate to audit', $failures );
+		bhp_svp_assert( ! preg_match( '/mc4wp_|add_list_member|api\.mailchimp\.com|update_list_member_tags/', $fsrc ), '⛔ NO NEW MAILCHIMP INTEGRATION WAS MINTED -- the file names no Mailchimp API, list, key or endpoint anywhere', $failures );
+		// The WRITE, specifically. `'meta' => BHP_SCHOOL_VISIT_META_CHILD,` in the
+		// definition list is a declaration, not a write, and must not be counted.
+		bhp_svp_assert( 1 === preg_match_all( '/update_meta_data\(\s*BHP_SCHOOL_VISIT_META_CHILD\s*,/', $fsrc ), 'The child\'s name is WRITTEN in exactly one place, so there is one gate to audit', $failures );
+	}
+}
+
+/* =========================================================================
  * RESULT
  * ====================================================================== */
 

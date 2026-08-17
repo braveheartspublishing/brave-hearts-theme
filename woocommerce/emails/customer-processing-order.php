@@ -143,17 +143,48 @@ if ( $bhp_is_pickup ) :
 	$bhp_pickup_date   = (string) $order->get_meta( '_bhp_school_visit_date' );
 	$bhp_pickup_ts     = $bhp_pickup_date ? strtotime( $bhp_pickup_date . ' 12:00:00' ) : false;
 	$bhp_pickup_pretty = $bhp_pickup_ts ? wp_date( 'l, F j', $bhp_pickup_ts ) : $bhp_pickup_date;
+
+	/*
+	 * ⭐ 1.19.232 (2026-08-17, `CYCLE162-LD-PICKUP-FIELDS`) — THE CHILD'S NAME.
+	 *
+	 * ⛔ TWO WHOLE SENTENCES, NOT ONE SENTENCE WITH A NAME GLUED ON. The
+	 *    no-name variant is byte-identical to the 1.19.231 string, so an order
+	 *    with no child name — a classic-checkout order, an order placed before
+	 *    1.19.232, a failed field write — reads exactly what it read before
+	 *    rather than "…signed for ." That is the same rule as the school/date
+	 *    block immediately below, and the plain-text twin carries the identical
+	 *    pair of strings, because these two templates drifted apart once (C10)
+	 *    and left two recipients of one order reading two different promises.
+	 * ⛔ IT ADDS NO NEW PROMISE. "signed" was already in the approved 1.19.231
+	 *    string; the only new information is who it is signed to, and that is
+	 *    the value the parent typed into the checkout field.
+	 * ⛔ THE `function_exists()` GUARD is required for the same reason the
+	 *    predicate above carries one: this template lives in the THEME and the
+	 *    accessor lives in the bundle PLUGIN.
+	 */
+	$bhp_pickup_child = function_exists( 'bhp_school_visit_child_name' ) ? bhp_school_visit_child_name( $order ) : '';
 	?>
 
 <h2 style="margin:0 0 10px;font-size:17px;"><?php esc_html_e( 'How you’ll get your books', 'brave-hearts' ); ?></h2>
 
+	<?php if ( '' !== $bhp_pickup_child ) : ?>
 <p><?php
-	printf(
-		/* translators: 1: opening strong tag, 2: closing strong tag */
-		esc_html__( 'Nothing is being posted, and you have not been charged for shipping. %1$sAndrew is bringing your books to the school visit by hand%2$s, signed.', 'brave-hearts' ),
-		'<strong>',
-		'</strong>'
-	); ?></p>
+		printf(
+			/* translators: 1: opening strong tag, 2: closing strong tag, 3: the child's first name */
+			esc_html__( 'Nothing is being posted, and you have not been charged for shipping. %1$sAndrew is bringing your books to the school visit by hand%2$s, signed for %3$s.', 'brave-hearts' ),
+			'<strong>',
+			'</strong>',
+			esc_html( $bhp_pickup_child )
+		); ?></p>
+	<?php else : ?>
+<p><?php
+		printf(
+			/* translators: 1: opening strong tag, 2: closing strong tag */
+			esc_html__( 'Nothing is being posted, and you have not been charged for shipping. %1$sAndrew is bringing your books to the school visit by hand%2$s, signed.', 'brave-hearts' ),
+			'<strong>',
+			'</strong>'
+		); ?></p>
+	<?php endif; ?>
 
 	<?php if ( '' !== $bhp_pickup_school && '' !== $bhp_pickup_pretty ) : ?>
 <p style="border:1px solid #e5e0d3;border-left:4px solid #2f6f4f;padding:14px 16px;margin:0 0 16px;"><?php

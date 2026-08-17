@@ -86,8 +86,34 @@ if ( $bhp_is_pickup ) {
 	$bhp_pickup_ts     = $bhp_pickup_date ? strtotime( $bhp_pickup_date . ' 12:00:00' ) : false;
 	$bhp_pickup_pretty = $bhp_pickup_ts ? wp_date( 'l, F j', $bhp_pickup_ts ) : $bhp_pickup_date;
 
+	/*
+	 * ⭐ 1.19.232 (2026-08-17, `CYCLE162-LD-PICKUP-FIELDS`) — THE CHILD'S NAME.
+	 *
+	 * ⛔ TWO WHOLE SENTENCES, NOT ONE SENTENCE WITH A NAME GLUED ON. The
+	 *    no-name variant is byte-identical to the 1.19.231 string, so an order
+	 *    with no child name reads exactly what it read before rather than
+	 *    "…signed for ." — the same rule the school/date block below follows,
+	 *    and the same rule the HTML twin follows. The two templates are kept in
+	 *    lockstep deliberately: this file's own header records that they drifted
+	 *    apart once (C10) and left two recipients of one order reading two
+	 *    different promises.
+	 * ⛔ IT ADDS NO NEW PROMISE. "signed" was already there; the only new
+	 *    information is who it is signed to, which is what the parent typed.
+	 */
+	$bhp_pickup_child = function_exists( 'bhp_school_visit_child_name' ) ? bhp_school_visit_child_name( $order ) : '';
+
 	echo esc_html__( 'HOW YOU’LL GET YOUR BOOKS', 'brave-hearts' ) . "\n\n";
-	echo esc_html__( 'Nothing is being posted, and you have not been charged for shipping. Andrew is bringing your books to the school visit by hand, signed.', 'brave-hearts' ) . "\n\n";
+	if ( '' !== $bhp_pickup_child ) {
+		echo esc_html(
+			sprintf(
+				/* translators: %s: the child's first name */
+				__( 'Nothing is being posted, and you have not been charged for shipping. Andrew is bringing your books to the school visit by hand, signed for %s.', 'brave-hearts' ),
+				$bhp_pickup_child
+			)
+		) . "\n\n";
+	} else {
+		echo esc_html__( 'Nothing is being posted, and you have not been charged for shipping. Andrew is bringing your books to the school visit by hand, signed.', 'brave-hearts' ) . "\n\n";
+	}
 
 	if ( '' !== $bhp_pickup_school && '' !== $bhp_pickup_pretty ) {
 		echo esc_html( $bhp_pickup_school ) . ' - ' . esc_html( $bhp_pickup_pretty ) . "\n\n";
