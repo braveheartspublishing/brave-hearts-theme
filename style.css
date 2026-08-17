@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.229
+Version: 1.19.230
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -8646,7 +8646,35 @@ body .bhp-typ__confirm.section { padding-bottom: clamp(8px, 1.8vw, 18px); }
 body .bhp-typ__offer.section { padding-top: clamp(8px, 1.8vw, 18px); }
 
 .bhp-typ__confirm .component-heading__eyebrow { margin: 0; }
-.bhp-typ__confirm h1 {
+/* ══════════════════════════════════════════════════════════════════════
+   ⛔ 1.19.230 (2026-08-17, `CYCLE162-LD-TYP-V2-QA`) — THIS SELECTOR CARRIES
+      A `body:not(.home)` PREFIX BECAUSE WITHOUT IT THE RULE NEVER APPLIED.
+   ══════════════════════════════════════════════════════════════════════
+
+   MEASURED, NOT ASSUMED. `getComputedStyle` on staging at an ASSERTED
+   `innerWidth` of 360 read this H1 at **51.2px / 50.18px line-height**,
+   four lines, 201px tall — i.e. exactly what it was before 1.19.229's
+   compaction. The declaration below asks for 23.2px at that width. It was
+   losing the cascade and had been since it shipped.
+
+   WHAT BEATS IT: `body:not(.home) h1 { font-size: clamp(3.2rem, 7vw, 6rem) }`
+   at style.css line ~4035, specificity (0,2,1). The old selector
+   `.bhp-typ__confirm h1` is (0,1,1) and loses; `body .bhp-typ__confirm h1`
+   would be (0,1,2) and STILL loses, because `:not(.home)` counts as a
+   class. `body:not(.home) .bhp-typ__confirm h1` is (0,2,2) and wins on
+   specificity rather than on source order, which is the point — a tie
+   decided by ordering breaks the next time this file is reorganised.
+
+   ⚠ 1.19.229's own note in this block says "the sitewide h1 clamp bottoms
+     out at 2.25rem". That is the sitewide **h2** rule (line ~4036). The h1
+     rule bottoms out at 3.2rem. The wrong rule was identified, so the
+     override was written at the wrong specificity, and the computed value
+     was never read back. The note is left in place above rather than
+     quietly corrected; this is the correction.
+
+   ⛔ NOT ONE DECLARED VALUE IN THIS RULE CHANGED. Only the selector. The
+      design intent 1.19.229 recorded is what finally renders. */
+body:not(.home) .bhp-typ__confirm h1 {
   font-size: clamp(1.45rem, 5.1vw, 2.6rem);
   line-height: 1.12;
   margin-block: var(--space-1, 4px) 0;
@@ -8693,7 +8721,13 @@ body .bhp-typ__offer.section { padding-top: clamp(8px, 1.8vw, 18px); }
 }
 .bhp-kit-upsell__headtext { min-width: 0; }
 .bhp-kit-upsell__headtext .component-heading__eyebrow { margin: 0; }
-.bhp-kit-upsell__headtext h2 {
+/* ⛔ SAME CORRECTION, SAME REASON, 1.19.230 (`CYCLE162-LD-TYP-V2-QA`).
+      MEASURED on staging at innerWidth 360: **36px / 37.8px line-height**,
+      four lines, 151px — which is `body:not(.home) h2`'s
+      `clamp(2.25rem, 4.5vw, 4rem)` (specificity (0,2,1)), not the 16.8px
+      this rule asks for. `.bhp-kit-upsell__headtext h2` is (0,1,1) and lost.
+      Selector only; no declared value changed. */
+body:not(.home) .bhp-kit-upsell__headtext h2 {
   font-size: clamp(1.05rem, 4.2vw, 1.75rem);
   line-height: 1.16;
   margin-block: var(--space-1, 4px) 0;

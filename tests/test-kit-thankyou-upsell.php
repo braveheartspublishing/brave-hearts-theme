@@ -287,11 +287,37 @@ bhp_ktu_assert(
 	'5: it still fires from exactly one element',
 	$failures
 );
-/* The signup conversion event on this page is not this build's business. */
+/*
+ * The signup conversion event on this page is not this build's business.
+ *
+ * ⛔ GATED ON THE ANALYTICS SWITCH, CORRECTED 1.19.230 (`CYCLE162-LD-TYP-V2-QA`).
+ *    Superseded assertion, verbatim:
+ *        strpos( $html, "'event': 'adventure_kit_signup'" ) !== false
+ *        || strpos( $html, '"event":"adventure_kit_signup"' ) !== false,
+ *        '5: the adventure_kit_signup conversion event still renders (unchanged)'
+ *
+ *    ⚠ THIS IS A PRE-EXISTING FAILURE, NOT ONE 1.19.229 INTRODUCED. The
+ *    assertion is byte-identical in 1.19.228 (`02c8b97`) and is untouched by
+ *    1.19.229 (`72666ca`); it was simply never run on an environment where
+ *    analytics is suppressed. The page gates the whole dataLayer push behind
+ *    `BHP_Analytics_Config::should_render_analytics()`, which is FALSE on
+ *    staging — OBSERVED 2026-08-17 by `wp eval` (`bool(false)`) and by the
+ *    fetched document (zero occurrences of `adventure_kit_signup`). The old
+ *    form asserted a conditional block unconditionally.
+ *
+ * ⭐ THE REPLACEMENT IS STRICTER, NOT LOOSER: it now asserts the event in
+ *    BOTH directions — present when analytics renders, ABSENT when it does
+ *    not. A page that fired a conversion event on a suppressed environment
+ *    would now fail, and previously would not have.
+ */
+$ktu_analytics_on = class_exists( 'BHP_Analytics_Config' ) && BHP_Analytics_Config::should_render_analytics();
+$ktu_signup_event = strpos( $html, "'event': 'adventure_kit_signup'" ) !== false
+	|| strpos( $html, '"event":"adventure_kit_signup"' ) !== false;
 bhp_ktu_assert(
-	strpos( $html, "'event': 'adventure_kit_signup'" ) !== false
-	|| strpos( $html, '"event":"adventure_kit_signup"' ) !== false,
-	'5: the adventure_kit_signup conversion event still renders (unchanged)',
+	$ktu_analytics_on ? $ktu_signup_event : ! $ktu_signup_event,
+	$ktu_analytics_on
+		? '5: the adventure_kit_signup conversion event still renders (unchanged)'
+		: '5: analytics is suppressed on this environment, and the adventure_kit_signup event is correctly absent',
 	$failures
 );
 
@@ -375,10 +401,37 @@ bhp_ktu_assert(
 	'8: the thank-you page emits NO Offer schema despite now showing a price',
 	$failures
 );
-/* Funnel isolation: this is the PARENT funnel's page and must stay so. */
+/*
+ * Funnel isolation: this is the PARENT funnel's page and must stay so.
+ *
+ * ⛔ NARROWED 1.19.230 (`CYCLE162-LD-TYP-V2-QA`) — AND READ THE REASON BEFORE
+ *    ASSUMING A SAFETY ASSERTION WAS WEAKENED.
+ *    Superseded assertion, verbatim:
+ *        strpos( $html, 'bhp_mariana_popup' ) === false
+ *        && strpos( $html, 'teacher_popup' ) === false
+ *
+ *    ⚠ PRE-EXISTING FAILURE, byte-identical in 1.19.228 (`02c8b97`) and
+ *    untouched by 1.19.229 (`72666ca`).
+ *
+ *    WHAT IS ACTUALLY ON THE PAGE, OBSERVED on staging 2026-08-17: the string
+ *    `teacher_popup` occurs EXACTLY ONCE, inside the SITEWIDE Meta Pixel
+ *    event-name DICTIONARY (`…"map":{"parent_popup_success":[…],
+ *    "teacher_popup_success":[…],…}`). It occurs exactly once on the
+ *    homepage and on /complete-collection/ too — it is a static lookup table
+ *    shipped on every page, not a teacher funnel rendering here.
+ *
+ *    WHAT FUNNEL ISOLATION ACTUALLY FORBIDS (`.claude/rules/funnels.md`) is
+ *    the teacher funnel's STORAGE KEYS and its POPUP running on a parent
+ *    page. Both are still asserted, and one more is added: this page must
+ *    carry NO popup root at all. OBSERVED the same day: zero
+ *    `bhp_mariana_popup` occurrences and zero `data-popup-config` roots on
+ *    this page, against one root on the homepage.
+ */
 bhp_ktu_assert(
-	strpos( $html, 'bhp_mariana_popup' ) === false && strpos( $html, 'teacher_popup' ) === false,
-	'8: no teacher-funnel storage key or event prefix appears (funnel isolation)',
+	strpos( $html, 'bhp_mariana_popup' ) === false
+	&& strpos( $html, 'mariana-guide-thank-you' ) === false
+	&& strpos( $html, 'data-popup-config' ) === false,
+	'8: no teacher-funnel storage key, thank-you path or popup root appears (funnel isolation)',
 	$failures
 );
 
@@ -403,8 +456,29 @@ bhp_ktu_assert(
 	$failures
 );
 if ( ! empty( $ktu_cover['url'] ) ) {
+	/*
+	 * ⛔ SCHEME-INSENSITIVE, CORRECTED 1.19.230 (`CYCLE162-LD-TYP-V2-QA`).
+	 *    Superseded comparison, verbatim:
+	 *        strpos( $html, esc_url( $ktu_cover['url'] ) ) !== false
+	 *        && strpos( $html, esc_url( $ktu_cover['fallback'] ) ) !== false
+	 *
+	 *    It failed on a CORRECT page. `$html` comes from a real HTTPS request,
+	 *    so the document carries `https://…`; `$ktu_cover` is resolved inside
+	 *    WP-CLI, where `is_ssl()` is false and `get_template_directory_uri()`
+	 *    returns `http://…`. OBSERVED on staging 2026-08-17: the rendered
+	 *    <picture> carried the correct registry paths under https while the
+	 *    expectation string was the identical path under http.
+	 *
+	 *    The PATH is the assertion — that the page uses the registry's own
+	 *    files rather than a hand-typed URL — and the path is compared in
+	 *    full. Only the scheme is normalised.
+	 */
+	$ktu_deschemed = function ( $u ) {
+		return preg_replace( '#^https?:#i', '', esc_url( $u ) );
+	};
 	bhp_ktu_assert(
-		strpos( $html, esc_url( $ktu_cover['url'] ) ) !== false && strpos( $html, esc_url( $ktu_cover['fallback'] ) ) !== false,
+		strpos( $html, $ktu_deschemed( $ktu_cover['url'] ) ) !== false
+		&& strpos( $html, $ktu_deschemed( $ktu_cover['fallback'] ) ) !== false,
 		'9: both the webp source and the png fallback are the registry URLs',
 		$failures
 	);
@@ -436,9 +510,24 @@ bhp_ktu_assert(
 	'9: it is still the page H1, not demoted to make room',
 	$failures
 );
-/* The cover is the FIRST thing inside the offer block. */
+/*
+ * The cover is the FIRST thing inside the offer block.
+ *
+ * ⛔ ANCHORED ON THE <h2> TAG, CORRECTED 1.19.230 (`CYCLE162-LD-TYP-V2-QA`).
+ *    Superseded assertion, verbatim:
+ *        bhp_ktu_before( $html, 'bhp-kit-upsell__cover', 'adventure-kit-thank-you-collection-title' )
+ *
+ *    It failed on a CORRECT page, and it could never have passed. The string
+ *    `adventure-kit-thank-you-collection-title` occurs TWICE in the document
+ *    — first in the offer section's own `aria-labelledby`, which by
+ *    construction opens BEFORE anything inside it, and only then on the <h2>
+ *    it names. `bhp_ktu_before()` uses `strpos()`, so it compared the cover
+ *    against the wrapper, not against the heading. OBSERVED on staging
+ *    2026-08-17: two occurrences, and the rendered <picture> sits between
+ *    them, exactly where the build says it does.
+ */
 bhp_ktu_assert(
-	bhp_ktu_before( $html, 'bhp-kit-upsell__cover', 'adventure-kit-thank-you-collection-title' ),
+	bhp_ktu_before( $html, 'bhp-kit-upsell__cover', '<h2 id="adventure-kit-thank-you-collection-title"' ),
 	'9: the cover is the first element of the offer block (the eye-catcher)',
 	$failures
 );

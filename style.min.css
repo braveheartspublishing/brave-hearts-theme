@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 38b63716578dd44947bbff4b715d9319
+    source-md5: a188afc8bf82a79aa571e7bdbb91c6d2
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.229
+Version: 1.19.230
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5617,7 +5617,7 @@ body .bhp-typ.section { padding-block: clamp(14px, 3.2vw, 40px); }
 body .bhp-typ__confirm.section { padding-bottom: clamp(8px, 1.8vw, 18px); }
 body .bhp-typ__offer.section { padding-top: clamp(8px, 1.8vw, 18px); }
 .bhp-typ__confirm .component-heading__eyebrow { margin: 0; }
-.bhp-typ__confirm h1 {
+body:not(.home) .bhp-typ__confirm h1 {
   font-size: clamp(1.45rem, 5.1vw, 2.6rem);
   line-height: 1.12;
   margin-block: var(--space-1, 4px) 0;
@@ -5653,7 +5653,7 @@ body .bhp-typ__offer.section { padding-top: clamp(8px, 1.8vw, 18px); }
 }
 .bhp-kit-upsell__headtext { min-width: 0; }
 .bhp-kit-upsell__headtext .component-heading__eyebrow { margin: 0; }
-.bhp-kit-upsell__headtext h2 {
+body:not(.home) .bhp-kit-upsell__headtext h2 {
   font-size: clamp(1.05rem, 4.2vw, 1.75rem);
   line-height: 1.16;
   margin-block: var(--space-1, 4px) 0;

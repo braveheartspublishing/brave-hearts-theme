@@ -383,22 +383,83 @@ bhp_typ_assert(
 	'7: the param is absent here, which is the no-param case being asserted',
 	$failures
 );
-/* The capture gate refuses every value except the one literal. */
+/*
+ * The capture gate refuses every value except the one literal.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔ CORRECTED 1.8.48 (2026-08-17, `CYCLE162-LD-TYP-V2-QA`) — THIS LOOP WAS
+ *    MEASURING ITS OWN LEFTOVERS AND FAILED ON A CORRECT BUILD.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ *    OBSERVED on staging 2026-08-17, both suite runs, identically:
+ *        FAIL: 7: param value "wellcome" does not set an intent
+ *        FAIL: 7: param value "welcome-offer" does not set an intent
+ *
+ *    The gate was doing exactly its job. `'Welcome '` is the FOURTH value in
+ *    this list and `sanitize_key()` folds it to the one accepted literal, so
+ *    that iteration legitimately sets the intent. The intent is then KEPT —
+ *    by design, because a visitor who has not completed their collection yet
+ *    must not lose it (see `bhp_typ_maybe_apply_auto_coupon()`). Every later
+ *    iteration therefore read an intent it did not set and reported a leak.
+ *
+ * ⛔ THE SESSION IS NOW CLEARED BEFORE EACH VALUE, so each assertion measures
+ *    one value and nothing else — which also makes the `'Welcome '` case a
+ *    POSITIVE assertion instead of a silently-excused one.
+ *
+ * ⛔ AND THE FLAG IS CLEARED AFTERWARDS, WHICH IS NOT COSMETIC. WP-CLI runs
+ *    each suite in its own process but the WooCommerce session for `--user=1`
+ *    PERSISTS IN THE DATABASE between them. Leaving the intent set made the
+ *    NEXT suite run's first qualifying Collection cart auto-apply the coupon:
+ *    OBSERVED once on staging 2026-08-17 as
+ *        FAIL: §5 paperback — the fee equals the promised discount ($3.98)
+ *    in `tests/test-collection-purchase-path.php` (fee -7.18 = -3.98 bundle
+ *    + -3.20 coupon), which vanished on the next run. A suite that leaks
+ *    state into another suite produces exactly that kind of ghost.
+ */
 $bhp_typ_saved_get = $_GET;
 /* ⛔ Every value here is deliberately NOT coupon-code-shaped. This file is in
    the same public repository, and a "realistic" fake code in a test is still
    a string a reader will try. */
 foreach ( array( '1', 'yes', 'true', 'Welcome ', 'wellcome', 'welcome-offer' ) as $bad ) {
+	if ( function_exists( 'WC' ) && WC()->session ) {
+		WC()->session->set( BHP_TYP_AUTO_COUPON_SESSION_KEY, null );
+	}
 	$_GET[ BHP_TYP_AUTO_COUPON_PARAM ] = $bad;
 	bhp_typ_capture_auto_coupon_intent();
-	$leaked = ( function_exists( 'WC' ) && WC()->session ) ? (bool) WC()->session->get( BHP_TYP_AUTO_COUPON_SESSION_KEY ) : false;
+	$leaked   = ( function_exists( 'WC' ) && WC()->session ) ? (bool) WC()->session->get( BHP_TYP_AUTO_COUPON_SESSION_KEY ) : false;
+	/*
+	 * ⛔ "ACCEPTED" NEEDS BOTH HALVES, and the second half is the shipped
+	 *    default. `sanitize_key()` folding the value to the one literal is
+	 *    necessary but NOT sufficient: `bhp_typ_capture_auto_coupon_intent()`
+	 *    also refuses to set an intent unless a LIVE coupon record resolves,
+	 *    which is exactly what makes a stale bookmark harmless on an
+	 *    environment where the option is unset.
+	 *
+	 *    OBSERVED on staging 2026-08-17 with the option deleted: this loop's
+	 *    `'Welcome '` case correctly set NO intent, and an earlier form of
+	 *    this assertion — which tested only the string normalisation —
+	 *    reported that correct behaviour as a failure. Recorded rather than
+	 *    quietly widened, because "the test was wrong twice in one day, in
+	 *    opposite directions" is the useful fact here.
+	 */
+	$accepted = ( 'welcome' === sanitize_key( $bad ) ) && (bool) bhp_typ_auto_coupon_record();
 	bhp_typ_assert(
-		! $leaked || 'welcome' === sanitize_key( $bad ),
-		sprintf( '7: param value "%s" does not set an intent', $bad ),
+		$accepted ? $leaked : ! $leaked,
+		$accepted
+			? sprintf( '7: param value "%s" normalises to the accepted literal and, with a live coupon, DOES set an intent', $bad )
+			: sprintf( '7: param value "%s" sets no intent on this environment', $bad ),
 		$failures
 	);
 }
 $_GET = $bhp_typ_saved_get;
+if ( function_exists( 'WC' ) && WC()->session ) {
+	WC()->session->set( BHP_TYP_AUTO_COUPON_SESSION_KEY, null );
+}
+bhp_typ_assert(
+	! ( function_exists( 'WC' ) && WC()->session && WC()->session->get( BHP_TYP_AUTO_COUPON_SESSION_KEY ) ),
+	'7: ⛔ this suite leaves NO session intent behind for the next suite to trip over',
+	$failures
+);
 bhp_typ_assert(
 	true,
 	'7: exercising the capture gate raised no exception',

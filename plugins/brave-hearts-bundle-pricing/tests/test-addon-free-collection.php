@@ -275,14 +275,48 @@ echo "\n=== §3 · THE AUDIENCE COUPON STACKS ON THE COLLECTION PRICE, NOT ON TH
  *    discounted line items proportionally would now have one more of them.
  *
  *    It does not, and this section is why we can say so rather than hope:
- *    bhp_audience_coupon_savings_amount() is a pure function of
- *    bhp_bundle_rules() and bhp_bundle_expected_price(). It never reads a
- *    cart line, so an extra $0.00 line cannot enter the calculation.
+ *    the savings expression is a pure function of bhp_bundle_rules() and
+ *    bhp_bundle_expected_price(). It never reads a cart line, so an extra
+ *    $0.00 line cannot enter the calculation.
  *
  *    paperback  3 x $11.99 = $35.97 - $3.98 = $31.99 ; 10% = $3.20
  *               $31.99 - $3.20 = $28.79   <- founder-verified total
  *    hardcover  3 x $17.99 = $53.97 - $4.98 = $48.99 ; 10% = $4.90
  *               $48.99 - $4.90 = $44.09   <- founder-verified total
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔ RETARGETED 1.8.48 (2026-08-17, `CYCLE162-LD-TYP-V2-QA`) AFTER THIS
+ *    SECTION KILLED THE WHOLE SUITE WITH AN UNCAUGHT `Error`.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ *    Superseded call, verbatim, preserved so the movement is visible:
+ *        $afc_pb_savings = bhp_audience_coupon_savings_amount( $afc_three_pb );
+ *        $afc_hc_savings = bhp_audience_coupon_savings_amount( $afc_three_hc );
+ *
+ *    1.8.47 gave `bhp_audience_coupon_savings_amount()` a second job — read
+ *    the cart's APPLIED COUPON and take the percentage off the live record
+ *    instead of a `0.10` literal. That is the right change, and it means the
+ *    function is no longer pure: it calls `$cart->get_applied_coupons()`, a
+ *    method this file's deliberately minimal cart double does not have.
+ *    OBSERVED on staging 2026-08-17: *"Call to undefined method
+ *    BHP_AFC_Cart::get_applied_coupons()"*, aborting every assertion below.
+ *
+ *    THE FOUNDER-VERIFIED TOTALS ARE UNCHANGED AND STILL THE POINT. What
+ *    moved is which function is asked for them: the PURE expression
+ *    `bhp_audience_coupon_savings_for_format()`, which is what
+ *    `bhp_audience_coupon_savings_amount()` itself calls once it has read the
+ *    percentage, and what the thank-you page's quoted price comes out of.
+ *
+ * ⭐ THE `10.0` HERE IS THE RATE THE $28.79 / $44.09 FIGURES WERE VERIFIED
+ *    AT, not an assumption about the live coupon. Asserting a founder-
+ *    verified total against a rate that can be edited in wp-admin would make
+ *    this suite fail for a legitimate reason and hide a real regression. The
+ *    live rate is asserted where it belongs, against the live record, in
+ *    `tests/test-typ-auto-coupon.php` and `tests/test-kit-thankyou-upsell.php`.
+ *
+ * ⛔ AND THE NEW CONTRACT IS ASSERTED RATHER THAN ASSUMED: a cart object that
+ *    cannot report its coupons must return 0.0, not fatal. That is the
+ *    1.8.48 guard, and this is the regression test for it.
  */
 $afc_pb_collection_price = ( 3 * bhp_bundle_expected_price( 'paperback' ) ) - bhp_bundle_rules( 'paperback' )[3]['discount'];
 $afc_hc_collection_price = ( 3 * bhp_bundle_expected_price( 'hardcover' ) ) - bhp_bundle_rules( 'hardcover' )[3]['discount'];
@@ -290,8 +324,14 @@ $afc_hc_collection_price = ( 3 * bhp_bundle_expected_price( 'hardcover' ) ) - bh
 bhp_afc_assert( 31.99 === round( $afc_pb_collection_price, 2 ), '§3 the paperback collection price is $31.99', $failures );
 bhp_afc_assert( 48.99 === round( $afc_hc_collection_price, 2 ), '§3 the hardcover collection price is $48.99', $failures );
 
-$afc_pb_savings = bhp_audience_coupon_savings_amount( $afc_three_pb );
-$afc_hc_savings = bhp_audience_coupon_savings_amount( $afc_three_hc );
+$afc_pb_savings = bhp_audience_coupon_savings_for_format( 'paperback', 10.0 );
+$afc_hc_savings = bhp_audience_coupon_savings_for_format( 'hardcover', 10.0 );
+
+bhp_afc_assert(
+	0.0 === bhp_audience_coupon_savings_amount( $afc_three_pb ),
+	'§3 ⛔ a cart object that cannot report applied coupons returns 0.0, never a fatal (1.8.48 guard)',
+	$failures
+);
 
 bhp_afc_assert( 3.20 === round( $afc_pb_savings, 2 ), '§3 the 10% audience-coupon saving on a paperback collection is $3.20', $failures );
 bhp_afc_assert( 4.90 === round( $afc_hc_savings, 2 ), '§3 the 10% audience-coupon saving on a hardcover collection is $4.90', $failures );

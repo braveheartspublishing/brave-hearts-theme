@@ -606,13 +606,46 @@ function bhp_audience_coupon_savings_for_format( $format, $percent ) {
  * The exact audience-coupon savings amount for a qualifying cart. Returns
  * 0.0 if the cart doesn't qualify, or if the applied coupon is not a
  * positive percentage coupon.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔ 1.8.48 (2026-08-17, `CYCLE162-LD-TYP-V2-QA`) — THIS FUNCTION READS THE
+ *    CART OBJECT NOW, AND 1.8.47 FORGOT TO SAY SO OUT LOUD.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Until 1.8.46 it was a PURE function of `bhp_bundle_rules()` and
+ * `bhp_bundle_expected_price()` — it read cart LINES only through
+ * `bhp_audience_coupon_qualifying_format()` and never called a cart method.
+ * `tests/test-addon-free-collection.php` §3 relied on exactly that, passing a
+ * lightweight cart double that implements `get_cart()` and nothing else.
+ *
+ * 1.8.47 added the `get_applied_coupons()` call below to take the percentage
+ * off the live coupon instead of a `0.10` literal — correct in substance, but
+ * it turned every caller holding a non-`WC_Cart` cart object into an
+ * UNCAUGHT `Error`. OBSERVED, not inferred: `wp eval-file` of
+ * `test-addon-free-collection.php` on staging 2026-08-17 died with
+ * *"Call to undefined method BHP_AFC_Cart::get_applied_coupons()"* at this
+ * line, aborting 40-odd later assertions in that suite.
+ *
+ * ⛔ NO LIVE CART EVER TOOK THIS PATH. The only production caller is
+ *    `bhp_audience_coupon_apply_savings_fee()` on
+ *    `woocommerce_cart_calculate_fees`, which WooCommerce always hands a real
+ *    `WC_Cart`. This was a test-visible fatal, not a customer-visible one —
+ *    but a suite that cannot finish cannot protect anything, so it is fixed
+ *    rather than explained away.
+ *
+ * ⭐ THE GUARD IS `is_callable`, NOT A `WC_Cart` TYPE CHECK, deliberately: a
+ *    cart object that cannot report its coupons has, by definition, no
+ *    coupon to take a percentage from, and 0.0 is the honest answer for it.
  */
 function bhp_audience_coupon_savings_amount( $cart ) {
 	$format = bhp_audience_coupon_qualifying_format( $cart );
 	if ( ! $format ) {
 		return 0.0;
 	}
-	$applied = $cart->get_applied_coupons();
+	if ( ! is_callable( array( $cart, 'get_applied_coupons' ) ) ) {
+		return 0.0;
+	}
+	$applied = (array) $cart->get_applied_coupons();
 	if ( 1 !== count( $applied ) || ! class_exists( 'WC_Coupon' ) ) {
 		return 0.0;
 	}
