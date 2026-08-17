@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 8a6b52f6d7097a4c423ae4202d9d20fc
+    source-md5: ea1aaf212f9cdb509c007e60e033f0d0
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.232
+Version: 1.19.233
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5706,4 +5706,51 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   line-height: 1.45;
   color: var(--color-text-muted);
   text-align: center;
+}
+.author-visits-hero .component-heading__eyebrow { margin-bottom: var(--space-2); }
+.author-visits-hero .text-lead { margin-bottom: 0; }
+.author-visits-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-4);
+}
+.author-visits-card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.author-visits-card--closed { border-left-color: var(--color-border); }
+.author-visits-card__school {
+  margin: 0 0 var(--space-2);
+  font-size: 1.25rem;
+  line-height: var(--leading-tight);
+}
+.author-visits-card__when {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-ui);
+  color: var(--color-text-muted);
+}
+.author-visits-card__sep { padding: 0 .35em; }
+.author-visits-card__note { margin: 0 0 var(--space-4); line-height: 1.55; }
+.author-visits-card__note--closed { margin-bottom: 0; color: var(--color-text-muted); }
+.author-visits-card__cta { margin: 0; }
+.author-visits-card__cta .btn { width: 100%; }
+.author-visits-empty { max-width: 52ch; }
+.author-visits-empty p { line-height: 1.55; }
+.author-visits-empty__cta { margin-top: var(--space-4); }
+.author-visits-how { margin-top: var(--space-10); }
+.author-visits-how__title { margin: 0 0 var(--space-4); font-size: 1.25rem; }
+.author-visits-how__steps { margin: 0; padding-left: 1.25em; }
+.author-visits-how__steps li { margin-bottom: var(--space-3); line-height: 1.55; }
+.author-visits-how__steps li:last-child { margin-bottom: 0; }
+@media (min-width: 40rem) {
+  .author-visits-card { padding: var(--space-6); }
+  .author-visits-card__cta .btn { width: auto; }
 }

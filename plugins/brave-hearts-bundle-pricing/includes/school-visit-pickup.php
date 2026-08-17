@@ -42,6 +42,15 @@
  *    packing-list note now carries a "SIGN TO:" clause. Read that file before
  *    changing the note, the meta keys or the session helpers.
  *
+ * ⭐ 1.8.51 (2026-08-17, `CYCLE162-LD-VISITS-PAGE`) ADDS ONE OPTIONAL REGISTRY
+ *    FIELD, `time`, and nothing else. It is a display string for the public
+ *    `/author-visits/` page (theme `page-author-visits.php` +
+ *    `inc/author-visits.php`). ⛔ NOTHING ABOUT CHECKOUT CHANGED: the shipping
+ *    label, the injected rate, the order meta, the packing-list note and the
+ *    Bookvault skip are byte-identical to 1.8.50, and the time is deliberately
+ *    NOT added to the checkout label — a label a parent reads while paying is
+ *    approved copy, and this build had no approval to reword it.
+ *
  * ---------------------------------------------------------------------------
  * ⛔⛔ THE DUPLICATE-PRINT PROTECTION — READ THIS BEFORE CHANGING ANYTHING
  * ---------------------------------------------------------------------------
@@ -121,6 +130,10 @@ if ( ! defined( 'BHP_SCHOOL_VISIT_SESSION_KEY' ) ) {
 if ( ! defined( 'BHP_SCHOOL_PICKUP_METHOD_ID' ) ) {
 	define( 'BHP_SCHOOL_PICKUP_METHOD_ID', 'bhp_school_pickup' );
 }
+/** The longest display time that will be stored. A time, not a paragraph. */
+if ( ! defined( 'BHP_SCHOOL_VISIT_TIME_MAXLEN' ) ) {
+	define( 'BHP_SCHOOL_VISIT_TIME_MAXLEN', 40 );
+}
 /** Order meta. `_bhp_school_pickup` is the flag; the rest is the packing list. */
 if ( ! defined( 'BHP_SCHOOL_PICKUP_META_FLAG' ) ) {
 	define( 'BHP_SCHOOL_PICKUP_META_FLAG', '_bhp_school_pickup' );
@@ -161,7 +174,19 @@ function bhp_school_visit_today() {
  * Fails closed on every malformed row rather than guessing: a row missing a
  * school, a date or a cutoff is dropped, not defaulted.
  *
- * @return array<string,array{slug:string,school:string,date:string,cutoff:string}>
+ * ⭐ 1.8.51 (2026-08-17, `CYCLE162-LD-VISITS-PAGE`) ADDS AN OPTIONAL `time`.
+ *    It is a DISPLAY STRING and nothing else: it is never parsed, never
+ *    compared, never used to decide whether a visit is open, and never sent
+ *    anywhere. Only `/author-visits/` renders it today.
+ *
+ * ⛔ THE TOLERANCE IS THE POINT, AND IT IS DELIBERATELY ASYMMETRIC. School,
+ *    date and cutoff are REQUIRED and a row missing one is dropped, because
+ *    each of them gates money or a promise. `time` gates nothing, so a row
+ *    without it is a COMPLETE row that renders date-only. Making it required
+ *    would have silently deleted the three visits already seeded on both
+ *    environments the moment this version shipped.
+ *
+ * @return array<string,array{slug:string,school:string,date:string,cutoff:string,time:string}>
  */
 function bhp_school_visit_records() {
 	$raw = get_option( BHP_SCHOOL_VISIT_OPTION, array() );
@@ -188,9 +213,36 @@ function bhp_school_visit_records() {
 			'school' => $school,
 			'date'   => $date,
 			'cutoff' => $cutoff,
+			'time'   => bhp_school_visit_sanitize_time( isset( $row['time'] ) ? $row['time'] : '' ),
 		);
 	}
 	return $out;
+}
+
+/**
+ * Sanitise the optional display time of a visit.
+ *
+ * ⛔ IT DOES NOT VALIDATE A TIME FORMAT, ON PURPOSE. "8:50 AM", "8:50–9:20 AM"
+ *    and "right after lunch" are all things an operator may legitimately want
+ *    on the page, and a format check would drop the third and then be "fixed"
+ *    by loosening it anyway. What it DOES guarantee is that the value is a
+ *    plain, short, single-line, tag-free string — because it is echoed to a
+ *    public page.
+ *
+ * @param mixed $value Raw option value.
+ * @return string Empty string when there is nothing usable.
+ */
+function bhp_school_visit_sanitize_time( $value ) {
+	if ( ! is_scalar( $value ) ) {
+		return '';
+	}
+	$value = wp_strip_all_tags( (string) $value );
+	$value = sanitize_text_field( $value );
+	$value = trim( preg_replace( '/\s+/u', ' ', $value ) );
+
+	return function_exists( 'mb_substr' )
+		? mb_substr( $value, 0, BHP_SCHOOL_VISIT_TIME_MAXLEN )
+		: substr( $value, 0, BHP_SCHOOL_VISIT_TIME_MAXLEN );
 }
 
 /**

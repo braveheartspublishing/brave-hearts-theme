@@ -3238,6 +3238,14 @@ require_once get_template_directory() . '/inc/amazon-reviews.php';
 require_once get_template_directory() . '/inc/reviews.php';
 require_once get_template_directory() . '/inc/class-bhp-printed-for-you.php';
 
+// Author visits list (2026-08-17, CYCLE162-LD-VISITS-PAGE): the data half of
+// the /author-visits/ page template. READ-ONLY over the bundle plugin's
+// bhp_school_visits registry -- it writes nothing, sets no visit flag, and
+// hardcodes no school, date or slug. Every call into plugin territory is
+// function_exists()-guarded, so a deactivated bundle plugin renders the page's
+// empty state instead of a fatal.
+require_once get_template_directory() . '/inc/author-visits.php';
+
 // E1 post-purchase order-confirmation email (2026-08-03): subject line and
 // inbox preheader for the WooCommerce processing-order email. The body copy
 // lives in the template override at woocommerce/emails/customer-processing-
