@@ -454,6 +454,50 @@ if ( function_exists( 'wc_create_order' ) && ! empty( $live_bv_order_hooks ) ) {
 		$reloaded = wc_get_order( $probe_pickup->get_id() );
 		bhp_svp_assert( 'yes' === $reloaded->get_meta( '_bhp_school_pickup_bv_skipped' ), 'The skip is recorded on the order itself, so the protection having fired is visible without reading a log', $failures );
 
+		/*
+		 * ⭐ THE SESSION-LESS MARKING FALLBACK, exercised for real.
+		 *
+		 * WooCommerce copies a RATE's meta onto the order's shipping item, on
+		 * BOTH checkout paths (`WC_Checkout::create_order_shipping_lines()`,
+		 * which the Store API calls too). So an order whose session has died
+		 * still carries the school and date on the item, and the packing-list
+		 * note must be built from that rather than degrade to blanks.
+		 */
+		$fb = wc_create_order( array( 'status' => 'pending' ) );
+		if ( $fb && ! is_wp_error( $fb ) ) {
+			$GLOBALS['bhp_svp_probe_ids'][] = $fb->get_id();
+			$fbi = new WC_Order_Item_Shipping();
+			$fbi->set_method_id( BHP_SCHOOL_PICKUP_METHOD_ID );
+			$fbi->set_method_title( 'Author hand-delivery (fallback probe)' );
+			$fbi->set_total( 0 );
+			// Exactly what create_order_shipping_lines() copies off the rate.
+			$fbi->add_meta_data( __( 'School', 'brave-hearts' ), 'Fallback Probe School', true );
+			$fbi->add_meta_data( __( 'Visit date', 'brave-hearts' ), '2099-01-31', true );
+			$fb->add_item( $fbi );
+			$fb->save();
+
+			// No session flag at all -- the fallback is the only route.
+			if ( function_exists( 'WC' ) && WC()->session ) {
+				WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, null );
+			}
+			bhp_school_pickup_mark_order( $fb->get_id() );
+			$fb_reloaded = wc_get_order( $fb->get_id() );
+
+			bhp_svp_assert( 'Fallback Probe School' === $fb_reloaded->get_meta( BHP_SCHOOL_PICKUP_META_SCHOOL ), 'SESSION-LESS FALLBACK: the school is recovered from the shipping ITEM meta when no session exists', $failures );
+			bhp_svp_assert( '2099-01-31' === $fb_reloaded->get_meta( BHP_SCHOOL_PICKUP_META_DATE ), 'SESSION-LESS FALLBACK: the visit date is recovered from the shipping ITEM meta', $failures );
+
+			$fb_notes    = wc_get_order_notes( array( 'order_id' => $fb->get_id() ) );
+			$fb_note_txt = '';
+			foreach ( $fb_notes as $n ) {
+				$fb_note_txt .= $n->content;
+			}
+			bhp_svp_assert( false !== strpos( $fb_note_txt, 'DO NOT SHIP' ), 'SESSION-LESS FALLBACK: the packing-list note still says DO NOT SHIP', $failures );
+			bhp_svp_assert( false !== strpos( $fb_note_txt, 'Fallback Probe School' ), 'SESSION-LESS FALLBACK: the note names the actual school, not a blank-filled non-answer', $failures );
+			bhp_svp_assert( false === strpos( $fb_note_txt, 'a school visit on the visit date' ), 'SESSION-LESS FALLBACK: the note NEVER degrades to the pleasant-sounding non-answer "at a school visit on the visit date"', $failures );
+		} else {
+			bhp_svp_skip( 'Session-less marking fallback', 'wc_create_order() did not return an order', $skips );
+		}
+
 		// A NON-print-partner webhook must be left alone even for this very
 		// same real pickup order -- the filter is narrow, not a blanket.
 		foreach ( $live_other_hooks as $hook ) {

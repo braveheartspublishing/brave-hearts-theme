@@ -437,11 +437,28 @@ function bhp_school_pickup_order_is_pickup( $order ) {
  * Blocks and the classic form is still reachable:
  *   · `woocommerce_store_api_checkout_order_processed` — Blocks / Store API.
  *   · `woocommerce_checkout_order_processed` — classic.
- * ⚠ `woocommerce_checkout_create_order_shipping_item` was considered and
- *   REJECTED: it is fired only by `class-wc-checkout.php`, never by the
- *   Store API. Verified by grepping WooCommerce 10.9.1 on staging — the hook
- *   has exactly one call site. Using it would have marked classic orders and
- *   silently missed every real one.
+ * ⚠⚠ A CORRECTION THIS FILE MUST CARRY, because an earlier version of this
+ *    very comment asserted the opposite and was WRONG.
+ *
+ *    It said `woocommerce_checkout_create_order_shipping_item` "is fired only
+ *    by class-wc-checkout.php, never by the Store API", on the strength of a
+ *    grep showing exactly one call site. **The grep was right and the
+ *    conclusion was wrong.** `StoreApi\Utilities\OrderController::update_order_
+ *    from_cart()` calls `wc()->checkout->create_order_shipping_lines()` —
+ *    WooCommerce 10.9.1, OrderController line 820, read on staging — which is
+ *    the method containing that single call site. The hook therefore DOES fire
+ *    on the Blocks path. One call site is not one caller.
+ *
+ *    ⭐ THE CONSEQUENCE THAT MATTERS IS GOOD NEWS: `create_order_shipping_lines()`
+ *       copies the RATE's meta onto the order's shipping item
+ *       (`foreach ( $shipping_rate->get_meta_data() ... $item->add_meta_data() )`),
+ *       so the School and Visit date this file attaches to the rate are on the
+ *       order item in BOTH checkout paths. That is what makes the session-less
+ *       fallback below real rather than theoretical.
+ *
+ *    The `..._order_processed` pair is nevertheless kept as the marking hook,
+ *    because it runs once per order after the shipping lines exist, whereas the
+ *    item hook runs per package before the order is saved.
  *
  * @param WC_Order|int $order Order or id (classic passes the id first).
  */
@@ -485,16 +502,30 @@ function bhp_school_pickup_mark_order( $order ) {
 	 * The note is Andrew's packing list and it is deliberately blunt. It says
 	 * "do not ship" in words, because the person reading it at 6am is reading
 	 * a list of orders, not this file.
+	 *
+	 * ⛔ TWO NOTES, NOT ONE WITH BLANKS IN IT. If the school and date could not
+	 *    be resolved, saying "at a school visit on the visit date" is worse
+	 *    than useless — it reads like a real answer. The degraded note says the
+	 *    detail is MISSING and where to look for it, which is a thing a human
+	 *    can act on. (This path was reached in QA with a probe order that had
+	 *    neither a session nor rate meta, and the first wording produced
+	 *    exactly the pleasant-sounding non-answer described here.)
 	 */
-	$order->add_order_note(
-		sprintf(
-			/* translators: 1: school name, 2: visit date, 3: visit slug */
-			__( 'HAND DELIVERY — DO NOT SHIP. Author hand-delivery at %1$s on %2$s (visit: %3$s). This order is excluded from the Bookvault print/fulfilment push.', 'brave-hearts' ),
-			'' !== $school ? $school : __( 'a school visit', 'brave-hearts' ),
-			'' !== $date ? $date : __( 'the visit date', 'brave-hearts' ),
-			'' !== $slug ? $slug : __( 'unknown', 'brave-hearts' )
-		)
-	);
+	if ( '' !== $school && '' !== $date ) {
+		$order->add_order_note(
+			sprintf(
+				/* translators: 1: school name, 2: visit date, 3: visit slug */
+				__( 'HAND DELIVERY — DO NOT SHIP. Author hand-delivery at %1$s on %2$s (visit: %3$s). This order is excluded from the Bookvault print/fulfilment push.', 'brave-hearts' ),
+				$school,
+				$date,
+				'' !== $slug ? $slug : __( 'slug unresolved', 'brave-hearts' )
+			)
+		);
+	} else {
+		$order->add_order_note(
+			__( 'HAND DELIVERY — DO NOT SHIP. ⚠ THE SCHOOL AND VISIT DATE COULD NOT BE RESOLVED for this order — read the shipping method on the order itself to find out which visit it belongs to. This order is excluded from the Bookvault print/fulfilment push.', 'brave-hearts' )
+		);
+	}
 
 	$order->save();
 }
