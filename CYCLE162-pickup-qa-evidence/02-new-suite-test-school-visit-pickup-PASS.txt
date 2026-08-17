@@ -1,0 +1,95 @@
+PASS: school-visit-pickup.php is loaded by the plugin bootstrap (BHP_SCHOOL_VISIT_OPTION defined)
+PASS: The pickup predicate is defined
+PASS: The Bookvault skip is defined
+PASS: A well-formed visit row survives sanitisation
+PASS: The school name round-trips exactly
+PASS: A row with an empty school name is DROPPED, not defaulted
+PASS: A row with an impossible date (2026-02-31) is DROPPED -- checkdate(), not a regex alone
+PASS: A row with no cutoff is DROPPED -- a visit with no deadline can never expire, which is the dangerous default
+PASS: is_ymd rejects a two-digit year
+PASS: is_ymd rejects month 13
+PASS: is_ymd accepts a real date
+PASS: A live visit resolves
+PASS: A visit past its cutoff resolves to NULL -- the option disappears after the cutoff
+PASS: The cutoff is INCLUSIVE: an order placed ON the cutoff date is still accepted
+PASS: An unknown slug resolves to NULL
+PASS: An empty slug resolves to NULL
+PASS: A path-traversal-shaped slug resolves to NULL (sanitize_key)
+PASS: The feature source file is readable for the hardcoding audit
+PASS: NO real visit slug appears anywhere in the source
+PASS: NO literal visit row ('school' => 'Some School') exists in the source -- the registry is data, never code
+PASS: The registry is read from the option in EXACTLY ONE place, so there is one gate to audit
+PASS: UNFLAGGED cart: the rate array is returned IDENTICAL -- a normal visitor sees zero change
+PASS: UNFLAGGED cart: no pickup rate is present
+PASS: UNFLAGGED cart: the shipping package is untagged, so its hash is unchanged and the rate cache is not disturbed
+PASS: A live session flag resolves to its visit record
+PASS: FLAGGED cart: the pickup rate is present
+PASS: FLAGGED cart: normal shipping is STILL PRESENT -- the option is added alongside, never instead
+PASS: FLAGGED cart: the normal rate object is the SAME object, unrepriced and unrenamed
+PASS: FLAGGED cart: exactly one rate was added and none removed
+PASS: FLAGGED cart: the pickup rate costs 0.00
+PASS: FLAGGED cart: the pickup rate carries no tax
+PASS: FLAGGED cart: the pickup rate has its own method_id, distinct from flat_rate
+PASS: FLAGGED cart: the label names the SCHOOL
+PASS: FLAGGED cart: the label names the DATE
+PASS: FLAGGED cart: the shipping package IS tagged, so the package hash differs and the cached pre-flag rate list cannot be served
+PASS: COMPLETE-COLLECTION cart (shipping already $0.00): BOTH free shipping and free pickup are offered -- the parent chooses where the books arrive, not what they cost
+PASS: EXPIRED flag: the pickup option DISAPPEARS
+PASS: EXPIRED flag: the rate array is identical to the unflagged case -- no residue, no half-state
+PASS: EXPIRED flag: the dead session flag CLEARS ITSELF rather than being re-checked forever
+PASS: WITHDRAWN visit: a session flag naming a slug no longer in the registry resolves to NULL
+PASS: A bare order is NOT a pickup order
+PASS: An order with a normal flat_rate shipping line is NOT a pickup order
+PASS: An order whose SHIPPING LINE is the pickup method IS a pickup order -- even with NO meta written. This is the assertion that stops a failed meta write from sending books to the printer
+PASS: An order carrying the pickup META is a pickup order -- the second, independent signal
+PASS: A null order is not a pickup order (and does not fatal)
+PASS: Order id 0 is not a pickup order (and does not fatal)
+PASS: A webhook delivering to webhooks.bookvault.app is recognised as print-partner-bound
+PASS: A non-Bookvault webhook (Rutter) is NOT print-partner-bound and is never interfered with
+PASS: The match is on the HOST, not the whole URL -- "bookvault.app" in a query string does not make a webhook Bookvault-bound
+PASS: A null webhook is not print-partner-bound (and does not fatal)
+INFO: 7 webhook rows read from this store; 4 are print-partner ORDER webhooks; 3 are not.
+PASS: LIVE WEBHOOK [BV Order Update (id 7, order.updated, status=disabled)]: a non-numeric hook argument is passed through untouched
+PASS: LIVE WEBHOOK [BV Order Update (id 7, order.updated, status=disabled)]: a NON-pickup order is NOT blocked -- normal orders still reach the print partner
+PASS: LIVE WEBHOOK [BV Order Update (id 7, order.updated, status=disabled)]: the filter can only ever suppress a delivery, never cause one
+PASS: LIVE WEBHOOK [BV Order Creation (id 6, order.created, status=disabled)]: a non-numeric hook argument is passed through untouched
+PASS: LIVE WEBHOOK [BV Order Creation (id 6, order.created, status=disabled)]: a NON-pickup order is NOT blocked -- normal orders still reach the print partner
+PASS: LIVE WEBHOOK [BV Order Creation (id 6, order.created, status=disabled)]: the filter can only ever suppress a delivery, never cause one
+PASS: LIVE WEBHOOK [BV Order Update (id 5, order.updated, status=disabled)]: a non-numeric hook argument is passed through untouched
+PASS: LIVE WEBHOOK [BV Order Update (id 5, order.updated, status=disabled)]: a NON-pickup order is NOT blocked -- normal orders still reach the print partner
+PASS: LIVE WEBHOOK [BV Order Update (id 5, order.updated, status=disabled)]: the filter can only ever suppress a delivery, never cause one
+PASS: LIVE WEBHOOK [BV Order Creation (id 4, order.created, status=disabled)]: a non-numeric hook argument is passed through untouched
+PASS: LIVE WEBHOOK [BV Order Creation (id 4, order.created, status=disabled)]: a NON-pickup order is NOT blocked -- normal orders still reach the print partner
+PASS: LIVE WEBHOOK [BV Order Creation (id 4, order.created, status=disabled)]: the filter can only ever suppress a delivery, never cause one
+PASS: REAL SAVED ORDER with a pickup shipping line reads as a pickup order by ID
+PASS: ⛔ DUPLICATE-PRINT PROTECTION [BV Order Update (id 7)]: a REAL pickup order is BLOCKED from the print-partner webhook
+PASS: ⛔ DUPLICATE-PRINT PROTECTION [BV Order Creation (id 6)]: a REAL pickup order is BLOCKED from the print-partner webhook
+PASS: ⛔ DUPLICATE-PRINT PROTECTION [BV Order Update (id 5)]: a REAL pickup order is BLOCKED from the print-partner webhook
+PASS: ⛔ DUPLICATE-PRINT PROTECTION [BV Order Creation (id 4)]: a REAL pickup order is BLOCKED from the print-partner webhook
+PASS: The skip is recorded on the order itself, so the protection having fired is visible without reading a log
+PASS: SESSION-LESS FALLBACK: the school is recovered from the shipping ITEM meta when no session exists
+PASS: SESSION-LESS FALLBACK: the visit date is recovered from the shipping ITEM meta
+PASS: SESSION-LESS FALLBACK: the packing-list note still says DO NOT SHIP
+PASS: SESSION-LESS FALLBACK: the note names the actual school, not a blank-filled non-answer
+PASS: SESSION-LESS FALLBACK: the note NEVER degrades to the pleasant-sounding non-answer "at a school visit on the visit date"
+PASS: NARROWNESS [Rutter Product Updated (id 3)]: a non-print-partner webhook is returned untouched for a REAL pickup order
+PASS: NARROWNESS [Rutter Product Deleted (id 2)]: a non-print-partner webhook is returned untouched for a REAL pickup order
+PASS: NARROWNESS [Rutter Order Deleted (id 1)]: a non-print-partner webhook is returned untouched for a REAL pickup order
+PASS: REAL SAVED ORDER with a flat_rate shipping line is NOT a pickup order
+PASS: ⛔ NO OVER-BLOCKING [BV Order Update (id 7)]: a REAL normal order is NOT blocked -- ordinary fulfilment is unaffected
+PASS: ⛔ NO OVER-BLOCKING [BV Order Creation (id 6)]: a REAL normal order is NOT blocked -- ordinary fulfilment is unaffected
+PASS: ⛔ NO OVER-BLOCKING [BV Order Update (id 5)]: a REAL normal order is NOT blocked -- ordinary fulfilment is unaffected
+PASS: ⛔ NO OVER-BLOCKING [BV Order Creation (id 4)]: a REAL normal order is NOT blocked -- ordinary fulfilment is unaffected
+PASS: NORMAL order: the Bookvault resend action is left in place
+PASS: PICKUP order: the Bookvault resend action is REMOVED from wp-admin
+PASS: PICKUP order: every OTHER order action is left alone
+PASS: The source contains NO reference to a shipping zone or a flat_rate settings option
+PASS: The source REGISTERS no shipping method and ZONES nothing -- it injects a rate into one filtered array and nothing else
+PASS: The source writes NO woocommerce_* option
+
+CLEANUP: deleted probe order 2596
+CLEANUP: deleted probe order 2597
+CLEANUP: deleted probe order 2598
+CLEANUP: visit registry restored to its pre-run value
+
+ALL SCHOOL-VISIT PICKUP ASSERTIONS PASSED

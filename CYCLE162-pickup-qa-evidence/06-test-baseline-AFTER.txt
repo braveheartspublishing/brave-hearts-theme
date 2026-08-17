@@ -1,0 +1,29 @@
+BASELINE AFTER — staging theme 1.19.231 / bundle 1.8.49, 2026-08-17
+Same method and same runner as 01-test-baseline-BEFORE.txt.
+
+SUITE-FAIL rc=1 failing_asserts=6 test-collection-purchase-path.php
+SUITE-FAIL rc=1 failing_asserts=1 test-content-intelligence-engine.php
+SUITE-FAIL rc=1 failing_asserts=2 test-cta-collision-detector.php
+SUITE-FAIL rc=1 failing_asserts=2 test-draft-package.php
+SUITE-FAIL rc=1 failing_asserts=2 test-header-collection-cta.php
+SUITE-FAIL rc=1 failing_asserts=1 test-lead-event-log.php
+SUITE-FAIL rc=0 failing_asserts=1 test-seo-hygiene.php
+SUITE-FAIL rc=1 failing_asserts=2 test-wave1-capture.php
+SUITE-FAIL rc=1 failing_asserts=0 test-purchase-validation-harness.php
+AFTER pass=65 fail=9
+
+COMPARISON
+  BEFORE  64 pass / 9 fail / 17 failing assertions  (73 suites)
+  AFTER   65 pass / 9 fail / 17 failing assertions  (74 suites)
+
+  The failing set is IDENTICAL: same nine suites, same per-suite assertion
+  counts, same order. The +1 pass is the new suite.
+  ZERO regressions introduced. ZERO pre-existing failures fixed or claimed.
+
+TIMING NOTE, so this is not read as fresher than it is: the AFTER run above was
+taken before the final two plugin commits (the docblock correction and the
+session-less fallback assertions). Those changed exactly one production code
+path — the wording of the DEGRADED order note — and added 5 assertions. The new
+suite was re-run afterwards: 87 PASS / 0 FAIL, cleanup verified (3 probe orders
+deleted, registry restored). The other 73 suites were not re-run after those two
+commits, because neither commit touches any file they exercise.

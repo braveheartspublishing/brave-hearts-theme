@@ -1,0 +1,72 @@
+════════════════════════════════════════════════════════════════════
+ CYCLE162-LD-SCHOOL-PICKUP — CART WALKS on staging
+ theme 1.19.231 / bundle 1.8.49
+ site date: 2026-08-17 15:48 MDT
+════════════════════════════════════════════════════════════════════
+
+WALK C — UNFLAGGED VISITOR (the control; must be byte-identical to pre-release behaviour)
+  SHIPPING OPTIONS OFFERED (1):
+    - [flat_rate:1] method_id=flat_rate  $1.99  "Contiguous US Shipping"
+  TOTALS: subtotal $11.99 | discounts $0.00 | shipping $1.99 | tax $0.00 | TOTAL $13.98
+    COUPONS APPLIED: (none)
+  ASSERT no pickup option offered: PASS
+
+WALK A — FLAGGED VISITOR CHOOSES PICKUP
+  arrived via ?bhp_visit=dallas-harris-2026-09-03 -> session flag = dallas-harris-2026-09-03
+  SHIPPING OPTIONS OFFERED (2):
+    - [flat_rate:1] method_id=flat_rate  $1.99  "Contiguous US Shipping"
+    - [bhp_school_pickup] method_id=bhp_school_pickup  $0.00  "Author hand-delivery at the Dallas Harris visit (September 3)"
+  TOTALS: subtotal $11.99 | discounts $0.00 | shipping $0.00 | tax $0.00 | TOTAL $11.99
+    COUPONS APPLIED: (none)
+  ASSERT pickup offered: PASS
+  ASSERT normal shipping still offered: PASS
+  NOTICES raised during WALK A: 0 (clean)
+  ASSERT shipping charged is 0.00: PASS
+
+WALK B — FLAGGED VISITOR CHOOSES NORMAL SHIPPING (the option is a choice, not a takeover)
+  arrived via ?bhp_visit=dallas-harris-2026-09-03 -> session flag = dallas-harris-2026-09-03
+  SHIPPING OPTIONS OFFERED (2):
+    - [flat_rate:1] method_id=flat_rate  $1.99  "Contiguous US Shipping"
+    - [bhp_school_pickup] method_id=bhp_school_pickup  $0.00  "Author hand-delivery at the Dallas Harris visit (September 3)"
+  TOTALS: subtotal $11.99 | discounts $0.00 | shipping $1.99 | tax $0.00 | TOTAL $13.98
+    COUPONS APPLIED: (none)
+  ASSERT flat rate still charges the normal tiered price (expect 1.99 for 1 paperback): $1.99
+
+WALK D — EXPIRED VISIT (the cutoff has passed)
+  (temporarily added an already-expired visit to the registry for this walk only)
+  arrived via ?bhp_visit=zzz-expired-walk -> session flag = (NOT SET)
+  (forced a pre-existing session flag AND an already-chosen pickup rate, as if both were set before the cutoff -- this is the worst case: a parent mid-checkout when the deadline passes)
+  SHIPPING OPTIONS OFFERED (1):
+    - [flat_rate:1] method_id=flat_rate  $1.99  "Contiguous US Shipping"
+  TOTALS: subtotal $11.99 | discounts $0.00 | shipping $1.99 | tax $0.00 | TOTAL $13.98
+    COUPONS APPLIED: (none)
+  ASSERT pickup NOT offered after cutoff: PASS
+  ASSERT the dead session flag cleared itself: PASS
+  ASSERT the chosen method fell back gracefully: ["flat_rate:1"]
+  NOTICES raised during WALK D: 0 (clean)
+  (registry restored)
+
+WALK E — FLAGGED + COMPLETE COLLECTION + PICKUP (bundle savings must survive)
+  arrived via ?bhp_visit=adams-2026-08-28 -> session flag = adams-2026-08-28
+  SHIPPING OPTIONS OFFERED (2):
+    - [flat_rate:1] method_id=flat_rate  $0.00  "Contiguous US Shipping"
+    - [bhp_school_pickup] method_id=bhp_school_pickup  $0.00  "Author hand-delivery at the Adams visit (August 28)"
+  ASSERT both free shipping AND free pickup are offered: PASS
+  TOTALS: subtotal $35.97 | discounts $3.98 | shipping $0.00 | tax $0.00 | TOTAL $31.99
+    FEE: "Bundle Savings (Paperback)" $-3.98
+    COUPONS APPLIED: (none)
+  ASSERT bundle discount fee still applied (expect a negative fee): $-3.98 -> PASS
+
+WALK F — FLAGGED + TYP AUTO-COUPON INTENT + PICKUP
+  arrived via ?bhp_visit=adams-2026-08-28 -> session flag = adams-2026-08-28
+  SHIPPING OPTIONS OFFERED (2):
+    - [flat_rate:1] method_id=flat_rate  $0.00  "Contiguous US Shipping"
+    - [bhp_school_pickup] method_id=bhp_school_pickup  $0.00  "Author hand-delivery at the Adams visit (August 28)"
+  TOTALS: subtotal $35.97 | discounts $7.18 | shipping $0.00 | tax $0.00 | TOTAL $28.79
+    FEE: "[PARENT_COUPON_CODE_REDACTED] Savings" $-3.20
+    FEE: "Bundle Savings (Paperback)" $-3.98
+    COUPONS APPLIED: [PARENT_COUPON_CODE_REDACTED]
+  ASSERT pickup offered alongside an auto-applied coupon: PASS
+
+CART EMPTIED. Registry: ["adams-2026-08-28","dallas-harris-2026-09-03","liberty-2026-09-04"]
+PHP notices/warnings raised during these walks are printed above this line if any occurred.
