@@ -62,7 +62,35 @@ if ( class_exists( 'BHP_Analytics_Config' ) && BHP_Analytics_Config::should_rend
     <?php
 }
 ?>
-<section class="passport-status-page section" aria-labelledby="adventure-kit-thank-you-title">
+<?php
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.229 (2026-08-17, `CYCLE162-LD-TYP-V2`) — THE CONFIRMATION IS
+ *     COMPACTED SO THE OFFER CLEARS THE PHONE FOLD. Andrew, verbatim,
+ *     relayed through the Chief of Staff and NOT witnessed by this agent:
+ *     *"The CTA on the thank you page is below the fold on the mobile view."*
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SAY-DO RULE IS INTACT AND THAT IS WHY NOTHING WAS REORDERED. The
+ *    visitor was told a Kit is coming; the first thing this page says is
+ *    still that the Kit is coming, in the same words, as the H1. The offer
+ *    did not move ABOVE the confirmation — the confirmation got SMALLER.
+ *
+ * MEASURED BEFORE (staging 1.19.228, headless Chrome, innerWidth ASSERTED,
+ * consent banner located by walking open shadow roots):
+ *      390x844  CTA y 1004-1052 — 320px BELOW the banner top (732)
+ *      360x740  CTA y 1055-1120 — 492px BELOW the banner top (628)
+ * The budget was spent almost entirely on section rhythm, not on words:
+ * at 360 the sitewide `--section-space` put 80px above the eyebrow and
+ * 213px between the confirmation and the offer, and the H1 took FOUR lines
+ * (201px) at the sitewide `clamp(2.25rem, 5vw, 3.75rem)`.
+ *
+ * ⛔ NO WORD OF THE CONFIRMATION COPY IS DELETED. The H1 is the same string;
+ *    it is set smaller on phones by `.bhp-typ` in style.css. The lead
+ *    sentence is the same sentence. Compaction here is TYPE and RHYTHM only.
+ */
+?>
+<section class="passport-status-page section bhp-typ bhp-typ__confirm" aria-labelledby="adventure-kit-thank-you-title">
   <div class="container container--content passport-status-page__inner">
     <p class="component-heading__eyebrow"><?php esc_html_e('Your adventure kit is on the way', 'brave-hearts'); ?></p>
     <h1 id="adventure-kit-thank-you-title"><?php esc_html_e('Your Reluctant Reader Adventure Kit Is on Its Way', 'brave-hearts'); ?></h1>
@@ -141,14 +169,93 @@ if ( function_exists('bhp_bundle_landing_price_facts') && function_exists('bhp_b
 $bhp_akty_coupon = function_exists('bhp_audience_coupon_public_notice')
     ? bhp_audience_coupon_public_notice($bhp_akty_format)
     : null;
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.229 — THE AUTO-APPLIED WELCOME DISCOUNT. Andrew, verbatim,
+ *     relayed and NOT witnessed by this agent: *"if they click get
+ *     collection it auto applies the discount so they have a 2 click path
+ *     to purchase no need to add the coupon code in"*.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THIS IS NOT THE COUPON LINE ABOVE, AND THE DIFFERENCE IS THE WHOLE
+ *    POINT. `$bhp_akty_coupon` renders a CODE and is gated by its own
+ *    option because rendering a code runs against the Frozen Audience
+ *    Coupon Policy. This one renders NO CODE AT ALL — it states an
+ *    OUTCOME and the mechanism applies the code server-side. The two are
+ *    independent options, and the code option stays unset.
+ *
+ * ⛔ THE NUMBER IS NOT TYPED AND IS NOT A SECOND OPINION.
+ *    `bhp_typ_auto_coupon_offer()` returns the effective price computed by
+ *    `bhp_audience_coupon_savings_for_format()` — the SAME function
+ *    `bhp_audience_coupon_apply_savings_fee()` charges the cart from. The
+ *    page and the cart share one expression, so they cannot disagree.
+ *
+ * ⛔ THE PRIMARY PRICE STAYS $31.99-DERIVED, DELIBERATELY. The struck sum
+ *    and the collection price above are unconditionally true. The
+ *    discounted figure is stated as a QUALIFIED second line ("with your
+ *    welcome discount"), never as the headline price, because the live
+ *    coupon record carries `usage_limit_per_user = 1` — a subscriber who
+ *    already redeemed it would be charged the collection price, and a
+ *    headline that had promised the discounted one would then be a false
+ *    price. Qualified is the honest form. Flagged for Andrew.
+ *
+ * ⛔ IT IS OFF UNTIL AN OPERATOR SETS `bhp_typ_auto_coupon`, and when it is
+ *    off the CTA href is byte-identical to 1.19.228's.
+ */
+$bhp_akty_offer = function_exists('bhp_typ_auto_coupon_offer')
+    ? bhp_typ_auto_coupon_offer($bhp_akty_format)
+    : null;
+
+$bhp_akty_cta_url = home_url('/complete-collection/');
+if ($bhp_akty_offer && defined('BHP_TYP_AUTO_COUPON_PARAM') && defined('BHP_TYP_AUTO_COUPON_PARAM_VALUE')) {
+    $bhp_akty_cta_url = add_query_arg(
+        BHP_TYP_AUTO_COUPON_PARAM,
+        BHP_TYP_AUTO_COUPON_PARAM_VALUE,
+        $bhp_akty_cta_url
+    );
+}
+$bhp_akty_cta_url .= '#bhp-landing-pricing-card';
+
+/*
+ * ⭐ THE EYE-CATCHER. Andrew, verbatim: *"It should probably have a picture
+ *    of the kits front page as an eye catcher"*. This is the REAL page-1
+ *    render of the delivered PDF, produced in CYCLE158 and already shipped
+ *    in the signup modal — `bhp_get_lead_magnet_cover()` resolves it, checks
+ *    both files exist, and returns an empty array rather than a broken image
+ *    if either is missing. Nothing is re-rendered here.
+ *
+ * ⛔ IT SITS BESIDE THE OFFER HEADING, NOT STACKED ABOVE IT, AND THAT IS A
+ *    FOLD DECISION, NOT A TASTE ONE. Stacked, the cover costs ~100px of the
+ *    ~535px total budget available above the consent banner at 360x740.
+ *    Beside it, it costs zero — the heading is already that tall. It is
+ *    still the first thing in the offer block, which is what "at the top"
+ *    is for. This is the signup modal's own proven cover pattern.
+ */
+$bhp_akty_cover = function_exists('bhp_get_lead_magnet_cover')
+    ? bhp_get_lead_magnet_cover('reluctant_reader_adventure_kit')
+    : [];
 ?>
-<section class="passport-section section" aria-labelledby="adventure-kit-thank-you-collection-title">
+<section class="passport-section section bhp-typ bhp-typ__offer" data-bhp-typ-offer aria-labelledby="adventure-kit-thank-you-collection-title">
   <div class="container container--content">
-    <header class="component-heading component-heading--center">
+    <div class="bhp-kit-upsell__card">
+    <div class="bhp-kit-upsell__head">
+      <?php if (!empty($bhp_akty_cover['url'])) : ?>
+      <picture class="bhp-kit-upsell__cover">
+        <source srcset="<?php echo esc_url($bhp_akty_cover['url']); ?>" type="image/webp">
+        <img
+          src="<?php echo esc_url($bhp_akty_cover['fallback']); ?>"
+          width="<?php echo (int) $bhp_akty_cover['width']; ?>"
+          height="<?php echo (int) $bhp_akty_cover['height']; ?>"
+          alt="<?php echo esc_attr($bhp_akty_cover['alt']); ?>"
+          loading="lazy"
+          decoding="async"
+        >
+      </picture>
+      <?php endif; ?>
+      <div class="bhp-kit-upsell__headtext">
       <p class="component-heading__eyebrow"><?php esc_html_e('Continue the adventure', 'brave-hearts'); ?></p>
       <h2 id="adventure-kit-thank-you-collection-title" class="text-section-title"><?php esc_html_e('Get All Three Adventures in the Complete Collection', 'brave-hearts'); ?></h2>
-      <p class="component-heading__intro text-lead"><?php esc_html_e('The Mariana Trench, Mount Everest, and the Amazon - bundled together, shipped in one order, for less than buying each on its own.', 'brave-hearts'); ?></p>
-    </header>
     <?php if ($bhp_akty_facts) :
       $bhp_akty_separate = '$' . number_format($bhp_akty_facts['separate'], 2);
       $bhp_akty_bundle   = '$' . number_format($bhp_akty_facts['bundle'], 2);
@@ -181,6 +288,27 @@ $bhp_akty_coupon = function_exists('bhp_audience_coupon_public_notice')
       <span class="bhp-kit-upsell__price-save" aria-hidden="true"><?php echo esc_html('Save ' . $bhp_akty_save); ?></span>
     </p>
     <?php endif; ?>
+      </div><!-- /.bhp-kit-upsell__headtext -->
+    </div><!-- /.bhp-kit-upsell__head -->
+    <?php if ($bhp_akty_offer) :
+      $bhp_akty_eff = '$' . number_format($bhp_akty_offer['effective'], 2);
+    ?>
+    <p class="bhp-kit-upsell__effective">
+      <span class="screen-reader-text"><?php
+        printf(
+          /* translators: 1: discounted collection price, 2: discount percentage */
+          esc_html__('With your welcome discount of %2$s, the Complete Collection comes to %1$s at checkout. The discount is applied automatically when you use the button below, so there is no code to enter.', 'brave-hearts'),
+          esc_html($bhp_akty_eff),
+          esc_html(rtrim(rtrim(number_format($bhp_akty_offer['percent'], 2, '.', ''), '0'), '.') . '%')
+        );
+      ?></span>
+      <span class="bhp-kit-upsell__effective-line" aria-hidden="true">
+        <span class="bhp-kit-upsell__effective-now"><?php echo esc_html($bhp_akty_eff); ?></span>
+        <span class="bhp-kit-upsell__effective-label"><?php esc_html_e('with your welcome discount', 'brave-hearts'); ?></span>
+      </span>
+      <span class="bhp-kit-upsell__effective-note" aria-hidden="true"><?php esc_html_e('Applied automatically at checkout — no code to enter.', 'brave-hearts'); ?></span>
+    </p>
+    <?php endif; ?>
     <?php if ($bhp_akty_coupon) : ?>
     <p class="bhp-kit-upsell__coupon"><?php
       printf(
@@ -191,9 +319,20 @@ $bhp_akty_coupon = function_exists('bhp_audience_coupon_public_notice')
       );
     ?></p>
     <?php endif; ?>
-    <p class="align-center">
-      <a class="btn btn-primary" href="<?php echo esc_url(home_url('/complete-collection/') . '#bhp-landing-pricing-card'); ?>" data-bhp-event="collection_upsell_click" data-bhp-format="collection" data-bhp-source="parent_thank_you"><?php esc_html_e('See the Complete Collection', 'brave-hearts'); ?></a>
+    <p class="align-center bhp-kit-upsell__cta">
+      <a class="btn btn-primary" href="<?php echo esc_url($bhp_akty_cta_url); ?>" data-bhp-event="collection_upsell_click" data-bhp-format="collection" data-bhp-source="parent_thank_you"><?php esc_html_e('Get the Complete Collection', 'brave-hearts'); ?></a>
     </p>
+    <?php
+    /*
+     * ⛔ NOT DELETED — MOVED. This is the same sentence the offer header
+     *    carried in 1.19.228, verbatim. It sits BELOW the CTA now because
+     *    every line above the CTA is charged against a ~535px budget at
+     *    360x740 and this one is supporting detail, not the offer. Nothing
+     *    was cut to make the fold; one paragraph changed places.
+     */
+    ?>
+    <p class="bhp-kit-upsell__detail"><?php esc_html_e('The Mariana Trench, Mount Everest, and the Amazon - bundled together, shipped in one order, for less than buying each on its own.', 'brave-hearts'); ?></p>
+    </div><!-- /.bhp-kit-upsell__card -->
   </div>
 </section>
 

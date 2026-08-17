@@ -149,7 +149,33 @@ function bhp_is_audience_coupon_code( $code ) {
  * @return array{code:string,percent:float,minimum:float}|null
  */
 function bhp_audience_coupon_public_notice( $format = 'paperback' ) {
-	$code = trim( (string) get_option( 'bhp_audience_coupon_public_code', '' ) );
+	return bhp_audience_coupon_resolve( get_option( 'bhp_audience_coupon_public_code', '' ), $format );
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * THE ONE VALIDATOR. 1.8.47 (2026-08-17, `CYCLE162-LD-TYP-V2`) extracted it
+ * from `bhp_audience_coupon_public_notice()` above, unchanged line for line.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ WHY IT IS ONE FUNCTION AND NOT TWO. There are now TWO independent
+ *    per-environment gates that name an audience coupon — the public NOTICE
+ *    (`bhp_audience_coupon_public_code`, which renders a code on a page) and
+ *    the AUTO-APPLY (`bhp_typ_auto_coupon`, which applies one to a cart).
+ *    They are deliberately separate options with separate consequences, but
+ *    they must never disagree about whether a given coupon record is fit to
+ *    use. One validator is how that is guaranteed rather than hoped for.
+ *
+ * ⛔ IT FAILS CLOSED ON EVERY DISAGREEMENT WITH LIVE STATE. Every condition
+ *    is read from the live coupon record at call time, never remembered.
+ *
+ * @param string $code   The candidate code. Never a literal in this file.
+ * @param string $format 'paperback'|'hardcover' — the collection the caller
+ *                       sits beside, used for the minimum-spend check.
+ * @return array{code:string,percent:float,minimum:float}|null
+ */
+function bhp_audience_coupon_resolve( $code, $format = 'paperback' ) {
+	$code = trim( (string) $code );
 	if ( '' === $code || ! class_exists( 'WC_Coupon' ) ) {
 		return null;
 	}
@@ -186,6 +212,239 @@ function bhp_audience_coupon_public_notice( $format = 'paperback' ) {
 		'percent' => $percent,
 		'minimum' => $minimum,
 	);
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.47 (2026-08-17, `CYCLE162-LD-TYP-V2`) — THE AUTO-APPLIED WELCOME
+ *     DISCOUNT. Andrew, verbatim, relayed through the Chief of Staff and NOT
+ *     witnessed by this agent: *"if they click get collection it auto applies
+ *     the discount so they have a 2 click path to purchase no need to add the
+ *     coupon code in"*.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * THE PATH, END TO END, AND WHERE EACH PIECE LIVES:
+ *
+ *   1. The Adventure Kit thank-you page renders its CTA with `?bhp_offer=
+ *      welcome` — a FIXED, NEUTRAL LITERAL. It is not the code, it is not
+ *      derived from the code, and it discloses nothing. The param is only
+ *      added when the offer actually resolves live, so a dead option
+ *      produces the byte-identical pre-1.19.229 link.
+ *   2. `bhp_typ_capture_auto_coupon_intent()` (below, on `template_redirect`)
+ *      turns that param into a WC SESSION FLAG. ⛔ The flag is a BOOLEAN, not
+ *      the code — the code is re-resolved from the option every single time
+ *      it is needed, so a rotated, expired or unflagged coupon can never be
+ *      carried around inside a stale session.
+ *   3. `bhp_typ_maybe_apply_auto_coupon()` applies it the moment the cart is
+ *      a genuine qualifying Complete Collection, and never before.
+ *
+ * ⛔ WHY IT CANNOT BE APPLIED AT STEP 2. `bhp_validate_audience_coupon_scope()`
+ *    (below) throws on any cart that is not a complete single-format
+ *    collection — including an EMPTY one. Applying on page view would fail
+ *    validation and push a red error notice at a visitor who has done nothing
+ *    wrong. Intent is stored; application waits for the cart.
+ *
+ * ⛔ NO COUPON CODE LITERAL ENTERS THIS PUBLIC REPOSITORY. The code is read
+ *    from the per-environment `bhp_typ_auto_coupon` site option — the shape
+ *    1.8.29 established and BHP-AGENT-STANDING-RULES §4.1 requires ("coupon
+ *    codes and values" are PRIVATE). Conflict C6 is the live instance of what
+ *    happens when they are not.
+ *
+ * ⛔ IT IS OFF ON EVERY ENVIRONMENT UNTIL AN OPERATOR SETS THE OPTION, and no
+ *    release seeds it. Production seeding is an explicit, separate act.
+ *
+ * ⛔⛔ THE POLICY CONFLICT IS RECORDED, NOT RESOLVED. `docs/ENGINEERING/
+ *     FUNNEL_CONSTITUTION.md`'s Audience Coupon Policy (Frozen 2026-07-14,
+ *     amended 2026-08-04) delivers audience coupons through EMAIL, gated by
+ *     mandatory purchase suppression. Auto-applying one from a page template
+ *     is a different delivery route and is Andrew's call, not this file's.
+ *     Nothing here advertises a CODE — the code is never rendered by the
+ *     auto-apply path — but the conflict is real and is escalated.
+ */
+if ( ! defined( 'BHP_TYP_AUTO_COUPON_OPTION' ) ) {
+	define( 'BHP_TYP_AUTO_COUPON_OPTION', 'bhp_typ_auto_coupon' );
+}
+if ( ! defined( 'BHP_TYP_AUTO_COUPON_SESSION_KEY' ) ) {
+	define( 'BHP_TYP_AUTO_COUPON_SESSION_KEY', 'bhp_typ_auto_coupon_intent' );
+}
+if ( ! defined( 'BHP_TYP_AUTO_COUPON_PARAM' ) ) {
+	define( 'BHP_TYP_AUTO_COUPON_PARAM', 'bhp_offer' );
+}
+if ( ! defined( 'BHP_TYP_AUTO_COUPON_PARAM_VALUE' ) ) {
+	define( 'BHP_TYP_AUTO_COUPON_PARAM_VALUE', 'welcome' );
+}
+
+/**
+ * The live, validated auto-apply coupon record, or null.
+ *
+ * Shares `bhp_audience_coupon_resolve()` with the public-notice gate, so the
+ * two can never disagree about whether a coupon record is fit to use.
+ *
+ * @param string $format 'paperback'|'hardcover'.
+ * @return array{code:string,percent:float,minimum:float}|null
+ */
+function bhp_typ_auto_coupon_record( $format = 'paperback' ) {
+	return bhp_audience_coupon_resolve( get_option( BHP_TYP_AUTO_COUPON_OPTION, '' ), $format );
+}
+
+/**
+ * Everything a page needs to state the OUTCOME honestly, with no code in it.
+ *
+ * ⛔ THE DISPLAYED NUMBER AND THE CHARGED NUMBER COME OUT OF THE SAME
+ *    FUNCTION. `savings` here is `bhp_audience_coupon_savings_for_format()`,
+ *    which is literally what `bhp_audience_coupon_apply_savings_fee()` adds to
+ *    the cart. A page cannot quote a total the cart will not honour, because
+ *    there is only one place the total is computed.
+ *
+ * @param string $format 'paperback'|'hardcover'.
+ * @return array{code:string,percent:float,bundle:float,savings:float,effective:float}|null
+ */
+function bhp_typ_auto_coupon_offer( $format = 'paperback' ) {
+	$format = ( 'hardcover' === $format ) ? 'hardcover' : 'paperback';
+	$record = bhp_typ_auto_coupon_record( $format );
+	if ( ! $record || ! function_exists( 'bhp_bundle_landing_price_facts' ) ) {
+		return null;
+	}
+	$facts   = bhp_bundle_landing_price_facts( $format );
+	$savings = bhp_audience_coupon_savings_for_format( $format, $record['percent'] );
+	if ( $savings <= 0 ) {
+		return null;
+	}
+	return array(
+		'code'      => $record['code'],
+		'percent'   => $record['percent'],
+		'bundle'    => (float) $facts['bundle'],
+		'savings'   => $savings,
+		'effective' => round( (float) $facts['bundle'] - $savings, 2 ),
+	);
+}
+
+/**
+ * Turn the CTA's neutral param into a session intent.
+ *
+ * ⛔ IT STORES A BOOLEAN, NEVER THE CODE. See the block comment above.
+ * ⛔ IT SETS NOTHING unless a live coupon actually resolves, so a stale
+ *    bookmark carrying the param on an environment with the option unset is
+ *    an ordinary page view with an ignored query string.
+ * ⭐ IT IS NOT SCOPED TO ONE PAGE ON PURPOSE — the CTA points at
+ *    /complete-collection/ today, and the moment it points anywhere else this
+ *    keeps working. The param is the contract, not the destination.
+ */
+add_action( 'template_redirect', 'bhp_typ_capture_auto_coupon_intent', 5 );
+function bhp_typ_capture_auto_coupon_intent() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only intent flag from a public link; it grants nothing a customer could not get by typing the code.
+	if ( empty( $_GET[ BHP_TYP_AUTO_COUPON_PARAM ] ) ) {
+		return;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( BHP_TYP_AUTO_COUPON_PARAM_VALUE !== sanitize_key( wp_unslash( $_GET[ BHP_TYP_AUTO_COUPON_PARAM ] ) ) ) {
+		return;
+	}
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return;
+	}
+	if ( ! bhp_typ_auto_coupon_record() ) {
+		return;
+	}
+	WC()->session->set( BHP_TYP_AUTO_COUPON_SESSION_KEY, 1 );
+	if ( is_callable( array( WC()->session, 'set_customer_session_cookie' ) ) ) {
+		WC()->session->set_customer_session_cookie( true );
+	}
+	// The intent may fire on a cart the customer already completed elsewhere.
+	bhp_typ_maybe_apply_auto_coupon();
+}
+
+/**
+ * Apply the welcome discount if — and only if — every gate is open.
+ *
+ * ⛔ IT PRE-VALIDATES BEFORE APPLYING, and that is the difference between a
+ *    silent no-op and a red error box on someone's checkout.
+ *    `WC_Cart::apply_coupon()` pushes a customer-facing error notice when it
+ *    refuses (usage limit reached, expired, restricted). Nobody asked for
+ *    this coupon out loud, so nobody should be told off for it:
+ *    `WC_Discounts::is_coupon_valid()` answers the same question silently and
+ *    runs the identical validation stack, including this plugin's own
+ *    `woocommerce_coupon_is_valid` scope filter.
+ *
+ * ⛔ THE INTENT IS KEPT, NOT BURNED, WHEN THE CART MERELY DOES NOT QUALIFY
+ *    YET. A visitor who arrives with intent, adds one book, then completes
+ *    the collection still gets the discount. It is cleared only when it is
+ *    spent or provably dead.
+ *
+ * @return bool True only if a coupon was applied by this call.
+ */
+function bhp_typ_maybe_apply_auto_coupon() {
+	static $running = false;
+	if ( $running ) {
+		return false;
+	}
+	if ( ! function_exists( 'WC' ) || ! WC()->cart || ! WC()->session ) {
+		return false;
+	}
+	if ( ! WC()->session->get( BHP_TYP_AUTO_COUPON_SESSION_KEY ) ) {
+		return false;
+	}
+
+	$record = bhp_typ_auto_coupon_record();
+	if ( ! $record ) {
+		// Option cleared, coupon deleted/unpublished/expired/re-typed, or the
+		// audience flag removed. Drop the intent rather than carry a dead flag.
+		WC()->session->set( BHP_TYP_AUTO_COUPON_SESSION_KEY, null );
+		return false;
+	}
+	$code = $record['code'];
+
+	if ( WC()->cart->has_discount( $code ) ) {
+		WC()->session->set( BHP_TYP_AUTO_COUPON_SESSION_KEY, null );
+		return false;
+	}
+	if ( ! bhp_audience_coupon_cart_qualifies( WC()->cart ) ) {
+		return false; // Not yet a collection. Keep the intent.
+	}
+	if ( ! class_exists( 'WC_Discounts' ) ) {
+		return false;
+	}
+
+	$discounts = new WC_Discounts( WC()->cart );
+	$valid     = $discounts->is_coupon_valid( new WC_Coupon( $code ) );
+	if ( true !== $valid ) {
+		// Genuinely refused (usage limit, per-user limit, restriction). Silent,
+		// and the intent is spent so it is not retried on every page load.
+		WC()->session->set( BHP_TYP_AUTO_COUPON_SESSION_KEY, null );
+		return false;
+	}
+
+	$running = true;
+	$applied = WC()->cart->apply_coupon( $code );
+	$running = false;
+
+	if ( $applied ) {
+		WC()->session->set( BHP_TYP_AUTO_COUPON_SESSION_KEY, null );
+	}
+	return (bool) $applied;
+}
+
+/**
+ * The two safety nets around the primary path.
+ *
+ * The primary path is `bhp_bundle_handle_add_to_cart()`, which calls the
+ * function directly after the three books are in and before the redirect —
+ * fully server-side, one request, deterministic.
+ *
+ * These cover the rest of the store honestly rather than assuming one route:
+ *   · `woocommerce_add_to_cart` — the cart drawer, the Store API's own
+ *     add-item route, and any future add path. Fires per item, so it lands on
+ *     the third book, which is the first moment the cart qualifies.
+ *   · `woocommerce_check_cart_items` — the cart and checkout renders, classic
+ *     and Blocks. Covers the visitor who ALREADY had the collection in the
+ *     cart before clicking the thank-you CTA.
+ * Both are no-ops without a session intent, and the whole function is a no-op
+ * once the coupon is on.
+ */
+add_action( 'woocommerce_add_to_cart', 'bhp_typ_auto_coupon_net', 99 );
+add_action( 'woocommerce_check_cart_items', 'bhp_typ_auto_coupon_net', 99 );
+function bhp_typ_auto_coupon_net() {
+	bhp_typ_maybe_apply_auto_coupon();
 }
 
 /**
@@ -303,20 +562,65 @@ function bhp_audience_coupon_zero_native_discount( $discount, $discounting_amoun
 }
 
 /**
- * The exact audience-coupon savings amount for a qualifying cart: 10% of
- * the Complete Collection price AFTER its own $3.98/$4.98 discount is
- * already applied -- i.e. stacked ON TOP OF, not instead of, the existing
- * Collection savings. Returns 0.0 if the cart doesn't qualify.
+ * The audience-coupon savings for one format at one percentage: that
+ * percentage of the Complete Collection price AFTER its own $3.98/$4.98
+ * discount is already applied — i.e. stacked ON TOP OF, not instead of, the
+ * existing Collection savings.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.8.47 (2026-08-17, `CYCLE162-LD-TYP-V2`) — EXTRACTED, AND THE `0.10`
+ *    LITERAL IT USED TO CONTAIN IS GONE.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHY THE LITERAL HAD TO GO. Until 1.8.46 this arithmetic hardcoded a 10%
+ *    rate while the coupon record carried its own `coupon_amount`. They agree
+ *    today (PARENT-audience coupon, `coupon_amount` 10, verified live on
+ *    staging 2026-08-17 by WP-CLI) — but a page that quotes an effective
+ *    price has to compute it from the same expression the cart charges from,
+ *    and a hardcoded rate makes those two things silently divergeable by a
+ *    coupon edit nobody re-deploys for. The percentage now comes off the live
+ *    record in both directions.
+ *
+ * ⛔ BEHAVIOUR IS UNCHANGED AT 10%. `round($p * 0.10, 2)` and
+ *    `round($p * (10/100), 2)` are the same computation; no cart total moves
+ *    unless Andrew changes the coupon's own amount, which is his gate and
+ *    would be the correct outcome if he did.
+ *
+ * @param string $format  'paperback'|'hardcover'.
+ * @param float  $percent The coupon's own live amount, e.g. 10.0.
+ * @return float
+ */
+function bhp_audience_coupon_savings_for_format( $format, $percent ) {
+	$percent = (float) $percent;
+	if ( $percent <= 0 ) {
+		return 0.0;
+	}
+	$format           = ( 'hardcover' === $format ) ? 'hardcover' : 'paperback';
+	$rules            = bhp_bundle_rules( $format );
+	$combined         = 3 * bhp_bundle_expected_price( $format );
+	$collection_price = $combined - $rules[3]['discount'];
+	return round( $collection_price * ( $percent / 100 ), 2 );
+}
+
+/**
+ * The exact audience-coupon savings amount for a qualifying cart. Returns
+ * 0.0 if the cart doesn't qualify, or if the applied coupon is not a
+ * positive percentage coupon.
  */
 function bhp_audience_coupon_savings_amount( $cart ) {
 	$format = bhp_audience_coupon_qualifying_format( $cart );
 	if ( ! $format ) {
 		return 0.0;
 	}
-	$rules             = bhp_bundle_rules( $format );
-	$combined          = 3 * bhp_bundle_expected_price( $format );
-	$collection_price  = $combined - $rules[3]['discount'];
-	return round( $collection_price * 0.10, 2 );
+	$applied = $cart->get_applied_coupons();
+	if ( 1 !== count( $applied ) || ! class_exists( 'WC_Coupon' ) ) {
+		return 0.0;
+	}
+	$coupon = new WC_Coupon( $applied[0] );
+	if ( ! $coupon->get_id() || 'percent' !== $coupon->get_discount_type() ) {
+		return 0.0;
+	}
+	return bhp_audience_coupon_savings_for_format( $format, (float) $coupon->get_amount() );
 }
 
 /**

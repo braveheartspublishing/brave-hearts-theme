@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.228
+Version: 1.19.229
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -8603,4 +8603,157 @@ a.header-expedition-cta {
   color: var(--color-forest);
   font-weight: 800;
   letter-spacing: .02em;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.229 (2026-08-17, `CYCLE162-LD-TYP-V2`) — THE ADVENTURE KIT
+       THANK-YOU PAGE CLEARS THE PHONE FOLD.
+   ══════════════════════════════════════════════════════════════════════
+
+   Andrew, verbatim, relayed through the Chief of Staff and NOT witnessed
+   by this agent: "The CTA on the thank you page is below the fold on the
+   mobile view."
+
+   MEASURED BEFORE, staging 1.19.228, headless Chrome, innerWidth ASSERTED,
+   consent banner located by walking OPEN SHADOW ROOTS (it lives in a shadow
+   root on a 0x0 host — a light-DOM query misses it entirely):
+
+     390x844   CTA y 1004-1052   banner top 732   320px UNDER the banner
+     360x740   CTA y 1055-1120   banner top 628   492px UNDER the banner
+
+   ⛔ THE BUDGET WAS SPENT ON RHYTHM, NOT ON WORDS, AND THAT IS WHY NO COPY
+      WAS CUT TO PAY FOR THIS. At 360 the sitewide `--section-space` put
+      80px above the eyebrow and 213px between the confirmation and the
+      offer — 293px of the 535px available between the header (93) and the
+      banner (628), before a single word was set. The H1 took a further
+      201px because the sitewide `h1` clamp bottoms out at 2.25rem, which
+      is four lines of "Your Reluctant Reader Adventure Kit Is on Its Way"
+      in a 328px column.
+
+   ⛔ EVERY RULE HERE IS SCOPED TO `.bhp-typ`, WHICH EXISTS ON EXACTLY TWO
+      SECTIONS OF ONE TEMPLATE. Nothing sitewide moves. `--section-space`
+      itself is untouched — six other page types read it.
+
+   ⭐ THE H1 IS SMALLER, NOT SHORTER. The say-do rule is the constraint:
+      the visitor was told a Kit is coming and the first thing this page
+      says is still that the Kit is coming, in the same words.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* `body:not(.home) .section` (0,2,1) is the rule being overridden, so the
+   override carries a body prefix rather than relying on source order. */
+body .bhp-typ.section { padding-block: clamp(14px, 3.2vw, 40px); }
+body .bhp-typ__confirm.section { padding-bottom: clamp(8px, 1.8vw, 18px); }
+body .bhp-typ__offer.section { padding-top: clamp(8px, 1.8vw, 18px); }
+
+.bhp-typ__confirm .component-heading__eyebrow { margin: 0; }
+.bhp-typ__confirm h1 {
+  font-size: clamp(1.45rem, 5.1vw, 2.6rem);
+  line-height: 1.12;
+  margin-block: var(--space-1, 4px) 0;
+}
+.bhp-typ__confirm .text-lead {
+  max-width: 48ch;
+  margin: var(--space-2, 8px) auto 0;
+  font-size: clamp(.88rem, 3.2vw, 1.05rem);
+  line-height: 1.42;
+}
+
+/* The offer block. One card, so the whole offer reads as a single object
+   and the CTA is visually attached to the number above it. */
+.bhp-kit-upsell__card {
+  max-width: 640px;
+  margin-inline: auto;
+  padding: clamp(12px, 3vw, 22px) clamp(12px, 3.5vw, 26px);
+  background: var(--color-white, #fff);
+  border: 1px solid var(--color-border, rgba(0, 0, 0, .1));
+  border-radius: 10px;
+}
+
+/* THE EYE-CATCHER SITS BESIDE THE HEADING, NOT ABOVE IT — the signup
+   modal's own proven cover pattern. Stacked, the cover costs ~100px of a
+   ~535px budget; beside the heading it costs zero, because the heading is
+   already at least that tall. It is still the first thing in the block. */
+.bhp-kit-upsell__head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 3.2vw, 22px);
+  text-align: left;
+}
+.bhp-kit-upsell__cover { flex: 0 0 auto; display: block; line-height: 0; }
+/* Height-driven, width auto: the intrinsic width/height attributes hold the
+   aspect ratio, so the slot is the right shape before the bytes arrive and
+   the row cannot reflow as the cover loads. */
+.bhp-kit-upsell__cover img {
+  display: block;
+  height: clamp(84px, 23vw, 130px);
+  width: auto;
+  border-radius: 3px;
+  box-shadow: 0 4px 10px rgba(var(--color-jungle-rgb), .22);
+}
+.bhp-kit-upsell__headtext { min-width: 0; }
+.bhp-kit-upsell__headtext .component-heading__eyebrow { margin: 0; }
+.bhp-kit-upsell__headtext h2 {
+  font-size: clamp(1.05rem, 4.2vw, 1.75rem);
+  line-height: 1.16;
+  margin-block: var(--space-1, 4px) 0;
+}
+.bhp-kit-upsell__headtext .bhp-kit-upsell__price {
+  justify-content: flex-start;
+  margin-top: var(--space-2, 8px);
+  text-align: left;
+}
+.bhp-kit-upsell__headtext .bhp-kit-upsell__price-now { font-size: clamp(1.5rem, 5.4vw, 2.2rem); }
+
+/* ⛔ THE AUTO-APPLIED WELCOME DISCOUNT LINE. Andrew: "below but above the
+      fold should be the auto discount". It is deliberately the SECOND
+      number, not the headline one — the live coupon carries
+      `usage_limit_per_user = 1`, so a subscriber who already redeemed it
+      pays the collection price, and a headline that had promised the
+      discounted one would then be a false price. It carries NO COUPON CODE:
+      the code is applied server-side and is never rendered by this path. */
+.bhp-kit-upsell__effective {
+  margin: clamp(10px, 2.4vw, 16px) 0 0;
+  text-align: center;
+}
+.bhp-kit-upsell__effective-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: .4rem;
+  row-gap: 0;
+}
+.bhp-kit-upsell__effective-now {
+  font-family: var(--font-ui);
+  font-size: clamp(1.2rem, 4.4vw, 1.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-gold-deep);
+}
+.bhp-kit-upsell__effective-label {
+  font-family: var(--font-ui);
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--color-forest);
+}
+.bhp-kit-upsell__effective-note {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-ui);
+  font-size: .75rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.bhp-kit-upsell__cta { margin: clamp(10px, 2.4vw, 16px) 0 0; }
+.bhp-kit-upsell__cta .btn { width: 100%; max-width: 420px; }
+/* Supporting detail, deliberately BELOW the CTA — moved, not deleted. */
+.bhp-kit-upsell__detail {
+  max-width: 52ch;
+  margin: clamp(10px, 2.4vw, 18px) auto 0;
+  font-size: .88rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  text-align: center;
 }

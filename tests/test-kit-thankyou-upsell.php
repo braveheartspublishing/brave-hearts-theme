@@ -212,9 +212,41 @@ if ( '' !== $ktu_tpl ) {
 
 echo "\n=== 4. The CTA lands on the purchase card, paperback preselected ===\n";
 
+/*
+ * ⭐ UPDATED 1.19.229 (`CYCLE162-LD-TYP-V2`). The destination and the anchor
+ *    are unchanged; a NEUTRAL query param (`bhp_offer=welcome`) is added when
+ *    — and only when — the auto-apply welcome discount resolves live. The
+ *    param is a fixed literal, is not the coupon code and is not derived from
+ *    it. When the feature is off the href is byte-identical to 1.19.228's,
+ *    which is asserted in both directions below.
+ */
+$ktu_auto = function_exists( 'bhp_typ_auto_coupon_offer' ) ? bhp_typ_auto_coupon_offer( $ktu_fmt ) : null;
 bhp_ktu_assert(
-	strpos( $html, 'href="' . esc_url( home_url( '/complete-collection/' ) . '#bhp-landing-pricing-card' ) . '"' ) !== false,
-	'4: the CTA points at /complete-collection/#bhp-landing-pricing-card',
+	preg_match( '#href="[^"]*/complete-collection/[^"]*\#bhp-landing-pricing-card"#', $html ) === 1,
+	'4: the CTA points at /complete-collection/ and ends on #bhp-landing-pricing-card',
+	$failures
+);
+if ( $ktu_auto ) {
+	bhp_ktu_assert(
+		strpos( $html, 'bhp_offer=welcome' ) !== false,
+		'4: with the auto-discount live, the CTA carries the neutral bhp_offer=welcome param',
+		$failures
+	);
+} else {
+	bhp_ktu_assert(
+		strpos( $html, 'href="' . esc_url( home_url( '/complete-collection/' ) . '#bhp-landing-pricing-card' ) . '"' ) !== false,
+		'4: with the auto-discount off, the CTA href is byte-identical to 1.19.228',
+		$failures
+	);
+	bhp_ktu_assert(
+		strpos( $html, 'bhp_offer' ) === false,
+		'4: with the auto-discount off, no offer param appears at all',
+		$failures
+	);
+}
+bhp_ktu_assert(
+	strpos( $html, 'Get the Complete Collection' ) !== false,
+	'4: the CTA reads "Get the Complete Collection", matching the collection page and the founder ruling',
 	$failures
 );
 /*
@@ -349,6 +381,124 @@ bhp_ktu_assert(
 	'8: no teacher-funnel storage key or event prefix appears (funnel isolation)',
 	$failures
 );
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 9 · 1.19.229 (`CYCLE162-LD-TYP-V2`) — THE COVER, THE FOLD ORDER, AND THE
+ *     EFFECTIVE-PRICE HONESTY RULE.
+ * ═══════════════════════════════════════════════════════════════════════ */
+echo "\n=== 9. The kit cover, the block order, and price honesty (1.19.229) ===\n";
+
+/* ⛔ THE COVER IS THE EXISTING VERIFIED ASSET, NOT A NEW RENDER. It resolves
+ *    through the same registry the signup modal uses, so there is exactly one
+ *    definition of "the Adventure Kit's cover" in the theme. */
+$ktu_cover = function_exists( 'bhp_get_lead_magnet_cover' ) ? bhp_get_lead_magnet_cover( 'reluctant_reader_adventure_kit' ) : array();
+bhp_ktu_assert(
+	! empty( $ktu_cover['url'] ) && ! empty( $ktu_cover['fallback'] ),
+	'9: the Adventure Kit cover resolves from bhp_get_lead_magnet_cover()',
+	$failures
+);
+bhp_ktu_assert(
+	strpos( $html, 'class="bhp-kit-upsell__cover"' ) !== false,
+	'9: the cover renders inside the offer block',
+	$failures
+);
+if ( ! empty( $ktu_cover['url'] ) ) {
+	bhp_ktu_assert(
+		strpos( $html, esc_url( $ktu_cover['url'] ) ) !== false && strpos( $html, esc_url( $ktu_cover['fallback'] ) ) !== false,
+		'9: both the webp source and the png fallback are the registry URLs',
+		$failures
+	);
+	bhp_ktu_assert(
+		strpos( $html, 'reluctant-reader-adventure-kit-cover' ) !== false,
+		'9: it is the CYCLE158 PDF page-1 render, not a substitute image',
+		$failures
+	);
+}
+bhp_ktu_assert(
+	preg_match( '#<picture class="bhp-kit-upsell__cover">.*?loading="lazy".*?</picture>#s', $html ) === 1,
+	'9: the cover is lazy-loaded and carries intrinsic width/height (no CLS)',
+	$failures
+);
+bhp_ktu_assert(
+	preg_match( '#<picture class="bhp-kit-upsell__cover">.*?width="\d+".*?height="\d+".*?</picture>#s', $html ) === 1,
+	'9: the cover img declares intrinsic dimensions',
+	$failures
+);
+
+/* ⛔ THE SAY-DO RULE. The confirmation still comes FIRST. */
+bhp_ktu_assert(
+	bhp_ktu_before( $html, 'Your Reluctant Reader Adventure Kit Is on Its Way', 'bhp-kit-upsell__cover' ),
+	'9: the confirmation H1 still precedes the offer block (say-do rule)',
+	$failures
+);
+bhp_ktu_assert(
+	preg_match( '#<h1[^>]*id="adventure-kit-thank-you-title"#', $html ) === 1,
+	'9: it is still the page H1, not demoted to make room',
+	$failures
+);
+/* The cover is the FIRST thing inside the offer block. */
+bhp_ktu_assert(
+	bhp_ktu_before( $html, 'bhp-kit-upsell__cover', 'adventure-kit-thank-you-collection-title' ),
+	'9: the cover is the first element of the offer block (the eye-catcher)',
+	$failures
+);
+/* The CTA precedes the supporting detail — the detail was MOVED, not cut. */
+bhp_ktu_assert(
+	bhp_ktu_before( $html, 'bhp-kit-upsell__cta', 'bhp-kit-upsell__detail' ),
+	'9: the CTA sits above the supporting detail paragraph',
+	$failures
+);
+bhp_ktu_assert(
+	strpos( $html, 'bundled together, shipped in one order' ) !== false,
+	'9: the supporting sentence was moved, not deleted',
+	$failures
+);
+
+/* ⛔ PRICE-DISPLAY HONESTY. Whatever effective price this page states, it
+ *    must be the number the cart's own savings expression produces. Both
+ *    sides are computed here from the plugin, never from a literal. */
+if ( $ktu_auto ) {
+	$ktu_expected_sav = bhp_audience_coupon_savings_for_format( $ktu_fmt, $ktu_auto['percent'] );
+	$ktu_expected_eff = round( (float) $facts['bundle'] - $ktu_expected_sav, 2 );
+	bhp_ktu_assert(
+		abs( $ktu_auto['effective'] - $ktu_expected_eff ) < 0.005,
+		sprintf( '9: the offered effective price (%.2f) equals bundle %.2f minus the cart savings expression %.2f', $ktu_auto['effective'], $facts['bundle'], $ktu_expected_sav ),
+		$failures
+	);
+	bhp_ktu_assert(
+		strpos( $html, '$' . number_format( $ktu_auto['effective'], 2 ) ) !== false,
+		sprintf( '9: the page renders that exact figure ($%.2f)', $ktu_auto['effective'] ),
+		$failures
+	);
+	/* ⛔ THE COLLECTION PRICE REMAINS THE UNCONDITIONAL HEADLINE. The live
+	 *    coupon carries usage_limit_per_user=1, so the discounted figure has
+	 *    to stay qualified or it becomes a false price for a repeat redeemer. */
+	bhp_ktu_assert(
+		strpos( $html, '$' . number_format( $facts['bundle'], 2 ) ) !== false
+		|| strpos( $html, number_format( $facts['bundle'], 2 ) ) !== false,
+		'9: the undiscounted collection price is still shown',
+		$failures
+	);
+	bhp_ktu_assert(
+		strpos( $html, 'with your welcome discount' ) !== false,
+		'9: the discounted figure is QUALIFIED, never presented as the plain price',
+		$failures
+	);
+	/* ⛔ AND NO CODE. The auto-apply path renders an outcome, never a code. */
+	bhp_ktu_assert(
+		strpos( $html, $ktu_auto['code'] ) === false || (bool) $ktu_notice,
+		'9: the auto-apply path does not render the coupon code anywhere',
+		$failures
+	);
+	echo "NOTE: the auto-applied welcome discount IS enabled on this environment (option bhp_typ_auto_coupon is set).\n";
+} else {
+	echo "NOTE: the auto-applied welcome discount is OFF on this environment (option bhp_typ_auto_coupon unset or the coupon failed a live check). This is the shipped default.\n";
+	bhp_ktu_assert(
+		strpos( $html, 'bhp-kit-upsell__effective' ) === false,
+		'9: with the feature off, no effective-price line renders at all',
+		$failures
+	);
+}
 
 echo "\n";
 if ( $failures ) {

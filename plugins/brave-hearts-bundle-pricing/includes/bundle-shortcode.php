@@ -85,6 +85,26 @@ function bhp_bundle_handle_add_to_cart() {
 	 * error and the cart is the honest destination -- a customer must not be
 	 * dropped onto checkout with a cart that is not what they asked for.
 	 */
+	/*
+	 * ⭐ 1.8.47 (2026-08-17, `CYCLE162-LD-TYP-V2`) — THE AUTO-APPLIED WELCOME
+	 *    DISCOUNT, PRIMARY PATH. The books are in the cart and the redirect has
+	 *    not happened yet, so this is the one deterministic, fully server-side
+	 *    moment on the founder's 2-click route: thank-you CTA -> this form ->
+	 *    checkout, with the discount already on it and no code typed.
+	 *
+	 * ⛔ IT IS A NO-OP WITHOUT A SESSION INTENT set by an earlier visit
+	 *    carrying the thank-you CTA's param, and a no-op on every environment
+	 *    where the coupon option is unset. An ordinary Collection purchase is
+	 *    byte-identical to 1.8.46 — `tests/test-typ-auto-coupon.php` asserts
+	 *    exactly that as a regression.
+	 *
+	 * ⛔ IT NEVER BLOCKS THE PURCHASE. Every failure route inside is silent and
+	 *    returns false; the customer still lands where they were going.
+	 */
+	if ( function_exists( 'bhp_typ_maybe_apply_auto_coupon' ) ) {
+		bhp_typ_maybe_apply_auto_coupon();
+	}
+
 	$destination = wc_get_cart_url();
 	$requested   = isset( $_POST['bhp_bundle_redirect'] ) ? sanitize_key( wp_unslash( $_POST['bhp_bundle_redirect'] ) ) : '';
 	if ( 'checkout' === $requested && ! wc_notice_count( 'error' ) && WC()->cart && ! WC()->cart->is_empty() ) {
