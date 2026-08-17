@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: ea1aaf212f9cdb509c007e60e033f0d0
+    source-md5: ff0e50e595c5b88020a382643e3a2cf8
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.233
+Version: 1.19.234
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4565,6 +4565,41 @@ body:not(.home) .books-series-overview + .books-complete-collection-banner { pad
   .woo-complete-collection-banner__inner .btn-cta-primary { width: 100%; text-align: center; }
   .books-complete-collection-banner__form { width: 100%; }
   .books-complete-collection-banner__browse { align-self: center; }
+}
+.woo-complete-collection-banner__lead {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  min-width: 0;
+}
+.woo-complete-collection-banner__covers {
+  display: flex;
+  align-items: flex-end;
+  flex: none;
+}
+.woo-complete-collection-banner__cover {
+  display: block;
+  height: 96px;
+  width: auto;
+  border-radius: 3px;
+  box-shadow: 0 4px 10px rgba(31, 77, 54, 0.22);
+}
+.woo-complete-collection-banner__cover:first-child { transform: rotate(-4deg); margin-right: -12px; }
+.woo-complete-collection-banner__cover:last-child { transform: rotate(4deg); margin-left: -12px; }
+.woo-complete-collection-banner__cover:nth-child(2) { position: relative; z-index: 1; height: 108px; }
+@media (max-width: 860px) {
+  .woo-complete-collection-banner__cover { height: 76px; }
+  .woo-complete-collection-banner__cover:nth-child(2) { height: 86px; }
+}
+@media (max-width: 700px) {
+  .woo-complete-collection-banner__lead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+    width: 100%;
+  }
+  .woo-complete-collection-banner__cover { height: 84px; }
+  .woo-complete-collection-banner__cover:nth-child(2) { height: 94px; }
 }
 .woocommerce-cart .interior-hero,
 .woocommerce-checkout .interior-hero,

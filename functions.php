@@ -784,17 +784,92 @@ add_action('woocommerce_before_main_content', 'bhp_woocommerce_archive_hero', 5)
  * Conversion Sprint, Priority 1.5) -- intercepts customers before they
  * start comparing six nearly-identical single-edition cards. Shop archive
  * only, not individual product pages or other taxonomy archives.
+ *
+ * 1.19.234 — THE COVERS NOW DO THE SELLING. The banner asked for the sale in
+ * words and showed nothing; the /complete-collection/ landing sells with the
+ * three covers before it says anything. This carries that visual up to the
+ * shop archive, which is where the comparison actually starts.
+ *
+ * ⭐ WHAT IS REUSED, AND WHAT WAS DELIBERATELY NOT.
+ *
+ *    REUSED: `bhp_get_popup_ab_covers()` — the A/B popup's cover strip source,
+ *    1.19.205. It resolves the same three real product image attachments the
+ *    homepage, the collection landing and the parent landing already render,
+ *    in series order (Mariana, Everest, Amazon), behind a 12-hour transient.
+ *    ⛔ NO NEW MEDIA. Nothing is uploaded, composited or regenerated here — it
+ *    reuses attachment IDs, which is the only thing `.claude/rules` and the
+ *    company memory permit for a real cover.
+ *
+ *    NOT REUSED: the collection page's actual hero gallery
+ *    (`bhp_book_render_collection_hero_gallery()` →
+ *    `template-parts/commerce/look-inside.php`, 475 lines with a thumbnail
+ *    rail, a lightbox and its own JS). It is the right component for a hero
+ *    and the wrong one for a banner: it renders behind the bundle plugin's
+ *    `bhp_bundle_landing_hero_media` action, it depends on approved
+ *    `complete_collection` interior media, and it would add a script and a
+ *    interactive surface above a product grid that has to stay immediately
+ *    visible. The brief named this trade and this is the side it lands on.
+ *
+ * ⭐ EAGER, NOT LAZY, AND THIS IS THE DELIBERATE CALL. The banner renders at
+ *    hook priority 6, directly under the archive hero and above the grid — all
+ *    three covers are in the first viewport at every width where the banner
+ *    shows. `loading="lazy"` on an in-viewport image buys nothing (the browser
+ *    fetches it during the same load regardless) and costs a visible pop-in.
+ *    Instead: `loading="eager"` with `fetchpriority="low"` on all three, so
+ *    they never compete with the page's real LCP element. WordPress emits a
+ *    `srcset` from the attachment metadata, so a phone downloads a small
+ *    candidate rather than the 300px `medium` file.
+ *
+ * ⭐ ZERO LAYOUT SHIFT BY CONSTRUCTION. `wp_get_attachment_image()` writes the
+ *    attachment's real `width`/`height` attributes, so the box is reserved
+ *    before a byte of image arrives. The CSS sets `height` and `width:auto`,
+ *    which keeps the reserved aspect ratio rather than overriding it.
+ *
+ * ⭐ DECORATIVE, ON PURPOSE. `alt=""` behind an `aria-hidden` wrapper, exactly
+ *    as the popup strip does. The heading and the CTA already carry the whole
+ *    message; three book titles announced ahead of "Looking for the complete
+ *    series?" would be noise, and adding titles to the accessible name would
+ *    be a copy change this brief does not permit.
+ *
+ * The copy is untouched: heading, subline and CTA label are byte-identical to
+ * 1.19.233, and the CTA still points at /complete-collection/. An empty cover
+ * set renders no strip at all, so the banner degrades to exactly its previous
+ * markup rather than to a gap.
  */
 function bhp_woocommerce_shop_complete_collection_banner() {
     if (!function_exists('is_shop') || !is_shop()) {
         return;
     }
+
+    $covers = function_exists('bhp_get_popup_ab_covers') ? bhp_get_popup_ab_covers() : [];
     ?>
     <div class="woo-complete-collection-banner">
       <div class="container woo-complete-collection-banner__inner">
-        <div>
-          <h2><?php esc_html_e('Looking for the complete series?', 'brave-hearts'); ?></h2>
-          <p><?php esc_html_e('Get all three adventures in paperback or hardcover.', 'brave-hearts'); ?></p>
+        <div class="woo-complete-collection-banner__lead">
+          <?php if ($covers) : ?>
+            <div class="woo-complete-collection-banner__covers" aria-hidden="true">
+              <?php foreach ($covers as $cover) : ?>
+                <?php
+                echo wp_get_attachment_image(
+                    (int) $cover['id'],
+                    'medium',
+                    false,
+                    [
+                        'class'         => 'woo-complete-collection-banner__cover',
+                        'alt'           => '',
+                        'loading'       => 'eager',
+                        'decoding'      => 'async',
+                        'fetchpriority' => 'low',
+                    ]
+                ); // phpcs:ignore WordPress.Security.EscapeOutput -- core-escaped attachment markup.
+                ?>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+          <div class="woo-complete-collection-banner__copy">
+            <h2><?php esc_html_e('Looking for the complete series?', 'brave-hearts'); ?></h2>
+            <p><?php esc_html_e('Get all three adventures in paperback or hardcover.', 'brave-hearts'); ?></p>
+          </div>
         </div>
         <a class="btn btn-cta-primary" href="<?php echo esc_url(home_url('/complete-collection/')); ?>"><?php esc_html_e('View the Complete Collection', 'brave-hearts'); ?></a>
       </div>

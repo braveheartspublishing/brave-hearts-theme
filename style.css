@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.233
+Version: 1.19.234
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5803,6 +5803,79 @@ body:not(.home) .books-series-overview + .books-complete-collection-banner { pad
   .books-complete-collection-banner__form { width: 100%; }
   .books-complete-collection-banner__browse { align-self: center; }
 }
+
+/* ---------- 1.19.234 · the shop banner's Complete Collection cover strip -----
+   ⛔ EVERY SELECTOR BELOW IS PREFIXED `.woo-complete-collection-banner`, and
+      that is load-bearing, not tidiness. The block above deliberately shares
+      its rules between TWO banners — the /books/ one
+      (`.books-complete-collection-banner`) and the shop-archive one — so a
+      bare `__covers` or an edit to `__inner` would have silently restyled a
+      page this brief never touched. The covers ship on the shop archive only;
+      /books/ renders byte-identically to 1.19.233.
+
+   ⛔ WHY A `__lead` WRAPPER EXISTS AT ALL. `__inner` is `space-between` with
+      exactly two children: the copy, and the CTA. Adding the covers as a THIRD
+      child would have redistributed that free space and pushed the heading to
+      the middle of the row. Grouping covers + copy keeps the child count at
+      two, so the CTA's position is unchanged and no existing rule had to move.
+
+   ⛔ NO `width`/`height` OVERRIDE. `wp_get_attachment_image()` writes the real
+      pixel dimensions as ATTRIBUTES, which is what reserves the box before the
+      image loads. `height` + `width: auto` scales inside that reservation and
+      preserves the aspect ratio; setting both in CSS would throw the reserved
+      ratio away and reintroduce the shift this is built to avoid.
+
+   Height budget, measured from the declared values rather than guessed: 96px
+   of cover inside a row whose text block is ~62px, so the banner grows by
+   roughly 34px on desktop and ~96px on mobile where it stacks. The brief's
+   ceiling was ~200px added. The product grid stays immediately visible. */
+.woo-complete-collection-banner__lead {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  min-width: 0;
+}
+.woo-complete-collection-banner__covers {
+  display: flex;
+  align-items: flex-end;
+  flex: none;
+}
+.woo-complete-collection-banner__cover {
+  display: block;
+  height: 96px;
+  width: auto;
+  border-radius: 3px;
+  box-shadow: 0 4px 10px rgba(31, 77, 54, 0.22);
+}
+/* The same overlapped fan the A/B popup strip uses (1.19.205), at banner
+   scale — the middle cover sits proudest and in front. */
+.woo-complete-collection-banner__cover:first-child { transform: rotate(-4deg); margin-right: -12px; }
+.woo-complete-collection-banner__cover:last-child { transform: rotate(4deg); margin-left: -12px; }
+.woo-complete-collection-banner__cover:nth-child(2) { position: relative; z-index: 1; height: 108px; }
+@media (max-width: 860px) {
+  .woo-complete-collection-banner__cover { height: 76px; }
+  .woo-complete-collection-banner__cover:nth-child(2) { height: 86px; }
+}
+/* Mobile-first outcome at the existing 700px stack point: covers on TOP of the
+   heading rather than beside it. Three covers plus a heading do not fit side
+   by side at 390px without shrinking the covers past the point of selling
+   anything. */
+@media (max-width: 700px) {
+  .woo-complete-collection-banner__lead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+    width: 100%;
+  }
+  .woo-complete-collection-banner__cover { height: 84px; }
+  .woo-complete-collection-banner__cover:nth-child(2) { height: 94px; }
+}
+/* ⛔ NO `prefers-reduced-motion` BLOCK, DELIBERATELY. An earlier draft of this
+   rule added one. It was wrong: these are STATIC rotations, not animation or
+   transition, and that query governs motion — honouring it here would change
+   the layout for reduced-motion users for no accessibility gain. The A/B popup
+   strip's identical fan does not do it either. Recorded rather than silently
+   dropped so the next reader does not re-add it. */
 
 /* ── Fable audit Finding #35: compact commerce header ─────────────────────
    On cart/checkout/order-received the tall "Brave Hearts Field Journal" hero
