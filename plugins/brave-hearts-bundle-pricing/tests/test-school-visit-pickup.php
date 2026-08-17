@@ -77,17 +77,67 @@ if ( ! defined( 'BHP_SCHOOL_VISIT_OPTION' ) ) {
  * REGISTRY SNAPSHOT — restored no matter how this script ends.
  * ====================================================================== */
 
-$bhp_svp_original_visits = get_option( BHP_SCHOOL_VISIT_OPTION, null );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ CLEANUP IS EXPLICIT AND IS **NOT** A SHUTDOWN HANDLER. READ THIS BEFORE
+ *     "TIDYING" IT BACK INTO ONE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * The first version of this suite used `register_shutdown_function()` for both
+ * the option restore and the probe-order deletion. IT DID NOT RUN, and the run
+ * left a seeded fixture registry and two probe orders behind on staging.
+ *
+ * ⭐ REPRODUCED DELIBERATELY RATHER THAN ASSUMED, 2026-08-17 on staging:
+ *      $ cat probe.php
+ *        <?php
+ *        register_shutdown_function(function(){ update_option('probe','ran'); });
+ *        echo "body-ran\n";
+ *        exit(1);
+ *      $ wp eval-file probe.php --user=1   ->  prints "body-ran", rc=1
+ *      $ wp option get probe               ->  "Could not get 'probe' option"
+ *
+ *    Under `wp eval-file`, a shutdown callback registered by the script does
+ *    NOT run when the script calls `exit()`. Since a failing test suite exits
+ *    non-zero BY DESIGN, shutdown-based cleanup is guaranteed not to run in
+ *    exactly the case where cleanup matters most — a failing run.
+ *
+ * ⛔ THEREFORE: every exit from this file goes through `bhp_svp_cleanup()`,
+ *    which is idempotent and is called explicitly on both the pass and the
+ *    fail path. Nothing this file writes is left to a handler that may never
+ *    fire.
+ *
+ * ⚠ This is a property of the RUNNER, not of this suite, and any other suite
+ *   in this repository that relies on a shutdown handler to clean up is
+ *   leaking too. Reported rather than fixed here — out of this build's scope.
+ */
 
-register_shutdown_function(
-	function () use ( $bhp_svp_original_visits ) {
-		if ( null === $bhp_svp_original_visits ) {
-			delete_option( BHP_SCHOOL_VISIT_OPTION );
-		} else {
-			update_option( BHP_SCHOOL_VISIT_OPTION, $bhp_svp_original_visits );
+$bhp_svp_original_visits = get_option( BHP_SCHOOL_VISIT_OPTION, null );
+$bhp_svp_probe_ids       = array();
+
+function bhp_svp_cleanup() {
+	global $bhp_svp_original_visits, $bhp_svp_probe_ids;
+
+	foreach ( (array) $bhp_svp_probe_ids as $pid ) {
+		$o = function_exists( 'wc_get_order' ) ? wc_get_order( $pid ) : null;
+		// Guard the delete: only ever remove a zero-total pending order this
+		// suite created. A destructive operation checks its target first.
+		if ( $o && 0.0 === (float) $o->get_total() && 'pending' === $o->get_status() ) {
+			$o->delete( true );
+			echo "CLEANUP: deleted probe order {$pid}\n";
+		} elseif ( $o ) {
+			echo "CLEANUP: ⛔ REFUSED to delete order {$pid} -- it is not a zero-total pending probe. Delete it by hand after checking it.\n";
 		}
 	}
-);
+	$bhp_svp_probe_ids = array();
+
+	if ( null === $bhp_svp_original_visits ) {
+		delete_option( BHP_SCHOOL_VISIT_OPTION );
+		echo "CLEANUP: visit registry deleted (it did not exist before this run)\n";
+	} else {
+		update_option( BHP_SCHOOL_VISIT_OPTION, $bhp_svp_original_visits );
+		echo "CLEANUP: visit registry restored to its pre-run value\n";
+	}
+}
 
 $today     = wp_date( 'Y-m-d' );
 $yesterday = wp_date( 'Y-m-d', strtotime( '-1 day' ) );
@@ -362,22 +412,10 @@ if ( empty( $live_bv_order_hooks ) ) {
  * coupon, no product record and no revenue figure.
  */
 if ( function_exists( 'wc_create_order' ) && ! empty( $live_bv_order_hooks ) ) {
-	$probe_ids = array();
-	register_shutdown_function(
-		function () use ( &$probe_ids ) {
-			foreach ( $probe_ids as $pid ) {
-				$o = wc_get_order( $pid );
-				if ( $o ) {
-					$o->delete( true );
-				}
-			}
-		}
-	);
-
 	// (a) A real PICKUP order.
 	$probe_pickup = wc_create_order( array( 'status' => 'pending' ) );
 	if ( $probe_pickup && ! is_wp_error( $probe_pickup ) ) {
-		$probe_ids[] = $probe_pickup->get_id();
+		$bhp_svp_probe_ids[] = $probe_pickup->get_id();
 
 		$pi = new WC_Order_Item_Shipping();
 		$pi->set_method_id( BHP_SCHOOL_PICKUP_METHOD_ID );
@@ -414,7 +452,7 @@ if ( function_exists( 'wc_create_order' ) && ! empty( $live_bv_order_hooks ) ) {
 	// (b) A real NORMAL order -- must NOT be blocked.
 	$probe_normal = wc_create_order( array( 'status' => 'pending' ) );
 	if ( $probe_normal && ! is_wp_error( $probe_normal ) ) {
-		$probe_ids[] = $probe_normal->get_id();
+		$bhp_svp_probe_ids[] = $probe_normal->get_id();
 
 		$ni = new WC_Order_Item_Shipping();
 		$ni->set_method_id( 'flat_rate' );
@@ -459,13 +497,28 @@ bhp_svp_assert( isset( $stripped['send_order_details'] ), 'PICKUP order: every O
 
 if ( is_string( $src ) ) {
 	bhp_svp_assert( ! preg_match( '/woocommerce_shipping_zone|WC_Shipping_Zones|woocommerce_flat_rate_\d+_settings/', $src ), 'The source contains NO reference to a shipping zone or a flat_rate settings option', $failures );
-	bhp_svp_assert( ! preg_match( '/BookVAULT Shipping|bookvault shipping/i', $src ), 'The source never names "BookVAULT Shipping" -- it is not added to any zone', $failures );
+	/*
+	 * ⚠ NOT a bare string search for "BookVAULT Shipping". The source's own
+	 *   rails comment says, in words, that it never adds that method — so a
+	 *   string search fails on the very sentence that promises the thing.
+	 *   (It did, on the first run of this suite. Recorded rather than quietly
+	 *   corrected, because "the assertion was wrong, not the code" is the
+	 *   distinction that matters when a safety test goes red.)
+	 *   What is asserted instead is the only two ways a method can actually be
+	 *   registered or zoned in WooCommerce.
+	 */
+	bhp_svp_assert( ! preg_match( '/woocommerce_shipping_methods|add_shipping_method|woocommerce_shipping_init/', $src ), 'The source REGISTERS no shipping method and ZONES nothing -- it injects a rate into one filtered array and nothing else', $failures );
 	bhp_svp_assert( ! preg_match( '/update_option\s*\(\s*[\'"]woocommerce_/', $src ), 'The source writes NO woocommerce_* option', $failures );
 }
 
 /* =========================================================================
  * RESULT
  * ====================================================================== */
+
+echo "\n";
+
+// ⛔ BEFORE any exit path, never after one, and never in a shutdown handler.
+bhp_svp_cleanup();
 
 echo "\n";
 if ( ! empty( $skips ) ) {
