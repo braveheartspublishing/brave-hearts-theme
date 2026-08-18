@@ -56,11 +56,58 @@ function bhp_get_printed_for_you_data() {
         'tagline'    => __('<strong>Good things take time.</strong>', 'brave-hearts'),
         'paragraphs' => [
             __('Every Brave Hearts book is <strong>printed especially for you</strong> after your order is placed.', 'brave-hearts'),
-            __('This helps us reduce waste, maintain exceptional quality, and continue publishing independently.', 'brave-hearts'),
+            /*
+             * CYCLE164-CX-02 (2026-08-18) — standing rule §9.1, the voice rule,
+             * adopted by Andrew Signore on 2026-08-18: "when you are putting
+             * front facing words to customers, there is no 'we'. I am the sole
+             * operator of the company."
+             *
+             * SUPERSEDED wording, recorded rather than deleted so the movement
+             * is visible and is not re-derived:
+             *   "This helps us reduce waste, maintain exceptional quality, and
+             *    continue publishing independently."
+             * One word changed: "us" -> "me". Meaning is unchanged.
+             */
+            __('This helps me reduce waste, maintain exceptional quality, and continue publishing independently.', 'brave-hearts'),
             __('Each book is <strong>printed especially for your order</strong>. Production and delivery times can vary, so please order early for birthdays, holidays, and other special occasions.', 'brave-hearts'),
         ],
         'thanks'     => __('Thank you for supporting independent publishing.', 'brave-hearts'),
     ]);
+}
+
+/**
+ * ⭐⭐ CYCLE164-CX-01 — is THIS request a school-visit hand-delivery session?
+ *
+ * ⛔ WHY THIS EXISTS. On a visit-flagged checkout the parent is being told that
+ *    Andrew carries the signed book to their child's school on a named day. The
+ *    print-on-demand notice sitting under that checkout told the same parent the
+ *    book is "printed especially for you after your order is placed" and that
+ *    "Production and delivery times can vary, so please order early." That is the
+ *    shipping-and-waiting mental model the hand-delivery build exists to remove,
+ *    and Andrew rejected it in his own words on 2026-08-17: "They will think its
+ *    getting shipped." Found on live production by `commerce-cx` and recorded as
+ *    CYCLE164-CX-01.
+ *
+ * ⭐ IT IS NOT A SECOND SOURCE OF TRUTH. It delegates to
+ *    `bhp_school_visit_use_delivery_framing()` in the bundle plugin
+ *    (`includes/school-visit-pickup.php`), which is the ONE predicate the pickup
+ *    machine already uses on every other surface — the collection page, the cart
+ *    drawer, the checkout cross-sell and the theme's own delivery bullet in
+ *    `inc/book-formats.php`. Adding a parallel session read here is exactly how
+ *    two surfaces end up telling one parent two different stories.
+ *
+ * ⛔ IT FAILS OPEN, DELIBERATELY. With the plugin deactivated, or on any request
+ *    that is not a live flagged visit session, this returns FALSE and every
+ *    caller renders byte-identically to 1.19.236. The control path — ordinary
+ *    paying customers who have nothing to do with a school — is the thing most
+ *    expensive to break here, so the guard can only ever REMOVE the notice from a
+ *    flagged session and can never add, move or alter it for anyone else.
+ *
+ * @return bool
+ */
+function bhp_printed_for_you_is_visit_session() {
+    return function_exists('bhp_school_visit_use_delivery_framing')
+        && (bool) bhp_school_visit_use_delivery_framing();
 }
 
 /**
@@ -139,6 +186,22 @@ function bhp_shortcode_printed_for_you($atts) {
         return '';
     }
 
+    /*
+     * ⭐ CYCLE164-CX-01, first half. On the CHECKOUT page this shortcode already
+     *    returns '' unconditionally above (B5), so the visit gate has nothing to
+     *    do here today and no check is added — dead code that looks load-bearing
+     *    is worse than none. The gate that actually suppresses the notice on a
+     *    flagged checkout is in bhp_checkout_printed_for_you_after_actions()
+     *    below, which is the ONE place the notice reaches a checkout screen.
+     *
+     * ⚠ SCOPE, STATED SO IT IS NOT MISREAD AS A CLAIM: the CART page and the
+     *   PRODUCT page still render this notice to a flagged visitor, and so does
+     *   the order-received page. That is OUT OF SCOPE for CYCLE164-CX-01, which
+     *   is checkout-only, and it is reported rather than silently absorbed. If
+     *   those surfaces are added later, the guard is one call to
+     *   bhp_printed_for_you_is_visit_session() at the top of this function.
+     */
+
     return bhp_render_printed_for_you_notice(sanitize_html_class($atts['context']));
 }
 add_shortcode('bhp_printed_for_you', 'bhp_shortcode_printed_for_you');
@@ -160,6 +223,20 @@ function bhp_checkout_printed_for_you_after_actions($block_content, $block) {
         return $block_content;
     }
     if (!function_exists('is_checkout') || !is_checkout() || is_order_received_page()) {
+        return $block_content;
+    }
+    /*
+     * ⭐⭐ CYCLE164-CX-01, THE GATE. A school-visit parent is not waiting for a
+     *    printer and must not be told they are. Returning the block content
+     *    UNCHANGED (not an empty string, not a modified string) is what keeps
+     *    this a pure suppression: on a flagged session the checkout renders
+     *    exactly as WooCommerce built it, with nothing appended.
+     *
+     * ⛔ For every other shopper `bhp_printed_for_you_is_visit_session()` is
+     *    false, this branch is not taken, and the notice is appended byte-for-byte
+     *    as it was in 1.19.236.
+     */
+    if (bhp_printed_for_you_is_visit_session()) {
         return $block_content;
     }
     $notice = bhp_render_printed_for_you_notice('checkout');

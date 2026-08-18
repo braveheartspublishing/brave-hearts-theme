@@ -76,8 +76,26 @@ defined('ABSPATH') || exit;
  *       our side, and we are sorry." It is the sentence that stops the stock
  *       WooCommerce behaviour reading as "your address is wrong".
  */
+/*
+ * ⭐ CYCLE164-CX-03 (2026-08-18) — standing rule §9.1, the voice rule, adopted
+ *    by Andrew Signore on 2026-08-18: "when you are putting front facing words
+ *    to customers, there is no 'we'. I am the sole operator of the company."
+ *    This string renders on the CONTROL checkout, in the shipping-address block,
+ *    where `commerce-cx` read it live on production on 2026-08-18.
+ *
+ *    SUPERSEDED wording, recorded rather than deleted:
+ *      "We currently ship within the contiguous United States."
+ *    One word changed: "We" -> "I". The delivery scope it states is unchanged.
+ *
+ * ⛔ WHAT WAS DELIBERATELY NOT TOUCHED, AND WHY. The AK/HI message immediately
+ *    below is also Andrew-approved copy and also carries "we"/"our" — including
+ *    the one sentence the approved deck says must not be cut. Rewriting it is a
+ *    meaning-bearing edit to locked prose (§9), it was NOT one of the three
+ *    named in the CYCLE164 brief, and it is INVENTORIED for Andrew rather than
+ *    changed here. Do not "finish the job" by editing it without his word.
+ */
 function bhp_checkout_shipping_scope_notice() {
-    return __('We currently ship within the contiguous United States.', 'brave-hearts');
+    return __('I currently ship within the contiguous United States.', 'brave-hearts');
 }
 
 /**
