@@ -278,11 +278,25 @@ foreach ( array(
 	 * is what makes a deploy actually reach a returning visitor's browser
 	 * rather than being served from cache. An asset without one is a
 	 * cache-invalidation defect that only shows up days later.
+	 *
+	 * ⛔ `(\.min)?` IS LOAD-BEARING AND WAS NOT DEFENSIVE PADDING — the first
+	 *    version of this assertion omitted it and FAILED against a correct
+	 *    1.19.235 build. Observed on staging: the CSS is served from the
+	 *    comment-stripped build artefact as `book-media.min.css?ver=1.19.235`
+	 *    (from theme 1.19.201, `bhp_minified_style_src()`), while the JS has no
+	 *    minified counterpart and is served as `book-media.js?ver=1.19.235`.
+	 *    The two assets legitimately differ, so the pattern has to allow both.
 	 */
-	if ( $scc_found && preg_match( '#' . preg_quote( $scc_path, '#' ) . '\.css\?ver=([^"\'&]+)#', $scc_shop_html, $scc_m ) ) {
-		bhp_scc_assert( '' !== $scc_m[1], "3: {$scc_what} carries a ver= string ({$scc_m[1]})", $failures );
-	} elseif ( $scc_found && preg_match( '#' . preg_quote( $scc_path, '#' ) . '\.js\?ver=([^"\'&]+)#', $scc_shop_html, $scc_m ) ) {
-		bhp_scc_assert( '' !== $scc_m[1], "3: {$scc_what} carries a ver= string ({$scc_m[1]})", $failures );
+	if ( $scc_found && preg_match(
+		'#' . preg_quote( $scc_path, '#' ) . '(\.min)?\.(css|js)\?ver=([^"\'&]+)#',
+		$scc_shop_html,
+		$scc_m
+	) ) {
+		bhp_scc_assert(
+			'' !== $scc_m[3],
+			"3: {$scc_what} carries a ver= string ({$scc_m[3]}" . ( '' !== $scc_m[1] ? ', minified' : '' ) . ')',
+			$failures
+		);
 	} else {
 		bhp_scc_assert( false, "3: {$scc_what} carries a ver= string", $failures );
 	}
