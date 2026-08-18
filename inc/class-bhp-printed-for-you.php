@@ -111,6 +111,38 @@ function bhp_printed_for_you_is_visit_session() {
 }
 
 /**
+ * ⭐⭐ CYCLE164-LD-COPY-GATE-PASS-2 — is THIS ORDER a hand-delivery order?
+ *
+ * ⛔ WHY A SECOND PREDICATE EXISTS AND WHY IT IS NOT A SECOND SOURCE OF TRUTH.
+ *    `bhp_printed_for_you_is_visit_session()` above answers a question about the
+ *    REQUEST: "is the person looking at this page in a visit-flagged session?"
+ *    The order-received page asks a DIFFERENT question — "was the order that was
+ *    just paid for a hand-delivery order?" — and the session is the wrong
+ *    instrument for it. A session flag can expire, be cleared, or belong to a
+ *    different browser than the one opening the confirmation link from an email.
+ *    The order itself cannot.
+ *
+ * ⭐ IT ADDS NO NEW LOGIC. It delegates to `bhp_school_pickup_order_is_pickup()`
+ *    in the bundle plugin, which is the ONE order-scoped predicate the pickup
+ *    machine already uses everywhere an ORDER is the subject — the Bookvault
+ *    fulfilment skip, the resend-action removal, the order-totals row rename, and
+ *    the confirmation email's own branch at
+ *    `woocommerce/emails/customer-processing-order.php:139`. Two predicates for two
+ *    different subjects, both owned by the plugin. Zero copies of either.
+ *
+ * ⛔ IT FAILS OPEN, exactly like its session twin: no plugin, no resolvable order,
+ *    or an ordinary shipped order all return FALSE and the caller renders exactly
+ *    what 1.19.237 rendered.
+ *
+ * @param WC_Order|int|mixed $order Order or order id.
+ * @return bool
+ */
+function bhp_printed_for_you_order_is_visit($order) {
+    return function_exists('bhp_school_pickup_order_is_pickup')
+        && (bool) bhp_school_pickup_order_is_pickup($order);
+}
+
+/**
  * Renders the notice via the shared partial. Every placement (hooks and
  * the shortcode below) calls this one function -- never
  * get_template_part() directly -- so there is exactly one call path to
@@ -132,6 +164,30 @@ function bhp_woocommerce_product_printed_for_you_section() {
     if (!$product instanceof WC_Product) {
         return;
     }
+    /*
+     * ⭐⭐ CYCLE164-LD-COPY-GATE-PASS-2, THE PRODUCT-PAGE GATE.
+     *
+     * ⛔ A parent who arrived from their school's pre-visit link is told, on the
+     *    collection page and in the cart drawer, that Andrew carries the signed book
+     *    to the school on a named day. Telling that same session, on the same product
+     *    page, that the book is "printed especially for you after your order is
+     *    placed" and that "Production and delivery times can vary, so please order
+     *    early" is the shipping-and-waiting story the hand-delivery build exists to
+     *    remove. Andrew rejected it in his own words on 2026-08-17: "They will think
+     *    its getting shipped."
+     *
+     * ⭐ EARLY RETURN, NOT AN EMPTY ECHO. Nothing is emitted at all, so priority 37
+     *    simply does not occupy its slot and the blocks either side of it — "What
+     *    Kids Will Learn" at 36 and the teacher/shipping links at 38 — close up
+     *    exactly as on any page where this component was never registered.
+     *
+     * ⛔ CONTROL PATH: for every shopper who has never touched a school link the
+     *    predicate is FALSE, this branch is not taken, and the notice renders
+     *    byte-identically to 1.19.237.
+     */
+    if (bhp_printed_for_you_is_visit_session()) {
+        return;
+    }
     echo bhp_render_printed_for_you_notice('product'); // phpcs:ignore -- partial fully escapes its own output
 }
 add_action('woocommerce_single_product_summary', 'bhp_woocommerce_product_printed_for_you_section', 37);
@@ -144,6 +200,29 @@ add_action('woocommerce_single_product_summary', 'bhp_woocommerce_product_printe
  */
 function bhp_woocommerce_thankyou_printed_for_you_notice($order_id) {
     if (!$order_id) {
+        return;
+    }
+    /*
+     * ⭐⭐ CYCLE164-LD-COPY-GATE-PASS-2, THE ORDER-RECEIVED GATE — the surface where
+     *    the wrong copy costs the MOST, not the least. The parent has already paid.
+     *    The page above this notice tells them Andrew is bringing the signed books to
+     *    the school by hand and that nothing is being posted. A "Printed Just for You
+     *    / production and delivery times can vary" panel directly underneath
+     *    contradicts that at the exact moment they are deciding whether they
+     *    understood what they just bought.
+     *
+     * ⭐ THE ORDER IS ASKED FIRST AND IT IS THE AUTHORITATIVE SIGNAL.
+     *    `bhp_printed_for_you_order_is_visit()` reads the order's own shipping line
+     *    (and, second, its meta flag) through the plugin's
+     *    `bhp_school_pickup_order_is_pickup()` — a permanent record of what was
+     *    actually bought. The session read is a FALLBACK ONLY, for a request where no
+     *    order object resolves; it can never contradict the order, because it is only
+     *    reached when there is no order answer to contradict.
+     *
+     * ⛔ FAILS OPEN both ways: no plugin, no order, or an ordinary shipped order all
+     *    render the notice exactly as 1.19.237 did.
+     */
+    if (bhp_printed_for_you_order_is_visit($order_id) || bhp_printed_for_you_is_visit_session()) {
         return;
     }
     echo bhp_render_printed_for_you_notice('thankyou'); // phpcs:ignore -- partial fully escapes its own output
@@ -160,6 +239,35 @@ add_action('woocommerce_thankyou', 'bhp_woocommerce_thankyou_printed_for_you_not
  */
 function bhp_shortcode_printed_for_you($atts) {
     $atts = shortcode_atts(['context' => 'default'], $atts, 'bhp_printed_for_you');
+
+    /*
+     * ⭐⭐ CYCLE164-LD-COPY-GATE-PASS-2, THE CART-PAGE GATE — and it is FIRST in this
+     *    function deliberately, above the B5 checkout short-circuit, because it is the
+     *    broader condition. This shortcode is the only mechanism that reaches the Cart
+     *    page (the classic `woocommerce_before_cart` hooks do not fire on a Blocks
+     *    cart), so gating here gates the cart.
+     *
+     * ⛔ THE DEFECT THIS CLOSES. `/cart/` is ONE CLICK BEFORE the checkout that
+     *    1.19.237 already cleaned, and a visit-flagged walk was OBSERVED rendering the
+     *    print-on-demand notice there on every school, at both viewports
+     *    (`pfyOnCartPage: true`, pass-1 evidence). The parent therefore met the
+     *    "printed especially for you … production and delivery times can vary" promise
+     *    BEFORE reaching the screen where it had been removed. Same defect, earlier
+     *    screen. Andrew rejected exactly this confusion on 2026-08-17.
+     *
+     * ⭐ RETURNING '' IS THE CORRECT SUPPRESSION HERE, and it is not the same act as
+     *    the render_block filter below returning its input unchanged. There, the string
+     *    carries WooCommerce's ENTIRE checkout and emptying it would destroy the page.
+     *    Here, the shortcode's whole output IS the notice — '' is precisely "this
+     *    component contributed nothing", which is what the B5 branch immediately below
+     *    has already returned on the checkout page since 2026-08-03.
+     *
+     * ⛔ CONTROL PATH: an ordinary shopper's predicate is FALSE, this branch is not
+     *    taken, and the cart renders byte-identically to 1.19.237.
+     */
+    if (bhp_printed_for_you_is_visit_session()) {
+        return '';
+    }
 
     /*
      * B5 (2026-08-03). Andrew, walk-3, verbatim: the print-on-demand
@@ -187,19 +295,23 @@ function bhp_shortcode_printed_for_you($atts) {
     }
 
     /*
-     * ⭐ CYCLE164-CX-01, first half. On the CHECKOUT page this shortcode already
-     *    returns '' unconditionally above (B5), so the visit gate has nothing to
-     *    do here today and no check is added — dead code that looks load-bearing
-     *    is worse than none. The gate that actually suppresses the notice on a
-     *    flagged checkout is in bhp_checkout_printed_for_you_after_actions()
-     *    below, which is the ONE place the notice reaches a checkout screen.
+     * ⭐ CYCLE164-CX-01, first half, PRESERVED AS HISTORY. On the CHECKOUT page this
+     *    shortcode already returns '' unconditionally above (B5), so the visit gate
+     *    still has nothing to do for checkout here. The gate that suppresses the
+     *    notice on a flagged CHECKOUT remains
+     *    bhp_checkout_printed_for_you_after_actions() below, which is the one place
+     *    the notice reaches a checkout screen.
      *
-     * ⚠ SCOPE, STATED SO IT IS NOT MISREAD AS A CLAIM: the CART page and the
-     *   PRODUCT page still render this notice to a flagged visitor, and so does
-     *   the order-received page. That is OUT OF SCOPE for CYCLE164-CX-01, which
-     *   is checkout-only, and it is reported rather than silently absorbed. If
-     *   those surfaces are added later, the guard is one call to
-     *   bhp_printed_for_you_is_visit_session() at the top of this function.
+     * ⛔ THE SCOPE NOTE THAT STOOD HERE IN 1.19.237 IS NOW CLOSED, and is recorded
+     *   rather than deleted so the movement stays visible. It read: "the CART page and
+     *   the PRODUCT page still render this notice to a flagged visitor, and so does the
+     *   order-received page. That is OUT OF SCOPE for CYCLE164-CX-01, which is
+     *   checkout-only". All three are gated as of 1.19.238 — the cart by the guard at
+     *   the top of this function, the product page in
+     *   bhp_woocommerce_product_printed_for_you_section(), and the order-received page
+     *   in bhp_woocommerce_thankyou_printed_for_you_notice(). It was in fact exactly
+     *   "one call to bhp_printed_for_you_is_visit_session() at the top of this
+     *   function", as that note predicted.
      */
 
     return bhp_render_printed_for_you_notice(sanitize_html_class($atts['context']));

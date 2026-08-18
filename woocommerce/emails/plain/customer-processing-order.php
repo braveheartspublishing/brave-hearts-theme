@@ -102,6 +102,22 @@ if ( $bhp_is_pickup ) {
 	 */
 	$bhp_pickup_child = function_exists( 'bhp_school_visit_child_name' ) ? bhp_school_visit_child_name( $order ) : '';
 
+	/*
+	 * ⭐⭐ CYCLE164-LD-COPY-GATE-PASS-2 (2026-08-18) — the §9.1 voice rule, applied to
+	 *    THIS BRANCH ONLY, and to the identical three strings its HTML twin carries.
+	 *    The twins move together on purpose: C10 was a real gap where one order
+	 *    produced two different promises. The other ~25 company-voice "we" in the
+	 *    order-email flow are inventoried for Andrew, NOT rewritten here — including
+	 *    the shared preamble above ("when you’ll hear from us again"), which BOTH
+	 *    branches render.
+	 *
+	 * SUPERSEDED WORDINGS, recorded rather than deleted so the movement is visible:
+	 *   "… collect anything from us, …"                     -> "… from me, …"
+	 *   "SOMETHING CHANGED? NEED US?"                        -> "… NEED ME?"
+	 *   "… tell us as soon as you can and we’ll sort it out." -> "… tell me … and I’ll
+	 *                                                          sort it out."
+	 * Meaning is unchanged in all three. No promise, timing or fact moved.
+	 */
 	echo esc_html__( 'HOW YOU’LL GET YOUR BOOKS', 'brave-hearts' ) . "\n\n";
 	if ( '' !== $bhp_pickup_child ) {
 		echo esc_html(
@@ -119,7 +135,7 @@ if ( $bhp_is_pickup ) {
 		echo esc_html( $bhp_pickup_school ) . ' - ' . esc_html( $bhp_pickup_pretty ) . "\n\n";
 	}
 
-	echo esc_html__( 'You don’t need to collect anything from us, arrange anything, or do anything before the visit.', 'brave-hearts' ) . "\n\n";
+	echo esc_html__( 'You don’t need to collect anything from me, arrange anything, or do anything before the visit.', 'brave-hearts' ) . "\n\n";
 
 	echo "----------------------------------------\n\n";
 
@@ -128,8 +144,8 @@ if ( $bhp_is_pickup ) {
 
 	echo "----------------------------------------\n\n";
 
-	echo esc_html__( 'SOMETHING CHANGED? NEED US?', 'brave-hearts' ) . "\n\n";
-	echo esc_html__( 'Reply to this email - it comes to a real person. If your plans have changed and you won’t be at the visit, tell us as soon as you can and we’ll sort it out.', 'brave-hearts' ) . "\n\n";
+	echo esc_html__( 'SOMETHING CHANGED? NEED ME?', 'brave-hearts' ) . "\n\n";
+	echo esc_html__( 'Reply to this email - it comes to a real person. If your plans have changed and you won’t be at the visit, tell me as soon as you can and I’ll sort it out.', 'brave-hearts' ) . "\n\n";
 } else {
 
 echo esc_html__( 'HOW YOUR BOOKS ARE MADE', 'brave-hearts' ) . "\n\n";

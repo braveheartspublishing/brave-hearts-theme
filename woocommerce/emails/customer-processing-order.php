@@ -165,6 +165,37 @@ if ( $bhp_is_pickup ) :
 	$bhp_pickup_child = function_exists( 'bhp_school_visit_child_name' ) ? bhp_school_visit_child_name( $order ) : '';
 	?>
 
+<?php
+/*
+ * ⭐⭐ CYCLE164-LD-COPY-GATE-PASS-2 (2026-08-18) — THE VOICE RULE INSIDE THE
+ *    SCHOOL-VISIT BRANCH ONLY.
+ *
+ * Standing rule §9.1, adopted by Andrew Signore on 2026-08-18 in his own words:
+ * "when you are putting front facing words to customers, there is no 'we'. I am
+ * the sole operator of the company."
+ *
+ * ⛔ FOUR OCCURRENCES, THREE STRINGS, IN THIS BRANCH ONLY. Everything from here
+ *    to the `else` is what a SCHOOL-VISIT parent reads after ordering, and the
+ *    plain-text twin carries the identical three strings — these two templates
+ *    drifted apart once (C10) and left two recipients of one order reading two
+ *    different promises.
+ *
+ * ⛔ THE OTHER ~25 COMPANY-VOICE "we" IN THE ORDER-EMAIL FLOW ARE DELIBERATELY
+ *    NOT TOUCHED BY THIS PASS — including the shared preamble above ("when you'll
+ *    hear from us again"), which BOTH branches render. They are higher volume, they
+ *    reach every paying customer, and they are inventoried for Andrew rather than
+ *    rewritten. See the CYCLE164 "we" inventory §3.
+ *
+ * SUPERSEDED WORDINGS, recorded rather than deleted so the movement is visible and
+ * is not re-derived:
+ *   "You don’t need to collect anything from us, …"        -> "… from me, …"
+ *   "Something changed? Need us?"                             -> "… Need me?"
+ *   "… tell us as soon as you can and we’ll sort it out."    -> "… tell me as soon
+ *                                                                as you can and I’ll
+ *                                                                sort it out."
+ * Meaning is unchanged in all three. No promise, no timing and no fact moved.
+ */
+?>
 <h2 style="margin:0 0 10px;font-size:17px;"><?php esc_html_e( 'How you’ll get your books', 'brave-hearts' ); ?></h2>
 
 	<?php if ( '' !== $bhp_pickup_child ) : ?>
@@ -196,7 +227,7 @@ if ( $bhp_is_pickup ) :
 		); ?></p>
 	<?php endif; ?>
 
-<p><?php esc_html_e( 'You don’t need to collect anything from us, arrange anything, or do anything before the visit.', 'brave-hearts' ); ?></p>
+<p><?php esc_html_e( 'You don’t need to collect anything from me, arrange anything, or do anything before the visit.', 'brave-hearts' ); ?></p>
 
 <hr style="border:none;border-top:1px solid #e5e0d3;margin:28px 0;">
 
@@ -212,9 +243,9 @@ if ( $bhp_is_pickup ) :
 
 <hr style="border:none;border-top:1px solid #e5e0d3;margin:28px 0;">
 
-<h2 style="margin:0 0 10px;font-size:17px;"><?php esc_html_e( 'Something changed? Need us?', 'brave-hearts' ); ?></h2>
+<h2 style="margin:0 0 10px;font-size:17px;"><?php esc_html_e( 'Something changed? Need me?', 'brave-hearts' ); ?></h2>
 
-<p><?php esc_html_e( 'Reply to this email - it comes to a real person. If your plans have changed and you won’t be at the visit, tell us as soon as you can and we’ll sort it out.', 'brave-hearts' ); ?></p>
+<p><?php esc_html_e( 'Reply to this email - it comes to a real person. If your plans have changed and you won’t be at the visit, tell me as soon as you can and I’ll sort it out.', 'brave-hearts' ); ?></p>
 
 <?php else : ?>
 
