@@ -35,3 +35,8 @@ brave-hearts-theme-deploy-*.zip
 # state. Also ignored machine-wide, but pinned here so the protection
 # travels with the repository.
 /.claude/settings.local.json
+
+# Credentials — never commit tokens (added 2026-08-11, ACT-OWN-100)
+meta_token.txt
+*.token
+output/
