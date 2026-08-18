@@ -115,6 +115,22 @@
  *   child's first name. Nothing is signed for that order, and no copy anywhere
  *   promises that it will be.
  *
+ * ⭐ 1.8.52 NOTE ON THAT PARAGRAPH. The rule-based route described above is
+ *    still available and is still not used, but its rule would now be keyed on
+ *    WooCommerce's own `pickup_location:<n>` rate id rather than the retired
+ *    `bhp_school_pickup` one. The reason for not using it is unchanged and is
+ *    about failure mode, not about which id it would name.
+ *
+ * ---------------------------------------------------------------------------
+ * ⭐⭐ WHAT 1.8.52 (`CYCLE163-LD-PICKUP-NATIVE`) CHANGED IN THIS FILE
+ * ---------------------------------------------------------------------------
+ * Exactly one thing: `bhp_school_visit_fields_session()` became a thin alias
+ * for `bhp_school_visit_request_record()`, and `bhp_school_visit_has_session_
+ * cookie()` moved to `school-visit-pickup.php` with it. **No field definition,
+ * label, consent rail, sanitiser, validator, meta key, tag, payload or hook
+ * priority in this file was touched.** The child-name field and the newsletter
+ * opt-in still register for a flagged session and only for a flagged session.
+ *
  * ---------------------------------------------------------------------------
  * ⛔ RAILS THIS FILE DOES NOT CROSS
  * ---------------------------------------------------------------------------
@@ -159,50 +175,36 @@ if ( ! defined( 'BHP_SCHOOL_VISIT_CHILD_MAXLEN' ) ) {
  * ====================================================================== */
 
 /**
- * True when this request carries a WooCommerce session COOKIE.
- *
- * ⛔ Reads the cookie only. It never creates one, never writes one and never
- *    touches the session store. A visitor with no cookie has no session data,
- *    therefore no visit flag, therefore nothing for this file to do.
- *
- * @return bool
- */
-function bhp_school_visit_has_session_cookie() {
-	if ( ! defined( 'COOKIEHASH' ) ) {
-		return false;
-	}
-	$name = 'wp_woocommerce_session_' . COOKIEHASH;
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- presence test only; the value is never read, parsed or trusted here.
-	return ! empty( $_COOKIE[ $name ] );
-}
-
-/**
  * The live visit for THIS request, resolved in a way that also works on the
  * Store API request where `WC()->session` has not been built yet.
  *
- * Read the file header before changing this. It is the difference between the
- * fields existing on the page and existing on the POST that submits the order.
+ * ⭐⭐ 1.8.52 (`CYCLE163-LD-PICKUP-NATIVE`) — THE IMPLEMENTATION MOVED. This is
+ *     now a THIN ALIAS for `bhp_school_visit_request_record()` in
+ *     `school-visit-pickup.php`, and `bhp_school_visit_has_session_cookie()`
+ *     moved there with it.
  *
- * @return array{slug:string,school:string,date:string,cutoff:string}|null
+ * ⛔ WHY IT MOVED RATHER THAN BEING DUPLICATED: 1.8.52 makes WooCommerce's own
+ *    local pickup visible by filtering two option READS, and those filters run
+ *    on requests where this file has not been required yet. Two copies of a
+ *    session resolver, one of which silently brings a session up, is exactly
+ *    the sort of thing that drifts apart and then disagrees on the one request
+ *    that matters.
+ *
+ * ⭐ THE ALIAS IS KEPT rather than the call sites rewritten, because this
+ *    file's field registration, help-text enqueue and slug fallback all read
+ *    better under this name, and because a future reader arriving from the
+ *    1.8.50 documentation will look for it.
+ *
+ * ⛔ THE REENTRANCY GUARD AND THE `Throwable` CATCH LIVE IN THE MOVED
+ *    IMPLEMENTATION, not here. Read that function before changing this one.
+ *
+ * @return array{slug:string,school:string,date:string,cutoff:string,time:string}|null
  */
 function bhp_school_visit_fields_session() {
-	if ( ! function_exists( 'WC' ) || ! function_exists( 'bhp_school_visit_active' ) ) {
+	if ( ! function_exists( 'bhp_school_visit_request_record' ) ) {
 		return null;
 	}
-
-	if ( ! WC()->session ) {
-		if ( ! bhp_school_visit_has_session_cookie() ) {
-			return null; // No cookie → no flag. Nothing is created, nothing is touched.
-		}
-		if ( is_callable( array( WC(), 'initialize_session' ) ) ) {
-			WC()->initialize_session();
-		}
-		if ( ! WC()->session ) {
-			return null;
-		}
-	}
-
-	return bhp_school_visit_active();
+	return bhp_school_visit_request_record();
 }
 
 /* =========================================================================

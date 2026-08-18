@@ -372,6 +372,30 @@ function bhp_book_free_addon_badge() {
  *    this environment, and an environment missing one still prints the
  *    other.
  *
+ * ⭐ CYCLE163-LD-PICKUP-NATIVE (1.19.236) - THE SCHOOL-VISIT SWAP, and it is
+ *    the reason the first line now comes from `bhp_book_free_shipping_line()`
+ *    rather than a literal.
+ *
+ *    Andrew Signore, RELAYED through the Chief of Staff and NOT witnessed by
+ *    this agent, after walking the visit-parent path on staging: "for that page
+ *    we need to eliminate all the 'Free Shipping' ... This will definitely
+ *    confuse the parents purchasing. They will think its getting shipped."
+ *
+ *    A parent who arrived from a school's pre-visit link is not being shipped
+ *    anything, so the word must not appear on the page they buy from. ⛔ THE
+ *    CLAIM IS UNCHANGED IN SUBSTANCE - delivery still costs nothing - and it is
+ *    still gated on exactly the same live predicate. Only the FRAMING moves,
+ *    and only for a session carrying a live visit flag.
+ *
+ * ⛔ THE BULLET ORDER IS UNCHANGED AND IS ASSERTED ELSEWHERE ON THIS SOURCE:
+ *    shipping, then activity book, then vocabulary cards. Two suites match a
+ *    bounded window across this function body
+ *    (`test-collection-band-freeship.php`, `test-wave1-capture.php`), which is
+ *    why the swap's explanation lives up here in the docblock and the body
+ *    carries one short line. Adding a long comment inside the body would break
+ *    a passing suite on a `.{0,900}` window, which is a real thing that
+ *    happened while writing this change and is recorded rather than re-derived.
+ *
  * @param string $scope 'collection' for a complete-collection context (both
  *                      lines can apply) or 'any_book' for a context where
  *                      only the always-on lines apply.
@@ -381,7 +405,8 @@ function bhp_book_free_bullet_lines($scope = 'collection') {
     $lines = [];
 
     if ('collection' === $scope && function_exists('bhp_book_collection_ships_free') && bhp_book_collection_ships_free()) {
-        $lines[] = __('FREE Shipping on the complete collection', 'brave-hearts');
+        // 1.19.236: school-visit swap. See the docblock. Same gate, same claim.
+        $lines[] = bhp_book_free_shipping_line();
     }
 
     if (bhp_book_collection_includes_free_addon()) {
@@ -426,6 +451,36 @@ function bhp_book_free_bullet_lines($scope = 'collection') {
     return array_values(array_filter($lines, static function ($line) {
         return is_string($line) && '' !== trim($line);
     }));
+}
+
+/**
+ * The first FREE bullet, framed for whoever is actually reading it.
+ *
+ * ⭐ 1.19.236, `CYCLE163-LD-PICKUP-NATIVE`. Ordinary visitor: the locked
+ *    sentence, byte-identical to every release before this one. School-visit
+ *    parent (a session carrying a live `?bhp_visit=` flag): the hand-delivery
+ *    sentence, because nothing about their order is being posted.
+ *
+ * ⛔ BOTH THE PREDICATE AND THE REPLACEMENT LIVE IN THE PLUGIN
+ *    (`school-visit-pickup.php`) and are called behind `function_exists`. The
+ *    dependency in this codebase runs theme -> plugin, never the reverse, and
+ *    this helper has to keep working under a plugin that does not define them.
+ *    With the plugin absent, or with no visit flag, the answer is the locked
+ *    sentence and nothing else changes.
+ *
+ * ⛔ IT DECIDES FRAMING ONLY. Whether the line appears at all is still the
+ *    caller's `bhp_book_collection_ships_free()` gate, untouched.
+ *
+ * @return string Translated, unescaped.
+ */
+function bhp_book_free_shipping_line() {
+    if (function_exists('bhp_school_visit_use_delivery_framing')
+        && function_exists('bhp_school_visit_delivery_bullet')
+        && bhp_school_visit_use_delivery_framing()) {
+        return bhp_school_visit_delivery_bullet();
+    }
+
+    return __('FREE Shipping on the complete collection', 'brave-hearts');
 }
 
 /**

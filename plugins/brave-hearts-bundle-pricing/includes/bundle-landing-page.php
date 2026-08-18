@@ -748,7 +748,18 @@ function bhp_bundle_render_landing_cold_open() {
 			$bhp_coldopen_free = array();
 			$bhp_coldopen_ship = bhp_bundle_rules( bhp_bundle_landing_default_format() );
 			if ( isset( $bhp_coldopen_ship[3]['shipping'] ) && 0.0 === (float) $bhp_coldopen_ship[3]['shipping'] ) {
-				$bhp_coldopen_free[] = 'FREE Shipping on the complete collection';
+				/*
+				 * ⭐ 1.8.52 (`CYCLE163-LD-PICKUP-NATIVE`) — THE SCHOOL-VISIT SWAP.
+				 *    A parent who arrived from a school's pre-visit link is not
+				 *    being shipped anything, so the word must not appear on the
+				 *    page they buy from. The claim is unchanged in substance and
+				 *    is still gated on the same live shipping predicate above;
+				 *    only the framing moves, and only for a flagged session.
+				 *    Same swap, same helper, at the closing CTA further down.
+				 */
+				$bhp_coldopen_free[] = bhp_school_visit_use_delivery_framing()
+					? bhp_school_visit_delivery_bullet()
+					: 'FREE Shipping on the complete collection';
 			}
 			if ( function_exists( 'bhp_bundle_addon_free_with_collection' )
 				&& bhp_bundle_addon_free_with_collection()
@@ -1785,7 +1796,13 @@ function bhp_bundle_render_landing_final_cta() {
 					 */
 					$bhp_final_free = array();
 					if ( bhp_bundle_shipping_is_free( $rule['shipping'] ) ) {
-						$bhp_final_free[] = 'FREE Shipping on the complete collection';
+						// ⭐ 1.8.52 — the same school-visit swap as the cold-open
+						//    at the top of this page. Both ends of the page make
+						//    the same promise in the same words, which is the
+						//    whole reason both route through one helper.
+						$bhp_final_free[] = bhp_school_visit_use_delivery_framing()
+							? bhp_school_visit_delivery_bullet()
+							: 'FREE Shipping on the complete collection';
 					}
 					if ( function_exists( 'bhp_bundle_addon_free_with_collection' )
 						&& bhp_bundle_addon_free_with_collection()

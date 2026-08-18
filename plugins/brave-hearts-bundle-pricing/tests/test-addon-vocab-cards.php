@@ -310,9 +310,20 @@ if ( ! is_readable( $avc_lp ) ) {
 		$failures
 	);
 
-	/* ⛔ ORDER: Shipping, then Activity Book, then Vocabulary Cards, at both ends. */
+	/* ⛔ ORDER: Shipping, then Activity Book, then Vocabulary Cards, at both ends.
+	 *
+	 * ⚠ NEEDLE CHANGED IN 1.8.52 (`CYCLE163-LD-PICKUP-NATIVE`), and the reason is
+	 *   recorded rather than left for a future reader to re-derive. The delivery
+	 *   bullet is no longer a literal at either end of the page: a school-visit
+	 *   parent gets hand-delivery framing instead of shipping framing, so both
+	 *   sites now read `$bhp_<which>_free[] = bhp_school_visit_use_delivery_framing()`.
+	 *   ⭐ THE ASSERTION'S SUBJECT IS UNCHANGED — it is about BULLET ORDER, not
+	 *   about the sentence — and the ordinary-visitor string is still emitted by
+	 *   the ternary's else branch and is still asserted, on the RENDERED page,
+	 *   by `test-collection-sales-first.php` and `test-collection-cold-traffic.php`.
+	 */
 	foreach ( array( 'coldopen', 'final' ) as $avc_which ) {
-		$avc_ship  = strpos( $avc_src, "\$bhp_{$avc_which}_free[] = 'FREE Shipping" );
+		$avc_ship  = strpos( $avc_src, "\$bhp_{$avc_which}_free[] = bhp_school_visit_use_delivery_framing()" );
 		$avc_addon = strpos( $avc_src, "\$bhp_{$avc_which}_free[] = bhp_bundle_addon_free_offer_line()" );
 		$avc_vocab = strpos( $avc_src, "\$bhp_{$avc_which}_free[] = bhp_bundle_vocab_free_offer_line()" );
 		bhp_avc_assert(
