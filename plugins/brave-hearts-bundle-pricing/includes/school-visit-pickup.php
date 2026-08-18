@@ -1416,3 +1416,166 @@ function bhp_school_pickup_thankyou_notice( $order_id ) {
 	}
 	echo '</div>';
 }
+
+/* =========================================================================
+ * ⭐⭐ 1.8.54 — `CYCLE164-LD-COD-GATE`. A PARENT MUST NOT BE ABLE TO ORDER A
+ *              SIGNED BOOK WITHOUT PAYING FOR IT.
+ * ====================================================================== */
+
+/**
+ * ⛔ THE DEFECT THIS CLOSES, IN THE FOUNDER'S OWN WORDS.
+ *
+ *    Andrew Signore, verbatim, 2026-08-18:
+ *      "they should have to pay before I receive the order- the parent must pay
+ *       for the book/s before I sign them"
+ *
+ *    `cod` — Cash on Delivery, titled "Pay in Person" on this store — creates an
+ *    order with NOTHING COLLECTED. On an ordinary order that is a considered
+ *    business choice: Andrew sells in person at the Portneuf Valley Farmers
+ *    Market and takes payment there, face to face, as he hands the book over.
+ *
+ *    ⛔ ON A SCHOOL-VISIT ORDER IT IS A DIFFERENT ANIMAL ENTIRELY. The parent is
+ *    not standing in front of him. The order still carries the visit flag, the
+ *    child's name, the packing note and the HAND DELIVERY note, so it flows into
+ *    exactly the same pack-and-carry pipeline as a paid one. Andrew would sign a
+ *    book, pack it, drive it to a school and hand it to a child FOR AN ORDER
+ *    NOBODY PAID FOR, and would not find out until he reconciled afterwards.
+ *
+ * ⭐ THE FIX IS CODE, AND DELIBERATELY NOT CONFIGURATION.
+ *
+ *    The obvious "fix" is to disable `cod` in WooCommerce, or to populate its
+ *    `enable_for_methods` so it excludes local pickup. BOTH ARE WRONG HERE:
+ *
+ *      · Disabling it globally KILLS THE FARMERS MARKET. That is real revenue,
+ *        and breaking it to fix a schools problem is a bad trade.
+ *      · Either edit is a WooCommerce PAYMENT SETTING, which is an Andrew-only
+ *        gate with no exceptions. No agent may make it, on any environment.
+ *      · A settings-level exclusion is also global and permanent, where the
+ *        thing that is actually true is per-request: THIS visitor, in THIS
+ *        session, arrived from a school's pre-visit link.
+ *
+ *    So the gateway is withheld for the duration of one flagged request and for
+ *    nobody else. `woocommerce_cod_settings` is never read and never written by
+ *    this file.
+ *
+ * ⭐ IT IS NOT A SECOND SOURCE OF TRUTH. It asks
+ *    `bhp_school_visit_use_delivery_framing()` — THE one request-scoped predicate
+ *    the pickup machine already uses for the collection page, the cart drawer,
+ *    the checkout cross-sell, the theme's delivery bullet and the print-on-demand
+ *    copy gate. If this file grew its own session read, one parent could be shown
+ *    hand-delivery copy while still being offered an unpaid checkout, or the
+ *    reverse. Zero copies of the predicate. One answer per request.
+ *
+ * ⛔ IT FAILS OPEN, AND THAT DIRECTION IS CHOSEN ON PURPOSE.
+ *    Every early return below leaves `$gateways` EXACTLY as it arrived. If the
+ *    predicate is missing, throws, or cannot resolve a session, an ordinary
+ *    shopper keeps every payment method they had. Wrongly REMOVING a gateway from
+ *    a paying customer breaks real revenue and is silent; wrongly KEEPING one on
+ *    a flagged checkout is the bug we already have and is at least visible in the
+ *    order. Between those two the safe default is unambiguous.
+ *
+ * ⭐ THIS IS A REAL ENFORCEMENT BOUNDARY, NOT COSMETICS — VERIFIED IN
+ *    WOOCOMMERCE 10.9.1's OWN SOURCE ON STAGING, NOT ASSUMED:
+ *      · `StoreApi/Schemas/V1/CartSchema.php:386` builds the Blocks checkout's
+ *        `payment_methods` list from `get_available_payment_gateways()`, so a
+ *        gateway withheld here does not RENDER.
+ *      · `StoreApi/Routes/V1/Checkout.php:949-963` re-reads the SAME list when an
+ *        order is submitted and throws
+ *        `woocommerce_rest_checkout_payment_method_disabled` for anything absent
+ *        from it. A hand-crafted POST of `payment_method=cod` on a flagged
+ *        session is therefore REJECTED, not merely hidden.
+ *    A gate that only hides a button is not a gate.
+ *
+ * ⚠ THE SET IS THE DEFERRED-PAYMENT SET, AND THAT IS SLIGHTLY WIDER THAN `cod`.
+ *    `bacs` (Direct bank transfer) and `cheque` (Check payments) create an unpaid
+ *    order by exactly the same mechanism and would produce exactly the same
+ *    outcome. BOTH ARE CURRENTLY DISABLED ON THIS STORE, so including them has
+ *    ZERO live effect today — it only means the hole cannot silently reopen if
+ *    one is ever switched on. ⛔ ANDREW SHOULD KNOW THIS AND MAY NARROW IT: if he
+ *    ever wants a school district to pay a hand-delivery order by bank transfer
+ *    or purchase order, `bacs` must come off this list. It is filterable below
+ *    precisely so that is a one-line decision and not a code rewrite.
+ *
+ * ⛔ CARD-BACKED WALLETS ARE NOT TOUCHED AND MUST NOT BE. `stripe`,
+ *    `stripe_link` and `stripe_amazon_pay` all capture funds at checkout
+ *    (`woocommerce_stripe_settings['capture'] === 'yes'` on this store), so they
+ *    already satisfy the founder's rule. Withholding them would break the flagged
+ *    parent's ability to pay at all, which is the opposite of the objective.
+ *
+ * @param array $gateways Available gateways, keyed by id.
+ * @return array
+ */
+add_filter( 'woocommerce_available_payment_gateways', 'bhp_school_visit_block_unpaid_gateways', 20, 1 );
+function bhp_school_visit_block_unpaid_gateways( $gateways ) {
+	// FAIL OPEN: anything unexpected about the input, and nobody's checkout changes.
+	if ( ! is_array( $gateways ) || empty( $gateways ) ) {
+		return $gateways;
+	}
+
+	/*
+	 * FAIL OPEN in wp-admin. The gateway screens must never be filtered by a
+	 * front-end session flag, or Andrew could not see "Pay in Person" in order to
+	 * manage it. AJAX is excluded from this escape hatch because the Blocks
+	 * checkout's own requests can run through admin-ajax.
+	 */
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return $gateways;
+	}
+
+	// FAIL OPEN: no predicate (plugin half-loaded, WooCommerce absent) -> no change.
+	if ( ! function_exists( 'bhp_school_visit_use_delivery_framing' ) ) {
+		return $gateways;
+	}
+
+	try {
+		$is_visit = (bool) bhp_school_visit_use_delivery_framing();
+	} catch ( Throwable $e ) {
+		// FAIL OPEN: a resolver that throws must never cost a paying customer
+		// their payment methods.
+		return $gateways;
+	}
+
+	if ( ! $is_visit ) {
+		return $gateways; // ⭐ ZERO CHANGE for every ordinary shopper. Same array, same order.
+	}
+
+	$original = $gateways;
+
+	/**
+	 * The gateways that create an order with NOTHING COLLECTED.
+	 *
+	 * ⛔ Only ever ADD a gateway here that genuinely defers payment. This list is
+	 *    subtractive on a flagged checkout, so a card gateway landing in it would
+	 *    make the visit checkout unpayable.
+	 *
+	 * @param string[] $ids Gateway ids to withhold from a visit-flagged checkout.
+	 */
+	$deferred = apply_filters(
+		'bhp_school_visit_unpaid_gateway_ids',
+		array( 'cod', 'bacs', 'cheque' )
+	);
+
+	if ( ! is_array( $deferred ) || empty( $deferred ) ) {
+		return $original; // FAIL OPEN: a filter that returns nonsense withholds nothing.
+	}
+
+	foreach ( $deferred as $id ) {
+		$id = (string) $id;
+		if ( '' !== $id && isset( $gateways[ $id ] ) ) {
+			unset( $gateways[ $id ] );
+		}
+	}
+
+	/*
+	 * ⛔ LAST-DITCH SAFETY. If withholding the deferred set would leave this
+	 *    parent with NO way to pay at all, give them back what they had. An
+	 *    unpayable checkout is a worse customer outcome than the problem being
+	 *    solved. Today this branch is unreachable on this store (three Stripe
+	 *    gateways are enabled) and it exists so that it stays unreachable.
+	 */
+	if ( empty( $gateways ) ) {
+		return $original;
+	}
+
+	return $gateways;
+}
