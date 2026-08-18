@@ -106,13 +106,25 @@ bhp_cg_assert(
 $pickup_settings_before  = get_option( 'woocommerce_pickup_location_settings', 'ABSENT' );
 $pickup_locations_before = get_option( 'pickup_location_pickup_locations', 'ABSENT' );
 
-/* Put the request on the checkout page so is_checkout() is genuinely true. */
+/*
+ * Put this CLI request on the checkout surface.
+ *
+ * ⭐ THROUGH WOOCOMMERCE'S OWN `woocommerce_is_checkout` FILTER, which is the
+ *    documented first term of `is_checkout()` itself
+ *    (`wc-conditional-functions.php`, read on staging at WooCommerce 10.9.1).
+ *    Faking `$wp_query` instead does NOT work under WP-CLI — that was tried
+ *    first and `is_checkout()` stayed false, because
+ *    `CartCheckoutUtils::is_checkout_page()` has no real page request to read.
+ *    Recorded here so it is not re-derived.
+ *
+ * ⛔ It is removed again in §5. `is_order_received_page()` stays FALSE
+ *    throughout, because no `order-received` query var is ever set.
+ */
 $checkout_id = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( 'checkout' ) : 0;
 bhp_cg_assert( $checkout_id > 0, '§1 a checkout page id resolves', $failures );
-if ( $checkout_id > 0 ) {
-	// phpcs:ignore WordPress.WP.DiscouragedFunctions.query_posts_query_posts -- test harness only; wp_reset_query() in §5.
-	query_posts( array( 'page_id' => $checkout_id ) );
-}
+
+add_filter( 'woocommerce_is_checkout', '__return_true', 99 );
+
 bhp_cg_assert(
 	function_exists( 'is_checkout' ) && is_checkout() && ! is_order_received_page(),
 	'§1 the harness has put this request on the real checkout surface',
@@ -303,7 +315,12 @@ bhp_cg_assert(
 	$failures
 );
 
-wp_reset_query();
+remove_filter( 'woocommerce_is_checkout', '__return_true', 99 );
+bhp_cg_assert(
+	! is_checkout(),
+	'§5 the checkout-surface harness filter is removed again',
+	$failures
+);
 
 /* =====================================================================
  * §6 — NOTHING WAS WRITTEN
