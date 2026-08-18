@@ -658,7 +658,9 @@ function bhp_school_pickup_location_details( array $record ) {
 		$date = wp_date( 'l, F j', $ts );
 	}
 
-	$details = sprintf(
+	// 2026-08-17 Andrew, verbatim order: the checkout must highlight that this
+	// is for personalized signed author copies. His words, fitted to voice rules.
+	$details = __( 'This is for personalized signed author copies! Fill in your child's first name below and I will hand them their book at the read aloud. ', 'brave-hearts' ) . sprintf(
 		/* translators: 1: school name, 2: visit date */
 		__( 'Andrew brings the signed books to %1$s on %2$s. Nothing is posted to your home, and there is no shipping charge.', 'brave-hearts' ),
 		$record['school'],
