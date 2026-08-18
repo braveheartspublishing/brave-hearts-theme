@@ -570,6 +570,95 @@ function bhp_cx_collection_gallery_map() {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.235 (2026-08-17, `CYCLE162-LD-SHOP-CAROUSEL-V2`) — THE SHOP-ARCHIVE
+ *     COMPLETE COLLECTION BANNER TAKES THE REAL CAROUSEL.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE RULING. Andrew Signore, 2026-08-17, verbatim (⚠ RELAYED through
+ *    `chief-of-staff` in the build brief; NOT witnessed first-hand here), on
+ *    1.19.234's static three-cover fan:
+ *
+ *        "No that is not very good- just use the collection page carousel
+ *         image gallery that we already created - should be easy to swap in"
+ *
+ * ⛔ WHY THIS LIVES HERE AND NOT IN THE PLACEMENT MAP ABOVE. The map is keyed
+ *    by the RESOLVED TEMPLATE BASENAME, and the shop archive resolves to
+ *    WooCommerce's own `archive-product.php` — which is ALSO the template for
+ *    every `product_cat` and `product_tag` archive. A map entry would have
+ *    leaked the carousel onto every category archive, which is precisely the
+ *    containment the banner's `is_shop()` guard exists to hold and which
+ *    `tests/test-shop-collection-carousel.php` §2 asserts against rendered
+ *    documents. So the shop gets its own predicate, gated on `is_shop()`
+ *    itself rather than on a template filename that cannot distinguish them.
+ *
+ * ⭐ HEAD-NOTE POINT 3 STILL BINDS AND IS THE WHOLE DESIGN OF THIS FUNCTION:
+ *    the enqueue gate (`bhp_book_enqueue_media_assets()` in
+ *    `inc/book-formats.php`) and the render call
+ *    (`bhp_woocommerce_shop_complete_collection_banner()` in `functions.php`)
+ *    both call THIS function and nothing else. There is exactly one of it, so
+ *    the assets and the markup cannot drift apart — a carousel whose CSS/JS
+ *    did not load would render as a broken vertical list of every slide, which
+ *    is the specific failure the brief named.
+ *
+ * ⭐ HEAD-NOTE POINT 4 (exactly one gallery instance per page) HOLDS BY
+ *    CONSTRUCTION, not by luck: `bhp_cx_render_collection_gallery()`'s map has
+ *    no shop entry, and `bhp_book_render_collection_hero_gallery()` fires on
+ *    the bundle plugin's `bhp_bundle_landing_hero_media` action, which the shop
+ *    archive never does. The shop banner is therefore the only consumer of the
+ *    `complete_collection` DOM id on that page.
+ *
+ * ⛔ NO NEW MEDIA, AND NO SECOND SOURCE OF TRUTH. This returns
+ *    `bhp_book_media('complete_collection')` unmodified — the identical call
+ *    `bhp_book_render_collection_hero_gallery()` makes for /complete-collection/.
+ *    Not a subset, not a re-ordering, not a filter. "The collection page
+ *    carousel" means the collection page's carousel.
+ *
+ * FAIL-CLOSED, like every other consumer of this component: unresolved media
+ * returns null, the banner renders its 1.19.233 copy-only markup, and nothing
+ * is enqueued. No empty frame, no placeholder.
+ *
+ * @return array|null The `bhp_book_media()` shape, or null.
+ */
+function bhp_cx_shop_banner_gallery_media() {
+    /*
+     * ⛔ NOT MEMOISED BEFORE THE QUERY EXISTS. `is_shop()` answers a question
+     *    about the main query; asked before `wp` it is meaningless, and caching
+     *    that meaningless answer would poison every later call in the request.
+     *    Both real callers run after `wp` (one on `wp_enqueue_scripts`, one on
+     *    `woocommerce_before_main_content`), so this branch is a guard against a
+     *    future caller, not a live path.
+     */
+    if (!did_action('wp')) {
+        return null;
+    }
+
+    static $resolved = null;
+    static $done     = false;
+
+    if ($done) {
+        return $resolved;
+    }
+    $done = true;
+
+    if (is_admin() || !function_exists('is_shop') || !is_shop()) {
+        return $resolved; // null
+    }
+    if (!function_exists('bhp_book_media')) {
+        return $resolved; // null
+    }
+
+    $media = bhp_book_media('complete_collection');
+    if (empty($media['has_any']) || empty($media['items'])) {
+        return $resolved; // null — fail closed
+    }
+
+    $resolved = $media;
+
+    return $resolved;
+}
+
+/**
  * The template file WordPress actually resolved for this request.
  *
  * Captured from `template_include`, which runs BEFORE `wp_head` and therefore

@@ -810,62 +810,147 @@ add_action('woocommerce_before_main_content', 'bhp_woocommerce_archive_hero', 5)
  *    interactive surface above a product grid that has to stay immediately
  *    visible. The brief named this trade and this is the side it lands on.
  *
- * ⭐ EAGER, NOT LAZY, AND THIS IS THE DELIBERATE CALL. The banner renders at
- *    hook priority 6, directly under the archive hero and above the grid — all
- *    three covers are in the first viewport at every width where the banner
- *    shows. `loading="lazy"` on an in-viewport image buys nothing (the browser
- *    fetches it during the same load regardless) and costs a visible pop-in.
- *    Instead: `loading="eager"` with `fetchpriority="low"` on all three, so
- *    they never compete with the page's real LCP element. WordPress emits a
- *    `srcset` from the attachment metadata, so a phone downloads a small
- *    candidate rather than the 300px `medium` file.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.235 (2026-08-17, `CYCLE162-LD-SHOP-CAROUSEL-V2`) — EVERYTHING FROM
+ *     "1.19.234 — THE COVERS NOW DO THE SELLING" DOWN TO HERE IS SUPERSEDED.
+ *     It is PRESERVED VERBATIM AND DELIBERATELY NOT DELETED, because the
+ *     paragraph beginning "NOT REUSED" argued AGAINST the component the
+ *     founder has now asked for by name, and a future session that cannot see
+ *     that argument being overruled will re-derive it and rebuild the fan.
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ ZERO LAYOUT SHIFT BY CONSTRUCTION. `wp_get_attachment_image()` writes the
- *    attachment's real `width`/`height` attributes, so the box is reserved
- *    before a byte of image arrives. The CSS sets `height` and `width:auto`,
- *    which keeps the reserved aspect ratio rather than overriding it.
+ * ⭐ THE RULING, VERBATIM. Andrew Signore, 2026-08-17, on his own viewing of
+ *    the 1.19.234 static cover fan (⚠ RELAYED through `chief-of-staff` in the
+ *    build brief — NOT witnessed first-hand by this session):
  *
- * ⭐ DECORATIVE, ON PURPOSE. `alt=""` behind an `aria-hidden` wrapper, exactly
- *    as the popup strip does. The heading and the CTA already carry the whole
- *    message; three book titles announced ahead of "Looking for the complete
- *    series?" would be noise, and adding titles to the accessible name would
- *    be a copy change this brief does not permit.
+ *        "No that is not very good- just use the collection page carousel
+ *         image gallery that we already created - should be easy to swap in"
  *
- * The copy is untouched: heading, subline and CTA label are byte-identical to
- * 1.19.233, and the CTA still points at /complete-collection/. An empty cover
- * set renders no strip at all, so the banner degrades to exactly its previous
- * markup rather than to a gap.
+ * ⛔ WHAT WAS WRONG WITH THE PRIOR REASONING, stated plainly rather than
+ *    quietly dropped. The "NOT REUSED" paragraph above made three claims. Two
+ *    were factually right and one was a judgement the founder has now made
+ *    differently:
+ *      - "it renders behind the bundle plugin's `bhp_bundle_landing_hero_media`
+ *        action" — TRUE of `bhp_book_render_collection_hero_gallery()`, and
+ *        irrelevant: the ACTION is just one caller. The component is
+ *        `template-parts/commerce/look-inside.php`, which /books/, the
+ *        homepage and four funnel pages already include directly, with no
+ *        plugin action anywhere. This build does the same.
+ *      - "it depends on approved `complete_collection` interior media" — TRUE,
+ *        and it is a FEATURE: `bhp_cx_shop_banner_gallery_media()` returns
+ *        null when that media does not resolve and the banner falls back to
+ *        exactly its 1.19.233 copy-only markup.
+ *      - "it would add a script and an interactive surface above a product
+ *        grid that has to stay immediately visible" — this was the judgement.
+ *        It is overruled. The cost is one CSS file and one JS file that are
+ *        already built, already minified in the deploy and already loaded on
+ *        seven other surfaces, plus a capped stage height (see the CSS block
+ *        in `style.css`) that keeps the first row of product cards in view.
+ *
+ * ⭐ WHAT IS ACTUALLY WIRED, and it is the same three lines the collection page
+ *    runs, not a copy of them:
+ *      1. MEDIA — `bhp_cx_shop_banner_gallery_media()` in
+ *         `inc/collection-gallery.php`, which returns
+ *         `bhp_book_media('complete_collection')` unmodified. The identical
+ *         call `bhp_book_render_collection_hero_gallery()` makes. Not a subset,
+ *         not a re-order. ⛔ NO NEW MEDIA — no upload, no composite, no
+ *         regeneration, no registry edit.
+ *      2. MARKUP — `template-parts/commerce/look-inside.php`, included with the
+ *         documented variable contract, exactly as `inc/collection-gallery.php`
+ *         includes it for the six funnel surfaces.
+ *      3. ASSETS — `bhp_book_enqueue_media_assets()` in `inc/book-formats.php`
+ *         gained an `is_shop()` branch that calls THE SAME PREDICATE this
+ *         function calls. ⛔ One predicate, two callers: the CSS/JS and the
+ *         markup cannot appear without each other, which is the failure mode
+ *         the brief named ("assets must load or the carousel is a broken
+ *         list").
+ *
+ * ⭐ THE MODE FLAGS, each chosen rather than copied, because the collection
+ *    page's own flags are wrong for a banner:
+ *      `$hero      = false` — hero mode DELETES the heading element and labels
+ *                    the region with `aria-label` instead. That is right when
+ *                    the gallery stands in for a product's main image above an
+ *                    `<h1>`; here the banner's own `<h2>` is the section title
+ *                    and the region still needs a name of its own.
+ *      `$heading_hidden = true` — the banner already says "Looking for the
+ *                    complete series?" two lines away. A second visible title
+ *                    inside the same ivory box reads as a second section. The
+ *                    ELEMENT IS NOT REMOVED: it is the `aria-labelledby`
+ *                    target, so deleting it would strip the region's
+ *                    accessible name. Same precedent as the homepage and the
+ *                    four funnel heroes.
+ *      `$level     = 'h3'` — the nearest preceding heading is the banner's own
+ *                    `<h2>`, so `h3` is the level that does not skip.
+ *      `$collection = true` — the cream/forest/gold chrome. The banner's
+ *                    background is `--color-ivory`, so the collection page's
+ *                    palette is the one that belongs here, and it carries
+ *                    1.19.206's `width: 100%` slide rule, which is what stops
+ *                    the picture painting small inside its own stage.
+ *      `$compact   = true` — tightens the rail, as every non-hero placement.
+ *      `$eager_first = true` — ⛔ LOAD-BEARING, NOT COSMETIC. The banner is at
+ *                    hook priority 6, directly under `bhp_woocommerce_archive_hero`,
+ *                    which is TEXT ONLY and has no image. Slide 0 is therefore
+ *                    the largest contentful paint on /shop/. Lazy-loading it
+ *                    would cost exactly the metric the placement is meant to
+ *                    win. (Contrast `front-page.php` and `page-books.php` in
+ *                    `inc/collection-gallery.php`, which correctly keep false.)
+ *
+ * ⭐ THE COPY IS STILL BYTE-IDENTICAL TO 1.19.233. Heading, subline and CTA
+ *    label are unchanged and the CTA still resolves to /complete-collection/.
+ *    Locked prose was not touched.
+ *
+ * ⭐ NO DEEP-LINK ODDITY, and this was checked rather than assumed:
+ *    `look-inside.php` emits no `<a>` at all except the `<video>` element's
+ *    "Download the flip-through instead." fallback, which is only ever
+ *    rendered by a browser that cannot play the clip and points at the media
+ *    file itself. Its "Click to enlarge" opens the in-page lightbox;
+ *    `assets/js/book-media.js` contains no `location`, `href` assignment,
+ *    `window.open` or `history` call. Nothing in the component navigates
+ *    anywhere, so nothing about it deep-links oddly from /shop/.
+ *
+ * ⛔ EXACTLY ONE GALLERY INSTANCE, which matters because `look-inside.php`
+ *    derives its DOM id from the media key. `bhp_cx_render_collection_gallery()`'s
+ *    placement map has no shop entry, and `bhp_book_render_collection_hero_gallery()`
+ *    fires on a bundle-plugin action the shop archive never runs. This is the
+ *    only consumer of `#bhp-look-inside-complete_collection` on /shop/.
  */
 function bhp_woocommerce_shop_complete_collection_banner() {
     if (!function_exists('is_shop') || !is_shop()) {
         return;
     }
 
-    $covers = function_exists('bhp_get_popup_ab_covers') ? bhp_get_popup_ab_covers() : [];
+    $bhp_scc_media = function_exists('bhp_cx_shop_banner_gallery_media')
+        ? bhp_cx_shop_banner_gallery_media()
+        : null;
+    $bhp_scc_tpl   = $bhp_scc_media ? locate_template('template-parts/commerce/look-inside.php') : '';
+    $bhp_scc_show  = ($bhp_scc_media && '' !== $bhp_scc_tpl);
     ?>
-    <div class="woo-complete-collection-banner">
+    <div class="woo-complete-collection-banner<?php echo $bhp_scc_show ? ' woo-complete-collection-banner--gallery' : ''; ?>">
       <div class="container woo-complete-collection-banner__inner">
+        <?php if ($bhp_scc_show) : ?>
+          <div class="woo-complete-collection-banner__media">
+            <?php
+            /*
+             * The documented variable contract of
+             * `template-parts/commerce/look-inside.php`. Set explicitly and
+             * completely — the template reads them from the including scope,
+             * so an unset one would inherit whatever a previous include left
+             * behind in this function's scope.
+             */
+            $media          = $bhp_scc_media;
+            $heading        = __('The Complete Collection - all three books', 'brave-hearts');
+            $heading_hidden = true;
+            $intro          = '';
+            $level          = 'h3';
+            $hero           = false;
+            $collection     = true;
+            $compact        = true;
+            $eager_first    = true;
+            include $bhp_scc_tpl;
+            ?>
+          </div>
+        <?php endif; ?>
         <div class="woo-complete-collection-banner__lead">
-          <?php if ($covers) : ?>
-            <div class="woo-complete-collection-banner__covers" aria-hidden="true">
-              <?php foreach ($covers as $cover) : ?>
-                <?php
-                echo wp_get_attachment_image(
-                    (int) $cover['id'],
-                    'medium',
-                    false,
-                    [
-                        'class'         => 'woo-complete-collection-banner__cover',
-                        'alt'           => '',
-                        'loading'       => 'eager',
-                        'decoding'      => 'async',
-                        'fetchpriority' => 'low',
-                    ]
-                ); // phpcs:ignore WordPress.Security.EscapeOutput -- core-escaped attachment markup.
-                ?>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
           <div class="woo-complete-collection-banner__copy">
             <h2><?php esc_html_e('Looking for the complete series?', 'brave-hearts'); ?></h2>
             <p><?php esc_html_e('Get all three adventures in paperback or hardcover.', 'brave-hearts'); ?></p>

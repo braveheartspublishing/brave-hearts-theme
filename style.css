@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.234
+Version: 1.19.235
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5804,78 +5804,68 @@ body:not(.home) .books-series-overview + .books-complete-collection-banner { pad
   .books-complete-collection-banner__browse { align-self: center; }
 }
 
-/* ---------- 1.19.234 · the shop banner's Complete Collection cover strip -----
-   ⛔ EVERY SELECTOR BELOW IS PREFIXED `.woo-complete-collection-banner`, and
-      that is load-bearing, not tidiness. The block above deliberately shares
-      its rules between TWO banners — the /books/ one
-      (`.books-complete-collection-banner`) and the shop-archive one — so a
-      bare `__covers` or an edit to `__inner` would have silently restyled a
-      page this brief never touched. The covers ship on the shop archive only;
-      /books/ renders byte-identically to 1.19.233.
+/* ---------- 1.19.235 · the shop banner's Complete Collection CAROUSEL --------
+   ⭐ SUPERSEDES 1.19.234's static cover fan (`__covers` / `__cover`), which is
+      DELETED here rather than left dead: the markup that emitted it is gone,
+      and an orphan rule set for three classes nothing renders is how a future
+      reader concludes the fan is still a supported mode. The reasoning that
+      produced it — the overlap fan, the eager/fetchpriority trade, the
+      no-reduced-motion note — is preserved in the superseded block in
+      `functions.php` above `bhp_woocommerce_shop_complete_collection_banner()`,
+      which is where the founder's overruling ruling is also recorded.
 
-   ⛔ WHY A `__lead` WRAPPER EXISTS AT ALL. `__inner` is `space-between` with
-      exactly two children: the copy, and the CTA. Adding the covers as a THIRD
-      child would have redistributed that free space and pushed the heading to
-      the middle of the row. Grouping covers + copy keeps the child count at
-      two, so the CTA's position is unchanged and no existing rule had to move.
+   ⛔ EVERY SELECTOR BELOW IS STILL PREFIXED `.woo-complete-collection-banner`,
+      and that is load-bearing, not tidiness. The block above deliberately
+      SHARES its rules between TWO banners — the /books/ one
+      (`.books-complete-collection-banner`) and the shop-archive one — so any
+      edit to a shared `__inner` rule would silently restyle a page this brief
+      never touched. /books/ renders byte-identically to 1.19.234.
 
-   ⛔ NO `width`/`height` OVERRIDE. `wp_get_attachment_image()` writes the real
-      pixel dimensions as ATTRIBUTES, which is what reserves the box before the
-      image loads. `height` + `width: auto` scales inside that reservation and
-      preserves the aspect ratio; setting both in CSS would throw the reserved
-      ratio away and reintroduce the shift this is built to avoid.
+   ⛔ THE GALLERY'S OWN CHROME IS NOT STYLED HERE, AND THAT IS NOT A CHOICE OF
+      TASTE. `.bhp-*` rules for this host live in `assets/css/book-media.css`.
+      Both files declare 0,2,0 selectors and book-media.css is enqueued AFTER
+      style.css, so a `.woo-complete-collection-banner__media .bhp-gallery`
+      rule written here would lose the cascade to
+      `.bhp-media-gallery--collection .bhp-gallery` and the stage-height cap
+      would silently not apply. That exact trap is recorded at book-media.css
+      line ~775 from the 1.19.147 QA run. Layout of the banner's own boxes
+      belongs here; anything touching the component belongs there.
 
-   Height budget, measured from the declared values rather than guessed: 96px
-   of cover inside a row whose text block is ~62px, so the banner grows by
-   roughly 34px on desktop and ~96px on mobile where it stacks. The brief's
-   ceiling was ~200px added. The product grid stays immediately visible. */
-.woo-complete-collection-banner__lead {
-  display: flex;
-  align-items: center;
-  gap: 1.15rem;
+   ⭐ THE ROW IS NOW THREE CHILDREN: the carousel, the copy, the CTA. `__inner`
+      is already `flex-wrap: wrap` with `justify-content: space-between`, so no
+      shared rule had to move — the carousel simply joins the row and takes its
+      own line when the row is not comfortably wide. This is the same shape the
+      /books/ banner has shipped since 1.19.146.
+
+   ⭐ MOBILE-FIRST OUTCOME. At the existing 700px stack point `__inner` is
+      already `flex-direction: column`, so the order is carousel → heading +
+      subline → full-width CTA. The 782px rule below makes the carousel take
+      its own full-width line slightly earlier, matching the /books/ breakpoint
+      in book-media.css rather than inventing a second one. */
+.woo-complete-collection-banner__media {
+  /* Grows into the free space but never past the /books/ banner's proven
+     420px, which is what stops the stage swallowing the row at 1440. */
+  flex: 1 1 380px;
+  max-width: 420px;
   min-width: 0;
 }
-.woo-complete-collection-banner__covers {
-  display: flex;
-  align-items: flex-end;
-  flex: none;
+/* The copy column keeps a real minimum so "Looking for the complete series?"
+   never wraps to one word per line between the carousel and the CTA. */
+.woo-complete-collection-banner__lead {
+  flex: 1 1 17rem;
+  min-width: 0;
 }
-.woo-complete-collection-banner__cover {
-  display: block;
-  height: 96px;
-  width: auto;
-  border-radius: 3px;
-  box-shadow: 0 4px 10px rgba(31, 77, 54, 0.22);
-}
-/* The same overlapped fan the A/B popup strip uses (1.19.205), at banner
-   scale — the middle cover sits proudest and in front. */
-.woo-complete-collection-banner__cover:first-child { transform: rotate(-4deg); margin-right: -12px; }
-.woo-complete-collection-banner__cover:last-child { transform: rotate(4deg); margin-left: -12px; }
-.woo-complete-collection-banner__cover:nth-child(2) { position: relative; z-index: 1; height: 108px; }
-@media (max-width: 860px) {
-  .woo-complete-collection-banner__cover { height: 76px; }
-  .woo-complete-collection-banner__cover:nth-child(2) { height: 86px; }
-}
-/* Mobile-first outcome at the existing 700px stack point: covers on TOP of the
-   heading rather than beside it. Three covers plus a heading do not fit side
-   by side at 390px without shrinking the covers past the point of selling
-   anything. */
-@media (max-width: 700px) {
-  .woo-complete-collection-banner__lead {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.85rem;
+@media (max-width: 782px) {
+  .woo-complete-collection-banner__media {
+    flex-basis: 100%;
+    max-width: 100%;
     width: 100%;
   }
-  .woo-complete-collection-banner__cover { height: 84px; }
-  .woo-complete-collection-banner__cover:nth-child(2) { height: 94px; }
+  .woo-complete-collection-banner__lead {
+    flex-basis: 100%;
+    width: 100%;
+  }
 }
-/* ⛔ NO `prefers-reduced-motion` BLOCK, DELIBERATELY. An earlier draft of this
-   rule added one. It was wrong: these are STATIC rotations, not animation or
-   transition, and that query governs motion — honouring it here would change
-   the layout for reduced-motion users for no accessibility gain. The A/B popup
-   strip's identical fan does not do it either. Recorded rather than silently
-   dropped so the next reader does not re-add it. */
 
 /* ── Fable audit Finding #35: compact commerce header ─────────────────────
    On cart/checkout/order-received the tall "Brave Hearts Field Journal" hero

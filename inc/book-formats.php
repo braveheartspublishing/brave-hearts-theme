@@ -971,12 +971,40 @@ function bhp_book_enqueue_media_assets() {
      * Product pages and the Complete Collection page. The shop-card affordance
      * remains PARKED, so the shop archive is deliberately absent here —
      * restore that branch at the same time as its hook, not before.
+     *
+     * ⭐ 1.19.235 — THE SENTENCE ABOVE IS PRESERVED AND IS NOW TRUE OF ONLY THE
+     *    SHOP-CARD AFFORDANCE. The shop archive DOES load these assets now, but
+     *    for a different feature: the Complete Collection banner's carousel
+     *    (`bhp_woocommerce_shop_complete_collection_banner()`). The parked
+     *    `bhp_book_shop_look_inside_link()` hook is still parked and this
+     *    changes nothing about it — do not read the new branch below as
+     *    permission to un-park it.
      */
     if (function_exists('is_product') && is_product()) {
         $found = bhp_book_lookup_product(get_queried_object_id());
         if (!$found || !$found['canonical'] || !bhp_book_has_look_inside($found['key'])) {
             return;
         }
+    } elseif (function_exists('bhp_cx_shop_banner_gallery_media') && bhp_cx_shop_banner_gallery_media()) {
+        /*
+         * ⭐ 1.19.235 / `CYCLE162-LD-SHOP-CAROUSEL-V2` — the shop archive's
+         *    Complete Collection banner.
+         *
+         * ⛔ THE SAME PREDICATE THE RENDER CALLS, exactly as the funnel branch
+         *    below does and for exactly the same reason (see the head note in
+         *    `inc/collection-gallery.php`, point 3). If the Collection media
+         *    does not resolve on this environment the predicate returns null,
+         *    the banner renders copy-only, and nothing is enqueued — the
+         *    assets and the markup cannot appear without each other.
+         *
+         * ⚠ THIS BRANCH MUST STAY ABOVE the collection-page branch only in the
+         *   sense that order does not matter here: `is_shop()` and
+         *   `bhp_book_is_collection_page()` are mutually exclusive. It is
+         *   placed here so the two banner branches read together.
+         *
+         * Intentionally empty body: the predicate in the condition IS the whole
+         * check and falling through to the enqueue below is correct.
+         */
     } elseif (bhp_book_is_collection_page()) {
         if (!bhp_book_media('complete_collection')['has_any']) {
             return;

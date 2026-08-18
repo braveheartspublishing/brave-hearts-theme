@@ -797,6 +797,50 @@ body.bhp-gallery-lightbox-open {
 	margin-inline: auto;
 }
 
+/*
+ * ---- /shop/: inside the Complete Collection banner (1.19.235,
+ *      `CYCLE162-LD-SHOP-CAROUSEL-V2`).
+ *
+ * The same situation as /books/ directly above — a third child of a two-child
+ * ivory flex band — with one addition that /books/ does not need.
+ *
+ * ⛔ THE STAGE HEIGHT IS CAPPED HERE, AND IT IS THE ONE RULE THAT MATTERS.
+ *    `.bhp-media-gallery--collection .bhp-gallery` sets `--bhp-stage-h:
+ *    min(52vh, 460px)` for the /complete-collection/ hero, where 52vh is
+ *    correct because the gallery IS the page's first screen. On /shop/ it is
+ *    not: the banner sits at hook priority 6 with a product grid directly
+ *    beneath it that has to stay reachable without a scroll on a laptop. A
+ *    460px stage plus the thumb rail plus the caption would push the first row
+ *    of product cards off a 900px viewport entirely.
+ *
+ * ⛔ WHY THIS RULE CANNOT LIVE IN style.css. Both selectors are 0,2,0 and this
+ *    file is enqueued AFTER style.css, so the `--collection` value would win
+ *    and the cap would silently do nothing. Same trap as the 620px width
+ *    override noted above, which was observed failing in the 1.19.147 QA run.
+ *
+ * ⚠ 340 / 280 ARE DECLARED VALUES, NOT MEASURED OUTCOMES. The stage's rendered
+ *   height and the banner's total height at 390 and 1440 have NOT been
+ *   observed by the session that wrote this — there was no browser available.
+ *   They are the first thing to check in the browser pass, and they are a
+ *   one-line tune if the grid still sits too low.
+ */
+.woo-complete-collection-banner__media .bhp-look-inside {
+	min-width: 0;
+	max-width: 100%;
+	margin: 0;
+}
+
+.woo-complete-collection-banner__media .bhp-gallery {
+	--bhp-stage-h: min(40vh, 340px);
+	max-width: 100%;
+}
+
+@media (max-width: 640px) {
+	.woo-complete-collection-banner__media .bhp-gallery {
+		--bhp-stage-h: min(38vh, 280px);
+	}
+}
+
 /* ---- parent + audience landing pages: centre within the section inner ---- */
 .parent-landing .bhp-look-inside,
 .audience-landing .bhp-look-inside {
