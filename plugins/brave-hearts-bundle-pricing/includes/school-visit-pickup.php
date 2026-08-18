@@ -1336,6 +1336,40 @@ function bhp_school_visit_freeship_copy( $copy ) {
 }
 add_filter( 'bhp_bundle_freeship_copy', 'bhp_school_visit_freeship_copy', 10, 1 );
 
+/**
+ * Rename the order-totals SHIPPING row on a hand-delivery order.
+ *
+ * ⭐ FOUND BY READING A RENDERED EMAIL, NOT BY READING CODE. The full order
+ *    walk produced a confirmation email whose totals table read
+ *    "Shipping: Author hand-delivery at the … visit", which is the last place
+ *    in the whole flow the word survived. The checkout screen itself already
+ *    says "Pickup" — WooCommerce's own order-summary block swaps that label
+ *    when `prefersCollection` is true — but `WC_Order::get_order_item_totals()`
+ *    hardcodes "Shipping:" and it is what the ORDER-RECEIVED page and EVERY
+ *    order email render.
+ *
+ * ⛔ IT CHANGES A LABEL AND NOTHING ELSE. The row's VALUE is WooCommerce's own,
+ *    including the "Collection from …" sentence its
+ *    `ShippingController::show_local_pickup_details()` builds from the pickup
+ *    location. No amount, no total and no other row is touched, and an ordinary
+ *    order is returned by identity.
+ *
+ * @param array         $rows  Total rows.
+ * @param WC_Order|null $order Order.
+ * @return array
+ */
+add_filter( 'woocommerce_get_order_item_totals', 'bhp_school_pickup_order_totals_label', 20, 2 );
+function bhp_school_pickup_order_totals_label( $rows, $order = null ) {
+	if ( ! is_array( $rows ) || ! isset( $rows['shipping']['label'] ) ) {
+		return $rows;
+	}
+	if ( ! $order instanceof WC_Order || ! bhp_school_pickup_order_is_pickup( $order ) ) {
+		return $rows; // ZERO CHANGE for every ordinary order.
+	}
+	$rows['shipping']['label'] = __( 'Hand delivery:', 'brave-hearts' );
+	return $rows;
+}
+
 /* =========================================================================
  * CUSTOMER-FACING HONESTY
  * ====================================================================== */

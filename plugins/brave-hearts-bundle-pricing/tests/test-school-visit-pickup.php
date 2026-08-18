@@ -160,12 +160,52 @@ if ( ! defined( 'BHP_SCHOOL_VISIT_OPTION' ) ) {
  *    cleaned up by hand. This is the second cleanup defect in this file and
  *    the second one caused by the RUNNER rather than by the assertions.
  */
-$GLOBALS['bhp_svp_original_visits'] = get_option( BHP_SCHOOL_VISIT_OPTION, null );
-$GLOBALS['bhp_svp_probe_ids']       = array();
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THIRD CLEANUP DEFECT, FOUND 2026-08-17 DURING `CYCLE163-LD-PICKUP-NATIVE`,
+ *     AND IT IS THE ONLY ONE THAT DESTROYED REAL OPERATOR DATA.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ WHAT ACTUALLY HAPPENED, OBSERVED, NOT REASONED ABOUT. The suite was run
+ *    over SSH and its output piped through `head -80` to read the first
+ *    screenful. `head` closes the pipe after 80 lines, PHP CLI takes SIGPIPE
+ *    on the next `echo`, AND THE PROCESS DIES BEFORE `bhp_svp_cleanup()`.
+ *    The fixture registry was therefore left in the option. The NEXT run then
+ *    snapshotted THAT as "the original", and restored it faithfully. Two runs
+ *    later, staging's three real seeded visits (Adams, Dallas Harris, Liberty)
+ *    were gone and six `bhpsvptest-*` rows were in their place. They were
+ *    restored by hand from a value read out of the option earlier in the same
+ *    session, which is luck, not a procedure.
+ *
+ * ⛔ THE FIX IS NOT "REMEMBER NOT TO PIPE THROUGH head". A test suite must not
+ *    have a failure mode that deletes production-shaped data when somebody
+ *    reads its output. So the fixtures are now MERGED INTO the registry, never
+ *    substituted for it, and cleanup REMOVES ONLY THE ROWS THIS FILE ADDED:
+ *
+ *      · A killed run now leaves six extra `bhpsvptest-*` rows behind and
+ *        loses NOTHING. They are inert: every one of them is a test school
+ *        nobody has a link to.
+ *      · The NEXT run removes them, because cleanup deletes by key prefix
+ *        rather than by restoring a snapshot.
+ *      · There is no snapshot to become contaminated, so the cascade that
+ *        caused this cannot happen at all.
+ *
+ * ⚠ STILL TRUE, AND STILL STATED: probe ORDERS are not protected by this
+ *   design. A killed run still leaves them behind, exactly as it did in 1.8.49.
+ *   They are zero-total `pending` orders and are safe to delete by hand. The
+ *   asymmetry is deliberate: an order is created by this file and can be
+ *   identified; the registry belongs to an operator and cannot be reconstructed.
+ *
+ * ⭐ AND THE OPERATIONAL RULE THAT FALLS OUT OF IT: redirect this suite to a
+ *    file (`> out.txt 2>&1`) and read the file. Do not pipe it into anything
+ *    that can close the pipe early.
+ */
+$GLOBALS['bhp_svp_fixture_prefix'] = 'bhpsvptest-';
+$GLOBALS['bhp_svp_probe_ids']      = array();
 
 function bhp_svp_cleanup() {
-	$bhp_svp_original_visits = isset( $GLOBALS['bhp_svp_original_visits'] ) ? $GLOBALS['bhp_svp_original_visits'] : null;
-	$bhp_svp_probe_ids       = isset( $GLOBALS['bhp_svp_probe_ids'] ) ? $GLOBALS['bhp_svp_probe_ids'] : array();
+	$bhp_svp_probe_ids = isset( $GLOBALS['bhp_svp_probe_ids'] ) ? $GLOBALS['bhp_svp_probe_ids'] : array();
+	$prefix            = isset( $GLOBALS['bhp_svp_fixture_prefix'] ) ? $GLOBALS['bhp_svp_fixture_prefix'] : 'bhpsvptest-';
 
 	foreach ( (array) $bhp_svp_probe_ids as $pid ) {
 		$o = function_exists( 'wc_get_order' ) ? wc_get_order( $pid ) : null;
@@ -180,13 +220,26 @@ function bhp_svp_cleanup() {
 	}
 	$GLOBALS['bhp_svp_probe_ids'] = array();
 
-	if ( null === $bhp_svp_original_visits ) {
-		delete_option( BHP_SCHOOL_VISIT_OPTION );
-		echo "CLEANUP: visit registry deleted (it did not exist before this run)\n";
-	} else {
-		update_option( BHP_SCHOOL_VISIT_OPTION, $bhp_svp_original_visits );
-		echo "CLEANUP: visit registry restored to its pre-run value\n";
+	/*
+	 * ⛔ REMOVE ONLY WHAT THIS FILE ADDED. Every other row is left exactly as
+	 *    it was found, whatever it is, whoever put it there.
+	 */
+	$current = get_option( BHP_SCHOOL_VISIT_OPTION, array() );
+	if ( ! is_array( $current ) ) {
+		echo "CLEANUP: ⛔ the visit registry is not an array; refusing to touch it.\n";
+		return;
 	}
+	$removed = 0;
+	foreach ( array_keys( $current ) as $k ) {
+		if ( 0 === strpos( (string) $k, $prefix ) ) {
+			unset( $current[ $k ] );
+			++$removed;
+		}
+	}
+	if ( $removed ) {
+		update_option( BHP_SCHOOL_VISIT_OPTION, $current );
+	}
+	echo "CLEANUP: removed {$removed} `{$prefix}*` fixture row(s); " . count( $current ) . " non-fixture visit row(s) left untouched\n";
 }
 
 $today     = wp_date( 'Y-m-d' );
@@ -194,9 +247,18 @@ $yesterday = wp_date( 'Y-m-d', strtotime( '-1 day' ) );
 $next_week = wp_date( 'Y-m-d', strtotime( '+7 days' ) );
 $next_year = wp_date( 'Y-m-d', strtotime( '+370 days' ) );
 
+/*
+ * ⛔ MERGE, NEVER REPLACE. See the cleanup block above for the incident this
+ *    prevents. A fixture slug can never collide with a real one: no operator
+ *    is going to name a school `bhpsvptest-live`.
+ */
+$bhp_svp_existing = get_option( BHP_SCHOOL_VISIT_OPTION, array() );
+$bhp_svp_existing = is_array( $bhp_svp_existing ) ? $bhp_svp_existing : array();
+echo 'INFO: ' . count( $bhp_svp_existing ) . " visit row(s) already in the registry; the fixtures below are ADDED to them, not substituted for them.\n";
+
 update_option(
 	BHP_SCHOOL_VISIT_OPTION,
-	array(
+	$bhp_svp_existing + array(
 		// Live: cutoff a week out.
 		'bhpsvptest-live'    => array( 'school' => 'Test Live Elementary', 'date' => $next_year, 'cutoff' => $next_week ),
 		// Live on the LAST possible day: cutoff is today, and today must still work.
@@ -811,6 +873,24 @@ bhp_svp_assert(
 	'⭐ ORDER SIDE: WooCommerce hides the shipping address on the confirmation page and in the order emails for this build\'s method. A parent never sees a posting address anywhere in the flow',
 	$failures
 );
+
+/*
+ * ⭐ THE LAST PLACE THE WORD "SHIPPING" SURVIVED, and it was found by RENDERING
+ *    a real confirmation email during the order walk rather than by reading
+ *    code. `WC_Order::get_order_item_totals()` hardcodes "Shipping:" and it is
+ *    what the order-received page and every order email print.
+ */
+$svp_rows_normal = bhp_school_pickup_order_totals_label( array( 'shipping' => array( 'label' => 'Shipping:', 'value' => 'x' ) ), $shipped_order );
+bhp_svp_assert( 'Shipping:' === $svp_rows_normal['shipping']['label'], '⛔ TOTALS ROW, ORDINARY ORDER: the label is WooCommerce\'s own, untouched', $failures );
+
+$svp_rows_pickup = bhp_school_pickup_order_totals_label( array( 'shipping' => array( 'label' => 'Shipping:', 'value' => 'x' ) ), $pickup_by_line );
+bhp_svp_assert( 'Hand delivery:' === $svp_rows_pickup['shipping']['label'], '⭐ TOTALS ROW, PICKUP ORDER: the confirmation page and every order email say "Hand delivery:", not "Shipping:"', $failures );
+bhp_svp_assert( 'x' === $svp_rows_pickup['shipping']['value'], 'TOTALS ROW: only the LABEL changed. The value is WooCommerce\'s own, including its "Collection from ..." sentence', $failures );
+
+$svp_rows_legacy = bhp_school_pickup_order_totals_label( array( 'shipping' => array( 'label' => 'Shipping:', 'value' => 'x' ) ), $pickup_legacy );
+bhp_svp_assert( 'Hand delivery:' === $svp_rows_legacy['shipping']['label'], 'TOTALS ROW: a 1.8.49-era order gets the corrected label too', $failures );
+
+bhp_svp_assert( array() === bhp_school_pickup_order_totals_label( array(), $pickup_by_line ), 'TOTALS ROW: a totals array with no shipping row is returned untouched (and does not fatal)', $failures );
 
 /* =========================================================================
  * 9. NO ZONE, METHOD OR FLAT-RATE SETTING WAS TOUCHED
