@@ -590,7 +590,49 @@ bhp_hdo_assert(
  *    record that holds it, by path only: Business OS `WORKING-DRAFTS\
  *    commerce-cx\FULL-SITE-VISUAL-INVENTORY-2026-08-19.md`.
  */
-$offer_block = strstr( $css_src, '⭐ 1.19.260 (2026-08-19) — THE MOBILE-HEADER OFFER' );
+/*
+ * ⛔ THE SLICE IS NOW BOUNDED AT BOTH ENDS — 1.19.268,
+ *    CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. Superseded line, quoted rather
+ *    than deleted:
+ *
+ *      $offer_block = strstr( $css_src, '⭐ 1.19.260 (2026-08-19) — THE MOBILE-HEADER OFFER' );
+ *
+ *    `strstr()` returns EVERYTHING FROM THE MARKER TO END OF FILE. That was
+ *    correct on the day it was written, when 1.19.260's block was last in the
+ *    stylesheet, and it was a LATENT TRIP-WIRE: §7.6 is a NEGATIVE assertion
+ *    ("`#071522` does not appear here"), so the first later release to write
+ *    that hex ANYWHERE below — including inside a comment — fails a test whose
+ *    message points at the header offer.
+ *
+ *    1.19.268 did exactly that. Its cream block documents the measured contrast
+ *    ratio of `--color-navy` (#071522) on the new parchment ground, 15.01:1, and
+ *    §7.6 went red on a header offer this release does not touch at all.
+ *
+ * ⭐ FIXED THE RIGHT WAY ROUND, TWICE OVER, AND NEITHER FIX WEAKENS ANYTHING:
+ *    1. the slice ends at the next top-level banner — a `/* ===` opener at the
+ *       start of a line, this stylesheet's own section delimiter — so any
+ *       future append is outside it automatically, with no marker to maintain;
+ *    2. the hex check reads the COMMENT-STRIPPED block, because this codebase
+ *       writes essay-length CSS comments on purpose and those essays quote the
+ *       very hexes the assertion forbids. Asserting over prose makes an
+ *       ACCURATE comment fail the build — the same correction
+ *       `test-direction1-home.php` §3.6 already carries, for the same reason.
+ *
+ *    The forbidden hexes and the assertion itself are UNCHANGED. Only the
+ *    window they are applied to is.
+ *
+ * ⚠️ THIS IS THE THIRD RECORDED INSTANCE OF THE UNBOUNDED-TAIL DEFECT IN THIS
+ *    TEST CORPUS (`test-homepage-warmth`'s `$p5_tail`/`$p7_tail`/`$p8_tail`,
+ *    `test-direction1-home`'s `$p4_tail`, and this). Registered as a finding
+ *    rather than fixed one file at a time: any `strstr()` or unbounded
+ *    `substr()` over a stylesheet, combined with a negative assertion, breaks
+ *    on the next append. New suites should bound the slice at both ends.
+ */
+$offer_raw   = strstr( $css_src, '⭐ 1.19.260 (2026-08-19) — THE MOBILE-HEADER OFFER' );
+$offer_end   = is_string( $offer_raw ) ? strpos( $offer_raw, "\n/* ===", 1 ) : false;
+$offer_block = ( is_string( $offer_raw ) && false !== $offer_end )
+	? substr( $offer_raw, 0, $offer_end )
+	: $offer_raw;
 bhp_hdo_assert(
 	is_string( $offer_block ) && false !== strpos( $offer_block, '@container (max-width: 1116px)' ),
 	'§7.3 the component is gated on the SAME container query that drives the hamburger',
@@ -607,8 +649,10 @@ bhp_hdo_assert(
 	'§7.5 the hidden state uses visibility, so the box is reserved and the logo cannot shift',
 	$failures
 );
+$offer_code = is_string( $offer_block ) ? (string) preg_replace( '#/\*.*?\*/#s', '', $offer_block ) : '';
 bhp_hdo_assert(
-	is_string( $offer_block ) && false === strpos( $offer_block, '#c4a15c' ) && false === strpos( $offer_block, '#071522' ),
+	is_string( $offer_block ) && '' !== $offer_code
+		&& false === strpos( $offer_code, '#c4a15c' ) && false === strpos( $offer_code, '#071522' ),
 	'§7.6 no new hue: the component reads the existing palette tokens rather than hardcoding colours',
 	$failures
 );

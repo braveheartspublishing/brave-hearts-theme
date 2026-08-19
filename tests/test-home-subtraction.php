@@ -139,16 +139,41 @@ bhp_hs_assert(
 	'§1.3 NO aggregateRating and NO Review schema is emitted on the homepage',
 	$failures
 );
-if ( preg_match( '#<span class="home-trust-proof__badge[^"]*"[^>]*>(.*?)</span>#s', $home, $bm ) ) {
-	$badge = trim( wp_strip_all_tags( $bm[1] ) );
-	bhp_hs_assert(
-		0 === preg_match( '/\d/', preg_replace( '/[\x{2605}\x{2606}]/u', '', $badge ) ),
-		'§1.4 the trust badge carries no digit — no rating value and no review count (badge: "' . $badge . '")',
-		$failures
-	);
-} else {
-	bhp_hs_assert( false, '§1.4 the trust badge could not be located in the served document', $failures );
+/*
+ * ⚠️ CORRECTED ON ITS FIRST RUN, AND THE CORRECTION IS THE INTERESTING PART.
+ *    The first version of this assertion took the FIRST `home-trust-proof__badge`
+ *    span on the page. That is the AGE badge — "Ages 6–9" — so the check went
+ *    red on the digit in "9" and reported the star badge as carrying a review
+ *    count it does not carry. A test that names the wrong element is worse than
+ *    no test: it would have been "fixed" by loosening the digit rule, which is
+ *    the one rule here that matters. It now selects the badge BY ITS OWN TEXT.
+ */
+$star_badge = '';
+if ( preg_match_all( '#<span class="home-trust-proof__badge[^"]*"[^>]*>(.*?)</span>#s', $home, $bm ) ) {
+	foreach ( $bm[1] as $candidate ) {
+		if ( false !== strpos( $candidate, 'Five-star reader reviews' ) ) {
+			$star_badge = trim( wp_strip_all_tags( $candidate ) );
+			break;
+		}
+	}
 }
+bhp_hs_assert(
+	'' !== $star_badge,
+	'§1.4a the five-star badge was located in the served document',
+	$failures
+);
+bhp_hs_assert(
+	'' !== $star_badge && 0 === preg_match( '/\d/', preg_replace( '/[\x{2605}\x{2606}]/u', '', $star_badge ) ),
+	'§1.4b the five-star badge carries no digit — no rating value and no review count (badge: "' . $star_badge . '")',
+	$failures
+);
+/* And the star glyphs themselves are untouched by this release: five of them,
+   exactly as before, because the ruling removed words and not the stars. */
+bhp_hs_assert(
+	'' !== $star_badge && 5 === preg_match_all( '/\x{2605}/u', $star_badge ),
+	'§1.4c the badge still carries exactly five star glyphs',
+	$failures
+);
 
 /* ═══════════════════════════════════════════════════════════════════════════
    §2 · THE THREE REMOVED SECTIONS ARE ABSENT
