@@ -1,5 +1,5 @@
 /*! Built from checkout-experience.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 74a5df6d2ce9c40d1edfb59b26639ad3
+    source-md5: 1fcee33c0a916cd51df08e7607559ab3
     Comments stripped for transfer size; the source file is canonical. */
 .wc-block-checkout.is-mobile > .wc-block-checkout__sidebar,
 .wc-block-cart.is-mobile > .wc-block-cart__sidebar.is-duplicate {
@@ -89,6 +89,20 @@
 }
 
 
+
+
+@media (max-width: 699px) {
+  .wc-block-cart table.wc-block-cart-items .wc-block-cart-items__row,
+  .is-small table.wc-block-cart-items .wc-block-cart-items__row,
+  .is-mobile table.wc-block-cart-items .wc-block-cart-items__row {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+  }
+  .wc-block-cart-items {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+}
 @media (max-width: 359px) {
   .wc-block-cart table.wc-block-cart-items .wc-block-cart-items__row,
   .is-small table.wc-block-cart-items .wc-block-cart-items__row,

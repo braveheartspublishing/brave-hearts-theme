@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 60ab6f709d5552156fdfcf0ed86d1e72
+    source-md5: 61eae787f56d67b7c6980d40768f0057
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -234,6 +234,25 @@
 	font-size: 0.95rem;
 	font-weight: 600;
 	color: var(--bhp-fmt-navy);
+}
+
+
+.bhp-shop-format-price {
+	display: inline-block;
+	white-space: nowrap;
+}
+
+.bhp-shop-format-price__label {
+	font-weight: 600;
+}
+
+.bhp-shop-format-price__amount {
+	font-weight: 700;
+}
+
+.bhp-shop-format-prices__sep {
+	white-space: nowrap;
+	opacity: 0.6;
 }
 
 @media (prefers-reduced-motion: reduce) {

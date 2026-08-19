@@ -313,6 +313,131 @@
      verbatim: "its stylesheet's position in the cascade relative to
      this one is decided by WooCommerce, not by us."
    ================================================================== */
+
+/* ==================================================================
+   ⭐⭐ C3-WIDE — 1.19.259 (2026-08-19, `CYCLE165-LD-CART-OVERFLOW-AND-
+      SHOP-PRICES`). THE C3 FIX NOW COVERS EVERY MOBILE WIDTH, BECAUSE
+      THE MEASUREMENT IT WAS BOUNDED ON HAS EXPIRED.
+   ------------------------------------------------------------------
+   ⛔ THE BLOCK ABOVE IS NOT CORRECTED IN PLACE AND NOTHING IN IT IS
+      DELETED. Its reasoning was right; one of its NUMBERS went stale.
+      Additive-only, so a future reader can see what moved.
+
+   ⭐ ANDREW SIGNORE, 2026-08-19, ON HIS OWN iPHONE — the live defect
+      this release answers:
+
+        "The cart page is all messed up and moves totally off the page.
+         the numbers go past the right side of the page"
+
+   ⭐ THE SUPERSEDED MEASUREMENT, QUOTED SO IT IS NOT RE-DERIVED. The
+      rule above stops at 359px on the strength of this line, measured
+      on staging 1.19.157 with ONE HARDCOVER in the cart:
+
+        "360px  same table, right 356.3  -> 3.7px of slack, fits"
+        "⛔ BOUNDARY IS 359px, NOT 360px, DELIBERATELY. 360px measured
+           3.7px of slack..."
+
+      ⚠ THAT IS NO LONGER TRUE, AND THE REASON IS THE CART, NOT THE
+        CODE. 3.7px of slack was never structural headroom — it was one
+        short product title in a one-line cart. A REAL cart (three
+        paperbacks plus the free Activity Book) carries longer names,
+        a quantity stepper on every row and a wider total column, and
+        the fixed 132px product track cannot give any of it back.
+
+   ⭐ RE-MEASURED LIVE ON staging2 1.19.258, /cart/, 3 paperbacks + the
+      free Activity Book, real browser, `window.innerWidth` asserted at
+      every reading. `.wc-block-cart-items__row` RIGHT EDGE vs
+      `innerWidth`, BEFORE this change:
+
+        320px   277.0   -> 43.0px inside   (the 359px rule fires: fine)
+        360px   374.9   -> 14.9px PAST     ⛔ REGRESSED SINCE 1.19.157
+        375px   374.9   ->  0.1px inside   ⛔ the price sits ON the edge
+        390px   382.9   ->  7.1px inside
+        430px   387.0   -> 43.0px inside
+
+      AND WITH iOS DYNAMIC TYPE, proxied by `html{font-size:120%/130%}`,
+      which is what turns a 7px margin into a visible defect on a phone
+      that is not at the default text size:
+
+        375px @120%  392.8  -> 17.8px PAST
+        375px @130%  401.8  -> 26.8px PAST
+        390px @120%  400.8  -> 10.8px PAST
+        390px @130%  409.8  -> 19.8px PAST
+
+      ⛔ `document.scrollWidth - clientWidth` READ 0 AT EVERY ONE OF
+         THOSE READINGS, exactly as the block above warns, because
+         `body:not(.home) .site-main` is `overflow: clip`. A horizontal-
+         scroll check reports this page as clean while the price is
+         hanging off the side of it. The founder's phone saw what the
+         scroll check could not. Compare the row's own right edge to
+         `innerWidth`, or you are not testing this defect.
+
+   ⭐ NO CART CSS CHANGED THIS CYCLE. `git diff 7e9c6b7..15e679d` is
+      empty for every cart selector, so this is PRE-EXISTING and is
+      live on production right now — not a regression introduced by the
+      storefront batch.
+
+   THE CHANGE, AND IT IS ONE NUMBER PLUS ONE TRACK WIDTH:
+
+     · the breakpoint moves 359px -> 699px, which is WooCommerce's OWN
+       breakpoint for the rule being overridden (`cart.css`,
+       `@media (max-width: 699px)`). Overriding a rule on a narrower
+       query than the rule itself is what left the gap; matching it
+       closes the gap by construction rather than by another measured
+       guess that can expire the same way this one did.
+     · the image track is 56px here, not the 48px used below 360px.
+       ⛔ 56px IS NOT A NEW DESIGN NUMBER — it is what the cell already
+          measures. F8 below sets `.wc-block-cart-item__image` to
+          `width: 56px`, and the cell was observed at exactly 56px wide
+          with a 40px image and 16px of padding-right at 320/360/375/
+          390/430. So the declared 80px track held 24px of nothing, and
+          reclaiming precisely that 24px changes no rendered pixel of
+          the image at any width.
+
+   ⛔ THE 44px TAP TARGETS AND THE QUANTITY SELECTOR ARE UNTOUCHED, and
+      that was verified rather than assumed: the stepper button measured
+      44.0 x 44.0 at 320, 360, 375, 390 and 430, and at 120% and 130%
+      text, both before and after. Nothing here shrinks a control.
+
+   ⭐ MEASURED AFTER, same cart, same instrument — row right edge:
+
+        320px   277.0 (unchanged: the 359px rule still wins below 360)
+        360px   317.0   was 374.9
+        375px   332.0   was 374.9      @120% 324.0   @130% 320.0
+        390px   347.0   was 382.9      @120% 339.0   @130% 335.0
+        430px   387.0   unchanged
+        768px   687.6   unchanged, template byte-identical (above 699px)
+
+      Every width, at every zoom tested, now sits INSIDE `innerWidth`.
+      No element inside the row is clipped (`scrollWidth <= clientWidth`
+      on every product name, total and quantity cell, before and after).
+
+   ⚠ THE ONE HONEST VISUAL DIFFERENCE, STATED RATHER THAN BURIED. At
+     360-699px the row's computed template changes from
+     `80px 132px <auto> <auto>` to `56px <flex> <auto>`: the product
+     title gains the 24px of dead image track plus whatever the fixed
+     132px was hoarding. At 430px the row's right edge is identical
+     (387.0 both ways) — only the internal column split moves. Titles
+     get more room; nothing gets less.
+
+   ⛔ THE 359px BLOCK BELOW IS DELIBERATELY KEPT AND DELIBERATELY LAST.
+      It is more specific about the image (40px + 8px padding) and it
+      must continue to win under 360px, where 56px of image track is
+      genuinely more than the viewport can spare. Source order is the
+      whole mechanism — do not reorder these two blocks.
+   ================================================================== */
+@media (max-width: 699px) {
+  .wc-block-cart table.wc-block-cart-items .wc-block-cart-items__row,
+  .is-small table.wc-block-cart-items .wc-block-cart-items__row,
+  .is-mobile table.wc-block-cart-items .wc-block-cart-items__row {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+  }
+  .wc-block-cart-items {
+    width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+}
 @media (max-width: 359px) {
   .wc-block-cart table.wc-block-cart-items .wc-block-cart-items__row,
   .is-small table.wc-block-cart-items .wc-block-cart-items__row,

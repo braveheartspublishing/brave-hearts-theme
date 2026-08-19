@@ -1656,22 +1656,99 @@ add_action('wp', 'bhp_book_remove_default_add_to_cart');
 // ============================================================
 // SHOP CARDS
 // ============================================================
-/** Short adventure descriptor + "Formats from <lowest live price>". */
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.259 (2026-08-19, `CYCLE165-LD-CART-OVERFLOW-AND-SHOP-PRICES`)
+ *     THE SHOP CARD NAMES BOTH FORMATS AND BOTH PRICES.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ ANDREW SIGNORE, 2026-08-19, verbatim: "Show both prices".
+ *
+ * ⛔ THE SUPERSEDED STRING, QUOTED SO IT IS NOT RE-DERIVED. Until this
+ *    release the card printed, via bhp_book_lowest_price_html():
+ *
+ *      printf( esc_html__( 'Formats from %s', 'brave-hearts' ), $lowest );
+ *
+ *    rendering "Formats from $11.99" on all three cards (observed live on
+ *    staging2 1.19.258, /shop/, real browser, 2026-08-19). It named a
+ *    floor and no format. A parent comparing a paperback against a
+ *    hardcover could not do it from the grid.
+ *
+ * ⛔ NOT ONE PRICE IS WRITTEN INTO THIS FILE, THIS MARKUP OR ANY TEMPLATE.
+ *    Both figures come from bhp_book_purchase_data(), which reads
+ *    WC_Product every time. A product whose price WooCommerce cannot
+ *    resolve yields an EMPTY entry and is simply not printed — never a
+ *    remembered number, never a fallback literal.
+ *
+ * ⛔ THE HARDCOVER LINE OBEYS THE SCHOOL-VISIT RESTRICTION. 1.19.240 made
+ *    a visit-flagged session paperback-only. Printing a hardcover price to
+ *    a flagged parent would advertise an edition that session cannot
+ *    order, so bhp_book_hardcover_is_offerable() gates it and the card
+ *    degrades to the paperback line alone. That predicate FAILS OPEN
+ *    (plugin absent -> nothing restricted), so an ordinary shopper always
+ *    sees both.
+ *
+ * ⭐ THE SEPARATOR IS "·", NOT AN EM DASH — standing copy rail, §9.1.
+ *    The strings carry no "we"/"us"/"our" and make no outcome claim: they
+ *    name a format and a price and stop.
+ *
+ * ⛔ THE CTA IS DELIBERATELY UNCHANGED. "CHOOSE YOUR FORMAT" still links
+ *    to the canonical (paperback) product page, where the real format
+ *    selector lives — see bhp_book_shop_choose_format_link() below. This
+ *    change adds information to the card; it does not add a second
+ *    destination to it.
+ *
+ * @return array<int, array{label:string, price_html:string}> Ordered
+ *         paperback-first. Empty when neither format resolves a price.
+ */
+function bhp_book_shop_format_prices($key) {
+    $data = bhp_book_purchase_data($key);
+    if (!$data) {
+        return [];
+    }
+
+    $out = [];
+
+    // wc_price() over the raw `price` rather than WooCommerce's own
+    // price_html: price_html renders a RANGE ("From $11.99") on a variable
+    // product, and Mariana's paperback is variable. The card needs one
+    // figure per format, and it must be the figure that reaches the cart.
+    if ('' !== $data['paperback']['price']) {
+        $out[] = [
+            'label'      => __('Paperback', 'brave-hearts'),
+            'price_html' => wc_price((float) $data['paperback']['price']),
+        ];
+    }
+
+    if ('' !== $data['hardcover']['price'] && bhp_book_hardcover_is_offerable()) {
+        $out[] = [
+            'label'      => __('Hardcover', 'brave-hearts'),
+            'price_html' => wc_price((float) $data['hardcover']['price']),
+        ];
+    }
+
+    return $out;
+}
+
+/** Short adventure descriptor + one priced line per available format. */
 function bhp_book_shop_card_meta() {
     $found = bhp_book_lookup_product(get_the_ID());
     if (!$found || !$found['canonical']) {
         return;
     }
-    $reg = bhp_book_registry();
-    $lowest = bhp_book_lowest_price_html($found['key']);
+    $reg     = bhp_book_registry();
+    $formats = bhp_book_shop_format_prices($found['key']);
     ?>
     <p class="bhp-shop-descriptor"><?php echo esc_html($reg[$found['key']]['descriptor']); ?></p>
-    <?php if ($lowest): ?>
-      <span class="bhp-shop-from-price">
-        <?php
-        /* translators: %s: lowest live WooCommerce price across formats. */
-        printf(esc_html__('Formats from %s', 'brave-hearts'), wp_kses_post($lowest));
-        ?>
+    <?php if ($formats): ?>
+      <span class="bhp-shop-from-price bhp-shop-format-prices">
+        <?php foreach ($formats as $i => $format): ?>
+          <?php if ($i > 0): ?><span class="bhp-shop-format-prices__sep" aria-hidden="true"> · </span><?php endif; ?>
+          <span class="bhp-shop-format-price">
+            <span class="bhp-shop-format-price__label"><?php echo esc_html($format['label']); ?></span>
+            <span class="bhp-shop-format-price__amount"><?php echo wp_kses_post($format['price_html']); ?></span>
+          </span>
+        <?php endforeach; ?>
       </span>
     <?php endif; ?>
     <?php

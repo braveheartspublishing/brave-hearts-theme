@@ -292,6 +292,43 @@
 	color: var(--bhp-fmt-navy);
 }
 
+/* ==================================================================
+   1.19.259 — BOTH FORMAT PRICES ON THE SHOP CARD
+   ------------------------------------------------------------------
+   Andrew Signore, 2026-08-19: "Show both prices".
+
+   The two priced entries sit on one line where the card is wide enough
+   and wrap as WHOLE entries where it is not — `inline-block` on the
+   entry with `white-space: nowrap` inside it, so "Hardcover $17.99"
+   can never break between its own label and its own figure while the
+   pair as a whole is still free to fall onto a second line. The
+   separator is hidden from assistive technology (it is decoration; the
+   labels already carry the meaning) and is prevented from starting a
+   line of its own.
+
+   The rule above is deliberately left intact and still carries the
+   colour, weight and spacing: the element keeps `.bhp-shop-from-price`
+   as well as the new class, so this is additive and nothing that
+   depended on the old hook lost its styling.
+   ================================================================== */
+.bhp-shop-format-price {
+	display: inline-block;
+	white-space: nowrap;
+}
+
+.bhp-shop-format-price__label {
+	font-weight: 600;
+}
+
+.bhp-shop-format-price__amount {
+	font-weight: 700;
+}
+
+.bhp-shop-format-prices__sep {
+	white-space: nowrap;
+	opacity: 0.6;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.bhp-format-card {
 		transition: none;
