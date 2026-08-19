@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.241
+Version: 1.19.242
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -8952,4 +8952,309 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 @media (min-width: 40rem) {
   .author-visits-card { padding: var(--space-6); }
   .author-visits-card__cta .btn { width: auto; }
+}
+
+/* ============================================================================
+   CYCLE164-LD-HOMEPAGE-WARMTH (2026-08-18, theme 1.19.241)
+   The Homepage Warmth Board, built. HOMEPAGE ONLY.
+   ----------------------------------------------------------------------------
+   Source: `Business OS\WORKING-DRAFTS\design-creative\homepage-warmth-board\`
+   (design-creative / Legolas, FD-391, 2026-08-17). Andrew opened the taste
+   gate 2026-08-18. This is a STAGING MOCK-UP for his nit-pick, not approved.
+
+   THE GOLD RULE, Brand Identity Kit v1 section 1.4, and it is the rule that
+   breaks designs: gold #D9A45F NEVER carries meaning on a light ground -- it
+   measures 1.81:1 on parchment and fails every threshold. On cream it may be
+   a rule, a flourish or a field, never something a reader must read. Gold
+   TEXT on a light ground uses gold-deep #9A6A00. On navy, gold is 8.27:1 and
+   is completely at home.
+   Every gold value below is checked against that rule, and the two places
+   gold appears on cream (the drawn divider, the aside arrow) are #9A6A00.
+
+   CAVEAT is Andrew's voice ONLY, and it is decorative: never navigation,
+   never buttons, never prices, never policies, and it never carries
+   information a plain-text equivalent does not also carry. It is already
+   self-hosted in this theme (assets/fonts/, declared in assets/fonts/fonts.css)
+   and already in use at style.css:4455, so this block adds NO font request.
+
+   EVERY SELECTOR IS SCOPED TO `.home`. This sheet is sitewide.
+   ========================================================================= */
+
+/* ---- 1. THE FOUNDER CHIP. Board move 1, and the one that does most work. --- */
+.home .home-founder-chip {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  margin: 0 0 var(--space-6);
+  padding: .7rem 1.15rem .7rem .75rem;
+  background: rgba(246, 241, 231, .055);
+  border: 1px solid rgba(217, 164, 95, .28);
+  border-left: 3px solid var(--color-gold);
+  border-radius: 2px;
+}
+.home .home-founder-chip__photo {
+  flex: 0 0 60px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--color-gold);
+  /* The source is a 1400x1867 portrait candid. `cover` plus a high
+     object-position keeps both faces in a 60px circle; measured against the
+     board's own render rather than guessed. */
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+.home .home-founder-chip__body { min-width: 0; }
+.home .home-founder-chip__said {
+  margin: 0;
+  font-family: 'Caveat', cursive;
+  font-size: 1.4375rem;
+  font-style: normal;
+  line-height: 1.18;
+  /* On the navy hero. Ivory on navy, not gold -- this is a sentence a
+     reader must actually read, so it does not get the flourish colour. */
+  color: var(--expedition-ivory);
+}
+.home .home-founder-chip__role {
+  margin: .2rem 0 0;
+  font-family: var(--font-body);
+  font-size: .59rem;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+  color: var(--color-gold); /* 8.27:1 on navy. Gold's home. */
+}
+
+/* ---- 2. THE DRAWN UNDERLINE. One word per headline, never two. ------------- */
+.home .home-hero__title-mark {
+  position: relative;
+  font-style: normal;
+  white-space: nowrap;
+}
+.home .home-hero__title-mark::after {
+  content: '';
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: -.06em;
+  height: .13em;
+  /* An inline SVG squiggle, not a border: a border is ruled and this has to
+     look drawn. Gold on the navy hero, where gold is legal. Decorative, so
+     it is invisible to assistive technology by construction (a ::after with
+     empty content is not announced). */
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 12' preserveAspectRatio='none'><path d='M2 8.4c34-5.2 70-6.6 104-4.2 30 2.1 60 5.4 88 1.2' fill='none' stroke='%23D9A45F' stroke-width='3' stroke-linecap='round'/></svg>") no-repeat center / 100% 100%;
+}
+
+/* ---- 3. THE TWO INVITATIONS. ---------------------------------------------- */
+.home .home-hero__invitations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .8125rem;
+  align-items: center;
+  margin-top: var(--space-6);
+}
+/* `.btn` already carries the theme's sizing, focus ring and transition. Only
+   colour and weight are restated, and the homepage-specific gold-fill rule
+   at style.css:3452 (`.home .home-hero__actions .btn`) does NOT match these
+   -- they are `.home-hero__invite`, not `.home-hero__actions .btn` -- so
+   nothing is being fought with !important. */
+.home .home-hero__invite {
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .95rem 1.6rem;
+  text-decoration: none;
+}
+.home .home-hero__invite--primary {
+  background: var(--color-forest);
+  border: 1px solid var(--color-gold);
+  color: var(--expedition-ivory);
+}
+.home .home-hero__invite--primary:hover,
+.home .home-hero__invite--primary:focus {
+  background: #1d5140;
+  color: var(--expedition-ivory);
+}
+.home .home-hero__invite--ghost {
+  background: transparent;
+  border: 1px solid rgba(217, 164, 95, .5);
+  color: var(--color-gold);
+}
+.home .home-hero__invite--ghost:hover,
+.home .home-hero__invite--ghost:focus {
+  border-color: var(--color-gold);
+  background: rgba(217, 164, 95, .1);
+  color: var(--color-gold);
+}
+
+/* ---- 4. "OPEN THE BOOK". Cream, breaking the run of dark bands. ------------ */
+.home .home-open-book {
+  background: var(--expedition-parchment-light);
+  padding-block: clamp(2.6rem, 5vw, 3.75rem);
+  border-top: 1px solid var(--expedition-border);
+}
+.home .home-open-book__hand {
+  margin: 0 0 .25rem;
+  font-family: 'Caveat', cursive;
+  font-size: 1.625rem;
+  line-height: 1.1;
+  color: #9A6A00; /* gold-deep. #D9A45F would be 1.81:1 here and unreadable. */
+}
+.home .home-open-book__title {
+  margin: 0 0 .75rem;
+  max-width: 730px;
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3.1vw, 2.5rem);
+  line-height: 1.16;
+  color: var(--color-navy);
+}
+.home .home-open-book__divider {
+  display: block;
+  width: 210px;
+  height: 16px;
+  margin: 0 0 1.375rem;
+}
+.home .home-open-book__lede {
+  margin: 0 0 1.875rem;
+  max-width: 62ch;
+  font-size: 1rem;
+  line-height: 1.62;
+}
+.home .home-open-book__spreads {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* Books on a table, not thumbnails in a card. The tilt is tiny and
+   deliberate -- three different small angles read as "placed", one shared
+   angle reads as a mistake. */
+.home .home-open-book__spread {
+  background: #fff;
+  padding: .5625rem .5625rem 0;
+  border: 1px solid var(--expedition-border);
+  box-shadow: 0 12px 26px rgba(7, 21, 34, .13);
+}
+.home .home-open-book__spread:nth-child(1) { transform: rotate(-1.4deg); }
+.home .home-open-book__spread:nth-child(2) { transform: rotate(.7deg); }
+.home .home-open-book__spread:nth-child(3) { transform: rotate(-.5deg); }
+.home .home-open-book__spread-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.home .home-open-book__spread-img {
+  display: block;
+  width: 100%;
+  height: 232px;
+  object-fit: cover;
+  object-position: center 46%;
+  background: #0e1a24; /* the interiors are shot on a dark studio ground */
+}
+.home .home-open-book__spread-caption {
+  display: block;
+  padding: .5625rem .1875rem .6875rem;
+  font-family: var(--font-body);
+  font-size: .8125rem;
+  line-height: 1.35;
+  color: var(--expedition-muted);
+}
+.home .home-open-book__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .8125rem;
+  align-items: center;
+  margin-top: 2rem;
+}
+.home .home-open-book__btn {
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .95rem 1.6rem;
+  text-decoration: none;
+}
+.home .home-open-book__btn--primary {
+  background: var(--color-forest);
+  border: 1px solid var(--color-forest);
+  color: var(--expedition-ivory);
+}
+.home .home-open-book__btn--primary:hover,
+.home .home-open-book__btn--primary:focus { background: #1d5140; color: var(--expedition-ivory); }
+.home .home-open-book__btn--ghost {
+  background: transparent;
+  border: 1px solid var(--color-forest);
+  color: var(--color-forest);
+}
+.home .home-open-book__btn--ghost:hover,
+.home .home-open-book__btn--ghost:focus { background: rgba(23, 63, 47, .07); color: var(--color-forest); }
+.home .home-open-book__aside {
+  margin: 0;
+  font-family: 'Caveat', cursive;
+  font-size: 1.3125rem;
+  line-height: 1.2;
+  color: #9A6A00; /* gold-deep on cream, per the gold rule */
+}
+
+/* ---- 5. THE BOOTH, WARMED. Same markup, same photo, same words. ----------- */
+/* CSS ONLY. No PHP in `#where-you-will-find-us` changed: the photograph is
+   uncropped, the approved alt text is untouched and the caption string is
+   the one that was already live. What changes is the frame -- a white
+   border so it reads as a printed photograph on a table, and the caption
+   set as a small stamp in Andrew's hand rather than a grey line under it. */
+.home .home-market__figure { position: relative; }
+.home .home-market__figure img {
+  border-radius: 0;
+  border: 9px solid #fff;
+  box-shadow: 0 16px 34px rgba(7, 21, 34, .2);
+}
+.home .home-market__caption {
+  position: absolute;
+  left: 1rem;
+  bottom: -.875rem;
+  margin: 0;
+  padding: .1875rem .75rem;
+  max-width: calc(100% - 2rem);
+  background: var(--expedition-ivory);
+  border: 1px solid var(--expedition-border);
+  transform: rotate(-1.6deg);
+  font-family: 'Caveat', cursive;
+  /* Caveat is decorative, so this line is deliberately NOT the only place
+     the date lives -- it is the same caption string that was already in the
+     DOM, still real text, still read by a screen reader in place. */
+  font-size: 1.25rem;
+  line-height: 1.25;
+  color: var(--color-navy); /* navy on ivory, not gold: this is read, not decoration */
+}
+.home .home-market__title { font-family: var(--font-heading); }
+
+/* ---- 6. RESPONSIVE. The mobile view is the same DOM, re-flowed. ----------- */
+@media (max-width: 860px) {
+  .home .home-open-book__spreads { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .home .home-open-book__spread { transform: none; }
+  .home .home-open-book__spread-img { height: 190px; }
+  .home .home-open-book__actions { flex-direction: column; align-items: stretch; }
+  .home .home-open-book__btn { text-align: center; padding-inline: .875rem; }
+  .home .home-open-book__aside { text-align: center; }
+  /* The stamp needs room below the frame once the figure is centred and
+     capped at 300px by the existing rule at style.css:6449. */
+  .home .home-market__figure { margin-bottom: 1.25rem; }
+  .home .home-market__caption { left: .5rem; font-size: 1.125rem; }
+}
+
+@media (max-width: 820px) {
+  .home .home-founder-chip { gap: .75rem; padding: .625rem .875rem .625rem .625rem; }
+  .home .home-founder-chip__photo { flex: 0 0 52px; width: 52px; height: 52px; }
+  .home .home-founder-chip__said { font-size: 1.25rem; }
+  .home .home-hero__invitations { flex-direction: column; align-items: stretch; }
+  .home .home-hero__invite { text-align: center; padding-inline: .875rem; }
+}
+
+/* ---- 7. REDUCED MOTION / PRINT. The tilt is decoration; drop it. ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .home .home-open-book__spread,
+  .home .home-market__caption { transform: none; }
 }

@@ -372,6 +372,123 @@ if ($hero_preview_books) {
 }
 
 /*
+ * =======================================================================
+ * 1.19.241 (2026-08-18) -- CYCLE164-LD-HOMEPAGE-WARMTH.
+ *    THE HERO GAINS A PERSON, A DRAWN UNDERLINE, AND TWO INVITATIONS.
+ * =======================================================================
+ *
+ * SOURCE: the Homepage Warmth Board (`design-creative` / Legolas, `FD-391`,
+ * 2026-08-17), `Business OS\WORKING-DRAFTS\design-creative\
+ * homepage-warmth-board\`. Andrew Signore opened the taste gate on it
+ * 2026-08-18 (RELAYED through the Chief of Staff, NOT witnessed first-hand
+ * by this agent), verbatim: "Its really good - needs a few tweaks but I
+ * really like the redesign lets mock it up on staging then I can nit-pick
+ * the details."
+ *
+ * THIS IS A STAGING MOCK-UP FOR HIS NIT-PICK. It is not an approved
+ * homepage, and no line of new copy in it is approved copy.
+ *
+ * WHAT THE BOARD MEASURED, and why the chip exists: Andrew's face first
+ * appears 4,177 px down on desktop and 5,371 px (6.4 screens) down on a
+ * phone. The booth first appears at 6,311 px / 8,537 px. The board's own
+ * conclusion: "The booth is already on the homepage. It is just 6,311
+ * pixels below the fold" -- so the work is promotion and composition, not
+ * invention, and it needs no new photograph.
+ *
+ * THE HERO BACKGROUND PHOTOGRAPH IS DELIBERATELY KEPT. The board's
+ * `after-home.html` mock-up drew the hero on a flat radial gradient with no
+ * image, because it was a standalone HTML file with no access to the
+ * theme's hero media -- not because it proposed removing the ocean. The
+ * board's own "what it deliberately keeps" list does not mention it either
+ * way, so this is AMBIGUOUS and current behaviour wins: `hero_image_id` is
+ * passed exactly as before. Flagged for Andrew.
+ *
+ * NO HERO TRUST STRIP IS BUILT, and the omission is deliberate rather than
+ * forgotten. Three reasons, each independently sufficient:
+ *   1. THE BOARD ITSELF SAYS SO. Sheet 1, move 3, verbatim: "The trust
+ *      anchors stay exactly where they are." The strip in the mock-up is
+ *      that file standing in for `#home-trust-proof`, which it did not
+ *      contain.
+ *   2. TWO OF ITS FOUR ITEMS ARE ALREADY ON THIS PAGE one section below, in
+ *      `#home-trust-proof`: the `Ages 6-9` pill and the "Featuring a
+ *      Kirkus-reviewed title" link. Rendering them twice, two screens
+ *      apart, is duplication rather than reinforcement -- and that pill's
+ *      link to `#kirkus-credibility-home` is what keeps F19's
+ *      claim-beside-its-evidence rule working.
+ *   3. "30-Day Guarantee - nothing to send back" IS NOT LIVE HOMEPAGE COPY.
+ *      It is live on the bundle landing page. The board flags its own
+ *      qualifier -- the policy says within 30 days OF DELIVERY, and "if
+ *      this strip ships, that anchor goes with it" -- and the word
+ *      "guarantee" sits on this theme's OWN forbidden-claim list
+ *      (`inc/class-bhp-conversion-scoring.php:61`; and
+ *      `class-bhp-author-fingerprint-package.php:256` flags "guarantee
+ *      language"). Adding it to the hero on a design pass, without the
+ *      qualifier and without Andrew, is not this build's call.
+ *   ALL OF THIS IS IN THE BUILD REPORT. If Andrew wants the strip it is a
+ *   small additive change, and the reasoning above is what he overrules.
+ */
+$hero_lead = '';
+ob_start();
+get_template_part('template-parts/components/home-founder-chip');
+$hero_lead = trim(ob_get_clean());
+
+/*
+ * THE TWO INVITATIONS.
+ *
+ * THIS DOES NOT REINSTATE THE HERO CTA ANDREW REMOVED. The superseded
+ * arguments block below records exactly why the old hero button went: it
+ * and the Best Value box "sold the SAME offer one screen apart". Neither
+ * button here sells the collection -- one opens the sample pages, one opens
+ * the quiz. The Best Value box, its paperback default and its first-seen
+ * price are NOT touched by this change, and its CTA is still the only buy
+ * button above the fold.
+ *
+ * COPY PROVENANCE, string by string:
+ *   "Open the book. Read the first pages free"
+ *       -- the board's "Open the book - read the first pages free", with the
+ *          em dash restructured to a full stop (standing rule 9.1 rail: no
+ *          em dashes; and this file already carries the Wave F em-dash purge
+ *          precedent of 2026-08-03). NEW COPY. Flagged for Andrew.
+ *   "Take the 30-second quiz."
+ *       -- NOT new. This exact string, full stop included, is already live
+ *          in `template-parts/components/audience-gateway.php:97`, which
+ *          renders further down THIS page. Reused verbatim rather than
+ *          reworded, so the page says one thing about the quiz.
+ *
+ * THE SECOND BUTTON IS A LINK TO `/find-your-adventure/`, NOT A SECOND QUIZ
+ * LAUNCHER. `assets/js/quiz-modal.js:685` binds `initLauncher` to EVERY
+ * `[data-bhp-quiz-launcher]`, and `initLauncher` arms its own auto-open
+ * timer, dwell floor and scroll trigger per launcher. A second launcher
+ * pointing at the footer's modal would arm that machinery twice and double
+ * the modal dataLayer pushes. The canonical quiz page is a real destination
+ * and costs nothing.
+ *
+ * TRACKING: BOTH REUSE EXISTING EVENT NAMES. `contextual_cta_click` and
+ * `quiz_cta_clicked` are both already in this site's dataLayer vocabulary,
+ * so this needs NO new GTM variable and NO new tag; they are distinguished
+ * by `data-bhp-source`. The delegated handler at `assets/js/nav.js:78`
+ * picks them up with no JS change at all. NO EXISTING EVENT IS REMOVED,
+ * RENAMED OR RE-SOURCED anywhere in this build.
+ */
+$hero_open_url = bhp_get_safe_link_url(home_url('/complete-collection/'), home_url('/complete-collection/'));
+$hero_quiz_url = bhp_get_safe_link_url(home_url('/find-your-adventure/'), home_url('/find-your-adventure/'));
+ob_start();
+?>
+<div class="home-hero__invitations">
+  <a class="btn home-hero__invite home-hero__invite--primary"
+     href="<?php echo esc_url($hero_open_url); ?>"
+     data-bhp-event="contextual_cta_click"
+     data-bhp-source="home_hero_open_book"><?php esc_html_e('Open the book. Read the first pages free', 'brave-hearts'); ?></a>
+  <a class="btn home-hero__invite home-hero__invite--ghost"
+     href="<?php echo esc_url($hero_quiz_url); ?>"
+     data-bhp-event="quiz_cta_clicked"
+     data-bhp-source="home_hero_quiz"
+     data-bhp-entry-location="home_hero"><?php esc_html_e('Take the 30-second quiz.', 'brave-hearts'); ?></a>
+</div>
+<?php
+$hero_after_text = trim(ob_get_clean());
+
+/*
  * SUPERSEDED 2026-08-05 by CYCLE144-LD-70 (below). Preserved verbatim
  * because it records a real earlier instruction, not an accident:
  *
@@ -475,6 +592,20 @@ get_template_part('template-parts/components/hero', null, [
     // phone visitor sees the actual product before any further copy. Real DOM
     // move, homepage only -- every other hero caller keeps the default false.
     'aside_after_title' => true,
+    /*
+     * CYCLE164-LD-HOMEPAGE-WARMTH (1.19.241). Three homepage-only slots on
+     * the shared hero component, every one of which defaults to '' for the
+     * six other callers. See the block above `$hero_lead` for provenance,
+     * and for what was deliberately NOT built.
+     *
+     * `title_emphasis` is the ONE word the drawn underline sits under; the
+     * board's rule is "one word per headline, never two". If a
+     * `bhp_home_hero_title` override ever removes that word, `hero.php`
+     * renders the plain heading -- it fails to unmarked, never to broken.
+     */
+    'lead'              => $hero_lead,
+    'title_emphasis'    => __('Curiosity', 'brave-hearts'),
+    'after_text'        => $hero_after_text,
 ]);
 
 /*
@@ -708,6 +839,142 @@ get_template_part('template-parts/components/complete-collection-feature', null,
 
 <?php
 /*
+ * =======================================================================
+ * 1.19.241 (2026-08-18) -- CYCLE164-LD-HOMEPAGE-WARMTH.
+ *    TWO SECTIONS ENTER THE PAGE HERE, AND ONE OF THEM IS A MOVE.
+ * =======================================================================
+ *
+ * ORDER, BEFORE -> AFTER (section index on the rendered page):
+ *    1 hero                     ->  1 hero                    (unchanged)
+ *    2 complete-collection band ->  2 complete-collection band (unchanged)
+ *    3 #home-trust-proof        ->  3 #home-trust-proof        (unchanged)
+ *    4 #kirkus-credibility-home ->  4 #kirkus-credibility-home (unchanged)
+ *                                   5 #home-open-the-book      NEW
+ *    9 #where-you-will-find-us  ->  6 #where-you-will-find-us   MOVED UP
+ *    5 audience-gateway         ->  7 audience-gateway
+ *    6 #explore-world           ->  8 #explore-world
+ *    7 #first-reader            ->  9 #first-reader
+ *    8 #home-philosophy         -> 10 #home-philosophy
+ *   (everything from #learning-hub down is untouched)
+ *
+ * WHY HERE AND NOT HIGHER, WHICH IS WHAT THE BOARD'S SHEET 4 ASKS FOR.
+ * The board promotes the booth "from position 9 to position 3". Position 3
+ * is not available without breaking three separate recorded owner rulings,
+ * and a design pass does not get to overturn those silently:
+ *   - the Best Value box sits DIRECTLY after the hero (Andrew, 2026-08-05,
+ *     "Right under 'Its an invitation to look up'", CYCLE144-LD-70);
+ *   - the brand signature + proof pills sit DIRECTLY under that box (same
+ *     ruling, "Put the big places. brave hearts under that box");
+ *   - Kirkus sits against the Collection offer (F19, walk-2, a PROTECTED
+ *     pass).
+ * Slot 5 is the first slot that breaks none of them. Measured effect is
+ * still most of what the board was after: the booth moves from 6,311 px to
+ * roughly 3,300 px on desktop, and the founder -- the actual subject of the
+ * board's first and largest move -- is now above the fold in the hero
+ * rather than at 4,177 px.
+ * THE FULL-PROMOTION ORDER IS ONE ARGUMENT AWAY if Andrew wants it. It is
+ * in the build report as an explicit question, not buried as a decision.
+ *
+ * WHY THE PLACEMENT COMMENT ON THE BOOTH BLOCK BELOW IS NOW PARTLY
+ * SUPERSEDED, AND IS PRESERVED VERBATIM RATHER THAN CORRECTED IN PLACE.
+ * That comment quotes `commerce-cx`'s trust audit: the strip belongs
+ * "BELOW `#first-reader` ... NOT above the fold -- it is provenance, not
+ * product proof", because it answers the same question the founder card
+ * answers and should therefore follow it. The RULE still holds and is still
+ * honoured; what changed is WHERE the founder first appears. Since
+ * 1.19.241 he is in the hero, so provenance at slot 6 still lands after the
+ * founder, not before him. It is also still well below the fold.
+ * THE OTHER HALF OF THAT COMMENT IS UNCHANGED AND STILL BINDING: no CTA in
+ * this section, no claim about attendance, footfall, sales, queues,
+ * popularity or reactions, and the market and city are still NOT named.
+ *
+ * WHAT WAS NOT DONE TO THE BOOTH, DELIBERATELY -- THREE THINGS:
+ *   1. THE PHOTOGRAPH IS NOT CROPPED. The board proposes cropping to the
+ *      canopy to push the retired sunrise-heart roll-up banner out of frame
+ *      (FD-32). This template already records the OPPOSITE decision, in
+ *      the preserved comment below: "it is a dated documentary photograph
+ *      of a real event, and retouching a logo out of one would be the
+ *      dishonest act. Andrew approved the banner as-is." Two sources
+ *      disagree, one of them records an owner approval, and the resolution
+ *      is Andrew's -- so nothing is picked here. The full frame, the
+ *      approved alt text and the existing caption all render unchanged.
+ *   2. THE HANDWRITTEN QUOTE IS NOT SHIPPED. The board's "If you were
+ *      standing here, I'd hand you one and let your kid read the first
+ *      page." is marked on its own sheet 6 as "NOT VERIFIED -- written by
+ *      me ... Andrew has not said it." Attributing an unsaid sentence to
+ *      him is the never-invent rule, which outranks warmth.
+ *   3. THE THREE TRUST ANCHORS ARE NOT REPEATED HERE, for the same reason
+ *      the hero strip was not built. See the block above `$hero_lead`.
+ *   And the board's red-dashed "Founder Reel" placeholder, which the board
+ *   itself marks "must not survive a build", is not here and nothing was
+ *   substituted for it.
+ */
+get_template_part('template-parts/components/home-open-the-book');
+?>
+
+<?php
+/*
+ * 5b. "Where you'll find us" — the farmers-market provenance element.
+ *
+ * PLACEMENT is `commerce-cx`'s, verbatim from its trust audit and NOT
+ * reinterpreted here: "a `Where you'll find us` strip on the homepage, BELOW
+ * `#first-reader` ... NOT above the fold — it is provenance, not product
+ * proof." It sits FIFTH in that audit's six-rank trust hierarchy, immediately
+ * after the founder photograph, because it answers the same question the
+ * founder card answers — "is there a real company behind this?" — rather than
+ * "is this book right for my child", which ranks 1–3 and is already answered
+ * higher up the page.
+ *
+ * ⛔ NO CTA, deliberately. Provenance earns nothing by asking for a click, and
+ *    the section it follows already carries the one link this part of the page
+ *    should have.
+ *
+ * THE PHOTOGRAPH. `assets/images/handoff/farmers-market-2026-05.webp` is a
+ * derivative of Andrew's own iPhone photograph, EXIF `DateTimeOriginal`
+ * 2026:05:23 10:28:34. Rotation and crop ONLY — no colour grading, no
+ * retouching, no object removal — because its whole value is that it is
+ * unmodified evidence of a real event. The crop deliberately excludes an
+ * acrylic price sign that was in the original frame and carried THREE claims
+ * that contradict live state ("PAPERBACK $8.99" against a live $11.99, "BOTH
+ * BOOKS $16" for a catalogue that now has three titles, and a superseded
+ * "save $1.98"). Removing them from a customer-facing photograph is the point
+ * of the crop, not tidiness (`CYCLE141-CX-45`).
+ *
+ * ⚠️ THE BANNER CARRIES THE RETIRED SUNRISE-HEART LOGO (`CYCLE141-CX-46`).
+ *    That is not an oversight: it is a dated documentary photograph of a real
+ *    event, and retouching a logo out of one would be the dishonest act.
+ *    Andrew approved the banner as-is. The caption carries the date so the
+ *    banner reads as history rather than as a competing identity.
+ *
+ * ⛔ WHAT IS NOT CLAIMED HERE, AND MUST NOT BE ADDED: attendance, footfall,
+ *    sales, queues, popularity, reactions, "meeting readers", "signing books",
+ *    or how the day went. None of it is sourced, and in the photograph Andrew
+ *    is holding two drink cups with no customer at the table — a caption
+ *    describing him serving a reader would be a fabricated scene. The market
+ *    and city are NOT named: the file carries no GPS and a named location is a
+ *    factual claim. The copy describes presence, not activity.
+ */
+?>
+<section id="where-you-will-find-us" class="homepage-section home-market section" aria-labelledby="home-market-title">
+  <div class="container">
+    <div class="home-market__card">
+      <figure class="home-market__figure">
+        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/farmers-market-2026-05.webp'); ?>"
+             alt="<?php esc_attr_e('Andrew Signore standing behind a Brave Hearts Publishing table at an outdoor farmers market, with a pop-up canopy, a roll-up banner for Adventures of Charlotte and Henry, copies of the paperbacks laid out, and a plush dog on the table.', 'brave-hearts'); ?>"
+             width="1400" height="1867" loading="lazy" decoding="async">
+        <figcaption class="home-market__caption"><?php esc_html_e('Brave Hearts at a farmers market, May 2026.', 'brave-hearts'); ?></figcaption>
+      </figure>
+      <div class="home-market__content">
+        <p class="component-heading__eyebrow"><?php esc_html_e('Where you\'ll find us', 'brave-hearts'); ?></p>
+        <h2 id="home-market-title" class="home-market__title"><?php esc_html_e('A canopy, a folding table, and the same books that ship to your door.', 'brave-hearts'); ?></h2>
+        <p><?php esc_html_e('Brave Hearts is a small independent publisher. Some of what we do happens at a table outdoors, with the paperbacks laid out where a child can pick one up.', 'brave-hearts'); ?></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<?php
+/*
  * B6 (2026-08-03) — MID-PAGE AUDIENCE BAND, REINSTATED.
  *
  * Spec: Business OS `WORKING-DRAFTS\commerce-cx\
@@ -864,66 +1131,6 @@ get_template_part('template-parts/components/audience-gateway');
       </li>
     </ul>
     <p class="home-philosophy__closing"><?php esc_html_e('The last page is not the end.', 'brave-hearts'); ?><br><strong><?php esc_html_e('It is an invitation to look up.', 'brave-hearts'); ?></strong></p>
-  </div>
-</section>
-<?php
-/*
- * 5b. "Where you'll find us" — the farmers-market provenance element.
- *
- * PLACEMENT is `commerce-cx`'s, verbatim from its trust audit and NOT
- * reinterpreted here: "a `Where you'll find us` strip on the homepage, BELOW
- * `#first-reader` ... NOT above the fold — it is provenance, not product
- * proof." It sits FIFTH in that audit's six-rank trust hierarchy, immediately
- * after the founder photograph, because it answers the same question the
- * founder card answers — "is there a real company behind this?" — rather than
- * "is this book right for my child", which ranks 1–3 and is already answered
- * higher up the page.
- *
- * ⛔ NO CTA, deliberately. Provenance earns nothing by asking for a click, and
- *    the section it follows already carries the one link this part of the page
- *    should have.
- *
- * THE PHOTOGRAPH. `assets/images/handoff/farmers-market-2026-05.webp` is a
- * derivative of Andrew's own iPhone photograph, EXIF `DateTimeOriginal`
- * 2026:05:23 10:28:34. Rotation and crop ONLY — no colour grading, no
- * retouching, no object removal — because its whole value is that it is
- * unmodified evidence of a real event. The crop deliberately excludes an
- * acrylic price sign that was in the original frame and carried THREE claims
- * that contradict live state ("PAPERBACK $8.99" against a live $11.99, "BOTH
- * BOOKS $16" for a catalogue that now has three titles, and a superseded
- * "save $1.98"). Removing them from a customer-facing photograph is the point
- * of the crop, not tidiness (`CYCLE141-CX-45`).
- *
- * ⚠️ THE BANNER CARRIES THE RETIRED SUNRISE-HEART LOGO (`CYCLE141-CX-46`).
- *    That is not an oversight: it is a dated documentary photograph of a real
- *    event, and retouching a logo out of one would be the dishonest act.
- *    Andrew approved the banner as-is. The caption carries the date so the
- *    banner reads as history rather than as a competing identity.
- *
- * ⛔ WHAT IS NOT CLAIMED HERE, AND MUST NOT BE ADDED: attendance, footfall,
- *    sales, queues, popularity, reactions, "meeting readers", "signing books",
- *    or how the day went. None of it is sourced, and in the photograph Andrew
- *    is holding two drink cups with no customer at the table — a caption
- *    describing him serving a reader would be a fabricated scene. The market
- *    and city are NOT named: the file carries no GPS and a named location is a
- *    factual claim. The copy describes presence, not activity.
- */
-?>
-<section id="where-you-will-find-us" class="homepage-section home-market section" aria-labelledby="home-market-title">
-  <div class="container">
-    <div class="home-market__card">
-      <figure class="home-market__figure">
-        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/farmers-market-2026-05.webp'); ?>"
-             alt="<?php esc_attr_e('Andrew Signore standing behind a Brave Hearts Publishing table at an outdoor farmers market, with a pop-up canopy, a roll-up banner for Adventures of Charlotte and Henry, copies of the paperbacks laid out, and a plush dog on the table.', 'brave-hearts'); ?>"
-             width="1400" height="1867" loading="lazy" decoding="async">
-        <figcaption class="home-market__caption"><?php esc_html_e('Brave Hearts at a farmers market, May 2026.', 'brave-hearts'); ?></figcaption>
-      </figure>
-      <div class="home-market__content">
-        <p class="component-heading__eyebrow"><?php esc_html_e('Where you\'ll find us', 'brave-hearts'); ?></p>
-        <h2 id="home-market-title" class="home-market__title"><?php esc_html_e('A canopy, a folding table, and the same books that ship to your door.', 'brave-hearts'); ?></h2>
-        <p><?php esc_html_e('Brave Hearts is a small independent publisher. Some of what we do happens at a table outdoors, with the paperbacks laid out where a child can pick one up.', 'brave-hearts'); ?></p>
-      </div>
-    </div>
   </div>
 </section>
 <?php
