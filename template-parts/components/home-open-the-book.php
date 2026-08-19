@@ -67,22 +67,48 @@ if (!function_exists('bhp_book_media_attachment_id')) {
  * described identically everywhere on the site, and so a future alt-text
  * correction lands in one place instead of two.
  */
+/*
+ * ⭐ 1.19.243 (2026-08-19) — CYCLE164-LD-HOMEPAGE-WARMTH-PASS2. THESE ARE THE
+ *    REAL FIRST PAGES NOW. 1.19.242 SHIPPED THE WRONG PHOTOGRAPHS.
+ *
+ * Andrew, on his phone, on 1.19.242: "there isnt the 3 pages of the MT book.
+ * The 3 pages are on the same home page which is fine but those pages are not
+ * the 1,2,3 first pages of the book. They are the diargrams and learning
+ * pages." And on the photographs themselves: "Keep the hands. Pages go in
+ * 1,2,3 order."
+ *
+ * He was right. 1.19.242 resolved three MID-BOOK diagram / Brave Learning
+ * spreads — one per title — under a heading that promises "Read the first
+ * pages". The section said "first pages" and showed page 40. These three are
+ * pages 1, 2 and 3 of The Mariana Trench, in that order.
+ *
+ * ⭐ THE SLOT CHOICE IS ANDREW'S, NOT MINE. `ASSET-NOTES.txt` left it open as
+ *    A) all three slots = the real pages 1-2-3, or B) slot 1 = page 1 and
+ *    keep Everest/Amazon in slots 2-3. "Pages go in 1,2,3 order" is option A,
+ *    so option A is built. ⚠️ IT COSTS THE THREE-TITLE SHOWCASE: this section
+ *    now shows one book. The Everest and Amazon interiors are NOT deleted —
+ *    they are still in the registry and still render in the Look Inside
+ *    carousel and on /complete-collection/. Raised in the build report.
+ *
+ * ⭐ SOURCE: real photographs Andrew supplied 2026-08-18, processed by Legolas
+ *    under CYCLE164-DES-FIRST-PAGE-PHOTOS (colour conversion, deskew, exposure
+ *    lift, unsharp mask, metadata stripped — no AI, no retouching of printed
+ *    content, no hand removal). Uploaded to the STAGING media library only,
+ *    2026-08-19, as attachments 3382/3383/3384.
+ *
+ * ⛔ THE ALT TEXT IS NOT WRITTEN HERE, AND THAT IS DELIBERATE. It lives on the
+ *    media record (`_wp_attachment_image_alt`), which `wp_get_attachment_image()`
+ *    reads by itself. 1.19.242 hardcoded alt into this array while its own
+ *    docblock claimed the registry owned it — two sources for one string. One
+ *    source now, and it is the one a WordPress editor can actually see.
+ *
+ * ⛔ CAPTIONS ARE "Page 1/2/3" AND NOTHING MORE. Standing rule §9.1: no claim
+ *    about what a page does to a child, no outcome language, no "we".
+ */
 $bhp_spreads = [
-    [
-        'slug'    => 'mariana-look-03-depth-diagram-brave-learning',
-        'caption' => __('The Mariana Trench: depth diagram and Brave Learning questions', 'brave-hearts'),
-        'alt'     => __('Interior spread showing a labelled How Deep Is the Mariana Trench diagram beside the Brave Learning STEM and SEL companion questions.', 'brave-hearts'),
-    ],
-    [
-        'slug'    => 'everest-look-03-how-tall-diagram',
-        'caption' => __('Mount Everest: the altitude zones, held open', 'brave-hearts'),
-        'alt'     => __('Interior page with a labelled How Tall Is Mount Everest diagram marking the altitude zones from Base Zone to Summit.', 'brave-hearts'),
-    ],
-    [
-        'slug'    => 'amazon-look-02-brave-learning-navy-v2',
-        'caption' => __('The Amazon: the canopy, and the questions after it', 'brave-hearts'),
-        'alt'     => __('Interior spread showing the Brave Learning companion questions beside a labelled Connected Amazon ecology diagram.', 'brave-hearts'),
-    ],
+    ['slug' => 'mariana-trench-page-1', 'caption' => __('Page 1', 'brave-hearts')],
+    ['slug' => 'mariana-trench-page-2', 'caption' => __('Page 2', 'brave-hearts')],
+    ['slug' => 'mariana-trench-page-3', 'caption' => __('Page 3', 'brave-hearts')],
 ];
 
 $bhp_resolved = [];
@@ -99,11 +125,16 @@ if (!$bhp_resolved) {
     return; // The gate.
 }
 
-$bhp_collection_url = home_url('/complete-collection/');
-$bhp_quiz_url       = home_url('/find-your-adventure/');
+/*
+ * ⭐ 1.19.243 — `$bhp_collection_url` IS DELETED, not left dangling. Both of
+ *    its consumers (the spread wrapper and the primary button) stopped
+ *    pointing at /complete-collection/ in this build, so the variable had no
+ *    reader left. A dead URL builder sitting in a file is how the wrong link
+ *    gets reintroduced by the next person who sees a convenient variable.
+ */
+$bhp_quiz_url = home_url('/find-your-adventure/');
 if (function_exists('bhp_get_safe_link_url')) {
-    $bhp_collection_url = bhp_get_safe_link_url($bhp_collection_url, home_url('/complete-collection/'));
-    $bhp_quiz_url       = bhp_get_safe_link_url($bhp_quiz_url, home_url('/find-your-adventure/'));
+    $bhp_quiz_url = bhp_get_safe_link_url($bhp_quiz_url, home_url('/find-your-adventure/'));
 }
 ?>
 <section id="home-open-the-book" class="homepage-section home-open-book" aria-labelledby="home-open-book-title">
@@ -128,10 +159,24 @@ if (function_exists('bhp_get_safe_link_url')) {
     <ul class="home-open-book__spreads" role="list">
       <?php foreach ($bhp_resolved as $bhp_i => $bhp_item): ?>
         <li class="home-open-book__spread">
-          <a class="home-open-book__spread-link"
-             href="<?php echo esc_url($bhp_collection_url); ?>"
-             data-bhp-event="contextual_cta_click"
-             data-bhp-source="home_open_the_book_spread">
+          <?php /*
+           * ⭐ 1.19.243 — THE LINK WRAPPER IS GONE, ON PURPOSE.
+           *
+           * Until 1.19.242 each photograph was an <a> to /complete-collection/.
+           * That is half of the exact defect Andrew reported: a reader who
+           * clicks a picture of page 1 expecting to read page 1 was taken to a
+           * shop page. Now that these ARE pages 1, 2 and 3, there is no better
+           * destination to send them to — the content is already on screen.
+           * A link that lands somewhere the label did not promise is worse
+           * than no link, so it is a plain figure.
+           *
+           * ⚠️ TRACKING NOTE, stated rather than buried: this removes the
+           *    `contextual_cta_click` / `home_open_the_book_spread` emitter.
+           *    It is the ONLY event removed in this build. No event is
+           *    renamed or re-sourced, and the section's two button emitters
+           *    (`home_open_the_book`, `home_open_the_book_quiz`) are untouched.
+           */ ?>
+          <figure class="home-open-book__spread-figure">
             <?php
             /*
              * `sizes` states the MEASURED ceiling of the rendered box rather
@@ -145,21 +190,35 @@ if (function_exists('bhp_get_safe_link_url')) {
              */
             echo wp_get_attachment_image($bhp_item['id'], 'large', false, [
                 'class'    => 'home-open-book__spread-img',
-                'alt'      => $bhp_item['alt'],
                 'loading'  => 'lazy',
                 'decoding' => 'async',
                 'sizes'    => '(max-width: 820px) 350px, 360px',
             ]);
             ?>
-            <span class="home-open-book__spread-caption"><?php echo esc_html($bhp_item['caption']); ?></span>
-          </a>
+            <figcaption class="home-open-book__spread-caption"><?php echo esc_html($bhp_item['caption']); ?></figcaption>
+          </figure>
         </li>
       <?php endforeach; ?>
     </ul>
 
     <div class="home-open-book__actions">
+      <?php /*
+       * ⭐ 1.19.243 — the second of the two controls Andrew hit. It also went
+       *    to /complete-collection/; it now scrolls to this section's own
+       *    photographs, which sit ABOVE these buttons, so from here it is a
+       *    scroll back up to pages 1-2-3 rather than a trip to a shop page.
+       *
+       * ⚠️⚠️ FLAGGED, NOT SETTLED — ANDREW'S CALL, IN THE BUILD REPORT.
+       *      With the real first pages now rendered a few hundred pixels
+       *      above it, a button still labelled "Read the first pages free"
+       *      is promising something the reader has already been given. The
+       *      LINK defect is fixed here because that is what he reported. The
+       *      LABEL is a copy decision and copy is not mine to change: two
+       *      replacement labels are offered in the report for him to pick,
+       *      and neither is shipped without his yes.
+       */ ?>
       <a class="btn home-open-book__btn home-open-book__btn--primary"
-         href="<?php echo esc_url($bhp_collection_url); ?>"
+         href="<?php echo esc_url(bhp_get_safe_link_url('#home-open-the-book', '#home-open-the-book')); ?>"
          data-bhp-event="contextual_cta_click"
          data-bhp-source="home_open_the_book">
         <?php esc_html_e('Read the first pages free', 'brave-hearts'); ?>

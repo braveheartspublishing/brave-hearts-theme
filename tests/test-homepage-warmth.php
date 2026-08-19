@@ -194,20 +194,80 @@ bhp_hw_assert(
 );
 bhp_hw_assert(
 	3 === substr_count( $home, 'class="home-open-book__spread"' ),
-	'§1.4 all THREE interior spreads resolved from the media registry',
+	'§1.4 all THREE page photographs resolve',
+	$failures
+);
+
+/*
+ * ⭐ 1.19.243 — THESE THREE ASSERTIONS REPLACE THE 1.19.242 ONES, WHICH WERE
+ *    ASSERTING THE DEFECT ANDREW REPORTED.
+ *
+ * The old test demanded the words "How Deep Is the Mariana Trench diagram",
+ * "How Tall Is Mount Everest diagram" and "Connected Amazon ecology diagram"
+ * — i.e. it PASSED precisely because the section showed mid-book diagram
+ * spreads under a heading that promises the first pages. A green suite is
+ * worth nothing if it is green about the wrong thing.
+ *
+ * ⛔ THE REPLACEMENTS ARE STRICTER, NOT LOOSER. They pin the page ORDER
+ *    ("Pages go in 1,2,3 order" — Andrew, 2026-08-18), pin the alt text to
+ *    the real first pages, and add a NEGATIVE assertion that the three
+ *    diagram spreads have actually left this section. Without that last one
+ *    a future edit could re-add them alongside and still pass.
+ */
+$bhp_hw_p1 = bhp_hw_at( $home, 'mariana-trench-page-1' );
+$bhp_hw_p2 = bhp_hw_at( $home, 'mariana-trench-page-2' );
+$bhp_hw_p3 = bhp_hw_at( $home, 'mariana-trench-page-3' );
+bhp_hw_assert(
+	$bhp_hw_p1 >= 0 && $bhp_hw_p2 > $bhp_hw_p1 && $bhp_hw_p3 > $bhp_hw_p2,
+	'§1.4 the three slots are the REAL first pages, in 1-2-3 order (Andrew, 2026-08-18)',
 	$failures
 );
 bhp_hw_assert(
-	false !== strpos( $home, 'How Deep Is the Mariana Trench diagram' )
-		&& false !== strpos( $home, 'How Tall Is Mount Everest diagram' )
-		&& false !== strpos( $home, 'Connected Amazon ecology diagram' ),
-	'§1.4 each spread carries the registry alt text, not a locally-written one',
+	false !== strpos( $home, 'Page 1 of Adventures of Charlotte and Henry: The Mariana Trench' )
+		&& false !== strpos( $home, 'Page 2 of Adventures of Charlotte and Henry: The Mariana Trench' )
+		&& false !== strpos( $home, 'Page 3 of Adventures of Charlotte and Henry: The Mariana Trench' ),
+	'§1.4 each page carries its media-record alt text, not a locally-written one',
+	$failures
+);
+bhp_hw_assert(
+	false === strpos( $home, 'How Deep Is the Mariana Trench diagram' )
+		&& false === strpos( $home, 'How Tall Is Mount Everest diagram' )
+		&& false === strpos( $home, 'Connected Amazon ecology diagram' ),
+	'§1.4 the mid-book DIAGRAM spreads no longer stand in for the first pages',
 	$failures
 );
 bhp_hw_assert(
 	false !== strpos( $home, 'Read the first pages before you decide.' )
 		&& false !== strpos( $home, 'At the market, people pick a book up' ),
 	'§1.4 the section copy is present (NEW COPY, awaiting Andrew - see the build report)',
+	$failures
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * §1.5 — 1.19.243. NEITHER "READ THE FIRST PAGES" CONTROL LEAVES THE HOMEPAGE.
+ *
+ * Andrew, 2026-08-18, on 1.19.242: "When you hit read the first pages it goes
+ * direct to the collection page... Also the 'read the first pages' CTA goes to
+ * the collection page again - this is all incorrect."
+ *
+ * Both controls now target the on-page section. The negative assertion is the
+ * one that matters: it is what stops a future edit from restoring the
+ * convenient /complete-collection/ href and shipping this bug a third time.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+bhp_hw_assert(
+	false !== strpos( $home, 'data-bhp-source="home_hero_open_book"' )
+		&& preg_match( '/href="#home-open-the-book"[^>]*data-bhp-source="home_hero_open_book"/', $home ) === 1,
+	'§1.5 the HERO "read the first pages" invitation targets #home-open-the-book',
+	$failures
+);
+bhp_hw_assert(
+	preg_match( '/href="#home-open-the-book"[^>]*data-bhp-source="home_open_the_book"/', $home ) === 1,
+	'§1.5 the SECTION "read the first pages" CTA targets #home-open-the-book',
+	$failures
+);
+bhp_hw_assert(
+	2 === substr_count( $home, 'href="#home-open-the-book"' ),
+	'§1.5 EXACTLY the two read-the-first-pages controls carry the anchor, no more',
 	$failures
 );
 
@@ -356,16 +416,36 @@ bhp_hw_assert(
 /* 3d. Tracking. Events ADDED, never removed or renamed. */
 $expected_events = array(
 	'quiz_cta_clicked'      => 3, /* footer launcher + hero link + open-the-book link */
-	'contextual_cta_click'  => 5, /* 3 spread links + 1 section CTA + >=1 pre-existing */
+	'contextual_cta_click'  => 2, /* 1.19.243: 1 section CTA + >=1 pre-existing */
 );
 bhp_hw_assert(
 	substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ) >= 3,
 	'§3.4 quiz_cta_clicked is emitted by the footer launcher AND both new links (>= 3 emitters)',
 	$failures
 );
+/*
+ * ⚠️ 1.19.243 — THIS FLOOR DROPS FROM 4 TO 2, AND THE DROP IS THE POINT, SO
+ *    IT IS WRITTEN DOWN RATHER THAN QUIETLY RE-NUMBERED.
+ *
+ * The three spread <a> wrappers were removed this build: they pointed at
+ * /complete-collection/, which is half of the defect Andrew reported ("the
+ * 'read the first pages' CTA goes to the collection page again - this is all
+ * incorrect"). The photographs ARE the first pages now, so there is nowhere
+ * honest to send a click, and they are plain <figure>s.
+ *
+ * ⭐ THIS IS THE ONLY EVENT EMITTER REMOVED IN THE WHOLE BUILD. No event is
+ *    renamed, re-sourced or added. The section CTA and the section quiz
+ *    button both still emit, and the assertion immediately below still
+ *    forbids any event NAME that did not already exist at 1.19.240.
+ */
 bhp_hw_assert(
-	substr_count( $home, 'data-bhp-event="contextual_cta_click"' ) >= 4,
-	'§3.4 contextual_cta_click is emitted by the 3 spread links and the section CTA (>= 4 emitters)',
+	substr_count( $home, 'data-bhp-event="contextual_cta_click"' ) >= 2,
+	'§3.4 contextual_cta_click still emitted by the section CTA plus pre-existing (>= 2 emitters)',
+	$failures
+);
+bhp_hw_assert(
+	false === strpos( $home, 'home-open-book__spread-link' ),
+	'§3.4 the three page photographs carry NO link to /complete-collection/',
 	$failures
 );
 /*

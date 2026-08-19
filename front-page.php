@@ -470,7 +470,33 @@ $hero_lead = trim(ob_get_clean());
  * picks them up with no JS change at all. NO EXISTING EVENT IS REMOVED,
  * RENAMED OR RE-SOURCED anywhere in this build.
  */
-$hero_open_url = bhp_get_safe_link_url(home_url('/complete-collection/'), home_url('/complete-collection/'));
+/*
+ * ⭐ 1.19.243 (2026-08-19) — CYCLE164-LD-HOMEPAGE-WARMTH-PASS2. THIS LINK NO
+ *    LONGER LEAVES THE HOMEPAGE, AND THAT IS THE WHOLE POINT OF THE CHANGE.
+ *
+ * Andrew, on his phone, on 1.19.242: "When you hit read the first pages it
+ * goes direct to the collection page... Also the 'read the first pages' CTA
+ * goes to the collection page again - this is all incorrect."
+ *
+ * He was right, and the defect was mine: 1.19.242 built #home-open-the-book
+ * on this very page and then pointed the button that promises it at
+ * /complete-collection/. A button labelled "Read the first pages" must show
+ * the first pages. It now scrolls to the section that holds them.
+ *
+ * ⛔ NO JS IS ADDED FOR THIS. `html { scroll-behavior: smooth }` is already
+ *    declared at style.css:184 (with the prefers-reduced-motion override at
+ *    :2259), and `.home .homepage-section` already carries
+ *    `scroll-margin-top: calc(var(--header-height) + var(--space-4))` at
+ *    :3411 — so the landing position already clears the sticky header
+ *    without a single line of script.
+ *
+ * ⭐ `bhp_get_safe_link_url()` PASSES FRAGMENTS DELIBERATELY: functions.php
+ *    :1192 whitelists `^#[A-Za-z][A-Za-z0-9_-]*$` and returns it untouched.
+ *    `#home-open-the-book` matches. The fallback is the same fragment rather
+ *    than a URL, so a future rename fails to a dead scroll rather than
+ *    silently reopening the exact bug Andrew just caught.
+ */
+$hero_open_url = bhp_get_safe_link_url('#home-open-the-book', '#home-open-the-book');
 $hero_quiz_url = bhp_get_safe_link_url(home_url('/find-your-adventure/'), home_url('/find-your-adventure/'));
 ob_start();
 ?>

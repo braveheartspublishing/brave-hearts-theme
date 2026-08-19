@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.242
+Version: 1.19.243
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -9141,17 +9141,26 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 .home .home-open-book__spread:nth-child(1) { transform: rotate(-1.4deg); }
 .home .home-open-book__spread:nth-child(2) { transform: rotate(.7deg); }
 .home .home-open-book__spread:nth-child(3) { transform: rotate(-.5deg); }
-.home .home-open-book__spread-link {
+/* 1.19.243: was `__spread-link` (an <a> to /complete-collection/). These are
+   the real pages 1-2-3 now and they link nowhere, so the wrapper is a
+   <figure>. Renamed rather than left as a stale selector matching nothing. */
+.home .home-open-book__spread-figure {
   display: block;
-  text-decoration: none;
+  margin: 0;
   color: inherit;
 }
 .home .home-open-book__spread-img {
   display: block;
   width: 100%;
   height: 232px;
-  object-fit: cover;
-  object-position: center 46%;
+  /* 1.19.243: `contain`, not `cover`. These are PAGES OF TEXT — `cover` on a
+     square 1200x1200 photograph in a 232px-tall box cropped the top and
+     bottom lines off page 1, which is the one thing a "read the first pages"
+     section may not do. `contain` shows the whole page; the dark ground
+     below fills the letterbox and matches the tabletop the books were shot
+     on, so it reads as intentional rather than as a gap. */
+  object-fit: contain;
+  object-position: center center;
   background: #0e1a24; /* the interiors are shot on a dark studio ground */
 }
 .home .home-open-book__spread-caption {
@@ -9257,4 +9266,124 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 @media (prefers-reduced-motion: reduce) {
   .home .home-open-book__spread,
   .home .home-market__caption { transform: none; }
+}
+
+/* ============================================================================
+   CYCLE164-LD-HOMEPAGE-WARMTH-PASS2 (1.19.243, 2026-08-19)
+   THE FOUNDER CHIP CLEARS THE NAV, AND THE PRIMARY CTA IS ON THE FIRST SCREEN.
+
+   Andrew, on his phone, on 1.19.242, verbatim:
+     "The Founder bar is under the top nav bar and almost fully covered.
+      The CTA is not above the fold."
+
+   Both were true, and both were MEASURED before and after rather than
+   eyeballed. At innerWidth 390 / innerHeight 844 on staging, 1.19.242:
+
+     .site-header      bottom  92.8
+     .home-founder-chip   top  44.8   <-- 48.0px of an 88px chip behind the nav
+     primary invitation   top 810.9   bottom 880.8   <-- 36.8px below the fold
+
+   ── WHY THE CHIP WAS BEHIND THE NAV, WHICH IS NOT WHERE ANYONE WOULD LOOK ──
+
+   It is not the chip's fault and it is not new. `.home #home-hero` is pulled
+   up under the translucent sticky header by `margin-top:-76px` (style.css
+   :4746) so the ocean artwork bleeds behind the nav — a deliberate, older
+   effect that is kept here. The compensating `padding-top:128px` that made
+   that safe was overridden to `28px` by the <=600px compression block at
+   :6176, whose ID selector (`.home #home-hero`) outranks the <=480px block at
+   :5932 that had explicitly "Verified against the 93px sticky header so the
+   eyebrow/title never sit behind it". That verification silently stopped
+   being true the moment the later block landed. Since -76 + 28 = -48, the
+   FIRST child of the hero has been sitting 48px behind the nav ever since;
+   when that child was a small uppercase eyebrow nobody filed it, and when it
+   became a photograph of Andrew's face he spotted it in one glance.
+
+   ⭐ THE 88px IS ARITHMETIC, NOT TASTE, AND IT IS HEADER-HEIGHT-INDEPENDENT.
+      chip_top = (header_height - 76) + padding_top. Setting padding_top = 88
+      gives chip_top = header_height + 12 for ANY header height — the term
+      cancels. So this cannot silently break again when the header changes
+      size at another breakpoint, which is exactly how it broke the first
+      time. `--header-height` is deliberately NOT used: it is declared 70px
+      at :149 while the header actually renders 92.8px here, so trusting it
+      would reintroduce the bug with a tidier-looking expression.
+
+   ── PAYING FOR IT: 88px COSTS 60px, AND THE CTA NEEDED 49px MORE ──
+
+   Clearing the nav pushes everything DOWN 60px while the CTA needed to come
+   UP ~49px, so ~109px had to be found inside the hero. It is taken as
+   spacing and type scale ONLY. No hero copy is changed, nothing is hidden,
+   nothing is reordered, no image is cropped.
+
+   ⚠️ THE 2026-07-31 "COVERS DIRECTLY UNDER THE H1 ON MOBILE" RULING IS NOT
+      OVERTURNED. Gandalf's brief authorised yielding it to tonight's founder
+      instruction if the two collided. They did not collide: the covers are
+      still the element immediately after the H1, in DOM order, via the same
+      `aside_after_title` real-DOM-move. They are 30px shorter. That is the
+      whole of it, and no `order`/transform/absolute trick was used, so
+      keyboard order still matches visible order.
+   ============================================================================ */
+@media (max-width: 600px) {
+
+  /* 1. THE CLEARANCE. See the arithmetic above. */
+  .home #home-hero.home-hero--with-books,
+  .home #home-hero {
+    padding-top: 88px;
+  }
+
+  /* 2. The stack gap: five gaps sit above the primary CTA, so every pixel
+        here is worth five. 14 -> 10 buys 20px for 4px of air per gap. */
+  .home #home-hero .home-hero__content {
+    gap: 10px;
+  }
+
+  /* 3. The chip's own bottom margin. It is a 3-line object; 24px below it on
+        a 390px screen is desktop rhythm that nobody asked for. */
+  .home #home-hero .home-founder-chip {
+    margin-bottom: 12px;
+  }
+
+  /* 4. The eyebrow wrapped to TWO lines purely on letter-spacing (.32em on a
+        39-character string in a 342px column). Tightening the tracking and
+        the size lands it on one line at 390px. It is still uppercase, still
+        gold, still the same words — "REAL-WORLD ADVENTURE BOOKS FOR AGES 6–9"
+        is untouched, and 6–9 stays 6–9. If a narrower phone still wraps it,
+        it wraps to two SHORTER lines and this rule still pays for itself. */
+  .home #home-hero .home-hero__eyebrow {
+    margin-bottom: 2px;
+    font-size: .675rem;
+    letter-spacing: .18em;
+  }
+
+  /* 5. The H1: 32px/1.1 -> 28px/1.06. Still the largest thing on the screen
+        by a wide margin, still three lines. */
+  .home #home-hero .home-hero__title {
+    margin-bottom: 2px;
+    font-size: 1.75rem;
+    line-height: 1.06;
+  }
+
+  /* 6. The covers. 168.8px -> 138px of cover, keeping the aspect ratio
+        (height is set, width follows) so nothing is cropped or squashed.
+        They remain the first thing under the H1. */
+  .home #home-hero .home-hero__book-preview {
+    margin-top: 10px;
+  }
+  .home #home-hero .home-hero__book-cover {
+    height: 138px;
+    width: auto;
+    max-width: 100%;
+  }
+
+  /* 7. The supporting paragraph: 16.32px/1.55 -> 15.2px/1.45. */
+  .home #home-hero .home-hero__text {
+    margin-top: 10px;
+    font-size: .95rem;
+    line-height: 1.45;
+  }
+
+  /* 8. The invitations. The primary one is the button Andrew could not
+        reach; this is the last 10px of its journey onto the first screen. */
+  .home #home-hero .home-hero__invitations {
+    margin-top: 14px;
+  }
 }
