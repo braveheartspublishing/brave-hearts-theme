@@ -40,7 +40,7 @@
    -------------------------------------------------------------------------- */
 
 body:not(.home) article.single-post.section {
-  padding-block-start: clamp(0.5rem, 2vw, 2rem);
+  padding-block-start: clamp(0.3rem, 1.6vw, 2rem);
 }
 
 /* The breadcrumb, compact.
@@ -51,11 +51,32 @@ body:not(.home) article.single-post.section {
    reader is not shown the headline twice within 100 px. Removing it from the
    markup would have been simpler and worse. */
 .single-post .guide-breadcrumbs {
-  margin-block: 0 clamp(0.5rem, 1.5vw, 0.85rem);
+  margin-block: 0 clamp(0.3rem, 1.2vw, 0.85rem);
 }
 .single-post .guide-breadcrumbs ol {
   gap: 0.35rem;
   align-items: baseline;
+}
+
+/* ⭐ ONE LINE AT 390, MEASURED RATHER THAN GUESSED.
+   At the inherited .68rem / .06em the visible trail
+   "Home -> Explorer Expedition Guides -> Science & Geography" is 54 characters
+   and wraps to TWO lines in a 358 px content column: 31 px where 16 px would
+   do, and 15 px is a quarter of the whole dead-band budget. Dropping to .62rem
+   with .04em tracking brings it inside one line while staying at or above the
+   .68rem-equivalent of the site's other captions in optical weight.
+
+   ⚠ IT IS DELIBERATELY NOT SMALLER THAN THIS. The next step down fits more
+     comfortably and starts to fail legibility on a phone, and a breadcrumb
+     nobody can read is not a saving. The remaining budget was taken from the
+     GAPS instead, which cost nothing to read. */
+@media (max-width: 480px) {
+  .single-post .guide-breadcrumbs li {
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    line-height: 1.35;
+  }
+  .single-post .guide-breadcrumbs ol { gap: 0.28rem; }
 }
 .single-post .guide-breadcrumbs li:last-child {
   position: absolute;
@@ -88,7 +109,7 @@ body:not(.home) article.single-post.section {
 }
 
 .post-header--field-note .bhp-post-eyebrow {
-  margin: 0 0 clamp(0.35rem, 1vw, 0.6rem);
+  margin: 0 0 clamp(0.25rem, 0.9vw, 0.6rem);
   color: var(--expedition-gold);
   font-family: var(--font-ui);
   font-size: 0.66rem;

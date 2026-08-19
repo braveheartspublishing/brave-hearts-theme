@@ -1,15 +1,23 @@
 /*! Built from blog-post.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 7322af5dc1644aa84a7f5cd0f8a70920
+    source-md5: b9d2939bc87c25793dad30ec5893dab9
     Comments stripped for transfer size; the source file is canonical. */
 body:not(.home) article.single-post.section {
-  padding-block-start: clamp(0.5rem, 2vw, 2rem);
+  padding-block-start: clamp(0.3rem, 1.6vw, 2rem);
 }
 .single-post .guide-breadcrumbs {
-  margin-block: 0 clamp(0.5rem, 1.5vw, 0.85rem);
+  margin-block: 0 clamp(0.3rem, 1.2vw, 0.85rem);
 }
 .single-post .guide-breadcrumbs ol {
   gap: 0.35rem;
   align-items: baseline;
+}
+@media (max-width: 480px) {
+  .single-post .guide-breadcrumbs li {
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    line-height: 1.35;
+  }
+  .single-post .guide-breadcrumbs ol { gap: 0.28rem; }
 }
 .single-post .guide-breadcrumbs li:last-child {
   position: absolute;
@@ -36,7 +44,7 @@ body:not(.home) article.single-post.section {
   text-align: left;                    
 }
 .post-header--field-note .bhp-post-eyebrow {
-  margin: 0 0 clamp(0.35rem, 1vw, 0.6rem);
+  margin: 0 0 clamp(0.25rem, 0.9vw, 0.6rem);
   color: var(--expedition-gold);
   font-family: var(--font-ui);
   font-size: 0.66rem;
