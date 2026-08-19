@@ -275,10 +275,31 @@ bhp_pt_assert(
  *    would mean copy was suppressed rather than moved, and that is a content
  *    decision this build was not given.
  */
-$display_nones = preg_match_all( '/display:\s*none/i', $css );
+/*
+ * ⭐ 1.19.265 (2026-08-19, `CYCLE165-LD-ITERATE-1-CRO-FIXES`) — COMMENTS ARE
+ *    STRIPPED BEFORE THIS COUNT, AND THE SEARCH IS NOT WEAKENED.
+ *
+ *    This assertion read the RAW file and therefore counted the PROPERTY NAME
+ *    wherever it appeared, including inside a docblock. `CX-018`'s desktop
+ *    section states in prose that it hides nothing — and the sentence saying so
+ *    contains the two words this test looks for, so the suite failed at 2 while
+ *    the stylesheet still contained exactly one real declaration. Verified both
+ *    ways before changing anything: raw 2, comments stripped 1, and the single
+ *    declaration is still line ~322, `.bhp-gallery__inspect-hint`.
+ *
+ *    ⛔ THIS IS STRICTER, NOT LOOSER. Counting declarations instead of
+ *       occurrences is what §3.6 always meant; a comment can no longer trip it,
+ *       and — the half that matters — a comment can no longer HIDE a real
+ *       `display: none` inside a commented-out rule either. The identical
+ *       treatment, with the identical reasoning, is already applied by §9 of
+ *       this same file: "comments are stripped before the search rather than
+ *       the search being weakened."
+ */
+$css_code_only = preg_replace( '#/\*.*?\*/#s', '', $css );
+$display_nones = preg_match_all( '/display:\s*none/i', $css_code_only );
 bhp_pt_assert(
 	1 === $display_nones,
-	sprintf( '§3.6 exactly one `display:none` in the whole stylesheet, and it is the hover-only pill (found %d)', $display_nones ),
+	sprintf( '§3.6 exactly one `display:none` DECLARATION in the whole stylesheet, and it is the hover-only pill (found %d)', $display_nones ),
 	$failures
 );
 
