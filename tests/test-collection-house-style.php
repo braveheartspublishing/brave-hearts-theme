@@ -227,29 +227,69 @@ if ( defined( 'BHP_BUNDLE_PRICING_DIR' ) ) {
 $hs_files['tests/test-collection-fold-390.php']   = get_template_directory() . '/tests/test-collection-fold-390.php';
 $hs_files['tests/test-collection-house-style.php'] = get_template_directory() . '/tests/test-collection-house-style.php';
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⭐ CORRECTED AFTER THIS ASSERTION'S FIRST RUN ON STAGING, AND RECORDED
+ *     RATHER THAN QUIETLY PATCHED. THE TEST WAS WRONG; THE CODE WAS RIGHT.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * The superseded needle, preserved verbatim so the movement is visible:
+ *
+ *   $hs_c = substr_count( $hs_src, $hs_lit );
+ *
+ * It counted the six figures ANYWHERE in the file's raw text and read
+ * "31.99 x4, 48.99 x5, 35.97 x2, 53.97 x2, 3.98 x2, 4.98 x1" — a FAILURE on
+ * a correct build. ⛔ EVERY ONE OF THOSE OCCURRENCES IS INSIDE A COMMENT, and
+ * they are load-bearing comments: the docblock recording the live WP-CLI
+ * verification of the price arithmetic, the docblock stating that no literal
+ * exists in the price function, the founder's own quoted instruction not to
+ * lead with the hardcover price, and preserved superseded markup. ⛔ THE
+ * COUNTS ARE IDENTICAL TO THE 1.19.253 BASELINE — this release introduced
+ * exactly zero of them. A guard that fails on its own documentation trains a
+ * reader to ignore a red suite, which is worse than no guard.
+ *
+ * ⭐ THE NEEDLE NOW ASSERTS THE PROPERTY THAT WAS ALWAYS MEANT: no literal in
+ *   CODE. `token_get_all()` is PHP's own lexer, so comments are removed
+ *   exactly, not approximately — a regex would trip over `$` in a docblock and
+ *   over apostrophes in prose, which is how the first form got this wrong.
+ *   Inline HTML is KEPT in the haystack deliberately: a price typed straight
+ *   into markup is the exact defect this is here to catch.
+ */
 foreach ( $hs_files as $hs_label => $hs_path ) {
 	if ( ! is_readable( $hs_path ) ) {
 		bhp_hs_skip( "4: {$hs_label} is not readable in this deployment", $skipped );
 		continue;
 	}
-	$hs_src = (string) file_get_contents( $hs_path );
+	if ( ! function_exists( 'token_get_all' ) ) {
+		bhp_hs_skip( '4: the tokenizer extension is unavailable, so the code-only scan cannot be made honestly', $skipped );
+		break;
+	}
+	$hs_code = '';
+	foreach ( token_get_all( (string) file_get_contents( $hs_path ) ) as $hs_tok ) {
+		if ( is_array( $hs_tok ) ) {
+			if ( T_COMMENT === $hs_tok[0] || T_DOC_COMMENT === $hs_tok[0] ) {
+				continue; // documentation, not output
+			}
+			$hs_code .= $hs_tok[1];
+			continue;
+		}
+		$hs_code .= $hs_tok;
+	}
 	/*
-	 * ⚠ THIS FILE IS ITS OWN HAYSTACK, so the six needles above are stripped
-	 *   from the source before counting. Without that, the guard fails on
-	 *   itself — which is exactly the kind of false red that trains a reader to
-	 *   ignore a suite.
+	 * ⚠ THIS FILE IS ITS OWN HAYSTACK — the needle array is real code here, not
+	 *   a comment, so the tokenizer keeps it. It is removed by name.
 	 */
-	$hs_src = str_replace( "'31.99', '48.99', '35.97', '53.97', '3.98', '4.98'", '', $hs_src );
+	$hs_code = str_replace( "'31.99', '48.99', '35.97', '53.97', '3.98', '4.98'", '', $hs_code );
 	$hs_found = array();
 	foreach ( $hs_literals as $hs_lit ) {
-		$hs_c = substr_count( $hs_src, $hs_lit );
+		$hs_c = substr_count( $hs_code, $hs_lit );
 		if ( $hs_c > 0 ) {
 			$hs_found[] = "{$hs_lit} x{$hs_c}";
 		}
 	}
 	bhp_hs_assert(
 		empty( $hs_found ),
-		"4: {$hs_label} contains no displayed-price literal" . ( $hs_found ? ' (found: ' . implode( ', ', $hs_found ) . ')' : '' ),
+		"4: {$hs_label} contains no displayed-price literal in CODE" . ( $hs_found ? ' (found: ' . implode( ', ', $hs_found ) . ')' : '' ),
 		$failures
 	);
 }
