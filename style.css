@@ -8401,7 +8401,18 @@ a.header-expedition-cta {
   background: var(--color-ivory);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-6) var(--space-5) var(--space-5);
+  /* ⛔ ONLY TOKENS THAT EXIST. The scale is 1, 2, 3, 4, 6, 8, 10, 12, 16, 20,
+     24, 32 — there is NO `--space-5`, and an earlier draft of this rule used
+     one. That is not a cosmetic slip: a custom property that resolves to
+     nothing makes the whole shorthand INVALID AT COMPUTED-VALUE TIME, which
+     sets it to `unset` — and `unset` on `padding` is `initial`, i.e. ZERO. It
+     does NOT fall back to the base rule's padding. The dialog rendered with
+     the image and both fields flush against its edges, and neither the PHP
+     suite nor the deploy gates can see a stylesheet defect. Found by
+     screenshotting this block offline against the real stylesheet before the
+     staging turn was available; recorded so the next reader reaches for the
+     scale rather than for a plausible-looking number. */
+  padding: var(--space-6) var(--space-6) var(--space-4);
   text-align: center;
 }
 
@@ -8422,10 +8433,18 @@ a.header-expedition-cta {
   margin: 0 auto var(--space-3);
   line-height: 0;
 }
+/* ⛔ THE CENTRING IS ON THE IMG, NOT ON THE PICTURE, AND THAT IS NOT
+   INTERCHANGEABLE. `margin: 0 auto` on the wrapper does nothing here: a block
+   `<picture>` already fills the dialog's content width, so auto margins have
+   no free space to distribute and the 96px image sits hard against the left
+   edge. Observed in an offline shot of this stylesheet before the staging turn
+   was available. The `img` is the element with a fixed width, so it is the
+   element that can be centred. */
 .mariana-popup--ab .popup-ab__kit-cover img {
   display: block;
   width: 96px;
   height: auto;
+  margin-inline: auto;
   border-radius: 3px;
   box-shadow: 0 4px 10px rgba(var(--color-jungle-rgb), 0.22);
 }
