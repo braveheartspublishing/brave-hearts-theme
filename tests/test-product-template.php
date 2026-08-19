@@ -290,10 +290,19 @@ if ( ! function_exists( 'bhp_book_ship_note_single' ) ) {
 	$dollar = bhp_book_ship_note_single( 1.99 );
 	$free   = bhp_book_ship_note_single( 0.00 );
 
+	/*
+	 * ⛔ THE CASE MATTERS HERE AND THE FIRST VERSION OF THIS ASSERTION GOT IT
+	 *    WRONG, so the correction is recorded rather than quietly applied. A
+	 *    case-INSENSITIVE `/\bus\b/` matches "contiguous US" -- the country, not
+	 *    the pronoun -- and reported a §9.1 breach in a sentence that has none.
+	 *    "we" and "our" are safe case-insensitively (no English word or code
+	 *    collides); "us" is only ever a pronoun in lower case on this site, and
+	 *    "US" is always the country. Same rule, correctly scoped.
+	 */
 	foreach ( array( 'dollar' => $dollar, 'free' => $free ) as $branch => $text ) {
 		bhp_pt_assert(
-			0 === preg_match( '/\b(we|us|our)\b/i', $text ),
-			"§4.1.{$branch} no \"we\", \"us\" or \"our\" (standing rule §9.1)",
+			0 === preg_match( '/\b(we|our)\b/i', $text ) && 0 === preg_match( '/\bus\b/', $text ),
+			"§4.1.{$branch} no \"we\", \"us\" or \"our\" (standing rule §9.1; \"US\" the country is not the pronoun)",
 			$failures
 		);
 		bhp_pt_assert(
@@ -349,7 +358,7 @@ if ( ! function_exists( 'bhp_book_ship_note_single' ) ) {
 			$failures
 		);
 		bhp_pt_assert(
-			'' === $note || 0 === preg_match( '/\b(we|us|our)\b/i', $note ),
+			'' === $note || ( 0 === preg_match( '/\b(we|our)\b/i', $note ) && 0 === preg_match( '/\bus\b/', $note ) ),
 			'§4.8 the collection sentence carries no "we", "us" or "our"',
 			$failures
 		);
@@ -391,17 +400,35 @@ foreach ( array( '4 stars: really good', '3 stars: it was okay', '2 stars: not f
  *     that no pass has "fixed" it: the showcase must still carry a first-person
  *     plural somewhere in its quoted text, because the live review contains one.
  */
-if ( ! empty( $pages ) ) {
-	$first_html = bhp_pt_fetch( reset( $pages ) );
-	if ( '' !== $first_html && false !== strpos( $first_html, 'amazon-reviews-product-section' ) ) {
+/*
+ * ⛔ THE PAGE IS NAMED, NOT GUESSED, AND THE FIRST VERSION OF THIS ASSERTION
+ *    GOT IT WRONG. It fetched whichever product happened to sort first and
+ *    looked for the Mariana review there, so it failed on a page that never
+ *    carried that review -- a red result with nothing behind it, which is worse
+ *    than no test. The review with the customer's "we" is on THE MARIANA
+ *    TRENCH; The Amazon carries no Amazon review section at all, because it has
+ *    no real reviews yet and none is ever invented (Standing Rules §3).
+ */
+$mariana_url = '';
+foreach ( $pages as $pid => $url ) {
+	if ( false !== strpos( (string) get_post_field( 'post_name', $pid ), 'mariana' ) ) {
+		$mariana_url = $url;
+		break;
+	}
+}
+if ( '' !== $mariana_url ) {
+	$mariana_html = bhp_pt_fetch( $mariana_url );
+	if ( '' !== $mariana_html && false !== strpos( $mariana_html, 'amazon-reviews-product-section' ) ) {
 		bhp_pt_assert(
-			1 === preg_match( '/We read a few chapters each night/i', $first_html ),
+			1 === preg_match( '/We read a few chapters each night/', $mariana_html ),
 			'§5.4 the real Amazon review is served verbatim, its "we" untouched (§9.1a)',
 			$failures
 		);
 	} else {
 		bhp_pt_skip( '§5.4 the Amazon review section is not present on this environment' );
 	}
+} else {
+	bhp_pt_skip( '§5.4 the Mariana product page did not resolve on this environment' );
 }
 
 echo "\n=== §6 — GALLERY THUMBNAIL ALT TEXT ===\n";
