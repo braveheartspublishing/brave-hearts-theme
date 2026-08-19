@@ -229,12 +229,35 @@ foreach ( array( 'field-marks.svg', 'plate-compass-rose.svg' ) as $asset ) {
 	);
 }
 
-// The step-4 CSS block itself declares no colour at all.
-$p4_pos  = strpos( $theme_css, '1.19.263 (2026-08-19) — THE FIELD RULE AND THE PLATE' );
+/*
+ * The step-4 CSS block itself declares no colour at all.
+ *
+ * ⚠️ THE SLICE MUST START AT THE BANNER'S `/*`, NOT AT THE MARKER TEXT INSIDE
+ *    IT. The marker sits on the banner's second line, so a slice starting
+ *    there begins in the MIDDLE of a comment with no opening delimiter — and
+ *    `preg_replace('#/\*.*?\*/#s')` would then leave the rest of that banner
+ *    standing while stripping the NEXT comment instead. The first run of this
+ *    suite failed exactly that way: §3.6 reported `#D9A45F` "declared" when
+ *    the only occurrence was the banner sentence explaining that the assets
+ *    carry it. Rewinding to the banner opener is the fix; loosening the
+ *    assertion would have been the wrong one. (This is the same defect class
+ *    as `test-homepage-warmth`'s unbounded `$p9_tail`, found in this session.)
+ */
+$p4_mark = strpos( $theme_css, '1.19.263 (2026-08-19) — THE FIELD RULE AND THE PLATE' );
+$p4_pos  = ( false === $p4_mark ) ? false : strrpos( substr( $theme_css, 0, $p4_mark ), '/*' );
 $p4_tail = ( false === $p4_pos ) ? '' : substr( $theme_css, $p4_pos );
 bhp_d1h_assert( '' !== $p4_tail, '§3.5 the step-4 CSS block is present in style.css', $failures );
-$p4_code = preg_replace( '#/\*.*?\*/#s', '', $p4_tail );
-preg_match_all( '/#[0-9a-fA-F]{3,8}\b/', (string) $p4_code, $p4hex );
+
+/*
+ * Everything below reads the COMMENT-STRIPPED block. This codebase writes
+ * essay-length CSS comments on purpose, and those essays quote the very
+ * things these assertions forbid — the hex the assets carry, the property
+ * names that make the decorations inert. Asserting over prose would make an
+ * accurate comment fail the build.
+ */
+$p4_code = (string) preg_replace( '#/\*.*?\*/#s', '', $p4_tail );
+
+preg_match_all( '/#[0-9a-fA-F]{3,8}\b/', $p4_code, $p4hex );
 bhp_d1h_assert(
 	'' !== $p4_tail && empty( $p4hex[0] ),
 	sprintf( '§3.6 the step-4 CSS declares no hex colour at all%s', ! empty( $p4hex[0] ) ? ' (found: ' . implode( ', ', array_unique( $p4hex[0] ) ) . ')' : '' ),
@@ -242,10 +265,13 @@ bhp_d1h_assert(
 );
 bhp_d1h_assert(
 	'' !== $p4_tail
-		&& false !== strpos( $p4_tail, 'background-repeat: no-repeat' )
-		&& 2 === substr_count( $p4_tail, 'background-repeat: no-repeat' )
-		&& false !== strpos( $p4_tail, 'pointer-events: none' ),
-	'§3.7 both decorations are ONE mark each (no-repeat) and the plate cannot swallow a tap',
+		&& 2 === substr_count( $p4_code, 'background-repeat: no-repeat' )
+		&& 1 === substr_count( $p4_code, 'pointer-events: none' ),
+	sprintf(
+		'§3.7 both decorations are ONE mark each (2 no-repeat, found %d) and the plate cannot swallow a tap (1 pointer-events, found %d)',
+		substr_count( $p4_code, 'background-repeat: no-repeat' ),
+		substr_count( $p4_code, 'pointer-events: none' )
+	),
 	$failures
 );
 
@@ -357,9 +383,32 @@ bhp_d1h_assert(
 	'§6.2 exactly one hero quiz CTA, same data-bhp-source as 1.19.262',
 	$failures
 );
+/*
+ * ⚠️ COUNT THE CLASS ON AN ELEMENT, NOT THE STRING IN THE DOCUMENT. The bare
+ *    string `home-hero__invite--primary` appears TWICE on this page and both
+ *    are correct: once on the anchor, and once inside step 1's
+ *    `data-bhp-offer-watch=".home-hero__invite--primary,…"` — the selector
+ *    list that makes the mobile header offer hide itself while the hero
+ *    primary is on screen. The first run of this suite failed here and the
+ *    finding was step 1's mechanism working, not a duplicate control.
+ *    Matching the full class attribute pair is what distinguishes them.
+ */
 bhp_d1h_assert(
-	1 === substr_count( $home, 'home-hero__invite--primary' ) && 1 === substr_count( $home, 'home-hero__invite--ghost' ),
-	'§6.3 one primary class and one ghost class in the document',
+	1 === substr_count( $home, 'home-hero__invite home-hero__invite--primary' )
+		&& 1 === substr_count( $home, 'home-hero__invite home-hero__invite--ghost' ),
+	sprintf(
+		'§6.3 exactly one primary element and one ghost element (found %d / %d)',
+		substr_count( $home, 'home-hero__invite home-hero__invite--primary' ),
+		substr_count( $home, 'home-hero__invite home-hero__invite--ghost' )
+	),
+	$failures
+);
+// And step 1's watch selector still names the hero primary, which is the
+// mechanism behind "the header offer stays hidden while the hero CTA is in view".
+bhp_d1h_assert(
+	false !== strpos( $home, 'data-bhp-offer-watch' )
+		&& false !== strpos( $home, '.home-hero__invite--primary' ),
+	'§6.3b the header offer still watches the hero primary (step 1\'s suppression is intact)',
 	$failures
 );
 bhp_d1h_assert(
