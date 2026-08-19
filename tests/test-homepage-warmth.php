@@ -783,7 +783,7 @@ foreach ( $other_pages as $path => $label ) {
 	);
 }
 /* ═══════════════════════════════════════════════════════════════════════════
-   §1.7 — 1.19.246 (PASS4). THE DESKTOP FOLD.
+   §1.7 — 1.19.247 (PASS4). THE DESKTOP FOLD.
 
    Andrew, on 1.19.244/245, RELAYED through the Chief of Staff and NOT
    witnessed first-hand by this agent:
@@ -852,8 +852,13 @@ bhp_hw_assert(
 	$failures
 );
 bhp_hw_assert(
-	'' !== $p4_tail && false === strpos( $p4_tail, 'max-width: 600px' )
-		&& false === strpos( $p4_tail, 'max-width: 768px' ),
+	/* Assert on an actual @media DECLARATION, not on the bare string. The
+	   first version of this assertion searched for 'max-width: 600px'
+	   anywhere in the tail and duly failed on this block's own PROSE, which
+	   explains the scoping by naming those very breakpoints. A test that
+	   cannot tell a rule from a sentence about a rule is not testing the
+	   rule. */
+	'' !== $p4_tail && 0 === preg_match( '/@media[^{]*max-width/', $p4_tail ),
 	'§1.7d the PASS4 block opens no phone-scoped media query of its own',
 	$failures
 );
