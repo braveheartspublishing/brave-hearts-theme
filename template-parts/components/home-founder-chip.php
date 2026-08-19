@@ -94,6 +94,44 @@ if (!file_exists($photo)) {
       echo esc_html__('“I’m Andrew. ICU nurse, uncle, and the author.”', 'brave-hearts');
       ?>
     </p>
-    <p class="home-founder-chip__role"><?php esc_html_e('Founder, Brave Hearts Publishing', 'brave-hearts'); ?></p>
+    <?php
+    /*
+     * PASS5 (2026-08-19, theme 1.19.248) — THE TRUST LINE.
+     *
+     * ⭐ THIS SENTENCE IS THE FOUNDER'S OWN, AND HIS OWN ANSWER CLEARED IT.
+     *    Offered to him as option A; he answered, verbatim, "A: All true."
+     *    WITNESSED BY THE CHIEF OF STAFF AND RELAYED IN THE BRIEF — recorded
+     *    as relayed rather than first-hand, because this agent did not hear
+     *    it. It is a first-person claim about his own practice, which is the
+     *    only kind of claim that can be cleared this way: nobody else's
+     *    experience, no reaction, no result, no number. §3's never-invent
+     *    list is not touched by it.
+     *
+     * §9.1 CHECKED, LINE BY LINE, BEFORE SHIPPING:
+     *   - Voice: "I write", "I sign", "I hand" — I/me throughout. No "we",
+     *     no "us", no "our". He is the sole operator and the line says so.
+     *   - No em dashes. Two commas and a full stop.
+     *   - No outcome claim. It says what he DOES, never what it does to a
+     *     child, so the design-truth rail holds.
+     *   - Reading age is not stated, so the 6-9 rail is not engaged.
+     *
+     * ⚠️ IT REPLACES "Founder, Brave Hearts Publishing" RATHER THAN JOINING
+     *    IT. The brief left the layout call here, and the reason for this one
+     *    is measured, not aesthetic: at 390x664 the CTA has about 6 px of
+     *    room above the fold, and a third line in this chip costs more than
+     *    that. Keeping both would have pushed the button Andrew could not
+     *    reach back off the first screen, which is the defect PASS3 existed
+     *    to fix. Nothing true is lost — the line above already establishes
+     *    that he is the author, and this one establishes what he does.
+     */
+    ?>
   </div>
+  <?php /*
+   * DELIBERATELY OUTSIDE `__body`. `__body` is the column beside the 60 px
+   * photograph, so a paragraph placed in it is laid out in ~265 px at 390 px
+   * and wraps to FOUR lines. As a direct child of the chip (which wraps) it
+   * gets the full ~324 px and wraps to two. That is ~30 px of the first
+   * screen, on the screen where the CTA has about 6 px to spare.
+   */ ?>
+  <p class="home-founder-chip__trust"><?php esc_html_e('I write them, I sign the school copies myself, and I hand them over at the read-aloud.', 'brave-hearts'); ?></p>
 </div>

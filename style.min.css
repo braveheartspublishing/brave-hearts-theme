@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 2fe9a6cafd4442c772d7ab54edea7f28
+    source-md5: db6fd1709324da92aba0e03146e585d1
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.247
+Version: 1.19.248
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -6139,4 +6139,74 @@ font-size: 1.25rem;
   }
 .home .home-hero__text { margin-top: 18px; }
   .home .home-hero__invitations { margin-top: 18px; }
+}
+.home .home-founder-chip { flex-wrap: wrap; row-gap: 6px; }
+.home .home-founder-chip__body { flex: 1 1 0; }
+.home .home-founder-chip__trust {
+  flex: 1 0 100%;
+  margin: .25rem 0 0;
+  font-family: var(--font-body);
+  font-size: .8rem;
+  line-height: 1.4;
+color: rgba(246, 241, 231, .78);
+}
+@media (max-width: 600px) {
+.home #home-hero .home-hero__book-stack {
+    gap: 0;
+    justify-content: center;
+    align-items: flex-end;
+  }
+.home #home-hero .home-hero__book-stack li,
+  .home #home-hero .home-hero__book-stack li:first-child,
+  .home #home-hero .home-hero__book-stack li:nth-child(2),
+  .home #home-hero .home-hero__book-stack li:nth-child(3) {
+    width: auto;
+    max-width: none;
+  }
+.home #home-hero .home-hero__book-cover {
+    height: 82px;
+    width: auto;
+    max-width: none;
+  }
+.home #home-hero.home-hero--aside-after-title .home-hero__content > .home-hero__book-preview {
+    margin-top: 10px;   
+  }
+  .home #home-hero.home-hero--aside-after-title .home-hero__book-preview-label {
+    margin-top: 8px;    
+  }
+  .home #home-hero .home-hero__text {
+    margin-top: 4px;    
+  }
+  .home #home-hero .home-hero__invitations {
+    margin-top: 6px;    
+  }
+.home #home-hero .home-founder-chip__said {
+    font-size: 1.02rem;
+  }
+.home #home-hero .home-hero__book-stack li:first-child {
+    z-index: 1;
+    margin-right: -9px !important;
+    transform: rotate(-6deg) translateY(9px);
+  }
+  .home #home-hero .home-hero__book-stack li:nth-child(2) {
+    z-index: 3;
+    margin-inline: 0 !important;
+    transform: translateY(-7px);
+  }
+  .home #home-hero .home-hero__book-stack li:nth-child(3) {
+    z-index: 2;
+    margin-left: -9px !important;
+    transform: rotate(6deg) translateY(9px);
+  }
+.home #home-hero .home-hero__book-cover {
+    border: 1px solid rgba(217, 164, 95, .55);
+    border-radius: 3px;
+    box-shadow: 0 14px 26px -10px rgba(0, 0, 0, .72);
+  }
+.home #home-hero .home-founder-chip__trust {
+    flex: 1 0 100%;
+    margin: 5px 0 0;
+    font-size: .72rem;
+    line-height: 1.32;
+  }
 }

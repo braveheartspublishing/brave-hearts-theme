@@ -845,7 +845,19 @@ bhp_hw_assert(
    leaking onto the phone and undoing PASS3, so scope is asserted, not
    assumed. */
 $p4_pos  = $has_css_p4 ? strpos( $css_p4, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS4' ) : false;
-$p4_tail = ( false !== $p4_pos ) ? substr( $css_p4, $p4_pos ) : '';
+$p4_tail = false === $p4_pos ? '' : substr( $css_p4, $p4_pos );
+/* ⭐ BOUNDED AT PASS5, AND THIS IS A REAL FIX, NOT A TEST WEAKENED TO GO
+   GREEN. §1.7d asks whether the PASS4 BLOCK opens a phone-scoped media
+   query. It computed its tail as "everything after the PASS4 marker",
+   which silently assumed PASS4 would be the last block in the file
+   forever. PASS5 appended a `@media (max-width: 600px)` after it, so the
+   assertion started reading PASS5's rules and reporting them as PASS4's.
+   The tail now ends where PASS5 begins, which is what the assertion
+   always meant. PASS5 has its own equivalent guard at §1.8e. */
+$p5_marker = strpos( $p4_tail, 'PASS5 (2026-08-19, theme 1.19.248)' );
+if ( false !== $p5_marker ) {
+	$p4_tail = substr( $p4_tail, 0, $p5_marker );
+}
 bhp_hw_assert(
 	'' !== $p4_tail && false !== strpos( $p4_tail, '@media (min-width: 1051px)' ),
 	'§1.7d every PASS4 rule sits behind min-width: 1051px (it cannot reach a phone)',
@@ -895,6 +907,115 @@ bhp_hw_assert(
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n";
+
+/* PASS5 — §1.8: THE MOBILE FAN IS ONE CLUSTER, AND THE TRUST LINE IS THERE.
+
+   The founder: "The books like separate now they should all be together
+   splayed out like on the desktop."
+
+   WHAT THIS SECTION CANNOT PROVE, SAID PLAINLY. It reads CSS text and
+   rendered markup. It CANNOT prove a pixel. The overlap that answers the
+   complaint was measured in a real headless browser at an asserted
+   window.innerWidth of 390 — BEFORE: -32.9 px, a GAP between the painted
+   covers. AFTER: a positive overlap. Those numbers live in the build report,
+   not here, because a test claiming to have measured them would be claiming
+   a check it never ran. */
+
+/* ⚠️ These read the SAME two files §1.7 already read. A first version of
+   this section invented `$css` / `$min` / `$has_css`, which exist nowhere
+   in this file, so every CSS assertion below compared against an empty
+   string and FAILED on a correct build. Reuse the real variables. */
+$css_p5 = $has_css_p4 ? $css_p4 : '';
+$min_p5 = $min_p4;
+$bhp_trust_line = 'I write them, I sign the school copies myself, and I hand them over at the read-aloud.';
+
+bhp_hw_assert(
+	'' !== $css_p5 && false !== strpos( $css_p5, 'PASS5 (2026-08-19, theme 1.19.248)' ),
+	'§1.8a the PASS5 block is present in style.css',
+	$failures
+);
+
+/* The two rules that actually close the 33 px gap. Either alone still leaves
+   three separated covers, so both are asserted. */
+bhp_hw_assert(
+	'' !== $css_p5 && 1 === preg_match( '/margin-right:\s*-9px\s*!important/', $css_p5 )
+		&& 1 === preg_match( '/margin-left:\s*-9px\s*!important/', $css_p5 ),
+	"§1.8b the fan overlaps again: both negative margins beat F8a's margin-inline: 0 !important",
+	$failures
+);
+
+/* F8a holds the ITEM at 104 px while the IMAGE inside it is ~66 px. That
+   difference IS the defect the founder saw; `width: auto` closes it. */
+bhp_hw_assert(
+	'' !== $css_p5 && 1 === preg_match( '/#home-hero\s+\.home-hero__book-stack li[^{]*\{[^}]*width:\s*auto/', $css_p5 ),
+	'§1.8c the cover item shrink-wraps its picture instead of floating inside a wider box',
+	$failures
+);
+
+/* The reclaimed margins only win at (1,4,0)/(1,3,0). If a later tidy-up
+   simplifies them back to `.home #home-hero`, they lose silently and the CTA
+   drops off the first screen again. This is the guard for that. */
+bhp_hw_assert(
+	'' !== $css_p5
+		&& false !== strpos( $css_p5, '.home #home-hero.home-hero--aside-after-title .home-hero__content > .home-hero__book-preview' )
+		&& false !== strpos( $css_p5, '.home #home-hero.home-hero--aside-after-title .home-hero__book-preview-label' ),
+	'§1.8d the reclaimed margins keep the compound specificity they need to win',
+	$failures
+);
+
+/* Asserted on an actual @media declaration, never on prose about one — that
+   false positive cost PASS4 a red run on a correct build. */
+$p5_pos  = strpos( $css_p5, 'PASS5 (2026-08-19, theme 1.19.248)' );
+$p5_tail = false === $p5_pos ? '' : substr( $css_p5, $p5_pos );
+bhp_hw_assert(
+	'' !== $p5_tail && 1 === preg_match( '/@media\s*\(\s*max-width:\s*600px\s*\)/', $p5_tail )
+		&& 0 === preg_match( '/@media\s*\(\s*min-width:/', $p5_tail ),
+	'§1.8e no PASS5 layout rule can reach the desktop hero',
+	$failures
+);
+
+bhp_hw_assert(
+	is_string( $min_p5 ) && false !== strpos( $min_p5, 'home-founder-chip__trust' ),
+	'§1.8f style.min.css was REBUILT and carries the trust-line rule',
+	$failures
+);
+
+/* ---- The trust line itself --------------------------------------------- */
+$home_p5 = bhp_hw_fetch( home_url( '/' ) );
+
+bhp_hw_assert(
+	'' !== $home_p5 && false !== strpos( $home_p5, $bhp_trust_line ),
+	'§1.8g the founder trust line renders on the homepage',
+	$failures
+);
+
+/* It REPLACES the role line. If both ever render the chip grows by a line and
+   the CTA leaves the first screen, so this asserts the replacement rather
+   than merely the addition. */
+bhp_hw_assert(
+	'' !== $home_p5 && false === strpos( $home_p5, 'home-founder-chip__role' ),
+	'§1.8h the role line it replaced is no longer rendered',
+	$failures
+);
+
+/* §9.1, enforced rather than trusted. */
+bhp_hw_assert(
+	0 === preg_match( '/\b(we|us|our)\b/i', $bhp_trust_line )
+		&& false === strpos( $bhp_trust_line, "\xe2\x80\x94" ),
+	"§1.8i the trust line is in Andrew's voice: no we/us/our, and no em dash",
+	$failures
+);
+
+/* PASS3's phone result and the F8a block PASS5 interacts with must both
+   survive. PASS5 OVERRIDES F8a; it does not delete it. */
+bhp_hw_assert(
+	'' !== $css_p5 && false !== strpos( $css_p5, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS3' )
+		&& false !== strpos( $css_p5, 'F8a. Mobile hero fan' ),
+	'§1.8j PASS3 and the F8a block it overrides are both still present',
+	$failures
+);
+
+
 if ( ! empty( $failures ) ) {
 	echo "FAILED ASSERTIONS:\n";
 	foreach ( $failures as $f ) {
