@@ -624,7 +624,61 @@ $hero_quiz_url = bhp_get_safe_link_url(home_url('/find-your-adventure/'), home_u
  * layout wants both buttons above the paragraph.
  */
 ob_start();
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.263 (2026-08-19) — CYCLE165-LD-DIRECTION1-STEP4-HOME. THE FIELD
+ *    RULE ENTERS THE HERO, AND NOTHING ELSE IN THE HERO MOVES.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Board sheet 4, homepage panel: "A drawn field rule sits between headline
+ * and CTA." Board sheet 3, marker ③: "A drawn field rule. Dive mask, ice
+ * axe, river — one per book, from the existing line-art set."
+ *
+ * ⭐ WHY IT IS PREPENDED TO `$hero_after_title` RATHER THAN GIVEN ITS OWN
+ *    HERO ARGUMENT. `template-parts/components/hero.php` is SHARED by
+ *    /about/, /books/, /contact/, /teachers/ and the audience landing
+ *    pages. `after_title` already renders in exactly the slot the board
+ *    asks for — after the H1, before the aside — and it already defaults to
+ *    '' for every other caller. Adding a seventh argument would be a
+ *    sitewide component change made to satisfy a homepage-only instruction,
+ *    which is the trade CYCLE144-LD-70 wrote down and refused. THE HERO
+ *    COMPONENT IS NOT TOUCHED BY THIS STEP.
+ *
+ * ⛔ NOT ONE CHARACTER OF HERO COPY CHANGES HERE, AND THAT IS THE WHOLE
+ *    CONSTRAINT ON THIS STEP. The chip, the founder line (FD-460, locked),
+ *    trust line A (FD-469, locked), the H1, the primary CTA's label, the
+ *    quiz CTA's label and the subcopy are byte-identical to 1.19.262. The
+ *    rule is `aria-hidden`, contains no text node and is not a link.
+ *
+ * ⛔ THE BOARD'S WORDS BESIDE THIS RULE ARE NOT SHIPPED. Sheet 4's 1440 mock
+ *    sets "three real places" in italic to the right of the marks, and sheet
+ *    3's 390 mock sets "WHAT WOULD YOU FIND DOWN THERE?" under the covers.
+ *    Both are UNAPPROVED COPY — the board's own README classes them as
+ *    proposals. They are carried to Gandalf in the build report as PROPOSED
+ *    and are deliberately absent from this build.
+ *
+ * ⛔ IT CANNOT BECOME A SECOND ABOVE-FOLD PRIMARY. It is a `<div>` with
+ *    three `<span>`s: no `<a>`, no `<button>`, no href, no `data-bhp-event`,
+ *    no text node. The above-fold primary count at 390 is 1 before and 1
+ *    after — measured, not asserted.
+ *
+ * ⛔ THE MARKS ARE A BACKGROUND IMAGE, NOT INLINE SVG, AND THAT IS FORCED BY
+ *    THIS SLOT. `hero.php` runs `after_title` through `wp_kses_post()`, whose
+ *    'post' allowlist contains no `svg` element — inline marks would be
+ *    silently stripped here exactly as `srcset` was in CYCLE144-LD-205. The
+ *    alternative was widening the SITEWIDE kses allowlist to admit SVG for
+ *    the sake of a decoration. See `inc/field-marks.php`'s header.
+ *
+ * MEASURED CONSEQUENCE, recorded because "it adds height" is exactly the
+ * kind of claim that should carry a number. staging2 1.19.262, headless
+ * Chrome, asserted innerWidth 390, scrollY 0: H1 240..345, primary CTA top
+ * 361, quiz CTA top 847 against an 844 fold. The rule occupies the 16px gap
+ * plus its own margins, so everything below it moves DOWN — which moves the
+ * quiz FURTHER below the fold, never toward it. The after-measurement is in
+ * the build report.
+ */
 ?>
+<?php echo function_exists( 'bhp_field_rule' ) ? bhp_field_rule( 'home-hero' ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- static markup built in inc/field-marks.php from esc_attr()'d path data ?>
 <div class="home-hero__invitations home-hero__invitations--primary">
   <a class="btn home-hero__invite home-hero__invite--primary"
      href="<?php echo esc_url($hero_open_url); ?>"

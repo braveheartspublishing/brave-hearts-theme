@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: f06b373c3c90dc05084546b168090fc5
+    source-md5: 6896d938874b7309c7bcd9664ff679c2
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.262
+Version: 1.19.263
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -6338,4 +6338,48 @@ color: rgba(246, 241, 231, .78);
 }
 @media (prefers-reduced-motion: reduce) {
   .bhp-header-offer { transition: none; }
+}
+.bhp-field-rule {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 3vw, 1rem);
+  width: 100%;
+  max-width: 22rem;
+  margin: clamp(0.9rem, 3.4vw, 1.4rem) 0 clamp(1rem, 3.6vw, 1.5rem);
+  color: var(--expedition-gold);
+}
+.bhp-field-rule__line {
+  flex: 1 1 auto;
+  height: 1px;
+  min-width: 1.5rem;
+  background: currentColor;
+  opacity: 0.42;
+}
+.bhp-field-rule__marks {
+  flex: 0 0 auto;
+  width: 78px;
+  height: 20px;
+  background-image: url('assets/img/field-marks.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.9;
+}
+.home #home-hero .bhp-field-rule { margin-inline: 0; }
+.audience-gateway { position: relative; overflow: hidden; }
+.audience-gateway__plate {
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(42%, 280px);
+  background-image: url('assets/img/plate-compass-rose.svg');
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: auto 240%;
+  opacity: 0.085;
+  pointer-events: none;
+}
+.audience-gateway__inner { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: no-preference) {
 }

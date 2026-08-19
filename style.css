@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.262
+Version: 1.19.263
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -10465,4 +10465,118 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
    button still appears; only the transition is dropped. */
 @media (prefers-reduced-motion: reduce) {
   .bhp-header-offer { transition: none; }
+}
+
+/* =========================================================================
+   ⭐ 1.19.263 (2026-08-19) — THE FIELD RULE AND THE PLATE
+   `CYCLE165-LD-DIRECTION1-STEP4-HOME` · Direction 1, board build step 4 of 4
+
+   Two decorations, and nothing else. Board sheet 3 marker ③ (the drawn field
+   rule, dive mask / ice axe / river) and board sheet 3's "WHAT CHANGES" panel
+   ("One faint plate watermark per light-ground template").
+
+   Appended LAST, this file's own convention for a new component that must not
+   be out-ranked by an older rule it never anticipated. NOTHING ABOVE IS
+   EDITED: every hero rule, every `.home-hero__invitations` rule, PASS7's,
+   PASS8's and PASS9's blocks and step 1's `.bhp-header-offer` block are all
+   byte-identical to 1.19.262.
+
+   ⛔ NO NEW HUE IS DECLARED IN THIS BLOCK. Every colour below is an existing
+      custom property or an `rgba()`/`color-mix()` of one. The two SVG assets
+      carry `#D9A45F`, which is the literal value of `--expedition-gold`, and
+      `tests/test-direction1-home.php` §3 asserts that equality in both files
+      so a palette re-tone cannot leave them behind.
+
+   ⛔ NEITHER DECORATION CAN AFFECT LAYOUT, INPUT OR THE ABOVE-FOLD PRIMARY
+      COUNT. Neither is a control. The plate is `position: absolute` and out of
+      flow, so its CLS contribution is zero; the field rule IS in flow (it has
+      to be — it separates two things) and its height is therefore declared
+      explicitly rather than left to content, so it cannot grow.
+   ========================================================================= */
+
+/* --------------------------------------------------------------------------
+   1 · THE FIELD RULE
+   --------------------------------------------------------------------------
+   Rendered by `bhp_field_rule()` into the hero's `after_title` slot, between
+   the H1 and the free-sample primary. Three spans: hairline, marks, hairline.
+
+   ⛔ THE MARKS ARE A BACKGROUND IMAGE, NOT INLINE SVG, AND THAT IS FORCED.
+      `hero.php` runs `after_title` through `wp_kses_post()`, whose 'post'
+      allowlist admits no `svg` element — inline marks would be stripped
+      silently, the same class of defect as CYCLE144-LD-205's `srcset`. The
+      alternative was widening a sitewide security filter for a decoration.
+      Reasoning in full: `inc/field-marks.php`'s header.
+
+   The hairlines are `currentColor` at low alpha rather than a border, so the
+   rule inherits whatever ink its section sets. On the navy hero that is gold.
+   A second caller on a light ground would need only a `color` declaration. */
+.bhp-field-rule {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 3vw, 1rem);
+  width: 100%;
+  max-width: 22rem;
+  margin: clamp(0.9rem, 3.4vw, 1.4rem) 0 clamp(1rem, 3.6vw, 1.5rem);
+  color: var(--expedition-gold);
+}
+
+.bhp-field-rule__line {
+  flex: 1 1 auto;
+  height: 1px;
+  min-width: 1.5rem;
+  background: currentColor;
+  opacity: 0.42;
+}
+
+/* Height is declared, width follows the 780x200 viewBox at 3.9:1. Declaring
+   both would let a future viewBox edit squash the drawing silently. */
+.bhp-field-rule__marks {
+  flex: 0 0 auto;
+  width: 78px;
+  height: 20px;
+  background-image: url('assets/img/field-marks.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.9;
+}
+
+/* The hero centres its own content below 1051px in places; the rule follows
+   the text it belongs to rather than declaring its own alignment war. */
+.home #home-hero .bhp-field-rule { margin-inline: 0; }
+
+/* --------------------------------------------------------------------------
+   2 · THE PLATE — one faint line-art mark on the one unmarked light ground
+   --------------------------------------------------------------------------
+   ⛔ IT IS ONE MARK, NOT A TILE. `background-repeat: no-repeat` is the rule
+      the "one mark per screen" constraint turns on.
+
+   ⛔ IT CANNOT SWALLOW A TAP. `pointer-events: none`, and the three real
+      links plus the quiz link in this band sit at z-index 1 above it.
+
+   The crop is deliberate: `background-size: auto 240%` with a right anchor
+   shows an ARC of the compass rose rather than a tiny complete circle, which
+   is what reads as a plate at this band's 165px desktop height. */
+.audience-gateway { position: relative; overflow: hidden; }
+
+.audience-gateway__plate {
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(42%, 280px);
+  background-image: url('assets/img/plate-compass-rose.svg');
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: auto 240%;
+  opacity: 0.085;
+  pointer-events: none;
+}
+
+.audience-gateway__inner { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* No animation is declared anywhere in this block. The block exists so that
+     a future pass adding one has an obvious place to put it, and so that the
+     absence is deliberate rather than accidental. */
 }

@@ -3446,6 +3446,13 @@ require_once get_template_directory() . '/inc/blog-post-template.php';
 // there. Loaded after book-formats.php because the buy box it reorders is
 // rendered by bhp_book_render_format_selector().
 require_once get_template_directory() . '/inc/product-template.php';
+// 1.19.263 — the drawn field-mark set (CYCLE165-LD-DIRECTION1-STEP4-HOME),
+// step 4 of the same board build. Pure markup helpers with no hooks, no
+// options and no dependency on WooCommerce or the bundle plugin, so its load
+// position is not load-bearing; it sits with its three siblings because a
+// future reader looking for "where did Direction 1 get wired in" should find
+// all four in one place.
+require_once get_template_directory() . '/inc/field-marks.php';
 require_once get_template_directory() . '/inc/amazon-reviews.php';
 // Native customer reviews (2026-08-03): the on-page "Write a Review for …"
 // section beneath the Kirkus block, the /review/<slug>/ two-click email

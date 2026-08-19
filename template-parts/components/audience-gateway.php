@@ -51,6 +51,50 @@ $gateway_links = [
 ];
 ?>
 <section id="home-audience-gateway" class="homepage-section audience-gateway section" aria-labelledby="home-audience-gateway-title">
+  <?php
+  /*
+   * ⭐ 1.19.263 (2026-08-19) — CYCLE165-LD-DIRECTION1-STEP4-HOME. THE ONE
+   *    PLATE WATERMARK. Board sheet 3, "WHAT CHANGES": "One faint plate
+   *    watermark per light-ground template."
+   *
+   * ⭐ WHY THIS SECTION AND NOT ANOTHER, AND IT IS A MEASUREMENT, NOT A
+   *    PREFERENCE. The brief's constraint is ONE MARK PER SCREEN. Measured on
+   *    staging2 1.19.262 (headless Chrome, asserted innerWidth 390 and 1440,
+   *    computed painted ground walked up the ancestor chain), the homepage has
+   *    exactly THREE light-ground regions and only one of them is unmarked:
+   *
+   *      #bhp-look-inside-complete_collection  lum 242   3 svgs (gallery controls)
+   *      #home-open-the-book                   lum 243   1 svg  (its drawn divider)
+   *      #home-audience-gateway                lum 250   0 svgs  <-- this one
+   *
+   *    #home-open-the-book was the obvious first choice and was REJECTED on
+   *    the measurement: it already carries `home-open-book__divider` near its
+   *    top, and at 1440 the section is 998px tall, so a plate anywhere inside
+   *    it lands within the same 900px window as that divider. Two drawn things
+   *    in one screen is precisely the "clutter" failure mode the board's own
+   *    RISK TO TRUST panel names. This section is 337px at 390 and 165px at
+   *    1440 — small enough that the whole band is inside one screen, so "one
+   *    mark on this screen" is true by construction rather than by luck.
+   *
+   * ⛔ DECORATIVE AND INERT. `aria-hidden`, no text, `pointer-events: none`,
+   *    absolutely positioned so it contributes ZERO layout and ZERO CLS. It
+   *    paints BEHIND the content (z-index 0 against the inner's 1), and it is
+   *    held to the right edge away from the heading. The contrast of every
+   *    string in this band was re-measured over the plate after it shipped —
+   *    see the build report; a watermark that costs a reading is not a
+   *    watermark, it is a defect.
+   *
+   * ⛔ NO NEW HUE. `assets/img/plate-compass-rose.svg` is stroked in
+   *    `#D9A45F`, which is the exact literal of `--expedition-gold` in
+   *    style.css. `tests/test-direction1-home.php` §3 asserts the two are the
+   *    same string, because a background image cannot inherit `currentColor`
+   *    and a baked literal only stays honest if something checks it.
+   *
+   * ⛔ NO NEW COPY. This section's five strings are byte-identical to
+   *    1.19.262. Nothing here says anything.
+   */
+  ?>
+  <div class="audience-gateway__plate" data-bhp-plate="home-audience-gateway" aria-hidden="true"></div>
   <div class="container audience-gateway__inner">
     <h2 id="home-audience-gateway-title" class="audience-gateway__heading"><?php esc_html_e('What brings you here today?', 'brave-hearts'); ?></h2>
     <ul class="audience-gateway__links">

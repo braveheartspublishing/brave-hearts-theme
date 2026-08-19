@@ -757,6 +757,26 @@ $known_events = array(
 	 * name you do not, a new GTM variable is needed before it ships.
 	 */
 	'collection_band_add_to_cart',
+	/*
+	 * ⭐ ADDED 2026-08-19 (`CYCLE165-LD-16`, theme 1.19.263). `header_offer_click`
+	 *    is emitted by `.bhp-header-offer`, the mobile-header offer button that
+	 *    shipped at 1.19.260 as step 1 of the Direction 1 board build. It has
+	 *    been turning this assertion RED on staging2 since that deploy.
+	 *
+	 * ⭐ THIS IS WHAT THE COMMENT ABOVE INSTRUCTS, NOT A WORKAROUND OF IT:
+	 *    "if this assertion fails on a name you recognise, add it here; if it
+	 *    fails on a name you do not, a new GTM variable is needed before it
+	 *    ships." The name is recognised — `inc/header-offer.php` is in this
+	 *    tree, the event is documented in its header, and step 1's own suite
+	 *    `tests/test-header-offer.php` asserts it.
+	 *
+	 * ⚠️ WHAT THIS ADDITION DOES NOT DO: it does not confirm a GTM variable
+	 *    exists for `header_offer_click`. GTM remains deliberately unpublished
+	 *    (`bhp_gtm_container_id` unset), so there is nothing to check against
+	 *    today. This allowlist records that the name is KNOWN TO THE THEME, not
+	 *    that it is wired downstream. Whoever publishes GTM owns that step.
+	 */
+	'header_offer_click',
 );
 $unknown = array();
 if ( preg_match_all( '/data-bhp-event="([a-z_]+)"/', $home, $em ) ) {
@@ -1644,7 +1664,54 @@ bhp_hw_assert(
 	'§1.11a the PASS9 block is present in style.css',
 	$failures
 );
+/*
+ * ⭐ REPAIRED 2026-08-19 (`CYCLE165-LD-16`, theme 1.19.263) — THIS SLICE WAS
+ *    UNBOUNDED, AND THE THREE ASSERTIONS BELOW HAD BEEN FAILING SINCE
+ *    1.19.260 BECAUSE OF IT. `test-homepage-warmth` was RED on staging2 at
+ *    1.19.262 with four failures; this repairs three of them and the
+ *    allowlist repair at §3.4 repairs the fourth.
+ *
+ * THE DEFECT. `substr( $css_p7, $p9_pos )` runs from the PASS9 marker to the
+ * END OF THE FILE. `$p8_tail` twenty lines above is bounded — it stops at
+ * `$p9_pos` — but PASS9 was the last block in `style.css` when this was
+ * written, so its slice had no terminator and none was noticed. The comment
+ * on §1.11c states the intent in its own words: *"Asserted as an absence over
+ * the PASS9 block only."* THE IMPLEMENTATION CONTRADICTED THAT SENTENCE.
+ *
+ * WHAT TRIPPED IT. `style.css` appends new components at the end — that is
+ * this file's stated convention, written into both the 1.19.260 and 1.19.263
+ * banners. 1.19.260 appended `.bhp-header-offer`, which legitimately declares
+ * `min-height`, `line-height`, `font-size` and `text-transform` and carries
+ * its own container query. None of that is inside the PASS9 block; all of it
+ * was inside the unbounded slice.
+ *
+ * ⛔ THIS DOES NOT WEAKEN THE ASSERTION — IT RESTORES THE ONE THAT WAS
+ *    INTENDED. The slice now ends at the next top-level banner, exactly the
+ *    way `$p8_tail` ends at `$p9_pos`. Everything PASS9 actually declares is
+ *    still checked, and a real regression inside PASS9 still fails. What can
+ *    no longer happen is an unrelated component appended below it turning
+ *    this suite red and training a future reader to ignore it.
+ *
+ * ⛔ NO ASSERTION IS DELETED, RELAXED OR RENUMBERED. §1.11c, §1.11d and
+ *    §1.11e are byte-identical below. Only the string they read changed.
+ */
 $p9_tail = ( false === $p9_pos ) ? '' : substr( $css_p7, $p9_pos );
+if ( '' !== $p9_tail ) {
+	/*
+	 * The next top-level banner, which is where the PASS9 block ends.
+	 *
+	 * `$p9_pos` is the position of the MARKER TEXT ("PASS9 — 1.19.252"), which
+	 * sits on the banner's second line — so the slice starts INSIDE PASS9's own
+	 * banner and the first `\n/* =====` it contains is unambiguously the start
+	 * of the next block. Matching on the banner opener alone, rather than on
+	 * the star or the version that follows it, means a future block that
+	 * formats its heading differently still terminates this slice.
+	 */
+	$p9_end = strpos( $p9_tail, "\n/* =========" );
+	if ( false !== $p9_end ) {
+		$p9_tail = substr( $p9_tail, 0, $p9_end );
+	}
+}
 
 /* ---- THE ASSERTION THAT MATTERS MOST IN THIS SECTION -------------------
    The COMPOUND SELECTOR is load-bearing and is not decoration. PASS5's own
