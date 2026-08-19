@@ -170,6 +170,30 @@ $bhp_shipping_note_paperback = bhp_book_ship_note_single($bhp_ship_single('paper
 $bhp_shipping_note_hardcover = bhp_book_ship_note_single($bhp_ship_single('hardcover', 2.99));
 
 /*
+ * ⭐ 1.19.262 (2026-08-19, CYCLE165-LD-DIRECTION1-STEP3-PRODUCT) — the two
+ *    single-format sentences may also say that the SET ships free, because it
+ *    currently does and a parent comparing one book against three cannot see
+ *    that anywhere on this page.
+ *
+ * ⛔ APPENDED, NOT MERGED, for the same reason bhp_book_free_addon_note() is
+ *    appended below: the single-format sentence is a pure, approved-copy
+ *    string with its own assertions, and the collection claim is a LIVE read
+ *    of the plugin's tier table. bhp_book_collection_free_ship_note() returns
+ *    '' the moment that stops being true, so this concatenation is
+ *    unconditional in the code and conditional in the output.
+ *
+ * ⛔ NOT ADDED TO THE COLLECTION CARD. That card already carries
+ *    bhp_book_ship_note_collection(), whose free branch says it there.
+ */
+$bhp_collection_free_ship = function_exists('bhp_book_collection_free_ship_note')
+    ? bhp_book_collection_free_ship_note()
+    : '';
+if ('' !== $bhp_collection_free_ship) {
+    $bhp_shipping_note_paperback .= ' ' . $bhp_collection_free_ship;
+    $bhp_shipping_note_hardcover .= ' ' . $bhp_collection_free_ship;
+}
+
+/*
  * ⭐ 2D (2026-08-03) — THE COLLECTION CARD'S SHIPPING NOW FOLLOWS THE DEFAULT
  *    FORMAT, because its PRICE already did and the two disagreed.
  *

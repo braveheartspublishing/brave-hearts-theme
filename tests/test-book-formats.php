@@ -418,7 +418,26 @@ $free_landing    = bhp_book_landing_ship_note(0.00);
 bhp_test_assert(
     $failures,
     'FREE (PDP single): exact approved wording',
-    $free_single === 'Ships from our print partner. FREE shipping in the contiguous US.'
+    $free_single === 'Ships from my print partner. Shipping is free in the contiguous US.'
+);
+/*
+ * ⭐ 1.19.262 (CYCLE165-LD-DIRECTION1-STEP3-PRODUCT). The three assertions in
+ *    this block moved from "our print partner" to "my print partner", and the
+ *    dollar branch from "Shipping from $x" to "Shipping starts at $x", under
+ *    standing rule §9.1 (no "we"/"us"/"our" in customer-facing copy, adopted
+ *    2026-08-18 on Andrew Signore's own words). SUPERSEDED strings, retained
+ *    here so a future reader sees the movement rather than re-deriving it:
+ *      'Ships from our print partner. FREE shipping in the contiguous US.'
+ *      'Ships from our print partner. Shipping from $1.99 in the contiguous US.'
+ *      'Ships from our print partner. Shipping from $2.99 in the contiguous US.'
+ *    The COLLECTION and LANDING sentences are untouched: neither contains a
+ *    first-person-plural pronoun, and re-wording approved copy that does not
+ *    breach the rule would be a rewrite, not a fix.
+ */
+bhp_test_assert(
+    $failures,
+    'VOICE §9.1 (PDP single, free branch): no "our"/"we"/"us"',
+    !preg_match('/(our|we|us)/i', $free_single)
 );
 bhp_test_assert(
     $failures,
@@ -438,13 +457,23 @@ foreach (['PDP single' => $free_single, 'PDP collection' => $free_collection, 'l
 // -- the three sentences, DOLLAR branch, which must still work --
 bhp_test_assert(
     $failures,
-    'DOLLAR (PDP single, 1.99): unchanged wording',
-    bhp_book_ship_note_single(1.99) === 'Ships from our print partner. Shipping from $1.99 in the contiguous US.'
+    'DOLLAR (PDP single, 1.99): exact approved wording, cost included',
+    bhp_book_ship_note_single(1.99) === 'Ships from my print partner. Shipping starts at $1.99 in the contiguous US.'
 );
 bhp_test_assert(
     $failures,
-    'DOLLAR (PDP single, 2.99): unchanged wording',
-    bhp_book_ship_note_single(2.99) === 'Ships from our print partner. Shipping from $2.99 in the contiguous US.'
+    'DOLLAR (PDP single, 2.99): exact approved wording, cost included',
+    bhp_book_ship_note_single(2.99) === 'Ships from my print partner. Shipping starts at $2.99 in the contiguous US.'
+);
+bhp_test_assert(
+    $failures,
+    'VOICE §9.1 (PDP single, dollar branch): no "our"/"we"/"us"',
+    !preg_match('/(our|we|us)/i', bhp_book_ship_note_single(1.99))
+);
+bhp_test_assert(
+    $failures,
+    'DOLLAR (PDP single): no em-dash',
+    strpos(bhp_book_ship_note_single(1.99), '—') === false
 );
 bhp_test_assert(
     $failures,

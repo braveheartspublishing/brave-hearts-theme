@@ -88,12 +88,35 @@ $return_url = 'standalone' === $context
     ? bhp_review_page_url($key)
     : get_permalink($target);
 
+/*
+ * ⭐ 1.19.262 (2026-08-19, CYCLE165-LD-DIRECTION1-STEP3-PRODUCT) — THE EM
+ *    DASHES COME OUT OF THE FIVE RATING LABELS.
+ *
+ * ⭐ THESE LABELS ARE OURS, NOT A CUSTOMER'S WORDS, AND THAT DISTINCTION IS THE
+ *    WHOLE REASON THIS EDIT IS ALLOWED. Standing rule §9.1a forbids altering a
+ *    quoted third-party statement — the real Amazon review on these pages reads
+ *    "We read a few chapters each night", and "fixing" that "we" would
+ *    FABRICATE A CUSTOMER STATEMENT. Nothing in this pass touches it. The five
+ *    strings below are site chrome written by this company, so the no-em-dash
+ *    rail applies to them exactly as it does to any other line of ours.
+ *
+ * The CRO audit counted 5 em dashes per product page here. A colon does the
+ * same work: "5 stars: loved it".
+ *
+ * ⛔ THE VALUES ARE UNTOUCHED. Only the punctuation inside the visible label
+ *    moves. The 1..5 keys, the radio values, the required-rating enforcement
+ *    and the stored `rating` meta are byte-identical.
+ *
+ * SUPERSEDED wording, retained so it is not re-derived: "5 stars — loved it",
+ * "4 stars — really good", "3 stars — it was okay", "2 stars — not for us",
+ * "1 star — did not work for us".
+ */
 $star_labels = [
-    5 => __('5 stars — loved it', 'brave-hearts'),
-    4 => __('4 stars — really good', 'brave-hearts'),
-    3 => __('3 stars — it was okay', 'brave-hearts'),
-    2 => __('2 stars — not for us', 'brave-hearts'),
-    1 => __('1 star — did not work for us', 'brave-hearts'),
+    5 => __('5 stars: loved it', 'brave-hearts'),
+    4 => __('4 stars: really good', 'brave-hearts'),
+    3 => __('3 stars: it was okay', 'brave-hearts'),
+    2 => __('2 stars: not for us', 'brave-hearts'),
+    1 => __('1 star: did not work for us', 'brave-hearts'),
 ];
 ?>
 <form

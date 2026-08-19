@@ -1,5 +1,5 @@
 /*! Built from book-media.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 9582fd69c8c4c5e79e28f95b201570f3
+    source-md5: 217bba4ed74b162bb413b642860e27ed
     Comments stripped for transfer size; the source file is canonical. */
 .woocommerce div.product .bhp-look-inside {
 	grid-column: 1 / -1;
@@ -94,10 +94,11 @@ body:not(.home) .bhp-look-inside .bhp-look-inside__title,
 	position: relative;
 }
 
+
 .bhp-gallery__inspect-hint {
 	position: absolute;
 	right: 0.6rem;
-	bottom: 0.6rem;
+	top: 0.6rem;
 	padding: 0.25rem 0.55rem;
 	font-size: 0.78rem;
 	font-weight: 600;
@@ -161,19 +162,16 @@ body:not(.home) .bhp-look-inside .bhp-look-inside__title,
 	display: none;
 }
 
+
+
+
 .bhp-gallery__counter {
-	position: absolute;
-	left: 50%;
-	bottom: 0.6rem;
-	transform: translateX(-50%);
-	z-index: 2;
-	margin: 0;
-	padding: 0.2rem 0.6rem;
+	margin: 0.55rem 0 0;
+	text-align: center;
 	font-size: 0.8rem;
 	font-weight: 600;
-	color: #fff;
-	background: rgba(15, 32, 51, 0.72);
-	border-radius: 999px;
+	letter-spacing: 0.02em;
+	color: var(--color-text-muted, #4a5568);
 }
 
 
@@ -507,9 +505,6 @@ body.bhp-gallery-lightbox-open {
 }
 
 
-.bhp-media-gallery--collection .bhp-gallery__counter {
-	background: rgba(7, 21, 34, 0.82);
-}
 
 .bhp-media-gallery--collection .bhp-gallery__thumb {
 	background: var(--bl-cream-card, #fbf6eb);

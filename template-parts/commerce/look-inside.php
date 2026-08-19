@@ -331,12 +331,45 @@ if ($total < 2) {
           <span aria-hidden="true">&#8250;</span>
           <span class="screen-reader-text"><?php esc_html_e('Next item', 'brave-hearts'); ?></span>
         </button>
-
-        <p class="bhp-gallery__counter" data-bhp-gallery-counter aria-hidden="true">
-          <span data-bhp-gallery-current>1</span> / <?php echo esc_html((string) $total); ?>
-        </p>
       <?php endif; ?>
     </div>
+
+    <?php
+    /*
+     * ⭐ 1.19.262 (2026-08-19, `CYCLE165-LD-DIRECTION1-STEP3-PRODUCT`) — THE
+     *    SLIDE COUNTER LEAVES THE PICTURE.
+     *
+     * ⭐ THE DEFECT, OBSERVED RATHER THAN REASONED. Headless Chrome at an
+     *    asserted `innerWidth` of 390 on staging2 1.19.261: the counter pill
+     *    rendered at top 402 inside a stage running 199 to 590, i.e. squarely
+     *    over the bottom band of the cover artwork — which on all three covers
+     *    is where "Big Places. Brave Hearts." and Andrew's name are printed.
+     *    The one line on the cover that says who wrote the book was covered by
+     *    a slide number, on every book page, at both widths. Screenshot in the
+     *    step-3 QA evidence.
+     *
+     * ⛔ THE FIX IS TO MOVE IT OUT OF THE STAGE, not to restyle it inside. The
+     *    stage is `overflow: hidden`, so an absolutely-positioned pill can only
+     *    ever sit ON the artwork; nudging it to a different corner trades one
+     *    covered thing for another. As a caption UNDER the stage it covers
+     *    nothing at any viewport, on any cover, forever.
+     *
+     * ⛔ THE HOOK IS UNCHANGED. `assets/js/book-media.js` finds the live number
+     *    with `root.querySelector('[data-bhp-gallery-current]')`, where `root`
+     *    is the gallery SECTION — so it still resolves one level up, and the
+     *    counter still updates on every slide change. `data-bhp-gallery-counter`
+     *    and `aria-hidden` are carried across untouched.
+     *
+     * ⛔ IT STILL ONLY RENDERS FOR A MULTI-ITEM GALLERY, and the single-item
+     *    rule in `book-media.css` still hides it, so nothing changed for a
+     *    one-picture product.
+     */
+    ?>
+    <?php if ($total > 1): ?>
+      <p class="bhp-gallery__counter" data-bhp-gallery-counter aria-hidden="true">
+        <span data-bhp-gallery-current>1</span> / <?php echo esc_html((string) $total); ?>
+      </p>
+    <?php endif; ?>
 
     <?php /* One polite live region, so switching items is announced once. */ ?>
     <p class="screen-reader-text" aria-live="polite" data-bhp-gallery-status></p>
@@ -367,6 +400,46 @@ if ($total < 2) {
             <?php if ($starts_group): ?>
               <span class="bhp-gallery__group-label" aria-hidden="true"><?php echo esc_html($group); ?></span>
             <?php endif; ?>
+            <?php
+            /*
+             * ⭐ 1.19.262 (2026-08-19, `CYCLE165-LD-DIRECTION1-STEP3-PRODUCT`) —
+             *    THE THUMBNAIL RAIL GAINS REAL ALT TEXT.
+             *
+             * ⭐ THE FINDING, COUNTED ON THE LIVE PAGES rather than inferred:
+             *    every image with a missing `alt` on the four product pages at
+             *    390 was a `.bhp-gallery__thumb-img` — 7 on Mariana, 8 on
+             *    Everest, 5 on The Amazon. That is CRO rubric row 14, and the
+             *    8 the audit reported is the Everest page.
+             *
+             * ⭐⭐ THE TEXT IS NOT WRITTEN HERE, AND THAT IS THE WHOLE POINT.
+             *    Every image in `inc/book-media.php` ALREADY carries a real,
+             *    authored `alt` — "Interior spread from the chapter The Whale,
+             *    with a pencil illustration of a humpback whale…" — and every
+             *    video already carries a `label`. The registry has been the
+             *    source of truth for the stage image all along; the rail simply
+             *    passed `alt=""` and threw it away. This reads the same string
+             *    the stage reads. Nothing is derived from a title, nothing is
+             *    generated, and a new item added to the registry is described
+             *    in the rail the day it is added, with no edit here.
+             *
+             * ⚠ THE STAGE AND THE THUMB THEREFORE SHARE ONE STRING. That is
+             *   correct: they are the same picture. A second, shorter,
+             *   hand-written variant would be a second description of one image
+             *   that can drift from the first.
+             *
+             * ⛔ WHY `alt` WAS EMPTY AND WHY THAT WAS ONCE DEFENSIBLE: the
+             *    button already carries a `.screen-reader-text` name, so an
+             *    `alt` on the image inside it would once have been read twice.
+             *    That reasoning holds for a screen reader and does NOT hold for
+             *    the other things alt text serves — an image that fails to load,
+             *    a text-only client, or an automated audit, all of which see an
+             *    unlabelled tile. The accessible NAME of the button is
+             *    unchanged; the image now describes itself as well.
+             */
+            $thumb_alt = ('video' === $item['type'])
+                ? (isset($item['label']) ? (string) $item['label'] : '')
+                : (isset($item['alt']) ? (string) $item['alt'] : '');
+            ?>
             <button type="button"
                     class="bhp-gallery__thumb"
                     data-bhp-gallery-thumb="<?php echo esc_attr((string) $i); ?>"
@@ -376,7 +449,7 @@ if ($total < 2) {
                          small play badge over it so it still reads as video. */ ?>
                 <img class="bhp-gallery__thumb-img"
                      src="<?php echo esc_url($item['thumb']); ?>"
-                     alt=""
+                     alt="<?php echo esc_attr($thumb_alt); ?>"
                      loading="lazy"
                      decoding="async"
                      width="120" height="120">
@@ -389,7 +462,7 @@ if ($total < 2) {
                     'class'    => 'bhp-gallery__thumb-img',
                     'loading'  => 'lazy',
                     'decoding' => 'async',
-                    'alt'      => '',
+                    'alt'      => $thumb_alt,
                 ]);
                 ?>
               <?php endif; ?>

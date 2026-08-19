@@ -19,13 +19,18 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * THE PROBLEM IT SOLVES, MEASURED RATHER THAN ASSERTED
  * ─────────────────────────────────────────────────────────────────────────────
- * `commerce-cx`'s full-site visual inventory (2026-08-19) found 69 of 83 pages
- * with NO buy CTA above the fold at 390, because the only sitewide purchase
- * control — `.header-expedition-cta` — is `display: none` at the mobile
- * breakpoint and its counterpart `.site-nav__cta` lives INSIDE the closed
- * hamburger. A phone visitor therefore has to open a menu before the site
- * offers to sell anything. The blog is 37.7% of human page views and had no
- * buy path at all.
+ * ⛔ THIS REPOSITORY IS PUBLIC. The site-wide audit counts and the traffic
+ *    shares that motivated this component are INTERNAL figures and were removed
+ *    from this comment at 1.19.262 (`CYCLE165-LD-10`). They are not restated,
+ *    paraphrased or approximated here. The record that holds them is, by path
+ *    only: Business OS `WORKING-DRAFTS\commerce-cx\
+ *    FULL-SITE-VISUAL-INVENTORY-2026-08-19.md` (private).
+ *
+ * The mechanism is public and is the part an engineer needs: the only sitewide
+ * purchase control — `.header-expedition-cta` — is `display: none` at the
+ * mobile breakpoint, and its counterpart `.site-nav__cta` lives INSIDE the
+ * closed hamburger. A phone visitor therefore has to open a menu before the
+ * site offers to sell anything, and the blog templates had no buy path at all.
  *
  * Re-measured on staging2 1.19.259 by this build before a line was written,
  * headless Chrome at a `window.innerWidth`-asserted 390x844, scrollY 0
@@ -254,6 +259,41 @@ function bhp_header_offer_context() {
 	}
 
 	/*
+	 * ⭐ 1.19.262 (2026-08-19, CYCLE165-LD-DIRECTION1-STEP3-PRODUCT) — SINGLE
+	 *    PRODUCT PAGES JOIN THE SUPPRESSION LIST.
+	 *
+	 * ⭐ THE RULE HAS NOT CHANGED. THE MEASUREMENT HAS. The table above is the
+	 *    spec: this control renders where a template measured ZERO above-fold
+	 *    primaries at 390, and suppresses itself where one already exists.
+	 *    `product 0` was true at 1.19.259 and is the only reason the product
+	 *    page sat on the render side of that list. Step 3 of this board moves
+	 *    the price, the format selector and ADD TO CART into the first screen —
+	 *    measured on staging at an asserted 390, ADD TO CART now lands well
+	 *    above the 844 px fold — so the product template measures ONE. Leaving
+	 *    this button there would put a SECOND buy control above the fold, which
+	 *    is what FD-479 limb 3 and CRO rubric row 1 forbid ("replace, do not
+	 *    add").
+	 *
+	 * ⛔ AND THE TWO SELL DIFFERENT THINGS. This button sells the three-book
+	 *    collection; the page's own primary sells the book the visitor came
+	 *    for. Putting the set above the single title a parent is actually
+	 *    reading about is an upsell before the sale, not a second chance at it.
+	 *
+	 * ⚠ THIS IS A REAL BEHAVIOUR CHANGE FROM 1.19.261 AND IS REPORTED AS ONE.
+	 *   The step-1 brief anticipated it ("the header offer suppresses itself
+	 *   here per its rule"); the CODE at 1.19.261 did not, because the product
+	 *   page had nothing to defer to yet. Recorded rather than presented as
+	 *   pre-existing behaviour.
+	 *
+	 * ⛔ `is_product()` COVERS ALL FOUR PRODUCT PAGES, the Adventure Activity
+	 *    Book included — its native WooCommerce price and add-to-cart form
+	 *    already measured inside the first screen at 390 before this step.
+	 */
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		return 'suppress';
+	}
+
+	/*
 	 * The homepage hero's free-sample CTA is THE primary (item 96(7)).
 	 *
 	 * ⛔ `is_front_page()` ONLY. `is_home()` IS NOT A SYNONYM AND USING IT HERE
@@ -261,8 +301,10 @@ function bhp_header_offer_context() {
 	 *    runs `show_on_front = page` with `page_for_posts` set, so `is_home()` is
 	 *    true on the BLOG INDEX, which measured ZERO above-fold primaries at 390
 	 *    and must therefore show the offer immediately. Deferring there would have
-	 *    hidden the button on the section that carries 37.7% of human page views,
-	 *    behind a reveal script watching for a hero CTA that page does not have.
+	 *    hidden the button on the section that carries the largest share of human
+	 *    page views (figure in the private inventory named at the top of this
+	 *    file; ⛔ not restated in a public repository), behind a reveal script
+	 *    watching for a hero CTA that page does not have.
 	 */
 	if ( is_front_page() ) {
 		return 'defer';

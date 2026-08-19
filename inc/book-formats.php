@@ -203,15 +203,74 @@ function bhp_book_shipping_is_free($amount) {
  * @return string Translated, unescaped.
  */
 function bhp_book_ship_note_single($amount) {
+    /*
+     * ⭐ 1.19.262 (2026-08-19, CYCLE165-LD-DIRECTION1-STEP3-PRODUCT) — "our"
+     *    LEAVES THE SENTENCE, AND THE COST STAYS IN IT.
+     *
+     * Standing rule §9.1, adopted 2026-08-18 on Andrew Signore's own words:
+     * customer-facing copy has no "we", "us" or "our" — he is the sole
+     * operator, and "our print partner" claims a company that does not exist.
+     * This one sentence rendered on all three book product pages, twice each
+     * (once visibly, once inside the format payload), which is the ×6 the CRO
+     * audit counted at rubric row 7.
+     *
+     * ⭐ THE COST IS ALREADY HERE AND STAYS. Rubric row 7 asks for "what it
+     *    costs / when it ships" beside the buy button. The figure below is not
+     *    typed: it is `bhp_bundle_single_shipping($format)`, the plugin's own
+     *    approved table, handed in by the caller — the same number the cart
+     *    charges.
+     *
+     * ⛔ NO DELIVERY TIME IS CLAIMED, and the omission is deliberate. There is
+     *    no shipping-speed value derivable from a live WooCommerce setting on
+     *    this store: the zone carries one flat-rate method and no delivery
+     *    window, and the production window quoted in the processing email is
+     *    prose in a template, not a setting this function can read. Writing a
+     *    number here would be inventing one. Reported as an open item rather
+     *    than filled in (`CYCLE165-LD-13`).
+     *
+     * ⛔ NO EM DASH. The separator is a full stop.
+     *
+     * SUPERSEDED wording, retained so the movement is visible and is not
+     * re-derived: "Ships from our print partner. FREE shipping in the
+     * contiguous US." / "Ships from our print partner. Shipping from $%s in
+     * the contiguous US."
+     */
     if (bhp_book_shipping_is_free($amount)) {
-        return __('Ships from our print partner. FREE shipping in the contiguous US.', 'brave-hearts');
+        return __('Ships from my print partner. Shipping is free in the contiguous US.', 'brave-hearts');
     }
 
     /* translators: %s is a dollar amount, e.g. 1.99 */
     return sprintf(
-        __('Ships from our print partner. Shipping from $%s in the contiguous US.', 'brave-hearts'),
+        __('Ships from my print partner. Shipping starts at $%s in the contiguous US.', 'brave-hearts'),
         number_format((float) $amount, 2)
     );
+}
+
+/**
+ * The one extra true sentence the buy box may add: the collection ships free.
+ *
+ * ⛔ IT IS A LIVE READ, NOT A COPY DECISION. `bhp_book_collection_ships_free()`
+ *    asks the bundle plugin's own tier tables — all three routes to a complete
+ *    collection — whether the figure is currently zero. If a tier ever moves off
+ *    $0.00 this sentence stops rendering in the same deploy, with no copy edit
+ *    and no stale promise on a purchase page. It returns '' when the plugin is
+ *    absent, so a theme running without it says nothing rather than guessing.
+ *
+ * ⛔ IT IS KEPT OUT OF bhp_book_ship_note_single() ON PURPOSE. That function is
+ *    a PURE function of one number and is asserted against its exact approved
+ *    wording in tests/test-book-formats.php for both branches. Welding a live
+ *    lookup into it would make an approved-copy assertion depend on plugin
+ *    state, which is how the four landing sentences drifted before 2D.
+ *
+ * §9.1 VOICE: no "we". No em dash.
+ *
+ * @return string Translated, unescaped. '' when the claim is not currently true.
+ */
+function bhp_book_collection_free_ship_note() {
+    if (!function_exists('bhp_book_collection_ships_free') || !bhp_book_collection_ships_free()) {
+        return '';
+    }
+    return __('All three adventures ship free.', 'brave-hearts');
 }
 
 /**

@@ -189,9 +189,27 @@ $doors = array(
 	'checkout'    => array( function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : '', 'absent' ),
 );
 
+/*
+ * ⭐ 1.19.262 (CYCLE165-LD-DIRECTION1-STEP3-PRODUCT) — `product` MOVED FROM
+ *    'visible' TO 'absent', AND THE MATRIX ABOVE IS WHY.
+ *
+ * The rule this suite enforces has not changed: the button renders where a
+ * template measured ZERO above-fold primaries at 390 and stays away where one
+ * already exists. `product 0` was measured on 1.19.259 and is the reason this
+ * row read 'visible'. Step 3 of the Direction 1 board moves the price, the
+ * format selector and ADD TO CART into the first screen at 390 — re-measured
+ * on staging in headless Chrome at an asserted innerWidth, evidence at
+ * `CYCLE165-direction1-step3-qa/` — so the product template now measures ONE.
+ * Keeping the header offer there would make it a SECOND buy CTA above the
+ * fold, which is the thing §2 exists to prevent.
+ *
+ * ⛔ THE EXPECTATION MOVED BECAUSE THE MEASUREMENT MOVED, not to make a test
+ *    pass. The SUPERSEDED row is recorded here rather than deleted:
+ *    `$doors['product'] = array( get_permalink( $product_ids[0] ), 'visible' );`
+ */
 $product_ids = get_posts( array( 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => 1, 'fields' => 'ids' ) );
 if ( ! empty( $product_ids ) ) {
-	$doors['product'] = array( get_permalink( $product_ids[0] ), 'visible' );
+	$doors['product'] = array( get_permalink( $product_ids[0] ), 'absent' );
 }
 
 $docs = array();
@@ -234,8 +252,12 @@ if ( isset( $docs['home'] ) ) {
 	);
 }
 
-/* ...and must NOT be enqueued anywhere else: those pages have nothing to reveal. */
-foreach ( array( 'blogpost', 'product', 'shop', 'staticpage' ) as $k ) {
+/* ...and must NOT be enqueued anywhere else: those pages have nothing to reveal.
+   1.19.262: `product` left this list when it left the render side of the matrix
+   above. The assertion would still have passed there (a suppressed component
+   enqueues nothing), but the label would have described a page that no longer
+   renders the offer, and a test whose label is wrong is a test nobody trusts. */
+foreach ( array( 'blogpost', 'shop', 'staticpage' ) as $k ) {
 	if ( isset( $docs[ $k ] ) ) {
 		bhp_hdo_assert(
 			false === strpos( $docs[ $k ], 'assets/js/header-offer.js' ),

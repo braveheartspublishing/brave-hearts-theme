@@ -1,0 +1,233 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DIRECTION 1 · STEP 3 — THE PRODUCT TEMPLATE'S FIRST SCREEN AT 390.
+ * theme 1.19.262 (2026-08-19, `CYCLE165-LD-DIRECTION1-STEP3-PRODUCT`)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE DEFECT, MEASURED ON STAGING BEFORE A LINE WAS WRITTEN, NOT ASSERTED.
+ *    Headless Chrome, `window.innerWidth` asserted 390, dpr 2, iPhone UA,
+ *    staging2 at theme 1.19.261, scrollY 0. Mariana paperback:
+ *
+ *        gallery      top  199   (391 px tall, then thumbs, cue and note)
+ *        title        top  654
+ *        price        top  957
+ *        ADD TO CART  top 1005
+ *
+ *    The fold at 390x844 is 844. A parent on a phone therefore met the cover,
+ *    a thumbnail rail, a video cue and a caption before the page said what the
+ *    book costs or offered to sell it. Everest and The Amazon measured the
+ *    same within 56 px. That is CRO rubric row 3 ("price + format + buy inside
+ *    the first screen on commerce pages"), failing on every book page.
+ *
+ * ⭐ THE ORDER THIS FILE IMPOSES AT <=600px, and nothing else:
+ *
+ *        1  title
+ *        2  "Ages 6-9" with one drawn mark
+ *        3  price + format selector + ADD TO CART + shipping + guarantee
+ *        4  the real, attributed Amazon review
+ *        5  gallery + flip-through
+ *        6  the one-sentence hook
+ *        7  everything else, in the order it already had
+ *
+ * ⛔ DESKTOP IS BYTE-UNTOUCHED. Every rule below lives inside
+ *    `@media (max-width: 600px)`. At 601 px and above this stylesheet matches
+ *    nothing, and the two-column grid, the gallery-left/summary-right layout
+ *    and every margin are exactly what 1.19.261 shipped. Verified by measuring
+ *    1440 before and after and diffing the numbers.
+ *
+ * ⛔ NOTHING IS HIDDEN. The hook sentence is MOVED, not suppressed: it renders
+ *    below the gallery instead of between the title and the price. Hiding copy
+ *    at one breakpoint is a content decision and is not this build's to take.
+ *
+ * ⭐ HOW THE REORDER REACHES ACROSS `.summary`, recorded because it is the one
+ *    non-obvious thing in this file. WooCommerce renders the gallery, the
+ *    summary column and every after-summary section as SIBLINGS inside
+ *    `div.product`; the title, the ages line and the buy box are CHILDREN of
+ *    `.summary`. `order` can only sort siblings, so no amount of ordering can
+ *    put the Amazon review between the Add-to-Cart button and the gallery
+ *    while the buy box is one level deeper than they are.
+ *
+ *    `display: contents` on `.summary` (and on `.bhp-product-value-prop`)
+ *    removes only those two BOXES, promoting their children to grid items of
+ *    `div.product` so all of them sort in one list. It changes no markup, no
+ *    hook priority and no PHP, so the server output is identical for search
+ *    engines, for the schema and for desktop.
+ *
+ *    ⚠ THE COST, STATED: a box that generates no box also drops its own
+ *      padding, background and border. `.summary` has none (its only rule is
+ *      `align-self: center`, which is meaningless in a one-column grid) and
+ *      `.bhp-product-value-prop` has none. Both were read before this was
+ *      used. If either ever gains a background, this technique has to be
+ *      revisited — that is why this paragraph exists.
+ *
+ *    ⚠ AND: grid items do not collapse margins the way blocks in a shared flow
+ *      do. `gap` is therefore taken to 0 at this breakpoint and every vertical
+ *      rhythm below is written explicitly, so the spacing is a decision rather
+ *      than an accident of two techniques meeting.
+ */
+
+@media (max-width: 600px) {
+
+	/* ---- 1. One column, no gap, explicit rhythm ---------------------- */
+
+	body.single-product .woocommerce div.product {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0;
+	}
+
+	body.single-product .woocommerce div.product > .summary {
+		display: contents;
+	}
+
+	body.single-product .woocommerce div.product > .summary > .bhp-product-value-prop {
+		display: contents;
+	}
+
+	/*
+	 * The default slot. Everything that is not named below keeps the order it
+	 * already had, after the six named blocks. Both levels are listed because
+	 * `display: contents` changes box generation, NOT the selector tree: the
+	 * summary's children are still `> .summary > *`, never `div.product > *`.
+	 */
+	body.single-product .woocommerce div.product > *,
+	body.single-product .woocommerce div.product > .summary > * {
+		order: 7;
+		margin-top: clamp(1.75rem, 6vw, 2.75rem);
+	}
+
+	/* ---- 2. The first screen, in the board's order -------------------- */
+
+	body.single-product .woocommerce div.product > .summary > .product_title {
+		order: 1;
+		margin-top: 0;
+		margin-bottom: 0.4rem;
+		font-size: 1.55rem;
+		line-height: 1.14;
+	}
+
+	/*
+	 * ⚠ `justify-self: start` is load-bearing, not tidiness. The age line is an
+	 *   ivory PILL (`style.css` 2801: inline-block, padding, radius). Promoted
+	 *   to a grid item by `display: contents` above, it would be blockified and
+	 *   stretched to the full column, turning a small badge into a full-width
+	 *   band. This keeps it at its content width, which is what it has always
+	 *   been.
+	 */
+	body.single-product .woocommerce div.product .bhp-product-value-prop__age {
+		order: 2;
+		margin: 0 0 0.85rem;
+		justify-self: start;
+	}
+
+	body.single-product .woocommerce div.product > .summary > .bhp-formats {
+		order: 3;
+		margin-top: 0;
+	}
+
+	body.single-product .woocommerce div.product > .amazon-reviews-product-section {
+		order: 4;
+	}
+
+	/*
+	 * The gallery. Two selectors because two galleries exist: the six canonical
+	 * editions render the theme's own hero gallery (`.bhp-look-inside`), and a
+	 * product with no approved media -- the Adventure Activity Book today --
+	 * keeps WooCommerce's native one. Both must move, or the fix would land on
+	 * three pages out of four.
+	 */
+	body.single-product .woocommerce div.product > .bhp-media-gallery--hero,
+	body.single-product .woocommerce div.product > .woocommerce-product-gallery {
+		order: 5;
+	}
+
+	body.single-product .woocommerce div.product .bhp-product-value-prop__hook {
+		order: 6;
+		margin: clamp(1.75rem, 6vw, 2.75rem) 0 0;
+	}
+
+	/*
+	 * The Activity Book has no format selector: it uses WooCommerce's own price
+	 * and add-to-cart form. They carry the same job and therefore the same
+	 * slots, so that page gets the identical first screen.
+	 */
+	body.single-product .woocommerce div.product > .summary > .price {
+		order: 3;
+		margin-top: 0;
+		margin-bottom: 0.6rem;
+	}
+
+	body.single-product .woocommerce div.product > .summary > form.cart {
+		order: 3;
+		margin-top: 0;
+	}
+
+	/* ---- 3. Buy box, tightened so the button clears the fold ---------- */
+
+	body.single-product .woocommerce div.product .bhp-formats__heading {
+		margin: 0 0 0.55rem;
+		font-size: 0.72rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+
+	body.single-product .woocommerce div.product .bhp-formats__selected-price {
+		margin: 0.85rem 0 0.6rem;
+	}
+
+	/* >= 44 px stays >= 44 px. This trims padding, never the target. */
+	body.single-product .woocommerce div.product .bhp-formats__cta {
+		min-height: 52px;
+	}
+
+	body.single-product .woocommerce div.product .bhp-formats__cta-wrap {
+		margin: 0;
+	}
+
+	/* ---- 4. The breadcrumb, compact ---------------------------------- */
+
+	/*
+	 * Three crumbs at 0.68rem with 0.1em tracking wrapped to two lines and
+	 * measured 42 px on all three book pages, and the last crumb repeats the
+	 * H1 word for word one line below it. Tightened, not truncated: every
+	 * crumb is still readable and still a link, which `text-overflow: ellipsis`
+	 * on a nowrap row would not be.
+	 */
+	body.single-product .woocommerce .woocommerce-breadcrumb {
+		margin-bottom: 0.9rem;
+		font-size: 0.6rem;
+		letter-spacing: 0.06em;
+		line-height: 1.5;
+	}
+
+	/* ---- 5. The gallery overlays, off the byline ---------------------- */
+
+	/*
+	 * There is no hover on a touch screen, so the "Click to enlarge" pill can
+	 * only ever appear here spuriously -- and when it did, it appeared directly
+	 * over the cover's byline. The counter moved out of the stage entirely (see
+	 * `book-media.css` section 5b); this removes the second overlay.
+	 */
+	body.single-product .bhp-gallery__inspect-hint {
+		display: none;
+	}
+}
+
+/* ---- 6. The drawn mark beside "Ages 6-9" ----------------------------- */
+
+/*
+ * Hand-authored line art from the activity-book set, inlined so it inherits
+ * `currentColor` and needs no request. Provenance and the no-AI statement are
+ * in `inc/product-template.php`. Decorative: `aria-hidden`, no alt required.
+ */
+.bhp-product-value-prop__mark {
+	flex: 0 0 auto;
+	width: 1.15em;
+	height: 1.15em;
+	vertical-align: -0.2em;
+	color: var(--expedition-gold, #d9a45f);
+}
+
+.bhp-product-value-prop__age {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+}

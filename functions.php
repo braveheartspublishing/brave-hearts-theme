@@ -3439,6 +3439,13 @@ require_once get_template_directory() . '/inc/header-offer.php';
 // book-formats.php / the bundle plugin so bhp_book_has_look_inside() and
 // bhp_bundle_landing_price_facts() exist when the rail resolves its facts.
 require_once get_template_directory() . '/inc/blog-post-template.php';
+// 1.19.262 — the product template (CYCLE165-LD-DIRECTION1-STEP3-PRODUCT),
+// step 3 of the same board build. Loaded AFTER header-offer.php for the same
+// reason step 2 is: this step is what makes the product page carry its own
+// above-fold primary, which is why header-offer.php now suppresses itself
+// there. Loaded after book-formats.php because the buy box it reorders is
+// rendered by bhp_book_render_format_selector().
+require_once get_template_directory() . '/inc/product-template.php';
 require_once get_template_directory() . '/inc/amazon-reviews.php';
 // Native customer reviews (2026-08-03): the on-page "Write a Review for …"
 // section beneath the Kirkus block, the /review/<slug>/ two-click email
@@ -3843,9 +3850,31 @@ function bhp_woocommerce_product_value_prop() {
         return;
     }
     $age_range = get_post_meta($product->get_id(), 'bhp_age_range', true) ?: __('Ages 6–9', 'brave-hearts');
+    /*
+     * ⭐ 1.19.262 (2026-08-19, CYCLE165-LD-DIRECTION1-STEP3-PRODUCT) — ONE
+     *    DRAWN MARK BESIDE THE AGE LINE, and only one.
+     *
+     * The Direction 1 board puts a single piece of the existing hand-authored
+     * line art beside "Ages 6-9" so the first screen carries the series'
+     * character without a second image competing with the cover. The artwork,
+     * its provenance and the reason it is inlined rather than shipped as a
+     * second file all live in `inc/product-template.php` beside the markup, so
+     * this file holds no copy of either.
+     *
+     * ⛔ function_exists() IS THE GATE. The mark is a Direction 1 component and
+     *    sits behind its own filter; with `bhp_product_template_enabled` off,
+     *    or the include absent, this renders exactly what 1.19.261 rendered.
+     * ⛔ IT IS DECORATIVE and precedes the words it decorates, so the age is
+     *    still the first thing read aloud.
+     */
+    $bhp_age_mark = function_exists('bhp_product_ages_mark_html') && function_exists('bhp_product_template_enabled') && bhp_product_template_enabled()
+        ? bhp_product_ages_mark_html()
+        : '';
     ?>
     <div class="bhp-product-value-prop">
-        <span class="bhp-product-value-prop__age"><?php echo esc_html($age_range); ?></span>
+        <span class="bhp-product-value-prop__age"><?php
+        echo $bhp_age_mark; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static, pre-escaped SVG from bhp_product_ages_mark_html().
+        ?><?php echo esc_html($age_range); ?></span>
         <p class="bhp-product-value-prop__hook"><?php esc_html_e('Adventure chapter books for ages 6–9 that combine real places, science, history, courage, and kindness.', 'brave-hearts'); ?></p>
     </div>
     <?php

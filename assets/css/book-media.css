@@ -130,10 +130,22 @@ body:not(.home) .bhp-look-inside .bhp-look-inside__title,
 	position: relative;
 }
 
+/*
+ * ⭐ 1.19.262 (2026-08-19, CYCLE165-LD-DIRECTION1-STEP3-PRODUCT) — THE HINT
+ *    MOVES OFF THE BYLINE.
+ *
+ * It sat at `bottom: 0.6rem`, which on a book cover is the band carrying "Big
+ * Places. Brave Hearts." and the author's name. Observed covering it on all
+ * three book pages at 390 and at 1440. `top` instead of `bottom` puts it over
+ * the upper artwork, where no cover prints text. Nothing else about the
+ * affordance changes: same string, same hover/focus reveal, same pointer-events.
+ * At <=600px it is hidden outright — there is no hover on a touch screen, so it
+ * could only ever appear there by accident (see product-template.css §5).
+ */
 .bhp-gallery__inspect-hint {
 	position: absolute;
 	right: 0.6rem;
-	bottom: 0.6rem;
+	top: 0.6rem;
 	padding: 0.25rem 0.55rem;
 	font-size: 0.78rem;
 	font-weight: 600;
@@ -197,19 +209,27 @@ body:not(.home) .bhp-look-inside .bhp-look-inside__title,
 	display: none;
 }
 
+/* ---- 5b. Slide counter — a caption, no longer an overlay ------------- */
+
+/*
+ * ⭐ 1.19.262 (2026-08-19, CYCLE165-LD-DIRECTION1-STEP3-PRODUCT). It was
+ *    `position: absolute; left: 50%; bottom: 0.6rem` INSIDE the stage, i.e. a
+ *    dark pill printed across the bottom of the cover, over the byline. The
+ *    markup moved out of the stage (see look-inside.php); these rules follow it
+ *    from an overlay to a plain centred caption under the picture.
+ *
+ * The pill treatment is dropped with it: sitting on cream rather than on
+ * artwork, white-on-navy at 0.8rem was a floating badge with nothing to float
+ * over. Muted text at the same size reads as what it is — a position
+ * indicator — and stops competing with the flip-through cue beneath it.
+ */
 .bhp-gallery__counter {
-	position: absolute;
-	left: 50%;
-	bottom: 0.6rem;
-	transform: translateX(-50%);
-	z-index: 2;
-	margin: 0;
-	padding: 0.2rem 0.6rem;
+	margin: 0.55rem 0 0;
+	text-align: center;
 	font-size: 0.8rem;
 	font-weight: 600;
-	color: #fff;
-	background: rgba(15, 32, 51, 0.72);
-	border-radius: 999px;
+	letter-spacing: 0.02em;
+	color: var(--color-text-muted, #4a5568);
 }
 
 /* ---- 6. Thumbnail carousel ------------------------------------------ */
@@ -669,12 +689,19 @@ body.bhp-gallery-lightbox-open {
 	outline: 3px solid var(--color-gold, #D9A45F);
 }
 
-/* Follows the stage. A forest pill sitting on a navy stage is a colour bug,
-   not a highlight. 0.82 alpha and the white text are unchanged, and the pill
-   still measures far above the 4.5:1 floor on the darker ground. */
-.bhp-media-gallery--collection .bhp-gallery__counter {
-	background: rgba(7, 21, 34, 0.82);
-}
+/*
+ * SUPERSEDED at 1.19.262 and retained so the movement is visible rather than
+ * re-derived. It read:
+ *
+ *   .bhp-media-gallery--collection .bhp-gallery__counter { background: rgba(7, 21, 34, 0.82); }
+ *
+ * with the note: "Follows the stage. A forest pill sitting on a navy stage is a
+ * colour bug, not a highlight." That rule existed only because the counter was
+ * a PILL SITTING ON THE STAGE. It is now a caption under the stage, on the page
+ * ground, so a stage-matched background would paint a dark box on cream. The
+ * override is therefore removed rather than re-tinted, and the collection
+ * gallery inherits the same muted caption every other gallery now uses.
+ */
 
 .bhp-media-gallery--collection .bhp-gallery__thumb {
 	background: var(--bl-cream-card, #fbf6eb);
