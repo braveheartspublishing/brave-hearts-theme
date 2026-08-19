@@ -241,8 +241,47 @@ if (function_exists('bhp_get_safe_link_url')) {
     <p class="home-open-book__lede"><?php esc_html_e('At the market, people pick a book up and read a few lines before they buy. That should be the easiest thing to do here too, not the hardest thing to find.', 'brave-hearts'); ?></p>
 
     <ul class="home-open-book__spreads" role="list">
-      <?php foreach ($bhp_resolved as $bhp_i => $bhp_item): ?>
-        <li class="home-open-book__spread home-open-book__spread--<?php echo esc_attr($bhp_item['aspect']); ?>">
+      <?php
+      foreach ($bhp_resolved as $bhp_i => $bhp_item):
+          /*
+           * ⭐ 1.19.245 — THE REAL INTRINSIC RATIO TRAVELS WITH THE ROW, AND
+           *    IT EXISTS TO STOP A LAYOUT SHIFT, NOT TO STYLE ANYTHING.
+           *
+           * ⚠️ THIS FIXES A DEFECT THIS BUILD INTRODUCED AND THEN MEASURED.
+           *    The first attempt simply set `aspect-ratio: auto` on the tall
+           *    slot to undo the section's `aspect-ratio: 1/1`. Measured on
+           *    staging at a real 390px viewport, the page-1 box came back
+           *    329.9 x 8.1 px — a collapsed sliver. `aspect-ratio: auto` in
+           *    author CSS overrides the UA stylesheet's `auto <ratio>` form,
+           *    which is the mechanism by which an <img>'s width/height
+           *    ATTRIBUTES reserve space before the file arrives. Killing it
+           *    meant a lazy image ~2,400px down the page reserved no height
+           *    at all and then jumped ~440px on load. The two square slots
+           *    never showed this because their fixed 1/1 ratio reserved
+           *    space by itself.
+           *
+           * ⛔ `aspect-ratio: revert` WAS REJECTED even though it is the
+           *    tidiest expression of the intent. If a browser does not
+           *    support `revert` the declaration is dropped, the section's
+           *    `1/1` survives, and page 1 is silently CROPPED again — a
+           *    failure mode that lands on exactly the thing Andrew reported.
+           *    An explicit ratio degrades to a correct box everywhere.
+           *
+           * The value is read off the attachment's own metadata, so it is the
+           * file's real shape rather than an assumption about it, and a
+           * future replacement photograph of any proportion works unchanged.
+           */
+          $bhp_ratio_style = '';
+          $bhp_src         = wp_get_attachment_image_src($bhp_item['id'], 'full');
+          if (is_array($bhp_src) && !empty($bhp_src[1]) && !empty($bhp_src[2])) {
+              $bhp_ratio_style = sprintf(
+                  'style="--bhp-spread-ratio: %d / %d;"',
+                  (int) $bhp_src[1],
+                  (int) $bhp_src[2]
+              );
+          }
+      ?>
+        <li class="home-open-book__spread home-open-book__spread--<?php echo esc_attr($bhp_item['aspect']); ?>" <?php echo $bhp_ratio_style; // phpcs:ignore WordPress.Security.EscapeOutput -- built from two (int) casts only ?>>
           <?php /*
            * ⭐ 1.19.243 — THE LINK WRAPPER IS GONE, ON PURPOSE.
            *

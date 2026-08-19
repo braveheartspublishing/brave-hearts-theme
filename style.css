@@ -9463,10 +9463,23 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
    slot rather than set to `contain`, because with an intrinsic-ratio box
    there is no spare space to fit into and `contain` would only be
    decoration pretending to be a safeguard. */
+/* ⚠️ `aspect-ratio: auto` WAS TRIED HERE FIRST AND MEASURED 329.9 x 8.1 px ON
+   STAGING. Author-level `auto` overrides the UA stylesheet's `auto <ratio>`
+   form, which is what lets an <img>'s width/height ATTRIBUTES reserve space
+   before a lazy file arrives — so page 1 reserved nothing and then jumped
+   ~440px on load. The row now carries its own file's real ratio in
+   `--bhp-spread-ratio` (see the loop in home-open-the-book.php). The 3/4
+   fallback is the shape of the page-1 photograph and applies only if the
+   custom property is somehow absent; it is never the primary value.
+
+   `contain` rather than `cover`: the declared ratio and the file's ratio are
+   the same number, so neither crops — but if they ever diverge, `contain`
+   letterboxes and `cover` would cut printed lines off a page Andrew is
+   inviting people to read. The safe failure is the one that keeps the words. */
 .home .home-open-book__spread--tall .home-open-book__spread-img {
-  aspect-ratio: auto;
+  aspect-ratio: var(--bhp-spread-ratio, 3 / 4);
   height: auto;
-  object-fit: fill; /* inert: box ratio == image ratio, so nothing is scaled unevenly */
+  object-fit: contain;
 }
 
 /* ---- 2. THE FOLD. All of this is <=600px, i.e. phones only. -------------- */

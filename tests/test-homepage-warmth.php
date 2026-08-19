@@ -404,10 +404,26 @@ bhp_hw_assert(
  * Asserted on the FILENAME, because that is what reaches the HTML — the
  * attachment slug is the post_name and never appears in rendered markup.
  * This is the same trap §1.4 records having fallen into once already.
+ *
+ * ⚠️ AND ON THE `src` ATTRIBUTE SPECIFICALLY, NOT ON A BARE OCCURRENCE COUNT.
+ *    The first version of this assertion demanded the filename appear
+ *    EXACTLY ONCE and failed on staging — not because the page was wrong but
+ *    because the page was right: requesting the `full` size emits a nine-rung
+ *    `srcset`, so the base filename legitimately appears TEN times. The page
+ *    was inspected before the test was changed, and it was the test that was
+ *    wrong about the page. Pinning `src="…-1600.webp"` asserts the one thing
+ *    that actually matters — which file a browser with no srcset support, and
+ *    every crawler, receives — and is immune to the derivative ladder
+ *    changing underneath it.
  */
 bhp_hw_assert(
-	1 === substr_count( $bhp_hw_section, 'mt-first-pages-01-chapter1-opening-1600' ),
+	preg_match( '#src="[^"]*mt-first-pages-01-chapter1-opening-1600\.webp"#', $bhp_hw_section ) === 1,
 	'§1.6b slot 1 serves the FULL-PAGE master (icon and all the words), not the square crop',
+	$failures
+);
+bhp_hw_assert(
+	preg_match( '#<img width="1600" height="2133"#', $bhp_hw_section ) === 1,
+	'§1.6b slot 1 declares the page\'s real 3:4 intrinsic size, so no crop or letterbox can occur',
 	$failures
 );
 bhp_hw_assert(

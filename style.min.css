@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 0e22d7647a88deb3cde51538595c4898
+    source-md5: 1ad038db38041f2f1026eda935e65681
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -6066,9 +6066,9 @@ font-size: 1.25rem;
   }
 }
 .home .home-open-book__spread--tall .home-open-book__spread-img {
-  aspect-ratio: auto;
+  aspect-ratio: var(--bhp-spread-ratio, 3 / 4);
   height: auto;
-  object-fit: fill; 
+  object-fit: contain;
 }
 @media (max-width: 600px) {
 .home #home-hero .home-hero__content {
