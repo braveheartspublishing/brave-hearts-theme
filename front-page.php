@@ -654,8 +654,8 @@ ob_start();
  *    sets "three real places" in italic to the right of the marks, and sheet
  *    3's 390 mock sets "WHAT WOULD YOU FIND DOWN THERE?" under the covers.
  *    Both are UNAPPROVED COPY — the board's own README classes them as
- *    proposals. They are carried to Gandalf in the build report as PROPOSED
- *    and are deliberately absent from this build.
+ *    proposals. They are carried to the supervising role in the build report
+ *    as PROPOSED and are deliberately absent from this build.
  *
  * ⛔ IT CANNOT BECOME A SECOND ABOVE-FOLD PRIMARY. It is a `<div>` with
  *    three `<span>`s: no `<a>`, no `<button>`, no href, no `data-bhp-event`,
