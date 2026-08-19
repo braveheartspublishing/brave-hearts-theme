@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 4cf09e71d134d51ef3a826ec451a9cb7
+    source-md5: b2b5a5e6a14e27cfe24cd4fda88dba6d
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -6009,7 +6009,7 @@ font-size: 1.25rem;
 @media (max-width: 860px) {
   .home .home-open-book__spreads { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .home .home-open-book__spread { transform: none; }
-  .home .home-open-book__spread-img { height: 190px; }
+.home .home-open-book__spread-img { height: auto; }
   .home .home-open-book__actions { flex-direction: column; align-items: stretch; }
   .home .home-open-book__btn { text-align: center; padding-inline: .875rem; }
   .home .home-open-book__aside { text-align: center; }

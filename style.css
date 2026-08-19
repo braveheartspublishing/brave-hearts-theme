@@ -9257,7 +9257,13 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 @media (max-width: 860px) {
   .home .home-open-book__spreads { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .home .home-open-book__spread { transform: none; }
-  .home .home-open-book__spread-img { height: 190px; }
+  /* 1.19.243: was `height: 190px`, which squashed the square page
+     photographs into a 190px letterbox on exactly the device Andrew reads on
+     and beat the `aspect-ratio: 1/1` above (a set height wins over
+     aspect-ratio). `auto` lets each page fill the column as a square, ~335px
+     on a 390px phone, so the printed text is legible on a phone rather than
+     only on a desktop. */
+  .home .home-open-book__spread-img { height: auto; }
   .home .home-open-book__actions { flex-direction: column; align-items: stretch; }
   .home .home-open-book__btn { text-align: center; padding-inline: .875rem; }
   .home .home-open-book__aside { text-align: center; }
