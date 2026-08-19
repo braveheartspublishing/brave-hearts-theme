@@ -190,8 +190,13 @@ if (function_exists('bhp_print_art_defer_script'))  { bhp_print_art_defer_script
      * breakpoint. It exists because `.header-expedition-cta` immediately below
      * is `display: none` there and `.site-nav__cta` is inside the CLOSED
      * dropdown, so a phone visitor had to open a menu before this site offered
-     * to sell anything. `commerce-cx` measured 69 of 83 pages with no buy CTA
-     * above the fold at 390.
+     * to sell anything. `commerce-cx`'s full-site inventory measured that
+     * condition on the large majority of pages at 390.
+     *
+     * ⛔ THIS REPOSITORY IS PUBLIC and the audit's page counts are internal, so
+     *    the figure is not restated here (`CYCLE165-LD-10`, cleared at
+     *    1.19.262). The record that holds it, by path only: Business OS
+     *    `WORKING-DRAFTS\commerce-cx\FULL-SITE-VISUAL-INVENTORY-2026-08-19.md`.
      *
      * ⛔ IT IS PLACED BEFORE `.nav-toggle` DELIBERATELY, AND THE ORDER IS
      *    LOAD-BEARING. `.header-inner` is `justify-content: space-between`, so

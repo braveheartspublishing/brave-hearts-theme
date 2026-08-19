@@ -410,8 +410,14 @@ bhp_hdo_assert(
  * ⛔ THE SAME CONTAINER QUERY AS THE HAMBURGER. If this ever becomes a viewport
  *    media query, the button and the hamburger part company on `.single-post`,
  *    where <body> is capped at 1120px and `.header-inner` is far narrower than
- *    `window.innerWidth`. The blog post template is 37.7% of human page views,
- *    so that is precisely the page it would break on.
+ *    `window.innerWidth`. The blog post template carries the largest share of
+ *    human page views on this site, so that is precisely the page it would
+ *    break on.
+ *
+ * ⛔ THIS REPOSITORY IS PUBLIC and the traffic share is an internal figure, so
+ *    it is not restated here (`CYCLE165-LD-10`, cleared at 1.19.262). The
+ *    record that holds it, by path only: Business OS `WORKING-DRAFTS\
+ *    commerce-cx\FULL-SITE-VISUAL-INVENTORY-2026-08-19.md`.
  */
 $offer_block = strstr( $css_src, '⭐ 1.19.260 (2026-08-19) — THE MOBILE-HEADER OFFER' );
 bhp_hdo_assert(
