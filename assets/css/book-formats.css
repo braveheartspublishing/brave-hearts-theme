@@ -129,7 +129,7 @@
 	text-align: center;
 	background: #fff;
 	border: 2px solid var(--bhp-fmt-border);
-	border-radius: 10px;
+	border-radius: 8px;   /* 1.19.266: was 10px. The format selector is a <button>; 8px is the system radius. */
 	cursor: pointer;
 	transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -212,7 +212,7 @@
 	   measured. Changing the two labels is the smaller blast radius. */
 	color: #ffffff;
 	background: var(--bhp-fmt-gold);
-	border-radius: 0 0 6px 6px;
+	border-radius: 0 0 8px 8px;   /* 1.19.266: was 6px -- it is a ribbon on the 8px card above and its corners must match the card's, not approximate them. */
 	white-space: nowrap;
 }
 
@@ -272,7 +272,12 @@
 
 .bhp-formats__note {
 	margin: 9px 0 0;
-	font-size: 0.8rem;
+	/* 1.19.266 (audit §8a item 3): was 0.8rem (12.8px). This is the shipping
+	   promise -- "Ships from my print partner. Shipping starts at $1.99 in the
+	   contiguous US" -- one of the four lines the rubric's row 11 names.
+	   ⛔ THE WORDS ARE NOT TOUCHED. The $1.99/$3.99 question is C12/C13 and is
+	      Andrew's; this changes the size the sentence is set at, nothing else. */
+	font-size: var(--trust-min, 0.875rem);
 	line-height: 1.45;
 	opacity: 0.8;
 }
@@ -287,7 +292,7 @@
 	text-align: center;
 	background: var(--bhp-fmt-cream);
 	border: 2px solid var(--bhp-fmt-gold);
-	border-radius: 12px;
+	border-radius: 8px;   /* 1.19.266: was 12px. Same component group as the 8px format cards it sits under; 12px is not a value in the 4/8/16 system. */
 }
 
 .bhp-shop-collection-card__badge {
@@ -573,9 +578,17 @@
    ══════════════════════════════════════════════════════════════════════ */
 .bhp-product-guarantee .bhp-landing-guarantee {
 	font-family: var(--font-ui, inherit);
-	font-size: 0.74rem;
+	/* 1.19.266: was 0.74rem (11.84px) -- the 30-day guarantee, the single
+	   strongest risk-reversal sentence on the page, set two-thirds the size of
+	   the body beside it. */
+	font-size: var(--trust-min, 0.875rem);
 	line-height: 1.45;
-	color: #7A6E60;
+	/* AND the colour: #7A6E60 on the product ground #f8f3e9 measured 4.49:1 --
+	   AA by 0.01 on the wrong side (audit §2.2, MARGINAL table). #706456 is the
+	   same hue and chroma carried far enough to clear 4.5 on every ground this
+	   sentence renders on: 5.21:1 on #f8f3e9, 5.03:1 on #f6efe0, 4.69:1 on
+	   #f1e7d2, 5.76:1 on #ffffff. */
+	color: #706456;
 	margin: 0.5rem 0 0;
 	text-align: center;
 	text-wrap: pretty;
@@ -588,7 +601,7 @@
 }
 
 .bhp-product-guarantee .bhp-landing-guarantee__sep {
-	color: #7A6E60;
+	color: #706456;   /* 1.19.266: was #7A6E60, 4.49:1 */
 }
 
 .bhp-product-guarantee .bhp-landing-guarantee__link {

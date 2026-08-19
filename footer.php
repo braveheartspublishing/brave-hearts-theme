@@ -108,7 +108,40 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
     </div>
 
     <nav class="footer-nav" aria-label="<?php esc_attr_e('Footer navigation', 'brave-hearts'); ?>">
-      <h2><?php esc_html_e('Explore', 'brave-hearts'); ?></h2>
+      <?php
+      /*
+       * ⭐⭐ 1.19.266 (2026-08-19, CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS) —
+       *     THESE THREE COLUMN LABELS WERE <h2> AND ARE NOW <p>.
+       *
+       * WHY. Measured on staging 1.19.264 (headless Chrome, innerWidth
+       * asserted 390): "Explore", "Learn" and "Connect" render at 10.5px
+       * against an 18px body — i.e. THREE headings smaller than body text,
+       * on all 83 pages, 249 instances sitewide. That is the rubric's row-1
+       * "no heading smaller than body" failure, and Pippin's audit §8a item 6
+       * is it. (The audit describes it as "an H3 at 10.5px on the homepage";
+       * the measurement says H2, three of them, on every page. The finding is
+       * right, the label was not — recorded rather than quietly corrected.)
+       *
+       * WHY DEMOTE RATHER THAN ENLARGE. The two available fixes are: set them
+       * at >=18px, or stop them being headings. Enlarging changes the footer's
+       * design on every page of the site to satisfy a semantic rule; demoting
+       * changes NOTHING a visitor sees — the CSS selector lists in style.css
+       * now carry `.footer-col-title` beside each `h2` and every declaration
+       * is identical — and removes the defect at its cause. These are column
+       * LABELS, not document sections.
+       *
+       * NOTHING IS LOST FOR ASSISTIVE TECHNOLOGY. `.footer-nav` and
+       * `.footer-learn` are <nav> landmarks that ALREADY carry their own
+       * `aria-label` ("Footer navigation", "Learning navigation"), so a
+       * screen-reader user reaches and identifies them by landmark, not by
+       * these headings. `.footer-contact` is a <div> with no landmark, so it
+       * is given `role="group"` + `aria-labelledby` pointing at its label —
+       * which names the group MORE precisely than a loose <h2> did.
+       *
+       * ⛔ NO COPY CHANGED. Three element names and one ARIA relationship.
+       */
+      ?>
+      <p class="footer-col-title"><?php esc_html_e('Explore', 'brave-hearts'); ?></p>
       <?php
       wp_nav_menu([
           'theme_location' => 'footer',
@@ -120,7 +153,7 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
     </nav>
 
     <nav class="footer-learn" aria-label="<?php esc_attr_e('Learning navigation', 'brave-hearts'); ?>">
-      <h2><?php esc_html_e('Learn', 'brave-hearts'); ?></h2>
+      <p class="footer-col-title"><?php esc_html_e('Learn', 'brave-hearts'); ?></p>
       <ul>
         <li><a href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Learning Hub', 'brave-hearts'); ?></a></li>
         <li><a href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('For Teachers', 'brave-hearts'); ?></a></li>
@@ -128,8 +161,8 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
       </ul>
     </nav>
 
-    <div class="footer-contact">
-      <h2><?php esc_html_e('Connect', 'brave-hearts'); ?></h2>
+    <div class="footer-contact" role="group" aria-labelledby="footer-connect-title">
+      <p class="footer-col-title" id="footer-connect-title"><?php esc_html_e('Connect', 'brave-hearts'); ?></p>
       <p><a href="mailto:andrew@braveheartspublishing.com">andrew@braveheartspublishing.com</a></p>
       <p><a href="<?php echo esc_url(home_url('/reluctant-reader-adventure-kit/')); ?>"><?php esc_html_e('Join the Expedition', 'brave-hearts'); ?></a></p>
       <p class="footer-contact__note">Classroom read alouds, school visits, bulk orders, media inquiries, and upcoming releases.</p>

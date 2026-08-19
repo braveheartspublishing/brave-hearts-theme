@@ -806,7 +806,38 @@ function bhp_bundle_render_landing_cold_open() {
 		// lines, and the duplicate below-headline star line removed — the star
 		// line now renders once, above the headline only.
 		?>
-		<h2 class="bhp-landing-coldopen__headline">Real places. Short chapters.<br />Stories that pull kids off screens.</h2>
+		<?php
+		/*
+		 * ⭐⭐ 1.8.60 (2026-08-19, `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS`) —
+		 *     THIS WAS AN <h2> AND IS NOW A <p>. THE WORDS ARE UNTOUCHED.
+		 *
+		 * `CYCLE165-BOR-206`, CONFIRMED LIVE by Pippin at both 390 and 1440 on
+		 * staging 1.19.264: `/complete-collection/` printed TWO <h2> elements
+		 * BEFORE its <h1> in DOM order — this one, and the two screen-reader
+		 * panel titles below. A document that opens with a level-2 heading and
+		 * reaches its level-1 heading fourth is malformed for anything that
+		 * navigates by heading structure (screen readers, reader modes, and
+		 * the outline a search engine builds), on the site's #1 front door.
+		 *
+		 * ⛔ NOTHING MOVES ON SCREEN, AND THAT IS THE REQUIREMENT. The
+		 *    collection build (`CYCLE165-LD-COLLECTION-CONVERSION`) positioned
+		 *    every element on this page against a measured 844px fold; this
+		 *    fix was explicitly not allowed to disturb that. Changing the tag
+		 *    and nothing else is what makes that true:
+		 *    `.bhp-landing-coldopen__headline` sets font-family, font-size,
+		 *    line-height (1.18), font-weight, letter-spacing, colour AND
+		 *    margin on the CLASS, so a <p> inherits none of the paragraph
+		 *    defaults it would otherwise pick up from
+		 *    `body:not(.home) p { line-height: 1.68 }`. Verified by
+		 *    re-measuring the page after deploy, not assumed.
+		 *
+		 * WHY DEMOTE RATHER THAN REORDER: reordering means moving the cold
+		 * open below the hero H1, which is a LAYOUT change to an
+		 * Andrew-approved sales-first fold. This line is a lead-in sentence,
+		 * not a section heading — it heads nothing.
+		 */
+		?>
+		<p class="bhp-landing-coldopen__headline">Real places. Short chapters.<br />Stories that pull kids off screens.</p>
 		<p class="bhp-landing-coldopen__subhead">Educational without feeling like homework &middot; ages 6&ndash;9</p>
 		<?php
 		/*
@@ -1407,8 +1438,31 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 	 *    the individual-books exit are all still on the page, once each.
 	 */
 	?>
-	<div class="bhp-landing-panel bhp-landing-panel--compact" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" <?php echo bhp_bundle_landing_default_format() === $format ? '' : 'hidden'; ?>>
-		<h2 class="bhp-landing-panel__title screen-reader-text"><?php echo esc_html( $copy['title'] ); ?></h2>
+	<?php
+	/*
+	 * ⭐ 1.8.60 — THE PANEL TITLE WAS AN <h2> AND IS NOW A LABELLED GROUP.
+	 *
+	 * Second half of `CYCLE165-BOR-206`: these two screen-reader-only titles
+	 * ("Complete Paperback Collection" / "Complete Hardcover Collection")
+	 * were the other two <h2> elements printing BEFORE the page's <h1>.
+	 *
+	 * They were never referenced by anything — no `aria-labelledby` pointed
+	 * at them — so they existed purely as headings in the accessibility tree.
+	 * They now name their own panel instead: the panel becomes a
+	 * `role="group"` with `aria-labelledby`, and the text stays in a
+	 * screen-reader-only <p>. A screen-reader user gets MORE than before (the
+	 * group is announced with its name on entry, rather than a loose heading
+	 * floating above a form) and the heading outline is no longer inverted.
+	 *
+	 * ⛔ NOTHING VISUAL AND NOTHING FUNCTIONAL. `bundle-landing.js` toggles
+	 *    these panels by `[data-bhp-format-panel]` and the form posts by
+	 *    `form.bhp-bundle-form`; neither attribute is touched, and the
+	 *    `hidden` default-format logic on this same line is unchanged.
+	 */
+	$bhp_panel_title_id = 'bhp-landing-panel-title-' . sanitize_html_class( $format );
+	?>
+	<div class="bhp-landing-panel bhp-landing-panel--compact" data-bhp-format-panel="<?php echo esc_attr( $format ); ?>" role="group" aria-labelledby="<?php echo esc_attr( $bhp_panel_title_id ); ?>" <?php echo bhp_bundle_landing_default_format() === $format ? '' : 'hidden'; ?>>
+		<p class="bhp-landing-panel__title screen-reader-text" id="<?php echo esc_attr( $bhp_panel_title_id ); ?>"><?php echo esc_html( $copy['title'] ); ?></p>
 
 		<form method="post" class="bhp-bundle-form bhp-landing-panel__form bhp-landing-panel__form--lead">
 			<?php bhp_bundle_nonce_input(); ?>

@@ -149,7 +149,12 @@ function bhp_consent_banner_compact_css() {
 @media (min-width: 782px) {
   /* Desktop already measured only 65px TALL and was never a HEIGHT defect. It
      keeps the one-row treatment for consistency and is capped lower. */
-  .wpconsent-banner { max-height: 92px !important; }
+  /* 1.19.266: 92px -> 104px. The cap must clear the control it contains:
+     44px button + 10px/10px padding = 64px, and a two-line message beside it
+     reaches ~90px on a narrow desktop window. 92px would have clipped the
+     taller of the two. Desktop's measured total was 65px, so this raises a
+     CEILING, not the rendered height. */
+  .wpconsent-banner { max-height: 104px !important; }
 
   /* ⛔⛔ THE 1.19.186 CORRECTION — READ THIS BEFORE TOUCHING THE THREE RULES BELOW.
 
@@ -299,8 +304,15 @@ function bhp_consent_banner_compact_css() {
 
    ! SCOPE: max-width: 600px only. It cannot reach the >= 782px desktop block
      above, and it cannot reach the 601-781px range; both keep the two-line
-     112px treatment unchanged. */
-@media (max-width: 600px) {
+     112px treatment unchanged.
+
+   @@@@ 1.19.266 AMENDMENT — READ THIS TOGETHER WITH THE BLOCK ABOVE.
+     The rule below is now gated on `(max-height: 699px)` as well as width.
+     Its arithmetic is UNCHANGED and still governs the short phone it was
+     measured on; it simply no longer reaches the tall phone it was never
+     measured on. The readable treatment that takes over above 700px is at
+     the end of this stylesheet, with its own measurements. */
+@media (max-width: 600px) and (max-height: 699px) {
   .wpconsent-banner {
     display: flex !important;
     flex-direction: row !important;
@@ -372,6 +384,226 @@ function bhp_consent_banner_compact_css() {
     top: 50% !important;
     right: 5px !important;
     transform: translateY(-50%) !important;
+  }
+}
+
+/* @@@@@@ 1.19.266 (2026-08-19, `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS`) —
+       THE READABLE BAR. Audit §8a item 8; rubric rows 2, 6 and 7.
+
+   ⛔ STILL POSITION, SIZE AND COLOUR ONLY. No button is added, removed,
+      renamed, reordered or re-bound. #wpconsent-accept-all,
+      #wpconsent-cancel-all and #wpconsent-preferences-all keep the plugin's
+      own labels, order and handlers, and `class-bhp-wpconsent-bridge.php` is
+      not involved. Nothing here decides WHEN consent fires or WHAT is
+      consented to. If a future change here would alter any of that, it is
+      not a styling change and it is not this file's to make.
+
+   THE TWO DEFECTS, MEASURED by Pippin on staging 1.19.264 at an asserted
+   innerWidth of 390 with cookies cleared, on 83 of 83 pages:
+     - the message renders as "I use cookies to keep t…" — one line, 10.5px,
+       ellipsised, i.e. a consent notice nobody can read;
+     - the three controls are the only BLUE and the only SQUARE controls on
+       the site (the plugin's own default), 34-36px tall against a 44px
+       minimum, in the bottom bar of every page.
+
+   ⛔ WHY THIS DID NOT SIMPLY REPLACE THE 36px BAR. The 1.19.249 block above
+      derives a HARD CEILING of 39.9px from two measured numbers at
+      390 x 664: the banner is bottom-anchored, so its top edge is
+      (viewportHeight - height), and the homepage hero CTA's centre sits at
+      y=624.1. Any bar >= 39.9px tall makes `document.elementFromPoint` at
+      that point return the banner instead of the CTA — the consent bar eats
+      the tap on the primary call to action. That arithmetic is still true and
+      is NOT overridden here. Its own closing note says the way out is that
+      "THE CTA MUST MOVE UP", and that is a homepage decision, not this
+      file's — so it is still not taken.
+
+      What that block never had was the OTHER measurement: the same CTA on a
+      390 x 844 phone (the audit's viewport, and the fold every Direction 1
+      step was measured against) ends at y~657, leaving 187px of clear space
+      below it. A 105px bar there covers nothing.
+
+      So the treatment is chosen by viewport HEIGHT, which is the variable the
+      constraint actually depends on:
+
+          <= 699px tall   the 1.19.249 compact 36px bar, unchanged, because a
+                          readable bar and a tappable hero CTA cannot both
+                          exist in that space and the CTA wins;
+          >= 700px tall   this readable bar, ~105px, which clears the CTA by
+                          ~80px and is re-measured at deploy.
+
+      ⚠ STATED PLAINLY RATHER THAN QUIETLY MISSED: on a phone under 700px
+        tall the message is STILL clamped to one line and the buttons are
+        STILL 36px. Item 8's ">=44px, message readable" is met on tall
+        phones, on tablets and on desktop, and is NOT met on short phones.
+        The blocker is geometric, it is recorded above, and closing it needs
+        the homepage hero decision that block already routed to Andrew.
+
+   THE BUTTONS: EQUAL, DELIBERATELY. All three get identical geometry (44px
+   min-height, identical padding, identical font size) and identical visual
+   weight — ivory fill, navy text, one forest hairline. NOT a primary/
+   secondary pair. Reject being exactly as easy to reach and as visually
+   loud as Accept is a compliance property, and the safest possible change to
+   a consent surface is one that adds no emphasis anywhere. Navy on ivory
+   measures 17.7:1; the forest border on ivory measures 11.3:1, well past the
+   3:1 that WCAG 1.4.11 asks of a UI boundary. The plugin's blue is replaced,
+   not re-weighted.
+
+   ⚠ THE flex: 0 0 auto + width: auto !important PAIRING IS PRESERVED on every
+     button rule below. `flex: 0 0 auto` alone restores flex-basis: auto and
+     hands sizing back to the plugin's own `width: 100%`, which is the exact
+     mechanism that put two of three DESKTOP buttons off screen in 1.19.186.
+     `tests/test-consent-banner-desktop-layout.php` §2.3 scans EVERY button
+     rule in this stylesheet for that pairing, including these.
+
+   ⚠ CUSTOM PROPERTIES DO CROSS THE SHADOW BOUNDARY. `--color-*` are
+     inherited properties declared on `:root`, and `#wpconsent-container` is a
+     light-DOM child of <body>, so they inherit into its shadow tree. Literal
+     fallbacks are given anyway so that a future token rename degrades to the
+     right colour instead of to `initial`. */
+
+/* ---- shared: geometry and palette for every viewport ---------------- */
+.wpconsent-banner {
+  background: var(--color-ivory, #fffaf0) !important;
+  color: var(--color-navy, #071522) !important;
+}
+.wpconsent-banner-message,
+.wpconsent-banner-message p {
+  color: var(--color-navy, #071522) !important;
+}
+.wpconsent-banner-message a {
+  color: var(--color-forest, #173f2f) !important;
+  text-underline-offset: 2px;
+}
+.wpconsent-banner-footer .wpconsent-banner-button {
+  border-radius: 8px !important;          /* was the plugin's square default */
+  border: 1px solid var(--color-forest, #173f2f) !important;
+  background: var(--color-ivory, #fffaf0) !important;
+  background-image: none !important;
+  color: var(--color-navy, #071522) !important;
+  font-family: var(--font-ui, Archivo, Arial, sans-serif) !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+}
+.wpconsent-banner-footer .wpconsent-banner-button:hover,
+.wpconsent-banner-footer .wpconsent-banner-button:focus-visible {
+  background: var(--color-parchment, #f1e7d2) !important;
+  color: var(--color-navy, #071522) !important;
+}
+.wpconsent-banner-footer .wpconsent-banner-button:focus-visible {
+  outline: 2px solid var(--color-forest, #173f2f) !important;
+  outline-offset: 2px !important;
+}
+.wpconsent-banner-close {
+  color: var(--color-navy, #071522) !important;
+}
+
+/* ---- tall phones: two rows, wrapped message, 44px controls ---------- */
+@media (max-width: 600px) and (min-height: 700px) {
+  .wpconsent-banner {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    height: auto !important;
+    /* 18 padding + ~35 message (2 lines at 13px/1.35) + 8 gap + 44 buttons
+       = ~105px. The cap is 132px so a three-line message on a narrow phone
+       grows rather than clips, and 132 still clears the hero CTA's 187px of
+       space at 390 x 844 with 55px to spare. */
+    max-height: 132px !important;
+    min-height: 0 !important;
+    padding: 10px 12px 8px !important;
+    overflow: visible !important;
+  }
+  .wpconsent-banner-body {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+  }
+  /* The one-line ellipsis from the 1.19.249 block is undone explicitly
+     rather than fought with, and replaced by a two-line box that WRAPS. */
+  .wpconsent-banner-message {
+    display: block !important;
+    -webkit-line-clamp: none !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .wpconsent-banner-message p {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    margin: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
+    overflow: hidden !important;
+  }
+  .wpconsent-banner-footer {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    height: auto !important;
+  }
+  .wpconsent-banner-footer .wpconsent-banner-button {
+    /* Three equal columns. `flex: 1 1 0` sets flex-basis 0, which overrides
+       the plugin's `width: 100%` on the main axis — this is the mobile half
+       of the 1.19.186 fix and is the reason `width: auto` is not needed
+       here (see the desktop block, where `flex: 0 0 auto` IS used and
+       `width: auto !important` therefore IS required beside it). */
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    font-size: 11.5px !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+  .wpconsent-powered-by { display: none !important; }
+  .wpconsent-banner-close {
+    top: 8px !important;
+    right: 8px !important;
+    transform: none !important;
+  }
+}
+
+/* ---- 601px and up: the same 44px controls and readable message ------
+   ⚠ DELIBERATELY SPLIT IN TWO. The 601-781px band gets its own height cap;
+     the >=782px block earlier in this file keeps ownership of the desktop
+     cap, because `tests/test-consent-banner-desktop-layout.php` §6.10 exists
+     to prove the desktop block still caps its own height and a blanket
+     `min-width: 601px` rule declared LATER would silently win that cascade
+     and make the assertion meaningless while still passing it. */
+@media (min-width: 601px) and (max-width: 781px) {
+  .wpconsent-banner {
+    max-height: 120px !important;
+    padding: 10px 14px !important;
+  }
+}
+@media (min-width: 601px) {
+  .wpconsent-banner-message,
+  .wpconsent-banner-message p {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+  .wpconsent-banner-footer .wpconsent-banner-button {
+    /* 34px -> 44px. Desktop was never a HEIGHT defect (measured 65px total
+       against a full-height viewport), so there is no fold to protect here
+       and the WCAG 2.5.5 / Apple HIG / Material floor simply applies. */
+    height: 44px !important;
+    min-height: 44px !important;
+    font-size: 13px !important;
   }
 }
 CSS;

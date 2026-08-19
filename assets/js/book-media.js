@@ -403,11 +403,43 @@
 		// stage while a different item is the committed one.
 		var lightboxIndex = 0;
 
-		function openLightbox(src, alt) {
+		/*
+		 * ⭐ 1.19.266 (CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS, audit §8a item 9)
+		 *    — `openLightbox` now takes the source image's intrinsic size and
+		 *    stamps it on the lightbox <img> together with the src.
+		 *
+		 * WHY. The lightbox <img> is rendered by `look-inside.php` with NO src
+		 * and NO dimensions, on 14 pages. The audit counted it among the 47
+		 * images missing width/height. Two honest observations, both measured:
+		 *
+		 *   1. At rest it contributes ZERO CLS. It is inside a `hidden` panel
+		 *      and the probe read it as 0x0 / displayed 0x0. Adding invented
+		 *      width/height to the markup would have satisfied a counter
+		 *      without improving a single page.
+		 *   2. The shift that CAN happen is at OPEN, when a src arrives on an
+		 *      element with no aspect ratio and the panel reflows around the
+		 *      decoded image. That is the real defect, and this is where it
+		 *      lives — so it is fixed here rather than papered over in markup.
+		 *
+		 * The numbers come from the thumbnail that was clicked
+		 * (`naturalWidth`/`naturalHeight`, or its own width/height attributes
+		 * if it has not decoded yet), so they are the real ratio of the real
+		 * asset. If neither is available the attributes are REMOVED rather than
+		 * guessed — a wrong ratio reserves the wrong box, which is worse than
+		 * reserving none.
+		 */
+		function openLightbox(src, alt, natW, natH) {
 			if (!lightbox || !lightboxImg) {
 				return;
 			}
 			lastFocus = document.activeElement;
+			if (natW && natH) {
+				lightboxImg.setAttribute('width', natW);
+				lightboxImg.setAttribute('height', natH);
+			} else {
+				lightboxImg.removeAttribute('width');
+				lightboxImg.removeAttribute('height');
+			}
 			lightboxImg.src = src;
 			lightboxImg.alt = alt || '';
 			lightbox.removeAttribute('hidden');
@@ -438,6 +470,9 @@
 			// because an empty src is a broken image and can trigger a request
 			// to the page URL itself.
 			lightboxImg.removeAttribute('src');
+			// 1.19.266: the reserved box goes with the src it was reserved for.
+			lightboxImg.removeAttribute('width');
+			lightboxImg.removeAttribute('height');
 			lightboxImg.alt = '';
 			if (lastFocus && lastFocus.focus) {
 				lastFocus.focus();
@@ -449,7 +484,23 @@
 				var slide = btn.closest('[data-bhp-slide]');
 				var index = slides.indexOf(slide);
 				lightboxIndex = index < 0 ? shown : index;
-				openLightbox(btn.getAttribute('data-bhp-full'), btn.getAttribute('data-bhp-alt'));
+				/*
+				 * 1.19.266: the ratio comes from the thumbnail this button sits
+				 * on. `naturalWidth` is the decoded truth and is preferred; the
+				 * width/height ATTRIBUTES are the fallback for an image that has
+				 * not decoded yet. Both may be absent, in which case
+				 * `openLightbox` reserves nothing rather than reserving wrong.
+				 *
+				 * ⚠ The full-size asset behind `data-bhp-full` and the thumbnail
+				 *   are the same photograph at different scales, so the RATIO is
+				 *   the same even though the pixel counts are not — and a ratio
+				 *   is the only thing width/height contribute here, because CSS
+				 *   sizes this element.
+				 */
+				var thumb = slide ? slide.querySelector('img') : null;
+				var natW = thumb ? (thumb.naturalWidth || parseInt(thumb.getAttribute('width'), 10) || 0) : 0;
+				var natH = thumb ? (thumb.naturalHeight || parseInt(thumb.getAttribute('height'), 10) || 0) : 0;
+				openLightbox(btn.getAttribute('data-bhp-full'), btn.getAttribute('data-bhp-alt'), natW, natH);
 				trackItem('look_inside_lightbox_open', lightboxIndex, { interaction: 'click' });
 			});
 		});

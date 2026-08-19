@@ -504,7 +504,7 @@ if (function_exists('bhp_book_available_formats')) {
              magnet -- its cover art reads "The Community Reading Kit", a clean
              match to this page's public name, so no naming caveat is needed
              here (contrast the Gift Buyer page's cover, which does need one). */ ?>
-          <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/community-reading-kit-cover.webp'); ?>" alt="<?php esc_attr_e('Front cover of the free Community Reading Kit', 'brave-hearts'); ?>" loading="lazy" decoding="async">
+          <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/community-reading-kit-cover.webp'); ?>" alt="<?php esc_attr_e('Front cover of the free Community Reading Kit', 'brave-hearts'); ?>" width="1275" height="1650" loading="lazy" decoding="async">
           <p class="tag"><?php esc_html_e('Free · Community Reading Kit', 'brave-hearts'); ?></p>
           <p class="sub"><?php esc_html_e('Printable PDF guide', 'brave-hearts'); ?></p>
         </div>

@@ -100,7 +100,7 @@ $book_values = apply_filters('bhp_about_book_values', [
             'alt'   => __('Andrew Signore, founder of Brave Hearts Publishing', 'brave-hearts'),
         ]); ?>
       <?php else: ?>
-        <img class="about-founder__image" src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/founder-and-charlotte.webp'); ?>" alt="<?php esc_attr_e('Andrew Signore with Charlotte and a Brave Hearts book', 'brave-hearts'); ?>" loading="lazy" decoding="async">
+        <img class="about-founder__image" src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/founder-and-charlotte.webp'); ?>" alt="<?php esc_attr_e('Andrew Signore with Charlotte and a Brave Hearts book', 'brave-hearts'); ?>" width="1400" height="1867" loading="lazy" decoding="async">
       <?php endif; ?>
     </figure>
     <div class="about-founder__content flow">

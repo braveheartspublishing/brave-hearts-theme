@@ -761,7 +761,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
   <div class="parent-landing__inner parent-landing__inner--narrow">
     <div class="parent-landing-author">
       <div class="parent-landing-media parent-landing-media--tall parent-landing-author__photo">
-        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/founder-and-charlotte.webp'); ?>" alt="<?php esc_attr_e('Andrew, author of Adventures of Charlotte and Henry, with Charlotte', 'brave-hearts'); ?>" loading="lazy" decoding="async">
+        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/founder-and-charlotte.webp'); ?>" alt="<?php esc_attr_e('Andrew, author of Adventures of Charlotte and Henry, with Charlotte', 'brave-hearts'); ?>" width="1400" height="1867" loading="lazy" decoding="async">
       </div>
       <div>
         <span class="parent-landing-eyebrow"><?php esc_html_e('Why these books exist', 'brave-hearts'); ?></span>

@@ -522,7 +522,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
              name. Andrew's explicit direction: use this cover as-is (no redesign),
              keep all page copy/CTAs/Mailchimp as "Meaningful Gift Guide", and alt
              text describes the actual image rather than the marketing name. */ ?>
-          <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/gift-guide-cover.webp'); ?>" alt="<?php esc_attr_e('Front cover of the Meaningful Gift Guide (free gift guide)', 'brave-hearts'); ?>" loading="lazy" decoding="async">
+          <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/gift-guide-cover.webp'); ?>" alt="<?php esc_attr_e('Front cover of the Meaningful Gift Guide (free gift guide)', 'brave-hearts'); ?>" width="1275" height="1650" loading="lazy" decoding="async">
           <p class="tag"><?php esc_html_e('Free · Meaningful Gift Guide', 'brave-hearts'); ?></p>
           <p class="sub"><?php esc_html_e('Printable PDF guide', 'brave-hearts'); ?></p>
         </div>

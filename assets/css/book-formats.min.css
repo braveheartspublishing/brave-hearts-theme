@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: d90df118b6f9b71508414230d2730da8
+    source-md5: 90a31e37e8358ea800df62841230ad59
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -70,7 +70,7 @@
 	text-align: center;
 	background: #fff;
 	border: 2px solid var(--bhp-fmt-border);
-	border-radius: 10px;
+	border-radius: 8px;   
 	cursor: pointer;
 	transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -135,7 +135,7 @@
 	
 	color: #ffffff;
 	background: var(--bhp-fmt-gold);
-	border-radius: 0 0 6px 6px;
+	border-radius: 0 0 8px 8px;   
 	white-space: nowrap;
 }
 
@@ -192,7 +192,8 @@
 
 .bhp-formats__note {
 	margin: 9px 0 0;
-	font-size: 0.8rem;
+	
+	font-size: var(--trust-min, 0.875rem);
 	line-height: 1.45;
 	opacity: 0.8;
 }
@@ -207,7 +208,7 @@
 	text-align: center;
 	background: var(--bhp-fmt-cream);
 	border: 2px solid var(--bhp-fmt-gold);
-	border-radius: 12px;
+	border-radius: 8px;   
 }
 
 .bhp-shop-collection-card__badge {
@@ -413,9 +414,11 @@
 
 .bhp-product-guarantee .bhp-landing-guarantee {
 	font-family: var(--font-ui, inherit);
-	font-size: 0.74rem;
+	
+	font-size: var(--trust-min, 0.875rem);
 	line-height: 1.45;
-	color: #7A6E60;
+	
+	color: #706456;
 	margin: 0.5rem 0 0;
 	text-align: center;
 	text-wrap: pretty;
@@ -428,7 +431,7 @@
 }
 
 .bhp-product-guarantee .bhp-landing-guarantee__sep {
-	color: #7A6E60;
+	color: #706456;   
 }
 
 .bhp-product-guarantee .bhp-landing-guarantee__link {

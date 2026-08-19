@@ -499,7 +499,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
       </div>
       <div class="audience-landing-lead__art">
         <div>
-          <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/educator-toolkit-cover.webp'); ?>" alt="<?php esc_attr_e('Adventure Learning Toolkit cover', 'brave-hearts'); ?>" loading="lazy" decoding="async">
+          <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/educator-toolkit-cover.webp'); ?>" alt="<?php esc_attr_e('Adventure Learning Toolkit cover', 'brave-hearts'); ?>" width="1275" height="1650" loading="lazy" decoding="async">
           <p class="tag"><?php esc_html_e('Free · Adventure Learning Toolkit', 'brave-hearts'); ?></p>
           <p class="sub"><?php esc_html_e('8 pages · printable PDF', 'brave-hearts'); ?></p>
         </div>
@@ -515,7 +515,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
 <section class="audience-landing__section audience-landing__section--muted">
   <div class="audience-landing__inner audience-landing-split audience-landing-split--media-lead">
     <div class="audience-landing-media audience-landing-media--tall">
-      <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/educator-toolkit-cover.webp'); ?>" alt="<?php esc_attr_e('Adventure Learning Toolkit cover', 'brave-hearts'); ?>" loading="lazy" decoding="async">
+      <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/educator-toolkit-cover.webp'); ?>" alt="<?php esc_attr_e('Adventure Learning Toolkit cover', 'brave-hearts'); ?>" width="1275" height="1650" loading="lazy" decoding="async">
     </div>
     <div>
       <span class="audience-landing-eyebrow"><?php esc_html_e('What’s inside', 'brave-hearts'); ?></span>

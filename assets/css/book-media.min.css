@@ -1,5 +1,5 @@
 /*! Built from book-media.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 217bba4ed74b162bb413b642860e27ed
+    source-md5: 3689620111f6c3b85a97cdbeee8d594c
     Comments stripped for transfer size; the source file is canonical. */
 .woocommerce div.product .bhp-look-inside {
 	grid-column: 1 / -1;
@@ -367,7 +367,7 @@ body.bhp-gallery-lightbox-open {
 }
 
 .bhp-media-gallery--hero .bhp-look-inside__note {
-	font-size: 0.82rem;
+	font-size: var(--trust-min, 0.875rem);   
 	margin-top: 0.5rem;
 }
 
@@ -522,8 +522,9 @@ body.bhp-gallery-lightbox-open {
 }
 
 .bhp-media-gallery--collection .bhp-look-inside__note {
-	color: var(--bl-text-light, #7a6e60);
-	font-size: 0.8rem;
+	
+	color: #706456;
+	font-size: var(--trust-min, 0.875rem);
 }
 
 

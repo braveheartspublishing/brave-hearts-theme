@@ -145,7 +145,7 @@
 	.audience-landing-hero__grid { grid-template-columns: 1.35fr 1fr; }
 }
 .audience-landing-hero__badge { margin-bottom: 0; }
-.audience-landing .audience-landing-hero h1 { font-size: clamp(40px, 5.2vw, 66px); line-height: 1.1; letter-spacing: -.01em; margin: 22px 0 0; max-width: 22ch; } /* wider column + smaller top-end clamp = far fewer forced line breaks on real headline lengths. Extra .audience-landing prefix needed: a sitewide body:not(.home) h1 rule (clamp 3.2rem/7vw/6rem) outranks a single-class selector on specificity and was silently winning, rendering headlines even larger than intended -- confirmed the real root cause of the excessive wrapping, not just column width. */
+.audience-landing .audience-landing-hero h1 { font-size: var(--h1-size);  /* 1.19.266: was clamp(40px, 5.2vw, 66px) */ line-height: 1.1; letter-spacing: -.01em; margin: 22px 0 0; max-width: 22ch; } /* wider column + smaller top-end clamp = far fewer forced line breaks on real headline lengths. Extra .audience-landing prefix needed: a sitewide body:not(.home) h1 rule (clamp 3.2rem/7vw/6rem) outranks a single-class selector on specificity and was silently winning, rendering headlines even larger than intended -- confirmed the real root cause of the excessive wrapping, not just column width. */
 .audience-landing-hero p.audience-landing__lead { font-size: clamp(18px, 1.7vw, 21px); max-width: 36ch; margin-top: 24px; } /* more air between headline and paragraph */
 .audience-landing-hero__ctas { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 32px; }
 .audience-landing-hero__ctas .btn { font-size: 17px; padding: 19px 30px; } /* ~5% taller */
@@ -455,7 +455,7 @@
 .audience-landing-pricecard__foot .bhp-collection-cta { display: block; width: 100%; }
 .audience-landing-final__ctas .bhp-collection-cta,
 .audience-landing-stickybar__ctas .bhp-collection-cta { display: inline-flex; }
-.audience-landing-pricecard__link-row { text-align: center; font-size: 13px; color: #8a8875; margin: 16px 0 0; }
+.audience-landing-pricecard__link-row { text-align: center; font-size: var(--trust-min, 0.875rem); color: #6b6a5c; margin: 16px 0 0; }   /* 1.19.266: was 13px / #8a8875. #8a8875 measured 3.09-3.52:1 on this page's creams; #6b6a5c measures 5.37:1 on #fffdf7, 5.11:1 on #faf7ef, 4.93:1 on #f7f3e9 and 4.72:1 on #f4eede. Trust line: "Secure checkout - Tracking provided". */
 .audience-landing-pricecard__link-row a { color: #6f6d61; text-decoration: underline; }
 .audience-landing-pricecard [data-parent-format-panel][hidden] { display: none; }
 

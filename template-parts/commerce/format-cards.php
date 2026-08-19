@@ -351,9 +351,38 @@ if (null === $bhp_initial_conf) {
      data-bhp-kindle-url="<?php echo esc_url($data['kindle']['url']); ?>"
      data-bhp-collection-url="<?php echo esc_url($data['collection']['url']); ?>">
 
-  <h2 class="bhp-formats__heading" id="<?php echo esc_attr($uid); ?>-label">
+  <?php
+  /*
+   * ⭐ 1.19.266 (CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS, audit §8a item 6) —
+   *    THIS WAS AN <h2> AND IS NOW A <p>. Same class, same id, same words.
+   *
+   * MEASURED on staging 1.19.264 at an asserted innerWidth of 390:
+   * "CHOOSE YOUR FORMAT" renders at 11.52px against an 18px body — a heading
+   * smaller than the text it heads, on all seven product pages.
+   *
+   * The two ways out are to set it at >=18px or to stop it being a heading.
+   * IT IS NOT A HEADING. It is the accessible name of the format
+   * `role="group"` immediately below (`aria-labelledby="<uid>-label"`, line
+   * ~381), and an accessible name does not need to be an <h2> — the id and
+   * the ARIA relationship do all the work and are unchanged.
+   *
+   * ⛔ ENLARGING IT WAS THE WRONG FIX HERE AND THE REASON IS MEASURED. This
+   *    node sits INSIDE the product buy box that Direction 1 step 3 rebuilt
+   *    to bring ADD TO CART above 844px at 390. Taking a label from 11.52px
+   *    to 18px spends ~9px of that fold on a word the four cards below it
+   *    already make self-evident. The H1 on this template is ALREADY growing
+   *    24.8px -> 34px in this same release; spending the fold twice would
+   *    have put the ATC back below the line the last release won.
+   *
+   * ⚠ ON MOBILE THIS NODE IS ALREADY VISUALLY HIDDEN by
+   *   `assets/css/book-formats.css` (the clip/1px pattern) while remaining in
+   *   the accessibility tree. That does not make the defect moot — it renders
+   *   visibly at wider viewports — but it is why the visual delta here is nil.
+   */
+  ?>
+  <p class="bhp-formats__heading" id="<?php echo esc_attr($uid); ?>-label">
     <?php esc_html_e('Choose your format', 'brave-hearts'); ?>
-  </h2>
+  </p>
 
   <?php
   /*

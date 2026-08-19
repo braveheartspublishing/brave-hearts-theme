@@ -15,7 +15,15 @@
 	--bl-ivory: #FFFDF8;
 	--bl-text: #3A342C;
 	--bl-text-muted: #5A5045;
-	--bl-text-light: #7A6E60;
+	/* ⭐ 1.19.266 / bundle 1.8.60 (CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS):
+	   was #7A6E60. Measured on staging 1.19.264 as rendered body text it
+	   reached only 4.34:1 on this page's own --bl-cream (#F6EFE0) and 4.49:1
+	   on the theme's #f8f3e9 -- AA by 0.01 on the wrong side, on the guarantee
+	   sentence and the look-inside caption (audit §2.2 MARGINAL table).
+	   #706456 is the same hue and chroma one step deeper: 5.03:1 on
+	   --bl-cream, 5.21:1 on #f8f3e9, 4.69:1 on #f1e7d2, 5.76:1 on white.
+	   ⛔ No brand hue changes. This token has never been a brand colour. */
+	--bl-text-light: #706456;
 	--bl-mint: #EAF1EC;
 	--bl-border: rgba(30, 67, 49, 0.16);
 	/* F1: Newsreader retired. It was loaded for exactly one page in the
@@ -238,7 +246,7 @@
 
 /* ---------- Testimonial ---------- */
 .bhp-landing-testimonial { max-width: 640px; margin: 2.5rem auto 0; padding-inline: 1rem; text-align: center; }
-.bhp-landing-testimonial__stars { color: var(--bl-gold); font-size: 1.1rem; margin-bottom: 0.75rem; }
+.bhp-landing-testimonial__stars { color: var(--bl-gold-dark); font-size: 1.1rem; margin-bottom: 0.75rem; }   /* ⭐ 1.19.266: was --bl-gold (#D9A45F) on --bl-cream #f6efe0 -- MEASURED 1.95:1 at 17.6px, the worst-contrast proof element on the collection page. --bl-gold-dark is --color-gold-deep, now #805800: 5.54:1 here. */
 .bhp-landing-testimonial blockquote { margin: 0 0 0.75rem; font-family: var(--bl-serif); font-style: italic; font-size: clamp(1.05rem, 2vw, 1.3rem); color: var(--bl-forest); line-height: 1.5; }
 .bhp-landing-testimonial cite { font-style: normal; font-size: 0.8rem; color: var(--bl-text-light); }
 .bhp-landing-testimonial__link { display: block; margin-top: 0.35rem; font-size: 0.76rem; color: var(--bl-text-light); text-decoration: underline; }
@@ -797,7 +805,9 @@
 	align-items: center;
 	gap: .4rem;
 	font-family: var(--bl-sans);
-	font-size: .78rem;
+	/* 1.19.266: was .78rem, rendering 11.2px at 390. Carries "5-Star Reader
+	   Reviews" -- the proof line on the #1 front door. */
+	font-size: var(--trust-min, 0.875rem);
 	font-weight: 800;
 	letter-spacing: .05em;
 	text-transform: uppercase;
@@ -842,7 +852,7 @@
 		font-size: 1.22rem;
 		margin-bottom: .18rem;
 	}
-	.bhp-landing-coldopen__stars { font-size: .7rem; margin-bottom: .22rem; }
+	.bhp-landing-coldopen__stars { font-size: var(--trust-min, 0.875rem); margin-bottom: .22rem; }   /* 1.19.266: was .7rem (11.2px) */
 	.bhp-landing-coldopen__stars--below { margin-bottom: .24rem; }
 	.bhp-landing-coldopen__subhead { font-size: .74rem; margin-bottom: .25rem; }
 	.bhp-landing-coldopen__trust { padding-top: .28rem; }
@@ -1271,7 +1281,10 @@
    ══════════════════════════════════════════════════════════════════ */
 .bhp-landing-guarantee {
 	font-family: var(--bl-sans);
-	font-size: .74rem;
+	/* 1.19.266 (audit §8a item 3 / rubric row 11): was .74rem (11.84px). The
+	   30-day guarantee is the page's risk reversal and was set two-thirds the
+	   size of the body beside it. Copy untouched. */
+	font-size: var(--trust-min, 0.875rem);
 	line-height: 1.45;
 	color: var(--bl-text-light);
 	margin: .5rem 0 0;

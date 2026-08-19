@@ -1,5 +1,5 @@
 /*! Built from audience-landing.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 9e419b7acb9593467a578345d659c815
+    source-md5: 1f4697139a57579b59c9e859f163d456
     Comments stripped for transfer size; the source file is canonical. */
 .audience-landing {
 	--bl-forest: var(--al-forest);
@@ -92,7 +92,7 @@
 	.audience-landing-hero__grid { grid-template-columns: 1.35fr 1fr; }
 }
 .audience-landing-hero__badge { margin-bottom: 0; }
-.audience-landing .audience-landing-hero h1 { font-size: clamp(40px, 5.2vw, 66px); line-height: 1.1; letter-spacing: -.01em; margin: 22px 0 0; max-width: 22ch; } 
+.audience-landing .audience-landing-hero h1 { font-size: var(--h1-size);   line-height: 1.1; letter-spacing: -.01em; margin: 22px 0 0; max-width: 22ch; } 
 .audience-landing-hero p.audience-landing__lead { font-size: clamp(18px, 1.7vw, 21px); max-width: 36ch; margin-top: 24px; } 
 .audience-landing-hero__ctas { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 32px; }
 .audience-landing-hero__ctas .btn { font-size: 17px; padding: 19px 30px; } 
@@ -337,7 +337,7 @@
 .audience-landing-pricecard__foot .bhp-collection-cta { display: block; width: 100%; }
 .audience-landing-final__ctas .bhp-collection-cta,
 .audience-landing-stickybar__ctas .bhp-collection-cta { display: inline-flex; }
-.audience-landing-pricecard__link-row { text-align: center; font-size: 13px; color: #8a8875; margin: 16px 0 0; }
+.audience-landing-pricecard__link-row { text-align: center; font-size: var(--trust-min, 0.875rem); color: #6b6a5c; margin: 16px 0 0; }   
 .audience-landing-pricecard__link-row a { color: #6f6d61; text-decoration: underline; }
 .audience-landing-pricecard [data-parent-format-panel][hidden] { display: none; }
 

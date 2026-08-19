@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.265
+Version: 1.19.266
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -66,7 +66,54 @@ Tags: woocommerce, children, books, education
      family carried to a usable depth — 4.3:1 on that pill — for glyph-sized
      gold that must stay legible. Not a replacement for --color-gold; use that
      on dark surfaces, this one on light. */
-  --color-gold-deep: #9A6A00;
+  /* ⭐⭐ 1.19.266 (2026-08-19, CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS) — THE
+     VALUE CHANGED. #9A6A00 -> #805800. THE COMMENT ABOVE IS PRESERVED VERBATIM
+     AND IS NOW PARTLY HISTORICAL; READ THIS BEFORE TRUSTING ITS NUMBER.
+
+     WHAT WAS WRONG: the note above says "4.3:1 on that pill" and treats that
+     as sufficient. It is not — AA text is 4.5:1, so the token has never
+     actually passed on the surface it was created for, and it fails by more
+     than that on every OTHER cream in this palette. Recomputed this session
+     with the WCAG 2.x relative-luminance formula against the fourteen light
+     grounds the audit measured ACTUALLY RENDERING on staging 1.19.264:
+
+         #9A6A00 on  #ffffff  4.73  PASS      #9A6A00 on  #f7f2e7  4.24  FAIL
+                     #fffdf7  4.65  PASS                  #f6efe0  4.14  FAIL
+                     #fffaf0  4.55  PASS (bare)           #f4eede  4.09  FAIL
+                     #faf7ef  4.42  FAIL                  #eaf1ec  4.12  FAIL
+                     #f8f3e9  4.28  FAIL                  #f2e4cd  3.78  FAIL
+                     #f7f3e9  4.27  FAIL                  #f1e7d2  3.86  FAIL
+                                                          #efdcc1  3.53  FAIL
+
+     i.e. the "accessibility derivative" passed on white and on bare ivory and
+     failed on ELEVEN of the fourteen grounds, including `--color-parchment`
+     (#f1e7d2) and `--expedition-parchment-light` (#f8f3e9), which are the two
+     grounds most of this site is actually painted on. Two of those failures
+     were rendering live and were caught by Pippin's (`commerce-cx`) aesthetics
+     audit §2.2 as `#9a6a00 on #f8f3e9  4.28:1` and `#9a6a00 on #f2e4cd  3.77:1`.
+
+     WHY #805800 AND NOT SOMETHING LIGHTER: it is the shallowest value in this
+     hue family that clears 4.5:1 on the DARKEST cream in circulation
+     (#efdcc1, the "Save $x" pill ground) — measured 4.73:1 there, 5.16:1 on
+     parchment, 5.73:1 on parchment-light, 6.09:1 on ivory, 6.34:1 on white.
+     Same hue (41°) as #9A6A00; only the value moved. #8A5F00 was tried first
+     and rejected: 4.22:1 on #efdcc1, i.e. it would have repeated this defect
+     one shade higher.
+
+     ⛔ THIS IS STILL NOT A BRAND COLOUR AND STILL MUST NOT BE USED ON DARK.
+        On dark grounds it now measures 2.5–3.0:1 and is WORSE than it was.
+        `body:not(.home) ... .home-origin__byline` was the one live rule using
+        it on a dark ground (#050f1a) — already failing at 4.07:1 before this
+        change — and is repointed at `--color-gold` (8.65:1) in the 1.19.266
+        block at the end of this file. If you add a gold mark on a dark
+        surface, use `--color-gold`. That rule has not changed; only the number
+        that enforces it has.
+
+     ⚠ THE CREAM-GROUND PALETTE ITSELF IS NOT DECIDED HERE. `CYCLE165-BOR-203`
+       and `-205` are Andrew's. This changes ONE accessibility derivative so
+       that gold-as-text stops failing AA; it proposes nothing about which
+       creams the site should use. */
+  --color-gold-deep: #805800;
   --color-gold-rgb: 217, 164, 95;
   --color-ivory: #fffaf0;
   --color-parchment: #f1e7d2;
@@ -122,6 +169,76 @@ Tags: woocommerce, children, books, education
   --leading-body: 1.7;
   --tracking-ui: 0.04em;
   --tracking-label: 0.1em;
+
+  /* ============================================================
+     ⭐⭐ 1.19.266 — THE ONE HEADING SCALE
+     `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS`, audit §8a item 4.
+
+     BEFORE (measured by Pippin on staging 1.19.264, `innerWidth`
+     asserted, all 83 pages): the H1 took SIX different values at
+     390 — 51.2px on 68 pages, 24.8px on the 7 product pages,
+     32px on `/`, 30px on the four kit/audience pages, 29.6px on
+     cart/checkout, 23.2px on the kit thank-you. Only 7 of 83 sat
+     inside the rubric's 28–40px band. At 1440 the same six became
+     96 / 72 / 50.4 / 44 / 41.6px. For scale: the loudest
+     children's publisher in Boromir's measured reference set runs
+     68px at 1440; the three sites his KB §6 names as the trusted
+     exemplars run 30px, 40px and no H1 at all.
+
+     AFTER: one clamp, everywhere. 32px floor · 34.0px at 390 ·
+     39.0px at 768 · 42.4px at 1024 · 48.0px at 1440 and above.
+
+     ⚠ THE VALUE IS A TASTE DECISION AND IS DISCLOSED AS ONE.
+       34px at 390 is the middle of the rubric's 28–40 band: it
+       keeps a headline ~1.9x the 18px body (unambiguously the
+       loudest thing on the screen) while fitting a six-word blog
+       title on two lines in a 358px column instead of the four
+       lines 51.2px was taking. 48px at 1440 is inside the 44–52
+       band and sits between Lovevery's 40 and Magic Tree House's
+       68 — an imprint voice, not a toy-store shout. Neither number
+       is derived from evidence about conversion, because no such
+       evidence exists in the corpus; they are derived from the
+       band, the body size and the column width, all of which are
+       measured.
+
+     H2 AND H3 MOVE TOO, AND THAT IS NOT SCOPE CREEP — IT IS
+     FORCED. `body:not(.home) h2` rendered at 36px/64px, i.e. an
+     H2 LARGER THAN THE NEW H1 at both widths. Shipping the H1 fix
+     alone would have inverted the heading hierarchy on 82 of 83
+     pages, which is a worse defect than the one being fixed.
+     The two derived clamps hold H1 > H2 > H3 > body at every
+     width from 320 to 1920:
+
+         390    H1 34.0   H2 27.1   H3 21.6   body 18
+         768    H1 39.0   H2 31.0   H3 23.9   body 18
+         1440   H1 48.0   H2 36.0   H3 27.2   body 18
+
+     ⛔ THE HOMEPAGE'S SECTION-TITLE SCALE IS DELIBERATELY NOT
+        TOUCHED. `.text-section-title` renders at 46.8px on `/`
+        and is part of the founder-approved Homepage Warmth Board
+        build (Direction 1 step 4). That leaves `/` with an H1
+        (34px) smaller than its own section H2s (46.8px) — a real
+        remaining inversion, REPORTED rather than silently fixed,
+        because changing an approved homepage treatment is a board
+        decision and not this pass's to make.
+     ============================================================ */
+  --h1-size: clamp(2rem, 1.8rem + 1.33vw, 3rem);
+  --h2-size: clamp(1.6rem, 1.45rem + 1vw, 2.25rem);
+  --h3-size: clamp(1.3rem, 1.2rem + 0.62vw, 1.7rem);
+  --h1-leading: 1.1;
+
+  /* ⭐ 1.19.266 — THE TRUST-LINE FLOOR. Audit §8a item 3 / rubric row 11.
+     14px, and it is a FLOOR for one named class of copy, not a sitewide
+     minimum. The guarantee, the shipping promise, the five-star line, the
+     Kirkus mark, the founder's own name and the format notes were all set
+     between 9px and 12.8px beside an 18px body — the company's proof
+     typeset as footnotes. Boromir's KB §9 and the rubric both put the
+     floor at 14. What this token does NOT do is raise every small label on
+     the site: the uppercase eyebrows (10.88px, 41 pages) and the tuned
+     one-line breadcrumb are deliberately left alone and are parked in the
+     audit's own §8b-H, because their size is tied to a palette/eyebrow
+     decision that is Andrew's. */
+  --trust-min: 0.875rem;
 
   /* Spacing: 4px base scale */
   --space-1: 0.25rem;
@@ -230,9 +347,14 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   line-height: var(--leading-heading);
 }
-h1 { font-size: clamp(2.25rem, 5vw, 3.75rem); }
-h2 { font-size: var(--text-section); }
-h3 { font-size: clamp(1.25rem, 2.5vw, 1.6rem); }
+/* 1.19.266: the three base heading sizes are now the one scale (see the
+   --h1-size block in :root). Values before this change, preserved so the
+   delta is legible: h1 clamp(2.25rem, 5vw, 3.75rem) · h2 var(--text-section)
+   · h3 clamp(1.25rem, 2.5vw, 1.6rem). `--text-section` itself is NOT
+   repointed — `.text-section-title` and the homepage still use it. */
+h1 { font-size: var(--h1-size); }
+h2 { font-size: var(--h2-size); }
+h3 { font-size: var(--h3-size); }
 p { margin: 0 0 1.25em; }
 
 .text-hero {
@@ -724,7 +846,7 @@ body.admin-bar .site-header { top: 32px; }
   pointer-events: none;
 }
 .hero-section > * { position: relative; }
-.hero-section h1 { margin-bottom: 0.5em; color: var(--color-white); font-size: var(--text-hero); line-height: var(--leading-tight); }
+.hero-section h1 { margin-bottom: 0.5em; color: var(--color-white); font-size: var(--h1-size); line-height: var(--h1-leading); }  /* 1.19.266: was var(--text-hero) = 52px/96px */
 .hero-section p { max-width: var(--container-narrow); margin: 0 auto 2em; color: var(--color-pale); font-size: var(--text-lead); }
 .hero-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-4); }
 
@@ -915,9 +1037,16 @@ article.single-post { margin-inline: auto; }
 .footer-brand .footer-logo { margin-bottom: var(--space-3); color: var(--color-white); font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; }
 .footer-brand p { font-size: var(--text-sm); line-height: 1.6; }
 .footer-proof { margin-top: var(--space-3); color: var(--color-pale); font-size: var(--text-xs) !important; }
-.footer-nav h2,
-.footer-learn h2,
-.footer-contact h2,
+/* ⭐ 1.19.266 (audit §8a item 6): `.footer-col-title` is added beside every
+   `h2` in these four selector lists. `footer.php` now renders these three
+   column labels as <p class="footer-col-title"> instead of <h2>, and the
+   `h2` half of each list is kept so the change is reversible in one file and
+   so a cached page mid-deploy is never unstyled. THE RENDERED RESULT IS
+   BYTE-FOR-BYTE THE SAME PIXELS; only the element name changed. Why it
+   changed is in `footer.php`. */
+.footer-nav h2, .footer-nav .footer-col-title,
+.footer-learn h2, .footer-learn .footer-col-title,
+.footer-contact h2, .footer-contact .footer-col-title,
 .site-footer .widget-title { margin-bottom: var(--space-4); color: var(--color-white); font-family: var(--font-ui); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; }
 .footer-nav ul { margin: 0; padding: 0; list-style: none; }
 .footer-nav li { margin-bottom: var(--space-2); }
@@ -972,9 +1101,9 @@ article.single-post { margin-inline: auto; }
 .woocommerce ul.products li.product h2,
 .woocommerce ul.products li.product .woocommerce-loop-product__title { padding: var(--space-4) var(--space-4) var(--space-1); color: var(--color-navy); font-size: 1rem; }
 .woocommerce ul.products li.product .price { display: block; padding: 0 var(--space-4) var(--space-4); color: var(--color-primary); font-size: 1.1rem; font-weight: 700; }
-.woocommerce ul.products li.product .button { margin: 0 var(--space-4) var(--space-4); padding: 0.625rem 1.25rem; border-radius: var(--radius-sm); background: var(--color-primary) !important; color: var(--color-white) !important; font-size: 0.85rem; }
+.woocommerce ul.products li.product .button { margin: 0 var(--space-4) var(--space-4); padding: 0.625rem 1.25rem; border-radius: var(--radius-md); background: var(--color-primary) !important; color: var(--color-white) !important; font-size: 0.85rem; }  /* 1.19.266: radius was --radius-sm (4px). This is the "SELECT OPTIONS" button on /shop/ and /books/ -- a primary purchase control at a different radius from every other primary on the site. */
 .woocommerce ul.products li.product .button:hover { background: var(--color-primary-dark) !important; }
-.woocommerce div.product .product_title { color: var(--color-navy); font-size: 2rem; }
+.woocommerce div.product .product_title { color: var(--color-navy); font-size: var(--h1-size); }  /* 1.19.266: was 2rem */
 .woocommerce div.product .price { color: var(--color-primary); font-size: 1.5rem; }
 .woocommerce div.product .woocommerce-product-gallery__image img { border-radius: var(--radius-md); }
 .woocommerce-products-header { padding: var(--space-10) 0 var(--space-6); text-align: center; }
@@ -1807,7 +1936,7 @@ body:not(.home) .teacher-resources-cta--compact.section { padding-block: clamp(2
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
 }
-.amazon-review-card__stars { color: var(--color-gold); font-size: var(--text-base); letter-spacing: 0.05em; }
+.amazon-review-card__stars { color: var(--color-gold-deep); font-size: var(--text-base); letter-spacing: 0.05em; }  /* 1.19.266: was --color-gold. Measured 2.23:1 on #ffffff and 2.14:1 on #fffaf0 -- the site's only proof element was the worst-contrast text on the page it appeared on. Now 6.34:1 / 6.09:1. */
 .amazon-review-card__title { margin: 0; color: var(--color-navy); font-family: var(--font-ui); font-size: var(--text-sm); font-weight: 700; }
 .amazon-review-card__quote { margin: 0; }
 .amazon-review-card__quote p { margin: 0; color: var(--color-text); font-family: var(--font-display); font-size: var(--text-base); font-style: italic; line-height: 1.6; }
@@ -1908,7 +2037,7 @@ body:not(.home) .teacher-resources-cta--compact.section { padding-block: clamp(2
 #amazon-customer-reviews .amazon-review-card__title { color: var(--color-gold); }
 #amazon-customer-reviews .amazon-review-card__source,
 #amazon-customer-reviews .amazon-review-card__verified { color: #e7dcc4; }
-#amazon-customer-reviews .amazon-review-card__stars { color: var(--color-gold); font-size: 1.15rem; }
+#amazon-customer-reviews .amazon-review-card__stars { color: var(--color-gold-deep); font-size: 1.15rem; }  /* 1.19.266: was --color-gold on a white card, 2.23:1 */
 /* The "Read on Amazon" links measured 102.5 x 21.8 — under the 44px
    minimum, on four controls, in the same section. Padding only. */
 #amazon-customer-reviews .amazon-review-card__link {
@@ -3812,8 +3941,8 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
 .home .footer-inner { grid-template-columns: minmax(300px, 1.25fr) minmax(190px, .75fr) minmax(270px, 1fr); gap: clamp(3rem, 7vw, 7rem); padding-block: 5.5rem 4rem; }
 .home .footer-logo { font-size: 1.35rem; letter-spacing: .13em; }
 .home .footer-closing { margin-top: 1.75rem; font-size: 1.42rem; line-height: 1.55; }
-.home .footer-nav h2,
-.home .footer-contact h2 { margin-bottom: 1.35rem; font-size: .78rem; letter-spacing: .18em; }
+.home .footer-nav h2, .home .footer-nav .footer-col-title,
+.home .footer-contact h2, .home .footer-contact .footer-col-title { margin-bottom: 1.35rem; font-size: .78rem; letter-spacing: .18em; }
 .home .footer-nav li,
 .home .footer-contact p { margin-bottom: .85rem; }
 .home .footer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding-block: 2rem 2.75rem; text-align: left; }
@@ -3989,6 +4118,11 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
   --expedition-parchment: #f1e7d2;
   --expedition-parchment-light: #f8f3e9;
   --expedition-gold: #D9A45F;
+  /* 1.19.266: the expedition palette's alias for the light-ground gold. It is
+     `--color-gold-deep` and is not a second value — declared here only so that
+     a rule written in `--expedition-*` terms has a same-family token to reach
+     for and does not reintroduce #D9A45F as text on cream (1.81–2.23:1). */
+  --expedition-gold-deep: var(--color-gold-deep);
   --expedition-ivory: #fffaf0;
   --expedition-muted: #6f685b;
   --expedition-border: rgba(111, 83, 38, .22);
@@ -4032,9 +4166,25 @@ body:not(.home) h1,
 body:not(.home) h2,
 body:not(.home) h3,
 body:not(.home) h4 { font-family: var(--font-display); font-weight: 500; letter-spacing: -.015em; }
-body:not(.home) h1 { font-size: clamp(3.2rem, 7vw, 6rem); line-height: .98; }
-body:not(.home) h2 { font-size: clamp(2.25rem, 4.5vw, 4rem); line-height: 1.05; }
-body:not(.home) h3 { font-size: clamp(1.55rem, 2.7vw, 2.25rem); line-height: 1.12; }
+/* ⭐ 1.19.266 — THE 51.2px / 96px H1 LIVED HERE. This one declaration set the
+   H1 on 68 of the 83 pages (every blog post, the blog index, the five hubs,
+   the four legal pages, the review pages, collection, shop, books, about,
+   contact, teachers, guides, quiz, author-visits, my-account) and, by winning
+   on specificity, also overrode four template stylesheets that had asked for
+   something smaller and never got it — see the `.bhp-typ__confirm h1` note
+   further down this file, which is the 1.19.229 instance of exactly that.
+
+   SUPERSEDED VALUES, preserved rather than deleted:
+       h1  clamp(3.2rem,  7vw,   6rem)   line-height .98    -> 51.2px / 96px
+       h2  clamp(2.25rem, 4.5vw, 4rem)   line-height 1.05   -> 36px   / 64px
+       h3  clamp(1.55rem, 2.7vw, 2.25rem) line-height 1.12  -> 24.8px / 36px
+
+   The h1 line-height moves .98 -> 1.1 with the size: .98 was chosen for a
+   51.2px four-line stack where tight leading reads as deliberate; at 34px it
+   reads as cramped and clips the descenders of a Cormorant Garamond 'g'. */
+body:not(.home) h1 { font-size: var(--h1-size); line-height: var(--h1-leading); }
+body:not(.home) h2 { font-size: var(--h2-size); line-height: 1.1; }
+body:not(.home) h3 { font-size: var(--h3-size); line-height: 1.18; }
 body:not(.home) p,
 body:not(.home) li { line-height: 1.68; }
 
@@ -4217,7 +4367,7 @@ body:not(.home) .final-cta .text-lead { color: #f8f3e9; }
 .woocommerce div.product .woocommerce-product-gallery { padding: clamp(1.5rem,4vw,3rem); background: linear-gradient(145deg,#e8dbc1,#fbf5e9); }
 .woocommerce div.product .woocommerce-product-gallery__image img { max-height: 720px; border-radius: 0; object-fit: contain; }
 .woocommerce div.product .summary { align-self: center; }
-.woocommerce div.product .product_title { color: var(--expedition-navy); font-size: clamp(2.8rem,5vw,5rem); font-weight: 500; line-height: .98; }
+.woocommerce div.product .product_title { color: var(--expedition-navy); font-size: var(--h1-size); font-weight: 500; line-height: var(--h1-leading); }  /* 1.19.266: was clamp(2.8rem,5vw,5rem) = 44.8px/72px. The product H1 measured 24.8px at 390 only because product-template.css overrode it inside its own media query; at 1440 this rule was what rendered 72px. */
 .woocommerce div.product p.price,
 .woocommerce div.product span.price { color: var(--expedition-forest); font-family: var(--font-ui); font-size: 1.35rem; }
 .woocommerce div.product form.cart { display: flex; gap: .75rem; flex-wrap: wrap; }
@@ -4272,9 +4422,9 @@ body:not(.home) .site-footer { padding: 84px clamp(24px,4vw,54px) 40px; backgrou
 body:not(.home) .footer-inner { grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: clamp(28px,4vw,48px); max-width: 1220px; margin-bottom: 0; padding-bottom: 56px; border-bottom: 1px solid rgba(217,164,95,.18); }
 body:not(.home) .footer-logo { font-size: 20px; font-weight: 600; letter-spacing: .18em; }
 body:not(.home) .footer-closing { max-width: 320px; margin-top: 24px; color: #f6f0e6; font-family: var(--font-display); font-size: 23px; line-height: 1.4; }
-body:not(.home) .footer-nav h2,
-body:not(.home) .footer-learn h2,
-body:not(.home) .footer-contact h2 { color: var(--expedition-gold); font-size: 10.5px; font-weight: 700; letter-spacing: .24em; opacity: 1; }
+body:not(.home) .footer-nav h2, body:not(.home) .footer-nav .footer-col-title,
+body:not(.home) .footer-learn h2, body:not(.home) .footer-learn .footer-col-title,
+body:not(.home) .footer-contact h2, body:not(.home) .footer-contact .footer-col-title { color: var(--expedition-gold); font-size: 10.5px; font-weight: 700; letter-spacing: .24em; opacity: 1; margin-bottom: var(--space-4); }
 body:not(.home) .footer-nav a,
 body:not(.home) .footer-learn a,
 body:not(.home) .footer-contact a { color: rgba(214,203,180,.85); font-size: 16px; }
@@ -4451,13 +4601,26 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
 .home .home-origin__portrait { min-height: 448px; margin: 15px 0 17px; padding: 7px; border: 1px solid rgba(120,90,40,.4); background: #efe6d2; }
 .home .home-origin__portrait::before { position: absolute; inset: 16px; border: 1px dashed rgba(120,90,40,.34); content: ''; }
 .home .home-origin__portrait em { max-width: 230px; font-size: 17px; line-height: 1.42; }
-.home .home-origin__portrait small { font-size: 9px; letter-spacing: .26em; }
+.home .home-origin__portrait small { font-size: var(--trust-min); letter-spacing: .18em; }  /* 1.19.266: was 9px -- the smallest text measured anywhere on the site, and it is the caption on the only real photograph of the founder. Tracking eased .26em -> .18em so the longer glyph run still holds one line at 390. */
 .home .home-origin__journal > strong { font-family: 'Caveat', cursive; font-size: 30px; font-style: normal; line-height: 1.12; }
 .home .home-origin__journal-meta { margin-top: 9px; font-size: 10px; letter-spacing: .22em; }
 .home .home-origin__content h2 { max-width: 620px; color: #2a2822; font-size: 56px; font-weight: 500; line-height: 1.04; }
 .home .home-origin__content p { max-width: 552px !important; color: #4e4839; font-size: 20px; line-height: 1.68; }
 .home .home-origin__content blockquote { max-width: 560px; margin: 26px 0 0; color: #2c3a4a; font-size: 27px; line-height: 1.34; }
-.home .home-origin__byline { margin-top: 26px; font-size: 11px !important; letter-spacing: .22em; }
+.home .home-origin__byline {
+  margin-top: 26px;
+  /* ⭐ 1.19.266: was `font-size: 11px !important` -- the founder's own name
+     and title, the smallest attribution on the site, at 11px beside 18px
+     body. Audit §2.11. */
+  font-size: var(--trust-min) !important;
+  letter-spacing: .22em;
+  /* ⛔ AND THE COLOUR HAD TO MOVE WITH IT. This line renders
+     `--color-gold-deep` on #050f1a and measured 4.07:1 -- ALREADY FAILING
+     AA before this release, and 1.19.266 deepens that token, which would
+     have taken it to 3.0:1. It is the one rule in the theme that used the
+     light-ground gold on a dark ground. --color-gold measures 8.65:1 here. */
+  color: var(--color-gold) !important;
+}
 .home .home-origin__link { margin-top: 30px; padding-bottom: 7px; font-size: 12px; letter-spacing: .2em; }
 
 /* Adventure and catalog exact geometry. */
@@ -4544,9 +4707,9 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
 .home .footer-logo { font-size: 20px; font-weight: 600; letter-spacing: .18em; }
 .home .footer-closing { max-width: 320px; margin-top: 24px; font-size: 23px; line-height: 1.4; }
 .home .footer-proof { max-width: 320px; margin-top: 20px; }
-.home .footer-nav h2,
-.home .footer-learn h2,
-.home .footer-contact h2 { margin-bottom: 18px; color: #D9A45F; font-size: 10.5px; letter-spacing: .24em; }
+.home .footer-nav h2, .home .footer-nav .footer-col-title,
+.home .footer-learn h2, .home .footer-learn .footer-col-title,
+.home .footer-contact h2, .home .footer-contact .footer-col-title { margin-bottom: 18px; color: #D9A45F; font-size: 10.5px; letter-spacing: .24em; }
 .home .footer-nav ul,
 .home .footer-learn ul { margin: 0; padding: 0; list-style: none; }
 .home .footer-nav li,
@@ -5882,7 +6045,7 @@ body:not(.home) .books-series-overview + .books-complete-collection-banner { pad
 .woocommerce-order-received .interior-hero__coordinate { display: none; }
 .woocommerce-cart .interior-hero h1,
 .woocommerce-checkout .interior-hero h1,
-.woocommerce-order-received .interior-hero h1 { margin-block: 0.15rem 0; font-size: clamp(1.85rem, 5vw, 2.6rem); }
+.woocommerce-order-received .interior-hero h1 { margin-block: 0.15rem 0; font-size: var(--h1-size); }  /* 1.19.266: was clamp(1.85rem,5vw,2.6rem) = 29.6px/41.6px -- in band at 390, BELOW the 44-52 band at 1440 */
 .woocommerce-cart .interior-hero .component-heading__eyebrow,
 .woocommerce-checkout .interior-hero .component-heading__eyebrow,
 .woocommerce-order-received .interior-hero .component-heading__eyebrow { margin-bottom: 0.2rem; }
@@ -6146,8 +6309,16 @@ body.bhp-audience-stickybar-visible #bhp-floating-cart {
 .home .home-hero .hero__title,
 .home #home-hero h1,
 .home .home-hero h1 {
-	font-size: clamp(2rem, 1.3rem + 2.4vw, 3.4rem);
-	line-height: 1.1;
+	/* ⭐ 1.19.266: joins the one scale. SUPERSEDED VALUE, preserved:
+	   clamp(2rem, 1.3rem + 2.4vw, 3.4rem) -> 32px at 390, 50.4px at 1440.
+	   Both were already INSIDE the rubric's bands, so this H1 was not a
+	   defect; it is changed only so that "one scale" means one scale. The
+	   delta at 390 is +2.0px (32 -> 34) and the hero fold is re-measured
+	   after deploy — if the primary CTA leaves the first screen at 390x844
+	   this declaration reverts to the value above and nothing else changes.
+	   line-height stays 1.1, which is what --h1-leading already is. */
+	font-size: var(--h1-size);
+	line-height: var(--h1-leading);
 	max-width: 18ch;
 }
 
@@ -6670,8 +6841,15 @@ body.bhp-audience-stickybar-visible #bhp-floating-cart {
   order: 2;
   margin-top: auto;
   margin-bottom: 0;
-  color: rgba(217, 164, 95, .72);
-  font-size: .7rem;
+  /* ⭐ 1.19.266: was rgba(217, 164, 95, .72) -- composited #a37f50 on the
+     #171f29 card, measured 4.49:1, i.e. AA by 0.01 on the wrong side. The
+     72% was chosen so the stars "stop competing with the quote"; that
+     intent is now carried by the SIZE (still small) rather than by an
+     alpha that eats the contrast. Full gold on this card is 7.43:1.
+     ⛔ NOT --color-gold-deep: this ground is DARK, where the deep gold now
+        measures 2.6:1. Light ground -> gold-deep, dark ground -> gold. */
+  color: var(--color-gold);
+  font-size: var(--trust-min);   /* 1.19.266: was .7rem (11.2px) */
   letter-spacing: .12em;
   line-height: 1;
 }
@@ -6733,7 +6911,11 @@ body.bhp-audience-stickybar-visible #bhp-floating-cart {
   border-radius: 0;
   background: none;
   color: #e4dbc4;
-  font-size: .72rem;
+  /* 1.19.266: was .72rem (11.52px). Carries "Placed in classrooms across
+     Boise", the five-star line and the Kirkus mark -- three of the site's
+     four proof statements. Colour is unchanged and passes (#e4dbc4 on
+     #050f1a measures 14.9:1); only the size was ever the defect here. */
+  font-size: var(--trust-min);
   font-weight: 600;
   letter-spacing: .08em;
   line-height: 1.5;
@@ -6746,7 +6928,10 @@ body.bhp-audience-stickybar-visible #bhp-floating-cart {
 }
 .home-trust-proof__stars {
   color: rgba(217, 164, 95, .85);
-  font-size: .78em;
+  /* 1.19.266: was .78em, which resolved to 8.99px -- the smallest glyphs on
+     the homepage, and they are the proof mark. 1em rides the badge's new
+     14px floor instead of shaving it. */
+  font-size: 1em;
   letter-spacing: .06em;
 }
 @media (max-width: 900px) {
@@ -8582,7 +8767,8 @@ a.header-expedition-cta {
   }
   .parent-landing .parent-landing-hero h1,
   .audience-landing .audience-landing-hero h1 {
-    font-size: clamp(38px, 4.2vw, 54px);
+    /* 1.19.266: was clamp(38px, 4.2vw, 54px). >=861px only. */
+    font-size: var(--h1-size);
     margin-top: 14px;
   }
   .parent-landing-hero p.parent-landing__lead,
@@ -8790,8 +8976,11 @@ body .bhp-typ__offer.section { padding-top: clamp(8px, 1.8vw, 18px); }
    ⛔ NOT ONE DECLARED VALUE IN THIS RULE CHANGED. Only the selector. The
       design intent 1.19.229 recorded is what finally renders. */
 body:not(.home) .bhp-typ__confirm h1 {
-  font-size: clamp(1.45rem, 5.1vw, 2.6rem);
-  line-height: 1.12;
+  /* 1.19.266: was clamp(1.45rem, 5.1vw, 2.6rem) -> 23.2px at 390, below the
+     28-40 band. The selector fight this rule records is now moot -- the rule
+     it had to out-specify (`body:not(.home) h1`) carries the same token. */
+  font-size: var(--h1-size);
+  line-height: var(--h1-leading);
   margin-block: var(--space-1, 4px) 0;
 }
 .bhp-typ__confirm .text-lead {
@@ -9801,7 +9990,10 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   flex: 1 0 100%;
   margin: .25rem 0 0;
   font-family: var(--font-body);
-  font-size: .8rem;
+  /* 1.19.266: was .8rem (12.8px). This is the locked founder line
+     ("I write them, I sign the school copies myself...") -- named in the
+     audit's row-11 trust table and in the brief. Copy UNCHANGED; size only. */
+  font-size: var(--trust-min);
   line-height: 1.4;
   /* Ivory at 78%, not gold. Gold is the flourish colour on this hero and this
      is a sentence to read, which is the same call `__said` already made. */
@@ -9921,7 +10113,7 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   .home #home-hero .home-founder-chip__trust {
     flex: 1 0 100%;
     margin: 5px 0 0;
-    font-size: .72rem;
+    font-size: var(--trust-min);   /* 1.19.266: was .72rem (11.52px) */
     line-height: 1.32;
   }
 }
@@ -10064,7 +10256,7 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
      .8rem/1.4 that PASS5 itself set at every OTHER width, so the phone stops
      being the one place it is smaller than its own design. */
   .home #home-hero .home-founder-chip__trust {
-    font-size: .8rem;
+    font-size: var(--trust-min);   /* 1.19.266: was .8rem (12.8px) */
     line-height: 1.4;
   }
 
@@ -10465,7 +10657,13 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
     padding-block: 5px;
     padding-inline: 11px;
     border: 1px solid var(--color-accent);
-    border-radius: 2px;
+    /* ⭐ 1.19.266 (audit §8a item 5, rubric row 7): was 2px. This control
+       shipped in Direction 1 step 1 and was the ONLY 2px radius on any button
+       on the site -- 238 of the buttons the audit measured are 8px. Boromir's
+       KB §3.3 records it as "two radii, two fills" on one page; two fills
+       (forest primary, gold secondary) is inside the rubric's allowance, two
+       radii is not. --radius-md IS 8px; the literal is not restated. */
+    border-radius: var(--radius-md);
     background: var(--color-accent);
     color: var(--color-navy);
     font-family: var(--font-ui);

@@ -439,7 +439,7 @@ body.bhp-gallery-lightbox-open {
 }
 
 .bhp-media-gallery--hero .bhp-look-inside__note {
-	font-size: 0.82rem;
+	font-size: var(--trust-min, 0.875rem);   /* 1.19.266: was 0.82rem (13.12px) */
 	margin-top: 0.5rem;
 }
 
@@ -719,8 +719,11 @@ body.bhp-gallery-lightbox-open {
 }
 
 .bhp-media-gallery--collection .bhp-look-inside__note {
-	color: var(--bl-text-light, #7a6e60);
-	font-size: 0.8rem;
+	/* 1.19.266: was 0.8rem (12.8px) and #7a6e60 (4.34:1 on the collection's
+	   #f6efe0 ground). "A short preview of the printed edition" is the label on
+	   the only look-inside evidence the site has. */
+	color: #706456;
+	font-size: var(--trust-min, 0.875rem);
 }
 
 /* ---- 9. Shop card "Look inside" affordance -------------------------- */
