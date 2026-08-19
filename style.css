@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.267
+Version: 1.19.268
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -10837,4 +10837,138 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   /* No animation is declared anywhere in this block. The block exists so that
      a future pass adding one has an obvious place to put it, and so that the
      absence is deliberate rather than accidental. */
+}
+
+
+/* ==========================================================================
+   ⭐⭐ 1.19.268 — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION
+   "WHAT FAMILIES ARE SAYING" MOVES UNDER THE BOOTH AND STANDS ON CREAM.
+   --------------------------------------------------------------------------
+   FOUNDER RULING, carrier item 110: move the Amazon reviews section to sit
+   directly under the farmers-market section and give it a CREAM background.
+
+   THE GROUND IS `--color-parchment` (#f1e7d2), the theme's cream token. It is
+   NOT a new hue and nothing here invents one.
+
+   ⛔ THIS IS A GROUND INVERSION, AND THAT IS THE WHOLE DANGER OF IT. Every
+      colour in the two blocks above (`.home #amazon-customer-reviews ...` and
+      the F21 block) was chosen for the NEAR-BLACK #050F1A ground this section
+      used to sit on, and measured there at 15-17:1. Ivory text on cream
+      measures 1.1:1. Moving the section without moving its palette would have
+      made the only genuine customer proof on the homepage invisible — a
+      silent, total failure that still passes every markup test in the suite.
+
+   ⭐ SO THE OLD BLOCKS ARE LEFT EXACTLY AS THEY ARE and this one overrides
+      them, rather than editing them in place. Two reasons, both practical:
+      (1) `#amazon-customer-reviews` also renders on dark grounds elsewhere and
+          those rules are still correct there;
+      (2) reverting this release is then deleting one contiguous block, not
+          reconstructing eleven measured colour decisions from a diff.
+
+   ⭐ EVERY RATIO BELOW IS COMPUTED FROM THE WCAG 2.x FORMULA AGAINST THE HEX
+      ACTUALLY IN THIS SHEET, not estimated. Ground = #f1e7d2 for section-level
+      text; the cards paint their own #FFFFFF, so card text measures better
+      still and the parchment figure is quoted as the conservative one.
+
+        --color-navy       #071522  on #f1e7d2   15.01:1   PASS AA
+        --color-text       #342f28  on #f1e7d2   10.80:1   PASS AA
+        --color-forest     #173f2f  on #f1e7d2    9.56:1   PASS AA
+        --color-text-muted #7A4E2D  on #f1e7d2    5.79:1   PASS AA
+        --color-gold-deep  #805800  on #f1e7d2    5.16:1   PASS AA  (stars, unchanged)
+
+   ⛔ `--color-gold` (#D9A45F) MEASURES 1.81:1 ON THIS GROUND AND IS BANNED
+      HERE. It was the correct choice on the dark ground (~9.7:1) and it is the
+      single colour a future pass is most likely to reintroduce by habit — it
+      is on the card title, the "Read on Amazon" links, their :visited state,
+      their focus outline and the collection CTA link, and every one of those
+      five is repointed below. `tests/test-home-subtraction.php` section 6
+      reads this whole block out of the SHIPPED style.min.css and fails the
+      build if `--color-gold` or `#D9A45F` comes back as a `color:` value
+      anywhere inside it.
+      ⚠️ The 4px gold LEFT BORDER on each card stays: it is a graphical object,
+      not text, and it is decorative rather than the sole carrier of any
+      information.
+
+   ⛔ NO COPY, NO MARKUP AND NO QUOTED WORD IS TOUCHED BY THIS BLOCK. It sets
+      colours, one background, one position context and the plate. The reviews
+      themselves are real customer words and the em-dash and "we" exemptions
+      for quoted humans apply to them exactly as before (standing rule 9.1a).
+   ========================================================================== */
+.home #amazon-customer-reviews.home-reviews--cream {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-parchment);
+}
+.home #amazon-customer-reviews.home-reviews--cream > .container { position: relative; z-index: 1; }
+
+/* --- section-level type ------------------------------------------------- */
+.home #amazon-customer-reviews.home-reviews--cream .component-heading__eyebrow { color: var(--color-text-muted); }   /* 5.79:1, was --color-pale (1.05:1 here) */
+.home #amazon-customer-reviews.home-reviews--cream .text-section-title { color: var(--color-navy); }                  /* 15.01:1, was --color-ivory (1.06:1 here) */
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__book-title { color: var(--color-navy); }  /* 15.01:1 */
+
+/* --- the card gets a real light surface --------------------------------- */
+/* The F21 card was `rgba(255,250,240,0.07)` — a 7% white veil designed to lift
+   a card off near-black. Over cream it composites to ~#f2e8d4, i.e. the ground
+   itself, and the card disappears. It becomes the theme's own `--color-surface`
+   (#FFFFFF), which is what `.amazon-review-card` uses everywhere else on a
+   light ground, so this is a return to the base treatment rather than a new
+   one. `backdrop-filter` goes with it: there is nothing behind the card to
+   blur, and it forces a compositing layer for no visual result. */
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: none;
+}
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__quote p { color: var(--color-text); }         /* 10.80:1 on cream, 13.2:1 on the white card; was #fdf8ee (1.06:1) */
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__title { color: var(--color-navy); }           /* 15.01:1, was --color-gold (1.81:1) */
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__source,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__verified { color: var(--color-text-muted); }  /* 5.79:1, was --color-parchment / #e7dcc4 (~1.0:1) */
+
+/* ⭐ THE STARS ARE DELIBERATELY NOT LISTED. `--color-gold-deep` (#805800) is
+   already what the dark block sets and it measures 5.16:1 on parchment — the
+   1.19.266 pass chose that value precisely because it clears AA on every cream
+   in circulation. Re-declaring it here would only create a second place to
+   forget to update. The size override (1.15rem) is equally still correct. */
+
+/* --- links --------------------------------------------------------------- */
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__product-link a,
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__collection-cta a { color: var(--color-forest); }    /* 9.56:1, was --color-gold (1.81:1) */
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link:visited,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__product-link a:visited,
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__collection-cta a:visited { color: var(--color-forest); }
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link:hover,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__product-link a:hover,
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__collection-cta a:hover,
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__collection-cta a:focus-visible { color: var(--color-jungle); }  /* 12.82:1 — darker on hover, the light-ground direction */
+
+/* The focus indicator goes back to the sitewide `--color-focus` (#7A4E2D):
+   5.79:1 here, comfortably over the 3:1 focus floor. Gold was only ever used
+   here because the sitewide focus colour failed on the DARK ground. */
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link:focus-visible,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__product-link a:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* --- the relocated plate ------------------------------------------------- */
+/* Same asset, same opacity, same geometry family as `.audience-gateway__plate`,
+   which is no longer rendered on this page. It is NOT an alias of that class:
+   the gateway rule stays intact and correct for the gateway, which still exists
+   as a component. Positioned against the section, painted behind `.container`,
+   inert. `background-size: auto 200%` rather than 240% because this section is
+   ~900px tall at 1440 against the gateway's 165px — at 240% the rose would
+   overrun the band entirely instead of reading as an arc. */
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__plate {
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(42%, 280px);
+  background-image: url('assets/img/plate-compass-rose.svg');
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: auto 200%;
+  opacity: 0.085;
+  pointer-events: none;
 }

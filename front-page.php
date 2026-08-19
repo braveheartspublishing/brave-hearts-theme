@@ -1021,7 +1021,33 @@ get_template_part('template-parts/components/complete-collection-feature', null,
                the first two titles and the wording stands. Had either been
                below 5.0 the phrase would have had to change, not just the
                pronoun. Recheck when either rating count moves. */ ?>
-      <?php esc_html_e('Five-star reader reviews on my first two titles', 'brave-hearts'); ?>
+      <?php /* ⭐ 1.19.268 — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. THE SCOPE
+               QUALIFIER IS REMOVED on a founder ruling (carrier item 110). The
+               badge now reads exactly "★★★★★ Five-star reader reviews".
+
+               ⭐ RE-VERIFIED LIVE BEFORE SHIPPING, because dropping a scope
+               qualifier WIDENS a review claim and re-widening one without
+               re-checking it is the never-invent failure class. See the build
+               report for the reading, its instrument and its timestamp.
+
+               ⭐ WHAT THE SHORTER LINE ASSERTS, stated so a future pass does not
+               have to re-reason it: "Five-star reader reviews" asserts that
+               five-star reader reviews EXIST. It does not assert an aggregate,
+               a count, or that every title has them. That is the whole reason
+               the line survives the widening — the registry in
+               `inc/amazon-reviews.php` holds six real five-star reviews across
+               two titles and every one of them is genuine.
+
+               ⛔ STILL NOT CLAIMED, AND MUST NOT BE ADDED: a rating number, a
+                  review count, an average, or any `aggregateRating` / `review`
+                  schema. None is emitted here, before or after this change.
+
+               ⛔ THIS IS THE HOMEPAGE STRING ONLY. The Complete Collection
+                  page's own badge lives in the bundle plugin
+                  (`includes/bundle-landing-page.php`) and was separately
+                  re-voiced under R-12. It is NOT touched by this release and
+                  the two are deliberately no longer identical. */ ?>
+      <?php esc_html_e('Five-star reader reviews', 'brave-hearts'); ?>
     </span>
     <?php
     /*
@@ -1214,40 +1240,107 @@ get_template_part('template-parts/components/home-open-the-book');
   </div>
 </section>
 
+<?php // 8b. Genuine Amazon customer reviews. MOVED here (directly under #where-you-will-find-us) and re-grounded on CREAM by CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. Renders nothing if no book has an approved review (defensive; both featured books currently do). ?>
+<?php $amazon_reviews_home = bhp_homepage_amazon_reviews_section(); ?>
+<?php if (trim($amazon_reviews_home)): ?>
+<section id="amazon-customer-reviews" class="homepage-section section home-reviews--cream" aria-label="<?php esc_attr_e('Amazon customer reviews', 'brave-hearts'); ?>">
+  <?php
+  /*
+   * THE ONE PLATE WATERMARK, RELOCATED — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION.
+   *
+   * 1.19.263 put the single compass-rose plate on #home-audience-gateway,
+   * chosen by measurement as the homepage's only light-ground section with no
+   * other drawn mark. That section is no longer rendered (see the removal note
+   * below #first-reader), so the plate had to either go with it or move.
+   *
+   * It MOVES, and it moves HERE, because this release turns this section into
+   * the homepage's one cream-ground band and it carries no other drawn mark —
+   * the same test #home-audience-gateway passed. #home-open-the-book is still
+   * rejected for the same reason it was rejected in 1.19.263: it already
+   * carries `home-open-book__divider`. ONE MARK PER SCREEN still holds.
+   *
+   * ⛔ Decorative and inert: aria-hidden, no text, pointer-events:none,
+   *    absolutely positioned so it contributes ZERO layout and ZERO CLS, and
+   *    painted BEHIND the content. No new hue — the SVG is stroked in #D9A45F,
+   *    the literal of --expedition-gold, asserted by tests/test-direction1-home.php §3.
+   */
+  ?>
+  <div class="home-reviews__plate" data-bhp-plate="amazon-customer-reviews" aria-hidden="true"></div>
+  <div class="container">
+    <header class="component-heading component-heading--center">
+      <p class="component-heading__eyebrow"><?php esc_html_e('From real readers', 'brave-hearts'); ?></p>
+      <h2 class="text-section-title"><?php esc_html_e('What Families Are Saying', 'brave-hearts'); ?></h2>
+    </header>
+    <div class="amazon-review-showcase--homepage-row">
+      <?php echo $amazon_reviews_home; // phpcs:ignore -- already escaped by the component itself ?>
+    </div>
+    <?php /* ⭐ 2C-2 (2026-08-03) — ONE BUTTON REPLACES TWO LINK CLUSTERS.
+
+             Andrew, final staging walk, verbatim: "Remove the 'shop adventures
+             of Charlotte and henry: The mariana trench / everest' and 'Get all
+             three adventures: The complete collection' from below the two
+             reviews and put a call to action button 'Get the collection Here' -
+             then it goes to the collection page". (Relayed through the Chief of
+             Staff; NOT witnessed first-hand by this agent.)
+
+             The two "Shop <book title> →" links are gone at their source --
+             `bhp_homepage_amazon_reviews_section()` now passes
+             `show_product_link => false`. This paragraph carried the third
+             link, and it is replaced by the single button.
+
+             ⛔ THE DESTINATION IS THE LANDING PAGE, NOT CHECKOUT. Andrew's own
+                routing: "then it goes to the collection page". `/complete-
+                collection/` is the landing page; it is deliberately NOT one of
+                the one-click add-to-cart CTAs built in the supplement wave, and
+                must not be "upgraded" into one without his word.
+
+             ⛔ BUTTON TEXT IS EXACT, INCLUDING THE LOWER-CASE "the" AND THE
+                CAPITAL "H" IN "Here". It is Andrew's string, quoted, not
+                title-cased into house style.
+
+             It uses THE button spec (`.btn .btn-cta-primary`: 8px radius,
+             --btn-font/Archivo, forest fill, 1.5px gold border) -- no new
+             button variant is introduced. The old paragraph's Wave F item 4
+             recolouring note is superseded by that and is preserved in
+             style.css beside the rule it described. */ ?>
+    <p class="home-reviews__collection-cta">
+      <a class="btn btn-cta-primary home-reviews__collection-btn" href="<?php echo esc_url(home_url('/complete-collection/')); ?>"><?php esc_html_e('Get the collection Here', 'brave-hearts'); ?></a>
+    </p>
+  </div>
+</section>
+<?php endif; ?>
+
 <?php
 /*
- * B6 (2026-08-03) — MID-PAGE AUDIENCE BAND, REINSTATED.
+ * ⛔ THE AUDIENCE GATEWAY IS NO LONGER RENDERED — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION
+ *    (theme 1.19.268, 2026-08-19), on a founder ruling carried to this session as
+ *    carrier item 110. The band it rendered was `#home-audience-gateway`, headed
+ *    "What brings you here today?", with four audience links and a quiz prompt.
  *
- * Spec: Business OS `WORKING-DRAFTS\commerce-cx\
- * DRAFT-PHASE1-2026-08-03-START-HERE-ACCESS-SPEC.md` Part B (R8-R15).
+ * ⛔ REMOVED MEANS NOT RENDERED, NOT DELETED.
+ *    `template-parts/components/audience-gateway.php` is untouched and stays in
+ *    the tree, exactly as the 2026-07-31 removal of the same module did. Its CSS
+ *    (style.css `.audience-gateway*`) also stays. Restoring the band is one
+ *    uncommented line, below.
  *
- * `template-parts/components/audience-gateway.php` was removed from this
- * template on 2026-07-31 as COLLATERAL in the quiz-consolidation pass. That
- * pass targeted duplicate `[data-bhp-quiz]` instances on the homepage.
+ * ⚠️ TWO THINGS TRAVELLED WITH IT AND ARE ACCOUNTED FOR RATHER THAN LOST:
+ *    1. THE PLATE. The single compass-rose watermark lived inside this module.
+ *       It is MOVED to `#amazon-customer-reviews`, which this release re-grounds
+ *       on cream and which is now the homepage's one unmarked light section.
+ *       `tests/test-direction1-home.php` §4 is updated to that host.
+ *    2. THE QUIZ IMPRESSION. This band raised its own `quiz_cta_viewed`
+ *       (`bhp_source="homepage_gateway"`). The homepage keeps the footer
+ *       launcher's impression, so the page still has exactly one quiz entry
+ *       point and one impression source — which is what the 2026-07-31
+ *       consolidation was for. `tests/test-homepage-warmth.php` §3.3 is updated.
  *
- * ⭐ THE LOAD-BEARING POINT: this module is NOT a quiz instance. It renders
- *    four `<a>` elements and one link. Reinstating it therefore cannot
- *    reintroduce a duplicate quiz, a duplicate DOM id or a second modal --
- *    which is why this is safe and why the file was never deleted. Its CSS
- *    was never removed either and is live at `style.css:2614-2626` and
- *    `:5047`, so this adds ZERO new CSS.
+ * The B6 (2026-08-03) reinstatement rationale that stood here is preserved in
+ * git history at 88e864c and is NOT restated, because it argued for a placement
+ * this ruling supersedes.
  *
- * PLACEMENT, and why here rather than where the spec's DOM listing shows it.
- * The spec puts it directly after `#home-sales-paths`. F19 has since moved
- * Kirkus into that gap on Andrew's walk-2 instruction ("put it right below
- * or above the complete collection gallery"), and F19 is a PROTECTED pass.
- * So the band goes after Kirkus and immediately before `#explore-world`,
- * which preserves both instructions: Kirkus still sits against the
- * Collection offer, and the band still catches the visitor at the moment
- * they have read the offer, read the proof, and not clicked.
- *
- * Homepage only (R14). Not on the audience landing pages (a visitor already
- * through the door does not need the door), not on `/books/` or
- * `/complete-collection/` (purchase-intent pages), and not on `/teachers/`
- * -- that page runs the separate teacher popup and a third routing surface
- * there would push against the parent/teacher funnel isolation rule.
+ * To restore: uncomment the line below.
  */
-get_template_part('template-parts/components/audience-gateway');
+// get_template_part('template-parts/components/audience-gateway');
 ?>
 
 <section id="explore-world" class="homepage-section home-destinations section" aria-labelledby="explore-world-title">
@@ -1348,80 +1441,46 @@ get_template_part('template-parts/components/audience-gateway');
 // the page. The component file is deliberately NOT deleted; it is simply no
 // longer rendered here, so it remains available and fully reversible.
 //
-// 2. Philosophy: connect the opening sense of wonder to the purpose behind every story.
+// ⚠️ THAT 2026-07-31 REMOVAL WAS LATER REVERSED (B6, 2026-08-03) AND THE BAND
+//    RAN AGAIN UNTIL 1.19.268. The note above is preserved because it is the
+//    original record; the CURRENT state is the removal note above #explore-world.
+//    Its "What brings you here today?" description is the same band both times.
+//
+// 2. Philosophy: connect the opening sense of wonder to the purpose behind every
+//    story. ⛔ SECTION MARKER RETAINED, SECTION NOT RENDERED — see immediately
+//    below. Every other marker in this file is a number in one sequence, and
+//    deleting one silently renumbers the reader's mental model of the page.
 ?>
-<section id="home-philosophy" class="homepage-section home-philosophy section" aria-labelledby="home-philosophy-title">
-  <div class="container home-philosophy__inner">
-    <header class="component-heading component-heading--center home-philosophy__heading">
-      <?php /* 1.19.251 PASS8 -- "Our philosophy" -> "My philosophy", standing
-               rule 9.1, on Andrew's explicit approval of 2026-08-19. The brief
-               offered "The philosophy" as an alternative if "my" read oddly in
-               caps; it does not. The eyebrow renders uppercase, so this sets
-               "MY PHILOSOPHY", and the section that follows is a statement of
-               what HE believes about how children read -- "THE PHILOSOPHY"
-               would be the more detached of the two and would give back the
-               first-person voice this whole pass exists to establish.
-               ⚠️ This is the DEFAULT only. `bhp_get_homepage_field()` still
-               wins if a `philosophy_eyebrow` override is ever set; none is set
-               on staging (`wp option get bhp_homepage_fields` returns "Could
-               not get ... option. Does it exist?" -- verified 2026-08-19). */ ?>
-      <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('philosophy_eyebrow', __('My philosophy', 'brave-hearts'))); ?></p>
-      <h2 id="home-philosophy-title" class="text-section-title"><?php echo esc_html(bhp_get_homepage_field('philosophy_title', __('Nature is the greatest classroom on Earth.', 'brave-hearts'))); ?></h2>
-      <p class="component-heading__intro text-lead"><?php echo esc_html(bhp_get_homepage_field('philosophy_intro', __('A Brave Hearts story is a beginning: adventure awakens curiosity, truth gives it somewhere to go, and character helps a child carry each discovery into the world.', 'brave-hearts'))); ?></p>
-    </header>
-    <ul class="home-philosophy__pillars" aria-label="<?php esc_attr_e('How Brave Hearts stories guide young readers', 'brave-hearts'); ?>">
-      <li>
-        <span class="home-philosophy__sequence" aria-hidden="true">01</span>
-        <span><strong><?php esc_html_e('Adventure', 'brave-hearts'); ?></strong><small><?php esc_html_e('opens the door.', 'brave-hearts'); ?></small></span>
-      </li>
-      <li>
-        <span class="home-philosophy__sequence" aria-hidden="true">02</span>
-        <span><strong><?php esc_html_e('Truth', 'brave-hearts'); ?></strong><small><?php esc_html_e('deepens the wonder.', 'brave-hearts'); ?></small></span>
-      </li>
-      <li>
-        <span class="home-philosophy__sequence" aria-hidden="true">03</span>
-        <span><strong><?php esc_html_e('Character', 'brave-hearts'); ?></strong><small><?php esc_html_e('carries it home.', 'brave-hearts'); ?></small></span>
-      </li>
-    </ul>
-    <p class="home-philosophy__closing"><?php esc_html_e('The last page is not the end.', 'brave-hearts'); ?><br><strong><?php esc_html_e('It is an invitation to look up.', 'brave-hearts'); ?></strong></p>
-  </div>
-</section>
 <?php
-// 6. Learning Hub: educational depth extends curiosity beyond the books.
-$learning_cards = apply_filters('bhp_homepage_learning_cards', [
-    ['title' => __('Animals', 'brave-hearts'), 'text' => __('The wildlife behind every adventure.', 'brave-hearts'), 'icon' => 'paw', 'link' => ['url' => bhp_get_learning_category_url('animals'), 'label' => __('Explore animals', 'brave-hearts')], 'class' => 'feature-card--field-note'],
-    ['title' => __('Science', 'brave-hearts'), 'text' => __('The forces that shape our world.', 'brave-hearts'), 'icon' => 'flask', 'link' => ['url' => bhp_get_learning_category_url('science'), 'label' => __('Explore science', 'brave-hearts')], 'class' => 'feature-card--field-note'],
-    ['title' => __('Geography', 'brave-hearts'), 'text' => __('The real places behind each journey.', 'brave-hearts'), 'icon' => 'globe', 'link' => ['url' => bhp_get_learning_category_url('geography'), 'label' => __('Explore geography', 'brave-hearts')], 'class' => 'feature-card--field-note'],
-    ['title' => __('Conservation', 'brave-hearts'), 'text' => __('How curiosity becomes care.', 'brave-hearts'), 'icon' => 'sprout', 'link' => ['url' => bhp_get_learning_category_url('conservation'), 'label' => __('Explore conservation', 'brave-hearts')], 'class' => 'feature-card--field-note'],
-    ['title' => __('Explorers', 'brave-hearts'), 'text' => __('The people who trek, study, protect.', 'brave-hearts'), 'icon' => 'telescope', 'link' => ['url' => bhp_get_learning_category_url('explorers'), 'label' => __('Meet explorers', 'brave-hearts')], 'class' => 'feature-card--field-note'],
-    ['title' => __('Activities', 'brave-hearts'), 'text' => __('Hands-on discoveries to try.', 'brave-hearts'), 'icon' => 'pencil', 'link' => ['url' => bhp_get_learning_category_url('activities'), 'label' => __('Try an activity', 'brave-hearts')], 'class' => 'feature-card--field-note'],
-], $page_id);
-foreach ($learning_cards as &$learning_card) {
-    $topic_slug = sanitize_title($learning_card['title'] ?? '');
-    $fallback_url = bhp_get_learning_category_url($topic_slug);
-    $learning_link = is_array($learning_card['link'] ?? null) ? $learning_card['link'] : [];
-    $learning_link['url'] = bhp_get_safe_link_url($learning_link['url'] ?? '', $fallback_url);
-    $learning_card['link'] = $learning_link;
-}
-unset($learning_card);
+/*
+ * ⛔ TWO SECTIONS ARE NO LONGER RENDERED — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION
+ *    (theme 1.19.268, 2026-08-19), on the same founder ruling (carrier item 110).
+ *
+ *    A. `#home-philosophy` — "Nature is the greatest classroom on Earth.",
+ *       eyebrow "My philosophy", the 01/02/03 Adventure/Truth/Character pillars
+ *       and the "It is an invitation to look up." closing line.
+ *    B. `#learning-hub` — "Follow Curiosity Into the Real World", the six
+ *       Learning Hub cards and the "Open the Expedition Guides" button.
+ *
+ * ⛔ REMOVED MEANS NOT RENDERED. Not one line of either section's markup, copy,
+ *    ids or classes was edited — both blocks are lifted out whole and live in
+ *    git history at 88e864c. Their CSS (`.home-philosophy*`, `.learning-hub*`)
+ *    stays in style.css untouched, so restoring either is a paste, not a rebuild.
+ *
+ * ⚠️ `$learning_cards` and the `bhp_homepage_learning_cards` filter went with B,
+ *    because nothing else in the theme reads either (verified by grep across
+ *    every .php and .js outside tests\ and docs\). `bhp_get_learning_category_url()`
+ *    itself is untouched and still used by the Learning Hub pages themselves.
+ *
+ * ⛔ WHAT WAS NOT REMOVED, AND WHY IT LOOKS LIKE IT SHOULD HAVE BEEN.
+ *    `#explore-world` ("Choose Your Adventure", the three destination cards and
+ *    the EXPLORE EVERY FORMAT AND EDITION link to /books/) IS STILL RENDERED,
+ *    immediately below this note. Its id reads like "follow curiosity into the
+ *    real world" but its rendered heading is not that string — the section that
+ *    renders that string is `#learning-hub`, removed above as B. Verified on the
+ *    live staging2 1.19.267 document, not from source. See the build report.
+ */
 ?>
-<section id="learning-hub" class="homepage-section learning-hub--ecosystem section section--muted" aria-labelledby="learning-hub-title">
-  <div class="container">
-    <header class="component-heading component-heading--center">
-      <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('learning_eyebrow', __('The Learning Hub', 'brave-hearts'))); ?></p>
-      <h2 id="learning-hub-title" class="text-section-title"><?php echo esc_html(bhp_get_homepage_field('learning_title', __('Follow Curiosity Into the Real World', 'brave-hearts'))); ?></h2>
-      <p class="component-heading__intro text-lead"><?php echo esc_html(bhp_get_homepage_field('learning_intro', __('Field notes, guides, and activities that turn a story into a lifetime of looking closer - at home and in the classroom.', 'brave-hearts'))); ?></p>
-    </header>
-    <div class="grid grid--3 homepage-grid homepage-grid--learning">
-      <?php foreach ($learning_cards as $card): ?>
-        <?php get_template_part('template-parts/components/feature-card', null, $card); ?>
-      <?php endforeach; ?>
-    </div>
-    <div class="component-section-action">
-      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Open the Expedition Guides', 'brave-hearts'); ?></a>
-    </div>
-  </div>
-</section>
 
 <?php // 7. Teachers and Families. ?>
 <section id="teacher-resources" class="homepage-section home-together section" aria-labelledby="home-together-title">
@@ -1464,53 +1523,6 @@ unset($learning_card);
   </div>
 </section>
 
-<?php // 8b. Genuine Amazon customer reviews -- kept several sections away from the Kirkus editorial block above so the two trust signals never visually collide, per Andrew's separation rule. Renders nothing if no book has an approved review (defensive; both featured books currently do). ?>
-<?php $amazon_reviews_home = bhp_homepage_amazon_reviews_section(); ?>
-<?php if (trim($amazon_reviews_home)): ?>
-<section id="amazon-customer-reviews" class="homepage-section section" aria-label="<?php esc_attr_e('Amazon customer reviews', 'brave-hearts'); ?>">
-  <div class="container">
-    <header class="component-heading component-heading--center">
-      <p class="component-heading__eyebrow"><?php esc_html_e('From real readers', 'brave-hearts'); ?></p>
-      <h2 class="text-section-title"><?php esc_html_e('What Families Are Saying', 'brave-hearts'); ?></h2>
-    </header>
-    <div class="amazon-review-showcase--homepage-row">
-      <?php echo $amazon_reviews_home; // phpcs:ignore -- already escaped by the component itself ?>
-    </div>
-    <?php /* ⭐ 2C-2 (2026-08-03) — ONE BUTTON REPLACES TWO LINK CLUSTERS.
-
-             Andrew, final staging walk, verbatim: "Remove the 'shop adventures
-             of Charlotte and henry: The mariana trench / everest' and 'Get all
-             three adventures: The complete collection' from below the two
-             reviews and put a call to action button 'Get the collection Here' -
-             then it goes to the collection page". (Relayed through the Chief of
-             Staff; NOT witnessed first-hand by this agent.)
-
-             The two "Shop <book title> →" links are gone at their source --
-             `bhp_homepage_amazon_reviews_section()` now passes
-             `show_product_link => false`. This paragraph carried the third
-             link, and it is replaced by the single button.
-
-             ⛔ THE DESTINATION IS THE LANDING PAGE, NOT CHECKOUT. Andrew's own
-                routing: "then it goes to the collection page". `/complete-
-                collection/` is the landing page; it is deliberately NOT one of
-                the one-click add-to-cart CTAs built in the supplement wave, and
-                must not be "upgraded" into one without his word.
-
-             ⛔ BUTTON TEXT IS EXACT, INCLUDING THE LOWER-CASE "the" AND THE
-                CAPITAL "H" IN "Here". It is Andrew's string, quoted, not
-                title-cased into house style.
-
-             It uses THE button spec (`.btn .btn-cta-primary`: 8px radius,
-             --btn-font/Archivo, forest fill, 1.5px gold border) -- no new
-             button variant is introduced. The old paragraph's Wave F item 4
-             recolouring note is superseded by that and is preserved in
-             style.css beside the rule it described. */ ?>
-    <p class="home-reviews__collection-cta">
-      <a class="btn btn-cta-primary home-reviews__collection-btn" href="<?php echo esc_url(home_url('/complete-collection/')); ?>"><?php esc_html_e('Get the collection Here', 'brave-hearts'); ?></a>
-    </p>
-  </div>
-</section>
-<?php endif; ?>
 
 <?php
 // 9. Inline homepage quiz REMOVED (2026-07-31, quiz consolidation).

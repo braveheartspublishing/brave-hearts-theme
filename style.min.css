@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: a08e58e1bd411a0736b6653c2de2f512
+    source-md5: bc28285c40ef91672dc0a4f798fc6532
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.267
+Version: 1.19.268
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -7288,4 +7288,67 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 
 @media (prefers-reduced-motion: no-preference) {
   
+}
+
+
+
+.home #amazon-customer-reviews.home-reviews--cream {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-parchment);
+}
+.home #amazon-customer-reviews.home-reviews--cream > .container { position: relative; z-index: 1; }
+
+
+.home #amazon-customer-reviews.home-reviews--cream .component-heading__eyebrow { color: var(--color-text-muted); }   
+.home #amazon-customer-reviews.home-reviews--cream .text-section-title { color: var(--color-navy); }                  
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__book-title { color: var(--color-navy); }  
+
+
+
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: none;
+}
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__quote p { color: var(--color-text); }         
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__title { color: var(--color-navy); }           
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__source,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__verified { color: var(--color-text-muted); }  
+
+
+
+
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__product-link a,
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__collection-cta a { color: var(--color-forest); }    
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link:visited,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__product-link a:visited,
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__collection-cta a:visited { color: var(--color-forest); }
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link:hover,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__product-link a:hover,
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__collection-cta a:hover,
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__collection-cta a:focus-visible { color: var(--color-jungle); }  
+
+
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link:focus-visible,
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-showcase__product-link a:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+
+
+.home #amazon-customer-reviews.home-reviews--cream .home-reviews__plate {
+  position: absolute;
+  z-index: 0;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(42%, 280px);
+  background-image: url('assets/img/plate-compass-rose.svg');
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: auto 200%;
+  opacity: 0.085;
+  pointer-events: none;
 }

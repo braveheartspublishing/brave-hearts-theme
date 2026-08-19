@@ -245,8 +245,37 @@ foreach ( array( 'field-marks.svg', 'plate-compass-rose.svg' ) as $asset ) {
  */
 $p4_mark = strpos( $theme_css, '1.19.263 (2026-08-19) — THE FIELD RULE AND THE PLATE' );
 $p4_pos  = ( false === $p4_mark ) ? false : strrpos( substr( $theme_css, 0, $p4_mark ), '/*' );
-$p4_tail = ( false === $p4_pos ) ? '' : substr( $theme_css, $p4_pos );
+/*
+ * ⛔ THE SLICE IS NOW BOUNDED AT BOTH ENDS — 1.19.268,
+ *    CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. Superseded line, quoted:
+ *
+ *      $p4_tail = ( false === $p4_pos ) ? '' : substr( $theme_css, $p4_pos );
+ *
+ *    That ran to END OF FILE. It was correct on the day it was written, when
+ *    step 4's block was the last thing in the stylesheet, and it was a LATENT
+ *    TRIP-WIRE: the very next release to append a block containing a
+ *    `background-repeat: no-repeat` or a `pointer-events: none` would fail
+ *    §3.7 with a message about STEP 4, pointing every reader at the wrong
+ *    code. 1.19.268 appends exactly such a block (the relocated plate), and
+ *    this is that release finding its own trap.
+ *
+ * ⭐ FIXED BY BOUNDING, NOT BY LOOSENING THE COUNTS. §3.7's "2 and 1" is the
+ *    real constraint on step 4 and it stays 2 and 1. The end of the block is
+ *    the next top-level banner — a `/* ===` opener at the start of a line —
+ *    which is this stylesheet's own consistent section delimiter. Any future
+ *    append is therefore outside the slice automatically, with no marker to
+ *    maintain. This is the same defect class the note above already names in
+ *    `test-homepage-warmth`'s unbounded `$p9_tail`; it is now fixed in both.
+ */
+$p4_raw  = ( false === $p4_pos ) ? '' : substr( $theme_css, $p4_pos );
+$p4_end  = ( '' === $p4_raw ) ? false : strpos( $p4_raw, "\n/* ===", 1 );
+$p4_tail = ( false === $p4_end ) ? $p4_raw : substr( $p4_raw, 0, $p4_end );
 bhp_d1h_assert( '' !== $p4_tail, '§3.5 the step-4 CSS block is present in style.css', $failures );
+bhp_d1h_assert(
+	'' !== $p4_tail && false === strpos( $p4_tail, 'home-reviews--cream' ),
+	'§3.5b the step-4 slice stops at the next top-level banner and does not swallow later releases',
+	$failures
+);
 
 /*
  * Everything below reads the COMMENT-STRIPPED block. This codebase writes
@@ -290,15 +319,49 @@ bhp_d1h_assert(
 	'§4.1 exactly ONE plate on the whole homepage (found ' . substr_count( $home, 'data-bhp-plate=' ) . ')',
 	$failures
 );
+/*
+ * ⛔ AMENDED 1.19.268 — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. The two
+ *    assertions this replaces are quoted verbatim rather than deleted, because
+ *    they record WHY that host was chosen and the reasoning still governs:
+ *
+ *      1 === substr_count( $home, 'data-bhp-plate="home-audience-gateway"' ),
+ *      '§4.2 it is on #home-audience-gateway, the one light-ground section with no other drawn mark',
+ *
+ *      $gw_src = file_get_contents( $theme . '/template-parts/components/audience-gateway.php' );
+ *      false === stripos( $gw_src, '<svg' ),
+ *      '§4.3 that section still carries no other SVG (the measurement that chose it stays true)',
+ *
+ *    `#home-audience-gateway` is no longer rendered on a founder ruling, so the
+ *    plate had to go with it or move. IT MOVED. The new host is
+ *    `#amazon-customer-reviews`, which the same release re-grounds on cream and
+ *    which passes the identical test the gateway passed: a light ground with no
+ *    other drawn mark. §4.4's rejection of `#home-open-the-book` is UNCHANGED
+ *    and still the reason it was not chosen either time.
+ *
+ * ⭐ §4.1 IS UNTOUCHED. "Exactly one plate on the whole homepage" is the
+ *    constraint; only its address changed.
+ */
 bhp_d1h_assert(
-	1 === substr_count( $home, 'data-bhp-plate="home-audience-gateway"' ),
-	'§4.2 it is on #home-audience-gateway, the one light-ground section with no other drawn mark',
+	1 === substr_count( $home, 'data-bhp-plate="amazon-customer-reviews"' ),
+	'§4.2 it is on #amazon-customer-reviews, the one light-ground section with no other drawn mark',
+	$failures
+);
+bhp_d1h_assert(
+	false === strpos( $home, 'data-bhp-plate="home-audience-gateway"' )
+		&& false === strpos( $home, 'id="home-audience-gateway"' ),
+	'§4.2b the previous host and its plate are both gone from the page, not merely renamed',
 	$failures
 );
 
-$gw_src = (string) file_get_contents( $theme . '/template-parts/components/audience-gateway.php' );
+/* The measurement that chose the new host, asserted the same way: the section
+   this plate now sits in must carry no other drawn mark. It is emitted by
+   front-page.php rather than by a component, so the template is what is read. */
+$fp_src_d1 = (string) file_get_contents( $theme . '/front-page.php' );
+$rev_start = strpos( $fp_src_d1, 'id="amazon-customer-reviews"' );
+$rev_end   = false === $rev_start ? false : strpos( $fp_src_d1, '<?php endif; ?>', $rev_start );
+$rev_block = ( false !== $rev_start && false !== $rev_end ) ? substr( $fp_src_d1, $rev_start, $rev_end - $rev_start ) : '';
 bhp_d1h_assert(
-	false === stripos( $gw_src, '<svg' ),
+	'' !== $rev_block && false === stripos( $rev_block, '<svg' ),
 	'§4.3 that section still carries no other SVG (the measurement that chose it stays true)',
 	$failures
 );
@@ -308,8 +371,11 @@ bhp_d1h_assert(
 	'§4.4 #home-open-the-book keeps its divider and did NOT also get a plate (that is why it was rejected)',
 	$failures
 );
+/* 1.19.268: the class travelled with the plate — `home-reviews__plate` on the
+   new host. `.audience-gateway__plate` is deliberately still in style.css and
+   still correct for the component, which remains in the tree unrendered. */
 $plate_block = '';
-if ( preg_match( '/<div class="audience-gateway__plate".*?<\/div>/s', $home, $pm ) ) {
+if ( preg_match( '/<div class="home-reviews__plate".*?<\/div>/s', $home, $pm ) ) {
 	$plate_block = $pm[0];
 }
 bhp_d1h_assert(

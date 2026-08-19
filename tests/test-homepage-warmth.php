@@ -686,14 +686,35 @@ bhp_hw_assert(
  * adds neither and removes neither. The first run of this suite asserted 1
  * and was wrong about the page, not the other way round.
  */
+/*
+ * ⛔ AMENDED 1.19.268 — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. The two
+ *    assertions this replaces are quoted verbatim rather than deleted:
+ *
+ *      2 === substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
+ *      '§3.3 both pre-existing quiz impressions still fire (footer launcher + audience-gateway band)',
+ *
+ *      false !== strpos( $home, 'data-bhp-source="homepage_gateway"' ),
+ *      '§3.3 the audience-gateway band still raises its own quiz impression',
+ *
+ *    They were CORRECT ABOUT THE PAGE until this release. `#home-audience-gateway`
+ *    is no longer rendered on a founder ruling, and the impression it raised goes
+ *    with it. The count therefore drops 2 -> 1 and `homepage_gateway` disappears.
+ *
+ * ⭐ THE ASSERTION IS KEPT, NOT DROPPED, AND IT IS ASSERTED BOTH WAYS. A removed
+ *    section is exactly the situation where a test is quietly weakened to "at
+ *    least one" and stops detecting anything. ONE impression, from the FOOTER
+ *    launcher, and NO `homepage_gateway` source anywhere on the document.
+ */
 bhp_hw_assert(
-	2 === substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
-	'§3.3 both pre-existing quiz impressions still fire (footer launcher + audience-gateway band)',
+	1 === substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
+	'§3.3 exactly ONE quiz impression now fires (the footer launcher; the audience-gateway band is no longer rendered) — found '
+		. substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
 	$failures
 );
 bhp_hw_assert(
-	false !== strpos( $home, 'data-bhp-source="homepage_gateway"' ),
-	'§3.3 the audience-gateway band still raises its own quiz impression',
+	false === strpos( $home, 'data-bhp-source="homepage_gateway"' )
+		&& false === strpos( $home, 'homepage_gateway' ),
+	'§3.3 no `homepage_gateway` analytics source survives anywhere on the homepage',
 	$failures
 );
 
@@ -792,10 +813,29 @@ bhp_hw_assert(
 	$failures
 );
 
-/* 3e. The rest of the page. Every section that existed still exists, exactly once. */
+/* 3e. The rest of the page. Every section that survives still exists, exactly once.
+ *
+ * ⛔ AMENDED 1.19.268 — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. The list this
+ *    replaces is quoted verbatim rather than deleted, because "which sections
+ *    the homepage had" is the single fact this suite exists to pin down:
+ *
+ *      'home-hero', 'home-trust-proof', 'kirkus-credibility-home', 'explore-world',
+ *      'first-reader', 'home-philosophy', 'where-you-will-find-us', 'learning-hub',
+ *      'teacher-resources', 'trust', 'amazon-customer-reviews',
+ *
+ *    `home-philosophy` and `learning-hub` move OUT of this list and INTO the
+ *    must-be-absent list below. Every other id is unchanged and still asserted.
+ *
+ * ⭐ `explore-world` STAYS IN THE PRESENT LIST ON PURPOSE. Its id reads like the
+ *    removed "Follow Curiosity Into the Real World" band, and it is not that
+ *    band — it renders "Choose Your Adventure", the three destination cards and
+ *    the only homepage link to /books/. Verified against the live staging2
+ *    1.19.267 document before this release was written. If a future pass deletes
+ *    it by name-matching, THIS assertion is what fails.
+ */
 $sections = array(
 	'home-hero', 'home-trust-proof', 'kirkus-credibility-home', 'explore-world',
-	'first-reader', 'home-philosophy', 'where-you-will-find-us', 'learning-hub',
+	'first-reader', 'where-you-will-find-us',
 	'teacher-resources', 'trust', 'amazon-customer-reviews',
 );
 foreach ( $sections as $sid ) {
@@ -1556,10 +1596,31 @@ bhp_hw_assert(
    "I agree to make the change from we to I" (2026-08-19). Each is asserted
    BOTH ways — the new string present AND the old string absent — because a
    half-applied rename is the failure that leaves one "we" on the page. */
+/*
+ * ⛔ AMENDED 1.19.268 — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. Superseded
+ *    assertion, quoted rather than deleted:
+ *
+ *      false !== strpos( $home_p8, 'Five-star reader reviews on my first two titles' )
+ *        && false === strpos( $home_p8, 'Five-star reader reviews on our first two titles' ),
+ *      '§1.10k trust strip says "my first two titles"',
+ *
+ *    The founder removed the scope qualifier. The homepage badge is now exactly
+ *    "Five-star reader reviews". BOTH prior wordings are now asserted ABSENT —
+ *    the "our" one because standing rule 9.1 still forbids it, and the "my" one
+ *    because a half-applied edit that leaves the qualifier on one of the two
+ *    render paths is the failure this suite is for.
+ *
+ * ⛔ HOMEPAGE ONLY. `$home_p8` is the rendered HOMEPAGE document. The Complete
+ *    Collection page's own badge lives in the bundle plugin and still reads
+ *    "...on my first two titles" under R-12; `tests/test-collection-house-style.php`
+ *    lines 189-195 assert THAT one and are deliberately NOT touched. The two
+ *    strings are no longer the same and neither suite should be "harmonised".
+ */
 bhp_hw_assert(
-	false !== strpos( $home_p8, 'Five-star reader reviews on my first two titles' )
+	false !== strpos( $home_p8, 'Five-star reader reviews' )
+		&& false === strpos( $home_p8, 'Five-star reader reviews on my first two titles' )
 		&& false === strpos( $home_p8, 'Five-star reader reviews on our first two titles' ),
-	'§1.10k trust strip says "my first two titles"',
+	'§1.10k trust strip reads exactly "Five-star reader reviews" — the scope qualifier is gone in both its wordings',
 	$failures
 );
 bhp_hw_assert(
@@ -1568,10 +1629,24 @@ bhp_hw_assert(
 	'§1.10l booth section says "Some of what I do"',
 	$failures
 );
+/*
+ * ⛔ AMENDED 1.19.268 — CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION. Superseded
+ *    assertion, quoted rather than deleted:
+ *
+ *      false !== stripos( $home_p8, 'My philosophy' )
+ *        && false === stripos( $home_p8, 'Our philosophy' ),
+ *      '§1.10m the philosophy eyebrow says "My philosophy"',
+ *
+ *    `#home-philosophy` is no longer rendered on a founder ruling, so there is
+ *    no eyebrow left to say either word. ⭐ THE "our" HALF IS KEPT AND STILL
+ *    BINDING: standing rule 9.1 forbids that word in customer-facing copy
+ *    whether or not this particular section exists, and if the section is ever
+ *    restored it must come back in the first-person voice PASS8 gave it.
+ */
 bhp_hw_assert(
-	false !== stripos( $home_p8, 'My philosophy' )
-		&& false === stripos( $home_p8, 'Our philosophy' ),
-	'§1.10m the philosophy eyebrow says "My philosophy"',
+	false === stripos( $home_p8, 'Our philosophy' )
+		&& false === stripos( $home_p8, 'My philosophy' ),
+	'§1.10m the philosophy eyebrow is gone with its section — and "Our philosophy" is still forbidden if it ever returns',
 	$failures
 );
 
