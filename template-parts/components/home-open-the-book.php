@@ -105,21 +105,105 @@ if (!function_exists('bhp_book_media_attachment_id')) {
  * ⛔ CAPTIONS ARE "Page 1/2/3" AND NOTHING MORE. Standing rule §9.1: no claim
  *    about what a page does to a child, no outcome language, no "we".
  */
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.245 (2026-08-19) — CYCLE164-LD-HOMEPAGE-WARMTH-PASS3.
+ *    SLOT 1 SHOWS THE WHOLE PAGE. SLOTS 2 AND 3 KEEP THE SQUARE CROP.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew, on his phone, on 1.19.244 (⛔ RELAYED, not witnessed first-hand),
+ * verbatim:
+ *
+ *   "The first page of MT is zoomed in on the chapter icon- this screen shot
+ *    to have the icon and all the words on the page. I like the page 2 and 3
+ *    cropped images."
+ *
+ * ⭐ HE IS DESCRIBING A REAL CROP, AND IT WAS CONFIRMED BY OPENING BOTH FILES
+ *    RATHER THAN INFERRED FROM THE FILENAMES. The 1200x1200 square crop of
+ *    page 1 ends mid-stanza: it holds the open-book chapter icon, "Chapter 1
+ *    / The Book", and only the first three lines of body text. The remaining
+ *    five printed lines are outside the crop. The full-page master
+ *    (`mt-first-pages-01-chapter1-opening-1600.webp`, 1600x2133) holds the
+ *    icon AND every printed line, which is exactly what he asked for.
+ *
+ * ⭐ WHY A PER-SLOT ASPECT RATHER THAN A SECTION-WIDE ONE: his sentence has
+ *    two halves and they point in OPPOSITE directions. Page 1 must stop
+ *    being cropped; pages 2 and 3 must STAY cropped, because he said he
+ *    likes them. So the section now mixes one 3:4 page with two 1:1 crops,
+ *    and `aspect` travels per row instead of being a rule of the section.
+ *
+ * ⛔ THE SQUARE ATTACHMENTS ARE NOT EDITED, REPLACED OR DELETED. 3382 (the
+ *    square page 1) still exists untouched; slot 1 simply resolves a
+ *    DIFFERENT attachment. If Andrew wants the square page 1 back it is a
+ *    one-line slug change.
+ *
+ * ⭐ THE NEW ATTACHMENT: staging 3385, slug `mariana-trench-page-1-full`,
+ *    imported 2026-08-19 from the same Legolas-processed master that produced
+ *    the square crop (`CYCLE164-DES-FIRST-PAGE-PHOTOS`; colour conversion,
+ *    deskew, exposure lift, unsharp mask, metadata stripped — no AI, no
+ *    retouching of printed content, no hand removal). Source md5 verified
+ *    identical on both sides of the copy: 27df0ca5a8fc488c01c79616ee337b2d.
+ *    STAGING MEDIA LIBRARY ONLY. ⛔ Nothing was uploaded to production.
+ *
+ * ⛔ THE ALT TEXT IS NOT WRITTEN HERE — same rule as before, it lives on the
+ *    media record. 3385's alt was copied VERBATIM from 3382 so the two
+ *    photographs of the same page are described identically wherever either
+ *    is used.
+ *
+ * ⛔ NO LIGHTBOX WAS ADDED, AND THE OMISSION IS DELIBERATE RATHER THAN
+ *    FORGOTTEN. The brief allowed a tap-to-enlarge lightbox "if the theme
+ *    already has one". It does — but the only one is the Look Inside gallery
+ *    (`inc/collection-gallery.php` + `assets/js/book-media.js`), and that file
+ *    ENFORCES one interactive gallery per page. The homepage's single
+ *    gallery is already spent inside the Best Value box, so wiring this
+ *    section into it would break the very rule this component was written to
+ *    respect (see the docblock at the top of this file). Legibility is
+ *    therefore paid for with column width and the `sizes` hint instead, and
+ *    the trade is raised in the build report rather than decided here.
+ */
 $bhp_spreads = [
-    ['slug' => 'mariana-trench-page-1', 'caption' => __('Page 1', 'brave-hearts')],
-    ['slug' => 'mariana-trench-page-2', 'caption' => __('Page 2', 'brave-hearts')],
-    ['slug' => 'mariana-trench-page-3', 'caption' => __('Page 3', 'brave-hearts')],
+    ['slug' => 'mariana-trench-page-1-full', 'caption' => __('Page 1', 'brave-hearts'), 'aspect' => 'tall'],
+    ['slug' => 'mariana-trench-page-2',      'caption' => __('Page 2', 'brave-hearts'), 'aspect' => 'square'],
+    ['slug' => 'mariana-trench-page-3',      'caption' => __('Page 3', 'brave-hearts'), 'aspect' => 'square'],
+];
+
+/*
+ * ⭐ THE PAGE-1 FALLBACK, AND WHY IT IS A FALLBACK RATHER THAN A SECOND ROW.
+ *
+ * `mariana-trench-page-1-full` exists on STAGING. It does not exist on
+ * production, and it will not until Andrew approves that media moving. On an
+ * environment where the full-page attachment is absent, slot 1 falls back to
+ * the SQUARE page 1 (3382) so the section still opens with page 1 — a
+ * cropped page 1 is worse than the full page, but a MISSING page 1 would
+ * start the sequence at page 2, which is a worse failure than the one
+ * Andrew reported. The fallback is per-slot and silent by design: it fails
+ * to the previous behaviour, never to an empty frame.
+ */
+$bhp_fallbacks = [
+    'mariana-trench-page-1-full' => ['slug' => 'mariana-trench-page-1', 'aspect' => 'square'],
 ];
 
 $bhp_resolved = [];
 foreach ($bhp_spreads as $bhp_spread) {
     $bhp_id = (int) bhp_book_media_attachment_id($bhp_spread['slug']);
+
+    if ($bhp_id <= 0 && isset($bhp_fallbacks[$bhp_spread['slug']])) {
+        $bhp_fallback = $bhp_fallbacks[$bhp_spread['slug']];
+        $bhp_id       = (int) bhp_book_media_attachment_id($bhp_fallback['slug']);
+        if ($bhp_id > 0) {
+            // The aspect travels WITH the attachment. A 1:1 crop rendered in
+            // a 3:4 frame would letterbox or crop it, which is the defect
+            // this whole change exists to remove.
+            $bhp_spread['aspect'] = $bhp_fallback['aspect'];
+        }
+    }
+
     if ($bhp_id > 0) {
         $bhp_spread['id'] = $bhp_id;
         $bhp_resolved[]   = $bhp_spread;
     }
 }
-unset($bhp_spread);
+unset($bhp_spread, $bhp_fallback);
 
 if (!$bhp_resolved) {
     return; // The gate.
@@ -158,7 +242,7 @@ if (function_exists('bhp_get_safe_link_url')) {
 
     <ul class="home-open-book__spreads" role="list">
       <?php foreach ($bhp_resolved as $bhp_i => $bhp_item): ?>
-        <li class="home-open-book__spread">
+        <li class="home-open-book__spread home-open-book__spread--<?php echo esc_attr($bhp_item['aspect']); ?>">
           <?php /*
            * ⭐ 1.19.243 — THE LINK WRAPPER IS GONE, ON PURPOSE.
            *
@@ -188,7 +272,29 @@ if (function_exists('bhp_get_safe_link_url')) {
              * Every spread below the fold stays lazy: this section is never
              * the LCP element.
              */
-            echo wp_get_attachment_image($bhp_item['id'], 'large', false, [
+            /*
+             * ⭐ 1.19.245 — THE TALL SLOT REQUESTS `full`, THE SQUARE SLOTS
+             *    KEEP `large`, AND THAT ASYMMETRY IS THE POINT.
+             *
+             * WordPress's `large` is a 1024x1024 BOUNDING box, so a 1600x2133
+             * portrait comes out of it at 768x1024 — 768 real pixels of page.
+             * The rendered column is ~338px on a 390px phone, which at DPR 3
+             * wants ~1014px. 768 would land UNDER that and soften exactly the
+             * printed body text Andrew asked to be able to read. `full`
+             * (1600x2133, 142 KB) is the only rung above it, and the browser
+             * still chooses off the emitted srcset rather than being forced.
+             *
+             * The two square slots are unchanged at `large`: their 1200x1200
+             * source yields 1024x1024, comfortably above the ~1005px a 335px
+             * column at DPR 3 asks for. Nothing about pages 2 and 3 moves.
+             *
+             * ⛔ THE COST IS ACCEPTED KNOWINGLY, NOT OVERLOOKED: this section
+             *    sits ~2,600px down the page, every spread stays `lazy`, and
+             *    this element is never the LCP. The page-weight trade buys the
+             *    one thing the section exists for — legible printed text.
+             */
+            $bhp_is_tall = ('tall' === $bhp_item['aspect']);
+            echo wp_get_attachment_image($bhp_item['id'], $bhp_is_tall ? 'full' : 'large', false, [
                 'class'    => 'home-open-book__spread-img',
                 'loading'  => 'lazy',
                 'decoding' => 'async',
@@ -203,25 +309,66 @@ if (function_exists('bhp_get_safe_link_url')) {
 
     <div class="home-open-book__actions">
       <?php /*
-       * ⭐ 1.19.243 — the second of the two controls Andrew hit. It also went
-       *    to /complete-collection/; it now scrolls to this section's own
-       *    photographs, which sit ABOVE these buttons, so from here it is a
-       *    scroll back up to pages 1-2-3 rather than a trip to a shop page.
+       * ═══════════════════════════════════════════════════════════════════
+       * ⭐ 1.19.245 (2026-08-19) — PASS3. THE SELF-REFERENTIAL CTA IS GONE.
+       *    THIS BUTTON NOW SELLS, BECAUSE THE READING HAS ALREADY HAPPENED.
+       * ═══════════════════════════════════════════════════════════════════
        *
-       * ⚠️⚠️ FLAGGED, NOT SETTLED — ANDREW'S CALL, IN THE BUILD REPORT.
-       *      With the real first pages now rendered a few hundred pixels
-       *      above it, a button still labelled "Read the first pages free"
-       *      is promising something the reader has already been given. The
-       *      LINK defect is fixed here because that is what he reported. The
-       *      LABEL is a copy decision and copy is not mine to change: two
-       *      replacement labels are offered in the report for him to pick,
-       *      and neither is shipped without his yes.
-       */ ?>
+       * Andrew, on his phone, on 1.19.244 (⛔ RELAYED, not witnessed
+       * first-hand), verbatim:
+       *
+       *   "There is no need to have the same 'Read the first pages free' CTA
+       *    right below the actual pages 1-3 thats just not a good CTA - Put
+       *    Shop the books and send to shop page."
+       *
+       * ⭐ HE IS SETTLING THE QUESTION 1.19.243 EXPLICITLY RAISED AND LEFT
+       *    OPEN. The PASS2 block that stood here flagged this exact defect
+       *    ("a button still labelled 'Read the first pages free' is promising
+       *    something the reader has already been given"), fixed only the
+       *    broken LINK, and put two replacement labels in the report because
+       *    copy is not this agent's to change. He has now chosen — and he
+       *    chose neither of the two offered, he supplied his own. His words
+       *    are used verbatim, sentence-cased for a button: "Shop the books".
+       *    ⛔ The two labels this agent proposed are NOT used and are not
+       *       recorded here as alternatives; the founder's own wording wins.
+       *
+       * ⭐ THE LINK GOES THROUGH WOOCOMMERCE'S OWN RESOLVER, NOT A HARDCODED
+       *    PATH. `wc_get_page_permalink('shop')` reads the shop page
+       *    WooCommerce actually has configured, so this cannot rot if the
+       *    page is ever moved or re-slugged. VERIFIED on staging rather than
+       *    assumed: `woocommerce_shop_page_id` is 6, post_name `shop`, and
+       *    the resolver returns https://staging2.braveheartspublishing.com/shop/.
+       *    ⛔ NO WooCommerce setting was written to check this — the option
+       *       and the permalink were READ.
+       *
+       * ⚠️ TRACKING: THE EMITTER IS RENAMED, HONESTLY AND DELIBERATELY.
+       *      before: contextual_cta_click | home_open_the_book
+       *      after:  contextual_cta_click | home_open_the_book_shop
+       *    The EVENT NAME is unchanged, so no new GTM variable and no new tag
+       *    is needed and the delegated handler at `assets/js/nav.js:78` picks
+       *    it up untouched. The SOURCE changes because the control changed
+       *    what it does: `home_open_the_book` recorded taps on a
+       *    read-the-sample control, and continuing to report shop-page traffic
+       *    under that name would make the historic series silently
+       *    discontinuous. A renamed source shows up as a new series starting
+       *    2026-08-19, which is the truth. ⛔ This is the ONLY event changed in
+       *    this build; the ghost button's `quiz_cta_clicked` /
+       *    `home_open_the_book_quiz` pair is untouched, and no event is
+       *    removed.
+       */
+      $bhp_shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : '';
+      if (!$bhp_shop_url) {
+          $bhp_shop_url = home_url('/shop/');
+      }
+      if (function_exists('bhp_get_safe_link_url')) {
+          $bhp_shop_url = bhp_get_safe_link_url($bhp_shop_url, home_url('/shop/'));
+      }
+      ?>
       <a class="btn home-open-book__btn home-open-book__btn--primary"
-         href="<?php echo esc_url(bhp_get_safe_link_url('#home-open-the-book', '#home-open-the-book')); ?>"
+         href="<?php echo esc_url($bhp_shop_url); ?>"
          data-bhp-event="contextual_cta_click"
-         data-bhp-source="home_open_the_book">
-        <?php esc_html_e('Read the first pages free', 'brave-hearts'); ?>
+         data-bhp-source="home_open_the_book_shop">
+        <?php esc_html_e('Shop the books', 'brave-hearts'); ?>
       </a>
       <a class="btn home-open-book__btn home-open-book__btn--ghost"
          href="<?php echo esc_url($bhp_quiz_url); ?>"

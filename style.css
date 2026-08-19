@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.244
+Version: 1.19.245
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -9404,5 +9404,139 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
         reach; this is the last 10px of its journey onto the first screen. */
   .home #home-hero .home-hero__invitations {
     margin-top: 14px;
+  }
+}
+
+/* ============================================================================
+   CYCLE164-LD-HOMEPAGE-WARMTH-PASS3 (1.19.245, 2026-08-19)
+   THE CTA CLEARS A REAL PHONE'S BROWSER CHROME, AND PAGE 1 SHOWS THE WHOLE
+   PAGE.
+
+   Andrew, on his phone, on 1.19.244 (RELAYED through the Chief of Staff,
+   NOT witnessed first-hand by this agent), verbatim:
+     "The CTA is still below the fold and covered by the URL shadow on
+      mobile."
+     "The first page of MT is zoomed in on the chapter icon- this screen shot
+      to have the icon and all the words on the page. I like the page 2 and 3
+      cropped images."
+
+   ── WHY PASS2 MEASURED 807 AND STILL SHIPPED A BUTTON HE COULD NOT SEE ──
+
+   PASS2 measured the CTA bottom at 807px against a 844px viewport, called it
+   above the fold, and it was not. The error was the DENOMINATOR, not the
+   measurement. `window.innerHeight` on an iPhone reports the CSS viewport,
+   which is the area the page is LAID OUT in -- not the area the reader can
+   actually SEE. Safari draws the URL bar over the top and the toolbar over
+   the bottom of that same box, and on many models the genuinely visible
+   strip is about 390x664. A button whose bottom edge is 807 sits ~143px
+   underneath the bottom toolbar. That is the "URL shadow" in his sentence,
+   and it is why a 844-based check kept passing while his eyes kept failing
+   it.
+
+   THE TARGET IS THEREFORE STATED AGAINST THE VISIBLE AREA, NOT THE CSS
+   VIEWPORT: primary CTA bottom <= ~700px at 390 wide, and this block aims
+   past that at the ~664 line so the whole button clears the toolbar rather
+   than grazing it. Both numbers are measured and reported.
+
+   ── HOW THE PIXELS WERE FOUND: SPACING, TYPE SCALE, AND ONE DELETION HE
+      ORDERED. NOTHING ELSE. ──
+
+   No hero copy is rewritten. Nothing is hidden behind a media query.
+   No element is reordered -- the DOM order set by the 2026-07-31
+   "covers directly under the H1 on mobile" ruling is intact, and no
+   `order`, transform or absolute-positioning trick is used to fake a
+   different visual sequence, so keyboard order still matches what is on
+   screen. The single element that leaves the page is the eyebrow, and it
+   leaves because he told it to, not to buy space -- the ~49px it returns is
+   a side effect of his instruction, not the reason for it.
+   ============================================================================ */
+
+/* ---- 1. PAGE 1 AT ITS NATURAL SHAPE. PAGES 2 AND 3 UNCHANGED. ------------- */
+/* The 1.19.243 rule sets `aspect-ratio: 1/1` on EVERY spread image, which is
+   correct for the two square crops and is exactly what cropped the words off
+   page 1. The square rule is now scoped to the square slots, and the tall
+   slot carries no aspect-ratio at all: width 100% + height auto lets the
+   file's own 1600x2133 drive the box, so there is no frame for a crop to
+   happen inside.
+
+   NOTHING IS CROPPED IN EITHER VARIANT. `object-fit` is dropped for the tall
+   slot rather than set to `contain`, because with an intrinsic-ratio box
+   there is no spare space to fit into and `contain` would only be
+   decoration pretending to be a safeguard. */
+.home .home-open-book__spread--tall .home-open-book__spread-img {
+  aspect-ratio: auto;
+  height: auto;
+  object-fit: fill; /* inert: box ratio == image ratio, so nothing is scaled unevenly */
+}
+
+/* ---- 2. THE FOLD. All of this is <=600px, i.e. phones only. -------------- */
+/* Desktop and tablet are deliberately untouched: the CTA is already on the
+   first screen at every width above this, and the founder's report is a
+   phone report. */
+@media (max-width: 600px) {
+
+  /* 2a. The stack gap, applied five times above the CTA. 10 -> 8. */
+  .home #home-hero .home-hero__content {
+    gap: 8px;
+  }
+
+  /* 2b. The founder chip. The photograph stays a photograph -- it is
+         reduced, never cropped, and the 88px hero padding-top that clears
+         the sticky nav (PASS2's arithmetic, still load-bearing) is NOT
+         touched. */
+  .home #home-hero .home-founder-chip {
+    margin-bottom: 10px;
+    padding: .5rem .75rem .5rem .5rem;
+  }
+  .home #home-hero .home-founder-chip__photo {
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+  }
+  .home #home-hero .home-founder-chip__said {
+    font-size: 1.15rem;
+  }
+
+  /* 2c. The covers. Height is set and width follows, so the aspect ratio is
+         preserved and no cover is cropped or squashed. They remain the
+         element immediately under the H1. */
+  .home #home-hero .home-hero__book-preview {
+    margin-top: 6px;
+  }
+  .home #home-hero .home-hero__book-preview-label {
+    margin-bottom: 6px;
+    font-size: .58rem;
+    letter-spacing: .16em;
+    line-height: 1.3;
+  }
+  .home #home-hero .home-hero__book-cover {
+    height: 112px;
+    width: auto;
+    max-width: 100%;
+  }
+
+  /* 2d. The supporting paragraph and the gold line after it. The gold line
+         is `content:` on `.home-hero__text > p::after` ("It is an invitation
+         to look up.") -- it is TYPE-SCALED here, not removed, because it is
+         the sentence that bridges the copy to the button. */
+  .home #home-hero .home-hero__text {
+    margin-top: 6px;
+    font-size: .875rem;
+    line-height: 1.42;
+  }
+  .home #home-hero .home-hero__text > p::after {
+    margin-top: .5rem;
+    font-size: 1rem;
+  }
+
+  /* 2e. The invitations. Tighter padding on the buttons themselves is the
+         last of the budget; both remain well above the 44px minimum touch
+         target (they measure ~56px and ~48px). */
+  .home #home-hero .home-hero__invitations {
+    margin-top: 10px;
+    gap: 10px;
+  }
+  .home #home-hero .home-hero__invite {
+    padding-block: .8rem;
   }
 }

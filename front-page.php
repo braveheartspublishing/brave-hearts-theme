@@ -239,6 +239,51 @@ $hero_title = bhp_get_homepage_field('hero_title', __('Adventure Books That Turn
 if (preg_match('/^Big Places\.\s*Brave Hearts\.$/i', trim($hero_title))) {
     $hero_title = __('Adventure Books That Turn Curiosity Into Courage', 'brave-hearts');
 }
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.245 (2026-08-19) — CYCLE164-LD-HOMEPAGE-WARMTH-PASS3.
+ *    THE HERO EYEBROW IS SUPPRESSED ON THE HOMEPAGE. IT IS NOT DELETED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew, on his phone, on 1.19.244 (⛔ RELAYED through the Chief of Staff,
+ * NOT witnessed first-hand by this agent), verbatim:
+ *
+ *   "For the homepage. The 'Real World...6-9' needs to be removed - it looks
+ *    to out of place."
+ *
+ * ⭐ SUPPRESSION, NOT DELETION, AND THE DISTINCTION IS LOAD-BEARING.
+ *    `$hero_eyebrow` is still computed exactly as before and is still a live
+ *    variable. What changes is that the homepage stops PASSING it to the hero
+ *    component (see the `'eyebrow' => ''` argument at the call site below).
+ *    Three reasons this is the right shape:
+ *
+ *    1. THE COMPONENT IS SHARED. `template-parts/components/hero.php` also
+ *       renders /about/, /books/, /contact/, /teachers/,
+ *       /explorer-passport/ and every campaign landing page, and each passes
+ *       its OWN eyebrow. Removing the eyebrow from the component to satisfy
+ *       a homepage instruction would strip six other pages. The component is
+ *       NOT touched by this build.
+ *    2. THE INSTRUCTION IS EXPLICITLY HOMEPAGE-SCOPED — "For the homepage."
+ *       It says nothing about anywhere else, so nowhere else moves.
+ *    3. `bhp_get_homepage_field('hero_eyebrow', …)` still reads any DB value
+ *       an editor may have set. Deleting the reader would silently discard
+ *       editor content and make the field un-restorable without a code
+ *       change; leaving it means Andrew can have the strip back by reverting
+ *       ONE argument.
+ *
+ * ⛔ THE AGE CLAIM IS NOT LOST FROM THE PAGE, AND THIS WAS VERIFIED RATHER
+ *    THAN ASSUMED. The `Ages 6–9` pill still renders one section below in
+ *    `#home-trust-proof` — where Andrew's own 2026-08-05 instruction put it
+ *    ("Put the big places. brave hearts under that box along with the Ages
+ *    6-9.... Featuring a kirkus reviewed title"). Measured on staging
+ *    1.19.244 at a real 390px viewport: the string "REAL-WORLD ADVENTURE
+ *    BOOKS FOR AGES" occurred exactly ONCE on the whole page, so this
+ *    removes a duplicate framing device and not the only statement of the
+ *    reading age. Reading age stays 6–9, never 5–9 (standing rule §9).
+ *
+ * ⛔ NO COPY IS REWRITTEN. Not one word of the eyebrow string is changed; it
+ *    simply stops being rendered here.
+ */
 $hero_eyebrow = bhp_get_homepage_field('hero_eyebrow', __('REAL-WORLD ADVENTURE BOOKS FOR AGES 6–9', 'brave-hearts'));
 if (trim($hero_eyebrow) === 'Bridge books for ages 6–9') {
     $hero_eyebrow = __('REAL-WORLD ADVENTURE BOOKS FOR AGES 6–9', 'brave-hearts');
@@ -608,7 +653,16 @@ $hero_after_text = trim(ob_get_clean());
 
 get_template_part('template-parts/components/hero', null, [
     'id'             => 'home-hero',
-    'eyebrow'        => $hero_eyebrow,
+    /*
+     * ⭐ 1.19.245 — PASS3. The homepage passes an EMPTY eyebrow so the
+     * component's own `if ($args['eyebrow'])` guard skips the <p> entirely.
+     * `$hero_eyebrow` above is deliberately still computed and still holds
+     * the string — see the long block at its assignment for why this is a
+     * suppression rather than a deletion, and for the verification that the
+     * `Ages 6–9` claim still appears on this page in `#home-trust-proof`.
+     * ⛔ Restoring the strip is a one-token change: `'' ` -> `$hero_eyebrow`.
+     */
+    'eyebrow'        => '',
     'title'          => $hero_title,
     'text'           => $hero_text,
     'image_id'       => (int) bhp_get_homepage_field('hero_image_id', 0),

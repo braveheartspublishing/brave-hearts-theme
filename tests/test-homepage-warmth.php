@@ -192,8 +192,20 @@ bhp_hw_assert(
 	'§1.4 the "Open the book" section renders EXACTLY ONCE',
 	$failures
 );
+/*
+ * ⭐ 1.19.245 — THE SELECTOR CHANGED BECAUSE THE MARKUP CHANGED, AND THE
+ *    ASSERTION IS COUNTED ON THE STABLE HALF OF THE CLASS ATTRIBUTE.
+ *
+ * PASS3 appends a per-slot aspect modifier, so the attribute is now
+ * `class="home-open-book__spread home-open-book__spread--tall"` (slot 1) or
+ * `...--square"` (slots 2 and 3). The old exact-string count would have read
+ * ZERO and failed for the wrong reason — the photographs would all still be
+ * on the page. Counting the opening `class="home-open-book__spread ` prefix
+ * keeps the assertion about "three spreads render" instead of about one
+ * particular attribute spelling.
+ */
 bhp_hw_assert(
-	3 === substr_count( $home, 'class="home-open-book__spread"' ),
+	3 === substr_count( $home, 'class="home-open-book__spread home-open-book__spread--' ),
 	'§1.4 all THREE page photographs resolve',
 	$failures
 );
@@ -284,14 +296,28 @@ bhp_hw_assert(
 	'§1.5 the HERO "read the first pages" invitation targets #home-open-the-book',
 	$failures
 );
+/*
+ * ⚠️ SUPERSEDED 2026-08-19 BY 1.19.245 (PASS3), AND QUOTED RATHER THAN
+ *    SILENTLY DELETED, because it records a real earlier instruction:
+ *
+ *      bhp_hw_assert(
+ *          preg_match( '/href="#home-open-the-book"[^>]*data-bhp-source="home_open_the_book"/', $home ) === 1,
+ *          '§1.5 the SECTION "read the first pages" CTA targets #home-open-the-book',
+ *          $failures );
+ *      bhp_hw_assert(
+ *          2 === substr_count( $home, 'href="#home-open-the-book"' ),
+ *          '§1.5 EXACTLY the two read-the-first-pages controls carry the anchor, no more',
+ *          $failures );
+ *
+ *    Both asserted a SECTION CTA that Andrew has since removed outright
+ *    ("There is no need to have the same 'Read the first pages free' CTA
+ *    right below the actual pages 1-3"). Their replacements are in §1.6.
+ *    The HERO invitation's anchor assertion immediately above is UNCHANGED
+ *    and still runs — that control is untouched by PASS3.
+ */
 bhp_hw_assert(
-	preg_match( '/href="#home-open-the-book"[^>]*data-bhp-source="home_open_the_book"/', $home ) === 1,
-	'§1.5 the SECTION "read the first pages" CTA targets #home-open-the-book',
-	$failures
-);
-bhp_hw_assert(
-	2 === substr_count( $home, 'href="#home-open-the-book"' ),
-	'§1.5 EXACTLY the two read-the-first-pages controls carry the anchor, no more',
+	1 === substr_count( $home, 'href="#home-open-the-book"' ),
+	'§1.5 EXACTLY ONE control now carries the anchor: the hero invitation (the section CTA became a shop link in 1.19.245)',
 	$failures
 );
 
@@ -311,6 +337,137 @@ bhp_hw_assert(
 	bhp_hw_at( $home, 'id="home-open-the-book"' ) > bhp_hw_at( $home, 'id="kirkus-credibility-home"' )
 		&& bhp_hw_at( $home, 'id="home-open-the-book"' ) < bhp_hw_at( $home, 'id="where-you-will-find-us"' ),
 	'§1.5 the new section sits between Kirkus and the booth, exactly as documented',
+	$failures
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * §1.6 — 1.19.245 (PASS3). THE FOUR THINGS ANDREW ASKED FOR ON HIS PHONE.
+ *
+ * Verbatim (RELAYED through the Chief of Staff, NOT witnessed first-hand):
+ *   "The 'Real World...6-9' needs to be removed - it looks to out of place."
+ *   "The first page of MT is zoomed in on the chapter icon- this screen shot
+ *    to have the icon and all the words on the page. I like the page 2 and 3
+ *    cropped images."
+ *   "There is no need to have the same 'Read the first pages free' CTA right
+ *    below the actual pages 1-3 thats just not a good CTA - Put Shop the
+ *    books and send to shop page."
+ *
+ * ⛔ EACH POSITIVE ASSERTION IS PAIRED WITH A NEGATIVE ONE. A test that only
+ *    checks the new thing arrived cannot catch the old thing failing to
+ *    leave, and every defect in this cycle has been an old thing that stayed.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+echo "\n=== §1.6 — PASS3: THE EYEBROW, THE FULL PAGE 1, THE SHOP CTA ===\n";
+
+/* --- 1.6a THE EYEBROW LEAVES THE HOMEPAGE, AND ONLY THE HOMEPAGE. --- */
+bhp_hw_assert(
+	false === strpos( $home, 'home-hero__eyebrow' ),
+	'§1.6a the hero eyebrow element is NOT rendered on the homepage at all',
+	$failures
+);
+bhp_hw_assert(
+	false === strpos( $home, 'REAL-WORLD ADVENTURE BOOKS FOR AGES' ),
+	'§1.6a the "Real World...6-9" string is gone from the homepage',
+	$failures
+);
+/*
+ * The claim is not lost from the page — it moved home in 2026-08-05 on
+ * Andrew's own instruction. This assertion is what stops a future "tidy-up"
+ * from concluding the age range is now unstated and re-adding a strip.
+ */
+/*
+ * ⛔ THE EN DASH IS ASSERTED AS A LITERAL UTF-8 CHARACTER, NOT AS `&#8211;`.
+ *    `esc_html_e()` escapes `& < > " '` and leaves every other character
+ *    alone, so "Ages 6–9" reaches the document as the real en dash. A first
+ *    draft of this assertion looked for the numeric entity and would have
+ *    failed against a page that was perfectly correct.
+ */
+bhp_hw_assert(
+	false !== strpos( $home, 'home-trust-proof__badge' )
+		&& false !== strpos( $home, "Ages 6\xE2\x80\x939" ),
+	'§1.6a the Ages 6-9 pill STILL renders in #home-trust-proof (the claim moved in 2026-08-05, it did not vanish)',
+	$failures
+);
+bhp_hw_assert(
+	false === stripos( $home, 'ages 5-9' ) && false === stripos( $home, "ages 5\xE2\x80\x939" ),
+	'§1.6a reading age is still 6-9 and never 5-9 (standing rule §9)',
+	$failures
+);
+
+/* --- 1.6b PAGE 1 IS THE FULL PAGE; PAGES 2 AND 3 STAY SQUARE. --- */
+bhp_hw_assert(
+	1 === substr_count( $home, 'home-open-book__spread--tall' )
+		&& 2 === substr_count( $home, 'home-open-book__spread--square' ),
+	'§1.6b exactly ONE slot is tall (page 1) and TWO stay square (pages 2 and 3, which Andrew said he likes)',
+	$failures
+);
+/*
+ * Asserted on the FILENAME, because that is what reaches the HTML — the
+ * attachment slug is the post_name and never appears in rendered markup.
+ * This is the same trap §1.4 records having fallen into once already.
+ */
+bhp_hw_assert(
+	1 === substr_count( $bhp_hw_section, 'mt-first-pages-01-chapter1-opening-1600' ),
+	'§1.6b slot 1 serves the FULL-PAGE master (icon and all the words), not the square crop',
+	$failures
+);
+bhp_hw_assert(
+	false === strpos( $bhp_hw_section, 'mt-first-pages-01-chapter1-opening-square' ),
+	'§1.6b the SQUARE page-1 crop Andrew rejected is no longer in this section',
+	$failures
+);
+bhp_hw_assert(
+	false !== strpos( $bhp_hw_section, 'mt-first-pages-02-page2-under-the-bed-square' )
+		&& false !== strpos( $bhp_hw_section, 'mt-first-pages-03-page3-text-spread-square' ),
+	'§1.6b pages 2 and 3 are still the SQUARE crops, untouched',
+	$failures
+);
+/* The order assertion in §1.4 runs on alt text, which is identical between
+   3382 and 3385 by design — so it survives the swap and still pins 1-2-3. */
+
+/* --- 1.6c THE SECTION CTA SELLS, AND POINTS AT THE REAL SHOP PAGE. --- */
+bhp_hw_assert(
+	false !== strpos( $bhp_hw_section, 'Shop the books' ),
+	'§1.6c the section CTA carries Andrew\'s own label, "Shop the books"',
+	$failures
+);
+bhp_hw_assert(
+	false === strpos( $bhp_hw_section, 'Read the first pages free' ),
+	'§1.6c the duplicated "Read the first pages free" CTA is GONE from the section',
+	$failures
+);
+/*
+ * The hero invitation still legitimately contains that phrase. Scoping this
+ * to the section rather than the page is deliberate: a page-wide assertion
+ * would be false and would force the hero button to be deleted to go green.
+ */
+bhp_hw_assert(
+	false !== strpos( $home, 'Open the book. Read the first pages free' ),
+	'§1.6c the HERO invitation keeps its wording (the removal was section-scoped)',
+	$failures
+);
+bhp_hw_assert(
+	preg_match( '#href="[^"]*/shop/"[^>]*data-bhp-source="home_open_the_book_shop"#', $bhp_hw_section ) === 1,
+	'§1.6c the section CTA links to /shop/ and emits the renamed source',
+	$failures
+);
+bhp_hw_assert(
+	false === strpos( $home, 'data-bhp-source="home_open_the_book"' ),
+	'§1.6c the OLD source name is fully retired (renamed, not left emitting alongside)',
+	$failures
+);
+bhp_hw_assert(
+	false !== strpos( $home, 'data-bhp-source="home_open_the_book_quiz"' ),
+	'§1.6c the section ghost button\'s quiz event is untouched',
+	$failures
+);
+/*
+ * The section must not send anyone to /complete-collection/ again. This is
+ * the third cycle in which a control in this section pointed somewhere its
+ * label did not promise; the negative assertion is the memory.
+ */
+bhp_hw_assert(
+	false === strpos( $bhp_hw_section, '/complete-collection/' ),
+	'§1.6c no control in this section points at /complete-collection/ (the 1.19.242 defect stays fixed)',
 	$failures
 );
 
