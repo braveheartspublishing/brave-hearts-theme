@@ -512,6 +512,64 @@ bhp_cpb_assert(
 	$failures
 );
 
+echo "\n=== 8. ⭐ 1.8.58 (`CYCLE165-LD-COLLECTION-CONVERSION`, T-4 / R-8) — NO EXIT INSIDE THE BUY BOX ===\n";
+
+/*
+ * ⛔ THE DEFECT THIS GUARDS. "View Individual Books" pointed at `/books/` from
+ *    INSIDE the purchase module, under the price and above the format
+ *    selector. It was the only exit on the page placed at the decision point,
+ *    and it offered a cheaper-looking alternative to a visitor who had already
+ *    chosen the collection. Everything else that leaks from this page — the
+ *    header nav, the footer, the audience router, the quiz, the capture form —
+ *    leaks AFTER the choice.
+ *
+ * ⛔ IT IS MOVED, NOT REMOVED, AND BOTH HALVES ARE ASSERTED. Deleting it would
+ *    strand a visitor who has genuinely rejected the collection, so its
+ *    continued presence further down is asserted as firmly as its absence
+ *    here. The link, the destination and the label are all unchanged.
+ */
+$cpb_price_at    = strpos( $html, 'bhp-landing-coldopen__price' );
+$cpb_selector_at = strpos( $html, 'bhp-landing-format-selector' );
+bhp_cpb_assert(
+	false !== $cpb_price_at && false !== $cpb_selector_at && $cpb_price_at < $cpb_selector_at,
+	'8: the price element precedes the format selector, so the R-8 window is well defined',
+	$failures
+);
+if ( false !== $cpb_price_at && false !== $cpb_selector_at && $cpb_price_at < $cpb_selector_at ) {
+	$cpb_window = substr( $html, $cpb_price_at, $cpb_selector_at - $cpb_price_at );
+	bhp_cpb_assert(
+		preg_match( '/<a[^>]+href="[^"]*\/books\/[^"]*"/i', $cpb_window ) === 0,
+		'8: M-8 — no /books/ link renders between the price element and the format selector',
+		$failures
+	);
+	bhp_cpb_assert(
+		strpos( $cpb_window, 'View Individual Books' ) === false,
+		'8: and the exit label specifically is not in that window',
+		$failures
+	);
+}
+bhp_cpb_assert(
+	substr_count( $html, 'View Individual Books' ) === 1,
+	'8: the exit renders EXACTLY once (it used to render once per format panel, one of them hidden)',
+	$failures
+);
+bhp_cpb_assert(
+	strpos( $html, 'bhp-landing-singles' ) !== false,
+	'8: it renders from its new home, the singles section',
+	$failures
+);
+bhp_cpb_assert(
+	bhp_cpb_before( $html, 'bhp-landing-value', 'bhp-landing-singles' )
+		&& bhp_cpb_before( $html, 'bhp-landing-singles', 'bhp-landing-gift' ),
+	'8: and that home is AFTER the value comparison — the first place the singles-vs-collection arithmetic has been shown',
+	$failures
+);
+bhp_cpb_assert(
+	preg_match( '/<a[^>]+href="[^"]*\/books\/[^"]*"[^>]*class="[^"]*bhp-landing-panel__view-link/', $html ) === 1,
+	'8: the link keeps its original destination and its original treatment (only the position moved)',
+	$failures
+);
+
 echo "\n";
 if ( $failures ) {
 	echo 'FAILED (' . count( $failures ) . "):\n";

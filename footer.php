@@ -27,10 +27,45 @@ if (function_exists('wc_get_page_id')) {
 // trust-elements audit) -- this only adds the missing link, following the
 // exact existing pattern used for Shipping Policy above.
 $returns_url = bhp_get_safe_link_url($returns_url, home_url('/refund_returns/'));
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.254 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`) R-9 — ON
+ *     THE COLLECTION PAGE, THE LAST THING BEFORE THE FOOTER IS THE ORDER.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * MEASURED on production: on /complete-collection/ the quiz launcher (top
+ * 5584) and the inline email capture (top 6154) sit between the page's final
+ * purchase CTA and the footer. On a page whose single job is the order, the
+ * two things immediately after the closing CTA are two competing
+ * conversions.
+ *
+ * ⛔ NEITHER IS REMOVED, ON EITHER PAGE, AT ANY WIDTH. This REORDERS them and
+ *    nothing else: on this one page they render AFTER the audience router
+ *    instead of before it. Removing either is a different decision (D-6) and
+ *    is the founder's, not this file's. The homepage-only exit popup is a
+ *    separate component entirely and is untouched.
+ *
+ * ⛔ PAGE-SCOPED BY CONSTRUCTION. `bhp_book_is_collection_page()` is true only
+ *    for a page whose content carries the collection shortcode, so every
+ *    other page on the site renders this footer in exactly the order 1.19.253
+ *    rendered it. If the theme ever loses that helper the condition is false
+ *    and the ORIGINAL order stands — it fails back to today's behaviour, not
+ *    to a broken one.
+ *
+ * ⛔ BOTH ELIGIBILITY GATES ARE UNTOUCHED. `bhp_should_show_quiz_cta()` and
+ *    `bhp_should_show_footer_capture()` still decide WHETHER each renders;
+ *    this only decides WHERE. A page that was not getting one still does not.
+ *
+ * ⛔ FUNNEL ISOLATION IS UNAFFECTED: no storage key, no analytics prefix and
+ *    no lead-magnet key is read or written here.
+ */
+$bhp_defer_conversions = function_exists('bhp_book_is_collection_page') && bhp_book_is_collection_page();
+$bhp_show_quiz_cta     = function_exists('bhp_should_show_quiz_cta') && bhp_should_show_quiz_cta();
+$bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bhp_should_show_footer_capture();
 ?>
 </main><!-- #main -->
 
-<?php if (function_exists('bhp_should_show_quiz_cta') && bhp_should_show_quiz_cta()): ?>
+<?php if ($bhp_show_quiz_cta && !$bhp_defer_conversions): ?>
   <?php
   // The homepage no longer renders an inline quiz section, so the launcher
   // here inherits the '#find-your-adventure' anchor id it used to carry --
@@ -46,7 +81,9 @@ $returns_url = bhp_get_safe_link_url($returns_url, home_url('/refund_returns/'))
      Eligibility (never on /teachers/, never on a transaction surface,
      never on a page that is already a signup destination) is decided
      server-side in bhp_should_show_footer_capture(). */
-  if (function_exists('bhp_should_show_footer_capture') && bhp_should_show_footer_capture()) {
+  // 1.19.254 R-9: on the collection page this block renders after the
+  // audience router below instead. Same gate, same template, same markup.
+  if ($bhp_show_capture && !$bhp_defer_conversions) {
       get_template_part('template-parts/acquisition/footer-capture');
   }
   ?>
@@ -111,6 +148,23 @@ $returns_url = bhp_get_safe_link_url($returns_url, home_url('/refund_returns/'))
       <li><a href="<?php echo esc_url(home_url('/organizations-community-reading-kit/')); ?>"><?php esc_html_e('Planning a reading program?', 'brave-hearts'); ?></a></li>
     </ul>
   </nav>
+
+  <?php
+  /*
+   * 1.19.254 R-9 — the deferred pair, in the order the specification sets:
+   * audience router (immediately above) -> quiz launcher -> email capture.
+   * This branch runs on the collection page ONLY; see the block at the top
+   * of this file for why, and for what is deliberately NOT changed.
+   */
+  if ($bhp_defer_conversions) {
+      if ($bhp_show_quiz_cta) {
+          get_template_part('template-parts/components/quiz-entry-cta', null, []);
+      }
+      if ($bhp_show_capture) {
+          get_template_part('template-parts/acquisition/footer-capture');
+      }
+  }
+  ?>
 
   <div class="footer-bottom">
     <p>&copy; <?php echo esc_html(wp_date('Y')); ?> Brave Hearts Publishing LLC. <?php esc_html_e('All rights reserved.', 'brave-hearts'); ?>

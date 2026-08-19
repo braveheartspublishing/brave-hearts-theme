@@ -152,11 +152,58 @@ bhp_gb_assert(
 
 echo "\n=== 3. The claim, and the words that make it true ===\n";
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⭐ SUPERSEDED 2026-08-19 (`CYCLE165-LD-COLLECTION-CONVERSION`, T-7 / R-13)
+ *     — THE EM DASH BECOMES A FULL STOP. THE ASSERTION MOVES WITH IT; THE
+ *     CLAIM DOES NOT MOVE AT ALL.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * The superseded assertion, preserved verbatim so the movement is visible and
+ * is not re-derived:
+ *
+ *   strpos( $html, '<span class="bhp-landing-guarantee__label">30-Day Guarantee</span>' ) !== false
+ *     '3: the badge is labelled "30-Day Guarantee"'
+ *
+ * ⛔ WHY. The standing rail for customer-facing copy is "no em dashes", and
+ *    this badge carried the only one rendered inside `.bhp-landing` —
+ *    "30-Day Guarantee — if these books don't fit…". It now reads
+ *    "30-Day Guarantee. If these books don't fit…".
+ *
+ * ⛔ NOT ONE WORD OF THE CLAIM CHANGED, and every assertion below this point
+ *    is byte-identical to 1.8.57: the delivery anchor, the full refund, "Keep
+ *    the books.", the policy link and the no-price/no-percentage rule all run
+ *    unchanged. This is punctuation, and it is asserted as punctuation.
+ *
+ * ⭐ THE SEPARATOR SPAN IS ASSERTED GONE, not merely emptied. An empty
+ *   aria-hidden span between the label and the sentence would print a stray
+ *   space before the stop, which is the failure mode a "just change the
+ *   character" fix produces.
+ */
 bhp_gb_assert(
-	strpos( $html, '<span class="bhp-landing-guarantee__label">30-Day Guarantee</span>' ) !== false,
-	'3: the badge is labelled "30-Day Guarantee"',
+	strpos( $html, '<span class="bhp-landing-guarantee__label">30-Day Guarantee.</span>' ) !== false,
+	'3: T-7 — the badge is labelled "30-Day Guarantee." and the label now closes its own sentence',
 	$failures
 );
+bhp_gb_assert(
+	strpos( $html, 'bhp-landing-guarantee__sep' ) === false,
+	'3: T-7 — the decorative separator span is removed, not refilled (its CSS rule stays in place, inert, so a revert is one file)',
+	$failures
+);
+bhp_gb_assert(
+	strpos( $html, 'If these books don&rsquo;t fit your reader' ) !== false
+		|| strpos( $html, 'If these books don’t fit your reader' ) !== false,
+	'3: T-7 — the following clause is now capitalised as the sentence it has become',
+	$failures
+);
+if ( preg_match( '/<p class="bhp-landing-guarantee">(.*?)<\/p>/su', $html, $gb_dash_m ) ) {
+	bhp_gb_assert(
+		strpos( $gb_dash_m[1], '&mdash;' ) === false
+			&& strpos( html_entity_decode( $gb_dash_m[1], ENT_QUOTES, 'UTF-8' ), "\u{2014}" ) === false,
+		'3: T-7 — no em dash renders anywhere in the badge, in entity form or literal form',
+		$failures
+	);
+}
 /*
  * ⛔ THE CLOCK ANCHOR IS THE ASSERTION THAT MATTERS. The policy grants the
  *    refund window "within 30 days OF DELIVERY". A badge that says only

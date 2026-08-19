@@ -288,6 +288,34 @@ function bhp_bundle_render_landing_page() {
 	?>
 	<div class="bhp-landing" data-bhp-landing>
 		<?php
+		/*
+		 * ⛔ THIS LIST IS THE PAGE'S RENDER ORDER, AND IT IS THE ONLY PLACE
+		 *    THE ORDER MAY BE CHANGED. Never re-order this page with CSS
+		 *    `order` — DOM order and reading order have to stay identical for
+		 *    screen readers, and the suites assert one sequence, not two.
+		 *
+		 * ⭐ 1.8.58 (`CYCLE165-LD-COLLECTION-CONVERSION`) R-8 — ONE LINE ADDED:
+		 *    the individual-books exit now renders here, after the value
+		 *    comparison, instead of inside the purchase card. See
+		 *    `bhp_bundle_render_landing_individual_books_link` and the
+		 *    preserved superseded markup in
+		 *    `bhp_bundle_render_landing_pricing_panel()`.
+		 *
+		 * ⛔ TODO — R-7 (THE FOUNDER CHIP AND TRUST LINE A) IS DELIBERATELY NOT
+		 *    BUILT, AND ITS ABSENCE IS A DECISION RATHER THAN AN OMISSION.
+		 *    `template-parts/components/home-founder-chip.php` already exists
+		 *    and its markup is page-agnostic; only its CSS is `.home`-scoped.
+		 *    The specification places it BELOW the buy box and ABOVE
+		 *    `bhp-landing-outcomes` — i.e. one call between
+		 *    `bhp_bundle_render_landing_hero()` and
+		 *    `bhp_bundle_render_landing_parent_outcomes()` — plus widening the
+		 *    `.home`-scoped selectors in the theme stylesheet.
+		 *    ⛔ IT IS GATED ON DECISION D-5, WHICH IS ANDREW SIGNORE'S AND IS
+		 *       OPEN: he cleared that first-person trust line for the HOMEPAGE,
+		 *       and extending it to a second page is his placement call, not
+		 *       this file's. Nothing here anticipates the answer in either
+		 *       direction.
+		 */
 		bhp_bundle_render_landing_hero();
 		bhp_bundle_render_landing_trust_row();
 		bhp_bundle_render_landing_parent_outcomes();
@@ -295,6 +323,7 @@ function bhp_bundle_render_landing_page() {
 		bhp_bundle_render_landing_story_section();
 		bhp_bundle_render_landing_kirkus();
 		bhp_bundle_render_landing_value_comparison();
+		bhp_bundle_render_landing_individual_books_link();
 		bhp_bundle_render_landing_gift_section();
 		bhp_bundle_render_landing_final_cta();
 		?>
@@ -455,9 +484,52 @@ function bhp_bundle_render_landing_hero_intro() {
 		</span>
 		<h1 class="bhp-landing-hero__title">Three Big Adventures.<br>One Complete Collection.</h1>
 		<p class="bhp-landing-hero__text">Travel from the deepest ocean trench to the top of Mount Everest and into the heart of the Amazon rainforest.</p>
-		<p class="bhp-landing-hero__subtext">Adventure chapter books for ages 6&ndash;9 that bring together real places, science, history, courage, and kindness.</p>
+		<?php
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐ 1.8.58 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`) R-3/R-10
+		 *    — THE PROMISE LINE MOVES ABOVE THE PRICE. IT IS A MOVE, AND ONLY
+		 *    A MOVE: NOT ONE CHARACTER OF THE SENTENCE CHANGED.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * The superseded markup, preserved verbatim so the movement is visible
+		 * and is not re-derived:
+		 *
+		 *   <p class="bhp-landing-hero__subtext">Adventure chapter books for ages 6&ndash;9 that bring together real places, science, history, courage, and kindness.</p>
+		 *
+		 * ⛔ WHY IT MOVED. It is the only sentence on the page that says what
+		 *    the product IS, and it rendered at the BOTTOM of the hero — below
+		 *    the buy box, below the price. A cold visitor met a number before a
+		 *    description. It now renders inside the cold-open block, above the
+		 *    price, from `bhp_bundle_landing_promise_line()`.
+		 *
+		 * ⛔ NO NEW COPY WAS WRITTEN, so no new claim was introduced. The
+		 *    string is now defined once, in that helper, and rendered once.
+		 *    `tests/test-collection-fold-390.php` asserts it appears EXACTLY
+		 *    once, so a future edit cannot restore it here and leave two.
+		 */
+		?>
 	</div>
 	<?php
+}
+
+/**
+ * The one sentence on this page that says what the product IS.
+ *
+ * ⛔ SINGLE SOURCE, ON PURPOSE. Before 1.8.58 this lived as a string literal
+ *    at the bottom of the hero. Moving it above the price (R-3/R-10) without
+ *    extracting it would have left a literal in one render function and an
+ *    assertion in another, which is how a "moved" line quietly becomes two
+ *    slightly different lines.
+ *
+ * ⛔ APPROVED, LOCKED PROSE. It is reproduced byte-for-byte from the 1.8.57
+ *    `.bhp-landing-hero__subtext`, entities included. No word, no dash and no
+ *    age range changed — the reading age is 6-9 and stays 6-9.
+ *
+ * @return string HTML-escaped-at-source markup fragment (entities only).
+ */
+function bhp_bundle_landing_promise_line() {
+	return 'Adventure chapter books for ages 6&ndash;9 that bring together real places, science, history, courage, and kindness.';
 }
 
 function bhp_bundle_render_landing_pricing_card() {
@@ -736,6 +808,34 @@ function bhp_bundle_render_landing_cold_open() {
 		?>
 		<h2 class="bhp-landing-coldopen__headline">Real places. Short chapters.<br />Stories that pull kids off screens.</h2>
 		<p class="bhp-landing-coldopen__subhead">Educational without feeling like homework &middot; ages 6&ndash;9</p>
+		<?php
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐ 1.8.58 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`) R-3/R-10
+		 *    AND R-6 — THE PROMISE LINE AND ONE CONDENSED TRUST LINE, BOTH
+		 *    ABOVE THE PRICE.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⛔ THE PROMISE LINE IS MOVED, NOT WRITTEN. It is the same sentence
+		 *    that rendered at the BOTTOM of the hero until 1.8.57, now printed
+		 *    from `bhp_bundle_landing_promise_line()` so there is exactly one
+		 *    copy of it on the page and exactly one place it could drift.
+		 *    ⛔ NO NEW CLAIM IS INTRODUCED BY THIS BLOCK.
+		 *
+		 * ⛔ THE TRUST LINE IS A MENTION, NOT A QUOTE. See the docblock on
+		 *    `bhp_bundle_render_landing_trust_row` for what the condensed
+		 *    variant deliberately does NOT carry, and why that was a founder
+		 *    tension to report rather than a copy decision to make here.
+		 *
+		 * ⚠ BOTH ARE `<p>` ELEMENTS, NOT `<div>`s, AND THAT IS LOAD-BEARING.
+		 *   `test-collection-cold-traffic.php` extracts this block with a
+		 *   non-greedy `<div class="bhp-landing-coldopen">(.*?)</div>` needle,
+		 *   so the FIRST nested `</div>` would truncate every scoped claim scan
+		 *   in §3 and silently shrink what the suite checks.
+		 */
+		?>
+		<p class="bhp-landing-coldopen__promise"><?php echo bhp_bundle_landing_promise_line(); // phpcs:ignore WordPress.Security.EscapeOutput -- locked approved prose, entities only, defined in one place. ?></p>
+		<?php bhp_bundle_render_landing_trust_row( 'condensed' ); ?>
 		<?php
 		// 2026-08-07 revision (Andrew, current-turn): the teacher quote leaves
 		// the cold-open bar (still published in full further down the page);
@@ -1194,10 +1294,44 @@ function bhp_bundle_guarantee_policy_url() {
  */
 function bhp_bundle_render_landing_guarantee() {
 	?>
+	<?php
+	/*
+	 * ═══════════════════════════════════════════════════════════════════
+	 * ⭐ 1.8.58 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`) R-13 —
+	 *    THE EM DASH BECOMES A FULL STOP.
+	 * ═══════════════════════════════════════════════════════════════════
+	 *
+	 * The superseded markup, preserved verbatim so the movement is visible
+	 * and is not re-derived:
+	 *
+	 *   <span class="bhp-landing-guarantee__label">30-Day Guarantee</span>
+	 *   <span class="bhp-landing-guarantee__sep" aria-hidden="true">&mdash;</span>
+	 *   <span class="bhp-landing-guarantee__text">if these books don&rsquo;t fit your reader, tell me within 30 days of delivery and I&rsquo;ll refund you in full. Keep the books.</span>
+	 *
+	 * ⛔ THE STANDING RAIL IS "no em dashes in customer-facing copy", and this
+	 *    was the only one rendered inside `.bhp-landing`.
+	 *
+	 * ⛔ NOT ONE WORD OF THE CLAIM CHANGED. "within 30 days OF DELIVERY" is
+	 *    kept — the anchor is what makes the clock match the live policy page,
+	 *    and dropping it would make this a claim the policy does not support
+	 *    (see the two reported deviations in this function's docblock above).
+	 *
+	 * ⛔ R-14 — THE FIRST-PERSON VOICE IS PRESERVED DELIBERATELY: "tell me",
+	 *    "I'll refund you". A rewrite to "we" would be a house-style
+	 *    violation, and `tests/test-collection-house-style.php` now fails if
+	 *    one appears.
+	 *
+	 * ⚠ THE `__sep` SPAN IS REMOVED RATHER THAN REFILLED. Its whole job was to
+	 *   carry a decorative dash between two spans; a `.` belongs to the label's
+	 *   sentence, not to a separator, and leaving an empty aria-hidden span
+	 *   between them would print a stray space before the stop. Its CSS rule is
+	 *   deliberately LEFT IN PLACE in `bundle-landing.css`, inert, so a revert
+	 *   is a one-file change.
+	 */
+	?>
 	<p class="bhp-landing-guarantee">
-		<span class="bhp-landing-guarantee__label">30-Day Guarantee</span>
-		<span class="bhp-landing-guarantee__sep" aria-hidden="true">&mdash;</span>
-		<span class="bhp-landing-guarantee__text">if these books don&rsquo;t fit your reader, tell me within 30 days of delivery and I&rsquo;ll refund you in full. Keep the books.</span>
+		<span class="bhp-landing-guarantee__label">30-Day Guarantee.</span>
+		<span class="bhp-landing-guarantee__text">If these books don&rsquo;t fit your reader, tell me within 30 days of delivery and I&rsquo;ll refund you in full. Keep the books.</span>
 		<a class="bhp-landing-guarantee__link" href="<?php echo esc_url( bhp_bundle_guarantee_policy_url() ); ?>">Read the policy</a>
 	</p>
 	<?php
@@ -1446,12 +1580,67 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 		 */
 		?>
 		<p class="bhp-landing-panel__fine-print">Secure checkout &middot; Tracking provided</p>
-
-		<!-- Quiet tertiary exit, moved below the primary CTA and fine print
-		     so it never visually competes with "Add the Complete ___
-		     Collection" inside the purchase card (conversion correction). -->
-		<a href="<?php echo esc_url( home_url( '/books/' ) ); ?>" class="bhp-landing-panel__view-link">View Individual Books</a>
+		<?php
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⛔⭐ 1.8.58 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`) R-8 —
+		 *     THE EXIT LEAVES THE BUY BOX. IT IS MOVED, NOT REMOVED.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * The superseded markup, preserved verbatim so the movement is visible
+		 * and is not re-derived:
+		 *
+		 *   <!-- Quiet tertiary exit, moved below the primary CTA and fine print
+		 *        so it never visually competes with "Add the Complete ___
+		 *        Collection" inside the purchase card (conversion correction). -->
+		 *   <a href="<?php echo esc_url( home_url( '/books/' ) ); ?>" class="bhp-landing-panel__view-link">View Individual Books</a>
+		 *
+		 * ⛔ WHY. This was the ONE exit placed at the decision point. Everything
+		 *    else that leaks from this page — the header nav, the footer, the
+		 *    audience router, the quiz, the capture form — leaks AFTER the
+		 *    choice. This one sat inside the purchase module, under the price
+		 *    and above the format selector, offering a cheaper-looking
+		 *    alternative to a visitor who had already chosen the collection.
+		 *
+		 * ⛔ THE LINK, THE DESTINATION AND THE LABEL ARE ALL UNCHANGED. Only
+		 *    the position moved: it now renders once, after the value
+		 *    comparison, from `bhp_bundle_render_landing_individual_books_link`
+		 *    — which is also the first place on this page a visitor has been
+		 *    shown the singles-vs-collection arithmetic, so a genuine rejection
+		 *    of the collection still has somewhere to go.
+		 *
+		 * ⭐ IT ALSO STOPS BEING RENDERED TWICE. It sat inside the per-format
+		 *    panel, so the DOM carried one copy per format (one of them
+		 *    `hidden`). The new position renders it exactly once.
+		 *
+		 * ⚠ THE `.bhp-landing-panel__view-link` CSS IS DELIBERATELY LEFT IN
+		 *   PLACE and is inherited by the new position, so no style moved with
+		 *   the markup and a revert is a one-file change.
+		 */
+		?>
 	</div>
+	<?php
+}
+
+/**
+ * R-8's new home for the individual-books exit: after the value comparison,
+ * before the gift section.
+ *
+ * ⛔ IT RENDERS ONCE, OUTSIDE EVERY FORMAT PANEL, so it can never be `hidden`
+ *    and can never be duplicated by a format toggle.
+ *
+ * ⛔ NOTHING ABOUT THE LINK ITSELF IS NEW: same `home_url( '/books/' )`
+ *    destination, same "View Individual Books" label, same class.
+ *    `tests/test-collection-price-box.php` asserts it no longer appears
+ *    between the price element and the format selector, at either width.
+ *
+ * @return void
+ */
+function bhp_bundle_render_landing_individual_books_link() {
+	?>
+	<section class="bhp-landing-singles">
+		<a href="<?php echo esc_url( home_url( '/books/' ) ); ?>" class="bhp-landing-panel__view-link bhp-landing-singles__link">View Individual Books</a>
+	</section>
 	<?php
 }
 
@@ -1481,10 +1670,63 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
  *       that goes stale, it does not widen the claim. Placement remains the
  *       only thing asserted; use, frequency and outcomes remain unclaimed.
  *       The claim was attested true at 40 as of 2026-08-03.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.58 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`) R-6 / R-12.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * TWO CHANGES HERE, AND THEY ARE DIFFERENT CLASSES OF CHANGE.
+ *
+ * 1. R-12 — A HOUSE-STYLE CORRECTION, NOT A CLAIM CHANGE. The five-star
+ *    badge read "…on OUR first two titles". The standing voice rule for
+ *    customer-facing copy is first-person singular: the company has one
+ *    operator, and "our" claims a company that does not exist. The badge now
+ *    reads "…on MY first two titles". ⛔ THE CLAIM IS UNTOUCHED AND IS STILL
+ *    SOURCED: six approved reviews, every one rating 5, across two ASINs, in
+ *    `inc/amazon-reviews.php`. The scope qualifier ("first two titles") is
+ *    the whole reason the badge is honest on a page that sells three books,
+ *    and it is deliberately kept.
+ *
+ * 2. R-6 — A SECOND, CONDENSED VARIANT so one trust element can render above
+ *    the fold without a second section. `$variant === 'condensed'` prints ONE
+ *    line, in the cold-open block. ⛔ IT CARRIES A KIRKUS *MENTION*, NEVER THE
+ *    QUOTE: `bhp_bundle_render_landing_kirkus()` keeps the full approved
+ *    quote, its attribution, its reviewed title and its link, unchanged,
+ *    further down the page. `tests/test-collection-cold-traffic.php` §3
+ *    asserts exactly that split.
+ *
+ * ⚠⚠ ONE THING THE R-6 SPECIFICATION ASKED FOR IS DELIBERATELY *NOT* BUILT,
+ *    AND IT IS REPORTED RATHER THAN QUIETLY DROPPED OR QUIETLY DONE.
+ *
+ *    The specification asks the condensed strip to carry the five-star
+ *    SENTENCE as well as the Kirkus mention. ⛔ THAT COLLIDES WITH A LIVE,
+ *    UNRESOLVED FOUNDER SCOPE TENSION THAT IS ALREADY RECORDED IN THIS FILE
+ *    — see the 1.8.33 docblock above `bhp_bundle_landing_five_star_reviews_exist`.
+ *    Andrew Signore's 2026-08-07 instruction puts the UNQUALIFIED wording
+ *    "5-Star Reader Reviews" in the cold-open bar; the 2026-08-02 narrowing
+ *    puts the QUALIFIED wording in this row. Printing the qualified sentence
+ *    into the cold-open would silently pick a side of a tension that was
+ *    explicitly flagged for the founder and left open.
+ *
+ *    ⭐ SO THE COLD-OPEN'S EXISTING FIVE-STAR LINE IS LEFT EXACTLY AS ANDREW
+ *      SET IT, and the condensed strip adds only the trust element that was
+ *      genuinely missing above the fold: the Kirkus mention. The measurable
+ *      requirement — a trust element above 844 at 390 and above 900 at 1440 —
+ *      is met by both together. The deviation is in the release handoff.
+ *
+ * @param string $variant 'full'|'condensed'.
+ * @return void
  */
-function bhp_bundle_render_landing_trust_row() {
+function bhp_bundle_render_landing_trust_row( $variant = 'full' ) {
 	$has_reviews = function_exists( 'bhp_get_approved_amazon_reviews_for_book' )
 		&& ( bhp_get_approved_amazon_reviews_for_book( 'mariana_trench' ) || bhp_get_approved_amazon_reviews_for_book( 'mount_everest' ) );
+
+	if ( 'condensed' === $variant ) {
+		?>
+		<p class="bhp-landing-coldopen__trustline">Featuring a Kirkus-reviewed title</p>
+		<?php
+		return;
+	}
 	?>
 	<div class="bhp-landing-trust-row">
 		<span class="bhp-landing-trust-badge">Placed in classrooms across Boise</span>
@@ -1504,7 +1746,18 @@ function bhp_bundle_render_landing_trust_row() {
 		 */
 		?>
 		<?php if ( $has_reviews ) : ?>
-			<span class="bhp-landing-trust-badge bhp-landing-trust-badge--gold">&#9733;&#9733;&#9733;&#9733;&#9733; Five-star reader reviews on our first two titles</span>
+			<?php
+			/*
+			 * ⭐ 1.8.58 R-12 — "our" -> "my". The superseded string, preserved
+			 *    verbatim so the movement is visible and is not re-derived:
+			 *
+			 *      Five-star reader reviews on our first two titles
+			 *
+			 * ⛔ HOUSE STYLE, NOT A CLAIM CHANGE. The scope qualifier and the
+			 *    data gate are byte-identical; only the pronoun moved.
+			 */
+			?>
+			<span class="bhp-landing-trust-badge bhp-landing-trust-badge--gold">&#9733;&#9733;&#9733;&#9733;&#9733; Five-star reader reviews on my first two titles</span>
 		<?php endif; ?>
 		<span class="bhp-landing-trust-badge">Featuring a Kirkus-reviewed title</span>
 	</div>

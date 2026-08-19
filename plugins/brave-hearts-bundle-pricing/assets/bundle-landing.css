@@ -1411,3 +1411,126 @@
 	/* last FREE bullet -> price row: 4.8 -> 3.52px */
 	.bhp-landing-coldopen__price { margin-top: .22rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.8.58 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`)
+       THE PHONE FOLD BECOMES A SELLING FOLD.
+   ----------------------------------------------------------------------
+   Four requirements land here. Each is scoped as narrowly as it can be,
+   and NOTHING in this block is deleted from anywhere else in this file.
+
+     R-1  the gallery renders BELOW the purchase card at <=600px, as one
+          piece, and a single non-interactive still stands in above it
+     R-3  the promise line, above the price
+     R-6  one condensed trust line, above the price
+     R-5  the "Hardcover available" control gets a real 44px touch target
+     R-8  the individual-books exit, in its new position below the value
+          comparison
+
+   ⛔ DESKTOP IS UNTOUCHED. Every declaration that moves anything is inside
+      `@media (max-width: 600px)`. Above 600px the still is `display:none`
+      and therefore not a grid item at all, so the two-column hero, the
+      thumbnail rail and every gallery control render exactly where
+      1.8.57 put them.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/*
+ * R-3 — THE PROMISE LINE. It is body copy, not a claim badge, and it is
+ * deliberately quieter than the headline above it: this line's job is to
+ * say what the thing IS before the number, not to compete for attention.
+ */
+.bhp-landing-coldopen__promise {
+	font-family: var(--bl-sans);
+	font-size: .78rem;
+	line-height: 1.35;
+	color: var(--bl-text-muted);
+	margin: 0 0 .45rem;
+}
+
+/*
+ * R-6 — THE CONDENSED TRUST LINE. ⛔ ONE LINE, BY BUDGET. The desktop fold
+ * is a hard 900px and the format selector sat at 814 with 86px of headroom
+ * before this release; a strip that wraps to two lines spends headroom the
+ * selector needs. `white-space: nowrap` is NOT used — a nowrap line that
+ * overflows on a 320px phone is worse than a wrap — the line is simply kept
+ * short enough that it does not need one.
+ */
+.bhp-landing-coldopen__trustline {
+	font-family: var(--bl-sans);
+	font-size: .72rem;
+	font-weight: 800;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	color: var(--bl-forest-mid);
+	line-height: 1.15;
+	margin: 0 0 .5rem;
+}
+
+/*
+ * R-1 — THE MOBILE STILL. Hidden by default, which is what keeps desktop
+ * out of this change entirely: a `display:none` element is not a grid item,
+ * so it contributes no track, no gap and no layout at >=601px.
+ */
+.bhp-landing-hero__still { display: none; }
+.bhp-landing-hero__still-img {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 12px;
+}
+
+/*
+ * R-8 — THE EXIT, IN ITS NEW POSITION. It keeps
+ * `.bhp-landing-panel__view-link`'s existing treatment (that rule is
+ * untouched at line ~191); this only gives it the page's section rhythm now
+ * that it is no longer sitting inside the purchase card's padding.
+ */
+.bhp-landing-singles {
+	margin: 0 auto;
+	padding-inline: clamp(1rem, 4vw, 2rem);
+	max-width: 1180px;
+}
+.bhp-landing-singles__link { margin-top: 0; padding-block: .75rem; }
+
+@media (max-width: 600px) {
+	/*
+	 * ⛔ THE WHOLE GALLERY MOVES, AS ONE PIECE. The stage, both arrows, the
+	 *    counter, the inspect button and the thumbnail rail are all inside
+	 *    `.bhp-media-gallery--collection`, which is a direct grid child of
+	 *    `.bhp-landing-hero__main`. Ordering the CHILD moves all thirteen
+	 *    controls together and never takes the component apart, so its JS,
+	 *    its focus order and its accessible names are all unchanged.
+	 *
+	 * ⚠ `order` here is NOT a page re-order. The page's section sequence is
+	 *   set in PHP, in `bhp_bundle_render_landing_page()`, and stays there.
+	 *   This is layout WITHIN one hero block, and DOM order still matches
+	 *   reading order for the three elements involved: still (decorative,
+	 *   aria-hidden), buy box, gallery.
+	 */
+	.bhp-landing-hero__still { display: block; order: 1; }
+	.bhp-landing-card { order: 2; }
+	.bhp-landing-hero__main > .bhp-media-gallery--collection { order: 3; }
+	.bhp-landing-hero__main > .bhp-landing-hero__covers { order: 3; }
+
+	/*
+	 * R-5 — A REAL TOUCH TARGET THAT COSTS THE FOLD NOTHING.
+	 *
+	 * MEASURED before: 19px tall, on a page where every other control is 44.
+	 * The negative block margin is the whole trick and it is deliberate: the
+	 * button's BOX grows to 44px (which is what a finger and
+	 * `getBoundingClientRect()` both see) while its contribution to the
+	 * line's flow stays at the original ~20px, so the price row does not get
+	 * taller and nothing below it is pushed toward the fold.
+	 *
+	 * ⛔ NO COLOUR, NO LABEL AND NO BEHAVIOUR CHANGES. It is the same
+	 *    <button>, the same `data-bhp-format-link` hook and the same quiet
+	 *    underlined treatment.
+	 */
+	.bhp-landing-coldopen__price-altbtn {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		padding-inline: .45rem;
+		margin-block: -12px;
+	}
+}
