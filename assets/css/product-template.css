@@ -343,3 +343,115 @@
 	align-items: center;
 	gap: 0.45rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SECTION 7 — THE DESKTOP FIRST SCREEN.
+ * theme 1.19.265 (2026-08-19, `CYCLE165-LD-ITERATE-1-CRO-FIXES`) · `CX-018`
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE DEFECT, FROM PIPPIN'S (`commerce-cx`) FULL RUBRIC AUDIT OF STAGING2 AT
+ *    1.19.264, AND RE-MEASURED BY THIS SESSION BEFORE A LINE WAS WRITTEN.
+ *
+ *    Step 3 above fixed the fold at 390 and said so in its own header:
+ *    "DESKTOP IS BYTE-UNTOUCHED." That was true, and it left the desktop fold
+ *    unfixed. Headless Chrome, `window.innerWidth` asserted 1440, viewport
+ *    1440x900, scrollY 0, fresh profile, Mariana paperback on staging2 at
+ *    1.19.264:
+ *
+ *        breadcrumb                 166 .. 185   (then a 32 px gap)
+ *        H1                         217 .. 499   h=282  72px, 4 lines
+ *                                               (then a 54 px gap)
+ *        ages + hook                553 .. 637   h= 83
+ *        "CHOOSE YOUR FORMAT"       659 .. 793   h=134  <-- see below
+ *        the four format cards      803 .. 898   h= 95
+ *        selected price             912 .. 955   h= 43   BELOW THE FOLD
+ *        ADD PAPERBACK TO CART      967 ..1019   h= 52   BELOW THE FOLD
+ *
+ *    The fold is 900. Price and Add-to-Cart were 67 px and 119 px under it, on
+ *    all six book pages. A parent on a laptop met the cover, the title, the
+ *    age line and the hook before the page said what the book costs or offered
+ *    to sell it. That is CRO rubric row 3, and Boromir's (`ads-knowledge`) KB
+ *    §6 records the standard desktop pattern as the buy box beside or above
+ *    the gallery. It IS beside the gallery here: `div.product` has been a
+ *    two-column grid (gallery 613 px | summary 521 px) since 1.19.x. The
+ *    failure was never the columns. It was the vertical stack inside the
+ *    right-hand one.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * WHAT THIS SECTION CHANGES — three things, none of them a new design
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * 1. THE BUY BOX'S LABEL IS THE SIZE ITS OWN COMPONENT ALREADY ASKED FOR.
+ *    `assets/css/book-formats.css` has said `font-size: 1rem` since 2026-07-30
+ *    and has never won; `body:not(.home) h2` rendered it at 64 px. The fix is
+ *    in that file, beside the rule it repairs, with the full measurement and
+ *    the `docs\DECISIONS.md` precedent. It is named here because it is the
+ *    single largest contributor to this defect (~113 px of 119) and a reader
+ *    of THIS file would otherwise not know where the space came from.
+ *
+ * 2. TWO GAPS THAT ARE ARITHMETIC, NOT DESIGN, ARE PINNED TO A VALUE.
+ *    The 54 px under the H1 is `margin: 0 0 0.75em` from the sitewide h1-h6
+ *    rule, resolved against a 72 px font. Nobody chose 54 px; it is 0.75 x 72.
+ *    Same for the breadcrumb's 32 px. Both are set in `rem` here so they stop
+ *    scaling with a display type size they have nothing to do with.
+ *
+ * 3. THE SUMMARY COLUMN STARTS AT THE TOP OF ITS ROW.
+ *    ⚠ THIS ONE IS LOAD-BEARING AND IS THE TRAP IN THIS FIX. `style.css` 4219
+ *      sets `.summary { align-self: center }`. Today the summary (2242 px) and
+ *      the gallery (2262 px) are almost the same height, so centring displaces
+ *      it by ~10 px and is invisible. Shrink the summary by ~160 px WITHOUT
+ *      this rule and the grid centres the shorter box against the unchanged
+ *      2262 px gallery, pushing its top DOWN by half of what was saved — about
+ *      half the fix silently cancels itself. Measured before and after, both
+ *      ways, rather than reasoned about once.
+ *
+ * ⛔ WHAT THIS SECTION DOES NOT DO.
+ *
+ *    - IT DOES NOT TOUCH <=600px. Every rule is inside `min-width: 601px`,
+ *      which is the exact complement of step 3's `max-width: 600px`. The
+ *      mobile order step 3 built is untouched, and was re-measured at an
+ *      asserted 390 after this change to prove it rather than assert it.
+ *    - IT HIDES, REMOVES AND MOVES NOTHING. No `display: none`, no `order`, no
+ *      reordering of the summary's children. Every element on the desktop
+ *      first screen before this change is still there, in the same sequence,
+ *      with the same text. Only two gaps and one font size differ.
+ *    - IT DOES NOT RESIZE THE H1. A 72 px title wrapping to four lines in a
+ *      521 px column is a real typography problem and it is NOT this build's
+ *      to settle: `.woocommerce div.product .product_title` is a deliberate
+ *      rule, and the type scale is Boromir's open aesthetics finding
+ *      `CYCLE165-BOR-202`, whose workstream is next. Recorded, not absorbed.
+ *    - IT MOVES THE REAL AMAZON REVIEW NOWHERE. `.amazon-reviews-product-section`
+ *      keeps its `grid-column: 1/-1` and its position. Its words are untouched
+ *      (§9.1a).
+ *    - IT EMITS NO PRICE, CHANGES NO PRODUCT, VARIATION, SKU, STOCK, COUPON,
+ *      SHIPPING, TAX, PAYMENT OR CHECKOUT SETTING.
+ *
+ * ⭐ ONE PRIMARY IS STILL ONE PRIMARY. The header offer is already suppressed
+ *    on single-product pages by step 3 (`inc/header-offer.php`), and this
+ *    section adds no CTA. The count of filled `.btn-primary` controls in the
+ *    first screen is unchanged at one: ADD ... TO CART.
+ */
+
+@media (min-width: 601px) {
+
+	/*
+	 * See note 3 above. Without this, the savings below are halved by the
+	 * grid re-centring a shorter column against an unchanged 2262 px gallery.
+	 */
+	body.single-product.woocommerce div.product > .summary {
+		align-self: start;
+	}
+
+	/*
+	 * 0.75em of a 72px font. Pinned so the gap under the title is a decision
+	 * and not a by-product of the display type size.
+	 */
+	body.single-product.woocommerce div.product > .summary > .product_title {
+		margin-bottom: 1.25rem;
+	}
+
+	/* Same reasoning, one level up the page. */
+	body.single-product.woocommerce .woocommerce-breadcrumb {
+		margin-bottom: 1.15rem;
+	}
+}

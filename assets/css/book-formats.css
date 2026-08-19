@@ -25,6 +25,54 @@
 	color: var(--bhp-fmt-navy);
 }
 
+/* ⭐ 1.19.265 (2026-08-19, `CYCLE165-LD-ITERATE-1-CRO-FIXES`, `CX-018`) —
+   THE RULE ABOVE HAS NEVER TAKEN EFFECT ON DESKTOP, AND THAT IS MOST OF WHY
+   ADD TO CART SAT BELOW THE FOLD AT 1440.
+
+   MEASURED, NOT INFERRED. staging2 theme 1.19.264, headless Chrome,
+   `window.innerWidth` asserted 1440, viewport 1440x900, scrollY 0, Mariana
+   paperback. `getComputedStyle` on `.bhp-formats__heading`:
+
+       font-size    64px          (not the 1rem three lines above)
+       line-height  67.2px
+       font-family  "Cormorant Garamond"
+       box height   134px         ("CHOOSE YOUR FORMAT", wrapped to 2 lines)
+
+   `CSS.getMatchedStylesForNode` names the winner: `body:not(.home) h2 {
+   font-size: clamp(2.25rem, 4.5vw, 4rem) }` in `style.css`. `:not(.home)`
+   contributes a class, so that selector is (0,1,2) and `.bhp-formats__heading`
+   alone is (0,1,0). Two type selectors beat one class. At 1440, 4.5vw is
+   64.8px, clamped to the 4rem ceiling.
+
+   ⭐ THIS IS A KNOWN, DOCUMENTED DEFECT CLASS IN THIS REPOSITORY, AND THE FIX
+      BELOW IS THE REMEDY THE REPOSITORY ITSELF PRESCRIBES. repo
+      `docs\DECISIONS.md`, "CSS specificity: sitewide `body:not(.home)
+      h1/h2/h3` rules outrank single-class landing-page selectors
+      (2026-07-15)": *"every ... heading selector that sets `font-size` must
+      include the page's own outer scope class ... a bare `<selector> h1/h2/h3`
+      without the outer scope class will silently lose to the sitewide rule."*
+      That entry was written for the audience/parent landing pages; this is the
+      same defect in the purchase component, found three weeks later.
+
+   ⛔ THIS RESTORES THE INTENDED SIZE. It does not choose a new one. Every
+      value below is copied from the rule above it; only the selector changes,
+      and `line-height` is stated because the sitewide rule pairs 1.05 with a
+      64px display size and 1.05 on a 16px label would crowd it.
+
+   `.bhp-formats .bhp-formats__heading` is (0,2,0) — two classes, no type
+   selectors — which outranks (0,1,2) on the class count and therefore does not
+   depend on stylesheet order.
+
+   ⛔ NOTHING IS HIDDEN AND NOTHING MOVES. The heading keeps its text, its `id`
+      and its `aria-labelledby` relationship to the card group. At <=600px it
+      is still screen-reader-only by the rule further down this file, so the
+      mobile first screen that step 3 built is byte-unchanged. */
+.bhp-formats .bhp-formats__heading {
+	font-size: 1rem;
+	line-height: 1.3;
+	letter-spacing: 0.06em;
+}
+
 /* ⭐ 1.19.240 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — the one-line
    reason there is no HARDCOVER card on a school-visit session.
 

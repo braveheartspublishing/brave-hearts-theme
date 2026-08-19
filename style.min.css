@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 29c4cc158cfaf2d0d072da9c8862bc30
+    source-md5: abd445f68ca4fe4f6ccba1f1124c7191
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.264
+Version: 1.19.265
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5086,8 +5086,13 @@ margin-inline: 0 !important;
   border-radius: var(--radius-sm);
   background: var(--color-white);
   font-family: var(--font-ui);
-  font-size: var(--text-sm);
+font-size: 1rem;
   color: var(--color-ink);
+}
+.acquisition-form input:not([type='hidden']),
+.acquisition-form select,
+.acquisition-form textarea {
+  font-size: max(1rem, 1em);
 }
 @media (max-width: 760px) {
   .footer-capture__inner { grid-template-columns: 1fr; gap: var(--space-6); }

@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 61eae787f56d67b7c6980d40768f0057
+    source-md5: d90df118b6f9b71508414230d2730da8
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -19,6 +19,13 @@
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: var(--bhp-fmt-navy);
+}
+
+
+.bhp-formats .bhp-formats__heading {
+	font-size: 1rem;
+	line-height: 1.3;
+	letter-spacing: 0.06em;
 }
 
 

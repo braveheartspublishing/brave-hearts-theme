@@ -386,6 +386,78 @@ function bhp_empty_cart_copy() {
     ];
 }
 
+/**
+ * ⭐ 1.19.265 (2026-08-19, `CYCLE165-LD-ITERATE-1-CRO-FIXES`) — `CX-021`.
+ *    THE STOCK "Your cart is currently empty!" HEADING, REMOVED FROM THE
+ *    RENDERED BLOCK RATHER THAN SHRUNK IN CSS.
+ *
+ * ⭐ WHAT WAS ACTUALLY ON THE PAGE, MEASURED BEFORE THIS WAS WRITTEN. staging2
+ *    at theme 1.19.264, headless Chrome, `/cart/`, cart genuinely empty, every
+ *    visible leaf node containing "empty" enumerated:
+ *
+ *      w=390   y=422  h=76   36px    h2.bhp-empty-cart__title
+ *                                    "Your expedition pack is empty"
+ *              y=796  h=15   14.4px  h2.wc-block-cart__empty-cart__title
+ *                                    "Your cart is currently empty!"
+ *      w=1440  y=551  h=134  64px    h2.bhp-empty-cart__title
+ *              y=924  h=15   14.4px  h2.wc-block-cart__empty-cart__title
+ *
+ *    Two headings, both visible, both at both widths, saying the same thing in
+ *    two different voices — one of them WooCommerce's.
+ *
+ * ⭐ WHY THE STOCK ONE GOES AND THE BRANDED ONE STAYS, and the branded copy was
+ *    re-read against the standing rules rather than assumed to still pass:
+ *    "Your expedition pack is empty" / "Three real places are waiting: the
+ *    deepest ocean trench, the top of the world, and the green heart of the
+ *    Amazon. Pick a starting point." — NO "we"/"us"/"our" (§9.1), NO em dash,
+ *    NO outcome claim, and it names three real places rather than promising
+ *    anything about a child. It also carries the two routes out; the stock
+ *    line carries none. NOT ONE WORD OF IT IS CHANGED BY THIS EDIT.
+ *
+ * ⭐ WHY A FILTER AND NOT CSS. F11 demoted the stock heading to 14.4 px
+ *    uppercase because "the text lives in the page's database content and this
+ *    wave does not edit it". That is still true, and it stays true here: THE
+ *    DATABASE IS NOT EDITED. `render_block` hands this function the block's
+ *    already-rendered output — inner blocks included — and what is returned is
+ *    what ships. Removing the node from that string removes it from the
+ *    document for real, rather than leaving a second, quieter empty-cart
+ *    message on the page for a screen reader to read out and for a sighted
+ *    visitor to read twice. Remove this filter and the stock heading returns
+ *    unchanged, because `post_content` still holds it.
+ *
+ * ⛔ SCOPE, TIGHT AND DELIBERATE. It only runs inside the `woocommerce/
+ *    empty-cart-block` filter, which already refuses to act unless
+ *    `WC()->cart->is_empty()`. It matches on `wc-block-cart__empty-cart__title`
+ *    — WooCommerce's own class on its own heading — and removes at most that
+ *    one element. Nothing else in the block is touched: not the cross-sells,
+ *    not the "Browse store" button, not any other block on the page.
+ *
+ * ⛔ IF THE MARKUP EVER CHANGES, THIS FAILS OPEN, NOT CLOSED. No match means
+ *    the content is returned byte-identical and the page renders exactly as it
+ *    does today (two headings again, which is a visible regression a human
+ *    notices, not a blank page). The CSS demotion rule in
+ *    `assets/css/checkout-experience.css` is DELIBERATELY LEFT IN PLACE as
+ *    exactly that fallback; it simply matches nothing while this filter works.
+ *
+ * ⚠ NOT FIXED HERE, AND STATED RATHER THAN QUIETLY LEFT: the BLOCKS CHECKOUT
+ *   has the same duplicate. Its empty state is `.wc-block-checkout-empty`,
+ *   rendered client-side by React and never passed through `render_block`, so
+ *   no server-side filter can reach it — removing it would mean deleting a
+ *   node in JavaScript, which is a different decision. Recorded as
+ *   `CYCLE165-LD-22` and routed, not absorbed into this fix.
+ *
+ * @param string $html The rendered empty-cart block.
+ * @return string
+ */
+function bhp_empty_cart_strip_stock_title($html) {
+    return (string) preg_replace(
+        '#<h2\b[^>]*\bclass="[^"]*\bwc-block-cart__empty-cart__title\b[^"]*"[^>]*>.*?</h2>#is',
+        '',
+        $html,
+        1
+    );
+}
+
 function bhp_empty_cart_invitation($block_content, $block) {
     if (empty($block['blockName']) || 'woocommerce/empty-cart-block' !== $block['blockName']) {
         return $block_content;
@@ -426,6 +498,14 @@ function bhp_empty_cart_invitation($block_content, $block) {
     </div>
     <?php
     $panel = ob_get_clean();
+    /*
+     * CX-021 (1.19.265): the stock heading comes out BEFORE the invitation
+     * goes in, so the offset computed on the next line is an offset into the
+     * string that is actually returned. Doing it the other way round would
+     * work today and break the first time the stock heading moved above the
+     * insertion point.
+     */
+    $block_content = bhp_empty_cart_strip_stock_title($block_content);
     // Insert immediately after the block wrapper's opening tag.
     $cut = strpos($block_content, '>');
     if (false === $cut) {

@@ -1,117 +1,169 @@
 /*! Built from product-template.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: ea98e604ff3200aef138ffe354f19681
+    source-md5: 13293ebcf3230d6c34aa9b34f083266b
     Comments stripped for transfer size; the source file is canonical. */
 @media (max-width: 600px) {
-body.single-product.woocommerce div.product {
+
+	
+
+	body.single-product.woocommerce div.product {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 0;
 	}
-body.single-product.woocommerce div.product > .summary {
+
+	body.single-product.woocommerce div.product > .summary {
 		display: contents;
 	}
-body.single-product.woocommerce div.product > .summary > .bhp-product-value-prop {
+
+	body.single-product.woocommerce div.product > .summary > .bhp-product-value-prop {
 		display: contents;
 	}
-body.single-product.woocommerce div.product > *,
+
+	
+	body.single-product.woocommerce div.product > *,
 	body.single-product.woocommerce div.product > .summary > * {
 		order: 7;
 		margin-top: clamp(1.75rem, 6vw, 2.75rem);
 	}
-body.single-product.woocommerce div.product > .summary > .product_title {
+
+	
+
+	body.single-product.woocommerce div.product > .summary > .product_title {
 		order: 1;
 		margin-top: 0;
 		margin-bottom: 0.4rem;
 		font-size: 1.55rem;
 		line-height: 1.14;
 	}
-body.single-product.woocommerce div.product .bhp-product-value-prop__age {
+
+	
+	body.single-product.woocommerce div.product .bhp-product-value-prop__age {
 		order: 2;
 		margin: 0 0 0.85rem;
 		justify-self: start;
 	}
-body.single-product.woocommerce div.product > .summary > .bhp-formats {
+
+	body.single-product.woocommerce div.product > .summary > .bhp-formats {
 		order: 3;
 		margin-top: 0;
 	}
-body.single-product.woocommerce div.product > .amazon-reviews-product-section {
+
+	body.single-product.woocommerce div.product > .amazon-reviews-product-section {
 		order: 4;
 	}
-body.single-product.woocommerce div.product > .bhp-media-gallery--hero,
+
+	
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero,
 	body.single-product.woocommerce div.product > .woocommerce-product-gallery {
 		order: 5;
 	}
-body.single-product.woocommerce div.product .bhp-product-value-prop__hook {
+
+	body.single-product.woocommerce div.product .bhp-product-value-prop__hook {
 		order: 6;
 		margin: clamp(1.75rem, 6vw, 2.75rem) 0 0;
 	}
-body.single-product.woocommerce div.product > .summary > .price {
+
+	
+	body.single-product.woocommerce div.product > .summary > .price {
 		order: 3;
 		margin-top: 0;
 		margin-bottom: 0.6rem;
 	}
-body.single-product.woocommerce div.product > .summary > form.cart {
+
+	body.single-product.woocommerce div.product > .summary > form.cart {
 		order: 3;
 		margin-top: 0;
 	}
-body.single-product.woocommerce div.product .bhp-formats {
+
+	
+
+	
+	body.single-product.woocommerce div.product .bhp-formats {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		column-gap: 10px;
 		row-gap: 0;
 	}
-body.single-product.woocommerce div.product .bhp-formats > * {
+
+	body.single-product.woocommerce div.product .bhp-formats > * {
 		order: 9;
 		grid-column: 1 / -1;
 	}
-body.single-product.woocommerce div.product .bhp-formats__grid {
+
+	body.single-product.woocommerce div.product .bhp-formats__grid {
 		display: contents;
 	}
-body.single-product.woocommerce div.product .bhp-formats__heading,
+
+	body.single-product.woocommerce div.product .bhp-formats__heading,
 	body.single-product.woocommerce div.product .bhp-formats__paperback-only {
 		order: 1;
 	}
-body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="paperback"],
+
+	
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="paperback"],
 	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="hardcover"] {
 		order: 2;
 		grid-column: auto;
 		margin-bottom: 10px;
 	}
-body.single-product.woocommerce div.product .bhp-formats__selected-price { order: 3; }
+
+	body.single-product.woocommerce div.product .bhp-formats__selected-price { order: 3; }
 	body.single-product.woocommerce div.product .bhp-formats__cta-wrap       { order: 4; }
 	body.single-product.woocommerce div.product .bhp-formats__spec           { order: 5; }
 	body.single-product.woocommerce div.product .bhp-formats__note           { order: 6; }
-body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="kindle"],
+
+	
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="kindle"],
 	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="collection"] {
 		order: 7;
 		grid-column: auto;
 		margin-top: 10px;
 	}
-body.single-product.woocommerce div.product .bhp-product-guarantee { order: 8; }
-body.single-product.woocommerce div.product .bhp-formats__heading {
+
+	body.single-product.woocommerce div.product .bhp-product-guarantee { order: 8; }
+
+	
+
+	body.single-product.woocommerce div.product .bhp-formats__heading {
 		margin: 0 0 0.55rem;
 		font-size: 0.72rem;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
 	}
-body.single-product.woocommerce div.product .bhp-formats__selected-price {
+
+	body.single-product.woocommerce div.product .bhp-formats__selected-price {
 		margin: 0.85rem 0 0.6rem;
 	}
-body.single-product.woocommerce div.product .bhp-formats__cta {
+
+	
+	body.single-product.woocommerce div.product .bhp-formats__cta {
 		min-height: 52px;
 	}
-body.single-product.woocommerce div.product .bhp-formats__cta-wrap {
+
+	body.single-product.woocommerce div.product .bhp-formats__cta-wrap {
 		margin: 0;
 	}
-body.single-product.woocommerce .woocommerce-breadcrumb {
+
+	
+
+	
+	body.single-product.woocommerce .woocommerce-breadcrumb {
 		margin-bottom: 0.9rem;
 		font-size: 0.6rem;
 		letter-spacing: 0.06em;
 		line-height: 1.5;
 	}
-body.single-product .bhp-gallery__inspect-hint {
+
+	
+
+	
+	body.single-product .bhp-gallery__inspect-hint {
 		display: none;
 	}
 }
+
+
+
+
 .bhp-product-value-prop__mark {
 	flex: 0 0 auto;
 	width: 1.15em;
@@ -119,8 +171,20 @@ body.single-product .bhp-gallery__inspect-hint {
 	vertical-align: -0.2em;
 	color: var(--expedition-gold, #d9a45f);
 }
+
 .bhp-product-value-prop__age {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.45rem;
+}
+@media (min-width: 601px) {
+body.single-product.woocommerce div.product > .summary {
+		align-self: start;
+	}
+body.single-product.woocommerce div.product > .summary > .product_title {
+		margin-bottom: 1.25rem;
+	}
+body.single-product.woocommerce .woocommerce-breadcrumb {
+		margin-bottom: 1.15rem;
+	}
 }
