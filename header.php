@@ -182,6 +182,42 @@ if (function_exists('bhp_print_art_defer_script'))  { bhp_print_art_defer_script
       </a>
     </div>
 
+    <?php
+    /*
+     * ⭐ 1.19.260 (2026-08-19) — THE MOBILE-HEADER OFFER. `CYCLE165-LD-DIRECTION1-STEP1-HEADER`.
+     *
+     * ONE compact primary offer, OUTSIDE the hamburger, at the mobile nav
+     * breakpoint. It exists because `.header-expedition-cta` immediately below
+     * is `display: none` there and `.site-nav__cta` is inside the CLOSED
+     * dropdown, so a phone visitor had to open a menu before this site offered
+     * to sell anything. `commerce-cx` measured 69 of 83 pages with no buy CTA
+     * above the fold at 390.
+     *
+     * ⛔ IT IS PLACED BEFORE `.nav-toggle` DELIBERATELY, AND THE ORDER IS
+     *    LOAD-BEARING. `.header-inner` is `justify-content: space-between`, so
+     *    the toggle must stay the rightmost item — the 2026-07-14 P0 in
+     *    style.css is a toggle pushed off the right edge of a phone, invisible
+     *    rather than merely broken. Putting the offer to its LEFT keeps the
+     *    toggle's position and the logo's box unchanged.
+     *
+     * ⛔ IT RENDERS NOTHING AT DESKTOP/TABLET, on any page. The whole component
+     *    is `display: none` outside the same `@container (max-width: 1116px)`
+     *    query that hides `.header-expedition-cta` — the same container, the
+     *    same breakpoint, so the two can never both show or both hide. The
+     *    desktop header is byte-identical to 1.19.259.
+     *
+     * The `function_exists()` guard is the same premium `.header-expedition-cta`
+     * pays three lines below, for the same reason: this is the SITEWIDE header
+     * and a fatal here is a whole-site outage. There is deliberately NO inline
+     * fallback — an offer button whose renderer is missing has no live price to
+     * print, and a hardcoded price on a sitewide purchase control is exactly
+     * what `inc/header-offer.php` refuses to ship.
+     */
+    if ( function_exists( 'bhp_header_offer' ) ) {
+      echo bhp_header_offer(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- renderer escapes every component
+    }
+    ?>
+
     <button class="nav-toggle" aria-label="<?php esc_attr_e('Toggle navigation', 'brave-hearts'); ?>" aria-controls="primary-navigation" aria-expanded="false">&#9776;</button>
 
     <nav class="site-nav" id="primary-navigation" role="navigation" aria-label="<?php esc_attr_e('Primary navigation', 'brave-hearts'); ?>">

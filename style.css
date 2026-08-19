@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.259
+Version: 1.19.260
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -10358,4 +10358,111 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   .home #home-hero.home-hero--aside-after-title .home-hero__content > .home-hero__book-preview {
     margin-top: 30px;
   }
+}
+
+/* =========================================================================
+   ⭐ 1.19.260 (2026-08-19) — THE MOBILE-HEADER OFFER
+   `CYCLE165-LD-DIRECTION1-STEP1-HEADER` · Direction 1, board build step 1 of 4
+
+   Appended LAST, which is this file's own convention for a new component that
+   must not be out-ranked by an older rule it never anticipated. Nothing above
+   is edited: `.header-expedition-cta`, `.site-nav__cta`, `.nav-toggle`,
+   `.site-logo` and `.header-inner` are byte-identical to 1.19.259.
+
+   ⛔ SAME CONTAINER, SAME BREAKPOINT AS THE HAMBURGER, AND THAT IS THE POINT.
+      `@container (max-width: 1116px)` on `.header-inner` is the exact query at
+      ~line 619 that turns `.nav-toggle` on and `.header-expedition-cta` off. A
+      viewport media query would NOT do: `.single-post` caps <body> at 1120px,
+      so `.header-inner` is far narrower than `window.innerWidth` there, and a
+      media query cannot see that. Using the same container query means the
+      offer button appears exactly when the hamburger appears and disappears
+      exactly when the desktop CTA returns. The two can never both show.
+
+   ⛔ NO NEW HUE. `var(--color-accent)` on `var(--color-navy)` are the tokens
+      `.header-expedition-cta` already uses, so this control cannot drift out of
+      palette parity the way the 2026-07-14 hardcoded gold/navy mobile CTA did.
+      The direction board's own palette strip says "Palette — unchanged".
+
+   ⛔ THE HIDDEN STATE USES `visibility`, NEVER `display`, AND THAT IS THE
+      LAYOUT-SHIFT GUARANTEE. On the homepage the button is hidden until the
+      hero's free-sample CTA scrolls away. A `display: none` -> `flex` reveal
+      inside a `justify-content: space-between` row would move the wordmark
+      sideways mid-scroll — the same class of defect as the measured 53.27px nav
+      shift that made Andrew reverse the 1.19.183 header build. Reserving the box
+      makes the reveal a pure opacity change. `visibility: hidden` also takes the
+      anchor out of the tab order, so a keyboard visitor is never sent to a
+      control they cannot see.
+
+   ⛔ 44px MINIMUM TAP TARGET, set as `min-height` rather than baked into
+      padding, so a longer price string grows the box horizontally and never
+      shortens it vertically.
+   ========================================================================= */
+
+.bhp-header-offer { display: none; }
+
+@container (max-width: 1116px) {
+
+  .bhp-header-offer {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    min-height: 44px;
+    padding-block: 5px;
+    padding-inline: 11px;
+    border: 1px solid var(--color-accent);
+    border-radius: 2px;
+    background: var(--color-accent);
+    color: var(--color-navy);
+    font-family: var(--font-ui);
+    line-height: 1.1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity .18s ease;
+  }
+
+  .bhp-header-offer__count {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .bhp-header-offer__price {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .01em;
+  }
+
+  /* The homepage states. `deferred` is what PHP prints; `hidden` is what the
+     reveal script writes when the hero CTA comes back into view on a scroll
+     up. Both mean the same thing to the stylesheet, and both keep the box. */
+  .bhp-header-offer[data-bhp-offer-state="deferred"],
+  .bhp-header-offer[data-bhp-offer-state="hidden"] {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  .bhp-header-offer[data-bhp-offer-state="visible"] {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Colour is NOT restated on hover: the fill is already the accent, and the
+     hover treatment matches `.header-expedition-cta`'s so the two controls
+     behave identically at the width where they swap over. */
+  .bhp-header-offer:hover,
+  .bhp-header-offer:focus-visible {
+    background: var(--color-accent-light);
+    color: var(--color-navy);
+  }
+}
+
+/* A visitor who asks for less motion gets the state change with no fade. The
+   button still appears; only the transition is dropped. */
+@media (prefers-reduced-motion: reduce) {
+  .bhp-header-offer { transition: none; }
 }

@@ -3428,6 +3428,11 @@ require_once get_template_directory() . '/inc/collection-gallery.php';
 // /complete-collection/ link if the plugin is off. Loaded AFTER book-formats.php
 // because it reads bhp_book_default_format() for format-agnostic CTAs.
 require_once get_template_directory() . '/inc/collection-cta.php';
+// 1.19.260 — the mobile-header offer (CYCLE165-LD-DIRECTION1-STEP1-HEADER).
+// Loaded AFTER collection-cta.php so the two header controls are read in the
+// order they render, and after book-formats.php/the bundle plugin so the live
+// price helpers exist by the time header.php calls the renderer.
+require_once get_template_directory() . '/inc/header-offer.php';
 require_once get_template_directory() . '/inc/amazon-reviews.php';
 // Native customer reviews (2026-08-03): the on-page "Write a Review for …"
 // section beneath the Kirkus block, the /review/<slug>/ two-click email
