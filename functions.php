@@ -626,6 +626,38 @@ function bhp_enqueue_audience_quiz_assets() {
     if (!$on_homepage && !$on_shortcode_page && !$on_canonical_quiz_page && !$on_sitewide_launcher_page) {
         return;
     }
+    /*
+     * ⭐⭐ 1.19.266 (`CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS`) — IS THE QUIZ
+     *    THE PAGE, OR IS IT A CLOSED MODAL? `bhp_async_noncritical_styles()`
+     *    needs the answer and this is the only place that already knows it.
+     *
+     * MEASURED, headless Chromium, `innerWidth` asserted 1440, three runs:
+     * `/find-your-adventure/` reported CLS 0.2404 with ONE 0.2354 shift at
+     * ~1.3-1.6 s. Source rects, read from the PerformanceObserver rather than
+     * inferred: `DIV.bhp-quiz__inner` 1440x156 -> 640x320, taking
+     * `FOOTER.site-footer` from y=586 to y=853. That is the quiz painting
+     * UNSTYLED and then being restyled when its deferred stylesheet lands.
+     *
+     * The deferral itself is right, and its docblock says exactly why it is
+     * right: the quiz "styles a modal that is CLOSED on first paint". On this
+     * ONE page that sentence is false -- the quiz IS the page's main content,
+     * rendered inline by `page-find-your-adventure.php` or by the shortcode.
+     * The correct fix is not to undo the deferral but to stop applying it
+     * where its own precondition does not hold.
+     *
+     * ⚠ THIS DEFECT PREDATES 1.19.266 -- the same page measured CLS 0.0836 at
+     *   1440 on 1.19.264. It is fixed here because THIS release made it
+     *   worse: the H1 went 96px -> 48px, the page above the quiz got shorter,
+     *   and the same absolute reflow therefore moved a larger fraction of the
+     *   viewport. A release that triples a gate-row number does not hand it
+     *   over as "pre-existing".
+     *
+     * ⛔ Keyed on the TEMPLATE and on the shortcode, never on a page slug --
+     *   a renamed page must not silently re-open this.
+     */
+    if ($on_canonical_quiz_page || $on_shortcode_page) {
+        $GLOBALS['bhp_quiz_is_page_content'] = true;
+    }
     $theme_version = wp_get_theme()->get('Version');
     wp_enqueue_style('bhp-audience-quiz', get_template_directory_uri() . '/assets/css/audience-quiz.css', ['bhp-style'], $theme_version);
     wp_enqueue_script('bhp-audience-quiz', get_template_directory_uri() . '/assets/js/audience-quiz.js', [], $theme_version, true);
@@ -5337,6 +5369,18 @@ function bhp_async_noncritical_styles( $tag, $handle, $href, $media ) {
         return $tag;
     }
     if ( ! in_array( $handle, array( 'bhp-audience-quiz', 'bhp-quiz-modal' ), true ) ) {
+        return $tag;
+    }
+    /*
+     * 1.19.266: the quiz stylesheet is NOT deferred on a page where the quiz is
+     * the page's own content rather than a closed modal. The flag is set in
+     * `bhp_enqueue_audience_quiz_assets()`, which is the only place that has
+     * already worked out which of the four entry points is in play; the full
+     * measurement and reasoning live there. `bhp-quiz-modal` stays deferred on
+     * every page including this one -- it styles the modal shell, which really
+     * is closed on first paint everywhere.
+     */
+    if ( 'bhp-audience-quiz' === $handle && ! empty( $GLOBALS['bhp_quiz_is_page_content'] ) ) {
         return $tag;
     }
     if ( 'all' !== $media ) {
