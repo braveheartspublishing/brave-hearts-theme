@@ -462,10 +462,36 @@ bhp_cpb_assert(
 	'6: the hardcover purchase forms are still on the page (the toggle still works)',
 	$failures
 );
-/* The paperback pricing panel is the one rendered WITHOUT `hidden`. */
+/* The paperback pricing panel is the one rendered WITHOUT `hidden`.
+ *
+ * ⚠ AMENDED BY `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS` (theme 1.19.266 /
+ *   bundle 1.8.60), and the amendment is disclosed rather than made quietly.
+ *
+ * IT READ: `/data-bhp-format-panel="paperback" >\s*<h2 class="bhp-landing-panel__title/`
+ *
+ * The comment above it says what it is FOR — "the panel rendered WITHOUT
+ * hidden" — and the regex tested something else entirely: that no attribute
+ * follows `data-bhp-format-panel`, and that the panel's first child is an
+ * `<h2>`. Neither is the property. 1.19.266 gave the panel
+ * `role="group" aria-labelledby="..."` and turned that `<h2>` into a `<p>`
+ * (`CYCLE165-BOR-206`: those titles were two of the three headings printing
+ * before the page's own `<h1>`), and this assertion went red while the
+ * behaviour it names was untouched.
+ *
+ * VERIFIED LIVE before rewriting it, staging2 1.19.266, `wp eval` +
+ * `wp_remote_get` on `/complete-collection/`, 2026-08-19:
+ *     VISIBLE  data-bhp-format-panel="paperback"  role="group" ... (no hidden)
+ *     HIDDEN   data-bhp-format-panel="hardcover"  role="group" ... hidden
+ *
+ * The replacement tests BOTH directions and does not care about tag names or
+ * attribute order — so the next markup change that does not break the
+ * behaviour will not break the test either. */
+$bhp_cpb_pb_panel = preg_match( '/<div[^>]*data-bhp-format-panel="paperback"[^>]*>/', $html, $bhp_cpb_pbm ) ? $bhp_cpb_pbm[0] : '';
+$bhp_cpb_hc_panel = preg_match( '/<div[^>]*data-bhp-format-panel="hardcover"[^>]*>/', $html, $bhp_cpb_hcm ) ? $bhp_cpb_hcm[0] : '';
 bhp_cpb_assert(
-	preg_match( '/data-bhp-format-panel="paperback" >\s*<h2 class="bhp-landing-panel__title/su', $html ) === 1,
-	'6: the PAPERBACK pricing panel is the visible one on load',
+	'' !== $bhp_cpb_pb_panel && ! preg_match( '/\bhidden\b/', $bhp_cpb_pb_panel )
+		&& '' !== $bhp_cpb_hc_panel && preg_match( '/\bhidden\b/', $bhp_cpb_hc_panel ),
+	'6: the PAPERBACK pricing panel is the visible one on load, and the HARDCOVER one carries `hidden`',
 	$failures
 );
 bhp_cpb_assert(
