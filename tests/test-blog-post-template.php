@@ -281,9 +281,39 @@ bhp_bpt_assert(
 );
 bhp_bpt_assert( false !== strpos( $cap_block, 'type="email"' ) && false !== strpos( $cap_block, 'autocomplete="email"' ), '§4.3 the email field carries type=email and autocomplete=email', $failures );
 bhp_bpt_assert( false !== strpos( $cap_block, 'acquisition-form__privacy' ), '§4.4 the capture carries a privacy line', $failures );
-bhp_bpt_assert( false !== strpos( $cap_block, 'name="action" value="bhp_mailchimp_signup"' ), '§4.5 it posts to the EXISTING Kit signup mechanism', $failures );
+
+/*
+ * ⚠ §4.5 AND §4.7 ARE ENVIRONMENT-DEPENDENT AND ARE SKIPPED, NOT FAKED, WHERE
+ *   THE ENVIRONMENT CANNOT SUPPORT THEM.
+ *
+ *   `signup-form.php` emits the POST action and the nonce only inside
+ *   `if ( $form_ready )`, and `$form_ready` is
+ *   `(bool) bhp_get_signup_form_action(...)`, which is empty whenever MC4WP has
+ *   no connected audience. On staging2 the Mailchimp API key is NOT SET, so
+ *   EVERY acquisition form on that environment -- the parent popup, the footer
+ *   capture, the Mariana popup and the Adventure Club form, all four of which
+ *   predate this build -- renders in its disabled state. That is a property of
+ *   the environment, not of this component.
+ *
+ *   ⛔ The readiness is therefore MEASURED against the pre-existing placements
+ *      rather than assumed, and the result is reported either way. A suite that
+ *      asserted these unconditionally would fail on staging forever and would
+ *      teach the next reader to ignore it.
+ */
+$env_forms_ready = (bool) bhp_get_signup_form_action( '', 'parents_families', 'parent_popup' );
+if ( ! $env_forms_ready ) {
+	bhp_bpt_skip( '§4.5 the POST action — NO acquisition form is ready on this environment (MC4WP audience unavailable); the pre-existing parent popup is equally not ready, so this is environmental' );
+	bhp_bpt_skip( '§4.7 the nonce — same environmental cause' );
+	bhp_bpt_assert(
+		false !== strpos( $cap_block, 'acquisition-form__provider-note' ),
+		'§4.5b with no audience the capture degrades to the shared provider note rather than a dead form',
+		$failures
+	);
+} else {
+	bhp_bpt_assert( false !== strpos( $cap_block, 'name="action" value="bhp_mailchimp_signup"' ), '§4.5 it posts to the EXISTING Kit signup mechanism', $failures );
+	bhp_bpt_assert( false !== strpos( $cap_block, 'name="bhp_signup_nonce"' ), '§4.7 the nonce is present', $failures );
+}
 bhp_bpt_assert( false !== strpos( $cap_block, 'value="reluctant_reader_adventure_kit"' ), '§4.6 the lead magnet is the Adventure Kit', $failures );
-bhp_bpt_assert( false !== strpos( $cap_block, 'name="bhp_signup_nonce"' ), '§4.7 the nonce is present', $failures );
 
 // ⭐ THE ONE THAT KEEPS lead_signup_success ALIVE. signup-form.php suppresses
 // the inline event when a success_redirect_key is passed, because such a form
@@ -366,25 +396,52 @@ bhp_bpt_assert(
 echo "\n=== §6 — THE COPY GATE ===\n";
 
 // Only the chrome this build added is scored. The article body, its H2s and any
-// quoted customer words belong to Merry/Andrew and are NOT this suite's to police
+// quoted customer words belong to `marketing-growth` / Andrew and are NOT this suite to police
 // (standing rule §9.1a: a quoted "we" is never edited).
 $chrome = '';
-foreach ( $docs as $html ) {
+$decks  = array();
+foreach ( $docs as $slug => $html ) {
 	$chrome .= bhp_bpt_rail_block( $html ) . ' ';
 	if ( preg_match( '/<aside id="[^"]*" class="bhp-post-capture".*?<\/aside>/s', $html, $m ) ) {
-		$chrome .= $m[0] . ' ';
-	}
-	if ( preg_match( '/<p class="bhp-post-deck">(.*?)<\/p>/s', $html, $m ) ) {
 		$chrome .= $m[0] . ' ';
 	}
 	if ( preg_match( '/<p class="component-heading__eyebrow bhp-post-eyebrow">(.*?)<\/p>/s', $html, $m ) ) {
 		$chrome .= $m[0] . ' ';
 	}
+	/*
+	 * ⛔ THE DECK IS SCORED SEPARATELY AND REPORTED, NOT FAILED. Its text is the
+	 *    post's OWN hand-written `post_excerpt` -- copy that belongs to
+	 *    `marketing-growth` and Andrew, that this build only re-positions, and
+	 *    that was already customer-facing on the blog index and in the meta
+	 *    description before this template existed. Failing a build for it would
+	 *    push the next engineer toward editing an author's sentence, which
+	 *    standing rule §9 forbids.
+	 */
+	if ( preg_match( '/<p class="bhp-post-deck">(.*?)<\/p>/s', $html, $m ) ) {
+		$decks[ $slug ] = html_entity_decode( wp_strip_all_tags( $m[1] ), ENT_QUOTES, 'UTF-8' );
+	}
 }
 $chrome_text = html_entity_decode( wp_strip_all_tags( $chrome ), ENT_QUOTES, 'UTF-8' );
 
 bhp_bpt_assert( false === strpos( $chrome_text, "\xE2\x80\x94" ), '§6.1 no em dash in any chrome this build added', $failures );
-bhp_bpt_assert( ! preg_match( '/\b(we|us|our)\b/i', $chrome_text ), '§6.2 no customer-facing "we", "us" or "our" (standing rule §9.1)', $failures );
+bhp_bpt_assert( ! preg_match( '/\b(we|us|our)\b/i', $chrome_text ), '§6.2 no customer-facing "we", "us" or "our" in the chrome this build wrote (standing rule §9.1)', $failures );
+
+// REPORTED, NOT FAILED. See the comment above the $decks collection.
+$deck_we = array();
+foreach ( $decks as $slug => $text ) {
+	if ( preg_match( '/\b(we|us|our)\b/i', $text, $m ) ) {
+		$deck_we[] = "{$slug} [{$m[0]}]";
+	}
+}
+if ( $deck_we ) {
+	echo "NOTE: §6.2b " . count( $deck_we ) . " of " . count( $decks ) . " post excerpts carry a company-voice pronoun and now show as a deck line.\n";
+	echo "      This is AUTHOR COPY, not this build's, and is ROUTED for a copy decision rather than edited here:\n";
+	foreach ( $deck_we as $row ) {
+		echo "        - {$row}\n";
+	}
+} else {
+	echo "NOTE: §6.2b no post excerpt carries a company-voice pronoun.\n";
+}
 bhp_bpt_assert( false === strpos( $chrome_text, '5–9' ) && false === strpos( $chrome_text, '5-9' ), '§6.3 no "5-9" anywhere in the chrome', $failures );
 bhp_bpt_assert(
 	! preg_match( '/\b(will|helps?|makes?|turns?)\s+(your|their|the)\s+(child|kid|reader)/i', $chrome_text ),
@@ -414,15 +471,24 @@ remove_filter( 'bhp_blog_template_enabled', '__return_false' );
 
 bhp_bpt_assert( '' === $off_rail && '' === $off_capture && '' === $off_plate, '§7.1 with the filter OFF the component emits nothing at all', $failures );
 bhp_bpt_assert( bhp_blog_template_enabled(), '§7.2 the filter was removed again and the default is back ON', $failures );
+// Whitespace-tolerant: these calls are wrapped across lines by the code style,
+// so a fixed-string search silently fails on a filter that is genuinely there.
+$has_filter = function ( $hook ) use ( $component_src ) {
+	return (bool) preg_match( '/apply_filters\(\s*[\'"]' . preg_quote( $hook, '/' ) . '[\'"]/', $component_src );
+};
 bhp_bpt_assert(
-	false !== strpos( $component_src, "apply_filters( 'bhp_blog_rail_cta_mode'" ),
+	$has_filter( 'bhp_blog_rail_cta_mode' ),
 	'§7.3 the CTA mode is filterable, so a copy ruling lands in one line',
 	$failures
 );
 bhp_bpt_assert(
-	false !== strpos( $component_src, "apply_filters( 'bhp_blog_eyebrow_text'" )
-		&& false !== strpos( $component_src, "apply_filters( 'bhp_blog_rail_eyebrow'" ),
+	$has_filter( 'bhp_blog_eyebrow_text' ) && $has_filter( 'bhp_blog_rail_eyebrow' ),
 	'§7.4 both proposed labels are filterable',
+	$failures
+);
+bhp_bpt_assert(
+	$has_filter( 'bhp_blog_rail_adventure' ) && $has_filter( 'bhp_blog_rail_facts' ) && $has_filter( 'bhp_blog_deck_text' ),
+	'§7.6 the resolver, the facts and the deck are each filterable without a code change',
 	$failures
 );
 // The injection filter must be idempotent and must not fire outside the loop.

@@ -63,7 +63,7 @@ $heading_id = $panel_id . '-title';
 			 *    "and it is on its way" -- removed, because whether a Mailchimp
 			 *    automation delivers the Kit immediately is UNVERIFIED by this
 			 *    session (`functions.php`'s own lead-magnet registry still marks
-			 *    assets "placeholder", and reading the account is Gimli's). The
+			 *    assets "placeholder", and reading the account is `connected-operator`'s). The
 			 *    copy therefore claims only what the Kit CONTAINS, which is
 			 *    already stated on three live surfaces.
 			 */

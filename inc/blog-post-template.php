@@ -94,7 +94,7 @@
  * ⛔ It does not modify one character of any post's stored content. The rail is
  *    injected into the RENDERED output through `the_content`; `post_content` in
  *    the database is never read for mutation and never written. H2s, body copy
- *    and headings belong to Merry (`marketing-growth`) and Andrew.
+ *    and headings belong to `marketing-growth` and Andrew.
  * ⛔ It adds NO popup. Item 61(4) keeps the popup homepage-only plus blog,
  *    exactly as it is. An inline block in the document flow is not a popup and
  *    does not engage Google's intrusive-interstitial rule.
@@ -322,7 +322,7 @@ function bhp_blog_plate_html() {
  *   pre-existing consequence is visible in
  *   `template-parts/guides/related-content.php`, whose `$book_urls` map has
  *   hyphenated keys only — so an Amazon-mapped post gets no book link there at
- *   all. Recorded as `CYCLE165-LD-02` and routed to Gandalf; NOT fixed here,
+ *   all. Recorded as `CYCLE165-LD-02` and routed to `chief-of-staff`; NOT fixed here,
  *   because related-content is another template's behaviour and changing it
  *   would move a customer-facing link outside this brief's scope.
  *
