@@ -97,6 +97,23 @@ function bhp_aes_token( $css, $name ) {
 
 $theme_dir = get_template_directory();
 $style     = (string) @file_get_contents( $theme_dir . '/style.css' );
+
+/* THE COMMENT TRAP, AND WHY $style_live EXISTS.
+   This codebase deliberately PRESERVES superseded values inside comments --
+   "SUPERSEDED VALUES, preserved rather than deleted" recurs throughout
+   style.css, and 1.19.266 added several more. A test that greps the raw file
+   for an old literal therefore fails on the very record that makes the change
+   reviewable, which is the opposite of what it should reward.
+
+   $style_live is style.css with comment blocks removed, so an assertion about
+   what the stylesheet DECLARES can be written without punishing the stylesheet
+   for explaining itself. $style is still used where the assertion is genuinely
+   about the file's text.
+
+   The first run of this suite on staging failed six assertions for exactly
+   this reason and the CODE was correct in all six. Recorded so it is not
+   re-derived. */
+$style_live = (string) preg_replace( '#/\*.*?\*/#s', '', $style );
 $blogcss   = (string) @file_get_contents( $theme_dir . '/assets/css/blog-post.css' );
 $fmtcss    = (string) @file_get_contents( $theme_dir . '/assets/css/book-formats.css' );
 $mediacss  = (string) @file_get_contents( $theme_dir . '/assets/css/book-media.css' );
@@ -188,8 +205,8 @@ foreach ( array(
 
 /* The colours they replaced are gone from the rules that carried them. */
 bhp_aes_assert(
-	false === stripos( $fmtcss, '#7A6E60' ),
-	'§1.7 #7A6E60 (4.49:1 on the product ground) no longer appears in book-formats.css',
+	! preg_match( '/color\s*:\s*#7A6E60/i', (string) preg_replace( '#/\*.*?\*/#s', '', $fmtcss ) ),
+	'§1.7 #7A6E60 (4.49:1 on the product ground) is no longer DECLARED in book-formats.css',
 	$failures
 );
 
@@ -222,8 +239,8 @@ bhp_aes_assert(
 	$failures
 );
 bhp_aes_assert(
-	! preg_match( '/\.home \.home-origin__byline\s*\{[^}]*var\(--color-gold-deep\)/s', $style ),
-	'§2.4 ...and no longer reads the light-ground gold anywhere in that rule',
+	! preg_match( '/\.home \.home-origin__byline\s*\{[^}]*var\(--color-gold-deep\)/s', $style_live ),
+	'§2.4 ...and NO rule on that selector still reads the light-ground gold. There are TWO, at the same specificity; only the later one renders, and the earlier one is corrected too rather than left to be saved by source order',
 	$failures
 );
 
@@ -238,7 +255,7 @@ bhp_aes_assert(
 	$failures
 );
 bhp_aes_assert(
-	! preg_match( '/#amazon-customer-reviews \.amazon-review-card__stars \{[^}]*rgba\(217, 164, 95, \.72\)/s', $style ),
+	! preg_match( '/#amazon-customer-reviews \.amazon-review-card__stars \{[^}]*rgba\(217, 164, 95, \.72\)/s', $style_live ),
 	'§2.7 ...and the alpha that ate that contrast is gone',
 	$failures
 );
@@ -305,13 +322,13 @@ foreach ( array(
 	'clamp(2rem, 1.3rem + 2.4vw, 3.4rem)' => 'the 32px homepage hero H1',
 ) as $literal => $what ) {
 	bhp_aes_assert(
-		false === strpos( $style, $literal ),
+		false === strpos( $style_live, $literal ),
 		"§3.6 style.css no longer declares {$what} as a literal",
 		$failures
 	);
 }
 bhp_aes_assert(
-	false === strpos( $prodcss, 'font-size: 1.55rem;' ),
+	false === strpos( (string) preg_replace( '#/\*.*?\*/#s', '', $prodcss ), 'font-size: 1.55rem;' ),
 	'§3.7 product-template.css no longer declares the 24.8px H1 — the smallest on the site',
 	$failures
 );
@@ -520,9 +537,13 @@ bhp_aes_assert(
 	'§7.7 the tall-phone message wraps instead of ellipsising ("I use cookies to keep t...")',
 	$failures
 );
+/* ⚠ The string `wpconsent_settings` DOES appear in this file — in the 1.19.249
+   note recording that two of its values were set on staging and then VERIFIED
+   INERT, and reverted. That note is exactly the dead end a future session needs
+   to not repeat, so this assertion looks for a WRITE, not for the word. */
 bhp_aes_assert(
-	false === strpos( $consent, 'wpconsent_settings' ),
-	'§7.8 NO PLUGIN SETTING IS WRITTEN from the theme — a settings change is Andrew\'s, prepared not applied',
+	! preg_match( '/(update_option|add_option|delete_option|update_site_option)\s*\(/', $consent ),
+	'§7.8 the theme never WRITES a plugin option — a WPConsent settings change is Andrew\'s, prepared not applied',
 	$failures
 );
 
@@ -538,16 +559,22 @@ $img_templates = array(
 	'page-audience-organizations.php'         => 'community-reading-kit-cover.webp',
 );
 foreach ( $img_templates as $tpl => $asset ) {
+	/* `<img[^>]*...>` CANNOT BE USED HERE, and the reason is worth recording:
+	   every one of these tags contains `<?php echo esc_url( ... ); ?>`, and the
+	   `?>` inside it terminates a `[^>]*` run long before the tag does. The
+	   first version of this assertion failed on all five templates while all
+	   five templates were correct. Each of these tags is one line, so the line
+	   is the honest unit to inspect. */
 	$src = (string) @file_get_contents( $theme_dir . '/' . $tpl );
-	$ok  = true;
-	if ( preg_match_all( '/<img[^>]*' . preg_quote( $asset, '/' ) . '[^>]*>/s', $src, $mm ) ) {
-		foreach ( $mm[0] as $tag ) {
-			if ( false === strpos( $tag, 'width="' ) || false === strpos( $tag, 'height="' ) ) {
-				$ok = false;
-			}
+	$ok  = false;
+	foreach ( preg_split( '/\R/', $src ) as $line ) {
+		if ( false === strpos( $line, $asset ) || false === strpos( $line, '<img' ) ) {
+			continue;
 		}
-	} else {
-		$ok = false;
+		$ok = ( false !== strpos( $line, 'width="' ) && false !== strpos( $line, 'height="' ) );
+		if ( ! $ok ) {
+			break;
+		}
 	}
 	bhp_aes_assert( $ok, "§8.1 {$tpl} — every {$asset} <img> carries width and height", $failures );
 }

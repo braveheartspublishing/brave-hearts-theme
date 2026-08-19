@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 710535bb7865d8ef0cf8205d6db58284
+    source-md5: 17fae154808215be0dcd97863ddb0a8e
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -2846,7 +2846,7 @@ max-width: 100%;
 .home .home-origin__content h2 { max-width: 650px; font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; }
 .home .home-origin__content p { color: #514c43; line-height: 1.75; }
 .home .home-origin__content blockquote { margin: var(--space-8) 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(1.3rem, 2.2vw, 1.8rem); font-style: italic; line-height: 1.45; }
-.home .home-origin__byline { color: var(--color-gold-deep) !important; font-family: var(--font-ui); font-size: .65rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.home .home-origin__byline { color: var(--color-gold) !important; font-family: var(--font-ui); font-size: .65rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }  
 .home .home-destinations { padding-block: clamp(5rem, 9vw, 8rem); background: #06131f; color: white; }
 .home .home-destinations::before { display: none; }
 .home .home-destinations .component-heading { margin-bottom: var(--space-12); text-align: center; }

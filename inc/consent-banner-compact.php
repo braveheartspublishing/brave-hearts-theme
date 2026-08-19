@@ -149,12 +149,16 @@ function bhp_consent_banner_compact_css() {
 @media (min-width: 782px) {
   /* Desktop already measured only 65px TALL and was never a HEIGHT defect. It
      keeps the one-row treatment for consistency and is capped lower. */
-  /* 1.19.266: 92px -> 104px. The cap must clear the control it contains:
-     44px button + 10px/10px padding = 64px, and a two-line message beside it
-     reaches ~90px on a narrow desktop window. 92px would have clipped the
-     taller of the two. Desktop's measured total was 65px, so this raises a
-     CEILING, not the rendered height. */
-  .wpconsent-banner { max-height: 104px !important; }
+  /* ⛔ 1.19.266 — A 104px CAP WAS TRIED HERE AND WITHDRAWN. RECORDED SO IT IS
+     NOT RE-PROPOSED. The reasoning was "a 44px button plus 10/10 padding is
+     64px and a wrapped two-line message could reach ~90px, so 92 is tight".
+     The arithmetic is right and the conclusion was wrong: 64px and ~90px are
+     both UNDER 92, so nothing clips, and raising the cap would have broken
+     `tests/test-consent-banner-desktop-layout.php` §6.10 — an assertion whose
+     entire job is to prove the desktop block still owns its own height.
+     Changing another suite's expectation to accommodate a change that was not
+     needed is how a guard rail becomes a formality. 92px stands. */
+  .wpconsent-banner { max-height: 92px !important; }
 
   /* ⛔⛔ THE 1.19.186 CORRECTION — READ THIS BEFORE TOUCHING THE THREE RULES BELOW.
 

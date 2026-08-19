@@ -3631,7 +3631,7 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
 .home .home-origin__content h2 { max-width: 650px; font-size: clamp(3rem, 5vw, 5rem); font-weight: 400; }
 .home .home-origin__content p { color: #514c43; line-height: 1.75; }
 .home .home-origin__content blockquote { margin: var(--space-8) 0; color: var(--color-navy); font-family: var(--font-heading); font-size: clamp(1.3rem, 2.2vw, 1.8rem); font-style: italic; line-height: 1.45; }
-.home .home-origin__byline { color: var(--color-gold-deep) !important; font-family: var(--font-ui); font-size: .65rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.home .home-origin__byline { color: var(--color-gold) !important; font-family: var(--font-ui); font-size: .65rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }  /* ⭐ 1.19.266: was --color-gold-deep. This is the EARLIER of two rules on the same selector at the same specificity; the later one (search `--trust-min` + `home-origin__byline`) already wins on source order, so the rendered pixel does not change. It is corrected anyway: a rule that says the wrong thing and is saved by source order is one reorder away from being the rule that ships, and this file's own history has three separate notes about exactly that failure. Caught by tests/test-aesthetics-tokens.php §2.4, which is why that assertion scans EVERY rule on the selector rather than the last one. */
 
 /* Destinations and catalog */
 .home .home-destinations { padding-block: clamp(5rem, 9vw, 8rem); background: #06131f; color: white; }
