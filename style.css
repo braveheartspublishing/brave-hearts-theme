@@ -9482,6 +9482,22 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   object-fit: contain;
 }
 
+/* ⚠️ CAUGHT ON A DESKTOP SCREENSHOT, NOT IN THE NUMBERS — the measurements
+   were all correct and the section still looked unfinished.
+
+   CSS Grid's default `align-items: stretch` makes every item in a row as tall
+   as the tallest. Once page 1 became a 3:4 portrait next to two 1:1 squares,
+   the two square cards kept their white card background but stretched ~250px
+   past their photographs, so pages 2 and 3 sat above a slab of empty white.
+   `start` lets each card size to its own content.
+
+   This did not show on a phone, where the grid is a single column and every
+   row has exactly one item. It is a desktop-only consequence of a change made
+   for a phone, which is the reason both viewports get looked at. */
+.home .home-open-book__spreads {
+  align-items: start;
+}
+
 /* ---- 2. THE FOLD. All of this is <=600px, i.e. phones only. -------------- */
 /* Desktop and tablet are deliberately untouched: the CTA is already on the
    first screen at every width above this, and the founder's report is a
