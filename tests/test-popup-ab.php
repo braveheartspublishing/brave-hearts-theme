@@ -245,9 +245,20 @@ bhp_ab_assert(
     $failures
 );
 
+/* ⚠ MATCHED WITH THE SURROUNDING WHITESPACE ALLOWED FOR. The shared form puts
+ *   the label on its own indented line, so the rendered markup is
+ *   `>\n    Join the Adventure  </button>` and never `>Join the Adventure</button>`.
+ *   The tighter assertion was written first and would have failed on correct
+ *   output. */
 bhp_ab_assert(
-    1 === substr_count($rendered, '>Join the Adventure</button>'),
-    'the CTA reads "Join the Adventure", exactly once',
+    1 === preg_match_all('/<button[^>]*type="submit"[^>]*>\s*Join the Adventure\s*<\/button>/s', $rendered),
+    'the CTA reads "Join the Adventure", on exactly one submit button',
+    $failures
+);
+
+bhp_ab_assert(
+    1 === substr_count($rendered, 'Join the Adventure'),
+    'that CTA string appears exactly once in the dialog',
     $failures
 );
 
