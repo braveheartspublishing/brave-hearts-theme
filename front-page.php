@@ -541,7 +541,55 @@ $hero_lead = trim(ob_get_clean());
  *    than a URL, so a future rename fails to a dead scroll rather than
  *    silently reopening the exact bug Andrew just caught.
  */
-$hero_open_url = bhp_get_safe_link_url('#home-open-the-book', '#home-open-the-book');
+/*
+ * ⛔ 1.19.255 (2026-08-19) — CYCLE165-LD-HERO-CTA-FALLBACK. THE LINE BELOW WAS
+ *    A DEAD ANCHOR ON PRODUCTION FOR SIX DAYS AND THE FOUNDER FOUND IT.
+ *
+ * Andrew Signore, 2026-08-19, item 82 (RELAYED through the Chief of Staff,
+ * NOT witnessed first-hand by this agent), verbatim: "The main CTA on the home
+ * page doesnt even click to to first free pages. Bad link." / "The pages 1,2,3
+ * arent even on the homepage!"
+ *
+ * ⭐ THE SUPERSEDED LINE, QUOTED RATHER THAN SILENTLY REPLACED, because the
+ *    comment block above it is still correct about everything EXCEPT this:
+ *
+ *        $hero_open_url = bhp_get_safe_link_url('#home-open-the-book', '#home-open-the-book');
+ *
+ *    Its own reasoning said the fallback was "the same fragment rather than a
+ *    URL, so a future rename fails to a dead scroll rather than silently
+ *    reopening the exact bug Andrew just caught." That reasoning covered a
+ *    RENAME. It did not cover the case that actually happened: the id was
+ *    never emitted at all, because `home-open-the-book.php` gates on three
+ *    Mariana page attachments that exist on staging2 and DO NOT EXIST on
+ *    production. Deploy #4 moved theme files; media is not theme files.
+ *
+ *    ⚠️ MEASURED, NOT ASSUMED — headless-Chrome DOM read of
+ *    https://braveheartspublishing.com/ on 2026-08-19: exactly one
+ *    `href="#home-open-the-book"`, and ZERO `id="home-open-the-book"`. The
+ *    only other fragment links on that document are `#main`,
+ *    `#kirkus-credibility-home` and the quiz's JS-populated `href="#"`, and
+ *    the first two targets both exist.
+ *
+ * ⭐ WHAT CHANGES: the VALUE of one variable. Nothing else on this button
+ *    moves — not the label, not `data-bhp-event`, not
+ *    `data-bhp-source="home_hero_open_book"`, not a class, not the wrapper.
+ *    `assets/js/nav.js`'s delegated handler and every GTM tag are untouched.
+ *
+ * ⭐ `bhp_home_first_pages_anchor()` (inc/book-media.php) picks the best
+ *    fragment that WILL be in this document: the first-pages section if its
+ *    own gate opens, else the Look Inside gallery inside the collection band,
+ *    else that band's own section id. All three are homepage sections and the
+ *    last one is emitted unconditionally, so this expression cannot produce a
+ *    fragment with no target. The literal second argument is the same floor,
+ *    stated again for the case where the helper is somehow absent.
+ *
+ * ⛔ `/complete-collection/` IS DELIBERATELY NOT A CANDIDATE. Andrew rejected
+ *    that exact destination for this exact button in 1.19.242.
+ */
+$hero_open_url = bhp_get_safe_link_url(
+    function_exists('bhp_home_first_pages_anchor') ? bhp_home_first_pages_anchor() : '#home-sales-paths',
+    '#home-sales-paths'
+);
 $hero_quiz_url = bhp_get_safe_link_url(home_url('/find-your-adventure/'), home_url('/find-your-adventure/'));
 /*
  * ⭐ 1.19.251 (2026-08-19) — CYCLE164-LD-HOMEPAGE-WARMTH-PASS8. THE TWO

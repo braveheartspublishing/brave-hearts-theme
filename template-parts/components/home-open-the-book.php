@@ -161,52 +161,34 @@ if (!function_exists('bhp_book_media_attachment_id')) {
  *    therefore paid for with column width and the `sizes` hint instead, and
  *    the trade is raised in the build report rather than decided here.
  */
-$bhp_spreads = [
-    ['slug' => 'mariana-trench-page-1-full', 'caption' => __('Page 1', 'brave-hearts'), 'aspect' => 'tall'],
-    ['slug' => 'mariana-trench-page-2',      'caption' => __('Page 2', 'brave-hearts'), 'aspect' => 'square'],
-    ['slug' => 'mariana-trench-page-3',      'caption' => __('Page 3', 'brave-hearts'), 'aspect' => 'square'],
-];
-
 /*
- * ⭐ THE PAGE-1 FALLBACK, AND WHY IT IS A FALLBACK RATHER THAN A SECOND ROW.
+ * ⭐ 1.19.255 (2026-08-19) — CYCLE165-LD-HERO-CTA-FALLBACK. THE SPREAD LIST,
+ *    THE PER-SLOT FALLBACK AND THE RESOLUTION LOOP MOVED OUT OF THIS FILE
+ *    INTO `inc/book-media.php`. NOT ONE RULE OF THEM CHANGED — the same three
+ *    slugs, the same page-1 fallback, the same aspect-travels-with-the-
+ *    attachment behaviour, the same "0 means not approved" reading. The full
+ *    page-1-fallback reasoning moved WITH the code and is preserved verbatim
+ *    at `bhp_home_open_the_book_fallbacks()`.
  *
- * `mariana-trench-page-1-full` exists on STAGING. It does not exist on
- * production, and it will not until Andrew approves that media moving. On an
- * environment where the full-page attachment is absent, slot 1 falls back to
- * the SQUARE page 1 (3382) so the section still opens with page 1 — a
- * cropped page 1 is worse than the full page, but a MISSING page 1 would
- * start the sequence at page 2, which is a worse failure than the one
- * Andrew reported. The fallback is per-slot and silent by design: it fails
- * to the previous behaviour, never to an empty frame.
+ * ⛔ WHY IT MOVED, AND IT IS A PRODUCTION DEFECT, NOT A TIDY-UP. The hero
+ *    button in `front-page.php` promises this section by fragment. While the
+ *    gate lived HERE, the button could not ask whether the gate would open —
+ *    so on production, where none of the three attachments exist, the page
+ *    shipped `href="#home-open-the-book"` with no such id anywhere in the
+ *    document. Andrew found it on the live site (item 82, 2026-08-19: "The
+ *    main CTA on the home page doesnt even click to to first free pages. Bad
+ *    link."). The button and this gate now read ONE function, so they cannot
+ *    disagree again.
+ *
+ * ⭐ THIS SECTION'S BEHAVIOUR IS BYTE-FOR-BYTE WHAT IT WAS on an environment
+ *    that HAS the media: `$bhp_resolved` holds the identical array, in the
+ *    identical order, with the identical `id` / `aspect` / `caption` keys that
+ *    every line below already reads.
  */
-$bhp_fallbacks = [
-    'mariana-trench-page-1-full' => ['slug' => 'mariana-trench-page-1', 'aspect' => 'square'],
-];
-
-$bhp_resolved = [];
-foreach ($bhp_spreads as $bhp_spread) {
-    $bhp_id = (int) bhp_book_media_attachment_id($bhp_spread['slug']);
-
-    if ($bhp_id <= 0 && isset($bhp_fallbacks[$bhp_spread['slug']])) {
-        $bhp_fallback = $bhp_fallbacks[$bhp_spread['slug']];
-        $bhp_id       = (int) bhp_book_media_attachment_id($bhp_fallback['slug']);
-        if ($bhp_id > 0) {
-            // The aspect travels WITH the attachment. A 1:1 crop rendered in
-            // a 3:4 frame would letterbox or crop it, which is the defect
-            // this whole change exists to remove.
-            $bhp_spread['aspect'] = $bhp_fallback['aspect'];
-        }
-    }
-
-    if ($bhp_id > 0) {
-        $bhp_spread['id'] = $bhp_id;
-        $bhp_resolved[]   = $bhp_spread;
-    }
-}
-unset($bhp_spread, $bhp_fallback);
+$bhp_resolved = bhp_home_open_the_book_spreads();
 
 if (!$bhp_resolved) {
-    return; // The gate.
+    return; // The gate. `bhp_home_first_pages_anchor()` reads the same answer.
 }
 
 /*

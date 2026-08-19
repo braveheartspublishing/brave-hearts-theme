@@ -314,10 +314,73 @@ bhp_hw_assert(
  * one that matters: it is what stops a future edit from restoring the
  * convenient /complete-collection/ href and shipping this bug a third time.
  * ═══════════════════════════════════════════════════════════════════════════ */
+/*
+ * ⚠️ AMENDED IN PLACE BY 1.19.255 (CYCLE165-LD-HERO-CTA-FALLBACK). THE
+ *    SUPERSEDED ASSERTION IS QUOTED RATHER THAN DELETED, because it recorded a
+ *    real earlier instruction and because deleting it would hide WHY it was
+ *    not enough:
+ *
+ *      bhp_hw_assert(
+ *          false !== strpos( $home, 'data-bhp-source="home_hero_open_book"' )
+ *              && preg_match( '/href="#home-open-the-book"[^>]*data-bhp-source="home_hero_open_book"/', $home ) === 1,
+ *          '§1.5 the HERO "read the first pages" invitation targets #home-open-the-book',
+ *          $failures
+ *      );
+ *
+ * ⛔ IT PASSED ON STAGING AND THE PAGE WAS BROKEN ON PRODUCTION, WHICH IS THE
+ *    WHOLE LESSON. It asserted the button's href STRING and never asked
+ *    whether anything in the document answered to it. Staging2 has the three
+ *    Mariana page attachments and production has none, so the section rendered
+ *    here and not there, while the assertion was green on the only environment
+ *    the suite was ever run against. Andrew found the dead link on the live
+ *    site (item 82, 2026-08-19: "The main CTA on the home page doesnt even
+ *    click to to first free pages. Bad link.").
+ *
+ * ⭐ THE REPLACEMENT ASSERTS THE TARGET, NOT THE STRING, and is therefore true
+ *    on every environment: whatever fragment the hero points at must be an id
+ *    this same document emits. The full three-candidate chain, the no-media
+ *    branch and the whole-document fragment scan live in the dedicated suite
+ *    `tests/test-hero-cta-fallback.php`; this is the tripwire in the homepage
+ *    suite, so a warmth-pass edit cannot reintroduce a dead anchor without a
+ *    red run right here.
+ */
 bhp_hw_assert(
-	false !== strpos( $home, 'data-bhp-source="home_hero_open_book"' )
-		&& preg_match( '/href="#home-open-the-book"[^>]*data-bhp-source="home_hero_open_book"/', $home ) === 1,
-	'§1.5 the HERO "read the first pages" invitation targets #home-open-the-book',
+	false !== strpos( $home, 'data-bhp-source="home_hero_open_book"' ),
+	'§1.5a the HERO "read the first pages" invitation is on the page with its unchanged data-bhp-source',
+	$failures
+);
+
+$hw_hero_frag = '';
+if ( preg_match( '/<a\b[^>]*data-bhp-source="home_hero_open_book"[^>]*>/', $home, $hw_m_tag )
+	&& preg_match( '/\bhref="#([A-Za-z][A-Za-z0-9_:.\-]*)"/', $hw_m_tag[0], $hw_m_frag ) ) {
+	$hw_hero_frag = $hw_m_frag[1];
+}
+
+bhp_hw_assert(
+	'' !== $hw_hero_frag,
+	'§1.5b the HERO invitation targets a same-page fragment (never /complete-collection/ — Andrew rejected that destination in 1.19.242)',
+	$failures
+);
+
+bhp_hw_assert(
+	'' !== $hw_hero_frag
+		&& 1 === preg_match( '/\bid=(["\'])' . preg_quote( $hw_hero_frag, '/' ) . '\1/', $home ),
+	"§1.5c the HERO invitation's fragment target (#{$hw_hero_frag}) EXISTS in this same rendered document",
+	$failures
+);
+
+/*
+ * The environment-specific expectation, kept SEPARATE from §1.5c on purpose.
+ * On staging2 the media resolves, so the button must reach the dedicated
+ * first-pages section rather than settle for a fallback. On an environment
+ * without the media this correctly does not apply, and the no-media branch is
+ * proven in `tests/test-hero-cta-fallback.php` §3 instead.
+ */
+bhp_hw_assert(
+	! function_exists( 'bhp_home_open_the_book_resolved' )
+		|| ! bhp_home_open_the_book_resolved()
+		|| 'home-open-the-book' === $hw_hero_frag,
+	'§1.5d where the first-pages section DOES resolve, the HERO invitation reaches it (not a fallback)',
 	$failures
 );
 /*

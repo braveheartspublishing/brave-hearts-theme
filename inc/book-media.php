@@ -807,6 +807,191 @@ function bhp_book_media_attachment_id($slug) {
     return $cache[$slug];
 }
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.255 (2026-08-19) — CYCLE165-LD-HERO-CTA-FALLBACK.
+ *    THE HOMEPAGE'S "FIRST PAGES" RESOLUTION, IN ONE PLACE, SO THE BUTTON
+ *    AND THE SECTION CAN NEVER DISAGREE ABOUT WHETHER THE SECTION EXISTS.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THIS EXISTS BECAUSE A DEAD ANCHOR SHIPPED TO PRODUCTION AND THE FOUNDER
+ *    FOUND IT, NOT QA. Andrew Signore, 2026-08-19, item 82: "The main CTA on
+ *    the home page doesnt even click to to first free pages. Bad link." /
+ *    "The pages 1,2,3 arent even on the homepage!"
+ *
+ * ⭐ THE MECHANISM OF THE DEFECT, RECORDED SO IT IS NOT RE-DERIVED. From
+ *    1.19.243 the hero button hard-coded `#home-open-the-book`, while
+ *    `template-parts/components/home-open-the-book.php` emitted that id only
+ *    if at least one of `mariana-trench-page-1-full` / `-page-1` / `-page-2` /
+ *    `-page-3` resolved to an attachment ON THIS ENVIRONMENT. Staging2 has
+ *    them; production has none of them, because deploy #4 moved THEME FILES
+ *    and media is not theme files. So production rendered a button whose
+ *    target its own gate had already suppressed.
+ *
+ *    VERIFIED LIVE, not inferred: headless-Chrome DOM read of
+ *    https://braveheartspublishing.com/ on 2026-08-19 — exactly one
+ *    `href="#home-open-the-book"`, and ZERO `id="home-open-the-book"`.
+ *
+ * ⭐ THE FIX IS STRUCTURAL, NOT A NEW STRING. The gate and the button now
+ *    read the SAME predicate, so the only way to reintroduce the defect is to
+ *    stop calling this function — which the test suite asserts against. A
+ *    second copy of the slug list in `front-page.php` would have been a
+ *    faster fix and would have drifted the first time anyone edited one.
+ */
+
+/**
+ * The homepage "open the book" spread specification, BEFORE resolution.
+ *
+ * Kept as its own function purely so a test harness can empty it with
+ * `add_filter( 'bhp_home_open_the_book_spreads', '__return_empty_array' )`
+ * and exercise the no-media branch WITHOUT deleting an attachment from any
+ * environment. Simulating a missing image by removing real media is how a
+ * QA step becomes a data-loss incident.
+ *
+ * @return array<int,array{slug:string,caption:string,aspect:string}>
+ */
+function bhp_home_open_the_book_spread_spec() {
+    $spreads = [
+        ['slug' => 'mariana-trench-page-1-full', 'caption' => __('Page 1', 'brave-hearts'), 'aspect' => 'tall'],
+        ['slug' => 'mariana-trench-page-2',      'caption' => __('Page 2', 'brave-hearts'), 'aspect' => 'square'],
+        ['slug' => 'mariana-trench-page-3',      'caption' => __('Page 3', 'brave-hearts'), 'aspect' => 'square'],
+    ];
+
+    /**
+     * Filters the homepage first-pages spread specification.
+     *
+     * @param array $spreads Slug / caption / aspect triples, in render order.
+     */
+    return (array) apply_filters('bhp_home_open_the_book_spreads', $spreads);
+}
+
+/**
+ * Per-slot fallbacks for the spread specification.
+ *
+ * ⭐ THE PAGE-1 FALLBACK, AND WHY IT IS A FALLBACK RATHER THAN A SECOND ROW
+ *    (moved here verbatim from the component in 1.19.255; the reasoning is
+ *    unchanged and is preserved rather than re-summarised).
+ *
+ *    `mariana-trench-page-1-full` exists on STAGING. It does not exist on
+ *    production, and it will not until Andrew approves that media moving. On
+ *    an environment where the full-page attachment is absent, slot 1 falls
+ *    back to the SQUARE page 1 so the section still opens with page 1 — a
+ *    cropped page 1 is worse than the full page, but a MISSING page 1 would
+ *    start the sequence at page 2, which is a worse failure than the one
+ *    Andrew reported. The fallback is per-slot and silent by design: it fails
+ *    to the previous behaviour, never to an empty frame.
+ *
+ * @return array<string,array{slug:string,aspect:string}>
+ */
+function bhp_home_open_the_book_fallbacks() {
+    return [
+        'mariana-trench-page-1-full' => ['slug' => 'mariana-trench-page-1', 'aspect' => 'square'],
+    ];
+}
+
+/**
+ * The resolved homepage first-pages spreads for THIS environment.
+ *
+ * ⛔ DELIBERATELY NOT MEMOISED. `bhp_book_media_attachment_id()` already
+ *    caches every slug lookup, so the repeat cost is three array reads — and
+ *    memoising here would make the test filter above unobservable after the
+ *    first call, which is precisely the branch that most needs testing.
+ *
+ * @return array<int,array{slug:string,caption:string,aspect:string,id:int}>
+ *         Empty array means: this environment cannot render the section.
+ */
+function bhp_home_open_the_book_spreads() {
+    $fallbacks = bhp_home_open_the_book_fallbacks();
+    $resolved  = [];
+
+    foreach (bhp_home_open_the_book_spread_spec() as $spread) {
+        if (!is_array($spread) || empty($spread['slug'])) {
+            continue;
+        }
+
+        $id = (int) bhp_book_media_attachment_id($spread['slug']);
+
+        if ($id <= 0 && isset($fallbacks[$spread['slug']])) {
+            $fallback = $fallbacks[$spread['slug']];
+            $id       = (int) bhp_book_media_attachment_id($fallback['slug']);
+            if ($id > 0) {
+                // The aspect travels WITH the attachment. A 1:1 crop rendered
+                // in a 3:4 frame would letterbox or crop it, which is the
+                // defect the per-slot aspect exists to remove.
+                $spread['aspect'] = $fallback['aspect'];
+            }
+        }
+
+        if ($id > 0) {
+            $spread['id'] = $id;
+            $resolved[]   = $spread;
+        }
+    }
+
+    return $resolved;
+}
+
+/**
+ * Will the homepage actually emit `id="home-open-the-book"` on this request?
+ *
+ * This is THE gate. The component returns early when it is false; the hero
+ * button refuses to point at the section when it is false. One predicate,
+ * two readers.
+ *
+ * @return bool
+ */
+function bhp_home_open_the_book_resolved() {
+    return (bool) bhp_home_open_the_book_spreads();
+}
+
+/**
+ * The best REAL "read the first pages" anchor available on the homepage now.
+ *
+ * ⭐ THREE CANDIDATES, IN DESCENDING ORDER OF HONESTY, AND EVERY ONE OF THEM
+ *    IS CHECKED AGAINST THE THING THAT ACTUALLY RENDERS IT.
+ *
+ *    1. `#home-open-the-book` — the dedicated first-pages section. Checked
+ *       with the same predicate its own gate uses.
+ *    2. `#bhp-look-inside-complete_collection` — the Look Inside gallery
+ *       inside the collection band. Checked with `bhp_cx_collection_gallery_config()`,
+ *       the ONE predicate `inc/collection-gallery.php` documents as its own
+ *       render gate, so this cannot claim a gallery the page will not build.
+ *       The id is `look-inside.php`'s own `'bhp-look-inside-' . sanitize_html_class($media['key'])`
+ *       with key `complete_collection`. VERIFIED LIVE on production 2026-08-19
+ *       (headless-Chrome DOM read): the section is present with
+ *       `data-bhp-gallery-count="10"`, and it sits INSIDE `#home-sales-paths`.
+ *    3. `#home-sales-paths` — the collection band's own section id, which
+ *       `front-page.php` renders unconditionally (no gate, no arguments but
+ *       `cta`, so the component's `section_id` default applies). This is the
+ *       floor: it is not a first-pages surface, but it is the nearest real
+ *       section to the promise and it CANNOT be absent.
+ *
+ * ⛔ `/complete-collection/` IS NOT IN THIS CHAIN, AND THAT IS DELIBERATE.
+ *    Andrew rejected exactly that destination for exactly this button in
+ *    1.19.242: "When you hit read the first pages it goes direct to the
+ *    collection page... this is all incorrect." Falling back to it would
+ *    reintroduce a defect he has already reported once.
+ *
+ * ⚠️ SCOPE: this answers for the HOMEPAGE. Every candidate is a homepage
+ *    section, and the only caller is `front-page.php`.
+ *
+ * @return string A fragment, always beginning with `#`.
+ */
+function bhp_home_first_pages_anchor() {
+    if (bhp_home_open_the_book_resolved()) {
+        return '#home-open-the-book';
+    }
+
+    if (function_exists('bhp_cx_collection_gallery_config')) {
+        $config = bhp_cx_collection_gallery_config();
+        if (is_array($config) && !empty($config['media']['has_any'])) {
+            return '#bhp-look-inside-complete_collection';
+        }
+    }
+
+    return '#home-sales-paths';
+}
+
 /**
  * ⭐ 1.19.241 — whole-second duration of a video attachment, or 0 if unknown.
  *
