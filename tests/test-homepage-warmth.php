@@ -214,26 +214,50 @@ bhp_hw_assert(
  *    diagram spreads have actually left this section. Without that last one
  *    a future edit could re-add them alongside and still pass.
  */
-$bhp_hw_p1 = bhp_hw_at( $home, 'mariana-trench-page-1' );
-$bhp_hw_p2 = bhp_hw_at( $home, 'mariana-trench-page-2' );
-$bhp_hw_p3 = bhp_hw_at( $home, 'mariana-trench-page-3' );
+/*
+ * ⛔ THESE ASSERTIONS ARE SCOPED TO THE SECTION, NOT TO THE WHOLE PAGE, AND
+ *    BOTH SCOPING MISTAKES WERE MADE ONCE AND CAUGHT BY THIS SUITE. Recorded
+ *    so they are not made a second time:
+ *
+ *    1. The attachment SLUG ("mariana-trench-page-1") is the post_name. It
+ *       never appears in rendered HTML — the URL carries the FILENAME
+ *       ("mt-first-pages-01-...webp") instead. Order is therefore asserted on
+ *       the alt text, which is the thing a reader and a screen reader
+ *       actually receive.
+ *    2. The three diagram spreads legitimately still render ELSEWHERE on this
+ *       page, in the Look Inside carousel. A page-wide "the diagrams are
+ *       gone" assertion is simply false and would have forced someone to
+ *       delete a working gallery to make a test pass.
+ */
+$bhp_hw_sec_start = bhp_hw_at( $home, 'id="home-open-the-book"' );
+$bhp_hw_sec_end   = bhp_hw_at( $home, 'id="where-you-will-find-us"' );
+$bhp_hw_section   = ( $bhp_hw_sec_start >= 0 && $bhp_hw_sec_end > $bhp_hw_sec_start )
+	? substr( $home, $bhp_hw_sec_start, $bhp_hw_sec_end - $bhp_hw_sec_start )
+	: '';
+bhp_hw_assert(
+	'' !== $bhp_hw_section,
+	'§1.4 the "Open the book" section could be isolated for the page-order checks',
+	$failures
+);
+
+$bhp_hw_p1 = bhp_hw_at( $bhp_hw_section, 'Page 1 of Adventures of Charlotte and Henry: The Mariana Trench' );
+$bhp_hw_p2 = bhp_hw_at( $bhp_hw_section, 'Page 2 of Adventures of Charlotte and Henry: The Mariana Trench' );
+$bhp_hw_p3 = bhp_hw_at( $bhp_hw_section, 'Page 3 of Adventures of Charlotte and Henry: The Mariana Trench' );
 bhp_hw_assert(
 	$bhp_hw_p1 >= 0 && $bhp_hw_p2 > $bhp_hw_p1 && $bhp_hw_p3 > $bhp_hw_p2,
 	'§1.4 the three slots are the REAL first pages, in 1-2-3 order (Andrew, 2026-08-18)',
 	$failures
 );
 bhp_hw_assert(
-	false !== strpos( $home, 'Page 1 of Adventures of Charlotte and Henry: The Mariana Trench' )
-		&& false !== strpos( $home, 'Page 2 of Adventures of Charlotte and Henry: The Mariana Trench' )
-		&& false !== strpos( $home, 'Page 3 of Adventures of Charlotte and Henry: The Mariana Trench' ),
-	'§1.4 each page carries its media-record alt text, not a locally-written one',
+	false === strpos( $bhp_hw_section, 'How Deep Is the Mariana Trench diagram' )
+		&& false === strpos( $bhp_hw_section, 'How Tall Is Mount Everest diagram' )
+		&& false === strpos( $bhp_hw_section, 'Connected Amazon ecology diagram' ),
+	'§1.4 no mid-book DIAGRAM spread stands in for a first page IN THIS SECTION',
 	$failures
 );
 bhp_hw_assert(
-	false === strpos( $home, 'How Deep Is the Mariana Trench diagram' )
-		&& false === strpos( $home, 'How Tall Is Mount Everest diagram' )
-		&& false === strpos( $home, 'Connected Amazon ecology diagram' ),
-	'§1.4 the mid-book DIAGRAM spreads no longer stand in for the first pages',
+	3 === substr_count( $bhp_hw_section, 'held open by hand.' ),
+	'§1.4 all three page photographs carry their honest media-record alt text',
 	$failures
 );
 bhp_hw_assert(
