@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.251
+Version: 1.19.252
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -10288,4 +10288,74 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
      13px reproduces the previous spacing exactly - measured hero bottom 743.8
      before and after. */
   .home #home-hero .home-hero__invitations--ghost { margin-top: 13px; }
+}
+
+/* =========================================================================
+   PASS9 — 1.19.252 · THE COVERS STOP TOUCHING THE BUTTON ON A PHONE
+   -------------------------------------------------------------------------
+   Andrew, on 1.19.251, his own phone, verbatim:
+
+     "The books sites directly on the CTA button. I think it should be a
+      little space in between the button and the image"
+
+   HE IS RIGHT, AND THE CSS GAP WAS LYING. 1.19.251 measures an 18.0px gap
+   between the primary CTA's bottom edge and the fan's LAYOUT box:
+
+     primary CTA bottom                          431.0
+     .home-hero__book-preview top                449.0   -> 18.0px
+
+   18px is composed of the content grid's 8px `row-gap` plus this rule's
+   10px `margin-top`. But the fan's layout top is NOT where the covers
+   paint. PASS8 gives the centre cover `translateY(-12px)` so the arc lifts
+   in the middle, and `getBoundingClientRect()` — which DOES resolve
+   transforms — puts its PAINTED top at:
+
+     painted top, centre cover                   429.0
+
+   429.0 is 2.0px ABOVE the button's 431.0 bottom. The centre cover was
+   OVERLAPPING the CTA by 2px, which is exactly what he saw. A layout-box
+   measurement would have reported this build as having 18px of clearance
+   and closed the ticket. MEASURE THE PAINTED BOX ON THIS FAN, ALWAYS.
+
+   THE CHANGE, AND IT IS THE ONLY ONE IN THIS BUILD: 10px -> 30px. +20px of
+   margin moves the whole fan down 20px and buys 20px of painted clearance:
+
+                                  1.19.251   1.19.252
+     primary CTA bottom             431.0      431.0    <- unchanged
+     painted top, centre cover      429.0      449.0
+     PAINTED CLEARANCE               -2.0      +18.0    <- the number he asked for
+     .home-hero__book-preview top   449.0      469.0
+     painted bottom, outer covers   622.3      642.3
+
+   18.0px sits mid-band of the 16-20px asked for, and deliberately NOT at
+   the 16.0px floor: a target met exactly is one sub-pixel from failing its
+   own assertion.
+
+   THE FOLD, STATED RATHER THAN GLOSSED. All three covers still PAINT
+   entirely above the 664px fold (642.3). What crosses is the fan's
+   container box (469.0 -> 674.7), whose bottom is the "Real places. Doors
+   into wonder." LABEL, not a cover — the label is `order: 2` and sits
+   BELOW the stack. That label was already below the fold at 1.19.251
+   (654.7) and this build moves it 20px further. No cover was shrunk to buy
+   the space back, because shrinking the covers is the complaint 1.19.251
+   was built to fix.
+
+   SELECTOR: the compound `#home-hero.home-hero--aside-after-title` is
+   MANDATORY and is not decoration. PASS5's own note at line ~9797 records
+   that a simplified `.home #home-hero …` at (1,2,0) MEASURED NO CHANGE AT
+   ALL, because two rules further up carry (1,4,0) and win silently. This
+   rule matches PASS5's compound exactly and wins on SOURCE ORDER. If it is
+   ever "tidied" to a shorter selector, the covers land back on the button.
+
+   DESKTOP AND TABLET ARE UNTOUCHED: this block is `max-width: 600px`, and
+   above 600px the fan's margin comes from the ~6276 and ~9805 rules, which
+   are not edited.
+   ========================================================================= */
+
+@media (max-width: 600px) {
+
+  /* was 10px (PASS5, line ~9806). +20px = the painted clearance above. */
+  .home #home-hero.home-hero--aside-after-title .home-hero__content > .home-hero__book-preview {
+    margin-top: 30px;
+  }
 }
