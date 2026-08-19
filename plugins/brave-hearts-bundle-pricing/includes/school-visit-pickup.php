@@ -255,6 +255,82 @@ if ( ! defined( 'BHP_SCHOOL_VISIT_SESSION_KEY' ) ) {
 	define( 'BHP_SCHOOL_VISIT_SESSION_KEY', 'bhp_school_visit' );
 }
 /**
+ * ⭐⭐ 1.8.59 (`CYCLE165-LD-VISIT-FLAG-EXPIRY`) — WC session key holding the UNIX
+ *     TIMESTAMP at which this session's flag was first set (or last re-armed by
+ *     the link). It is the ONLY new thing stored in a session by this build.
+ *
+ * ⛔ IT IS A SECOND KEY, NOT A NEW SHAPE FOR THE OLD ONE, AND THAT IS THE WHOLE
+ *    REASON IT IS A SECOND KEY. On 2026-08-19 there were 48 live staging
+ *    sessions holding a bare slug string under
+ *    `BHP_SCHOOL_VISIT_SESSION_KEY` (27 Adams, 17 Liberty, 4 Dallas Harris,
+ *    counted by `commerce-cx`). Changing that key to an array would have made
+ *    every one of them unreadable in a way that fails in the WRONG direction
+ *    for a parent mid-order. The old key keeps its old meaning forever.
+ */
+if ( ! defined( 'BHP_SCHOOL_VISIT_SET_AT_SESSION_KEY' ) ) {
+	define( 'BHP_SCHOOL_VISIT_SET_AT_SESSION_KEY', 'bhp_school_visit_set_at' );
+}
+/**
+ * ⭐ 1.8.59 — THE HARD TTL. Fourteen days from the moment the flag was set, or
+ *    from the last time the school link itself re-armed it.
+ *
+ * ⛔ IT IS THE SECOND GUARD, NEVER THE FIRST. The first guard is the visit's own
+ *    ONLINE CLOSE (`visit - 1`, 1.8.56), which is a fact about the calendar and
+ *    is what governs every real parent. The TTL exists for the case the close
+ *    cannot govern: a registry row whose `date` is a VALID date but the wrong
+ *    one — `2126-08-28` instead of `2026-08-28` is one keystroke — would
+ *    otherwise pin a session to paperback-only framing for a century, and
+ *    nothing in 1.8.56 would ever release it.
+ *
+ * ⚠ WHY FOURTEEN AND NOT SEVEN OR THIRTY, STATED SO IT IS NOT RE-DERIVED:
+ *    · It has to be LONGER than any real link-to-close span, or it would fire
+ *      inside a live window and break the feature for an early bird. Measured
+ *      against the three real visits on 2026-08-19: Adams closes in 8 days,
+ *      Dallas Harris in 14, Liberty in 15. Fourteen days covers the whole of
+ *      the first two and all but one day of the third — and the third is
+ *      covered anyway, see the re-arm note below.
+ *    · It has to be SHORTER than a browser bookmark's useful life, or it stops
+ *      being a guard at all. Thirty days is a month of a shopper being shown a
+ *      store that is missing its hardcover.
+ *    · Andrew Signore, 2026-08-19, relayed to this session by `chief-of-staff`
+ *      and NOT witnessed first-hand: *"Yeah we need an expiration on that - I
+ *      want them to come back and buy more books."* Two weeks is the shortest
+ *      value that cannot fire inside a real ordering window.
+ *
+ * ⭐ THE LINK RE-ARMS IT. Every visit to `?bhp_visit=<live slug>` writes a fresh
+ *    timestamp, so a parent who keeps the school's email has an unlimited
+ *    number of fresh fourteen-day windows and can never be locked out of hand
+ *    delivery by this guard while the visit is still open. That is what makes
+ *    fourteen days safe rather than merely short.
+ *
+ * ⚠ THE RESIDUAL, NAMED RATHER THAN HIDDEN: a parent who opens the link more
+ *   than fourteen days before the close, never opens it again, and returns on
+ *   day fifteen sees the ORDINARY storefront — paperback first, hardcover one
+ *   tap away — instead of the hand-delivery framing. They lose nothing they
+ *   can't recover by clicking the link in their email again, and what they see
+ *   meanwhile is the full shop, which is the direction Andrew asked for.
+ */
+if ( ! defined( 'BHP_SCHOOL_VISIT_TTL_SECONDS' ) ) {
+	define( 'BHP_SCHOOL_VISIT_TTL_SECONDS', 14 * 86400 );
+}
+/**
+ * ⭐ 1.8.59 — the reserved value of `?bhp_visit=` that CLEARS the flag.
+ *
+ * ⛔ IT IS NOT LINKED ANYWHERE CUSTOMER-FACING and must not be. It exists so QA
+ *    and Andrew can put a browser back to the ordinary storefront in one hop
+ *    without clearing cookies, because before 1.8.59 there was no way to do it
+ *    at all: `?bhp_visit=<anything-bogus>` was, and still is, a NO-OP that
+ *    leaves an existing flag exactly where it was.
+ *
+ * ⛔ `clear` IS THEREFORE A RESERVED SLUG. A registry row keyed `clear` would be
+ *    shadowed by this check and could never be entered. Nothing seeds one, all
+ *    three real slugs are `<school>-<date>` shaped, and the alternative — a
+ *    magic parameter nobody can guess — is worse to hand a human being.
+ */
+if ( ! defined( 'BHP_SCHOOL_VISIT_CLEAR_TOKEN' ) ) {
+	define( 'BHP_SCHOOL_VISIT_CLEAR_TOKEN', 'clear' );
+}
+/**
  * ⭐ 1.8.52 — WooCommerce's OWN local-pickup method id. This is the method id a
  *    hand-delivery order now carries. It is WooCommerce's constant, not ours.
  */
@@ -624,6 +700,183 @@ function bhp_school_visit_resolve( $slug ) {
  * ====================================================================== */
 
 /**
+ * ⭐ 1.8.59 — "now", as a UNIX timestamp, through one movable clock.
+ *
+ * The exact counterpart of `bhp_school_visit_today()` above, and it exists for
+ * the exact same reason: a suite has to be able to stand on both sides of the
+ * TTL boundary without sleeping for fourteen days and WITHOUT WRITING ANY
+ * SESSION OR OPTION.
+ *
+ * ⛔ THE FILTER CANNOT CHANGE DEFAULT BEHAVIOUR. Nothing in the plugin, the
+ *    theme or the admin UI hooks it. With nothing hooked, `apply_filters()`
+ *    returns `time()` untouched. A filtered value that is not a positive
+ *    integer is DISCARDED rather than trusted, so a broken hook falls back to
+ *    the real clock instead of silently expiring or immortalising every flag.
+ *
+ * @return int
+ */
+function bhp_school_visit_now() {
+	$now = time();
+
+	if ( ! function_exists( 'apply_filters' ) ) {
+		return $now;
+	}
+
+	/**
+	 * Filter the instant the school-visit TTL is evaluated against.
+	 *
+	 * A TEST SEAM, not a configuration point.
+	 *
+	 * @since 1.8.59
+	 * @param int $now UNIX timestamp.
+	 */
+	$filtered = apply_filters( 'bhp_school_visit_now', $now );
+
+	return ( is_int( $filtered ) && $filtered > 0 ) ? $filtered : $now;
+}
+
+/**
+ * The TTL in seconds. Filterable so a suite can shorten it; defaults to the
+ * constant and is never read from an option or a setting.
+ *
+ * ⛔ A filtered value that is not a positive integer is DISCARDED. In
+ *    particular a filter returning 0 or a negative number cannot be used to
+ *    expire every session at once — that is a footgun, not a feature.
+ *
+ * @return int
+ */
+function bhp_school_visit_ttl_seconds() {
+	$ttl = (int) BHP_SCHOOL_VISIT_TTL_SECONDS;
+
+	if ( ! function_exists( 'apply_filters' ) ) {
+		return $ttl;
+	}
+
+	/**
+	 * Filter the school-visit flag's hard TTL, in seconds.
+	 *
+	 * @since 1.8.59
+	 * @param int $ttl Seconds.
+	 */
+	$filtered = apply_filters( 'bhp_school_visit_ttl_seconds', $ttl );
+
+	return ( is_int( $filtered ) && $filtered > 0 ) ? $filtered : $ttl;
+}
+
+/**
+ * Has a flag stamped at `$set_at` outlived the TTL as of `$now`?
+ *
+ * ⛔ A PURE FUNCTION ON PURPOSE. No session, no option, no clock of its own, so
+ *    the boundary can be asserted at the second on both sides without any
+ *    environment at all. Everything stateful is the caller's problem.
+ *
+ * ⛔ FAILS CLOSED ON AN UNUSABLE STAMP. A non-integer, zero, negative or
+ *    future-dated stamp is treated as EXPIRED. A stamp the code cannot reason
+ *    about is precisely the case the TTL exists to catch, and the safe answer
+ *    is the ordinary storefront.
+ *
+ * @param mixed $set_at Stored stamp.
+ * @param int   $now    Current UNIX timestamp.
+ * @return bool
+ */
+function bhp_school_visit_ttl_expired( $set_at, $now ) {
+	if ( ! is_int( $set_at ) && ! ( is_string( $set_at ) && ctype_digit( $set_at ) ) ) {
+		return true;
+	}
+	$set_at = (int) $set_at;
+	$now    = (int) $now;
+
+	if ( $set_at <= 0 ) {
+		return true;
+	}
+	// A stamp from the future is a corrupted stamp, not a longer entitlement.
+	if ( $set_at > $now ) {
+		return true;
+	}
+	return ( $now - $set_at ) >= bhp_school_visit_ttl_seconds();
+}
+
+/**
+ * Read this session's TTL stamp, adopting one for a pre-1.8.59 session.
+ *
+ * ⭐⭐ THE LEGACY-ADOPTION BRANCH IS THE MOST CONSEQUENTIAL LINE IN THIS BUILD
+ *     AND IT IS A DELIBERATE CHOICE BETWEEN TWO WRONG-LOOKING OPTIONS.
+ *
+ *     48 of 95 live staging sessions carried a slug and no stamp when this
+ *     shipped, and every real production session will too. Two things could be
+ *     done with them:
+ *
+ *       A. treat "no stamp" as EXPIRED — clears all 48 instantly, which is
+ *          tidy, and which would also strip hand-delivery from a parent who is
+ *          at that moment on the checkout page inside a wide-open window. That
+ *          is the pre-order-in-flight case the brief explicitly protects.
+ *       B. treat "no stamp" as "starts now" — the session gets its fourteen
+ *          days from the deploy rather than from whenever it really began.
+ *
+ *     ⭐ B IS CHOSEN. The TTL is a BACKSTOP; the window close is the guard that
+ *        actually governs, it is already live since 1.8.56, and it will fire
+ *        for all three real visits (08-26, 09-01, 09-02) long before any
+ *        adopted stamp reaches fourteen days. So B costs nothing real and A
+ *        would cost a parent an order.
+ *
+ * ⚠ CONSEQUENCE, STATED PLAINLY SO NOBODY IS SURPRISED BY IT: deploying 1.8.59
+ *   does NOT by itself clear the 48 stale staging sessions or Andrew's own
+ *   Chrome. What clears those is the window close, or `?bhp_visit=clear`.
+ *
+ * @return int Stamp, or 0 when there is no session or no flag.
+ */
+function bhp_school_visit_set_at_stamp() {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return 0;
+	}
+	$stamp = WC()->session->get( BHP_SCHOOL_VISIT_SET_AT_SESSION_KEY );
+
+	if ( is_int( $stamp ) && $stamp > 0 ) {
+		return $stamp;
+	}
+	if ( is_string( $stamp ) && ctype_digit( $stamp ) && (int) $stamp > 0 ) {
+		return (int) $stamp;
+	}
+
+	// Pre-1.8.59 session: adopt "now" once, then behave normally forever after.
+	$adopted = bhp_school_visit_now();
+	WC()->session->set( BHP_SCHOOL_VISIT_SET_AT_SESSION_KEY, $adopted );
+	return $adopted;
+}
+
+/**
+ * Drop the flag and everything downstream of it, and leave no other trace.
+ *
+ * ⛔ WHAT IT TOUCHES, EXHAUSTIVELY: two WooCommerce SESSION keys, the session's
+ *    chosen-shipping-method SELECTION, and the shipping rate-cache version.
+ * ⛔ WHAT IT DOES NOT TOUCH, AND MUST NEVER: the cart, any order, any product,
+ *    price, coupon, stock, shipping, tax, pickup or payment SETTING, and the
+ *    `bhp_school_visits` registry. Clearing a session is not a data change.
+ *
+ * ⭐ THE CHOSEN METHOD IS CLEARED FOR THE SAME REASON `capture_intent()` clears
+ *    it on the way IN, mirrored. A session that had selected
+ *    `pickup_location:*` would otherwise hold a selection that no longer exists
+ *    in the rate list, and `wc_get_default_shipping_method_for_package()`
+ *    preserves an existing choice where it can. Clearing it lets the ordinary
+ *    flat rate be selected cleanly on the next calculation.
+ *
+ * @return void
+ */
+function bhp_school_visit_clear_session() {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return;
+	}
+	WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, null );
+	WC()->session->set( BHP_SCHOOL_VISIT_SET_AT_SESSION_KEY, null );
+
+	if ( is_callable( array( WC()->session, 'set' ) ) ) {
+		WC()->session->set( 'chosen_shipping_methods', array() );
+	}
+
+	bhp_school_pickup_invalidate_rate_cache();
+}
+
+/**
  * Turn `?bhp_visit=<slug>` into a session flag.
  *
  * ⛔ IT SETS NOTHING unless the slug resolves to a live, non-expired visit,
@@ -647,11 +900,45 @@ function bhp_school_visit_capture_intent() {
 	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
 		return;
 	}
+
+	/*
+	 * ⭐ 1.8.59 — THE EXPLICIT CLEAR PATH, CHECKED BEFORE THE REGISTRY.
+	 *
+	 * `?bhp_visit=clear` puts this browser back to the ordinary storefront.
+	 * It is checked first because `clear` must never reach `resolve()` and be
+	 * treated as a slug, and it is a plain session clear: no notice, no
+	 * redirect, no cookie deleted, nothing removed from the cart.
+	 *
+	 * ⛔ NOT LINKED ANYWHERE CUSTOMER-FACING. It is for QA and for Andrew's own
+	 *    phone, and it is documented in the build report rather than on a page.
+	 * ⭐ IT IS SAFE FOR ANYONE TO HIT. On a session with no flag it does
+	 *    nothing at all, and it can only ever REMOVE an entitlement — there is
+	 *    no value of this parameter that grants one without a live visit.
+	 */
+	if ( BHP_SCHOOL_VISIT_CLEAR_TOKEN === $slug ) {
+		bhp_school_visit_clear_session();
+		return;
+	}
+
+	/*
+	 * ⛔ AN UNRESOLVABLE SLUG IS STILL A NO-OP, AND THAT IS UNCHANGED FROM
+	 *    1.8.56 ON PURPOSE. `commerce-cx` confirmed on 2026-08-19 that
+	 *    `?bhp_visit=<bogus>` does not clear an existing flag; making it clear
+	 *    one would mean a truncated or mistyped URL silently strips hand
+	 *    delivery from a parent who is entitled to it. The clear path above is
+	 *    an explicit word, not an accident anyone can have.
+	 */
 	if ( ! bhp_school_visit_resolve( $slug ) ) {
 		return;
 	}
 
 	WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, $slug );
+	/*
+	 * ⭐ 1.8.59 — the TTL is (re-)armed on every arrival through the link, so a
+	 *    parent holding the school's email always has a full fresh window and
+	 *    the hard TTL can never fire on somebody who is still using the link.
+	 */
+	WC()->session->set( BHP_SCHOOL_VISIT_SET_AT_SESSION_KEY, bhp_school_visit_now() );
 	if ( is_callable( array( WC()->session, 'set_customer_session_cookie' ) ) ) {
 		WC()->session->set_customer_session_cookie( true );
 	}
@@ -682,6 +969,28 @@ function bhp_school_visit_capture_intent() {
  *    BUTTON GREYS. It re-runs `bhp_school_visit_resolve()` on every request, so
  *    the boundary is a property of the calendar, not of when a session started.
  *
+ * ⭐⭐ 1.8.59 (`CYCLE165-LD-VISIT-FLAG-EXPIRY`) — TWO GUARDS NOW, IN THIS ORDER,
+ *     AND THE ORDER IS LOAD-BEARING.
+ *
+ *       1. THE HARD TTL, checked FIRST and WITHOUT consulting the registry.
+ *          Checking it first is what makes it a real backstop: a registry row
+ *          with a valid but wrong far-future date resolves perfectly happily
+ *          and would sail through guard 2 forever. Guard 1 never asks the
+ *          registry anything, so nothing in the registry can defeat it.
+ *       2. THE VISIT'S OWN ONLINE CLOSE, unchanged from 1.8.56, via
+ *          `bhp_school_visit_resolve()`. This is the guard that governs every
+ *          real parent, and on 2026-08-19 all three live visits were OPEN
+ *          (Adams closes 08-27, Dallas Harris 09-02, Liberty 09-03), so this
+ *          build changes NOTHING for any real family today.
+ *
+ * ⭐ EITHER GUARD FIRING CLEARS THE SESSION RATHER THAN MERELY ANSWERING "no",
+ *    so an expired session self-heals on one request instead of paying for a
+ *    registry read on every request for the rest of its life.
+ *
+ * ⛔ NEITHER GUARD TOUCHES THE CART, AN ORDER, OR ANY WOOCOMMERCE RECORD. The
+ *    worst thing an expiry can do to a shopper mid-journey is put the ordinary
+ *    storefront and the ordinary shipping rate back in front of them.
+ *
  * @return array{slug:string,school:string,date:string,cutoff:string,time:string}|null
  */
 function bhp_school_visit_active() {
@@ -692,10 +1001,17 @@ function bhp_school_visit_active() {
 	if ( ! $slug ) {
 		return null;
 	}
+
+	// GUARD 1 — the hard TTL. Deliberately asks the registry nothing.
+	if ( bhp_school_visit_ttl_expired( bhp_school_visit_set_at_stamp(), bhp_school_visit_now() ) ) {
+		bhp_school_visit_clear_session();
+		return null;
+	}
+
+	// GUARD 2 — the visit's own online close, re-read live on every request.
 	$record = bhp_school_visit_resolve( $slug );
 	if ( ! $record ) {
-		WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, null );
-		bhp_school_pickup_invalidate_rate_cache();
+		bhp_school_visit_clear_session();
 		return null;
 	}
 	return $record;
