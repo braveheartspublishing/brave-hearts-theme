@@ -510,11 +510,33 @@ function bhp_consent_banner_compact_css() {
     align-items: stretch !important;
     gap: 8px !important;
     height: auto !important;
-    /* 18 padding + ~35 message (2 lines at 13px/1.35) + 8 gap + 44 buttons
-       = ~105px. The cap is 132px so a three-line message on a narrow phone
-       grows rather than clips, and 132 still clears the hero CTA's 187px of
-       space at 390 x 844 with 55px to spare. */
-    max-height: 132px !important;
+    /* 18 padding + ~35 message (2 lines at 13px/1.35) + 8 gap + 44 buttons.
+       MEASURED RENDERED HEIGHT: 105px at 390 x 844, on home, product and
+       collection alike.
+
+       ⛔ THE CAP IS 116px AND IT IS NOT A ROUND NUMBER. It is set by the
+          TIGHTEST of the three folds this release had to protect, measured
+          after deploy rather than reasoned about:
+
+              /complete-collection/ primary CTA   top 681  bottom 735
+              its centre, which is what
+              `document.elementFromPoint` tests            708
+
+          A bottom-anchored bar of height H has its top edge at 844 - H, so
+          the largest H that leaves that centre clickable is 844 - 708 = 136.
+          116 leaves 20px of margin for font loading, subpixel rounding and
+          device pixel ratio -- the same margin the 1.19.249 block took for
+          the same reason on the homepage.
+
+       ⚠ A 132px cap was written first and withdrawn: at 132 the bar's top
+         edge is 712, four pixels above that CTA's bottom edge. It would not
+         have covered the tap POINT, and it would have covered the control.
+         Recorded so it is not re-proposed as "there was room".
+
+       The message cannot outgrow this anyway -- `-webkit-line-clamp: 2`
+       below bounds it at two lines -- so this is a guarantee, not a limit
+       that content is expected to hit. */
+    max-height: 116px !important;
     min-height: 0 !important;
     padding: 10px 12px 8px !important;
     overflow: visible !important;
