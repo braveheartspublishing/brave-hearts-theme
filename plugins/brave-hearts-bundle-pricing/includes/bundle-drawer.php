@@ -239,6 +239,31 @@ function bhp_bundle_drawer_assets() {
 			),
 			'currencySymbol' => function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '$',
 			/*
+			 * ⭐ 1.8.57 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — TRUE on a
+			 *    school-visit session, which is PAPERBACK ONLY (Andrew's own
+			 *    inventory constraint; ⛔ relayed, not witnessed first-hand).
+			 *
+			 * ⭐ WHAT IT ACTUALLY PREVENTS, stated precisely rather than
+			 *    overclaimed: `pickCrossSell()` in bundle-drawer.js walks the
+			 *    formats in an order derived from what is ALREADY in the cart.
+			 *    On a legitimately paperback-only flagged cart it can only ever
+			 *    reach the hardcover branch once every adventure is owned, at
+			 *    which point it returns null anyway. So today this flag closes a
+			 *    NARROW path (a cart already holding a hardcover from before the
+			 *    school link was clicked) rather than a wide one.
+			 *
+			 * ⛔ IT IS NOT THE ENFORCEMENT, and it is not relied upon as such.
+			 *    The Store API add the cross-sell button performs is refused
+			 *    server-side by `school-visit-paperback-only.php` seam 2
+			 *    regardless. This flag exists so a flagged parent is not OFFERED
+			 *    a button that would then fail, which is a worse experience than
+			 *    not seeing the button.
+			 *
+			 * ⛔ FALSE for every ordinary shopper, and bundle-drawer.js treats a
+			 *    falsy value exactly as it treated an absent one.
+			 */
+			'paperbackOnly'  => function_exists( 'bhp_school_visit_paperback_only' ) && bhp_school_visit_paperback_only(),
+			/*
 			 * R4 (2026-08-03): the cross-sell box's gold eyebrow.
 			 *
 			 * ⛔ ONE STRING, ONE SOURCE. It is read from the checkout module's

@@ -154,6 +154,34 @@ function bhp_bundle_checkout_redirect_input() {
  * item (never a substitute bundle product).
  */
 function bhp_bundle_add_titles_to_cart( $format, array $title_keys ) {
+	/*
+	 * ⭐ 1.8.57 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — THE EXPLICIT
+	 *    GUARD ON THIS FUNCTION'S OWN CONTRACT.
+	 *
+	 * ⛔ THIS IS BELT AND BRACES ON TOP OF SEAM 5, NOT INSTEAD OF IT.
+	 *    `school-visit-paperback-only.php` seam 5 catches every caller of
+	 *    `WC_Cart::add_to_cart()`; this one catches THIS caller by name and
+	 *    gives the parent ONE clear sentence instead of three identical
+	 *    per-title errors and a misleading "That bundle could not be added ...
+	 *    the titles may be temporarily unavailable."
+	 *
+	 * ⛔ WHY BOTH: the reason seam 5 had to be written at all is that
+	 *    `WC_Cart::add_to_cart()` does NOT apply
+	 *    `woocommerce_add_to_cart_validation`, which is exactly the kind of
+	 *    core assumption that is invisible until something is measured. A
+	 *    format-level refusal in the function that takes a `$format` argument
+	 *    does not depend on any core hook behaviour at all.
+	 *
+	 * ⛔ CONTROL PATH: false for every ordinary shopper, and for every
+	 *    paperback add on any session.
+	 */
+	if ( 'hardcover' === $format
+		&& function_exists( 'bhp_school_visit_paperback_only' )
+		&& bhp_school_visit_paperback_only() ) {
+		wc_add_notice( bhp_school_visit_paperback_only_message(), 'error' );
+		return;
+	}
+
 	$catalog = bhp_bundle_catalog();
 	$added   = 0;
 
@@ -241,6 +269,23 @@ function bhp_bundle_render_offers() {
 				'complete' => array( 'complete_hardcover', 'Add the Complete Hardcover Collection' ),
 			),
 		);
+
+		/*
+		 * ⭐ 1.8.57 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT): /book-bundles/
+		 *    renders all four offers at once with no toggle, so "paperback only"
+		 *    here means the two HARDCOVER sections are not rendered at all on a
+		 *    school-visit session. Two purchase forms that the server would
+		 *    refuse are worse than none.
+		 *
+		 * ⛔ CONTROL PATH: `bhp_school_visit_paperback_only()` is false for every
+		 *    ordinary shopper and all four sections render exactly as in 1.8.56.
+		 */
+		if ( function_exists( 'bhp_school_visit_paperback_only' ) && bhp_school_visit_paperback_only() ) {
+			$bhp_restricted_order = array_values( array_intersect( $bhp_offer_order, array( 'paperback' ) ) );
+			if ( ! empty( $bhp_restricted_order ) ) {
+				$bhp_offer_order = $bhp_restricted_order;
+			}
+		}
 
 		foreach ( $bhp_offer_order as $bhp_offer_format ) {
 			$bhp_offer = $bhp_offer_labels[ $bhp_offer_format ];

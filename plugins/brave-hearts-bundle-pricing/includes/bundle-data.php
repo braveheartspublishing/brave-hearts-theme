@@ -76,14 +76,57 @@ function bhp_bundle_expected_price( $format ) {
 }
 
 /**
- * The format the Complete Collection landing page presents first when the
- * visitor has not chosen one (2026-07-30, Andrew's explicit decision).
+ * ⭐⭐ THE SITE-WIDE FIRST-SEEN FORMAT. 1.8.57 (2026-08-18) — IT IS PAPERBACK.
  *
- * Hardcover: $48.99 collection (3 x $17.99 = $53.97, less the existing $4.98
- * bundle discount), $4.99 flat shipping. Both figures are the pre-existing
- * commerce model -- nothing about pricing, discounts, shipping rules, taxes,
- * product IDs or Bookvault behavior is changed by defaulting to it. Only the
- * initially-selected control changes.
+ * Andrew Signore, 2026-08-18, verbatim (⛔ RELAYED through the Chief of Staff
+ * in the `CYCLE164-LD-PAPERBACK-DEFAULT` brief; NOT witnessed first-hand by
+ * the agent that made this change):
+ *
+ *   "yes, lets make it the paperbacks"
+ *
+ * ⭐ ONE LINE MOVES EVERY SURFACE, WHICH IS THE WHOLE POINT OF THIS FUNCTION
+ *    EXISTING. Read by the homepage Best Value band, `/books/`, the four
+ *    audience/funnel landing pages, the product-page collection cross-sell,
+ *    the shop grid's collection card, the header collection CTA,
+ *    `/book-bundles/` and `/shop-the-series/`. Before 2026-07-30 those were
+ *    six hardcoded literals in six files; the reason they were consolidated
+ *    here is precisely so a founder ruling like this one is a ONE-LINE change
+ *    that cannot half-apply.
+ *
+ * ⚠ THIS IS A REAL COMMERCIAL MOVEMENT AND IT IS REPORTED AS ONE, NOT AS A
+ *   NEUTRAL DISPLAY TWEAK: the first price a shopper meets on the homepage
+ *   band and the funnel price cards goes from the $17.99/$48.99 hardcover
+ *   figures to the $11.99/$31.99 paperback ones. HARDCOVER REMAINS ONE TAP
+ *   AWAY on every one of those surfaces, fully in stock and fully
+ *   purchasable. It is the founder's own instruction, applied as given.
+ *
+ * ⛔ NO PRICE, DISCOUNT, SHIPPING TIER, TAX, COUPON, STOCK STATUS, PRODUCT
+ *    RECORD, VARIATION, SKU, BOOKVAULT MAPPING OR WOOCOMMERCE SETTING IS
+ *    CHANGED BY THIS FUNCTION, on any environment. Every figure on every
+ *    affected surface is still read at render time from WooCommerce or from
+ *    the approved tables below, so the numbers FOLLOW the default rather than
+ *    being restated beside it. Only which control starts selected moves.
+ *
+ * ⛔ SUPERSEDED, PRESERVED VERBATIM SO THE MOVEMENT STAYS VISIBLE RATHER THAN
+ *    BEING RE-DERIVED. This function returned `'hardcover'` from 2026-07-30 to
+ *    2026-08-18 under Andrew's decision of 2026-07-30, and its docblock read:
+ *
+ *      "The format the Complete Collection landing page presents first when
+ *       the visitor has not chosen one (2026-07-30, Andrew's explicit
+ *       decision).
+ *
+ *       Hardcover: $48.99 collection (3 x $17.99 = $53.97, less the existing
+ *       $4.98 bundle discount), $4.99 flat shipping. Both figures are the
+ *       pre-existing commerce model -- nothing about pricing, discounts,
+ *       shipping rules, taxes, product IDs or Bookvault behavior is changed
+ *       by defaulting to it. Only the initially-selected control changes."
+ *
+ *    ⚠ Note what the old docblock's FIRST LINE says and what is no longer
+ *      true of it: the Complete Collection LANDING PAGE has had its own
+ *      separate default since 2026-08-14 (`bhp_bundle_landing_default_format()`
+ *      in bundle-landing-page.php, paperback), so that page is already
+ *      paperback-first and is UNAFFECTED by this change. Confirmed by reading
+ *      that function, not assumed.
  *
  * Single source of truth: the format selector, the pricing panel and the final
  * CTA panel all read this, so the default can never drift apart between them.
@@ -91,7 +134,7 @@ function bhp_bundle_expected_price( $format ) {
  * @return string 'paperback'|'hardcover'
  */
 function bhp_bundle_default_format() {
-	return 'hardcover';
+	return 'paperback';
 }
 
 /**

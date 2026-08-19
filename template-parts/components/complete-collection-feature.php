@@ -198,6 +198,36 @@ $bhp_cc_format_order = function_exists('bhp_book_format_order')
     : [$bhp_cc_format, ('hardcover' === $bhp_cc_format ? 'paperback' : 'hardcover')];
 
 /*
+ * ⭐ 1.19.240 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — on a school-visit
+ *    session this band offers PAPERBACK ONLY, and the CTA it wires up posts a
+ *    paperback action.
+ *
+ * ⛔ BOTH LINES ARE REQUIRED, NOT ONE. `$bhp_cc_format_order` decides which
+ *    radio buttons exist; `$bhp_cc_format` decides which one is checked AND is
+ *    passed straight into `bhp_collection_add_to_cart_cta()` as the format the
+ *    hidden `bhp_bundle_action` field posts. Filtering the buttons alone would
+ *    leave a flagged parent with one visible "Paperback" radio and a form that
+ *    still submits `complete_hardcover_smart`.
+ *
+ * ⛔ CONTROL PATH: `bhp_book_available_formats()` returns both formats for
+ *    every ordinary shopper, so the rendered band is byte-identical to
+ *    1.19.239 apart from which format the site-wide default names — which is
+ *    Andrew's separate 2026-08-18 ruling, not this restriction.
+ */
+if (function_exists('bhp_book_available_formats')) {
+    $bhp_cc_allowed = bhp_book_available_formats();
+    if (is_array($bhp_cc_allowed) && !empty($bhp_cc_allowed)) {
+        $bhp_cc_filtered = array_values(array_intersect($bhp_cc_format_order, $bhp_cc_allowed));
+        if (!empty($bhp_cc_filtered)) {
+            $bhp_cc_format_order = $bhp_cc_filtered;
+            if (!in_array($bhp_cc_format, $bhp_cc_format_order, true)) {
+                $bhp_cc_format = $bhp_cc_format_order[0];
+            }
+        }
+    }
+}
+
+/*
  * Two bands never render on one document today, but the ids here are
  * per-page anyway (see `title_id` above) and the toggle's radiogroup needs
  * its own label id. Derived from the section id so it cannot collide.

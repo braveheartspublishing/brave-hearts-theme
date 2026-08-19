@@ -113,6 +113,41 @@ if ($bundle_available) {
 $bhp_default_format = function_exists('bhp_book_default_format') ? bhp_book_default_format() : 'hardcover';
 $bhp_format_order   = function_exists('bhp_book_format_order') ? bhp_book_format_order() : array('paperback', 'hardcover');
 
+/*
+ * ⭐ 1.19.240 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — on a school-visit
+ *    session this funnel offers PAPERBACK ONLY.
+ *
+ * Andrew Signore, 2026-08-18, verbatim (⛔ RELAYED, not witnessed first-hand):
+ *   "also for the orders on the pre-signed books for the read alouds- based on
+ *    my inventory I can only do paperbacks"
+ *
+ * ⛔ BOTH VARIABLES MOVE OR NEITHER SHOULD. `$bhp_format_order` decides which
+ *    format panels and controls exist; `$bhp_default_format` decides which one
+ *    is pre-selected and is what the price panel and the add-to-cart action are
+ *    built from. Filtering only the first would leave a page showing one
+ *    paperback control while still posting a hardcover action.
+ *
+ * ⛔ THE UI IS NOT THE ENFORCEMENT. The bundle plugin's
+ *    `includes/school-visit-paperback-only.php` refuses a hardcover at the
+ *    add-to-cart and at the checkout, on the classic AND the Store API paths.
+ *    This block only stops the page offering what the server would refuse.
+ *
+ * ⛔ CONTROL PATH: `bhp_book_available_formats()` returns both formats for
+ *    every ordinary shopper and this block is a no-op for them.
+ */
+if (function_exists('bhp_book_available_formats')) {
+    $bhp_allowed_formats = bhp_book_available_formats();
+    if (is_array($bhp_allowed_formats) && !empty($bhp_allowed_formats)) {
+        $bhp_filtered_formats = array_values(array_intersect($bhp_format_order, $bhp_allowed_formats));
+        if (!empty($bhp_filtered_formats)) {
+            $bhp_format_order = $bhp_filtered_formats;
+            if (!in_array($bhp_default_format, $bhp_format_order, true)) {
+                $bhp_default_format = $bhp_format_order[0];
+            }
+        }
+    }
+}
+
 // Sprint A, Phase 4: swapped from amz-mariana-04 (a teacher/classroom
 // review -- the wrong voice for a gift buyer) to amz-mariana-02, a real,
 // already-approved family/bedtime-reading review from the same registry

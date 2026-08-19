@@ -25,6 +25,26 @@
 	color: var(--bhp-fmt-navy);
 }
 
+/* ⭐ 1.19.240 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — the one-line
+   reason there is no HARDCOVER card on a school-visit session.
+
+   It sits between the heading and the card grid deliberately: a parent reads
+   it BEFORE they look for the missing option, not after. Styled as a quiet
+   fact rather than a warning, because nothing has gone wrong. No colour token
+   is introduced; it reuses the navy already on the heading at reduced opacity.
+
+   ⛔ This rule is INERT for every ordinary shopper. The element is only
+      emitted when `bhp_school_visit_paperback_only_note()` returns a string,
+      which it never does without a live visit flag on the request. */
+.bhp-formats__paperback-only {
+	margin: 0 0 10px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	line-height: 1.45;
+	color: var(--bhp-fmt-navy);
+	opacity: 0.85;
+}
+
 .bhp-formats__grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));

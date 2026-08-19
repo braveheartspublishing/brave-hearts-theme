@@ -156,15 +156,36 @@ bhp_cpb_assert(
 	$failures
 );
 /*
- * ⛔ THE GUARD THAT MATTERS MORE THAN THE OVERRIDE ITSELF. Six surfaces
- *    outside this page read `bhp_bundle_default_format()`. If a future edit
- *    "simplifies" the override by changing the global, every product page
- *    and collection card on the site silently re-defaults, which is a
- *    commercial change nobody approved.
+ * ⛔⭐ SUPERSEDED 2026-08-18 (`CYCLE164-LD-PAPERBACK-DEFAULT`, plugin 1.8.57).
+ *     The superseded assertion, PRESERVED VERBATIM so the movement is visible
+ *     and is not re-derived:
+ *
+ *       bhp_cpb_assert(
+ *           'hardcover' === bhp_bundle_default_format(),
+ *           '2: the SITEWIDE default format is STILL hardcover — the override is page-scoped',
+ *           $failures
+ *       );
+ *
+ *     It was correct, and its stated reason was correct: "Six surfaces outside
+ *     this page read bhp_bundle_default_format(). If a future edit 'simplifies'
+ *     the override by changing the global, every product page and collection
+ *     card on the site silently re-defaults, which is a commercial change
+ *     nobody approved."
+ *
+ * ⭐ THE GLOBAL WAS THEN CHANGED, AND NOT SILENTLY. Andrew Signore, 2026-08-18,
+ *    verbatim (⛔ RELAYED through the Chief of Staff; NOT witnessed first-hand
+ *    by the agent that edited this file): "yes, lets make it the paperbacks".
+ *    The site-wide default is now PAPERBACK. That is the commercial change this
+ *    assertion existed to force someone to ask about, and the answer came from
+ *    the owner.
+ *
+ * ⛔ THE GUARD IS NOT DELETED, IT IS RE-POINTED. It still pins the site-wide
+ *    default to an explicit value, so the next unapproved flip in either
+ *    direction still fails a test rather than shipping quietly.
  */
 bhp_cpb_assert(
-	'hardcover' === bhp_bundle_default_format(),
-	'2: the SITEWIDE default format is STILL hardcover — the override is page-scoped',
+	'paperback' === bhp_bundle_default_format(),
+	'2: the SITEWIDE default format is PAPERBACK (Andrew, 2026-08-18), pinned so it cannot flip unnoticed',
 	$failures
 );
 

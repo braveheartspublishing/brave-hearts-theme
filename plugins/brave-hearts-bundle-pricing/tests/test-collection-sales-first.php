@@ -295,10 +295,28 @@ bhp_csf_assert(
 	'2: the collection landing page opens on PAPERBACK',
 	$failures
 );
+/*
+ * ⛔⭐ SUPERSEDED 2026-08-18 (`CYCLE164-LD-PAPERBACK-DEFAULT`, plugin 1.8.57).
+ *     The superseded assertion, PRESERVED VERBATIM:
+ *
+ *       bhp_csf_assert(
+ *           function_exists( 'bhp_bundle_default_format' )
+ *           && 'hardcover' === bhp_bundle_default_format(),
+ *           '2: the SITEWIDE default format is still hardcover (page-scoped override only)',
+ *           $failures
+ *       );
+ *
+ * ⭐ Andrew Signore, 2026-08-18, verbatim (⛔ RELAYED, NOT witnessed here):
+ *    "yes, lets make it the paperbacks". The site-wide default is PAPERBACK,
+ *    and the Collection page's own paperback override is therefore no longer
+ *    the only thing holding this page on paperback. Both are asserted, because
+ *    a page-scoped override that quietly stops being needed is exactly how one
+ *    gets deleted and takes the behaviour with it.
+ */
 bhp_csf_assert(
 	function_exists( 'bhp_bundle_default_format' )
-	&& 'hardcover' === bhp_bundle_default_format(),
-	'2: the SITEWIDE default format is still hardcover (page-scoped override only)',
+	&& 'paperback' === bhp_bundle_default_format(),
+	'2: the SITEWIDE default format is PAPERBACK (Andrew, 2026-08-18)',
 	$failures
 );
 

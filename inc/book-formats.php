@@ -61,6 +61,87 @@ function bhp_book_format_order() {
     return 'paperback' === $default ? ['paperback', 'hardcover'] : ['hardcover', 'paperback'];
 }
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.240 (2026-08-18) — CYCLE164-LD-PAPERBACK-DEFAULT.
+ *     THE FORMATS A VISITOR MAY ACTUALLY BUY, AS OPPOSED TO THE ONES THAT
+ *     EXIST.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-18, verbatim (⛔ RELAYED through the Chief of Staff;
+ * NOT witnessed first-hand by the agent that wrote this):
+ *
+ *   "yes, lets make it the paperbacks - also for the orders on the pre-signed
+ *    books for the read alouds- based on my inventory I can only do paperbacks"
+ *
+ * ⭐ WHY THIS IS A SECOND FUNCTION RATHER THAN AN EDIT TO
+ *    bhp_book_format_order(). The two questions are genuinely different and
+ *    conflating them would be wrong in both directions:
+ *
+ *      bhp_book_format_order()      "which format LEADS" — a presentation
+ *                                   decision, site-wide, both formats always
+ *                                   present, ordered by the site default.
+ *      bhp_book_available_formats() "which formats may be OFFERED AT ALL on
+ *                                   THIS request" — an inventory fact, and on
+ *                                   a school-visit session it is paperback
+ *                                   alone, because Andrew cannot carry a
+ *                                   hardcover to a read aloud and sign it.
+ *
+ *    Overloading the order function would also have broken its own contract
+ *    ("exactly the two physical formats, once each"), which
+ *    tests/test-book-formats.php asserts and which is doing its job.
+ *
+ * ⛔ THE RESTRICTION IS THE PLUGIN'S, NOT THE THEME'S, AND THAT IS DELIBERATE.
+ *    `bhp_bundle_available_format_order()` lives in the bundle plugin next to
+ *    the SERVER-SIDE ENFORCEMENT that refuses the add-to-cart and the
+ *    checkout (`includes/school-visit-paperback-only.php`). One predicate
+ *    decides both what is hidden and what is refused, so the two can never
+ *    disagree — hiding a control the server would still accept, or refusing a
+ *    control the page still shows, are both worse than either alone.
+ *
+ * ✅ FAILS OPEN. With the plugin deactivated, or on any request with no visit
+ *    flag, this returns exactly what bhp_book_format_order() returns and this
+ *    file behaves as it did in 1.19.239.
+ *
+ * @return string[] One or both physical formats, presentation order.
+ */
+function bhp_book_available_formats() {
+    if (function_exists('bhp_bundle_available_format_order')) {
+        $formats = bhp_bundle_available_format_order();
+        if (is_array($formats) && !empty($formats)) {
+            return array_values($formats);
+        }
+    }
+    return bhp_book_format_order();
+}
+
+/**
+ * True when the hardcover format may be offered on this request at all.
+ *
+ * @return bool
+ */
+function bhp_book_hardcover_is_offerable() {
+    if (function_exists('bhp_bundle_hardcover_is_offerable')) {
+        return (bool) bhp_bundle_hardcover_is_offerable();
+    }
+    return true; // FAIL OPEN: plugin absent -> nothing is restricted.
+}
+
+/**
+ * The short §9.1 note a surface prints in place of a hidden hardcover control.
+ *
+ * Empty string for every ordinary shopper, so a template may echo it
+ * unconditionally and print nothing.
+ *
+ * @return string
+ */
+function bhp_book_paperback_only_note() {
+    if (function_exists('bhp_school_visit_paperback_only_note')) {
+        return (string) bhp_school_visit_paperback_only_note();
+    }
+    return '';
+}
+
 // ============================================================
 // CYCLE143-LD-171 (2026-08-04) — SHIPPING NOTES THAT SURVIVE A $0.00 TIER
 // ============================================================
@@ -624,14 +705,34 @@ function bhp_book_purchase_data($key) {
 
 /**
  * Complete Collection figures, read from the bundle plugin so the theme
- * never recreates bundle maths. Defaults to the plugin's own default format
- * (hardcover), matching the dedicated Complete Collection page.
+ * never recreates bundle maths. Defaults to the plugin's own default format.
+ *
+ * ⭐ 1.19.240 (2026-08-18): the plugin's default is now PAPERBACK (Andrew's
+ *    2026-08-18 ruling), so this returns the $31.99 paperback collection where
+ *    it returned the $48.99 hardcover set from 2026-07-30 to 2026-08-18. The
+ *    superseded docblock line said "(hardcover), matching the dedicated
+ *    Complete Collection page" — note that the Collection PAGE has had its own
+ *    paperback default since 2026-08-14, so the two now agree for the first
+ *    time since that override was added.
+ *
+ * ⭐ AND ON A SCHOOL-VISIT SESSION IT IS PAPERBACK REGARDLESS. This function
+ *    feeds the product-page collection cross-sell AND the shop grid's
+ *    collection card, which are two of the three surfaces where a flagged
+ *    parent could otherwise be offered a hardcover set that cannot be
+ *    hand-delivered. Restricting it here rather than in the two templates is
+ *    what stops them drifting apart.
+ *
+ * ⛔ NO PRICE IS COMPUTED OR STORED HERE. Every figure is still read live from
+ *    WooCommerce and the plugin's approved discount table.
  */
 function bhp_book_collection_data() {
     $page = get_page_by_path('complete-collection');
     $url = $page && 'publish' === $page->post_status ? get_permalink($page) : home_url('/complete-collection/');
 
     $format = function_exists('bhp_bundle_default_format') ? bhp_bundle_default_format() : 'hardcover';
+    if ('hardcover' === $format && function_exists('bhp_book_hardcover_is_offerable') && !bhp_book_hardcover_is_offerable()) {
+        $format = 'paperback';
+    }
     $price_html = '';
 
     if (function_exists('bhp_bundle_rules')) {
@@ -802,6 +903,63 @@ function bhp_book_viewed_format() {
 }
 
 function bhp_book_incoming_format() {
+    $resolved = bhp_book_incoming_format_unrestricted();
+
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.240 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — THE ONE
+     *     RESOLVER IS ALSO WHERE THE SCHOOL-VISIT RESTRICTION LANDS.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ THIS IS A DEFECT FOUND IN BROWSER QA, NOT A PRECAUTION. With the
+     *    format CARDS already restricted, a flagged walk of
+     *    /product/…-the-mariana-trench-HARDCOVER/ (which 301s here carrying
+     *    `?bhp_format=hardcover`) still rendered a VISIBLE, SUBMITTABLE button
+     *    reading "Add the Complete Hardcover Collection", posting
+     *    `complete_hardcover_smart`. OBSERVED at 1440 and 390 on staging
+     *    2026-08-18, `window.innerWidth` asserted. It comes from the
+     *    product-page collection upsell in inc/audit-remediation.php, which
+     *    reads THIS function and not the format cards.
+     *
+     * ⛔ FIXING IT IN THE UPSELL WOULD HAVE BEEN THE WRONG FIX. That file's own
+     *    comment says why this function exists: "bhp_book_incoming_format() is
+     *    the theme's ONE resolver for this question ... Reusing it is what
+     *    stops this card and the selector directly above it from ever
+     *    disagreeing again." Patching the consumer would have re-created the
+     *    disagreement it was written to end, and left every OTHER consumer
+     *    (the Offer schema's primary offer, bhp_book_hardcover_leads) still
+     *    answering "hardcover" on a session that cannot buy one.
+     *
+     * ⭐ THE PARAMETER STILL WINS FOR EVERY ORDINARY SHOPPER. Nothing about the
+     *    resolution ORDER changes; a format the visitor may not buy is simply
+     *    not a valid answer to "which format is this visitor looking at".
+     *    `kindle` and `collection` are untouched: Amazon fulfils the first and
+     *    the second resolves to a paperback set through
+     *    `bhp_book_collection_data()`.
+     *
+     * ⛔ bhp_book_incoming_format_unrestricted() is kept and exported so a
+     *    caller that genuinely needs the raw URL intent (a canonical/redirect
+     *    decision, say) can still get it without this restriction. Nothing
+     *    calls it that way today; it exists so a future need does not
+     *    reintroduce a second resolver.
+     */
+    if ('hardcover' === $resolved
+        && function_exists('bhp_book_hardcover_is_offerable')
+        && !bhp_book_hardcover_is_offerable()) {
+        return 'paperback';
+    }
+
+    return $resolved;
+}
+
+/**
+ * The raw incoming format, BEFORE the school-visit paperback-only restriction.
+ *
+ * The pre-1.19.240 body of bhp_book_incoming_format(), unchanged.
+ *
+ * @return string 'paperback'|'hardcover'|'kindle'|'collection'
+ */
+function bhp_book_incoming_format_unrestricted() {
     $raw = isset($_GET['bhp_format']) ? sanitize_key(wp_unslash($_GET['bhp_format'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     if (in_array($raw, ['paperback', 'hardcover', 'kindle', 'collection'], true)) {
         return $raw;

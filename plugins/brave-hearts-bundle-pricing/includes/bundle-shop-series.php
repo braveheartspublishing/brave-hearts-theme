@@ -23,7 +23,20 @@ function bhp_bundle_render_shop_series() {
 	<div class="bhp-shop-series">
 		<?php
 		bhp_bundle_render_shop_series_format_section( 'paperback', 'Paperback' );
-		bhp_bundle_render_shop_series_format_section( 'hardcover', 'Hardcover' );
+		/*
+		 * ⭐ 1.8.57 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT): the HARDCOVER
+		 *    section is withheld from a school-visit session. Andrew cannot
+		 *    carry a hardcover to a read aloud and sign it, and the bundle
+		 *    plugin's `includes/school-visit-paperback-only.php` refuses every
+		 *    hardcover add and checkout on such a session, so rendering three
+		 *    hardcover purchase forms here would offer what the server refuses.
+		 *
+		 * ⛔ CONTROL PATH: false for every ordinary shopper; the section renders
+		 *    exactly as in 1.8.56.
+		 */
+		if ( ! function_exists( 'bhp_school_visit_paperback_only' ) || ! bhp_school_visit_paperback_only() ) {
+			bhp_bundle_render_shop_series_format_section( 'hardcover', 'Hardcover' );
+		}
 		?>
 	</div>
 	<?php

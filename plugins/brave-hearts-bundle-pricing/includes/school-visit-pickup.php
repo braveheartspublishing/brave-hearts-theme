@@ -847,9 +847,18 @@ function bhp_school_pickup_location_details( array $record ) {
 
 	// 2026-08-17 Andrew, verbatim order: the checkout must highlight that this
 	// is for personalized signed author copies. His words, fitted to voice rules.
+	//
+	// ⭐ 1.8.57 (2026-08-18): "books" becomes "paperbacks", one word, because a
+	//    flagged order can now only BE paperbacks (Andrew, 2026-08-18: "based on
+	//    my inventory I can only do paperbacks") and this is the last screen
+	//    before payment. A parent who assumed hardcover finds out here, not at
+	//    the read aloud. ⛔ NO "we". ⛔ NO EM DASH. Nothing else in the sentence
+	//    moves, and the SUPERSEDED wording was "Andrew brings the signed books to
+	//    %1$s on %2$s." — preserved here so the change is visible rather than
+	//    re-derived.
 	$details = __( 'This is for personalized signed author copies! Fill in your child&#8217;s first name below and I will hand them their book at the read aloud. ', 'brave-hearts' ) . sprintf(
 		/* translators: 1: school name, 2: visit date */
-		__( 'Andrew brings the signed books to %1$s on %2$s. Nothing is posted to your home, and there is no shipping charge.', 'brave-hearts' ),
+		__( 'Andrew brings the signed paperbacks to %1$s on %2$s. Nothing is posted to your home, and there is no shipping charge.', 'brave-hearts' ),
 		$record['school'],
 		$date
 	);

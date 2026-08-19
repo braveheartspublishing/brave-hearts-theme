@@ -27,6 +27,53 @@ $initial = isset($initial) ? $initial
 $uid = 'bhp-fmt-' . (int) $data['paperback']['product_id'];
 
 /*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.240 (2026-08-18) — CYCLE164-LD-PAPERBACK-DEFAULT.
+ *     ON A SCHOOL-VISIT SESSION THIS SELECTOR OFFERS PAPERBACK ONLY.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-18, verbatim (⛔ RELAYED, not witnessed first-hand):
+ *   "also for the orders on the pre-signed books for the read alouds- based on
+ *    my inventory I can only do paperbacks"
+ *
+ * ⭐ THE DEFECT WAS LIVE AND WAS OBSERVED, NOT INFERRED. `commerce-cx` walked
+ *    the flagged path on PRODUCTION on 2026-08-18 and reported: "the product
+ *    page renders a selectable HARDCOVER $17.99 card". A Liberty parent could
+ *    therefore pre-order a hardcover that cannot be hand-delivered, and the
+ *    failure would surface at the read aloud in front of a child.
+ *
+ * ⛔ HIDING THIS CARD IS NOT THE FIX AND MUST NEVER BE MISTAKEN FOR IT. The
+ *    fix is the SERVER-SIDE refusal in the bundle plugin's
+ *    `includes/school-visit-paperback-only.php`, at four seams including the
+ *    Store API cart-error seam that stops a cart filled BEFORE the school link
+ *    was clicked. This block hides the control that the server would refuse,
+ *    so the page and the server say the same thing — it does not do the
+ *    enforcing, and a stale link, a bookmark or a Store API client never reads
+ *    this file at all.
+ *
+ * ⭐ THREE THINGS MOVE, AND ONLY ON A FLAGGED REQUEST:
+ *      1. `$initial` is pulled off hardcover. A hardcover product URL 301s to
+ *         this page carrying `?bhp_format=hardcover`, so a flagged parent
+ *         arriving from an old link would otherwise land on a pressed card
+ *         that is about to disappear.
+ *      2. The hardcover entry leaves `$bhp_format_payload`, so book-formats.js
+ *         cannot select it either. Removing the card while leaving the payload
+ *         would leave a selectable format with no control, which is worse.
+ *      3. The COLLECTION card is forced to the paperback collection, so the
+ *         "all three adventures" price a flagged parent sees is one they can
+ *         actually be handed.
+ *
+ * ⛔ CONTROL PATH: every ordinary shopper gets the identical four cards, the
+ *    identical payload, the identical order and the identical prices as
+ *    1.19.239. `bhp_book_hardcover_is_offerable()` returns true for them and
+ *    every branch below is skipped.
+ */
+$bhp_hc_offerable = function_exists('bhp_book_hardcover_is_offerable') ? bhp_book_hardcover_is_offerable() : true;
+if (!$bhp_hc_offerable && 'hardcover' === $initial) {
+    $initial = 'paperback';
+}
+
+/*
  * A1 / CX-008 (2026-08-03) — THE FORMAT-REACTIVE SPEC LINE.
  *
  * Architectural fact this exists because of, verified live by `commerce-cx`
@@ -138,7 +185,18 @@ $bhp_shipping_note_hardcover = bhp_book_ship_note_single($bhp_ship_single('hardc
  *    number. If he sets the default back to paperback, this reads $3.99 again
  *    with no edit here. Flagged in the handoff, not presented as pre-approved.
  */
-$bhp_collection_format = function_exists('bhp_book_default_format') ? bhp_book_default_format() : 'hardcover';
+/*
+ * ⭐ 1.19.240 (2026-08-18): READ FROM `$data['collection']['format']` RATHER
+ *    THAN RE-ASKING `bhp_book_default_format()`. The card's PRICE is built by
+ *    `bhp_book_collection_data()`, which now applies the school-visit
+ *    paperback-only restriction itself, and this line has to follow the same
+ *    answer or the card renders a paperback price beside a hardcover shipping
+ *    figure — which is EXACTLY the defect 2D fixed here on 2026-08-03, in the
+ *    other direction. One function decides, this line reads it.
+ */
+$bhp_collection_format = isset($data['collection']['format']) && in_array($data['collection']['format'], ['paperback', 'hardcover'], true)
+    ? $data['collection']['format']
+    : (function_exists('bhp_book_default_format') ? bhp_book_default_format() : 'hardcover');
 
 $bhp_shipping_note_collection = bhp_book_ship_note_collection(
     $bhp_ship_three($bhp_collection_format, 'paperback' === $bhp_collection_format ? 3.99 : 4.99)
@@ -234,6 +292,25 @@ $bhp_format_payload = [
 ];
 
 /*
+ * ⭐ 1.19.240 (2026-08-18) — THE HARDCOVER ENTRY LEAVES THE PAYLOAD ON A
+ *    FLAGGED SESSION, not just the card.
+ *
+ * book-formats.js selects a format by looking the key up in this JSON. Hiding
+ * the button while leaving the entry would leave hardcover reachable by
+ * `?bhp_format=hardcover`, by a keyboard user tabbing to a stale node, or by
+ * anything that calls the selector programmatically — and it would leave the
+ * hardcover add-to-cart URL sitting in the page source of a purchase page that
+ * refuses to sell it. The control, the payload and the server refusal all move
+ * together or the fix is cosmetic.
+ *
+ * ⛔ CONTROL PATH: for every ordinary shopper `$bhp_hc_offerable` is true and
+ *    the payload is byte-identical to 1.19.239, hardcover entry included.
+ */
+if (!$bhp_hc_offerable) {
+    unset($bhp_format_payload['hardcover']);
+}
+
+/*
  * The card the page opens on, resolved once. If $initial names a format this
  * page cannot render (it cannot, today — the caller whitelists four keys — but
  * a future caller might), fall back to the site-wide default rather than
@@ -253,6 +330,29 @@ if (null === $bhp_initial_conf) {
   <h2 class="bhp-formats__heading" id="<?php echo esc_attr($uid); ?>-label">
     <?php esc_html_e('Choose your format', 'brave-hearts'); ?>
   </h2>
+
+  <?php
+  /*
+   * ⭐ 1.19.240 (2026-08-18): ONE SENTENCE EXPLAINING WHY THERE IS NO HARDCOVER
+   *    CARD, and only on a school-visit session.
+   *
+   * A parent who followed a hardcover link, or who simply knows the hardcover
+   * exists, would otherwise meet a selector that silently lost an option. An
+   * unexplained absence reads as a broken page; a one-line reason reads as a
+   * decision.
+   *
+   * ⛔ §9.1 VOICE: I/me, never "we". ⛔ NO EM DASH. The string is the plugin's
+   *    (`bhp_school_visit_paperback_only_note()`), beside the refusal message
+   *    it belongs with, so a copy change is one file.
+   *
+   * ⛔ It returns '' for every ordinary shopper, so this block emits NOTHING on
+   *    the control path and the rendered markup is byte-identical to 1.19.239.
+   */
+  $bhp_pb_only_note = function_exists('bhp_book_paperback_only_note') ? bhp_book_paperback_only_note() : '';
+  if ('' !== $bhp_pb_only_note) :
+  ?>
+  <p class="bhp-formats__paperback-only" data-bhp-paperback-only><?php echo esc_html($bhp_pb_only_note); ?></p>
+  <?php endif; ?>
 
   <div class="bhp-formats__grid" role="group" aria-labelledby="<?php echo esc_attr($uid); ?>-label">
 
@@ -290,6 +390,24 @@ if (null === $bhp_initial_conf) {
     $bhp_card_order = in_array($initial, ['paperback', 'hardcover'], true)
         ? ['paperback' === $initial ? 'paperback' : 'hardcover', 'paperback' === $initial ? 'hardcover' : 'paperback']
         : $bhp_default_order;
+    /*
+     * ⭐ 1.19.240: the two physical cards are intersected with the formats this
+     *    visitor may actually buy. `bhp_book_available_formats()` returns both
+     *    for every ordinary shopper (identical markup to 1.19.239) and
+     *    ['paperback'] on a school-visit session, so the HARDCOVER card is not
+     *    emitted at all rather than emitted-and-hidden. A control that exists
+     *    in the DOM is reachable by keyboard, by a screen reader and by
+     *    anything that ignores CSS.
+     */
+    if (function_exists('bhp_book_available_formats')) {
+        $bhp_allowed_formats = bhp_book_available_formats();
+        if (is_array($bhp_allowed_formats) && !empty($bhp_allowed_formats)) {
+            $bhp_filtered_order = array_values(array_intersect($bhp_card_order, $bhp_allowed_formats));
+            if (!empty($bhp_filtered_order)) {
+                $bhp_card_order = $bhp_filtered_order;
+            }
+        }
+    }
     foreach ($bhp_card_order as $bhp_fmt):
         $bhp_on = ($bhp_fmt === $initial);
     ?>

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Brave Hearts Bundle Pricing
  * Description: Fixed-dollar bundle discounts, shipping, and storefront offers for the six approved Adventures of Charlotte and Henry editions. Every bundle purchase adds the real, individually-mapped WooCommerce products as separate cart line items — Bookvault fulfillment routing and per-book tax are never altered.
- * Version: 1.8.56
+ * Version: 1.8.57
  * Author: Brave Hearts Publishing
  * Requires Plugins: woocommerce
  * Text Domain: bhp-bundle-pricing
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.56' );
+define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.57' );
 define( 'BHP_BUNDLE_PRICING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BHP_BUNDLE_PRICING_URL', plugin_dir_url( __FILE__ ) );
 
@@ -101,6 +101,15 @@ function bhp_bundle_pricing_init() {
 	// is defined there. With the `bhp_school_visits` option unset it registers
 	// its hooks and every one of them returns its input untouched.
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-fields.php';
+	// 1.8.57 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT): a visit-flagged
+	// session is PAPERBACK ONLY, because Andrew's inventory cannot supply a
+	// hardcover for a signed pre-order. Loaded AFTER school-visit-pickup.php
+	// for the same reason school-visit-fields.php is: the session flag, the
+	// visit registry and `bhp_school_visit_use_delivery_framing()` are all
+	// defined there, and this file is a thin restriction on top of that ONE
+	// predicate rather than a second resolver. With no visit flag on the
+	// request, every hook it registers returns its input untouched.
+	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-paperback-only.php';
 	bhp_bundle_pricing_load_dashboard_module();
 
 	add_action( 'wp_enqueue_scripts', 'bhp_bundle_pricing_assets' );

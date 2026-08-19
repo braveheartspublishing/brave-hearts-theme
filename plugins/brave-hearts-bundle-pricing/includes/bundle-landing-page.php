@@ -151,7 +151,45 @@ function bhp_bundle_landing_default_format() {
  */
 function bhp_bundle_landing_format_order() {
 	$default = bhp_bundle_landing_default_format();
-	return array( $default, 'hardcover' === $default ? 'paperback' : 'hardcover' );
+	$order   = array( $default, 'hardcover' === $default ? 'paperback' : 'hardcover' );
+
+	/*
+	 * ⭐ 1.8.57 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — ON A SCHOOL-VISIT
+	 *    SESSION THIS PAGE OFFERS PAPERBACK ONLY.
+	 *
+	 * Andrew Signore, 2026-08-18, verbatim (⛔ RELAYED through the Chief of
+	 * Staff; NOT witnessed first-hand by the agent that wrote this):
+	 *   "also for the orders on the pre-signed books for the read alouds- based
+	 *    on my inventory I can only do paperbacks"
+	 *
+	 * ⭐ RESTRICTED HERE, IN THE ORDER FUNCTION, RATHER THAN AT THE FOUR CALL
+	 *    SITES. This function is already the page's single source for "which
+	 *    formats exist and in what order" — the pills at line ~459, the panels
+	 *    at ~474, the cold-open block at ~830 and the final CTA panels at ~1735
+	 *    all read it. Filtering three of the four is how a hidden pill ends up
+	 *    beside a visible panel, which is the exact `C1` defect this function
+	 *    was created to end.
+	 *
+	 * ⛔ THE UI IS NOT THE ENFORCEMENT. `includes/school-visit-paperback-only.php`
+	 *    refuses a hardcover at the add-to-cart and at the checkout, on the
+	 *    classic AND the Store API paths. This only stops the page offering
+	 *    something the server would then refuse.
+	 *
+	 * ⛔ CONTROL PATH: `bhp_school_visit_paperback_only()` is false for every
+	 *    ordinary shopper and this block returns `$order` untouched, so the
+	 *    rendered page is byte-identical to 1.8.56.
+	 *
+	 * ✅ FAILS OPEN: if the predicate is missing, or the intersection somehow
+	 *    empties the list, both formats are returned.
+	 */
+	if ( function_exists( 'bhp_school_visit_paperback_only' ) && bhp_school_visit_paperback_only() ) {
+		$restricted = array_values( array_intersect( $order, array( 'paperback' ) ) );
+		if ( ! empty( $restricted ) ) {
+			return $restricted;
+		}
+	}
+
+	return $order;
 }
 
 /**
@@ -493,7 +531,31 @@ function bhp_bundle_render_landing_pricing_card() {
 				</button>
 				<?php endforeach; ?>
 			</div>
+			<?php
+			/*
+			 * ⭐ 1.8.57 (2026-08-18): the helper sentence has to follow the pills.
+			 *    With hardcover withheld from a school-visit session, "or
+			 *    hardcover for a more durable, gift-ready edition" points at a
+			 *    control that is not on the page, which reads as a broken page
+			 *    rather than as a decision.
+			 *
+			 * ⛔ §9.1 VOICE on the replacement string: I/me, never "we". ⛔ NO EM
+			 *    DASH. The replacement is the plugin's shared note, beside the
+			 *    refusal message it belongs with, so a copy change is one file.
+			 *
+			 * ⛔ CONTROL PATH: `bhp_school_visit_paperback_only_note()` returns ''
+			 *    for every ordinary shopper, so the original sentence is printed
+			 *    byte-identically to 1.8.56.
+			 */
+			$bhp_landing_pb_note = function_exists( 'bhp_school_visit_paperback_only_note' )
+				? bhp_school_visit_paperback_only_note()
+				: '';
+			?>
+			<?php if ( '' !== $bhp_landing_pb_note ) : ?>
+			<p class="bhp-landing-format-selector__note"><?php echo esc_html( $bhp_landing_pb_note ); ?></p>
+			<?php else : ?>
 			<p class="bhp-landing-format-selector__note">Choose paperback for the most affordable reading set, or hardcover for a more durable, gift-ready edition.</p>
+			<?php endif; ?>
 		</div>
 	</div>
 	<?php
@@ -920,12 +982,27 @@ function bhp_bundle_render_landing_coldopen_price( $format ) {
 			}
 		?></span>
 		<span class="bhp-landing-coldopen__price-save" aria-hidden="true"><?php echo esc_html( 'Save ' . $save ); ?></span>
+		<?php
+		/*
+		 * ⭐ 1.8.57 (2026-08-18): "Hardcover available" is a CLAIM, and on a
+		 *    school-visit session it is not a true one. The button also switches
+		 *    the page to a format panel that no longer exists there, so leaving
+		 *    it would produce a dead control on the highest-value commerce page
+		 *    on the site.
+		 *
+		 * ⛔ CONTROL PATH: `bhp_school_visit_paperback_only()` is false for every
+		 *    ordinary shopper and this line renders byte-identically to 1.8.56.
+		 */
+		$bhp_alt_offerable = ! function_exists( 'bhp_school_visit_paperback_only' ) || ! bhp_school_visit_paperback_only();
+		?>
+		<?php if ( $bhp_alt_offerable ) : ?>
 		<span class="bhp-landing-coldopen__price-alt">
 			<span aria-hidden="true">&middot;</span>
 			<button type="button" class="bhp-landing-coldopen__price-altbtn" data-bhp-format-link="<?php echo esc_attr( $other ); ?>">
 				<?php echo esc_html( ucfirst( $other ) . ' available' ); ?>
 			</button>
 		</span>
+		<?php endif; ?>
 	</p>
 	<?php
 }

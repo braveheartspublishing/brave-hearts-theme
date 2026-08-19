@@ -341,6 +341,20 @@
 			? ['hardcover', 'paperback']
 			: ['paperback', 'hardcover'];
 
+		/*
+		 * ⭐ 1.8.57 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — a school-visit
+		 *    session is PAPERBACK ONLY, so the cross-sell never offers a
+		 *    hardcover on one. The flag is server-set in bundle-drawer.php from
+		 *    the SAME predicate that refuses the add server-side, so the button
+		 *    the drawer shows and the add the Store API accepts cannot disagree.
+		 *
+		 * ⛔ Falsy for every ordinary shopper: `formatOrder` is untouched and the
+		 *    cross-sell behaves exactly as it did in 1.8.56.
+		 */
+		if (window.bhpDrawerData && window.bhpDrawerData.paperbackOnly) {
+			formatOrder = ['paperback'];
+		}
+
 		function offer(format, titleKey) {
 			var info = (catalog[format] || {})[titleKey];
 			if (!info) {
