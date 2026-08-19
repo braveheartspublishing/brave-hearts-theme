@@ -235,9 +235,32 @@ bhp_drawer_layout_assert(
 // ==================== 5. NOTHING ELSE CHANGED ====================
 // A layout fix that silently edits approved copy is not a layout fix.
 
+/*
+ * ⭐⭐ THE CONTIGUOUS-US DISCLOSURE CHANGED ON 2026-08-18, AND IT CHANGED
+ *     BECAUSE ANDREW SIGNORE SAID SO, NOT BECAUSE AN AGENT TIDIED IT.
+ *
+ *     His words, verbatim, relayed through the Chief of Staff and NOT witnessed
+ *     by the session that made this edit: "change to I currently ship".
+ *
+ *     The assertion below therefore moved from
+ *         "We currently ship within the contiguous United States."   (locked 2026-08-03, A5 / D3)
+ *     to
+ *         "I currently ship within the contiguous United States."    (approved 2026-08-18)
+ *
+ *     ⛔ THE OLD STRING IS RECORDED HERE RATHER THAN DELETED, so a future
+ *        reader can see that the lock moved on the founder's instruction and
+ *        does not re-derive the change as a regression. Standing Rules §9 says
+ *        approved copy is locked and §9.1 is the voice rule; a locked string
+ *        moves only with his word, and this one has it.
+ *
+ *     ⛔ IT IS NOW BYTE-IDENTICAL TO `inc/checkout-experience.php`
+ *        `bhp_checkout_shipping_scope_notice()`, which
+ *        `tests/test-visit-pickup-copy-gate.php` already asserts. Two surfaces,
+ *        one sentence, one voice.
+ */
 $locked_copy = array(
 	'Have a coupon? You can add it at checkout.'          => 'coupon hint',
-	'We currently ship within the contiguous United States.' => 'contiguous-US disclosure (A5 / D3, Andrew-approved wording)',
+	'I currently ship within the contiguous United States.' => 'contiguous-US disclosure (A5 / D3 wording, voice corrected 2026-08-18 on Andrew Signore\'s approval: "change to I currently ship")',
 	'Secure Checkout'                                     => 'primary CTA label',
 	'Continue Shopping'                                   => 'secondary CTA label',
 	'Your Cart'                                           => 'drawer heading',
@@ -250,6 +273,37 @@ foreach ( $locked_copy as $string => $what ) {
 		$failures
 	);
 }
+
+/*
+ * ⛔ AND THE SUPERSEDED WORDING IS GONE FROM THE RENDERED SENTENCE, not merely
+ *    joined by the new one. Asserting only the presence of the "I" version
+ *    would pass on a file that still contained BOTH, which is precisely how a
+ *    half-applied copy change survives a green suite.
+ *
+ * ⚠ The check is scoped to the `ship-note` PARAGRAPH rather than the whole
+ *   file, because the comment block directly above that paragraph quotes the
+ *   superseded sentence on purpose, so the movement is visible to the next
+ *   reader instead of being re-derived.
+ */
+$ship_note = '';
+if ( preg_match( '/<p class="bhp-cart-drawer__ship-note">(.*?)<\/p>/s', $php, $m ) ) {
+	$ship_note = $m[1];
+}
+bhp_drawer_layout_assert(
+	'I currently ship within the contiguous United States.' === trim( $ship_note ),
+	'5b. ⭐ The contiguous-US paragraph renders Andrew\'s 2026-08-18 wording exactly ("change to I currently ship")',
+	$failures
+);
+bhp_drawer_layout_assert(
+	false === strpos( $ship_note, 'We currently ship' ),
+	'5c. ⛔ The superseded "We currently ship" is GONE from the rendered paragraph, not merely accompanied by the new one',
+	$failures
+);
+bhp_drawer_layout_assert(
+	false === stripos( $ship_note, ' we ' ) && 0 !== stripos( trim( $ship_note ), 'we ' ),
+	'5d. ⛔ No company "we" survives anywhere in the disclosure a customer reads (Standing Rules §9.1, Andrew Signore 2026-08-18)',
+	$failures
+);
 
 // The three body regions are untouched by this change, and F4's Andrew-ruled
 // DOM order (cross-sell ABOVE the line items: "put it on top of the inventory

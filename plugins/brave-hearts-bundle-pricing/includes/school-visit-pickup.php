@@ -1339,6 +1339,30 @@ function bhp_school_visit_freeship_copy( $copy ) {
 add_filter( 'bhp_bundle_freeship_copy', 'bhp_school_visit_freeship_copy', 10, 1 );
 
 /**
+ * ⭐⭐ THE WORDS THAT REPLACE "Shipping" ON A TOTALS ROW. ONE AUTHOR, FOUR
+ *     SURFACES, AND THAT IS THE ENTIRE REASON THIS FUNCTION EXISTS.
+ *
+ * 1.8.52 fixed the ORDER-RECEIVED page and every order email by hardcoding
+ * `__( 'Hand delivery:', 'brave-hearts' )` inside the filter below. 1.8.55 has
+ * to say the same thing on the CART page and inside the cart DRAWER, and three
+ * copies of a customer-facing phrase is how two of them end up disagreeing.
+ * So the phrase moved here and the 1.8.52 filter now reads it.
+ *
+ * ⛔ THE ORDER FILTER'S OUTPUT IS BYTE-IDENTICAL TO 1.8.52. That filter appends
+ *    the colon itself, because `WC_Order::get_order_item_totals()` labels carry
+ *    one and the cart and drawer rows do not. The test suite asserts the exact
+ *    string `Hand delivery:` on the order path and `Hand delivery` on the cart
+ *    path, so a future edit here cannot silently move either.
+ *
+ * ⛔ NO EM DASH. NO "WE". Founder-plain, per the standing copy conventions.
+ *
+ * @return string
+ */
+function bhp_school_pickup_totals_label() {
+	return __( 'Hand delivery', 'brave-hearts' );
+}
+
+/**
  * Rename the order-totals SHIPPING row on a hand-delivery order.
  *
  * ⭐ FOUND BY READING A RENDERED EMAIL, NOT BY READING CODE. The full order
@@ -1368,8 +1392,194 @@ function bhp_school_pickup_order_totals_label( $rows, $order = null ) {
 	if ( ! $order instanceof WC_Order || ! bhp_school_pickup_order_is_pickup( $order ) ) {
 		return $rows; // ZERO CHANGE for every ordinary order.
 	}
-	$rows['shipping']['label'] = __( 'Hand delivery:', 'brave-hearts' );
+	// The colon belongs to the ORDER surface only. The words come from one place.
+	$rows['shipping']['label'] = bhp_school_pickup_totals_label() . ':';
 	return $rows;
+}
+
+/* =========================================================================
+ * ⭐⭐ 1.8.55 — THE CART PAGE, WHICH 1.8.52 MISSED
+ *
+ * FOUNDER-CAUGHT, ON PRODUCTION, ON A PHONE, 2026-08-18. Andrew Signore,
+ * verbatim, RELAYED through the Chief of Staff and NOT witnessed here:
+ *
+ *     "I checked the QA - the cart page still says shipping when moving to
+ *      the checkout page - but I do like the option for hand delivery /
+ *      shipping - very good."
+ *
+ * ⛔ THE VALUE WAS ALREADY RIGHT AND STILL IS. A flagged cart already read
+ *    `FREE` with `Author hand-delivery at the Adams Elementary visit
+ *    (August 28)` underneath it. The one wrong word was the LABEL, and it is
+ *    the same defect class the founder rejected the whole build over on
+ *    2026-08-17 ("They will think its getting shipped") — one screen earlier
+ *    than the screen that was fixed.
+ *
+ * ⛔⛔ WHY A `gettext` FILTER WOULD HAVE BEEN A FAKE FIX, AND HOW THIS WAS
+ *     ESTABLISHED — BY READING THE SHIPPED BUNDLE ON STAGING, NOT BY GUESSING.
+ *     `wp-content/plugins/woocommerce/assets/client/blocks/
+ *     wc-cart-checkout-base-frontend.js` (WooCommerce 10.9.1) renders that row
+ *     from React:
+ *
+ *         const C = ({ label = __( "Shipping", "woocommerce" ), ... }) => {
+ *             ...
+ *             const g = p.length > 1 || m.length > 1;      // >1 rate on offer
+ *             const _ = 0 === h.length || g ? label : h[0];
+ *             return <TotalsItem label={_} value={...} description={...} />
+ *         }
+ *
+ *     `m` is every rate NAME in the package. A flagged cart deliberately
+ *     carries TWO rates — `pickup_location:N` and `flat_rate:1`, because a
+ *     flagged parent may still choose to have the books posted — so `g` is
+ *     true and the component falls back to the generic word. There is no PHP
+ *     hook anywhere in that path: the string is a JavaScript `__()` call
+ *     evaluated at render, in the `woocommerce` text domain. **A PHP `gettext`
+ *     filter cannot see it, which is why one was not written.**
+ *
+ * ⭐ WHAT IS DONE INSTEAD: the ordinary, documented WordPress way to change a
+ *    translated JavaScript string — `wp.i18n.setLocaleData()`, merged into the
+ *    `woocommerce` domain BEFORE the Blocks bundle executes. `@wordpress/i18n`
+ *    merges rather than replaces, so no other WooCommerce string is disturbed.
+ *
+ * ⛔ IT IS GATED THREE TIMES OVER, AND THE THIRD GATE IS THE ONE THAT MATTERS:
+ *      1. the CART page only (`is_cart()`), so the checkout's own
+ *         Ship/Pickup toggle — which already says "Pickup" and which Andrew
+ *         explicitly praised — is not touched;
+ *      2. a live visit-flagged session only;
+ *      3. **only when the SELECTED rate really is the hand-delivery rate.**
+ *         A flagged parent who deliberately chooses ordinary shipping and
+ *         then walks back to the cart must see "Shipping", because that is
+ *         what is about to happen to their books. Labelling a $2.99 posted
+ *         order "Hand delivery" would be a worse lie than the one being fixed.
+ * ====================================================================== */
+
+/**
+ * True when THIS cart-page request is really going to be hand-delivered.
+ *
+ * ⛔ THE CONTROL PATH RETURNS BEFORE ANYTHING IS TOUCHED. An unflagged visitor
+ *    exits on the first line, so no cart is read, no shipping is calculated and
+ *    no session is written for anybody who is not a visit parent.
+ *
+ * ⭐ WHY IT MAY CALCULATE SHIPPING. `chosen_shipping_methods` is written by
+ *    WooCommerce during totals calculation, and on a Blocks cart page that can
+ *    happen AFTER `wp_enqueue_scripts`. Rather than guess at the ordering, this
+ *    asks WooCommerce to do the calculation it was going to do anyway; the
+ *    result is cached against the package hash, so the later call is a hit.
+ *
+ * @return bool
+ */
+function bhp_school_pickup_cart_shows_hand_delivery() {
+	if ( ! bhp_school_visit_use_delivery_framing() ) {
+		return false; // ZERO CHANGE, and zero work, for a normal visitor.
+	}
+	if ( ! function_exists( 'WC' ) || ! WC()->cart || ! WC()->session ) {
+		return false;
+	}
+	if ( WC()->cart->is_empty() ) {
+		return false;
+	}
+
+	$chosen = (array) WC()->session->get( 'chosen_shipping_methods', array() );
+	if ( empty( $chosen ) && is_callable( array( WC()->cart, 'calculate_shipping' ) ) ) {
+		WC()->cart->calculate_shipping();
+		$chosen = (array) WC()->session->get( 'chosen_shipping_methods', array() );
+	}
+
+	foreach ( $chosen as $method ) {
+		if ( is_string( $method ) && 0 === strpos( $method, BHP_SCHOOL_PICKUP_NATIVE_METHOD_ID . ':' ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Print the one-line locale override that renames the Blocks cart totals row.
+ *
+ * ⛔ IT IS AN INLINE SCRIPT ON A DEPENDENCY OF `wp-i18n`, ENQUEUED FROM
+ *    `wp_enqueue_scripts`, WHICH IS WHAT MAKES IT RUN IN TIME. The Blocks cart
+ *    bundle is enqueued later, during block render in the body, so WordPress
+ *    prints this first and React sees the overridden string on its FIRST paint.
+ *    There is no flash and no MutationObserver anywhere in this build.
+ *
+ * ⛔ IT WRITES NO SETTING, NO OPTION AND NO TRANSLATION FILE. The override
+ *    lives for exactly one page load.
+ */
+add_action( 'wp_enqueue_scripts', 'bhp_school_pickup_cart_totals_label_assets', 100 );
+function bhp_school_pickup_cart_totals_label_assets() {
+	if ( is_admin() || ! function_exists( 'is_cart' ) || ! is_cart() ) {
+		return;
+	}
+	if ( ! bhp_school_pickup_cart_shows_hand_delivery() ) {
+		return;
+	}
+
+	$handle = 'bhp-school-pickup-cart-label';
+	wp_register_script( $handle, '', array( 'wp-i18n' ), BHP_BUNDLE_PRICING_VERSION, true );
+	wp_enqueue_script( $handle );
+	wp_add_inline_script( $handle, bhp_school_pickup_cart_totals_label_js( bhp_school_pickup_totals_label() ) );
+}
+
+/**
+ * The override itself, as a string, so the test suite can assert it without a
+ * browser and without re-deriving what it is supposed to contain.
+ *
+ * ⛔⛔ THE ARRAY SHAPE IS `[ translation ]`, NOT `[ null, translation ]`, AND
+ *     THIS COST A DEPLOY TO FIND. The first attempt shipped the Jed-style
+ *     `[ null, "Hand delivery" ]` — which is a real format, in po2json's
+ *     "jed" mode, where index 0 holds the plural msgid. **Tannin, which is what
+ *     `@wordpress/i18n` actually runs, reads index 0 as the TRANSLATION.** With
+ *     a `null` there its `entry[ index ]` test fails and it silently returns
+ *     the untranslated string. The page was byte-perfect, the script was in the
+ *     right place in the right order, `wp.i18n` was loaded, no error was thrown
+ *     anywhere, and the row still said "Shipping".
+ *
+ *     WordPress core emits the correct shape a few lines above this script on
+ *     every page, and that is the authority for it:
+ *         wp.i18n.setLocaleData( { 'text directionltr': [ 'ltr' ] } );
+ *
+ * ⭐ THE RULE THIS LEAVES BEHIND: a translation override is only real when a
+ *    browser has been asked what `wp.i18n.__()` returns AFTER the page loads.
+ *    Reading the emitted `<script>` tag proves the tag, not the translation.
+ *
+ * @param string $label The replacement label.
+ * @return string JavaScript.
+ */
+function bhp_school_pickup_cart_totals_label_js( $label ) {
+	return sprintf(
+		'if ( window.wp && wp.i18n && wp.i18n.setLocaleData ) { wp.i18n.setLocaleData( { "Shipping": [ %s ] }, "woocommerce" ); }',
+		wp_json_encode( (string) $label )
+	);
+}
+
+/* =========================================================================
+ * ⭐ 1.8.55 — THE CART DRAWER'S OWN SHIPPING ROW
+ *
+ * The Blocks totals row is not the only place the word survived on the cart
+ * page. `bundle-drawer.js` builds its own summary from the Store API and had
+ * `addRow( 'Shipping', ... )` hardcoded, which rendered
+ * `<span>Shipping</span><span>FREE</span>` inside
+ * `.bhp-cart-drawer__summary-row--free`. That markup is OURS, so it is fixed
+ * here rather than reported.
+ *
+ * ⭐ THROUGH `bundle-drawer.php`'s OWN FILTERS, in exactly the shape
+ *    `bhp_bundle_freeship_copy` above already uses, so the drawer keeps knowing
+ *    nothing about school visits and this file keeps owning the words.
+ *
+ * ⛔ THE DRAWER DECIDES AT RENDER TIME FROM THE LIVE SELECTED RATE, not from a
+ *    session value baked into the page. That makes the drawer route
+ *    cache-proof: the localized payload below is IDENTICAL for every visitor,
+ *    flagged or not, and only the rate the Store API actually reports back can
+ *    change what is drawn.
+ * ====================================================================== */
+
+add_filter( 'bhp_bundle_drawer_ship_row_pickup_label', 'bhp_school_pickup_drawer_row_label', 10, 1 );
+function bhp_school_pickup_drawer_row_label( $label ) {
+	return bhp_school_pickup_totals_label();
+}
+
+add_filter( 'bhp_bundle_drawer_ship_row_pickup_method', 'bhp_school_pickup_drawer_row_method', 10, 1 );
+function bhp_school_pickup_drawer_row_method( $method_id ) {
+	return BHP_SCHOOL_PICKUP_NATIVE_METHOD_ID;
 }
 
 /* =========================================================================

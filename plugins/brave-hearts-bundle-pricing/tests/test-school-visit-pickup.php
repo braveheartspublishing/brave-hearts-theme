@@ -893,6 +893,160 @@ bhp_svp_assert( 'Hand delivery:' === $svp_rows_legacy['shipping']['label'], 'TOT
 bhp_svp_assert( array() === bhp_school_pickup_order_totals_label( array(), $pickup_by_line ), 'TOTALS ROW: a totals array with no shipping row is returned untouched (and does not fatal)', $failures );
 
 /* =========================================================================
+ * 8b. ⭐⭐ 1.8.55 — THE CART PAGE, WHICH 1.8.52 MISSED.
+ *
+ * FOUNDER-CAUGHT ON PRODUCTION, ON A PHONE, 2026-08-18. Andrew Signore,
+ * verbatim, relayed through the Chief of Staff and NOT witnessed by the session
+ * that wrote these assertions: "I checked the QA - the cart page still says
+ * shipping when moving to the checkout page - but I do like the option for hand
+ * delivery / shipping - very good."
+ *
+ * ⛔ WHAT THESE ASSERTIONS CAN AND CANNOT PROVE, STATED SO NOBODY READS MORE
+ *    INTO A GREEN LINE THAN IS THERE. They prove the override is emitted, is
+ *    correctly shaped, is gated, and carries the same words as the order path.
+ *    THEY DO NOT PROVE THE RENDERED LABEL CHANGED — that row is drawn by React
+ *    from a JavaScript `__()` call, and the only thing that can prove it is a
+ *    real browser looking at a real flagged cart. That evidence is in the QA
+ *    record, not in this file.
+ * ====================================================================== */
+
+bhp_svp_assert(
+	function_exists( 'bhp_school_pickup_totals_label' ),
+	'CART LABEL: the shared phrase function exists (one author for four surfaces)',
+	$failures
+);
+bhp_svp_assert(
+	'Hand delivery' === bhp_school_pickup_totals_label(),
+	'⭐ CART LABEL: the shared phrase is exactly "Hand delivery" (no colon; the ORDER surface appends its own)',
+	$failures
+);
+bhp_svp_assert(
+	'Hand delivery:' === bhp_school_pickup_order_totals_label( array( 'shipping' => array( 'label' => 'Shipping:', 'value' => 'x' ) ), $pickup_by_line )['shipping']['label'],
+	'⛔ CART LABEL: refactoring the phrase into one function left the ORDER label BYTE-IDENTICAL to 1.8.52',
+	$failures
+);
+
+bhp_svp_assert(
+	function_exists( 'bhp_school_pickup_cart_shows_hand_delivery' ),
+	'CART LABEL: the cart-page predicate exists',
+	$failures
+);
+bhp_svp_assert(
+	function_exists( 'bhp_school_pickup_cart_totals_label_assets' )
+		&& false !== has_action( 'wp_enqueue_scripts', 'bhp_school_pickup_cart_totals_label_assets' ),
+	'⛔ CART LABEL: the enqueue is ATTACHED to `wp_enqueue_scripts` (a defined-but-unhooked function relabels nothing)',
+	$failures
+);
+bhp_svp_assert(
+	100 === has_action( 'wp_enqueue_scripts', 'bhp_school_pickup_cart_totals_label_assets' ),
+	'CART LABEL: it runs at priority 100, late enough that the cart and its session are up',
+	$failures
+);
+
+$svp_js = bhp_school_pickup_cart_totals_label_js( bhp_school_pickup_totals_label() );
+bhp_svp_assert(
+	false !== strpos( $svp_js, 'wp.i18n.setLocaleData' ),
+	'⭐ CART LABEL: the override uses `wp.i18n.setLocaleData`, the documented way to change a translated JAVASCRIPT string. The Blocks totals row is React and no PHP `gettext` filter can reach it',
+	$failures
+);
+bhp_svp_assert(
+	false !== strpos( $svp_js, '"woocommerce"' ),
+	'CART LABEL: it is scoped to the `woocommerce` text domain, which is the domain the Blocks bundle calls `__("Shipping","woocommerce")` in',
+	$failures
+);
+/*
+ * ⛔⛔ THE SHAPE, NOT MERELY THE CONTENTS. The first 1.8.55 build emitted
+ *     `[ null, "Hand delivery" ]` — the Jed layout, where index 0 is the plural
+ *     msgid — and the rendered row DID NOT CHANGE. Tannin, which is what
+ *     `@wordpress/i18n` runs, reads index 0 as the translation, finds `null`,
+ *     and silently returns the original string. Nothing errored. This assertion
+ *     exists so that regression cannot be re-shipped, and it is written against
+ *     the shape WordPress core itself emits: `{ 'msgid': [ 'translation' ] }`.
+ */
+bhp_svp_assert(
+	false !== strpos( $svp_js, '"Shipping": [ "Hand delivery" ]' ),
+	'⭐⭐ CART LABEL: the emitted payload is `{"Shipping": ["Hand delivery"]}` — TANNIN\'s shape, where index 0 is the translation',
+	$failures
+);
+bhp_svp_assert(
+	false === strpos( $svp_js, 'null,' ),
+	'⛔ CART LABEL: the Jed-style `[ null, ... ]` shape is NOT emitted. Tannin ignores it and the label silently stays "Shipping" with no error anywhere',
+	$failures
+);
+bhp_svp_assert(
+	false !== strpos( $svp_js, 'window.wp && wp.i18n && wp.i18n.setLocaleData' ),
+	'⛔ CART LABEL: it is guarded, so a page where `wp-i18n` failed to load throws nothing at a paying customer',
+	$failures
+);
+bhp_svp_assert(
+	'{"a":"b"}' !== $svp_js && false === strpos( bhp_school_pickup_cart_totals_label_js( 'a"b' ), 'a"b' ),
+	'⛔ CART LABEL: the label is JSON-ENCODED into the script, so a school name or phrase containing a quote cannot break the page',
+	$failures
+);
+
+/*
+ * ⛔ THE THIRD GATE, AND IT IS THE ONE THAT MATTERS. A flagged parent who
+ *    deliberately chooses ordinary shipping and walks back to the cart must
+ *    read "Shipping", because that is what is about to happen to their books.
+ *    Labelling a posted, charged order "Hand delivery" would be a worse lie
+ *    than the one being fixed.
+ */
+$svp_src_cart = file_get_contents( dirname( __DIR__ ) . '/includes/school-visit-pickup.php' );
+bhp_svp_assert(
+	false !== strpos( $svp_src_cart, 'chosen_shipping_methods' )
+		&& false !== strpos( $svp_src_cart, "strpos( \$method, BHP_SCHOOL_PICKUP_NATIVE_METHOD_ID . ':' )" ),
+	'⭐⭐ CART LABEL: the predicate tests the SELECTED rate, not merely the session flag',
+	$failures
+);
+bhp_svp_assert(
+	false !== strpos( $svp_src_cart, 'is_cart()' ) && false === strpos( $svp_src_cart, 'is_checkout() || is_cart()' ),
+	'⛔ CART LABEL: it is scoped to the CART page. The checkout\'s own Ship/Pickup toggle already says "Pickup" and Andrew explicitly praised it; it is not touched',
+	$failures
+);
+
+// CONTROL: an unflagged request gets no override at all, and the predicate does
+// no work on the way to saying so.
+$svp_unflagged = ! bhp_school_visit_use_delivery_framing();
+bhp_svp_assert(
+	$svp_unflagged ? ( false === bhp_school_pickup_cart_shows_hand_delivery() ) : true,
+	'⛔ CART LABEL, CONTROL: with no visit flag on this request the predicate is false, so nothing is enqueued and an ordinary shopper still reads "Shipping"'
+		. ( $svp_unflagged ? '' : ' (SKIPPED-AS-PASS: this run IS flagged)' ),
+	$failures
+);
+
+/*
+ * The DRAWER's own row. Its markup is ours, so it is fixed rather than
+ * reported, and it draws BOTH labels from PHP so the words cannot drift.
+ */
+bhp_svp_assert(
+	'Hand delivery' === apply_filters( 'bhp_bundle_drawer_ship_row_pickup_label', '' ),
+	'⭐ DRAWER ROW: the drawer is handed "Hand delivery" through `bhp_bundle_drawer_ship_row_pickup_label` — the same phrase, from the same function',
+	$failures
+);
+bhp_svp_assert(
+	BHP_SCHOOL_PICKUP_NATIVE_METHOD_ID === apply_filters( 'bhp_bundle_drawer_ship_row_pickup_method', '' ),
+	'DRAWER ROW: it is handed the method id that means "this is not shipping at all"',
+	$failures
+);
+bhp_svp_assert(
+	'Shipping' === apply_filters( 'bhp_bundle_drawer_ship_row_label', 'Shipping' ),
+	'⛔ DRAWER ROW, CONTROL: the DEFAULT label is still "Shipping" and is returned unchanged',
+	$failures
+);
+
+$svp_drawer_js = file_get_contents( dirname( __DIR__ ) . '/assets/bundle-drawer.js' );
+bhp_svp_assert(
+	false !== strpos( $svp_drawer_js, 'selectedRate.method_id === drawerData.shipRowPickupMethod' ),
+	'⭐⭐ DRAWER ROW: the drawer decides from the LIVE SELECTED RATE, not from a session flag baked into the page — so the row is correct even on a cached page',
+	$failures
+);
+bhp_svp_assert(
+	false === strpos( $svp_drawer_js, "addRow('Shipping'," ),
+	'⛔ DRAWER ROW: the hardcoded `addRow(\'Shipping\', ...)` is gone from the drawer summary',
+	$failures
+);
+
+/* =========================================================================
  * 9. NO ZONE, METHOD OR FLAT-RATE SETTING WAS TOUCHED
  *
  * A structural assertion on the source, because the rails in the brief are

@@ -140,9 +140,25 @@ function bhp_bundle_drawer_markup() {
 				 * does NOT go here: the drawer has no address, so the
 				 * condition cannot be tested, and a permanent AK/HI warning
 				 * would alarm every customer it does not apply to.
+				 *
+				 * ⭐⭐ "We" BECAME "I" ON 2026-08-18, ON ANDREW SIGNORE'S OWN
+				 *     WORD. Verbatim, relayed through the Chief of Staff and
+				 *     NOT witnessed here: "change to I currently ship".
+				 *
+				 *     This sentence is APPROVED COPY and approved copy is
+				 *     LOCKED (Standing Rules §9). It was left alone by
+				 *     CYCLE164's earlier pass for exactly that reason and was
+				 *     PROPOSED to him instead. He then approved it. So this is
+				 *     the §9.1 voice rule applied WITH the founder's word, not
+				 *     an agent rewriting locked prose on its own initiative.
+				 *
+				 * ⛔ IT IS NOW BYTE-IDENTICAL TO `inc/checkout-experience.php`
+				 *    `bhp_checkout_shipping_scope_notice()`. The drawer and the
+				 *    checkout must not tell a customer the same fact in two
+				 *    different voices; the test suite asserts the exact string.
 				 */
 				?>
-				<p class="bhp-cart-drawer__ship-note">We currently ship within the contiguous United States.</p>
+				<p class="bhp-cart-drawer__ship-note">I currently ship within the contiguous United States.</p>
 				</div>
 				<div class="bhp-cart-drawer__footer-actions">
 					<a href="<?php echo esc_url( wc_get_checkout_url() ); ?>" class="button bhp-cart-drawer__checkout">Secure Checkout</a>
@@ -299,6 +315,30 @@ function bhp_bundle_drawer_assets() {
 			 *    behaviour.
 			 */
 			'addonProductIds' => array_map( 'intval', bhp_bundle_addon_product_ids() ),
+			/*
+			 * ⭐ 1.8.55 — THE LABEL OF THE DRAWER'S SHIPPING ROW.
+			 *
+			 * `renderSummary()` used to write the word `Shipping` into that
+			 * row unconditionally, which is wrong for a parent whose books
+			 * are being hand-delivered at a school visit and is the same
+			 * defect the Blocks totals row was carrying (founder-caught on
+			 * production, 2026-08-18).
+			 *
+			 * ⛔ FILTERED, NOT HARDCODED, AND IN THE SAME SHAPE AS
+			 *    `bhp_bundle_freeship_copy` ABOVE. `school-visit-pickup.php`
+			 *    supplies the alternative wording and the method id that
+			 *    triggers it; this file goes on knowing nothing about school
+			 *    visits, and there is still exactly one author for the phrase.
+			 *
+			 * ⛔ THIS PAYLOAD IS THE SAME FOR EVERY VISITOR, FLAGGED OR NOT.
+			 *    Nothing here is session-dependent, so a cached page cannot
+			 *    leak one visitor's delivery story to another. The DRAWER
+			 *    decides which of the two labels to draw, at render time,
+			 *    from the rate the Store API actually reports as selected.
+			 */
+			'shipRowLabel'        => (string) apply_filters( 'bhp_bundle_drawer_ship_row_label', 'Shipping' ),
+			'shipRowPickupLabel'  => (string) apply_filters( 'bhp_bundle_drawer_ship_row_pickup_label', '' ),
+			'shipRowPickupMethod' => (string) apply_filters( 'bhp_bundle_drawer_ship_row_pickup_method', '' ),
 		)
 	);
 }

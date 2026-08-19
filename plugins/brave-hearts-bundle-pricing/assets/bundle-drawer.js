@@ -967,6 +967,41 @@
 		var shippingPackage = cart.shipping_rates && cart.shipping_rates[0];
 		var selectedRate = shippingPackage && (shippingPackage.shipping_rates || []).filter(function (r) { return r.selected; })[0];
 		var shippingMinor = selectedRate ? Number(selectedRate.price) : 0;
+
+		/*
+		 * ⭐ 1.8.55 — the row is not always called "Shipping".
+		 *
+		 * A parent who arrived from a school's pre-visit link and has the
+		 * hand-delivery rate SELECTED is not being shipped anything, and this
+		 * drawer said so anyway: `<span>Shipping</span><span>FREE</span>`.
+		 * Founder-caught on production, on a phone, 2026-08-18 -- the same
+		 * defect the WooCommerce Blocks totals row on the cart page was
+		 * carrying, and one screen before the checkout that was already fixed.
+		 *
+		 * ⛔ THE TEST IS THE LIVE SELECTED RATE, NOT A SESSION FLAG BAKED INTO
+		 *    THE PAGE. A flagged parent who deliberately picks ordinary
+		 *    shipping still reads "Shipping" here, because that is what is
+		 *    about to happen to their books. It also means this row is correct
+		 *    on a cached page: the two labels are shipped to everyone and only
+		 *    the Store API response decides between them.
+		 *
+		 * ⛔ NEITHER WORD IS AUTHORED HERE. Both come from PHP
+		 *    (`bhp_school_pickup_totals_label()` via the
+		 *    `bhp_bundle_drawer_ship_row_*` filters), so the drawer, the cart
+		 *    totals row, the order-received page and every order email cannot
+		 *    drift apart.
+		 */
+		var drawerData = window.bhpDrawerData || {};
+		var shipRowLabel = drawerData.shipRowLabel || 'Shipping';
+		if (
+			selectedRate &&
+			drawerData.shipRowPickupLabel &&
+			drawerData.shipRowPickupMethod &&
+			selectedRate.method_id === drawerData.shipRowPickupMethod
+		) {
+			shipRowLabel = drawerData.shipRowPickupLabel;
+		}
+
 		if (selectedRate) {
 			/*
 			 * ⭐ 1.8.23 — a zero rate is written FREE, never "$0.00 flat".
@@ -984,12 +1019,14 @@
 			 */
 			var freeShipLabel = (window.bhpDrawerData && window.bhpDrawerData.freeShipLabel) || 'FREE';
 			addRow(
-				'Shipping',
+				shipRowLabel,
 				0 === shippingMinor ? freeShipLabel : money(shippingMinor, minorUnit) + ' flat',
 				0 === shippingMinor ? 'free' : ''
 			);
 		} else {
-			addRow('Shipping', 'Flat rate - enter address at checkout');
+			// No rate selected yet, so there is nothing to be hand-delivered
+			// yet either. This branch stays the generic one, deliberately.
+			addRow(shipRowLabel, 'Flat rate - enter address at checkout');
 		}
 
 		/**
