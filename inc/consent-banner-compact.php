@@ -206,6 +206,174 @@ function bhp_consent_banner_compact_css() {
     min-width: 0 !important;
   }
 }
+
+/* @@@@ THE 1.19.249 COMPACT BAR ("slim the banner") -- READ THIS BEFORE
+      TOUCHING ANY DECLARATION BELOW.
+
+   * POSITION AND SIZE ONLY, exactly like the rest of this file. No button is
+     added, removed, renamed, reordered or re-bound. All three of the plugin's
+     own controls -- #wpconsent-accept-all, #wpconsent-cancel-all and
+     #wpconsent-preferences-all -- stay VISIBLE, stay the same size as each
+     other, and keep the plugin's own labels and handlers. Reject is exactly as
+     easy to reach as Accept, which is a compliance property and not a styling
+     preference. The close button stays. Nothing here decides WHEN consent
+     fires, WHAT is consented to, or WHAT happens on accept, reject or save.
+
+   ---------------------------------------------------------------------------
+   THE DEFECT, MEASURED on the DEPLOYED 1.19.248 build in headless Chrome,
+   staging home page, window.innerWidth/innerHeight asserted 390 x 664, cookies
+   cleared so the banner actually renders:
+
+       banner    390 x 112, top 552 -> bottom 664
+       hero CTA  "Open the book. Read the first pages free"
+                 top 591.6 -> bottom 656.7, centre (195, 624.1)
+       document.elementFromPoint(195, 624.1)
+                 -> DIV#wpconsent-container    <-- THE BANNER, NOT THE CTA
+
+   i.e. the consent bar was eating the tap on the homepage's primary call to
+   action on a 664px-tall phone. PASS3 lifted that CTA onto the first screen;
+   the first screen's bottom 112px belonged to the banner.
+
+   ! WHY THE PLUGIN'S OWN LAYOUT SETTING CANNOT FIX THIS, so it is not retried:
+     wpconsent_settings.banner_layout / banner_position were set to "floating" /
+     "right-bottom" on staging during the 1.19.248 pass and were VERIFIED INERT
+     at both 390 and 1440. The holder classes really do change
+     (wpconsent-banner-floating wpconsent-banner-floating-right-bottom was
+     observed on it), but the base block ABOVE in this very file pins
+     .wpconsent-banner to position: fixed; left: 0; right: 0; width: 100%;
+     bottom: 0 with !important, which outranks every plugin layout. The theme
+     owns this banner's geometry, so the theme is where it is fixed. Those two
+     options were reverted afterwards, since they changed nothing and an inert
+     setting is a false lead for the next reader.
+
+   ---------------------------------------------------------------------------
+   ** THE HEIGHT IS NOT A TASTE DECISION -- IT IS FORCED BY TWO MEASURED
+      NUMBERS, AND THE ARITHMETIC IS RECORDED SO IT IS NOT RE-DERIVED OR
+      "TIDIED" UPWARDS LATER.
+
+      The banner is bottom-anchored, so its bottom edge IS the viewport bottom:
+      664. For elementFromPoint at the CTA centre (y = 624.1) to return the CTA,
+      the banner's top edge must sit BELOW 624.1, so:
+
+          max banner height = 664 - 624.1 = 39.9px
+
+      THAT IS A CEILING, NOT A TARGET. A 48px bar still covers the CTA centre
+      (its top would be 616). Anything >= 39.9px fails the acceptance test.
+      36px is used here, leaving 3.9px of clearance so that font loading,
+      subpixel rounding and device pixel ratio cannot flip the result.
+
+    ! THE 40px HIT-AREA TARGET IS GEOMETRICALLY UNREACHABLE AT 390 x 664, and
+      that is stated plainly rather than quietly missed. A hit area cannot
+      extend below the viewport bottom, so the tallest button a phone can carry
+      here while leaving the CTA centre clickable is 39.9px. The buttons are
+      therefore 36px -- they fill the bar edge to edge with zero block padding,
+      which is the most a 36px bar can give them. Raising them to 40px would
+      re-cover the CTA. If a >= 40px target is ever required, THE CTA MUST MOVE
+      UP; the banner cannot shrink further and stay legible. That is a homepage
+      decision, not this file's.
+
+   ---------------------------------------------------------------------------
+   THE LAYOUT: one row.   [ message ][ Accept ][ Reject ][ Manage ]      [x]
+
+   - The message is CLAMPED TO ONE LINE and ellipsised. The full sentence stays
+     in the DOM, is still announced by assistive technology, and is still
+     reachable through Manage Preferences -- only the visual box is bounded. At
+     390px the three plugin labels need ~250px of the ~360px row, so the visible
+     prose really is a lead-in fragment. That is the documented trade-off, not
+     an oversight.
+   - .wpconsent-banner-footer needs width: auto. The plugin ships width: 100% on
+     the footer inside its own @media (max-width: 767px), and with the footer as
+     a flex ITEM that percentage ate the whole row and collapsed the message to
+     ZERO width. Measured, not guessed.
+   - The buttons keep the flex: 0 0 auto + width: auto !important PAIRING that
+     the 1.19.186 fix is built on. flex: 0 0 auto alone restores flex-basis:
+     auto and hands sizing back to the plugin's width: 100%, which is the exact
+     mechanism that put two of three desktop buttons off screen.
+     tests/test-consent-banner-desktop-layout.php section 2.3 scans EVERY button
+     rule in this stylesheet for that pairing, including this one.
+   - .wpconsent-powered-by is hidden at this breakpoint. It is the plugin's
+     attribution LINK, carries no consent function, and there is no room for it
+     in a 36px bar. It is untouched on every wider viewport.
+   - The close button is re-centred vertically and the bar reserves 22px of
+     right padding for it, so it cannot land on top of Manage Preferences.
+
+   ! SCOPE: max-width: 600px only. It cannot reach the >= 782px desktop block
+     above, and it cannot reach the 601-781px range; both keep the two-line
+     112px treatment unchanged. */
+@media (max-width: 600px) {
+  .wpconsent-banner {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 5px !important;
+    height: 36px !important;
+    max-height: 36px !important;
+    min-height: 0 !important;
+    padding: 0 22px 0 8px !important;
+    overflow: visible !important;
+  }
+  .wpconsent-banner-body {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+  /* One line, ellipsised. The base block's two-line -webkit-box clamp is
+     explicitly undone rather than fought with. */
+  .wpconsent-banner-message {
+    display: block !important;
+    -webkit-line-clamp: none !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .wpconsent-banner-message p {
+    display: block !important;
+    -webkit-line-clamp: none !important;
+    margin: 0 !important;
+    font-size: 10.5px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  /* width: auto is the load-bearing declaration here -- see the note above. */
+  .wpconsent-banner-footer {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 3px !important;
+    margin: 0 !important;
+    height: 36px !important;
+  }
+  .wpconsent-banner-footer .wpconsent-banner-button {
+    flex: 0 0 auto !important;
+    /* Kills the plugin's inherited percentage. Never remove this while
+       flex: 0 0 auto is present -- that pairing IS the 1.19.186 fix. */
+    width: auto !important;
+    min-width: 0 !important;
+    /* Fills the bar edge to edge: the largest hit box a 36px bar can give. */
+    height: 36px !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    font-size: 9.5px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+  }
+  .wpconsent-powered-by {
+    display: none !important;
+  }
+  .wpconsent-banner-close {
+    top: 50% !important;
+    right: 5px !important;
+    transform: translateY(-50%) !important;
+  }
+}
 CSS;
 }
 

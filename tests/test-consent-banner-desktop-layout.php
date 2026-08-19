@@ -243,6 +243,142 @@ if (bhp_consent_banner_compact_active()) {
 }
 
 // ---------------------------------------------------------------------
+// 6. The 1.19.249 COMPACT BAR at <= 600px ("slim the banner").
+//
+//    Added because the phone is now the viewport with the tight constraint,
+//    and every assertion above was written when only the desktop was.
+//
+//    THE MEASURED FACTS these guard, from the deployed 1.19.248 build in
+//    headless Chrome at an asserted 390 x 664 with cookies cleared:
+//        banner  390 x 112, top 552 -> bottom 664
+//        hero CTA centre (195, 624.1)
+//        document.elementFromPoint(195, 624.1) -> DIV#wpconsent-container
+//    The banner was intercepting the tap on the homepage's primary CTA.
+//
+//    THE ARITHMETIC, asserted rather than remembered: the banner is
+//    bottom-anchored, so its bottom edge IS the viewport bottom (664). For the
+//    CTA centre at 624.1 to be clickable the banner must be SHORTER than
+//    664 - 624.1 = 39.9px. That is a CEILING. A "compact" 48px bar still
+//    covers it. 6.3 below is the assertion that stops a future edit from
+//    rounding 36 up to a friendlier-looking number and silently re-breaking
+//    the CTA.
+//
+//    PHP cannot lay out a page, so no pixel claim is made here; the pixel
+//    result is measured in a real browser and recorded in the release notes.
+//    What PHP can prove is that the rules producing it are present, correctly
+//    scoped, and shipped in the stylesheet the browser downloads.
+// ---------------------------------------------------------------------
+
+/** Returns the body of the first `@media (max-width: 600px)` block, or ''. */
+function bhp_cbdl_mobile_block($css) {
+    $start = strpos($css, '@media (max-width: 600px)');
+    if (false === $start) {
+        return '';
+    }
+    $open = strpos($css, '{', $start);
+    if (false === $open) {
+        return '';
+    }
+    $depth = 0;
+    $len   = strlen($css);
+    for ($i = $open; $i < $len; $i++) {
+        if ('{' === $css[$i]) {
+            $depth++;
+        } elseif ('}' === $css[$i]) {
+            $depth--;
+            if (0 === $depth) {
+                return substr($css, $open + 1, $i - $open - 1);
+            }
+        }
+    }
+    return '';
+}
+
+$mobile = bhp_cbdl_mobile_block($css);
+
+bhp_cbdl_assert($failures, '6.1 the <= 600px compact-bar block exists and is non-empty', '' !== trim($mobile));
+
+$btn_rule_mobile = '';
+if (preg_match('/\.wpconsent-banner-footer\s+\.wpconsent-banner-button\s*\{([^}]*)\}/', $mobile, $m)) {
+    $btn_rule_mobile = $m[1];
+}
+bhp_cbdl_assert($failures, '6.2 the compact block styles .wpconsent-banner-footer .wpconsent-banner-button', '' !== $btn_rule_mobile);
+
+/* THE ONE THAT MATTERS. 39.9px is the ceiling; anything at or above it puts
+   the banner back over the CTA centre. Both `height` and `max-height` are
+   checked, because setting one and leaving the other at the base block's
+   112px would produce a bar that is only accidentally short. */
+$mobile_banner_rule = '';
+if (preg_match('/\.wpconsent-banner\s*\{([^}]*)\}/', $mobile, $m)) {
+    $mobile_banner_rule = $m[1];
+}
+$mobile_h  = preg_match('/[^-]height\s*:\s*([0-9.]+)px/', $mobile_banner_rule, $mh) ? (float) $mh[1] : -1.0;
+$mobile_mh = preg_match('/max-height\s*:\s*([0-9.]+)px/', $mobile_banner_rule, $mm) ? (float) $mm[1] : -1.0;
+
+bhp_cbdl_assert(
+    $failures,
+    sprintf('6.3 the compact bar is shorter than the 39.9px ceiling (height %.1fpx, max-height %.1fpx)', $mobile_h, $mobile_mh),
+    $mobile_h > 0 && $mobile_h < 39.9 && $mobile_mh > 0 && $mobile_mh < 39.9
+);
+
+/* The 1.19.186 pairing, re-asserted at this breakpoint specifically. Section
+   2.3 already scans every button rule in the file, but naming it here means a
+   failure points straight at the compact bar instead of at "somewhere". */
+bhp_cbdl_assert(
+    $failures,
+    '6.4 the compact-bar buttons pair flex: 0 0 auto with width: auto (the 1.19.186 fix)',
+    (bool) preg_match('/flex\s*:\s*0\s+0\s+auto/', $btn_rule_mobile)
+        && (bool) preg_match('/width\s*:\s*auto\s*!important/', $btn_rule_mobile)
+);
+
+/* The footer's own width: 100% comes from the PLUGIN's max-width: 767px rule.
+   Left alone it eats the entire row and collapses the message to zero width --
+   observed, not theorised. */
+bhp_cbdl_assert(
+    $failures,
+    '6.5 the compact-bar footer neutralises the plugin\'s mobile width: 100%',
+    (bool) preg_match('/\.wpconsent-banner-footer\s*\{[^}]*width\s*:\s*auto\s*!important[^}]*\}/s', $mobile)
+);
+
+/* Buttons must fill the bar. A short button inside a short bar is the one way
+   to lose hit area without losing height, and 36px is already below the 40px
+   target purely because of the geometry above. */
+bhp_cbdl_assert(
+    $failures,
+    '6.6 the compact-bar buttons fill the bar height (min-height present, >= 32px)',
+    preg_match('/min-height\s*:\s*([0-9.]+)px/', $btn_rule_mobile, $bh) && (float) $bh[1] >= 32.0
+);
+
+/* ALL THREE CONSENT CONTROLS SURVIVE. This is the safety assertion of the
+   section: a "compact" bar is exactly the kind of change that quietly drops
+   Reject or Manage, which would be a compliance failure and not a cosmetic
+   one. Nothing in the compact block may hide a consent control. */
+bhp_cbdl_assert(
+    $failures,
+    '6.7 the compact block hides no consent button and no footer',
+    !preg_match('/\.wpconsent-(banner-footer|accept-all|cancel-all|preferences-all|banner-button)[^{}]*\{[^}]*display\s*:\s*none/s', $mobile)
+);
+bhp_cbdl_assert(
+    $failures,
+    '6.8 the compact block hides no banner body or message (the prose is clamped, never removed)',
+    !preg_match('/\.wpconsent-banner-(body|message)[^{}]*\{[^}]*display\s*:\s*none/s', $mobile)
+);
+
+/* Scope. A compact-bar rule leaking onto the desktop would undo 1.19.186. */
+bhp_cbdl_assert(
+    $failures,
+    '6.9 the compact block declares no min-width media query of its own',
+    0 === preg_match('/@media[^{]*min-width/', $mobile)
+);
+
+/* And the desktop block must still be there, unchanged in kind. */
+bhp_cbdl_assert(
+    $failures,
+    '6.10 the >= 782px desktop block still caps its own height (desktop untouched)',
+    (bool) preg_match('/\.wpconsent-banner\s*\{[^}]*max-height\s*:\s*92px[^}]*\}/s', $desktop)
+);
+
+// ---------------------------------------------------------------------
 // Result
 // ---------------------------------------------------------------------
 if ($failures) {
