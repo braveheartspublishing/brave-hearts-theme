@@ -29,7 +29,44 @@ $adventures = bhp_get_series_adventures();
 // the "once per real conversion" intent without needing any new PHP
 // state. The event is also enriched with lead_offer/audience/placement
 // so it is directly comparable to Phase 1C's other conversion events.
-if ( class_exists( 'BHP_Analytics_Config' ) && BHP_Analytics_Config::should_render_analytics() ) {
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.253 (`CYCLE165-LD-META-LEAD-EVENT`) — THIS PUSH MOVED FROM THE
+ *    PAGE BODY TO `wp_footer` PRIORITY 99. THE PAYLOAD, THE EVENT NAME AND
+ *    THE DEDUP GUARD ARE BYTE-FOR-BYTE WHAT THEY WERE. Only WHEN it runs
+ *    changed, and that is the whole point of the change.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHY, AND IT IS AN ORDERING CONTRACT WITH THE META PIXEL — NOT A TIDY-UP.
+ *    `adventure_kit_signup` is now mapped to Meta's `Lead` event, and so is
+ *    the parent popup's `parent_popup_success`. A visitor who signs up
+ *    THROUGH the popup raises BOTH on this one page load, because this page
+ *    is the popup's own `thankYouPath`. The pixel therefore fires the FIRST
+ *    Lead of a page load and drops the rest — one signup is one Lead.
+ *
+ *    `assets/js/mariana-popup.js` is enqueued sitewide in the FOOTER
+ *    (functions.php, "Enqueue the shared popup script sitewide") precisely
+ *    so a thank-you page can fire the originating popup's success event, and
+ *    `wp_print_footer_scripts` runs on `wp_footer` at priority 20. Printing
+ *    this generic page-level event inline in the body made it arrive FIRST,
+ *    which would have cost every popup-originated signup its funnel name and
+ *    its A/B variant in Meta. At priority 99 it arrives last, so the popup
+ *    keeps its attribution and this event is the fallback for every signup
+ *    that did NOT come through a popup.
+ *
+ *    ⚠ The COUNT is correct either way — the latch guarantees one Lead per
+ *    conversion regardless of order. What order buys is ATTRIBUTION. If this
+ *    priority or that enqueue ever moves, `content_name` degrades to
+ *    `adventure_kit` for popup signups and nothing else breaks.
+ *
+ * ⛔ GA4 IS UNAFFECTED. The same event with the same payload still reaches
+ *    the same dataLayer on the same page load; only its position in the load
+ *    order moved, and no GA4 tag in the container is order-sensitive.
+ */
+add_action( 'wp_footer', function () {
+    if ( ! class_exists( 'BHP_Analytics_Config' ) || ! BHP_Analytics_Config::should_render_analytics() ) {
+        return;
+    }
     $bhp_akty_payload = wp_json_encode(
         array(
             'event'       => 'adventure_kit_signup',
@@ -60,7 +97,7 @@ if ( class_exists( 'BHP_Analytics_Config' ) && BHP_Analytics_Config::should_rend
     })();
     </script>
     <?php
-}
+}, 99 );
 ?>
 <?php
 /*

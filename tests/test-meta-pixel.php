@@ -535,7 +535,39 @@ bhp_mp_assert(
 );
 bhp_mp_assert( $failures, 'E8 landing-page leads derive their content_name from the payload\'s lead_offer', '' === $map['lead_signup_success'][1] && false !== strpos( $runtime, "'landing_' + String( payload.lead_offer )" ) );
 bhp_mp_assert( $failures, 'E9 the Blocks checkout\'s proven add_payment_info event maps to AddPaymentInfo', isset( $map['add_payment_info'] ) && 'AddPaymentInfo' === $map['add_payment_info'][0] );
-bhp_mp_assert( $failures, 'E10 content_name is attached to Lead events ONLY — never to AddPaymentInfo', false !== strpos( $runtime, "if ( 'Lead' === mapped[ 0 ] ) { params.content_name" ) );
+/*
+ * ⛔ E10 REWRITTEN 2026-08-19 (theme 1.19.253, `CYCLE165-LD-META-LEAD-EVENT`).
+ *    THE ASSERTION IT REPLACES WAS TRUE OF THE FORMATTING, NOT OF THE BEHAVIOUR:
+ *
+ *      false !== strpos( $runtime, "if ( 'Lead' === mapped[ 0 ] ) { params.content_name" )
+ *
+ *    It matched a ONE-LINE `if`. 1.19.253 grew that branch to several lines (the
+ *    Lead latch and the eventID live there now) and the assertion failed while
+ *    the invariant it names was never once violated. A test that fails on
+ *    reformatting trains a reader to edit the test, which is the failure mode
+ *    that lets a real regression through next time.
+ *
+ *    ⭐ THE REPLACEMENT IS STRICTLY STRONGER, not looser. The old line proved
+ *    only that a Lead branch mentioned content_name somewhere. This proves
+ *    content_name is assigned EXACTLY ONCE in the whole runtime, and that the
+ *    single assignment sits INSIDE the Lead-only branch — after the Lead guard
+ *    and before the currency/value lines that every mapped event reaches. An
+ *    AddPaymentInfo carrying a content_name now fails here; under the old line
+ *    it could have passed.
+ */
+$e10_guard    = strpos( $runtime, "if ( 'Lead' === mapped[ 0 ] ) {" );
+$e10_assign   = strpos( $runtime, 'params.content_name = contentNameFor( mapped, payload );' );
+$e10_shared   = strpos( $runtime, 'if ( payload.currency ) { params.currency = payload.currency; }' );
+bhp_mp_assert(
+	$failures,
+	'E10 content_name is assigned exactly once, inside the Lead-only branch — never on AddPaymentInfo',
+	// Assignments only. `NS.lead` READS params.content_name for the QA hook,
+	// and a read is not a second place the field can be set.
+	1 === substr_count( $runtime, 'params.content_name =' )
+		&& false !== $e10_guard && false !== $e10_assign && false !== $e10_shared
+		&& $e10_assign > $e10_guard && $e10_assign < $e10_shared
+		&& '' === $map['add_payment_info'][1]
+);
 
 /* GTM replaces dataLayer.push when its container executes. A wrapper alone
  * would be silently discarded; the cursor-based drain is what makes the bridge

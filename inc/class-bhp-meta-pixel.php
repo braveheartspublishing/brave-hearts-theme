@@ -116,6 +116,15 @@
  *                     currency FROM THE ORDER, `eventID` = the order number,
  *                     deduplicated by order meta so a refresh cannot re-fire.
  *   Lead              the existing lead dataLayer events, mapped by name.
+ *                     ⭐ 1.19.253: the map was INCOMPLETE and had been since
+ *                     1.19.203 — it read the two popup success events and the
+ *                     inline-form one, and the inline-form one is deliberately
+ *                     suppressed for any form that has its own thank-you page,
+ *                     which the primary Kit funnel does. The three thank-you /
+ *                     quiz success events are now mapped, every Lead carries an
+ *                     `eventID` for Conversions-API dedup, and a page load can
+ *                     raise at most one Lead. See runtime_config()'s map and
+ *                     the latch note in runtime_js().
  *
  * @package brave-hearts
  */
@@ -318,6 +327,27 @@ class BHP_Meta_Pixel {
 				'parent_popup_success'  => array( 'Lead', 'parent_popup' ),
 				'teacher_popup_success' => array( 'Lead', 'teacher_popup' ),
 				'lead_signup_success'   => array( 'Lead', '' ), // content_name derived from the payload's lead_offer
+				/*
+				 * ⭐ 1.19.253 (`CYCLE165-LD-META-LEAD-EVENT`). THE THREE ENTRIES
+				 * BELOW ARE WHY THIS PIXEL HAD NEVER RECORDED A SINGLE LEAD.
+				 * The table above is not wrong — it is incomplete, and it is
+				 * incomplete in exactly the place the traffic goes.
+				 *
+				 * `lead_signup_success` is deliberately NOT fired by any form
+				 * that has a dedicated thank-you page: see the comment in
+				 * template-parts/acquisition/signup-form.php, which suppresses
+				 * it so the thank-you page's own named event is not
+				 * double-counted. The Reluctant Reader Adventure Kit — the
+				 * primary newsletter funnel — HAS a dedicated thank-you page.
+				 * So the main signup path fired `adventure_kit_signup`, which
+				 * nothing here read, while `lead_signup_success`, which this
+				 * table does read, never fired for it at all. The gift guide
+				 * has the same shape, and the quiz's success event was never
+				 * mapped either.
+				 */
+				'adventure_kit_signup'  => array( 'Lead', 'adventure_kit' ),
+				'gift_guide_signup'     => array( 'Lead', 'gift_guide' ),
+				'quiz_signup_success'   => array( 'Lead', 'quiz' ),
 				'add_payment_info'      => array( 'AddPaymentInfo', '' ),
 			),
 			/* Seeing one of these means the server may have just written the queue cookie. */
@@ -711,6 +741,67 @@ class BHP_Meta_Pixel {
 	var granted = false;
 	var loaded  = false;
 
+	/* ---------- Lead identity and the one-Lead-per-page-load latch ----------
+	 *
+	 * 1.19.253. Two separate problems, one small block.
+	 *
+	 * ⭐ eventID. Every Lead now carries one. Meta deduplicates on the pair
+	 *    (event_name, event_id), so when the server-side Conversions API is
+	 *    built it sends the SAME id for the same signup and the two sources
+	 *    collapse into one Lead instead of two. Without an id there is nothing
+	 *    to dedup on and a CAPI rollout would silently double every lead.
+	 *    The id is generated here rather than server-side for a reason that is
+	 *    an invariant of this file, not a convenience: the head payload must be
+	 *    byte-identical for every visitor (invariant 2), and a per-visitor id
+	 *    rendered into cacheable HTML would be served to the wrong visitor.
+	 *    It is written back onto the dataLayer payload as `event_id` when the
+	 *    payload does not already carry one, so a future GTM/CAPI tag reads the
+	 *    same value rather than minting a second.
+	 *
+	 * ⛔ THE LATCH. A single signup can raise TWO mapped events on one page
+	 *    load: the parent popup redirects to `adventure-kit-thank-you`, so that
+	 *    page fires `adventure_kit_signup` AND mariana-popup.js fires
+	 *    `parent_popup_success` from its pending-submit handoff. One signup is
+	 *    one Lead. The first mapped Lead of a page load wins and every later
+	 *    one is dropped — a page load is at most one conversion, so this is a
+	 *    mechanical rule and not a judgement call.
+	 *
+	 * ⚠ WHICH ONE IS "FIRST" IS A DELIBERATE ORDERING CONTRACT, NOT LUCK.
+	 *    page-adventure-kit-thank-you.php prints its push on `wp_footer` at
+	 *    priority 99, which is AFTER wp_print_footer_scripts (priority 20) runs
+	 *    mariana-popup.js. The popup's own event therefore arrives first and
+	 *    keeps its funnel name and its A/B variant in Meta, and the generic
+	 *    thank-you-page event is the fallback for every non-popup signup. If
+	 *    either side of that contract moves, attribution degrades to
+	 *    `adventure_kit` — the count stays correct either way.
+	 *
+	 * ⛔ NO storage of any kind is used here. The latch is one in-memory
+	 *    boolean for one page load. Invariant 3 is untouched.
+	 */
+	var leadFired = false;
+
+	function newEventId() {
+		var c = window.crypto || window.msCrypto;
+		if ( c && typeof c.randomUUID === 'function' ) {
+			return c.randomUUID();
+		}
+		if ( c && typeof c.getRandomValues === 'function' ) {
+			var b = new Uint8Array( 16 );
+			c.getRandomValues( b );
+			b[ 6 ] = ( b[ 6 ] & 0x0f ) | 0x40;
+			b[ 8 ] = ( b[ 8 ] & 0x3f ) | 0x80;
+			var hex = '';
+			for ( var i = 0; i < 16; i++ ) {
+				hex += ( b[ i ] + 0x100 ).toString( 16 ).slice( 1 );
+				if ( i === 3 || i === 5 || i === 7 || i === 9 ) { hex += '-'; }
+			}
+			return hex;
+		}
+		// Last resort only. Not cryptographic, and it does not need to be: an
+		// eventID is a correlation key, never a secret and never a credential.
+		return 'lead-' + Date.now().toString( 16 ) + '-' + Math.random().toString( 16 ).slice( 2, 14 );
+	}
+
 	/* ---------- consent ---------- */
 
 	function readCookie( name ) {
@@ -865,12 +956,27 @@ class BHP_Meta_Pixel {
 		var mapped = mappingFor( name );
 		if ( !mapped ) { return; }
 
-		var params = {};
-		if ( 'Lead' === mapped[ 0 ] ) { params.content_name = contentNameFor( mapped, payload ); }
+		var params  = {};
+		var eventId = payload.event_id || '';
+
+		if ( 'Lead' === mapped[ 0 ] ) {
+			if ( leadFired ) { return; }   // one signup, one Lead — see the latch note above
+			leadFired = true;
+			params.content_name = contentNameFor( mapped, payload );
+			if ( !eventId ) {
+				eventId = newEventId();
+				// Hand the same id back to whoever else is reading this entry,
+				// so a future CAPI/GTM tag dedups against it instead of minting
+				// a second id for the same conversion.
+				payload.event_id = eventId;
+			}
+			NS.lead = { name: name, content_name: params.content_name, eventID: eventId };
+		}
+
 		if ( payload.currency ) { params.currency = payload.currency; }
 		if ( typeof payload.value === 'number' ) { params.value = payload.value; }
 
-		track( { name: mapped[ 0 ], params: params, eventID: payload.event_id || '' } );
+		track( { name: mapped[ 0 ], params: params, eventID: eventId } );
 	}
 
 	window.dataLayer = window.dataLayer || [];
@@ -904,7 +1010,10 @@ class BHP_Meta_Pixel {
 	NS.debug = {
 		granted: function () { return granted; },
 		sdkLoaded: function () { return loaded; },
-		queue: function () { return ( window.fbq && window.fbq.queue ) || []; }
+		queue: function () { return ( window.fbq && window.fbq.queue ) || []; },
+		// 1.19.253. The Lead actually emitted on this page load, or null. QA
+		// reads this rather than reconstructing intent from the raw queue.
+		lead: function () { return NS.lead || null; }
 	};
 })();
 JS;
