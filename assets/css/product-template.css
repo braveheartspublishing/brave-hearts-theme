@@ -65,20 +65,43 @@
  *      than an accident of two techniques meeting.
  */
 
+/*
+ * ⛔ THE SELECTOR PREFIX IS `body.single-product.woocommerce`, WITH NO SPACE
+ *    BETWEEN THE TWO CLASSES, AND THE FIRST VERSION OF THIS FILE GOT IT WRONG.
+ *
+ *    It shipped `body.single-product .woocommerce div.product` — a DESCENDANT
+ *    combinator — which asks for an element carrying `.woocommerce` somewhere
+ *    INSIDE the body. There isn't one: WooCommerce puts that class on `<body>`
+ *    itself (verified in the browser, `body class="… single-product …
+ *    woocommerce woocommerce-page …"`). So every rule below matched nothing,
+ *    the stylesheet loaded and did nothing, and the first after-deploy probe
+ *    measured ADD TO CART at 1031 — no reorder at all.
+ *
+ *    `style.css`'s own `.woocommerce div.product` rules work because `.woocommerce`
+ *    resolves against the BODY there; adding a `body.…` prefix in front of it
+ *    silently changed what it was asking for. Recorded rather than quietly
+ *    fixed, because the failure mode — a stylesheet that loads, parses clean
+ *    and matches nothing — leaves no error anywhere and is only visible in a
+ *    measurement.
+ *
+ *    Both classes on one element also lifts specificity to (0,3,1) against the
+ *    base rules' (0,2,1), so the reorder does not depend on enqueue order.
+ */
+
 @media (max-width: 600px) {
 
 	/* ---- 1. One column, no gap, explicit rhythm ---------------------- */
 
-	body.single-product .woocommerce div.product {
+	body.single-product.woocommerce div.product {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 0;
 	}
 
-	body.single-product .woocommerce div.product > .summary {
+	body.single-product.woocommerce div.product > .summary {
 		display: contents;
 	}
 
-	body.single-product .woocommerce div.product > .summary > .bhp-product-value-prop {
+	body.single-product.woocommerce div.product > .summary > .bhp-product-value-prop {
 		display: contents;
 	}
 
@@ -88,15 +111,15 @@
 	 * `display: contents` changes box generation, NOT the selector tree: the
 	 * summary's children are still `> .summary > *`, never `div.product > *`.
 	 */
-	body.single-product .woocommerce div.product > *,
-	body.single-product .woocommerce div.product > .summary > * {
+	body.single-product.woocommerce div.product > *,
+	body.single-product.woocommerce div.product > .summary > * {
 		order: 7;
 		margin-top: clamp(1.75rem, 6vw, 2.75rem);
 	}
 
 	/* ---- 2. The first screen, in the board's order -------------------- */
 
-	body.single-product .woocommerce div.product > .summary > .product_title {
+	body.single-product.woocommerce div.product > .summary > .product_title {
 		order: 1;
 		margin-top: 0;
 		margin-bottom: 0.4rem;
@@ -112,18 +135,18 @@
 	 *   band. This keeps it at its content width, which is what it has always
 	 *   been.
 	 */
-	body.single-product .woocommerce div.product .bhp-product-value-prop__age {
+	body.single-product.woocommerce div.product .bhp-product-value-prop__age {
 		order: 2;
 		margin: 0 0 0.85rem;
 		justify-self: start;
 	}
 
-	body.single-product .woocommerce div.product > .summary > .bhp-formats {
+	body.single-product.woocommerce div.product > .summary > .bhp-formats {
 		order: 3;
 		margin-top: 0;
 	}
 
-	body.single-product .woocommerce div.product > .amazon-reviews-product-section {
+	body.single-product.woocommerce div.product > .amazon-reviews-product-section {
 		order: 4;
 	}
 
@@ -134,12 +157,12 @@
 	 * keeps WooCommerce's native one. Both must move, or the fix would land on
 	 * three pages out of four.
 	 */
-	body.single-product .woocommerce div.product > .bhp-media-gallery--hero,
-	body.single-product .woocommerce div.product > .woocommerce-product-gallery {
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero,
+	body.single-product.woocommerce div.product > .woocommerce-product-gallery {
 		order: 5;
 	}
 
-	body.single-product .woocommerce div.product .bhp-product-value-prop__hook {
+	body.single-product.woocommerce div.product .bhp-product-value-prop__hook {
 		order: 6;
 		margin: clamp(1.75rem, 6vw, 2.75rem) 0 0;
 	}
@@ -149,36 +172,36 @@
 	 * and add-to-cart form. They carry the same job and therefore the same
 	 * slots, so that page gets the identical first screen.
 	 */
-	body.single-product .woocommerce div.product > .summary > .price {
+	body.single-product.woocommerce div.product > .summary > .price {
 		order: 3;
 		margin-top: 0;
 		margin-bottom: 0.6rem;
 	}
 
-	body.single-product .woocommerce div.product > .summary > form.cart {
+	body.single-product.woocommerce div.product > .summary > form.cart {
 		order: 3;
 		margin-top: 0;
 	}
 
 	/* ---- 3. Buy box, tightened so the button clears the fold ---------- */
 
-	body.single-product .woocommerce div.product .bhp-formats__heading {
+	body.single-product.woocommerce div.product .bhp-formats__heading {
 		margin: 0 0 0.55rem;
 		font-size: 0.72rem;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
 	}
 
-	body.single-product .woocommerce div.product .bhp-formats__selected-price {
+	body.single-product.woocommerce div.product .bhp-formats__selected-price {
 		margin: 0.85rem 0 0.6rem;
 	}
 
 	/* >= 44 px stays >= 44 px. This trims padding, never the target. */
-	body.single-product .woocommerce div.product .bhp-formats__cta {
+	body.single-product.woocommerce div.product .bhp-formats__cta {
 		min-height: 52px;
 	}
 
-	body.single-product .woocommerce div.product .bhp-formats__cta-wrap {
+	body.single-product.woocommerce div.product .bhp-formats__cta-wrap {
 		margin: 0;
 	}
 
@@ -191,7 +214,7 @@
 	 * crumb is still readable and still a link, which `text-overflow: ellipsis`
 	 * on a nowrap row would not be.
 	 */
-	body.single-product .woocommerce .woocommerce-breadcrumb {
+	body.single-product.woocommerce .woocommerce-breadcrumb {
 		margin-bottom: 0.9rem;
 		font-size: 0.6rem;
 		letter-spacing: 0.06em;
