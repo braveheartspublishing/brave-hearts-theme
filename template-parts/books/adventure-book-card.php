@@ -35,7 +35,13 @@ $amazon_url = bhp_get_safe_link_url($args['amazon_url']);
     <?php if ($args['description']): ?><div class="adventure-book-card__description"><?php echo wp_kses_post($args['description']); ?></div><?php endif; ?>
     <?php if ($formats): ?>
       <div class="adventure-book-card__formats" aria-label="<?php echo esc_attr($args['available'] ? __('Available formats', 'brave-hearts') : __('Planned formats', 'brave-hearts')); ?>">
-        <h4><?php echo esc_html($args['available'] ? __('Available formats', 'brave-hearts') : __('Planned formats', 'brave-hearts')); ?></h4>
+        <?php /* 1.19.266: was <h4>. A 12.8px label against an 18px body is a
+                 heading smaller than the text it heads (audit item 6). The
+                 wrapper above already carries the same words as `aria-label`,
+                 so nothing is lost to assistive technology, and style.css
+                 matches `.card-label` beside the `h4` so nothing moves on
+                 screen either. */ ?>
+        <p class="card-label"><?php echo esc_html($args['available'] ? __('Available formats', 'brave-hearts') : __('Planned formats', 'brave-hearts')); ?></p>
         <ul>
           <?php foreach ($formats as $format): ?>
             <?php $format_url = bhp_get_safe_link_url($format_urls[$format] ?? ''); ?>

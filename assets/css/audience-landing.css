@@ -182,7 +182,7 @@
 /* ---------- Buttons ---------- */
 .audience-landing .btn {
 	display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-	border-radius: 12px; padding: 17px 26px; font: 800 16px/1 var(--al-sans);
+	border-radius: 8px; padding: 17px 26px; font: 800 16px/1 var(--al-sans);   /* 1.19.266: radius was 12px. This is the .btn every control on these pages inherits -- the last button system on the site that was not on the 8px value (audit §8a item 5, rubric row 7). */
 	cursor: pointer; text-decoration: none; border: none; box-shadow: 0 3px 0 rgba(0,0,0,.16);
 	transition: background-color .15s ease;
 }
@@ -409,7 +409,7 @@
 
 .audience-landing-format-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
 .audience-landing-format-btn {
-	border-radius: 12px; padding: 18px 14px; font: 800 16px/1.2 var(--al-sans); cursor: pointer; text-align: center;
+	border-radius: 8px; padding: 18px 14px; font: 800 16px/1.2 var(--al-sans); cursor: pointer; text-align: center;   /* 1.19.266: radius was 12px -- the format selector. */
 	transition: all .15s; background: #fff; color: var(--al-forest); border: 2px solid #e0d4b8;
 }
 .audience-landing-format-btn span.price { display: block; font-weight: 700; font-size: 14px; opacity: .85; margin-top: 4px; }
@@ -785,8 +785,14 @@
    outranks the sitewide `body:not(.home) h1` rule for the same reason the
    original comment gives. */
 .audience-landing .audience-landing-hero--funnel h1 {
-	font-size: clamp(30px, 3.4vw, 44px);
-	line-height: 1.12;
+	/* 1.19.266: was clamp(30px, 3.4vw, 44px) -> 30px at 390, 44px at 1440. In
+	   band at both, but not the same value as everything else, and this is the
+	   twin of the `.parent-landing` rule corrected in parent-landing.css. It is
+	   the rule that was still rendering 30px on educators / gift-buyers /
+	   organizations after the first pass -- found by asking the BROWSER which
+	   rule won, not by reading the file. */
+	font-size: var(--h1-size);
+	line-height: var(--h1-leading);
 	margin: 12px auto 0;
 	max-width: 20ch;
 }

@@ -30,13 +30,15 @@ $args['resources_url'] = bhp_get_safe_link_url($args['resources_url']);
     <?php if ($args['description']): ?><div class="teacher-book-card__description"><?php echo wp_kses_post($args['description']); ?></div><?php endif; ?>
     <?php if ($themes): ?>
       <div class="teacher-book-card__themes">
-        <h4><?php esc_html_e('Classroom themes', 'brave-hearts'); ?></h4>
+        <?php /* 1.19.266: <h4> -> <p class="card-label">, same pixels. The
+                 reasoning is in `template-parts/books/adventure-book-card.php`. */ ?>
+        <p class="card-label"><?php esc_html_e('Classroom themes', 'brave-hearts'); ?></p>
         <ul><?php foreach ($themes as $theme): ?><li><?php echo esc_html($theme); ?></li><?php endforeach; ?></ul>
       </div>
     <?php endif; ?>
     <?php if ($subjects): ?>
       <div class="teacher-book-card__subjects">
-        <h4><?php esc_html_e('Suggested subjects', 'brave-hearts'); ?></h4>
+        <p class="card-label"><?php esc_html_e('Suggested subjects', 'brave-hearts'); ?></p>
         <ul><?php foreach ($subjects as $subject): ?><li><?php echo esc_html($subject); ?></li><?php endforeach; ?></ul>
       </div>
     <?php endif; ?>
