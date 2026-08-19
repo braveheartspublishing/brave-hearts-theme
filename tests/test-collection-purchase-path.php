@@ -320,6 +320,105 @@ if ( function_exists( 'bhp_collection_add_to_cart_cta' ) && bhp_collection_cta_a
 	bhp_cpp_assert( false === strpos( $hostile, '<script>' ), '§2 the label is escaped, not injected', $failures );
 }
 
+echo "\n=== §2b — ⭐ 1.8.58 (`CYCLE165-LD-COLLECTION-CONVERSION`, T-3 / R-2) — THE COLLECTION PAGE'S OWN ABOVE-FOLD CTA ===\n";
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⭐ THIS SECTION EXISTS BECAUSE THE BUILD BRIEF'S DIAGNOSIS WAS WRONG, AND
+ *     THAT IS RECORDED HERE RATHER THAN QUIETLY CORRECTED IN A COMMIT.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * The CYCLE165 conversion specification's fault F-2 reads: "The above-fold CTA
+ * cannot buy anything. `bhp-landing-cta--primary` is a <button> with no
+ * `href`. It scrolls to the format selector."
+ *
+ * ⛔ IT DOES NOT SCROLL. VERIFIED BY READING THE CODE, NOT BY TRUSTING EITHER
+ *    DOCUMENT: since 1.8.32 the primary CTA has been a `<button type="submit">`
+ *    inside `form.bhp-bundle-form`, carrying `bhp_bundle_action` =
+ *    `complete_{format}_smart` and the checkout-redirect input, and
+ *    `bundle-drawer.js` intercepts every `form.bhp-bundle-form` submit. The
+ *    ONLY control on this page that scrolls to the pricing card is the
+ *    gift-section CTA, which is the sole carrier of `data-bhp-scroll-to-card`.
+ *    A button with no `href` is not evidence of anything — submit buttons do
+ *    not have one.
+ *
+ * ⭐ SO R-2 WAS ALREADY SATISFIED, and the correct action was to GUARD it, not
+ *   to build a second add path — which R-2's own constraint explicitly
+ *   forbids ("Reuse it. Do not invent a second add path."). These assertions
+ *   are that guard, and they are what makes the claim checkable next time
+ *   instead of re-argued.
+ */
+$cpp_page = null;
+foreach ( get_posts(
+	array(
+		'post_type'      => 'page',
+		'post_status'    => 'publish',
+		'posts_per_page' => 50,
+		'fields'         => 'ids',
+	)
+) as $cpp_id ) {
+	$cpp_content = get_post_field( 'post_content', $cpp_id );
+	if ( is_string( $cpp_content ) && has_shortcode( $cpp_content, 'bhp_complete_series_landing' ) ) {
+		$cpp_page = $cpp_id;
+		break;
+	}
+}
+bhp_cpp_assert( (bool) $cpp_page, '§2b the collection landing page exists', $failures );
+if ( $cpp_page ) {
+	$cpp_resp = wp_remote_get( get_permalink( $cpp_page ), array( 'timeout' => 30, 'sslverify' => false ) );
+	$cpp_html = is_wp_error( $cpp_resp ) ? '' : (string) wp_remote_retrieve_body( $cpp_resp );
+	bhp_cpp_assert( '' !== $cpp_html, '§2b the collection page renders', $failures );
+
+	if ( '' !== $cpp_html ) {
+		/*
+		 * Containment, not co-occurrence. The needle runs from a
+		 * `bhp-bundle-form` open tag to the primary-CTA hook without crossing
+		 * a `</form>`, so it proves the button is INSIDE the form that carries
+		 * the paperback smart action — which two separate `strpos` calls never
+		 * could.
+		 */
+		bhp_cpp_assert(
+			preg_match( '/<form[^>]*class="[^"]*bhp-bundle-form[^"]*"[^>]*>(?:(?!<\/form>).)*?name="bhp_bundle_action" value="complete_paperback_smart"(?:(?!<\/form>).)*?data-bhp-landing-main-cta/s', $cpp_html ) === 1,
+			'§2b R-2 — the above-fold primary CTA submits the PAPERBACK smart-add form',
+			$failures
+		);
+		bhp_cpp_assert(
+			preg_match( '/<form[^>]*class="[^"]*bhp-bundle-form[^"]*"[^>]*>(?:(?!<\/form>).)*?name="bhp_bundle_nonce"(?:(?!<\/form>).)*?data-bhp-landing-main-cta/s', $cpp_html ) === 1,
+			'§2b and that form carries the plugin nonce, so the add is not going to be refused',
+			$failures
+		);
+		bhp_cpp_assert(
+			preg_match( '/data-bhp-landing-main-cta[^>]*>/s', $cpp_html ) === 1,
+			'§2b the primary CTA hook renders exactly once',
+			$failures
+		);
+		bhp_cpp_assert(
+			preg_match( '/<button[^>]*data-bhp-landing-main-cta/s', $cpp_html ) === 1
+				&& preg_match( '/<a[^>]*data-bhp-landing-main-cta/s', $cpp_html ) === 0,
+			'§2b it is a button, never an anchor',
+			$failures
+		);
+		bhp_cpp_assert(
+			preg_match( '/data-bhp-scroll-to-card[^>]*data-bhp-landing-main-cta|data-bhp-landing-main-cta[^>]*data-bhp-scroll-to-card/s', $cpp_html ) === 0,
+			'§2b it does NOT carry the scroll-to-card hook (the brief\'s F-2 described the gift-section CTA, not this one)',
+			$failures
+		);
+		/*
+		 * ⛔ AND THERE IS STILL ONLY ONE ADD PATH. Every add-to-cart on this
+		 *    page must go through `form.bhp-bundle-form`; a bare button posting
+		 *    a bundle action outside one would bypass the drawer's smart
+		 *    de-duplication and could add a title the visitor already has.
+		 */
+		$cpp_actions = preg_match_all( '/name="bhp_bundle_action"/', $cpp_html );
+		$cpp_forms   = preg_match_all( '/class="[^"]*bhp-bundle-form[^"]*"/', $cpp_html );
+		bhp_cpp_assert(
+			$cpp_actions > 0 && $cpp_actions === $cpp_forms,
+			"§2b every bundle action sits inside a bhp-bundle-form ({$cpp_actions} actions, {$cpp_forms} forms) — no second add path was invented",
+			$failures
+		);
+	}
+}
+
 echo "\n=== §3 — NO STRAGGLERS: every funnel collection CTA takes the direct path ===\n";
 
 /*

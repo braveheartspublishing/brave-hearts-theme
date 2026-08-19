@@ -1509,6 +1509,8 @@ function bhp_book_render_collection_hero_gallery() {
         return;
     }
 
+    bhp_book_render_collection_hero_still($media);
+
     $hero       = true;
     $collection = true;
     $heading    = __('The Complete Collection - all three books', 'brave-hearts');
@@ -1521,6 +1523,88 @@ function bhp_book_render_collection_hero_gallery() {
         return; // Template missing: render nothing so the caller's fallback stands.
     }
     include $bhp_tpl;
+}
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.254 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`) R-1 — THE
+ *     PHONE FOLD STOPS BEING A GALLERY WITH A BUY BUTTON ATTACHED.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * MEASURED on production before this change, at an asserted 390x844: the
+ * media gallery occupied y 98-409 — 311px of the 844px first screen — and
+ * carried THIRTEEN of the fourteen interactive controls above the fold (one
+ * inspect button, two arrows, ten thumbnails). The primary CTA was the
+ * fourteenth. The standing fold rule asks for the primary CTA above the
+ * fold; that fold was a browsing component with a CTA attached to it.
+ *
+ * ⛔ NOTHING IS DELETED AND NOTHING IS HIDDEN. Every image, every
+ *    flip-through video, the thumbnail rail, both arrows, the counter and
+ *    the inspect button all still render, all still work, and all still
+ *    carry their accessible names. At <=600px the WHOLE gallery simply
+ *    renders BELOW the purchase card instead of above it — one `order`
+ *    declaration on a grid child in `bundle-landing.css`, so the controls
+ *    move as one piece and the component is never taken apart.
+ *
+ * ⛔ WHY A SEPARATE STILL RATHER THAN "JUST MOVE THE GALLERY". Moving the
+ *    gallery alone would leave the phone fold with no picture of the product
+ *    at all. This prints ONE non-interactive image — no button, no arrows,
+ *    no rail — so the fold shows the books and offers exactly one control.
+ *
+ * ⭐ IT COSTS NO EXTRA REQUEST. It is emitted from the SAME attachment, at
+ *    the same size, with the same `sizes` as the gallery's first image
+ *    slide, so the browser resolves the identical `srcset` candidate URL and
+ *    reuses it. It is `aria-hidden` with an empty `alt` because the gallery
+ *    below is the real, labelled content — announcing it twice would be a
+ *    regression, not an addition.
+ *
+ * ⛔ DESKTOP IS BYTE-IDENTICAL IN EFFECT. The still is `display:none` above
+ *    600px, so it leaves the grid entirely and the two-column hero, the
+ *    thumbnail rail and every gallery control render exactly where 1.19.253
+ *    put them. `tests/test-collection-fold-390.php` asserts the desktop rail
+ *    survives.
+ *
+ * ⛔ FAILS CLOSED. If no image item can be resolved, this prints nothing at
+ *    all and the gallery renders in its original position — i.e. the page
+ *    degrades to exactly the 1.19.253 layout rather than to an empty box.
+ *
+ * @param array $media The resolved media set from bhp_book_media().
+ * @return void
+ */
+function bhp_book_render_collection_hero_still($media) {
+    if (empty($media['items']) || !is_array($media['items'])) {
+        return;
+    }
+
+    $still_id = 0;
+    foreach ($media['items'] as $item) {
+        if (isset($item['type'], $item['id']) && 'image' === $item['type'] && (int) $item['id'] > 0) {
+            $still_id = (int) $item['id'];
+            break;
+        }
+    }
+    if ($still_id <= 0) {
+        return; // Fail closed: no still, no wrapper, gallery keeps its place.
+    }
+
+    $img = wp_get_attachment_image($still_id, 'large', false, [
+        'class'         => 'bhp-landing-hero__still-img',
+        'alt'           => '',
+        'decoding'      => 'async',
+        'loading'       => 'eager',
+        'fetchpriority' => 'high',
+        /*
+         * The SAME fixed `sizes` the gallery stage uses. It must match, or the
+         * browser picks a different srcset candidate for the still than for
+         * slide 0 and the "one request" property above stops being true.
+         */
+        'sizes'         => '(max-width: 1024px) 300px, 560px',
+    ]);
+    if ('' === trim((string) $img)) {
+        return;
+    }
+    ?>
+    <div class="bhp-landing-hero__still" aria-hidden="true"><?php echo $img; // phpcs:ignore WordPress.Security.EscapeOutput -- wp_get_attachment_image() output is escaped at source. ?></div>
+    <?php
 }
 add_action('bhp_bundle_landing_hero_media', 'bhp_book_render_collection_hero_gallery');
 

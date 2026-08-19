@@ -449,9 +449,55 @@ if ( preg_match( '/<div class="bhp-landing-coldopen">(.*?)<\/div>/su', $html, $m
 		'3: the Kirkus fragment no longer renders in the cold-open box (Andrew, 2026-08-14)',
 		$failures
 	);
+	/*
+	 * ═══════════════════════════════════════════════════════════════════
+	 * ⛔⭐ SUPERSEDED 2026-08-19 (`CYCLE165-LD-COLLECTION-CONVERSION`, T-6) —
+	 *     THIS ASSERTION IS RE-SCOPED, NOT DELETED, AND THE CHANGE IS
+	 *     DELIBERATE RATHER THAN A CONVENIENCE.
+	 * ═══════════════════════════════════════════════════════════════════
+	 *
+	 * The superseded assertion, preserved verbatim so the movement is visible
+	 * and is not re-derived:
+	 *
+	 *   stripos( $cold, 'Kirkus' ) === false
+	 *     '3: the cold-open box carries no Kirkus attribution at all — the
+	 *      review is published once, in full, further down'
+	 *
+	 * ⛔ WHY IT HAD TO CHANGE. R-6 puts a compact trust line above the fold
+	 *    carrying the words "Featuring a Kirkus-reviewed title" — a MENTION,
+	 *    not a quote and not an attribution. The old form banned the STRING
+	 *    "Kirkus" from this block outright, so it would have failed a correct
+	 *    build, and the only way to make it pass would have been to drop the
+	 *    requirement.
+	 *
+	 * ⛔ WHY IT IS NOT SIMPLY DROPPED. The property it was protecting is real
+	 *    and is unchanged: the approved Kirkus QUOTE is published ONCE, in
+	 *    full, with its attribution, its reviewed title and its link, and it
+	 *    lives in `bhp-landing-kirkus` and nowhere else. A fragment repeated
+	 *    3,000px above the full review is the duplication the founder removed
+	 *    on 2026-08-14, and that removal must stay removed.
+	 *
+	 * ⭐ SO THE GUARD IS SHARPENED FROM "no Kirkus string" TO THE THING THAT
+	 *   ACTUALLY MATTERS: no QUOTE, no ATTRIBUTION and no REVIEWED-TITLE
+	 *   qualifier in this box; a bare mention permitted; the full quote
+	 *   present exactly once, and only in the Kirkus section. The quote and
+	 *   attribution halves are asserted PRESENT in §3 above, so both
+	 *   directions still fail if the review is ever quietly dropped.
+	 */
 	bhp_cct_assert(
-		stripos( $cold, 'Kirkus' ) === false,
-		'3: the cold-open box carries no Kirkus attribution at all — the review is published once, in full, further down',
+		stripos( $cold, 'Kirkus' ) !== false,
+		'3: T-6 — the cold-open box may carry a bare Kirkus MENTION (R-6), and it does',
+		$failures
+	);
+	$cct_kirkus_attr = isset( $kirkus_data['attribution'] ) ? (string) $kirkus_data['attribution'] : '';
+	bhp_cct_assert(
+		'' !== $cct_kirkus_attr && strpos( $cold, $cct_kirkus_attr ) === false,
+		'3: T-6 — but it carries NO Kirkus attribution (a mention is not a citation)',
+		$failures
+	);
+	bhp_cct_assert(
+		substr_count( $html, 'spark children&rsquo;s curiosity' ) + substr_count( $html, 'spark children’s curiosity' ) === 1,
+		'3: T-6 — the full Kirkus quote appears EXACTLY ONCE on the whole page, and §3 above proves that once is inside bhp-landing-kirkus',
 		$failures
 	);
 	bhp_cct_assert(
@@ -854,6 +900,73 @@ bhp_cct_assert(
 	'6: the teacher-funnel storage prefix does not leak onto this non-/teachers/ page',
 	$failures
 );
+
+echo "\n=== 7. ⭐ 1.19.254 / 1.8.58 (`CYCLE165-LD-COLLECTION-CONVERSION`, T-1) — THE NEW ABOVE-FOLD SET ===\n";
+
+/*
+ * ⛔ WHAT THIS SECTION CAN AND CANNOT DO, STATED BEFORE THE ASSERTIONS.
+ *
+ * Acceptance criterion M-1 is "interactive controls with `top < 844` at an
+ * asserted `innerWidth` of 390 = exactly 2: the header nav toggle and the
+ * primary CTA (it was 14)". That is a MEASUREMENT. `wp eval-file` has no
+ * viewport and no layout engine, so this suite cannot make it and does not
+ * claim to — the count lives in the release QA evidence, taken in a real
+ * browser with the width read in the page.
+ *
+ * ⭐ WHAT IS ASSERTED HERE IS THE STRUCTURE THE COUNT DEPENDS ON. Thirteen of
+ *   the fourteen controls belonged to the media gallery. They now sit below
+ *   the purchase card at <=600px because the gallery — as one whole component,
+ *   with its stage, both arrows, its counter, its inspect button and its
+ *   thumbnail rail inside it — is ordered after the card. If the still is
+ *   missing, or the gallery has been taken apart, or a control was deleted
+ *   rather than moved, the measurement is meaningless and this fails first.
+ *
+ * ⚠ ONE HONEST CONSEQUENCE, RECORDED RATHER THAN GLOSSED: at <=600px the
+ *   gallery's VISUAL position is below the buy box while its DOM position is
+ *   still above it, so keyboard tab order reaches the gallery controls before
+ *   the CTA. That is the cost of moving a component with `order` instead of
+ *   moving it in the document, and the alternative — reordering the DOM —
+ *   would have changed the desktop hero, which R-1 explicitly scopes out. It
+ *   is flagged in the release handoff, not hidden here.
+ */
+bhp_cct_assert(
+	substr_count( $html, 'bhp-landing-hero__still"' ) === 1,
+	'7: the non-interactive mobile still renders exactly once (the one thing that replaces the gallery above the fold)',
+	$failures
+);
+foreach ( array(
+	'data-bhp-gallery-stage'  => 'the gallery stage',
+	'data-bhp-gallery-thumbs' => 'the thumbnail rail',
+	'data-bhp-gallery-prev'   => 'the previous arrow',
+	'data-bhp-gallery-next'   => 'the next arrow',
+	'data-bhp-gallery-inspect' => 'the inspect control',
+) as $cct_hook => $cct_what ) {
+	bhp_cct_assert(
+		strpos( $html, $cct_hook ) !== false,
+		"7: {$cct_what} still renders — R-1 moved the gallery, it did not shrink it",
+		$failures
+	);
+}
+/*
+ * The move must be CSS-gated, and gated at <=600px specifically. A rule that
+ * leaked past the gate would push the desktop thumbnail rail below the buy box
+ * too, which acceptance criterion D-4 forbids.
+ */
+$cct_css_path = defined( 'BHP_BUNDLE_PRICING_DIR' ) ? BHP_BUNDLE_PRICING_DIR . 'assets/bundle-landing.css' : '';
+$cct_css      = ( '' !== $cct_css_path && is_readable( $cct_css_path ) ) ? (string) file_get_contents( $cct_css_path ) : '';
+bhp_cct_assert( '' !== $cct_css, '7: bundle-landing.css is readable', $failures );
+if ( '' !== $cct_css ) {
+	bhp_cct_assert(
+		preg_match( '/@media\s*\(max-width:\s*600px\)\s*\{[^@]*\.bhp-landing-card\s*\{\s*order:\s*2/s', $cct_css ) === 1,
+		'7: the buy box is ordered ABOVE the gallery, and only at <=600px',
+		$failures
+	);
+	bhp_cct_assert(
+		preg_match( '/\.bhp-landing-hero__main\s*>\s*\.bhp-media-gallery--collection\s*\{\s*order:\s*3/s', $cct_css ) === 1,
+		'7: and the gallery moves as ONE piece (the child selector is the component, never its controls individually)',
+		$failures
+	);
+}
 
 echo "\n";
 if ( $failures ) {
