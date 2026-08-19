@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: d3f47c0cdb7267bde63a5469d8c23e9d
+    source-md5: c52decf479d1a7f74587cabc344d435f
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.238
+Version: 1.19.239
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5759,9 +5759,24 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 }
 .author-visits-card__sep { padding: 0 .35em; }
 .author-visits-card__note { margin: 0 0 var(--space-4); line-height: 1.55; }
-.author-visits-card__note--closed { margin-bottom: 0; color: var(--color-text-muted); }
+.author-visits-card__note--closed { color: var(--color-text-muted); }
 .author-visits-card__cta { margin: 0; }
 .author-visits-card__cta .btn { width: 100%; }
+.author-visits-card__btn--closed {
+  background: var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  border-color: transparent;
+  cursor: not-allowed;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.author-visits-card__btn--closed:hover,
+.author-visits-card__btn--closed:focus {
+  background: var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  transform: none;
+  text-decoration: none;
+}
 .author-visits-empty { max-width: 52ch; }
 .author-visits-empty p { line-height: 1.55; }
 .author-visits-empty__cta { margin-top: var(--space-4); }

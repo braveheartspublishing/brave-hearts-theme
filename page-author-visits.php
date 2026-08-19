@@ -10,6 +10,14 @@
  * Andrew Signore, RELAYED through the Chief of Staff and NOT witnessed by this
  * agent: *"we list the schools dates and times of the read alouds"*.
  *
+ * ⭐ 1.19.239 (2026-08-18, `CYCLE164-LD-ORDER-WINDOW`) CHANGED EXACTLY ONE
+ *    BRANCH OF THIS FILE: the CLOSED state of a visit row. The button is no
+ *    longer removed — it stays, greyed and unclickable, and the row keeps its
+ *    school, date, time and stated "Order by" line, so every read-aloud remains
+ *    on the page as a trust record. ⛔ THE OPEN BRANCH IS BYTE-IDENTICAL TO
+ *    1.19.238. Before the close, this page renders exactly what it rendered
+ *    yesterday, and the test suite asserts that rather than assuming it.
+ *
  * ⛔ THIS FILE IS COPY AND MARKUP ONLY. Every decision — which visits appear,
  *    which carry a button, what each button's URL is, how "today" is worked out
  *    — lives in `inc/author-visits.php`. Read that file first. The split exists
@@ -111,9 +119,53 @@ $bhp_kit_url    = home_url( '/reluctant-reader-adventure-kit/' );
 
             <?php else : ?>
 
-              <?php /* CLOSED. No link at all — not a disabled one. The row stays so a parent reading a QR code still learns the visit is happening. */ ?>
+              <?php
+              /*
+               * ⭐ CLOSED — 1.19.239 (`CYCLE164-LD-ORDER-WINDOW`). THE ROW KEEPS ITS FULL
+               *    SHAPE AND THE BUTTON STAYS, GREYED. Andrew Signore, RELAYED through the
+               *    Chief of Staff and NOT witnessed by this agent: *"then just make the
+               *    button unclickable - keep it up to keep a trust record of all the read
+               *    alouds I will be doing"* and *"the button goes off and gets greyed out
+               *    the morning 1 day before the read aloud"*.
+               *
+               * ⛔ SUPERSEDED MARKUP, PRESERVED SO THE MOVEMENT IS VISIBLE:
+               *      <p class="author-visits-card__note author-visits-card__note--closed">
+               *        <?php esc_html_e( 'Ordering for this visit has closed.', ... ); ?>
+               *      </p>
+               *    The button used to be REMOVED and replaced by that sentence alone.
+               *
+               * ⛔ IT IS A <span>, NOT AN <a>. Not an `<a>` without an href, not an `<a>`
+               *    with `onclick="return false"`, not a `<button disabled>` (which would be
+               *    a form control in a page that has no form). A `<span>` is not focusable,
+               *    carries no href a browser could follow, cannot be middle-clicked into a
+               *    new tab and cannot be copied as a link address. `bhp_author_visits_rows()`
+               *    also returns an EMPTY url for a closed row, so there is nothing to leak
+               *    even if this markup were changed carelessly.
+               *
+               * ⛔ THE "Order by" LINE STAYS AND STILL PRINTS THE **STATED** DEADLINE
+               *    (`cutoff`, three days before the visit) — the date parents were emailed.
+               *    ⛔ NOTHING HERE MENTIONS THAT ORDERING ACTUALLY RAN A DAY LONGER. The
+               *    grace window is deliberate and is never advertised.
+               *
+               * ♿ `role="link"` + `aria-disabled="true"` is the accessible-disabled-control
+               *    pattern: assistive technology announces it and marks it unavailable,
+               *    while the absence of `tabindex` keeps it out of the keyboard tab order.
+               *    The full sentence is kept for screen readers in `.screen-reader-text`,
+               *    because "Ordering closed" alone is terse out of visual context.
+               */
+              ?>
               <p class="author-visits-card__note author-visits-card__note--closed">
-                <?php esc_html_e( 'Ordering for this visit has closed.', 'brave-hearts' ); ?>
+                <?php
+                printf(
+                  /* translators: %s: the deadline that was published for this visit, e.g. "Monday, August 25" */
+                  esc_html__( 'Order by %s.', 'brave-hearts' ),
+                  esc_html( bhp_author_visits_format_date( $bhp_row['cutoff'] ) )
+                );
+                ?>
+              </p>
+              <p class="author-visits-card__cta">
+                <span class="btn btn-primary author-visits-card__btn--closed" role="link" aria-disabled="true"><?php esc_html_e( 'Ordering closed', 'brave-hearts' ); ?></span>
+                <span class="screen-reader-text"><?php esc_html_e( 'Ordering for this visit has closed.', 'brave-hearts' ); ?></span>
               </p>
 
             <?php endif; ?>

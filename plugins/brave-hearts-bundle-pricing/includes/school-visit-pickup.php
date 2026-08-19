@@ -120,6 +120,24 @@
  * ⭐ 1.8.51 (`CYCLE162-LD-VISITS-PAGE`) added the optional `time` registry field
  *    for the public `/author-visits/` page. Unchanged by 1.8.52.
  *
+ * ⭐⭐ 1.8.56 (2026-08-18, `CYCLE164-LD-ORDER-WINDOW`) MOVED THE ONLINE CLOSE OFF
+ *    THE STATED DEADLINE. It is the only behaviour change in this file since
+ *    1.8.52, and it is four functions plus one line inside
+ *    `bhp_school_visit_resolve()`:
+ *
+ *      · `bhp_school_visit_today()` gained a FILTER — a test seam and nothing
+ *        else. With nothing hooked, behaviour is byte-identical to 1.8.55.
+ *      · `bhp_school_visit_shift_days()`, `bhp_school_visit_last_order_date()`
+ *        and `bhp_school_visit_online_close_date()` derive the window from the
+ *        VISIT DATE. No registry field was added.
+ *      · `bhp_school_visit_is_open_on()` is now the ONE place the question is
+ *        answered, and `/author-visits/` routes through it too.
+ *
+ *    ⛔ THE STATED `cutoff` FIELD IS UNTOUCHED — same data, same sanitiser, same
+ *       "Order by ..." line on the public page. It simply stops gating. Read
+ *       `bhp_school_visit_last_order_date()`'s docblock before changing any of
+ *       this; the two deadlines are deliberate and the gap is never advertised.
+ *
  * ---------------------------------------------------------------------------
  * ⛔ WHAT WAS DELETED IN 1.8.52, STATED PLAINLY
  * ---------------------------------------------------------------------------
@@ -304,17 +322,162 @@ if ( ! defined( 'BHP_SCHOOL_PICKUP_ITEM_META_DATE' ) ) {
 /**
  * Today's date in the SITE's timezone, as `Y-m-d`.
  *
- * ⛔ NOT `date('Y-m-d')` and not UTC. A cutoff of "2026-08-25" means the end
- *    of the 25th where the school is, and a UTC comparison would close the
- *    option up to a day early for a US store every evening.
+ * ⛔ NOT `date('Y-m-d')` and not UTC. A visit date of "2026-08-28" means the
+ *    28th where the school is, and a UTC comparison would close the option up
+ *    to a day early for a US store every evening. The site timezone is
+ *    `America/Boise` (read live, not assumed: `wp eval 'echo
+ *    wp_timezone_string();'` on staging, 2026-08-18).
+ *
+ * ⭐ 1.8.56 (2026-08-18, `CYCLE164-LD-ORDER-WINDOW`) MAKES THIS THE ONE MOVABLE
+ *    CLOCK IN THE FEATURE, and that is the whole reason the filter exists. Every
+ *    date decision in this file, and — through `bhp_author_visits_today()` — on
+ *    `/author-visits/` too, is downstream of this single function. A test that
+ *    can move "today" can assert the boundary on both sides at 23:59 and at
+ *    00:00 without waiting for a Thursday and WITHOUT WRITING THE REGISTRY,
+ *    which is the failure that destroyed the real visit rows on 2026-08-17.
+ *
+ * ⛔ THE FILTER CANNOT CHANGE DEFAULT BEHAVIOUR. With nothing hooked,
+ *    `apply_filters()` returns the value untouched, so the production and
+ *    staging code paths are byte-for-byte what they were at 1.8.55. And a
+ *    filtered value that is not a real `Y-m-d` is DISCARDED rather than trusted:
+ *    a broken hook falls back to the real today instead of silently opening or
+ *    closing every visit.
  *
  * @return string
  */
 function bhp_school_visit_today() {
-	if ( function_exists( 'wp_date' ) ) {
-		return wp_date( 'Y-m-d' );
+	$today = function_exists( 'wp_date' ) ? wp_date( 'Y-m-d' ) : gmdate( 'Y-m-d' );
+
+	if ( ! function_exists( 'apply_filters' ) ) {
+		return $today;
 	}
-	return gmdate( 'Y-m-d' );
+
+	/**
+	 * Filter the date the school-visit window is evaluated against.
+	 *
+	 * A TEST SEAM, not a configuration point. Nothing in the plugin, the theme
+	 * or the admin UI hooks it; it exists so a suite can stand on either side
+	 * of a boundary. An unusable value is ignored.
+	 *
+	 * @since 1.8.56
+	 * @param string $today `Y-m-d` in the site's timezone.
+	 */
+	$filtered = apply_filters( 'bhp_school_visit_today', $today );
+
+	return ( is_string( $filtered ) && bhp_school_visit_is_ymd( $filtered ) ) ? $filtered : $today;
+}
+
+/**
+ * Shift a `Y-m-d` by whole days. Returns '' for anything unusable.
+ *
+ * ⛔ ANCHORED AT MIDNIGHT **UTC**, not at site-local midnight, and that is the
+ *    point rather than laziness. This function does calendar arithmetic on a
+ *    label, not on an instant: "two days before 2026-08-28" is 2026-08-26 in
+ *    every timezone, and a DST transition inside the interval must not be able
+ *    to make it 2026-08-25. Anchoring in UTC makes the arithmetic exact.
+ *    `strtotime('... -2 days')` in local time is what would drift.
+ *
+ * @param string $ymd  Base date.
+ * @param int    $days Signed day offset.
+ * @return string `Y-m-d`, or '' when the input is not a real date.
+ */
+function bhp_school_visit_shift_days( $ymd, $days ) {
+	if ( ! bhp_school_visit_is_ymd( $ymd ) ) {
+		return '';
+	}
+	$ts = strtotime( $ymd . ' 00:00:00 UTC' );
+	if ( false === $ts ) {
+		return '';
+	}
+	return gmdate( 'Y-m-d', $ts + ( (int) $days * 86400 ) );
+}
+
+/**
+ * ⭐ THE LAST DAY AN ORDER MAY BE PLACED ONLINE, INCLUSIVE. `visit date - 2`.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ TWO DEADLINES EXIST ON PURPOSE. CONFUSING THEM IS THE ONE REAL BUG THIS
+ *     FUNCTION CAN HAVE, AND IT IS A DIFFERENT PAIR FROM THE `date`/`cutoff`
+ *     PAIR DOCUMENTED IN `inc/author-visits.php`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ *   1. THE STATED DEADLINE — the registry's `cutoff` field, three days before
+ *      the visit. It is what `/author-visits/` prints as "Order by ...", and it
+ *      is what parents were told in the pre-visit email. ⛔ IT IS DISPLAY ONLY
+ *      FROM 1.8.56. It no longer gates anything, its data is untouched, and it
+ *      must keep displaying exactly as it did.
+ *
+ *   2. THE ACTUAL ONLINE CLOSE — 00:00 site time on the day BEFORE the visit.
+ *      Ordering is therefore open through the whole of `visit - 2`, and the
+ *      button is grey from the first minute of `visit - 1`. That is what this
+ *      function returns the inclusive last day of.
+ *
+ * ⛔ THE GAP BETWEEN THEM IS DELIBERATE AND IS NEVER ADVERTISED. Andrew's
+ *    instruction, RELAYED and not witnessed by this agent: *"We say 3 days
+ *    before but the online cutoff is 1 day before so they can sneak in after
+ *    their deadline. Gives them a time crunch they need to meet."* ⛔ NO COPY
+ *    ANYWHERE MAY MENTION THE GRACE WINDOW. A page that advertises a secret
+ *    extension has no deadline at all, and the test suite asserts that the
+ *    printed deadline is still the stated `cutoff`.
+ *
+ * ⛔ DERIVED FROM `date`, NEVER STORED. No registry field was added, so no
+ *    existing row needed editing and no row can drift out of sync with its own
+ *    visit. A visit moved to a new day moves its own close with it.
+ *
+ * ⚠ KNOWN EDGE, RECORDED RATHER THAN CODED AROUND: a hand-entered row whose
+ *   `cutoff` is LATER than `visit - 2` would print an "Order by" date that
+ *   falls after the button has already greyed. All three real rows are
+ *   `visit - 3` and none is affected. It is not clamped here because clamping
+ *   in either direction would silently override the operator, and Andrew's rule
+ *   is stated in terms of the VISIT date, not the cutoff.
+ *
+ * @param string $visit_date Registry `date`.
+ * @return string `Y-m-d`, or '' when the visit date is unusable (fail CLOSED).
+ */
+function bhp_school_visit_last_order_date( $visit_date ) {
+	return bhp_school_visit_shift_days( $visit_date, -2 );
+}
+
+/**
+ * The first day on which ordering is CLOSED. `visit date - 1`, from 00:00.
+ *
+ * The complement of `bhp_school_visit_last_order_date()`, exposed separately
+ * because it is the sentence Andrew actually said — *"the button goes off and
+ * gets greyed out the morning 1 day before the read aloud"* — and a reader
+ * should not have to add one to a number to check the code against it.
+ *
+ * @param string $visit_date Registry `date`.
+ * @return string `Y-m-d`, or ''.
+ */
+function bhp_school_visit_online_close_date( $visit_date ) {
+	return bhp_school_visit_shift_days( $visit_date, -1 );
+}
+
+/**
+ * Is online ordering open for this visit on this day?
+ *
+ * ⛔ THE SINGLE SOURCE OF THE ANSWER. `bhp_school_visit_resolve()` (the
+ *    entitlement) and `bhp_author_visits_build_rows()` (the button) both route
+ *    here, so the page and the checkout cannot drift apart: an old bookmark
+ *    stops granting hand-delivery at the same instant the button greys.
+ *
+ * ⛔ FAILS CLOSED. An unusable visit date yields '' from the helper above and
+ *    this returns false.
+ *
+ * @param string $visit_date Registry `date`.
+ * @param string $today      `Y-m-d` in the site's timezone.
+ * @return bool
+ */
+function bhp_school_visit_is_open_on( $visit_date, $today ) {
+	$last = bhp_school_visit_last_order_date( $visit_date );
+	if ( '' === $last ) {
+		return false;
+	}
+	$today = (string) $today;
+	if ( '' === $today ) {
+		return true;
+	}
+	return $today <= $last;
 }
 
 /**
@@ -430,8 +593,27 @@ function bhp_school_visit_resolve( $slug ) {
 	}
 	$record = $records[ $slug ];
 
-	// The cutoff is INCLUSIVE — the last day an order may be placed.
-	if ( bhp_school_visit_today() > $record['cutoff'] ) {
+	/*
+	 * ⭐ 1.8.56 — THE GATE IS THE ONLINE CLOSE, NOT THE STATED CUTOFF.
+	 *
+	 * ⛔ SUPERSEDED LINE, PRESERVED SO THE MOVEMENT IS VISIBLE AND IS NOT
+	 *    RE-DERIVED:
+	 *
+	 *        // The cutoff is INCLUSIVE — the last day an order may be placed.
+	 *        if ( bhp_school_visit_today() > $record['cutoff'] ) {
+	 *
+	 *    That closed ordering at the end of the STATED deadline (`visit - 3`).
+	 *    It now closes at 00:00 on `visit - 1`, so a parent has the whole of
+	 *    `visit - 2` to sneak in after the deadline they were given. The
+	 *    `cutoff` field is untouched, still sanitised, still returned in the
+	 *    record, and still what `/author-visits/` prints as "Order by ...".
+	 *
+	 * ⛔ THIS IS ALSO WHAT CLEARS A STALE BOOKMARK. `bhp_school_visit_active()`
+	 *    re-validates through this same call on every request, so a session
+	 *    flagged before the close loses the entitlement at the same instant the
+	 *    button greys — not at the end of that shopper's session.
+	 */
+	if ( ! bhp_school_visit_is_open_on( $record['date'], bhp_school_visit_today() ) ) {
 		return null;
 	}
 	return $record;
@@ -445,9 +627,10 @@ function bhp_school_visit_resolve( $slug ) {
  * Turn `?bhp_visit=<slug>` into a session flag.
  *
  * ⛔ IT SETS NOTHING unless the slug resolves to a live, non-expired visit,
- *    so a stale bookmark, a guessed slug or a link used after the cutoff is
- *    an ordinary page view with an ignored query string. No notice, no
- *    error, no trace — a parent who missed the deadline sees the normal shop.
+ *    so a stale bookmark, a guessed slug or a link used after the ONLINE
+ *    CLOSE (`visit - 1`, 1.8.56) is an ordinary page view with an ignored
+ *    query string. No notice, no error, no trace — a parent who missed the
+ *    window sees the normal shop.
  * ⭐ IT IS NOT SCOPED TO ONE PAGE ON PURPOSE. The pre-visit email may point
  *    at any landing page; the param is the contract, not the destination.
  *   (Same reasoning, and the same shape, as `bhp_typ_capture_auto_coupon_intent()`.)
@@ -492,8 +675,12 @@ function bhp_school_visit_capture_intent() {
 /**
  * The visit this session is entitled to, re-validated live, or null.
  *
- * Clears the flag when the visit is gone or past its cutoff, so an expired
- * session self-heals instead of being re-checked forever.
+ * Clears the flag when the visit is gone or past its ONLINE CLOSE, so an
+ * expired session self-heals instead of being re-checked forever.
+ *
+ * ⛔ 1.8.56 — THIS IS WHY AN OLD BOOKMARK STOPS FLAGGING AT THE SAME INSTANT THE
+ *    BUTTON GREYS. It re-runs `bhp_school_visit_resolve()` on every request, so
+ *    the boundary is a property of the calendar, not of when a session started.
  *
  * @return array{slug:string,school:string,date:string,cutoff:string,time:string}|null
  */

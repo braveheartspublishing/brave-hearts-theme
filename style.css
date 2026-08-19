@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.238
+Version: 1.19.239
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -8866,6 +8866,14 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
    A closed row is styled by REMOVING emphasis (muted border, muted note), not
    by adding a warning colour. It is not an error state; the visit is still
    happening and the parent has simply missed the ordering deadline.
+
+   1.19.239 (CYCLE164-LD-ORDER-WINDOW): a closed row now KEEPS ITS BUTTON,
+   greyed. The greying is done by neutralising the primary's colours rather
+   than by fading them with opacity, because a .52-opacity gold button reads as
+   "loading", not as "closed" -- and because muted text at half opacity on a
+   light card is unreadable. `cursor: not-allowed` and the removal of the hover
+   lift are what make it feel dead under the pointer; the markup (a <span>, no
+   href, no tabindex, aria-disabled) is what makes it dead in fact.
    ========================================================================== */
 .author-visits-hero .component-heading__eyebrow { margin-bottom: var(--space-2); }
 .author-visits-hero .text-lead { margin-bottom: 0; }
@@ -8904,11 +8912,32 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 .author-visits-card__sep { padding: 0 .35em; }
 
 .author-visits-card__note { margin: 0 0 var(--space-4); line-height: 1.55; }
-.author-visits-card__note--closed { margin-bottom: 0; color: var(--color-text-muted); }
+/* The bottom margin is NOT zeroed any more -- from 1.19.239 a greyed button
+   follows this note instead of the note being the last thing in the card. */
+.author-visits-card__note--closed { color: var(--color-text-muted); }
 
 .author-visits-card__cta { margin: 0; }
 /* Full-width tap target on a phone; shrink-to-fit once there is room. */
 .author-visits-card__cta .btn { width: 100%; }
+
+/* THE GREYED, UNCLICKABLE BUTTON. `!important` is not decoration here: the
+   expedition palette re-declares `.btn-primary`'s background and colour with
+   `!important` further up this stylesheet, so a plain override loses. */
+.author-visits-card__btn--closed {
+  background: var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  border-color: transparent;
+  cursor: not-allowed;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.author-visits-card__btn--closed:hover,
+.author-visits-card__btn--closed:focus {
+  background: var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  transform: none;
+  text-decoration: none;
+}
 
 .author-visits-empty { max-width: 52ch; }
 .author-visits-empty p { line-height: 1.55; }

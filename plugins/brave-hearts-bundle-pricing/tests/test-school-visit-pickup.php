@@ -242,10 +242,15 @@ function bhp_svp_cleanup() {
 	echo "CLEANUP: removed {$removed} `{$prefix}*` fixture row(s); " . count( $current ) . " non-fixture visit row(s) left untouched\n";
 }
 
-$today     = wp_date( 'Y-m-d' );
-$yesterday = wp_date( 'Y-m-d', strtotime( '-1 day' ) );
-$next_week = wp_date( 'Y-m-d', strtotime( '+7 days' ) );
-$next_year = wp_date( 'Y-m-d', strtotime( '+370 days' ) );
+$today      = wp_date( 'Y-m-d' );
+$yesterday  = wp_date( 'Y-m-d', strtotime( '-1 day' ) );
+$next_week  = wp_date( 'Y-m-d', strtotime( '+7 days' ) );
+$next_year  = wp_date( 'Y-m-d', strtotime( '+370 days' ) );
+/* ⭐ 1.8.56 fixtures. Every one of these is expressed relative to the VISIT
+   date, because from 1.8.56 that is what the window is derived from. */
+$in_1_day   = wp_date( 'Y-m-d', strtotime( '+1 day' ) );
+$in_2_days  = wp_date( 'Y-m-d', strtotime( '+2 days' ) );
+$days_ago_4 = wp_date( 'Y-m-d', strtotime( '-4 days' ) );
 
 /*
  * ⛔ MERGE, NEVER REPLACE. See the cleanup block above for the incident this
@@ -259,12 +264,23 @@ echo 'INFO: ' . count( $bhp_svp_existing ) . " visit row(s) already in the regis
 update_option(
 	BHP_SCHOOL_VISIT_OPTION,
 	$bhp_svp_existing + array(
-		// Live: cutoff a week out.
+		// Live: visit a year out, stated deadline a week out.
 		'bhpsvptest-live'    => array( 'school' => 'Test Live Elementary', 'date' => $next_year, 'cutoff' => $next_week ),
-		// Live on the LAST possible day: cutoff is today, and today must still work.
+		// ⭐ 1.8.56: the STATED cutoff is TODAY and the visit is a year away, so
+		//    ordering is wide open. Before 1.8.56 this was the last open day.
 		'bhpsvptest-lastday' => array( 'school' => 'Test Lastday Elementary', 'date' => $next_year, 'cutoff' => $today ),
-		// Expired: cutoff was yesterday.
-		'bhpsvptest-expired' => array( 'school' => 'Test Expired Elementary', 'date' => $next_year, 'cutoff' => $yesterday ),
+		// ⭐ 1.8.56 THE GRACE CASE, and the reason the feature exists. The stated
+		//    deadline passed YESTERDAY, but the visit is the day after tomorrow, so
+		//    today is `visit - 2` and ordering is STILL OPEN. Before 1.8.56 this row
+		//    was closed. Nothing on the site advertises that it is open.
+		'bhpsvptest-grace'   => array( 'school' => 'Test Grace Elementary', 'date' => $in_2_days, 'cutoff' => $yesterday ),
+		// ⭐ 1.8.56 THE CLOSE. The visit is TOMORROW, so today is `visit - 1` and
+		//    ordering closed at 00:00 this morning.
+		'bhpsvptest-closed'  => array( 'school' => 'Test Closed Elementary', 'date' => $in_1_day, 'cutoff' => $days_ago_4 ),
+		// ⭐ 1.8.56 THE VISIT IS TODAY. Closed, and closed yesterday too.
+		'bhpsvptest-visitday' => array( 'school' => 'Test Visitday Elementary', 'date' => $today, 'cutoff' => $days_ago_4 ),
+		// Expired outright: the visit has already happened.
+		'bhpsvptest-expired' => array( 'school' => 'Test Expired Elementary', 'date' => $yesterday, 'cutoff' => $days_ago_4 ),
 		// Malformed rows, each missing exactly one required field.
 		'bhpsvptest-noschool' => array( 'school' => '', 'date' => $next_year, 'cutoff' => $next_week ),
 		'bhpsvptest-baddate'  => array( 'school' => 'Test Bad Date', 'date' => '2026-02-31', 'cutoff' => $next_week ),
@@ -293,11 +309,174 @@ bhp_svp_assert( true === bhp_school_visit_is_ymd( '2026-08-28' ), 'is_ymd accept
  * ====================================================================== */
 
 bhp_svp_assert( null !== bhp_school_visit_resolve( 'bhpsvptest-live' ), 'A live visit resolves', $failures );
-bhp_svp_assert( null === bhp_school_visit_resolve( 'bhpsvptest-expired' ), 'A visit past its cutoff resolves to NULL -- the option disappears after the cutoff', $failures );
-bhp_svp_assert( null !== bhp_school_visit_resolve( 'bhpsvptest-lastday' ), 'The cutoff is INCLUSIVE: an order placed ON the cutoff date is still accepted', $failures );
+/*
+ * ⛔ SUPERSEDED ASSERTIONS, PRESERVED SO THE MOVEMENT IS VISIBLE AND IS NOT
+ *    RE-DERIVED. Until 1.8.55 these two read:
+ *
+ *      null === resolve('bhpsvptest-expired')
+ *        'A visit past its cutoff resolves to NULL -- the option disappears
+ *         after the cutoff'
+ *      null !== resolve('bhpsvptest-lastday')
+ *        'The cutoff is INCLUSIVE: an order placed ON the cutoff date is still
+ *         accepted'
+ *
+ *    Both described a gate that no longer exists. From 1.8.56 the STATED cutoff
+ *    gates NOTHING; the online close is `visit - 1` at 00:00. The fixtures
+ *    changed with them, and §2a below asserts the new boundary on both sides.
+ */
+bhp_svp_assert( null === bhp_school_visit_resolve( 'bhpsvptest-expired' ), '⛔ 1.8.56: a visit whose DATE has already passed resolves to NULL', $failures );
+bhp_svp_assert( null !== bhp_school_visit_resolve( 'bhpsvptest-lastday' ), '1.8.56: a visit a year out resolves even though its STATED cutoff is today -- the stated deadline no longer gates anything', $failures );
+bhp_svp_assert( null !== bhp_school_visit_resolve( 'bhpsvptest-grace' ), '⭐ 1.8.56 THE GRACE WINDOW IS REAL: the stated deadline passed YESTERDAY and the visit is in two days, so ordering is still accepted today', $failures );
+bhp_svp_assert( null === bhp_school_visit_resolve( 'bhpsvptest-closed' ), '⛔ 1.8.56 THE ONLINE CLOSE BITES: the visit is TOMORROW, so ordering closed at 00:00 this morning and the entitlement is refused', $failures );
+bhp_svp_assert( null === bhp_school_visit_resolve( 'bhpsvptest-visitday' ), '⛔ 1.8.56: on the day of the visit itself, ordering is closed', $failures );
 bhp_svp_assert( null === bhp_school_visit_resolve( 'no-such-visit-anywhere' ), 'An unknown slug resolves to NULL', $failures );
 bhp_svp_assert( null === bhp_school_visit_resolve( '' ), 'An empty slug resolves to NULL', $failures );
 bhp_svp_assert( null === bhp_school_visit_resolve( '../../etc/passwd' ), 'A path-traversal-shaped slug resolves to NULL (sanitize_key)', $failures );
+
+/* =========================================================================
+ * ⭐⭐ 2a. THE BOUNDARY, MOVED THROUGH THE CLOCK SEAM, AGAINST THE **REAL**
+ *        VISITS -- AND WITHOUT WRITING ONE BYTE OF THE REGISTRY.
+ *
+ * ⭐ ADDED 1.8.56 by `CYCLE164-LD-ORDER-WINDOW-FINISH`. §2's own docblock above
+ *    already promised "§2a below asserts the new boundary on both sides"; the
+ *    section it promised did not exist, and the `bhp_school_visit_today` filter
+ *    the same release added was exercised by NO test at all. This is that
+ *    section. A seam nothing stands on is not a seam.
+ *
+ * ---------------------------------------------------------------------------
+ * ⛔ WHY THIS RUNS AGAINST THE REAL ROWS AND NOT AGAINST FIXTURES
+ * ---------------------------------------------------------------------------
+ * §2 above proves the RULE with fixtures. This proves the rule is TRUE OF THE
+ * THREE VISITS ANDREW IS ACTUALLY DRIVING TO. A fixture cannot catch a real row
+ * that was hand-entered with a date the operator did not mean; these rows are
+ * printed on QR codes and taped to classroom doors.
+ *
+ * ⛔ IT WRITES NOTHING. Every row here is READ from the registry. The clock is
+ *    what moves, through `bhp_school_visit_today`, so a boundary that would
+ *    otherwise need a specific Thursday is an assertion instead. This is the
+ *    direct answer to the 2026-08-17 incident in which a suite that MOVED THE
+ *    DATA destroyed the real visit rows: move the clock, never the calendar.
+ *
+ * ⛔ EVERY LABEL BELOW IS BUILT FROM THE REGISTRY AT RUN TIME. No real slug,
+ *    school or date is typed into this file -- §3 immediately after this
+ *    section is the structural assertion that keeps it that way.
+ * ====================================================================== */
+
+$GLOBALS['bhp_svp_clock'] = '';
+$bhp_svp_clock_filter     = function ( $today ) {
+	return ( '' !== $GLOBALS['bhp_svp_clock'] ) ? $GLOBALS['bhp_svp_clock'] : $today;
+};
+add_filter( 'bhp_school_visit_today', $bhp_svp_clock_filter );
+
+/* --- the seam itself, before anything is asserted through it ------------- */
+
+$bhp_svp_real_today       = wp_date( 'Y-m-d' );
+$GLOBALS['bhp_svp_clock'] = '2026-01-02';
+bhp_svp_assert( '2026-01-02' === bhp_school_visit_today(), 'THE CLOCK SEAM MOVES: with the filter hooked, bhp_school_visit_today() returns the injected date', $failures );
+
+$GLOBALS['bhp_svp_clock'] = 'not-a-date';
+bhp_svp_assert( $bhp_svp_real_today === bhp_school_visit_today(), '⛔ THE SEAM FAILS SAFE: a filtered value that is not Y-m-d is DISCARDED and the real today is used -- a broken hook cannot open or close every visit', $failures );
+
+$GLOBALS['bhp_svp_clock'] = '2026-02-31';
+bhp_svp_assert( $bhp_svp_real_today === bhp_school_visit_today(), '⛔ THE SEAM FAILS SAFE: an impossible date (2026-02-31) is discarded by checkdate(), not merely regex-matched', $failures );
+
+$GLOBALS['bhp_svp_clock'] = '';
+
+/* --- the pure window helpers, including the fail-closed edges ------------ */
+
+bhp_svp_assert( '' === bhp_school_visit_last_order_date( '' ), 'FAIL CLOSED: an empty visit date has no last order date', $failures );
+bhp_svp_assert( '' === bhp_school_visit_last_order_date( '2026-02-31' ), 'FAIL CLOSED: an impossible visit date has no last order date', $failures );
+bhp_svp_assert( false === bhp_school_visit_is_open_on( '', '2026-08-18' ), 'FAIL CLOSED: a visit with no date is never open', $failures );
+bhp_svp_assert( false === bhp_school_visit_is_open_on( '2026-02-31', '2026-08-18' ), 'FAIL CLOSED: a visit with an impossible date is never open', $failures );
+bhp_svp_assert( '2026-08-26' === bhp_school_visit_last_order_date( '2026-08-28' ), 'THE WINDOW IS visit-2: the last order day for a visit on the 28th is the 26th', $failures );
+bhp_svp_assert( '2026-08-27' === bhp_school_visit_online_close_date( '2026-08-28' ), 'THE CLOSE IS visit-1: ordering is shut from 00:00 on the 27th for a visit on the 28th', $failures );
+bhp_svp_assert( '2026-03-01' === bhp_school_visit_online_close_date( '2026-03-02' ), 'The arithmetic crosses a month end', $failures );
+bhp_svp_assert( '2026-02-28' === bhp_school_visit_last_order_date( '2026-03-02' ), 'The arithmetic crosses a month end in a non-leap year', $failures );
+bhp_svp_assert( '2026-03-06' === bhp_school_visit_last_order_date( '2026-03-08' ), '⛔ THE DST TRANSITION (US spring forward, 2026-03-08) DOES NOT MOVE THE WINDOW -- the arithmetic is anchored at midnight UTC on purpose', $failures );
+
+/* --- and now the three sentences Andrew said, per REAL visit -------------- */
+
+$bhp_svp_all_records = bhp_school_visit_records();
+$bhp_svp_real_rows   = array();
+foreach ( $bhp_svp_all_records as $bhp_svp_k => $bhp_svp_v ) {
+	if ( 0 !== strpos( (string) $bhp_svp_k, $GLOBALS['bhp_svp_fixture_prefix'] ) ) {
+		$bhp_svp_real_rows[ $bhp_svp_k ] = $bhp_svp_v;
+	}
+}
+
+bhp_svp_assert( count( $bhp_svp_real_rows ) > 0, 'THE REGISTRY HOLDS AT LEAST ONE REAL VISIT to assert the boundary against (' . count( $bhp_svp_real_rows ) . ' found)', $failures );
+
+foreach ( $bhp_svp_real_rows as $bhp_svp_slug => $bhp_svp_row ) {
+	$bhp_svp_visit  = $bhp_svp_row['date'];
+	$bhp_svp_last   = bhp_school_visit_last_order_date( $bhp_svp_visit );   // visit - 2
+	$bhp_svp_close  = bhp_school_visit_online_close_date( $bhp_svp_visit ); // visit - 1
+	$bhp_svp_stated = $bhp_svp_row['cutoff'];
+	$bhp_svp_tag    = "[{$bhp_svp_slug} visit={$bhp_svp_visit} stated={$bhp_svp_stated} last={$bhp_svp_last} close={$bhp_svp_close}]";
+
+	// The derivation, stated as an identity rather than trusted.
+	bhp_svp_assert( '' !== $bhp_svp_last && $bhp_svp_close === bhp_school_visit_shift_days( $bhp_svp_last, 1 ), "{$bhp_svp_tag} the close is the day after the last order day -- there is no gap and no overlap", $failures );
+
+	// ⭐ THE THREE SENTENCES, as pure window questions.
+	bhp_svp_assert( true === bhp_school_visit_is_open_on( $bhp_svp_visit, $bhp_svp_last ), "{$bhp_svp_tag} OPEN on visit-2, all the way through that day", $failures );
+	bhp_svp_assert( false === bhp_school_visit_is_open_on( $bhp_svp_visit, $bhp_svp_close ), "⛔ {$bhp_svp_tag} CLOSED on visit-1, from 00:00 that morning", $failures );
+	bhp_svp_assert( false === bhp_school_visit_is_open_on( $bhp_svp_visit, $bhp_svp_visit ), "⛔ {$bhp_svp_tag} CLOSED on the day of the visit itself", $failures );
+
+	// ⭐ AND THE SAME THREE THROUGH THE WHOLE ENTITLEMENT PATH, with the clock
+	//    moved. This is what a parent's checkout actually asks.
+	$GLOBALS['bhp_svp_clock'] = $bhp_svp_last;
+	bhp_svp_assert( null !== bhp_school_visit_resolve( $bhp_svp_slug ), "{$bhp_svp_tag} THE ENTITLEMENT IS GRANTED on visit-2", $failures );
+
+	$bhp_svp_resolved = bhp_school_visit_resolve( $bhp_svp_slug );
+	bhp_svp_assert( is_array( $bhp_svp_resolved ) && $bhp_svp_stated === $bhp_svp_resolved['cutoff'], "{$bhp_svp_tag} ⛔ THE STATED DEADLINE IS UNCHANGED AND STILL CARRIED -- it is what /author-visits/ prints as \"Order by ...\"; it simply no longer gates", $failures );
+
+	$GLOBALS['bhp_svp_clock'] = $bhp_svp_close;
+	bhp_svp_assert( null === bhp_school_visit_resolve( $bhp_svp_slug ), "⛔ {$bhp_svp_tag} THE ENTITLEMENT IS REFUSED on visit-1 -- an old bookmark stops working at the same instant the button greys", $failures );
+
+	$GLOBALS['bhp_svp_clock'] = $bhp_svp_visit;
+	bhp_svp_assert( null === bhp_school_visit_resolve( $bhp_svp_slug ), "⛔ {$bhp_svp_tag} THE ENTITLEMENT IS REFUSED on the day of the visit", $failures );
+
+	// ⭐ THE GRACE WINDOW, WHICH IS THE ONLY REASON THIS RELEASE EXISTS: the day
+	//    AFTER the deadline the parent was given is still open, as long as it is
+	//    not past visit-2. Nothing on the site says so, and §5 of the theme
+	//    suite asserts that silence.
+	$bhp_svp_day_after_stated = bhp_school_visit_shift_days( $bhp_svp_stated, 1 );
+	if ( '' !== $bhp_svp_day_after_stated && $bhp_svp_day_after_stated <= $bhp_svp_last ) {
+		$GLOBALS['bhp_svp_clock'] = $bhp_svp_day_after_stated;
+		bhp_svp_assert( null !== bhp_school_visit_resolve( $bhp_svp_slug ), "⭐ {$bhp_svp_tag} THE GRACE IS REAL: still open on {$bhp_svp_day_after_stated}, the day AFTER the stated deadline", $failures );
+	} else {
+		bhp_svp_skip( "{$bhp_svp_tag} grace window", 'this row\'s stated cutoff is not earlier than its online close, so there is no grace day to assert -- the known hand-entry edge documented on bhp_school_visit_last_order_date()', $skips );
+	}
+
+	$GLOBALS['bhp_svp_clock'] = '';
+}
+
+/* --- ⛔ THE SESSION FLAG CLEARS AT THE SAME BOUNDARY --------------------- */
+
+$bhp_svp_first_real = key( $bhp_svp_real_rows );
+if ( null !== $bhp_svp_first_real && function_exists( 'WC' ) && WC()->session ) {
+	$bhp_svp_fr_visit = $bhp_svp_real_rows[ $bhp_svp_first_real ]['date'];
+	$bhp_svp_fr_last  = bhp_school_visit_last_order_date( $bhp_svp_fr_visit );
+	$bhp_svp_fr_close = bhp_school_visit_online_close_date( $bhp_svp_fr_visit );
+
+	WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, $bhp_svp_first_real );
+	$GLOBALS['bhp_svp_clock'] = $bhp_svp_fr_last;
+	bhp_svp_assert( null !== bhp_school_visit_active(), "[{$bhp_svp_first_real}] SESSION FLAG: a session flagged on visit-2 is live", $failures );
+
+	$GLOBALS['bhp_svp_clock'] = $bhp_svp_fr_close;
+	bhp_svp_assert( null === bhp_school_visit_active(), "⛔ [{$bhp_svp_first_real}] SESSION FLAG: THE SAME SESSION IS DEAD on visit-1 -- the boundary is a property of the calendar, not of when the session started", $failures );
+	bhp_svp_assert( ! WC()->session->get( BHP_SCHOOL_VISIT_SESSION_KEY ), "⛔ [{$bhp_svp_first_real}] SESSION FLAG: and it CLEARED ITSELF rather than being re-checked forever", $failures );
+
+	WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, null );
+	$GLOBALS['bhp_svp_clock'] = '';
+} else {
+	bhp_svp_skip( 'Session flag at the online close', 'no WooCommerce session is available in this context, or the registry holds no real visit', $skips );
+}
+
+/* --- put the clock back, and PROVE it went back -------------------------- */
+
+$GLOBALS['bhp_svp_clock'] = '';
+remove_filter( 'bhp_school_visit_today', $bhp_svp_clock_filter );
+bhp_svp_assert( $bhp_svp_real_today === bhp_school_visit_today(), '⛔ THE CLOCK IS BACK: the seam is unhooked and every assertion after this point runs on the real date', $failures );
 
 /* =========================================================================
  * 3. NO VISIT DATA IS HARDCODED
