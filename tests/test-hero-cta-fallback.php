@@ -288,10 +288,23 @@ bhp_hcf_assert(
 
 echo "\n=== §4 — THE INVARIANTS: COPY, TRACKING, AND NO REGRESSION ===\n";
 
-/* Copy is Andrew's and is locked. This build changed a variable's value. */
+/*
+ * Copy is Andrew's and is locked. This build changed a variable's value.
+ *
+ * ⚠️ COUNTED ON THE ANCHOR, NOT ON THE DOCUMENT, and the first draft of this
+ *    assertion got that wrong and went red on a correct page. A bare
+ *    `substr_count( $home, 'Open the book. Read the first pages free' )`
+ *    returns 2 on staging2, because the inline critical CSS carries a
+ *    measurement docblock from PASS5 that QUOTES the label verbatim. Counting
+ *    a customer-facing string across a document that also contains stylesheet
+ *    comments measures the comments.
+ */
 bhp_hcf_assert(
-	1 === substr_count( $home, 'Open the book. Read the first pages free' ),
-	'§4.1 the CTA label is byte-identical and appears exactly once',
+	1 === preg_match_all(
+		'/data-bhp-source="home_hero_open_book"[^>]*>Open the book\. Read the first pages free</',
+		$home
+	),
+	'§4.1 the CTA label is byte-identical and is the text of exactly one anchor',
 	$failures
 );
 
