@@ -13,10 +13,19 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * THE FOUR DEFECTS IT ANSWERS, EACH MEASURED BEFORE A LINE WAS WRITTEN
  * ─────────────────────────────────────────────────────────────────────────────
- * `ads-knowledge`'s CRO rubric (2026-08-19) scores the blog post template FAIL
- * on rows 1, 4, 8 and 13. The blog carries 37.7% of human page views against
- * products' 2%, so a template defect here is the highest-traffic defect on the
- * site. Re-measured on staging2 1.19.260 by this build, headless Chrome at an
+ * The CRO rubric of 2026-08-19 scores the blog post template FAIL on rows 1, 4,
+ * 8 and 13. The blog carries the largest share of human page views on this site
+ * and the product pages carry a small fraction of it, so a template defect here
+ * is the highest-traffic defect on the site.
+ *
+ * ⚠ THE ACTUAL TRAFFIC SPLIT IS DELIBERATELY NOT QUOTED IN THIS FILE. This
+ *   repository is PUBLIC on GitHub, and the site's internal traffic
+ *   distribution is a business figure, not an engineering fact this component
+ *   needs. The numbers, their source and their date live in the private record
+ *   named at the foot of this block. Standing rule §4.1: a public file may
+ *   POINT AT a private source; it may not reproduce its contents.
+ *
+ * Re-measured on staging2 1.19.260 by this build, headless Chrome at an
  * asserted `window.innerWidth`, scrollY 0 (evidence:
  * `CYCLE165-direction1-step2-qa/before/BEFORE-1.19.260-390.json`):
  *
