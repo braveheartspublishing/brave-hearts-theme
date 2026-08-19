@@ -482,6 +482,82 @@
 				}
 			}
 		});
+
+		/* ================================================================
+		 * 1.19.241 (CYCLE164-LD-STOREFRONT-BATCH) — THE FLIP-THROUGH CUE.
+		 * ================================================================
+		 *
+		 * A visible control that selects the video slide and starts it. The
+		 * button is rendered by bhp_book_flip_through_cue_html() INSIDE this
+		 * same <section>, so it is found by scope rather than by an id
+		 * reference that could go stale.
+		 *
+		 * WHY THIS IS WIRED HERE, INSIDE initGallery, RATHER THAN AS A
+		 * DOCUMENT-LEVEL DELEGATE: select(), show(), mountVideo() and
+		 * pauseAllExcept() are all closure-scoped, and the whole point of the
+		 * cue is to reuse them rather than to grow a second, subtly different
+		 * way of switching slides. A delegate outside this closure would have
+		 * had to re-implement every one of them.
+		 *
+		 * NO AUTOPLAY. play() is called synchronously inside a click handler,
+		 * which is a genuine user gesture; nothing here runs on load, on
+		 * scroll or on a timer.
+		 */
+		var cue = root.querySelector('[data-bhp-gallery-cue]');
+		if (cue) {
+			cue.addEventListener('click', function () {
+				var index = parseInt(cue.getAttribute('data-bhp-gallery-cue'), 10);
+				if (isNaN(index) || !slides[index]) {
+					return;
+				}
+
+				select(index);
+				trackItem('look_inside_cue_click', index, { interaction: 'cue' });
+
+				/*
+				 * Bring the stage into view before playing. On a phone the
+				 * stage sits well above this button, and starting a clip the
+				 * visitor cannot see is worse than not starting it.
+				 * `scrollIntoView` is a no-op cost when it is already visible.
+				 */
+				var reduce = window.matchMedia
+					&& window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				if (stage.scrollIntoView) {
+					stage.scrollIntoView({
+						behavior: reduce ? 'auto' : 'smooth',
+						block: 'nearest'
+					});
+				}
+
+				var video = videoIn(index);
+				if (!video) {
+					return;
+				}
+				mountVideo(video);
+
+				/*
+				 * Focus moves to the video so a keyboard visitor lands on the
+				 * native controls they just asked for, instead of being left
+				 * on a button whose job is done.
+				 */
+				if (video.focus) {
+					video.focus({ preventScroll: true });
+				}
+
+				/*
+				 * play() returns a promise that REJECTS on some browsers (an
+				 * unsatisfied autoplay policy, a codec the device declines).
+				 * Swallowing it deliberately: the poster and native controls
+				 * are still on screen, so the visitor can start it themselves,
+				 * and an unhandled rejection in the console is noise that
+				 * looks like a defect during QA.
+				 */
+				var started = video.play();
+				if (started && typeof started.catch === 'function') {
+					started.catch(function () {});
+				}
+			});
+		}
 	}
 
 	function init() {

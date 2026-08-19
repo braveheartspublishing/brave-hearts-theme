@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 569f82bee71a9be8bdacd626cd77667a
+    source-md5: 60ab6f709d5552156fdfcf0ed86d1e72
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -311,4 +311,36 @@ color: #ffffff;
 .woocommerce div.product .upsells.products ul.products li.product img {
 	object-fit: contain;
 	background: #fff;
+}
+.bhp-product-guarantee .bhp-landing-guarantee {
+	font-family: var(--font-ui, inherit);
+	font-size: 0.74rem;
+	line-height: 1.45;
+	color: #7A6E60;
+	margin: 0.5rem 0 0;
+	text-align: center;
+	text-wrap: pretty;
+}
+.bhp-product-guarantee .bhp-landing-guarantee__label {
+	font-weight: 800;
+	color: var(--color-forest, #173f2f);
+	letter-spacing: 0.01em;
+}
+.bhp-product-guarantee .bhp-landing-guarantee__sep {
+	color: #7A6E60;
+}
+.bhp-product-guarantee .bhp-landing-guarantee__link {
+	color: var(--color-forest, #173f2f);
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	white-space: nowrap;
+}
+.bhp-product-guarantee .bhp-landing-guarantee__link:hover,
+.bhp-product-guarantee .bhp-landing-guarantee__link:focus-visible {
+	color: #235340;
+}
+.bhp-product-guarantee .bhp-landing-guarantee__link:focus-visible {
+	outline: 2px solid #235340;
+	outline-offset: 2px;
 }

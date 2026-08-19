@@ -2462,6 +2462,45 @@ function bhp_should_show_parent_ab_popup() {
         return false;
     }
 
+    /*
+     * ═══════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.241 (2026-08-18, `CYCLE164-LD-STOREFRONT-BATCH`) — THE POPUP
+     *    IS NOW HOMEPAGE-ONLY. IT IS NARROWED, NOT KILLED.
+     * ═══════════════════════════════════════════════════════════════════
+     *
+     * ⭐ THE FINDING (`commerce-cx` / Pippin, `CYCLE164-CX` #3): this popup
+     *    fires at ~16s at 100% of viewports on the homepage, the Complete
+     *    Collection page AND the product pages. VERIFIED LIVE on staging
+     *    2026-08-18 before the change: `.mariana-popup--ab` was present in
+     *    the DOM of the Mariana product page at both 1280 and an asserted
+     *    390. Interrupting somebody who is already reading a price is the
+     *    one place a capture overlay costs more than it earns.
+     *
+     * ⛔ IT IS DELIBERATELY NOT SWITCHED OFF. This surface produced the one
+     *    paid subscriber the funnel has, so the offer keeps its best
+     *    surface — the homepage, where a visitor has not yet chosen
+     *    anything — and loses only the commercial-intent pages.
+     *
+     * ⚠ REPORTED, NOT ABSORBED — "homepage only" is strictly narrower than
+     *   the four surfaces the brief names. `/complete-collection/`, product
+     *   pages, cart and checkout are all suppressed as instructed (cart and
+     *   checkout already were, upstream in bhp_should_show_any_popup()),
+     *   AND SO IS EVERY BLOG POST, /books/, /shop/ and the rest of the
+     *   site. That is what "homepage only" means and it is what was asked
+     *   for, but blog traffic is a large share of this funnel's reach and
+     *   nobody has decided that it should lose the offer. FLAGGED for
+     *   Andrew rather than quietly widened back — the filter below is the
+     *   one-line way to return blog posts if he wants them.
+     *
+     * ⛔ NO STORAGE KEY, EVENT PREFIX, VARIANT MAP, COPY STRING OR TIMER IS
+     *    TOUCHED. This is a surface rule and nothing else, so the A/B test
+     *    still measures the hook and `.claude/rules/funnels.md`'s isolation
+     *    guarantees are exactly as they were.
+     */
+    if (!is_front_page()) {
+        return false;
+    }
+
     if (!bhp_get_reluctant_reader_download()['ready']) {
         return false;
     }
@@ -4523,6 +4562,63 @@ add_filter('rank_math/json_ld', function ($data, $jsonld) {
         ];
     };
 
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.241 (2026-08-18, `CYCLE164-LD-STOREFRONT-BATCH`) —
+     *     hasMerchantReturnPolicy. THE FIELD GOOGLE IS ASKING FOR.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ WHY THIS AND NOT RATINGS. Gimli's indexing audit
+     *    (`DRAFT-2026-08-18-INDEXING-AUDIT.md`) reports a Search Console
+     *    warning on these product pages. The reflex fix is `aggregateRating`
+     *    — and it is FORBIDDEN here: there are ZERO reviews, and inventing a
+     *    rating is the single most explicit prohibition in
+     *    `BHP-AGENT-STANDING-RULES.md` §2 and `.claude/rules/schema.md`.
+     *    VERIFIED on staging 2026-08-18 by reading the rendered
+     *    `<script class="rank-math-schema">`: no `aggregateRating`, no
+     *    `review`, and this release adds NEITHER. The missing-field warning
+     *    that can honestly be cleared is the return policy, so that is the
+     *    one that is cleared.
+     *
+     * ⛔⛔ THE BRIEF SAID "free return shipping BY MAIL". THE LIVE POLICY SAYS
+     *     THE OPPOSITE, AND THE POLICY WINS. Read from PRODUCTION, read-only,
+     *     2026-08-18 (`wp post get 10`, post_modified 2026-08-14 12:55:42),
+     *     VERBATIM:
+     *
+     *       "Because every book is printed on demand, there is nothing to
+     *        send back - keep the books or pass them along."
+     *
+     *     There is no return shipment, so there is no `returnMethod` to
+     *     declare. `https://schema.org/ReturnByMail` would publish a
+     *     structured-data claim that this store's own published policy
+     *     contradicts. It is therefore OMITTED — the property is optional to
+     *     Google, and the warning clears without it. ⚠ FLAGGED to the Chief
+     *     of Staff rather than silently reconciled.
+     *
+     * ⭐ EVERY FIELD BELOW TRACES TO THAT PAGE, and nothing else is asserted:
+     *      applicableCountry     US        — "the 48 contiguous United States"
+     *      returnPolicyCategory  Finite    — "within 30 days of delivery"
+     *      merchantReturnDays    30        — the same sentence
+     *      returnFees            FreeReturn— nothing to send back, so the
+     *                                        customer is never charged to
+     *                                        return anything
+     *
+     * ⛔ SAME ALLOWLIST AS shippingDetails, for the same reason: this filter
+     *    has already returned early for anything outside the six printed
+     *    editions, so the $5 downloadable Activity Book never receives a
+     *    printed-book return policy.
+     *
+     * ⛔ NO WOOCOMMERCE SETTING IS READ OR WRITTEN. This prints a JSON-LD
+     *    document. Refund configuration is an Andrew gate and is untouched.
+     */
+    $return_policy = [
+        '@type'                => 'MerchantReturnPolicy',
+        'applicableCountry'    => 'US',
+        'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        'merchantReturnDays'   => 30,
+        'returnFees'           => 'https://schema.org/FreeReturn',
+    ];
+
     // The hardcover Offer is the one bhp_book_add_hardcover_offer() built, and
     // it is identifiable by the `?bhp_format=hardcover` URL that same function
     // wrote into it. Everything else on a canonical book page is the paperback.
@@ -4574,6 +4670,16 @@ add_filter('rank_math/json_ld', function ($data, $jsonld) {
             if (null !== $shipping) {
                 $offers[$i]['shippingDetails'] = $shipping;
             }
+
+            /*
+             * The return policy is identical for both editions — it is a store
+             * policy, not a per-format fact — so unlike shippingDetails there
+             * is nothing to derive per offer. It is still written PER OFFER
+             * because that is where Google reads it from, and because the
+             * hardcover offer is a separate node that would otherwise carry
+             * shipping terms with no return terms.
+             */
+            $offers[$i]['hasMerchantReturnPolicy'] = $return_policy;
 
             // The GTIN belongs to the paperback variation, so it is only ever
             // written onto the paperback offer — never onto the hardcover,

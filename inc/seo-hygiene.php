@@ -462,3 +462,104 @@ function bhp_seo_filter_robots_txt($output, $public) {
  *   it under "Excluded by noindex" is the system working. Nothing to fix.
  * ─────────────────────────────────────────────────────────────────────────
  */
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.241 (2026-08-18, `CYCLE164-LD-STOREFRONT-BATCH`) — A URL THIS THEME
+ *     301s MUST NOT ALSO BE ADVERTISED IN THE SITEMAP.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE FINDING (`connected-operator` / Gimli,
+ *    `DRAFT-2026-08-18-INDEXING-AUDIT.md`): `/teachers-guide/` sits in
+ *    `page-sitemap.xml` while returning a 301 to `/teachers/`.
+ *
+ * ⭐ BOTH HALVES VERIFIED LIVE ON PRODUCTION, read-only, 2026-08-18:
+ *      · `curl -o /dev/null -w '%{http_code} -> %{redirect_url}'`
+ *        https://braveheartspublishing.com/teachers-guide/
+ *        -> `301 -> https://braveheartspublishing.com/teachers/`
+ *      · `page-sitemap.xml` contains `<loc>…/teachers-guide/</loc>`
+ *        AND `<loc>…/teachers/</loc>` — the redirect and its destination,
+ *        both offered to Google as canonical URLs.
+ *      · `wp post list --name=teachers-guide` -> page **119**, status
+ *        `publish`; `wp post meta list 119` shows NO `rank_math_robots` and
+ *        NO sitemap-exclusion meta.
+ *
+ * ⭐ SO THE SOURCE IS OURS, AND THAT IS WHY THIS IS FIXED IN CODE RATHER THAN
+ *    REPORTED. Page 119 is an ordinary published page, so Rank Math is right
+ *    to enumerate it; what makes the URL uncrawlable is
+ *    `bhp_redirect_legacy_teacher_resources()` in `functions.php` — THIS
+ *    THEME'S OWN `template_redirect` hook. The contradiction is produced
+ *    entirely inside code this repository owns, and it is resolved here.
+ *
+ * ⛔ WHAT WAS DELIBERATELY NOT DONE, because it is a SETTING and settings are
+ *    Andrew's: Rank Math's per-post "Exclude from sitemap" toggle on page 119
+ *    is NOT switched, no `rank_math_exclude_sitemap` postmeta is written, no
+ *    Rank Math option is touched, and page 119 is NOT unpublished, deleted or
+ *    edited in any way on any environment. The page keeps working; only its
+ *    sitemap ENTRY is withheld.
+ *
+ * ⭐ THE MECHANISM. `rank_math/sitemap/entry` is Rank Math's own documented
+ *    filter (`includes/modules/sitemap/providers/class-post-type.php:222`,
+ *    plugin 1.0.272, read on the server); returning an empty array makes the
+ *    provider `continue` and the URL never reaches the file. Rank Math uses
+ *    this same hook itself for hidden-language posts, so this is the
+ *    supported route rather than a workaround.
+ *
+ * ⛔ MATCHED BY PATH, NOT BY POST ID. IDs differ between staging and
+ *    production; the redirect itself is expressed as a path, so the exclusion
+ *    is too, and the two therefore agree on every environment.
+ */
+
+/**
+ * Paths this theme answers with a 301, and which therefore must never be
+ * advertised in a sitemap.
+ *
+ * ⛔ THIS LIST IS A SECOND COPY OF A FACT THAT LIVES IN `functions.php`, and
+ *    saying so is the point. Each entry corresponds to a real redirect:
+ *
+ *      /teachers-guide/  ->  bhp_redirect_legacy_teacher_resources()
+ *
+ *    `tests/test-cycle164-storefront-batch.php` §5 asserts that the redirect
+ *    function still exists and is still hooked, so if somebody removes the
+ *    redirect and leaves this list behind, the suite fails instead of the
+ *    sitemap quietly losing a page that had become legitimate again.
+ *
+ * ⛔ THE BOOKVAULT MARIANA SLUG IS DELIBERATELY ABSENT. It is also 301'd
+ *    (`bhp_redirect_legacy_bookvault_mariana_slug()`), but no post exists at
+ *    that slug, so Rank Math never enumerates it and adding it here would be a
+ *    rule guarding nothing. VERIFIED: it does not appear in
+ *    `product-sitemap.xml` on production.
+ *
+ * @return string[] Untrailingslashed, path-only, home-relative.
+ */
+function bhp_seo_theme_redirected_paths() {
+    $paths = [
+        untrailingslashit((string) wp_parse_url(home_url('/teachers-guide/'), PHP_URL_PATH)),
+    ];
+
+    return array_values(array_filter(apply_filters('bhp_seo_theme_redirected_paths', $paths)));
+}
+
+/**
+ * Drop any sitemap entry whose URL this theme 301s away from.
+ *
+ * @param array  $url  Rank Math's URL entry (`loc`, `mod`, …).
+ * @param string $type Entry type: 'post', 'term' or 'user'.
+ * @param mixed  $obj  The object the entry was built from.
+ * @return array The entry, or [] to exclude it.
+ */
+function bhp_seo_exclude_redirected_from_sitemap($url, $type, $obj) {
+    unset($type, $obj); // Path is the only thing that decides this.
+
+    if (!is_array($url) || empty($url['loc'])) {
+        return $url;
+    }
+
+    $loc_path = untrailingslashit((string) wp_parse_url((string) $url['loc'], PHP_URL_PATH));
+    if ('' === $loc_path) {
+        return $url;
+    }
+
+    return in_array($loc_path, bhp_seo_theme_redirected_paths(), true) ? [] : $url;
+}
+add_filter('rank_math/sitemap/entry', 'bhp_seo_exclude_redirected_from_sitemap', 10, 3);

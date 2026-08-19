@@ -1276,17 +1276,35 @@ function bhp_book_replace_product_gallery() {
 }
 add_action('wp', 'bhp_book_replace_product_gallery');
 
-/** Renders the hero gallery in place of the native product gallery. */
-function bhp_book_render_hero_gallery() {
-    $product_id = get_queried_object_id();
+/**
+ * ⭐ 1.19.241 (2026-08-18, `CYCLE164-LD-STOREFRONT-BATCH`) — THE HERO ITEM LIST,
+ *    BUILT IN EXACTLY ONE PLACE.
+ *
+ * ⛔ WHY THIS WAS EXTRACTED RATHER THAN COPIED. The flip-through cue added in
+ *    this release has to name a SLIDE INDEX, and the hero list is not the
+ *    registry list: this function PREPENDS the product's featured image, which
+ *    shifts every registry item by one. The Mariana video is item 0 in
+ *    `bhp_book_media()` and slide 1 on the rendered page.
+ *
+ *    A second copy of that `array_unshift` — in the cue, next to the gallery —
+ *    would be two definitions of "which slide is the video", and the day a
+ *    product loses its featured image they would disagree silently and the cue
+ *    would open the wrong picture. One builder, two callers, no drift.
+ *
+ * @param int $product_id
+ * @return array|null The media array with the featured image prepended, or null
+ *                    when this product has no renderable hero gallery.
+ */
+function bhp_book_hero_gallery_media($product_id) {
+    $product_id = (int) $product_id;
     $found = bhp_book_lookup_product($product_id);
     if (!$found || !$found['canonical']) {
-        return;
+        return null;
     }
 
     $media = bhp_book_media($found['key']);
     if (empty($media['has_any'])) {
-        return;
+        return null;
     }
 
     /*
@@ -1312,6 +1330,117 @@ function bhp_book_render_hero_gallery() {
         ]);
         $media['count'] = count($media['items']);
     }
+
+    return $media;
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.241 (2026-08-18, `CYCLE164-LD-STOREFRONT-BATCH`) — THE FLIP-THROUGH
+ *     CUE. Making the video FINDABLE, not adding a video.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE FINDING IT ANSWERS (`commerce-cx` / Pippin, `CYCLE164-CX` #1,
+ *    `ONLINE-GAP-BOOKS-IN-KIDS-HANDS-2026-08-18.md`): the flip-through already
+ *    exists and already plays — it is just invisible. VERIFIED LIVE on staging
+ *    2026-08-18 before a line was written, at an asserted `innerWidth` of 390:
+ *    the Mariana clip is slide 2 of 7 and its only affordance is a **52x52**
+ *    rail thumbnail (76x76 at 1280). A parent deciding whether a book will hold
+ *    their child has no reason to guess that the second small square is twelve
+ *    seconds of the actual printed pages.
+ *
+ * ⛔ WHAT THIS IS NOT. No autoplay, on any viewport, ever. The clip still
+ *    ships `preload="metadata"`, so nothing about this control downloads a
+ *    video byte before a visitor asks. Playback starts inside the click
+ *    handler — a real user gesture — which is also the only reason the browser
+ *    will honour it.
+ *
+ * ⛔ IT RENDERS ONLY WHERE AN ASSET EXISTS, and that is enforced by looking for
+ *    a video in the resolved list rather than by naming titles. Today that
+ *    means Mariana and Everest render it and **The Amazon does not**, because
+ *    Andrew withdrew that clip on 2026-08-02 and the registry entry is still
+ *    commented out (`inc/book-media.php`). If he restores it, the cue appears
+ *    on that page by itself with no edit here. If an asset ever fails to
+ *    resolve, `bhp_book_media()` drops the item and this returns '' — the page
+ *    then promises nothing it cannot show, which is the same gate the gallery
+ *    itself already applies.
+ *
+ * ⭐ THE DURATION IS READ FROM THE FILE, NOT WRITTEN HERE. See
+ *    `bhp_book_media_duration()`. Where the asset cannot tell us, the cue says
+ *    "Watch the flip-through" with no duration rather than inventing one.
+ *
+ * §9.1 VOICE: no "we", "us" or "our" — this is customer-facing copy.
+ *
+ * @param array $media The hero media array from bhp_book_hero_gallery_media().
+ * @return string Pre-escaped HTML, or '' when there is no video to point at.
+ */
+function bhp_book_flip_through_cue_html($media) {
+    if (empty($media['items']) || !is_array($media['items'])) {
+        return '';
+    }
+
+    /*
+     * The FIRST video in the rendered order. Index is taken from the hero list
+     * — the one that already includes the prepended featured image — so it is
+     * the same number the visitor's thumbnail rail uses.
+     */
+    $index = -1;
+    $video = null;
+    foreach ($media['items'] as $i => $item) {
+        if (isset($item['type']) && 'video' === $item['type']) {
+            $index = (int) $i;
+            $video = $item;
+            break;
+        }
+    }
+
+    if ($index < 0) {
+        return ''; // Stills-only title. Nothing to offer, so nothing is said.
+    }
+
+    $duration = isset($video['duration']) ? (int) $video['duration'] : 0;
+
+    if ($duration > 0) {
+        $label = sprintf(
+            /* translators: %d: length of the flip-through video in whole seconds. */
+            __('Watch the flip-through (%d sec)', 'brave-hearts'),
+            $duration
+        );
+    } else {
+        $label = __('Watch the flip-through', 'brave-hearts');
+    }
+
+    /*
+     * A <button>, not a link: it drives a control already on this page rather
+     * than navigating anywhere, and it must stay inert and harmless with
+     * JavaScript off. The gallery is fully usable without JS (every slide is in
+     * the DOM and the video plays from its own native controls), so a visitor
+     * who never gets the enhancement is exactly where they were before this
+     * release rather than staring at a dead link.
+     */
+    $html  = '<p class="bhp-gallery-cue">';
+    $html .= '<button type="button" class="bhp-gallery-cue__btn"'
+        . ' data-bhp-gallery-cue="' . esc_attr((string) $index) . '">';
+    $html .= '<span class="bhp-gallery-cue__icon" aria-hidden="true">'
+        . '<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">'
+        . '<path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>';
+    $html .= '<span class="bhp-gallery-cue__label">' . esc_html($label) . '</span>';
+    $html .= '</button>';
+    $html .= '</p>';
+
+    return $html;
+}
+
+/** Renders the hero gallery in place of the native product gallery. */
+function bhp_book_render_hero_gallery() {
+    $product_id = get_queried_object_id();
+
+    $media = bhp_book_hero_gallery_media($product_id);
+    if (null === $media) {
+        return;
+    }
+
+    $gallery_cue = bhp_book_flip_through_cue_html($media);
 
     $hero    = true;
     $heading = __('Book images and flip-through', 'brave-hearts');

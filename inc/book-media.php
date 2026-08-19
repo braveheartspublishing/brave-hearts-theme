@@ -808,6 +808,39 @@ function bhp_book_media_attachment_id($slug) {
 }
 
 /**
+ * ⭐ 1.19.241 — whole-second duration of a video attachment, or 0 if unknown.
+ *
+ * WordPress writes `length` into `_wp_attachment_metadata` at upload time from
+ * the real container, so this is the file's own length rather than anybody's
+ * recollection of it.
+ *
+ * ⛔ 0 IS A REAL ANSWER AND MUST STAY ONE. An attachment whose metadata was
+ *    never generated (a direct DB insert, a failed regeneration, a
+ *    non-video mime) has no honest duration to report, and every caller is
+ *    expected to omit the duration rather than substitute a plausible number.
+ *    Returning a guess here would put a fabricated figure in customer-facing
+ *    copy, which `BHP-AGENT-STANDING-RULES.md` §3 forbids outright.
+ *
+ * @param int $attachment_id
+ * @return int Whole seconds, or 0 when not knowable.
+ */
+function bhp_book_media_duration($attachment_id) {
+    $attachment_id = (int) $attachment_id;
+    if ($attachment_id <= 0) {
+        return 0;
+    }
+
+    $meta = wp_get_attachment_metadata($attachment_id);
+    if (!is_array($meta) || !isset($meta['length'])) {
+        return 0;
+    }
+
+    $length = (int) round((float) $meta['length']);
+
+    return $length > 0 ? $length : 0;
+}
+
+/**
  * Approved, fully-resolved gallery items for one title.
  *
  * Returns:
@@ -857,6 +890,27 @@ function bhp_book_media($key) {
                 'poster_id' => $poster,
                 'thumb_id'  => $thumb,
                 'thumb'     => $thumb_url ? $thumb_url : wp_get_attachment_url($poster),
+                /*
+                 * ⭐ 1.19.241 (2026-08-18, `CYCLE164-LD-STOREFRONT-BATCH`) —
+                 *    THE CLIP'S OWN LENGTH, READ FROM THE ASSET.
+                 *
+                 * The PDP cue says "(12 sec)" out loud, so the number has to
+                 * come from the file rather than from a comment or a brief.
+                 * `_wp_attachment_metadata['length']` is whole seconds, written
+                 * by WordPress at upload from the real container.
+                 *
+                 * ⛔ WHY NOT A LITERAL. Both approved clips happen to be 12s
+                 *    today (VERIFIED on staging 2026-08-18 by WP-CLI:
+                 *    mariana-look-01-flip-through id 642 length 12;
+                 *    everest-look-01-flip-through id 628 length 12). A literal
+                 *    would keep saying 12 after someone swaps in a 30-second
+                 *    re-shoot — which is a claim about the product, not a
+                 *    caption, and the never-invent rule reaches it.
+                 *
+                 * 0 means "not known", and the cue then omits the duration
+                 * entirely rather than guessing or printing "(0 sec)".
+                 */
+                'duration'  => bhp_book_media_duration($mp4 ? $mp4 : $webm),
                 'label'     => isset($item['label']) && $item['label']
                     ? $item['label']
                     : __('Flip-through of the printed book', 'brave-hearts'),

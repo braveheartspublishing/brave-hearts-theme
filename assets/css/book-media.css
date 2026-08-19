@@ -423,6 +423,77 @@ body.bhp-gallery-lightbox-open {
 	margin-top: 0.5rem;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   1.19.241 (CYCLE164-LD-STOREFRONT-BATCH) — THE FLIP-THROUGH CUE.
+   ------------------------------------------------------------------
+   The video was reachable only through a 52x52 rail tile (measured on
+   staging at an asserted innerWidth of 390). This is the visible way in.
+
+   IT CANNOT MOVE THE PURCHASE COLUMN. The node renders inside the
+   gallery <section>, which is its own cell in `div.product`'s grid, so
+   at desktop widths the format cards and the primary CTA sit in a
+   different column and are unaffected by anything here. Measured
+   before and after; see the CYCLE164 QA evidence.
+
+   NO NEW COLOUR. --color-forest, --color-parchment and --color-ivory
+   are the theme's existing tokens and are already used by the stage
+   directly above this control.
+   ══════════════════════════════════════════════════════════════════ */
+.bhp-gallery-cue {
+	margin: 0.75rem 0 0;
+}
+
+.bhp-gallery-cue__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	/* 44px minimum tap target — this is a phone-first control. */
+	min-height: 44px;
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--color-forest, #173f2f);
+	border-radius: 999px;
+	background: var(--color-ivory, #fffaf0);
+	color: var(--color-forest, #173f2f);
+	font-family: var(--font-ui, inherit);
+	font-size: 0.9rem;
+	font-weight: 700;
+	line-height: 1.2;
+	cursor: pointer;
+	text-align: left;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.bhp-gallery-cue__btn:hover {
+	background: var(--color-forest, #173f2f);
+	color: var(--color-ivory, #fffaf0);
+}
+
+.bhp-gallery-cue__btn:focus-visible {
+	outline: 2px solid var(--color-forest, #173f2f);
+	outline-offset: 2px;
+}
+
+.bhp-gallery-cue__icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+	width: 1.1em;
+	height: 1.1em;
+}
+
+.bhp-gallery-cue__icon svg {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+/* Reduced motion is honoured in JS for the scroll; the colour transition
+   is small enough to keep, but it goes too for consistency. */
+@media (prefers-reduced-motion: reduce) {
+	.bhp-gallery-cue__btn {
+		transition: none;
+	}
+}
+
 /* ---- 8b. Grouped rail (Complete Collection) ------------------------- */
 /*
  * A group caption marks where one title's slides begin. It is decorative and

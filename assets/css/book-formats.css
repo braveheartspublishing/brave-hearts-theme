@@ -460,3 +460,66 @@
 	object-fit: contain;
 	background: #fff;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   1.19.241 (CYCLE164-LD-STOREFRONT-BATCH) — THE 30-DAY GUARANTEE ON THE
+   PRODUCT PAGE.
+   ----------------------------------------------------------------------
+   THE MARKUP AND THE COPY COME FROM THE PLUGIN. This file supplies only
+   the presentation, and it exists at all for one reason: the plugin's own
+   rules live in `bundle-landing.css`, which is enqueued on the Complete
+   Collection landing page and NOT on product pages. The `--bl-*` custom
+   properties those rules use are declared in that same stylesheet, so on
+   a product page they resolve to nothing.
+
+   The declarations below are the plugin's values, re-expressed against
+   the THEME's tokens rather than the plugin's aliases:
+       --bl-forest      -> var(--color-forest)      (the plugin's own alias)
+       --bl-sans        -> var(--font-ui)           (the plugin's own alias)
+       --bl-text-light  -> #7A6E60                  (plugin-local literal)
+       --bl-forest-mid  -> #235340                  (plugin-local literal)
+   The two literals are copied deliberately and are the only duplicated
+   values; both are plugin-local and neither exists as a theme token.
+
+   IT MUST NOT MOVE ANYTHING ABOVE IT. `margin-top` is small and
+   `margin-bottom` is 0, and the node is the last child of the format
+   block, so the price, the CTA, the spec line and the shipping note keep
+   their positions exactly. Verified by measurement at both viewports.
+   ══════════════════════════════════════════════════════════════════════ */
+.bhp-product-guarantee .bhp-landing-guarantee {
+	font-family: var(--font-ui, inherit);
+	font-size: 0.74rem;
+	line-height: 1.45;
+	color: #7A6E60;
+	margin: 0.5rem 0 0;
+	text-align: center;
+	text-wrap: pretty;
+}
+
+.bhp-product-guarantee .bhp-landing-guarantee__label {
+	font-weight: 800;
+	color: var(--color-forest, #173f2f);
+	letter-spacing: 0.01em;
+}
+
+.bhp-product-guarantee .bhp-landing-guarantee__sep {
+	color: #7A6E60;
+}
+
+.bhp-product-guarantee .bhp-landing-guarantee__link {
+	color: var(--color-forest, #173f2f);
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	white-space: nowrap;
+}
+
+.bhp-product-guarantee .bhp-landing-guarantee__link:hover,
+.bhp-product-guarantee .bhp-landing-guarantee__link:focus-visible {
+	color: #235340;
+}
+
+.bhp-product-guarantee .bhp-landing-guarantee__link:focus-visible {
+	outline: 2px solid #235340;
+	outline-offset: 2px;
+}

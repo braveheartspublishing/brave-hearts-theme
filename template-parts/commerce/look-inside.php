@@ -21,6 +21,8 @@
  *   $intro    string  optional one-line intro
  *   $level    string  heading tag, default h2
  *   $compact  bool    tightens spacing (Collection page)
+ *   $gallery_cue string optional pre-escaped HTML rendered below the rail
+ *                       (1.19.241 — the product page's flip-through cue)
  *
  * Video rules from the wireframe brief §4.7, all implemented here:
  *   - a real <video>, never a div, never an iframe wrapper
@@ -444,6 +446,32 @@ if ($total < 2) {
       </ul>
     <?php endif; ?>
   </div>
+
+  <?php
+  /*
+   * ⭐ 1.19.241 (2026-08-18, `CYCLE164-LD-STOREFRONT-BATCH`) — OPTIONAL CUE SLOT.
+   *
+   * ⛔ DEFAULT EMPTY, SO NOTHING ELSE MOVES. All eight existing callers — the
+   *    three product heroes, the Collection hero, /books/ and the four funnel
+   *    pages — pass nothing and render byte-identical markup to before. Only
+   *    `bhp_book_render_hero_gallery()` fills it.
+   *
+   * ⛔ IT LIVES INSIDE THIS <section> DELIBERATELY. `div.product` is a CSS grid
+   *    (`assets/css/book-media.css:401`), so emitting the cue as a THIRD grid
+   *    child beside the gallery and the summary would have handed it its own
+   *    grid cell and re-flowed the purchase column. Inside the section it is
+   *    the gallery's own child and the grid sees exactly what it saw before.
+   *
+   * ⛔ ECHOED UNESCAPED, AND THAT IS THE CONTRACT: the caller passes markup it
+   *    has already escaped. It is never fed anything from a request, an option
+   *    or a database field — see bhp_book_render_flip_through_cue(), which
+   *    builds every attribute through esc_attr()/esc_html() and is the only
+   *    producer of this value.
+   */
+  if (!empty($gallery_cue)) {
+      echo $gallery_cue; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pre-escaped by the caller; see above.
+  }
+  ?>
 
   <?php
   /*

@@ -489,6 +489,62 @@ if (null === $bhp_initial_conf) {
            question a parent is trying to answer. */ ?>
   <p class="bhp-formats__note" data-bhp-format-note><?php echo esc_html(isset($bhp_initial_conf['note']) ? $bhp_initial_conf['note'] : ''); ?></p>
 
+  <?php
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * ⭐⭐ 1.19.241 (2026-08-18, `CYCLE164-LD-STOREFRONT-BATCH`) — THE 30-DAY
+   *     GUARANTEE REACHES THE PRODUCT PAGE.
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * ⭐ THE FINDING (`commerce-cx` / Pippin, `CYCLE164-CX` #4): the guarantee
+   *    is above the fold on `/complete-collection/` and ABSENT from every
+   *    product page. VERIFIED LIVE on staging 2026-08-18 before the change —
+   *    `.bhp-landing-guarantee` returned 0 nodes on the Mariana product page
+   *    at 1280 and at an asserted 390, and 2 nodes (1 visible, 1 in the
+   *    hidden format panel) on the Collection page. So the page that takes
+   *    most of the traffic was the page that never answered "what if it
+   *    doesn't suit my child?".
+   *
+   * ⛔⛔ THE COPY IS NOT RETYPED. This calls the bundle plugin's OWN
+   *     `bhp_bundle_render_landing_guarantee()`, so the label, the sentence,
+   *     the entity references and the policy URL are the SAME BYTES the
+   *     Collection page renders — not a copy that can drift, and not a
+   *     paraphrase. Approved copy is locked (`BHP-AGENT-STANDING-RULES.md`
+   *     §9); reproducing it by hand here would be a rewrite waiting to
+   *     happen. It also means the wording keeps Andrew's first-person voice
+   *     ("tell me … I'll refund you") with no second decision needed.
+   *
+   * ⛔ function_exists() IS THE GATE, NOT DECORATION. The function lives in
+   *    the bundle-pricing PLUGIN and this is the THEME. With the plugin
+   *    deactivated the product page must lose a reassurance line, never take
+   *    a fatal error.
+   *
+   * ⛔ SCOPE: this template renders only for the six canonical book editions
+   *    (`bhp_book_render_format_selector()` returns early otherwise), so the
+   *    guarantee cannot appear on the downloadable Activity Book — whose
+   *    refund situation the printed-book policy does not describe.
+   *
+   * ⛔ IT CANNOT MOVE THE CTA. The node is a sibling AFTER the CTA, the spec
+   *    line and the shipping note, so by document order nothing above it can
+   *    shift. Placed below the shipping note rather than immediately under
+   *    the button deliberately: shipping cost is the more urgent question and
+   *    keeps the position nearest the CTA. Measured before and after at both
+   *    viewports; see the CYCLE164 QA evidence.
+   *
+   * ⛔ THE STAGING POLICY PAGE IS STILL STALE and this release does not fix
+   *    it — the same CONTENT-PARITY gap `bhp_bundle_render_landing_guarantee()`
+   *    already flags for the Collection page now applies to the product pages
+   *    too. On PRODUCTION the badge and the policy agree; on STAGING page 10
+   *    still carries the superseded "we generally do not accept returns"
+   *    text. Page copy is Andrew's and syncing it is outside this brief.
+   */
+  if (function_exists('bhp_bundle_render_landing_guarantee')) {
+      echo '<div class="bhp-product-guarantee">';
+      bhp_bundle_render_landing_guarantee();
+      echo '</div>';
+  }
+  ?>
+
   <?php /* Per-format data for the selector. Prices are rendered server-side
            above; these payloads carry only IDs, URLs and already-escaped
            price HTML so nothing is recalculated in the browser. */ ?>
