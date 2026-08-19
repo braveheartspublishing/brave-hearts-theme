@@ -28,6 +28,14 @@
  *                                     the hero content, above $eyebrow.
  *   @type string $title_emphasis Optional single word inside $title to wrap in
  *                                     `<em class="home-hero__title-mark">`.
+ *   @type string $after_title    Optional HTML rendered immediately after the
+ *                                     H1 and BEFORE $aside. Added 1.19.251 so
+ *                                     the homepage can put its primary
+ *                                     invitation above the three-book fan on a
+ *                                     phone while the ghost invitation stays in
+ *                                     $after_text. Defaults to '' -- the six
+ *                                     non-homepage callers emit nothing and
+ *                                     their DOM is byte-identical.
  *   @type string $after_text     Optional HTML rendered immediately after
  *                                     $text and before $commercial_subtext.
  * }
@@ -95,6 +103,7 @@ $args = wp_parse_args($args ?? [], [
     'commercial_subtext' => '',
     'lead'               => '',
     'title_emphasis'     => '',
+    'after_title'        => '',
     'after_text'         => '',
 ]);
 
@@ -154,6 +163,10 @@ $secondary['url'] = bhp_get_safe_link_url($secondary['url']);
     <?php if ($args['lead']): ?><?php echo wp_kses_post($args['lead']); ?><?php endif; ?>
     <?php if ($args['eyebrow']): ?><p class="home-hero__eyebrow"><?php echo esc_html($args['eyebrow']); ?></p><?php endif; ?>
     <h1 id="<?php echo esc_attr($heading_id); ?>" class="text-hero home-hero__title"><?php echo wp_kses_post($title_html); ?></h1>
+    <?php /* 1.19.251: $after_title lands between the H1 and the aside so the
+             homepage's primary invitation precedes the three-book fan IN THE
+             DOM. Every other caller passes '' and emits nothing here. */ ?>
+    <?php if ($args['after_title']): ?><?php echo wp_kses_post($args['after_title']); ?><?php endif; ?>
     <?php /* The aside renders here OR at the end of this container -- never
              both. See the $aside_after_title guard on the closing block. */ ?>
     <?php if ($aside_after_title): ?><?php echo wp_kses_post($args['aside']); ?><?php endif; ?>

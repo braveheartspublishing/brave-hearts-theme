@@ -149,10 +149,34 @@ bhp_hw_assert(
 	$failures
 );
 
-/* Move 2b: the two invitations. */
+/* Move 2b: the two invitations.
+
+   â AMENDED IN PLACE BY PASS8 (1.19.251). The SUPERSEDED assertion is quoted
+      rather than deleted:
+
+        bhp_hw_assert(
+            1 === substr_count( $home, 'class="home-hero__invitations"' ),
+            '§1.3 the hero invitation cluster renders EXACTLY ONCE',
+            $failures
+        );
+
+      It matched the class attribute as a WHOLE STRING, closing quote included.
+      PASS8 splits the single cluster into two containers so the primary
+      invitation can precede the three-book fan IN THE DOM (see §1.10g for why
+      that is an accessibility requirement and not a preference), and both
+      containers now carry a modifier - so the old needle matches ZERO times,
+      not two. The assertion failed by going to 0 while the page was correct.
+
+      The CLAIM it was protecting is unchanged and is now stated more precisely:
+      there are exactly TWO containers, exactly one of each kind, and exactly
+      two invitation anchors. A duplicated hero would still be caught, and so
+      would a container that lost its modifier. */
 bhp_hw_assert(
-	1 === substr_count( $home, 'class="home-hero__invitations"' ),
-	'§1.3 the hero invitation cluster renders EXACTLY ONCE',
+	2 === substr_count( $home, 'home-hero__invitations' ) - substr_count( $home, 'home-hero__invitations--' )
+		&& 1 === substr_count( $home, 'home-hero__invitations--primary' )
+		&& 1 === substr_count( $home, 'home-hero__invitations--ghost' )
+		&& 2 === substr_count( $home, 'class="btn home-hero__invite home-hero__invite--' ),
+	'§1.3 the hero renders EXACTLY TWO invitation containers and EXACTLY TWO invitations',
 	$failures
 );
 bhp_hw_assert(
@@ -988,10 +1012,27 @@ bhp_hw_assert(
 /* Asserted on an actual @media declaration, never on prose about one — that
    false positive cost PASS4 a red run on a correct build. */
 $p5_pos  = strpos( $css_p5, 'PASS5 (2026-08-19, theme 1.19.248)' );
-$p5_tail = false === $p5_pos ? '' : substr( $css_p5, $p5_pos );
+
+/* â AMENDED IN PLACE BY PASS8 (1.19.251). SUPERSEDED line, quoted:
+
+       $p5_tail = false === $p5_pos ? '' : substr( $css_p5, $p5_pos );
+
+   It ran to the END OF THE FILE, so "$p5_tail" stopped meaning "PASS5's rules"
+   the moment any later block was appended. That was harmless while everything
+   after PASS5 was also <=600px, and it went red the instant PASS8 added its
+   deliberate `@media (min-width: 1051px)` desktop block - a false positive on
+   a correct build, which is the exact failure this assertion's own comment
+   warns about two lines above. `$p5_tail` is now bounded at the start of the
+   PASS7 block, so it is genuinely PASS5's own text. PASS7's and PASS8's
+   equivalents are covered separately by §1.9l and by §1.10d. */
+$p5_end  = strpos( $css_p5, 'PASS7 (2026-08-19, theme 1.19.250)' );
+$p5_tail = ( false === $p5_pos )
+	? ''
+	: ( false === $p5_end ? substr( $css_p5, $p5_pos ) : substr( $css_p5, $p5_pos, $p5_end - $p5_pos ) );
+$p5_tail_code = preg_replace( '#/\*.*?\*/#s', '', $p5_tail );
 bhp_hw_assert(
-	'' !== $p5_tail && 1 === preg_match( '/@media\s*\(\s*max-width:\s*600px\s*\)/', $p5_tail )
-		&& 0 === preg_match( '/@media\s*\(\s*min-width:/', $p5_tail ),
+	'' !== $p5_tail && 1 === preg_match( '/@media\s*\(\s*max-width:\s*600px\s*\)/', $p5_tail_code )
+		&& 0 === preg_match( '/@media\s*\(\s*min-width:/', $p5_tail_code ),
 	'§1.8e no PASS5 layout rule can reach the desktop hero',
 	$failures
 );
@@ -1066,6 +1107,18 @@ $min_p7 = $min_p4;
 $p7_pos  = strpos( $css_p7, 'PASS7 (2026-08-19, theme 1.19.250)' );
 $p7_tail = false === $p7_pos ? '' : substr( $css_p7, $p7_pos );
 
+/* AMENDED BY PASS8 (1.19.251). `$p7_tail` runs to the END OF THE FILE, so the
+   moment a PASS8 block was appended it stopped meaning "PASS7's rules" and
+   started meaning "PASS7's rules AND everything after them". That is fine for
+   the presence checks below, which only ask whether a declaration EXISTS, but
+   it is fatal to the NEGATIVE check at §1.9l, which asks whether a `min-width`
+   rule exists anywhere in the slice - PASS8 deliberately adds one. `$p7_only`
+   is the PASS7 block alone and is what §1.9l now reads. */
+$p8_pos  = strpos( $css_p7, 'PASS8 (2026-08-19, theme 1.19.251)' );
+$p7_only = ( false === $p7_pos )
+	? ''
+	: ( false === $p8_pos ? $p7_tail : substr( $css_p7, $p7_pos, $p8_pos - $p7_pos ) );
+
 bhp_hw_assert(
 	'' !== $p7_tail,
 	'§1.9a the PASS7 block is present in style.css',
@@ -1118,10 +1171,40 @@ bhp_hw_assert(
 	$failures
 );
 
-/* ---- The one structural move -------------------------------------------- */
+/* ---- The one structural move --------------------------------------------
+
+   â AMENDED IN PLACE BY PASS8 (1.19.251). The SUPERSEDED assertion is quoted
+      rather than deleted, because it PASSED for a correct reason and now fails
+      for an equally correct one:
+
+        bhp_hw_assert(
+            '' !== $p7_tail && 1 === preg_match( '/\.home-hero__text\s*\{\s*order:\s*1;/', $p7_tail ),
+            '§1.9j the subcopy moves below the primary invitation at <=600px',
+            $failures
+        );
+
+      PASS7 lifted the buttons above the subcopy with `order: 1` while BOTH
+      invitations still sat in one container at the end of the hero content.
+      PASS8 splits them and puts the primary invitation in the hero's new
+      `after_title` slot, so at <=600px the DOM order is already
+      chip > H1 > primary > covers > subcopy > ghost and NO `order` is needed.
+      The declaration is gone from that breakpoint on purpose; asserting it
+      would now pin a rule whose removal is the point of the change.
+
+      What replaces it is the same claim stated where it is still true: the
+      subcopy is ordered LAST of the flow items on DESKTOP, which is how the
+      primary invitation gets above the paragraph. */
+/* â  AND IT MUST READ CODE, NOT COMMENTS. The first version of this assertion
+      matched `$p7_only` raw and FAILED on a correct build, because the
+      amendment note directly above QUOTES the superseded declaration verbatim
+      - so the regex found `.home-hero__text { order: 1; ... }` inside a
+      comment and concluded the rule was still live. Quoting superseded text is
+      this file's house style and is not going away, so every negative CSS
+      assertion has to strip comments first. */
+$p7_only_code = preg_replace( '#/\*.*?\*/#s', '', $p7_only );
 bhp_hw_assert(
-	'' !== $p7_tail && 1 === preg_match( '/\.home-hero__text\s*\{\s*order:\s*1;/', $p7_tail ),
-	'§1.9j the subcopy moves below the primary invitation at <=600px',
+	'' !== $p7_only && 0 === preg_match( '/\.home-hero__text\s*\{\s*order:\s*1;/', $p7_only_code ),
+	'§1.9j PASS7\'s <=600px `order: 1` on the subcopy is GONE (PASS8 does it in the DOM)',
 	$failures
 );
 
@@ -1149,9 +1232,24 @@ bhp_hw_assert(
 /* Asserted on an actual @media declaration, never on prose about one — that
    false positive cost PASS4 a red run on a correct build, and §1.8e records
    the lesson. */
+/* â AMENDED IN PLACE BY PASS8: reads `$p7_only`, not `$p7_tail`. The
+      SUPERSEDED assertion is quoted rather than deleted:
+
+        bhp_hw_assert(
+            '' !== $p7_tail && 1 === preg_match( '/@media\s*\(\s*max-width:\s*600px\s*\)/', $p7_tail )
+                && 0 === preg_match( '/@media\s*\(\s*min-width:/', $p7_tail ),
+            '§1.9l no PASS7 rule can reach the tablet or desktop hero',
+            $failures
+        );
+
+      It read to the end of the file, so PASS8's deliberate
+      `@media (min-width: 1051px)` desktop block would have made it fail while
+      describing PASS7 - a red run on a correct build, which is the exact false
+      positive §1.8e was written about. The CLAIM is unchanged and still
+      enforced; only the slice it reads is corrected. */
 bhp_hw_assert(
-	'' !== $p7_tail && 1 === preg_match( '/@media\s*\(\s*max-width:\s*600px\s*\)/', $p7_tail )
-		&& 0 === preg_match( '/@media\s*\(\s*min-width:/', $p7_tail ),
+	'' !== $p7_only && 1 === preg_match( '/@media\s*\(\s*max-width:\s*600px\s*\)/', $p7_only_code )
+		&& 0 === preg_match( '/@media\s*\(\s*min-width:/', $p7_only_code ),
 	'§1.9l no PASS7 rule can reach the tablet or desktop hero',
 	$failures
 );
@@ -1207,6 +1305,235 @@ bhp_hw_assert(
 	$failures
 );
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PASS8 — §1.10: THE COVERS ARE 150px, THE PRIMARY INVITATION LEADS THE FAN
+   ON A PHONE, AND ON DESKTOP IT SITS ABOVE THE PARAGRAPH.
+
+   The founder, on 1.19.250, on his own devices:
+     "The books on mobile are still too small and the CTA on desktop is still
+      below the fold. Put the CTA above the paragraph then on desktop. I agree
+      to make the change from we to I"
+
+   ⛔ WHAT THIS SECTION CANNOT PROVE, for the third pass running and for the
+      same reason. It reads CSS text and rendered markup. IT CANNOT PROVE A
+      PIXEL. The numbers that actually answer him — primary CTA bottom 431.0 at
+      390x664 and 464.0 at 1440x900, cover height 110 -> 150px, painted cover
+      width 73.2 -> 99.5px, fan 194.7 -> 265.4px wide — were measured by DOM
+      read in a real browser at an asserted window.innerWidth/innerHeight, and
+      they live in the build report and the screenshots, NOT here. An assertion
+      here claiming to have measured them would be claiming a check it never
+      ran.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+bhp_hw_assert(
+	'' !== $css_p7 && false !== $p8_pos,
+	'§1.10a the PASS8 block is present in style.css',
+	$failures
+);
+$p8_tail = ( false === $p8_pos ) ? '' : substr( $css_p7, $p8_pos );
+
+/* ---- The covers -------------------------------------------------------
+   150/110 = +36.4%, past the "at least 30-40%" he asked for at PASS7 and
+   answering "still too small" at PASS8. The HEIGHT is asserted because width
+   follows it — asserting a width would assert a consequence. */
+bhp_hw_assert(
+	'' !== $p8_tail && 1 === preg_match( '/\.home-hero__book-cover\s*\{\s*height:\s*150px;/', $p8_tail ),
+	'§1.10b the covers are 150px (+36.4% on PASS7\'s 110px)',
+	$failures
+);
+
+/* THE SCALED OVERLAP. -12 x (150/110) = -16.36px, and the fraction is the
+   assertion: rounding to -16px measures a 20.6% join instead of the 21.0% the
+   fan is designed around, and a later "tidy" to a whole number is exactly the
+   silent loosening this guards. Both margins and all three transforms are
+   asserted, because a pass that scaled the margin and left the lift behind
+   would flatten the arc. */
+bhp_hw_assert(
+	'' !== $p8_tail
+		&& 1 === preg_match( '/margin-right:\s*-16\.36px\s*!important/', $p8_tail )
+		&& 1 === preg_match( '/margin-left:\s*-16\.36px\s*!important/', $p8_tail )
+		&& 1 === preg_match( '/transform:\s*rotate\(-6deg\)\s*translateY\(16px\)/', $p8_tail )
+		&& 1 === preg_match( '/transform:\s*rotate\(6deg\)\s*translateY\(16px\)/', $p8_tail )
+		&& 1 === preg_match( '/transform:\s*translateY\(-12px\)/', $p8_tail ),
+	'§1.10c the overlap and the lift both scaled with the covers (21.0% join preserved)',
+	$failures
+);
+
+/* ---- The desktop swap, which is his second sentence -------------------- */
+bhp_hw_assert(
+	'' !== $p8_tail
+		&& 1 === preg_match( '/@media\s*\(\s*min-width:\s*1051px\s*\)/', $p8_tail )
+		&& 1 === preg_match( '/\.home-hero__invitations--primary\s*\{\s*order:\s*1;\s*\}/', $p8_tail )
+		&& 1 === preg_match( '/\.home-hero__invitations--ghost\s*\{\s*order:\s*2;\s*\}/', $p8_tail )
+		&& 1 === preg_match( '/\.home-hero__text\s*\{\s*order:\s*3;\s*\}/', $p8_tail ),
+	'§1.10d on desktop both invitations are ordered ABOVE the paragraph',
+	$failures
+);
+
+/* The ghost container's 13px. PASS4 gives every `.home-hero__invitations` an
+   18px margin-top; with two containers that 18px would also land BETWEEN the
+   buttons and open the pair by 5px against 1.19.250. Asserted because "the
+   desktop hero is otherwise byte-identical" is a claim this build makes. */
+bhp_hw_assert(
+	'' !== $p8_tail && 1 === preg_match( '/\.home-hero__invitations--ghost\s*\{\s*margin-top:\s*13px;\s*\}/', $p8_tail ),
+	'§1.10e the split does not open the desktop button pair (13px reproduces the old flex gap)',
+	$failures
+);
+
+/* The grid items do not stretch. Split apart, the ghost container shrink-wrapped
+   its shorter label and measured 263.1px against the primary's 302px. */
+bhp_hw_assert(
+	'' !== $p8_tail
+		&& 1 === preg_match( '/@media\s*\(\s*max-width:\s*1050px\s*\)/', $p8_tail )
+		&& 1 === preg_match( '/\.home-hero__invitations\s*\{\s*width:\s*100%;\s*\}/', $p8_tail ),
+	'§1.10f the two invitation containers are forced to equal width below 1051px',
+	$failures
+);
+
+/* ---- THE MARKUP SPLIT, AND THE A11Y GUARD THAT IS THE POINT OF IT -------
+   ⭐ THIS IS THE ASSERTION THAT MATTERS MOST IN THIS SECTION.
+
+   The three covers are THREE REAL LINKS, one per product page. The whole
+   reason PASS8 moved the DOM instead of using `order` is that a CSS-only
+   reorder would have left the primary invitation visually above three links
+   that still preceded it in the DOM — a keyboard user tabbing the covers and
+   then jumping back up to the button.
+
+   So the guard is a POSITIONAL one on the rendered homepage: the primary
+   invitation must appear BEFORE the book preview in the HTML, and the ghost
+   invitation AFTER it. If a later pass ever moves the primary invitation back
+   into `after_text` "to simplify", the visual order will still look right and
+   the tab order will silently regress — and this is what catches that. */
+$home_p8      = bhp_hw_fetch( home_url( '/' ) );
+$pos_primary  = strpos( $home_p8, 'home-hero__invitations--primary' );
+$pos_preview  = strpos( $home_p8, 'home-hero__book-preview' );
+$pos_ghost    = strpos( $home_p8, 'home-hero__invitations--ghost' );
+
+bhp_hw_assert(
+	false !== $pos_primary && false !== $pos_preview && false !== $pos_ghost
+		&& $pos_primary < $pos_preview && $pos_preview < $pos_ghost,
+	'§1.10g DOM ORDER: primary invitation BEFORE the fan, ghost invitation AFTER it (tab order == visual order)',
+	$failures
+);
+
+/* And the premise that makes §1.10g necessary: the covers really are links.
+   If they ever stop being links the reasoning above changes, and a future
+   session should be told that by a red suite rather than rediscover it. */
+$p8_stack_pos   = strpos( $home_p8, 'home-hero__book-stack' );
+$p8_stack_end   = false === $p8_stack_pos ? false : strpos( $home_p8, '</ul>', $p8_stack_pos );
+$p8_stack_slice = ( false === $p8_stack_pos || false === $p8_stack_end )
+	? ''
+	: substr( $home_p8, $p8_stack_pos, $p8_stack_end - $p8_stack_pos );
+bhp_hw_assert(
+	'' !== $p8_stack_slice && 3 === preg_match_all( '/<a\b[^>]*href=/i', $p8_stack_slice ),
+	'§1.10h the three covers are still three real links (the premise of §1.10g)',
+	$failures
+);
+
+/* Both invitations still render exactly once, with their events and sources
+   intact. The split moved a wrapper; it must not have moved a tag. */
+bhp_hw_assert(
+	1 === substr_count( $home_p8, 'data-bhp-source="home_hero_open_book"' )
+		&& 1 === substr_count( $home_p8, 'data-bhp-source="home_hero_quiz"' )
+		&& false !== strpos( $home_p8, 'contextual_cta_click' )
+		&& false !== strpos( $home_p8, 'quiz_cta_clicked' )
+		&& false !== strpos( $home_p8, 'Open the book. Read the first pages free' )
+		&& false !== strpos( $home_p8, 'Take the 30-second quiz.' ),
+	'§1.10i both invitations still render once each, same labels, same events, same sources',
+	$failures
+);
+
+/* ---- The shared component ---------------------------------------------- */
+$hero_php_p8 = (string) @file_get_contents( get_template_directory() . '/template-parts/components/hero.php' );
+bhp_hw_assert(
+	'' !== $hero_php_p8
+		&& 1 === preg_match( "/'after_title'\s*=>\s*''/", $hero_php_p8 )
+		&& false !== strpos( $hero_php_p8, "\$args['after_title']" ),
+	'§1.10j hero.php gained an `after_title` slot that defaults to empty',
+	$failures
+);
+
+/* ---- THE THREE COPY EDITS, on Andrew's explicit approval ----------------
+   "I agree to make the change from we to I" (2026-08-19). Each is asserted
+   BOTH ways — the new string present AND the old string absent — because a
+   half-applied rename is the failure that leaves one "we" on the page. */
+bhp_hw_assert(
+	false !== strpos( $home_p8, 'Five-star reader reviews on my first two titles' )
+		&& false === strpos( $home_p8, 'Five-star reader reviews on our first two titles' ),
+	'§1.10k trust strip says "my first two titles"',
+	$failures
+);
+bhp_hw_assert(
+	false !== strpos( $home_p8, 'Some of what I do happens at a table outdoors' )
+		&& false === strpos( $home_p8, 'Some of what we do happens at a table outdoors' ),
+	'§1.10l booth section says "Some of what I do"',
+	$failures
+);
+bhp_hw_assert(
+	false !== stripos( $home_p8, 'My philosophy' )
+		&& false === stripos( $home_p8, 'Our philosophy' ),
+	'§1.10m the philosophy eyebrow says "My philosophy"',
+	$failures
+);
+
+/* ⛔⛔ THE CARVE-OUT GUARD — STANDING RULE 9.1a, AND IT OUTRANKS THE VOICE RULE.
+   A REAL Amazon customer wrote "We read a few chapters each night." That "we"
+   is a CUSTOMER'S WORD, not Andrew's, and rewriting it would FABRICATE A
+   CUSTOMER STATEMENT — the never-invent failure class, which wins over the
+   voice rule every time and without escalation.
+
+   This assertion exists so that the next agent told "remove the we's" cannot
+   quietly reach into the review registry. It must stay green forever. */
+$reviews_php_p8 = (string) @file_get_contents( get_template_directory() . '/inc/amazon-reviews.php' );
+bhp_hw_assert(
+	'' !== $reviews_php_p8
+		&& false !== strpos( $reviews_php_p8, 'We read a few chapters each night' ),
+	'§1.10n the quoted customer review still says "We read a few chapters each night" (§9.1a — never edit a quote)',
+	$failures
+);
+
+/* ---- The artefact ------------------------------------------------------ */
+bhp_hw_assert(
+	is_string( $min_p7 ) && 1 === preg_match( '/height:\s*150px/', $min_p7 )
+		&& 1 === preg_match( '/margin-right:\s*-16\.36px\s*!important/', $min_p7 )
+		&& 1 === preg_match( '/\.home-hero__invitations--primary\s*\{\s*order:\s*1;\s*\}/', $min_p7 ),
+	'§1.10o style.min.css was REBUILT and carries the PASS8 cover and desktop rules',
+	$failures
+);
+
+/* Everything PASS8 overrides must still BE there — PASS8 wins on source order,
+   not by deletion, and the values it was measured against live underneath. */
+bhp_hw_assert(
+	'' !== $css_p7 && false !== strpos( $css_p7, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS3' )
+		&& false !== strpos( $css_p7, 'PASS5 (2026-08-19, theme 1.19.248)' )
+		&& false !== strpos( $css_p7, 'PASS7 (2026-08-19, theme 1.19.250)' )
+		&& false !== strpos( $css_p7, 'F8a. Mobile hero fan' ),
+	'§1.10p PASS3, PASS5, PASS7 and F8a are all still present underneath PASS8',
+	$failures
+);
+
+/* PASS8 changes NO type size. Every font-size PASS7 restored must survive it —
+   asserted as an absence, because the failure mode is a "while we are in here"
+   tweak, not a deliberate edit. */
+$p8_tail_code = preg_replace( '#/\*.*?\*/#s', '', $p8_tail );
+bhp_hw_assert(
+	'' !== $p8_tail && 0 === preg_match( '/font-size:/', $p8_tail_code ),
+	'§1.10q PASS8 declares no font-size at any width (no type was traded for the fold)',
+	$failures
+);
+
+/* Nor does it trim the chip padding or the H1 leading. BOTH WERE MEASURED
+   (chip padding-block 8px -> 2px and H1 line-height 1.1 -> 1.0 together reached
+   635.1, still 11.1px over the 624 line) AND BOTH WERE REJECTED. Neither may
+   arrive later by accident and be mistaken for part of this build. */
+bhp_hw_assert(
+	'' !== $p8_tail
+		&& 0 === preg_match( '/padding-top:\s*2px/', $p8_tail_code )
+		&& 0 === preg_match( '/line-height:\s*1(\.0)?;/', $p8_tail_code ),
+	'§1.10r the two rejected trims (chip padding, H1 leading) are NOT in the shipped block',
+	$failures
+);
 
 if ( ! empty( $failures ) ) {
 	echo "FAILED ASSERTIONS:\n";

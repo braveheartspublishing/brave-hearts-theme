@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 56b1023665d9cc3e72099813785399b3
+    source-md5: 3b03a255476d770ae567707512f2846d
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.250
+Version: 1.19.251
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -6252,7 +6252,33 @@ color: rgba(246, 241, 231, .78);
     transform: rotate(6deg) translateY(12px);
   }
 .home #home-hero .home-hero__text {
-    order: 1;
     margin-top: 14px;
   }
+}
+@media (max-width: 600px) {
+.home #home-hero .home-hero__book-cover {
+    height: 150px;
+  }
+.home #home-hero .home-hero__book-stack li:first-child {
+    margin-right: -16.36px !important;
+    transform: rotate(-6deg) translateY(16px);
+  }
+  .home #home-hero .home-hero__book-stack li:nth-child(2) {
+    transform: translateY(-12px);
+  }
+  .home #home-hero .home-hero__book-stack li:nth-child(3) {
+    margin-left: -16.36px !important;
+    transform: rotate(6deg) translateY(16px);
+  }
+}
+@media (max-width: 1050px) {
+.home #home-hero .home-hero__invitations {
+    width: 100%;
+  }
+}
+@media (min-width: 1051px) {
+.home #home-hero .home-hero__invitations--primary { order: 1; }
+  .home #home-hero .home-hero__invitations--ghost   { order: 2; }
+  .home #home-hero .home-hero__text                 { order: 3; }
+.home #home-hero .home-hero__invitations--ghost { margin-top: 13px; }
 }

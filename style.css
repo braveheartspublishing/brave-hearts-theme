@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.250
+Version: 1.19.251
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -10090,8 +10090,202 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
      The 14px margin-top replaces PASS5's 4px, which existed to close a gap
      ABOVE the buttons that no longer exists.
      -------------------------------------------------------------------- */
+  /* AMENDED IN PLACE BY PASS8 (1.19.251). The SUPERSEDED declaration is
+        quoted rather than silently dropped:
+
+            .home #home-hero .home-hero__text { order: 1; margin-top: 14px; }
+
+        `order: 1` is REMOVED at this width and is no longer needed here. PASS7
+        used it to lift the buttons above the subcopy while both invitations
+        still sat in ONE container at the END of the hero content. PASS8 moves
+        the primary invitation into its own container in the new `after_title`
+        hero slot, so the DOM itself now reads
+        chip > H1 > primary > covers > subcopy > ghost
+        and the visual order it produces needs no `order` at all below 1051px.
+        Leaving `order: 1` here would push the subcopy back below the ghost
+        invitation and undo the sequence the founder asked for.
+        `margin-top: 14px` is UNCHANGED and still does its job. */
   .home #home-hero .home-hero__text {
-    order: 1;
     margin-top: 14px;
   }
+}
+
+/* =========================================================================
+   PASS8 (2026-08-19, theme 1.19.251) - THE COVERS GO TO 150px, THE PRIMARY
+   INVITATION LEADS THE FAN ON A PHONE, AND ON DESKTOP IT MOVES ABOVE THE
+   PARAGRAPH.
+
+   -- THE FOUNDER'S WORDS, ON 1.19.250, ON HIS OWN DEVICES --
+   "The books on mobile are still too small and the CTA on desktop is still
+    below the fold. Put the CTA above the paragraph then on desktop. I agree
+    to make the change from we to I"
+
+   -- 1. THE COVERS: 110px -> 150px (+36.4%) --
+   Every number below is a DOM read on staging at an asserted
+   window.innerWidth 390 / innerHeight 664, not an estimate.
+
+       painted centre cover     73.2 x 110.0  ->   99.5 x 150.0
+       outer cover bounding box 88.7 x 120.0  ->  120.7 x 163.5
+       fan width (l to r)          194.7      ->     265.4
+       fan height                  138.0      ->     205.6
+
+   265.4px of fan inside a 302px content column leaves 36.6px of margin, so
+   the cluster still clears both edges at 390 and is still centred.
+
+   THE OVERLAP IS SCALED, NOT KEPT - the same rule PASS7 wrote and for the
+   same reason. PASS7 measured a join of -18.6px on an 88.7px cover, which is
+   20.9% of the cover width. Holding -12px at the new size would have been
+   15.3% and the fan would have loosened back toward the three-separate-books
+   look Andrew filed originally. The margin is therefore scaled by exactly the
+   same factor as the covers: -12 x (150/110) = -16.36px. MEASURED RESULT: a
+   join of -25.3px on a 120.7px cover = 21.0% - the target proportion, to one
+   decimal place. Splay angle (+-6deg) and z-order are untouched; `translateY`
+   scales 12 -> 16 and -9 -> -12 so the arc keeps its shape instead of
+   flattening at the larger size.
+
+   THE !important IS STILL LOAD-BEARING, for PASS5's reason, restated so it is
+   not tidied away: F8a (1.19.201, live on PRODUCTION) sets
+   `margin-inline: 0 !important` on these same items, and only another
+   !important can beat it. Specificity then decides, and this selector carries
+   an ID. Remove either half and the gap reopens.
+
+   -- 2. THE MOBILE ORDER, AND WHICH OF THE BRIEF'S TWO OPTIONS SHIPPED --
+   The brief asked first for chip > H1 > covers > primary > subcopy > ghost,
+   with the primary invitation's bottom edge at or under 624 at 390x664 (the
+   36px consent strip sits between 624 and 664). THAT ORDER WAS BUILT AND
+   MEASURED FIRST, and it does not fit:
+
+       covers at 150px, brief's preferred order      primary bottom  656.7
+       + chip padding-block 8px -> 2px
+         and H1 line-height 1.1 -> 1.0               primary bottom  635.1
+
+   635.1 is still 11.1px over the line, and those two trims are the only
+   levers the brief allowed before the fallback ("Do not shrink type or covers
+   to buy it"). So the brief's own fallback ships: the primary invitation
+   moves ABOVE the covers, and NEITHER TRIM IS APPLIED - the chip keeps its
+   full padding and the H1 keeps its 1.1 leading, because once the button is
+   above the fan there is 193px of slack and nothing needs paying for.
+   SHIPPED ORDER, <=600px:
+
+       chip > H1 > PRIMARY > covers > subcopy > ghost
+                                          primary bottom  431.0
+
+   The fan lands at 449.0 -> 654.7, so the WHOLE cluster is still above the
+   664 fold and only its bottom 30.7px sits behind the consent strip. That
+   matters: the complaint being answered is "the books are too small", and the
+   alternative arrangement (both buttons above the fan) pushed the covers to
+   515.0 -> 720.7 and cut 28% of them off the screen entirely.
+
+   -- 3. WHY THE DOM MOVED AND `order` DID NOT --
+   The three covers are THREE REAL LINKS, one per product page - probed in the
+   browser, not read from source. Doing this reorder with `order` on a single
+   invitations container would have put the primary invitation visually above
+   three links that still preceded it in the DOM. MEASURED: tab sequence
+   cover/cover/cover/PRIMARY/GHOST against a visual sequence of
+   PRIMARY/cover/cover/cover/GHOST - a keyboard user tabbing the covers and
+   then jumping back up to the button. Splitting the invitations into two
+   containers and putting the primary one in the hero's new `after_title` slot
+   fixes it in the DOM instead. VERIFIED AT 390 AND AT 768: tab order and
+   visual order are IDENTICAL, PRIMARY > cover > cover > cover > GHOST.
+
+   PASS7's constraint is kept, not abandoned: the only element still moved by
+   `order` is `.home-hero__text`, which contains ZERO focusable elements, and
+   that move is now confined to >=1051px.
+
+   -- 4. DESKTOP: THE PRIMARY INVITATION GOES ABOVE THE PARAGRAPH --
+   His instruction, and the one number he is judging it by. MEASURED at
+   1440x900, DOM read, before and after:
+
+                          1.19.250      1.19.251
+       primary CTA top      574.8         410.0
+       primary CTA bottom   628.8         464.0
+       ghost bottom         695.8         531.0
+       subcopy top          410.0         549.0
+       covers top/bottom  210.8/587.1  210.8/587.1   <- IDENTICAL
+       hero bottom          743.8         743.8      <- IDENTICAL
+
+   464.0 clears the ~730-770px genuinely-visible strip on a 1440x900 display
+   (PASS4's arithmetic: taskbar ~48px, Chrome chrome ~85-120px) with 266px to
+   spare, and it clears the brief's stretch target of 560 by 96px. THE COVERS
+   ARE NOT TOUCHED ON DESKTOP: they are explicitly placed at `grid-column: 2`
+   / `grid-row: 1 / 6`, so reordering the flow items cannot move them, and the
+   measured rectangle is identical to the byte.
+
+   -- 5. WHAT THIS BLOCK DOES NOT DO --
+   NO type size changes, at any width. NO cover shrinks. NO chip padding or H1
+   leading is trimmed (see section 2 - both trims were measured, both were
+   rejected as insufficient, and NEITHER is in this file).
+   The gold line "It is an invitation to look up." is untouched and is once
+   again read BEFORE the ghost invitation on a phone, which is closer to
+   front-page.php's stated intent for it than 1.19.250 was.
+
+   ONE OUT-OF-BRIEF CONSEQUENCE, REPORTED RATHER THAN BURIED: the DOM split
+   also reorders the 601-1050px TABLET band, which the brief did not ask
+   about. At 768x1024 the primary invitation now sits above the fan (top
+   488.2) instead of below the paragraph. It is the same sequence as the
+   phone, its tab order and visual order agree, and no size changed - but it
+   IS a change at a width nobody asked about, and it is Gandalf's to accept or
+   reject.
+   ========================================================================= */
+
+@media (max-width: 600px) {
+
+  /* 150px, taken on the CSS height so the width follows and no cover is
+     squashed or cropped. `width: auto` / `max-width: none` are already set by
+     PASS5 section 2 and are not restated. */
+  .home #home-hero .home-hero__book-cover {
+    height: 150px;
+  }
+
+  /* -12 x (150/110) = -16.36px. See the header note: this is the scaled
+     overlap, and the fraction is deliberately not rounded to -16px, which
+     measures 20.6% instead of the 21.0% the fan is designed around. */
+  .home #home-hero .home-hero__book-stack li:first-child {
+    margin-right: -16.36px !important;
+    transform: rotate(-6deg) translateY(16px);
+  }
+  .home #home-hero .home-hero__book-stack li:nth-child(2) {
+    transform: translateY(-12px);
+  }
+  .home #home-hero .home-hero__book-stack li:nth-child(3) {
+    margin-left: -16.36px !important;
+    transform: rotate(6deg) translateY(16px);
+  }
+}
+
+@media (max-width: 1050px) {
+
+  /* LOAD-BEARING, AND IT COST A MEASUREMENT TO FIND. The invitation
+     containers are grid items that DO NOT stretch - they are sized to their
+     content. That was invisible while both buttons shared one container,
+     because the primary button's label is long enough to fill the column on
+     its own. Split apart, the ghost container shrink-wrapped its shorter
+     label and MEASURED 263.1px against the primary's 302px, so the two
+     buttons no longer lined up. `width: 100%` restores the match - measured
+     302px and 302px at 390 wide. It is a no-op at 768, where the containers
+     already fill the column (measured 657px both with and without). */
+  .home #home-hero .home-hero__invitations {
+    width: 100%;
+  }
+}
+
+@media (min-width: 1051px) {
+
+  /* The desktop swap, and the ONLY `order` declarations in this build. The
+     hero content is a grid; chip and H1 keep the implicit `order: 0`, so
+     three declarations are enough to lift both invitations above the
+     paragraph. The book preview is NOT listed because it is explicitly placed
+     at `grid-column: 2` / `grid-row: 1 / 6` - explicit placement ignores
+     `order`, which is why the covers measure identically before and after. */
+  .home #home-hero .home-hero__invitations--primary { order: 1; }
+  .home #home-hero .home-hero__invitations--ghost   { order: 2; }
+  .home #home-hero .home-hero__text                 { order: 3; }
+
+  /* PASS4 gives every `.home-hero__invitations` an 18px margin-top. With one
+     container that spaced the pair from the H1 and the two buttons were
+     separated by the container's own 13px flex gap. With two containers the
+     18px would apply BETWEEN the buttons as well and open the pair by 5px.
+     13px reproduces the previous spacing exactly - measured hero bottom 743.8
+     before and after. */
+  .home #home-hero .home-hero__invitations--ghost { margin-top: 13px; }
 }

@@ -543,13 +543,51 @@ $hero_lead = trim(ob_get_clean());
  */
 $hero_open_url = bhp_get_safe_link_url('#home-open-the-book', '#home-open-the-book');
 $hero_quiz_url = bhp_get_safe_link_url(home_url('/find-your-adventure/'), home_url('/find-your-adventure/'));
+/*
+ * ⭐ 1.19.251 (2026-08-19) — CYCLE164-LD-HOMEPAGE-WARMTH-PASS8. THE TWO
+ *    INVITATIONS NOW RENDER IN TWO CONTAINERS, IN TWO DIFFERENT HERO SLOTS.
+ *
+ * Andrew, on 1.19.250, his own devices, verbatim:
+ *   "The books on mobile are still too small and the CTA on desktop is still
+ *    below the fold. Put the CTA above the paragraph then on desktop."
+ *
+ * ⛔ NOT ONE CHARACTER OF EITHER BUTTON'S COPY, href, EVENT NAME OR
+ *    `data-bhp-*` ATTRIBUTE CHANGES HERE. The same two anchors, the same two
+ *    strings, the same `contextual_cta_click` / `quiz_cta_clicked` events and
+ *    the same `data-bhp-source` values. Only the wrapper they sit in moves,
+ *    so `assets/js/nav.js`'s delegated handler still picks both up with no JS
+ *    change and no GTM change.
+ *
+ * WHY A DOM SPLIT RATHER THAN CSS `order` ON ONE CONTAINER, and it is an
+ * ACCESSIBILITY answer, not a taste one. The covers are THREE REAL LINKS
+ * (`.home-hero__book-stack li > a`, one per product page) -- probed in the
+ * browser, not read from source. Reordering a single invitations container
+ * with `order` at <=600px therefore puts the primary invitation VISUALLY
+ * above three links that still precede it in the DOM, so a keyboard user
+ * tabs the covers first and then jumps back up to the button. MEASURED: tab
+ * sequence cover/cover/cover/PRIMARY/GHOST against a visual sequence of
+ * PRIMARY/cover/cover/cover/GHOST. Splitting the containers puts the primary
+ * invitation before the fan IN THE DOM instead, so tab order and visual order
+ * agree at every width at or below 1050px.
+ *
+ * PASS7's rule still holds and is not being abandoned: the ONE element still
+ * moved by `order` is `.home-hero__text`, which contains ZERO focusable
+ * elements -- and that move is now confined to >=1051px, where the desktop
+ * layout wants both buttons above the paragraph.
+ */
 ob_start();
 ?>
-<div class="home-hero__invitations">
+<div class="home-hero__invitations home-hero__invitations--primary">
   <a class="btn home-hero__invite home-hero__invite--primary"
      href="<?php echo esc_url($hero_open_url); ?>"
      data-bhp-event="contextual_cta_click"
      data-bhp-source="home_hero_open_book"><?php esc_html_e('Open the book. Read the first pages free', 'brave-hearts'); ?></a>
+</div>
+<?php
+$hero_after_title = trim(ob_get_clean());
+ob_start();
+?>
+<div class="home-hero__invitations home-hero__invitations--ghost">
   <a class="btn home-hero__invite home-hero__invite--ghost"
      href="<?php echo esc_url($hero_quiz_url); ?>"
      data-bhp-event="quiz_cta_clicked"
@@ -685,6 +723,8 @@ get_template_part('template-parts/components/hero', null, [
      */
     'lead'              => $hero_lead,
     'title_emphasis'    => __('Curiosity', 'brave-hearts'),
+    // 1.19.251 PASS8 -- primary invitation, DOM-placed before the book fan.
+    'after_title'       => $hero_after_title,
     'after_text'        => $hero_after_text,
 ]);
 
@@ -863,7 +903,23 @@ get_template_part('template-parts/components/complete-collection-feature', null,
                deliberately UNCHANGED: whether a bare glyph run reads as an
                aggregate rating is CYCLE140-CX-9, which is Andrew's call, not
                this change's. */ ?>
-      <?php esc_html_e('Five-star reader reviews on our first two titles', 'brave-hearts'); ?>
+      <?php /* ⭐ 1.19.251 PASS8 -- "our" -> "my", standing rule 9.1 (the voice
+               rule), on Andrew Signore's explicit approval of 2026-08-19:
+               "I agree to make the change from we to I".
+
+               ⭐ THE "FIVE-STAR" CLAIM WAS RE-VERIFIED LIVE BEFORE THIS EDIT,
+               because rewording a review claim without checking it is the
+               never-invent failure class. Read from the live Amazon product
+               pages in a real browser on 2026-08-19 (DOM read of
+               `#averageCustomerReviews` / `#acrPopover`, not a document, not
+               the registry in inc/amazon-reviews.php):
+                 The Mariana Trench (B0GQCCPZLL)  5.0 out of 5 stars, 26 ratings
+                 Mount Everest      (B0GWJ4PNPZ)  5.0 out of 5 stars,  4 ratings
+               Both averages are exactly 5.0, so "Five-star" is TRUE of both of
+               the first two titles and the wording stands. Had either been
+               below 5.0 the phrase would have had to change, not just the
+               pronoun. Recheck when either rating count moves. */ ?>
+      <?php esc_html_e('Five-star reader reviews on my first two titles', 'brave-hearts'); ?>
     </span>
     <?php
     /*
@@ -1047,7 +1103,10 @@ get_template_part('template-parts/components/home-open-the-book');
       <div class="home-market__content">
         <p class="component-heading__eyebrow"><?php esc_html_e('Where you\'ll find us', 'brave-hearts'); ?></p>
         <h2 id="home-market-title" class="home-market__title"><?php esc_html_e('A canopy, a folding table, and the same books that ship to your door.', 'brave-hearts'); ?></h2>
-        <p><?php esc_html_e('Brave Hearts is a small independent publisher. Some of what we do happens at a table outdoors, with the paperbacks laid out where a child can pick one up.', 'brave-hearts'); ?></p>
+        <?php /* 1.19.251 PASS8 -- "we do" -> "I do", standing rule 9.1, on
+                 Andrew's explicit approval of 2026-08-19. Nothing else in the
+                 sentence moves. */ ?>
+        <p><?php esc_html_e('Brave Hearts is a small independent publisher. Some of what I do happens at a table outdoors, with the paperbacks laid out where a child can pick one up.', 'brave-hearts'); ?></p>
       </div>
     </div>
   </div>
@@ -1192,7 +1251,19 @@ get_template_part('template-parts/components/audience-gateway');
 <section id="home-philosophy" class="homepage-section home-philosophy section" aria-labelledby="home-philosophy-title">
   <div class="container home-philosophy__inner">
     <header class="component-heading component-heading--center home-philosophy__heading">
-      <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('philosophy_eyebrow', __('Our philosophy', 'brave-hearts'))); ?></p>
+      <?php /* 1.19.251 PASS8 -- "Our philosophy" -> "My philosophy", standing
+               rule 9.1, on Andrew's explicit approval of 2026-08-19. The brief
+               offered "The philosophy" as an alternative if "my" read oddly in
+               caps; it does not. The eyebrow renders uppercase, so this sets
+               "MY PHILOSOPHY", and the section that follows is a statement of
+               what HE believes about how children read -- "THE PHILOSOPHY"
+               would be the more detached of the two and would give back the
+               first-person voice this whole pass exists to establish.
+               ⚠️ This is the DEFAULT only. `bhp_get_homepage_field()` still
+               wins if a `philosophy_eyebrow` override is ever set; none is set
+               on staging (`wp option get bhp_homepage_fields` returns "Could
+               not get ... option. Does it exist?" -- verified 2026-08-19). */ ?>
+      <p class="component-heading__eyebrow"><?php echo esc_html(bhp_get_homepage_field('philosophy_eyebrow', __('My philosophy', 'brave-hearts'))); ?></p>
       <h2 id="home-philosophy-title" class="text-section-title"><?php echo esc_html(bhp_get_homepage_field('philosophy_title', __('Nature is the greatest classroom on Earth.', 'brave-hearts'))); ?></h2>
       <p class="component-heading__intro text-lead"><?php echo esc_html(bhp_get_homepage_field('philosophy_intro', __('A Brave Hearts story is a beginning: adventure awakens curiosity, truth gives it somewhere to go, and character helps a child carry each discovery into the world.', 'brave-hearts'))); ?></p>
     </header>
