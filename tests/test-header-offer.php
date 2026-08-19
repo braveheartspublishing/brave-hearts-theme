@@ -17,6 +17,9 @@
  *       is no price literal anywhere in the component
  *   §2  the render / defer / suppress matrix, page by page — the assertion that
  *       enforces "exactly ONE above-fold primary CTA" at the markup level
+ *   §2b (1.19.264) the suppression is keyed on the TEMPLATE, not on a page
+ *       slug, so a renamed page or a new audience landing cannot escape it —
+ *       and every template named in the list really exists in this theme
  *   §3  the desktop header is untouched: `.header-expedition-cta` still appears
  *       exactly once on every page, and the offer never appears twice
  *   §4  the whole component is behind ONE filter, default ON, and switching it
@@ -183,11 +186,76 @@ $doors = array(
 	'blogindex'   => array( $blog_page_id ? get_permalink( $blog_page_id ) : '', 'visible' ),
 	'blogpost'    => array( ! empty( $post_ids ) ? get_permalink( $post_ids[0] ) : '', 'visible' ),
 	'shop'        => array( function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : '', 'visible' ),
-	'staticpage'  => array( home_url( '/about/' ), 'visible' ),
 	'collection'  => array( home_url( '/complete-collection/' ), 'absent' ),
 	'cart'        => array( function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : '', 'absent' ),
 	'checkout'    => array( function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : '', 'absent' ),
 );
+
+/*
+ * ⭐⭐ 1.19.264 (CYCLE165-LD-DIRECTION1-STEP1B-SUPPRESS) — NINE PAGE TEMPLATES
+ *     JOIN THE 'absent' SIDE, AND `staticpage` IS ONE OF THEM.
+ *
+ * ⛔ THIS ROW MOVED BECAUSE THE MEASUREMENT WAS WRONG, NOT BECAUSE THE SITE
+ *    CHANGED — and that is a different admission from the one at 1.19.262, so
+ *    it is written out rather than filed under the same sentence.
+ *
+ *    At 1.19.262 `product` moved because the PAGE changed: step 3 lifted ADD TO
+ *    CART into the first screen, so a template that genuinely measured ZERO
+ *    genuinely came to measure ONE.
+ *
+ *    Here, nothing on these nine pages changed. They were rendering their own
+ *    `.btn.btn-primary` inside the first screen at 390 before step 1 shipped,
+ *    and step 1's scanner could not see it, because that scanner admits a
+ *    control only when its LABEL matches a buy/sample vocabulary — and these
+ *    heroes say "Start with Book 1", "Explore the Guides", "Shop the Books",
+ *    "Get the Meaningful Gift Guide", "Get the Community Reading Kit". None of
+ *    those match. So the matrix comment above records `static page 0` for
+ *    `/about/`, the row below read `'visible'`, and from 1.19.260 to 1.19.263
+ *    `/about/` served TWO above-fold primaries on a phone.
+ *
+ * ⛔ THE SUPERSEDED ROW IS RECORDED HERE RATHER THAN DELETED:
+ *    `'staticpage' => array( home_url( '/about/' ), 'visible' ),`
+ *
+ * ⚠ RE-MEASURED with a structural probe that has NO vocabulary gate
+ *   (`harness/scan-controls.mjs`), headless Chrome, asserted
+ *   `window.innerWidth` 390, viewport 390x844, scrollY 0, staging2 1.19.263.
+ *   Each row below is a real button with a measured rect; the evidence file is
+ *   `CYCLE165-direction1-step1b-qa/before/BEFORE-1.19.263-controls-390.json`
+ *   (private, ⛔ path only — this repository is public).
+ *
+ *   /books/                                 "Start with Book 1"                       top=503
+ *   /reluctant-reader-adventure-kit/        "Get the free chapter & activity"         top=322
+ *   /adventure-kit-thank-you/               "Get the Complete Collection"             top=438
+ *   /teachers/                              "Explore the Guides"                      top=515
+ *   /educators-adventure-learning-toolkit/  "Get the Free Adventure Learning Toolkit" top=332
+ *   /gift-buyers-guide/                     "Get the Meaningful Gift Guide"           top=332
+ *   /organizations-community-reading-kit/   "Get the Community Reading Kit"           top=366
+ *   /about/                                 "Shop the Books"                          top=379
+ *   /retailers-wholesale-guide/             "Get the Wholesale Guide"                 top=522
+ *
+ * ⚠ `/retailers-wholesale-guide/` WAS NOT IN THE EIGHT PAGES THIS BUILD WAS
+ *   BRIEFED ON. It is the fourth page on the shared audience-landing template
+ *   family, it was measured for that reason, and it measured ONE. Included on
+ *   the same evidence as the other eight and reported as an addition.
+ *
+ * ⛔ THESE ARE URLS OF REAL PAGES, BUT THE SUPPRESSION IS KEYED ON THE
+ *    TEMPLATE. §2b below proves that directly, so a page renamed or a new
+ *    audience landing added does not quietly escape the rule.
+ */
+$funnel_doors = array(
+	'books'         => home_url( '/books/' ),
+	'kit'           => home_url( '/reluctant-reader-adventure-kit/' ),
+	'typ'           => home_url( '/adventure-kit-thank-you/' ),
+	'teachers'      => home_url( '/teachers/' ),
+	'educators'     => home_url( '/educators-adventure-learning-toolkit/' ),
+	'giftbuyers'    => home_url( '/gift-buyers-guide/' ),
+	'organizations' => home_url( '/organizations-community-reading-kit/' ),
+	'staticpage'    => home_url( '/about/' ),
+	'retailers'     => home_url( '/retailers-wholesale-guide/' ),
+);
+foreach ( $funnel_doors as $fd_key => $fd_url ) {
+	$doors[ $fd_key ] = array( $fd_url, 'absent' );
+}
 
 /*
  * ⭐ 1.19.262 (CYCLE165-LD-DIRECTION1-STEP3-PRODUCT) — `product` MOVED FROM
@@ -256,8 +324,10 @@ if ( isset( $docs['home'] ) ) {
    1.19.262: `product` left this list when it left the render side of the matrix
    above. The assertion would still have passed there (a suppressed component
    enqueues nothing), but the label would have described a page that no longer
-   renders the offer, and a test whose label is wrong is a test nobody trusts. */
-foreach ( array( 'blogpost', 'shop', 'staticpage' ) as $k ) {
+   renders the offer, and a test whose label is wrong is a test nobody trusts.
+   1.19.264: `staticpage` leaves for exactly the same reason, and the list is
+   now down to the two templates that still render the offer immediately. */
+foreach ( array( 'blogpost', 'shop' ) as $k ) {
 	if ( isset( $docs[ $k ] ) ) {
 		bhp_hdo_assert(
 			false === strpos( $docs[ $k ], 'assets/js/header-offer.js' ),
@@ -266,6 +336,107 @@ foreach ( array( 'blogpost', 'shop', 'staticpage' ) as $k ) {
 		);
 	}
 }
+
+echo "\n=== §2b — THE SUPPRESSION IS KEYED ON THE TEMPLATE, NOT ON A SLUG ===\n";
+
+/*
+ * §2 proves the SERVED DOCUMENTS are right today. §2b proves the RULE behind
+ * them, which is what keeps them right tomorrow.
+ *
+ * ⛔ THE PREDICATE IS NOT FULLY REACHABLE FROM WP-CLI AND THIS SUITE DOES NOT
+ *    PRETEND IT IS — the same honest split as §5. `bhp_header_offer_template_candidates()`
+ *    reads `$GLOBALS['template']`, which the template loader sets and WP-CLI
+ *    never does. So the DECISION is proved here, purely, through
+ *    `bhp_header_offer_template_has_own_primary()`; the PREDICATE is proved by
+ *    §2's real HTTP fetches above, which go through a real template load.
+ */
+bhp_hdo_assert(
+	function_exists( 'bhp_header_offer_template_has_own_primary' )
+		&& function_exists( 'bhp_header_offer_own_primary_templates' )
+		&& function_exists( 'bhp_header_offer_template_candidates' ),
+	'§2b.0 the template decision is a pure, testable function with a filterable list',
+	$failures
+);
+
+$own_primary = bhp_header_offer_own_primary_templates();
+
+/* Every template named in the list must actually exist in this theme. A typo
+   here fails OPEN — the page keeps serving two primaries and no test notices. */
+foreach ( $own_primary as $tpl ) {
+	bhp_hdo_assert(
+		'' !== locate_template( $tpl ),
+		"§2b.exists {$tpl} is a real template file in this theme",
+		$failures
+	);
+	bhp_hdo_assert(
+		bhp_header_offer_template_has_own_primary( $tpl ),
+		"§2b.decide {$tpl} resolves to SUPPRESS",
+		$failures
+	);
+}
+
+/* The four audience landings share one hero component, so the family must be
+   complete. If a fifth is ever added, this is the assertion that catches it. */
+foreach ( glob( get_template_directory() . '/page-audience-*.php' ) as $audience_tpl ) {
+	$base = basename( $audience_tpl );
+	bhp_hdo_assert(
+		in_array( $base, $own_primary, true ),
+		"§2b.family {$base} is an audience-landing template and is covered by the suppression list",
+		$failures
+	);
+}
+
+/* ...and the render side must NOT be swept up by it. */
+foreach ( array( 'single.php', 'index.php', 'front-page.php', 'archive.php', 'page.php' ) as $render_tpl ) {
+	bhp_hdo_assert(
+		! bhp_header_offer_template_has_own_primary( $render_tpl ),
+		"§2b.render {$render_tpl} is NOT suppressed by the template rule",
+		$failures
+	);
+}
+
+bhp_hdo_assert(
+	! bhp_header_offer_template_has_own_primary( '' )
+		&& ! bhp_header_offer_template_has_own_primary( array() )
+		&& ! bhp_header_offer_template_has_own_primary( array( '', null ) ),
+	'§2b.empty an unknown or empty template never suppresses by accident',
+	$failures
+);
+
+/* A full path must decide the same way as a bare basename — the candidate list
+   mixes both sources (`$GLOBALS[template]` is absolute). */
+bhp_hdo_assert(
+	bhp_header_offer_template_has_own_primary( get_template_directory() . '/page-about.php' ),
+	'§2b.path an absolute template path decides the same as its basename',
+	$failures
+);
+
+/* The list is filterable, and the filter genuinely drives the decision. */
+add_filter( 'bhp_header_offer_own_primary_templates', '__return_empty_array' );
+bhp_hdo_assert(
+	! bhp_header_offer_template_has_own_primary( 'page-about.php' ),
+	'§2b.filter emptying the list through the filter restores the render behaviour',
+	$failures
+);
+remove_filter( 'bhp_header_offer_own_primary_templates', '__return_empty_array' );
+bhp_hdo_assert(
+	bhp_header_offer_template_has_own_primary( 'page-about.php' ),
+	'§2b.filter removing the filter restores the shipped list',
+	$failures
+);
+
+/*
+ * ⭐ THE HOMEPAGE RULE IS UNCHANGED AND STAYS FAIL-CLOSED. `front-page.php` is
+ *    deliberately absent from the list, and the caller checks `is_front_page()`
+ *    BEFORE the template rule, so the homepage keeps `defer` — the reveal that
+ *    reserves the button's box and cannot shift the wordmark. §2.home above
+ *    asserts the served result.
+ */
+bhp_hdo_assert(
+	! in_array( 'front-page.php', $own_primary, true ),
+	'§2b.home front-page.php is NOT in the suppression list, so the homepage keeps its deferred reveal',
+	$failures
+);
 
 echo "\n=== §3 — THE DESKTOP HEADER IS UNTOUCHED ===\n";
 

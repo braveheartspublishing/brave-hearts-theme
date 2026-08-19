@@ -51,6 +51,18 @@
  *    that already measured ONE. The rule is derived from what the site actually
  *    renders, not from a guess about what it probably renders.
  *
+ * ⛔⛔ THE TABLE ABOVE IS PRESERVED VERBATIM AND IS PARTLY WRONG. Its
+ *     `static page 0` row is a MEASUREMENT ERROR, found at 1.19.264 and
+ *     corrected there, not here — the row is left standing so a reader can see
+ *     what was believed and why the correction was needed. `/about/` (and eight
+ *     more page templates) were rendering their own above-fold primary at 390
+ *     the whole time; step 1's scanner could not see those buttons because it
+ *     matched a LABEL VOCABULARY the pages do not use. The nine templates, the
+ *     measured rects and the full account of the instrument error are in
+ *     `bhp_header_offer_own_primary_templates()` below. The RULE the table
+ *     states is unchanged and remains the spec; only one of its numbers was
+ *     bad.
+ *
  * ─────────────────────────────────────────────────────────────────────────────
  * ⛔ IT REPLACES A SECOND PRIMARY. IT NEVER ADDS ONE.
  * ─────────────────────────────────────────────────────────────────────────────
@@ -310,7 +322,210 @@ function bhp_header_offer_context() {
 		return 'defer';
 	}
 
+	/*
+	 * ⭐⭐ 1.19.264 (2026-08-19, CYCLE165-LD-DIRECTION1-STEP1B-SUPPRESS) — THE
+	 *     FUNNEL AND AUDIENCE TEMPLATES JOIN THE SUPPRESSION LIST.
+	 *
+	 * ⭐ THE RULE STILL HAS NOT CHANGED. THE MEASUREMENT DID — and this time
+	 *    what moved was not the site but the INSTRUMENT. See
+	 *    `bhp_header_offer_own_primary_templates()` below for the full account
+	 *    and the evidence path. In one line: nine page templates were already
+	 *    rendering their own above-fold primary at 390 before step 1 shipped,
+	 *    and step 1's scanner could not see them because it classified a
+	 *    control by its LABEL VOCABULARY, which those nine heroes do not use.
+	 *
+	 * ⛔ THIS RUNS AFTER `is_front_page()` ON PURPOSE. The homepage rule is
+	 *    `defer`, not `suppress`, and it must stay that way: `defer` is the
+	 *    fail-closed reveal that reserves the button's box so the wordmark
+	 *    cannot shift (see THE HOMEPAGE RULE above). If `front-page.php` were
+	 *    ever added to the template list, this ordering keeps the homepage on
+	 *    its own tested behaviour instead of silently swapping it for a
+	 *    different one.
+	 */
+	if ( bhp_header_offer_template_has_own_primary( bhp_header_offer_template_candidates() ) ) {
+		return 'suppress';
+	}
+
 	return 'render';
+}
+
+/**
+ * Templates that ALREADY render their own above-fold primary CTA at <= the
+ * mobile breakpoint, and on which this control must therefore yield.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ⭐⭐ WHY THIS IS A TEMPLATE LIST AND NOT A LIST OF PAGE SLUGS
+ * ─────────────────────────────────────────────────────────────────────────────
+ * The thing that carries the above-fold primary is the TEMPLATE, not the page.
+ * Four of the entries below (`page-audience-*.php`) are assignable templates
+ * that share one hero component; a new audience landing page built on any of
+ * them inherits this suppression the moment it is published, with no code
+ * change and no chance of someone forgetting. A slug list would have to be
+ * edited every time, and the edit would be remembered exactly until it wasn't.
+ *
+ * The three entries with no assignable template (`page-books.php`,
+ * `page-teachers.php`, `page-about.php`) are resolved through WordPress's OWN
+ * `page-{slug}.php` rule by `bhp_header_offer_template_candidates()` — the
+ * candidate is derived from the hierarchy and confirmed with
+ * `locate_template()`, so it is still the template that decides, not a typed
+ * slug.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ⛔⛔ WHERE THIS LIST CAME FROM, AND THE MEASUREMENT ERROR IT CORRECTS
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Every row is a control MEASURED in headless Chrome on staging2 1.19.263 at an
+ * asserted `window.innerWidth` of 390, viewport 390x844, scrollY 0. Evidence:
+ * `CYCLE165-direction1-step1b-qa/before/BEFORE-1.19.263-controls-390.json`
+ * (private; ⛔ path only, this repository is public).
+ *
+ *   page-books.php                            "Start with Book 1"                       top=503 h=48
+ *   page-reluctant-reader-adventure-kit.php   "Get the free chapter & activity"         top=322 h=48
+ *   page-adventure-kit-thank-you.php          "Get the Complete Collection"             top=438 h=65
+ *   page-teachers.php                         "Explore the Guides"                      top=515 h=48
+ *   page-audience-educators.php               "Get the Free Adventure Learning Toolkit" top=332 h=62
+ *   page-audience-gift-buyers.php             "Get the Meaningful Gift Guide"           top=332 h=48
+ *   page-audience-organizations.php           "Get the Community Reading Kit"           top=366 h=48
+ *   page-about.php                            "Shop the Books"                          top=379 h=48
+ *   page-audience-retailers.php               "Get the Wholesale Guide"                 top=522 h=49
+ *
+ * Every one is a `.btn.btn-primary` inside the page's own hero, every one is
+ * comfortably inside the 844 px first screen, and every one is that page's top
+ * call to action under FD-479 limb 3. Item 96(7) settles the six that are
+ * free-sample/lead CTAs rather than buy CTAs: a lead CTA COUNTS as a primary,
+ * so on a funnel page the page's own lead CTA IS the primary and this sitewide
+ * buy control is the second one. It yields.
+ *
+ * ⛔ THE STEP-1 SCANNER DID NOT UNDERCOUNT THE SITE; IT UNDERCOUNTED ITSELF,
+ *    AND THAT IS RECORDED HERE RATHER THAN QUIETLY FIXED. `scan-abovefold.mjs`
+ *    admits a control only if its label or href matches a buy/sample
+ *    VOCABULARY. That vocabulary was derived from the nine templates step 1
+ *    touched and is correct on those nine. It matches none of
+ *    "Start with Book 1", "Explore the Guides", "Shop the Books",
+ *    "Get the Meaningful Gift Guide" or "Get the Community Reading Kit". Run
+ *    against these pages it therefore reported ONE primary (this button) where
+ *    a phone was plainly showing TWO. The step-1 evidence table
+ *    ("static page 0") is wrong for that reason, and the row it produced —
+ *    `staticpage => 'visible'` in `tests/test-header-offer.php` §2 — shipped a
+ *    second above-fold primary on `/about/` from 1.19.260 to 1.19.263.
+ *    A structural probe with no vocabulary gate
+ *    (`harness/scan-controls.mjs`, same evidence folder) is what produced the
+ *    table above.
+ *
+ * ⚠ `page-audience-retailers.php` IS NOT ONE OF THE EIGHT PAGES THIS BUILD WAS
+ *   BRIEFED ON. It was measured because it is the fourth member of the
+ *   audience-landing template family and generalising by family without
+ *   measuring it could have suppressed the offer on a page with no primary of
+ *   its own, leaving ZERO. It measured ONE ("Get the Wholesale Guide",
+ *   top=522), so it belongs in this list on the same evidence as the other
+ *   eight. Reported as an addition, not folded in silently.
+ *
+ * ⛔ WHAT IS DELIBERATELY *NOT* IN THIS LIST, each for a measured reason:
+ *    · `front-page.php` — the homepage defers instead; see the caller.
+ *    · the blog index and single-post templates — measured ZERO page controls
+ *      above the fold at 390, which is the whole reason step 1 exists.
+ *    · `page-complete-collection.php`, the cart, the checkout and single
+ *      product pages — already suppressed earlier in the caller, by their own
+ *      predicates, for their own recorded reasons. Adding them here too would
+ *      give one behaviour two switches.
+ *
+ * @return array List of template file basenames.
+ */
+function bhp_header_offer_own_primary_templates() {
+	return (array) apply_filters(
+		'bhp_header_offer_own_primary_templates',
+		array(
+			'page-books.php',
+			'page-teachers.php',
+			'page-about.php',
+			'page-reluctant-reader-adventure-kit.php',
+			'page-adventure-kit-thank-you.php',
+			'page-audience-educators.php',
+			'page-audience-gift-buyers.php',
+			'page-audience-organizations.php',
+			'page-audience-retailers.php',
+		)
+	);
+}
+
+/**
+ * Every template basename that could be responsible for rendering THIS request.
+ *
+ * Three sources, because no single one of them is complete:
+ *
+ *   1. `get_page_template_slug()` — the template an editor ASSIGNED in Page
+ *      Attributes. This is how the four `page-audience-*.php` pages and the two
+ *      adventure-kit pages resolve, and it is the only source available before
+ *      the template file is chosen.
+ *   2. WordPress's own `page-{slug}.php` rule, confirmed with
+ *      `locate_template()` so a slug can never conjure a template that does not
+ *      exist. This is how `/books/`, `/teachers/` and `/about/` resolve — all
+ *      three have NO assigned template (verified live over WP-CLI:
+ *      `wp post meta get <id> _wp_page_template` returns nothing for 102, 103
+ *      and 116). Consulted ONLY when no template was assigned, because an
+ *      assigned template wins the hierarchy outright.
+ *   3. `$GLOBALS['template']` — the file the template loader actually included.
+ *      The authoritative answer, and the one that keeps this working for any
+ *      template not covered by the two rules above.
+ *
+ * ⛔ IT RETURNS A LIST, NOT A WINNER, AND THAT IS THE FAIL-CLOSED CHOICE. If any
+ *    candidate names a template known to carry its own above-fold primary, the
+ *    offer yields. The cost of a false suppression is that a phone visitor does
+ *    not see this button on a page that has its own; the cost of a false render
+ *    is two primaries above the fold, which is the rule the component exists to
+ *    respect. The asymmetry decides it.
+ *
+ * ⚠ `$GLOBALS['template']` IS UNSET UNDER WP-CLI, AJAX AND REST. That is why
+ *   the decision itself is split into the pure
+ *   `bhp_header_offer_template_has_own_primary()` below — the suite can prove
+ *   the DECISION without faking a template loader, exactly as §5 proves the
+ *   format decision without faking a WooCommerce session.
+ *
+ * @return array List of candidate template basenames, possibly empty.
+ */
+function bhp_header_offer_template_candidates() {
+	$candidates = array();
+
+	if ( is_page() ) {
+		$assigned = get_page_template_slug();
+		if ( is_string( $assigned ) && '' !== $assigned ) {
+			$candidates[] = basename( $assigned );
+		} else {
+			$slug = get_post_field( 'post_name', get_queried_object_id() );
+			if ( is_string( $slug ) && '' !== $slug ) {
+				$by_slug = 'page-' . $slug . '.php';
+				if ( '' !== locate_template( $by_slug ) ) {
+					$candidates[] = $by_slug;
+				}
+			}
+		}
+	}
+
+	if ( isset( $GLOBALS['template'] ) && is_string( $GLOBALS['template'] ) && '' !== $GLOBALS['template'] ) {
+		$candidates[] = basename( $GLOBALS['template'] );
+	}
+
+	return array_values( array_unique( $candidates ) );
+}
+
+/**
+ * The pure half of the template decision, split out SO IT CAN BE TESTED
+ * HONESTLY — the same split, for the same reason, as
+ * `bhp_header_offer_format_for()` above.
+ *
+ * @param array|string $candidates One template basename, or a list of them.
+ * @return bool True when at least one candidate already carries an above-fold primary.
+ */
+function bhp_header_offer_template_has_own_primary( $candidates ) {
+	$candidates = is_array( $candidates ) ? $candidates : array( $candidates );
+	$known      = bhp_header_offer_own_primary_templates();
+
+	foreach ( $candidates as $candidate ) {
+		if ( is_string( $candidate ) && '' !== $candidate && in_array( basename( $candidate ), $known, true ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
