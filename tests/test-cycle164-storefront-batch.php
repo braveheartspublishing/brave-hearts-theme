@@ -275,8 +275,24 @@ if ( isset( $c164_urls['amazon'] ) ) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-echo "\n=== 2. The A/B capture popup is homepage-only ===\n";
+echo "\n=== 2. The capture popup is off the selling pages ===\n";
 // ═══════════════════════════════════════════════════════════════════════
+
+/*
+ * ⚠ SECTION HEADING CORRECTED AT 1.19.267 (2026-08-19,
+ *   `CYCLE165-LD-ITERATE-3-POPUP-SIMPLE`), AND NOT ONE ASSERTION BELOW WAS
+ *   TOUCHED. This section was written at 1.19.241, when the popup had just
+ *   been narrowed to the homepage, and it said so in its heading. 1.19.241's
+ *   own comment in `bhp_should_show_parent_ab_popup()` flagged that blog posts
+ *   had lost the offer with nobody deciding they should; that flag has since
+ *   been discharged and the surface is now the homepage AND single blog posts.
+ *
+ * ⭐ EVERY ASSERTION IN THIS SECTION IS STILL TRUE AND STILL WANTED — the
+ *   popup on the homepage, and suppressed on the product page, the collection
+ *   page, the cart, the checkout and /teachers/. Only the HEADING claimed
+ *   something the code no longer does. The blog-post surface is asserted in
+ *   `test-popup-ab.php` §6 rather than duplicated here.
+ */
 
 list( $c164_hcode, $c164_home ) = bhp_c164_get( home_url( '/' ) );
 bhp_c164_assert( 200 === $c164_hcode, "2: the homepage returns HTTP 200 (got {$c164_hcode})", $failures );

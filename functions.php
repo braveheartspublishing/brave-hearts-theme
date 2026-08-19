@@ -2413,6 +2413,37 @@ function bhp_should_show_parent_popup() {
  *    key 'A' or 'B' in `bhp_variant`, resolved here against this fixed
  *    whitelist. Same pattern, deliberately, as bhp_get_quiz_signup_routes()
  *    and bhp_get_capture_segment_routes().
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔ 1.19.267 (2026-08-19) — THE EXPERIMENT IS **OFF**, AND EVERYTHING FROM
+ *    HERE TO THE END OF THIS SECTION IS RETAINED DELIBERATELY.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * `parent-ab-popup.php` no longer emits an `abTest` config block, so the
+ * shared engine takes its pre-1.19.204 path: no cookie is read or written,
+ * no variant is assigned, and no `bhp_variant` field is rendered or posted.
+ * The map below, `bhp_resolve_popup_ab_variant()`, the cookie constant,
+ * `bhp_popup_ab_emphasise_free()`, `bhp_get_popup_ab_covers()` and the
+ * variant-tag filter at the end of this section are therefore UNREACHED from
+ * the popup.
+ *
+ * ⛔ THEY ARE NOT DELETED, FOR THREE SEPARATE REASONS, EACH SUFFICIENT:
+ *   1. The strings below are Andrew's approved 1.19.204 copy. Deleting
+ *      approved copy to turn a test off destroys the thing that makes
+ *      turning it back on a one-commit change instead of a reconstruction.
+ *   2. `bhp_resolve_popup_ab_variant()` is a WHITELIST. If a stale cached
+ *      page somewhere still posts a `bhp_variant`, the resolver is what
+ *      stops an attacker-supplied string becoming a Mailchimp tag. Removing
+ *      the guard before removing every possible caller is the wrong order.
+ *   3. The `Variant:` tags already exist in the live Mailchimp audience.
+ *      The filter that produces them is the only in-repo record of how those
+ *      historical tag strings were minted.
+ *
+ * ⚠ CONSEQUENCE, STATED PLAINLY: this is dormant code with no live caller
+ *   from the popup. It is dormant on purpose and it is cheap — nothing below
+ *   runs unless something asks it to. A future session that wants it gone
+ *   should remove it as its own decision, with Andrew's ruling on the
+ *   Mailchimp tag continuity, not as a side effect of a copy change.
  */
 const BHP_POPUP_AB_COOKIE = 'bhp_popup_ab';
 
@@ -2528,8 +2559,42 @@ function bhp_should_show_parent_ab_popup() {
      *    TOUCHED. This is a surface rule and nothing else, so the A/B test
      *    still measures the hook and `.claude/rules/funnels.md`'s isolation
      *    guarantees are exactly as they were.
+     *
+     * ═══════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.267 (2026-08-19, `CYCLE165-LD-ITERATE-3-POPUP-SIMPLE`) — THE
+     *    BLOG COMES BACK. HOMEPAGE **AND** BLOG POSTS; STILL NO SELLING
+     *    PAGES.
+     * ═══════════════════════════════════════════════════════════════════
+     *
+     * ⭐ THIS IS THE FLAG ABOVE BEING ANSWERED, NOT A NEW DECISION. 1.19.241
+     *    narrowed the surface to the homepage and said so in the ⚠ block
+     *    above: "blog traffic is a large share of this funnel's reach and
+     *    nobody has decided that it should lose the offer. FLAGGED for Andrew
+     *    rather than quietly widened back — the filter below is the one-line
+     *    way to return blog posts if he wants them." The scope now briefed
+     *    for this popup is homepage + blog posts and NOT the selling pages,
+     *    so the flag is discharged in the function rather than through the
+     *    filter, and the reasoning stays where the next reader will find it.
+     *
+     * ⛔ WHAT IS STILL EXCLUDED, AND THE EXCLUSION IS THE POINT: every
+     *    commercial-intent surface. `/complete-collection/`, single product
+     *    pages, `/shop/`, `/books/`, product archives, every page template
+     *    other than the front page, cart and checkout (already suppressed
+     *    upstream in `bhp_should_show_any_popup()`), `/teachers/` (above),
+     *    and both funnels' own landing and thank-you pages. Interrupting
+     *    somebody who is already reading a price is the one place a capture
+     *    overlay costs more than it earns — that finding
+     *    (`commerce-cx` / Pippin, `CYCLE164-CX` #3) is unchanged and this
+     *    release does not touch it.
+     *
+     * ⛔ `is_singular('post')` IS THE NARROWEST TEST THAT MEANS "A BLOG POST".
+     *    It is true for exactly one thing: a single post of the built-in
+     *    `post` type. It is FALSE for the blog index, for category, tag, date
+     *    and author archives, for pages, for products and for every custom
+     *    post type, so widening here cannot leak the popup onto an archive or
+     *    a product by accident.
      */
-    if (!is_front_page()) {
+    if (!is_front_page() && !is_singular('post')) {
         return false;
     }
 
