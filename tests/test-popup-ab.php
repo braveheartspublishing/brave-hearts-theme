@@ -114,8 +114,13 @@ bhp_ab_assert(
  *    gated mode's clothes. Declaring one here would restore the exact
  *    time-only path the ruling removed, and no other assertion in this file
  *    would notice. */
+/* ⚠ THE QUOTED KEY, NOT THE BARE WORD. The template's own docblock explains
+ *   at length why there is no fallback, so it names the key twice in prose. A
+ *   bare-substring test would trip on the explanation of the rule it is
+ *   testing — which is the exact defect this file's neighbours have been
+ *   caught by twice. Only a PHP array key can actually configure anything. */
 bhp_ab_assert(
-    false === strpos($tpl, 'fallbackDelay'),
+    false === strpos($tpl, "'fallbackDelay'"),
     'NO ungated fallback timer is configured — time alone can never open the popup',
     $failures
 );
@@ -393,8 +398,10 @@ bhp_ab_assert(
  * 4. THE EXPERIMENT IS OFF — AND REVERSIBLY SO
  * ================================================================== */
 
+/* ⚠ The quoted key again, and for the same reason: the docblock explains that
+ *   the block is absent, so it names it. */
 bhp_ab_assert(
-    false === strpos($tpl, 'abTest') && false === strpos($tpl, 'BHP_POPUP_AB_COOKIE'),
+    false === strpos($tpl, "'abTest'") && false === strpos($tpl, 'BHP_POPUP_AB_COOKIE'),
     'the template declares no abTest block — the engine takes its pre-experiment path',
     $failures
 );
