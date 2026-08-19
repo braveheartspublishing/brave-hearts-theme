@@ -89,7 +89,7 @@ Tags: woocommerce, children, books, education
      failed on ELEVEN of the fourteen grounds, including `--color-parchment`
      (#f1e7d2) and `--expedition-parchment-light` (#f8f3e9), which are the two
      grounds most of this site is actually painted on. Two of those failures
-     were rendering live and were caught by Pippin's (`commerce-cx`) aesthetics
+     were rendering live and were caught by the `commerce-cx` aesthetics
      audit §2.2 as `#9a6a00 on #f8f3e9  4.28:1` and `#9a6a00 on #f2e4cd  3.77:1`.
 
      WHY #805800 AND NOT SOMETHING LIGHTER: it is the shallowest value in this
@@ -174,14 +174,14 @@ Tags: woocommerce, children, books, education
      ⭐⭐ 1.19.266 — THE ONE HEADING SCALE
      `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS`, audit §8a item 4.
 
-     BEFORE (measured by Pippin on staging 1.19.264, `innerWidth`
+     BEFORE (measured by `commerce-cx` on staging 1.19.264, `innerWidth`
      asserted, all 83 pages): the H1 took SIX different values at
      390 — 51.2px on 68 pages, 24.8px on the 7 product pages,
      32px on `/`, 30px on the four kit/audience pages, 29.6px on
      cart/checkout, 23.2px on the kit thank-you. Only 7 of 83 sat
      inside the rubric's 28–40px band. At 1440 the same six became
      96 / 72 / 50.4 / 44 / 41.6px. For scale: the loudest
-     children's publisher in Boromir's measured reference set runs
+     children's publisher in the `ads-knowledge` measured reference set runs
      68px at 1440; the three sites his KB §6 names as the trusted
      exemplars run 30px, 40px and no H1 at all.
 
@@ -232,7 +232,7 @@ Tags: woocommerce, children, books, education
      minimum. The guarantee, the shipping promise, the five-star line, the
      Kirkus mark, the founder's own name and the format notes were all set
      between 9px and 12.8px beside an 18px body — the company's proof
-     typeset as footnotes. Boromir's KB §9 and the rubric both put the
+     typeset as footnotes. The `ads-knowledge` KB §9 and the rubric both put the
      floor at 14. What this token does NOT do is raise every small label on
      the site: the uppercase eyebrows (10.88px, 41 pages) and the tuned
      one-line breadcrumb are deliberately left alone and are parked in the
@@ -10659,8 +10659,9 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
     border: 1px solid var(--color-accent);
     /* ⭐ 1.19.266 (audit §8a item 5, rubric row 7): was 2px. This control
        shipped in Direction 1 step 1 and was the ONLY 2px radius on any button
-       on the site -- 238 of the buttons the audit measured are 8px. Boromir's
-       KB §3.3 records it as "two radii, two fills" on one page; two fills
+       on the site -- 238 of the buttons the audit measured are 8px. The
+       `ads-knowledge` KB §3.3 records it as "two radii, two fills" on one
+       page; two fills
        (forest primary, gold secondary) is inside the rubric's allowance, two
        radii is not. --radius-md IS 8px; the literal is not restated. */
     border-radius: var(--radius-md);

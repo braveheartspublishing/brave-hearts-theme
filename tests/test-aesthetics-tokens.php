@@ -3,9 +3,9 @@
  * Brave Hearts — THE AESTHETICS TOKEN PASS.
  *
  * CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS (2026-08-19, theme 1.19.266 /
- * bundle 1.8.60). The nine token-level items of Pippin's (`commerce-cx`)
- * AESTHETICS-AUDIT-STAGING-1.19.264-2026-08-19 §8a, scored against Boromir's
- * (`ads-knowledge`) AESTHETICS-AUDIT-RUBRIC-2026-08-19 rows 1-7 and 11.
+ * bundle 1.8.60). The nine token-level items of the `commerce-cx`
+ * AESTHETICS-AUDIT-STAGING-1.19.264-2026-08-19 §8a, scored against the
+ * `ads-knowledge` AESTHETICS-AUDIT-RUBRIC-2026-08-19 rows 1-7 and 11.
  *
  * Run via WP-CLI:
  *   wp eval-file wp-content/themes/brave-hearts-theme-deploy-explorer-expedition-guides/tests/test-aesthetics-tokens.php --user=1
@@ -129,7 +129,7 @@ bhp_aes_assert( '' !== $consent && '' !== $footer && '' !== $fmtpart, '§0.3 the
 /* ═══════════════════════════════════════════════════════════════════════════
    §1 · THE CONTRAST ARITHMETIC — computed here, not quoted from a document
    ═══════════════════════════════════════════════════════════════════════════
-   The fourteen light grounds below are the ones Pippin's probe recorded
+   The fourteen light grounds below are the ones the `commerce-cx` probe recorded
    ACTUALLY RENDERING gold or muted text on staging 1.19.264 — not a designer's
    palette list. `#efdcc1` is the darkest of them and is the binding case. */
 

@@ -105,9 +105,25 @@ foreach (
 	bhp_it1_assert( '' !== $src, "§0 {$file} is readable and non-empty", $failures );
 }
 
+/* ⚠ AMENDED BY `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS` (theme 1.19.266),
+ *   and the amendment is disclosed here rather than made quietly, because this
+ *   is another workstream's suite.
+ *
+ * IT READ `'1.19.265' === ...`. That is an equality on a version that only
+ * ever moves forward, so this assertion was guaranteed to fail on the very
+ * next release even though every fix it guards was still present and correct —
+ * which is what happened, on the next release, forty minutes later.
+ *
+ * WHAT THE ASSERTION IS ACTUALLY FOR is "the build carrying CX-018/020/021 is
+ * the one installed", and `version_compare( ..., '>=' )` says that without
+ * also asserting that no one has shipped since. The floor is still 1.19.265,
+ * so a rollback below it fails exactly as before. Nothing else in this file is
+ * touched, and all 44 of its other assertions were green on 1.19.266.
+ */
+$bhp_it1_ver = wp_get_theme()->get( 'Version' );
 bhp_it1_assert(
-	'1.19.265' === wp_get_theme()->get( 'Version' ),
-	'§0.1 the active theme reports version 1.19.265',
+	version_compare( $bhp_it1_ver, '1.19.265', '>=' ),
+	"§0.1 the active theme is at or after 1.19.265, the release these fixes shipped in (found {$bhp_it1_ver})",
 	$failures
 );
 

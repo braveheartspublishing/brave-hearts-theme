@@ -98,45 +98,55 @@ body:not(.home) article.single-post.section {
 }
 
 /* ==========================================================================
-   ⭐⭐ 1.19.266 (2026-08-19) — `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS`.
+   1.19.266 (2026-08-19) — `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS`.
    THREE EYEBROWS IN THIS FILE WERE GOLD-ON-CREAM AND FAILED AA BADLY.
 
-   MEASURED on staging 1.19.264 by Pippin (`commerce-cx`), all 83 URLs at an
-   asserted innerWidth of 390, contrast computed on the COMPOSITED rendered
-   pair, not on the declared token:
+   NO COLOUR VALUE IS WRITTEN ANYWHERE IN THIS COMMENT, DELIBERATELY.
+   `tests/test-blog-post-template.php` §8.4 asserts that this stylesheet
+   declares no hex literal at all — the guarantee behind Direction 1 step 2's
+   "NO NEW HUE IS DECLARED IN THIS FILE" — and it scans the FILE, not just its
+   declarations. A comment full of hexes would defeat a rail that exists for a
+   good reason, and the first draft of this block did exactly that and failed
+   the suite. The values live on the tokens in `style.css`, which is where a
+   reader who needs them should be looking anyway.
+
+   MEASURED on staging 1.19.264 by `commerce-cx`, all 83 URLs at an asserted
+   innerWidth of 390, contrast computed on the COMPOSITED rendered pair rather
+   than on the declared token:
 
        "THE BOOKS BEHIND THIS JOURNAL" / "THE BOOK THIS CAME FROM"
-           #d9a45f on #fffaf0   2.14 : 1   at 9.92px   — 42 pages
+           `--expedition-gold` on `--color-ivory`      2.14 : 1  at 9.92px  — 42 pages
        "BEFORE YOU GO"
-           #d9a45f on #f1e7d2   1.81 : 1   at 9.92px   — 36 pages
+           `--expedition-gold` on `--color-parchment`  1.81 : 1  at 9.92px  — 36 pages
 
    AA for body-sized text is 4.5:1. 1.81:1 is not "a bit low"; it is roughly
    the contrast of a mid-grey on a slightly different mid-grey. Both labels
    ship with Direction 1 step 2, so this is a REGRESSION THIS BUILD
-   INTRODUCED, on a gate row, on 38.6% of human page views. It should not
-   have shipped and it is fixed here before the Direction 1 production deploy.
+   INTRODUCED, on a gate row, on 38.6% of human page views. It should not have
+   shipped and it is fixed here before the Direction 1 production deploy.
 
    THE FIX IS THE TOKEN THAT ALREADY EXISTED FOR THIS EXACT PURPOSE.
    `--color-gold-deep` is documented in `style.css` as the light-ground gold;
-   these three rules simply never used it. 1.19.266 also DEEPENS that token
-   (#9A6A00 -> #805800) because at #9A6A00 it did not clear 4.5:1 on any of
-   this site's creams either — the full arithmetic is on the token itself.
+   these three rules simply never used it. 1.19.266 also DEEPENS that token,
+   because at its previous value it did not clear 4.5:1 on any of this site's
+   creams either — the full arithmetic is recorded on the token itself.
 
    AFTER, computed against the same two composited grounds:
-       #805800 on #fffaf0   6.09 : 1   PASS
-       #805800 on #f1e7d2   5.16 : 1   PASS
+       `--expedition-gold-deep` on `--color-ivory`      6.09 : 1  PASS
+       `--expedition-gold-deep` on `--color-parchment`  5.16 : 1  PASS
 
    SIZE: 0.62rem (9.92px) -> 0.8rem (12.8px). The brief's floor for these two
    labels is >=12px. It is NOT 14px, and that is measured rather than
    conceded: "THE BOOKS BEHIND THIS JOURNAL" is 29 characters at 0.14em
    tracking, which at 14px measures ~309px inside the rail's ~332px padded
    column at 390 — under 25px of clearance, i.e. one longer book title away
-   from wrapping a label that is meant to be one line. 12.8px measures ~283px
-   and holds. The audit's 8a-1 asked for >=14px; the difference is recorded
-   here rather than silently taken.
+   from wrapping a label that is meant to hold one line. 12.8px measures
+   ~283px and holds. The audit's 8a-1 asked for >=14px; the difference is
+   recorded here rather than silently taken.
 
-   ⛔ NO HUE IS INTRODUCED. #805800 is the same 41° hue as #9A6A00, which is
-      the same family as #D9A45F. Only the value moved.
+   NO HUE IS INTRODUCED. The deepened token is the same 41-degree hue as the
+   value it replaces, which is the same family as the brand gold. Only the
+   value moved, and it moved in `style.css`.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------

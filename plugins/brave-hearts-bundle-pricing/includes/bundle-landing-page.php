@@ -811,7 +811,7 @@ function bhp_bundle_render_landing_cold_open() {
 		 * ⭐⭐ 1.8.60 (2026-08-19, `CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS`) —
 		 *     THIS WAS AN <h2> AND IS NOW A <p>. THE WORDS ARE UNTOUCHED.
 		 *
-		 * `CYCLE165-BOR-206`, CONFIRMED LIVE by Pippin at both 390 and 1440 on
+		 * `CYCLE165-BOR-206`, CONFIRMED LIVE by `commerce-cx` at both 390 and 1440 on
 		 * staging 1.19.264: `/complete-collection/` printed TWO <h2> elements
 		 * BEFORE its <h1> in DOM order — this one, and the two screen-reader
 		 * panel titles below. A document that opens with a level-2 heading and

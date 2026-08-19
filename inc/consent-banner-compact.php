@@ -402,7 +402,7 @@ function bhp_consent_banner_compact_css() {
       consented to. If a future change here would alter any of that, it is
       not a styling change and it is not this file's to make.
 
-   THE TWO DEFECTS, MEASURED by Pippin on staging 1.19.264 at an asserted
+   THE TWO DEFECTS, MEASURED by `commerce-cx` on staging 1.19.264 at an asserted
    innerWidth of 390 with cookies cleared, on 83 of 83 pages:
      - the message renders as "I use cookies to keep t…" — one line, 10.5px,
        ellipsised, i.e. a consent notice nobody can read;

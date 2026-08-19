@@ -117,7 +117,8 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
        * asserted 390): "Explore", "Learn" and "Connect" render at 10.5px
        * against an 18px body — i.e. THREE headings smaller than body text,
        * on all 83 pages, 249 instances sitewide. That is the rubric's row-1
-       * "no heading smaller than body" failure, and Pippin's audit §8a item 6
+       * "no heading smaller than body" failure, and the `commerce-cx` aesthetics
+       * audit §8a item 6
        * is it. (The audit describes it as "an H3 at 10.5px on the homepage";
        * the measurement says H2, three of them, on every page. The finding is
        * right, the label was not — recorded rather than quietly corrected.)
