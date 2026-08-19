@@ -183,7 +183,94 @@
 		margin-top: 0;
 	}
 
-	/* ---- 3. Buy box, tightened so the button clears the fold ---------- */
+	/* ---- 3. Inside the buy box: one OFFER above the fold, not two ----- */
+
+	/*
+	 * ⭐⭐ MEASURED, THEN FIXED. The first working build of this reorder put all
+	 *     FOUR format cards above ADD TO CART, and the canonical above-fold
+	 *     probe — step 1's own, reused verbatim so the numbers compare — then
+	 *     counted TWO buy controls at 390 on every book page:
+	 *
+	 *         buy: "BEST VALUE COMPLETE COLLECTION $31.99"
+	 *         buy: "ADD PAPERBACK TO CART"
+	 *
+	 *     That is CRO rubric row 1 failing ("a second buy CTA above the fold =
+	 *     FAIL — replace, do not add"), introduced by the reorder itself: the
+	 *     collection card used to sit at 881, below the fold, and the buy box
+	 *     moving up carried it over the line. Fixing the first screen by adding
+	 *     a competing offer to it would have traded one rubric row for another.
+	 *
+	 * ⭐ WHAT MOVES, AND WHY THIS SPLIT AND NOT ANOTHER. The brief names the two
+	 *    PHYSICAL formats — "paperback first, hardcover one tap" — and those two
+	 *    stay above the button, because choosing between them is choosing what
+	 *    the button will add. KINDLE and COMPLETE COLLECTION move BELOW it:
+	 *    Kindle leaves the site entirely, and the collection is a different,
+	 *    larger purchase. Neither is a format of the book on the page; both are
+	 *    separate offers. The direction board's own 390 mock shows exactly this
+	 *    — one buy control in the first screen, the format pills lower down.
+	 *
+	 * ⛔ NOTHING IS HIDDEN OR REMOVED. All four cards render, all four are
+	 *    reachable by tap and by keyboard, the payload is untouched, and the
+	 *    order is restored at 601px. This is a position change at one
+	 *    breakpoint, not a change to what is offered.
+	 *
+	 * ⚠ REPORTED TO THE REVIEWER AS A JUDGEMENT, NOT PRESENTED AS APPROVED. The
+	 *   brief says "price + format selector -> Add to Cart"; taken to mean all
+	 *   four cards, that wording and "assert exactly one primary at 390" cannot
+	 *   both hold. This resolves it in the direction the board and the rubric
+	 *   agree on and flags it (`CYCLE165-LD-12`).
+	 *
+	 * ⚠ `display: contents` ON THE CARD GRID, and the same caveat as §1: the
+	 *   grid is a `role="group"` labelled by the heading. Modern engines keep a
+	 *   semantic element in the accessibility tree when it generates no box
+	 *   (the old removal bug is fixed); the group and its label were re-read
+	 *   from the live accessibility tree after deploy rather than assumed.
+	 */
+	body.single-product.woocommerce div.product .bhp-formats {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		column-gap: 10px;
+		row-gap: 0;
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats > * {
+		order: 9;
+		grid-column: 1 / -1;
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats__grid {
+		display: contents;
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats__heading,
+	body.single-product.woocommerce div.product .bhp-formats__paperback-only {
+		order: 1;
+	}
+
+	/* The two physical formats: side by side, above the button. */
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="paperback"],
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="hardcover"] {
+		order: 2;
+		grid-column: auto;
+		margin-bottom: 10px;
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats__selected-price { order: 3; }
+	body.single-product.woocommerce div.product .bhp-formats__cta-wrap       { order: 4; }
+	body.single-product.woocommerce div.product .bhp-formats__spec           { order: 5; }
+	body.single-product.woocommerce div.product .bhp-formats__note           { order: 6; }
+
+	/* The two separate offers: same controls, one screen lower. */
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="kindle"],
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="collection"] {
+		order: 7;
+		grid-column: auto;
+		margin-top: 10px;
+	}
+
+	body.single-product.woocommerce div.product .bhp-product-guarantee { order: 8; }
+
+	/* ---- 3b. Buy box, tightened so the button clears the fold --------- */
 
 	body.single-product.woocommerce div.product .bhp-formats__heading {
 		margin: 0 0 0.55rem;

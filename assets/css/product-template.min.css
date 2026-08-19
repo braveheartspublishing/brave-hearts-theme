@@ -1,5 +1,5 @@
 /*! Built from product-template.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 50c3b123a26825454390aba062cdeafa
+    source-md5: 7c4ed7371cba2215c1b6c66b725f0fe6
     Comments stripped for transfer size; the source file is canonical. */
 @media (max-width: 600px) {
 body.single-product.woocommerce div.product {
@@ -53,6 +53,40 @@ body.single-product.woocommerce div.product > .summary > form.cart {
 		order: 3;
 		margin-top: 0;
 	}
+body.single-product.woocommerce div.product .bhp-formats {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		column-gap: 10px;
+		row-gap: 0;
+	}
+body.single-product.woocommerce div.product .bhp-formats > * {
+		order: 9;
+		grid-column: 1 / -1;
+	}
+body.single-product.woocommerce div.product .bhp-formats__grid {
+		display: contents;
+	}
+body.single-product.woocommerce div.product .bhp-formats__heading,
+	body.single-product.woocommerce div.product .bhp-formats__paperback-only {
+		order: 1;
+	}
+body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="paperback"],
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="hardcover"] {
+		order: 2;
+		grid-column: auto;
+		margin-bottom: 10px;
+	}
+body.single-product.woocommerce div.product .bhp-formats__selected-price { order: 3; }
+	body.single-product.woocommerce div.product .bhp-formats__cta-wrap       { order: 4; }
+	body.single-product.woocommerce div.product .bhp-formats__spec           { order: 5; }
+	body.single-product.woocommerce div.product .bhp-formats__note           { order: 6; }
+body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="kindle"],
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="collection"] {
+		order: 7;
+		grid-column: auto;
+		margin-top: 10px;
+	}
+body.single-product.woocommerce div.product .bhp-product-guarantee { order: 8; }
 body.single-product.woocommerce div.product .bhp-formats__heading {
 		margin: 0 0 0.55rem;
 		font-size: 0.72rem;
