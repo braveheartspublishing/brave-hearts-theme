@@ -1,0 +1,339 @@
+/* ==========================================================================
+   THE BLOG POST TEMPLATE — Direction 1, "Expedition field notes", step 2 of 4.
+   Theme 1.19.261. Loaded by `bhp_blog_template_enqueue()` on single posts only.
+
+   Companion to `inc/blog-post-template.php`, which carries the reasoning. This
+   file carries only the reasoning that is specifically about the CSS.
+
+   ⛔ NO NEW HUE IS DECLARED IN THIS FILE. Every colour below is an existing
+      `--expedition-*` custom property or an `rgba()` of one of them. The
+      direction is "same suit, richer texture", not a repaint.
+
+   ⛔ NO RULE HERE TOUCHES THE SITE HEADER. Step 1's `.bhp-header-offer` and the
+      desktop `.header-expedition-cta` are not named anywhere in this file, and
+      the header is byte-identical to 1.19.260 on every page including this one.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1 · THE DEAD BAND
+   --------------------------------------------------------------------------
+   MEASURED on staging2 1.19.260, headless Chrome, asserted innerWidth 390,
+   scrollY 0. 289 px from the bottom of the site header to the top of the H1:
+
+       80 px   `body:not(.home) .section` top padding
+       92 px   the breadcrumb, wrapped to four lines because its last crumb is
+               the full post title -- the same words as the H1 100 px below it
+       36 px   gap
+       39 px   the meta line, two lines, ending in the word "Uncategorized"
+       11 px   gap
+       18 px   the eyebrow
+       13 px   gap
+
+   Every one of those seven rows is addressed below or in `single.php`. The
+   target is <= 60 px, and the two survivors are the breadcrumb (one line) and
+   the eyebrow, which are content rather than emptiness.
+
+   ⚠ THE SELECTOR IS DELIBERATELY MORE SPECIFIC THAN THE RULE IT OVERRIDES.
+     `body:not(.home) .section` is (0,2,1); `body:not(.home) article.single-post.section`
+     is (0,2,2). Matching on source order alone would break the moment
+     `style.css` is reordered.
+   -------------------------------------------------------------------------- */
+
+body:not(.home) article.single-post.section {
+  padding-block-start: clamp(0.5rem, 2vw, 2rem);
+}
+
+/* The breadcrumb, compact.
+
+   The last crumb is the post's own title. It is kept IN THE ACCESSIBILITY TREE
+   and taken out of the visual flow, rather than deleted: a screen-reader user
+   still hears the full trail with its `aria-current="page"`, and a sighted
+   reader is not shown the headline twice within 100 px. Removing it from the
+   markup would have been simpler and worse. */
+.single-post .guide-breadcrumbs {
+  margin-block: 0 clamp(0.5rem, 1.5vw, 0.85rem);
+}
+.single-post .guide-breadcrumbs ol {
+  gap: 0.35rem;
+  align-items: baseline;
+}
+.single-post .guide-breadcrumbs li:last-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.single-post .guide-breadcrumbs li:nth-last-child(2)::after {
+  content: none;                       /* no arrow pointing at a hidden crumb */
+}
+.single-post .guide-breadcrumbs li:not(:last-child)::after {
+  margin-left: 0.35rem;
+}
+
+/* --------------------------------------------------------------------------
+   2 · THE MASTHEAD — eyebrow, headline, deck, meta
+   -------------------------------------------------------------------------- */
+
+.post-header--field-note {
+  position: relative;
+  z-index: 1;                          /* above the plate, which paints at 0 */
+  margin-bottom: clamp(1.5rem, 4vw, var(--space-10));
+  text-align: left;                    /* the field-note voice is not centred */
+}
+
+.post-header--field-note .bhp-post-eyebrow {
+  margin: 0 0 clamp(0.35rem, 1vw, 0.6rem);
+  color: var(--expedition-gold);
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.post-header--field-note .post-header__title {
+  margin: 0;
+  color: var(--expedition-navy);
+  text-wrap: balance;
+}
+
+.post-header--field-note .bhp-post-deck {
+  max-width: 52ch;
+  margin: clamp(0.6rem, 2vw, 1rem) 0 0;
+  color: var(--expedition-navy);
+  font-family: var(--font-display);
+  font-size: clamp(1.02rem, 1.1rem + 0.4vw, 1.35rem);
+  font-style: italic;
+  line-height: 1.45;
+  opacity: 0.86;
+}
+
+.post-header--field-note .post-header__meta {
+  margin: clamp(0.7rem, 2vw, 1.1rem) 0 0;
+  color: var(--expedition-muted);
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.post-header--field-note .post-header__image {
+  margin-top: clamp(1.25rem, 4vw, 2rem);
+}
+
+/* --------------------------------------------------------------------------
+   3 · THE PLATE — one faint line-art mark
+   --------------------------------------------------------------------------
+   ⛔ IT IS ONE MARK, NOT A TILE. `background-repeat: no-repeat` is the rule the
+      brief's "one mark per screen" constraint turns on: a repeating plate on a
+      844 px-tall phone would stack two or three of them into a single viewport.
+
+   ⛔ IT CANNOT AFFECT LAYOUT OR INPUT. `position: absolute` takes it out of
+      flow, `pointer-events: none` keeps it from swallowing a tap on the
+      headline, and it has no intrinsic size, so its CLS contribution is zero.
+
+   The ink is `--expedition-navy` baked into the SVG file (see
+   `bhp_blog_plate_ink()` for why it has to be, and the test that stops the two
+   drifting). Faintness is carried by `opacity` here rather than by a lighter
+   colour in the file, so the one asset can be re-toned from CSS. */
+.bhp-post-plate {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  width: min(62%, 420px);
+  height: clamp(240px, 46vw, 460px);
+  background-image: url('../img/plate-deep-sea.svg');
+  background-position: top right;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.07;
+  pointer-events: none;
+}
+article.single-post { position: relative; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* No animation is declared anywhere in this file. The block exists so that a
+     future pass adding one has an obvious place to put it, and so that the
+     absence is deliberate rather than accidental. */
+}
+
+/* --------------------------------------------------------------------------
+   4 · THE BOOK RAIL
+   --------------------------------------------------------------------------
+   Injected into the article body by `bhp_blog_inject_rail()`, so it sits INSIDE
+   `.entry-content .flow`, whose owl selector would otherwise give it the body
+   paragraph rhythm. The margins below are declared with enough specificity to
+   win that, deliberately: this block wants more air than a paragraph.
+
+   ⛔ IT MUST NOT BECOME A SECOND ABOVE-FOLD PRIMARY. Placement is the guard,
+      not styling -- `bhp_blog_rail_offset()` puts it after the first useful
+      answer. Nothing here is sticky, fixed, or transformed up the page, and
+      that is a requirement rather than an oversight. */
+.entry-content .bhp-book-rail,
+.bhp-book-rail {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(0.75rem, 3vw, 1.25rem);
+  align-items: center;
+  margin-block: clamp(1.75rem, 5vw, 2.75rem);
+  padding: clamp(0.85rem, 3vw, 1.25rem);
+  border: 1px solid var(--expedition-border);
+  border-radius: 2px;
+  background: rgba(255, 250, 240, 0.85);
+  box-shadow: 0 12px 34px rgba(53, 43, 27, 0.07);
+}
+
+.bhp-book-rail__cover {
+  display: block;
+  width: clamp(58px, 16vw, 84px);
+  line-height: 0;
+}
+.bhp-book-rail__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+  box-shadow: 0 6px 18px rgba(7, 21, 34, 0.18);
+}
+
+.bhp-book-rail__body { min-width: 0; }
+
+.bhp-book-rail__eyebrow {
+  margin: 0 0 0.2rem;
+  color: var(--expedition-gold);
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+.bhp-book-rail__title {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 1.1rem + 0.9vw, 1.5rem);
+  line-height: 1.15;
+}
+.bhp-book-rail__title a {
+  color: var(--expedition-navy);
+  text-decoration: none;
+}
+.bhp-book-rail__title a:hover,
+.bhp-book-rail__title a:focus-visible { text-decoration: underline; }
+
+.bhp-book-rail__facts {
+  margin: 0;
+  color: var(--expedition-muted);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+.bhp-book-rail__price { color: var(--expedition-navy); font-weight: 700; }
+
+/* The CTA takes the full width of its own row at 390 so it clears 44 px without
+   competing with the cover for horizontal space. WCAG 2.5.5 / Apple HIG /
+   Material all land between 44 px and 48 px for a primary; 48 px is chosen so
+   the rail's control is never the smallest primary on the page. */
+.entry-content .bhp-book-rail__cta,
+.bhp-book-rail__cta {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin: 0;
+  padding-inline: 1.25rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+@media (min-width: 640px) {
+  .entry-content .bhp-book-rail,
+  .bhp-book-rail {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .entry-content .bhp-book-rail__cta,
+  .bhp-book-rail__cta {
+    grid-column: auto;
+    white-space: nowrap;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5 · THE END-OF-POST CAPTURE
+   --------------------------------------------------------------------------
+   ⛔ 16 px MINIMUM INPUT FONT SIZE IS NOT A TASTE DECISION. iOS Safari zooms the
+      whole page when a focused input's font-size is under 16 px, which on a
+      390 px viewport throws the reader into a horizontally scrolling document
+      mid-signup. The `!important` is load-bearing: `.acquisition-form__field
+      input` carries its own size from `style.css` and this is the one property
+      that must not lose that fight. */
+.bhp-post-capture {
+  margin-block: clamp(2rem, 6vw, 3.25rem) 0;
+  padding: clamp(1.1rem, 4vw, 2rem);
+  border: 1px solid var(--expedition-border);
+  border-radius: 2px;
+  background: var(--expedition-parchment);
+}
+
+.bhp-post-capture__eyebrow {
+  margin: 0 0 0.3rem;
+  color: var(--expedition-gold);
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.bhp-post-capture__title {
+  margin: 0 0 0.5rem;
+  color: var(--expedition-navy);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 1.2rem + 1.2vw, 1.9rem);
+  line-height: 1.15;
+}
+.bhp-post-capture__reason {
+  max-width: 56ch;
+  margin: 0 0 clamp(0.9rem, 3vw, 1.25rem);
+  color: var(--expedition-navy);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  opacity: 0.9;
+}
+
+.bhp-post-capture .acquisition-form__field input {
+  min-height: 48px;
+  font-size: 16px !important;
+}
+.bhp-post-capture .acquisition-form__submit {
+  min-height: 48px;
+}
+.bhp-post-capture .acquisition-form__privacy {
+  margin-top: 0.6rem;
+  color: var(--expedition-muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   6 · OVERFLOW GUARD
+   --------------------------------------------------------------------------
+   Two of the three blocks above contain content whose intrinsic width this
+   template does not control -- a product title, and a live price string. A grid
+   child defaults to `min-width: auto`, which refuses to shrink below its
+   content and pushes the document wider than the viewport. `minmax(0, 1fr)`
+   above handles the columns; this handles anything a future caller adds. */
+.bhp-book-rail *,
+.bhp-post-capture * { min-width: 0; }
+.bhp-book-rail,
+.bhp-post-capture { max-width: 100%; }

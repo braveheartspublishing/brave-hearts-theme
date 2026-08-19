@@ -3433,6 +3433,12 @@ require_once get_template_directory() . '/inc/collection-cta.php';
 // order they render, and after book-formats.php/the bundle plugin so the live
 // price helpers exist by the time header.php calls the renderer.
 require_once get_template_directory() . '/inc/header-offer.php';
+// 1.19.261 — the blog post template (CYCLE165-LD-DIRECTION1-STEP2-BLOG), step 2
+// of the same board build. Loaded AFTER header-offer.php because its whole
+// placement rule is "below whatever step 1 put above the fold", and after
+// book-formats.php / the bundle plugin so bhp_book_has_look_inside() and
+// bhp_bundle_landing_price_facts() exist when the rail resolves its facts.
+require_once get_template_directory() . '/inc/blog-post-template.php';
 require_once get_template_directory() . '/inc/amazon-reviews.php';
 // Native customer reviews (2026-08-03): the on-page "Write a Review for …"
 // section beneath the Kirkus block, the /review/<slug>/ two-click email
