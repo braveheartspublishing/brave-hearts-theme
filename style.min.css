@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: abd445f68ca4fe4f6ccba1f1124c7191
+    source-md5: ce2c606e08e4c005ada12909f0881b66
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -5086,8 +5086,7 @@ margin-inline: 0 !important;
   border-radius: var(--radius-sm);
   background: var(--color-white);
   font-family: var(--font-ui);
-font-size: 1rem;
-  color: var(--color-ink);
+color: var(--color-ink);
 }
 .acquisition-form input:not([type='hidden']),
 .acquisition-form select,

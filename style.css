@@ -7131,28 +7131,55 @@ body.bhp-consent-banner-visible #bhp-floating-cart {
   border-radius: var(--radius-sm);
   background: var(--color-white);
   font-family: var(--font-ui);
-  /* ⭐ 1.19.265 (2026-08-19, CYCLE165-LD-ITERATE-1-CRO-FIXES) — CX-020.
-     WAS `var(--text-sm)`, which computes to 14.4px. MEASURED on staging2 at
-     1.19.264, headless Chrome, iPhone UA, `window.innerWidth` asserted 390,
-     on `/`, the Mariana paperback product page and `/complete-collection/`:
-     `getComputedStyle(select).fontSize` = "14.4px" on all three.
-     Mobile Safari ZOOMS THE PAGE when a form control under 16px takes focus,
-     and it does not zoom back out. This select is the FIRST control in the
-     sitewide capture form, so the one interaction that starts a lead began by
-     throwing the layout out — on 69 of the 83 audited pages.
-     16px is the iOS threshold exactly; it is a floor, not a size choice.
-     ⛔ The two text inputs in this form were measured in the same pass and
-        already render at 18px. Nothing else in the form changes. */
-  font-size: 1rem;
+  /* ⛔ NO `font-size` HERE ON PURPOSE — see CX-020 immediately below, which is
+     the single place this form's control size is decided. This rule carried
+     `font-size: var(--text-sm)` until 1.19.265; that is the defect. */
   color: var(--color-ink);
 }
 
-/* The same floor, stated once for the whole capture form, so a control added
-   later cannot reintroduce CX-020 silently. It raises nothing that is already
-   >=16px: `font-size` here is a MINIMUM expressed as a fallback, and every
-   rule above that sets a larger size on a specific control still wins by
-   specificity or by order. Verified after deploy by re-reading the computed
-   size of every visible control in the form at an asserted 390. */
+/* ⭐ 1.19.265 (2026-08-19, CYCLE165-LD-ITERATE-1-CRO-FIXES) — CX-020.
+   NO CONTROL IN THE CAPTURE FORM MAY RENDER UNDER 16px, BECAUSE MOBILE SAFARI
+   ZOOMS THE PAGE WHEN ONE UNDER 16px TAKES FOCUS — AND DOES NOT ZOOM BACK OUT.
+
+   MEASURED, NOT INFERRED. staging2 at theme 1.19.264, headless Chrome, iPhone
+   UA, `window.innerWidth` asserted 390, on `/`, the Mariana paperback product
+   page and `/complete-collection/`. `getComputedStyle().fontSize` for every
+   visible control in `form.acquisition-form`:
+
+       input[name=email]        18px    ok
+       input[name=bhp_website]  18px    ok (honeypot, aria-hidden)
+       select[name=bhp_segment] 14.4px  <-- zooms iOS, on all three pages
+
+   `<select name="bhp_segment">` is the FIRST control in the sitewide capture
+   form, so the single interaction that starts a lead began by throwing the
+   layout out. Pippin's audit found it on 69 of 83 pages and it was the sole
+   cause of rubric row 10 failing 68/68 at 390.
+
+   ⭐ ONE RULE, NOT TWO, AND THAT IS THE POINT. A first pass at this fix put
+      `font-size: 1rem` back on `.acquisition-form__field--segment select`
+      instead. That selector is (0,1,1) and this one is also (0,1,1) — a tie,
+      broken by source order, which this rule wins because it comes later. The
+      1rem was therefore DEAD CODE, and the measured result was 18px, not the
+      16px the declaration claimed. That is precisely the CX-018 defect class
+      (a rule that parses clean, matches, and never applies) and shipping a
+      second instance of it while fixing the first was not acceptable. The
+      `font-size` was removed from the segment rule instead, so exactly one
+      declaration decides this and its measured value is its stated value.
+
+   ⭐ WHAT `max(1rem, 1em)` MEANS HERE. In a `font-size` declaration `1em` is
+      the PARENT's computed size, so this reads: take the size the control
+      would have inherited, and never go below 16px. The email input inherits
+      18px and keeps 18px; the segment select was pinned at 14.4px and now
+      inherits 18px too. Both controls in the form finally render at the same
+      size, which they never did before.
+
+   ⭐ IT REACHES EVERY PLACEMENT. `template-parts/acquisition/signup-form.php`
+      puts `acquisition-form` on the `<form>` itself for every context, so the
+      footer capture, the inline blog capture and the popup are all covered by
+      this one rule rather than by three that can drift.
+
+   VERIFIED AFTER DEPLOY at an asserted 390 by re-reading the computed size of
+   every visible control on five pages: 18px / 18px / 18px, nothing under 16. */
 .acquisition-form input:not([type='hidden']),
 .acquisition-form select,
 .acquisition-form textarea {

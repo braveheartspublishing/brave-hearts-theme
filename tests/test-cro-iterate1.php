@@ -262,9 +262,17 @@ bhp_it1_assert(
 	$failures
 );
 
+/*
+ * ⭐ EXACTLY ONE DECLARATION DECIDES THIS FORM'S CONTROL SIZE.
+ *    The segment rule and the form-wide floor have IDENTICAL specificity —
+ *    (0,1,1) each — so a `font-size` in both is a tie broken by source order,
+ *    and the loser is dead code whose stated value is not the measured value.
+ *    A first pass at CX-020 shipped exactly that (declared 1rem, measured
+ *    18px). The remedy is not more specificity, it is one declaration.
+ */
 bhp_it1_assert(
-	'' !== $segment_rule && 1 === preg_match( '/font-size:\s*1rem\s*;/', $segment_rule ),
-	'§3.3 the segment select is 1rem (16px) — the iOS threshold exactly',
+	'' !== $segment_rule && 0 === preg_match( '/font-size/', $segment_rule ),
+	'§3.3 the segment select rule declares no font-size, so the form-wide floor is the only authority',
 	$failures
 );
 
