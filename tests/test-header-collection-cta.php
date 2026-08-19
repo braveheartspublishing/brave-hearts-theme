@@ -304,9 +304,32 @@ foreach ( $sitewide as $key => $url ) {
 		sprintf( '§3 %s — EXACTLY ONE dropdown anchor in the header (got %d)', $key, substr_count( $header, '<a class="site-nav__cta"' ) ),
 		$failures
 	);
+	/*
+	 * ⭐ UPDATED 1.19.260 (2026-08-19, `CYCLE165-LD-DIRECTION1-STEP1-HEADER`).
+	 *
+	 * ⛔ THE SUPERSEDED ASSERTION IS PRESERVED IMMEDIATELY BELOW rather than
+	 *    deleted, because a hardcoded `2` that silently became a hardcoded `3`
+	 *    would hide that a third header control now exists:
+	 *
+	 *        2 === substr_count( $header, '/complete-collection/' )
+	 *
+	 * WHAT MOVED: the header carries a THIRD control at the mobile nav
+	 * breakpoint — `.bhp-header-offer`, the compact offer button that lives
+	 * OUTSIDE the hamburger (`inc/header-offer.php`). It is an anchor to the same
+	 * destination, so the count went 2 -> 3 on every page that renders it.
+	 *
+	 * ⭐ THE INTENT OF THIS ASSERTION IS UNCHANGED AND IS NOW STATED DIRECTLY
+	 *    rather than encoded as a magic number: EVERY collection link in the
+	 *    header is one of the known controls, and NO header link routes anywhere
+	 *    else while claiming to be a collection CTA. Counting against the number
+	 *    of offer buttons actually present means this assertion keeps working on
+	 *    the pages where the offer is deliberately SUPPRESSED (the collection page
+	 *    itself, /cart/ and /checkout/), where the expected count is 2 again.
+	 */
+	$offers_in_header = substr_count( $header, '<a class="bhp-header-offer"' );
 	bhp_hcta_assert(
-		2 === substr_count( $header, '/complete-collection/' ),
-		sprintf( '§3 %s — both header CTAs route to the collection page (got %d)', $key, substr_count( $header, '/complete-collection/' ) ),
+		( 2 + $offers_in_header ) === substr_count( $header, '/complete-collection/' ),
+		sprintf( '§3 %s — both header CTAs plus %d offer button(s) route to the collection page, and nothing else does (got %d)', $key, $offers_in_header, substr_count( $header, '/complete-collection/' ) ),
 		$failures
 	);
 
