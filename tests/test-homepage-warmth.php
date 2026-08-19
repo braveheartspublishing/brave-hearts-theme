@@ -1331,7 +1331,22 @@ bhp_hw_assert(
 	'§1.10a the PASS8 block is present in style.css',
 	$failures
 );
-$p8_tail = ( false === $p8_pos ) ? '' : substr( $css_p7, $p8_pos );
+/* ⚠ BOUNDED BY PASS9 (1.19.252), AND THIS IS THE THIRD TIME THIS FILE HAS
+   LEARNED IT. The SUPERSEDED line, quoted rather than deleted:
+
+       $p8_tail = ( false === $p8_pos ) ? '' : substr( $css_p7, $p8_pos );
+
+   It sliced to the END OF THE FILE, so the instant PASS9 appended a block,
+   "PASS8's rules" silently began to include PASS9's. §1.10q and §1.10r are
+   NEGATIVE assertions over this slice — they would have started reporting a
+   LATER pass's declarations as PASS8's own, which is precisely how 1.8e and
+   1.9l went red on a correct build at PASS8. Bounded to its own block now. */
+$p9_pos  = strpos( $css_p7, 'PASS9 — 1.19.252' );
+$p8_tail = ( false === $p8_pos )
+	? ''
+	: ( false === $p9_pos
+		? substr( $css_p7, $p8_pos )
+		: substr( $css_p7, $p8_pos, $p9_pos - $p8_pos ) );
 
 /* ---- The covers -------------------------------------------------------
    150/110 = +36.4%, past the "at least 30-40%" he asked for at PASS7 and
@@ -1532,6 +1547,122 @@ bhp_hw_assert(
 		&& 0 === preg_match( '/padding-top:\s*2px/', $p8_tail_code )
 		&& 0 === preg_match( '/line-height:\s*1(\.0)?;/', $p8_tail_code ),
 	'§1.10r the two rejected trims (chip padding, H1 leading) are NOT in the shipped block',
+	$failures
+);
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PASS9 — §1.11: THE COVERS STOP TOUCHING THE CTA BUTTON ON A PHONE.
+
+   The founder, on 1.19.251, on his own phone:
+     "The books sites directly on the CTA button. I think it should be a little
+      space in between the button and the image"
+
+   ⛔ WHAT THIS SECTION CANNOT PROVE, for the fourth pass running and for the
+      same reason. It reads CSS text. IT CANNOT PROVE A PIXEL — and on THIS
+      change that limitation is the entire story, because the defect was
+      INVISIBLE to every layout-box measurement:
+
+        primary CTA bottom                 431.0
+        .home-hero__book-preview top       449.0   -> 18.0px of "clearance"
+        painted top, centre cover          429.0   -> 2.0px OVERLAP
+
+      PASS8 gives the centre cover `translateY(-12px)`, so the fan paints
+      higher than it lays out. The numbers that actually answer him — painted
+      clearance -2.0 -> +18.0 at an asserted window.innerWidth 390 /
+      innerHeight 664 — were measured by DOM read with getBoundingClientRect()
+      in a real browser and live in the build report, NOT here. An assertion
+      here claiming to have measured them would be claiming a check it never
+      ran.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+bhp_hw_assert(
+	'' !== $css_p7 && false !== $p9_pos,
+	'§1.11a the PASS9 block is present in style.css',
+	$failures
+);
+$p9_tail = ( false === $p9_pos ) ? '' : substr( $css_p7, $p9_pos );
+
+/* ---- THE ASSERTION THAT MATTERS MOST IN THIS SECTION -------------------
+   The COMPOUND SELECTOR is load-bearing and is not decoration. PASS5's own
+   note at style.css line ~9797 records that a simplified `.home #home-hero …`
+   at (1,2,0) MEASURED NO CHANGE AT ALL, because two rules further up the file
+   carry `#home-hero.home-hero--aside-after-title` at (1,4,0) and win
+   silently. If a later pass "tidies" this selector to a shorter one, the rule
+   stops applying, the covers land back on the button, and the page LOOKS
+   plausible — the exact silent regression this guards. */
+bhp_hw_assert(
+	'' !== $p9_tail
+		&& 1 === preg_match( '/@media\s*\(\s*max-width:\s*600px\s*\)/', $p9_tail )
+		&& 1 === preg_match(
+			'/\.home\s+#home-hero\.home-hero--aside-after-title\s+\.home-hero__content\s*>\s*\.home-hero__book-preview\s*\{\s*margin-top:\s*30px;\s*\}/',
+			$p9_tail
+		),
+	'§1.11b the fan margin is 30px at <=600px, ON THE (1,4,0) COMPOUND SELECTOR that actually wins',
+	$failures
+);
+
+/* The spacing is bought with MARGIN and nothing else. The one thing this build
+   was forbidden to do is shrink the covers to make room — that is the
+   complaint 1.19.251 was built to fix, and re-introducing it here would look
+   like a tidy. Asserted as an absence over the PASS9 block only. */
+$p9_tail_code = preg_replace( '#/\*.*?\*/#s', '', $p9_tail );
+bhp_hw_assert(
+	'' !== $p9_tail
+		&& 0 === preg_match( '/height:/', $p9_tail_code )
+		&& 0 === preg_match( '/transform:/', $p9_tail_code )
+		&& 0 === preg_match( '/font-size:/', $p9_tail_code )
+		&& 0 === preg_match( '/margin-(left|right):/', $p9_tail_code ),
+	'§1.11c PASS9 declares no height, transform, font-size or splay margin (no cover was shrunk to buy the space)',
+	$failures
+);
+
+/* PASS8's cover geometry must survive PASS9 untouched. §1.10b/c already assert
+   it inside PASS8's now-bounded slice; this asserts the pair did not get
+   RESTATED at a different value further down, which a bounded slice cannot
+   see and which would let the later value win on source order. */
+bhp_hw_assert(
+	'' !== $p9_tail
+		&& 0 === preg_match( '/height:\s*\d+px/', $p9_tail_code )
+		&& 0 === preg_match( '/-16\.36px/', $p9_tail_code ),
+	'§1.11d PASS9 does not restate PASS8\'s cover height or splay at a new value',
+	$failures
+);
+
+/* Nothing above 600px may be touched. The founder reported a PHONE defect and
+   the desktop hero was signed off at 1.19.251 (primary CTA bottom 464.0, hero
+   bottom 743.8, both re-measured identical after this build). A stray
+   min-width or a wider max-width in this block is how a phone fix reaches a
+   desktop nobody asked about. */
+bhp_hw_assert(
+	'' !== $p9_tail
+		&& 0 === preg_match( '/min-width:/', $p9_tail_code )
+		&& 1 === preg_match_all( '/@media/', $p9_tail_code ),
+	'§1.11e PASS9 contains exactly ONE media query and it is phone-only (no min-width, desktop untouched)',
+	$failures
+);
+
+/* Every earlier pass still underneath PASS9. */
+bhp_hw_assert(
+	'' !== $css_p7
+		&& false !== strpos( $css_p7, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS3' )
+		&& false !== strpos( $css_p7, 'PASS5 (2026-08-19, theme 1.19.248)' )
+		&& false !== strpos( $css_p7, 'PASS8 (2026-08-19, theme 1.19.251)' )
+		&& false !== strpos( $css_p7, 'F8a. Mobile hero fan' ),
+	'§1.11f PASS3, PASS5, PASS8 and F8a are all still present underneath PASS9',
+	$failures
+);
+
+/* The artefact, not the source. Editing style.css without rebuilding ships a
+   stale stylesheet to a phone — the exact defect 1.19.244 existed to fix, and
+   on this build it would mean the founder sees no change at all. */
+bhp_hw_assert(
+	is_string( $min_p7 )
+		&& 1 === preg_match(
+			'/\.home\s+#home-hero\.home-hero--aside-after-title\s+\.home-hero__content\s*>\s*\.home-hero__book-preview\s*\{\s*margin-top:\s*30px;\s*\}/',
+			$min_p7
+		),
+	'§1.11g style.min.css was REBUILT and carries the PASS9 fan margin',
 	$failures
 );
 
