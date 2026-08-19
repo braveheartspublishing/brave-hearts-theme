@@ -232,10 +232,10 @@ foreach ( array( 'field-marks.svg', 'plate-compass-rose.svg' ) as $asset ) {
 /*
  * The step-4 CSS block itself declares no colour at all.
  *
- * ⚠️ THE SLICE MUST START AT THE BANNER'S `/*`, NOT AT THE MARKER TEXT INSIDE
- *    IT. The marker sits on the banner's second line, so a slice starting
- *    there begins in the MIDDLE of a comment with no opening delimiter — and
- *    `preg_replace('#/\*.*?\*/#s')` would then leave the rest of that banner
+ * ⚠️ THE SLICE MUST START AT THE BANNER'S OPENING DELIMITER, NOT AT THE MARKER
+ *    TEXT INSIDE IT. The marker sits on the banner's second line, so a slice
+ *    starting there begins in the MIDDLE of a comment with no opener — and the
+ *    comment-stripping regex below would then leave the rest of that banner
  *    standing while stripping the NEXT comment instead. The first run of this
  *    suite failed exactly that way: §3.6 reported `#D9A45F` "declared" when
  *    the only occurrence was the banner sentence explaining that the assets
