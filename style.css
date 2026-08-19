@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.245
+Version: 1.19.246
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -9568,4 +9568,110 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   .home #home-hero .home-hero__invite {
     padding-block: .8rem;
   }
+}
+
+/* =========================================================================
+   CYCLE164-LD-HOMEPAGE-WARMTH-PASS4 (1.19.246, 2026-08-19)
+   THE DESKTOP CTA AND THE THREE COVERS CLEAR A REAL LAPTOP'S BROWSER CHROME.
+
+   Andrew, on 1.19.244/245 (RELAYED through the Chief of Staff, NOT witnessed
+   first-hand by this agent), verbatim:
+     "The CTA and Books arent above the fold on desktop either btw."
+
+   ── THE SAME DENOMINATOR ERROR PASS3 FOUND ON THE PHONE, ONE SCREEN SIZE UP ──
+
+   Measured on staging 1.19.245 BEFORE any edit in this pass, by DOM read at
+   an asserted window.innerWidth/innerHeight (not inferred from source):
+
+     viewport        CTA bottom    covers bottom    CTA as % of viewport
+     1366 x  768        674            580                87.8%
+     1440 x  900        726            631                80.7%
+     1920 x 1080        816            721                75.6%
+
+   Every one of those "passes" against the CSS viewport, and every one of
+   them failed his eyes -- for exactly the reason PASS3 wrote down for the
+   phone. A 1440x900 DISPLAY is not a 900px viewport. The Windows taskbar
+   takes ~48px and Chrome's tab strip, omnibox and (when shown) bookmarks bar
+   take a further ~85-120px, so the genuinely visible strip on a 900px-tall
+   screen is roughly 730-770px, and on a 1366x768 laptop roughly 620-650px.
+   A CTA whose bottom edge is 726 sits under the taskbar on the first and
+   well below the fold on the second.
+
+   ── WHY THE NUMBER SCALED WITH THE VIEWPORT INSTEAD OF STAYING PUT ──
+
+   The hero was `min-height: 100vh` with `align-content: center` on a content
+   box of `min-height: calc(100vh - 200px)`. Centring a fixed-height stack
+   inside a viewport-height box pins the CTA to a PERCENTAGE of the viewport
+   rather than to a pixel. That is why the three rows read 87.8 / 80.7 / 75.6
+   instead of one repeated number: the taller the screen, the further down
+   the button went, which is the opposite of what a fold fix needs.
+
+   THE FIX IS THEREFORE STRUCTURAL, NOT COSMETIC. Stop centring, let the hero
+   stack from a fixed top offset, and bound the hero's height. The CTA's
+   position stops being a function of viewport height, and one pixel answer
+   holds at 1366, 1440 and 1920.
+
+   ── WHAT THIS BLOCK DOES NOT DO ──
+
+   NO copy is changed -- not one word of the founder-approved hero prose.
+   NO element is reordered: this block is CSS only and touches no markup, so
+   the DOM order is byte-identical to 1.19.245.
+   NO rule here can reach the phone. Every selector is behind
+   `min-width: 1051px`, which is where the hero is genuinely two-column;
+   PASS3's phone result lives behind `max-width: 600px` / `max-width: 768px`.
+   The subcopy measure is deliberately NOT widened to buy a line: its
+   paragraph is capped at 440px upstream, and stretching a 20px measure past
+   that trades readability for pixels.
+   ========================================================================= */
+
+@media (min-width: 1051px) {
+
+  /* 1. THE STRUCTURAL CHANGE. Everything below this is a handful of pixels;
+        this is the one that makes the number stop moving.
+
+        `align-content: start` puts the grid row at the top of the content
+        box instead of its middle. On its own that lifts the CTA by 45px at
+        1440x900 and by 135px at 1920x1080 -- the bigger the screen, the more
+        it had been losing, which is the signature of the centring bug.
+
+        The hero also stops being exactly 100vh. The clamp keeps a generous
+        full-bleed feel while bounding it, so a tall monitor no longer
+        inflates empty navy below the buttons. A hero that ends a little
+        above the fold also lets the next section peek, which is how a reader
+        learns there is more page. */
+  .home .home-hero--with-books {
+    min-height: clamp(640px, 82vh, 800px);
+    padding-top: 100px;
+    padding-bottom: 48px;
+  }
+  .home .home-hero--with-books .home-hero__content {
+    min-height: 0;
+    align-content: start;
+  }
+
+  /* 2. THE SPACING BUDGET. Four small reductions. None removes a word, an
+        element, or a touch target, and none puts the founder chip under the
+        sticky nav -- measured clearance is 22px at 1366, 34px at 1440 and
+        65px at 1920, against the PASS2 defect where 48px of an 88px chip
+        ended up behind the nav. */
+
+  /* 2a. The chip keeps its full size -- it is the warmth this whole pass
+         exists for -- and gives back only the gap beneath it. */
+  .home .home-founder-chip { margin-bottom: 16px; }
+
+  /* 2b. The headline: 3.4rem -> 3.15rem with slightly tighter leading. It
+         stays THREE lines at 1366, 1440 and 1920 (measured in the browser,
+         not assumed), so no line is gained or lost and the drawn underline
+         still sits under one word. */
+  .home #home-hero .home-hero__title,
+  .home .home-hero .home-hero__title {
+    font-size: clamp(2rem, 1.2rem + 2.2vw, 3.15rem);
+    line-height: 1.07;
+    margin-bottom: 0;
+  }
+
+  /* 2c. The subcopy and the two invitations close up slightly. Both stay
+         clear of the type rhythm used further down the page. */
+  .home .home-hero__text { margin-top: 18px; }
+  .home .home-hero__invitations { margin-top: 18px; }
 }

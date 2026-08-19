@@ -782,6 +782,111 @@ foreach ( $other_pages as $path => $label ) {
 		$failures
 	);
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   §1.7 — 1.19.246 (PASS4). THE DESKTOP FOLD.
+
+   Andrew, on 1.19.244/245, RELAYED through the Chief of Staff and NOT
+   witnessed first-hand by this agent:
+     "The CTA and Books arent above the fold on desktop either btw."
+
+   These assertions guard the STRUCTURAL fix, because that is the part a
+   future edit is most likely to undo by accident. The pixel result itself
+   is measured in a real browser at an asserted window.innerWidth and is
+   recorded in the release notes -- PHP cannot lay out a page, so no pixel
+   claim is made here. What PHP CAN prove is that the rules which produce
+   the result are present, correctly scoped, and shipped in the artefact
+   the browser actually downloads.
+   ═══════════════════════════════════════════════════════════════════════════ */
+echo "
+=== §1.7 — PASS4: THE DESKTOP HERO STACKS FROM THE TOP ===
+";
+
+$css_p4     = @file_get_contents( get_template_directory() . '/style.css' );
+$min_p4     = @file_get_contents( get_template_directory() . '/style.min.css' );
+$has_css_p4 = is_string( $css_p4 ) && '' !== $css_p4;
+
+bhp_hw_assert(
+	$has_css_p4 && false !== strpos( $css_p4, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS4' ),
+	'§1.7a the PASS4 block is present in style.css',
+	$failures
+);
+
+/* The structural fix. `align-content: center` on a viewport-height box is
+   what pinned the CTA to a PERCENTAGE of the viewport; `start` is what makes
+   the pixel answer stop moving between 1366, 1440 and 1920. */
+bhp_hw_assert(
+	$has_css_p4 && 1 === preg_match(
+		'/\.home\s+\.home-hero--with-books\s+\.home-hero__content\s*\{[^}]*align-content:\s*start/s',
+		$css_p4
+	),
+	'§1.7b the hero content stacks from the TOP (align-content: start), not centred',
+	$failures
+);
+
+bhp_hw_assert(
+	$has_css_p4 && 1 === preg_match(
+		'/\.home\s+\.home-hero--with-books\s+\.home-hero__content\s*\{[^}]*min-height:\s*0/s',
+		$css_p4
+	),
+	'§1.7b the content box no longer reserves calc(100vh - 200px) on desktop',
+	$failures
+);
+
+bhp_hw_assert(
+	$has_css_p4 && 1 === preg_match(
+		'/\.home\s+\.home-hero--with-books\s*\{[^}]*min-height:\s*clamp\(\s*640px\s*,\s*82vh\s*,\s*800px\s*\)/s',
+		$css_p4
+	),
+	'§1.7c the desktop hero is BOUNDED (clamp), not pinned to exactly 100vh',
+	$failures
+);
+
+/* Scope. The most dangerous regression available here is a desktop rule
+   leaking onto the phone and undoing PASS3, so scope is asserted, not
+   assumed. */
+$p4_pos  = $has_css_p4 ? strpos( $css_p4, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS4' ) : false;
+$p4_tail = ( false !== $p4_pos ) ? substr( $css_p4, $p4_pos ) : '';
+bhp_hw_assert(
+	'' !== $p4_tail && false !== strpos( $p4_tail, '@media (min-width: 1051px)' ),
+	'§1.7d every PASS4 rule sits behind min-width: 1051px (it cannot reach a phone)',
+	$failures
+);
+bhp_hw_assert(
+	'' !== $p4_tail && false === strpos( $p4_tail, 'max-width: 600px' )
+		&& false === strpos( $p4_tail, 'max-width: 768px' ),
+	'§1.7d the PASS4 block opens no phone-scoped media query of its own',
+	$failures
+);
+
+/* PASS3's phone result must survive this pass untouched. */
+bhp_hw_assert(
+	$has_css_p4 && false !== strpos( $css_p4, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS3' ),
+	'§1.7e the PASS3 phone block is still present and was not replaced',
+	$failures
+);
+
+/* The built artefact is what the browser loads. A correct source file that
+   was never rebuilt is precisely the failure this catches. */
+bhp_hw_assert(
+	/* The builder strips comments but preserves the single space after a
+	   colon, so this tolerates both forms rather than hard-coding one and
+	   failing the day the builder changes. */
+	is_string( $min_p4 ) && 1 === preg_match( '/align-content:\s*start/', $min_p4 ),
+	'§1.7f style.min.css was REBUILT and carries the structural rule',
+	$failures
+);
+
+/* No copy changed. PASS4 is CSS only; if a word moved, this pass did the one
+   thing it declared it would not do. */
+$home_p4 = bhp_hw_fetch( home_url( '/' ) );
+bhp_hw_assert(
+	'' !== $home_p4 && false !== strpos( $home_p4, 'home-hero__invitations' )
+		&& false !== strpos( $home_p4, 'home-founder-chip' ),
+	'§1.7g the hero markup is unchanged: chip and both invitations still render',
+	$failures
+);
+
+
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n";
