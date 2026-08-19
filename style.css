@@ -7152,8 +7152,9 @@ body.bhp-consent-banner-visible #bhp-floating-cart {
 
    `<select name="bhp_segment">` is the FIRST control in the sitewide capture
    form, so the single interaction that starts a lead began by throwing the
-   layout out. Pippin's audit found it on 69 of 83 pages and it was the sole
-   cause of rubric row 10 failing 68/68 at 390.
+   layout out. The `commerce-cx` CRO audit found it on the large majority of
+   audited pages and it was the sole cause of that rubric row failing at 390.
+   (The audit's own counts are internal and stay in the private record.)
 
    ⭐ ONE RULE, NOT TWO, AND THAT IS THE POINT. A first pass at this fix put
       `font-size: 1rem` back on `.acquisition-form__field--segment select`

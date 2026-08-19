@@ -349,7 +349,7 @@
  * theme 1.19.265 (2026-08-19, `CYCLE165-LD-ITERATE-1-CRO-FIXES`) · `CX-018`
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ THE DEFECT, FROM PIPPIN'S (`commerce-cx`) FULL RUBRIC AUDIT OF STAGING2 AT
+ * ⭐ THE DEFECT, FROM THE `commerce-cx` FULL RUBRIC AUDIT OF STAGING2 AT
  *    1.19.264, AND RE-MEASURED BY THIS SESSION BEFORE A LINE WAS WRITTEN.
  *
  *    Step 3 above fixed the fold at 390 and said so in its own header:
@@ -370,7 +370,7 @@
  *    The fold is 900. Price and Add-to-Cart were 67 px and 119 px under it, on
  *    all six book pages. A parent on a laptop met the cover, the title, the
  *    age line and the hook before the page said what the book costs or offered
- *    to sell it. That is CRO rubric row 3, and Boromir's (`ads-knowledge`) KB
+ *    to sell it. That is CRO rubric row 3, and the `ads-knowledge` KB
  *    §6 records the standard desktop pattern as the buy box beside or above
  *    the gallery. It IS beside the gallery here: `div.product` has been a
  *    two-column grid (gallery 613 px | summary 521 px) since 1.19.x. The
@@ -418,7 +418,7 @@
  *    - IT DOES NOT RESIZE THE H1. A 72 px title wrapping to four lines in a
  *      521 px column is a real typography problem and it is NOT this build's
  *      to settle: `.woocommerce div.product .product_title` is a deliberate
- *      rule, and the type scale is Boromir's open aesthetics finding
+ *      rule, and the type scale is the open `ads-knowledge` aesthetics finding
  *      `CYCLE165-BOR-202`, whose workstream is next. Recorded, not absorbed.
  *    - IT MOVES THE REAL AMAZON REVIEW NOWHERE. `.amazon-reviews-product-section`
  *      keeps its `grid-column: 1/-1` and its position. Its words are untouched

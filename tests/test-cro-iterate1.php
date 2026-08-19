@@ -3,7 +3,7 @@
  * Brave Hearts — CRO ITERATE 1: the three fixes from the full rubric audit.
  *
  * `CYCLE165-LD-ITERATE-1-CRO-FIXES` (2026-08-19, theme 1.19.265).
- * Source of the findings: Pippin's (`commerce-cx`) full rubric audit of
+ * Source of the findings: the `commerce-cx` full rubric audit of
  * staging2 at theme 1.19.264 / plugin 1.8.59, `CX-018`, `CX-020`, `CX-021`.
  *
  * Run via WP-CLI:
