@@ -97,17 +97,49 @@
  *                   floor has elapsed (`onScroll()` returns early while
  *                   `minTimeElapsed` is false).
  *
- * ⭐ WHY `scrollPct` IS 25 AND NOT THE 40/50 THE OLDER TIMED PARENT POPUP
- *    USES. The engine's `getScrollPercent()` is not "fraction of the article
- *    read" — it is `(scrollY + clientHeight) / scrollHeight`, so the number
- *    it reports at rest already includes one whole viewport. On a 10,000 px
- *    homepage at an 800 px viewport it reads 8% before a finger moves, 25% is
- *    reached at roughly 1,700 px of real scrolling (about two screens), and
- *    40% would demand about 3,200 px. Two screens is engagement; four is a
- *    deep read, and asking for a deep read before making a free offer is how
- *    a popup earns nothing. The SAME number is used on both devices
- *    deliberately: the formula is already viewport-relative, so a phone's
- *    shorter screen makes the identical percentage a shorter scroll.
+ * ⭐ WHY `scrollPct` IS 20 ON DESKTOP AND 12 ON MOBILE — MEASURED ON STAGING,
+ *    NOT REASONED ABOUT, AND THE FIRST ANSWER THIS BUILD REACHED WAS WRONG.
+ *
+ *    The engine's `getScrollPercent()` is NOT "fraction of the article read".
+ *    It is `(scrollY + clientHeight) / scrollHeight`, so the number it reports
+ *    before a finger moves already includes one whole viewport. That makes the
+ *    percentage a poor proxy on its own and the real question "how many
+ *    screens of scrolling does this threshold cost on the page that matters".
+ *
+ *    ⛔ THE WRONG ANSWER, WRITTEN OUT SO IT IS NOT RE-DERIVED: an earlier draft
+ *       of this file used 25 on BOTH devices and argued that "the formula is
+ *       already viewport-relative, so a phone's shorter screen makes the
+ *       identical percentage a shorter scroll." That is backwards. The
+ *       homepage is TALLER on a phone than on a desktop (19,607 px against
+ *       12,518 px), and the taller page more than cancels the shorter
+ *       viewport. 25% on a phone costs 4.81 screens — a deep read demanded
+ *       before a free offer is even made.
+ *
+ *    MEASURED on staging with every lazy image forced to resolve first, so the
+ *    heights are the real ones rather than a half-loaded page's:
+ *
+ *      homepage @1440  12,518 px tall, 900 px viewport, 7.2% at rest
+ *                      → 20% costs 1,604 px  = 1.78 screens
+ *      homepage @390   19,607 px tall, 844 px viewport, 4.3% at rest
+ *                      → 12% costs 1,509 px  = 1.79 screens
+ *
+ *    So the two numbers differ precisely SO THAT the ask does not: about one
+ *    and three-quarter screens of real scrolling on the primary surface,
+ *    whichever device a parent is holding. That is engagement. Four screens is
+ *    a deep read, and asking for a deep read before making a free offer is how
+ *    a popup earns nothing.
+ *
+ * ⚠ AN HONEST LIMIT OF THE SHARED ENGINE, REPORTED RATHER THAN PAPERED OVER.
+ *   Because the formula includes one viewport, ANY page shorter than roughly
+ *   `100/scrollPct` viewports already reads above the threshold at rest, and
+ *   on such a page the trigger degrades to the 15-second floor alone. Measured
+ *   examples on staging: a 7,431 px page at 1440 reads 12.1% at rest, so the
+ *   desktop threshold of 20 still requires scrolling there, but a shorter one
+ *   would not. Short blog posts are the realistic case. FIXING that would need
+ *   an absolute pixel floor — a `scrollPx` config key alongside `scrollPct` —
+ *   which is a schema extension to an engine four surfaces share and is
+ *   therefore its own piece of work, not a side effect of a copy change.
+ *   FLAGGED to the Chief of Staff; NOT absorbed here.
  *
  * ⛔ THERE IS DELIBERATELY NO `fallbackDelay`. The engine treats a fallback as
  *    an UNGATED timer — it calls `trigger()` directly, with no scroll test —
@@ -196,8 +228,8 @@ $popup_config = wp_json_encode([
         //   engine's fallback is an UNGATED timer, and an ungated timer is
         //   precisely the time-only path the founder's ruling removes.
         'mode'    => 'gated',
-        'desktop' => ['minDelay' => 15000, 'scrollPct' => 25],
-        'mobile'  => ['minDelay' => 15000, 'scrollPct' => 25],
+        'desktop' => ['minDelay' => 15000, 'scrollPct' => 20],
+        'mobile'  => ['minDelay' => 15000, 'scrollPct' => 12],
     ],
 ]);
 
