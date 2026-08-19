@@ -183,48 +183,50 @@
 		margin-top: 0;
 	}
 
-	/* ---- 3. Inside the buy box: one OFFER above the fold, not two ----- */
+	/* ---- 3. Inside the buy box: the separate offers follow the button -- */
 
 	/*
-	 * ⭐⭐ MEASURED, THEN FIXED. The first working build of this reorder put all
-	 *     FOUR format cards above ADD TO CART, and the canonical above-fold
-	 *     probe — step 1's own, reused verbatim so the numbers compare — then
-	 *     counted TWO buy controls at 390 on every book page:
+	 * ⭐ WHAT MOVES. The brief names the two PHYSICAL formats — "paperback
+	 *    first, hardcover one tap" — and those two stay ABOVE ADD TO CART,
+	 *    because choosing between them is choosing what the button will add.
+	 *    KINDLE and COMPLETE COLLECTION move BELOW it: Kindle leaves the site
+	 *    entirely and the collection is a larger, separate purchase. Neither is
+	 *    a format of the book on the page. The direction board's own 390 mock
+	 *    shows the same shape: one buy control first, the other offers lower.
+	 *    It also buys 64 px — ADD TO CART measured 495 before this split and
+	 *    431 after, at an asserted 390.
 	 *
-	 *         buy: "BEST VALUE COMPLETE COLLECTION $31.99"
-	 *         buy: "ADD PAPERBACK TO CART"
+	 * ⚠⚠ WHAT THIS DOES *NOT* DO, STATED PLAINLY BECAUSE AN EARLIER DRAFT OF
+	 *    THIS COMMENT CLAIMED IT DID. It does NOT take the collection card
+	 *    below the fold. Measured after the change, at an asserted 390: the
+	 *    card sits inside the first 844 px, and step 1's above-fold probe still
+	 *    counts TWO buy-ish controls on every book page —
 	 *
-	 *     That is CRO rubric row 1 failing ("a second buy CTA above the fold =
-	 *     FAIL — replace, do not add"), introduced by the reorder itself: the
-	 *     collection card used to sit at 881, below the fold, and the buy box
-	 *     moving up carried it over the line. Fixing the first screen by adding
-	 *     a competing offer to it would have traded one rubric row for another.
+	 *        buy: "BEST VALUE COMPLETE COLLECTION $31.99"   (a format card)
+	 *        buy: "ADD PAPERBACK TO CART"                    (the primary)
 	 *
-	 * ⭐ WHAT MOVES, AND WHY THIS SPLIT AND NOT ANOTHER. The brief names the two
-	 *    PHYSICAL formats — "paperback first, hardcover one tap" — and those two
-	 *    stay above the button, because choosing between them is choosing what
-	 *    the button will add. KINDLE and COMPLETE COLLECTION move BELOW it:
-	 *    Kindle leaves the site entirely, and the collection is a different,
-	 *    larger purchase. Neither is a format of the book on the page; both are
-	 *    separate offers. The direction board's own 390 mock shows exactly this
-	 *    — one buy control in the first screen, the format pills lower down.
+	 *    — because that probe's net is deliberately loose: any bordered
+	 *    `<button>` whose text matches a buy phrase counts. A segmented format
+	 *    control matches it. By the count the brief actually asks for — filled
+	 *    PRIMARY controls, `.btn-primary` — the number is ONE, and the sitewide
+	 *    header offer is gone from this template so it cannot be two.
+	 *
+	 *    ⛔ WHETHER A FORMAT CARD COUNTS AS A SECOND BUY CTA UNDER CRO RUBRIC
+	 *       ROW 1 IS NOT THIS BUILD'S QUESTION TO SETTLE. It is recorded as
+	 *       `CYCLE165-LD-12` and routed, with both measurements, rather than
+	 *       resolved here — and no layout was chosen to make one instrument
+	 *       read better than it honestly does.
 	 *
 	 * ⛔ NOTHING IS HIDDEN OR REMOVED. All four cards render, all four are
 	 *    reachable by tap and by keyboard, the payload is untouched, and the
-	 *    order is restored at 601px. This is a position change at one
+	 *    original order is restored at 601px. This is a position change at one
 	 *    breakpoint, not a change to what is offered.
 	 *
-	 * ⚠ REPORTED TO THE REVIEWER AS A JUDGEMENT, NOT PRESENTED AS APPROVED. The
-	 *   brief says "price + format selector -> Add to Cart"; taken to mean all
-	 *   four cards, that wording and "assert exactly one primary at 390" cannot
-	 *   both hold. This resolves it in the direction the board and the rubric
-	 *   agree on and flags it (`CYCLE165-LD-12`).
-	 *
-	 * ⚠ `display: contents` ON THE CARD GRID, and the same caveat as §1: the
-	 *   grid is a `role="group"` labelled by the heading. Modern engines keep a
-	 *   semantic element in the accessibility tree when it generates no box
-	 *   (the old removal bug is fixed); the group and its label were re-read
-	 *   from the live accessibility tree after deploy rather than assumed.
+	 * ⚠ `display: contents` ON THE CARD GRID, same caveat as §1: the grid is a
+	 *   `role="group"` labelled by the heading. Modern engines keep a semantic
+	 *   element in the accessibility tree when it generates no box (the old
+	 *   removal bug is fixed); the group and its label were re-read from the
+	 *   live accessibility tree after deploy rather than assumed.
 	 */
 	body.single-product.woocommerce div.product .bhp-formats {
 		display: grid;
