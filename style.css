@@ -9152,14 +9152,27 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 .home .home-open-book__spread-img {
   display: block;
   width: 100%;
-  height: 232px;
-  /* 1.19.243: `contain`, not `cover`. These are PAGES OF TEXT — `cover` on a
-     square 1200x1200 photograph in a 232px-tall box cropped the top and
-     bottom lines off page 1, which is the one thing a "read the first pages"
-     section may not do. `contain` shows the whole page; the dark ground
-     below fills the letterbox and matches the tabletop the books were shot
-     on, so it reads as intentional rather than as a gap. */
-  object-fit: contain;
+  /* ⭐ 1.19.243: A SQUARE FRAME, BECAUSE THE POINT OF THIS SECTION IS THAT THE
+     PAGES CAN ACTUALLY BE READ.
+
+     The fixed 232px landscape box inherited from 1.19.242 was built for
+     landscape diagram spreads. The real page photographs are SQUARE
+     (1200x1200), so that box letterboxed each page down to roughly 232px of
+     actual page inside a 360px column and the body text stopped being
+     legible — a "Read the first pages" section whose pages cannot be read.
+
+     `aspect-ratio: 1/1` + `height: auto` lets each page fill the column
+     width instead: ~360px on desktop, ~335px on a 390px phone. Verified
+     live at both widths.
+
+     ⛔ NOTHING IS CROPPED. `cover` is safe here ONLY because the source is
+        square and the box is square, so cover and contain are identical.
+        If a non-square photograph is ever added to this section, this rule
+        must change with it — a crop here would cut printed lines off a page
+        Andrew is inviting people to read. */
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: cover;
   object-position: center center;
   background: #0e1a24; /* the interiors are shot on a dark studio ground */
 }
