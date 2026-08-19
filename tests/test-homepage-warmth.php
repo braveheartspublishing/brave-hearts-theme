@@ -936,11 +936,33 @@ bhp_hw_assert(
 );
 
 /* The two rules that actually close the 33 px gap. Either alone still leaves
-   three separated covers, so both are asserted. */
+   three separated covers, so both are asserted.
+ *
+ * ⚠️ AMENDED 2026-08-19 BY 1.19.250 (PASS7), AND QUOTED RATHER THAN REWRITTEN.
+ *    The original assertion was:
+ *
+ *      1 === preg_match( '/margin-right:\s*-9px\s*!important/', $css_p5 )
+ *        && 1 === preg_match( '/margin-left:\s*-9px\s*!important/', $css_p5 )
+ *
+ *    It still MATCHES on a correct 1.19.250 build, and that is exactly the
+ *    problem: PASS5's `-9px` text is still in the file, but PASS7 overrides it
+ *    with `-12px` further down, so the old assertion would have gone on
+ *    passing while asserting a value the browser no longer computes. A test
+ *    that cannot fail is not a test.
+ *
+ *    ⭐ WHAT IS BEING PROTECTED HAS NOT CHANGED — "the fan overlaps rather
+ *       than sitting apart, and it beats F8a's `margin-inline: 0 !important`".
+ *       Only the number moved, and it moved because the covers grew 34%; the
+ *       overlap-to-cover-width PROPORTION is 20.9% in both builds. The
+ *       assertion is therefore written against the EFFECTIVE pair, with the
+ *       superseded pair still required to be present so a future pass cannot
+ *       delete PASS5's block and think nothing depended on it. */
 bhp_hw_assert(
-	'' !== $css_p5 && 1 === preg_match( '/margin-right:\s*-9px\s*!important/', $css_p5 )
+	'' !== $css_p5 && 1 === preg_match( '/margin-right:\s*-12px\s*!important/', $css_p5 )
+		&& 1 === preg_match( '/margin-left:\s*-12px\s*!important/', $css_p5 )
+		&& 1 === preg_match( '/margin-right:\s*-9px\s*!important/', $css_p5 )
 		&& 1 === preg_match( '/margin-left:\s*-9px\s*!important/', $css_p5 ),
-	"§1.8b the fan overlaps again: both negative margins beat F8a's margin-inline: 0 !important",
+	"§1.8b the fan overlaps again: both negative margins beat F8a's margin-inline: 0 !important (PASS7's -12px effective, PASS5's -9px still present)",
 	$failures
 );
 
@@ -1012,6 +1034,176 @@ bhp_hw_assert(
 	'' !== $css_p5 && false !== strpos( $css_p5, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS3' )
 		&& false !== strpos( $css_p5, 'F8a. Mobile hero fan' ),
 	'§1.8j PASS3 and the F8a block it overrides are both still present',
+	$failures
+);
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+echo "\n";
+
+/* PASS7 — §1.9: THE TYPE IS BACK AT FULL SIZE, THE COVERS ARE 34% BIGGER, AND
+   ONLY THE PRIMARY CTA HAS TO BE ON THE FIRST SCREEN.
+
+   The founder, on 1.19.249, on his phone:
+     "Mobile- The book images are way too small, make the image bigger by at
+      least 30-40%. Also all the text now is very very small even the logo on
+      the top left and all the fonts- was that just to fit the CTA above the
+      fold, we only need the top CTA above the fold honestly?"
+
+   ⛔ WHAT THIS SECTION CANNOT PROVE, SAID PLAINLY AND FOR THE SAME REASON
+      §1.8 said it. It reads CSS text and rendered markup. IT CANNOT PROVE A
+      PIXEL. The three numbers that actually answer him — primary CTA bottom
+      616.7 at 390x664, cover height 82 -> 110px, cover width 66.4 -> 88.9px —
+      were measured in a real headless browser at an asserted
+      window.innerWidth/innerHeight, and they live in the build report and in
+      the screenshots, NOT here. An assertion in this file claiming to have
+      measured them would be claiming a check it never ran. */
+
+$css_p7 = $has_css_p4 ? $css_p4 : '';
+$min_p7 = $min_p4;
+
+$p7_pos  = strpos( $css_p7, 'PASS7 (2026-08-19, theme 1.19.250)' );
+$p7_tail = false === $p7_pos ? '' : substr( $css_p7, $p7_pos );
+
+bhp_hw_assert(
+	'' !== $p7_tail,
+	'§1.9a the PASS7 block is present in style.css',
+	$failures
+);
+
+/* ---- The type restoration, selector by selector -------------------------
+   Asserted individually rather than as one "the block contains font-size"
+   check, because the failure mode that matters is ONE of these being lost in
+   a later tidy-up while the others survive — which is precisely how the page
+   drifted small over three passes in the first place. Each value is the
+   1.19.242 computed size, read out of a real render. */
+$p7_type = array(
+	'§1.9b the H1 is back to 2rem/1.1 (32px, was 28px)'
+		=> '/\.home-hero__title\s*\{[^}]*font-size:\s*2rem;[^}]*line-height:\s*1\.1;/',
+	'§1.9c the subcopy is back to 1.02rem/1.55 (16.32px, was 14px)'
+		=> '/\.home-hero__text\s*\{[^}]*font-size:\s*1\.02rem;[^}]*line-height:\s*1\.55;/',
+	'§1.9d the spoken line is back to 1.25rem (20px, was 16.32px)'
+		=> '/\.home-founder-chip__said\s*\{[^}]*font-size:\s*1\.25rem;/',
+	'§1.9e the founder photograph is back to 52px square (was 46px)'
+		=> '/\.home-founder-chip__photo\s*\{[^}]*flex:\s*0\s+0\s+52px;[^}]*width:\s*52px;[^}]*height:\s*52px;/',
+	'§1.9f the fan label is back to .656rem (10.5px, was 9.28px)'
+		=> '/\.home-hero__book-preview-label\s*\{[^}]*font-size:\s*\.656rem;/',
+	'§1.9g the invitation padding is back to .95rem (15.2px, was 12.8px)'
+		=> '/\.home-hero__invite\s*\{[^}]*padding-block:\s*\.95rem;/',
+);
+foreach ( $p7_type as $p7_label => $p7_re ) {
+	bhp_hw_assert( '' !== $p7_tail && 1 === preg_match( $p7_re, $p7_tail ), $p7_label, $failures );
+}
+
+/* ---- The covers ---------------------------------------------------------
+   110/82 = +34.1%, inside the "at least 30-40%" he asked for. The height is
+   what is asserted because width follows it; asserting a width would be
+   asserting a consequence and would go stale if the artwork ever changes. */
+bhp_hw_assert(
+	'' !== $p7_tail && 1 === preg_match( '/\.home-hero__book-cover\s*\{\s*height:\s*110px;/', $p7_tail ),
+	'§1.9h the covers are 110px (+34.1% on PASS5\'s 82px)',
+	$failures
+);
+
+/* The splay must scale WITH the covers or the fan loosens back into three
+   separate books. Both the rotation and the scaled translateY are asserted,
+   because a pass that kept the angle and dropped the lift would flatten it. */
+bhp_hw_assert(
+	'' !== $p7_tail
+		&& 1 === preg_match( '/transform:\s*rotate\(-6deg\)\s*translateY\(12px\)/', $p7_tail )
+		&& 1 === preg_match( '/transform:\s*rotate\(6deg\)\s*translateY\(12px\)/', $p7_tail )
+		&& 1 === preg_match( '/transform:\s*translateY\(-9px\)/', $p7_tail ),
+	'§1.9i the splay geometry scaled with the covers rather than flattening',
+	$failures
+);
+
+/* ---- The one structural move -------------------------------------------- */
+bhp_hw_assert(
+	'' !== $p7_tail && 1 === preg_match( '/\.home-hero__text\s*\{\s*order:\s*1;/', $p7_tail ),
+	'§1.9j the subcopy moves below the primary invitation at <=600px',
+	$failures
+);
+
+/* ⭐ THE GUARD THAT MAKES THE ORDER MOVE SAFE, AND IT IS AN A11Y GUARD.
+   `order` is only defensible here because the element it moves contains no
+   focusable content — one <p>, no links. If a link is ever added to the hero
+   subcopy, the visual order and the TAB order diverge and this stops being a
+   free move. This asserts the shape of the rendered subcopy, so that day is
+   caught by a red suite rather than by a keyboard user. */
+$home_p7 = bhp_hw_fetch( home_url( '/' ) );
+$p7_text_pos = strpos( $home_p7, 'home-hero__text' );
+$p7_text_slice = false === $p7_text_pos ? '' : substr( $home_p7, $p7_text_pos, 900 );
+$p7_text_slice = false === strpos( $p7_text_slice, 'home-hero__invitations' )
+	? $p7_text_slice
+	: substr( $p7_text_slice, 0, strpos( $p7_text_slice, 'home-hero__invitations' ) );
+bhp_hw_assert(
+	'' !== $p7_text_slice
+		&& 0 === preg_match( '/<a\b|<button\b|tabindex=/i', $p7_text_slice ),
+	'§1.9k the reordered subcopy still contains NO focusable element, so no tab stop moved',
+	$failures
+);
+
+/* ---- The things PASS7 promised NOT to do -------------------------------- */
+
+/* Asserted on an actual @media declaration, never on prose about one — that
+   false positive cost PASS4 a red run on a correct build, and §1.8e records
+   the lesson. */
+bhp_hw_assert(
+	'' !== $p7_tail && 1 === preg_match( '/@media\s*\(\s*max-width:\s*600px\s*\)/', $p7_tail )
+		&& 0 === preg_match( '/@media\s*\(\s*min-width:/', $p7_tail ),
+	'§1.9l no PASS7 rule can reach the tablet or desktop hero',
+	$failures
+);
+
+/* THE LOGO GUARD. Andrew named the logo, and the honest answer was that no
+   pass in this workstream ever shrank it — `height: 34.5px` has been live
+   since 1.19.190 and is on PRODUCTION at the same value. Asserting it here
+   turns that claim into something a future session can check in one second
+   instead of re-deriving from six commits. */
+bhp_hw_assert(
+	'' !== $css_p7
+		&& 1 === preg_match( '/\.site-logo\s+img\.site-logo__mark\s*\{[^}]*height:\s*34\.5px/', $css_p7 ),
+	'§1.9m the header logo is untouched at 34.5px (PASS7 reverted nothing, because nothing shrank it)',
+	$failures
+);
+
+/* PASS3 removed the eyebrow on Andrew's own instruction. "Restore the type"
+   is not licence to restore an ELEMENT, and this is the guard that keeps the
+   two apart. */
+bhp_hw_assert(
+	'' !== $home_p7 && false === strpos( $home_p7, 'home-hero__eyebrow' ),
+	'§1.9n the eyebrow Andrew removed in PASS3 is still gone',
+	$failures
+);
+
+/* No copy changed, at any width. PASS7 is CSS only. */
+bhp_hw_assert(
+	'' !== $home_p7 && false !== strpos( $home_p7, 'home-hero__invitations' )
+		&& false !== strpos( $home_p7, 'home-founder-chip' )
+		&& false !== strpos( $home_p7, 'home-hero__book-preview' ),
+	'§1.9o the hero markup is unchanged: chip, fan and both invitations still render',
+	$failures
+);
+
+/* Every earlier block PASS7 overrides must still BE there. PASS7 wins on
+   source order, not by deletion — if PASS3's or PASS5's block is removed, the
+   base values underneath them are not what PASS7 was measured against. */
+bhp_hw_assert(
+	'' !== $css_p7 && false !== strpos( $css_p7, 'CYCLE164-LD-HOMEPAGE-WARMTH-PASS3' )
+		&& false !== strpos( $css_p7, 'PASS5 (2026-08-19, theme 1.19.248)' )
+		&& false !== strpos( $css_p7, 'F8a. Mobile hero fan' ),
+	'§1.9p PASS3, PASS5 and F8a are all still present underneath PASS7',
+	$failures
+);
+
+/* The artefact, not the source. Editing style.css without rebuilding ships a
+   stale stylesheet to a phone, which is the exact defect 1.19.244 existed to
+   fix. */
+bhp_hw_assert(
+	is_string( $min_p7 ) && 1 === preg_match( '/height:\s*110px/', $min_p7 )
+		&& 1 === preg_match( '/margin-right:\s*-12px\s*!important/', $min_p7 ),
+	'§1.9q style.min.css was REBUILT and carries the PASS7 cover rules',
 	$failures
 );
 

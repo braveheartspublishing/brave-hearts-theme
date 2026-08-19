@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.249
+Version: 1.19.250
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -9871,5 +9871,227 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
     margin: 5px 0 0;
     font-size: .72rem;
     line-height: 1.32;
+  }
+}
+
+/* =========================================================================
+   PASS7 (2026-08-19, theme 1.19.250) — THE TYPE COMES BACK, THE COVERS GROW
+   34%, AND ONLY THE PRIMARY CTA HAS TO BE ON THE FIRST SCREEN.
+
+   ── THE FOUNDER'S WORDS, ON 1.19.249, ON HIS PHONE ──
+   "Mobile- The book images are way too small, make the image bigger by at
+    least 30-40%. Also all the text now is very very small even the logo on
+    the top left and all the fonts- was that just to fit the CTA above the
+    fold, we only need the top CTA above the fold honestly? I do like the new
+    format."
+
+   ── THE RULE THIS BLOCK IS BUILT ON, AND IT IS NEW ──
+   Passes 2, 3 and 5 each bought the fold by shrinking type and covers,
+   because the target was "the hero fits". THE TARGET IS NOW NARROWER AND HE
+   SET IT HIMSELF: only the PRIMARY invitation must be on the first screen.
+   The ghost invitation and the subcopy may fall below it. That single
+   relaxation is what pays for full-size type AND bigger covers at once —
+   nothing else in this block would have been affordable without it.
+
+   ── WHAT FULL RESTORATION ACTUALLY COSTS, MEASURED BEFORE IT WAS SHIPPED ──
+   Every number below is a DOM read on staging at an asserted
+   window.innerWidth 390 / innerHeight 664, not an estimate.
+
+     1.19.249 as he saw it              primary CTA bottom  656.7
+     + type restored + covers 110px     primary CTA bottom  762.6   (+105.9)
+     + subcopy moved below the CTA      primary CTA bottom  616.7   (-145.9)
+
+   762.6 is the honest answer to "can it stay above the fold with full-size
+   type and bigger covers, in the existing order": NO, by 138.6px against the
+   624 line and by 104.6px against the 658 line. The subcopy block is 133.9px
+   tall plus 12px of gap and margin, and moving it is therefore the single
+   cheapest thing that can be moved. It is also the exact trade the brief
+   named first.
+
+   ── WHY `order` IS SAFE HERE, WHEN EARLIER PASSES REFUSED IT ──
+   Passes 2-5 each wrote "no `order`/transform trick was used, so keyboard
+   order still matches visible order". That constraint is honoured, not
+   abandoned. `.home-hero__content` has exactly FIVE children (chip, H1,
+   book preview, subcopy, invitations) and the moved one is the subcopy,
+   which was PROBED IN THE BROWSER and contains ZERO focusable elements:
+   one <p>, no links, no buttons, no tabindex. Moving it therefore changes
+   NO tab stop and NO focus order — the two invitations remain the only
+   focusable things in the hero and remain in the same sequence.
+   ⚠️ It does mean the DOM reading order (H1 > covers > subcopy > buttons)
+      and the visual order (H1 > covers > buttons > subcopy) differ at this
+      breakpoint. Both are coherent sequences and neither misrepresents the
+      other, but it is a real difference and it is written down here rather
+      than discovered later.
+   ⚠️ FLAGGED FOR GANDALF, NOT DECIDED HERE: the gold line "It is an
+      invitation to look up." is `content:` on `.home-hero__text > p::after`,
+      and front-page.php's own comment says it exists to be "the last thing
+      read before the buttons". On a phone it is now read AFTER them. No word
+      of it is changed and it is still on the page; whether it should be
+      lifted out of the subcopy block is a copy call, not an engineering one.
+
+   ── WHAT THIS BLOCK DOES NOT DO ──
+   NO copy is changed. Not one word, at any width.
+   NO rule here can reach a tablet or a desktop: everything is behind
+   `max-width: 600px`. PASS4's desktop result was MEASURED at 1440x900 with
+   this block active and is identical — primary CTA bottom 628.8, hero bottom
+   743.8, H1 161.8px tall in 3 lines, covers 200px wide — the same five
+   numbers as without it.
+   THE HEADER LOGO IS NOT TOUCHED, and the reason is in section 0 below.
+   The eyebrow is NOT brought back; Andrew removed it in PASS3 by
+   instruction, and restoring type is not licence to restore an element.
+   ========================================================================= */
+
+/* ---- 0. THE LOGO, WHICH IS THE ONE THING HE ASKED FOR THAT IS NOT HERE ---
+   He named "the logo on the top left" alongside the fonts. IT WAS NEVER
+   SHRUNK BY THIS WORKSTREAM, and that is checkable rather than asserted:
+   `.site-logo img.site-logo__mark { height: 34.5px }` lives at :6610 behind
+   `@container (max-width: 1116px)`, was set by 1.19.190, and is LIVE ON
+   PRODUCTION at the same value. Passes 2-6 touched no logo rule of any kind.
+   Measured on staging 1.19.249 at 390x664: 116.6 x 34.5px.
+
+   So "restore the logo to its pre-pass-3 size" is a NO-OP — it is already
+   there. Making it BIGGER is a new change to a shared header that renders on
+   every page of the site, not a revert, and it is not in this brief's scope.
+   It is reported up rather than done quietly, because doing it silently
+   would be the difference between a revert and a redesign.
+   ------------------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+
+  /* ---- 1. THE TYPE, BACK TO ITS 1.19.242 VALUES --------------------------
+     Each value below was read out of a real render, not out of a diff: the
+     1.19.242 stylesheet was loaded into the live staging page at 390 wide
+     with the shipped stylesheets disabled, and these are the computed sizes
+     it produced. That matters because several of these selectors are settled
+     by a four-deep cascade where the declared value and the computed value
+     are not the same number.
+
+         selector                        1.19.249    1.19.242 (restored)
+         .home-hero__title               28.00px     32.00px  (lh 29.68 -> 35.20)
+         .home-hero__text                14.00px     16.32px  (lh 19.88 -> 25.30)
+         .home-founder-chip__said        16.32px     20.00px
+         .home-founder-chip__photo       46px sq     52px sq
+         .home-hero__book-preview-label   9.28px     10.50px
+         .home-hero__invite (padding)    12.80px     15.20px  (font-size was
+                                                     15px in BOTH — it was
+                                                     never reduced)
+     -------------------------------------------------------------------- */
+
+  /* 32px/1.1. MEASURED: still exactly THREE lines in the 302px column, so
+     no line is gained and the drawn title mark still sits under one word. */
+  .home #home-hero .home-hero__title {
+    font-size: 2rem;
+    line-height: 1.1;
+  }
+
+  /* 16.32px/1.55. This is the single most expensive restoration on the page
+     — 90.3px -> 133.9px — and it is the reason the subcopy is the element
+     that moves in section 3 rather than the element that shrinks. */
+  .home #home-hero .home-hero__text {
+    font-size: 1.02rem;
+    line-height: 1.55;
+  }
+
+  /* The spoken line. PASS5 took it to 1.02rem to force it into two lines
+     beside the photograph; at 20px it sets in two lines anyway now that the
+     photo is back to 52px and the column is 214px, so the compression bought
+     nothing that this does not also get. */
+  .home #home-hero .home-founder-chip__said {
+    font-size: 1.25rem;
+  }
+
+  /* The photograph is reduced/enlarged, never cropped — same rule as every
+     pass before this one. 46 -> 52 is the restoration, not a new size. */
+  .home #home-hero .home-founder-chip__photo {
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+  }
+
+  /* The trust line has no 1.19.242 value — PASS5 invented it. It goes to the
+     .8rem/1.4 that PASS5 itself set at every OTHER width, so the phone stops
+     being the one place it is smaller than its own design. */
+  .home #home-hero .home-founder-chip__trust {
+    font-size: .8rem;
+    line-height: 1.4;
+  }
+
+  /* "Real places. Doors into wonder." — 9.28px is below the size at which a
+     letter-spaced monospace label is comfortably readable. `.16em` tracking
+     is kept; only the size moves. */
+  .home #home-hero .home-hero__book-preview-label {
+    font-size: .656rem;
+  }
+
+  /* The buttons' font-size was never touched by any pass; only their padding
+     was, in PASS3. Restoring it gives the primary invitation a 69.9px box
+     again instead of 65.1px — comfortably past the 44px touch minimum in
+     both states, and it is the difference between a button and a strip. */
+  .home #home-hero .home-hero__invite {
+    padding-block: .95rem;
+  }
+
+  /* ---- 2. THE COVERS, +34% ----------------------------------------------
+     He asked for "at least 30-40%". 82px -> 110px is +34.1%, taken on the
+     CSS height so the width follows and no cover is squashed or cropped.
+
+         painted cover height   82.0 / 89.5 / 89.6  ->  110.0 / 120.0 / 120.1
+         painted cover width    54.8 / 66.4 / 66.9  ->   73.3 /  88.9 /  89.6
+         fan width (l to r)     145.9               ->  214.6
+
+     (the outer pair measure taller than the centre because the +-6deg
+     rotation is included in the bounding box; that is PASS5's geometry,
+     unchanged in shape.)
+
+     214.6px of fan inside a 302px content column leaves 87px of margin, so
+     nothing approaches the edge at 390 — and the fan is still centred.
+
+     ⭐ THE OVERLAP IS SCALED, NOT KEPT. This is the whole reason the margin
+        moves from -9 to -12. PASS5 measured joins of -13.9px on a 66.4px
+        cover: 20.9% of the cover width. Leaving -9px on an 88.9px cover
+        would have been 15.6% and the fan would have visibly loosened into
+        the three-separate-books look Andrew filed in the first place. -12px
+        MEASURES -18.6px of join on 88.9px = 20.9% — the same proportion, to
+        one decimal place. The splay angle and the z-order are untouched, and
+        `translateY` scales with the covers (9 -> 12, -7 -> -9) so the arc
+        keeps its shape rather than flattening at the new size.
+
+     ⚠️ THE !important IS STILL LOAD-BEARING, FOR PASS5'S REASON, RESTATED SO
+        IT IS NOT TIDIED AWAY: F8a (1.19.201, live on PRODUCTION) sets
+        `margin-inline: 0 !important` on these same items, and only another
+        !important can beat it. Specificity then decides, and this selector
+        carries an ID. Remove either half and the gap reopens.
+     -------------------------------------------------------------------- */
+  .home #home-hero .home-hero__book-cover {
+    height: 110px;
+  }
+  .home #home-hero .home-hero__book-stack li:first-child {
+    margin-right: -12px !important;
+    transform: rotate(-6deg) translateY(12px);
+  }
+  .home #home-hero .home-hero__book-stack li:nth-child(2) {
+    transform: translateY(-9px);
+  }
+  .home #home-hero .home-hero__book-stack li:nth-child(3) {
+    margin-left: -12px !important;
+    transform: rotate(6deg) translateY(12px);
+  }
+
+  /* ---- 3. THE ONE STRUCTURAL MOVE ---------------------------------------
+     The subcopy goes last in the visual order, so the primary invitation
+     follows the covers directly. See the a11y note in the header comment:
+     zero focusable elements move, so zero tab stops move.
+
+     `order: 1` against four siblings that are all `order: 0` is sufficient
+     and is deliberately the ONLY order declaration in this block — giving
+     all five children explicit orders would look tidier and would silently
+     take ownership of a sequence that four other rules already depend on.
+
+     The 14px margin-top replaces PASS5's 4px, which existed to close a gap
+     ABOVE the buttons that no longer exists.
+     -------------------------------------------------------------------- */
+  .home #home-hero .home-hero__text {
+    order: 1;
+    margin-top: 14px;
   }
 }
