@@ -298,8 +298,16 @@ bhp_hw_assert(
 );
 
 /* 3b. The look-inside gallery. Still ONE per page: the new section is not a second one. */
+/*
+ * The needle carries its closing quote ON PURPOSE. `data-bhp-gallery-count`
+ * is ALSO a prefix of `data-bhp-gallery-counter`, the slide counter inside
+ * the same gallery, so the bare string matches twice for ONE gallery. The
+ * first run of this suite failed here and the page was innocent -- recorded
+ * rather than quietly corrected, because a test that cries wolf gets
+ * disabled and then the real regression ships.
+ */
 bhp_hw_assert(
-	1 === substr_count( $home, 'data-bhp-gallery-count' ),
+	1 === substr_count( $home, 'data-bhp-gallery-count="' ),
 	'§3.2 EXACTLY ONE interactive Look Inside gallery on the page (the new spreads are static links, not a second gallery)',
 	$failures
 );
@@ -326,9 +334,22 @@ bhp_hw_assert(
 	'§3.3 the #find-your-adventure deep-link anchor still resolves to exactly one element',
 	$failures
 );
+/*
+ * TWO, not one, and both are pre-existing. The footer launcher
+ * (`data-bhp-source="information_page"`, id `find-your-adventure`) and the
+ * mid-page audience-gateway band (`data-bhp-source="homepage_gateway"`,
+ * reinstated by B6 on 2026-08-03) each raise this impression. This build
+ * adds neither and removes neither. The first run of this suite asserted 1
+ * and was wrong about the page, not the other way round.
+ */
 bhp_hw_assert(
-	1 === substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
-	'§3.3 the quiz impression event still fires from exactly one element',
+	2 === substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
+	'§3.3 both pre-existing quiz impressions still fire (footer launcher + audience-gateway band)',
+	$failures
+);
+bhp_hw_assert(
+	false !== strpos( $home, 'data-bhp-source="homepage_gateway"' ),
+	'§3.3 the audience-gateway band still raises its own quiz impression',
 	$failures
 );
 
@@ -361,6 +382,17 @@ $known_events = array(
 	'parent_final_cta_click', 'parent_hero_primary_cta_click', 'quiz_cta_clicked',
 	'quiz_destination_click', 'related_content_click', 'retailer_hero_primary_cta_click',
 	'retailer_hero_secondary_cta_click', 'retailer_wholesale_contact_click',
+	/*
+	 * `collection_band_add_to_cart` is emitted by the Complete Collection
+	 * band's own control. It was MISSING from the first version of this list
+	 * because that list was built by grepping literal
+	 * `data-bhp-event="..."` attributes out of the template tree, and this
+	 * one is assembled in PHP rather than written as a literal. The list is
+	 * therefore a HAND-MAINTAINED allowlist, not a derived one -- if this
+	 * assertion fails on a name you recognise, add it here; if it fails on a
+	 * name you do not, a new GTM variable is needed before it ships.
+	 */
+	'collection_band_add_to_cart',
 );
 $unknown = array();
 if ( preg_match_all( '/data-bhp-event="([a-z_]+)"/', $home, $em ) ) {
@@ -391,8 +423,10 @@ foreach ( $sections as $sid ) {
 }
 
 /* 3f. The hero's own pre-existing furniture. */
+/* Again the quoted form: `home-hero__book-preview` is a prefix of
+   `home-hero__book-preview-label`. */
 bhp_hw_assert(
-	1 === substr_count( $home, 'home-hero__book-preview' )
+	1 === substr_count( $home, 'class="home-hero__book-preview"' )
 		&& 3 === substr_count( $home, 'home-hero__book-cover' ),
 	'§3.6 the three-cover preview still renders once, with all three covers',
 	$failures
@@ -412,9 +446,25 @@ bhp_hw_assert(
 	'§3.6 the brand signature still renders',
 	$failures
 );
+/*
+ * THE HERO BACKGROUND IS A CSS `::after`, NOT AN `<img>`, AND THAT WAS
+ * ESTABLISHED BY LOOKING RATHER THAN BY ASSUMING. The first version of this
+ * assertion looked for `home-hero__media`, the markup `hero.php` emits when
+ * `image_id` is non-zero. It is absent -- and it is absent on PRODUCTION
+ * too: `bhp_home_hero_image_id` is an empty string on the front page of
+ * BOTH environments (read read-only on production, 2026-08-18). The ocean
+ * comes from `.home .home-hero--with-books::after` in style.css, so what
+ * there is to assert is that the RULE survived the CSS append.
+ */
+$css_live = @file_get_contents( get_template_directory() . '/style.css' );
 bhp_hw_assert(
-	false !== strpos( $home, 'home-hero__media' ),
-	'§3.6 the hero background photograph is KEPT (the board\'s mock-up dropped it; current behaviour wins where the board is silent)',
+	is_string( $css_live ) && false !== strpos( $css_live, 'assets/images/wild-places/ocean-surface.webp' ),
+	'§3.6 the hero background treatment is KEPT (the board mock-up drew a flat gradient; current behaviour wins where the board is silent)',
+	$failures
+);
+bhp_hw_assert(
+	is_string( $css_live ) && false !== strpos( $css_live, '.home .home-hero--with-books .home-hero__overlay' ),
+	'§3.6 the hero overlay gradient rule is untouched by the warmth append',
 	$failures
 );
 
