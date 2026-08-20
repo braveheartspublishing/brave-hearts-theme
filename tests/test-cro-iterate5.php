@@ -185,7 +185,7 @@ foreach ( $posts as $p ) {
 bhp_i5_assert( count( $post_docs ) === count( $posts ), sprintf( '§1.1 all %d posts fetched', count( $posts ) ), $failures );
 bhp_i5_assert(
 	empty( $still_rail ),
-	sprintf( '§1.2 REMOVED: the mid-post rail renders on no post%s', $still_rail ? ' (' . implode( ', ', $still_rail ) . ')' : '' ),
+	sprintf( '§1.2 KEPT (reversed 1.19.272, items 110/118): the mid-post book rail renders EXACTLY ONCE on every post%s', $still_rail ? ' — WRONG COUNT on: ' . implode( ', ', $still_rail ) : '' ),
 	$failures
 );
 bhp_i5_assert(
@@ -250,11 +250,14 @@ bhp_i5_assert(
 	'§1.8 the exclusion lives in the eligibility function, so every caller of the template part inherits it',
 	$failures
 );
+/* ⛔ REVERSED 1.19.272 (items 110/118). The switch is still a filter — that
+   never changed and was the reason the restore cost one line — but its DEFAULT
+   is now ON, which is what the founder ruled twice. */
 bhp_i5_assert(
 	function_exists( 'bhp_blog_rail_enabled' )
-		&& false === bhp_blog_rail_enabled()
+		&& true === bhp_blog_rail_enabled()
 		&& 1 === preg_match( '/apply_filters\(\s*[\'"]bhp_blog_rail_enabled[\'"]/', $blogc ),
-	'§1.9 the rail is switched off by a filter, not deleted — one line restores it',
+	'§1.9 the rail RENDERS by default and is still governed by a filter — one line moves it either way',
 	$failures
 );
 bhp_i5_assert(

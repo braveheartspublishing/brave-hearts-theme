@@ -327,8 +327,15 @@ foreach ( $pe_posts as $pe_p ) {
 	 *    an empty price element would mean the guard was bypassed — and a
 	 *    typed price is the standing-rule §3 failure this component was built
 	 *    to make impossible.
+	 *
+	 * ⚠ THE CURRENCY SYMBOL ARRIVES AS THE ENTITY `&#036;`, NOT AS `$`, AND
+	 *   THIS ASSERTION WAS WRONG ABOUT THAT BEFORE THE CODE WAS. WooCommerce's
+	 *   `get_woocommerce_currency_symbol()` returns the entity; `esc_html()`
+	 *   passes it through un-double-encoded, so the browser renders "$11.99"
+	 *   correctly and only a byte-level test could mistake it for a defect.
+	 *   Checked live on staging2 1.19.272 before this pattern was widened.
 	 */
-	if ( ! preg_match( '/class="bhp-book-rail__price">\s*\$\d/', $pe_doc ) ) {
+	if ( ! preg_match( '/class="bhp-book-rail__price">\s*(?:\$|&#0*36;|&#x0*24;)\s*\d/i', $pe_doc ) ) {
 		$pe_bad_price[] = $pe_p->post_name;
 	}
 
@@ -488,9 +495,16 @@ if ( '' !== $pe_prod_doc ) {
 	$pe_note = array();
 	preg_match( '/<p class="bhp-formats__note"[^>]*>(.*?)<\/p>/s', $pe_prod_doc, $pe_note );
 	$pe_note_txt = isset( $pe_note[1] ) ? wp_strip_all_tags( $pe_note[1] ) : '';
+	/*
+	 * ⚠ CASE-SENSITIVE ON PURPOSE, AND THIS ASSERTION WAS WRONG BEFORE THE CODE
+	 *   WAS. A case-insensitive `\bus\b` matches "contiguous **US**" — the
+	 *   country, not the pronoun — and reported a voice violation in a line
+	 *   that is already correctly in Andrew's voice. Lowercase `us` only;
+	 *   `we`/`our` in either case, because both can open a sentence.
+	 */
 	bhp_pe_assert(
 		'' !== $pe_note_txt
-			&& ! preg_match( '/\b(we|our|us)\b/i', $pe_note_txt ),
+			&& ! preg_match( '/\b(?:[Ww]e|[Oo]ur|us)\b/', $pe_note_txt ),
 		sprintf( '§3.8 the shipping note carries no company "we" — %s  ⭐ PROTECTED: standing rules §9.1, the founder is the sole operator', var_export( $pe_note_txt, true ) ),
 		$failures
 	);
@@ -537,10 +551,49 @@ if ( '' !== $pe_coll ) {
 	/*
 	 * ⭐ ONE PRIMARY. The founder's subtraction sheet and the CRO rubric agree
 	 *    on this and it is the rule the audience router was removed to protect.
+	 *
+	 * ⚠ "ONE" IS ONE *CONTROL*, NOT ONE OCCURRENCE IN THE MARKUP, AND THIS
+	 *   ASSERTION WAS WRONG BEFORE THE CODE WAS. The page renders the SAME
+	 *   primary once per format panel — paperback visible, hardcover `hidden` —
+	 *   so a naive count of 1 fails on a page that is behaving correctly.
+	 *   Verified live on staging2 1.19.272: two occurrences, both carrying
+	 *   `data-bhp-landing-main-cta`, one inside a `hidden` panel.
+	 *
+	 *   ⭐ THE PROTECTION IS THEREFORE STATED PRECISELY: every primary CTA on
+	 *      this page is THE SAME CONTROL. A genuinely second, competing primary
+	 *      would be a different element and would not carry that attribute —
+	 *      which is exactly the regression this assertion has to catch.
 	 */
+	$pe_prim = substr_count( $pe_coll, 'bhp-landing-cta--primary' );
+	$pe_main = substr_count( $pe_coll, 'data-bhp-landing-main-cta' );
 	bhp_pe_assert(
-		1 === substr_count( $pe_coll, 'bhp-landing-cta--primary' ),
-		sprintf( '§4.9 exactly ONE primary CTA on the collection page (found %d)  ⭐ PROTECTED: report §4 — one primary per screen', substr_count( $pe_coll, 'bhp-landing-cta--primary' ) ),
+		$pe_prim >= 1 && $pe_prim === $pe_main,
+		sprintf( '§4.9 every primary CTA is the one main control (%d primary, %d main-cta)  ⭐ PROTECTED: report §4 — one primary per screen; format panels repeat it, they do not compete with it', $pe_prim, $pe_main ),
+		$failures
+	);
+	/*
+	 * ⭐ AND ONLY ONE FORMAT IS ON SHOW AT A TIME. Every format panel's opening
+	 *    tag is read; the ones without `hidden` must all name the SAME format.
+	 *    If a future edit un-hid the hardcover panels, the visible set would
+	 *    hold two format names and this fails — which is the real "two
+	 *    primaries on the money page" regression, expressed as a fact about the
+	 *    page rather than as a count of a class name.
+	 */
+	$pe_panels  = array();
+	preg_match_all( '/data-bhp-format-panel="([a-z]+)"([^>]*)>/', $pe_coll, $pe_panels, PREG_SET_ORDER );
+	$pe_visible = array();
+	foreach ( $pe_panels as $pe_pan ) {
+		if ( ! preg_match( '/\bhidden\b/', $pe_pan[2] ) ) {
+			$pe_visible[ $pe_pan[1] ] = true;
+		}
+	}
+	bhp_pe_assert(
+		count( $pe_panels ) > 0 && 1 === count( $pe_visible ),
+		sprintf(
+			'§4.10 …and exactly ONE format is visible at a time (%d panels, visible formats: %s)  ⭐ PROTECTED: the customer sees one primary, not two',
+			count( $pe_panels ),
+			$pe_visible ? implode( '+', array_keys( $pe_visible ) ) : 'none'
+		),
 		$failures
 	);
 }

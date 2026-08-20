@@ -177,6 +177,21 @@ echo "\n=== §2 — THE RAIL: EXACTLY ONCE, AND THE PRICE IS LIVE ===\n";
  *    assertion that actually proves the founder's ruling took effect, and it is
  *    measured on the same fetched HTML a visitor receives.
  *
+ * ⛔⛔ AMENDED 2026-08-19 BY `CYCLE165-LD-ITERATE-8-FINAL` (theme 1.19.272).
+ *     §2.0 AND §2.0b ARE REVERSED — the rail is BACK, on the founder's own
+ *     correction (carrier items 110 and 118). ⭐ THE PARAGRAPH ABOVE READ THE
+ *     SITUATION EXACTLY RIGHT AND IS PRESERVED WORD FOR WORD: it refused to
+ *     delete §2 and §3, kept every price-parity and provenance assertion
+ *     pointed at the component, and said in as many words *"the day Andrew
+ *     reverses the ruling it comes back working rather than rotted."* That is
+ *     precisely what happened, one day later, and the rail came back working.
+ *     Only the two ON/OFF assertions flip; nothing else in §2 or §3 changes.
+ *
+ * ⚠ The `bhp_bpt_rail_render()` helper still forces the switch ON in-process.
+ *   That is now redundant — the default IS on — and it is deliberately kept:
+ *   it makes §2 and §3 independent of the default, so they keep proving the
+ *   component is correct whichever way the switch is later set.
+ *
  * ⛔ `bhp_blog_rail_html()` is guarded by `bhp_blog_template_active()`, which is
  *    `is_singular('post')` — false in WP-CLI. The helper below sets up a real
  *    `WP_Query` for the post and restores the globals afterwards. That is the
@@ -210,22 +225,22 @@ function bhp_bpt_rail_render( $p ) {
 $shipped_rails = array();
 foreach ( $docs as $slug => $html ) {
 	$n = preg_match_all( '/<aside class="bhp-book-rail/', $html );
-	if ( 0 !== $n ) {
+	if ( 1 !== $n ) {
 		$shipped_rails[] = "{$slug}({$n})";
 	}
 }
 bhp_bpt_assert(
 	empty( $shipped_rails ),
 	sprintf(
-		'§2.0 (1.19.269, founder item 1) the mid-post rail is rendered on NONE of the %d published posts%s',
+		'§2.0 (1.19.272, founder items 110/118) the mid-post rail is rendered EXACTLY ONCE on all %d published posts%s',
 		count( $docs ),
-		$shipped_rails ? ' (still present on: ' . implode( ', ', $shipped_rails ) . ')' : ''
+		$shipped_rails ? ' (WRONG COUNT on: ' . implode( ', ', $shipped_rails ) . ')' : ''
 	),
 	$failures
 );
 bhp_bpt_assert(
-	function_exists( 'bhp_blog_rail_enabled' ) && false === bhp_blog_rail_enabled(),
-	'§2.0b the switch is OFF by default and is a real filter, not a deleted call site',
+	function_exists( 'bhp_blog_rail_enabled' ) && true === bhp_blog_rail_enabled(),
+	'§2.0b the switch is ON by default and is still a real filter, so it reverses in one line in either direction',
 	$failures
 );
 
