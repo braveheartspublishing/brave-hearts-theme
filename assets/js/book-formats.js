@@ -22,6 +22,19 @@
 		var priceEl = root.querySelector('[data-bhp-format-price]');
 		var ctaEl = root.querySelector('[data-bhp-format-cta]');
 		var noteEl = root.querySelector('[data-bhp-format-note]');
+		/*
+		 * 1.19.274 (CYCLE165-LD-COLLECTION-CTA-TO-CHECKOUT) — the COLLECTION
+		 * card's own add-and-checkout control. Present only when the server
+		 * rendered a real bundle form (bundle plugin live); null otherwise, in
+		 * which case every branch below leaves the anchor exactly as it was and
+		 * this file behaves identically to 1.19.273.
+		 *
+		 * This file still contains NO commerce logic. The form, its nonce, its
+		 * action and its checkout flag are all server-rendered by
+		 * bhp_collection_add_to_cart_cta(); all that happens here is that one of
+		 * two already-rendered controls is shown.
+		 */
+		var directEl = root.querySelector('[data-bhp-collection-cta]');
 		// A1 (2026-08-03): the format-reactive spec line. Server-rendered for
 		// the initial format, so this only ever REPLACES existing text and can
 		// never introduce a layout shift on load.
@@ -73,6 +86,23 @@
 			} else {
 				ctaEl.removeAttribute('aria-disabled');
 			}
+
+			/*
+			 * 1.19.274 — swap the CONTROL, not just its label. `directBuy` is set
+			 * server-side on the collection entry only when a real form was
+			 * rendered, so `direct` is false for every other format and false on
+			 * a site with the bundle plugin off.
+			 *
+			 * The anchor's href/label above are still applied on the direct path,
+			 * deliberately: it stays a correct, hidden fallback to
+			 * /complete-collection/ rather than a stale node, and the protected
+			 * `bhp-formats__cta` element is never removed from the document.
+			 */
+			var direct = !!(directEl && conf.directBuy);
+			if (directEl) {
+				directEl.hidden = !direct;
+			}
+			ctaEl.hidden = direct;
 
 			if (specEl && conf.formatSpec) {
 				specEl.textContent = conf.formatSpec;

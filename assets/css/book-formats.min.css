@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 90a31e37e8358ea800df62841230ad59
+    source-md5: 3c8201de1946d5c8e2aef48f0952f133
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -180,6 +180,32 @@
 .bhp-formats__cta.is-disabled {
 	opacity: 0.55;
 	pointer-events: none;
+}
+
+
+.bhp-formats__cta[hidden],
+.bhp-formats__cta-direct[hidden] {
+	display: none;
+}
+
+.bhp-formats__cta-direct {
+	display: block;
+}
+
+.bhp-formats__cta-direct .bhp-formats__cta-form {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.bhp-formats__cta-wrap button.bhp-formats__cta {
+	display: inline-flex;
+	width: 100%;
+	min-height: 52px;
+	padding: 13px 22px;
+	line-height: 1.25;
+	letter-spacing: 0.03em;
+	cursor: pointer;
 }
 
 
@@ -384,6 +410,11 @@
 	}
 
 	.bhp-formats__cta {
+		min-height: 50px;
+	}
+
+	
+	.bhp-formats__cta-wrap button.bhp-formats__cta {
 		min-height: 50px;
 	}
 }

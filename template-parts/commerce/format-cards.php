@@ -335,6 +335,96 @@ if (!$bhp_hc_offerable) {
 }
 
 /*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.274 (2026-08-20, `CYCLE165-LD-COLLECTION-CTA-TO-CHECKOUT`) — THE
+ *     COLLECTION CARD'S CTA BUYS THE COLLECTION INSTEAD OF DESCRIBING IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-20, current-turn instruction, verbatim (RELAYED
+ * through the Chief of Staff in the brief that commissioned this change; NOT
+ * witnessed by this agent):
+ *
+ *   "on that same page when you click complete collection then get the
+ *    collection it goes to the collection page- if someone wants to buy the
+ *    collection from the individual page - it should auto add to cart from
+ *    that page not send you to the collection page. Send them straight to
+ *    check out not the cart either."
+ *
+ * ⛔ WHAT WAS ACTUALLY WRONG, AND IT WAS NOT THE UPSELL MODULE BELOW.
+ *    `bhp_product_collection_upsell()` (inc/audit-remediation.php) has posted
+ *    straight to /checkout/ since 1.19.19x. THIS control — the fourth card in
+ *    the format rail, in the buy box, above the fold — was still the last
+ *    Complete-Collection CTA on a product page that NAVIGATED. Two controls on
+ *    one page did opposite things, and the one a customer meets first was the
+ *    one that made them start over on another page.
+ *
+ * ⛔ THIS INVENTS NO COMMERCE MECHANISM. It calls the theme's existing shared
+ *    renderer `bhp_collection_add_to_cart_cta()` (inc/collection-cta.php),
+ *    which is the same `form.bhp-bundle-form` contract the Collection page's
+ *    three buy CTAs, the four funnel pages, the homepage band, the /books/
+ *    banner and the upsell module below all already post through: the plugin's
+ *    own nonce, its `complete_{format}_smart` action and its ALLOWLISTED
+ *    "finish on /checkout/" flag. No price, discount, shipping, tax, stock,
+ *    product record, SKU or Bookvault mapping is touched anywhere in this pass.
+ *
+ * ⭐ REPEAT CLICKS CANNOT DOUBLE-CHARGE, AND THAT IS INHERITED, NOT ADDED.
+ *    `complete_{format}_smart` adds only the titles the cart is MISSING
+ *    (`bhp_bundle_handle_add_to_cart()`), so a second click on a cart that
+ *    already holds the set is a no-op that still lands on /checkout/. The
+ *    server path is a redirect-after-POST, so F5 on the destination re-GETs
+ *    /checkout/ rather than re-adding. No product configuration was needed to
+ *    get that, and none was changed.
+ *
+ * ⛔ FAILS CLOSED TO EXACTLY TODAY'S BEHAVIOUR. Gated on
+ *    `bhp_collection_cta_available()` — i.e. the bundle plugin is live — rather
+ *    than on the renderer's own anchor fallback. With the plugin off this
+ *    block emits NOTHING, `directBuy` never enters the payload, and the anchor
+ *    below keeps the `/complete-collection/` href it has always had. A
+ *    plugin-less site sees byte-identical markup to 1.19.273.
+ *
+ * ⛔ THE FORMAT IS $bhp_collection_format, NOT $initial. That is the format the
+ *    collection CARD is already priced in (resolved ~line 221 from
+ *    `$data['collection']['format']`, which carries the school-visit
+ *    paperback-only restriction). Posting anything else would put a different
+ *    set in the cart from the one whose price the customer just read — the
+ *    same defect class `CYCLE144-LD-23` fixed in the upsell module.
+ *
+ * ⛔ THE LABEL IS UNCHANGED AND IS NOT NEW COPY. It is the payload's own
+ *    already-live `ctaLabel`, read from the array rather than retyped. Andrew
+ *    has approved no new string, and the existing words become MORE true after
+ *    this change, not less: "GET THE COMPLETE COLLECTION" now gets it.
+ *
+ * ⛔ THE ANCHOR IS HIDDEN, NEVER REMOVED. It stays in the document, first, with
+ *    class `bhp-formats__cta` — so `21-PROTECTED-ELEMENTS-MANIFEST.md`'s
+ *    product rows (`bhp-formats__cta` min 1) and the §3.7 ordering assertion
+ *    hold on every format, including a `?bhp_format=collection` URL where the
+ *    anchor renders hidden. Nothing listed in the manifest was removed or
+ *    reworded by this pass.
+ */
+$bhp_collection_direct_cta = '';
+if (
+    function_exists('bhp_collection_cta_available') && bhp_collection_cta_available()
+    && function_exists('bhp_collection_add_to_cart_cta')
+    && (!function_exists('bhp_collection_cta_context_allows_add') || bhp_collection_cta_context_allows_add())
+) {
+    $bhp_collection_direct_cta = bhp_collection_add_to_cart_cta([
+        'format'     => $bhp_collection_format,
+        'label'      => $bhp_format_payload['collection']['ctaLabel'],
+        'class'      => 'btn btn-primary bhp-formats__cta',
+        'form_class' => 'bhp-formats__cta-form',
+        'event'      => 'collection_upsell_click',
+        'source'     => 'product_format_rail',
+        'extra'      => 'data-bhp-format="' . esc_attr($bhp_collection_format) . '"',
+    ]);
+    /*
+     * book-formats.js swaps controls on this flag alone, so it exists only when
+     * a real form was rendered above. A flag set unconditionally would let the
+     * script hide the working anchor on a site where nothing replaced it.
+     */
+    $bhp_format_payload['collection']['directBuy'] = true;
+}
+
+/*
  * The card the page opens on, resolved once. If $initial names a format this
  * page cannot render (it cannot, today — the caller whitelists four keys — but
  * a future caller might), fall back to the site-wide default rather than
@@ -518,6 +608,14 @@ if (null === $bhp_initial_conf) {
    */
   $bhp_cta_disabled = (isset($bhp_initial_conf['inStock']) && false === $bhp_initial_conf['inStock']);
   $bhp_cta_external = !empty($bhp_initial_conf['external']);
+  /*
+   * 1.19.274: which of the two controls the SERVER paints. The rule is the
+   * same one book-formats.js applies on every later selection, written once
+   * here so first paint and every subsequent swap cannot disagree — the
+   * hoisted-payload discipline CYCLE143-CX-2 established for the price, label
+   * and note, extended to the control itself.
+   */
+  $bhp_cta_is_direct = ('' !== $bhp_collection_direct_cta && !empty($bhp_initial_conf['directBuy']));
   ?>
   <p class="bhp-formats__selected-price" data-bhp-format-price aria-live="polite"><?php echo wp_kses_post($bhp_initial_conf['priceHtml']); ?></p>
 
@@ -526,7 +624,19 @@ if (null === $bhp_initial_conf) {
        data-bhp-format-cta
        href="<?php echo esc_url($bhp_initial_conf['addUrl'] ? $bhp_initial_conf['addUrl'] : '#'); ?>"
        <?php echo $bhp_cta_external ? 'target="_blank" rel="noopener nofollow sponsored"' : ''; ?>
-       <?php echo $bhp_cta_disabled ? 'aria-disabled="true"' : ''; ?>><?php echo esc_html($bhp_initial_conf['ctaLabel']); ?></a>
+       <?php echo $bhp_cta_disabled ? 'aria-disabled="true"' : ''; ?>
+       <?php echo $bhp_cta_is_direct ? 'hidden' : ''; ?>><?php echo esc_html($bhp_initial_conf['ctaLabel']); ?></a>
+    <?php
+    /*
+     * 1.19.274: the add-and-checkout control for the COLLECTION card. Emitted
+     * only when the bundle plugin is live (see the gate above), and only ever
+     * ONE of these two is visible at a time. `bhp_collection_add_to_cart_cta()`
+     * escapes every component it renders, which is why this echoes raw.
+     */
+    if ('' !== $bhp_collection_direct_cta) :
+    ?>
+    <span class="bhp-formats__cta-direct" data-bhp-collection-cta<?php echo $bhp_cta_is_direct ? '' : ' hidden'; ?>><?php echo $bhp_collection_direct_cta; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped --every component escaped in bhp_collection_add_to_cart_cta() ?></span>
+    <?php endif; ?>
   </p>
 
   <?php /* A1: server-rendered for the initial format so first paint is already

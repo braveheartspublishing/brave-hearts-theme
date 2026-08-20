@@ -259,6 +259,62 @@
 	pointer-events: none;
 }
 
+/* ==========================================================================
+   1.19.274 (2026-08-20, CYCLE165-LD-COLLECTION-CTA-TO-CHECKOUT) — TWO
+   CONTROLS IN ONE SLOT, EXACTLY ONE OF THEM VISIBLE.
+   ==========================================================================
+
+   The COLLECTION card's CTA is now a real bundle form that adds the set and
+   lands on /checkout/, rendered beside the anchor the other three formats
+   use. book-formats.js toggles the `hidden` attribute between them.
+
+   ⛔ THE `[hidden]` RULES ARE LOAD-BEARING, NOT BELT-AND-BRACES. The UA
+      sheet's `[hidden] { display: none }` is (0,1,0) and loses to
+      `.bhp-formats__cta { display: inline-flex }` (0,1,0, later sheet), so
+      `hidden` alone would leave BOTH controls painted. Matching on class +
+      attribute takes these to (0,2,0), which wins outright.
+
+   ⛔ THE GEOMETRY RULE IS (0,2,1) FOR THE SAME KIND OF REASON, MEASURED FROM
+      style.css RATHER THAN GUESSED. The direct control is a
+      <button type="submit">, and style.css's shared button block matches
+      `button[type='submit']` by ATTRIBUTE (0,1,1) — which out-ranks
+      `.bhp-formats__cta` (0,1,0) and would silently paint the collection
+      button at min-height 48px / padding .875rem 2rem / tracking
+      var(--tracking-ui) while its neighbours sit at 52px / 13px 22px /
+      0.03em. Adding the wrap class ties it at (0,2,1) and wins. This is the
+      identical trap already recorded at inc/audit-remediation.php ~line 291
+      for the upsell module's button.
+
+   ⭐ COLOUR IS DELIBERATELY NOT SET HERE. bhp_collection_add_to_cart_cta()
+      appends BHP_COLLECTION_CTA_CLASS, whose !important palette rule in
+      style.css gives every Complete-Collection CTA the nav-button treatment
+      under Andrew's 2026-08-05 ruling. Repainting it back to .btn-primary
+      here would break that ruling to win a local consistency argument. */
+.bhp-formats__cta[hidden],
+.bhp-formats__cta-direct[hidden] {
+	display: none;
+}
+
+.bhp-formats__cta-direct {
+	display: block;
+}
+
+.bhp-formats__cta-direct .bhp-formats__cta-form {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.bhp-formats__cta-wrap button.bhp-formats__cta {
+	display: inline-flex;
+	width: 100%;
+	min-height: 52px;
+	padding: 13px 22px;
+	line-height: 1.25;
+	letter-spacing: 0.03em;
+	cursor: pointer;
+}
+
 /* A1 (2026-08-03) — the format-reactive spec line, above the shipping note.
    Sized between the CTA and the note so it reads as a fact about the EDITION,
    not as fine print. Full opacity deliberately: it is the sentence that stops
@@ -520,6 +576,14 @@
 	}
 
 	.bhp-formats__cta {
+		min-height: 50px;
+	}
+
+	/* 1.19.274: the direct control's (0,2,1) geometry rule out-ranks the
+	   (0,1,0) line above, so the mobile height has to be restated at the same
+	   weight or the two controls would differ by 2px on a phone — the exact
+	   drift the shared slot exists to prevent. */
+	.bhp-formats__cta-wrap button.bhp-formats__cta {
 		min-height: 50px;
 	}
 }
