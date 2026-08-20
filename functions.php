@@ -2648,10 +2648,26 @@ function bhp_should_show_parent_ab_popup() {
  *   - EVERY post carries exactly ONE such link, and it is the FOOTER NAV
  *     item "Free Reluctant Reader Kit". That is sitewide chrome, it appears
  *     on selling pages too, and it is NOT touched here.
- *   - ONE post (`/blog/best-books-for-7-year-olds/`) additionally carries the
- *     contextual-CTA block for `adventure_kit_signup`, placed by an editor's
- *     `[bhp_contextual_cta]` shortcode. ⭐ THAT is the navigating kit CTA the
- *     ruling bites on, and it is what `BHP_CTA_Engine::render()` now marks.
+ *   - ONE post (`/blog/best-books-for-7-year-olds/`, id 28) additionally
+ *     carries the contextual-CTA block for `adventure_kit_signup`. ⭐ THAT is
+ *     the navigating kit CTA the ruling bites on.
+ *
+ * ⚠ AND IT IS NOT WHAT IT LOOKS LIKE — A CORRECTION THIS RELEASE MADE TO
+ *   ITSELF AFTER MEASURING. That block LOOKS like `[bhp_contextual_cta]`
+ *   output because it is: somebody rendered it once and PASTED THE RESULT into
+ *   the post. `wp post get 28 --field=content` returns the finished `<a
+ *   class="btn btn-primary" ... data-bhp-cta-id="adventure_kit_signup">` as
+ *   stored HTML, with no shortcode anywhere in the post. The CTA engine
+ *   therefore NEVER RUNS on the one post that has a kit CTA.
+ *
+ *   Two consequences, both recorded rather than smoothed over:
+ *     1. THE CONTENT FILTER BELOW IS LOAD-BEARING TODAY, not a hedge against
+ *        some future editor. It is the only thing that carries the founder's
+ *        ruling to the live blog.
+ *     2. The engine change is still correct and still required — a shortcode
+ *        placed tomorrow renders through it — but on 2026-08-19 it is
+ *        exercised only by the test suite and by a direct `wp eval` probe,
+ *        never by a page load. Both paths were verified; see the QA evidence.
  *   - The END-OF-POST CAPTURE IS ALREADY AN INLINE FORM. It posts to the
  *     Mailchimp endpoint and returns to the same post; it never navigated
  *     anywhere, so there are already zero steps to remove and it is left
@@ -2734,13 +2750,16 @@ function bhp_kit_popup_trigger_attrs( $reason = 'cta_click' ) {
 }
 
 /**
- * IN-CONTENT kit links written by hand in the editor.
+ * IN-CONTENT kit links stored in the post itself.
  *
- * ⚠ NO SUCH LINK EXISTS ON ANY OF THE 36 PUBLISHED POSTS TODAY — that was
- *   measured, not assumed, and it is recorded in the block above. This filter
- *   is here so the ruling survives the next post that carries one, because the
- *   alternative is a rule that quietly stops applying the moment an editor
- *   writes the obvious thing.
+ * ⭐ THIS IS THE FILTER THAT ACTUALLY DELIVERS THE FOUNDER'S RULING ON THE LIVE
+ *    BLOG, and an earlier draft of this comment said the opposite. It claimed
+ *    no such link existed and called this "future-proofing". Measuring the
+ *    stored content of post 28 disproved that: the one kit CTA the blog has is
+ *    pasted HTML, so it reaches the reader through THIS filter and not through
+ *    the CTA engine. The withdrawn claim is left recorded here rather than
+ *    quietly deleted, because a future reader deciding whether this filter is
+ *    dead weight needs to know it was nearly removed for exactly that reason.
  *
  * ⛔ IT ADDS ATTRIBUTES AND CHANGES NOTHING ELSE. It never rewrites an `href`,
  *    never removes a link, never touches link text and never touches an anchor
