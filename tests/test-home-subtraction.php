@@ -413,13 +413,27 @@ bhp_hs_assert(
 	'§6.3 the focus indicator returns to the sitewide var(--color-focus), which passes on a light ground',
 	$failures
 );
-/* ⭐ THE STARS. `--color-gold-deep` (#805800) was chosen in 1.19.266 precisely
-   because it clears AA on every cream in circulation. It is inherited, not
-   re-declared, and it must NOT be "fixed" back to --color-gold. */
+/* ⛔⛔ THE STARS, AND THE ASSERTION THAT WAS WRONG. Superseded, quoted:
+ *
+ *      1 === preg_match( '/\#amazon-customer-reviews\ \.amazon-review-card__stars\s*\{\s*color:\s*var\(--color-gold-deep\)/', $css_min )
+ *      '§6.4 the stars are still var(--color-gold-deep) = #805800 (5.16:1 on parchment)',
+ *
+ *    IT PASSED, AND THE STARS WERE GOLD. The rule it found is real and sits at
+ *    style.css:2040 — and a LATER rule in the same sheet re-declares the same
+ *    selector as `var(--color-gold)`, correctly, for the dark ground this
+ *    release replaced. Measured live in headless Chrome at an asserted
+ *    innerWidth of 390 and 1440: `rgb(217,164,95)` on the white card, 2.23:1.
+ *
+ * ⚠️ A STYLESHEET TEST CAN PROVE A DECLARATION EXISTS. IT CAN NEVER PROVE THAT
+ *    DECLARATION WINS. That is a cascade fact and only a browser can read it.
+ *    §6.4 now asserts the rule that actually wins — the one inside the cream
+ *    block, which outranks both by carrying the id AND the modifier class — and
+ *    the WINNING is proven by the probe filed with this release, not here.
+ */
 bhp_hs_assert(
-	1 === preg_match( '/\#amazon-customer-reviews\ \.amazon-review-card__stars\s*\{\s*color:\s*var\(--color-gold-deep\)/', $css_min )
+	1 === preg_match( '/' . preg_quote( $cream_sel . ' .amazon-review-card__stars', '/' ) . '\s*\{\s*color:\s*var\(--color-gold-deep\)/', $css_min )
 		&& 1 === preg_match( '/--color-gold-deep:\s*#805800/i', $css_min ),
-	'§6.4 the stars are still var(--color-gold-deep) = #805800 (5.16:1 on parchment)',
+	'§6.4 the cream block itself repoints the stars to var(--color-gold-deep) = #805800 (6.34:1 on the white card)',
 	$failures
 );
 

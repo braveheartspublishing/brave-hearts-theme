@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: bc28285c40ef91672dc0a4f798fc6532
+    source-md5: 9ee9bbb29264e755c8f7a30e26ff5f10
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7317,6 +7317,7 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 .home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__verified { color: var(--color-text-muted); }  
 
 
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__stars { color: var(--color-gold-deep); }
 
 
 .home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link,

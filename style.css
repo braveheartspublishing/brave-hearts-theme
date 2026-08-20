@@ -10924,11 +10924,41 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 .home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__source,
 .home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__verified { color: var(--color-text-muted); }  /* 5.79:1, was --color-parchment / #e7dcc4 (~1.0:1) */
 
-/* ⭐ THE STARS ARE DELIBERATELY NOT LISTED. `--color-gold-deep` (#805800) is
-   already what the dark block sets and it measures 5.16:1 on parchment — the
-   1.19.266 pass chose that value precisely because it clears AA on every cream
-   in circulation. Re-declaring it here would only create a second place to
-   forget to update. The size override (1.15rem) is equally still correct. */
+/* ⛔⛔ THE STARS. THIS DECLARATION EXISTS BECAUSE I GOT IT WRONG FIRST, AND THE
+   BROWSER CAUGHT WHAT EVERY MARKUP TEST MISSED. Recording it, because the
+   mistake is more instructive than the fix.
+
+   The first version of this block deliberately OMITTED the stars, with the
+   reasoning: "`#amazon-customer-reviews .amazon-review-card__stars` already
+   sets `--color-gold-deep`, which measures 5.16:1 on parchment — re-declaring
+   it here would only create a second place to forget to update."
+
+   That rule is real, it is at :2040, and IT DOES NOT WIN. A later rule in this
+   same sheet — Item 6 of the F21 family — re-declares the same selector with
+   `color: var(--color-gold)`, and its own comment states the reason in full:
+   "⛔ NOT --color-gold-deep: this ground is DARK, where the deep gold now
+   measures 2.6:1. Light ground -> gold-deep, dark ground -> gold."
+
+   ⭐ THAT COMMENT WAS CORRECT AND IS EXACTLY WHY THIS DECLARATION IS NEEDED:
+      THIS RELEASE INVERTED THE GROUND. The rule stayed right about a page that
+      no longer exists. Measured live on staging2 1.19.268 in headless Chrome at
+      an asserted innerWidth of 390 AND 1440: the stars computed
+      `rgb(217,164,95)` on the new `rgb(255,255,255)` card — **2.23:1**, the
+      worst contrast on the section, on the site's only customer proof.
+
+   ⚠️ AND THE TEST THAT SHOULD HAVE CAUGHT IT DID NOT, WHICH IS THE REAL LESSON.
+      `tests/test-home-subtraction.php` §6.4 asserted that the :2040 rule EXISTS
+      and it passed — a stylesheet test can prove a declaration is present and
+      can never prove it WINS. Only a browser can read a computed cascade. §6.4
+      now asserts the rule below instead, and says plainly that the cascade
+      itself is proven by the probe and not by the suite.
+
+   #805800 on the white card measures 6.34:1 (the same figure the 1.19.266
+   token block recorded) and 5.16:1 against the parchment ground behind it. The
+   SIZE and the `order`/`margin` geometry from Item 6 are untouched: only the
+   colour moves, and it moves in the direction Item 6's own rule prescribes for
+   a light ground. */
+.home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__stars { color: var(--color-gold-deep); }
 
 /* --- links --------------------------------------------------------------- */
 .home #amazon-customer-reviews.home-reviews--cream .amazon-review-card__link,
