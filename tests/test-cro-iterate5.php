@@ -461,7 +461,7 @@ bhp_i5_assert(
  *
  * §5.3b below PRINTS every excluded value so the gap is visible in the run log
  * rather than discoverable only by re-deriving it. It is reported to Gandalf as
- * `CYCLE165-LD-47`, open, and it is the ONLY part of item 5 not applied.
+ * `CYCLE165-LD-50`, open, and it is the ONLY part of item 5 not applied.
  */
 $hero_excluded = array();
 if ( preg_match_all( '/([^{}]*home-hero__eyebrow[^{}]*)\{([^}]*)\}/', $style, $hrules, PREG_SET_ORDER ) ) {
