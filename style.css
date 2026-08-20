@@ -1692,7 +1692,8 @@ article.single-post { margin-inline: auto; }
 .hub-card--destination:focus-within .hub-card__media { filter: brightness(1.06); box-shadow: 0 22px 44px rgba(var(--color-jungle-rgb), 0.55); transform: translateY(-3px); }
 .hub-card--destination .card__eyebrow {
   color: var(--color-gold);
-  font-size: 0.7rem;
+  /* 1.19.269 item 5 — was 0.7rem (11.20px). A card eyebrow is a label. */
+  font-size: var(--text-label);
   line-height: 1.5;
 }
 .hub-card--destination .card__excerpt { color: var(--color-sky); }
@@ -3734,7 +3735,8 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
 .home .hub-card--destination .card__body { justify-content: flex-end; padding: var(--space-6) var(--space-8) var(--space-8); }
 .home .hub-card--destination .card__eyebrow,
 .home .hub-card--destination .card__title { max-width: none; }
-.home .hub-card--destination .card__eyebrow { color: var(--color-gold); font-size: .6rem; letter-spacing: .16em; }
+/* 1.19.269 item 5 — was .6rem (9.60px), the smallest label measured on the site. */
+.home .hub-card--destination .card__eyebrow { color: var(--color-gold); font-size: var(--text-label); letter-spacing: .16em; }
 .home .hub-card--destination .card__title { order: -1; color: white; font-size: 1.25rem; font-weight: 400; }
 /* The coordinate line — Andrew: "keep the coordinates". */
 .home .hub-card--destination .hub-card__location {
@@ -3917,7 +3919,8 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
 .home .homepage-grid--adventures { gap: 1.65rem; }
 .home .hub-card--destination { min-height: 610px; }
 .home .hub-card--destination .card__body { padding: 2.7rem; }
-.home .hub-card--destination .card__eyebrow { margin-bottom: 1.05rem; font-size: .67rem; }
+/* 1.19.269 item 5 — was .67rem (10.72px). */
+.home .hub-card--destination .card__eyebrow { margin-bottom: 1.05rem; font-size: var(--text-label); }
 .home .hub-card--destination .card__title { margin-bottom: 2rem; font-size: 1.48rem; }
 .home .hub-card--destination .hub-card__question { font-size: clamp(2rem, 2.85vw, 2.65rem); line-height: 1.16; }
 .home .hub-card--destination .hub-card__link { margin-top: 2rem; padding-block: .6rem; font-size: .78rem; }
@@ -4698,7 +4701,8 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
 .home .homepage-grid--adventures { gap: 24px; max-width: 1300px; margin-inline: auto; }
 .home .hub-card--destination { min-height: 560px; height: 560px; border-radius: 5px; box-shadow: 0 40px 70px -34px rgba(0,0,0,.8); }
 .home .hub-card--destination .card__body { padding: 34px 30px; }
-.home .hub-card--destination .card__eyebrow { margin: 0 0 6px; font-size: 10.5px; letter-spacing: .26em; }
+/* 1.19.269 item 5 — was 10.5px. */
+.home .hub-card--destination .card__eyebrow { margin: 0 0 6px; font-size: var(--text-label); letter-spacing: .26em; }
 .home .hub-card--destination .card__title { order: initial; margin: 0; font-size: 24px; }
 .home .hub-card--destination .hub-card__location { margin: auto 0 16px; color: rgba(217,164,95,.85); font-family: ui-monospace,Menlo,monospace; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; }
 .hub-card__commerce { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.85rem; margin: 0.5rem 0 0.75rem; }
@@ -4775,7 +4779,9 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
 .home .footer-proof { max-width: 320px; margin-top: 20px; }
 .home .footer-nav h2, .home .footer-nav .footer-col-title,
 .home .footer-learn h2, .home .footer-learn .footer-col-title,
-.home .footer-contact h2, .home .footer-contact .footer-col-title { margin-bottom: 18px; color: #D9A45F; font-size: 10.5px; letter-spacing: .24em; }
+/* 1.19.269 item 5 — the homepage's own footer column labels, was 10.5px. The
+   colour is the DARK-ground gold on #12271d and is not the AA case that failed. */
+.home .footer-contact h2, .home .footer-contact .footer-col-title { margin-bottom: 18px; color: #D9A45F; font-size: var(--text-label); letter-spacing: .24em; }
 .home .footer-nav ul,
 .home .footer-learn ul { margin: 0; padding: 0; list-style: none; }
 .home .footer-nav li,

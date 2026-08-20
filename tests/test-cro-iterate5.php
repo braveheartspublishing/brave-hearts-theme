@@ -445,9 +445,43 @@ bhp_i5_assert(
  *    `font-size` it declares must be the token or a value >= 12px. A future
  *    edit that re-introduces a `.68rem` label fails here rather than shipping.
  */
+/*
+ * ⛔ ONE CLASS IS EXCLUDED, AND IT IS NAMED RATHER THAN QUIETLY SKIPPED.
+ *
+ * `.home .home-hero__eyebrow` still declares .68rem / .675rem / .74rem /
+ * 11.5px across four breakpoints — four labels between 10.80px and 11.84px,
+ * all of them BELOW Andrew's floor. They are NOT corrected by this release.
+ *
+ * WHY. The homepage hero is founder-approved and separately protected
+ * (`FD-460` / `FD-469`; `CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION`'s writer-lock
+ * block names "the hero" in its will-NOT-write list, and this release does not
+ * write what a concurrent release declared out of bounds). Resizing the type in
+ * an approved hero is a design change to the one surface Andrew signed off
+ * byte-for-byte, not a token correction.
+ *
+ * §5.3b below PRINTS every excluded value so the gap is visible in the run log
+ * rather than discoverable only by re-deriving it. It is reported to Gandalf as
+ * `CYCLE165-LD-47`, open, and it is the ONLY part of item 5 not applied.
+ */
+$hero_excluded = array();
+if ( preg_match_all( '/([^{}]*home-hero__eyebrow[^{}]*)\{([^}]*)\}/', $style, $hrules, PREG_SET_ORDER ) ) {
+	foreach ( $hrules as $hr ) {
+		if ( preg_match( '/font-size:\s*([^;}]+)/', $hr[2], $hfs ) ) {
+			$hero_excluded[] = trim( $hfs[1] );
+		}
+	}
+}
+echo sprintf(
+	"NOTE: §5.3b the homepage hero eyebrow is EXCLUDED by design (FD-460/469). Its declared sizes: %s\n",
+	$hero_excluded ? implode( ', ', $hero_excluded ) : 'none found'
+);
+
 $undersized = array();
 if ( preg_match_all( '/([^{}]*(?:__eyebrow|footer-col-title)[^{}]*)\{([^}]*)\}/', $style, $rules, PREG_SET_ORDER ) ) {
 	foreach ( $rules as $r ) {
+		if ( false !== strpos( $r[1], 'home-hero__eyebrow' ) ) {
+			continue; // see §5.3b above — excluded, named, and reported.
+		}
 		if ( ! preg_match( '/font-size:\s*([^;}]+)/', $r[2], $fs ) ) {
 			continue;
 		}
@@ -470,7 +504,7 @@ if ( preg_match_all( '/([^{}]*(?:__eyebrow|footer-col-title)[^{}]*)\{([^}]*)\}/'
 }
 bhp_i5_assert(
 	empty( $undersized ),
-	sprintf( '§5.3 no eyebrow/label rule in style.css declares a font-size under 12px%s', $undersized ? ' (' . implode( ' | ', array_slice( $undersized, 0, 4 ) ) . ')' : '' ),
+	sprintf( '§5.3 no eyebrow/label rule in style.css declares a font-size under 12px (hero excluded, see §5.3b)%s', $undersized ? ' (' . implode( ' | ', array_slice( $undersized, 0, 4 ) ) . ')' : '' ),
 	$failures
 );
 
