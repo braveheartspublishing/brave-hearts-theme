@@ -409,11 +409,13 @@ function bhp_blog_rail_adventure( $post = null ) {
  * ⭐⭐ 3a · THE RAIL CONTRACT — 1.19.273, founder-ruled (carrier item 126)
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⚠ SOURCE: Andrew Signore, RELAYED through `chief-of-staff` (Gandalf). This
- *   agent did NOT witness it first-hand, and it is not described here as
- *   first-hand. The verbatim words live in the carrier record, not in this
- *   public repository (standing rule §4.1: point at the private source, never
- *   copy it in).
+ * ⚠ SOURCE: Andrew Signore, RELAYED through `chief-of-staff`. This agent did
+ *   NOT witness it first-hand, and it is not described here as first-hand. The
+ *   verbatim words live in the carrier record, not in this public repository
+ *   (standing rule §4.1: point at the private source, never copy it in).
+ *   ⛔ The technical agent ID is used deliberately and the internal call name is
+ *      not: standing rule §14 constraint 5 keeps aliases off every public
+ *      surface, and this repository is public on GitHub.
  *
  * THE RULE, IN ONE SENTENCE: A RAIL IS IN EXACTLY ONE MODE, AND ITS IMAGE AND
  * ITS PRICE COME FROM THE SAME MODE. NEVER MIXED.
@@ -553,8 +555,9 @@ function bhp_blog_rail_series_facts() {
 	 * right. But it left a different defect, which is the one Andrew found on
 	 * staging himself: the first available title is The Mariana Trench, so all
 	 * 29 series rails printed THE MARIANA COVER beside THE COLLECTION PRICE.
-	 * A parent reads one cover and one price as one object. $31.99 under a
-	 * single book reads as that book costing $31.99.
+	 * A parent reads one cover and one price as one object, so the bundle price
+	 * under a single cover reads as that book costing the bundle price.
+	 * (The figures are not quoted here — see §3a on why §2.3 stays blunt.)
 	 *
 	 * ⭐ THE ASSET IS FOUND, NEVER GENERATED. `collection-look-01-three-books-v2`
 	 *    is the approved three-cover composite already registered in
