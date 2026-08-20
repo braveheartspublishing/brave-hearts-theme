@@ -767,9 +767,16 @@ bhp_hw_assert(
 		. substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
 	$failures
 );
+/*
+ * TWO, not one — corrected against the served document rather than left as
+ * written. The homepage's two quiz routes are the hero ghost CTA and the
+ * "Open the book" ghost ("Which adventure fits your reader?"). Both predate
+ * this release and both link to the canonical PAGE. See the fuller note in
+ * tests/test-cro-iterate6.php §5.
+ */
 bhp_hw_assert(
-	1 === substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
-	'§3.3 the hero ghost CTA still raises quiz_cta_clicked exactly once — found '
+	2 === substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
+	'§3.3 both surviving homepage quiz routes still raise quiz_cta_clicked — found '
 		. substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
 	$failures
 );
@@ -781,13 +788,31 @@ bhp_hw_assert(
 );
 
 /* 3d. Tracking. Events ADDED, never removed or renamed. */
+/*
+ * ⛔ AMENDED 1.19.270 — CYCLE165-LD-ITERATE-6-PATH-LINE. The floor drops from
+ *    3 to 2, and it is written down rather than quietly re-numbered. The
+ *    assertion this replaces is quoted verbatim:
+ *
+ *      substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ) >= 3,
+ *      '§3.4 quiz_cta_clicked is emitted by the footer launcher AND both new links (>= 3 emitters)',
+ *
+ *    The THIRD emitter was the footer launcher, which the founder has removed
+ *    from the homepage. The other two — the hero ghost CTA and the
+ *    "Open the book" ghost — are untouched, and no event is renamed or
+ *    re-sourced.
+ *
+ * ⭐ AND THE FLOOR IS REPLACED BY AN EXACT COUNT. ">= 2" would keep passing if
+ *    a later change took one of the two surviving routes away, which is
+ *    precisely the regression this row exists to catch after a subtraction.
+ */
 $expected_events = array(
-	'quiz_cta_clicked'      => 3, /* footer launcher + hero link + open-the-book link */
+	'quiz_cta_clicked'      => 2, /* 1.19.270: hero link + open-the-book link (footer launcher removed) */
 	'contextual_cta_click'  => 2, /* 1.19.243: 1 section CTA + >=1 pre-existing */
 );
 bhp_hw_assert(
-	substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ) >= 3,
-	'§3.4 quiz_cta_clicked is emitted by the footer launcher AND both new links (>= 3 emitters)',
+	2 === substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
+	'§3.4 quiz_cta_clicked is emitted by EXACTLY the two surviving homepage links — found '
+		. substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
 	$failures
 );
 /*

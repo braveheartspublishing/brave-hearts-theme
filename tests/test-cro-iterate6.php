@@ -225,10 +225,40 @@ bhp_i6_assert(
 	'§5 ...and it points at the canonical /find-your-adventure/ PAGE, not at a homepage fragment',
 	$failures
 );
+/*
+ * ⚠ MY OWN ASSERTION WAS WRONG ABOUT THE PAGE, AND IS CORRECTED RATHER THAN
+ *   RELAXED. Its first run against staging2 asserted `1 === ...` and found 2.
+ *
+ * The homepage carries TWO routes into the quiz, not one, and both predate
+ * this release:
+ *   · the hero ghost CTA          `home_hero_quiz`          front-page.php
+ *   · the "Open the book" ghost   `home_open_the_book_quiz` in
+ *     template-parts/components/home-open-the-book.php ("Which adventure fits
+ *     your reader?")
+ * Both are `<a href>` links to the canonical `/find-your-adventure/` PAGE —
+ * READ from the templates and CONFIRMED in the served document, not assumed —
+ * so neither was orphaned by removing the band, and the homepage is better
+ * covered than the first draft of this suite believed.
+ *
+ * ⭐ THE COUNT IS PINNED AT 2, NOT LOOSENED TO ">= 1". Pinning is the whole
+ *    value of the assertion: it fails if a later subtraction takes either
+ *    route away, and it fails if a third appears unannounced.
+ */
 bhp_i6_assert(
-	1 === substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
-	'§5 ...and `quiz_cta_clicked` still fires exactly once from the homepage — found '
+	2 === substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
+	'§5 ...and BOTH homepage quiz routes still fire `quiz_cta_clicked` — found '
 		. substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
+	$failures
+);
+bhp_i6_assert(
+	false !== strpos( $home, 'data-bhp-source="home_open_the_book_quiz"' ),
+	'§5 ...the second route ("Which adventure fits your reader?") is still present too',
+	$failures
+);
+bhp_i6_assert(
+	2 === substr_count( $home, 'href="' . esc_url( home_url( '/find-your-adventure/' ) ) . '"' ),
+	'§5 ...and BOTH point at the canonical PAGE, neither at a homepage fragment — found '
+		. substr_count( $home, 'href="' . esc_url( home_url( '/find-your-adventure/' ) ) . '"' ),
 	$failures
 );
 

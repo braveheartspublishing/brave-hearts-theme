@@ -96,9 +96,29 @@ bhp_i5_assert(
 	'§0.1 all five touched sources are readable',
 	$failures
 );
+/*
+ * ⛔ AMENDED 1.19.270 — CYCLE165-LD-ITERATE-6-PATH-LINE. The assertion this
+ *    replaces is quoted verbatim rather than deleted:
+ *
+ *      1 === preg_match( '/^\s*Version:\s*1\.19\.269\s*$/m', $style ),
+ *      '§0.2 style.css declares Version: 1.19.269',
+ *
+ * ⭐ AN EXACT-VERSION PIN IN A PER-RELEASE SUITE IS A TIME BOMB, and this is
+ *    the release it went off on. Its job is "the tree under test is AT LEAST
+ *    the release these assertions were written for" — a floor, not an equality.
+ *    Pinned to `=== 1.19.269` it goes red on every subsequent release forever,
+ *    for a reason that has nothing to do with the five subtractions this suite
+ *    actually proves, and a permanently-red row is a row nobody reads.
+ *
+ * ⚠ THE FLOOR IS REAL, NOT A WAIVER: `version_compare` still fails if this
+ *   suite is ever run against a tree OLDER than 1.19.269, which is the only
+ *   case where its assertions could be wrong about the code.
+ */
+$style_version = ( 1 === preg_match( '/^\s*Version:\s*([0-9.]+)\s*$/m', $style, $m_ver ) ) ? $m_ver[1] : '';
 bhp_i5_assert(
-	1 === preg_match( '/^\s*Version:\s*1\.19\.269\s*$/m', $style ),
-	'§0.2 style.css declares Version: 1.19.269',
+	'' !== $style_version && version_compare( $style_version, '1.19.269', '>=' ),
+	'§0.2 style.css declares 1.19.269 or later (the release these assertions were written for) — found '
+		. ( '' === $style_version ? '(no Version line)' : $style_version ),
 	$failures
 );
 
