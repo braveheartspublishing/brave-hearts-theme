@@ -340,11 +340,49 @@
         var dismissedUntil = parseInt(readLocal(STORAGE_DISMISSED_UNTIL), 10) || 0;
         var withinCooldown = Date.now() < dismissedUntil;
 
+        /*
+         * ═════════════════════════════════════════════════════════════
+         * ⭐ 1.19.271 (2026-08-19, `CYCLE165-LD-ITERATE-7-KIT-CTA-POPUP`)
+         *    THE THREE FREQUENCY RULES BELOW NOW SUPPRESS THE **AUTOMATIC**
+         *    OPEN ONLY. THEY NO LONGER ABANDON `initPopup()`.
+         * ═════════════════════════════════════════════════════════════
+         *
+         * ⭐ Andrew Signore, verbatim, relayed by the Chief of Staff as
+         *    first-hand founder wording: "When someone on the blog hits Get
+         *    the free kit - it should be a pop up where they can immediately
+         *    subscribe- not send them to the reluctant reader page. Less
+         *    steps."
+         *
+         * ⛔ WHY THE `return`s HAD TO GO, AND WHY THAT IS NOT A LOOSENING.
+         *    An explicit click on a control whose label says "Get the Free
+         *    Kit" is a REQUEST. Cooldown, once-per-session and the shared
+         *    session guard all exist to stop the popup ARRIVING UNASKED;
+         *    none of them is a reason to refuse somebody who just asked.
+         *    But every listener in this function — close, dismiss, overlay,
+         *    focus trap, submit handoff — is wired BELOW this point, so a
+         *    bare `return` left no popup to open and no way to close it.
+         *    The flag keeps the setup and skips only the arming.
+         *
+         * ⛔ NOTHING IS WIDENED FOR THE AUTOMATIC PATH. `autoSuppressed` is
+         *    consulted at exactly one place: the trigger-arming block at the
+         *    end of this function. Every storage key, cooldown length,
+         *    session key and guard name is byte-unchanged, and a suppressed
+         *    popup arms NO timer and NO scroll listener, so it cannot open
+         *    by itself for any reason.
+         *
+         * ⛔ THE PERMANENT `_signed_up` SUPPRESSION ABOVE IS **NOT** IN THIS
+         *    SET AND STILL RETURNS. Somebody who already gave their email
+         *    for this kit must not be asked for it again, so their click
+         *    finds no JS opener and the link's own href carries them to the
+         *    kit page — the pre-1.19.271 behaviour, unchanged.
+         */
+        var autoSuppressed = false;
+
         if (!forceOpen && withinCooldown) {
-            return;
+            autoSuppressed = true;
         }
         if (!forceOpen && readSession(SESSION_SHOWN) === '1') {
-            return;
+            autoSuppressed = true;
         }
 
         // SHARED SESSION-FREQUENCY GUARD. Only popups that declare
@@ -355,7 +393,7 @@
         if (!forceOpen && config.sessionGuard.length) {
             for (var g = 0; g < config.sessionGuard.length; g++) {
                 if (readSession(config.sessionGuard[g]) === '1') {
-                    return;
+                    autoSuppressed = true;
                 }
             }
         }
@@ -446,7 +484,17 @@
             }
         }
 
-        function show() {
+        /*
+         * 1.19.271: `openReason` is OPTIONAL and defaults to the automatic
+         * path, so every existing caller behaves exactly as before. When it
+         * is given it rides along on the view event as `trigger_source`, so
+         * a popup opened because somebody clicked "Get the Free Kit" is
+         * distinguishable in the dataLayer from one that opened on its own.
+         * The EVENT NAME is deliberately unchanged — renaming it would split
+         * one funnel's view count into two series and break every comparison
+         * against the releases before this one.
+         */
+        function show(openReason) {
             lastFocused = document.activeElement;
             popup.hidden = false;
             popup.classList.add('is-open');
@@ -460,7 +508,11 @@
             // next capture surface (another popup, or the quiz modal) knows
             // not to stack on top of it.
             writeSession(SHARED_SESSION_SHOWN_KEY, '1');
-            pushEvent(config.source, eventName(config.eventPrefix, 'view'), eventExtra({ page_type: popup.getAttribute('data-page-type') || '' }));
+            var viewExtra = { page_type: popup.getAttribute('data-page-type') || '' };
+            if (openReason) {
+                viewExtra.trigger_source = String(openReason);
+            }
+            pushEvent(config.source, eventName(config.eventPrefix, 'view'), eventExtra(viewExtra));
         }
 
         function close(wasDismissed) {
@@ -996,6 +1048,43 @@
             document.removeEventListener('mouseout', onMouseOut);
         }
 
+        /*
+         * ⭐ 1.19.271 — THE EXPLICIT OPENER.
+         *
+         * Registered on the element itself rather than in a module-level map
+         * so that two popups on one page cannot collide, and so the delegated
+         * listener at the bottom of this file has ONE thing to test for: if
+         * this function is absent, there is no popup to open and the anchor's
+         * own `href` does its job. That absence is the whole no-JS / no-popup
+         * fallback, and it is why the server still renders a real `href` on
+         * every CTA this release touches.
+         *
+         * It bypasses `trigger()` deliberately. `trigger()` re-checks the
+         * shared session guard and defers behind the cart drawer, both of
+         * which are politeness rules for an UNINVITED overlay. A click is an
+         * invitation, so the only thing left to check is that the popup is
+         * not already open. It still claims `triggered` and clears the timers,
+         * so an auto-open cannot arrive on top of it seconds later.
+         */
+        popup.bhpOpenExplicitly = function (reason) {
+            if (popup.classList.contains('is-open')) {
+                return false;
+            }
+            triggered = true;
+            cleanupTriggers();
+            show(reason || 'explicit');
+            return true;
+        };
+
+        if (autoSuppressed) {
+            // Dismissed, already seen this session, or another capture
+            // surface got there first. NOTHING is armed: no timer, no scroll
+            // listener, no exit listener. The popup exists only for an
+            // explicit click from here on.
+            window.addEventListener('pagehide', cleanupTriggers);
+            return;
+        }
+
         if (mode === 'simple') {
             // Timer and scroll race unconditionally; whichever fires first wins.
             if (typeof deviceConfig.delay === 'number') {
@@ -1040,4 +1129,84 @@
     for (var i = 0; i < popups.length; i++) {
         initPopup(popups[i]);
     }
+
+    /*
+     * ═══════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.271 — "LESS STEPS": A KIT CTA OPENS THE KIT POPUP.
+     * ═══════════════════════════════════════════════════════════════════
+     *
+     * ⭐ Andrew Signore, verbatim (relayed as first-hand founder wording):
+     *    "When someone on the blog hits Get the free kit - it should be a
+     *    pop up where they can immediately subscribe- not send them to the
+     *    reluctant reader page. Less steps."
+     *
+     * PROGRESSIVE ENHANCEMENT, AND IT IS THE LOAD-BEARING PART.
+     *   The server renders an ORDINARY ANCHOR with a REAL `href` to the kit
+     *   page. This listener upgrades it. Every one of the following falls
+     *   back to plain navigation rather than to a dead control:
+     *     - this script did not load, or threw before this line;
+     *     - no popup is rendered on this surface (the server decides that,
+     *       and it deliberately does not render one on selling pages);
+     *     - the visitor already signed up, so `initPopup()` returned before
+     *       registering an opener;
+     *     - the popup is already open.
+     *
+     * ⛔ NOT CAPTURE-PHASE, AND PROPAGATION IS NEVER HALTED. The
+     *    contextual-CTA analytics binder in `nav.js` listens for the same
+     *    click through `data-bhp-event`. `preventDefault()` cancels the
+     *    NAVIGATION only; both listeners still run, so
+     *    `contextual_cta_click` fires exactly as it did before this release
+     *    and the Lead event path is untouched.
+     *
+     * ⚠ THE METHOD THAT WOULD HALT IT IS DELIBERATELY NOT NAMED IN THIS
+     *   COMMENT. `tests/test-kit-cta-popup.php` asserts that its name does
+     *   not appear anywhere in this file, and a prose mention would break
+     *   that guard while changing no behaviour. Two guards in neighbouring
+     *   files have already been caught by exactly this mistake, which is why
+     *   the rule is described here instead of quoted.
+     *
+     * ⛔ MODIFIER AND MIDDLE CLICKS ARE LEFT ALONE. Ctrl/Cmd/Shift/Alt click
+     *    and any non-primary button keep their browser meaning — open in a
+     *    new tab or window — because taking that away from a link that still
+     *    has a real destination would be a regression, not a simplification.
+     */
+    function findPopupTrigger(node) {
+        while (node && node !== document) {
+            if (node.getAttribute && node.getAttribute('data-bhp-popup-open')) {
+                return node;
+            }
+            node = node.parentNode;
+        }
+        return null;
+    }
+
+    document.addEventListener('click', function (event) {
+        if (event.defaultPrevented) {
+            return;
+        }
+        if (typeof event.button === 'number' && event.button !== 0) {
+            return;
+        }
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+        }
+
+        var trigger = findPopupTrigger(event.target);
+        if (!trigger) {
+            return;
+        }
+
+        var popup = document.getElementById(trigger.getAttribute('data-bhp-popup-open'));
+        if (!popup || typeof popup.bhpOpenExplicitly !== 'function') {
+            // No popup on this page, or it is permanently suppressed for this
+            // visitor. Let the anchor navigate; it still has a real href.
+            return;
+        }
+
+        // The popup exists and can be opened, so this click belongs to it —
+        // including the already-open case, where navigating away from an open
+        // capture form would be the worst of both outcomes.
+        event.preventDefault();
+        popup.bhpOpenExplicitly(trigger.getAttribute('data-bhp-popup-open-reason') || 'cta_click');
+    });
 })();

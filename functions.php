@@ -2631,6 +2631,192 @@ function bhp_should_show_parent_ab_popup() {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.271 (2026-08-19, `CYCLE165-LD-ITERATE-7-KIT-CTA-POPUP`) — A KIT
+ *    CTA ON THE BLOG OPENS THE KIT POPUP INSTEAD OF NAVIGATING.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ Andrew Signore, verbatim, relayed by the Chief of Staff as first-hand
+ *    founder wording (carrier item 117): "When someone on the blog hits Get
+ *    the free kit - it should be a pop up where they can immediately
+ *    subscribe- not send them to the reluctant reader page. Less steps."
+ *
+ * WHAT WAS ACTUALLY ON THE BLOG WHEN THIS WAS BUILT — measured, not assumed.
+ * All 36 published posts were fetched from staging2 at 1.19.270 and their
+ * rendered HTML searched for links to the kit page:
+ *
+ *   - EVERY post carries exactly ONE such link, and it is the FOOTER NAV
+ *     item "Free Reluctant Reader Kit". That is sitewide chrome, it appears
+ *     on selling pages too, and it is NOT touched here.
+ *   - ONE post (`/blog/best-books-for-7-year-olds/`) additionally carries the
+ *     contextual-CTA block for `adventure_kit_signup`, placed by an editor's
+ *     `[bhp_contextual_cta]` shortcode. ⭐ THAT is the navigating kit CTA the
+ *     ruling bites on, and it is what `BHP_CTA_Engine::render()` now marks.
+ *   - The END-OF-POST CAPTURE IS ALREADY AN INLINE FORM. It posts to the
+ *     Mailchimp endpoint and returns to the same post; it never navigated
+ *     anywhere, so there are already zero steps to remove and it is left
+ *     BYTE-UNTOUCHED. The brief anticipated this and instructed exactly that.
+ *   - The "book this came from" rail carries NO free-CTA. Its mode is
+ *     `product` or `look_inside` by deliberate design (see
+ *     `bhp_blog_rail_cta()`), so there was nothing of that kind to change.
+ *   - The BLOG INDEX carries no kit CTA at all — only the same footer nav
+ *     item. The brief's "(and blog index if it carries one)" is therefore
+ *     satisfied by measurement rather than by code.
+ *
+ * ⛔ THE KIT PAGE IS UNTOUCHED and other surfaces still link to it. This is a
+ *    blog-surface behaviour, not a retirement of the destination.
+ */
+function bhp_kit_popup_dom_id() {
+	/*
+	 * ⛔ THE ONE PLACE THIS STRING IS COMPUTED. The literal also appears once
+	 *    more, as the `id` attribute in
+	 *    `template-parts/acquisition/parent-ab-popup.php`, where the existing
+	 *    suite already asserts it character for character. The test added
+	 *    with this release asserts that the two agree, so a rename of either
+	 *    fails loudly instead of silently producing a CTA that points at
+	 *    nothing.
+	 */
+	return 'parent-ab-popup';
+}
+
+/**
+ * The blog surfaces the founder's ruling names, and nothing else.
+ *
+ * `is_home()` is the blog index; `is_singular('post')` is one blog post. It is
+ * deliberately NOT `is_front_page()` — the homepage is out of this brief's
+ * scope, and its own CTAs keep the behaviour they have.
+ */
+function bhp_is_blog_kit_cta_surface() {
+	return is_home() || is_singular( 'post' );
+}
+
+/**
+ * Whether a kit CTA rendered on THIS request should open the popup.
+ *
+ * ⛔ BOTH LIMBS ARE REQUIRED, AND THE SECOND ONE IS THE SAFETY PROPERTY.
+ *    `bhp_should_show_parent_ab_popup()` is the same function the footer uses
+ *    to decide whether to render the popup at all, so a CTA can only ever be
+ *    marked as a popup trigger on a page where the popup is genuinely in the
+ *    DOM. There is no request on which this returns true and the target is
+ *    absent, which is what stops the enhancement from producing a dead button
+ *    on a selling page, an archive, `/teachers/`, the cart or the checkout.
+ *
+ *    It is ALSO why the blog index is currently excluded: the popup does not
+ *    render there. Recorded rather than worked around — widening the popup's
+ *    own surface is a separate decision and not this brief's.
+ */
+function bhp_kit_cta_opens_popup() {
+	return bhp_is_blog_kit_cta_surface() && bhp_should_show_parent_ab_popup();
+}
+
+/**
+ * The attribute pair that upgrades an ordinary anchor into a popup trigger,
+ * or an EMPTY ARRAY where it must stay an ordinary anchor.
+ *
+ * ⛔ THE `href` IS NEVER REMOVED OR REPLACED BY ANY CALLER. The upgrade is
+ *    purely additive: with no JavaScript, with a failed script load, or with
+ *    the popup suppressed for this visitor, the control is still a link to
+ *    the kit page. A "Get the Free Kit" button that does nothing would be a
+ *    worse outcome than the extra step the founder asked us to remove.
+ *
+ * @param string $reason A short analytics label for why the popup opened.
+ * @return array
+ */
+function bhp_kit_popup_trigger_attrs( $reason = 'cta_click' ) {
+	if ( ! bhp_kit_cta_opens_popup() ) {
+		return array();
+	}
+
+	return array(
+		'data-bhp-popup-open'        => bhp_kit_popup_dom_id(),
+		'data-bhp-popup-open-reason' => sanitize_key( $reason ),
+	);
+}
+
+/**
+ * IN-CONTENT kit links written by hand in the editor.
+ *
+ * ⚠ NO SUCH LINK EXISTS ON ANY OF THE 36 PUBLISHED POSTS TODAY — that was
+ *   measured, not assumed, and it is recorded in the block above. This filter
+ *   is here so the ruling survives the next post that carries one, because the
+ *   alternative is a rule that quietly stops applying the moment an editor
+ *   writes the obvious thing.
+ *
+ * ⛔ IT ADDS ATTRIBUTES AND CHANGES NOTHING ELSE. It never rewrites an `href`,
+ *    never removes a link, never touches link text and never touches an anchor
+ *    that points anywhere but the kit page's own path on this host. An anchor
+ *    that already carries the trigger attribute — which is exactly what the
+ *    contextual-CTA block renders, and that block is produced by a shortcode
+ *    INSIDE `the_content()` — is returned untouched, so the two paths cannot
+ *    double-stamp each other.
+ *
+ * PRIORITY 20: after `do_shortcode()` (11), so the shortcode's own output is
+ * present and can be recognised and skipped rather than raced.
+ */
+function bhp_kit_content_links_open_popup( $content ) {
+	if ( ! is_singular( 'post' ) || ! in_the_loop() || ! is_main_query() ) {
+		return $content;
+	}
+	if ( false === stripos( $content, 'reluctant-reader-adventure-kit' ) ) {
+		return $content;
+	}
+
+	$attrs = bhp_kit_popup_trigger_attrs( 'content_link' );
+	if ( ! $attrs ) {
+		return $content;
+	}
+
+	$kit_path  = untrailingslashit( (string) wp_parse_url( home_url( '/reluctant-reader-adventure-kit/' ), PHP_URL_PATH ) );
+	$site_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+
+	$attr_string = '';
+	foreach ( $attrs as $name => $value ) {
+		$attr_string .= ' ' . $name . '="' . esc_attr( $value ) . '"';
+	}
+
+	$replaced = preg_replace_callback(
+		'/<a\s[^>]*>/i',
+		function ( $matches ) use ( $kit_path, $site_host, $attr_string ) {
+			$tag = $matches[0];
+
+			if ( false !== stripos( $tag, 'data-bhp-popup-open' ) ) {
+				return $tag;
+			}
+			if ( ! preg_match( '/\shref\s*=\s*("|\')(.*?)\1/i', $tag, $href_match ) ) {
+				return $tag;
+			}
+
+			$url  = html_entity_decode( $href_match[2], ENT_QUOTES );
+			$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+			if ( '' !== $host && $host !== $site_host ) {
+				return $tag;
+			}
+			$path = untrailingslashit( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+			if ( '' === $path || $path !== $kit_path ) {
+				return $tag;
+			}
+
+			// Rebuild the open tag, preserving an XHTML-style trailing slash
+			// if the author wrote one.
+			$inner  = substr( $tag, 0, -1 );
+			$suffix = '';
+			if ( '/' === substr( $inner, -1 ) ) {
+				$inner  = substr( $inner, 0, -1 );
+				$suffix = ' /';
+			}
+
+			return rtrim( $inner ) . $attr_string . $suffix . '>';
+		},
+		$content
+	);
+
+	// preg_replace_callback returns null on failure (e.g. backtrack limit on a
+	// very long post). Never hand null back to the content chain.
+	return ( null === $replaced ) ? $content : $replaced;
+}
+add_filter( 'the_content', 'bhp_kit_content_links_open_popup', 20 );
+
+/**
  * 1.19.205 — the A/B popup's cover strip, as attachment IDs only.
  *
  * ⛔ WHY THIS IS CACHED, AND WHY THAT IS NOT PREMATURE. The popup renders in

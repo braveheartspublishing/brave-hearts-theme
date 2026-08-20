@@ -346,6 +346,30 @@ class BHP_CTA_Engine {
 			'data-bhp-cta-funnel-stage' => $selected['funnel_stage'],
 			'data-bhp-cta-variant'     => sanitize_key( $variant ),
 		);
+
+		/*
+		 * ⭐ 1.19.271 (`CYCLE165-LD-ITERATE-7-KIT-CTA-POPUP`) — on a blog
+		 *    post, the Adventure Kit CTA opens the capture popup instead of
+		 *    sending the reader to the kit page. Andrew Signore, verbatim:
+		 *    "it should be a pop up where they can immediately subscribe- not
+		 *    send them to the reluctant reader page. Less steps."
+		 *
+		 * ⛔ THE URL IS UNCHANGED AND THE ANCHOR IS STILL AN ANCHOR. Only two
+		 *    data attributes are added, and only where
+		 *    `bhp_kit_cta_opens_popup()` has confirmed the popup is actually
+		 *    rendered on this request. Everywhere else — the resource hubs,
+		 *    the product surfaces, any page template — this array is empty and
+		 *    the CTA renders byte-identically to 1.19.270.
+		 *
+		 * ⛔ ONLY THE KIT ENTRY. The toolkit, gift-guide, community-kit,
+		 *    classroom-guide, book, collection and Amazon CTAs are untouched:
+		 *    each has its own destination and its own funnel, and the ruling
+		 *    was about the kit.
+		 */
+		if ( 'adventure_kit_signup' === $selected['id'] && function_exists( 'bhp_kit_popup_trigger_attrs' ) ) {
+			$attrs = array_merge( $attrs, bhp_kit_popup_trigger_attrs( 'contextual_cta' ) );
+		}
+
 		get_template_part(
 			'template-parts/components/final-cta',
 			null,
