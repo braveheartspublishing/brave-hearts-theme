@@ -13,9 +13,21 @@
  * WHAT THIS SUITE PROVES, AND WHAT IT DELIBERATELY CANNOT
  * ═══════════════════════════════════════════════════════════════════════════
  *
+ * ⛔⛔ AMENDED 2026-08-19 BY `CYCLE165-LD-ITERATE-8-FINAL` (theme 1.19.272).
+ *     §1.2 AND §1.9 ARE REVERSED. They asserted that the "book this came from"
+ *     rail renders on NO post. That was this suite faithfully testing an
+ *     over-read: the founder had already ruled the rail KEPT (carrier item
+ *     110), he found its absence on production himself (carrier item 118), and
+ *     1.19.272 restores it. The two assertions now demand the rail's PRESENCE.
+ *     ⭐ THE OTHER LIMB OF SUBTRACTION ITEM 1 IS UNCHANGED AND STILL ENFORCED —
+ *        §1.3 still requires the sitewide footer capture to be absent from
+ *        every post. One limb reversed, one limb kept, and the difference is
+ *        that one of them was a book bridge and the other was an email ask.
+ *
  * PROVES, from SERVED DOCUMENTS wherever a served document can carry the fact:
- *   §1  blog posts: no mid-post rail, no footer capture, and the two the
- *       founder KEPT are still there — the end-of-post capture and the popup
+ *   §1  blog posts: the mid-post book rail is PRESENT exactly once, the footer
+ *       capture is absent, and the two asks the founder KEPT are still there —
+ *       the end-of-post capture and the popup
  *   §2  the audience router is gone from every page, including the collection
  *       page R-9 put it above, and R-9's own deferral still works
  *   §3  /books/ carries ONE hero CTA and it is "Start with Book 1"
@@ -152,7 +164,9 @@ foreach ( $posts as $p ) {
 	}
 	$post_docs[ $p->post_name ] = $html;
 
-	if ( preg_match( '/<aside class="bhp-book-rail/', $html ) ) {
+	/* 1.19.272: EXACTLY ONE rail per post. Zero is the item-118 regression;
+	   two would mean the `the_content` dedup guard stopped working. */
+	if ( 1 !== preg_match_all( '/<aside class="bhp-book-rail/', $html ) ) {
 		$still_rail[] = $p->post_name;
 	}
 	/* The footer capture identifies itself by section id AND by form class;

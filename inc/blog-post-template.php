@@ -629,42 +629,55 @@ function bhp_blog_rail_html( $post = null ) {
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * ⭐⭐ 1.19.269 (`CYCLE165-LD-ITERATE-5-SUBTRACTIONS`) — IS THE MID-POST RAIL
- *     RENDERED AT ALL? IT IS NOT, AND THAT IS A FOUNDER RULING.
+ * ⭐⭐ 1.19.272 (`CYCLE165-LD-ITERATE-8-FINAL`) — THE RAIL RENDERS. RESTORED,
+ *     ON THE FOUNDER'S OWN CORRECTION, AFTER 1.19.269 TURNED IT OFF.
  *
- * ANDREW SIGNORE, 2026-08-19, subtraction item 1. The founder-facing line he
- * answered "Stage it" to, quoted from
- * `Business OS\ANDREW-REVIEW\2026-08-19\REPORT-2026-08-19-LEARN-REVIEW-ITERATE.md`
- * §4 item 1, verbatim:
+ * ⛔ THIS REVERSES 1.19.269, AND THE REVERSAL IS THE POINT. The previous
+ *    version of this docblock is preserved in git history at 3762909 rather
+ *    than restated here; the summary below is what a future reader needs.
  *
- *   "Two of the three capture forms on every blog post — posts now carry rail +
- *    inline capture + footer capture + popup = 4 asks. Keep the end-of-post
- *    capture + popup; drop the footer capture and the mid-post duplicate on
- *    posts."
+ * WHAT HAPPENED, in order, each limb traceable:
  *
- * ⚠ THE IDENTIFICATION IS AN INTERPRETATION AND IS LABELLED AS ONE. The brief
- *   says "the mid-post capture". MEASURED on staging2 1.19.267 in a real
- *   browser (innerWidth 1280, four posts fetched and parsed), the asks on a
- *   blog post are exactly: this rail at scrollY 822 INSIDE `.post-content` ·
- *   the end-of-post capture at 2760 · the quiz launcher at 4550 · the footer
- *   capture at 4762 · the popup. THE RAIL IS THE ONLY ONE THAT IS MID-POST,
- *   and the source line above names the removal set as "rail + ... footer
- *   capture". No second inline capture exists to be the "duplicate".
- *   ⛔ It is a BOOK BRIDGE, not an email capture. That mismatch between the
- *      word used and the thing that exists is reported to the supervising
- *      session as a finding rather than resolved here, and the switch below
- *      is why one line reverses it if Andrew meant something else.
+ *   1. Founder ruling, 2026-08-19 (~16:2x−0600) — carrier item **110** — kept
+ *      the "book this came from" rail on blog posts explicitly. He likes it.
+ *   2. Founder ruling, same evening — carrier item **119**'s source line, the
+ *      subtraction list at
+ *      `Business OS\ANDREW-REVIEW\2026-08-19\REPORT-2026-08-19-LEARN-REVIEW-ITERATE.md`
+ *      §4 item 1 — asked for two of the FOUR asks on a blog post to go.
+ *   3. 1.19.269 read (2) as covering this rail and switched it off. That was
+ *      an over-read: **the rail is a BOOK BRIDGE, not an email capture**, and
+ *      (1) had already ruled on it. The 1.19.269 docblock said so itself and
+ *      still shipped the switch — the finding was recorded and then not acted
+ *      on, which is the actual defect.
+ *   4. Founder-found regression, 2026-08-19 (~21:4x−0600) — carrier item
+ *      **118**. He looked at production and asked where the embedded books had
+ *      gone. Registered as `CYCLE165-COS-009`.
+ *   5. This release restores it. Item 118 nominated 1.19.271 for the fix;
+ *      1.19.271 shipped the kit-CTA popup only, so the restore lands here in
+ *      1.19.272. Stated rather than smoothed over.
  *
- * ⛔ NOTHING IS DELETED. `bhp_blog_rail_facts()`, `_eyebrow()`, `_cta()`,
- *    `_html()`, `_offset()`, `_min_paragraphs()`, the `book-rail` template part
- *    and the `.bhp-book-rail` stylesheet all remain, unchanged and still
- *    covered by `tests/test-blog-post-template.php`. Only the RENDER is off.
- *    `add_filter( 'bhp_blog_rail_enabled', '__return_true' )` restores it.
+ * ⛔ SOURCE RECORDS ARE REFERENCED BY LOCATION, NOT RESTATED. The founder
+ *    verbatim for items 110, 118 and 119 lives in the Business OS chief-of-staff
+ *    founder-verbatim record; **this repository is public** (standing rules §4,
+ *    §4.1) and the `CYCLE165-LD-10` scrub class exists because a private figure
+ *    once reached a public-bound comment. Item numbers and dates may travel
+ *    here. The words may not.
+ *
+ * ⭐ WHAT DID *NOT* COME BACK WITH IT. Subtraction item 1's other limb — the
+ *    sitewide FOOTER CAPTURE being suppressed on posts — is untouched and stays
+ *    suppressed (`bhp_should_show_footer_capture()`). A blog post therefore
+ *    carries exactly **two asks** (end-of-post capture + popup) **and one book
+ *    bridge**, which is what both rulings say together.
+ *
+ * ⚠ STILL A FILTER, DELIBERATELY. `add_filter( 'bhp_blog_rail_enabled',
+ *   '__return_false' )` turns it off again in one line, with no code deleted,
+ *   exactly as the reverse direction did. A switch that only travels one way is
+ *   not a switch.
  *
  * @return bool
  */
 function bhp_blog_rail_enabled() {
-	return (bool) apply_filters( 'bhp_blog_rail_enabled', false );
+	return (bool) apply_filters( 'bhp_blog_rail_enabled', true );
 }
 
 /**
@@ -742,7 +755,7 @@ function bhp_blog_inject_rail( $content ) {
 	static $done = false;
 
 	if ( ! bhp_blog_rail_enabled() ) {
-		return $content;                                  // 1.19.269, founder item 1
+		return $content;                                  // filterable off-switch; default ON since 1.19.272 (item 118)
 	}
 	if ( $done ) {
 		return $content;                                  // once per request

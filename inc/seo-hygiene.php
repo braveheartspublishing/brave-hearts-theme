@@ -540,8 +540,190 @@ function bhp_seo_theme_redirected_paths() {
     return array_values(array_filter(apply_filters('bhp_seo_theme_redirected_paths', $paths)));
 }
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.272 (2026-08-19, `CYCLE165-LD-ITERATE-8-FINAL`, `CYCLE165-MKT-302`)
+ *     — THE RULE GENERALISES: **A URL THAT 301s NEVER ENTERS THE SITEMAP.**
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE FOUNDER RULING. Carrier item **121**, 2026-08-19: clean the sitemap
+ *    tonight. Referenced by location, not restated — this repository is public
+ *    (standing rules §4.1) and the founder verbatim lives in the Business OS
+ *    chief-of-staff founder-verbatim record.
+ *
+ * ⭐ THE EVIDENCE, from `marketing-growth` (Merry),
+ *    `Business OS\WORKING-DRAFTS\marketing-growth\BRIDGE-IMPRESSIONS-AND-SEO-HEALTH-2026-08-19.md`
+ *    §2.3 — every URL in all four PRODUCTION sitemaps fetched and
+ *    status-checked, 2026-08-19, 103 URLs. **Nine were not 200:**
+ *
+ *      5 × blog post   -> 301 (Rank Math redirection, the bridge consolidation)
+ *      3 × product     -> 301 (THIS THEME, the hardcover format fold)
+ *      1 × /checkout/  -> 302 (WooCommerce, empty-cart behaviour)
+ *
+ *    A sitemap is a statement that these URLs are canonical and indexable.
+ *    Nine of them were not, Google files each under "Page with redirect", and
+ *    the re-crawling defers the consolidation the bridge cluster is waiting on.
+ *
+ * ⛔ WHY THIS IS A RULE AND NOT A LIST OF NINE PATHS — the brief asked for the
+ *    general form and the environments prove why it has to be general:
+ *
+ *      · The five Rank Math redirections exist in the PRODUCTION database and
+ *        DO NOT EXIST ON STAGING2 (verified 2026-08-19: staging2 holds three
+ *        unrelated redirections; production holds the bridge batch). A
+ *        hard-coded list of nine would be nine rules guarding nothing on
+ *        staging and would rot the moment Andrew adds or removes a redirect in
+ *        WP admin — which is exactly how the bridge batch appeared in the first
+ *        place, unlogged (`CYCLE165-MKT-301`).
+ *      · The three hardcover URLs are not three slugs, they are *every*
+ *        non-canonical format edition. A fourth title would silently
+ *        re-introduce the defect.
+ *
+ *    So each limb below asks the SOURCE OF THE REDIRECT whether it redirects
+ *    this URL, and no limb carries a copy of the answer.
+ *
+ * ⛔ WHAT IS DELIBERATELY NOT DONE, because settings are Andrew's (§6): no Rank
+ *    Math option, redirection row, per-post "Exclude from sitemap" toggle,
+ *    `rank_math_robots` meta or robots setting is read-for-mutation, written,
+ *    created or deleted on ANY environment. **The nine redirects themselves are
+ *    untouched and keep redirecting.** Only the sitemap's ADVERTISEMENT of them
+ *    is withheld. No post is unpublished, edited or deleted.
+ *
+ * ⚠ THE ONE REAL RISK, NAMED RATHER THAN DISCOVERED LATER. Rank Math
+ *   redirections support `contains`, `start`, `end` and `regex` comparisons as
+ *   well as `exact`. A broad pattern could match legitimate URLs and quietly
+ *   empty the sitemap. Three things bound that:
+ *     1. only `active` redirections with a **3xx** header code count;
+ *     2. a redirect whose destination is the entry's own path is ignored, so a
+ *        self-referential or no-op rule cannot remove a live page;
+ *     3. `tests/test-seo-hygiene.php` asserts a FLOOR — the known-good URLs
+ *        (`/shop/`, `/complete-collection/`, `/blog/`, the three canonical
+ *        paperbacks) must still be present after filtering. If a broad pattern
+ *        ever guts the sitemap, the suite fails instead of Google noticing.
+ *
+ * ⚠ `/checkout/` IS EXCLUDED BY NAME, NOT BY ITS REDIRECT. Its 302 is
+ *   empty-cart behaviour and disappears the moment a cart has contents, so a
+ *   redirect-derived rule would be non-deterministic. Merry's §2.3 note is the
+ *   right reason and it is the one used here: a checkout URL should never be in
+ *   a sitemap at all, redirect or no redirect.
+ */
+
 /**
- * Drop any sitemap entry whose URL this theme 301s away from.
+ * Paths that must never be advertised in a sitemap, independent of any redirect.
+ *
+ * ⛔ `/cart/` and `/my-account/` are DELIBERATELY ABSENT even though both are
+ *    the same class of transactional URL and both are currently enumerated.
+ *    The founder ruling (item 121, via `CYCLE165-MKT-302`) names `/checkout/`
+ *    and nothing else, and widening a ruling past its words is how a fix
+ *    acquires a change nobody approved. Flagged to the supervising session as
+ *    `CYCLE165-LD-65`, not absorbed here.
+ *
+ * @return string[] Untrailingslashed, path-only, home-relative.
+ */
+function bhp_seo_sitemap_never_advertised_paths() {
+    // The checkout URL is asked of WooCommerce when WooCommerce is present, so
+    // a renamed checkout page is still caught; the literal is the fallback and
+    // is kept alongside it so both shapes are covered on every environment.
+    $checkout = function_exists('wc_get_checkout_url') ? (string) wc_get_checkout_url() : '';
+    $paths    = [
+        untrailingslashit((string) wp_parse_url($checkout, PHP_URL_PATH)),
+        untrailingslashit((string) wp_parse_url(home_url('/checkout/'), PHP_URL_PATH)),
+    ];
+
+    $paths = array_values(array_unique(array_filter($paths)));
+
+    return array_values(array_filter((array) apply_filters('bhp_seo_sitemap_never_advertised_paths', $paths)));
+}
+
+/**
+ * Does Rank Math hold an ACTIVE 3xx redirection whose source is this path?
+ *
+ * Rank Math's own matcher is used (`DB::match_redirections()`), not a
+ * re-implementation, so every comparison mode it supports — exact, contains,
+ * start, end, regex — behaves here exactly as it does when the visitor arrives.
+ *
+ * @param string $path Untrailingslashed, home-relative path (leading slash).
+ * @return bool
+ */
+function bhp_seo_rank_math_redirects_path($path) {
+    static $memo = [];
+
+    if (isset($memo[$path])) {
+        return $memo[$path];
+    }
+    $memo[$path] = false;
+
+    if (!class_exists('\RankMath\Redirections\DB')
+        || !method_exists('\RankMath\Redirections\DB', 'match_redirections')) {
+        return false; // Redirections module off, or Rank Math absent. Nothing to do.
+    }
+
+    // Rank Math stores and matches sources WITHOUT the leading slash, and with
+    // the trailing slash as the visitor typed it. Both shapes are offered.
+    $home_path = untrailingslashit((string) wp_parse_url(home_url('/'), PHP_URL_PATH));
+    $relative  = $path;
+    if ('' !== $home_path && 0 === strpos($relative, $home_path)) {
+        $relative = substr($relative, strlen($home_path));
+    }
+    $relative = ltrim($relative, '/');
+    if ('' === $relative) {
+        return false; // Never let a redirect rule take the home page out.
+    }
+
+    foreach ([$relative . '/', $relative] as $candidate) {
+        $hit = \RankMath\Redirections\DB::match_redirections($candidate);
+        if (empty($hit) || !is_array($hit)) {
+            continue;
+        }
+        if ('active' !== ($hit['status'] ?? '')) {
+            continue;
+        }
+        $code = (int) ($hit['header_code'] ?? 0);
+        if ($code < 300 || $code > 399) {
+            continue; // 410 Gone and 451 are not "this URL moved".
+        }
+        // Guard 2: a rule that points at the entry itself is a no-op, and must
+        // never be allowed to remove a live page from the sitemap.
+        $to_path = untrailingslashit((string) wp_parse_url((string) ($hit['url_to'] ?? ''), PHP_URL_PATH));
+        if ('' !== $to_path && $to_path === untrailingslashit($path)) {
+            continue;
+        }
+        $memo[$path] = true;
+        break;
+    }
+
+    return $memo[$path];
+}
+
+/**
+ * Does THIS THEME 301 the object behind a sitemap entry?
+ *
+ * Asks the redirect's own predicate rather than carrying a copy of its answer:
+ * `bhp_book_redirect_legacy_format_urls()` fires for any product that
+ * `bhp_book_lookup_product()` reports as a NON-canonical format edition, so
+ * that is the question asked here. Every hardcover edition is caught, including
+ * ones that do not exist yet.
+ *
+ * @param mixed $obj The object Rank Math built the entry from.
+ * @return bool
+ */
+function bhp_seo_theme_redirects_object($obj) {
+    $id = 0;
+    if (is_object($obj) && isset($obj->ID)) {
+        $id = (int) $obj->ID;
+    } elseif (is_numeric($obj)) {
+        $id = (int) $obj;
+    }
+    if ($id <= 0 || !function_exists('bhp_book_lookup_product')) {
+        return false;
+    }
+
+    $found = bhp_book_lookup_product($id);
+
+    return is_array($found) && empty($found['canonical']);
+}
+
+/**
+ * Drop any sitemap entry whose URL is redirected, by whatever redirects it.
  *
  * @param array  $url  Rank Math's URL entry (`loc`, `mod`, …).
  * @param string $type Entry type: 'post', 'term' or 'user'.
@@ -549,7 +731,7 @@ function bhp_seo_theme_redirected_paths() {
  * @return array The entry, or [] to exclude it.
  */
 function bhp_seo_exclude_redirected_from_sitemap($url, $type, $obj) {
-    unset($type, $obj); // Path is the only thing that decides this.
+    unset($type);
 
     if (!is_array($url) || empty($url['loc'])) {
         return $url;
@@ -560,6 +742,23 @@ function bhp_seo_exclude_redirected_from_sitemap($url, $type, $obj) {
         return $url;
     }
 
-    return in_array($loc_path, bhp_seo_theme_redirected_paths(), true) ? [] : $url;
+    // Limb 0 — never advertised at all, redirect or no redirect (/checkout/).
+    if (in_array($loc_path, bhp_seo_sitemap_never_advertised_paths(), true)) {
+        return [];
+    }
+    // Limb 1 — a path this theme 301s by name (the /teachers-guide/ class).
+    if (in_array($loc_path, bhp_seo_theme_redirected_paths(), true)) {
+        return [];
+    }
+    // Limb 2 — an object this theme 301s by rule (every non-canonical format).
+    if (bhp_seo_theme_redirects_object($obj)) {
+        return [];
+    }
+    // Limb 3 — an active Rank Math 3xx redirection (the bridge consolidation).
+    if (bhp_seo_rank_math_redirects_path($loc_path)) {
+        return [];
+    }
+
+    return $url;
 }
 add_filter('rank_math/sitemap/entry', 'bhp_seo_exclude_redirected_from_sitemap', 10, 3);

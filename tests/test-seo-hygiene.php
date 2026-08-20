@@ -298,6 +298,107 @@ $author_link = get_author_posts_url(1);
 bhp_seoh_assert($failures, "a real author archive link resolves ({$author_link})",
     is_string($author_link) && false !== strpos($author_link, '/author/'));
 
+/* ------------------------------------------------------------------ *
+ * 9. 1.19.272 (`CYCLE165-LD-ITERATE-8-FINAL`, `CYCLE165-MKT-302`, founder
+ *    ruling item 121) — A URL THAT 301s NEVER ENTERS THE SITEMAP.
+ *
+ * The filter is exercised DIRECTLY with synthetic entries, because the three
+ * limbs cannot all be observed in one environment's live sitemap: the Rank
+ * Math bridge redirections live in the PRODUCTION database and do not exist on
+ * staging2 (verified 2026-08-19). Exercising the function is the honest way to
+ * prove the mechanism on either environment; the live sitemap fetch that
+ * proves the OUTCOME is a separate, environment-specific check.
+ * ------------------------------------------------------------------ */
+
+$entry = function ($path) {
+    return array('loc' => home_url($path), 'mod' => '2026-01-01T00:00:00+00:00');
+};
+
+/* limb 0 — /checkout/ is never advertised, redirect or no redirect. */
+bhp_seoh_assert($failures, 'sitemap: /checkout/ is excluded by name (item 121; a checkout URL is never canonical)',
+    array() === bhp_seo_exclude_redirected_from_sitemap($entry('/checkout/'), 'post', null));
+
+/* limb 1 — the theme's own named 301. */
+bhp_seoh_assert($failures, 'sitemap: /teachers-guide/ is still excluded (CYCLE164 rule survives the generalisation)',
+    array() === bhp_seo_exclude_redirected_from_sitemap($entry('/teachers-guide/'), 'post', null));
+
+/* THE FLOOR — the assertion that catches a broad redirect pattern gutting the
+   sitemap. Every one of these must SURVIVE the filter. */
+$floor = array('/', '/shop/', '/complete-collection/', '/blog/', '/teachers/', '/about/', '/books/');
+foreach ($floor as $keep) {
+    $kept = bhp_seo_exclude_redirected_from_sitemap($entry($keep), 'post', null);
+    bhp_seoh_assert($failures, "sitemap FLOOR: {$keep} is NOT excluded",
+        is_array($kept) && !empty($kept['loc']));
+}
+
+/* limb 2 — every NON-CANONICAL format edition is excluded, by rule, not by
+   slug; and every CANONICAL one survives. This is the three hardcover product
+   URLs from MKT-302 §2.3, generalised. */
+if (function_exists('bhp_get_series_adventures') && function_exists('bhp_book_lookup_product')) {
+    $checked_hc = 0;
+    $checked_pb = 0;
+    foreach (get_posts(array('post_type' => 'product', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true)) as $prod) {
+        $found = bhp_book_lookup_product($prod->ID);
+        if (!is_array($found)) {
+            continue;
+        }
+        $e = array('loc' => get_permalink($prod), 'mod' => '2026-01-01T00:00:00+00:00');
+        $r = bhp_seo_exclude_redirected_from_sitemap($e, 'post', $prod);
+        if (empty($found['canonical'])) {
+            ++$checked_hc;
+            bhp_seoh_assert($failures, "sitemap: non-canonical format edition excluded — {$prod->post_name}",
+                array() === $r);
+        } else {
+            ++$checked_pb;
+            bhp_seoh_assert($failures, "sitemap: CANONICAL edition kept — {$prod->post_name}",
+                is_array($r) && !empty($r['loc']));
+        }
+    }
+    bhp_seoh_assert($failures, "sitemap: at least one non-canonical and one canonical edition were actually tested (hc={$checked_hc}, pb={$checked_pb})",
+        $checked_hc > 0 && $checked_pb > 0);
+} else {
+    bhp_seoh_skip($skipped, 'format-edition sitemap exclusion', 'book registry unavailable');
+}
+
+/* limb 3 — Rank Math's own active 3xx redirections, matched with Rank Math's
+   own matcher. Environment-dependent by design: whatever redirections THIS
+   environment holds, their sources must be excluded and their destinations
+   must not be. */
+if (class_exists('\RankMath\Redirections\DB') && method_exists('\RankMath\Redirections\DB', 'get_redirections')) {
+    $rows = \RankMath\Redirections\DB::get_redirections(array('limit' => 200, 'status' => 'active'));
+    $rows = isset($rows['redirections']) ? (array) $rows['redirections'] : array();
+    bhp_seoh_assert($failures, sprintf('sitemap: Rank Math redirections are readable (%d active on this environment)', count($rows)), true);
+
+    $tested = 0;
+    foreach ($rows as $row) {
+        $code = (int) ($row['header_code'] ?? 0);
+        if ($code < 300 || $code > 399) {
+            continue;
+        }
+        foreach ((array) maybe_unserialize($row['sources'] ?? '') as $src) {
+            $pattern = (string) ($src['pattern'] ?? '');
+            if ('' === $pattern || 'exact' !== (string) ($src['comparison'] ?? '')) {
+                continue; // Only exact sources can be turned back into a URL to test.
+            }
+            ++$tested;
+            bhp_seoh_assert($failures, "sitemap: an active Rank Math 3xx source is excluded — /{$pattern}",
+                array() === bhp_seo_exclude_redirected_from_sitemap($entry('/' . ltrim($pattern, '/')), 'post', null));
+
+            $to = untrailingslashit((string) wp_parse_url((string) ($row['url_to'] ?? ''), PHP_URL_PATH));
+            if ('' !== $to && '/' !== $to) {
+                $kept = bhp_seo_exclude_redirected_from_sitemap($entry($to . '/'), 'post', null);
+                bhp_seoh_assert($failures, "sitemap: …and its DESTINATION {$to}/ is kept",
+                    is_array($kept) && !empty($kept['loc']));
+            }
+        }
+    }
+    if (0 === $tested) {
+        bhp_seoh_skip($skipped, 'Rank Math redirection exclusion', 'no active exact-match 3xx redirection on this environment');
+    }
+} else {
+    bhp_seoh_skip($skipped, 'Rank Math redirection exclusion', 'Redirections module unavailable');
+}
+
 /* ------------------------------------------------------------------ */
 
 echo "\n";
