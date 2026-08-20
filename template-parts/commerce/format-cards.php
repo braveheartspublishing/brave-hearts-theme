@@ -619,7 +619,42 @@ if (null === $bhp_initial_conf) {
   ?>
   <p class="bhp-formats__selected-price" data-bhp-format-price aria-live="polite"><?php echo wp_kses_post($bhp_initial_conf['priceHtml']); ?></p>
 
-  <p class="bhp-formats__cta-wrap">
+  <?php
+  /*
+   * ⛔⛔ 1.19.274 — THIS WAS A <p> AND HAD TO STOP BEING ONE. OBSERVED IN A REAL
+   *     BROWSER ON STAGING, NOT INFERRED FROM THE SOURCE, AND THE SOURCE LOOKED
+   *     CORRECT THE WHOLE TIME.
+   *
+   * `<p>` may contain PHRASING content only. When the HTML parser meets a
+   * `<form>` start tag with a `<p>` open, it CLOSES THE PARAGRAPH FIRST — so the
+   * collection form was hoisted clean out of both the `<p>` and the `<span>`
+   * that was supposed to hold it, and reparented as a sibling of
+   * `div.bhp-formats`. Measured on staging 1.19.274 at an asserted
+   * `window.innerWidth` of 1440:
+   *
+   *     span.bhp-formats__cta-direct  ->  innerHTML "" (empty, hidden)
+   *     form.bhp-formats__cta-form    ->  parentElement DIV.bhp-formats
+   *
+   * The consequence was not cosmetic: the form escaped the element the swap
+   * toggles, so it rendered on EVERY format instead of the collection card, and
+   * `hidden` could never reach it. The served HTML and the PHP were both fine;
+   * only the PARSED DOM was wrong, which is exactly why this is checked in a
+   * browser rather than by reading the markup back.
+   *
+   * ⛔ A `<div>` IS THE FIX, NOT A `<span>` AROUND IT. Wrapping harder does not
+   *    help — the parser closes the paragraph on the `<form>` token regardless
+   *    of how many phrasing elements are open inside it.
+   *
+   * ⛔ NOTHING ELSE MOVES. The class is unchanged, and every rule that styles
+   *    this node is class-based, never `p.…`: `.bhp-formats__cta-wrap` in
+   *    book-formats.css (margin only) and the two `order:`/layout rules in
+   *    product-template.css. A `<div>` and a margin-reset `<p>` render the
+   *    identical box here. `bhp-formats__cta-wrap` is NOT in
+   *    `21-PROTECTED-ELEMENTS-MANIFEST.md`; the protected `bhp-formats__cta`
+   *    inside it is untouched.
+   */
+  ?>
+  <div class="bhp-formats__cta-wrap">
     <a class="btn btn-primary bhp-formats__cta<?php echo $bhp_cta_disabled ? ' is-disabled' : ''; ?>"
        data-bhp-format-cta
        href="<?php echo esc_url($bhp_initial_conf['addUrl'] ? $bhp_initial_conf['addUrl'] : '#'); ?>"
@@ -637,7 +672,7 @@ if (null === $bhp_initial_conf) {
     ?>
     <span class="bhp-formats__cta-direct" data-bhp-collection-cta<?php echo $bhp_cta_is_direct ? '' : ' hidden'; ?>><?php echo $bhp_collection_direct_cta; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped --every component escaped in bhp_collection_add_to_cart_cta() ?></span>
     <?php endif; ?>
-  </p>
+  </div>
 
   <?php /* A1: server-rendered for the initial format so first paint is already
            correct and this line can never cause a layout shift.
