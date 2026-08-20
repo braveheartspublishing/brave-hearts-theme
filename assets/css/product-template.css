@@ -714,6 +714,55 @@
  *   layout showed before. If Andrew would rather have the bigger cover, the
  *   two dials are this stage height and the H1 size, in that order.
  *
+ * ⛔⛔ THE FOLD NUMBER ABOVE IS TRUE AND IS ALSO NOT THE WHOLE TRUTH. ON A
+ *     FIRST VISIT AT 390 THE CONSENT BANNER COVERS ADD TO CART COMPLETELY.
+ *
+ *     MEASURED, staging 1.19.275, cookies and storage cleared before each read,
+ *     innerWidth asserted 390. `.wpconsent-banner` is `position: fixed`,
+ *     `z-index: 900000`, and occupies y = 739..844 — the bottom 105 px of the
+ *     fold. Against it:
+ *
+ *       page              ADD TO CART   banner top   first-visit result
+ *       ---------------   -----------   ----------   ------------------------
+ *       Mariana pb            781..829      739      100% HIDDEN (48 of 48 px)
+ *       Mariana hc            781..829      739      100% HIDDEN (48 of 48 px)
+ *       Mount Everest pb      743..791      739      100% HIDDEN (48 of 48 px)
+ *       The Amazon pb         694..742      739      3 px clipped
+ *       Activity Book         555..605      739      clear
+ *
+ *     ⭐ AND IT IS A REGRESSION, not a pre-existing condition. PRODUCTION at
+ *     1.19.273, same probe, same cleared state: the banner sits at the same
+ *     739..844 and ADD TO CART sits at 486..538 — 201 px ABOVE it, fully
+ *     visible. Today nothing is covered. With the gallery promoted, three of
+ *     five product pages cover it entirely.
+ *
+ *     ⚠ WHY NO EARLIER MEASUREMENT CAUGHT THIS, because the next person will
+ *       hit the same wall: the banner is rendered inside an OPEN SHADOW ROOT on
+ *       a 0x0 host. `document.querySelector('.wpconsent-banner')` returns null
+ *       and every light-DOM or offsetWidth probe reports a clean fold. It is
+ *       only visible to a probe that walks `el.shadowRoot` recursively, or to a
+ *       screenshot. This one was found in a screenshot and then measured.
+ *
+ *     ⚠ IT AFFECTS FIRST-TIME VISITORS ONLY. After consent is given the banner
+ *       is gone and ADD TO CART is fully visible at 781..829. Desktop is
+ *       unaffected at every page (banner 842, ADD TO CART 681).
+ *
+ *     ⛔ NOT FIXED HERE, AND DELIBERATELY NOT DECIDED HERE. Clearing it needs
+ *       ADD TO CART to end above 739, i.e. ~90 px more than this section
+ *       already bought. There is no honest 90 px left: the stage is at 190
+ *       (a 127 px cover), the H1 is protected by 1.19.266's standing
+ *       instruction, and the remaining spacing is already trimmed. The real
+ *       options are (a) accept it — first-visit shoppers scroll past a banner
+ *       they must dismiss anyway, (b) put the gallery back below the buy box,
+ *       which is the founder's ruling reversed, or (c) change the banner's
+ *       size or placement, which is a WPConsent plugin decision and not this
+ *       stylesheet's call.
+ *
+ *       The founder's instruction was "at the top of the page, UNLESS THERE IS
+ *       OBJECTION BASED ON KNOWLEDGE." This is that objection, measured and
+ *       handed to him whole. The order he asked for is what ships until he
+ *       rules otherwise.
+ *
  * ⚠ THE SCOPE NOTE IS NOW ~2,200 px FROM THE THING IT SCOPES, AND THE LINE
  *   ITEM ABOVE ("the note moves to slot 8, -32 px") DOES NOT SAY SO PLAINLY.
  *   `.bhp-look-inside__note` — "A short preview of the printed edition. A few
