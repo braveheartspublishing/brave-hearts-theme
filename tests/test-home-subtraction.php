@@ -140,38 +140,54 @@ bhp_hs_assert(
 	$failures
 );
 /*
- * ⚠️ CORRECTED ON ITS FIRST RUN, AND THE CORRECTION IS THE INTERESTING PART.
- *    The first version of this assertion took the FIRST `home-trust-proof__badge`
- *    span on the page. That is the AGE badge — "Ages 6–9" — so the check went
- *    red on the digit in "9" and reported the star badge as carrying a review
- *    count it does not carry. A test that names the wrong element is worse than
- *    no test: it would have been "fixed" by loosening the digit rule, which is
- *    the one rule here that matters. It now selects the badge BY ITS OWN TEXT.
+ * ⚠️ THIS ASSERTION WAS WRONG TWICE AND BOTH CORRECTIONS ARE RECORDED, because
+ *    the second one changed what the test is FOR and a future reader would
+ *    otherwise re-derive the first.
+ *
+ *    ATTEMPT 1 took the FIRST `home-trust-proof__badge` span on the page. That
+ *    is the AGE badge — "Ages 6–9" — so it went red on the "9" and reported the
+ *    star badge as carrying a review count it does not carry.
+ *
+ *    ATTEMPT 2 selected by text but used `(.*?)</span>`, which stops at the
+ *    FIRST NESTED `</span>`. The badge contains two nested spans, so the capture
+ *    was the star glyph run and the search text was never inside it.
+ *
+ * ⛔ AND THE REAL LESSON, WHICH IS NOT A REGEX LESSON. Attempt 1's rule — "no
+ *    digit anywhere in the badge" — WAS ITSELF WRONG, and it would have been
+ *    "fixed" by loosening it. The badge legitimately contains
+ *    `<span class="screen-reader-text">5 out of 5 stars</span>`: that is the
+ *    ACCESSIBLE EQUIVALENT of the five aria-hidden glyphs, it predates this
+ *    release, and stripping it to satisfy a test would have removed the only
+ *    thing a screen-reader user gets from the stars.
+ *
+ * ⭐ SO THE GUARD IS STATED AS WHAT IT ACTUALLY MEANS: the release removed
+ *    WORDS and added NOTHING. The stars are unchanged, their accessible
+ *    equivalent is unchanged, and no review COUNT ("26 ratings", "4 reviews")
+ *    entered the page anywhere — which is the edit that would make the widened
+ *    claim dishonest.
  */
-$star_badge = '';
-if ( preg_match_all( '#<span class="home-trust-proof__badge[^"]*"[^>]*>(.*?)</span>#s', $home, $bm ) ) {
-	foreach ( $bm[1] as $candidate ) {
-		if ( false !== strpos( $candidate, 'Five-star reader reviews' ) ) {
-			$star_badge = trim( wp_strip_all_tags( $candidate ) );
-			break;
-		}
-	}
+bhp_hs_assert(
+	1 === substr_count( $home, '<span class="home-trust-proof__stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span>' ),
+	'§1.4a the five star glyphs are unchanged — exactly one run of five, still aria-hidden',
+	$failures
+);
+bhp_hs_assert(
+	1 === substr_count( $home, '<span class="screen-reader-text">5 out of 5 stars</span>' ),
+	'§1.4b the stars keep their accessible equivalent (pre-existing, and NOT a review count)',
+	$failures
+);
+/* ⛔ THE WIDENING GUARD PROPER. No quantity of ratings or reviews anywhere on
+   the homepage — the number that, beside an unscoped "Five-star reader
+   reviews", would assert an aggregate across a catalogue whose newest title
+   has no reviews at all. */
+$counts = array();
+if ( preg_match_all( '/\b\d[\d,]*\s*(?:\+\s*)?(?:customer\s+)?(?:ratings?|reviews?)\b/i', wp_strip_all_tags( $home ), $cm ) ) {
+	$counts = array_unique( $cm[0] );
 }
 bhp_hs_assert(
-	'' !== $star_badge,
-	'§1.4a the five-star badge was located in the served document',
-	$failures
-);
-bhp_hs_assert(
-	'' !== $star_badge && 0 === preg_match( '/\d/', preg_replace( '/[\x{2605}\x{2606}]/u', '', $star_badge ) ),
-	'§1.4b the five-star badge carries no digit — no rating value and no review count (badge: "' . $star_badge . '")',
-	$failures
-);
-/* And the star glyphs themselves are untouched by this release: five of them,
-   exactly as before, because the ruling removed words and not the stars. */
-bhp_hs_assert(
-	'' !== $star_badge && 5 === preg_match_all( '/\x{2605}/u', $star_badge ),
-	'§1.4c the badge still carries exactly five star glyphs',
+	empty( $counts ),
+	'§1.4c no review or rating COUNT appears anywhere on the homepage'
+		. ( $counts ? ' — FOUND: ' . implode( ' | ', $counts ) : '' ),
 	$failures
 );
 
