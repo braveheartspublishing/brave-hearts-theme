@@ -311,6 +311,101 @@ bhp_bpt_assert(
 	$failures
 );
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ §2.7 — THE RAIL CONTRACT (1.19.273, founder ruling carrier item 126)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ RELAYED through `chief-of-staff`, not witnessed by the agent that wrote
+ *   this. The words live in the carrier record; §4.1 keeps them out of this
+ *   public repository.
+ *
+ * A rail is in ONE mode and its IMAGE and PRICE both come from THAT mode:
+ *   series ⇒ the collection composite + the collection price
+ *   book   ⇒ that book's own cover   + that book's own single price
+ *
+ * ⛔ WHAT THIS CATCHES THAT §2.1–§2.6 DID NOT. Every one of them passed while
+ *    all 29 series rails printed the Mariana cover beside the collection price.
+ *    §2.2 even compared the printed price to the live figure and was RIGHT —
+ *    the series price WAS the live collection price. The lie was not in either
+ *    fact, it was in putting them side by side. So this is a PAIRING assertion,
+ *    and it is the class of assertion the repository was missing.
+ */
+$contract_bad = array();
+$imgclass_bad = array();
+foreach ( $rail_docs as $slug => $html ) {
+	$block = bhp_bpt_rail_block( $html );
+	if ( '' === $block ) {
+		continue;
+	}
+	preg_match( '/data-bhp-rail-kind="([^"]*)"/', $block, $m_k );
+	preg_match( '/data-bhp-rail-image="([^"]*)"/', $block, $m_i );
+	preg_match( '/data-bhp-rail-price-source="([^"]*)"/', $block, $m_s );
+
+	$kind = $m_k[1] ?? '';
+	$want = ( 'series' === $kind ) ? array( 'collection', 'collection' ) : array( 'cover', 'single' );
+
+	if ( ( $m_i[1] ?? '' ) !== $want[0] || ( $m_s[1] ?? '' ) !== $want[1] ) {
+		$contract_bad[] = sprintf( '%s[kind=%s img=%s price=%s]', $slug, $kind, $m_i[1] ?? '', $m_s[1] ?? '' );
+	}
+	/* An image is optional (degrade-never-mix); a MISMATCHED one is not. */
+	if ( preg_match( '/class="[^"]*bhp-book-rail__img[^"]*"/', $block, $m_c )
+		&& false === strpos( $m_c[0], 'bhp-book-rail__img--' . $want[0] ) ) {
+		$imgclass_bad[] = $slug . '[' . $m_c[0] . ']';
+	}
+}
+bhp_bpt_assert(
+	empty( $contract_bad ),
+	sprintf( '§2.7 THE RAIL CONTRACT: image kind and price source match the mode on every rail, never mixed (item 126)%s', $contract_bad ? ' — MIXED: ' . implode( ' | ', array_slice( $contract_bad, 0, 4 ) ) : '' ),
+	$failures
+);
+bhp_bpt_assert(
+	empty( $imgclass_bad ),
+	sprintf( '§2.7b …and the rendered image class agrees with the declared mode%s', $imgclass_bad ? ' — MISMATCH: ' . implode( ' | ', array_slice( $imgclass_bad, 0, 4 ) ) : '' ),
+	$failures
+);
+
+/*
+ * ⭐ THE SERIES RAIL RESOLVES THE COLLECTION COMPOSITE — the SAME approved
+ *    attachment every collection carousel on the site renders, found by slug
+ *    and never generated (standing rule §9). Asserted through the live
+ *    resolver, not by a hard-coded attachment id, because the id differs
+ *    between staging and production.
+ */
+if ( function_exists( 'bhp_blog_rail_collection_image_slug' ) && function_exists( 'bhp_book_media_attachment_id' ) ) {
+	$want_slug = bhp_blog_rail_collection_image_slug();
+	$want_id   = (int) bhp_book_media_attachment_id( $want_slug );
+	$series_facts = function_exists( 'bhp_blog_rail_series_facts' ) ? bhp_blog_rail_series_facts() : null;
+
+	bhp_bpt_assert(
+		$want_id > 0,
+		sprintf( '§2.8 the collection composite slug "%s" resolves to a real attachment on this environment (id=%d)', $want_slug, $want_id ),
+		$failures
+	);
+	bhp_bpt_assert(
+		is_array( $series_facts ) && (int) $series_facts['image_id'] === $want_id,
+		sprintf( '§2.8b the SERIES rail uses that composite and not a single title\'s cover (rail=%d, composite=%d)  ⭐ item 126', (int) ( $series_facts['image_id'] ?? 0 ), $want_id ),
+		$failures
+	);
+	/*
+	 * ⛔ AND IT IS NOT ANY SINGLE BOOK'S COVER. Stated as its own assertion
+	 *    because that is the exact regression: the previous code picked the
+	 *    first available adventure's image_id, and it looked reasonable.
+	 */
+	$single_cover_ids = array();
+	if ( function_exists( 'bhp_get_series_adventures' ) ) {
+		foreach ( bhp_get_series_adventures() as $adv ) {
+			if ( ! empty( $adv['image_id'] ) ) {
+				$single_cover_ids[] = (int) $adv['image_id'];
+			}
+		}
+	}
+	bhp_bpt_assert(
+		is_array( $series_facts ) && ! in_array( (int) $series_facts['image_id'], $single_cover_ids, true ),
+		'§2.8c …and the series rail image is NOT any single title\'s cover  ⭐ item 126 — this is the exact pairing Andrew found on staging',
+		$failures
+	);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n=== §3 — THE PROVENANCE CLAIM IS TRUE WHEREVER IT IS MADE ===\n";
 

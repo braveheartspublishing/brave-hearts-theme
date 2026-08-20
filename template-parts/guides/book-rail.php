@@ -22,10 +22,25 @@ if ( empty( $facts['url'] ) || empty( $facts['price'] ) || empty( $facts['title'
 $eyebrow = (string) ( $args['eyebrow'] ?? '' );
 $cta     = $args['cta'] ?? array( 'label' => '', 'url' => $facts['url'] );
 $rail_id = wp_unique_id( 'bhp-book-rail-' );
+
+/*
+ * ⭐ THE RAIL CONTRACT, MADE VISIBLE TO A TEST. See `inc/blog-post-template.php`
+ *    §3a. The mode's image kind and price source are printed onto the element so
+ *    the pairing can be asserted from rendered HTML — by the suite, by the
+ *    deploy gate, and by anyone reading the DOM on a live page. They are
+ *    declared by the resolver, never inferred here: this file draws, it does not
+ *    decide. A missing declaration prints empty and FAILS the gate, which is the
+ *    correct direction — a rail that cannot state its mode is not a rail that
+ *    has been checked.
+ */
+$image_kind   = (string) ( $facts['image_kind'] ?? '' );
+$price_source = (string) ( $facts['price_source'] ?? '' );
 ?>
 <aside class="bhp-book-rail bhp-book-rail--<?php echo esc_attr( $facts['kind'] ?? 'book' ); ?>"
        aria-labelledby="<?php echo esc_attr( $rail_id ); ?>"
-       data-bhp-rail-kind="<?php echo esc_attr( $facts['kind'] ?? 'book' ); ?>">
+       data-bhp-rail-kind="<?php echo esc_attr( $facts['kind'] ?? 'book' ); ?>"
+       data-bhp-rail-image="<?php echo esc_attr( $image_kind ); ?>"
+       data-bhp-rail-price-source="<?php echo esc_attr( $price_source ); ?>">
 
 	<?php if ( ! empty( $facts['image_id'] ) ) : ?>
 		<a class="bhp-book-rail__cover" href="<?php echo esc_url( $facts['url'] ); ?>" tabindex="-1" aria-hidden="true">
@@ -42,7 +57,10 @@ $rail_id = wp_unique_id( 'bhp-book-rail-' );
 				'medium',
 				false,
 				array(
-					'class'   => 'bhp-book-rail__img',
+					// The modifier names WHICH KIND of image this is -- a single
+					// title's cover, or the three-book collection composite. It
+					// is the class the contract assertion reads.
+					'class'   => 'bhp-book-rail__img bhp-book-rail__img--' . sanitize_html_class( $image_kind ),
 					'alt'     => '',
 					'loading' => 'lazy',
 					'decoding' => 'async',

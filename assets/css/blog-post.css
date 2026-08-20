@@ -278,6 +278,26 @@ article.single-post { position: relative; }
   box-shadow: 0 6px 18px rgba(7, 21, 34, 0.18);
 }
 
+/* 1.19.273 — THE COLLECTION COMPOSITE IS LANDSCAPE; A COVER IS PORTRAIT.
+   The slot above is sized for a single cover (1303x1999, ratio 0.65). The
+   approved three-book composite `collection-look-01-three-books-v2` is
+   1800x1140, ratio 1.58 — at 84 px wide it renders 53 px tall and each of the
+   three books is about 26 px across, which is not a picture of three books, it
+   is a smudge. The collection mode therefore gets its own width. Measured, not
+   guessed: 32vw at 390 gives 125x79 (~40 px per book); the desktop ceiling of
+   176 px gives 176x111.
+
+   Its own drop shadow is removed because the composite ALREADY CARRIES baked-in
+   shadows and a background gradient from the approved build (see
+   `inc/book-media.php`) — stacking the CSS shadow on top double-darkens its
+   lower edge. */
+.bhp-book-rail--series .bhp-book-rail__cover {
+  width: clamp(104px, 32vw, 176px);
+}
+.bhp-book-rail__img--collection {
+  box-shadow: none;
+}
+
 .bhp-book-rail__body { min-width: 0; }
 
 .bhp-book-rail__eyebrow {

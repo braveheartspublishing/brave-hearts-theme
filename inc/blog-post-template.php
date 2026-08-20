@@ -405,6 +405,60 @@ function bhp_blog_rail_adventure( $post = null ) {
 	return (string) apply_filters( 'bhp_blog_rail_adventure', $key, $post );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 3a · THE RAIL CONTRACT — 1.19.273, founder-ruled (carrier item 126)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ SOURCE: Andrew Signore, RELAYED through `chief-of-staff` (Gandalf). This
+ *   agent did NOT witness it first-hand, and it is not described here as
+ *   first-hand. The verbatim words live in the carrier record, not in this
+ *   public repository (standing rule §4.1: point at the private source, never
+ *   copy it in).
+ *
+ * THE RULE, IN ONE SENTENCE: A RAIL IS IN EXACTLY ONE MODE, AND ITS IMAGE AND
+ * ITS PRICE COME FROM THE SAME MODE. NEVER MIXED.
+ *
+ *   ┌─────────────────┬──────────────────────────┬────────────────────────────┐
+ *   │ mode            │ series / collection      │ single book                │
+ *   ├─────────────────┼──────────────────────────┼────────────────────────────┤
+ *   │ image           │ the COLLECTION composite │ THAT BOOK's cover          │
+ *   │ `image_kind`    │ `collection`             │ `cover`                    │
+ *   │ price           │ live COLLECTION price    │ that book's live SINGLE    │
+ *   │ `price_source`  │ `collection`             │ `single`                   │
+ *   │ eyebrow         │ the series wording       │ "The book this came from"  │
+ *   │ CTA             │ "See the books"          │ "See the book"/"Look inside"│
+ *   │ link            │ /complete-collection/    │ that book's product page   │
+ *   └─────────────────┴──────────────────────────┴────────────────────────────┘
+ *
+ * ⛔ WHY IT IS A RULE AND NOT A PREFERENCE. Until 1.19.273 the series branch
+ *    showed the first available title's cover — The Mariana Trench — beside the
+ *    COLLECTION price, on all 29 series rails. Andrew found it on staging. A
+ *    cover and a price sitting in one card are read as one object: that pairing
+ *    states, to a parent, that The Mariana Trench costs the bundle price. It is
+ *    a false price claim assembled out of two true facts — the derived-claim
+ *    trap, and a standing rule §3 failure rather than a design nitpick.
+ *
+ * ⛔ NO FIGURE IN EITHER COLUMN IS A LITERAL, AND NONE IS WRITTEN IN THIS
+ *    COMMENT EITHER. Single prices come from `bhp_get_homepage_books()`, the
+ *    collection price from `bhp_bundle_landing_price_facts()`. A price change
+ *    in WooCommerce moves the rail with no code edit — which is the property
+ *    that makes the contract survive.
+ *
+ *    ⚠ THE OBSERVED FIGURES ARE DELIBERATELY NOT QUOTED HERE. `test-blog-post-
+ *      template.php` §2.3 greps this file for any `$n.nn` literal with a blunt
+ *      `strpos`, and that bluntness is worth more than the convenience of
+ *      naming the numbers in a comment: a gate that cannot be argued with
+ *      cannot be argued down. The values as observed on staging 2026-08-19 are
+ *      in the QA evidence, which is where a dated figure belongs (§8).
+ *
+ * ⭐ THE CONTRACT IS MACHINE-CHECKED, not merely documented. Both branches
+ *    declare `image_kind` and `price_source`; `book-rail.php` prints them onto
+ *    the element; and `tests/test-protected-elements.php` asserts the
+ *    implication in both directions, as does the deploy script's gate. A future
+ *    edit that reintroduces a lead-title cover on the series rail fails the
+ *    suite and refuses the deploy.
+ */
+
 /**
  * The live product facts behind one adventure, or null.
  *
@@ -448,6 +502,11 @@ function bhp_blog_rail_book_facts( $key ) {
 		'image_id'   => (int) ( $card['image_id'] ?: $adventure['image_id'] ),
 		'image_alt'  => (string) ( $card['image_alt'] ?: $adventure['image_alt'] ),
 		'product_id' => (int) ( $card['product_id'] ?? 0 ),
+		// THE RAIL CONTRACT (see §3a below). Single-book mode: this book's own
+		// cover, this book's own live single price. Both declared, so the
+		// pairing is assertable in the DOM and cannot silently drift.
+		'image_kind'   => 'cover',
+		'price_source' => 'single',
 	);
 }
 
@@ -476,15 +535,44 @@ function bhp_blog_rail_series_facts() {
 		return null;
 	}
 
-	// The cover shown is the series' lead title, which is a real Charlotte and
-	// Henry cover under a label that names the series, not that one book.
-	$lead = null;
-	foreach ( bhp_get_series_adventures() as $adventure ) {
-		if ( ! empty( $adventure['available'] ) && ! empty( $adventure['image_id'] ) ) {
-			$lead = $adventure;
-			break;
-		}
-	}
+	/*
+	 * ⛔ THE COLLECTION IMAGE, NOT A LEAD TITLE'S COVER. Founder ruling,
+	 *    carrier item 126 (⚠ RELAYED through `chief-of-staff`, not witnessed
+	 *    by this agent). See §3a below for the contract in full.
+	 *
+	 * SUPERSEDED, preserved so the movement is visible and is not re-derived.
+	 * This branch previously walked `bhp_get_series_adventures()` and took the
+	 * FIRST available title's `image_id`, under the reasoning:
+	 *
+	 *     "The cover shown is the series' lead title, which is a real Charlotte
+	 *      and Henry cover under a label that names the series, not that one
+	 *      book."
+	 *
+	 * That reasoning was about PROVENANCE — it is careful that the label never
+	 * claims the post came from that one book, and on that narrow point it was
+	 * right. But it left a different defect, which is the one Andrew found on
+	 * staging himself: the first available title is The Mariana Trench, so all
+	 * 29 series rails printed THE MARIANA COVER beside THE COLLECTION PRICE.
+	 * A parent reads one cover and one price as one object. $31.99 under a
+	 * single book reads as that book costing $31.99.
+	 *
+	 * ⭐ THE ASSET IS FOUND, NEVER GENERATED. `collection-look-01-three-books-v2`
+	 *    is the approved three-cover composite already registered in
+	 *    `inc/book-media.php` under `complete_collection`, and already rendered
+	 *    by every collection carousel on the site through
+	 *    `bhp_collection_carousel_slugs()`. Standing rule §9: covers are
+	 *    composited from approved artwork, never regenerated. This resolves the
+	 *    SAME slug those surfaces resolve, so the rail cannot drift from them.
+	 *
+	 * ⚠ WHEN THE COMPOSITE DOES NOT RESOLVE on an environment, `image_id` is 0
+	 *   and `book-rail.php` renders the rail WITH NO IMAGE. That is deliberate:
+	 *   a text-only series rail still bridges to the books and makes no false
+	 *   claim, whereas falling back to a single cover would reinstate exactly
+	 *   the mixed rail this change exists to remove. Degrade, never mix.
+	 */
+	$collection_image_id = function_exists( 'bhp_book_media_attachment_id' )
+		? (int) bhp_book_media_attachment_id( bhp_blog_rail_collection_image_slug() )
+		: 0;
 
 	$price = (float) $facts['bundle'];
 
@@ -495,9 +583,29 @@ function bhp_blog_rail_series_facts() {
 		'url'        => home_url( '/complete-collection/' ),
 		'price'      => function_exists( 'wc_price' ) ? wp_strip_all_tags( wc_price( $price, array( 'decimals' => 2 ) ) ) : '$' . number_format( $price, 2 ),
 		'age_range'  => __( 'Ages 6–9', 'brave-hearts' ),
-		'image_id'   => (int) ( $lead['image_id'] ?? 0 ),
-		'image_alt'  => (string) ( $lead['image_alt'] ?? '' ),
+		'image_id'   => $collection_image_id,
+		'image_alt'  => '',
 		'product_id' => 0,
+		// THE RAIL CONTRACT. Collection mode: the collection composite, the
+		// live collection price. Never one book's cover beside a bundle price.
+		'image_kind'   => 'collection',
+		'price_source' => 'collection',
+	);
+}
+
+/**
+ * The attachment slug of the approved three-cover collection composite.
+ *
+ * One place, so the rail, the carousels and the deploy-script gate name the
+ * same asset. Filterable so a rebuilt composite is a one-line change — the
+ * same rollback shape `inc/book-media.php` already documents for v1 -> v2.
+ *
+ * @return string
+ */
+function bhp_blog_rail_collection_image_slug() {
+	return (string) apply_filters(
+		'bhp_blog_rail_collection_image_slug',
+		'collection-look-01-three-books-v2'
 	);
 }
 

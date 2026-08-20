@@ -58,8 +58,13 @@
  *                   free-sample primary · ★ badge · a REAL attributed Amazon
  *                   review · Kirkus · the first-pages section the hero points at
  *   §2  POSTS     — the book rail EXACTLY ONCE · the end-of-post capture
- *                   EXACTLY ONCE · the popup engine present · and the ask count
- *                   still TWO, because the rail is a BOOK, not an ask
+ *                   EXACTLY ONCE · the popup engine present · the ask count
+ *                   still TWO, because the rail is a BOOK, not an ask · and
+ *                   ⭐ 1.19.273 THE RAIL CONTRACT (§2.6a/b/c, item 126): the
+ *                   rail's IMAGE and PRICE both come from its OWN mode, never
+ *                   mixed — the first assertion here to check a PAIRING rather
+ *                   than a presence, because presence was true while the
+ *                   pairing was false and that is what the founder found
  *   §3  PRODUCTS  — price · format selector · ATC, all three ahead of the
  *                   long-form body · guarantee · a real review · the I-voice
  *                   shipping line
@@ -163,6 +168,17 @@ function bhp_pe_manifest() {
 				'end-of-post capture — report §4 item 1: "keep the end-of-post capture"' ),
 			'parent-ab-popup' => array( 'min', 1,
 				'popup engine — report §4 item 1 keeps it; ruling item 110 limb (4) approved it' ),
+			/*
+			 * 1.19.273 — THE RAIL CONTRACT's two declarations (item 126). These
+			 * rows exist so the DEPLOY SCRIPT's gate greps them out of the
+			 * artefact too: an artefact whose rail cannot state its mode is one
+			 * whose pairing §2.6a/b/c could never have checked, and it must not
+			 * reach production silently.
+			 */
+			'data-bhp-rail-image="' => array( 'exact', 1,
+				'rail contract — image kind declared (item 126); §2.6a asserts it MATCHES the mode' ),
+			'data-bhp-rail-price-source="' => array( 'exact', 1,
+				'rail contract — price source declared (item 126); §2.6c compares it to the live figure' ),
 		),
 
 		/* ── PRODUCTS ────────────────────────────────────────────────────── */
@@ -302,6 +318,10 @@ $pe_bad_cap    = array();
 $pe_bad_popup  = array();
 $pe_bad_asks   = array();
 $pe_bad_price  = array();
+/* 1.19.273 — the rail contract's four collectors (item 126). */
+$pe_bad_contract = array();
+$pe_bad_imgclass = array();
+$pe_bad_pricesrc = array();
 $pe_fetched    = 0;
 
 foreach ( $pe_posts as $pe_p ) {
@@ -354,6 +374,92 @@ foreach ( $pe_posts as $pe_p ) {
 	if ( 2 !== $pe_asks ) {
 		$pe_bad_asks[] = $pe_p->post_name . '=' . $pe_asks;
 	}
+
+	/*
+	 * ⭐⭐ THE RAIL CONTRACT — 1.19.273, founder ruling carrier item 126.
+	 *     ⚠ RELAYED through `chief-of-staff`, not witnessed by the agent that
+	 *       wrote this. Words live in the carrier record; §4.1 keeps them out
+	 *       of this public repository.
+	 *
+	 *     THE ASSERTION: a rail is in ONE mode, and its IMAGE and its PRICE
+	 *     both come from THAT mode. Never mixed.
+	 *
+	 *         series  ⇒ collection composite  +  collection price
+	 *         book    ⇒ that book's cover     +  that book's single price
+	 *
+	 * ⛔ THIS IS THE ASSERTION THAT WOULD HAVE CAUGHT WHAT ANDREW CAUGHT. Until
+	 *    1.19.273 all 29 series rails printed THE MARIANA COVER beside the
+	 *    COLLECTION price. Every existing assertion passed: the rail was
+	 *    present (§2.2), rendered once, carried a live price (§2.3), and the ask
+	 *    count was two (§2.6). Presence and liveness were both true. THE
+	 *    PAIRING was the defect, and nothing checked the pairing — so the
+	 *    founder found it on staging himself, one release after item 118.
+	 *    A cover and a price in one card are read as one object; a bundle price
+	 *    under a single cover states that that book costs the bundle price,
+	 *    which is a false claim assembled from two true facts.
+	 *
+	 * ⚠ THE IMAGE LIMB IS CONDITIONAL BY DESIGN, and this is not a softened
+	 *   assertion. `book-rail.php` renders no image at all when the attachment
+	 *   does not resolve, which is the deliberate degrade-never-mix path. So
+	 *   the rule is: IF an image is present it MUST match the mode. An absent
+	 *   image is not a contract breach; a MISMATCHED one is. The declarations
+	 *   themselves are checked unconditionally below — they are never optional.
+	 */
+	if ( preg_match( '/<aside class="bhp-book-rail[^>]*>/', $pe_doc, $pe_rail_tag ) ) {
+		$pe_tag = $pe_rail_tag[0];
+
+		preg_match( '/data-bhp-rail-kind="([^"]*)"/', $pe_tag, $m_kind );
+		preg_match( '/data-bhp-rail-image="([^"]*)"/', $pe_tag, $m_img );
+		preg_match( '/data-bhp-rail-price-source="([^"]*)"/', $pe_tag, $m_src );
+
+		$pe_kind = $m_kind[1] ?? '';
+		$pe_ikind = $m_img[1] ?? '';
+		$pe_psrc  = $m_src[1] ?? '';
+
+		$pe_want = ( 'series' === $pe_kind )
+			? array( 'collection', 'collection' )
+			: array( 'cover', 'single' );
+
+		if ( $pe_ikind !== $pe_want[0] || $pe_psrc !== $pe_want[1] ) {
+			$pe_bad_contract[] = sprintf(
+				'%s[kind=%s image=%s price=%s, want image=%s price=%s]',
+				$pe_p->post_name, $pe_kind, $pe_ikind, $pe_psrc, $pe_want[0], $pe_want[1]
+			);
+		}
+
+		/* The rendered image's own class must agree with the declaration. */
+		if ( preg_match( '/class="[^"]*bhp-book-rail__img[^"]*"/', $pe_doc, $m_cls ) ) {
+			if ( false === strpos( $m_cls[0], 'bhp-book-rail__img--' . $pe_want[0] ) ) {
+				$pe_bad_imgclass[] = $pe_p->post_name . '[' . $m_cls[0] . ' want --' . $pe_want[0] . ']';
+			}
+		}
+
+		/*
+		 * ⭐ AND THE PRINTED PRICE IS THE MODE'S OWN LIVE FIGURE — compared by
+		 *    VALUE against the same resolver the page used, not against a
+		 *    literal. `$11.99` and `$31.99` appear nowhere in this suite.
+		 */
+		if ( preg_match( '/class="bhp-book-rail__price">\s*(?:\$|&#0*36;|&#x0*24;)\s*([\d,]+\.\d\d)/i', $pe_doc, $m_price ) ) {
+			$pe_shown = (float) str_replace( ',', '', $m_price[1] );
+			$pe_want_price = null;
+
+			if ( 'series' === $pe_kind && function_exists( 'bhp_bundle_landing_price_facts' ) ) {
+				$pe_fmt = function_exists( 'bhp_bundle_default_format' ) ? bhp_bundle_default_format() : 'paperback';
+				$pe_cf  = bhp_bundle_landing_price_facts( $pe_fmt );
+				$pe_want_price = is_array( $pe_cf ) ? (float) ( $pe_cf['bundle'] ?? 0 ) : null;
+			} elseif ( function_exists( 'bhp_blog_rail_facts' ) ) {
+				$pe_bf = bhp_blog_rail_facts( $pe_p );
+				if ( $pe_bf ) {
+					$pe_want_price = (float) preg_replace( '/[^\d.]/', '', html_entity_decode( (string) $pe_bf['price'] ) );
+				}
+			}
+
+			if ( null !== $pe_want_price && $pe_want_price > 0
+				&& abs( $pe_shown - $pe_want_price ) > 0.005 ) {
+				$pe_bad_pricesrc[] = sprintf( '%s[shown=%.2f live=%.2f]', $pe_p->post_name, $pe_shown, $pe_want_price );
+			}
+		}
+	}
 }
 
 bhp_pe_assert(
@@ -398,6 +504,32 @@ bhp_pe_assert(
 	sprintf(
 		'§2.6 the ASK COUNT on every post is exactly TWO — capture + popup%s  ⭐ PROTECTED: report §4 item 1. The rail is a BOOK, not an ask, which is why §2.2 and this assertion are both true at once',
 		$pe_bad_asks ? ' — WRONG on: ' . implode( ', ', $pe_bad_asks ) : ''
+	),
+	$failures
+);
+
+/* ── 1.19.273 · THE RAIL CONTRACT (founder ruling item 126) ──────────────── */
+bhp_pe_assert(
+	empty( $pe_bad_contract ),
+	sprintf(
+		'§2.6a THE RAIL CONTRACT: every rail declares an image kind and a price source that MATCH ITS MODE — series⇒collection/collection, book⇒cover/single%s  ⭐ PROTECTED: ruling item 126. A collection price under one book\'s cover is a false price claim (standing rules §3, derived-claim trap)',
+		$pe_bad_contract ? ' — MIXED on: ' . implode( ', ', $pe_bad_contract ) : ''
+	),
+	$failures
+);
+bhp_pe_assert(
+	empty( $pe_bad_imgclass ),
+	sprintf(
+		'§2.6b …and the RENDERED IMAGE\'s own class agrees with that declaration%s  ⭐ PROTECTED: ruling item 126 — a declaration the picture contradicts is worse than none',
+		$pe_bad_imgclass ? ' — MISMATCH on: ' . implode( ', ', $pe_bad_imgclass ) : ''
+	),
+	$failures
+);
+bhp_pe_assert(
+	empty( $pe_bad_pricesrc ),
+	sprintf(
+		'§2.6c …and the PRINTED PRICE equals the mode\'s own LIVE figure, compared by value against the live resolver%s  ⭐ PROTECTED: ruling item 126 + standing rules §3 — no figure on the rail is typed, and none is borrowed from the other mode',
+		$pe_bad_pricesrc ? ' — WRONG SOURCE on: ' . implode( ', ', $pe_bad_pricesrc ) : ''
 	),
 	$failures
 );

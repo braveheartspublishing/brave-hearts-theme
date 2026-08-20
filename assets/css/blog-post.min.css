@@ -1,5 +1,5 @@
 /*! Built from blog-post.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 61f28495aa00f52db8b8f8ae27b5f743
+    source-md5: b1cc9e30f63bca1aed7ff1b915e08d30
     Comments stripped for transfer size; the source file is canonical. */
 body:not(.home) article.single-post.section {
   padding-block-start: clamp(0.3rem, 1.6vw, 2rem);
@@ -141,6 +141,14 @@ article.single-post { position: relative; }
   height: auto;
   border-radius: 2px;
   box-shadow: 0 6px 18px rgba(7, 21, 34, 0.18);
+}
+
+
+.bhp-book-rail--series .bhp-book-rail__cover {
+  width: clamp(104px, 32vw, 176px);
+}
+.bhp-book-rail__img--collection {
+  box-shadow: none;
 }
 
 .bhp-book-rail__body { min-width: 0; }
