@@ -634,6 +634,147 @@ foreach (
 	);
 }
 
+echo "\n=== §10 — 1.19.275: THE GALLERY LEADS THE MOBILE PAGE (CYCLE165-LD-GALLERY-TOP) ===\n";
+
+/*
+ * ⭐ WHAT CHANGED. Andrew Signore ruled the carousel back to the top of the
+ *    product page. Section 8 of `product-template.css` reverses step 3's mobile
+ *    order and compacts the gallery so ADD TO CART still lands inside the 844 px
+ *    fold at 390. §3 above is unchanged and still guards desktop.
+ *
+ * ⛔ WHAT THIS SECTION CAN AND CANNOT PROVE, same honesty as the file header.
+ *    It reads the SHIPPED STYLESHEET and checks the declared slot NUMBERS and
+ *    the compaction values. It does NOT prove where ADD TO CART lands — that is
+ *    a browser fact, measured in headless Chrome at an ASSERTED
+ *    `window.innerWidth` and recorded in section 8's own table. A test that
+ *    claimed the pixel result from CSS text would be a fabricated verification.
+ */
+
+/*
+ * The slot each block declares, read out of the stylesheet rather than assumed.
+ * `$css` is the source file; comments are stripped first so a superseded value
+ * quoted in a docblock cannot satisfy or trip an assertion.
+ */
+$pt_code = preg_replace( '#/\*.*?\*/#s', '', $css );
+
+/**
+ * Returns the `order:` value declared for the LAST rule whose selector list
+ * contains $needle, or null.
+ */
+function bhp_pt_order_for( $code, $needle ) {
+	$found = null;
+	if ( preg_match_all( '/([^{}]+)\{([^{}]*)\}/s', $code, $m, PREG_SET_ORDER ) ) {
+		foreach ( $m as $rule ) {
+			if ( false === strpos( $rule[1], $needle ) ) {
+				continue;
+			}
+			if ( preg_match( '/(?:^|;)\s*order\s*:\s*(\d+)/', $rule[2], $o ) ) {
+				$found = (int) $o[1];
+			}
+		}
+	}
+	return $found;
+}
+
+/*
+ * ⚠ The needles are chosen so each matches exactly ONE product-level rule. The
+ *   buy box's INTERNAL order scale (`.bhp-formats > *`, 1..9) is a separate
+ *   stacking context and is deliberately not read here — `> .summary > .bhp-formats`
+ *   is the page-level slot, `.bhp-formats__cta-wrap` is the internal one.
+ */
+$slots = array(
+	/*
+	 * ⚠ The gallery is read through `> .woocommerce-product-gallery`, its
+	 *   co-selector, NOT through `> .bhp-media-gallery--hero > .bhp-gallery`.
+	 *   The latter is a STRING PREFIX of the cue's selector
+	 *   (`...> .bhp-gallery-cue`), so it matches both rules and would report
+	 *   the cue's slot. Caught by the test failing, and recorded rather than
+	 *   quietly re-worded.
+	 */
+	'the gallery'      => array( '> .woocommerce-product-gallery',                  1 ),
+	'the flip-through cue' => array( '> .bhp-media-gallery--hero > .bhp-gallery-cue', 2 ),
+	'the title'        => array( '> .summary > .product_title',                     3 ),
+	'the age line'     => array( '.bhp-product-value-prop__age',                    4 ),
+	'the buy box'      => array( '> .summary > .bhp-formats',                       5 ),
+	'the Amazon review'=> array( '> .amazon-reviews-product-section',               6 ),
+	'the hook'         => array( '.bhp-product-value-prop__hook',                   7 ),
+);
+foreach ( $slots as $what => $pair ) {
+	list( $needle, $want ) = $pair;
+	$got = bhp_pt_order_for( $pt_code, $needle );
+	bhp_pt_assert(
+		$got === $want,
+		sprintf( '§10.1 %s declares slot %d (found %s)', $what, $want, null === $got ? 'none' : $got ),
+		$failures
+	);
+}
+
+/*
+ * The default slot must sort AFTER every named block, or the note, the trust
+ * row and the tabs would interleave with the first screen.
+ */
+$default_slot = bhp_pt_order_for( $pt_code, '> .bhp-media-gallery--hero > *' );
+bhp_pt_assert(
+	8 === $default_slot,
+	sprintf( '§10.2 the default slot is 8, after every named block (found %s)', null === $default_slot ? 'none' : $default_slot ),
+	$failures
+);
+
+/*
+ * ⚠ THE MIN-WIDTH TRAP. `book-media.css:26` puts `min-width: 0` on the gallery
+ *   SECTION, which now generates no box, so the rule stops applying and the
+ *   thumb rail's ~500px min-content could blow the 358px mobile column out
+ *   again. The replacement must be present on the promoted children.
+ */
+bhp_pt_assert(
+	(bool) preg_match(
+		'/>\s*\.bhp-media-gallery--hero\s*>\s*\*\s*\{[^}]*min-width\s*:\s*0/s',
+		$pt_code
+	),
+	'§10.3 the promoted gallery children carry `min-width: 0` (the book-media.css:26 trap, moved)',
+	$failures
+);
+
+/*
+ * The compaction values section 8 measured. Named individually so a later
+ * "tidy-up" that restores one of them fails here instead of silently pushing
+ * ADD TO CART back under the fold.
+ */
+$compaction = array(
+	'--bhp-stage-h: 190px'   => 'the stage is 190px at <=600px',
+	'width: 46px'            => 'the thumbnails are 46px',
+	'min-height: 48px'       => 'ADD TO CART keeps a 48px target, still clear of the 44px floor',
+);
+foreach ( $compaction as $needle => $what ) {
+	bhp_pt_assert(
+		false !== strpos( $pt_code, $needle ),
+		"§10.4 {$what}",
+		$failures
+	);
+}
+
+/*
+ * ⛔ EVERY 1.19.275 RULE IS STILL INSIDE THE <=600px BLOCK. §3.3 above proves
+ *    no `order:` exists BEFORE the media query; this proves none exists AFTER
+ *    it either, i.e. section 8's prose block added no desktop rule. Together
+ *    they are the desktop guarantee, and the desktop numbers were separately
+ *    measured identical at 1440 before and after.
+ */
+$mq_end = strrpos( $pt_code, '@media (min-width: 601px)' );
+if ( false !== $mq_end ) {
+	$desktop_block = substr( $pt_code, $mq_end );
+	bhp_pt_assert(
+		0 === preg_match( '/(?:^|;)\s*order\s*:/m', $desktop_block ),
+		'§10.5 the min-width:601px block declares no `order`, so desktop cannot be reordered',
+		$failures
+	);
+	bhp_pt_assert(
+		false === strpos( $desktop_block, 'display: contents' ),
+		'§10.6 the min-width:601px block promotes nothing with display:contents',
+		$failures
+	);
+}
+
 echo "\n=== RESULT ===\n";
 if ( empty( $failures ) ) {
 	echo "ALL PASS\n";

@@ -191,8 +191,18 @@ function bhp_pe_manifest() {
 				'ADD TO CART — item 119 (sales)' ),
 			'bhp-product-guarantee' => array( 'min', 1,
 				'guarantee — report §4 "Keeps" (trust)' ),
+			/*
+			 * 1.19.275 (CYCLE165-LD-GALLERY-TOP): the label used to read "REAL
+			 * review above the gallery". The founder ruled the carousel back to
+			 * the top of the mobile page, so the review now sits BELOW it, at
+			 * slot 6, directly under ADD TO CART. THE ASSERTION IS UNCHANGED and
+			 * always was position-independent — this suite checks PRESENCE, not
+			 * order. Only the description is corrected, because a description
+			 * that describes the wrong layout is how a stale claim gets quoted
+			 * as evidence later.
+			 */
 			'amazon-review-card__quote' => array( 'min', 1,
-				'REAL review above the gallery — report §4 "Keeps" (trust)' ),
+				'REAL review, directly under ADD TO CART on mobile — report §4 "Keeps" (trust)' ),
 			'Ships from my print partner' => array( 'min', 1,
 				'I-voice shipping line — Direction 1 step 3; §9.1 voice rule, I not we' ),
 		),

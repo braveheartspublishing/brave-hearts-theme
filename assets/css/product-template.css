@@ -28,6 +28,14 @@
  *        6  the one-sentence hook
  *        7  everything else, in the order it already had
  *
+ * ⛔⛔ THE ORDER LIST IMMEDIATELY ABOVE IS SUPERSEDED AT 1.19.275 BY A FOUNDER
+ *     RULING. It is preserved rather than rewritten so the movement stays
+ *     visible and is not re-derived. ➡ READ SECTION 8 AT THE END OF THIS FILE
+ *     FOR THE ORDER THAT ACTUALLY SHIPS. Everything else in this header —
+ *     the measured defect, the `display: contents` technique, the desktop
+ *     confinement, the "nothing is hidden" rule and the min-width trap — is
+ *     unchanged and still governs.
+ *
  * ⛔ DESKTOP IS BYTE-UNTOUCHED. Every rule below lives inside
  *    `@media (max-width: 600px)`. At 601 px and above this stylesheet matches
  *    nothing, and the two-column grid, the gallery-left/summary-right layout
@@ -106,23 +114,52 @@
 	}
 
 	/*
+	 * ⭐ 1.19.275 — THE HERO GALLERY SECTION IS PROMOTED TOO. See section 8.
+	 *    Same technique, same two caveats, and the min-width trap is handled
+	 *    explicitly on the promoted children below.
+	 */
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero {
+		display: contents;
+	}
+
+	/*
 	 * The default slot. Everything that is not named below keeps the order it
-	 * already had, after the six named blocks. Both levels are listed because
+	 * already had, after the named blocks. Three levels are listed because
 	 * `display: contents` changes box generation, NOT the selector tree: the
-	 * summary's children are still `> .summary > *`, never `div.product > *`.
+	 * summary's children are still `> .summary > *`, never `div.product > *`,
+	 * and the gallery section's children are still `> .bhp-media-gallery--hero > *`.
+	 *
+	 * ⚠ THE THIRD SELECTOR IS NOT OPTIONAL. Without it the gallery section's
+	 *   promoted children inherit `order: 0`, which sorts BEFORE every named
+	 *   block — the note and the lightbox would jump to the top of the page.
+	 *
+	 * ⚠ `min-width: 0` IS THE MIN-WIDTH TRAP FROM `book-media.css:26`, MOVED.
+	 *   It used to sit on the SECTION (`.woocommerce div.product .bhp-look-inside`),
+	 *   which now generates no box, so that rule stops applying. The thumb rail's
+	 *   min-content is the sum of every thumb (~500px at 390) and a grid item
+	 *   defaults to `min-width: auto`, so losing it re-opens the exact defect
+	 *   that rule was written for. `.bhp-gallery` already carries its own
+	 *   `min-width: 0`; this covers the promoted siblings as well.
+	 *   ⭐ VERIFIED, NOT ASSUMED: the mobile column measured 358.0px before and
+	 *   358.0px after this change at an asserted innerWidth of 390.
 	 */
 	body.single-product.woocommerce div.product > *,
-	body.single-product.woocommerce div.product > .summary > * {
-		order: 7;
+	body.single-product.woocommerce div.product > .summary > *,
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero > * {
+		order: 8;
 		margin-top: clamp(1.75rem, 6vw, 2.75rem);
+		min-width: 0;
 	}
 
 	/* ---- 2. The first screen, in the board's order -------------------- */
 
 	body.single-product.woocommerce div.product > .summary > .product_title {
-		order: 1;
-		margin-top: 0;
-		margin-bottom: 0.4rem;
+		/* 1.19.275: was `order: 1; margin-top: 0` — the title led the page while
+		   the gallery sat at slot 5. The gallery and its cue now take slots 1
+		   and 2 (section 8), so the title needs a gap above it. */
+		order: 3;
+		margin-top: 0.7rem;
+		margin-bottom: 0.2rem;    /* 1.19.275: was 0.4rem */
 		/* ⭐ 1.19.266: was 1.55rem (24.8px) -- the smallest H1 on the site and
 		   3.2px below the rubric's 28px floor. It is now the one scale, which
 		   is 34px at 390: +9.2px of type and, at this line-height, roughly
@@ -142,18 +179,18 @@
 	 *   been.
 	 */
 	body.single-product.woocommerce div.product .bhp-product-value-prop__age {
-		order: 2;
-		margin: 0 0 0.85rem;
+		order: 4;                 /* 1.19.275: was 2 */
+		margin: 0 0 0.4rem;       /* 1.19.275: was 0 0 0.85rem */
 		justify-self: start;
 	}
 
 	body.single-product.woocommerce div.product > .summary > .bhp-formats {
-		order: 3;
+		order: 5;                 /* 1.19.275: was 3 */
 		margin-top: 0;
 	}
 
 	body.single-product.woocommerce div.product > .amazon-reviews-product-section {
-		order: 4;
+		order: 6;                 /* 1.19.275: was 4 */
 	}
 
 	/*
@@ -162,14 +199,55 @@
 	 * product with no approved media -- the Adventure Activity Book today --
 	 * keeps WooCommerce's native one. Both must move, or the fix would land on
 	 * three pages out of four.
+	 *
+	 * ⭐ 1.19.275: both go to slot 1 — the TOP of the page — per the founder's
+	 *    ruling. The theme gallery's own section is `display: contents` above,
+	 *    so the thing that actually takes slot 1 there is `.bhp-gallery` (stage
+	 *    + counter + rail); the native gallery is still a real box and takes it
+	 *    directly. The two selectors below are kept so the native gallery is
+	 *    still named and so a reader can see the pair moved together.
+	 *
+	 *    SUPERSEDED, preserved rather than deleted:
+	 *      .bhp-media-gallery--hero, .woocommerce-product-gallery { order: 5 }
 	 */
-	body.single-product.woocommerce div.product > .bhp-media-gallery--hero,
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero > .bhp-gallery,
 	body.single-product.woocommerce div.product > .woocommerce-product-gallery {
-		order: 5;
+		order: 1;
+		margin-top: 0;
+		/*
+		 * ⚠⚠ THIS LINE IS THE SECOND HALF OF THE `display: contents` COST, AND
+		 *    IT WAS CAUGHT BY MEASUREMENT, NOT BY REVIEW.
+		 *
+		 *    `book-media.css:80` gives `.bhp-gallery` `margin-inline: auto`,
+		 *    which did nothing while it was an ordinary block filling its
+		 *    section. Promoted to a GRID ITEM it changes meaning entirely: a
+		 *    grid item with auto inline margins does NOT stretch — the auto
+		 *    margins win, the item is sized to fit-content and centred.
+		 *
+		 *    Its fit-content is the thumbnail rail. Mariana (7 thumbs) and
+		 *    Everest (8) overflow the column and were clamped back to 358, so
+		 *    they looked correct and hid the defect. THE AMAZON HAS 5 THUMBS:
+		 *    measured at an asserted innerWidth of 390, its gallery rendered
+		 *    265.2 px wide inside a 358 px column — a narrower cover on one
+		 *    book page than on the other two, for no reason a reader could see.
+		 *
+		 *    Zeroing the inline margins restores stretch. Re-measured after:
+		 *    358 px on all four book pages. Recorded rather than quietly fixed,
+		 *    because "the same rule means something different once the parent
+		 *    stops generating a box" is the whole hazard of this technique and
+		 *    the next person to reach for it needs the warning.
+		 */
+		margin-inline: 0;
+	}
+
+	/* The flip-through cue travels WITH the gallery, immediately under the rail. */
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero > .bhp-gallery-cue {
+		order: 2;
+		margin-top: 0.3rem;       /* 1.19.275: was 0.75rem, from book-media.css */
 	}
 
 	body.single-product.woocommerce div.product .bhp-product-value-prop__hook {
-		order: 6;
+		order: 7;                 /* 1.19.275: was 6 */
 		margin: clamp(1.75rem, 6vw, 2.75rem) 0 0;
 	}
 
@@ -179,13 +257,13 @@
 	 * slots, so that page gets the identical first screen.
 	 */
 	body.single-product.woocommerce div.product > .summary > .price {
-		order: 3;
+		order: 5;                 /* 1.19.275: was 3 — same slot as .bhp-formats */
 		margin-top: 0;
 		margin-bottom: 0.6rem;
 	}
 
 	body.single-product.woocommerce div.product > .summary > form.cart {
-		order: 3;
+		order: 5;                 /* 1.19.275: was 3 */
 		margin-top: 0;
 	}
 
@@ -260,7 +338,7 @@
 	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="hardcover"] {
 		order: 2;
 		grid-column: auto;
-		margin-bottom: 10px;
+		margin-bottom: 6px;       /* 1.19.275: was 10px */
 	}
 
 	body.single-product.woocommerce div.product .bhp-formats__selected-price { order: 3; }
@@ -288,12 +366,14 @@
 	}
 
 	body.single-product.woocommerce div.product .bhp-formats__selected-price {
-		margin: 0.85rem 0 0.6rem;
+		margin: 0.45rem 0 0.35rem;   /* 1.19.275: was 0.85rem 0 0.6rem */
 	}
 
 	/* >= 44 px stays >= 44 px. This trims padding, never the target. */
 	body.single-product.woocommerce div.product .bhp-formats__cta {
-		min-height: 52px;
+		/* 1.19.275: was 52px. 48px is still 4px clear of the 44px floor and the
+		   label is unchanged, so nothing about the target's reachability moves. */
+		min-height: 48px;
 	}
 
 	body.single-product.woocommerce div.product .bhp-formats__cta-wrap {
@@ -310,7 +390,7 @@
 	 * on a nowrap row would not be.
 	 */
 	body.single-product.woocommerce .woocommerce-breadcrumb {
-		margin-bottom: 0.9rem;
+		margin-bottom: 0.45rem;   /* 1.19.275: was 0.9rem */
 		font-size: 0.6rem;
 		letter-spacing: 0.06em;
 		line-height: 1.5;
@@ -326,6 +406,45 @@
 	 */
 	body.single-product .bhp-gallery__inspect-hint {
 		display: none;
+	}
+
+	/* ---- 8. The gallery, compacted so it can lead the page ------------ */
+
+	/*
+	 * See the section 8 header below the media query for the ruling, the
+	 * arithmetic and the honest statement of what this did and did not buy.
+	 * Every value here is scoped to `body.single-product`, so the Complete
+	 * Collection hero, /books/ and the four funnel pages keep the 240px stage
+	 * and the 52px rail they have today.
+	 */
+
+	/*
+	 * 240px -> 190px. The cover still renders contained and uncropped.
+	 *
+	 * ⭐ 190 IS A MEASURED VALUE, NOT A GUESS. At 205px the first build of this
+	 *    section put ADD TO CART at 855 on the two Mariana pages against an
+	 *    844 fold — 11 px short, on the two longest titles. Everest (817), The
+	 *    Amazon (766) and the Activity Book (610) already cleared. Rather than
+	 *    tune the fix to the pages that passed, the stage came down to 190 and
+	 *    the six spacing values below came with it.
+	 */
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery {
+		--bhp-stage-h: 190px;
+	}
+
+	/* 52 -> 46. Still 46x46, comfortably above the 44px tap floor. */
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__thumb {
+		width: 46px;
+		height: 46px;
+	}
+
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__thumbs {
+		margin-top: 0.2rem;       /* was 0.5rem */
+		padding: 0.1rem;          /* was 0.15rem */
+	}
+
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__counter {
+		margin-top: 0.15rem;      /* was 0.55rem */
 	}
 }
 
@@ -461,3 +580,165 @@
 		margin-bottom: 1.15rem;
 	}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SECTION 8 — THE CAROUSEL GOES BACK TO THE TOP, AND THE FOLD HOLDS.
+ * theme 1.19.275 (2026-08-20, `CYCLE165-LD-GALLERY-TOP`)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ PROVENANCE — READ THIS BEFORE TRUSTING THE NUMBERS BELOW.
+ *
+ *    The rules and the prose of this section were AUTHORED BY AN UNCOORDINATED
+ *    DUPLICATE AGENT INSTANCE that was dispatched by mistake, held no writer
+ *    lock, and wrote into a working tree another writer had already declared.
+ *    That instance died mid-pass (machine restart) without committing anything.
+ *    Its work was left in place deliberately rather than discarded, captured as
+ *    a patch, and then REVIEWED AND ADOPTED by the properly-briefed
+ *    reconciliation writer (`CYCLE165-LD-GALLERY-TOP-RECONCILE`) — which is who
+ *    actually committed it.
+ *
+ *    ⭐ THE ADOPTION WAS NOT ON TRUST. Every figure in the 390 and 1440 tables
+ *    below was RE-MEASURED INDEPENDENTLY against staging2 before this section
+ *    was committed, with a separate probe, and all of them reproduced exactly:
+ *    ADD TO CART bottom 829 / 829 / 791 / 742 / 605, gallery top 185. The 1440
+ *    column was additionally cross-checked against PRODUCTION at 1.19.273 —
+ *    which has never had this change — and `div.product` width 1236, gallery
+ *    top 203, title top 203 and ADD TO CART bottom 681 are identical there.
+ *    That is what makes "desktop is untouched" a measurement rather than an
+ *    inference from the media query.
+ *
+ *    ⚠ WHAT WAS *NOT* ADOPTED: the duplicate's `.min.css` artefacts were
+ *    discarded and rebuilt with `tools/build-css.mjs`, and its incidental
+ *    rewrites of `audience-landing.min.css` and `parent-landing.min.css` were
+ *    reverted as out of scope. See the CRLF note in that builder.
+ *
+ *    Recorded here, in the file itself, because "who wrote this and was it
+ *    checked" is exactly the question a future reader of an unusual commit
+ *    asks, and the commit message alone is too easy to lose.
+ *
+ * ⭐ THIS IS A FOUNDER RULING, NOT AN ENGINEERING PREFERENCE, AND IT REVERSES
+ *    PART OF SECTION 1 ABOVE. Andrew Signore, relayed through the Chief of
+ *    Staff (⛔ NOT witnessed first-hand by this session):
+ *
+ *        "I would like it at the top of the page, unless there is objection
+ *         based on knowledge."
+ *
+ *    There is no objection. Step 3 moved the gallery BELOW the buy box at
+ *    <=600px because at 205 px of gallery, rail, cue and caption the page put
+ *    ADD TO CART at 1005 against an 844 fold. That was a real defect and the
+ *    reasoning was sound. It was not, however, the only way to fix it: the
+ *    fold can also be held with the gallery first, by compacting it. This
+ *    section does that, so the founder gets the order he asked for AND CRO
+ *    rubric row 3 still passes on every product page.
+ *
+ * ⭐ THE ORDER THAT ACTUALLY SHIPS AT <=600px (supersedes the header list):
+ *
+ *        1  the gallery — stage, slide counter, thumbnail rail
+ *        2  the flip-through cue
+ *        3  title
+ *        4  "Ages 6-9" with one drawn mark
+ *        5  price + format selector + ADD TO CART + shipping + guarantee
+ *        6  the real, attributed Amazon review
+ *        7  the one-sentence hook
+ *        8  everything else, in the order it already had
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * MEASURED, NOT ASSERTED. Headless Chrome over CDP, `window.innerWidth`
+ * ASSERTED on every run before any number was read (the probe throws if the
+ * emulated width does not match), dpr 1, iPhone UA, touch emulation on,
+ * network cache disabled, scrollY 0, staging2. Same probe expression for
+ * before and after, so the two columns are literally comparable.
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ *   390 x 844, fold = 844        ADD TO CART bottom
+ *   product page              1.19.274   1.19.275    clearance
+ *   ----------------------    --------   --------    ---------
+ *   Mariana   paperback          538        829        15 px
+ *   Mariana   hardcover          538        829        15 px
+ *   Mount Everest paperback      501        791        53 px
+ *   The Amazon paperback         501        742       102 px
+ *   Adventure Activity Book      395        605       239 px
+ *
+ *   Gallery top moved from 2385 / 2408 / 1628 / 771 / 459 to 185 (170 on the
+ *   Activity Book, which has no breadcrumb depth). All five clear the fold.
+ *
+ *   1440 x 900, fold = 900 — EVERY NUMBER IDENTICAL BEFORE AND AFTER:
+ *   ADD TO CART bottom 681 on all four book pages and 541 on the Activity
+ *   Book; `div.product` width 1236; gallery top 203; title top 203. Desktop
+ *   behaviour is unchanged, and that is a measurement, not an inference from
+ *   the media query.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * WHERE THE ~176 px CAME FROM — every value, so none of it reads as taste
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ *   the "A short preview..." note moves to slot 8      -32 px  (note + its gap)
+ *   stage height          240 -> 190                   -50 px
+ *   thumbnails             52 ->  46, padding 0.15->0.1 -9 px
+ *   counter margin-top   0.55 -> 0.15rem                -6 px
+ *   thumb rail margin-top 0.5 -> 0.2rem                 -5 px
+ *   cue margin-top       0.75 -> 0.3rem                 -7 px
+ *   gallery -> title gap  1.75rem -> 0.7rem            -17 px
+ *   title margin-bottom   0.4 -> 0.2rem                 -3 px
+ *   ages margin-bottom   0.85 -> 0.4rem                 -7 px
+ *   format cards margin-bottom 10 -> 6px                -4 px
+ *   selected price margins 0.85/0.6 -> 0.45/0.35rem     -9 px
+ *   ADD TO CART min-height 52 -> 48                     -4 px
+ *   breadcrumb margin-bottom 0.9 -> 0.45rem             -7 px
+ *
+ * ⛔ WHAT WAS DELIBERATELY NOT TOUCHED, AND WHY.
+ *
+ *    - THE H1 SIZE. `var(--h1-size)` (34 px at 390) stands. 1.19.266 raised it
+ *      off 1.55rem because 24.8 px was 3.2 px under the rubric's 28 px floor,
+ *      and that rule left an explicit instruction: "if it breaks, the fix is
+ *      spacing inside this media query, NOT a smaller H1." The fix is spacing.
+ *      The title is still the single largest block above the fold (112 px on
+ *      Mariana, three lines) and shrinking it would have been the easy 20 px.
+ *    - THE 44 px TAP FLOOR. ADD TO CART went 52 -> 48, the rail 52 -> 46, the
+ *      cue keeps its 44 px min-height. Padding was trimmed; no target crossed
+ *      the floor.
+ *    - NOTHING IS HIDDEN OR REMOVED. Section 3.6's "exactly one display:none in
+ *      the whole stylesheet" still holds, and it is still the hover-only
+ *      enlarge pill. The note is MOVED to slot 8, exactly as the hook sentence
+ *      was moved in step 3 — same technique, same reasoning, and it is still on
+ *      the page, still readable, still in the same place in the DOM.
+ *    - THE REVIEW'S WORDS. `.amazon-reviews-product-section` changes slot
+ *      number only (4 -> 6). Its text is byte-untouched (standing rule §9.1a).
+ *    - DESKTOP. Every rule added by this section is inside the same
+ *      `max-width: 600px` block section 3 already used.
+ *
+ * ⚠ THE COST OF THE FOUNDER'S ORDER, STATED RATHER THAN BURIED. The cover now
+ *   renders in a 190 px stage instead of 240. On a 6x9 cover that is roughly
+ *   127 px wide instead of 160. It is the price of putting the picture first
+ *   and still selling above the fold, and it is a smaller cover than either
+ *   layout showed before. If Andrew would rather have the bigger cover, the
+ *   two dials are this stage height and the H1 size, in that order.
+ *
+ * ⚠ THE SCOPE NOTE IS NOW ~2,200 px FROM THE THING IT SCOPES, AND THE LINE
+ *   ITEM ABOVE ("the note moves to slot 8, -32 px") DOES NOT SAY SO PLAINLY.
+ *   `.bhp-look-inside__note` — "A short preview of the printed edition. A few
+ *   pages only." — exists to pre-empt "is this the whole book?". It used to sit
+ *   directly under the gallery. MEASURED at 390 on the Mariana paperback it now
+ *   renders at y=2742, below the review (ends 2647) and below the hook, while
+ *   the gallery it describes ends at 451. It is still on the page, still in the
+ *   same place in the DOM, still readable — but it no longer reads as a caption
+ *   for anything.
+ *
+ *   ⛔ IT WAS LEFT THERE ANYWAY, AND HERE IS THE HONEST REASON. Putting it back
+ *   at slot 3 costs the 32 px, which puts Mariana's ADD TO CART at ~861 against
+ *   the 844 fold — it breaks the founder's requirement on the two longest
+ *   pages. Hiding it on mobile would break section 3.6's "exactly one
+ *   display:none in this stylesheet" rule and would be worse: a scope note that
+ *   disappears on the viewport where most readers are is not an honest note.
+ *   Buying the 32 px back would mean the stage or the H1, and both are already
+ *   spent. So this is a real, if small, cost of the founder's order — flagged
+ *   to him rather than absorbed silently. If he wants the note back beside the
+ *   gallery, the one-line change is `order: 3` on `.bhp-look-inside__note`, and
+ *   the price is the Mariana fold.
+ *
+ * ⚠ AND THE MARGIN IS 15 px ON THE TWO MARIANA PAGES. That is real clearance,
+ *   measured, but it is thin: a different font fallback, a longer title, or an
+ *   added line in the breadcrumb would eat it. The other three pages have
+ *   53-239 px. Recorded so a future change to the title, the breadcrumb or the
+ *   buy box knows it is spending a budget that is nearly empty.
+ */
