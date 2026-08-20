@@ -235,8 +235,18 @@ bhp_i5_assert(
    ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n=== §2 — THE AUDIENCE ROUTER ===\n";
 
+/*
+ * ⚠ SCORED ON THE RENDERED MARKUP, NOT ON THE WORD. `footer.php` still MENTIONS
+ *   `.footer-audience-cluster` — in the comment that records what was removed
+ *   and on whose ruling, which is the house convention and is the reason a
+ *   future reader will not re-derive this. A bare `strpos($footer, 'footer-
+ *   audience-cluster')` therefore fails against a CORRECT build, which is
+ *   exactly what it did on the first run of this suite. The assertion below
+ *   tests the class ATTRIBUTE, which only appears when the element renders,
+ *   and §2.3 measures the served documents on top of it.
+ */
 bhp_i5_assert(
-	false === strpos( $footer, 'footer-audience-cluster' ),
+	false === strpos( $footer, 'class="footer-audience-cluster"' ),
 	'§2.1 footer.php no longer renders the audience router',
 	$failures
 );
@@ -294,10 +304,18 @@ if ( isset( $i5_docs['collection'] ) ) {
    ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n=== §3 — /books/ ONE PRIMARY ===\n";
 
+/*
+ * ⚠ SAME TRAP AS §2.1, SAME FIX. The removed CTA is quoted verbatim in the
+ *   comment that records the ruling, so any test that searches for its LABEL
+ *   fails against a correct build. What actually decides whether the button
+ *   renders is whether `secondary_link` is PASSED to the hero component, so
+ *   that is what is asserted: a `'secondary_link' =>` key at the start of a
+ *   line, which a commented-out copy (prefixed ` * `) can never match.
+ *   §3.4-§3.6 then measure the served hero, which is the fact that matters.
+ */
 bhp_i5_assert(
-	false === strpos( $books, 'Shop All Adventure Books' )
-		|| 0 === preg_match( "/'label'\s*=>\s*__\(\s*'Shop All Adventure Books'/", $books ),
-	'§3.1 page-books.php no longer passes a "Shop All Adventure Books" CTA',
+	0 === preg_match( "/^\s*'secondary_link'\s*=>/m", $books ),
+	'§3.1 page-books.php no longer passes a secondary_link to the hero',
 	$failures
 );
 bhp_i5_assert(

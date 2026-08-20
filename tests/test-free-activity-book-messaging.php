@@ -113,13 +113,41 @@ bhp_fab_assert(
 );
 
 /*
- * The eyebrow string must still EXIST in the template — it renders on every
- * other page. An assertion that it is gone entirely would pass against a
- * regression that stripped it from the whole site.
+ * ⭐⭐ 1.19.269 — §1e's SUBJECT WAS REMOVED ON PURPOSE, SO THE ASSERTION MOVES
+ *     TO SOMETHING THAT STILL EXISTS AND STILL GUARDS THE SAME PROPERTY.
+ *
+ * THE SUPERSEDED ASSERTION, PRESERVED VERBATIM SO THE MOVEMENT IS VISIBLE AND
+ * IS NOT RE-DERIVED:
+ *
+ *     The eyebrow string must still EXIST in the template — it renders on
+ *     every other page. An assertion that it is gone entirely would pass
+ *     against a regression that stripped it from the whole site.
+ *
+ *     bhp_fab_assert(
+ *         false !== strpos( $fab_page_code, 'Brave Hearts Field Journal' ),
+ *         '§1e ⛔ the eyebrow still exists for every OTHER page - this is a
+ *          suppression, not a deletion',
+ *         $failures
+ *     );
+ *
+ * WHAT CHANGED. Andrew Signore's subtraction ruling of 2026-08-19, item 5,
+ * removed the decorative eyebrow labels that restate the heading below them.
+ * "Brave Hearts Field Journal" above the H1 of a default page was one of the
+ * fourteen removed. The sitewide strip this assertion existed to catch is now
+ * the INTENDED state, so the assertion could only ever fail from here on.
+ *
+ * ⛔ IT IS NOT SIMPLY DELETED. The property §1e actually protects is "the
+ *    checkout suppression is a SUPPRESSION, not a deletion" — i.e. the hero
+ *    block still renders its contents on every non-checkout page. That
+ *    property survives the eyebrow's removal, because the block still carries
+ *    an H1 and the field-note coordinate. Both are now asserted, so a
+ *    regression that emptied the interior hero for every page still fails
+ *    here, which is what §1e was for.
  */
 bhp_fab_assert(
-	false !== strpos( $fab_page_code, 'Brave Hearts Field Journal' ),
-	'§1e ⛔ the eyebrow still exists for every OTHER page - this is a suppression, not a deletion',
+	false !== strpos( $fab_page_code, '<h1><?php the_title(); ?></h1>' )
+		&& false !== strpos( $fab_page_code, 'interior-hero__coordinate' ),
+	'§1e ⛔ the non-checkout hero still renders its contents (H1 + field-note mark) - this is a suppression, not a deletion',
 	$failures
 );
 bhp_fab_assert(

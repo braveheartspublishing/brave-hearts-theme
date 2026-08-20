@@ -651,9 +651,9 @@ function bhp_blog_rail_html( $post = null ) {
  *   and the source line above names the removal set as "rail + ... footer
  *   capture". No second inline capture exists to be the "duplicate".
  *   ⛔ It is a BOOK BRIDGE, not an email capture. That mismatch between the
- *      word used and the thing that exists is reported to Gandalf as a finding
- *      rather than resolved here, and the switch below is why one line
- *      reverses it if Andrew meant something else.
+ *      word used and the thing that exists is reported to the supervising
+ *      session as a finding rather than resolved here, and the switch below
+ *      is why one line reverses it if Andrew meant something else.
  *
  * ⛔ NOTHING IS DELETED. `bhp_blog_rail_facts()`, `_eyebrow()`, `_cta()`,
  *    `_html()`, `_offset()`, `_min_paragraphs()`, the `book-rail` template part
