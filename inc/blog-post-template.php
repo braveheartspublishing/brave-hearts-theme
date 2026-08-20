@@ -387,6 +387,47 @@ function bhp_blog_rail_adventure( $post = null ) {
 	}
 	if ( ! $key && function_exists( 'bhp_get_series_adventures' ) ) {
 		$title = strtolower( wp_strip_all_tags( get_the_title( $post ) ) );
+
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐ 1.19.276 — THE COLOURING LINE IS NOT ABSORBED BY A CHAPTER
+		 *    ADVENTURE. ⛔ `CYCLE165-OPS-019`, the rail limb.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⛔ The founder-ruled colouring title (`FD-557`) CONTAINS 'mariana
+		 *    trench', so the substring fallback below would resolve any post
+		 *    carrying that title to the `mariana_trench` adventure and rail a
+		 *    CHAPTER book beside COLOURING-book words. That is the `FD-549`
+		 *    shape: an image and a price that describe different objects.
+		 *
+		 * ⭐⭐ THIS IS A NEGATIVE GUARD, AND THE DIRECTION MATTERS. It only
+		 *    ever REFUSES a match; it never MAKES one. The authoritative,
+		 *    ID-based test lives in `bhp_get_series_adventures()`
+		 *    (`bhp_is_colouring_product()`), where the subject is a PRODUCT and
+		 *    an ID exists. ⛔ Here the subject is a POST, which has no
+		 *    colouring product ID to compare against, so the only available
+		 *    signal is the title -- and the safe way to use an unreliable
+		 *    signal is to let it VETO a guess, never to let it make one.
+		 *
+		 * ⭐ FAILING SAFE MEANS RAILING NOTHING. If this vetoes, `$key` stays
+		 *    empty and the rail renders no adventure at all. ⛔ That is
+		 *    "degrade, never mix" (spec R2.3) applied to a rail: an absent
+		 *    rail is a non-event, a wrong rail is a false claim.
+		 *
+		 * ⚠ IT IS DELIBERATELY BROAD. Any post whose title says "coloring
+		 *   book" or "colouring book" is refused a chapter adventure, whether
+		 *   or not a colouring PRODUCT exists yet -- so the veto is already in
+		 *   force before the first product record, which is the entire point
+		 *   of `ACT-OPS-269`. Both spellings are matched because the corpus
+		 *   uses "colouring" internally and `FD-557` uses "Coloring" on the
+		 *   cover.
+		 */
+		foreach ( array( 'coloring book', 'colouring book' ) as $colouring_needle ) {
+			if ( false !== strpos( $title, $colouring_needle ) ) {
+				return (string) apply_filters( 'bhp_blog_rail_adventure', '', $post );
+			}
+		}
+
 		foreach ( bhp_get_series_adventures() as $adventure_key => $adventure ) {
 			foreach ( (array) ( $adventure['matches'] ?? array() ) as $needle ) {
 				// "amazon" alone is excluded: on this site it names the retailer

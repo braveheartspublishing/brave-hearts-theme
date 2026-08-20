@@ -720,6 +720,55 @@ function bhp_bundle_apply_discount_fees( $cart ) {
 
 	$eval = bhp_bundle_evaluate_cart( $cart );
 
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.8.61 — THE `has_unrelated` GUARD. ⛔ THE DEFECT THIS CLOSES IS
+	 *     `CYCLE165-OPS-018`, AND IT WAS PRE-EMPTED, NOT FOUND LIVE.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔⛔ THIS FUNCTION HAD NO SUCH GUARD, AND ITS ABSENCE WAS ASYMMETRIC IN
+	 *    THE ONE DIRECTION THAT PRODUCES A FALSE CLAIM.
+	 *    `bhp_bundle_override_shipping_cost()` has bailed on `has_unrelated`
+	 *    since the tiered table shipped, deliberately, rather than guess a
+	 *    shipping amount for a cart it does not understand. This function did
+	 *    not -- so an unrelated item took the FREE SHIPPING away while leaving
+	 *    the -$3.98 DISCOUNT in place, and the collection page's own "FREE
+	 *    shipping" promise kept rendering because it is produced by
+	 *    `bhp_bundle_rules()` BEFORE any cart exists.
+	 *
+	 * ⭐ THE CUSTOMER-FACING RESULT WAS: the site promises free shipping on
+	 *    the complete collection, the shopper adds the collection plus one
+	 *    unrecognised item, and is charged for shipping -- while the cart's
+	 *    own progress copy goes QUIET, because
+	 *    `bhp_bundle_print_progress_messages()` DOES check `has_unrelated`.
+	 *    Less discoverable, not more.
+	 *
+	 * ⭐⭐ WHY IT COULD NOT WAIT: no code change was required to trigger it.
+	 *    CREATING A PRODUCT RECORD WAS SUFFICIENT. The colouring line made
+	 *    that imminent, which is why `ACT-OPS-269` requires this fix to ship
+	 *    BEFORE the first colouring product record on ANY environment,
+	 *    staging included.
+	 *
+	 * ⛔ NOTE WHAT THE GUARD DOES *NOT* DO TO THE COLOURING LINE. From 1.8.61
+	 *    a colouring book is RELATED (`bhp_bundle_cart_has_unrelated_items()`),
+	 *    so a collection cart holding one still earns its discount AND still
+	 *    earns its free shipping. The promise stays TRUE. This guard bites
+	 *    only on a genuinely unrecognised product -- and there it fails SAFE
+	 *    in both directions at once: no discount AND no free-shipping promise,
+	 *    which is the only combination that cannot lie to a customer.
+	 *
+	 * ⚠ IT IS A REAL COMMERCIAL MOVEMENT AND IS REPORTED AS ONE, NOT AS A
+	 *   TIDY-UP: a cart that today receives a bundle discount alongside an
+	 *   unrecognised product will, from 1.8.61, receive none. ⭐ NO SUCH
+	 *   PRODUCT EXISTS ON EITHER ENVIRONMENT TODAY -- verified over SSH this
+	 *   session: staging holds 9 product records, all six catalogue editions
+	 *   plus the allowlisted Activity Book plus two drafts. So the guard is
+	 *   INERT on the current store and changes no live order.
+	 */
+	if ( ! empty( $eval['has_unrelated'] ) ) {
+		return;
+	}
+
 	// Mixed-format discount rule (Overnight Conversion Sprint, Priority 7 —
 	// supersedes the Staging Refinement Phase 1 blanket "any mixing kills
 	// every discount" rule):
@@ -897,12 +946,103 @@ function bhp_bundle_shipping_amount( array $eval ) {
 	 *    rates untouched), so an unknown product still cannot be given free
 	 *    shipping by accident.
 	 */
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.8.61 · BRANCH A — ANY THREE PHYSICAL BOOKS SHIP FREE.
+	 *     ⛔⛔ OFF BY DEFAULT. THE POLICY IS AN OPEN FOUNDER DECISION.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ Read `bhp_bundle_colouring_policy()` in bundle-data.php before
+	 *    touching this branch. Two sources disagree about whether the
+	 *    any-three rule is ruled: `00A-WHAT-GOVERNS-TODAY.md` records the
+	 *    colouring-in-free-shipping policy ⛔ OPEN as of 2026-08-20T09:0x-0600,
+	 *    while the build brief relays founder carrier items 158/159 ruling it.
+	 *    ⭐ RECORDED, NOT RESOLVED. The stricter reading is the default.
+	 *
+	 * ⭐ WHEN ENABLED, THIS BRANCH IS FIRST FOR THE SAME REASON THE COLLECTION
+	 *    BRANCH BELOW IT IS: it has to outrank the mixed-format COUNT table,
+	 *    which is exactly what would otherwise charge $4.99 to a customer who
+	 *    has just bought three books. ⭐ It makes the $4.99 row UNREACHABLE --
+	 *    "the $4.99 row dies" -- rather than deleting the row, so a reader can
+	 *    still see what the table used to say and why it stopped applying.
+	 *
+	 * ⭐ DUPLICATES COUNT, AND THAT IS THE WHOLE DIFFERENCE FROM BRANCH B.
+	 *    `physical_book_count` is a QUANTITY; `distinct_adventures` is a SET.
+	 *    Three copies of one title is three books in one box and ships free
+	 *    under this policy, while remaining TWO-books-short of a collection
+	 *    for every DISCOUNT purpose -- the discount tables are untouched by
+	 *    this branch and still require distinct titles.
+	 */
+	if ( 'any-three' === bhp_bundle_colouring_policy() && ! empty( $eval['physical_book_count'] ) && (int) $eval['physical_book_count'] >= 3 ) {
+		return 0.00;
+	}
+
+	/* ⭐ BRANCH B — the complete collection ships free. 1.8.23, UNCHANGED. */
 	if ( ! empty( $eval['is_complete_collection'] ) ) {
 		return 0.00;
 	}
 
-	if ( $eval['is_mixed_format'] ) {
-		return $eval['total_quantity'] <= 2 ? 3.99 : 4.99;
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐ 1.8.61 · BRANCH C — A COLOURING BOOK IS IN THE CART.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐⭐ NOT ONE NEW TIER NUMBER IS INVENTED HERE. The colouring line is a
+	 *    single-format physical paperback-class book, so a colouring-bearing
+	 *    cart is priced on the EXISTING PAPERBACK LADDER by PHYSICAL BOOK
+	 *    COUNT, and every figure below is read from the approved tables rather
+	 *    than written down again:
+	 *
+	 *      1 book  -> `bhp_bundle_single_shipping('paperback')`  = $1.99
+	 *      2 books -> `bhp_bundle_rules('paperback')[2]['shipping']` = $2.99
+	 *      3+      -> $4.99, the pre-existing mixed-cart 3-or-more row,
+	 *                 reachable ONLY under the `conservative` policy (under
+	 *                 `any-three`, branch A has already returned $0.00)
+	 *
+	 * ⚠️⚠️ THREE READINGS ARE FLAGGED RATHER THAN PRESENTED AS SETTLED. The
+	 *    existing table is genuinely ambiguous for a colouring item and this
+	 *    build chose the PARALLEL reading in each case, per the brief's
+	 *    instruction to choose the parallel and flag it:
+	 *      1. A single colouring book ships at $1.99, like a single paperback,
+	 *         NOT at the hardcover $2.99. Basis: it is a paperback binding.
+	 *      2. One chapter paperback + one colouring book ships at $2.99, like
+	 *         two distinct paperbacks -- NOT at the mixed-format $3.99, which
+	 *         exists to price a paperback-plus-HARDCOVER cart.
+	 *      3. Two copies of ONE colouring book ships at $2.99 (count), not
+	 *         $1.99. ⭐ This deliberately DIFFERS from the chapter line, where
+	 *         two copies of one title fall through to the single rate -- a
+	 *         pre-existing quirk of a table keyed on DISTINCT titles. Two
+	 *         printed books cost two books of postage, and the colouring
+	 *         ladder is a COUNT, so it does not inherit the quirk.
+	 *    ⛔ NONE of these is a founder ruling. All three are reported.
+	 *
+	 * ⛔ A HARDCOVER IN THE CART STILL WINS. If the cart also holds a
+	 *    hardcover, the mixed-format table below is the honest answer and this
+	 *    branch stands aside -- a colouring book does not make a hardcover
+	 *    cart cheaper to ship.
+	 */
+	if ( ! empty( $eval['has_colouring'] ) && empty( $eval['has_hardcover'] ) ) {
+		$books = (int) $eval['physical_book_count'];
+		if ( $books <= 1 ) {
+			return bhp_bundle_single_shipping( 'paperback' );
+		}
+		if ( 2 === $books ) {
+			$paperback_rules = bhp_bundle_rules( 'paperback' );
+			return $paperback_rules[2]['shipping'];
+		}
+		return 4.99;
+	}
+
+	if ( $eval['is_mixed_format'] || ! empty( $eval['has_colouring'] ) ) {
+		/*
+		 * ⭐ 1.8.61 widens the COUNT this table reads from `total_quantity`
+		 *    (catalogue editions only) to `physical_book_count` (catalogue +
+		 *    colouring). ⛔ On a cart with no colouring book the two are equal
+		 *    by construction, so every pre-existing mixed-cart answer is
+		 *    unchanged. Reached now only when a hardcover is present, since
+		 *    branch C handles the paperback-class colouring carts above.
+		 */
+		return $eval['physical_book_count'] <= 2 ? 3.99 : 4.99;
 	}
 
 	foreach ( array( 'paperback', 'hardcover' ) as $format ) {

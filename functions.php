@@ -4092,6 +4092,69 @@ function bhp_get_series_adventures() {
     }
 
     foreach ($products as $product) {
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.276 — THE COLOURING LINE IS EXCLUDED BY PRODUCT ID, BEFORE
+         *     THE SUBSTRING MATCHER BELOW EVER SEES THE TITLE.
+         *     ⛔ `CYCLE165-OPS-019` / `ACT-OPS-269`. PRE-EMPTED, not found live.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔⛔ THE DEFECT. The loop below assigns a product to an adventure by
+         *    SUBSTRING MATCH ON THE PRODUCT TITLE ('mariana trench',
+         *    'mariana', ...). The founder-ruled colouring title (`FD-557`) is
+         *    "Coloring Adventures with Charlotte and Henry: The Mariana Trench
+         *    Ocean Coloring Book" -- which CONTAINS 'mariana trench'. It would
+         *    be absorbed into the `mariana_trench` adventure the moment it is
+         *    published, on either environment.
+         *
+         * ⛔ NOTHING CONTAINED IT. `bhp_get_homepage_books()` scopes by
+         *    `product_cat` only if `charlotte-henry`, `charlotte-and-henry` or
+         *    `books` exists -- and ⭐ NONE of them does (both category URLs
+         *    return 404, verified live 2026-08-20). The query is therefore
+         *    UNFILTERED across every published product.
+         *
+         * ⛔ WHAT BREAKS, CONCRETELY, AND IT IS THE `FD-549` FAILURE SHAPE:
+         *    `primary_url` for the Mariana adventure can be reassigned to the
+         *    colouring book, and `image_id` / `image_alt` FOLLOW IT -- so the
+         *    COLOURING COVER appears where the CHAPTER-BOOK COVER belongs,
+         *    beside the chapter-book price. An image and a price that describe
+         *    different objects is a false claim assembled from two true facts.
+         *    ⚠ Which one wins depends on the order products come back in,
+         *    which is exactly the kind of silent, ordering-dependent breakage
+         *    that does not show up in one test run.
+         *
+         * ⭐ AND IT REACHES THE TEST SUITE: `tests/test-protected-elements.php`
+         *    resolves its product target from THIS function and runs the
+         *    product manifest against `$pe_products[0]`. That manifest requires
+         *    `amazon-review-card__quote` -- ⛔ A REAL REVIEW. A brand-new
+         *    colouring book has none, so the suite would fail on a page that
+         *    has no review to show. ⛔⛔ `FD-542` GOVERNS WHAT HAPPENS THEN: a
+         *    blocked build IS the manifest working. This fix keeps the
+         *    colouring book OUT of the PE target so the question does not
+         *    arise; ⛔ whether it should ever BE a target is spec decision D-6
+         *    and is ANDREW'S ONLY. No manifest row is relaxed here.
+         *
+         * ⭐⭐ THE FIX IS AN ID TEST, NEVER A SUBSTRING TEST. Product IDs are
+         *    resolved from the colouring line's own SKU registry
+         *    (`bhp_colouring_product_ids()`, bundle plugin 1.8.61). ⛔ It fails
+         *    CLOSED and INERT: with no colouring product on either environment
+         *    today, `bhp_is_colouring_product()` returns false for everything
+         *    and this loop behaves byte-for-byte as it did before.
+         *
+         * ⚠ IF THE BUNDLE PLUGIN IS ABSENT the guard cannot run, and the
+         *   substring matcher is reached exactly as before. That is the honest
+         *   degradation and it is stated rather than hidden: the theme does
+         *   not silently reimplement the registry, because two registries
+         *   drift and one of them would eventually be wrong.
+         */
+        // ⚠ The key is `product_id`. `bhp_get_homepage_books()` builds its
+        //   cards with 'product_id' => $book->ID and emits no 'id' key at all,
+        //   so a guard reading $product['id'] would silently never fire --
+        //   caught by reading that function rather than assuming its shape.
+        if (function_exists('bhp_is_colouring_product') && bhp_is_colouring_product($product['product_id'] ?? 0)) {
+            continue;
+        }
+
         $product_title = strtolower(wp_strip_all_tags($product['title']));
         $adventure_key = '';
 

@@ -644,6 +644,27 @@ function bhp_bundle_cart_has_unrelated_items( $cart ) {
 		if ( bhp_bundle_is_addon_item( $cart_item['product_id'], $cart_item['variation_id'] ) ) {
 			continue;
 		}
+		/*
+		 * ⭐⭐ 1.8.61 — A COLOURING BOOK IS RELATED. `ACT-OPS-269`.
+		 *
+		 * ⛔ THIS IS THE LINE THAT CLOSES THE DEFECT, and it is deliberately
+		 *    NOT the add-on allowlist above it. A colouring book is skipped
+		 *    here because the system UNDERSTANDS it -- it is in
+		 *    `bhp_colouring_catalog()`, it is counted by
+		 *    `bhp_bundle_physical_book_count()`, and it is priced by
+		 *    `bhp_bundle_shipping_amount()`. It is NOT skipped because it is
+		 *    weightless, which is what the add-on branch above asserts and
+		 *    which would be FALSE of a printed 8.5x11 book.
+		 *
+		 * ⭐ THE FAIL-SAFE IS UNCHANGED FOR EVERYTHING ELSE. A genuinely
+		 *    unknown product still returns true here, and from 1.8.61 that
+		 *    now suppresses the DISCOUNT as well as the shipping override --
+		 *    see `bhp_bundle_apply_discount_fees()`. Unrelated fails SAFE in
+		 *    BOTH directions: no discount AND no free-shipping promise.
+		 */
+		if ( null !== bhp_bundle_identify_colouring_item( $cart_item['product_id'], $cart_item['variation_id'] ) ) {
+			continue;
+		}
 		return true;
 	}
 	return false;
@@ -723,5 +744,293 @@ function bhp_bundle_evaluate_cart( $cart ) {
 	// unresolved here — see bhp_bundle_shipping_amount() for the fallback.
 	$result['is_mixed_format'] = $result['has_paperback'] && $result['has_hardcover'];
 
+	/*
+	 * ⭐⭐ 1.8.61 — THE COLOURING LINE, ADDED TO THE EVALUATION RATHER THAN
+	 *    BOLTED ONTO THE CALLERS. `ACT-OPS-269`.
+	 *
+	 * ⛔ EVERY KEY BELOW IS ZERO / EMPTY / FALSE UNTIL A COLOURING SKU
+	 *    RESOLVES TO A LIVE PRODUCT, which is the state of both environments
+	 *    as this ships. `$result` is therefore a SUPERSET of what it was, with
+	 *    every pre-existing key computed by byte-identical code. Nothing that
+	 *    reads this array today can observe a different value.
+	 */
+	$result['colouring_quantity']  = bhp_bundle_colouring_quantity_in_cart( $cart );
+	$result['distinct_colouring']  = count( bhp_bundle_distinct_colouring_in_cart( $cart ) );
+	$result['has_colouring']       = $result['colouring_quantity'] > 0;
+	// ⭐ The count postage is actually paid on: catalogue editions + colouring
+	//    books, duplicates included, weightless add-ons excluded.
+	$result['physical_book_count'] = bhp_bundle_physical_book_count( $cart );
+
 	return $result;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.61 — THE COLOURING LINE. `ACT-OPS-269`, and it ships BEFORE the
+ *              first colouring product record on ANY environment.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ WHY THIS EXISTS, AND WHY IT COULD NOT WAIT FOR THE PRODUCT.
+ *
+ * `bhp_bundle_cart_has_unrelated_items()` above returns TRUE for anything that
+ * is neither one of the six approved editions nor an allowlisted add-on.
+ * Before this file was extended, a colouring book was "anything". The
+ * consequence, on a cart of three chapter paperbacks + one colouring book:
+ *
+ *   · `bhp_bundle_override_shipping_cost()` bails on `has_unrelated`, so the
+ *     customer falls back to the zone's raw flat rate;
+ *   · `bhp_bundle_apply_discount_fees()` carried NO `has_unrelated` guard, so
+ *     the -$3.98 collection discount STILL APPLIED;
+ *   · the collection page's "FREE shipping" promise is produced by
+ *     `bhp_bundle_rules()` BEFORE any cart exists, so it STILL RENDERED;
+ *   · `bhp_bundle_print_progress_messages()` DOES check `has_unrelated`, so
+ *     the cart copy went quiet -- making it LESS discoverable, not more.
+ *
+ * ⭐ NET: the site promises free shipping, the shopper adds the collection and
+ *    a colouring book, and is charged for shipping. A FALSE ADVERTISED CLAIM,
+ *    created by adding a product record, with NO code change. Registered
+ *    `CYCLE165-OPS-018`; the prerequisite is `ACT-OPS-269`.
+ *
+ * ⛔⛔ THE OBVIOUS FIX IS A TRAP AND IT WAS NOT TAKEN. Adding the colouring
+ *    SKUs to `bhp_bundle_addon_skus()` silences `has_unrelated` in one line --
+ *    and thereby declares a PHYSICAL, SHIPPABLE, PRINTED BOOK to be a
+ *    weightless digital add-on. `bhp_bundle_total_quantity_in_cart()` SKIPS
+ *    add-ons, so a cart of 2 paperbacks + 1 colouring book would be priced as
+ *    a TWO-BOOK shipment while THREE physical books ship. That is a real
+ *    fulfilment-cost error dressed as a config change. The colouring line gets
+ *    its OWN registry instead, and is counted as the physical book it is.
+ *
+ * ⭐ A SEPARATE REGISTRY, NOT AN EXTENSION OF `bhp_book_registry()`. Every
+ *    entry in that registry assumes a paperback AND a hardcover, and
+ *    `bhp_book_hide_hardcovers_from_shop()` pushes `hc_product` into
+ *    `post__not_in`. A colouring book has ONE binding. ⛔ It is not modelled
+ *    as a book with a missing hardcover.
+ *
+ * ✅ SKU-KEYED, AND IT FAILS CLOSED. Product IDs differ between staging and
+ *    production; a hardcoded ID would either do nothing on production or match
+ *    a DIFFERENT product there. Until a SKU resolves -- which is the state of
+ *    BOTH environments as this ships, verified over SSH this session -- every
+ *    function below returns an empty list and the cart maths is BYTE-FOR-BYTE
+ *    what it was before this file was touched. That is deliberate: the fix
+ *    lands first, the product later.
+ */
+function bhp_colouring_catalog() {
+	/**
+	 * The colouring line, keyed by adventure slug.
+	 *
+	 * ⛔ `product_id` is deliberately ABSENT. Resolution is by SKU only.
+	 * ⚠ Fulfilment routes PER-ISBN, which is the whole reason there is no
+	 *   bundle SKU anywhere in this plugin.
+	 *
+	 * @param array $titles Colouring-line titles, keyed by adventure slug.
+	 */
+	return apply_filters(
+		'bhp_colouring_catalog',
+		array(
+			'mariana' => array(
+				'sku'   => 'BHP-COLOR-MT-01',
+				/*
+				 * ⛔ FD-557, VERBATIM. No agent shortens, re-cases or drops the
+				 *    subtitle. This string is for INTERNAL identification only;
+				 *    the customer-facing title is the product record's own.
+				 */
+				'label' => 'Coloring Adventures with Charlotte and Henry: The Mariana Trench Ocean Coloring Book',
+			),
+			/*
+			 * ⛔ Everest and Amazon are NOT listed. They do not exist in any
+			 *    form, and their titles are Andrew's per title (spec D-7). The
+			 *    series title pattern is INFERRED FROM ONE INSTANCE and is a
+			 *    hypothesis, never a ruling. An entry here would be an
+			 *    invented product.
+			 */
+		)
+	);
+}
+
+/**
+ * Resolve the colouring-line SKUs to live product IDs.
+ *
+ * Request-scoped static for the same reason `bhp_bundle_addon_product_ids()`
+ * has one: `has_unrelated` is evaluated several times per cart calculation.
+ *
+ * @return array<string,int> adventure slug => product id, for SKUs that resolve.
+ */
+function bhp_colouring_product_ids() {
+	static $resolved = null;
+
+	if ( null === $resolved ) {
+		$resolved = array();
+		if ( function_exists( 'wc_get_product_id_by_sku' ) ) {
+			foreach ( bhp_colouring_catalog() as $slug => $info ) {
+				if ( empty( $info['sku'] ) ) {
+					continue;
+				}
+				$id = (int) wc_get_product_id_by_sku( $info['sku'] );
+				if ( $id > 0 ) {
+					$resolved[ $slug ] = $id;
+				}
+			}
+		}
+	}
+
+	/**
+	 * The resolved colouring-line product IDs.
+	 *
+	 * ⭐ THE FILTER IS APPLIED ON EVERY CALL WHILE THE SKU LOOKUP ITSELF IS
+	 *    CACHED ONCE. That split is deliberate and it is what makes the tier
+	 *    machine TESTABLE: `tests/test-colouring-line-tiers.php` must be able
+	 *    to inject a colouring product ID on an environment where no colouring
+	 *    product exists, which is every environment today. Caching the FILTER
+	 *    result instead would freeze the empty map before any test could reach
+	 *    it, and the any-three rule would then be shipped untested -- which is
+	 *    the one thing that must not happen to a rule that moves money.
+	 *
+	 * ⛔ IT IS STILL AN ALLOWLIST, NOT A CATEGORY TEST. Only a product whose
+	 *    SKU is in `bhp_colouring_catalog()` resolves here on its own; reaching
+	 *    this filter requires code, exactly as `bhp_bundle_addon_skus()` does.
+	 *
+	 * @param array<string,int> $resolved adventure slug => product id.
+	 */
+	return apply_filters( 'bhp_colouring_product_ids', $resolved );
+}
+
+/**
+ * True if this product id belongs to the colouring line. The ID-based test
+ * that replaces title-substring matching everywhere it matters.
+ */
+function bhp_is_colouring_product( $product_id ) {
+	$product_id = (int) $product_id;
+	return $product_id > 0 && in_array( $product_id, array_map( 'intval', bhp_colouring_product_ids() ), true );
+}
+
+/**
+ * Which colouring title (if any) a cart line represents.
+ *
+ * Matches parent product id AND variation id, so a future variable colouring
+ * product cannot slip past by being added as a variation.
+ *
+ * @return string|null Adventure slug, or null.
+ */
+function bhp_bundle_identify_colouring_item( $product_id, $variation_id = 0 ) {
+	foreach ( bhp_colouring_product_ids() as $slug => $id ) {
+		if ( (int) $product_id === (int) $id ) {
+			return $slug;
+		}
+		if ( $variation_id && (int) $variation_id === (int) $id ) {
+			return $slug;
+		}
+	}
+	return null;
+}
+
+/**
+ * Total quantity of colouring-line items in the cart. ⭐ DUPLICATES COUNT --
+ * three copies of one title is three printed books and three books of postage.
+ */
+function bhp_bundle_colouring_quantity_in_cart( $cart ) {
+	$total = 0;
+	if ( ! $cart ) {
+		return $total;
+	}
+	foreach ( $cart->get_cart() as $cart_item ) {
+		if ( null === bhp_bundle_identify_colouring_item( $cart_item['product_id'], $cart_item['variation_id'] ) ) {
+			continue;
+		}
+		$total += (int) $cart_item['quantity'];
+	}
+	return $total;
+}
+
+/**
+ * Distinct colouring TITLES in the cart. A collection counts titles; shipping
+ * counts books. Keeping the two questions separate is what stops "buy the same
+ * book three times" from ever being mistaken for owning a collection.
+ *
+ * @return string[] Distinct adventure slugs.
+ */
+function bhp_bundle_distinct_colouring_in_cart( $cart ) {
+	$present = array();
+	if ( ! $cart ) {
+		return $present;
+	}
+	foreach ( $cart->get_cart() as $cart_item ) {
+		$slug = bhp_bundle_identify_colouring_item( $cart_item['product_id'], $cart_item['variation_id'] );
+		if ( null !== $slug && ! in_array( $slug, $present, true ) ) {
+			$present[] = $slug;
+		}
+	}
+	return $present;
+}
+
+/**
+ * ⭐⭐ EVERY PHYSICAL, SHIPPABLE BOOK IN THE CART -- the count postage is
+ *    actually paid on.
+ *
+ * ⛔ IT IS A QUANTITY, NOT A SET. Duplicates count. Three copies of one title
+ *    is three books in one box.
+ *
+ * ⛔ WEIGHTLESS ADD-ONS ARE EXCLUDED, and that exclusion must never drift:
+ *    `bhp_bundle_addon_skus()` names a digital PDF, and a digital file has no
+ *    weight and must not move a book-count tier. Both terms below already
+ *    skip it -- `bhp_bundle_total_quantity_in_cart()` counts only identified
+ *    catalogue editions, and the colouring term counts only resolved
+ *    colouring SKUs.
+ */
+function bhp_bundle_physical_book_count( $cart ) {
+	return bhp_bundle_total_quantity_in_cart( $cart ) + bhp_bundle_colouring_quantity_in_cart( $cart );
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⚠️⚠️ THE FREE-SHIPPING POLICY SWITCH — ⛔ AND IT IS AN OPEN FOUNDER DECISION
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ TWO SOURCES DISAGREE ABOUT WHETHER THIS IS RULED. RECORDED, NOT
+ *    RESOLVED, per Standing Rules §7. NO AGENT PICKS.
+ *
+ *   · `00A-WHAT-GOVERNS-TODAY.md` §2A / S1 / C1 / N2, READ LIVE 2026-08-20 by
+ *     this agent, that file updated 2026-08-20T09:0x-0600: THE FOUR BUILD
+ *     DECISIONS -- architecture, the eight prices, ⭐ THE COLOURING-IN-FREE-
+ *     SHIPPING POLICY, and sequence confirm -- all read ⛔⛔ OPEN. `FD-575`(c)
+ *     approved the shop-matrix spec as a PLAN, not a BUILD.
+ *   · The build brief this agent received relays founder carrier items 158/159
+ *     of 2026-08-20 ~17:5x-0600 ruling ⭐ FREE SHIPPING AT ANY 3+ BOOKS,
+ *     DUPLICATES INCLUDED. ⚠️ RELAYED THROUGH THE CHIEF OF STAFF, NOT
+ *     WITNESSED FIRST-HAND by this agent, and ⛔ NOT FOUND ON DISK IN ANY
+ *     CANONICAL FILE by a recursive search run this session.
+ *
+ * ⭐ SO BOTH BEHAVIOURS ARE BUILT AND BOTH ARE TESTED. The DEFAULT is the
+ *    STRICTER one (Standing Rules §1: when instructions conflict, the stricter
+ *    restriction applies until Andrew explicitly decides otherwise).
+ *
+ *   `conservative` ⭐ DEFAULT. Free shipping still requires THREE DISTINCT
+ *                  ADVENTURES, exactly as 1.8.23 ruled it. Colouring books are
+ *                  recognised, counted and priced -- ⛔ which is what actually
+ *                  closes `ACT-OPS-269` -- but they open no new free-shipping
+ *                  route. NOTHING A CUSTOMER IS PROMISED CHANGES.
+ *
+ *   `any-three`    The brief's ruling. Any 3+ PHYSICAL BOOKS ship free,
+ *                  duplicates included. ⭐ The $4.99 mixed-3+-but-under-3-
+ *                  distinct row DIES: it becomes unreachable, because the
+ *                  any-three branch catches every cart that could reach it.
+ *
+ * ⭐ FLIPPING IT IS ONE LINE, once the ruling is in a canonical file:
+ *
+ *       add_filter( 'bhp_bundle_colouring_policy', function () {
+ *           return 'any-three';
+ *       } );
+ *
+ * ⛔ DO NOT flip the default without the founder ruling on disk. Moving a
+ *    customer's shipping cost on a relayed claim that no document carries is
+ *    the precise failure class this corpus exists to prevent.
+ *
+ * @return string 'conservative'|'any-three'
+ */
+function bhp_bundle_colouring_policy() {
+	/**
+	 * The free-shipping policy for carts containing colouring-line books.
+	 *
+	 * @param string $policy 'conservative' (default) or 'any-three'.
+	 */
+	$policy = apply_filters( 'bhp_bundle_colouring_policy', 'conservative' );
+	return in_array( $policy, array( 'conservative', 'any-three' ), true ) ? $policy : 'conservative';
 }
