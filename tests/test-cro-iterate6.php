@@ -255,10 +255,39 @@ bhp_i6_assert(
 	'§5 ...the second route ("Which adventure fits your reader?") is still present too',
 	$failures
 );
+/*
+ * ⚠ AND MY SECOND ATTEMPT AT THIS ROW WAS ALSO WRONG, FOR A DIFFERENT REASON,
+ *   AND IS ALSO CORRECTED RATHER THAN RELAXED. It counted page-wide
+ *   occurrences of `href="…/find-your-adventure/"` and asserted 2; staging2
+ *   returned 3. The THIRD is the "Start Here" NAVIGATION link
+ *   (`functions.php`, the primary-menu map) — a real, correct, pre-existing
+ *   link to the same page that has nothing to do with either quiz CTA.
+ *
+ * ⭐ COUNTING THE PAGE WAS THE WRONG INSTRUMENT. The claim is about the two
+ *    CTAs' OWN hrefs, so the test now reads each `quiz_cta_clicked` anchor and
+ *    checks ITS href. That is immune to a nav link being added or removed, and
+ *    it is what the sentence in the label actually says.
+ */
+$cta_hrefs = array();
+if ( preg_match_all( '/<a\b[^>]*>/i', $home, $tags ) ) {
+	foreach ( $tags[0] as $tag ) {
+		if ( false === strpos( $tag, 'data-bhp-event="quiz_cta_clicked"' ) ) {
+			continue;
+		}
+		$cta_hrefs[] = preg_match( '/href="([^"]*)"/i', $tag, $hm ) ? $hm[1] : '(no href)';
+	}
+}
+$want_href     = esc_url( home_url( '/find-your-adventure/' ) );
+$all_to_page   = ( 2 === count( $cta_hrefs ) );
+foreach ( $cta_hrefs as $h ) {
+	if ( $h !== $want_href ) {
+		$all_to_page = false;
+	}
+}
 bhp_i6_assert(
-	2 === substr_count( $home, 'href="' . esc_url( home_url( '/find-your-adventure/' ) ) . '"' ),
-	'§5 ...and BOTH point at the canonical PAGE, neither at a homepage fragment — found '
-		. substr_count( $home, 'href="' . esc_url( home_url( '/find-your-adventure/' ) ) . '"' ),
+	$all_to_page,
+	'§5 ...and BOTH quiz CTAs\' OWN hrefs are the canonical PAGE, neither a homepage fragment — found '
+		. ( array() === $cta_hrefs ? '(none)' : implode( ' | ', $cta_hrefs ) ),
 	$failures
 );
 
