@@ -49,11 +49,16 @@ $location = !empty($args['location']) ? sanitize_key($args['location']) : bhp_ge
 
 /**
  * Optional `id` (2026-07-31, quiz consolidation): stamps a stable anchor id on
- * the launcher wrapper. footer.php passes 'find-your-adventure' on the homepage
- * only, so the deep-link contract that used to be served by the now-removed
- * inline homepage quiz section still resolves -- and still resolves to exactly
- * ONE element per page. Left unset everywhere else, so no other page grows a
- * duplicate id.
+ * the launcher wrapper.
+ *
+ * ⚠ NO CALLER PASSES IT AS OF 1.19.270 (2026-08-19,
+ *   `CYCLE165-LD-ITERATE-6-PATH-LINE`). footer.php used to pass
+ *   'find-your-adventure' on the homepage only, preserving the deep-link
+ *   contract left behind by the removed inline homepage quiz section. The
+ *   founder has now removed this whole band from the homepage, so there is no
+ *   homepage launcher to stamp. The argument is KEPT, not deleted -- it is the
+ *   supported way to reinstate a stable anchor if one is ever needed again,
+ *   and deleting it would make that a code change rather than an argument.
  */
 $cta_id = !empty($args['id']) ? sanitize_html_class($args['id']) : '';
 $autoopen_eligible = function_exists('bhp_should_autoopen_quiz') && bhp_should_autoopen_quiz();

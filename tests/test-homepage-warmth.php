@@ -662,20 +662,60 @@ bhp_hw_assert(
 	$failures
 );
 
-/* 3c. The funnel. One quiz launcher, one modal, unchanged auto-open contract. */
+/* 3c. The funnel. */
+/*
+ * ⛔⛔ AMENDED 1.19.270 — CYCLE165-LD-ITERATE-6-PATH-LINE. THE THREE
+ *     ASSERTIONS THIS REPLACES ARE QUOTED VERBATIM RATHER THAN DELETED:
+ *
+ *       1 === substr_count( $home, 'data-bhp-quiz-launcher' ),
+ *       '§3.3 EXACTLY ONE quiz launcher on the page - the hero button is a LINK, not a second launcher',
+ *
+ *       1 === substr_count( $home, 'data-bhp-quiz-modal-location' ),
+ *       '§3.3 exactly one quiz modal, so initLauncher cannot arm its timers twice',
+ *
+ *       1 === substr_count( $home, 'id="find-your-adventure"' ),
+ *       '§3.3 the #find-your-adventure deep-link anchor still resolves to exactly one element',
+ *
+ *     ALL THREE WERE CORRECT ABOUT THE PAGE UNTIL THIS RELEASE. The founder
+ *     ruled the "Not sure which Brave Hearts path fits?" band off the
+ *     homepage; the launcher, its hidden modal and the anchor id it carried
+ *     all leave with it. The expected counts go 1 -> 0.
+ *
+ * ⭐ THE ASSERTIONS ARE KEPT AND INVERTED, NOT DROPPED. A removed section is
+ *    exactly where a suite gets quietly weakened to "at least zero" and stops
+ *    detecting anything. `=== 0` still fails loudly if the band ever returns
+ *    to the homepage without a founder ruling behind it.
+ *
+ * ⭐ AND THE SAME BLOCK NOW ASSERTS THE ROUTE THAT MUST SURVIVE. Removing the
+ *    band must not remove the homepage's way INTO the quiz. The hero's ghost
+ *    CTA is a link to the canonical PAGE and is asserted here, in the same
+ *    place, so a future subtraction cannot take both without going red.
+ */
 bhp_hw_assert(
-	1 === substr_count( $home, 'data-bhp-quiz-launcher' ),
-	'§3.3 EXACTLY ONE quiz launcher on the page - the hero button is a LINK, not a second launcher',
+	0 === substr_count( $home, 'data-bhp-quiz-launcher' ),
+	'§3.3 NO quiz launcher on the homepage (founder ruling, 1.19.270) — found '
+		. substr_count( $home, 'data-bhp-quiz-launcher' ),
 	$failures
 );
 bhp_hw_assert(
-	1 === substr_count( $home, 'data-bhp-quiz-modal-location' ),
-	'§3.3 exactly one quiz modal, so initLauncher cannot arm its timers twice',
+	0 === substr_count( $home, 'data-bhp-quiz-modal-location' ),
+	'§3.3 NO quiz modal on the homepage — found '
+		. substr_count( $home, 'data-bhp-quiz-modal-location' ),
 	$failures
 );
 bhp_hw_assert(
-	1 === substr_count( $home, 'id="find-your-adventure"' ),
-	'§3.3 the #find-your-adventure deep-link anchor still resolves to exactly one element',
+	0 === substr_count( $home, 'id="find-your-adventure"' ),
+	'§3.3 the #find-your-adventure anchor id leaves the homepage with the band it was stamped on',
+	$failures
+);
+bhp_hw_assert(
+	false !== strpos( $home, 'data-bhp-source="home_hero_quiz"' ),
+	'§3.3 the homepage KEEPS a live route into the quiz — the hero ghost CTA is still present',
+	$failures
+);
+bhp_hw_assert(
+	false !== strpos( $home, esc_url( home_url( '/find-your-adventure/' ) ) ),
+	'§3.3 ...and that route points at the canonical /find-your-adventure/ PAGE, not a dead fragment',
 	$failures
 );
 /*
@@ -705,10 +745,32 @@ bhp_hw_assert(
  *    least one" and stops detecting anything. ONE impression, from the FOOTER
  *    launcher, and NO `homepage_gateway` source anywhere on the document.
  */
+/*
+ * ⛔ AMENDED AGAIN 1.19.270 — CYCLE165-LD-ITERATE-6-PATH-LINE. The 1.19.268
+ *    assertion this replaces is quoted verbatim rather than deleted:
+ *
+ *      1 === substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
+ *      '§3.3 exactly ONE quiz impression now fires (the footer launcher; the audience-gateway band is no longer rendered) — found '
+ *
+ *    The ONE impression it counted was the footer launcher's. The founder has
+ *    now removed the launcher from the homepage, so the count goes 1 -> 0.
+ *    The 1.19.268 amendment above remains accurate about what IT changed and
+ *    is left standing; this amends only the number.
+ *
+ * ⚠ `quiz_cta_clicked` IS A DIFFERENT EVENT AND IT STAYS. The hero ghost CTA
+ *   raises it. Only the IMPRESSION event leaves the homepage, because only the
+ *   band raised it.
+ */
 bhp_hw_assert(
-	1 === substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
-	'§3.3 exactly ONE quiz impression now fires (the footer launcher; the audience-gateway band is no longer rendered) — found '
+	0 === substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
+	'§3.3 NO quiz impression fires on the homepage now that the band is gone — found '
 		. substr_count( $home, 'data-bhp-impression-event="quiz_cta_viewed"' ),
+	$failures
+);
+bhp_hw_assert(
+	1 === substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
+	'§3.3 the hero ghost CTA still raises quiz_cta_clicked exactly once — found '
+		. substr_count( $home, 'data-bhp-event="quiz_cta_clicked"' ),
 	$failures
 );
 bhp_hw_assert(

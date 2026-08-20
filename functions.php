@@ -609,7 +609,32 @@ function bhp_render_audience_quiz_shortcode() {
 add_shortcode('bhp_audience_quiz', 'bhp_render_audience_quiz_shortcode');
 
 function bhp_enqueue_audience_quiz_assets() {
-    $on_homepage = is_front_page();
+    /*
+     * ⭐ 1.19.270 (`CYCLE165-LD-ITERATE-6-PATH-LINE`) — THE `$on_homepage`
+     *    LIMB IS REMOVED, BECAUSE AFTER THIS RELEASE IT LOADS 10.4 KB OF CSS
+     *    AND A SCRIPT FOR MARKUP THAT NO LONGER EXISTS ON THAT PAGE.
+     *
+     * It was written when `front-page.php` embedded the inline quiz. That
+     * section was removed on 2026-07-31 and the homepage's only remaining
+     * `[data-bhp-quiz]` instance was the launcher's hidden modal — which the
+     * `$on_sitewide_launcher_page` limb below already covered. With the
+     * launcher itself now gated off the homepage by the founder's ruling
+     * (see `bhp_should_show_quiz_cta()`), this limb is the ONLY thing that
+     * would still enqueue `bhp-audience-quiz` there, for zero markup.
+     *
+     * ⛔ VERIFIED BEFORE REMOVING, not assumed: `front-page.php` contains no
+     *    `get_template_part('template-parts/quiz/...')` call, no
+     *    `[bhp_audience_quiz]` shortcode and no `data-bhp-quiz` attribute.
+     *    The homepage's only quiz reference is the hero's `<a href>` to the
+     *    canonical PAGE, which needs none of these assets.
+     *
+     * ⛔ THE OTHER THREE LIMBS ARE UNTOUCHED, so the canonical
+     *    `/find-your-adventure/` page, any shortcode page and every launcher
+     *    page load exactly what they loaded in 1.19.269. And
+     *    `$GLOBALS['bhp_quiz_is_page_content']` below was never keyed on the
+     *    homepage — it reads the template and the shortcode only — so
+     *    1.19.266's CLS fix is not disturbed by this.
+     */
     $on_shortcode_page = is_singular() && has_shortcode((string) (get_post()->post_content ?? ''), 'bhp_audience_quiz');
     // The canonical /find-your-adventure/ page (2026-07-17) renders the quiz
     // via a direct get_template_part() call in its page template rather than
@@ -623,7 +648,7 @@ function bhp_enqueue_audience_quiz_assets() {
     // bhp_should_show_quiz_cta() is true, so its assets must load there too
     // -- same handles, same single enqueue function, no second loading path.
     $on_sitewide_launcher_page = bhp_should_show_quiz_cta();
-    if (!$on_homepage && !$on_shortcode_page && !$on_canonical_quiz_page && !$on_sitewide_launcher_page) {
+    if (!$on_shortcode_page && !$on_canonical_quiz_page && !$on_sitewide_launcher_page) {
         return;
     }
     /*
@@ -3416,6 +3441,60 @@ function bhp_should_show_quiz_cta() {
     // page-find-your-adventure.php stays excluded: that page IS the quiz, so
     // a modal of the quiz over it would be self-defeating.
     if (is_page_template('page-find-your-adventure.php')) {
+        return false;
+    }
+
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.270 (2026-08-19, `CYCLE165-LD-ITERATE-6-PATH-LINE`) — THE
+     *     HOMEPAGE EXCLUSION IS RESTORED, BY THE FOUNDER'S OWN RULING.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * Andrew Signore, carrier item 114, ⛔ RELAYED through the Chief of Staff
+     * and NOT witnessed first-hand by the agent that wrote this line:
+     *
+     *   "Remove the 'not sure which brave hearts path fits' on the home page
+     *    then we can deploy."
+     *
+     * That copy is `template-parts/components/quiz-entry-cta.php`'s first
+     * line. On the homepage this launcher is the ONLY thing that renders it,
+     * so switching this gate off for the front page removes exactly the band
+     * he named and nothing else.
+     *
+     * ⭐ NOTE THE SYMMETRY WITH 2026-07-19, DELIBERATELY LEFT VISIBLE ABOVE.
+     *    The homepage used to be excluded here; Andrew lifted the exclusion on
+     *    2026-07-19 when the homepage still embedded the inline quiz. He has
+     *    now reinstated it. Both of his instructions are preserved in place
+     *    rather than one being edited away, so a future reader can see that
+     *    this gate has been flipped twice, by him, for two different pages.
+     *
+     * ⛔ WHAT THIS DOES NOT DO, AND THE SCOPE IS THE WHOLE POINT:
+     *    · The canonical `/find-your-adventure/` PAGE is untouched. It renders
+     *      the quiz through `page-find-your-adventure.php` and gets its assets
+     *      from `bhp_enqueue_audience_quiz_assets()`'s own
+     *      `$on_canonical_quiz_page` limb, neither of which reads this gate.
+     *    · EVERY OTHER PAGE that shows the launcher today still shows it. This
+     *      is `is_front_page()`, not a sitewide retirement.
+     *    · The quiz component, its routing, its copy, its four segments and its
+     *      analytics vocabulary are byte-identical.
+     *    · The hero's ghost CTA "Take the 30-second quiz." is NOT affected: it
+     *      is an `<a href>` to the canonical PAGE (`front-page.php`'s
+     *      `$hero_quiz_url`), never a fragment into this band, so the homepage
+     *      keeps a live route into the quiz after this band is gone.
+     *    · `bhp_should_autoopen_quiz()` inherits this correctly (it already
+     *      returns false everywhere via the 1.19.204 filter).
+     *
+     * ⚠ THE `#find-your-adventure` DEEP-LINK ANCHOR LEAVES THE HOMEPAGE WITH
+     *   THE BAND. It was carried by this launcher (footer.php's `id` arg) and
+     *   by nothing else. SCANNED BEFORE REMOVING, across *.php/*.js/*.css:
+     *   the theme emits NO `href="#find-your-adventure"` anywhere, so no link
+     *   on any surface is orphaned by this. `page-find-your-adventure.php`'s
+     *   own `#find-your-adventure-intro` id is a DIFFERENT id on a DIFFERENT
+     *   page and is untouched.
+     *
+     * Fully reversible in one line: delete this block.
+     */
+    if (is_front_page()) {
         return false;
     }
 

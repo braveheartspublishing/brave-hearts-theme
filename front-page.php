@@ -1531,14 +1531,24 @@ get_template_part('template-parts/components/home-open-the-book');
 // instances on one page. The homepage now carries exactly one: the single
 // sitewide launcher plus its hidden modal.
 //
-// The '#find-your-adventure' deep-link contract is preserved -- footer.php
-// passes that id to the launcher on the homepage only (see
-// template-parts/components/quiz-entry-cta.php's `id` arg), so existing
-// in-page anchors still land on a real quiz entry point and the id is still
-// rendered exactly once per page.
+// ⭐ 1.19.270 (2026-08-19, `CYCLE165-LD-ITERATE-6-PATH-LINE`) — AND NOW THE
+//    LAUNCHER IS GONE FROM THIS PAGE TOO, BY THE FOUNDER'S RULING.
 //
-// The quiz template part itself is untouched and still used by the modal and
-// by the canonical /find-your-adventure/ page.
+// The note that used to sit here said the '#find-your-adventure' deep-link
+// contract was preserved because footer.php passed that id to the launcher on
+// the homepage only. That is no longer true and is corrected rather than left
+// standing: `bhp_should_show_quiz_cta()` now returns false on the front page,
+// so the homepage renders NO quiz band, NO launcher, NO hidden modal and NO
+// '#find-your-adventure' id. The full ruling and the scope limits are quoted
+// at that function in functions.php and are not repeated here.
+//
+// ⛔ THE HOMEPAGE STILL HAS A LIVE ROUTE INTO THE QUIZ, and that is deliberate:
+//    the hero's ghost CTA "Take the 30-second quiz." (`$hero_quiz_url` above)
+//    is a link to the canonical `/find-your-adventure/` PAGE, not a fragment
+//    into the removed band. It is unchanged by this release.
+//
+// The quiz template part itself is untouched and still used by the modal on
+// every other eligible page and by the canonical /find-your-adventure/ page.
 
 // 11. Footer.
 get_footer();

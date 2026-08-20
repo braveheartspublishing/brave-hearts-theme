@@ -67,10 +67,32 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
 
 <?php if ($bhp_show_quiz_cta && !$bhp_defer_conversions): ?>
   <?php
-  // The homepage no longer renders an inline quiz section, so the launcher
-  // here inherits the '#find-your-adventure' anchor id it used to carry --
-  // homepage only, so the id stays unique on every page.
-  get_template_part('template-parts/components/quiz-entry-cta', null, is_front_page() ? ['id' => 'find-your-adventure'] : []);
+  /*
+   * ⭐ 1.19.270 (`CYCLE165-LD-ITERATE-6-PATH-LINE`) — THE `is_front_page()`
+   *    TERNARY IS NOW UNREACHABLE AND IS REPLACED BY A PLAIN CALL.
+   *
+   * It stamped the '#find-your-adventure' anchor id on the launcher, on the
+   * homepage only, so the deep-link contract survived the 2026-07-31 removal
+   * of the inline homepage quiz section. The founder has now removed the
+   * launcher itself from the homepage (his ruling is quoted in full at
+   * `bhp_should_show_quiz_cta()` in functions.php), so `$bhp_show_quiz_cta`
+   * is false whenever `is_front_page()` is true and this branch can never be
+   * taken again.
+   *
+   * ⛔ LEAVING A DEAD TERNARY HERE WOULD BE WORSE THAN REMOVING IT: it reads
+   *    as "the homepage gets a special id", which is now the opposite of the
+   *    truth, and the next reader would spend a turn discovering that.
+   *
+   * ⛔ NO OTHER PAGE CHANGES. The `else` half of that ternary was `[]`, which
+   *    is exactly what this call now passes on every page that still renders
+   *    the launcher — same template part, same arguments, same markup.
+   *
+   * ⚠ IF THE FOUNDER EVER RESTORES THE HOMEPAGE BAND, restore the `id` arg
+   *   with it. The anchor is not needed today because the theme emits no
+   *   `href="#find-your-adventure"` anywhere (scanned across *.php/*.js/*.css
+   *   in 1.19.270), but it would be needed again the moment one is written.
+   */
+  get_template_part('template-parts/components/quiz-entry-cta');
   ?>
 <?php endif; ?>
 
