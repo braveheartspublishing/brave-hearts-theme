@@ -1,9 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-<<<<<<< HEAD
-    source-md5: 5c155e6c945a485e5729e1819e952251
-=======
-    source-md5: e8b8550565b2dcbccb2819be78b72ce1
->>>>>>> 995c96a (fix(theme 1.19.269): five more label rules were under the founder's 12px floor, and the hero is excluded by name)
+    source-md5: 79c865c50ae8db1aaebea3839e6bc586
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7306,7 +7302,6 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 
 @media (prefers-reduced-motion: no-preference) {
   
-<<<<<<< HEAD
 }
 
 
@@ -7371,6 +7366,4 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   background-size: auto 200%;
   opacity: 0.085;
   pointer-events: none;
-=======
->>>>>>> 995c96a (fix(theme 1.19.269): five more label rules were under the founder's 12px floor, and the hero is excluded by name)
 }
