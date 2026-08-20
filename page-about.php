@@ -41,7 +41,25 @@ get_template_part('template-parts/components/hero', null, [
 <section id="about-mission" class="about-section about-mission section" aria-labelledby="about-mission-title">
   <div class="container about-mission__layout">
     <div class="about-mission__heading">
-      <p class="component-heading__eyebrow"><?php esc_html_e('Our mission', 'brave-hearts'); ?></p>
+      <?php
+      /*
+       * ⭐ 1.19.269 item 5 — REMOVED: `<p class="component-heading__eyebrow">Our
+       *    mission</p>`. Founder ruling of 2026-08-19: "Eyebrow labels that
+       *    fail contrast and say nothing ('OUR PHILOSOPHY' class) — remove or
+       *    restyle; they are decoration."
+       *
+       * TEST APPLIED, AND IT IS THE SAME TEST ON ALL 70 INSTANCES: an eyebrow
+       * STAYS when it carries something the heading beneath it does not — an
+       * audience, a price or format qualifier, a status, or a name the heading
+       * assumes. It GOES when it restates the heading or is a slogan.
+       * "Our mission" above "Build Curiosity Through Adventure" restates it.
+       *
+       * ⭐ IT ALSO CARRIED A "WE"-FAMILY PRONOUN in customer-facing copy, which
+       *    standing rule §9.1 forbids. That is a second, independent reason,
+       *    and it is noted rather than used as the reason — the ruling above is
+       *    sufficient on its own.
+       */
+      ?>
       <h2 id="about-mission-title" class="text-section-title"><?php echo esc_html($about_field('mission_title', __('Build Curiosity Through Adventure', 'brave-hearts'))); ?></h2>
     </div>
     <div class="about-mission__content text-lead flow">
@@ -79,7 +97,9 @@ $book_values = apply_filters('bhp_about_book_values', [
 <section id="why-these-books" class="about-section section section--muted" aria-labelledby="why-these-books-title">
   <div class="container">
     <header class="component-heading component-heading--center">
-      <p class="component-heading__eyebrow"><?php esc_html_e('Why these books exist', 'brave-hearts'); ?></p>
+      <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, restates the heading below it:
+              <p class="component-heading__eyebrow"><?php esc_html_e('Why these books exist', 'brave-hearts'); ?></p>
+         The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
       <h2 id="why-these-books-title" class="text-section-title"><?php echo esc_html($about_field('books_title', __('Stories That Make Children Want to Know More', 'brave-hearts'))); ?></h2>
       <p class="component-heading__intro text-lead"><?php echo esc_html($about_field('books_intro', __('Brave Hearts books are created to inspire children to read, ask better questions, explore real places, and build confidence through meaningful adventure.', 'brave-hearts'))); ?></p>
     </header>
@@ -134,7 +154,9 @@ $book_values = apply_filters('bhp_about_book_values', [
 
 <section id="about-final-cta" class="about-final-cta final-cta section" aria-labelledby="about-final-cta-title">
   <div class="container container--content final-cta__inner">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Books first. Adventure second. Education always.', 'brave-hearts'); ?></p>
+    <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, a brand slogan, not a section label:
+            <p class="component-heading__eyebrow"><?php esc_html_e('Books first. Adventure second. Education always.', 'brave-hearts'); ?></p>
+       The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
     <h2 id="about-final-cta-title" class="text-section-title"><?php esc_html_e('Start the Adventure', 'brave-hearts'); ?></h2>
     <p class="text-lead final-cta__text"><?php esc_html_e('Choose a book, bring an adventure into the classroom, or join the community that keeps exploring after the final page.', 'brave-hearts'); ?></p>
     <div class="final-cta__actions cluster">

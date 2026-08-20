@@ -93,7 +93,9 @@ get_template_part('template-parts/components/hero', null, [
 <section id="explore-topics" class="guides-hub-section section" aria-labelledby="explore-topics-title">
   <div class="container">
     <header class="component-heading component-heading--center">
-      <p class="component-heading__eyebrow"><?php esc_html_e('Choose a trail', 'brave-hearts'); ?></p>
+      <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, restates "Explore by Topic":
+              <p class="component-heading__eyebrow"><?php esc_html_e('Choose a trail', 'brave-hearts'); ?></p>
+         The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
       <h2 id="explore-topics-title" class="text-section-title"><?php esc_html_e('Explore by Topic', 'brave-hearts'); ?></h2>
       <p class="component-heading__intro text-lead"><?php esc_html_e('Begin with the question your reader, family, or classroom is already asking.', 'brave-hearts'); ?></p>
     </header>
@@ -211,7 +213,9 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
 <section id="book-based-resources" class="teachers-section section section--muted" aria-labelledby="book-based-resources-title">
   <div class="container">
     <header class="component-heading component-heading--center">
-      <p class="component-heading__eyebrow"><?php esc_html_e('Teach through story', 'brave-hearts'); ?></p>
+      <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, a slogan; the H2 names the resources:
+              <p class="component-heading__eyebrow"><?php esc_html_e('Teach through story', 'brave-hearts'); ?></p>
+         The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
       <h2 id="book-based-resources-title" class="text-section-title"><?php esc_html_e('Resources for Every Charlotte & Henry Adventure', 'brave-hearts'); ?></h2>
       <p class="component-heading__intro text-lead"><?php esc_html_e('Each destination creates a natural path into real science, geography, vocabulary, conservation, discussion, and writing.', 'brave-hearts'); ?></p>
     </header>
@@ -231,7 +235,9 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
 <section id="read-aloud-visits" class="teachers-section teacher-read-aloud section" aria-labelledby="read-aloud-visits-title">
   <div class="container teacher-read-aloud__layout">
     <div class="teacher-read-aloud__content">
-      <p class="component-heading__eyebrow"><?php esc_html_e('School-year outreach', 'brave-hearts'); ?></p>
+      <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, restates "Read-Alouds and Author Visits":
+              <p class="component-heading__eyebrow"><?php esc_html_e('School-year outreach', 'brave-hearts'); ?></p>
+         The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
       <h2 id="read-aloud-visits-title" class="text-section-title"><?php esc_html_e('Read-Alouds and Author Visits', 'brave-hearts'); ?></h2>
       <p class="text-lead"><?php esc_html_e('Brave Hearts Publishing supports classroom read-alouds and author visits where scheduling and location allow.', 'brave-hearts'); ?></p>
       <p><?php esc_html_e('Visits can connect a Charlotte & Henry story to real geography, science, vocabulary, courage, and questions students are excited to explore together.', 'brave-hearts'); ?></p>
@@ -256,7 +262,9 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
 
 <section id="teachers-final-cta" class="teachers-final-cta final-cta section" aria-labelledby="teachers-final-cta-title">
   <div class="container container--content final-cta__inner">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Books first. Learning always.', 'brave-hearts'); ?></p>
+    <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, a slogan above a CTA:
+            <p class="component-heading__eyebrow"><?php esc_html_e('Books first. Learning always.', 'brave-hearts'); ?></p>
+       The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
     <h2 id="teachers-final-cta-title" class="text-section-title"><?php esc_html_e('Start a Classroom Adventure', 'brave-hearts'); ?></h2>
     <p class="text-lead final-cta__text"><?php esc_html_e('Choose a book, invite a read-aloud, or join the Adventure Club for future resources and new adventures.', 'brave-hearts'); ?></p>
     <div class="final-cta__actions cluster">

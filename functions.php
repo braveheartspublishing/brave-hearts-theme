@@ -2831,6 +2831,34 @@ function bhp_should_show_footer_capture() {
         return false;
     }
 
+    /*
+     * ⭐⭐ 1.19.269 (`CYCLE165-LD-ITERATE-5-SUBTRACTIONS`) — NEVER ON A BLOG
+     *     POST. Founder ruling, 2026-08-19, subtraction item 1: on blog posts
+     *     keep the popup and the end-of-post capture, and remove the mid-post
+     *     ask and THIS form.
+     *
+     * WHY THE GATE RATHER THAN THE TEMPLATE. `footer.php` renders this block
+     * from two places (the ordinary position, and 1.19.254's R-9 deferred
+     * position on the collection page). One condition in the eligibility
+     * function closes both, and closes any third caller a future release adds.
+     * A `!is_singular('post')` test in the template would have closed one.
+     *
+     * ⛔ SCOPE IS POSTS ONLY, DELIBERATELY. `is_singular('post')` is true for a
+     *    single blog post and false for the /blog/ archive, for every page, for
+     *    every product and for the home page — so the capture is unchanged on
+     *    all ~80 non-post surfaces. Andrew's item 1 says "on posts", and this
+     *    is that word in code.
+     *
+     * ⭐ THE PARENT FUNNEL STILL HAS TWO ASKS ON EVERY POST after this: the
+     *    end-of-post capture (`template-parts/acquisition/post-end-capture.php`,
+     *    context `blog_post_end`) and the popup. No storage key, analytics
+     *    prefix or lead-magnet key is touched here, so funnel isolation
+     *    (`.claude/rules/funnels.md`) is unaffected.
+     */
+    if (is_singular('post')) {
+        return false;
+    }
+
     if (function_exists('is_cart') && is_cart()) {
         return false;
     }

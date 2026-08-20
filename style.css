@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.268
+Version: 1.19.269
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -159,6 +159,34 @@ Tags: woocommerce, children, books, education
   --font-ui: 'Archivo', Arial, sans-serif;
   --text-xs: 0.8rem;
   --text-sm: 0.9rem;
+  /* ⭐⭐ 1.19.269 — `--text-label`: ONE SIZE FOR EVERY EYEBROW / KICKER LABEL.
+     `CYCLE165-LD-ITERATE-5-SUBTRACTIONS`, founder ruling of 2026-08-19 item 5:
+     decorative eyebrows are removed where they say nothing, and "where a
+     section genuinely needs a label, restyle to an AA-passing token >=12px".
+
+     THIS CLOSES THE ITEM 1.19.266 EXPLICITLY PARKED. That pass wrote, in the
+     block near `.section--dark .component-heading__eyebrow`: "On the site's
+     creams that is 4.47:1 (marginal, and parked in the audit's §8b-H with the
+     eyebrow SIZE question, which is Andrew's)." Andrew has now ruled on both
+     halves, so both move together here: size AND colour.
+
+     MEASURED BEFORE (stylesheet values, root 16px):
+       .component-heading__eyebrow                   var(--text-xs)  12.80px
+       body:not(.home) .component-heading__eyebrow   .68rem          10.88px  <-
+       body:not(.home) .card__eyebrow                .68rem          10.88px  <-
+       .home  .component-heading__eyebrow            .70rem          11.20px  <-
+       .home .home-together .component-heading__eyebrow .74rem       11.84px  <-
+       .woo-card__eyebrow                            .64rem          10.24px  <-
+     Four of the six sat below the 12px floor; the smallest was 10.24px.
+
+     AFTER: 0.78rem = 12.48px everywhere, one declaration source. 12.48 rather
+     than exactly 0.75rem/12px so a user agent rounding down, or a root under
+     16px, still clears the floor rather than landing on it.
+
+     ⚠ THE BASE VALUE MOVES DOWN 0.32px (12.80 -> 12.48). That is deliberate:
+       the point of the ruling is ONE label size, and a 0.32px shrink on the
+       rules that already passed is the price of the four that did not. */
+  --text-label: 0.78rem;
   --text-base: 1.125rem;
   --text-lead: clamp(1.125rem, 2vw, 1.3rem);
   --text-card-title: clamp(1.125rem, 2vw, 1.35rem);
@@ -962,7 +990,7 @@ body:not(.home) .final-cta .btn-ghost:hover,
 .card__title a { color: var(--color-navy); }
 .card__excerpt { margin-bottom: var(--space-6); color: var(--color-text); font-size: var(--text-sm); }
 .card__link { margin-top: auto; font-family: var(--font-ui); font-size: var(--text-sm); font-weight: 700; }
-.card__eyebrow { margin-bottom: var(--space-2); color: var(--color-primary); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: 700; letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.card__eyebrow { margin-bottom: var(--space-2); color: var(--color-primary); font-family: var(--font-ui); font-size: var(--text-label); font-weight: 700; letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .card__footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: auto; padding-top: var(--space-4); }
 
 .book-card .card__image { height: 320px; object-fit: contain; padding: var(--space-4); }
@@ -1146,7 +1174,8 @@ article.single-post { margin-inline: auto; }
   margin-bottom: var(--space-3);
   color: var(--color-primary);
   font-family: var(--font-ui);
-  font-size: var(--text-xs);
+  /* 1.19.269 item 5 — the one label size. See `--text-label` at the top. */
+  font-size: var(--text-label);
   font-weight: 700;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
@@ -3824,7 +3853,10 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
   font-size: .78rem;
   letter-spacing: .095em;
 }
-.home .component-heading__eyebrow { font-size: .7rem; letter-spacing: .2em; }
+/* 1.19.269 item 5 — was `.7rem` (11.20px), below the 12px floor Andrew set.
+   ⚠ CSS ONLY. No homepage TEMPLATE line is touched by this release; the
+     homepage's markup belongs to `CYCLE165-LD-ITERATE-4-HOME-SUBTRACTION`. */
+.home .component-heading__eyebrow { font-size: var(--text-label); letter-spacing: .2em; }
 
 /* Hero: restore equal visual authority to the title and collection. */
 .home .home-hero--with-books { min-height: clamp(820px, 88vh, 920px); }
@@ -3915,7 +3947,8 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
 .home .home-together { min-height: 780px; isolation: isolate; overflow: clip; background-image: linear-gradient(90deg, rgba(7,43,32,.91) 0 47%, rgba(7,43,32,.28) 78%), url('assets/images/wild-places/rainforest-bridge.webp'); }
 .home .home-together__inner { padding-block: 5rem; }
 .home .home-together__inner > * { max-width: 760px; }
-.home .home-together .component-heading__eyebrow { font-size: .74rem; }
+/* 1.19.269 item 5 — was `.74rem` (11.84px). CSS only; see the note above. */
+.home .home-together .component-heading__eyebrow { font-size: var(--text-label); }
 .home .home-together h2 { max-width: 720px; font-size: clamp(3.6rem, 5.6vw, 5.8rem); line-height: 1.02; }
 .home .home-together__intro { max-width: 700px; margin-top: 2rem; font-size: 1.16rem; line-height: 1.82; }
 .home .home-together__paths { gap: 3rem; margin-block: 3rem; }
@@ -4334,8 +4367,14 @@ a:focus-visible { outline: 3px solid var(--expedition-focus); outline-offset: 3p
 body:not(.home) .section { padding-block: var(--section-space); }
 body:not(.home) .section--muted { background: var(--expedition-parchment); }
 body:not(.home) .component-heading { margin-bottom: clamp(2.5rem,5vw,4.5rem); }
+/* ⭐ 1.19.269 item 5 — the two values 1.19.266 parked as Andrew's are corrected
+   here together. `#806534` on the site's creams measured 4.47:1 (AA needs 4.5
+   for text this size) and `.68rem` rendered 10.88px against an 18px body. Now
+   `var(--color-gold-deep)` (#805800: 5.17:1 on parchment #f1e7d2, 6.09:1 on
+   ivory #fffaf0 — recomputed from the WCAG 2.x formula, and asserted in
+   `tests/test-cro-iterate5.php`) at `var(--text-label)` = 12.48px. */
 body:not(.home) .component-heading__eyebrow,
-body:not(.home) .card__eyebrow { color: #806534; font-family: var(--font-ui); font-size: .68rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+body:not(.home) .card__eyebrow { color: var(--color-gold-deep); font-family: var(--font-ui); font-size: var(--text-label); font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
 body:not(.home) .text-section-title { color: var(--expedition-navy); }
 body:not(.home) .feature-card,
 body:not(.home) .passport-card,
@@ -4366,7 +4405,9 @@ body:not(.home) .final-cta .text-lead { color: #f8f3e9; }
 }
 .woocommerce ul.products li.product a.woocommerce-LoopProduct-link { display: flex; flex: 1; flex-direction: column; }
 .woocommerce ul.products li.product img { height: 390px; margin: 0; padding: 1.75rem 1.75rem .75rem; object-fit: contain; background: linear-gradient(#eee4cf,#f8f3e9); }
-.woo-card__eyebrow { margin: 1.4rem 1.5rem .25rem; color: #806534; font-family: var(--font-ui); font-size: .64rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+/* 1.19.269 item 5 — the smallest label on the site (10.24px) and the same
+   sub-AA gold. Same correction as the two rules above; see `--text-label`. */
+.woo-card__eyebrow { margin: 1.4rem 1.5rem .25rem; color: var(--color-gold-deep); font-family: var(--font-ui); font-size: var(--text-label); font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .woocommerce ul.products li.product .woocommerce-loop-product__title { padding: 0 1.5rem; color: var(--expedition-navy); font-size: 1.65rem; font-weight: 500; }
 .woocommerce ul.products li.product .price { padding: .5rem 1.5rem 1rem; color: var(--expedition-forest); font-family: var(--font-ui); font-size: 1rem; }
 .woocommerce ul.products li.product .button { align-self: flex-start; margin: 0 1.5rem 1.5rem; background: var(--expedition-forest) !important; color: white !important; }
@@ -4429,12 +4470,27 @@ body:not(.home) .final-cta .text-lead { color: #f8f3e9; }
 
 /* Approved footer lockup and journal close across the site. */
 body:not(.home) .site-footer { padding: 84px clamp(24px,4vw,54px) 40px; background: #12271d; color: rgba(214,203,180,.85); }
-body:not(.home) .footer-inner { grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: clamp(28px,4vw,48px); max-width: 1220px; margin-bottom: 0; padding-bottom: 56px; border-bottom: 1px solid rgba(217,164,95,.18); }
+/* ⭐ 1.19.269 item 4 — FOUR COLUMNS BECAME THREE because the footer lost the
+   "Learn" column. This is the track count, not a design change: leaving
+   `1.4fr 1fr 1fr 1fr` with three children would have left a dead fourth track
+   and squeezed the brand column for nothing. The 1100px and 900px steps below
+   already read 3 and 2 tracks and are unchanged. */
+body:not(.home) .footer-inner { grid-template-columns: 1.4fr 1fr 1fr; gap: clamp(28px,4vw,48px); max-width: 1220px; margin-bottom: 0; padding-bottom: 56px; border-bottom: 1px solid rgba(217,164,95,.18); }
 body:not(.home) .footer-logo { font-size: 20px; font-weight: 600; letter-spacing: .18em; }
 body:not(.home) .footer-closing { max-width: 320px; margin-top: 24px; color: #f6f0e6; font-family: var(--font-display); font-size: 23px; line-height: 1.4; }
 body:not(.home) .footer-nav h2, body:not(.home) .footer-nav .footer-col-title,
 body:not(.home) .footer-learn h2, body:not(.home) .footer-learn .footer-col-title,
-body:not(.home) .footer-contact h2, body:not(.home) .footer-contact .footer-col-title { color: var(--expedition-gold); font-size: 10.5px; font-weight: 700; letter-spacing: .24em; opacity: 1; margin-bottom: var(--space-4); }
+/* ⭐ 1.19.269 item 5, applied to the same defect one class over. These are the
+   footer's SECTION LABELS and they measured 10.5px — the smallest label on the
+   site after `.woo-card__eyebrow`. Andrew's ruling reads "where a section
+   genuinely needs a label, restyle to an AA-passing token >=12px"; a column of
+   links needs its label, so it is restyled rather than removed.
+   ⚠ REPORTED AS AN EXTENSION, NOT SMUGGLED IN: the ruling names the eyebrow
+     class, and this is `.footer-col-title`. The colour is left as
+     `--expedition-gold` on #12271d, which is the DARK-ground case and already
+     measures 8.27:1 (1.19.266) — it is the light-ground gold that failed AA,
+     and none of it is here. */
+body:not(.home) .footer-contact h2, body:not(.home) .footer-contact .footer-col-title { color: var(--expedition-gold); font-size: var(--text-label); font-weight: 700; letter-spacing: .24em; opacity: 1; margin-bottom: var(--space-4); }
 body:not(.home) .footer-nav a,
 body:not(.home) .footer-learn a,
 body:not(.home) .footer-contact a { color: rgba(214,203,180,.85); font-size: 16px; }

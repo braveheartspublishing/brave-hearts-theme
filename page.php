@@ -59,7 +59,9 @@ while (have_posts()): the_post();
 <?php if (!$bhp_is_checkout_page): ?>
 <header class="interior-hero interior-hero--parchment">
   <div class="container container--content">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Brave Hearts Field Journal', 'brave-hearts'); ?></p>
+    <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, decoration above the page H1:
+            <p class="component-heading__eyebrow"><?php esc_html_e('Brave Hearts Field Journal', 'brave-hearts'); ?></p>
+       The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
     <h1><?php the_title(); ?></h1>
     <span class="interior-hero__coordinate" aria-hidden="true">FIELD NOTE · BHP</span>
   </div>

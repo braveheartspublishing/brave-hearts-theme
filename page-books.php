@@ -47,16 +47,38 @@ get_template_part('template-parts/components/hero', null, [
         'url'   => $book_one_url,
         'label' => __('Start with Book 1', 'brave-hearts'),
     ],
-    'secondary_link' => [
-        'url'   => $shop_url,
-        'label' => __('Shop All Adventure Books', 'brave-hearts'),
-    ],
+    /*
+     * ⭐⭐ 1.19.269 (`CYCLE165-LD-ITERATE-5-SUBTRACTIONS`) — ONE PRIMARY ON
+     *     THIS PAGE. `secondary_link` IS GONE.
+     *
+     * FOUNDER RULING, 2026-08-19, subtraction item 3. The line he answered
+     * "Stage it" to, verbatim: "/books/'s second above-fold CTA ('Shop All'
+     * beside 'Start with Book 1') — one primary."
+     *
+     * ⛔ WHAT WAS HERE, preserved so the movement is visible:
+     *      'secondary_link' => [
+     *          'url'   => $shop_url,                       // home_url('/shop/')
+     *          'label' => __('Shop All Adventure Books', 'brave-hearts'),
+     *      ],
+     *
+     * ⭐ NOTHING BECOMES UNREACHABLE. `/shop/` is still reached from the
+     *    header, from the pruned footer's "The Books" entry, and from the
+     *    adventure grid immediately below this hero — which is what a visitor
+     *    who wanted "shop all" was actually going to scroll to anyway.
+     *    `$shop_url` itself is KEPT: it is still the fallback destination for
+     *    `$book_one_url` two lines above, so it is not an unused variable.
+     *
+     * ⛔ "START WITH BOOK 1" IS UNTOUCHED — same label, same destination, same
+     *    position. The founder kept it by name.
+     */
 ]);
 ?>
 <section id="series-overview" class="books-section books-series-overview section" aria-labelledby="series-overview-title">
   <div class="container books-series-overview__layout">
     <div>
-      <p class="component-heading__eyebrow"><?php esc_html_e('One growing series. A world of discovery.', 'brave-hearts'); ?></p>
+      <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, a slogan; the H2 already names the section:
+              <p class="component-heading__eyebrow"><?php esc_html_e('One growing series. A world of discovery.', 'brave-hearts'); ?></p>
+         The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
       <h2 id="series-overview-title" class="text-section-title"><?php esc_html_e('Stories That Travel Somewhere Real', 'brave-hearts'); ?></h2>
     </div>
     <div class="books-series-overview__content text-lead flow">
@@ -158,7 +180,9 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
 
 <section id="books-final-cta" class="books-final-cta final-cta section" aria-labelledby="books-final-cta-title">
   <div class="container container--content final-cta__inner">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Big Places. Brave Hearts.', 'brave-hearts'); ?></p>
+    <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, the brand line used as decoration above a CTA:
+            <p class="component-heading__eyebrow"><?php esc_html_e('Big Places. Brave Hearts.', 'brave-hearts'); ?></p>
+       The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
     <h2 id="books-final-cta-title" class="text-section-title"><?php esc_html_e('Start the Adventure Today', 'brave-hearts'); ?></h2>
     <p class="text-lead final-cta__text"><?php esc_html_e('Choose the next Charlotte & Henry adventure, bring the books into your classroom, or join the Adventure Club.', 'brave-hearts'); ?></p>
     <div class="final-cta__actions cluster">

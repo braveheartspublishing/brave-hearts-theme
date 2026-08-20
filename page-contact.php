@@ -68,7 +68,9 @@ $contact_paths = apply_filters('bhp_contact_paths', [
 <section id="contact-paths" class="contact-section section" aria-labelledby="contact-paths-title">
   <div class="container">
     <header class="component-heading component-heading--center">
-      <p class="component-heading__eyebrow"><?php esc_html_e('Choose the right path', 'brave-hearts'); ?></p>
+      <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, restates "How Can We Help?":
+              <p class="component-heading__eyebrow"><?php esc_html_e('Choose the right path', 'brave-hearts'); ?></p>
+         The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
       <h2 id="contact-paths-title" class="text-section-title"><?php esc_html_e('How Can We Help?', 'brave-hearts'); ?></h2>
     </header>
     <div class="grid grid--3 contact-path-grid">
@@ -82,7 +84,9 @@ $contact_paths = apply_filters('bhp_contact_paths', [
 <section id="contact-form" class="contact-section contact-form-section section section--muted" aria-labelledby="contact-form-title">
   <div class="container contact-form-section__layout">
     <div class="contact-form-section__intro">
-      <p class="component-heading__eyebrow"><?php esc_html_e('Send a message', 'brave-hearts'); ?></p>
+      <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, restates "Tell Us About Your Next Adventure":
+              <p class="component-heading__eyebrow"><?php esc_html_e('Send a message', 'brave-hearts'); ?></p>
+         The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
       <h2 id="contact-form-title" class="text-section-title"><?php esc_html_e('Tell Us About Your Next Adventure', 'brave-hearts'); ?></h2>
       <p class="text-lead"><?php echo esc_html($form_ready
           ? __('Choose the inquiry type that best fits your question. Read-aloud and school links automatically select the matching path.', 'brave-hearts')
@@ -116,7 +120,9 @@ $contact_paths = apply_filters('bhp_contact_paths', [
 <?php if ($form_ready): ?>
   <section id="direct-contact" class="contact-section contact-direct section section--muted" aria-labelledby="direct-contact-title">
   <div class="container container--content contact-direct__inner">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Direct contact', 'brave-hearts'); ?></p>
+    <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, restates "Prefer Email?":
+            <p class="component-heading__eyebrow"><?php esc_html_e('Direct contact', 'brave-hearts'); ?></p>
+       The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
     <h2 id="direct-contact-title" class="text-section-title"><?php esc_html_e('Prefer Email?', 'brave-hearts'); ?></h2>
     <p class="text-lead"><?php esc_html_e('You can always reach Brave Hearts Publishing directly by email.', 'brave-hearts'); ?></p>
     <?php if ($contact_email): ?>
@@ -129,7 +135,9 @@ $contact_paths = apply_filters('bhp_contact_paths', [
 
 <section id="contact-final-cta" class="contact-final-cta final-cta section" aria-labelledby="contact-final-cta-title">
   <div class="container container--content final-cta__inner">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Continue the adventure', 'brave-hearts'); ?></p>
+    <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, a slogan above a CTA:
+            <p class="component-heading__eyebrow"><?php esc_html_e('Continue the adventure', 'brave-hearts'); ?></p>
+       The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
     <h2 id="contact-final-cta-title" class="text-section-title"><?php esc_html_e('Explore Brave Hearts Publishing', 'brave-hearts'); ?></h2>
     <div class="final-cta__actions cluster">
       <a class="btn btn-primary" href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('Shop the Books', 'brave-hearts'); ?></a>

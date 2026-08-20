@@ -387,9 +387,25 @@ bhp_aes_assert(
 	'§5.1 the three 10.5px footer column labels are no longer <h2> (249 sub-body headings sitewide)',
 	$failures
 );
+/*
+ * ⚠ 1.19.269 — THIS COUNT WAS 3 AND IS NOW 2, AND THE CHANGE IS NOT A
+ *   WEAKENING OF THE ASSERTION.
+ *
+ * The founder's subtraction item 4 of 2026-08-19 pruned the footer to
+ * shop / kit / contact / policies, which removed the whole "Learn" column and
+ * folded "Explore" into "Shop". Two labelled columns remain — Shop and
+ * Connect — and the assertion still checks the same property it always did:
+ * that EVERY footer column label carries `.footer-col-title` rather than being
+ * an <h2>. §5.1 above, which is the assertion that actually protects the
+ * heading-order fix, is UNCHANGED and still names all three original strings.
+ *
+ * The superseded line, preserved so the movement is visible:
+ *     3 === substr_count( $footer, 'class="footer-col-title"' ),
+ *     '§5.2 ...and all three carry the class the stylesheet now targets',
+ */
 bhp_aes_assert(
-	3 === substr_count( $footer, 'class="footer-col-title"' ),
-	'§5.2 ...and all three carry the class the stylesheet now targets',
+	2 === substr_count( $footer, 'class="footer-col-title"' ),
+	'§5.2 ...and both surviving column labels (Shop, Connect) carry the class the stylesheet targets',
 	$failures
 );
 bhp_aes_assert(

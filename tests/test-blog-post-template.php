@@ -155,12 +155,92 @@ bhp_bpt_assert(
 /* ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n=== §2 — THE RAIL: EXACTLY ONCE, AND THE PRICE IS LIVE ===\n";
 
+/*
+ * ⭐⭐ 1.19.269 (`CYCLE165-LD-ITERATE-5-SUBTRACTIONS`) — §2 AND §3 NOW READ THE
+ *     RAIL FROM THE COMPONENT, NOT FROM THE SHIPPED PAGE, BECAUSE THE SHIPPED
+ *     PAGE NO LONGER CARRIES ONE.
+ *
+ * Andrew's subtraction item 1 turned the mid-post rail OFF
+ * (`bhp_blog_rail_enabled()` in `inc/blog-post-template.php`). Two ways to
+ * respond to that in a test suite, and only one of them is honest:
+ *
+ *   ✗ DELETE §2 AND §3. That would throw away the price-parity assertion and
+ *     the provenance assertion — the two things in this file that stop a
+ *     customer being shown a wrong price or a false claim about where a post
+ *     came from — at the exact moment the code they guard stops being exercised
+ *     by the page and starts depending on a switch.
+ *   ✓ KEEP EVERY ASSERTION and point it at the component, with the switch
+ *     forced ON in-process. The rail is proven still correct, so the day Andrew
+ *     reverses the ruling it comes back working rather than rotted.
+ *
+ * ⭐ AND ADD §2.0: the shipped documents must contain ZERO rails. That is the
+ *    assertion that actually proves the founder's ruling took effect, and it is
+ *    measured on the same fetched HTML a visitor receives.
+ *
+ * ⛔ `bhp_blog_rail_html()` is guarded by `bhp_blog_template_active()`, which is
+ *    `is_singular('post')` — false in WP-CLI. The helper below sets up a real
+ *    `WP_Query` for the post and restores the globals afterwards. That is the
+ *    pattern `tests/test-wave1-capture.php` already uses for its four live gate
+ *    checks (see its §4a/§4b), not a new invention, and `$wp_the_query` is
+ *    deliberately NOT reassigned so nothing here can look like the main query.
+ *    Nothing is written: no post, option, product or WooCommerce record.
+ */
+function bhp_bpt_rail_render( $p ) {
+	if ( ! $p instanceof WP_Post ) {
+		return '';
+	}
+	$saved_query = $GLOBALS['wp_query'];
+	$saved_post  = $GLOBALS['post'] ?? null;
+
+	$GLOBALS['wp_query'] = new WP_Query( array( 'p' => $p->ID, 'post_type' => 'post' ) ); // phpcs:ignore
+	if ( $GLOBALS['wp_query']->have_posts() ) {
+		$GLOBALS['wp_query']->the_post();
+	}
+
+	add_filter( 'bhp_blog_rail_enabled', '__return_true' );
+	$html = bhp_blog_rail_html( $p );
+	remove_filter( 'bhp_blog_rail_enabled', '__return_true' );
+
+	wp_reset_postdata();
+	$GLOBALS['wp_query'] = $saved_query; // phpcs:ignore
+	$GLOBALS['post']     = $saved_post;  // phpcs:ignore
+	return (string) $html;
+}
+
+$shipped_rails = array();
+foreach ( $docs as $slug => $html ) {
+	$n = preg_match_all( '/<aside class="bhp-book-rail/', $html );
+	if ( 0 !== $n ) {
+		$shipped_rails[] = "{$slug}({$n})";
+	}
+}
+bhp_bpt_assert(
+	empty( $shipped_rails ),
+	sprintf(
+		'§2.0 (1.19.269, founder item 1) the mid-post rail is rendered on NONE of the %d published posts%s',
+		count( $docs ),
+		$shipped_rails ? ' (still present on: ' . implode( ', ', $shipped_rails ) . ')' : ''
+	),
+	$failures
+);
+bhp_bpt_assert(
+	function_exists( 'bhp_blog_rail_enabled' ) && false === bhp_blog_rail_enabled(),
+	'§2.0b the switch is OFF by default and is a real filter, not a deleted call site',
+	$failures
+);
+
+/* Everything from here to the end of §3 renders the rail through the switch. */
+$rail_docs = array();
+foreach ( array_keys( $docs ) as $slug ) {
+	$rail_docs[ $slug ] = bhp_bpt_rail_render( get_page_by_path( $slug, OBJECT, 'post' ) );
+}
+
 $rail_counts   = array();
 $rail_missing  = array();
 $price_mismatch = array();
 $kinds         = array( 'book' => 0, 'series' => 0 );
 
-foreach ( $docs as $slug => $html ) {
+foreach ( $rail_docs as $slug => $html ) {
 	$n                   = preg_match_all( '/<aside class="bhp-book-rail/', $html );
 	$rail_counts[ $slug ] = $n;
 	if ( 1 !== $n ) {
@@ -186,7 +266,7 @@ foreach ( $docs as $slug => $html ) {
 
 bhp_bpt_assert(
 	empty( $rail_missing ),
-	sprintf( '§2.1 the rail appears EXACTLY ONCE on every one of the %d posts%s', count( $docs ), $rail_missing ? ' (wrong count: ' . implode( ', ', $rail_missing ) . ')' : '' ),
+	sprintf( '§2.1 with the switch on, the rail renders EXACTLY ONCE for every one of the %d posts%s', count( $rail_docs ), $rail_missing ? ' (wrong count: ' . implode( ', ', $rail_missing ) . ')' : '' ),
 	$failures
 );
 bhp_bpt_assert(
@@ -203,7 +283,7 @@ echo sprintf( "      (rail kinds: book=%d, series=%d)\n", $kinds['book'] ?? 0, $
 
 // The rail carries a real cover, a real age band, and a CTA big enough to tap.
 $sample_slug  = array_key_first( $docs );
-$sample_block = bhp_bpt_rail_block( $docs[ $sample_slug ] );
+$sample_block = bhp_bpt_rail_block( $rail_docs[ $sample_slug ] );
 bhp_bpt_assert( false !== strpos( $sample_block, 'bhp-book-rail__img' ), '§2.4 the rail renders a real attachment image, not a placeholder', $failures );
 bhp_bpt_assert(
 	false !== strpos( $sample_block, 'Ages 6' ) && false === strpos( $sample_block, 'Ages 5' ),
@@ -220,7 +300,7 @@ bhp_bpt_assert(
 echo "\n=== §3 — THE PROVENANCE CLAIM IS TRUE WHEREVER IT IS MADE ===\n";
 
 $false_provenance = array();
-foreach ( $docs as $slug => $html ) {
+foreach ( $rail_docs as $slug => $html ) {
 	$block = bhp_bpt_rail_block( $html );
 	if ( false === strpos( $block, 'data-bhp-rail-kind="book"' ) ) {
 		continue;
@@ -245,7 +325,7 @@ bhp_bpt_assert(
 );
 // The series rail must never wear the provenance label.
 $series_mislabel = array();
-foreach ( $docs as $slug => $html ) {
+foreach ( $rail_docs as $slug => $html ) {
 	$block = bhp_bpt_rail_block( $html );
 	if ( false !== strpos( $block, 'data-bhp-rail-kind="series"' ) && false !== stripos( $block, 'came from' ) ) {
 		$series_mislabel[] = $slug;
@@ -401,7 +481,10 @@ echo "\n=== §6 — THE COPY GATE ===\n";
 $chrome = '';
 $decks  = array();
 foreach ( $docs as $slug => $html ) {
-	$chrome .= bhp_bpt_rail_block( $html ) . ' ';
+	/* 1.19.269: the rail is no longer in the served document (founder item 1),
+	   so its copy is scored from the switched-on render instead. Dropping it
+	   from the gate would stop policing copy that one filter can bring back. */
+	$chrome .= bhp_bpt_rail_block( $rail_docs[ $slug ] ?? '' ) . ' ';
 	if ( preg_match( '/<aside id="[^"]*" class="bhp-post-capture".*?<\/aside>/s', $html, $m ) ) {
 		$chrome .= $m[0] . ' ';
 	}

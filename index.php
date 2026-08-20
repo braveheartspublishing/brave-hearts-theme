@@ -6,7 +6,9 @@ get_header(); ?>
 
 <header class="interior-hero interior-hero--parchment archive-hero">
   <div class="container container--content">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Field Notes from the Real World', 'brave-hearts'); ?></p>
+    <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, decoration above the archive H1:
+            <p class="component-heading__eyebrow"><?php esc_html_e('Field Notes from the Real World', 'brave-hearts'); ?></p>
+       The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
     <h1><?php
       if (is_home()) { echo esc_html__('Field Notes', 'brave-hearts'); }
       elseif (is_archive()) { the_archive_title(); }

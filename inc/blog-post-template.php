@@ -629,6 +629,45 @@ function bhp_blog_rail_html( $post = null ) {
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
+ * ⭐⭐ 1.19.269 (`CYCLE165-LD-ITERATE-5-SUBTRACTIONS`) — IS THE MID-POST RAIL
+ *     RENDERED AT ALL? IT IS NOT, AND THAT IS A FOUNDER RULING.
+ *
+ * ANDREW SIGNORE, 2026-08-19, subtraction item 1. The founder-facing line he
+ * answered "Stage it" to, quoted from
+ * `Business OS\ANDREW-REVIEW\2026-08-19\REPORT-2026-08-19-LEARN-REVIEW-ITERATE.md`
+ * §4 item 1, verbatim:
+ *
+ *   "Two of the three capture forms on every blog post — posts now carry rail +
+ *    inline capture + footer capture + popup = 4 asks. Keep the end-of-post
+ *    capture + popup; drop the footer capture and the mid-post duplicate on
+ *    posts."
+ *
+ * ⚠ THE IDENTIFICATION IS AN INTERPRETATION AND IS LABELLED AS ONE. The brief
+ *   says "the mid-post capture". MEASURED on staging2 1.19.267 in a real
+ *   browser (innerWidth 1280, four posts fetched and parsed), the asks on a
+ *   blog post are exactly: this rail at scrollY 822 INSIDE `.post-content` ·
+ *   the end-of-post capture at 2760 · the quiz launcher at 4550 · the footer
+ *   capture at 4762 · the popup. THE RAIL IS THE ONLY ONE THAT IS MID-POST,
+ *   and the source line above names the removal set as "rail + ... footer
+ *   capture". No second inline capture exists to be the "duplicate".
+ *   ⛔ It is a BOOK BRIDGE, not an email capture. That mismatch between the
+ *      word used and the thing that exists is reported to Gandalf as a finding
+ *      rather than resolved here, and the switch below is why one line
+ *      reverses it if Andrew meant something else.
+ *
+ * ⛔ NOTHING IS DELETED. `bhp_blog_rail_facts()`, `_eyebrow()`, `_cta()`,
+ *    `_html()`, `_offset()`, `_min_paragraphs()`, the `book-rail` template part
+ *    and the `.bhp-book-rail` stylesheet all remain, unchanged and still
+ *    covered by `tests/test-blog-post-template.php`. Only the RENDER is off.
+ *    `add_filter( 'bhp_blog_rail_enabled', '__return_true' )` restores it.
+ *
+ * @return bool
+ */
+function bhp_blog_rail_enabled() {
+	return (bool) apply_filters( 'bhp_blog_rail_enabled', false );
+}
+
+/**
  * How many closing paragraphs must precede the rail at minimum.
  *
  * @return int
@@ -702,6 +741,9 @@ function bhp_blog_rail_offset( $html ) {
 function bhp_blog_inject_rail( $content ) {
 	static $done = false;
 
+	if ( ! bhp_blog_rail_enabled() ) {
+		return $content;                                  // 1.19.269, founder item 1
+	}
 	if ( $done ) {
 		return $content;                                  // once per request
 	}

@@ -110,8 +110,88 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
     <nav class="footer-nav" aria-label="<?php esc_attr_e('Footer navigation', 'brave-hearts'); ?>">
       <?php
       /*
+       * ⭐⭐ 1.19.269 (2026-08-19, `CYCLE165-LD-ITERATE-5-SUBTRACTIONS`) — THE
+       *     FOOTER IS PRUNED TO shop / kit / contact / policies.
+       *
+       * FOUNDER RULING, 2026-08-19, subtraction item 4: prune the ~25-link
+       * footer to "shop / kit / contact / policies (+ legally required bits)".
+       *
+       * WHAT THAT LEAVES, and each one is here because the ruling names it:
+       *   · SHOP      -> /books/ and /complete-collection/  (this column)
+       *   · KIT       -> /reluctant-reader-adventure-kit/   (this column)
+       *   · CONTACT   -> /contact/ + the mailto              (this column)
+       *   · POLICIES  -> privacy · shipping · refunds · terms (footer-bottom,
+       *                  UNCHANGED by this release)
+       *   · LEGALLY REQUIRED -> the Amazon Associates disclosure above, and
+       *                  the copyright line. Neither is touched.
+       *
+       * ⛔ WHAT WENT, listed here rather than only in the report, because a
+       *    future reader of this file needs to know these were removed
+       *    deliberately and by whom:
+       *      · the `footer` nav-menu location + `bhp_footer_fallback_menu()`'s
+       *        NINE links (Books · Expedition Guides · Family Resources ·
+       *        About · Blog · Contact · Privacy Policy · Terms · Adventure
+       *        Club). Privacy and Terms survive in `footer-bottom`; Books and
+       *        Adventure Club survive as Shop and Kit here.
+       *      · the whole "Learn" column — Learning Hub · For Teachers ·
+       *        For Families (3 links).
+       *      · the whole `.footer-audience-cluster` router — Helping a
+       *        reluctant reader? · Shopping for a meaningful gift? ·
+       *        Teaching or homeschooling? · Planning a reading program?
+       *        (4 links) — which is ALSO founder item 2, below.
+       *      · the "Connect" column's prose note.
+       *
+       * ⛔ THE FALLBACK FUNCTION IS NOT DELETED. `bhp_footer_fallback_menu()`
+       *    stays in `functions.php`, now unreferenced by this template, so the
+       *    prune is one `wp_nav_menu()` call away from being reverted and so
+       *    no other caller can break. Its own test coverage still runs.
+       *
+       * ⭐ ITEM 2 — THE AUDIENCE ROUTER IS GONE, AND GONE EVERYWHERE.
+       *    Andrew ruled it off the collection page ("it exits buyers at the
+       *    decision point; the audience pages are in the nav"). The router was
+       *    never collection-scoped — it rendered in this footer on all 83
+       *    pages — and item 4's prune list does not contain it, so removing it
+       *    sitewide is what BOTH rulings require. 1.19.254's R-9 reorder,
+       *    which moved the quiz and the capture BELOW the router on the
+       *    collection page, is deliberately LEFT INTACT below: with the router
+       *    gone it still does the one thing R-9 exists to do — keep those two
+       *    conversions after the page's own closing CTA.
+       */
+      ?>
+      <p class="footer-col-title"><?php esc_html_e('Shop', 'brave-hearts'); ?></p>
+      <ul>
+        <li><a href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('The Books', 'brave-hearts'); ?></a></li>
+        <li><a href="<?php echo esc_url(home_url('/complete-collection/')); ?>"><?php esc_html_e('The Complete Collection', 'brave-hearts'); ?></a></li>
+        <li><a href="<?php echo esc_url(home_url('/reluctant-reader-adventure-kit/')); ?>"><?php esc_html_e('Free Reluctant Reader Kit', 'brave-hearts'); ?></a></li>
+        <li><a href="<?php echo esc_url(home_url('/contact/')); ?>"><?php esc_html_e('Contact', 'brave-hearts'); ?></a></li>
+      </ul>
+      <?php
+      /*
+       * ⛔ REMOVED, PRESERVED VERBATIM SO THE MOVEMENT IS VISIBLE AND IS NOT
+       *    RE-DERIVED. This is what stood here at 1.19.268:
+       *
+       *      a <p> with the footer-col-title class reading "Explore", then:
+       *      wp_nav_menu([
+       *          'theme_location' => 'footer',
+       *          'menu_class'     => '',
+       *          'container'      => false,
+       *          'fallback_cb'    => 'bhp_footer_fallback_menu',
+       *      ]);
+       *
+       * ⚠ CONSEQUENCE STATED RATHER THAN DISCOVERED LATER: the `footer` MENU
+       *   LOCATION IS NO LONGER RENDERED. It is still REGISTERED in
+       *   `functions.php`, so nothing in the admin breaks and no menu is
+       *   deleted, but a link added to that menu in wp-admin will no longer
+       *   appear on the site. That is a real editorial change and it is
+       *   Andrew's to reverse; it is reported, not buried.
+       *
+       * ─────────────────────────────────────────────────────────────────────
        * ⭐⭐ 1.19.266 (2026-08-19, CYCLE165-LD-ITERATE-2-AESTHETICS-TOKENS) —
        *     THESE THREE COLUMN LABELS WERE <h2> AND ARE NOW <p>.
+       *     RETAINED VERBATIM. Two of the three columns it describes are
+       *     removed by this release, but `.footer-col-title` is still the
+       *     element used above and in "Connect", and the reasoning below is
+       *     still the reasoning for it being a <p>.
        *
        * WHY. Measured on staging 1.19.264 (headless Chrome, innerWidth
        * asserted 390): "Explore", "Learn" and "Connect" render at 10.5px
@@ -142,53 +222,45 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
        * ⛔ NO COPY CHANGED. Three element names and one ARIA relationship.
        */
       ?>
-      <p class="footer-col-title"><?php esc_html_e('Explore', 'brave-hearts'); ?></p>
-      <?php
-      wp_nav_menu([
-          'theme_location' => 'footer',
-          'menu_class'     => '',
-          'container'      => false,
-          'fallback_cb'    => 'bhp_footer_fallback_menu',
-      ]);
-      ?>
-    </nav>
-
-    <nav class="footer-learn" aria-label="<?php esc_attr_e('Learning navigation', 'brave-hearts'); ?>">
-      <p class="footer-col-title"><?php esc_html_e('Learn', 'brave-hearts'); ?></p>
-      <ul>
-        <li><a href="<?php echo esc_url(home_url('/blog/')); ?>"><?php esc_html_e('Learning Hub', 'brave-hearts'); ?></a></li>
-        <li><a href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('For Teachers', 'brave-hearts'); ?></a></li>
-        <li><a href="<?php echo esc_url(home_url('/teachers/#family-resources')); ?>"><?php esc_html_e('For Families', 'brave-hearts'); ?></a></li>
-      </ul>
     </nav>
 
     <div class="footer-contact" role="group" aria-labelledby="footer-connect-title">
       <p class="footer-col-title" id="footer-connect-title"><?php esc_html_e('Connect', 'brave-hearts'); ?></p>
       <p><a href="mailto:andrew@braveheartspublishing.com">andrew@braveheartspublishing.com</a></p>
-      <p><a href="<?php echo esc_url(home_url('/reluctant-reader-adventure-kit/')); ?>"><?php esc_html_e('Join the Expedition', 'brave-hearts'); ?></a></p>
-      <p class="footer-contact__note">Classroom read alouds, school visits, bulk orders, media inquiries, and upcoming releases.</p>
+      <?php
+      /*
+       * 1.19.269 item 4. Two lines left this column and one stayed.
+       *
+       * ⛔ GONE: the second "Join the Expedition" link (the Kit is already the
+       *    third entry in Shop above — this was the same destination twice in
+       *    one footer), and the prose note "Classroom read alouds, school
+       *    visits, bulk orders, media inquiries, and upcoming releases."
+       *    which is a list of reasons to write, not a link, on a footer the
+       *    ruling reduces to links.
+       *
+       * ⭐ KEPT: the mailto. It IS "contact" in the ruling's four-word list,
+       *    and it is the only route on the site that reaches Andrew without a
+       *    form.
+       *
+       * ⛔ THE `footer-3` WIDGET AREA IS UNTOUCHED. It is empty today, but it
+       *    is site OWNER content, not theme content, and silently dropping a
+       *    widget area is not a link prune.
+       */
+      ?>
       <?php if (is_active_sidebar('footer-3')): ?>
         <?php dynamic_sidebar('footer-3'); ?>
       <?php endif; ?>
     </div>
   </div>
 
-  <nav class="footer-audience-cluster" aria-label="<?php esc_attr_e('Resources by reader type', 'brave-hearts'); ?>">
-    <p class="footer-audience-cluster__heading"><?php esc_html_e('Resources for Every Reader', 'brave-hearts'); ?></p>
-    <ul>
-      <li><a href="<?php echo esc_url(home_url('/reluctant-reader-adventure-kit/')); ?>"><?php esc_html_e('Helping a reluctant reader?', 'brave-hearts'); ?></a></li>
-      <li><a href="<?php echo esc_url(home_url('/gift-buyers-guide/')); ?>"><?php esc_html_e('Shopping for a meaningful gift?', 'brave-hearts'); ?></a></li>
-      <li><a href="<?php echo esc_url(home_url('/educators-adventure-learning-toolkit/')); ?>"><?php esc_html_e('Teaching or homeschooling?', 'brave-hearts'); ?></a></li>
-      <li><a href="<?php echo esc_url(home_url('/organizations-community-reading-kit/')); ?>"><?php esc_html_e('Planning a reading program?', 'brave-hearts'); ?></a></li>
-    </ul>
-  </nav>
-
   <?php
   /*
-   * 1.19.254 R-9 — the deferred pair, in the order the specification sets:
-   * audience router (immediately above) -> quiz launcher -> email capture.
-   * This branch runs on the collection page ONLY; see the block at the top
-   * of this file for why, and for what is deliberately NOT changed.
+   * 1.19.254 R-9, KEPT — the deferred pair on the collection page only:
+   * quiz launcher -> email capture, still after the page's closing CTA.
+   * 1.19.269 removed the `.footer-audience-cluster` router that used to sit
+   * immediately above this block (founder item 2); the deferral itself was
+   * not part of that ruling and is unchanged. See the block at the top of
+   * this file for the original reasoning.
    */
   if ($bhp_defer_conversions) {
       if ($bhp_show_quiz_cta) {
