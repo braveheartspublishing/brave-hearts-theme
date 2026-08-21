@@ -4458,7 +4458,42 @@ body:not(.home) .final-cta .text-lead { color: #f8f3e9; }
       `ul.products li.product` too.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── A · the flex chain, continued through the two bundle wrappers ────────── */
+/* ── A · TWO TOKENS, DECLARED ONCE ON THE GRID ────────────────────────────────
+   ⛔⛔ THESE EXIST BECAUSE THE FIRST VERSION OF THIS BLOCK WAS WRONG IN A WAY
+      ONLY A MEASUREMENT COULD SHOW, AND THE MEASUREMENT IS RECORDED SO THE
+      MISTAKE IS NOT REPEATED. It set `width: 100%` on the button and a fixed
+      `1.5rem` gutter, and read as correct. In a real browser at an asserted
+      innerWidth it produced THREE different widths and an OVERFLOW:
+
+        390   single 170px   pair 134px   collection 146px   (card content 170)
+        1440  single 382px   pair 334px   collection 294px   (card content 382)
+
+      ⭐ THE CAUSE, read off `getComputedStyle()` rather than guessed: `width:
+      100%` resolves against the CONTAINING BLOCK and then MARGINS ARE ADDED
+      OUTSIDE IT, so the single card's anchor was 9px wider than the card at 390
+      and 23px wider at 1440 — clipped, not visible, by `li.product`'s
+      `overflow: hidden`. And the three CTAs sit inside three DIFFERENT boxes:
+      the card itself, `.bhp-offer` (8px inline padding at 390), and
+      `.bhp-shop-collection-card` (2px gold border + 18px inline padding).
+
+   ⭐ SO THE INSET IS A TOKEN AND EACH WRAPPER SUBTRACTS ITS OWN BOX FROM IT.
+      Every CTA then resolves to the SAME width — the card's content width minus
+      twice the gutter — and the arithmetic is visible on the page rather than
+      hidden in three hand-tuned numbers.
+
+   ⛔ THE COLLECTION CARD'S GOLD "BEST VALUE" FRAME IS NOT FLATTENED, and that
+      is deliberate. It is a design element that predates this release, and the
+      cheap way to equalise the widths would have been to delete it. Its 2px
+      border and its inline padding are SUBTRACTED instead, so the frame renders
+      exactly as it did and its CTA still lands on the shared width. */
+body.woocommerce-shop .woo-expedition-shell ul.products {
+  /* the inset between a CTA and its CARD, identical on all six */
+  --bhp-card-gutter: 1.5rem;
+  /* the collection frame's own inline padding, preserved at today's value */
+  --bhp-collection-frame-pad: 18px;
+}
+
+/* ── B · the flex chain, continued through the two bundle wrappers ────────── */
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card,
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
   display: flex;
@@ -4466,10 +4501,11 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .
   flex-direction: column;
 }
 
-/* ── B · THE BUTTON BOX — byte-identical on all six ───────────────────────────
-   ⛔ `width: 100%` + `box-sizing: border-box`, never a fixed px width: the card
-      is a grid track and its width is the grid's to decide. A px width would be
-      right at one viewport and wrong at every other.
+/* ── C · THE BUTTON BOX — identical on all six ────────────────────────────────
+   ⛔ NO WIDTH IS SET HERE. The WRAPPER decides the width (block D) and the
+      button fills whatever it is given. That separation is the fix: a button
+      that sets its own `width: 100%` AND carries margins can never fit its
+      parent, whatever the parent is.
    ⭐ `min-height: 48px` is the site's existing primary-control floor — the same
       figure `test-product-template.php` already asserts for the product page's
       ADD TO CART, and clear of the 44px touch-target minimum. */
@@ -4478,7 +4514,6 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  width: 100%;
   min-height: 48px;
   margin: 0;
   padding: 0.75rem 1rem;
@@ -4494,19 +4529,45 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc
      `overflow: hidden` — the founder's own desktop screenshot. */
   white-space: normal;
 }
-
-/* ── C · the CTA's wrapper, pinned to the card floor ──────────────────────────
-   ⭐ `margin: auto <gutter> <gutter>` is `margin-top: auto` plus the card's own
-      gutter in one declaration. The chapter and colouring cards pin the anchor
-      itself; the two bundle cards pin the FORM that wraps it, because a form is
-      what a bundle CTA has to be. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc,
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell),
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
-  margin: auto 1.5rem 1.5rem;
+/* A button inside a form fills that form; the form is the wrapper. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.product form > button.bhp-shop-atc {
+  width: 100%;
 }
 
-/* ── D · what now sits ABOVE the CTA ──────────────────────────────────────────
+/* ── D · THE WRAPPER — one width, pinned to the card floor ────────────────────
+   ⭐ `margin: auto <inset> <inset>` is `margin-top: auto` (the bottom pin) plus
+      that card kind's inset, in one declaration.
+   ⛔ THE ANCHOR TAKES `align-self: stretch` AND `width: auto`, NOT `width:
+      100%` — on a flex item, stretch sizes the box to the container MINUS its
+      margins, which is exactly the arithmetic `width: 100%` gets wrong. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc {
+  align-self: stretch;
+  width: auto;
+  margin: auto var(--bhp-card-gutter) var(--bhp-card-gutter);
+}
+/* The pair card's wrapper adds no box of its own, so the gutter passes through. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+  padding-inline: 0;
+  padding-bottom: 0;
+}
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
+  margin: auto var(--bhp-card-gutter) var(--bhp-card-gutter);
+}
+/* ⭐ The collection frame keeps its look and SUBTRACTS ITSELF: its 2px border
+      and its inline padding come off the gutter, so the CTA inside it lands on
+      the same width and the same baseline as the five beside it. Its bottom
+      padding goes to 0 because the CTA is now the frame's last child and is
+      carrying the whole inset itself — two bottom insets stacked is what put
+      this card's button 6px above its neighbour's. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
+  padding-inline: var(--bhp-collection-frame-pad);
+  padding-bottom: 0;
+}
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell) {
+  margin: auto calc(var(--bhp-card-gutter) - 2px - var(--bhp-collection-frame-pad)) calc(var(--bhp-card-gutter) - 2px);
+}
+
+/* ── E · what now sits ABOVE the CTA ──────────────────────────────────────────
    ⛔ NOTHING WAS REMOVED. The saving line and the hardcover swap are still
       rendered, still recomputed live, still reachable by keyboard — they moved
       above the CTA in the DOM (see `bhp_offer_render_module()` and
@@ -4515,9 +4576,11 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item f
       have left focus order behind, which is an accessibility defect on a
       control a keyboard reaches. */
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell,
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell {
+  margin: 0 var(--bhp-card-gutter) 0.5rem;
+}
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
-  margin: 0 1.5rem 0.5rem;
+  margin: 0 calc(var(--bhp-card-gutter) - 2px - var(--bhp-collection-frame-pad)) 0.5rem;
 }
 
 .woocommerce span.onsale { top: 1rem; right: 1rem; left: auto; min-width: 0; min-height: 0; padding: .45rem .7rem; border-radius: 0; background: var(--expedition-gold); color: var(--expedition-navy); font: 700 .65rem/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
@@ -4851,8 +4914,16 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
         padding, so it is pulled back out to the card edge — otherwise the
         picture paints small inside a padded box while its neighbour fills the
         tile, and the two read as different components. */
+  /* ⛔ 1.19.286 — `padding-bottom` MOVED FROM 14px TO 0, and the shorthand was
+     the reason it had to. The superseded declaration read `padding: 0 0 14px`.
+     A shorthand RESETS every side, so it was undoing block D's
+     `padding-bottom: 0` at this width only — and that 14px, stacked under the
+     CTA's own 10px inset, is exactly what put this card's button 6px above its
+     neighbour's at 390 (measured: bottoms 1890 vs 1896). ⭐ The inline value is
+     unchanged at 0 and now travels as a token so the CTA can subtract it. */
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
-    padding: 0 0 14px;
+    padding-block-start: 0;
+    padding-bottom: 0;
     gap: 6px;
   }
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__composite {
@@ -4861,8 +4932,18 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card__price {
     font-size: 1rem;
   }
+  /* ⛔ 1.19.286 — the same shorthand-reset correction as the card above. The
+     superseded declaration read `padding: 0 8px 10px`. Its 8px inline padding
+     is what made the pair card's CTA 134px wide inside a 172px card while its
+     neighbour's was 170px (measured in a real browser at an asserted
+     innerWidth), and its 10px bottom padding stacked under the CTA's own inset.
+     ⭐ NOTHING LOSES ITS 8px INSET: the price line takes it from
+     `.bhp-shop-from-price { padding-inline: 8px }` in block 2 above, and the
+     saving and the hardcover swap take the gutter from block E. */
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
-    padding: 0 8px 10px;
+    padding-block-start: 0;
+    padding-inline: 0;
+    padding-bottom: 0;
   }
   /* ⛔⛔ SUPERSEDED BY BLOCK 7 BELOW — 1.19.286, carrier items 210 + 211. The
      1.19.284 rule is preserved here rather than deleted, because it is the
@@ -4902,6 +4983,19 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
      ⛔ 48px SURVIVES THE SHRINK, DELIBERATELY. It is the touch-target floor and
         this is the touch viewport; shrinking the type is a legitimate response
         to 172px, shrinking the target is not. */
+  /* ⭐⭐ THE TWO TOKENS TAKE THEIR 172px VALUES, AND THAT IS THE WHOLE MOBILE
+     ADJUSTMENT TO THE GEOMETRY. Every selector in block D above reads them, so
+     the widths and the baseline are re-derived here rather than re-specified.
+     ⛔ `--bhp-collection-frame-pad: 0` is not a change — it is TODAY'S value at
+     this width (the 2-up block above already sets the frame to `padding: 0 0
+     14px`), written as a token so the CTA's arithmetic can subtract it. Keeping
+     it at 0 is also what leaves the collection composite at the card edge, which
+     block 6 above is explicitly there to protect. */
+  body.woocommerce-shop .woo-expedition-shell ul.products {
+    --bhp-card-gutter: 10px;
+    --bhp-collection-frame-pad: 0px;
+  }
+
   body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc {
     /* ⛔ `margin: 0` IS RESTATED HERE AND IT IS NOT REDUNDANT. The 2-up block's
        own `li.product .button { margin: 10px }` (block 2 above) matches these
@@ -4915,15 +5009,17 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
     font-size: 0.72rem;
     letter-spacing: 0.04em;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell),
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
-    margin: auto 10px 10px;
+  /* ⛔ The 2-up block's `li.product .button { align-self: stretch }` and the
+     desktop rule's `align-self: flex-start` both match these controls. The
+     anchor's stretch is restated at element specificity so neither can win. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc {
+    align-self: stretch;
+    width: auto;
   }
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell,
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
-    margin: 0 10px 4px;
+    margin-bottom: 4px;
   }
 }
 

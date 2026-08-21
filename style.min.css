@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: d9c070486ce618a2866c605dee9f7124
+    source-md5: 6f1abed5db17f4561643d3e4ef321b84
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -3463,6 +3463,10 @@ body:not(.home) .final-cta .text-lead { color: #f8f3e9; }
 .woocommerce ul.products li.product .woocommerce-loop-product__title { padding: 0 1.5rem; color: var(--expedition-navy); font-size: 1.65rem; font-weight: 500; }
 .woocommerce ul.products li.product .price { padding: .5rem 1.5rem 1rem; color: var(--expedition-forest); font-family: var(--font-ui); font-size: 1rem; }
 .woocommerce ul.products li.product .button { align-self: flex-start; margin: 0 1.5rem 1.5rem; background: var(--expedition-forest) !important; color: white !important; }
+body.woocommerce-shop .woo-expedition-shell ul.products {
+--bhp-card-gutter: 1.5rem;
+--bhp-collection-frame-pad: 18px;
+}
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card,
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
   display: flex;
@@ -3474,7 +3478,6 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  width: 100%;
   min-height: 48px;
   margin: 0;
   padding: 0.75rem 1rem;
@@ -3487,15 +3490,34 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc
   text-transform: uppercase;
 white-space: normal;
 }
-body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc,
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell),
+body.woocommerce-shop .woo-expedition-shell ul.products li.product form > button.bhp-shop-atc {
+  width: 100%;
+}
+body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc {
+  align-self: stretch;
+  width: auto;
+  margin: auto var(--bhp-card-gutter) var(--bhp-card-gutter);
+}
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+  padding-inline: 0;
+  padding-bottom: 0;
+}
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
-  margin: auto 1.5rem 1.5rem;
+  margin: auto var(--bhp-card-gutter) var(--bhp-card-gutter);
+}
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
+  padding-inline: var(--bhp-collection-frame-pad);
+  padding-bottom: 0;
+}
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell) {
+  margin: auto calc(var(--bhp-card-gutter) - 2px - var(--bhp-collection-frame-pad)) calc(var(--bhp-card-gutter) - 2px);
 }
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell,
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell {
+  margin: 0 var(--bhp-card-gutter) 0.5rem;
+}
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
-  margin: 0 1.5rem 0.5rem;
+  margin: 0 calc(var(--bhp-card-gutter) - 2px - var(--bhp-collection-frame-pad)) 0.5rem;
 }
 .woocommerce span.onsale { top: 1rem; right: 1rem; left: auto; min-width: 0; min-height: 0; padding: .45rem .7rem; border-radius: 0; background: var(--expedition-gold); color: var(--expedition-navy); font: 700 .65rem/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
 .woocommerce div.product { display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,.85fr); gap: clamp(3rem,7vw,7rem); }
@@ -3634,7 +3656,8 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product:has(.bhp-shop
     display: none;
   }
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
-    padding: 0 0 14px;
+    padding-block-start: 0;
+    padding-bottom: 0;
     gap: 6px;
   }
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__composite {
@@ -3643,12 +3666,18 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-i
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card__price {
     font-size: 1rem;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
-    padding: 0 8px 10px;
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+    padding-block-start: 0;
+    padding-inline: 0;
+    padding-bottom: 0;
   }
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__upsell {
     font-size: 0.72rem;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products {
+    --bhp-card-gutter: 10px;
+    --bhp-collection-frame-pad: 0px;
   }
 body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc {
 margin: 0;
@@ -3656,15 +3685,14 @@ margin: 0;
     font-size: 0.72rem;
     letter-spacing: 0.04em;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell),
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
-    margin: auto 10px 10px;
+body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc {
+    align-self: stretch;
+    width: auto;
   }
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell,
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
-    margin: 0 10px 4px;
+    margin-bottom: 4px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
