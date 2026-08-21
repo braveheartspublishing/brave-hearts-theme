@@ -234,15 +234,91 @@ smg_assert(
 	'5.3 ⛔ it does NOT blanket-kill wp_mail — the funnel and Mailchimp QA paths keep working'
 );
 
-/*
- * ⭐ THE FILTERS ARE REGISTERED THROUGH WOOCOMMERCE'S OWN MECHANISM, on
- *    `woocommerce_email_init`, so a site without WooCommerce runs none of this.
- */
 smg_assert(
-	false !== strpos( $smg_src, "add_action( 'woocommerce_email_init'" )
-	&& false !== strpos( $smg_src, "woocommerce_email_enabled_" ),
+	false !== strpos( $smg_src, 'woocommerce_email_enabled_' ),
 	'5.4 suppression uses WooCommerce\'s own woocommerce_email_enabled_{id} filter'
 );
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * §5b · ⛔⛔ THE FILTERS ARE ACTUALLY REGISTERED — THE ASSERTION THAT WAS
+ *           MISSING, AND ITS ABSENCE LET A NO-OP GUARD LOOK CORRECT
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ⭐ THE DEFECT: the guard was first hung on `woocommerce_email_init`, which
+ *    THIS WOOCOMMERCE NEVER FIRES (`did_action()` returned 0 before and after
+ *    `WC()->mailer()`). ⛔ So not one filter was ever attached — while every
+ *    assertion in §1–§5 above still passed, because they test the DECISION and
+ *    the decision was always right.
+ *
+ * ⛔ FOUND BY TRIGGERING REAL ORDER EMAILS ON STAGING BEHIND AN OUTBOUND
+ *    BLOCK, not by reading this file. WooCommerce attempted FOUR sends, two of
+ *    them addressed to Andrew.
+ *
+ * ⭐ SO: ASSERT THE WIRING, NOT ONLY THE LOGIC. A guard that decides correctly
+ *    and is never asked is worth exactly nothing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+echo "\n--- §5b the wiring, not just the logic ---\n";
+
+$smg_unregistered = array();
+foreach ( $smg_ids as $smg_id ) {
+	if ( false === has_filter( 'woocommerce_email_enabled_' . $smg_id, 'bhp_staging_mail_guard_disable' ) ) {
+		$smg_unregistered[] = $smg_id;
+	}
+}
+smg_assert(
+	empty( $smg_unregistered ),
+	sprintf(
+		'5b.1 ⛔⛔ EVERY suppressed id has its filter ACTUALLY ATTACHED (%d/%d; missing: %s)',
+		count( $smg_ids ) - count( $smg_unregistered ),
+		count( $smg_ids ),
+		$smg_unregistered ? implode( ', ', $smg_unregistered ) : 'none'
+	)
+);
+
+/*
+ * ⭐⭐ AND THE WHOLE PATH, END TO END: ask WooCommerce's own email object the
+ *     question it asks itself before building a message. ⛔ This is the
+ *     assertion that would have caught the no-op on the first run.
+ */
+if ( function_exists( 'WC' ) && method_exists( WC(), 'mailer' ) ) {
+	$smg_saved2 = isset( $_SERVER['HTTP_HOST'] ) ? $_SERVER['HTTP_HOST'] : null;
+	$_SERVER['HTTP_HOST'] = BHP_Analytics_Config::STAGING_HOST;
+	$smg_still_on = array();
+	foreach ( WC()->mailer()->get_emails() as $smg_email ) {
+		if ( in_array( $smg_email->id, $smg_ids, true ) && $smg_email->is_enabled() ) {
+			$smg_still_on[] = $smg_email->id;
+		}
+	}
+	smg_assert(
+		empty( $smg_still_on ),
+		sprintf(
+			'5b.2 ⭐⭐ END TO END: WooCommerce reports every order email DISABLED on staging (still enabled: %s)',
+			$smg_still_on ? implode( ', ', $smg_still_on ) : 'none'
+		)
+	);
+	/*
+	 * ⛔ THE NEGATIVE CONTROL. Simulate production and the SAME objects must
+	 *    report ENABLED again — otherwise this assertion would pass on a site
+	 *    where WooCommerce had simply turned its own emails off, and would
+	 *    prove nothing about the guard.
+	 */
+	$_SERVER['HTTP_HOST'] = 'braveheartspublishing.com';
+	$smg_on_prod = 0;
+	foreach ( WC()->mailer()->get_emails() as $smg_email ) {
+		if ( in_array( $smg_email->id, array( 'new_order', 'customer_processing_order' ), true ) && $smg_email->is_enabled() ) {
+			$smg_on_prod++;
+		}
+	}
+	smg_assert(
+		$smg_on_prod > 0,
+		sprintf( '5b.3 ⛔ NEGATIVE CONTROL: the same emails report ENABLED on a production host (%d) — so 5b.2 is the guard, not a switched-off store', $smg_on_prod )
+	);
+	if ( null === $smg_saved2 ) {
+		unset( $_SERVER['HTTP_HOST'] );
+	} else {
+		$_SERVER['HTTP_HOST'] = $smg_saved2;
+	}
+}
 
 /*
  * ⭐ THE NEGATIVE CONTROL — this harness is shown to be capable of failing.

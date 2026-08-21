@@ -179,12 +179,32 @@ function bhp_staging_mail_guard_is_staging() {
 /**
  * Register the suppression.
  *
- * ⭐ ON `woocommerce_email_init`, so the filters exist before any email object
- *    is asked whether it is enabled, and so nothing runs at all on a site
- *    without WooCommerce.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ REGISTERED AT FILE SCOPE, AND THE FIRST ATTEMPT WAS WRONG.
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔ THE HOST TEST IS RE-RUN PER REQUEST, INSIDE THE CALLBACK, rather than
- *    captured at registration. `is_enabled()` can be asked during a
+ * ⭐ THIS WAS FIRST HUNG ON `woocommerce_email_init`, on the assumption that
+ *    WooCommerce fires it when the mailer is built. ⛔ IT DOES NOT — measured
+ *    on staging, not reasoned about: `did_action( 'woocommerce_email_init' )`
+ *    returned **0** both before and after `WC()->mailer()`, while
+ *    `has_action()` confirmed the callback was correctly attached and
+ *    `bhp_staging_mail_guard_disable( true )` correctly returned `false`.
+ *
+ * ⛔ THE GUARD WAS THEREFORE A COMPLETE NO-OP, AND IT LOOKED FINE. Every unit
+ *    assertion about host detection passed, because those test the DECISION.
+ *    The registration was never exercised until an email was actually
+ *    triggered — at which point WooCommerce attempted four real sends, two of
+ *    them addressed to Andrew.
+ *
+ * ⭐ WHY FILE SCOPE IS THE RIGHT ANSWER AND NOT MERELY A DIFFERENT HOOK:
+ *    `WC_Email::is_enabled()` applies `woocommerce_email_enabled_{$id}` AT
+ *    CALL TIME, every time. So a filter registered as early as possible has no
+ *    ordering dependency whatsoever — it cannot be registered "too late",
+ *    which is exactly the failure that just happened. ⛔ Registering a filter
+ *    for a hook that a WooCommerce-less site never applies costs nothing.
+ *
+ * ⛔ THE HOST TEST IS STILL RE-RUN PER REQUEST, INSIDE THE CALLBACK, rather
+ *    than captured here. `is_enabled()` can be asked at any point in a
  *    long-running request, and a boolean frozen at bootstrap is the kind of
  *    stale state this codebase has paid for before.
  */
@@ -193,7 +213,7 @@ function bhp_staging_mail_guard_register() {
 		add_filter( 'woocommerce_email_enabled_' . $id, 'bhp_staging_mail_guard_disable', 99 );
 	}
 }
-add_action( 'woocommerce_email_init', 'bhp_staging_mail_guard_register' );
+bhp_staging_mail_guard_register();
 
 /**
  * Answer "is this order email enabled?" with NO on staging.
