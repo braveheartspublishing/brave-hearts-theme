@@ -531,13 +531,41 @@ if ( '' !== $uc_css ) {
 		substr_count( $uc_css, '.bhp-shop-atc' ) >= 4,
 		'8.2 the uniform-button rules are present in the served stylesheet'
 	);
+	/*
+	 * ⛔⛔ THESE TWO ASSERTIONS WERE REWRITTEN AFTER A REAL BROWSER FORCED A
+	 *     REWRITE OF THE CSS, AND THE SUPERSEDED VERSIONS ARE QUOTED SO THE
+	 *     MOVEMENT IS VISIBLE:
+	 *
+	 *       8.3  strpos( $css, 'margin: auto 1.5rem 1.5rem' )
+	 *       8.4  strpos( $css, 'margin: auto 10px 10px' )
+	 *
+	 *     ⭐ They matched LITERAL VALUES. The first CSS pass hard-coded the
+	 *     gutter and produced THREE different button widths and an overflow at
+	 *     both viewports; the fix made the gutter a TOKEN each wrapper subtracts
+	 *     its own box from, at which point the literals stopped existing and
+	 *     these assertions failed against a build the browser had just measured
+	 *     as correct.
+	 * ⭐ THEY NOW ASSERT THE MECHANISM: the token is declared at BOTH widths,
+	 *    and the bottom-pin (`margin-top: auto`) is served. ⛔ The WIDTHS and
+	 *    the BASELINE themselves are not assertable from a stylesheet at all —
+	 *    they are measured in a real browser at an asserted `innerWidth`, and
+	 *    the QA folder is the authority on them.
+	 */
 	uc_assert(
-		false !== strpos( $uc_css, 'margin:auto 1.5rem 1.5rem' ) || false !== strpos( $uc_css, 'margin: auto 1.5rem 1.5rem' ),
-		'8.3 ⭐ the DESKTOP bottom-pin (margin-top:auto + the card gutter) is served'
+		substr_count( $uc_css, '--bhp-card-gutter' ) >= 4,
+		'8.3 ⭐ the shared gutter token is declared and consumed in the served stylesheet'
 	);
 	uc_assert(
-		false !== strpos( $uc_css, 'margin:auto 10px 10px' ) || false !== strpos( $uc_css, 'margin: auto 10px 10px' ),
-		'8.4 ⭐ the MOBILE bottom-pin is served — a rule that only exists at 1440 is not uniform at 390'
+		(bool) preg_match( '/--bhp-card-gutter:\s*10px/', $uc_css ),
+		'8.4 ⭐ the token takes its MOBILE value too — a rule that only exists at 1440 is not uniform at 390'
+	);
+	uc_assert(
+		(bool) preg_match( '/margin:\s*auto\s+/', $uc_css ),
+		'8.4a the bottom-pin (`margin-top: auto` via the margin shorthand) is served'
+	);
+	uc_assert(
+		(bool) preg_match( '/--bhp-collection-frame-pad/', $uc_css ),
+		'8.4b ⭐ the collection frame subtracts its own box rather than being flattened'
 	);
 	uc_assert(
 		false !== strpos( $uc_css, 'min-height:48px' ) || false !== strpos( $uc_css, 'min-height: 48px' ),
