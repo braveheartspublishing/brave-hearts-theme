@@ -142,6 +142,64 @@ function bhp_bundle_handle_add_to_cart() {
 		$destination = wc_get_checkout_url();
 	}
 
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.8.67 — THE NO-JAVASCRIPT FLOOR UNDER THE SHOP CARD'S OFFER BUTTON.
+	 *     CARRIER ITEM 210.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ WHAT ACTUALLY HAPPENS ON A NORMAL VISIT, so this is read in
+	 *    proportion: `interceptOfferForms()` in `bundle-drawer.js` claims this
+	 *    submit, adds over the Store API and opens the side panel. No page
+	 *    load, no redirect, nothing for this branch to do. THAT is the flow
+	 *    item 210 describes and the flow QA walks.
+	 *
+	 * ⛔ THIS IS THE FLOOR UNDER IT: JavaScript off, or the Store API refusing.
+	 *    Without this branch that shopper lands on the CART PAGE — the exact
+	 *    surface carrier item 186 objected to ("I honestly dont like having
+	 *    this cart page in the middle of a purchase"). ⭐ So the floor is the
+	 *    offer's own product page, with the items really in the cart and
+	 *    WooCommerce's own "added to cart" notice on it.
+	 *
+	 * ⛔ NOT A URL AND NOT CUSTOMER-CONTROLLED — the same discipline as the
+	 *    `checkout` flag one paragraph up, and for the same reason. The posted
+	 *    value is compared against ONE literal (`'1'`); the destination is
+	 *    built from `get_permalink()` of a product this plugin resolved itself
+	 *    out of `bhp_offer_components()`. ⛔ NO BYTE OF THE REQUEST IS EVER
+	 *    CONCATENATED INTO IT. Do not "generalise" this to accept a URL.
+	 *
+	 * ⛔ AND IT NEVER OPENS THE PANEL. It sends no flag onward, because a URL
+	 *    parameter that opens the panel is one that can be bookmarked, shared,
+	 *    linked and crawled — Boromir's second condition, recorded in the
+	 *    theme's `inc/purchase-flow.php`. A JavaScript-less shopper getting a
+	 *    correct product page instead of a panel is a degradation; a panel any
+	 *    link can open is a defect.
+	 *
+	 * ⛔ IT FAILS TO TODAY'S BEHAVIOUR: no flag, an error notice, an empty
+	 *    cart, or an offer whose chapter component will not resolve → the cart
+	 *    URL above stands, byte-identical to 1.8.66.
+	 */
+	if (
+		isset( $_POST['bhp_offer_panel'] )
+		&& '1' === sanitize_key( wp_unslash( $_POST['bhp_offer_panel'] ) )
+		&& 0 === strpos( $action, 'offer_' )
+		&& ! wc_notice_count( 'error' )
+		&& WC()->cart && ! WC()->cart->is_empty()
+		&& function_exists( 'bhp_offer_components' )
+	) {
+		$panel_components = bhp_offer_components( substr( $action, strlen( 'offer_' ) ) );
+		foreach ( (array) $panel_components as $panel_component ) {
+			if ( 'chapter' !== $panel_component['line'] ) {
+				continue;
+			}
+			$panel_permalink = get_permalink( (int) $panel_component['product_id'] );
+			if ( $panel_permalink ) {
+				$destination = $panel_permalink;
+			}
+			break;
+		}
+	}
+
 	wp_safe_redirect( $destination );
 	exit;
 }

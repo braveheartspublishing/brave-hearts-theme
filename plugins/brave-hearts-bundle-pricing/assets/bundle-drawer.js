@@ -2018,6 +2018,139 @@
 		window.location.assign(url);
 	}
 
+	/**
+	 * ⭐⭐⭐ 1.8.67 — CARRIER ITEM 210. THE SHOP CARD'S OFFER BUTTON OPENS THE
+	 *     PANEL, INSTEAD OF POSTING TO A REDIRECT.
+	 * ========================================================================
+	 *
+	 * ⭐ Andrew Signore, carrier items 210 + 211, 2026-08-21. ⚠️ RELAYED
+	 *    through `chief-of-staff` in the build brief — ⛔ NOT witnessed
+	 *    first-hand by the agent that wrote this function. Recorded as relayed
+	 *    per Standing Rules §9.2 rule 2. Every shop card's ADD TO CART opens the
+	 *    side panel with the right contents; the bundle cards add their bundle
+	 *    through the offer engine.
+	 *
+	 * ⛔⛔ WHY THIS IS A SEPARATE LISTENER AND NOT A NEW BRANCH IN
+	 *     `interceptBundleForms()`, WHICH WAS THE OBVIOUS THING TO DO. That
+	 *     function's capability test — `/^(complete_|single_|any2_)/`, added in
+	 *     1.8.62 — exists BECAUSE it once claimed `offer_*` forms, called
+	 *     `preventDefault()`, fell through every branch and fired
+	 *     "Please choose exactly two different titles for this bundle." on an
+	 *     offer that has no titles to choose, adding nothing to the cart.
+	 *     ⭐ THAT TEST IS LEFT EXACTLY AS IT IS. Widening it would re-route
+	 *     EVERY `offer_*` form on the site, including the PRODUCT PAGE's, whose
+	 *     straight-to-checkout path the founder walked himself.
+	 *
+	 * ⛔ SO THE GATE IS AN EXPLICIT PER-FORM OPT-IN: `data-bhp-offer-panel`,
+	 *    emitted by the theme on the SHOP CARD ONLY. A form without it is not
+	 *    ours and the native POST proceeds untouched.
+	 *
+	 * ⛔ SEQUENTIAL ADDS, NEVER `Promise.all` — the same lost-update race
+	 *    `addTitlesSequentially()` documents: concurrent Store API adds each
+	 *    work from their own read of the session cart and the last one wins.
+	 *    Observed live on the premium landing page; it is not theoretical.
+	 *
+	 * ⛔ NO PRICE IS COMPUTED HERE AND NO DISCOUNT IS APPLIED HERE. The offer's
+	 *    saving is a WooCommerce cart FEE created server-side by
+	 *    `bhp_offer_apply_fees()` from what is actually in the cart, so adding
+	 *    the components IS applying the offer. ⭐ The panel's totals are the
+	 *    Store API's own, refetched after the add — never arithmetic this
+	 *    script did.
+	 *
+	 * ⛔ IT FALLS BACK BY SUBMITTING FOR REAL, never by swallowing the click.
+	 *    Any failure re-submits the form natively, which reaches
+	 *    `bhp_bundle_handle_add_to_cart()` and its `bhp_offer_panel` floor.
+	 */
+	function interceptOfferForms() {
+		document.addEventListener('submit', function (e) {
+			var form = e.target;
+			if (!form.matches || !form.matches('form[data-bhp-offer-panel]')) {
+				return;
+			}
+
+			var actionField = form.querySelector('input[name="bhp_bundle_action"]');
+			if (!actionField || 0 !== actionField.value.indexOf('offer_')) {
+				return; // Not ours to handle; let the native POST do its job.
+			}
+
+			var offerKey = actionField.value.slice('offer_'.length);
+			var offers = (window.bhpDrawerData && window.bhpDrawerData.offerAdds) || {};
+			var buyIds = (offers[offerKey] && offers[offerKey].buy_ids) || [];
+			if (!buyIds.length) {
+				/*
+				 * ⛔ THE TEST IS ABOVE `preventDefault()`, DELIBERATELY — the
+				 *    1.8.62 lesson applied a second time. An offer this script
+				 *    has no component list for degrades to the SERVER, which
+				 *    resolves the components itself, rather than to a click
+				 *    that appears to do nothing.
+				 */
+				return;
+			}
+
+			e.preventDefault();
+
+			/*
+			 * ⭐⭐ "SMART", AND IT HAS TO BE — IT MIRRORS `bhp_offer_add_to_cart()`
+			 *     LINE FOR LINE. That function skips any component already in the
+			 *     cart, so a repeat click cannot double-add. ⛔ ADDING
+			 *     UNCONDITIONALLY HERE WOULD MAKE THE JAVASCRIPT PATH AND THE
+			 *     SERVER PATH DISAGREE ABOUT QUANTITY — the shopper with
+			 *     JavaScript would get 2× each component where the shopper
+			 *     without it got 1×, on the same button, for the same money.
+			 *     ⭐ Two paths to one cart must produce one cart.
+			 *
+			 * ⛔ THE CART IS READ FRESH, never from a cached copy: this is the
+			 *    same `getCart()` → filter → add sequence the `complete_*_smart`
+			 *    branch below uses, for the same reason.
+			 */
+			getCart()
+				.then(function (cart) {
+					var present = (cart.items || []).map(function (i) { return parseInt(i.id, 10); });
+					var missing = buyIds.filter(function (id) { return present.indexOf(parseInt(id, 10)) === -1; });
+
+					var chain = Promise.resolve();
+					missing.forEach(function (id) {
+						/*
+						 * ⛔ ONE AT A TIME, NEVER `Promise.all` — the lost-update
+						 *    race `addTitlesSequentially()` documents. Concurrent
+						 *    Store API adds each work from their own read of the
+						 *    session cart and the last one silently wins.
+						 */
+						chain = chain.then(function () {
+							return addItem(parseInt(id, 10), 0, 1);
+						});
+					});
+
+					return chain.then(function () {
+						return refreshDrawer();
+					}).then(function (fresh) {
+						var addedLines = (fresh.items || []).filter(function (i) {
+							return missing.indexOf(parseInt(i.id, 10)) !== -1;
+						});
+						var addedItems = addedLines.map(ga4ItemFromCartLine);
+						pushEvent('add_to_cart', {
+							source: 'shop_card',
+							bundle_type: actionField.value,
+							currency: cartCurrency(fresh),
+							value: addedItems.reduce(function (sum, it) { return sum + it.price * it.quantity; }, 0),
+							items: addedItems
+						});
+						pushEvent('bundle_add_to_cart', {
+							format: (offers[offerKey] && offers[offerKey].format) || null,
+							bundle_type: actionField.value,
+							product_count: missing.length,
+							already_complete: 0 === missing.length
+						});
+						openDrawer('add_to_cart');
+					});
+				})
+				.catch(function (err) {
+					window.console && console.error('BHP drawer offer add failed, falling back to normal submit', err);
+					HTMLFormElement.prototype.submit.call(form);
+				});
+		});
+	}
+
 	function interceptBundleForms() {
 		document.addEventListener('submit', function (e) {
 			var form = e.target;
@@ -2325,6 +2458,12 @@
 		interceptCartAddLinks();
 		initBundleFormFeedback();
 		interceptBundleForms();
+		/*
+		 * ⭐ 1.8.67 — carrier item 210. Delegated on `document`, and it claims
+		 *    ONLY forms that opted in with `data-bhp-offer-panel`. The product
+		 *    page's own offer form carries no such attribute and is untouched.
+		 */
+		interceptOfferForms();
 		initFormatSelectedTracking();
 		initFloatingCartButton();
 

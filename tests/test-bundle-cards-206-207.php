@@ -293,12 +293,45 @@ foreach ( $bc_cards as $bc_what => $bc_li ) {
 	if ( false === $bc_p_price ) {
 		$bc_p_price = strpos( $bc_li, 'bhp-shop-collection-card__price' );
 	}
-	$bc_p_cta = stripos( $bc_li, '<button' );
+	/*
+	 * ⭐⭐ 1.19.286 (items 210+211) — THE CTA IS NOW LOCATED BY ITS OWN CLASS,
+	 *     NOT BY "the first <button> in the card".
+	 *
+	 * ⛔ THE SUPERSEDED PROBE, QUOTED SO THE MOVEMENT IS VISIBLE:
+	 *        $bc_p_cta = stripos( $bc_li, '<button' );
+	 *    It was correct while the primary CTA was the first button in the card.
+	 *    ⭐ It stopped being correct when the hardcover swap moved ABOVE the CTA
+	 *    so the CTA could be pinned to the card floor — at which point
+	 *    "first <button>" silently began measuring the SWAP, and 3.8's ordering
+	 *    assertion would have passed while proving nothing about the control the
+	 *    founder actually presses.
+	 * ⛔ THIS IS THE CLASS OF DEFECT THAT PASSES A SUITE. It is fixed by naming
+	 *    the element, not by loosening the check.
+	 */
+	$bc_p_cta = strpos( $bc_li, 'bhp-shop-atc' );
 
 	bc_assert( false !== $bc_p_img, "3.4 {$bc_what} — ⭐ IMAGE present" );
 	bc_assert( false !== $bc_p_title, "3.5 {$bc_what} — TITLE present (<h2>)" );
 	bc_assert( false !== $bc_p_price, "3.6 {$bc_what} — PRICE present as its own element" );
-	bc_assert( false !== $bc_p_cta, "3.7 {$bc_what} — direct-buy CTA present (<button>)" );
+	bc_assert( false !== $bc_p_cta, "3.7 {$bc_what} — the uniform ADD TO CART control is present (`bhp-shop-atc`)" );
+	bc_assert(
+		false !== strpos( $bc_li, 'ADD TO CART' ),
+		"3.7a ⭐ {$bc_what} — it carries the one founder label (item 211)"
+	);
+	/*
+	 * ⛔⛔ THE SHOP CARD MUST NOT CARRY THE CHECKOUT-REDIRECT FIELD. Its absence
+	 *     IS the mechanism that sends this card to the SIDE PANEL instead of to
+	 *     /checkout/ (item 210) — `finishBundleAdd()` and
+	 *     `bhp_bundle_handle_add_to_cart()` both branch on it. Asserting the
+	 *     absence is asserting the behaviour.
+	 * ⛔ IT SAYS NOTHING ABOUT THE PRODUCT PAGE OR THE HEADER, whose forms still
+	 *    post the field and still finish on /checkout/ — the founder-walked
+	 *    path, unchanged, and covered by their own suites.
+	 */
+	bc_assert(
+		false === strpos( $bc_li, 'name="bhp_bundle_redirect"' ),
+		"3.7b ⭐⭐ {$bc_what} — no checkout-redirect field, so ADD TO CART opens the PANEL (item 210)"
+	);
 
 	/*
 	 * ⛔ THE ORDER IS THE CONTRACT, NOT A NICETY. All four present in the wrong

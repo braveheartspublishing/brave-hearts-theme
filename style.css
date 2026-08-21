@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.285
+Version: 1.19.286
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4414,6 +4414,112 @@ body:not(.home) .final-cta .text-lead { color: #f8f3e9; }
 .woocommerce ul.products li.product .woocommerce-loop-product__title { padding: 0 1.5rem; color: var(--expedition-navy); font-size: 1.65rem; font-weight: 500; }
 .woocommerce ul.products li.product .price { padding: .5rem 1.5rem 1rem; color: var(--expedition-forest); font-family: var(--font-ui); font-size: 1rem; }
 .woocommerce ul.products li.product .button { align-self: flex-start; margin: 0 1.5rem 1.5rem; background: var(--expedition-forest) !important; color: white !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐⭐ 1.19.286 — ONE BUTTON, SIX CARDS. CARRIER ITEMS 210 + 211.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ ANDREW SIGNORE, carrier items 210 + 211, 2026-08-21. ⚠️ RELAYED through
+      `chief-of-staff` in the build brief — ⛔ NOT witnessed first-hand by the
+      agent that wrote this block. Recorded as relayed (Standing Rules §9.2
+      rule 2). Every shop card carries a UNIFORM "ADD TO CART": one label, one
+      size, bottom-aligned in its card, at 390 AND at 1440.
+
+   ⛔⛔ THE THREE DEFECTS THIS CLOSES, EACH OBSERVED ON A RENDERED CARD RATHER
+      THAN INFERRED FROM CSS:
+
+      1. FIVE LABELS IN ONE GRID — "CHOOSE YOUR FORMAT" ×3, WooCommerce's own
+         sentence-case "Add to cart", "GET BOTH", "GET THE COMPLETE
+         COLLECTION". Fixed in PHP by `bhp_shop_card_atc_label()`, not here.
+      2. `align-self: flex-start` ON THE DESKTOP `.button` (the rule directly
+         above) sizes each button to its own words, so a six-card grid printed
+         six different button widths. ⭐ THAT RULE IS UNTOUCHED and still
+         governs every other `ul.products` surface — the related/upsell rows on
+         a product page, the search archive, the category archives.
+      3. THE FOUNDER'S DESKTOP SCREENSHOT: "GET BOTH" overflowing its card.
+         The label fix removes the cause; `white-space: normal` below removes
+         the failure MODE, so a long word can never clip a card again.
+
+   ⭐ THE PATTERN IS FLEX + `margin-top: auto`, AND IT IS THE PATTERN THE GRID
+      ALREADY USED. `li.product` is already `display:flex; flex-direction:
+      column`, and `a.woocommerce-LoopProduct-link` is already `flex:1`. The two
+      bundle cards wrap their contents in one more box (`.bhp-shop-collection-
+      card`, `.bhp-offer`), which broke the chain — so the chain is continued
+      through them rather than a second mechanism being invented.
+
+   ⛔ BOTTOM ALIGNMENT IS PER ROW, AND IT IS ARITHMETIC RATHER THAN LUCK: grid
+      items stretch to their row's height by default, so a CTA pinned to the
+      bottom of each card sits on one baseline across that row. It does NOT
+      claim alignment between rows of different heights, and QA measures rows.
+
+   ⛔ SCOPED TO `body.woocommerce-shop`, AND THE SCOPE IS LOAD-BEARING — the
+      same reason the 2-up block below records. `.woo-expedition-shell` also
+      wraps the SINGLE PRODUCT page, whose related/upsell rows are
+      `ul.products li.product` too.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── A · the flex chain, continued through the two bundle wrappers ────────── */
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card,
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+/* ── B · THE BUTTON BOX — byte-identical on all six ───────────────────────────
+   ⛔ `width: 100%` + `box-sizing: border-box`, never a fixed px width: the card
+      is a grid track and its width is the grid's to decide. A px width would be
+      right at one viewport and wrong at every other.
+   ⭐ `min-height: 48px` is the site's existing primary-control floor — the same
+      figure `test-product-template.php` already asserts for the product page's
+      ADD TO CART, and clear of the 44px touch-target minimum. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+  /* ⛔ The overflow guard. `white-space: normal` is what makes a long label
+     wrap inside its card instead of being cut off by `li.product`'s
+     `overflow: hidden` — the founder's own desktop screenshot. */
+  white-space: normal;
+}
+
+/* ── C · the CTA's wrapper, pinned to the card floor ──────────────────────────
+   ⭐ `margin: auto <gutter> <gutter>` is `margin-top: auto` plus the card's own
+      gutter in one declaration. The chapter and colouring cards pin the anchor
+      itself; the two bundle cards pin the FORM that wraps it, because a form is
+      what a bundle CTA has to be. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc,
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell),
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
+  margin: auto 1.5rem 1.5rem;
+}
+
+/* ── D · what now sits ABOVE the CTA ──────────────────────────────────────────
+   ⛔ NOTHING WAS REMOVED. The saving line and the hardcover swap are still
+      rendered, still recomputed live, still reachable by keyboard — they moved
+      above the CTA in the DOM (see `bhp_offer_render_module()` and
+      `bhp_book_shop_collection_card()`) so the CTA can be the last child and
+      the six buttons can share one baseline. ⛔ A CSS `order` reorder would
+      have left focus order behind, which is an accessibility defect on a
+      control a keyboard reaches. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell,
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
+  margin: 0 1.5rem 0.5rem;
+}
+
 .woocommerce span.onsale { top: 1rem; right: 1rem; left: auto; min-width: 0; min-height: 0; padding: .45rem .7rem; border-radius: 0; background: var(--expedition-gold); color: var(--expedition-navy); font: 700 .65rem/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
 .woocommerce div.product { display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,.85fr); gap: clamp(3rem,7vw,7rem); }
 .woocommerce div.product .woocommerce-product-gallery,
@@ -4758,23 +4864,66 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
     padding: 0 8px 10px;
   }
-  /* ⭐ Both bundle CTAs take the same stretched, small-caps treatment the
-     chapter cards' "CHOOSE YOUR FORMAT" already has at this width, so a row
-     of three different card kinds still reads as one control set. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__cta,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .button {
-    width: 100%;
-    margin: 8px 0 0;
-    padding: 0.62rem 0.35rem;
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
-  }
+  /* ⛔⛔ SUPERSEDED BY BLOCK 7 BELOW — 1.19.286, carrier items 210 + 211. The
+     1.19.284 rule is preserved here rather than deleted, because it is the
+     record of WHY the two bundle CTAs were ever styled apart from the four
+     beside them, and a future session would otherwise re-derive it:
+
+       "⭐ Both bundle CTAs take the same stretched, small-caps treatment the
+        chapter cards' 'CHOOSE YOUR FORMAT' already has at this width, so a row
+        of three different card kinds still reads as one control set."
+
+       body...li.bhp-shop-offer-item .bhp-offer__cta,
+       body...li.bhp-shop-collection-item .button {
+         width: 100%; margin: 8px 0 0; padding: .62rem .35rem;
+         font-size: .72rem; letter-spacing: .04em; }
+
+     ⭐ ITS PREMISE — that the bundle CTAs must be taught to MATCH the chapter
+        CTA — is what changed. All six now carry one class, one label and one
+        box, so the matching is the rule rather than a per-card imitation of it.
+     ⛔ IT IS RETIRED, NOT WEAKENED: block 7 sets width, margin, padding, size
+        and tracking on the same controls, at the same breakpoint. */
+
   /* ⛔ The saving line and the hardcover swap are NOT removed from the DOM —
      they are real, recomputed claims and a control a keyboard can reach. They
      simply take the smaller type the 172px cell has room for. */
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
   body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__upsell {
     font-size: 0.72rem;
+  }
+
+  /* ── 7 · ⭐⭐ 1.19.286 — THE ONE BUTTON, AT 172px. ITEMS 210 + 211. ─────────
+     ⭐ THE BOX IS THE SAME BOX, at the type size this cell has room for. Only
+        the four values a 172px card actually forces are restated — padding,
+        font-size, tracking and the gutter. ⛔ `width: 100%`, `min-height:48px`,
+        the flex centring and `white-space: normal` all come from the base block
+        and are NOT repeated, so there is one definition of the button and a
+        mobile adjustment to it, never two buttons.
+     ⛔ 48px SURVIVES THE SHRINK, DELIBERATELY. It is the touch-target floor and
+        this is the touch viewport; shrinking the type is a legitimate response
+        to 172px, shrinking the target is not. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc {
+    /* ⛔ `margin: 0` IS RESTATED HERE AND IT IS NOT REDUNDANT. The 2-up block's
+       own `li.product .button { margin: 10px }` (block 2 above) matches these
+       buttons too, at IDENTICAL specificity, and it appears LATER in the file
+       than the base block — so without this line the two bundle cards' buttons
+       would take a 10px inset their four neighbours do not, and "identical
+       geometry" would be false by 20px at exactly the viewport the founder
+       checks on. ⭐ Found by counting specificity, not by looking at it. */
+    margin: 0;
+    padding: 0.62rem 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell),
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
+    margin: auto 10px 10px;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
+    margin: 0 10px 4px;
   }
 }
 

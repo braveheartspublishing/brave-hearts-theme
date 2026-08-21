@@ -2110,21 +2110,124 @@ function bhp_book_shop_card_meta() {
 add_action('woocommerce_after_shop_loop_item_title', 'bhp_book_shop_card_meta', 12);
 
 /**
- * Shop cards lead to the canonical page to choose a format, rather than
- * adding a specific edition straight from the grid.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.19.286 — ONE LABEL ON EVERY SHOP CARD. CARRIER ITEM 211.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ ANDREW SIGNORE, carrier items 210 + 211, 2026-08-21. ⚠️ RELAYED through
+ *    `chief-of-staff` in the build brief — ⛔ NOT witnessed first-hand by the
+ *    agent that wrote this function, and recorded as relayed per Standing
+ *    Rules §9.2 rule 2. The founder word is **ADD TO CART**.
+ *
+ * ⛔ ONE FUNCTION, NOT SIX LITERALS, AND THAT IS THE WHOLE REASON THIS EXISTS.
+ *    Six cards in one grid carried five different strings — "CHOOSE YOUR
+ *    FORMAT" ×3, WooCommerce's own "Add to cart", "GET BOTH", "GET THE
+ *    COMPLETE COLLECTION". A uniform label maintained as six literals is a
+ *    uniform label until the next release touches five of them.
+ *
+ * ⛔ NO NEW CLAIM IS COINED. "ADD TO CART" names the action the control
+ *    performs and stops: no "we/us/our" (§9.1 — he is the sole operator), no
+ *    em dash, no outcome claim, no figure, no superlative.
+ *
+ * @return string
  */
-function bhp_book_shop_choose_format_link($html, $product) {
+function bhp_shop_card_atc_label() {
+    /**
+     * The one shop-card purchase label.
+     *
+     * @param string $label
+     */
+    return (string) apply_filters('bhp_shop_card_atc_label', __('ADD TO CART', 'brave-hearts'));
+}
+
+/**
+ * The one class token every shop-card purchase control carries.
+ *
+ * ⭐ IT IS WHAT MAKES "IDENTICAL GEOMETRY" TESTABLE RATHER THAN EYEBALLED. One
+ *    selector styles all six buttons and one selector counts them, so a card
+ *    added later either joins the set or fails the count.
+ */
+const BHP_SHOP_ATC_CLASS = 'bhp-shop-atc';
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.286 — THE CHAPTER CARD ADDS THE PAPERBACK. CARRIER ITEM 210.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED CONTROL, QUOTED SO THE MOVEMENT IS VISIBLE AND IS NOT
+ *    RE-DERIVED. Until this release this filter returned:
+ *
+ *      <a href="{permalink}" class="button bhp-shop-choose-format">
+ *        CHOOSE YOUR FORMAT</a>
+ *
+ *    — a NAVIGATION control wearing a button. Its own 1.19.259 note said
+ *    "THE CTA IS DELIBERATELY UNCHANGED … it does not add a second
+ *    destination to it." ⭐ Item 210 changes exactly that: the grid now buys.
+ *
+ * ⭐⭐ IT ADDS THE PAPERBACK, AND THAT IS `FD-439`, NOT A PREFERENCE.
+ *    Paperback is the one default. ⛔ THE HARDCOVER IS NOT REMOVED AND NOT
+ *    HIDDEN: the card still prints "Hardcover $17.99" beside "Paperback
+ *    $11.99" (`bhp_book_shop_format_prices()`, untouched), the title still
+ *    links to the product page, and the FORMAT SELECTOR still lives there.
+ *    ⭐ So the grid gained a purchase and lost no path — the same shape item
+ *    206 already used for the collection card's hardcover swap.
+ *
+ * ⛔ IT IS THE SAME CONTROL THE PRODUCT PAGE ALREADY SHIPS, byte for byte in
+ *    mechanism: the anchor carries `data-bhp-cart-add` + `data-product-id` +
+ *    `data-variation-id`, `bundle-drawer.js` intercepts the click, adds over
+ *    the Store API and opens the side panel (item 188). ⛔ NO SECOND ADD PATH,
+ *    NO SECOND PANEL, NO NEW COMMERCE MECHANISM, and no WooCommerce setting,
+ *    price, coupon, stock or product record is read or written here.
+ *
+ * ⛔ THE HREF IS THE FLOOR, NOT THE MECHANISM. `bhp_book_purchase_data()`
+ *    already marks the paperback add URL `bhp_buy=panel`, which
+ *    `inc/purchase-flow.php` turns into "stay on the product page" for a
+ *    JavaScript-less click. ⭐ It keeps that shopper off the cart page item
+ *    186 objected to, and it is built in ONE place so the grid and the product
+ *    page cannot disagree about the destination.
+ *
+ * ⛔⛔ IT DEGRADES TO WOOCOMMERCE'S OWN CONTROL, NEVER TO A LYING LABEL. If
+ *     the paperback has no live price or is not in stock, this returns `$html`
+ *     untouched. ⭐ Uniformity is a promise about six PURCHASABLE cards; a card
+ *     that cannot be bought must not wear a button that says it can. Every
+ *     degrade path here shows a truthful control, never a broken one.
+ */
+function bhp_book_shop_add_to_cart_link($html, $product) {
     $found = $product ? bhp_book_lookup_product($product->get_id()) : null;
     if (!$found || !$found['canonical']) {
         return $html;
     }
+
+    $data = bhp_book_purchase_data($found['key']);
+    if (!$data) {
+        return $html;
+    }
+
+    $pb = $data['paperback'];
+    // ⛔ Live, this request. No literal, no remembered figure, no fallback.
+    if (!$pb['product_id'] || '' === $pb['price'] || !$pb['in_stock'] || '' === $pb['add_url']) {
+        return $html;
+    }
+
     return sprintf(
-        '<a href="%s" class="button bhp-shop-choose-format">%s</a>',
-        esc_url(get_permalink($product->get_id())),
-        esc_html__('CHOOSE YOUR FORMAT', 'brave-hearts')
+        '<a href="%1$s" class="button %2$s" data-bhp-cart-add data-product-id="%3$d" data-variation-id="%4$d">%5$s</a>',
+        esc_url($pb['add_url']),
+        esc_attr(BHP_SHOP_ATC_CLASS),
+        /*
+         * ⭐ BOTH IDS TRAVEL, and the drawer picks. `addItem()` in
+         *    `bundle-drawer.js` resolves `variationId ? variationId :
+         *    productId` — the same rule `bhp_bundle_identify_cart_item()` uses
+         *    server-side. Mariana's paperback is a VARIABLE product, so
+         *    emitting the parent alone would post an unresolvable line to the
+         *    Store API. Emitting both is what makes one attribute pair correct
+         *    for a variable product and a simple one alike.
+         */
+        (int) $pb['product_id'],
+        (int) $pb['variation_id'],
+        esc_html(bhp_shop_card_atc_label())
     );
 }
-add_filter('woocommerce_loop_add_to_cart_link', 'bhp_book_shop_choose_format_link', 10, 2);
+add_filter('woocommerce_loop_add_to_cart_link', 'bhp_book_shop_add_to_cart_link', 10, 2);
 
 /**
  * Adds the Complete Collection as a real fourth card INSIDE the product
@@ -2239,15 +2342,55 @@ function bhp_book_shop_collection_card($loop_end) {
             && function_exists('bhp_bundle_default_format');
         $bhp_cc_cta_class = defined('BHP_COLLECTION_CTA_CLASS') ? BHP_COLLECTION_CTA_CLASS : 'bhp-collection-cta__btn';
         ?>
+        <?php
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐⭐ 1.19.286 — ITEMS 210 + 211, ON THE COLLECTION CARD.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔ THREE THINGS MOVED HERE AND EACH IS NAMED, so a reader can undo
+         *    any one of them without unpicking the others:
+         *
+         *    1. THE LABEL. "GET THE COMPLETE COLLECTION" → the one shop-card
+         *       label, `bhp_shop_card_atc_label()`. ⭐ Item 211. It is also
+         *       what fixes the overflow the founder photographed on his
+         *       desktop: a 27-character string in a card cell had nowhere to
+         *       go. ⛔ THE STRING IS NOT DELETED FROM THE SITE — the
+         *       Collection page's own CTA, the header offer and the sticky bar
+         *       are untouched, and `test-collection-cold-traffic.php` still
+         *       asserts it there.
+         *
+         *    2. THE DESTINATION. ⛔ `bhp_bundle_checkout_redirect_input()` is
+         *       DELIBERATELY ABSENT from the SHOP-CARD form and present
+         *       everywhere else. That single omission is the whole mechanism:
+         *       `finishBundleAdd()` in `bundle-drawer.js` reads
+         *       `input[name="bhp_bundle_redirect"]`, and with no such field it
+         *       calls `openDrawer()` instead of navigating. ⭐ SO THE PANEL
+         *       OPENS WITH THE BUNDLE IN IT, which is item 210, and it needs
+         *       no new JavaScript branch, no new action and no new flag.
+         *       ⛔ THE DIRECT-BUY PATH THE FOUNDER WALKED IS UNTOUCHED: the
+         *       PDP and header controls still post the field and still land on
+         *       /checkout/.
+         *
+         *    3. THE ORDER. The CTA is now the LAST child, after the hardcover
+         *       swap, so `margin-top:auto` can pin it to the card floor and
+         *       all six buttons in a row share one baseline. ⛔ DOM ORDER, NOT
+         *       a CSS `order` property — a visual reorder that leaves focus
+         *       order behind is an accessibility defect, and this control is
+         *       reached by keyboard.
+         *
+         * ⛔ NO-JAVASCRIPT FLOOR, STATED RATHER THAN GLOSSED: without JS this
+         *    form does a real POST and `bhp_bundle_handle_add_to_cart()` lands
+         *    the shopper on the CART PAGE — the plugin's unchanged default for
+         *    every bundle form that omits the field, since Phase 4. ⛔ There is
+         *    no server-side "open the panel", because opening it would need a
+         *    URL parameter and a URL that opens the panel is one that can be
+         *    bookmarked, shared and crawled (`inc/purchase-flow.php`, Boromir's
+         *    second condition). A correct cart page is a degradation; a
+         *    panel any link can open is a defect.
+         */
+        ?>
         <?php if ($bhp_cc_can_buy): ?>
-          <form class="bhp-bundle-form bhp-shop-collection-card__form" method="post">
-            <?php bhp_bundle_nonce_input(); ?>
-            <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('complete_' . $collection['format'] . '_smart'); ?>" />
-            <?php bhp_bundle_checkout_redirect_input(); ?>
-            <button type="submit" class="button <?php echo esc_attr($bhp_cc_cta_class); ?>">
-              <?php esc_html_e('GET THE COMPLETE COLLECTION', 'brave-hearts'); ?>
-            </button>
-          </form>
           <?php
           $bhp_cc_alt = ('paperback' === $collection['format'] && function_exists('bhp_book_hardcover_is_offerable') && bhp_book_hardcover_is_offerable())
               ? bhp_book_collection_data('hardcover')
@@ -2257,7 +2400,6 @@ function bhp_book_shop_collection_card($loop_end) {
             <form class="bhp-bundle-form bhp-shop-collection-card__form bhp-shop-collection-card__form--upsell" method="post">
               <?php bhp_bundle_nonce_input(); ?>
               <input type="hidden" name="bhp_bundle_action" value="complete_hardcover_smart" />
-              <?php bhp_bundle_checkout_redirect_input(); ?>
               <button type="submit" class="bhp-offer__upsell">
                 <?php
                 /* ⛔ The figure is the plugin's, recomputed every render. No
@@ -2273,7 +2415,30 @@ function bhp_book_shop_collection_card($loop_end) {
               </button>
             </form>
           <?php endif; ?>
+          <form class="bhp-bundle-form bhp-shop-collection-card__form" method="post">
+            <?php bhp_bundle_nonce_input(); ?>
+            <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('complete_' . $collection['format'] . '_smart'); ?>" />
+            <button type="submit" class="button <?php echo esc_attr($bhp_cc_cta_class . ' ' . BHP_SHOP_ATC_CLASS); ?>">
+              <?php echo esc_html(bhp_shop_card_atc_label()); ?>
+            </button>
+          </form>
         <?php else: ?>
+          <?php
+          /*
+           * ⛔⛔ THE PLUGIN-OFF FALLBACK KEEPS ITS OWN LABEL, DELIBERATELY, AND
+           *     THIS IS THE ONE PLACE THE SIX CARDS DO NOT SAY THE SAME WORD.
+           *     ⭐ It is an ANCHOR. It navigates to /complete-collection/; it
+           *     adds nothing. Labelling a navigation control "ADD TO CART"
+           *     would be a control that lies about what it does — the same
+           *     failure `bhp_book_shop_add_to_cart_link()` refuses one screen
+           *     up when a paperback has no live price. ⛔ UNIFORMITY IS A
+           *     PROMISE ABOUT SIX PURCHASABLE CARDS, never a promise to print
+           *     a word over a control that cannot honour it.
+           * ⭐ It is unreachable on staging and production, where the bundle
+           *    plugin is active — asserted at deploy time by the FINAL script,
+           *    not assumed here.
+           */
+          ?>
           <a href="<?php echo esc_url($collection['url']); ?>" class="button <?php echo esc_attr($bhp_cc_cta_class); ?>">
             <?php esc_html_e('GET THE COMPLETE COLLECTION', 'brave-hearts'); ?>
           </a>

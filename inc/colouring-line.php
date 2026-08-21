@@ -235,7 +235,29 @@ function bhp_colouring_draft_copy($key, array $tokens = []) {
          *    the whole rail contract exists to close.
          */
         'offer_card_price_label' => __('BOOK + COLORING BOOK', 'brave-hearts'),
-        'offer_card_cta'         => __('GET BOTH', 'brave-hearts'),
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.286 — CARRIER ITEM 211. THE CARD CTA BECOMES THE ONE WORD.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔ THE SUPERSEDED STRING, QUOTED SO THE MOVEMENT IS VISIBLE AND IS
+         *    NOT RE-DERIVED: this key read `'GET BOTH'` in 1.19.284–1.19.285.
+         *    ⭐ THE FOUNDER PHOTOGRAPHED IT OVERFLOWING ITS CARD on his own
+         *    desktop — an observed defect on his own screen, which Standing
+         *    Rules §9.2 rule 7 ranks above every instrument QA owns.
+         *
+         * ⭐ IT NOW DEFERS TO `bhp_shop_card_atc_label()` — the ONE label, in
+         *    the theme's one place — rather than holding a sixth literal that
+         *    happens to match today. ⛔ A uniform grid maintained as six
+         *    strings is uniform until the next release touches five of them.
+         *
+         * ⛔ `offer_cta` ABOVE IS NOT TOUCHED. The PRODUCT-PAGE control still
+         *    reads "ADD BOTH FOR $22.99", byte for byte. A string he has seen
+         *    keeps its wording; only the SHOP CARD moved.
+         */
+        'offer_card_cta'         => function_exists('bhp_shop_card_atc_label')
+            ? bhp_shop_card_atc_label()
+            : __('ADD TO CART', 'brave-hearts'),
     ], $key);
 
     if (!isset($copy[$key])) {
@@ -508,6 +530,61 @@ function bhp_colouring_restore_loop_price() {
 }
 add_action('woocommerce_after_shop_loop_item', 'bhp_colouring_restore_loop_price', 99);
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.286 — THE COLOURING CARD JOINS THE ONE CONTROL SET. ITEMS 210+211.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED CONTROL, NAMED SO THE MOVEMENT IS VISIBLE: until this
+ *    release this card carried WOOCOMMERCE'S OWN loop button — sentence-case
+ *    "Add to cart", core's own classes, and no panel hook at all, because
+ *    `bhp_book_shop_add_to_cart_link()` returns `$html` untouched for a product
+ *    that is not one of the three chapter books. ⭐ It was the one card in the
+ *    grid whose button neither matched its neighbours nor opened the panel.
+ *
+ * ⛔ IT IS THE SAME MECHANISM AS THE CHAPTER CARDS, NOT A SECOND ONE:
+ *    `data-bhp-cart-add` + `data-product-id`, intercepted by
+ *    `bundle-drawer.js`, added over the Store API, panel opened (item 188).
+ *    The href is the JavaScript-less floor and is already marked
+ *    `bhp_buy=panel` in `bhp_colouring_purchase_data()` — ⭐ built in ONE place
+ *    so the card and the product page cannot disagree about the destination.
+ *
+ * ⛔ `variation_id` IS 0 AND THAT IS THE RECORD, not a shortcut: the colouring
+ *    book is a simple product. `addItem()` resolves `variationId ? variationId
+ *    : productId`, so 0 is correct and a fabricated id would be wrong.
+ *
+ * ⛔ IT DEGRADES TO WOOCOMMERCE'S OWN CONTROL, NEVER TO A LYING LABEL — the
+ *    identical rule the chapter cards follow. No live price or out of stock →
+ *    `$html` untouched.
+ *
+ * ⭐ PRIORITY 11: after `bhp_book_shop_add_to_cart_link()` at 10, which has
+ *    already declined this product. Two filters, one per catalogue, neither
+ *    able to claim the other's cards.
+ */
+function bhp_colouring_shop_add_to_cart_link($html, $product) {
+    if (!$product || !function_exists('bhp_shop_card_atc_label')) {
+        return $html;
+    }
+    $data = bhp_colouring_purchase_data($product->get_id());
+    if (!$data) {
+        return $html;
+    }
+
+    $pb = $data['paperback'];
+    if (!$pb['product_id'] || '' === $pb['price'] || !$pb['in_stock'] || '' === $pb['add_url']) {
+        return $html;
+    }
+
+    return sprintf(
+        '<a href="%1$s" class="button %2$s" data-bhp-cart-add data-product-id="%3$d" data-variation-id="0">%4$s</a>',
+        esc_url($pb['add_url']),
+        esc_attr(defined('BHP_SHOP_ATC_CLASS') ? BHP_SHOP_ATC_CLASS : 'bhp-shop-atc'),
+        (int) $pb['product_id'],
+        esc_html(bhp_shop_card_atc_label())
+    );
+}
+add_filter('woocommerce_loop_add_to_cart_link', 'bhp_colouring_shop_add_to_cart_link', 11, 2);
+
 /* ═══════════════════════════════════════════════════════════════════════════
  * THE OFFER SURFACE — `FD-579`'s "same thing we offer for the collection"
  * ═══════════════════════════════════════════════════════════════════════════ */
@@ -736,11 +813,127 @@ function bhp_offer_render_module($key, $class = '', $show_heading = true, $card 
         </span>
       <?php endif; ?>
 
-      <form class="bhp-offer__form" method="post">
+      <?php
+      /*
+       * ═══════════════════════════════════════════════════════════════════════
+       * ⭐⭐⭐ 1.19.286 — ITEMS 210 + 211 ON THE PAIR CARD. THREE MOVES, NAMED.
+       * ═══════════════════════════════════════════════════════════════════════
+       *
+       * ⭐ ALL THREE ARE GATED ON `$card`, so the PRODUCT-PAGE cross-sell is
+       *    BYTE-FOR-BYTE what it was in 1.19.285 — same label, same
+       *    `bhp_bundle_redirect=checkout` field, same order, same straight-to-
+       *    checkout path the founder walked himself.
+       *
+       * 1. THE LABEL comes from `offer_card_cta`, which now defers to the one
+       *    shop-card label (item 211). ⭐ It is also the overflow fix: "GET
+       *    BOTH" was photographed breaking its card on his desktop.
+       *
+       * 2. THE DESTINATION. ⛔ `bhp_bundle_checkout_redirect_input()` is
+       *    OMITTED IN CARD MODE and printed in every other mode. On a shop
+       *    card the pair adds and the SIDE PANEL takes it from there (item
+       *    210); on the product page it still finishes on /checkout/.
+       *
+       * ⛔⛔ AND ONE THING THE OMISSION ALONE COULD NOT DO, STATED PLAINLY
+       *     RATHER THAN ASSUMED: `offer_*` is NOT one of the three action
+       *     families `bundle-drawer.js` implements. Its capability test
+       *     (`/^(complete_|single_|any2_)/`, plugin 1.8.62) deliberately
+       *     returns BEFORE `preventDefault()`, so an offer form has always
+       *     done a real POST and the server has always redirected it. Dropping
+       *     the checkout field on its own would therefore have landed this
+       *     card on the CART PAGE — the exact surface item 186 objected to.
+       *     ⭐ SO `data-bhp-offer-panel` IS AN EXPLICIT OPT-IN, read by
+       *     `interceptOfferForms()` in plugin 1.8.67, and it is emitted on the
+       *     SHOP CARD ONLY. ⛔ An attribute rather than a class, because the
+       *     capability test is the plugin's contract and widening it to claim
+       *     every `offer_*` form on the site would silently re-route the
+       *     product page too.
+       *
+       * 3. THE ORDER. In card mode the saving line and the hardcover swap
+       *    render ABOVE the CTA so the CTA is the last child and
+       *    `margin-top:auto` can pin it to the card floor — the one baseline
+       *    all six buttons share. ⛔ DOM ORDER, NOT a CSS `order` property: a
+       *    visual reorder that leaves focus order behind is an accessibility
+       *    defect on a control a keyboard reaches. ⛔ NOTHING IS REMOVED — the
+       *    saving is the same recomputed figure and the swap is the same real
+       *    form; they moved, they did not go.
+       */
+      $bhp_offer_saving_html = '';
+      if (null !== $saving) {
+          /*
+           * ⛔ A DERIVED CLAIM, RECOMPUTED EVERY RENDER. `evidence-verification`
+           *    §5: the saving is the difference between what the components cost
+           *    in WooCommerce TODAY and Andrew's offer price. It is never
+           *    inherited from a draft and never stored.
+           */
+          $bhp_offer_saving_html = '<p class="bhp-offer__saving">'
+              . esc_html(bhp_colouring_draft_copy('offer_saving', [wp_strip_all_tags(wc_price($saving))]))
+              . '</p>';
+      }
+
+      $bhp_offer_upsell_html = '';
+      if ($upsell_key) {
+          $upsell_price = bhp_offer_price($upsell_key);
+          /*
+           * ⭐ HIS LIMB: "with the upsell of HC". A FORMAT SWAP under an offer
+           *    already chosen (spec §6.4) — ⛔ not an interstitial, ⛔ not a
+           *    post-purchase one-click.
+           */
+          ob_start();
+          ?>
+          <?php
+          /*
+           * ⛔ THE SWAP TAKES THE SAME ROUTE AS THE CTA ABOVE IT, and that is not
+           *    tidiness — it is the whole point. Two controls on one card that
+           *    finish in two different places (one in the panel, one on
+           *    /checkout/) is a card that behaves differently depending on which
+           *    button the shopper happens to press. ⭐ So in CARD mode the swap
+           *    carries the same `data-bhp-offer-panel` opt-in and the same
+           *    no-JavaScript floor field; on the PRODUCT PAGE it still posts the
+           *    checkout redirect, exactly as it did.
+           */
+          ?>
+          <form class="bhp-offer__form bhp-offer__form--upsell" method="post"<?php echo $card ? ' data-bhp-offer-panel="' . esc_attr($upsell_key) . '"' : ''; ?>>
+            <?php bhp_bundle_nonce_input(); ?>
+            <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('offer_' . $upsell_key); ?>" />
+            <?php if ($card) : ?>
+              <input type="hidden" name="bhp_offer_panel" value="1" />
+            <?php else : ?>
+              <?php bhp_bundle_checkout_redirect_input(); ?>
+            <?php endif; ?>
+            <button type="submit" class="bhp-offer__upsell">
+              <?php echo esc_html(bhp_colouring_draft_copy('offer_upsell', [wp_strip_all_tags(wc_price($upsell_price))])); ?>
+            </button>
+          </form>
+          <?php
+          $bhp_offer_upsell_html = ob_get_clean();
+      }
+      ?>
+
+      <?php if ($card) : ?>
+        <?php echo $bhp_offer_saving_html; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source. ?>
+        <?php echo $bhp_offer_upsell_html; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source. ?>
+      <?php endif; ?>
+
+      <form class="bhp-offer__form<?php echo $card ? ' bhp-offer__form--card' : ''; ?>" method="post"<?php echo $card ? ' data-bhp-offer-panel="' . esc_attr($key) . '"' : ''; ?>>
         <?php bhp_bundle_nonce_input(); ?>
         <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('offer_' . $key); ?>" />
-        <?php bhp_bundle_checkout_redirect_input(); ?>
-        <button type="submit" class="button bhp-offer__cta">
+        <?php if ($card) : ?>
+          <?php
+          /*
+           * ⛔ THE NO-JAVASCRIPT FLOOR FOR THIS CARD, AND IT IS NOT THE CART
+           *    PAGE. `bhp_offer_panel` is read by the plugin's own POST handler
+           *    and resolves to the OFFER'S OWN PRODUCT PAGE — a real page with
+           *    the item in the cart, the panel closed, and WooCommerce's own
+           *    "added to cart" notice. ⛔ Still not a URL and still not
+           *    customer-controlled: the handler compares it to one literal and
+           *    builds the destination itself.
+           */
+          ?>
+          <input type="hidden" name="bhp_offer_panel" value="1" />
+        <?php else : ?>
+          <?php bhp_bundle_checkout_redirect_input(); ?>
+        <?php endif; ?>
+        <button type="submit" class="button bhp-offer__cta<?php echo $card && defined('BHP_SHOP_ATC_CLASS') ? ' ' . esc_attr(BHP_SHOP_ATC_CLASS) : ''; ?>">
           <?php
           /* ⛔ R2.2: the figure is the ENGINE's, never a literal in this template. */
           echo esc_html(
@@ -752,34 +945,9 @@ function bhp_offer_render_module($key, $class = '', $show_heading = true, $card 
         </button>
       </form>
 
-      <?php if (null !== $saving) : ?>
-        <?php
-        /*
-         * ⛔ A DERIVED CLAIM, RECOMPUTED EVERY RENDER. `evidence-verification`
-         *    §5: the saving is the difference between what the components cost
-         *    in WooCommerce TODAY and Andrew's offer price. It is never
-         *    inherited from a draft and never stored.
-         */
-        ?>
-        <p class="bhp-offer__saving"><?php echo esc_html(bhp_colouring_draft_copy('offer_saving', [wp_strip_all_tags(wc_price($saving))])); ?></p>
-      <?php endif; ?>
-
-      <?php if ($upsell_key) : $upsell_price = bhp_offer_price($upsell_key); ?>
-        <?php
-        /*
-         * ⭐ HIS LIMB: "with the upsell of HC". A FORMAT SWAP under an offer
-         *    already chosen (spec §6.4) — ⛔ not an interstitial, ⛔ not a
-         *    post-purchase one-click.
-         */
-        ?>
-        <form class="bhp-offer__form bhp-offer__form--upsell" method="post">
-          <?php bhp_bundle_nonce_input(); ?>
-          <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('offer_' . $upsell_key); ?>" />
-          <?php bhp_bundle_checkout_redirect_input(); ?>
-          <button type="submit" class="bhp-offer__upsell">
-            <?php echo esc_html(bhp_colouring_draft_copy('offer_upsell', [wp_strip_all_tags(wc_price($upsell_price))])); ?>
-          </button>
-        </form>
+      <?php if (!$card) : ?>
+        <?php echo $bhp_offer_saving_html; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source. ?>
+        <?php echo $bhp_offer_upsell_html; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source. ?>
       <?php endif; ?>
     </div>
     <?php

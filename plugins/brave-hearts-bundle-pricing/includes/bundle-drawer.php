@@ -283,6 +283,25 @@ function bhp_bundle_drawer_assets() {
 				? bhp_offer_drawer_payload()
 				: array(),
 			/*
+			 * ⭐⭐ 1.8.67 — CARRIER ITEM 210. The component ids the shop card's
+			 *    ADD TO CART adds over the Store API so the PANEL opens with the
+			 *    bundle in it.
+			 *
+			 * ⛔ IDS ONLY — no price, no saving, no copy. The offer's money is a
+			 *    cart fee computed server-side from what is actually in the cart
+			 *    (`bhp_offer_apply_fees()`), so the browser never carries a
+			 *    figure and cannot drift from the invoice.
+			 *
+			 * ⛔ EMPTY ARRAY UNTIL AN OFFER'S PRODUCTS RESOLVE, structurally,
+			 *    via `bhp_offer_components()`. That is production's state today
+			 *    (`FD-598`, no colouring product record there), and on that
+			 *    environment the shop card does not render either — so the two
+			 *    gates agree by construction rather than by remembering to.
+			 */
+			'offerAdds' => function_exists( 'bhp_offer_shop_add_payload' )
+				? bhp_offer_shop_add_payload()
+				: array(),
+			/*
 			 * R4 (2026-08-03): the cross-sell box's gold eyebrow.
 			 *
 			 * ⛔ ONE STRING, ONE SOURCE. It is read from the checkout module's

@@ -643,6 +643,67 @@ function bhp_offer_drawer_payload() {
 }
 
 /**
+ * ⭐⭐⭐ 1.8.67 — THE COMPONENT IDS THE SHOP CARD'S BUTTON ADDS. ITEM 210.
+ * ============================================================================
+ *
+ * ⭐ WHY IT EXISTS: `interceptOfferForms()` in `bundle-drawer.js` adds an
+ *    offer's components over the Store API so the SIDE PANEL opens with the
+ *    bundle in it, instead of the form POSTing to a redirect. It cannot ask
+ *    PHP what an offer contains, so the ids have to travel.
+ *
+ * ⛔ IT PUBLISHES NOTHING BUT IDS. No price, no saving, no discount, no
+ *    catalogue row and no customer copy crosses into the page. ⭐ The offer's
+ *    money is a cart FEE created by `bhp_offer_apply_fees()` from what is
+ *    ACTUALLY in the cart, server-side, every recalculation — so adding the
+ *    components IS applying the offer, and the browser is never trusted with a
+ *    figure.
+ *
+ * ⛔ SAME GATE AS EVERY OTHER SURFACE, NOT A NEW ONE: `bhp_offer_components()`
+ *    fails closed, so an offer whose products do not resolve on this
+ *    environment yields NO ROW and the script falls through to the server.
+ *    ⛔ SPEC-STUB offers (`cart_rule` !== 'pair') are never published.
+ *
+ * ⛔ THE HARDCOVER UPSELL IS INCLUDED and that is deliberate: on a shop card it
+ *    is a real submit control of its own, so it needs its own component list or
+ *    its click would degrade to the server while the primary did not.
+ *
+ * @return array<string,array{buy_ids:int[]}> Offer key => component buy ids.
+ */
+function bhp_offer_shop_add_payload() {
+	$out = array();
+
+	foreach ( bhp_offer_catalog() as $key => $offer ) {
+		if ( 'pair' !== $offer['cart_rule'] ) {
+			continue;
+		}
+		$components = bhp_offer_components( $key );
+		if ( null === $components ) {
+			continue;
+		}
+		$buy_ids = array();
+		foreach ( $components as $component ) {
+			$buy_ids[] = (int) $component['buy_id'];
+		}
+		if ( empty( $buy_ids ) ) {
+			continue;
+		}
+		/*
+		 * ⭐ `format` TRAVELS BECAUSE THE ANALYTICS EVENT NAMES IT, and for no
+		 *    other reason. It is 'paperback' or 'hardcover' — a catalogue
+		 *    attribute the page already exposes through `bundleRules`, not a
+		 *    commercial figure. ⛔ Deriving it in the browser from the offer key
+		 *    would be a second definition of the same fact.
+		 */
+		$out[ $key ] = array(
+			'buy_ids' => $buy_ids,
+			'format'  => isset( $offer['format'] ) ? $offer['format'] : null,
+		);
+	}
+
+	return $out;
+}
+
+/**
  * ⭐⭐⭐ THE OFFER FEE'S LABEL — AND THE DEFECT THAT MADE IT ITS OWN FUNCTION.
  * ============================================================================
  *

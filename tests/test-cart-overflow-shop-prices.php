@@ -51,8 +51,11 @@
  *       `_price` of the product WooCommerce would actually charge for.
  *   §7  ⛔ NO PRICE LITERAL IN THE MARKUP. Both figures are read from
  *       WC_Product; a hardcoded dollar figure in the shop-card code fails.
- *   §8  The "CHOOSE YOUR FORMAT" CTA still points at the canonical paperback
- *       product page, where the format selector lives.
+ *   §8  ⭐ REWRITTEN 1.19.286 (items 210+211). SUPERSEDED WORDING, kept so the
+ *       movement is visible: *"The 'CHOOSE YOUR FORMAT' CTA still points at
+ *       the canonical paperback product page, where the format selector
+ *       lives."* The card now ADDS the paperback and opens the side panel;
+ *       §8 asserts the id it adds is the paperback's and never the hardcover's.
  *   §9  §9.1 voice rails on the new strings: no "we/us/our", no em dash.
  *
  * ⛔ NO ORDER IS CREATED. NO CART IS BUILT. No product record, price, coupon,
@@ -389,15 +392,44 @@ bhp_cos_assert(
 	$failures
 );
 
-echo "\n=== §8 · the CTA still leads to the canonical paperback product page ===\n";
+echo "\n=== §8 · the shop CTA — ⭐ SUPERSEDED BY ITEMS 210+211, AND SAYING SO ===\n";
 
-if ( ! function_exists( 'bhp_book_shop_choose_format_link' ) || ! function_exists( 'bhp_book_canonical_id' ) ) {
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THIS SECTION WAS REWRITTEN IN 1.19.286. THE SUPERSEDED ASSERTIONS ARE
+ *     QUOTED HERE RATHER THAN DELETED, because a reader arriving from the
+ *     1.19.259 release record needs to see that they moved, not wonder where
+ *     they went:
+ *
+ *       §8b  has_filter(..., 'bhp_book_shop_choose_format_link')
+ *       §8d  strpos( $html, 'CHOOSE YOUR FORMAT' ) !== false
+ *              "the CTA label is unchanged"
+ *       §8e  the CTA href is the paperback PERMALINK
+ *
+ * ⭐ ANDREW SIGNORE, carrier items 210 + 211, 2026-08-21 (⚠️ RELAYED through
+ *    `chief-of-staff`, ⛔ NOT witnessed first-hand): every shop card carries a
+ *    uniform ADD TO CART, and every one of them opens the side panel. So the
+ *    chapter card's control is no longer a link to the page that sells — it
+ *    ADDS THE PAPERBACK (`FD-439`) and the panel takes it from there.
+ *
+ * ⛔ WHAT §8 STILL GUARDS, AND IT IS THE PART THAT ACTUALLY MATTERED: the
+ *    control resolves to the PAPERBACK product, not the hardcover and not a
+ *    remembered id. That was the real content of §8c/§8e and it is asserted
+ *    below against the live registry, unchanged in strength.
+ */
+
+if ( ! function_exists( 'bhp_book_shop_add_to_cart_link' ) || ! function_exists( 'bhp_book_canonical_id' ) ) {
 	bhp_cos_assert( false, '§8a the shop CTA filter is available', $failures );
 } else {
 	bhp_cos_assert( true, '§8a the shop CTA filter is available', $failures );
 	bhp_cos_assert(
-		has_filter( 'woocommerce_loop_add_to_cart_link', 'bhp_book_shop_choose_format_link' ) !== false,
+		has_filter( 'woocommerce_loop_add_to_cart_link', 'bhp_book_shop_add_to_cart_link' ) !== false,
 		'§8b the CTA filter is still hooked to woocommerce_loop_add_to_cart_link',
+		$failures
+	);
+	bhp_cos_assert(
+		has_filter( 'woocommerce_loop_add_to_cart_link', 'bhp_book_shop_choose_format_link' ) === false,
+		'§8b2 ⛔ the SUPERSEDED navigation filter is gone, not left double-hooked beside its replacement',
 		$failures
 	);
 
@@ -412,15 +444,37 @@ if ( ! function_exists( 'bhp_book_shop_choose_format_link' ) || ! function_exist
 		if ( function_exists( 'wc_get_product' ) ) {
 			$product = wc_get_product( $book['pb_product'] );
 			if ( $product ) {
-				$html = bhp_book_shop_choose_format_link( '<a>fallback</a>', $product );
+				$html = bhp_book_shop_add_to_cart_link( '<a>fallback</a>', $product );
 				bhp_cos_assert(
-					strpos( $html, 'CHOOSE YOUR FORMAT' ) !== false,
-					"§8d [{$key}] the CTA label is unchanged",
+					strpos( $html, 'CHOOSE YOUR FORMAT' ) === false,
+					"§8d [{$key}] ⛔ the superseded label is GONE from the rendered control",
 					$failures
 				);
 				bhp_cos_assert(
-					strpos( $html, esc_url( get_permalink( $book['pb_product'] ) ) ) !== false,
-					"§8e [{$key}] the CTA href is the paperback permalink",
+					strpos( $html, 'ADD TO CART' ) !== false,
+					"§8d2 [{$key}] ⭐ the control carries the one founder label (item 211)",
+					$failures
+				);
+				/*
+				 * ⭐ THE PAPERBACK, NAMED BY ID. This is what §8e used to prove
+				 *    through the permalink and it proves it more directly: the
+				 *    id the panel will add is the paperback's, and the variation
+				 *    id travels beside it because Mariana's paperback is a
+				 *    variable product.
+				 */
+				bhp_cos_assert(
+					strpos( $html, 'data-product-id="' . (int) $book['pb_product'] . '"' ) !== false,
+					"§8e [{$key}] ⭐ the control adds the PAPERBACK product id, never the hardcover",
+					$failures
+				);
+				bhp_cos_assert(
+					strpos( $html, 'data-variation-id="' . (int) $book['pb_variation'] . '"' ) !== false,
+					"§8e2 [{$key}] the paperback variation id travels with it (0 when the product is simple)",
+					$failures
+				);
+				bhp_cos_assert(
+					strpos( $html, 'data-product-id="' . (int) $book['hc_product'] . '"' ) === false,
+					"§8f [{$key}] ⛔ the HARDCOVER id is not what this control adds (FD-439: paperback is the one default)",
 					$failures
 				);
 			}
