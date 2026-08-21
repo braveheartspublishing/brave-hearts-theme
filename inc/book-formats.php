@@ -270,7 +270,96 @@ function bhp_book_collection_free_ship_note() {
     if (!function_exists('bhp_book_collection_ships_free') || !bhp_book_collection_ships_free()) {
         return '';
     }
-    return __('All three adventures ship free.', 'brave-hearts');
+
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.282 — HARMONISED WITH THE COLLECTION CLAUSE. CARRIER ITEM 192.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ THE FOUNDER'S INSTRUCTION WAS "harmonize". ⚠️ RELAYED through
+     *    `chief-of-staff`, NOT witnessed first-hand here.
+     *
+     * ⚠️⚠️⚠️ THE EXACT WORDING BELOW IS **GANDALF'S DEFAULT, NOT A FOUNDER
+     *    RULING**, AND IT IS FLAGGED FOR HIS VETO AT THE WALK. He ruled the
+     *    DIRECTION ("harmonize"); he did not dictate these seven words. This
+     *    is the default-not-ruling pattern: a build cannot ship a blank, so a
+     *    default is chosen, LABELLED as a default, and put in front of him at
+     *    the next walk rather than allowed to harden into canon by silence.
+     *    ⛔ Do not quote this sentence anywhere as founder-approved copy until
+     *       he has looked at it on the page.
+     *
+     * ⭐ WHY THIS DEFAULT AND NOT ANOTHER. The old sentence said "All three
+     *    adventures ship free." — which was TRUE of the collection and SILENT
+     *    about the any-three rule, so the PDP promised less than the cart
+     *    actually gives. Since `FD-583` a shopper who buys three of anything
+     *    (duplicates included) ships free. The new sentence states the rule
+     *    the engine actually runs, and its casing matches the sibling clause
+     *    in `bhp_book_free_shipping_line()` above, which is the whole point of
+     *    "harmonize".
+     *
+     * ⛔⛔ THE GATE IS WIDENED IN THE SAME EDIT, AND IT HAD TO BE. The old
+     *    wording was a COLLECTION claim and `bhp_book_collection_ships_free()`
+     *    is a COLLECTION test, so gate and sentence matched. The new wording
+     *    is an ANY-THREE claim, and the collection test does not prove it: if
+     *    the `bhp_bundle_colouring_policy` filter were ever set back to
+     *    `conservative`, the collection would still ship free while three
+     *    copies of one title would NOT — and this sentence would be a promise
+     *    the cart refuses. `bhp_book_any_three_ships_free()` closes exactly
+     *    that gap by asking the engine, live, about a NON-collection cart of
+     *    three books. ⭐ A promise the cart does not honour is the defect class
+     *    `CYCLE165-OPS-018` exists to prevent, and widening the words without
+     *    widening the gate would have re-opened it.
+     *
+     * §9.1 VOICE: no "we". No em dash. No outcome claim.
+     */
+    if (!bhp_book_any_three_ships_free()) {
+        return '';
+    }
+
+    return __('3 or more books ship FREE.', 'brave-hearts');
+}
+
+/**
+ * ⭐ 1.19.282 — is the ANY-THREE rule actually returning $0.00 right now?
+ *
+ * The sibling of `bhp_book_collection_ships_free()` below, for the claim that
+ * sentence above now makes. Both are LIVE READS of the plugin's own engine;
+ * neither hardcodes a tier.
+ *
+ * ⛔ THE FIXTURE IS DELIBERATELY **NOT** A COLLECTION. Three copies of ONE
+ *    paperback title: three physical books, one distinct adventure,
+ *    `is_complete_collection` false. That shape can only reach $0.00 through
+ *    `bhp_bundle_shipping_amount()` branch A — the `any-three` branch — so a
+ *    zero here proves the any-three rule specifically, and not the collection
+ *    rule wearing its coat. Under `conservative` the same shape falls through
+ *    to the single-paperback figure and this returns false.
+ *
+ * ⛔ Returns false when the plugin is absent, so a theme running without it
+ *    says nothing rather than guessing.
+ *
+ * @return bool
+ */
+function bhp_book_any_three_ships_free() {
+    if (!function_exists('bhp_bundle_shipping_amount')) {
+        return false;
+    }
+
+    $three = bhp_bundle_shipping_amount([
+        'is_complete_collection' => false,
+        'is_mixed_format'        => false,
+        'total_quantity'         => 3,
+        'physical_book_count'    => 3,
+        'has_paperback'          => true,
+        'has_hardcover'          => false,
+        'has_colouring'          => false,
+        'paperback_tier'         => 1,
+        'hardcover_tier'         => 0,
+        'distinct_adventures'    => 1,
+        'has_any_book'           => true,
+        'has_unrelated'          => false,
+    ]);
+
+    return null !== $three && bhp_book_shipping_is_free($three);
 }
 
 /**
@@ -651,6 +740,34 @@ function bhp_book_free_shipping_line() {
      *    ⛔ If he wants "Free Shipping", it is one literal in three files
      *       and `test-freeship-line-parity.php` names all three. ROUTED to
      *       him for a one-word confirmation at the re-walk; NOT decided here.
+     *
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.282 — THE FLAG ABOVE IS ANSWERED. CARRIER ITEM 192, 2026-08-21.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ THE RULING: uppercase **FREE**, matching the pre-existing string's
+     *    own style, everywhere the clause appears. ⚠️ RELAYED to this agent by
+     *    `chief-of-staff`, NOT witnessed first-hand here, and labelled that
+     *    way rather than presented as a source read.
+     *
+     * ⭐⭐ NOT ONE BYTE OF CODE MOVED FOR THIS LIMB, AND THAT IS THE FINDING,
+     *    NOT A SHORTCUT. 1.19.280 shipped the conservative reading — it left
+     *    the locked casing alone and asked. The founder confirmed the casing
+     *    that was already shipping. ⛔ So item 192 limb 1 is a VERIFICATION
+     *    result, not an edit: every occurrence of the clause in shipped code
+     *    and in the protected-elements manifest was ALREADY the exact final
+     *    bytes, and a case-insensitive sweep of the whole tree found no
+     *    lowercase variant to correct.
+     *
+     * ⭐ THE GUARD IS THE NEW WORK. `tests/test-freeship-line-parity.php`
+     *    (1.19.282) now asserts the exact bytes in every shipped occurrence
+     *    AND fails on any "Free Shipping on the complete collection" variant
+     *    anywhere in theme or plugin source, so the casing cannot be silently
+     *    downcased by a later edit the way it could before this pass.
+     *
+     * ⛔ THE PRECISION NOTE ABOVE IS PRESERVED VERBATIM rather than corrected
+     *    in place: it records that the casing was a REASONED REFUSAL put to
+     *    him, not an oversight, which is what a future reader needs.
      *
      * ⛔ THE SCHOOL-VISIT BRANCH ABOVE IS UNTOUCHED. A flagged parent is not
      *    being shipped anything and still gets the hand-delivery sentence —

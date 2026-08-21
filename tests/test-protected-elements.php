@@ -251,9 +251,33 @@ function bhp_pe_manifest() {
 			 *    behaving flagged journey, which is the `FD-505`/`FD-506` path
 			 *    that must never be broken by a gate.
 			 */
+			/*
+			 * ⭐⭐ 1.19.282 — CARRIER ITEM 192 CONFIRMED THIS ROW'S CASING.
+			 *
+			 * Andrew Signore, carrier item 192, 2026-08-21 (⚠️ RELAYED through
+			 * `chief-of-staff`, NOT witnessed first-hand by the agent that
+			 * wrote this note): uppercase **FREE**, matching the pre-existing
+			 * string's own style, everywhere the clause appears.
+			 *
+			 * ⭐⭐ THE ROW WAS ALREADY THE EXACT FINAL BYTES AND NOT ONE
+			 *    CHARACTER OF IT MOVED. 1.19.280 shipped the conservative
+			 *    reading — it left the locked casing alone and asked him. He
+			 *    confirmed the casing that was already shipping. ⛔ So "sync
+			 *    the row to the final bytes" resolved to a VERIFICATION, not
+			 *    an edit, and saying so plainly matters more than making the
+			 *    diff look like work: a row edited for no reason is a row a
+			 *    future reader cannot trust.
+			 *
+			 * ⭐ THE PARITY GUARD IS THE NEW WORK, and it lives in
+			 *    `tests/test-freeship-line-parity.php` §4, which compares THIS
+			 *    ROW against the live helper rather than against a second copy
+			 *    of the literal. If either side ever moves alone, that suite
+			 *    fails. Before 1.19.282 the casing was protected only by a
+			 *    comment asking a future agent not to change it.
+			 */
 			'FREE Shipping on the complete collection or 3 or more books purchased' => array( 'min', 2,
-				'the free-shipping promise, his exact string — carrier item 186 (trust + sales). '
-				. 'Skipped on a school-visit session, which shows hand-delivery instead.' ),
+				'the free-shipping promise, his exact string — carrier item 186, casing confirmed at item 192 '
+				. '(trust + sales). Skipped on a school-visit session, which shows hand-delivery instead.' ),
 		),
 	);
 }
