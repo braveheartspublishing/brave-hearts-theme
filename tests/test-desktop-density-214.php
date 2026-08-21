@@ -200,10 +200,40 @@ dd_assert(
 	false !== strpos( $dd_out, '@media (max-width: 640px)' ),
 	'3.2 ⛔ the 390 mobile block is untouched and still present'
 );
-dd_assert(
-	false === strpos( $dd_out, 'repeat(4, minmax(0, 1fr))' ),
-	'3.3 ⛔⛔ FOUR TRACKS APPEAR NOWHERE OUTSIDE THE 1280 BLOCK — a phone never gets a 4-across grid'
-);
+/*
+ * ⛔⛔ CORRECTED IN THE FIRST STAGING RUN — THIS ASSERTION FAILED ON A CORRECT
+ *     BUILD, AND THE SUITE WAS THE THING THAT WAS WRONG.
+ *
+ * ⭐ THE SUPERSEDED TEST, PRESERVED SO IT IS NOT RE-DERIVED:
+ *
+ *       false === strpos( $dd_out, 'repeat(4, minmax(0, 1fr))' )
+ *
+ *    It searched the WHOLE stylesheet for four tracks and found
+ *    `.grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }` — a
+ *    generic layout utility that has been in this file since long before item
+ *    214, is used on surfaces that are not the shop, and has nothing to do
+ *    with `ul.products`. ⛔ A gate that fails on a correct build gets muted,
+ *    and a muted gate protects nothing.
+ *
+ * ⭐ THE TEST NOW ASSERTS WHAT IT ALWAYS MEANT: no rule OUTSIDE the 1280 block
+ *    gives the SHOP GRID four tracks. That is the claim worth gating — it is
+ *    what stops a phone rendering four 96px cards.
+ */
+if ( preg_match_all( '/body\.woocommerce-shop[^{}]*ul\.products[^{}]*\{[^{}]*\}/', $dd_out, $dd_shop_rules ) ) {
+	$dd_bad = 0;
+	foreach ( $dd_shop_rules[0] as $dd_rule ) {
+		if ( preg_match( '/grid-template-columns:\s*repeat\(\s*4/', $dd_rule ) ) {
+			$dd_bad++;
+		}
+	}
+	dd_assert(
+		0 === $dd_bad,
+		'3.3 ⛔⛔ NO SHOP-GRID RULE OUTSIDE THE 1280 BLOCK DECLARES FOUR TRACKS ('
+			. count( $dd_shop_rules[0] ) . ' shop rules scanned) — a phone never gets a 4-across grid'
+	);
+} else {
+	dd_assert( false, '3.3 ⛔ no body.woocommerce-shop ul.products rules found outside the block — the scope itself has gone missing' );
+}
 dd_assert(
 	false === strpos( $dd_desktop, 'max-width' ),
 	'3.4 ⛔ the desktop block contains no max-width rule — it cannot reach down into the mobile band'
