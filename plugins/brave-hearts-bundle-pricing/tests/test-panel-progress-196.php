@@ -263,6 +263,35 @@ pp_assert(
 	'4.4 ⭐ the JS counter sums QUANTITIES and includes colouring ids — the same two terms as PHP'
 );
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 4.5 — THE REGRESSION GUARD FOR THE DEFECT THIS BUILD'S BROWSER QA FOUND.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ PRE-EXISTING SINCE 1.8.61 AND INVISIBLE TO A SOURCE READ. PHP's
+ *    `bhp_bundle_cart_has_unrelated_items()` SKIPS colouring items; the
+ *    drawer's `computeDrawerMeta()` did not, so any cart holding a colouring
+ *    book computed `hasUnrelated === true` — which silences EVERY free-
+ *    shipping message in the panel, including the two that shipped in 1.8.23.
+ *    The server went on giving those carts free shipping while the panel said
+ *    nothing.
+ *
+ * ⭐ IT TOOK A REAL BROWSER. Both halves look correct read on their own; the
+ *    line rendered at 1 chapter paperback and went blank the instant the
+ *    panel's own cross-sell added the colouring book, at 390 AND 1440.
+ */
+$pp_meta_pos = strpos( $pp_js, 'function computeDrawerMeta' );
+$pp_meta_src = false === $pp_meta_pos ? '' : substr( $pp_js, $pp_meta_pos, 4000 );
+pp_assert(
+	false !== strpos( $pp_meta_src, 'colouringIdsForUnrelated' ),
+	'4.5 ⭐⭐ computeDrawerMeta() treats a colouring book as RELATED, exactly as PHP has since 1.8.61'
+);
+pp_assert(
+	false !== strpos( $pp_data_code, 'bhp_bundle_identify_colouring_item' )
+		&& false !== strpos( $pp_data_code, 'bhp_bundle_cart_has_unrelated_items' ),
+	'4.6 …and the PHP side it is mirroring still skips colouring items too'
+);
+
 /* ───────────────────────────────────────────────────────────────────────────
  * §5 · THE PAYLOAD REACHES THE PANEL, AND NOTHING IS RESTATED IN JS
  * ─────────────────────────────────────────────────────────────────────────── */

@@ -710,11 +710,58 @@
 		});
 
 		var addonIds = (window.bhpDrawerData && window.bhpDrawerData.addonProductIds) || [];
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐⭐ 1.8.66 — A COLOURING BOOK IS *RELATED*, AND THIS SIDE DID NOT
+		 *    KNOW IT. A REAL DIVERGENCE, FOUND BY BROWSER QA, NOT BY A READ.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⛔ THE DEFECT, AND IT IS PRE-EXISTING SINCE 1.8.61. PHP's
+		 *    `bhp_bundle_cart_has_unrelated_items()` explicitly SKIPS colouring
+		 *    items ("A colouring book is skipped… it is counted by
+		 *    `bhp_bundle_physical_book_count()`"), so the server has always
+		 *    treated a colouring cart as one it understands. This function did
+		 *    not: `identifyCartItem()` knows only the six chapter editions and
+		 *    `addonIds` holds only the weightless digital add-on, so ANY cart
+		 *    containing a colouring book computed `hasUnrelated === true`.
+		 *
+		 * ⛔ WHAT THAT ACTUALLY BROKE, STATED PLAINLY RATHER THAN MINIMISED:
+		 *    every free-shipping message in this drawer is suppressed on
+		 *    `hasUnrelated`. So since 1.8.61 a shopper who added a colouring
+		 *    book silently lost the existing "add the final adventure and your
+		 *    order ships free" nudge and the "your complete collection ships
+		 *    free" line — while the SERVER went on giving them free shipping.
+		 *    The drawer was under-promising on exactly the cart the colouring
+		 *    line exists to create.
+		 *
+		 * ⭐ HOW IT WAS FOUND: item 196's progress line rendered correctly at
+		 *    1 chapter paperback and went blank the instant the panel's own
+		 *    cross-sell added the colouring book — at BOTH 390 and 1440. A
+		 *    source read would not have shown it; the PHP and the JS each look
+		 *    correct in isolation. It took a real browser and a real cart.
+		 *
+		 * ⭐ THE FIX IS TO MIRROR PHP, NOT TO SPECIAL-CASE THE NEW LINE. Adding
+		 *    a colouring exemption inside `shipProgressLine()` alone would have
+		 *    made the new line right and left the two older messages wrong,
+		 *    which is two behaviours for one rule — the drift this codebase
+		 *    keeps paying for. `colouringIds` is `bhp_colouring_product_ids()`
+		 *    verbatim, the same list PHP matches on.
+		 *
+		 * ⛔ THE FAIL-SAFE IS UNCHANGED. An unknown product still returns true
+		 *    and still silences every claim. On an environment with no
+		 *    colouring product record `colouringIds` is empty and this reads
+		 *    exactly as it did before.
+		 */
+		var colouringIdsForUnrelated = (window.bhpDrawerData && window.bhpDrawerData.colouringIds) || [];
 		var hasUnrelated = (cart.items || []).some(function (item) {
 			if (identifyCartItem(item)) {
 				return false;
 			}
-			return addonIds.indexOf(parseInt(item.id, 10)) === -1;
+			var id = parseInt(item.id, 10);
+			if (colouringIdsForUnrelated.indexOf(id) !== -1) {
+				return false;
+			}
+			return addonIds.indexOf(id) === -1;
 		});
 
 		// True exactly when the two-adventure free-shipping nudge will render.
