@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: a0de17e3e932bc6ce5de0d2cf3db8d7e
+    source-md5: 643885e084c2ba7be7f532b31fcaee5c
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -3563,6 +3563,12 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product img {
     margin: 4px 0 0;
     padding-inline: 8px;
     font-size: 0.82rem;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-format-price {
+    display: block;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-format-prices__sep {
+    display: none;
   }
   body.woocommerce-shop .woo-expedition-shell ul.products li.product .button {
     align-self: stretch;

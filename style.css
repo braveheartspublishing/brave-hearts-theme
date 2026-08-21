@@ -4607,6 +4607,25 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
     padding-inline: 8px;
     font-size: 0.82rem;
   }
+  /* ⭐ THE TWO PRICED ENTRIES STACK, AND THE SEPARATOR GOES WITH THEM.
+     ⛔ FOUND BY LOOKING AT THE RENDERED CARD, NOT BY READING THE CSS. At 172px
+        "Paperback $11.99 · Hardcover $17.99" always wraps, and the existing
+        rule (1.19.259) deliberately keeps each entry whole and stops the "·"
+        starting a line — so the separator ends up DANGLING at the end of line
+        one: "Paperback $11.99 ·". That is the 1.19.259 behaviour working
+        exactly as designed at a width it was never designed for.
+     ⭐ ONE LINE PER FORMAT IS ALSO EASIER TO COMPARE ACROSS TWO CARDS, which
+        is the whole reason item 204 asked for a 2-up grid.
+     ⛔ NOTHING IS LOST: the separator is `aria-hidden="true"` decoration whose
+        only job is to divide entries ON ONE LINE; the labels carry the
+        meaning and both prices still render in full. ⛔ THE 1.19.259 RULE
+        ITSELF IS UNTOUCHED and still governs every other width. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-format-price {
+    display: block;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-format-prices__sep {
+    display: none;
+  }
   body.woocommerce-shop .woo-expedition-shell ul.products li.product .button {
     align-self: stretch;
     margin: 10px;
