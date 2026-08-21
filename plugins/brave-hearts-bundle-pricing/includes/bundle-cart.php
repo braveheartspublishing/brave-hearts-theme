@@ -993,7 +993,8 @@ function bhp_bundle_shipping_amount( array $eval ) {
 	 *    COUNT, and every figure below is read from the approved tables rather
 	 *    than written down again:
 	 *
-	 *      1 book  -> `bhp_bundle_single_shipping('paperback')`  = $1.99
+	 *      1 book  -> `bhp_colouring_single_shipping()` = $2.99   ⭐ 1.8.66
+	 *                 (was `bhp_bundle_single_shipping('paperback')` = $1.99)
 	 *      2 books -> `bhp_bundle_rules('paperback')[2]['shipping']` = $2.99
 	 *      3+      -> $4.99, the pre-existing mixed-cart 3-or-more row,
 	 *                 reachable ONLY under the `conservative` policy (under
@@ -1005,6 +1006,12 @@ function bhp_bundle_shipping_amount( array $eval ) {
 	 *    instruction to choose the parallel and flag it:
 	 *      1. A single colouring book ships at $1.99, like a single paperback,
 	 *         NOT at the hardcover $2.99. Basis: it is a paperback binding.
+	 *         ⭐⭐ SUPERSEDED 1.8.66 BY FOUNDER RULING, CARRIER ITEM 195: a
+	 *         single colouring book ships at $2.99. ⛔ The sentence above is
+	 *         preserved verbatim rather than corrected in place, so a reader
+	 *         can see that $1.99 was a REASONED READING flagged for him and
+	 *         not an oversight, and that he then ruled against it. The figure
+	 *         now comes from `bhp_colouring_single_shipping()`.
 	 *      2. One chapter paperback + one colouring book ships at $2.99, like
 	 *         two distinct paperbacks -- NOT at the mixed-format $3.99, which
 	 *         exists to price a paperback-plus-HARDCOVER cart.
@@ -1024,7 +1031,13 @@ function bhp_bundle_shipping_amount( array $eval ) {
 	if ( ! empty( $eval['has_colouring'] ) && empty( $eval['has_hardcover'] ) ) {
 		$books = (int) $eval['physical_book_count'];
 		if ( $books <= 1 ) {
-			return bhp_bundle_single_shipping( 'paperback' );
+			/*
+			 * ⭐ 1.8.66 — founder carrier item 195. The single colouring row is
+			 *    the ONLY row this ruling moves; every branch above and below
+			 *    is byte-unchanged, and a single chapter paperback still reads
+			 *    $1.99 from `bhp_bundle_single_shipping()` further down.
+			 */
+			return bhp_colouring_single_shipping();
 		}
 		if ( 2 === $books ) {
 			$paperback_rules = bhp_bundle_rules( 'paperback' );

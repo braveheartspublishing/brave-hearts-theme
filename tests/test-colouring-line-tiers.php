@@ -321,9 +321,48 @@ bhp_clt_assert(
  *     ⚠️ Three readings are FLAGGED in the report, not settled here.
  * ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n[§5] The colouring ladder (conservative policy)\n";
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.66 — FLAGGED READING 1 IS NOW A FOUNDER RULING, AND HE WENT THE
+ *    OTHER WAY. Carrier item 195, 2026-08-21 (⚠️ RELAYED, not witnessed here).
+ *
+ * ⛔ THE SUPERSEDED ASSERTION, PRESERVED VERBATIM so the movement is visible
+ *    and is not re-derived — 1.8.61 through 1.8.65 asserted:
+ *
+ *      1.99, '⚠️ FLAGGED READING 1 — 1 colouring book alone = $1.99, like a
+ *             single paperback'
+ *
+ *    That was a REASONED READING put to him, not an oversight. He ruled $2.99.
+ * ═══════════════════════════════════════════════════════════════════════════ */
 bhp_clt_assert_money(
 	bhp_bundle_shipping_amount( bhp_clt_eval( array( 'has_colouring' => true, 'colouring_quantity' => 1, 'distinct_colouring' => 1, 'physical_book_count' => 1 ) ) ),
-	1.99, '⚠️ FLAGGED READING 1 — 1 colouring book alone = $1.99, like a single paperback', $failures, $passes
+	2.99, '⭐ RULED (item 195) — 1 colouring book alone = $2.99, NOT the $1.99 single-paperback figure', $failures, $passes
+);
+bhp_clt_assert_money(
+	bhp_colouring_single_shipping(),
+	2.99, '⭐ item 195 — the figure has ONE author, and it is bhp_colouring_single_shipping()', $failures, $passes
+);
+/*
+ * ⛔⛔ THE SCOPE ASSERTIONS. Item 195 moved the SINGLE COLOURING row and
+ *    nothing else, and these four exist so that claim is machine-checked
+ *    rather than asserted in a report. A shipping edit that quietly widens is
+ *    the defect class this suite keeps catching.
+ */
+bhp_clt_assert_money(
+	bhp_bundle_single_shipping( 'paperback' ),
+	1.99, '⛔ SCOPE — a single chapter PAPERBACK is UNTOUCHED at $1.99', $failures, $passes
+);
+bhp_clt_assert_money(
+	bhp_bundle_single_shipping( 'hardcover' ),
+	2.99, '⛔ SCOPE — a single HARDCOVER is UNTOUCHED at $2.99', $failures, $passes
+);
+bhp_clt_assert_money(
+	bhp_bundle_shipping_amount( bhp_clt_eval( array( 'has_paperback' => true, 'total_quantity' => 1, 'physical_book_count' => 1, 'distinct_adventures' => 1 ) ) ),
+	1.99, '⛔ SCOPE — 1 chapter paperback in a real cart shape still renders $1.99', $failures, $passes
+);
+$clt_rules_195 = bhp_bundle_rules( 'paperback' );
+bhp_clt_assert_money(
+	$clt_rules_195[3]['shipping'],
+	0.00, '⛔ SCOPE — the COLLECTION tier is UNTOUCHED at $0.00', $failures, $passes
 );
 bhp_clt_assert_money(
 	bhp_bundle_shipping_amount( bhp_clt_eval( array( 'has_paperback' => true, 'has_colouring' => true, 'total_quantity' => 1, 'colouring_quantity' => 1, 'distinct_colouring' => 1, 'physical_book_count' => 2, 'distinct_adventures' => 1 ) ) ),

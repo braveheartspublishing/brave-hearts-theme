@@ -175,6 +175,59 @@ function bhp_bundle_single_shipping( $format ) {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.66 — THE SINGLE COLOURING BOOK SHIPS AT $2.99, NOT $1.99.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ FOUNDER RULING, CARRIER ITEM 195, 2026-08-21 — relayed to this agent by
+ *    `chief-of-staff` in the build brief. ⚠️ RELAYED, NOT WITNESSED FIRST-HAND
+ *    HERE, and it is labelled that way rather than dressed up as a source read.
+ *
+ * ⭐ IT CLOSES A READING THAT 1.8.61 EXPLICITLY REFUSED TO SETTLE. That build
+ *    wrote, in `bhp_bundle_shipping_amount()` branch C: "⚠️⚠️ THREE READINGS
+ *    ARE FLAGGED RATHER THAN PRESENTED AS SETTLED... 1. A single colouring book
+ *    ships at $1.99, like a single paperback, NOT at the hardcover $2.99.
+ *    Basis: it is a paperback binding. ⛔ NONE of these is a founder ruling."
+ *    ⭐ FLAGGED READING 1 IS NOW A FOUNDER RULING, AND HE WENT THE OTHER WAY.
+ *
+ * ⛔⛔ SCOPE — THE SINGLE COLOURING ROW AND NOTHING ELSE. Stated as a list of
+ *    what did NOT move, because a shipping edit that quietly widens is the
+ *    defect class this file keeps catching:
+ *      · a single chapter PAPERBACK is still $1.99 (`bhp_bundle_single_shipping`
+ *        above is byte-untouched, and a test asserts it in the same pass)
+ *      · a single HARDCOVER is still $2.99
+ *      · 1 chapter PB + 1 colouring is still $2.99
+ *      · 2 copies of one colouring title is still $2.99
+ *      · the COLLECTION tier is still $0.00
+ *      · the `any-three` free-shipping rule is untouched — 3+ physical books
+ *        still return $0.00 from branch A, before this figure is ever reached
+ *      · no bundle DISCOUNT table, no product price, no coupon
+ *
+ * ⛔ IT IS A PLUGIN FIGURE, NOT A WOOCOMMERCE SETTING. No zone, no method, no
+ *    `flat_rate` instance and no store option is touched on any environment by
+ *    this constant. The zone base stays $3.99 and the override still only
+ *    rewrites a cost the zone already produces.
+ *
+ * ⭐ WHY A FUNCTION OF ITS OWN RATHER THAN A LITERAL IN branch C: so the
+ *    colouring ladder has ONE author, is filterable the way every other figure
+ *    in this file is, and so a future reader grepping "2.99" does not have to
+ *    guess whether a given occurrence is the hardcover single or this one.
+ *
+ * @return float The single-colouring-book shipping figure, in dollars.
+ */
+function bhp_colouring_single_shipping() {
+	/**
+	 * The shipping figure for a cart holding exactly one colouring-line book.
+	 *
+	 * ⭐ 1.8.66: $2.99 (founder carrier item 195). Was `bhp_bundle_single_
+	 *    shipping('paperback')` = $1.99 from 1.8.61.
+	 *
+	 * @param float $amount Dollars.
+	 */
+	return (float) apply_filters( 'bhp_colouring_single_shipping', 2.99 );
+}
+
+/**
  * Fixed-dollar bundle rules, keyed by qualifying tier (2 or 3 distinct
  * titles). Every number here is the literal approved amount — never a
  * computed percentage, never derived from anything other than this table.
@@ -401,6 +454,82 @@ function bhp_bundle_freeship_copy() {
 	 *                    is the one that earns free shipping).
 	 */
 	return apply_filters( 'bhp_bundle_freeship_copy', $copy );
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.66 — THE FREE-SHIPPING PROGRESS LINE. FOUNDER CARRIER ITEM 196.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE THREE STRINGS ARE FOUNDER-APPROVED — he approved the copy itself, not
+ *    merely the idea of a line. ⚠️ RELAYED to this agent by `chief-of-staff` in
+ *    the build brief; NOT witnessed first-hand here, and labelled as relayed
+ *    rather than presented as a source read.
+ *
+ * ⭐⭐ IT IS KEYED ON A **COUNT OF PHYSICAL BOOKS**, DUPLICATES INCLUDED — the
+ *    same quantity the shipping rule itself reads, and this is the whole
+ *    reason the line can be trusted. The counter is
+ *    `bhp_bundle_physical_book_count()` (bundle-data.php), which is
+ *    `bhp_bundle_total_quantity_in_cart()` + `bhp_bundle_colouring_quantity_
+ *    in_cart()`; `bhp_bundle_shipping_amount()` branch A (bundle-cart.php)
+ *    reads that exact field as `$eval['physical_book_count']` and returns
+ *    $0.00 at `>= 3` under `FD-583` / `bhp_bundle_colouring_policy() ===
+ *    'any-three'`. ⛔ ONE COUNTER, TWO READERS. The panel cannot promise a
+ *    threshold the cart charges past, because it is not counting separately.
+ *
+ * ⛔ IT IS **NOT** A COUNT OF DISTINCT ADVENTURES, and that distinction is the
+ *    difference between this line and `bhp_bundle_freeship_copy()` above.
+ *    That one is a COLLECTION nudge keyed on distinct titles; this one is a
+ *    SHIPPING nudge keyed on quantity. Three copies of one title is three
+ *    books of postage and zero progress toward a collection, so the two lines
+ *    legitimately say different things about the same cart.
+ *
+ * ⛔ NO URGENCY THEATRICS, by instruction and by the standing constraint on
+ *    `bhp_bundle_freeship_copy()` above: no countdown, no "today only", no
+ *    "hurry", no scarcity, no exclamation, no colour alarm. Nothing here
+ *    expires and the copy does not pretend it does.
+ *
+ * ⛔ NO DOLLAR FIGURE IN ANY OF THE THREE STRINGS — the same rule the nudge
+ *    follows, for the same reason: a hardcoded amount drifts out of step with
+ *    the tier table, and the amount saved differs by format and by cart.
+ *
+ * ⭐ SINGULAR/PLURAL IS BAKED IN RATHER THAN COMPUTED. "1 more book" and
+ *    "2 more books" are two separate approved strings, not one string with a
+ *    pluralisation branch, so no code decides how his sentence reads.
+ *
+ * @return array{1:string,2:string,earned:string}
+ */
+function bhp_bundle_ship_progress_copy() {
+	$copy = array(
+		1        => 'Add 2 more books and shipping is FREE.',
+		2        => 'Add 1 more book and shipping is FREE.',
+		'earned' => 'Your order ships FREE.',
+	);
+
+	/**
+	 * Swap the mini-cart free-shipping progress copy.
+	 *
+	 * @param array $copy Keyed by the number of physical books ALREADY IN THE
+	 *                    CART (1, 2), plus 'earned' for the threshold and
+	 *                    above. ⛔ Keyed on what the shopper HAS, not on what
+	 *                    is missing — the strings themselves name the
+	 *                    remainder, so a reader comparing key to sentence does
+	 *                    not have to do the subtraction twice.
+	 */
+	return apply_filters( 'bhp_bundle_ship_progress_copy', $copy );
+}
+
+/**
+ * ⭐ 1.8.66 — the book count at which shipping becomes free.
+ *
+ * ⛔ READ FROM THE RULE, NOT WRITTEN DOWN A SECOND TIME. The threshold lives in
+ *    `bhp_bundle_shipping_amount()` branch A as `>= 3`; this exposes it so the
+ *    panel copy and the cart cannot disagree about where the line is.
+ *
+ * @return int
+ */
+function bhp_bundle_freeship_book_threshold() {
+	return (int) apply_filters( 'bhp_bundle_freeship_book_threshold', 3 );
 }
 
 /**
