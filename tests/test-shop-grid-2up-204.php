@@ -96,6 +96,45 @@ function s2u_shipped_css( $path ) {
 $s2u_css     = s2u_shipped_css( $s2u_theme . '/style.min.css' );
 $s2u_fmt_css = s2u_shipped_css( $s2u_theme . '/assets/css/book-formats.min.css' );
 
+/**
+ * Every `@media (max-width: 640px)` block in the shipped artefact, brace-matched.
+ *
+ * ⭐⭐ THE WHOLE SUITE TURNS ON THIS SEPARATION, so it is done once, here, and
+ *    both halves are kept. §4–§6 assert what must be INSIDE the mobile block;
+ *    §7 asserts what must be OUTSIDE it.
+ *
+ * ⛔ WITHOUT IT, "the Kirkus badge is hidden" passes on a build that hides the
+ *    badge at EVERY width — which is not the ruling, and which would silently
+ *    strip a real trust element from the desktop storefront while the mobile
+ *    screenshot looked perfect.
+ *
+ * ⛔ THE BLOCKS ARE KEPT AS AN ARRAY, NOT ONLY AS ONE CONCATENATED STRING, AND
+ *    THAT IS A BUG FIX RECORDED RATHER THAN HIDDEN. §7 originally built its
+ *    "outside" text as `str_replace( $concatenated, '', $css )` — which
+ *    removes NOTHING when there is more than one such block, because the
+ *    concatenation appears nowhere in the file. §7.4 therefore failed on a
+ *    correct build. Removing the blocks ONE AT A TIME is what makes it true.
+ */
+$s2u_blocks = array();
+if ( preg_match_all( '/@media\s*\(max-width:\s*640px\)\s*\{/', $s2u_css, $s2u_mm, PREG_OFFSET_CAPTURE ) ) {
+	foreach ( $s2u_mm[0] as $s2u_hit ) {
+		$s2u_i     = $s2u_hit[1] + strlen( $s2u_hit[0] );
+		$s2u_start = $s2u_i;
+		$s2u_depth = 1;
+		$s2u_len   = strlen( $s2u_css );
+		while ( $s2u_i < $s2u_len && $s2u_depth > 0 ) {
+			if ( '{' === $s2u_css[ $s2u_i ] ) {
+				$s2u_depth++;
+			} elseif ( '}' === $s2u_css[ $s2u_i ] ) {
+				$s2u_depth--;
+			}
+			$s2u_i++;
+		}
+		$s2u_blocks[] = substr( $s2u_css, $s2u_start, $s2u_i - $s2u_start );
+	}
+}
+$s2u_mobile = implode( ' ', $s2u_blocks );
+
 echo "\n=== §1 · THE AGE LINE RESOLVES, IT IS NOT A LITERAL IN A TEMPLATE ===\n";
 
 s2u_assert(
@@ -252,41 +291,49 @@ s2u_assert(
  *    SINGLE PRODUCT page, whose related/upsell rows are `ul.products
  *    li.product` too. An unscoped rule would restyle a surface item 204 never
  *    mentioned, and it would do it silently.
+ *
+ * ⛔⛔ THE FIRST VERSION OF THIS ASSERTION WAS A TEST DEFECT AND IS RECORDED
+ *    RATHER THAN QUIETLY REPLACED — it is the same shape as the bug the
+ *    1.19.282 sweep found in `test-freeship-line-parity.php`. It read:
+ *
+ *      false === strpos( $css, '.woo-expedition-shell ul.products { grid-…' )
+ *
+ *    ⛔ THAT CAN NEVER PASS, because the forbidden literal is a SUBSTRING of
+ *       the correct one: `body.woocommerce-shop .woo-expedition-shell
+ *       ul.products {…}` CONTAINS `.woo-expedition-shell ul.products {…}`. It
+ *       failed on a perfectly correct build. ⭐ A gate that fires on the right
+ *       answer is worse than no gate — the next agent "fixes" the code.
+ *
+ * ⭐ THE CORRECT TEST WALKS THE RULES. Every rule inside the mobile block that
+ *    sets two tracks on `ul.products` must carry `body.woocommerce-shop` in its
+ *    own selector. That is the property that actually matters, and it stays
+ *    true no matter how the minifier spaces the output.
  */
+$s2u_unscoped = array();
+if ( preg_match_all( '/([^{}]*ul\.products[^{}]*)\{([^}]*)\}/', $s2u_mobile, $s2u_rules, PREG_SET_ORDER ) ) {
+	foreach ( $s2u_rules as $s2u_rule ) {
+		if ( ! preg_match( '/grid-template-columns:\s*repeat\(\s*2/', $s2u_rule[2] ) ) {
+			continue;
+		}
+		if ( false === strpos( $s2u_rule[1], 'body.woocommerce-shop' ) ) {
+			$s2u_unscoped[] = trim( $s2u_rule[1] );
+		}
+	}
+}
 s2u_assert(
-	false === strpos( $s2u_css, '.woo-expedition-shell ul.products{grid-template-columns:repeat(2' )
-		&& false === strpos( $s2u_css, '.woo-expedition-shell ul.products { grid-template-columns: repeat(2' ),
-	'4.4 ⛔ the 2-up rule is NEVER emitted unscoped (related/upsell rows untouched)'
+	empty( $s2u_unscoped ),
+	sprintf(
+		'4.4 ⛔ every 2-up rule in the mobile block is scoped to body.woocommerce-shop (unscoped: %s)',
+		empty( $s2u_unscoped ) ? 'none' : implode( ' | ', $s2u_unscoped )
+	)
 );
 
 echo "\n=== §5 · KIRKUS AND THE REVIEW COME OFF — MOBILE ONLY ===\n";
 
-/*
- * ⭐ THE MEDIA QUERY IS EXTRACTED AND THE ASSERTIONS RUN INSIDE IT. Asserting
- *    "the file contains `.kirkus-credibility{display:none}`" would pass on a
- *    build that hid the badge at EVERY width — which is not the ruling and
- *    would silently strip a real trust element from the desktop storefront.
- */
-$s2u_mobile = '';
-if ( preg_match_all( '/@media\s*\(max-width:\s*640px\)\s*\{/', $s2u_css, $s2u_mm, PREG_OFFSET_CAPTURE ) ) {
-	foreach ( $s2u_mm[0] as $s2u_hit ) {
-		$s2u_i     = $s2u_hit[1] + strlen( $s2u_hit[0] );
-		$s2u_depth = 1;
-		$s2u_len   = strlen( $s2u_css );
-		$s2u_start = $s2u_i;
-		while ( $s2u_i < $s2u_len && $s2u_depth > 0 ) {
-			if ( '{' === $s2u_css[ $s2u_i ] ) {
-				$s2u_depth++;
-			} elseif ( '}' === $s2u_css[ $s2u_i ] ) {
-				$s2u_depth--;
-			}
-			$s2u_i++;
-		}
-		$s2u_mobile .= substr( $s2u_css, $s2u_start, $s2u_i - $s2u_start );
-	}
-}
-
-s2u_assert( '' !== $s2u_mobile, '5.1 a max-width:640px block exists in the shipped artefact' );
+s2u_assert(
+	'' !== $s2u_mobile,
+	sprintf( '5.1 a max-width:640px block exists in the shipped artefact (%d found)', count( $s2u_blocks ) )
+);
 s2u_assert(
 	false !== strpos( $s2u_mobile, '.kirkus-credibility' )
 		&& (bool) preg_match( '/\.kirkus-credibility[^{]*\{[^}]*display:\s*none/', $s2u_mobile ),
@@ -346,7 +393,14 @@ echo "\n=== §7 · THE DESKTOP CARD IS UNCHANGED ===\n";
  *    "Take it off mobile" is one selector away from "take it off everywhere",
  *    and the difference is invisible to anyone testing on a phone.
  */
-$s2u_outside = str_replace( $s2u_mobile, '', $s2u_css );
+/*
+ * ⛔ ONE AT A TIME. See the extraction note above — removing the concatenation
+ *    removes nothing, and §7.4 then fails on a correct build.
+ */
+$s2u_outside = $s2u_css;
+foreach ( $s2u_blocks as $s2u_block ) {
+	$s2u_outside = str_replace( $s2u_block, '', $s2u_outside );
+}
 s2u_assert(
 	! preg_match( '/(^|[},])\s*\.kirkus-credibility\s*\{[^}]*display:\s*none/', $s2u_outside ),
 	'7.1 ⛔ Kirkus is NOT hidden globally — the desktop card keeps its badge'
