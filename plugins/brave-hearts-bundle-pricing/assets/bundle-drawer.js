@@ -331,12 +331,100 @@
 	 * @param {boolean} hasUnrelated
 	 * @return {Object|null}
 	 */
-	function chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated) {
+	/**
+	 * ⭐⭐⭐ 1.8.65 — PASS 0: THE COLOURING OFFER.
+	 *
+	 * Andrew, carrier item 186, naming the two offers the surviving cart
+	 * surface should carry: "add the coloring book, add the next chapter book
+	 * etc." ⛔ Only the second existed until now.
+	 *
+	 * ⭐ ONE OFFER AT A TIME — Boromir's rail. This returns a single offer or
+	 *    null, exactly as the adventure passes do, and the rail renders
+	 *    exactly one box. ⛔ It is NOT a second box and NOT a stack of offers.
+	 *
+	 * ⭐ THE ORDER, AND WHY IT IS THIS ORDER, so nobody re-derives it:
+	 *
+	 *      1. COMPLETING THE COLLECTION WINS. If an adventure cross-sell would
+	 *         take the cart from two adventures to three, that offer earns
+	 *         `FD-583` FREE SHIPPING, and free shipping is the strongest, most
+	 *         concrete thing this rail can truthfully say. It also carries
+	 *         Andrew's own approved free-shipping clause.
+	 *      2. THEN THE COLOURING BOOK, when the cart holds the chapter book it
+	 *         pairs with and does not already hold it.
+	 *      3. THEN the ordinary adventure cross-sell, unchanged.
+	 *
+	 * ⛔ IT NEVER OFFERS SOMETHING ALREADY IN THE CART — every component of
+	 *    the offer's chapter side must be present AND the colouring book must
+	 *    be absent. That is a real id test against the Store API cart, not a
+	 *    title test.
+	 *
+	 * ⛔ AND IT CLAIMS NOTHING. `saving` arrives from the server, where it is
+	 *    `bhp_offer_saving()` — the same function that creates the cart fee.
+	 *    A row with no positive saving is not sent and cannot be offered.
+	 *
+	 * @param {Object} cart Store API cart response.
+	 * @return {Object|null}
+	 */
+	function chooseColouringOffer(cart) {
+		var offers = (window.bhpDrawerData && window.bhpDrawerData.colouringOffers) || [];
+		if (!offers.length) {
+			return null; // ⛔ No colouring product record on this environment.
+		}
+
+		var inCart = {};
+		(cart.items || []).forEach(function (item) {
+			inCart[parseInt(item.id, 10)] = true;
+		});
+
+		for (var i = 0; i < offers.length; i++) {
+			var offer = offers[i];
+			if (!offer || !offer.colouring_id || !(offer.saving > 0)) {
+				continue;
+			}
+			if (inCart[parseInt(offer.colouring_id, 10)]) {
+				continue; // Already has it.
+			}
+			var chapterIds = offer.chapter_ids || [];
+			if (!chapterIds.length) {
+				continue;
+			}
+			var hasEveryChapter = chapterIds.every(function (id) {
+				return !!inCart[parseInt(id, 10)];
+			});
+			if (!hasEveryChapter) {
+				continue;
+			}
+			return {
+				format: 'colouring',
+				title_key: offer.title_key,
+				label: offer.label,
+				cta: offer.cta,
+				product_id: offer.product_id,
+				variation_id: offer.variation_id || 0,
+				savings: offer.saving,
+				// ⛔ A colouring book is not an adventure, so it can never be
+				//    the title that completes the collection. Stated, not
+				//    left to a falsy default.
+				completes_collection: false
+			};
+		}
+		return null;
+	}
+
+	function chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart) {
 		var catalog = (window.bhpDrawerData && window.bhpDrawerData.catalog) || {};
 
 		if (!adventures.length) {
 			return null;
 		}
+
+		/*
+		 * ⭐ 1.8.65 — the colouring offer is chosen BEFORE the ordinary
+		 *    adventure passes but AFTER the completes-the-collection case,
+		 *    which is why the adventure choice is computed first and only
+		 *    yielded to when it earns free shipping. See chooseColouringOffer().
+		 */
+		var colouringOffer = cart ? chooseColouringOffer(cart) : null;
 
 		var majorityIsHardcover = distinct.hardcover.length > distinct.paperback.length;
 		var formatOrder = majorityIsHardcover
@@ -391,8 +479,18 @@
 			};
 		}
 
+		/*
+		 * ⭐ 1.8.65 — the two adventure passes are BYTE-UNCHANGED in substance.
+		 *    What changed is that they now `break` into a local variable
+		 *    instead of returning straight out, so the colouring offer can be
+		 *    weighed against the result. Every title they can choose, the
+		 *    order they choose it in, and the `offer()` payload are identical
+		 *    to 1.8.64.
+		 */
+		var adventureOffer = null;
+
 		// PASS 1 — a title missing from the cart entirely.
-		for (var f = 0; f < formatOrder.length; f++) {
+		for (var f = 0; f < formatOrder.length && !adventureOffer; f++) {
 			var format = formatOrder[f];
 			if (distinct[format].length >= 3) {
 				continue; // cannot happen while a title is missing; cheap guard.
@@ -402,14 +500,15 @@
 				if (adventures.indexOf(keys[i]) === -1) {
 					var missing = offer(format, keys[i]);
 					if (missing) {
-						return missing;
+						adventureOffer = missing;
+						break;
 					}
 				}
 			}
 		}
 
 		// PASS 2 — every adventure is owned; complete a format set instead.
-		for (var g = 0; g < formatOrder.length; g++) {
+		for (var g = 0; g < formatOrder.length && !adventureOffer; g++) {
 			var fmt = formatOrder[g];
 			var count = distinct[fmt].length;
 			if (0 === count || count >= 3) {
@@ -420,13 +519,30 @@
 				if (distinct[fmt].indexOf(fmtKeys[j]) === -1) {
 					var twin = offer(fmt, fmtKeys[j]);
 					if (twin) {
-						return twin;
+						adventureOffer = twin;
+						break;
 					}
 				}
 			}
 		}
 
-		return null;
+		/*
+		 * ⭐⭐ THE PRIORITY, IN THREE LINES. See chooseColouringOffer() for the
+		 *     reasoning. ⛔ EXACTLY ONE OFFER IS RETURNED, ALWAYS.
+		 *
+		 * ⛔ FREE SHIPPING OUTRANKS THE COLOURING BOOK. A cart one adventure
+		 *    short of the collection is offered the adventure, because that
+		 *    offer earns `FD-583` free shipping and says so in Andrew's own
+		 *    approved clause. Offering a coloring book at that exact moment
+		 *    would trade a "your order ships free" for a "save $1.99".
+		 */
+		if (adventureOffer && adventureOffer.completes_collection) {
+			return adventureOffer;
+		}
+		if (colouringOffer) {
+			return colouringOffer;
+		}
+		return adventureOffer;
 	}
 
 	function formatMoneyPlain(amount) {
@@ -559,7 +675,7 @@
 		 * message, every suppression and every `savedCopy` line is
 		 * byte-identical to 1.8.24.
 		 */
-		crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated);
+		crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart);
 
 		// Tiers exposed for renderDrawer()'s per-line-item "included in your
 		// savings" notes and summary math -- same 0/2/3 values the PHP side
@@ -825,7 +941,17 @@
 			 *    `cta_clause` (an older plugin build), so the button can
 			 *    never render bare on a real saving.
 			 */
-			var ctaLabel = 'Add This Adventure';
+			/*
+			 * ⭐ 1.8.65 — the colouring offer brings its OWN button word, from
+			 *    `bhp_colouring_draft_copy('panel_cta')`, because "Add This
+			 *    Adventure" is false of a coloring book. Every other offer is
+			 *    byte-unchanged: absent `cs.cta`, this is the 1.8.64 literal.
+			 *
+			 * ⛔ THE SAVINGS CLAUSE IS STILL APPENDED BY THE SAME CODE BELOW,
+			 *    from the same live figure. No offer carries a number in its
+			 *    own copy.
+			 */
+			var ctaLabel = cs.cta || 'Add This Adventure';
 			var freeShipClause = (window.bhpDrawerData
 				&& window.bhpDrawerData.freeShipCopy
 				&& window.bhpDrawerData.freeShipCopy.cta_clause) || '';
@@ -1368,6 +1494,97 @@
 	}
 
 	/**
+	 * ⭐⭐⭐ 1.8.65 — CARRIER ITEM 188. ADD TO CART OPENS THE PANEL.
+	 * ========================================================================
+	 *
+	 * Andrew Signore, ~05:4x−0600 2026-08-21, read first-hand at source by the
+	 * agent that wrote this function (`FOUNDER-VERBATIM-2026-08-05-PRODUCTION-
+	 * DEPLOY-AUTHORIZATION.md` line 818, G: mount, NOT relayed):
+	 *
+	 *   "Well if we keep add to cart - lets not do the cart page- we made the
+	 *    cart side panel for a reason with the upsells and the totals in
+	 *    their- they go to checkout then add the coupon"
+	 *
+	 * ⭐ THE PRODUCT PAGE'S ADD TO CART IS AN ANCHOR, NOT A `form.cart`, which
+	 *    is why `interceptSingleProductForms()` above never saw it. It is an
+	 *    anchor because the format rail swaps its href when the shopper picks
+	 *    a format, and 1.19.281 keeps it that way — this adds a click handler,
+	 *    it does not convert the control into a form.
+	 *
+	 * ⛔ IT IS THE SAME MACHINERY, DELIBERATELY. `addItem()` → `refreshDrawer()`
+	 *    → `openDrawer()`, the identical sequence the form path has used since
+	 *    the Overnight Conversion Sprint, and the identical `add_to_cart`
+	 *    analytics event with the same `product_page` source. ⛔ NO SECOND
+	 *    ADD PATH AND NO SECOND PANEL.
+	 *
+	 * ⛔ DIRECT-BUY IS UNREACHABLE FROM HERE. The collection / bundle "GET
+	 *    THE…" controls are `form.bhp-bundle-form` POSTs handled by
+	 *    `interceptBundleForms()`, and the theme never puts
+	 *    `data-bhp-cart-add` on them. ⭐ He walked that path himself and it
+	 *    still lands on /checkout/.
+	 *
+	 * ⛔ IT FALLS BACK BY NAVIGATING, NEVER BY SWALLOWING THE CLICK. If the
+	 *    Store API refuses for any reason, the anchor's own href is followed —
+	 *    a real add-to-cart request, which `inc/purchase-flow.php` keeps off
+	 *    the cart page. A shopper never ends a click with nothing having
+	 *    happened.
+	 *
+	 * ⛔ A DISABLED / OUT-OF-STOCK CTA IS LEFT ALONE (`is-disabled`,
+	 *    `aria-disabled`), and so is any modified click (new tab, middle
+	 *    click), which belongs to the browser and not to us.
+	 */
+	function interceptCartAddLinks() {
+		document.addEventListener('click', function (e) {
+			var link = e.target && e.target.closest ? e.target.closest('[data-bhp-cart-add]') : null;
+			if (!link) {
+				return;
+			}
+			// The browser's own gestures stay the browser's.
+			if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+				return;
+			}
+			if (link.classList.contains('is-disabled') || 'true' === link.getAttribute('aria-disabled')) {
+				return;
+			}
+
+			var productId = parseInt(link.getAttribute('data-product-id'), 10) || 0;
+			var variationId = parseInt(link.getAttribute('data-variation-id'), 10) || 0;
+			if (!productId) {
+				return; // Not ours to handle; let the href do its job.
+			}
+
+			e.preventDefault();
+
+			var href = link.getAttribute('href') || '';
+			var fallback = function () {
+				if (href && '#' !== href) {
+					window.location.assign(href);
+				}
+			};
+
+			addItem(productId, variationId, 1)
+				.then(function () {
+					return refreshDrawer();
+				})
+				.then(function (cart) {
+					var addedId = variationId || productId;
+					var addedLine = (cart.items || []).filter(function (i) { return parseInt(i.id, 10) === addedId; })[0];
+					pushEvent('add_to_cart', {
+						source: 'product_page',
+						currency: cartCurrency(cart),
+						value: addedLine ? ga4ItemFromCartLine(addedLine).price : null,
+						items: addedLine ? [ga4ItemFromCartLine(addedLine)] : []
+					});
+					openDrawer('add_to_cart');
+				})
+				.catch(function (err) {
+					window.console && console.error('BHP drawer add-to-cart link failed, following the href instead', err);
+					fallback();
+				});
+		});
+	}
+
+	/**
 	 * Bundle offer forms (Any-2 and Complete-Set) from the Shop the Series
 	 * page: intercept and add each selected title via the Store API
 	 * instead of the original full-page POST + redirect-to-cart, so the
@@ -1864,6 +2081,12 @@
 
 		initDrawerEvents();
 		interceptSingleProductForms();
+		/*
+		 * ⭐ 1.8.65 — carrier item 188. Delegated on `document`, so a CTA whose
+		 *    attributes `book-formats.js` rewrites on a format switch is still
+		 *    intercepted; there is no per-node listener to go stale.
+		 */
+		interceptCartAddLinks();
 		initBundleFormFeedback();
 		interceptBundleForms();
 		initFormatSelectedTracking();

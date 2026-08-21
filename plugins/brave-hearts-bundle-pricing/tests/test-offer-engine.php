@@ -14,9 +14,15 @@
  * are silent and expensive, and every one of them is asserted below:
  *
  *   · DOUBLE-CLAIMING one physical book into two offers (§4);
- *   · STACKING an offer on top of a chapter-tier discount that already
- *     discounts the same book (§5);
- *   · PRICING A GATED OFFER whose books do not exist (§3).
+ *   · PRICING A GATED OFFER whose books do not exist (§3);
+ *   · GETTING THE STACKED TOTAL WRONG once Andrew ruled that the pair offer
+ *     and the chapter tier BOTH fire (§5, §5b).
+ *
+ * ⛔ THE THIRD BULLET USED TO READ: "STACKING an offer on top of a chapter-tier
+ *    discount that already discounts the same book (§5)" — i.e. stacking was
+ *    the failure mode. ⭐ CARRIER ITEM 189 MADE STACKING THE REQUIREMENT. The
+ *    superseded line is preserved here rather than deleted so that a reader
+ *    who finds it quoted elsewhere can see that it moved, and when.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * ⛔⛔ WHAT THIS SUITE CANNOT PROVE, STATED PLAINLY
@@ -80,11 +86,27 @@ class BHP_Offer_Stub_Cart {
 }
 
 function bhp_oe_item( $product_id, $variation_id = 0, $qty = 1 ) {
+	/*
+	 * ⭐ 1.8.65 — `data` NOW CARRIES THE REAL `WC_Product`, where one resolves.
+	 *    It was `null`, which was sufficient while only `bhp_offer_apply_fees()`
+	 *    ran over this stub: that function never reads it.
+	 *
+	 * ⛔ §5b RUNS `bhp_bundle_apply_discount_fees()` OVER THE SAME STUB, and
+	 *    that path reaches `bhp_bundle_prices_match_expected()`, which calls
+	 *    `$cart_item['data']->get_price()`. With `null` there it fatals; with a
+	 *    real product it does the price-drift check a real cart does. So this
+	 *    makes the stub MORE like a cart, never less.
+	 *
+	 * ⛔ `false` for a deliberately unrecognised id (§6's 999999). That is
+	 *    correct and is never dereferenced: `bhp_bundle_identify_cart_item()`
+	 *    does not match it, so the price loop skips the line entirely.
+	 */
+	$buy_id = $variation_id ? $variation_id : $product_id;
 	return array(
 		'product_id'   => $product_id,
 		'variation_id' => $variation_id,
 		'quantity'     => $qty,
-		'data'         => null,
+		'data'         => function_exists( 'wc_get_product' ) ? wc_get_product( $buy_id ) : null,
 	);
 }
 
@@ -259,9 +281,26 @@ if ( empty( $colouring_ids['mariana'] ) ) {
 	bhp_oe_assert( array() === $cart->fees, 'Everest PB + Mariana colouring -> no offer (an offer is per-adventure)', $failures, $passes );
 
 	/* ═══════════════════════════════════════════════════════════════════════
-	 * §5 · ⚠️ THE FLAGGED JUDGEMENT — TIER PRECEDENCE
+	 * §5 · ⭐⭐⭐ CARRIER ITEM 189 — STACKING IS ON, AND THERE IS NO CAP
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ Andrew Signore, ~06:0x−0600 2026-08-21, read first-hand at source by
+	 *    the agent that wrote this section (`FOUNDER-VERBATIM-2026-08-05-
+	 *    PRODUCTION-DEPLOY-AUTHORIZATION.md` line 819, G: mount, NOT relayed):
+	 *
+	 *      "So no cap and stack is the way to go?"
+	 *
+	 * ⛔ THIS SECTION IS THE INVERSE OF WHAT IT ASSERTED IN 1.8.62–1.8.64.
+	 *    It used to prove the pair offer STOOD DOWN on a collection cart. The
+	 *    superseded assertion read:
+	 *
+	 *      '3 chapter paperbacks + colouring -> the OFFER engine adds nothing,
+	 *       so the Mariana paperback is not discounted twice'
+	 *
+	 *    ⭐ It was correct for the judgement it tested. He overturned the
+	 *       judgement, so the assertion inverts with it.
 	 * ═══════════════════════════════════════════════════════════════════════ */
-	echo "\n[§5] The chapter-tier ladder outranks a pair offer on the same format\n";
+	echo "\n[§5] Item 189: the pair offer STACKS with the chapter-tier ladder\n";
 
 	$three_pb = array(
 		bhp_oe_item( $PB_M['product_id'], $PB_M['variation_id'], 1 ),
@@ -270,23 +309,133 @@ if ( empty( $colouring_ids['mariana'] ) ) {
 	);
 	$cart = bhp_oe_run( array_merge( $three_pb, array( $col ) ) );
 	bhp_oe_assert(
-		array() === $cart->fees,
-		'3 chapter paperbacks + colouring -> the OFFER engine adds nothing, so the Mariana paperback is not discounted twice',
+		1 === count( $cart->fees ),
+		'3 chapter paperbacks + colouring -> the OFFER engine DOES fire (item 189: stacking is on)',
+		$failures,
+		$passes
+	);
+	bhp_oe_assert(
+		1 === count( $cart->fees ) && abs( $cart->fee_total() - ( -1.99 ) ) < 0.001,
+		sprintf( '...and the offer fee is exactly -$1.99, the live derived saving (got %.2f)', $cart->fee_total() ),
 		$failures,
 		$passes
 	);
 
 	/*
-	 * ⭐ AND IT IS ONE FILTER LINE TO REVERSE, which is asserted rather than
-	 *    merely claimed in a comment — because "reversible" is exactly the
-	 *    kind of promise that quietly stops being true.
+	 * ⭐ AND IT IS STILL ONE FILTER LINE TO REVERSE — now in the OTHER
+	 *    direction. Asserted rather than claimed in a comment, because
+	 *    "reversible" is exactly the kind of promise that quietly stops being
+	 *    true, and because re-suppressing is the move Andrew makes if the
+	 *    contribution read ever turns.
 	 */
-	add_filter( 'bhp_offer_tier_precedence', 'bhp_oe_force_stack' );
+	add_filter( 'bhp_offer_tier_precedence', 'bhp_oe_force_suppress' );
 	$cart = bhp_oe_run( array_merge( $three_pb, array( $col ) ) );
-	remove_filter( 'bhp_offer_tier_precedence', 'bhp_oe_force_stack' );
+	remove_filter( 'bhp_offer_tier_precedence', 'bhp_oe_force_suppress' );
 	bhp_oe_assert(
-		1 === count( $cart->fees ),
-		'...and bhp_offer_tier_precedence reverses it in one line, so the judgement is Andrew\'s to change',
+		array() === $cart->fees,
+		'...and bhp_offer_tier_precedence restores suppression in one line, so the judgement stays Andrew\'s to change back',
+		$failures,
+		$passes
+	);
+
+	/*
+	 * ⛔ NO QUANTITY CAP — his second limb. Two complete pairs in one cart
+	 *    must earn the saving TWICE. ⭐ This required no code change and is
+	 *    asserted here precisely so nobody "adds" a cap later believing one
+	 *    was removed.
+	 */
+	$two_pairs = array(
+		bhp_oe_item( $PB_M['product_id'], $PB_M['variation_id'], 2 ),
+		bhp_oe_item( $COLOUR, 0, 2 ),
+	);
+	$cart = bhp_oe_run( $two_pairs );
+	bhp_oe_assert(
+		1 === count( $cart->fees ) && abs( $cart->fee_total() - ( -3.98 ) ) < 0.001,
+		sprintf( 'NO CAP: 2 Mariana paperbacks + 2 colouring books -> the saving is claimed TWICE, -$3.98 (got %.2f)', $cart->fee_total() ),
+		$failures,
+		$passes
+	);
+	$cart = bhp_oe_run(
+		array(
+			bhp_oe_item( $PB_M['product_id'], $PB_M['variation_id'], 3 ),
+			bhp_oe_item( $COLOUR, 0, 3 ),
+		)
+	);
+	bhp_oe_assert(
+		abs( $cart->fee_total() - ( -5.97 ) ) < 0.001,
+		sprintf( 'NO CAP: three complete pairs -> -$5.97, still uncapped (got %.2f)', $cart->fee_total() ),
+		$failures,
+		$passes
+	);
+
+	/* ═══════════════════════════════════════════════════════════════════════
+	 * §5b · ⭐⭐⭐ FRODO'S ROW A, END TO END — BOTH ENGINES OVER ONE CART
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐⭐ THIS IS THE ONLY ASSERTION IN THE SUITE THAT RUNS *BOTH* FEE
+	 *     ENGINES over the same cart, and it exists because item 189's whole
+	 *     point is what happens when they BOTH fire. §5 above proves the
+	 *     offer engine fires; it cannot prove the customer's total, because
+	 *     `bhp_offer_apply_fees()` never sees the tier fee.
+	 *
+	 *     `bhp_bundle_apply_discount_fees()` (priority 20) is therefore run
+	 *     FIRST, exactly as WooCommerce runs it, then the offer engine at 21.
+	 *
+	 * ⛔ WHAT THIS STILL CANNOT PROVE, STATED PLAINLY: it is a stub cart. It
+	 *    does not load /cart/, does not call the Store API, does not compute
+	 *    tax or shipping, and does not take a payment. ⭐ THE $42.99 A REAL
+	 *    SHOPPER IS CHARGED IS A DIFFERENT CLAIM AND IS VERIFIED IN A REAL
+	 *    BLOCKS CART, in a browser, in the QA evidence for this build.
+	 * ═══════════════════════════════════════════════════════════════════════ */
+	echo "\n[§5b] Frodo's Row A: the four-item cart carries BOTH discounts\n";
+
+	$row_a = array_merge( $three_pb, array( $col ) );
+
+	$components = 0.0;
+	foreach ( $row_a as $line ) {
+		$p           = wc_get_product( $line['variation_id'] ? $line['variation_id'] : $line['product_id'] );
+		$components += $p ? (float) $p->get_price() * (int) $line['quantity'] : 0.0;
+	}
+
+	$cart = new BHP_Offer_Stub_Cart( $row_a );
+	bhp_bundle_apply_discount_fees( $cart ); // priority 20 — the chapter tier.
+	bhp_offer_apply_fees( $cart );           // priority 21 — the pair offer.
+
+	bhp_oe_assert(
+		2 === count( $cart->fees ),
+		sprintf( 'the 4-item cart carries TWO fees, not one (got %d)', count( $cart->fees ) ),
+		$failures,
+		$passes
+	);
+	bhp_oe_assert(
+		abs( $components - 48.96 ) < 0.001,
+		sprintf( 'components read LIVE from WooCommerce total $48.96 (got %.2f)', $components ),
+		$failures,
+		$passes
+	);
+	bhp_oe_assert(
+		abs( $cart->fee_total() - ( -5.97 ) ) < 0.001,
+		sprintf( 'the two discounts total -$5.97 (-3.98 tier + -1.99 pair) (got %.2f)', $cart->fee_total() ),
+		$failures,
+		$passes
+	);
+	bhp_oe_assert(
+		abs( ( $components + $cart->fee_total() ) - 42.99 ) < 0.001,
+		sprintf( 'the cart charges $42.99 before tax and shipping — Frodo\'s Row A (got %.2f)', $components + $cart->fee_total() ),
+		$failures,
+		$passes
+	);
+	/*
+	 * ⛔ AND THE $0.00 FREE-SHIPPING TIER IS NOT LOST BY STACKING. Three
+	 *    distinct adventures still complete the collection with a colouring
+	 *    book in the cart (1.8.61 made a colouring book RELATED, not
+	 *    unrelated), so `FD-583` still holds on this exact cart.
+	 */
+	$eval_a = bhp_bundle_evaluate_cart( $cart );
+	bhp_oe_assert(
+		! empty( $eval_a['is_complete_collection'] ) && empty( $eval_a['has_unrelated'] )
+		&& 0.0 === (float) bhp_bundle_shipping_amount( $eval_a ),
+		'...and it still ships free — stacking did not cost the shopper FD-583',
 		$failures,
 		$passes
 	);
@@ -316,8 +465,14 @@ if ( empty( $colouring_ids['mariana'] ) ) {
 	bhp_oe_assert( array() === $cart->fees, 'an empty cart -> no fee', $failures, $passes );
 }
 
-function bhp_oe_force_stack() {
-	return false; }
+/**
+ * ⭐ Restores the pre-item-189 suppression, for the reversibility assertion in
+ *    §5. Renamed from `bhp_oe_force_stack()` (which returned FALSE) when the
+ *    default flipped — the helper now has to push in the OTHER direction, and
+ *    a helper called "force_stack" that forced suppression would be a trap.
+ */
+function bhp_oe_force_suppress() {
+	return true; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * §7 · ⭐ THE NEGATIVE CONTROL — this harness fails when it should

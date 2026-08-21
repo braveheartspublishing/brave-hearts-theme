@@ -157,13 +157,32 @@ if ( function_exists( 'bhp_bundle_shipping_amount' ) ) {
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
- * §2 · CATCH (3) — THE FLOW: EVERY BUY BUTTON FINISHES ON /checkout/
+ * §2 · CATCH (3), REFINED BY CARRIER ITEM 188 — TWO BUTTON CLASSES
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ⛔ THIS SECTION'S HEADING USED TO READ "THE FLOW: EVERY BUY BUTTON FINISHES
+ *    ON /checkout/", which is what item 186's delegated mechanism was read to
+ *    mean. ⭐ CARRIER ITEM 188 IS ANDREW CHOOSING FOR HIMSELF, read first-hand
+ *    at source by the agent that rewrote this section
+ *    (`FOUNDER-VERBATIM-2026-08-05-PRODUCTION-DEPLOY-AUTHORIZATION.md` line
+ *    818, G: mount, NOT relayed):
+ *
+ *      "Well if we keep add to cart - lets not do the cart page- we made the
+ *       cart side panel for a reason with the upsells and the totals in their-
+ *       they go to checkout then add the coupon"
+ *
+ *    ADD TO CART  → adds, and OPENS THE SIDE PANEL
+ *    DIRECT BUY   → straight to /checkout/, UNCHANGED (he walked it himself)
  * ─────────────────────────────────────────────────────────────────────────── */
-echo "\n--- §2 the flow (catch 3) ---\n";
+echo "\n--- §2 the flow (catch 3, refined by item 188) ---\n";
 
 pf_assert(
 	function_exists( 'bhp_purchase_flow_mark' ) && function_exists( 'bhp_purchase_flow_redirect' ),
 	'2.1 the purchase-flow module is loaded'
+);
+pf_assert(
+	function_exists( 'bhp_purchase_flow_mark_panel' ) && function_exists( 'bhp_purchase_flow_panel_requested' ),
+	'2.1b item 188: the "add, then open the panel" half of the module is loaded'
 );
 
 $pf_flow_code = pf_code( $pf_theme . '/inc/purchase-flow.php' );
@@ -189,22 +208,88 @@ if ( function_exists( 'bhp_book_purchase_data' ) && function_exists( 'bhp_book_r
 	$pf_key  = isset( $pf_keys[0] ) ? $pf_keys[0] : '';
 	$pf_data = $pf_key ? bhp_book_purchase_data( $pf_key ) : null;
 	if ( $pf_data ) {
+		/*
+		 * ⛔ THE SUPERSEDED ASSERTIONS, PRESERVED SO THE MOVEMENT IS VISIBLE.
+		 *    1.19.280 asserted `bhp_buy=checkout` on both single-book URLs:
+		 *      '2.4 the PAPERBACK add-to-cart URL is marked "finish on /checkout/"'
+		 *      '2.5 …and so is the HARDCOVER one'
+		 *    ⭐ Item 188 moved ADD TO CART to the panel, so they invert.
+		 */
 		pf_assert(
-			false !== strpos( (string) $pf_data['paperback']['add_url'], 'bhp_buy=checkout' ),
-			'2.4 the PAPERBACK add-to-cart URL is marked "finish on /checkout/"'
+			false !== strpos( (string) $pf_data['paperback']['add_url'], 'bhp_buy=panel' ),
+			'2.4 item 188: the PAPERBACK add-to-cart URL is marked "add, then open the panel"'
 		);
 		pf_assert(
-			false !== strpos( (string) $pf_data['hardcover']['add_url'], 'bhp_buy=checkout' ),
+			false !== strpos( (string) $pf_data['hardcover']['add_url'], 'bhp_buy=panel' ),
 			'2.5 …and so is the HARDCOVER one'
 		);
 		pf_assert(
-			false === strpos( (string) $pf_data['kindle']['url'], 'bhp_buy=checkout' ),
-			'2.6 ⛔ the KINDLE link is NOT marked — it leaves this site for Amazon'
+			false === strpos( (string) $pf_data['paperback']['add_url'], 'bhp_buy=checkout' )
+			&& false === strpos( (string) $pf_data['hardcover']['add_url'], 'bhp_buy=checkout' ),
+			'2.5b ⛔ …and NEITHER still carries the superseded straight-to-checkout mark'
+		);
+		pf_assert(
+			false === strpos( (string) $pf_data['kindle']['url'], 'bhp_buy=checkout' )
+			&& false === strpos( (string) $pf_data['kindle']['url'], 'bhp_buy=panel' ),
+			'2.6 ⛔ the KINDLE link is NOT marked at all — it leaves this site for Amazon'
+		);
+		/*
+		 * ⭐⭐ THE DIRECT-BUY PATH IS THE ONE HE WALKED. It must NOT have
+		 *     acquired a panel mark: the collection URL is a page link, and the
+		 *     control beside it is the plugin's own checkout-redirect POST.
+		 */
+		pf_assert(
+			false === strpos( (string) $pf_data['collection']['url'], 'bhp_buy=panel' ),
+			'2.6b ⛔ DIRECT BUY UNTOUCHED: the collection URL carries no panel mark'
 		);
 	} else {
 		pf_assert( false, '2.4 purchase data resolves for at least one title' );
 	}
 }
+
+/*
+ * ⭐⭐ THE PANEL IS OPENED BY A CLICK, NEVER BY A URL — Boromir's second
+ *     condition, asserted structurally rather than promised in a comment.
+ *
+ * ⛔ IF ANY FUTURE BUILD ADDS AN "OPEN THE PANEL" QUERY PARAMETER, THIS FAILS.
+ *    A URL that opens the panel is a URL that can be bookmarked, shared,
+ *    crawled and landed on, which is precisely the self-open Boromir ruled
+ *    out. The two legitimate openers are both DOM hooks on controls the
+ *    shopper clicks: `data-bhp-cart-add` and `data-bhp-cart-open`.
+ */
+$pf_drawer_js = pf_code( $pf_plugin . '/assets/bundle-drawer.js' );
+pf_assert(
+	false !== strpos( $pf_drawer_js, 'data-bhp-cart-add' )
+	&& false !== strpos( $pf_drawer_js, 'interceptCartAddLinks' ),
+	'2.10 item 188: the drawer intercepts add-to-cart controls and opens the panel'
+);
+pf_assert(
+	false === strpos( $pf_drawer_js, 'bhp_cart=open' )
+	&& false === strpos( $pf_drawer_js, 'bhp_open_cart' )
+	&& false === strpos( $pf_flow_code, 'bhp_cart=open' ),
+	'2.11 ⛔ BOROMIR CONDITION 2: no query parameter anywhere can open the panel'
+);
+pf_assert(
+	false !== strpos( $pf_flow_code, "option_woocommerce_cart_redirect_after_add" ),
+	'2.12 the no-JavaScript fallback is steered by a READ filter, keeping that shopper off the cart page'
+);
+pf_assert(
+	false === strpos( $pf_flow_code, "update_option" )
+	&& false === strpos( $pf_flow_code, "add_option" ),
+	'2.13 ⛔ …and it writes NO WooCommerce setting on any environment (Andrew gate not crossed)'
+);
+/*
+ * ⛔ THE FORMAT SWITCHER MUST MOVE THE BUY ID WITH THE HREF. An anchor whose
+ *    href said "paperback" while its data-product-id still said "hardcover"
+ *    would add the wrong book — silently, and only for shoppers who switch
+ *    format, which is the hardest class of defect to notice.
+ */
+$pf_formats_js = pf_code( $pf_theme . '/assets/js/book-formats.js' );
+pf_assert(
+	false !== strpos( $pf_formats_js, 'data-bhp-cart-add' )
+	&& false !== strpos( $pf_formats_js, "removeAttribute('data-bhp-cart-add')" ),
+	'2.14 the format switcher sets AND removes the panel hook, so it can never go stale'
+);
 
 /*
  * ⭐ THE OFFER BOXES AND THE COLLECTION CARD ALREADY DID THIS, and they still
@@ -392,25 +477,68 @@ pf_assert(
 );
 
 /* ───────────────────────────────────────────────────────────────────────────
- * §6 · CATCH (6) — THE SUPPRESSION IS UNCHANGED, PENDING HIS RULING
+ * §6 · CATCH (6) — HE RULED. STACKING SHIPS, WITH NO CAP.
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ⛔ THIS SECTION'S SUPERSEDED HEADING AND REASONING, PRESERVED VERBATIM:
+ *
+ *      "§6 · CATCH (6) — THE SUPPRESSION IS UNCHANGED, PENDING HIS RULING
+ *       ⛔ HE ASKED A QUESTION, HE DID NOT GIVE AN ORDER: 'The bundle savings
+ *          and adding the coloring books doesnt show the coloring book and PB
+ *          bundle savings - does that go away when you buy all 4?'
+ *          Stack-or-keep is HIS. Until he rules, the behaviour must not move
+ *          in either direction — this asserts it did not."
+ *
+ * ⭐ HE HAS SINCE RULED, TWICE, AND BOTH WERE READ FIRST-HAND AT SOURCE by the
+ *    agent that rewrote this section (same carrier, G: mount, NOT relayed):
+ *
+ *      item 187, ~05:2x−0600:  "Stack and see what the math says"
+ *      item 189, ~06:0x−0600:  "So no cap and stack is the way to go?"
+ *
+ *    Item 187 attached a condition — Frodo's contribution read — and item 189
+ *    is him adopting the recommendation once that read came back.
+ *
+ * ⭐ THE ARITHMETIC IS ASSERTED IN THE OFFER SUITE (§5, §5b of
+ *    `plugins/brave-hearts-bundle-pricing/tests/test-offer-engine.php`), which
+ *    drives both fee engines over one cart. This section asserts only that the
+ *    RULE moved and stayed reversible.
  * ─────────────────────────────────────────────────────────────────────────── */
-echo "\n--- §6 pair-offer suppression: UNCHANGED, on purpose ---\n";
+echo "\n--- §6 pair-offer stacking: item 189, RULED ---\n";
 
-/*
- * ⛔ HE ASKED A QUESTION, HE DID NOT GIVE AN ORDER: "The bundle savings and
- *    adding the coloring books doesnt show the coloring book and PB bundle
- *    savings - does that go away when you buy all 4?" Stack-or-keep is HIS.
- *    Until he rules, the behaviour must not move in either direction — this
- *    asserts it did not.
- */
 pf_assert(
 	function_exists( 'bhp_offer_tier_takes_precedence' ),
-	'6.1 the suppression rule is still where it was'
+	'6.1 the precedence rule is still where it was'
 );
 $pf_offer_code = pf_code( $pf_plugin . '/includes/offer-engine.php' );
 pf_assert(
 	false !== strpos( $pf_offer_code, 'bhp_offer_tier_precedence' ),
 	'6.2 …still reversible by the single documented filter, not rewritten'
+);
+/*
+ * ⭐ EXERCISED, NOT READ. A collection-tier cart evaluation must NO LONGER
+ *    suppress the pair offer.
+ */
+pf_assert(
+	false === bhp_offer_tier_takes_precedence(
+		'mariana_pb_colouring',
+		array( 'paperback_tier' => 3, 'hardcover_tier' => 0 )
+	),
+	'6.3 item 189: a tier-3 paperback cart NO LONGER suppresses the pair offer — stacking is on'
+);
+pf_assert(
+	false === bhp_offer_tier_takes_precedence(
+		'mariana_pb_colouring',
+		array( 'paperback_tier' => 2, 'hardcover_tier' => 0 )
+	),
+	'6.4 …and neither does a tier-2 one'
+);
+/*
+ * ⛔ NO QUANTITY CAP — his second limb. Asserted at the source, because there
+ *    never was a cap to remove and the risk is somebody ADDING one later.
+ */
+pf_assert(
+	false !== strpos( $pf_offer_code, '$saving * $instances' ),
+	'6.5 ⛔ NO CAP: the fee is still the saving times the number of complete pairs'
 );
 
 echo "\n=== RESULT: {$GLOBALS['pf_passes']} passed, {$GLOBALS['pf_failures']} failed ===\n";

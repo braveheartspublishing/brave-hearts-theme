@@ -92,25 +92,76 @@
  *    HALF-BUILT: two gates, and neither depends on the other.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⚠️⚠️ THE ONE COMMERCIAL JUDGEMENT IN THIS FILE — FLAGGED, NOT BURIED
+ * ⭐⭐⭐ THE JUDGEMENT WENT TO ANDREW AND HE RULED. STACKING IS ON.
+ *       Plugin 1.8.65 · `CYCLE165-LD-FLOW-ADJUSTMENTS`
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔ A PAIR OFFER IS SUPPRESSED WHEN ITS FORMAT ALREADY EARNS A CHAPTER-TIER
- *    DISCOUNT. Cart: 3 chapter paperbacks + 1 colouring book. The tier ladder
- *    already discounts those three paperbacks by −$3.98 (they are the $31.99
- *    Complete Collection). Firing the pair offer on top would discount the
- *    Mariana paperback TWICE, in two engines, for the same cart.
+ * ⭐ CARRIER ITEM 189, READ FIRST-HAND AT SOURCE by the agent that made this
+ *    change — `FOUNDER-VERBATIM-2026-08-05-PRODUCTION-DEPLOY-AUTHORIZATION.md`
+ *    line 819, read on the G: mount, NOT relayed. Andrew Signore, ~06:0x−0600
+ *    2026-08-21:
  *
- * ⭐ WHY SUPPRESSION AND NOT STACKING, IN ONE LINE: `FD-581` prices a TWO-ITEM
- *    CART at $22.99. It does not say what a four-item cart costs, and no
- *    advertised claim on this site is broken by declining to invent one. The
- *    shopper still receives the full collection discount AND `FD-583` free
- *    shipping. ⚠️ IT IS A JUDGEMENT, IT IS REPORTED AS ONE TO GANDALF AND
- *    ANDREW, and it is the conservative direction (Standing Rules §1: the
- *    stricter reading applies until Andrew decides otherwise).
+ *      "So no cap and stack is the way to go?"
  *
- * ⭐ IT IS ALSO ONE FILTER LINE TO REVERSE — `bhp_offer_tier_precedence`.
+ *    asked as adoption of the recommendation after Frodo (`finance-analytics`)
+ *    returned the math his item-187 condition required ("Stack and see what
+ *    the math says").
  *
+ * ⭐ SO, FROM 1.8.65: A PAIR OFFER STACKS WITH THE CHAPTER-TIER LADDER, AND
+ *    THE PAIR OFFER CARRIES NO QUANTITY CAP.
+ *
+ *    Frodo's Row A, the cart the ruling was decided on, and the one the suite
+ *    now asserts: 3 chapter paperbacks + 1 Mariana colouring book.
+ *
+ *        components   3 × $11.99 + $12.99          = $48.96
+ *        tier fee     Bundle Savings (Paperback)   = −$3.98
+ *        offer fee    Bundle Savings (Paperback)   = −$1.99
+ *        ─────────────────────────────────────────────────────
+ *        charged                                     $42.99
+ *
+ * ⛔ NO QUANTITY CAP IS ADDED, AND NONE WAS EVER PRESENT.
+ *    `bhp_offer_claim_instances()` has always claimed as many complete pairs
+ *    as the cart's pool holds and `bhp_offer_apply_fees()` has always
+ *    multiplied the saving by that count. His "no cap" limb therefore
+ *    required NO code change — it is asserted in the suite rather than
+ *    implemented, and this line exists so nobody "adds" a cap later believing
+ *    one was removed.
+ *
+ * ⭐ IT REMAINS ONE FILTER LINE TO REVERSE — `bhp_offer_tier_precedence`,
+ *    now returning TRUE to restore suppression. The suite asserts the
+ *    reversal in that direction.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ⛔ THE SUPERSEDED JUDGEMENT, PRESERVED VERBATIM SO IT IS NOT RE-DERIVED.
+ *    It was the conservative reading, it was correct to flag rather than
+ *    decide, and it was flagged, sent up, and OVERTURNED BY THE OWNER. That
+ *    is the mechanism working, not a defect:
+ *
+ *      "⛔ A PAIR OFFER IS SUPPRESSED WHEN ITS FORMAT ALREADY EARNS A
+ *          CHAPTER-TIER DISCOUNT. Cart: 3 chapter paperbacks + 1 colouring
+ *          book. The tier ladder already discounts those three paperbacks by
+ *          −$3.98 (they are the $31.99 Complete Collection). Firing the pair
+ *          offer on top would discount the Mariana paperback TWICE, in two
+ *          engines, for the same cart.
+ *
+ *       ⭐ WHY SUPPRESSION AND NOT STACKING, IN ONE LINE: `FD-581` prices a
+ *          TWO-ITEM CART at $22.99. It does not say what a four-item cart
+ *          costs, and no advertised claim on this site is broken by declining
+ *          to invent one. The shopper still receives the full collection
+ *          discount AND `FD-583` free shipping. ⚠️ IT IS A JUDGEMENT, IT IS
+ *          REPORTED AS ONE TO GANDALF AND ANDREW, and it is the conservative
+ *          direction (Standing Rules §1: the stricter reading applies until
+ *          Andrew decides otherwise)."
+ *
+ * ⚠️ WHAT HIS RULING ACTUALLY COSTS, STATED PLAINLY RATHER THAN BURIED: the
+ *    Mariana paperback in a four-item cart IS now discounted by two engines
+ *    at once. That is the deliberate outcome, not an oversight. The figure is
+ *    Frodo's, not this file's: $1.85 per affected cart, identical in all four
+ *    shapes he modelled, no negative cart on any known cost.
+ *    ⛔ THIS FILE STILL COMPUTES NO CONTRIBUTION FIGURE AND MAKES NO
+ *       PROFITABILITY CLAIM. `STACKING-MATH-FOR-ANDREW.pdf` is the record.
+ *
+
  * ═══════════════════════════════════════════════════════════════════════════
  * ⛔ WHAT THIS FILE DOES NOT TOUCH, ON ANY ENVIRONMENT
  * ═══════════════════════════════════════════════════════════════════════════
@@ -415,23 +466,41 @@ function bhp_offer_tier_takes_precedence( $key, array $eval ) {
 	$catalog = bhp_offer_catalog();
 	$format  = isset( $catalog[ $key ]['format'] ) ? $catalog[ $key ]['format'] : null;
 
+	/*
+	 * ⭐ COMPUTED, THEN DELIBERATELY NOT ACTED ON. `$tier_already_discounts`
+	 *    is the exact condition that used to suppress the offer, kept as a
+	 *    named value so that a reader of this function — and anyone who
+	 *    re-suppresses on Andrew's word — can see WHICH carts the ruling
+	 *    changed, rather than having to re-derive it from a deleted line.
+	 */
+	$tier_already_discounts = (bool) (
+		$format
+		&& isset( $eval[ $format . '_tier' ] )
+		&& (int) $eval[ $format . '_tier' ] >= 2
+	);
+
+	/*
+	 * ⭐ 1.8.65 — STACKING IS ON. The default is FALSE for every cart.
+	 */
 	$suppressed = false;
-	if ( $format && isset( $eval[ $format . '_tier' ] ) && (int) $eval[ $format . '_tier' ] >= 2 ) {
-		$suppressed = true;
-	}
 
 	/**
 	 * Whether the chapter-tier ladder outranks this offer for this cart.
 	 *
-	 * ⭐ The one-line reversal named in this file's header. Returning FALSE
-	 *    makes offers and tiers STACK, which is a commercial decision and
-	 *    Andrew's to make.
+	 * ⭐ The one-line reversal named in this file's header, now pointing the
+	 *    other way. Returning TRUE restores suppression, which remains a
+	 *    commercial decision and Andrew's to change back.
 	 *
-	 * @param bool   $suppressed TRUE to suppress the offer.
-	 * @param string $key        Offer key.
-	 * @param array  $eval       Cart evaluation.
+	 * ⭐ `$tier_already_discounts` is passed as a fourth argument so a filter
+	 *    can restore the old behaviour without re-reading `$eval`.
+	 *
+	 * @param bool   $suppressed             TRUE to suppress the offer.
+	 * @param string $key                    Offer key.
+	 * @param array  $eval                   Cart evaluation.
+	 * @param bool   $tier_already_discounts TRUE when the chapter-tier ladder
+	 *                                       already discounts this format.
 	 */
-	return (bool) apply_filters( 'bhp_offer_tier_precedence', $suppressed, $key, $eval );
+	return (bool) apply_filters( 'bhp_offer_tier_precedence', $suppressed, $key, $eval, $tier_already_discounts );
 }
 
 /**
@@ -472,6 +541,105 @@ function bhp_offer_claim_instances( $key, array &$pool ) {
 		$pool[ $id ] -= $instances * $per_instance;
 	}
 	return $instances;
+}
+
+/**
+ * ⭐⭐⭐ THE CART SIDE PANEL'S COLOURING OFFERS — plugin 1.8.65.
+ * ============================================================================
+ *
+ * ⭐ WHY THIS EXISTS: the panel's cross-sell rail could offer "add the next
+ *    chapter book" and could NOT offer the colouring book. Andrew named both
+ *    by hand in carrier item 186 — "add the coloring book, add the next
+ *    chapter book etc." — and only one of them was wired.
+ *
+ * ⛔ IT INVENTS NO OFFER AND NO SAVING. Every row below is an offer already in
+ *    `bhp_offer_catalog()`, already gated by `bhp_offer_is_purchasable()`, and
+ *    its `saving` is `bhp_offer_saving()` — the SAME derived figure the offer
+ *    engine turns into the real cart fee. ⭐ The number on the button and the
+ *    number on the invoice come from one function and cannot drift.
+ *
+ * ⛔ IT IS EMPTY UNTIL A COLOURING PRODUCT RECORD EXISTS, structurally, by way
+ *    of `bhp_offer_is_purchasable()`. On production today that is the state
+ *    (`FD-598`), so the panel renders no colouring offer there and this
+ *    function returns `array()`.
+ *
+ * ⛔ NO CUSTOMER COPY IS WRITTEN HERE. The two strings come from the theme's
+ *    `bhp_colouring_draft_copy()`, where every colouring string Andrew has to
+ *    approve already lives in one place. If the theme is not providing them,
+ *    the label falls back to the PRODUCT'S OWN NAME — a record, never an
+ *    invention — rather than this file coining a phrase.
+ *
+ * @return array<int,array> Rows the drawer script can match against a cart.
+ */
+function bhp_offer_drawer_payload() {
+	$rows = array();
+
+	foreach ( bhp_offer_catalog() as $key => $offer ) {
+		if ( 'pair' !== $offer['cart_rule'] ) {
+			continue; // ⛔ SPEC-STUB offers are never surfaced.
+		}
+		$components = bhp_offer_components( $key );
+		if ( null === $components ) {
+			continue; // ⛔ THE GATE. No product record, no row.
+		}
+		$saving = bhp_offer_saving( $key );
+		if ( null === $saving ) {
+			continue; // ⛔ No honest saving, no offer.
+		}
+
+		$chapter_ids  = array();
+		$colouring    = null;
+		$adventure    = '';
+		foreach ( $components as $component ) {
+			if ( 'colouring' === $component['line'] ) {
+				$colouring = $component;
+				$adventure = $component['adventure'];
+			} else {
+				$chapter_ids[] = (int) $component['buy_id'];
+			}
+		}
+		if ( null === $colouring || empty( $chapter_ids ) ) {
+			continue;
+		}
+
+		/*
+		 * ⭐ THE ADVENTURE'S DISPLAY NAME, read from the SAME catalogue the
+		 *    adventure cross-sell reads its labels from, so the two rows in
+		 *    the rail name the same book the same way.
+		 */
+		$book_catalog = function_exists( 'bhp_bundle_catalog' ) ? bhp_bundle_catalog() : array();
+		$format       = $offer['format'];
+		$book_label   = isset( $book_catalog[ $format ][ $adventure ]['label'] )
+			? $book_catalog[ $format ][ $adventure ]['label']
+			: '';
+
+		$product = wc_get_product( (int) $colouring['buy_id'] );
+		$label   = $product ? $product->get_name() : '';
+		if ( $book_label && function_exists( 'bhp_colouring_draft_copy' ) ) {
+			$drafted = bhp_colouring_draft_copy( 'panel_label', array( $book_label ) );
+			if ( '' !== $drafted ) {
+				$label = $drafted;
+			}
+		}
+		$cta = function_exists( 'bhp_colouring_draft_copy' ) ? bhp_colouring_draft_copy( 'panel_cta' ) : '';
+
+		$rows[] = array(
+			'key'          => $key,
+			'format'       => $format,
+			'title_key'    => 'colouring_' . $adventure,
+			// ⭐ EVERY chapter id must be in the cart for this row to apply.
+			'chapter_ids'  => $chapter_ids,
+			'colouring_id' => (int) $colouring['buy_id'],
+			'product_id'   => (int) $colouring['product_id'],
+			'variation_id' => (int) $colouring['variation_id'],
+			'label'        => $label,
+			'cta'          => $cta,
+			// ⭐ DERIVED, live, this request. Never stored, never a literal.
+			'saving'       => round( (float) $saving, 2 ),
+		);
+	}
+
+	return $rows;
 }
 
 /**

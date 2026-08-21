@@ -179,6 +179,33 @@ function bhp_colouring_draft_copy($key, array $tokens = []) {
         'offer_saving'     => __('Save %s', 'brave-hearts'),
         'offer_upsell'     => __('Prefer the hardcover? %s', 'brave-hearts'),
         'offer_descriptor' => __('The chapter book and its coloring book', 'brave-hearts'),
+
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.281 — THE TWO STRINGS THE CART SIDE PANEL NEEDS.
+         *     ⚠️ NEW DRAFTS. THEY GO ON THE LIST THAT WAITS FOR ANDREW.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ WHY THEY EXIST: the panel's cross-sell rail could offer "add the
+         *    next chapter book" and could not offer the coloring book, which
+         *    is one of the two things Andrew named by hand in item 186 ("add
+         *    the coloring book, add the next chapter book etc."). A rail
+         *    cannot offer a thing it has no words for.
+         *
+         * ⛔ TWO STRINGS, NOT A PARAGRAPH, and both built to the existing
+         *    rails: no "we" (§9.1 — he is the sole operator), no em dash, no
+         *    outcome claim, and NO SAVINGS FIGURE INSIDE THE COPY. The
+         *    "- Save $1.99" clause is appended by the drawer from
+         *    `bhp_offer_saving()`, recomputed live, exactly as the adventure
+         *    cross-sell does it. A number typed into a string here would be
+         *    the derived-claim trap.
+         *
+         * ⛔ `panel_label` TAKES THE ADVENTURE NAME AS A TOKEN rather than
+         *    naming Mariana, so the day Everest's coloring book gets a record
+         *    the line is already right and nobody writes a second string.
+         */
+        'panel_label'      => __('%s coloring book', 'brave-hearts'),
+        'panel_cta'        => __('Add The Coloring Book', 'brave-hearts'),
     ], $key);
 
     if (!isset($copy[$key])) {
@@ -264,7 +291,21 @@ function bhp_colouring_purchase_data($product_id) {
             'price_html'   => $product->get_price_html(),
             'price'        => $product->get_price(),
             'in_stock'     => $product->is_in_stock(),
-            'add_url'      => add_query_arg(['add-to-cart' => $product_id], get_permalink($product_id)),
+            /*
+             * ⭐ 1.19.281 — CARRIER ITEM 188. The colouring book's ADD TO CART
+             *    is an ADD TO CART like any other, so it carries the same
+             *    `bhp_buy=panel` mark and opens the same side panel.
+             *
+             * ⛔ IT WAS UNMARKED IN 1.19.277–1.19.280 — it never carried
+             *    `bhp_buy=checkout`, so this is not a change of destination,
+             *    it is the FIRST time this button is steered at all. Before
+             *    this line it fell through to the store's stored
+             *    `woocommerce_cart_redirect_after_add`, i.e. to the cart page
+             *    footer Andrew objected to in item 186.
+             */
+            'add_url'      => function_exists('bhp_purchase_flow_mark_panel')
+                ? bhp_purchase_flow_mark_panel(add_query_arg(['add-to-cart' => $product_id], get_permalink($product_id)))
+                : add_query_arg(['add-to-cart' => $product_id], get_permalink($product_id)),
         ],
         'hardcover'     => [
             'product_id'   => 0,

@@ -264,6 +264,25 @@ function bhp_bundle_drawer_assets() {
 			 */
 			'paperbackOnly'  => function_exists( 'bhp_school_visit_paperback_only' ) && bhp_school_visit_paperback_only(),
 			/*
+			 * ⭐⭐⭐ 1.8.65 — THE COLOURING OFFER REACHES THE PANEL.
+			 *
+			 * ⭐ Andrew, carrier item 186, his own two examples of what the
+			 *    surviving cart surface should offer: "add the coloring book,
+			 *    add the next chapter book etc." ⛔ Only the second was wired.
+			 *
+			 * ⛔ EMPTY ARRAY UNTIL A COLOURING PRODUCT RECORD EXISTS, and that
+			 *    is the state of PRODUCTION today (`FD-598`). The gate is
+			 *    structural inside `bhp_offer_drawer_payload()`, not a boolean
+			 *    anyone has to remember to flip.
+			 *
+			 * ⛔ NO SAVING IS COMPUTED HERE. The figure travels from
+			 *    `bhp_offer_saving()`, the same function that creates the real
+			 *    cart fee.
+			 */
+			'colouringOffers' => function_exists( 'bhp_offer_drawer_payload' )
+				? bhp_offer_drawer_payload()
+				: array(),
+			/*
 			 * R4 (2026-08-03): the cross-sell box's gold eyebrow.
 			 *
 			 * ⛔ ONE STRING, ONE SOURCE. It is read from the checkout module's

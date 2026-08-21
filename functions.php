@@ -3856,6 +3856,15 @@ require_once get_template_directory() . '/inc/purchase-flow.php';
 // hook that plugin 1.8.64 wires to the drawer's own openDrawer(). Loaded
 // after purchase-flow.php purely for reading order — the two are independent.
 require_once get_template_directory() . '/inc/mini-cart.php';
+// ⭐⭐ 1.19.281 — THE STAGING ORDER-EMAIL GUARD. The QA round of 2026-08-21
+// placed real staging orders through the real checkout, and every one of them
+// mailed Andrew before the test orders were cleaned up. This suppresses
+// WooCommerce ORDER emails on staging ONLY, keyed to the same
+// `BHP_Analytics_Config::STAGING_HOST` literal every other staging-only guard
+// in this theme uses. ⛔ It writes no WooCommerce setting, and there is no
+// value of anything that makes it fire on production — an unknown host is
+// treated as production, which is the fail-safe direction.
+require_once get_template_directory() . '/inc/staging-mail-guard.php';
 // ⭐ 1.19.277 — THE COLOURING LINE ON THE STOREFRONT, and the offer surface
 // FD-579 rules. Loaded AFTER book-formats.php because its shop-card hooks sit
 // beside that file's on the same WooCommerce loop actions and its offer cards

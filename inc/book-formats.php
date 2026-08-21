@@ -765,11 +765,30 @@ function bhp_book_purchase_data($key) {
         : add_query_arg(['add-to-cart' => $book['pb_product']], get_permalink($book['pb_product']));
 
     /*
-     * ⭐⭐ 1.19.280 — "it should go straight to check out honestly. We want it
-     *    easy to buy books. Not extra steps." (carrier item 186, read
-     *    first-hand at source). Both single-book add URLs are marked
-     *    "finish on /checkout/"; `inc/purchase-flow.php` turns the mark into
-     *    a redirect built from `wc_get_checkout_url()`.
+     * ⭐⭐⭐ 1.19.281 — CARRIER ITEM 188, READ FIRST-HAND AT SOURCE. THESE TWO
+     *    URLS NOW CARRY `bhp_buy=panel`, NOT `bhp_buy=checkout`.
+     *
+     *    Andrew Signore, ~05:4x−0600 2026-08-21: "Well if we keep add to cart
+     *    - lets not do the cart page- we made the cart side panel for a reason
+     *    with the upsells and the totals in their- they go to checkout then
+     *    add the coupon"
+     *
+     *    ⛔ THE SUPERSEDED 1.19.280 NOTE, PRESERVED SO THE MOVEMENT IS VISIBLE:
+     *       "⭐⭐ 1.19.280 — 'it should go straight to check out honestly. We
+     *        want it easy to buy books. Not extra steps.' (carrier item 186,
+     *        read first-hand at source). Both single-book add URLs are marked
+     *        'finish on /checkout/'; `inc/purchase-flow.php` turns the mark
+     *        into a redirect built from `wc_get_checkout_url()`."
+     *
+     *    ⭐ ITEM 186 DELEGATED THE MECHANISM ("whatever you and boromir thinks
+     *       is best"). ITEM 188 IS HIM CHOOSING. The panel is where the
+     *       upsells and the running totals already live, and it is the surface
+     *       he says he built for this. His choice governs.
+     *
+     * ⛔ THE HREF IS THE FALLBACK, NOT THE MECHANISM. With JavaScript the
+     *    drawer intercepts the click and never navigates; `bhp_buy=panel` only
+     *    decides where a NON-JavaScript click lands, and it keeps that shopper
+     *    off the cart page he objected to.
      *
      * ⭐ MARKED HERE, IN THE ONE PLACE THE URLS ARE BUILT, so the
      *    server-rendered anchor and the `book-formats.js` href swap
@@ -783,8 +802,8 @@ function bhp_book_purchase_data($key) {
      *    (`bhp_collection_add_to_cart_cta()`), which is the precedent this
      *    change follows rather than duplicates.
      */
-    if (function_exists('bhp_purchase_flow_mark')) {
-        $add_pb = bhp_purchase_flow_mark($add_pb);
+    if (function_exists('bhp_purchase_flow_mark_panel')) {
+        $add_pb = bhp_purchase_flow_mark_panel($add_pb);
     }
 
     return [
@@ -808,10 +827,11 @@ function bhp_book_purchase_data($key) {
             'price_html'   => $hc ? $hc->get_price_html() : '',
             'price'        => $hc ? $hc->get_price() : '',
             'in_stock'     => $hc ? $hc->is_in_stock() : false,
-            /* ⭐ 1.19.280 — marked "finish on /checkout/"; see the paperback
-               note above. Same one-place-per-URL discipline. */
-            'add_url'      => function_exists('bhp_purchase_flow_mark')
-                ? bhp_purchase_flow_mark(add_query_arg(['add-to-cart' => $book['hc_product']], get_permalink($book['hc_product'])))
+            /* ⭐ 1.19.281 — marked "add, then open the panel" (item 188); see
+               the paperback note above. Same one-place-per-URL discipline.
+               ⛔ SUPERSEDED: 1.19.280 marked this "finish on /checkout/". */
+            'add_url'      => function_exists('bhp_purchase_flow_mark_panel')
+                ? bhp_purchase_flow_mark_panel(add_query_arg(['add-to-cart' => $book['hc_product']], get_permalink($book['hc_product'])))
                 : add_query_arg(['add-to-cart' => $book['hc_product']], get_permalink($book['hc_product'])),
         ],
         // Kindle deliberately carries NO price. Amazon controls the live

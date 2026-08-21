@@ -80,6 +80,30 @@
 				ctaEl.removeAttribute('rel');
 			}
 
+			/*
+			 * ⭐⭐ 1.19.281 — CARRIER ITEM 188. The panel hook moves WITH the
+			 *    format, in the same function that already moves the href, the
+			 *    label and the price. That is deliberate: an anchor whose href
+			 *    said "paperback" while its data-product-id still said
+			 *    "hardcover" would add the wrong book, and the only structural
+			 *    defence against that is one switch statement, not two.
+			 *
+			 * ⛔ REMOVED, NOT ZEROED, for Kindle and the Collection. A stale
+			 *    `data-bhp-cart-add` with `data-product-id="0"` would be a
+			 *    control the drawer tries to intercept and then fails on;
+			 *    absent means the click is simply not ours.
+			 */
+			var buyId = parseInt(conf.productId, 10) || 0;
+			if (buyId > 0 && !conf.external && !(directEl && conf.directBuy)) {
+				ctaEl.setAttribute('data-bhp-cart-add', '');
+				ctaEl.setAttribute('data-product-id', String(buyId));
+				ctaEl.setAttribute('data-variation-id', String(parseInt(conf.variationId, 10) || 0));
+			} else {
+				ctaEl.removeAttribute('data-bhp-cart-add');
+				ctaEl.removeAttribute('data-product-id');
+				ctaEl.removeAttribute('data-variation-id');
+			}
+
 			ctaEl.classList.toggle('is-disabled', conf.inStock === false);
 			if (conf.inStock === false) {
 				ctaEl.setAttribute('aria-disabled', 'true');

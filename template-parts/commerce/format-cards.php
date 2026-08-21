@@ -799,9 +799,42 @@ if (null === $bhp_initial_conf) {
    *    inside it is untouched.
    */
   ?>
+  <?php
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * ⭐⭐⭐ 1.19.281 — CARRIER ITEM 188. THIS ANCHOR NOW OPENS THE SIDE PANEL.
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * ⭐ Andrew Signore, ~05:4x−0600 2026-08-21, read first-hand at source
+   *    (`FOUNDER-VERBATIM-2026-08-05-PRODUCTION-DEPLOY-AUTHORIZATION.md`
+   *    line 818, G: mount, NOT relayed): "we made the cart side panel for a
+   *    reason with the upsells and the totals in their- they go to checkout
+   *    then add the coupon".
+   *
+   * ⛔ THREE ATTRIBUTES, NO NEW CONTROL. The protected `bhp-formats__cta`
+   *    element (`21-PROTECTED-ELEMENTS-MANIFEST.md` §3.3) is the SAME node,
+   *    with the same class, the same label and the same href. Nothing is
+   *    added to the page and nothing is removed from it — `bundle-drawer.js`
+   *    simply now recognises this anchor and intercepts its click.
+   *
+   * ⛔ `data-bhp-cart-add` IS EMITTED ONLY WHEN A REAL BUY ID EXISTS. Kindle
+   *    (`productId` 0, external, leaves for Amazon) and the Collection card
+   *    (`productId` 0, and its DIRECT-BUY form is the control that acts) both
+   *    fall through with no hook at all. ⭐ THAT IS WHAT KEEPS THE FOUNDER-
+   *    WALKED DIRECT-BUY PATH STRAIGHT TO CHECKOUT — the panel interceptor
+   *    can never see a control it is not attached to.
+   */
+  $bhp_cta_buy_id     = (int) (isset($bhp_initial_conf['productId']) ? $bhp_initial_conf['productId'] : 0);
+  $bhp_cta_panel_hook = ($bhp_cta_buy_id > 0 && empty($bhp_initial_conf['external']) && !$bhp_cta_is_direct);
+  ?>
   <div class="bhp-formats__cta-wrap">
     <a class="btn btn-primary bhp-formats__cta<?php echo $bhp_cta_disabled ? ' is-disabled' : ''; ?>"
        data-bhp-format-cta
+       <?php if ($bhp_cta_panel_hook) : ?>
+       data-bhp-cart-add
+       data-product-id="<?php echo esc_attr($bhp_cta_buy_id); ?>"
+       data-variation-id="<?php echo esc_attr((int) (isset($bhp_initial_conf['variationId']) ? $bhp_initial_conf['variationId'] : 0)); ?>"
+       <?php endif; ?>
        href="<?php echo esc_url($bhp_initial_conf['addUrl'] ? $bhp_initial_conf['addUrl'] : '#'); ?>"
        <?php echo $bhp_cta_external ? 'target="_blank" rel="noopener nofollow sponsored"' : ''; ?>
        <?php echo $bhp_cta_disabled ? 'aria-disabled="true"' : ''; ?>
