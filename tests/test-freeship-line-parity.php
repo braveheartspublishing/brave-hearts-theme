@@ -71,7 +71,22 @@ function flp_assert( $cond, $label ) {
 /** ⭐ THE ONE TRUE BYTES. Every assertion below compares against this literal. */
 $flp_expected = 'FREE Shipping on the complete collection or 3 or more books purchased';
 
-/** The casing variant the ruling forbids. */
+/**
+ * The casing variant the ruling forbids.
+ *
+ * ⛔⛔ IT NEVER OVERLAPS `$flp_expected`, AND THE FIRST VERSION OF THIS FILE
+ *    GOT THAT WRONG. `substr_count()` is case-SENSITIVE, so 'Free Shipping…'
+ *    and 'FREE Shipping…' are two disjoint literals: a file containing only
+ *    the correct string matches the forbidden one ZERO times. The original
+ *    assertions computed `count(forbidden) - count(expected)` as if the
+ *    forbidden literal were a PREFIX the expected one contained — which made
+ *    §2.1 and §3.1 pass for the wrong reason (a negative number is always
+ *    `<= 0`) and made §4.2 fail on a perfectly correct manifest.
+ *
+ * ⭐ THE CORRECT TEST IS SIMPLY `=== 0`, and it is stated once here so all
+ *    three sections read it the same way. Caught by the first staging sweep of
+ *    1.19.282, which is exactly what a sweep is for.
+ */
 $flp_forbidden = 'Free Shipping on the complete collection';
 
 $flp_theme  = get_template_directory();
@@ -165,12 +180,12 @@ foreach ( $flp_carriers as $flp_label => $flp_path ) {
 	flp_assert( '' !== $flp_src, "2.0 {$flp_label} is readable" );
 
 	$flp_good = substr_count( $flp_src, $flp_expected );
-	$flp_bad  = substr_count( $flp_src, $flp_forbidden ) - $flp_good;
+	$flp_bad  = substr_count( $flp_src, $flp_forbidden );
 	$flp_total_occurrences += $flp_good;
 
 	flp_assert(
-		$flp_bad <= 0,
-		sprintf( '2.1 %s carries NO lowercase variant in shipped code (found %d)', $flp_label, max( 0, $flp_bad ) )
+		0 === $flp_bad,
+		sprintf( '2.1 %s carries NO lowercase variant in shipped code (found %d)', $flp_label, $flp_bad )
 	);
 }
 
@@ -210,7 +225,7 @@ foreach ( $flp_scan as $flp_file ) {
 	if ( '' === $flp_src ) {
 		continue;
 	}
-	$flp_bad = substr_count( $flp_src, $flp_forbidden ) - substr_count( $flp_src, $flp_expected );
+	$flp_bad = substr_count( $flp_src, $flp_forbidden );
 	if ( $flp_bad > 0 ) {
 		$flp_offenders[] = str_replace( array( $flp_theme, $flp_plugin ), array( 'theme', 'plugin' ), $flp_file );
 	}
@@ -247,8 +262,11 @@ flp_assert(
 	'4.1 ⭐ the manifest row is the founder-ruled bytes, character for character'
 );
 flp_assert(
-	substr_count( $flp_pe_code, $flp_forbidden ) === substr_count( $flp_pe_code, $flp_expected ),
-	'4.2 the manifest carries no lowercase variant in its executable half'
+	0 === substr_count( $flp_pe_code, $flp_forbidden ),
+	sprintf(
+		'4.2 the manifest carries no lowercase variant in its executable half (found %d)',
+		substr_count( $flp_pe_code, $flp_forbidden )
+	)
 );
 
 /* ───────────────────────────────────────────────────────────────────────────
