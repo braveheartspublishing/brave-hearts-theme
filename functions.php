@@ -3837,6 +3837,19 @@ require_once get_template_directory() . '/inc/collection-gallery.php';
 // /complete-collection/ link if the plugin is off. Loaded AFTER book-formats.php
 // because it reads bhp_book_default_format() for format-agnostic CTAs.
 require_once get_template_directory() . '/inc/collection-cta.php';
+// ⭐ 1.19.277 — THE COLOURING LINE ON THE STOREFRONT, and the offer surface
+// FD-579 rules. Loaded AFTER book-formats.php because its shop-card hooks sit
+// beside that file's on the same WooCommerce loop actions and its offer cards
+// must inject BEFORE the collection card (filter priority 5 vs the default
+// 10), and AFTER collection-cta.php because both read the bundle plugin's
+// nonce/redirect contract rather than restating it.
+//
+// ⛔ IT FAILS CLOSED TO 1.19.276 EVERYWHERE THE COLOURING LINE IS ABSENT. Every
+//    surface in it gates on bhp_colouring_product_ids() (SKU-keyed, plugin
+//    1.8.61) or on bhp_offer_is_purchasable(). On an environment where no
+//    colouring SKU resolves, every hook it registers returns without emitting a
+//    byte, and nothing that already renders is altered.
+require_once get_template_directory() . '/inc/colouring-line.php';
 // 1.19.260 — the mobile-header offer (CYCLE165-LD-DIRECTION1-STEP1-HEADER).
 // Loaded AFTER collection-cta.php so the two header controls are read in the
 // order they render, and after book-formats.php/the bundle plugin so the live

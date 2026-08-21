@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.276
+Version: 1.19.277
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -11063,4 +11063,107 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   background-size: auto 200%;
   opacity: 0.085;
   pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.277 — THE OFFER SURFACE (`FD-579`) AND THE COLOURING SHOP CARD.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⛔ EVERY SELECTOR BELOW IS NEW AND SCOPED TO NEW CLASSES. Not one existing
+      rule is reworded, reordered, weakened or overridden, so a page with no
+      colouring product and no purchasable offer renders byte-identical CSS
+      behaviour to 1.19.276.
+
+   ⭐ IT INHERITS THE HOUSE TOKENS RATHER THAN RESTATING THEM, for the reason
+      the collection card's own block records: a second palette is a second
+      thing to keep in step.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.bhp-offer {
+  margin: 1.25rem 0 0;
+  padding: 1rem 1.125rem 1.125rem;
+  border: 1px solid rgba(15, 42, 68, 0.14);
+  border-radius: 12px;
+  background: rgba(15, 42, 68, 0.035);
+}
+
+/* ⛔ R2.3 — DEGRADE, NEVER MIX. There is no composite image today, so this
+      block never renders. It is styled now so that registering one is an
+      attachment change and not a layout change, exactly as the spec's §8
+      photograph swap requires. */
+.bhp-offer__media {
+  margin: 0 0 0.75rem;
+}
+
+.bhp-offer__composite {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.bhp-offer__heading {
+  margin: 0 0 0.65rem;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+}
+
+.bhp-offer__form {
+  margin: 0;
+}
+
+.bhp-offer__cta {
+  display: block;
+  width: 100%;
+  /* ⭐ 48px, clear of the 44px target floor `test-product-template.php` §10.4
+        asserts for the primary purchase control on every other page. */
+  min-height: 48px;
+}
+
+.bhp-offer__saving {
+  margin: 0.55rem 0 0;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+/* ⭐ THE HARDCOVER SWAP READS AS A SECONDARY CONTROL, NEVER AS A SECOND
+      PRIMARY. `FD-439`: paperback stays the chosen thing. A second filled
+      button beside the first would present two defaults, which is the exact
+      "half-applied default reads as a bug" failure 2D recorded. */
+.bhp-offer__upsell {
+  display: inline-block;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.9375rem;
+  text-decoration: underline;
+  cursor: pointer;
+  /* Keyboard and touch target without a box: the padded hit area comes from
+     the line-height, so the underline still sits on the words. */
+  min-height: 44px;
+}
+
+/* The offer as a grid card. It is a real `li.product`, so the grid's own
+   column sizing applies and no width is restated here. */
+.bhp-shop-offer-item .bhp-offer {
+  margin-top: 0.5rem;
+}
+
+/* ⛔ R2.6 — ONE PRICE, ONCE. WooCommerce's own loop price is removed on a
+      colouring card in PHP (`bhp_colouring_hide_loop_price()`), not hidden
+      here: a price that is present in the DOM and invisible is still read by a
+      screen reader and still scraped by a feed. */
+.bhp-colouring-spec {
+  margin: 0.5rem 0 0;
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 600px) {
+  .bhp-offer {
+    padding: 0.875rem 1rem 1rem;
+  }
 }

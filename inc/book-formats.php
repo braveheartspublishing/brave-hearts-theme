@@ -1798,7 +1798,21 @@ function bhp_book_shop_card_meta() {
     $reg     = bhp_book_registry();
     $formats = bhp_book_shop_format_prices($found['key']);
     ?>
-    <p class="bhp-shop-descriptor"><?php echo esc_html($reg[$found['key']]['descriptor']); ?></p>
+    <?php
+    /*
+     * ⭐ 1.19.277 — `data-bhp-card-kind` (spec `R2.1`, the `FD-549` rail
+     *    contract applied to the grid). A SINGLE-TITLE CARD DECLARES ITSELF AS
+     *    ONE, so a test can assert that its image and its price describe the
+     *    same object rather than inferring the card's kind from its classes.
+     *
+     * ⛔ IT IS AN ATTRIBUTE ON AN ELEMENT THIS THEME ALREADY OWNS, not a
+     *    template override of WooCommerce's `<li>`. `wc_product_class()` emits
+     *    `class` and nothing else, so putting it on the list item would mean
+     *    forking `content-product.php` — a whole core template forked to carry
+     *    one string, and a second place for a protected element to go missing.
+     */
+    ?>
+    <p class="bhp-shop-descriptor" data-bhp-card-kind="single"><?php echo esc_html($reg[$found['key']]['descriptor']); ?></p>
     <?php if ($formats): ?>
       <span class="bhp-shop-from-price bhp-shop-format-prices">
         <?php foreach ($formats as $i => $format): ?>
@@ -1848,7 +1862,7 @@ function bhp_book_shop_collection_card($loop_end) {
 
     ob_start();
     ?>
-    <li class="product bhp-shop-collection-item">
+    <li class="product bhp-shop-collection-item" data-bhp-card-kind="collection">
       <div class="bhp-shop-collection-card">
         <span class="bhp-shop-collection-card__badge"><?php esc_html_e('BEST VALUE', 'brave-hearts'); ?></span>
         <h2 class="woocommerce-loop-product__title"><?php esc_html_e('The Complete Collection', 'brave-hearts'); ?></h2>

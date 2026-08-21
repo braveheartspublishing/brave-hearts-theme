@@ -69,6 +69,39 @@ $uid = 'bhp-fmt-' . (int) $data['paperback']['product_id'];
  *    every branch below is skipped.
  */
 $bhp_hc_offerable = function_exists('bhp_book_hardcover_is_offerable') ? bhp_book_hardcover_is_offerable() : true;
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.277 — THE ONE-CARD RAIL, GENERALISED FROM THE SCHOOL-VISIT PATH.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ NOT A NEW MECHANISM. 1.19.240 already renders a one-card
+ *    `bhp-formats__grid` when `bhp_book_available_formats()` returns a single
+ *    format, and that path is live and tested. All this does is let a CALLER
+ *    declare the same shape for a product that has only ever had one format —
+ *    ⭐ the colouring line, whose book is a single-format perfect-bound
+ *    paperback and has no hardcover and no Kindle edition to lose.
+ *
+ * ⛔ CONTROL PATH: none of the three keys is set by `bhp_book_purchase_data()`,
+ *    so every chapter-book page takes the `isset()` default and renders
+ *    byte-identical markup to 1.19.276 — four cards, same payload, same order,
+ *    same prices, same protected elements.
+ */
+$bhp_rail_hardcover  = isset($data['rail_hardcover']) ? (bool) $data['rail_hardcover'] : true;
+$bhp_rail_collection = isset($data['rail_collection']) ? (bool) $data['rail_collection'] : true;
+if (!$bhp_rail_hardcover) {
+    /*
+     * ⭐ ROUTED THROUGH THE EXISTING FLAG ON PURPOSE. `$bhp_hc_offerable` is
+     *    the ONE predicate that already drops the hardcover CARD **and** its
+     *    PAYLOAD ENTRY together — the 1.19.240 lesson that hiding the control
+     *    while leaving the entry leaves the format reachable by
+     *    `?bhp_format=hardcover`, by a keyboard user tabbing to a stale node,
+     *    and by anything that calls the selector programmatically. A second
+     *    suppression path here would be a second place for that to go wrong.
+     */
+    $bhp_hc_offerable = false;
+}
+
 if (!$bhp_hc_offerable && 'hardcover' === $initial) {
     $initial = 'paperback';
 }
@@ -99,6 +132,22 @@ $bhp_format_specs = [
     'kindle'     => __('Kindle edition. Delivered by Amazon to your Kindle app or device.', 'brave-hearts'),
     'collection' => __('All three adventures. Illustrated. 12 short chapters each. Ages 6–9. Choose paperback or hardcover.', 'brave-hearts'),
 ];
+
+/*
+ * ⭐ 1.19.277 — A CALLER MAY REPLACE THE SPEC LINE FOR ITS OWN PRODUCT KIND.
+ *
+ * ⛔⛔ THIS IS A CORRECTNESS FIX, NOT A CONVENIENCE. The paperback spec above
+ *    reads "12 short chapters", which is TRUE of the three chapter books and
+ *    ⛔ FALSE of a colouring book. Serving it on a colouring product page
+ *    would be a false factual claim about the object being sold, printed
+ *    directly under its price.
+ *
+ * ⛔ CONTROL PATH: `rail_spec` is not set by `bhp_book_purchase_data()`, so
+ *    every chapter page keeps the Andrew-approved string above, unchanged.
+ */
+if (!empty($data['rail_spec'])) {
+    $bhp_format_specs['paperback'] = $data['rail_spec'];
+}
 
 /*
  * A4 / CX-016 (2026-08-03) — SHIPPING-LINE HARMONISATION.
@@ -335,6 +384,23 @@ if (!$bhp_hc_offerable) {
 }
 
 /*
+ * ⭐ 1.19.277 — AND THE COLLECTION ENTRY LEAVES THE PAYLOAD WITH ITS CARD, for
+ *    exactly the reason recorded immediately above for hardcover.
+ *
+ * ⛔ `book-formats.js` selects a format by looking the key up in this JSON.
+ *    Dropping the button while leaving the entry would leave the collection
+ *    reachable by `?bhp_format=collection` on a colouring page — a URL that
+ *    would then paint the $31.99 collection price into a $12.99 book's buy
+ *    box. The control, the payload entry and the card move together or the
+ *    gate is cosmetic.
+ *
+ * ⛔ CONTROL PATH: true on every chapter page; the payload is byte-identical.
+ */
+if (!$bhp_rail_collection) {
+    unset($bhp_format_payload['collection']);
+}
+
+/*
  * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐ 1.19.274 (2026-08-20, `CYCLE165-LD-COLLECTION-CTA-TO-CHECKOUT`) — THE
  *     COLLECTION CARD'S CTA BUYS THE COLLECTION INSTEAD OF DESCRIBING IT.
@@ -403,7 +469,9 @@ if (!$bhp_hc_offerable) {
  */
 $bhp_collection_direct_cta = '';
 if (
-    function_exists('bhp_collection_cta_available') && bhp_collection_cta_available()
+    // ⭐ 1.19.277: no collection card means no collection buy form to swap to.
+    $bhp_rail_collection
+    && function_exists('bhp_collection_cta_available') && bhp_collection_cta_available()
     && function_exists('bhp_collection_add_to_cart_cta')
     && (!function_exists('bhp_collection_cta_context_allows_add') || bhp_collection_cta_context_allows_add())
 ) {
@@ -470,8 +538,32 @@ if (null === $bhp_initial_conf) {
    *   visibly at wider viewports — but it is why the visual delta here is nil.
    */
   ?>
+  <?php
+  /*
+   * ⭐ 1.19.277 — "CHOOSE YOUR FORMAT" ABOVE ONE CARD IS NONSENSE (spec `R3.4`).
+   *
+   * ⛔ It is not a question when there is no choice, and a control that asks a
+   *    question it does not accept an answer to reads as a broken page. A
+   *    caller rendering a one-card rail supplies its own label — ⭐ DRAFT for
+   *    Andrew, `Paperback · 8.5 × 11`, which names the thing instead of asking
+   *    about it.
+   *
+   * ⛔ THE ELEMENT, ITS CLASS AND ITS `id` ARE UNCHANGED, and that is
+   *    load-bearing: this node is the accessible name of the `role="group"`
+   *    below (`aria-labelledby="<uid>-label"`). Only the WORDS move.
+   *
+   * ⛔ CONTROL PATH: `rail_heading` is unset on every chapter page, so the
+   *    approved string below renders exactly as it did in 1.19.276.
+   */
+  ?>
   <p class="bhp-formats__heading" id="<?php echo esc_attr($uid); ?>-label">
-    <?php esc_html_e('Choose your format', 'brave-hearts'); ?>
+    <?php
+    if (!empty($data['rail_heading'])) {
+        echo esc_html($data['rail_heading']);
+    } else {
+        esc_html_e('Choose your format', 'brave-hearts');
+    }
+    ?>
   </p>
 
   <?php
@@ -568,11 +660,30 @@ if (null === $bhp_initial_conf) {
     </button>
     <?php endif; ?>
 
+    <?php
+    /*
+     * ⭐ 1.19.277 — THE COLLECTION CARD IS GATED. ⛔⛔ THIS IS THE RAIL
+     *    CONTRACT (`FD-549`), NOT A LAYOUT PREFERENCE.
+     *
+     * ⛔ THE COMPLETE COLLECTION IS THREE CHAPTER BOOKS. Rendering it as a
+     *    fourth "format" of a COLOURING book states that the two are the same
+     *    object, and prints the $31.99 collection price inside the buy box of
+     *    a $12.99 book. That is the item-126 defect — a false claim assembled
+     *    from two true facts — on the very template the rail contract was
+     *    written to protect.
+     *
+     * ⛔ CONTROL PATH: `rail_collection` is unset on every chapter-book page,
+     *    so the card, its BEST VALUE badge, its price and 1.19.274's direct
+     *    buy form all render exactly as they did in 1.19.276.
+     */
+    if ($bhp_rail_collection) :
+    ?>
     <button type="button" class="bhp-format-card bhp-format-card--collection<?php echo 'collection' === $initial ? ' is-selected' : ''; ?>" data-bhp-format="collection" aria-pressed="<?php echo 'collection' === $initial ? 'true' : 'false'; ?>">
       <span class="bhp-format-card__badge"><?php esc_html_e('BEST VALUE', 'brave-hearts'); ?></span>
       <span class="bhp-format-card__name"><?php esc_html_e('COMPLETE COLLECTION', 'brave-hearts'); ?></span>
       <span class="bhp-format-card__price"><?php echo wp_kses_post($data['collection']['price_html']); ?></span>
     </button>
+    <?php endif; ?>
   </div>
 
   <?php
