@@ -333,7 +333,7 @@ if ( ! function_exists( 'WC' ) ) {
 		);
 		bhp_vfe_assert(
 			function_exists( 'bhp_book_free_shipping_line' )
-				&& 'FREE Shipping on the complete collection' === bhp_book_free_shipping_line(),
+				&& 'FREE Shipping on the complete collection or 3 or more books purchased' === bhp_book_free_shipping_line(),
 			'§4c the locked shipping sentence is back, byte-identical',
 			$failures
 		);
@@ -494,7 +494,7 @@ if ( ! function_exists( 'WC' ) ) {
 		}
 		bhp_vfe_assert(
 			function_exists( 'bhp_book_free_shipping_line' )
-				&& 'FREE Shipping on the complete collection' === bhp_book_free_shipping_line(),
+				&& 'FREE Shipping on the complete collection or 3 or more books purchased' === bhp_book_free_shipping_line(),
 			'§7 with no flag, an ordinary shopper reads the locked shipping sentence',
 			$failures
 		);

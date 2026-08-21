@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.279
+Version: 1.19.280
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -11166,4 +11166,159 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   .bhp-offer {
     padding: 0.875rem 1rem 1rem;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.280 — FOUNDER STAGING WALK, CARRIER ITEM 186, CATCH (1).
+   ═══════════════════════════════════════════════════════════════════════════
+
+   HIS WORDS (carrier item 186, machine clock ~05:1x−0600 2026-08-21; read
+   FIRST-HAND at source by the agent that wrote this block, not relayed):
+
+     "The Mariana Trench Book + coloring book box is not correct. It skews
+      right and has white lettering on a creme background."
+
+   ⭐ BOTH LIMBS REPRODUCED AND MEASURED BEFORE ANYTHING WAS CHANGED, on
+      staging 1.19.279, real Chrome, `window.innerWidth` ASSERTED, on
+      /product/adventures-of-charlotte-and-henry-the-mariana-trench-paperback/:
+
+     LIMB A — "white lettering on a creme background". `.bhp-offer__cta`
+       computed  color rgb(81,81,81)  on  rgb(233,230,237)  = 6.43:1.
+       ⛔ THAT IS WOOCOMMERCE'S OWN DEFAULT BUTTON (#ebe9eb / #515151),
+          not a house control. The element carries `class="button
+          bhp-offer__cta"` and NEVER carried `btn-primary`, so the house
+          rule at § "buttons" (`.btn-primary`) never applied to it and the
+          WooCommerce base skin showed through. On the SHOP card the same
+          element measured white on rgb(23,63,47) = 11.74:1, because a
+          different ambient rule reached it there — so ONE control was
+          rendering two different ways on two surfaces, and the product
+          page got the washed-out one.
+
+     LIMB B — "it skews right". Measured at 1440: every sibling in the
+       module centred on x=1077.2, but `.bhp-offer__upsell` is an
+       `inline-block` with no width, so its BOX ran 835.4 → 1167.5 and
+       centred on x=1001.4 — 75.8 px left of the module centre with its
+       text centred inside that short box, while the heading and the
+       saving sat flush left (`text-align: start`, inherited from the
+       summary column). Three different alignments in one 216 px box.
+
+   ⭐ THE FIX IS HOUSE TOKENS AND NOTHING ELSE. No new palette, no literal
+      hex, no `!important`. `--color-primary` (#173f2f) + `--color-white`
+      is the same pair `.btn-primary` uses everywhere else on the site, so
+      the offer CTA now renders IDENTICALLY on the product page and in the
+      shop card and cannot drift from the house button again.
+
+   ⭐ AA IS MEASURED, NOT ASSUMED: white on #173f2f = 11.74:1 (observed on
+      the shop card at 1.19.279, and re-measured on both surfaces after
+      this change). AA large/normal both pass with margin.
+
+   ⛔ ADDITIVE. Not one rule in the 1.19.277 offer block above is reworded,
+      reordered or deleted — these rules follow it and win on source order
+      at equal specificity, so the movement stays visible to a reader.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* LIMB B — one alignment for the whole module. The heading, the saving and
+   the upsell now agree with the CTA that was already centred. */
+.bhp-offer {
+  text-align: center;
+}
+
+/* …and the upsell's BOX spans the module, so its centred text lands on the
+   module's centre instead of 75.8 px to the left of it. The 44 px target and
+   the "secondary, never a second primary" treatment (`FD-439`) are unchanged
+   — only the box width moves. */
+.bhp-offer__upsell {
+  display: block;
+  width: 100%;
+}
+
+/* LIMB A — the house primary, explicitly, so no ambient WooCommerce skin can
+   reach this control again on any surface. */
+.bhp-offer__cta,
+.woocommerce .bhp-offer__cta,
+.woocommerce button.button.bhp-offer__cta {
+  border-color: transparent;
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.bhp-offer__cta:hover,
+.woocommerce .bhp-offer__cta:hover,
+.woocommerce button.button.bhp-offer__cta:hover {
+  background: var(--color-primary-dark);
+  color: var(--color-white);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.280 — THE HEADER CART CONTROL (carrier item 186, catch 3).
+   ═══════════════════════════════════════════════════════════════════════════
+
+   It opens the mini-cart side panel that already exists (`#bhp-cart-drawer`).
+   ⛔ NOT A PURCHASE CTA — a quiet utility icon, deliberately unfilled, so the
+      "one primary per page" property (`21-PROTECTED-ELEMENTS-MANIFEST.md`
+      §5.3) is untouched on every page including /complete-collection/.
+
+   ⭐ 44px MINIMUM TARGET at every width — the same floor
+      `test-product-template.php` §10.4 asserts for purchase controls.
+
+   ⛔ IT INHERITS THE HEADER'S OWN INK (`currentColor` on the SVG) rather than
+      naming a colour, so it cannot fall out of step with the header on a page
+      that themes the header differently.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.bhp-cart-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bhp-cart-toggle__icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.bhp-cart-toggle:hover .bhp-cart-toggle__icon,
+.bhp-cart-toggle:focus-visible .bhp-cart-toggle__icon {
+  opacity: 0.75;
+}
+
+.bhp-cart-toggle:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* The count bubble. ⛔ Hidden until the Store-API hydration says otherwise —
+   the header is cached by SiteGround and must never paint a number it cannot
+   prove belongs to THIS visitor. See inc/mini-cart.php. */
+.bhp-cart-toggle__count {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--color-accent);
+  color: var(--color-jungle);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.bhp-cart-toggle[data-bhp-cart-empty='true'] .bhp-cart-toggle__count {
+  display: none;
 }

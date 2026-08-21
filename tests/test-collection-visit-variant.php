@@ -131,7 +131,7 @@ bhp_vv_assert(
 	$failures
 );
 bhp_vv_assert(
-	strpos( $html, 'FREE Shipping on the complete collection' ) !== false,
+	strpos( $html, 'FREE Shipping on the complete collection or 3 or more books purchased' ) !== false,
 	'1: the first FREE bullet is the SHIPPING one (if this says hand-delivery, the session is flagged and every other assertion here is about the wrong variant)',
 	$failures
 );

@@ -952,7 +952,7 @@ function bhp_bundle_render_landing_cold_open() {
 				 */
 				$bhp_coldopen_free[] = bhp_school_visit_use_delivery_framing()
 					? bhp_school_visit_delivery_bullet()
-					: 'FREE Shipping on the complete collection';
+					: 'FREE Shipping on the complete collection or 3 or more books purchased';
 			}
 			if ( function_exists( 'bhp_bundle_addon_free_with_collection' )
 				&& bhp_bundle_addon_free_with_collection()
@@ -2186,7 +2186,7 @@ function bhp_bundle_render_landing_final_cta() {
 						//    whole reason both route through one helper.
 						$bhp_final_free[] = bhp_school_visit_use_delivery_framing()
 							? bhp_school_visit_delivery_bullet()
-							: 'FREE Shipping on the complete collection';
+							: 'FREE Shipping on the complete collection or 3 or more books purchased';
 					}
 					if ( function_exists( 'bhp_bundle_addon_free_with_collection' )
 						&& bhp_bundle_addon_free_with_collection()

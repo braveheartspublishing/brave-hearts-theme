@@ -1010,3 +1010,63 @@
   display: inline-grid;
   margin: 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.280 — FOUNDER STAGING WALK, CARRIER ITEM 186, CATCH (5).
+   ═══════════════════════════════════════════════════════════════════════════
+
+   HIS WORDS (carrier item 186, ~05:1x−0600 2026-08-21; read FIRST-HAND at
+   source by the agent that wrote this block):
+
+     "Also on checkout the coupon drop down has a creme background as its
+      header it just needs an aesthetic pass looks wierd."
+
+   ⭐ MEASURED ON STAGING 1.19.279 BEFORE THE CHANGE — real Chrome, a REAL
+      POPULATED CART (one Mariana paperback added through the live buy
+      button), /checkout/, `window.innerWidth` ASSERTED at 390 AND 1440.
+      Identical at both widths:
+
+        .wc-block-components-totals-coupon      own background  rgb(255,255,255)
+        the surrounding totals panel            painted         rgb(253,248,238)
+
+      ⭐ SO THE ROW IS A PURE-WHITE BAND LYING ACROSS A CREAM PANEL. That
+        mismatch is the "looks wierd" — the row reads as a foreign block
+        pasted into the order summary rather than as one of its rows.
+
+   ⚠️ ONE PRECISION, RECORDED RATHER THAN SMOOTHED OVER: he described the
+      header as CREAM; the instrument says the header is WHITE and its
+      SURROUND is cream. ⭐ Same defect either way — the two surfaces do not
+      match — and the fix is the same. His eye found it; the measurement only
+      names which of the two moved.
+
+   ⛔ IT IS AESTHETIC ONLY, AND THE NUMBERS SAY SO. Contrast was ALREADY fine
+      and is not what he was reporting: label rgb(14,48,35) on the row =
+      14.33:1, row text 13.26:1. Both stay above AA after this change
+      (the ground moves 255,255,255 → 253,248,238, a luminance change too
+      small to take either below 13:1 — re-measured after deploy).
+
+   ⛔ NOTHING FUNCTIONAL MOVES. The 48px touch target, the centred label, the
+      icon, the expand/collapse behaviour, the coupon field itself, and every
+      WooCommerce Blocks behaviour are untouched. ⛔ NO COUPON, COUPON CODE,
+      DISCOUNT, TOTAL, SHIPPING RATE OR WOOCOMMERCE SETTING IS READ OR
+      WRITTEN BY THIS BLOCK — changing any of those is an Andrew gate (§6).
+
+   ⛔ THIS STYLESHEET DEPENDS ON `bhp-style`, so it loads AFTER style.css and
+      these rules win on source order at equal specificity. The style.css
+      block at § "WooCommerce Blocks' native coupon toggle" is left intact and
+      unreworded, so the movement stays visible to a reader.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.wc-block-components-totals-coupon {
+  /* Sit on the panel's own ground instead of painting a white band over it. */
+  background: transparent;
+}
+
+/* The hover state was `--color-surface-muted` (#fffaf0), which is all but
+   invisible against a #fdf8ee panel — a control that gives no feedback reads
+   as a dead control. A low-alpha ink wash reads on cream AND on white, so it
+   does not depend on which ground WooCommerce paints behind it. */
+.wc-block-components-totals-coupon .wc-block-components-panel__button:hover,
+.wc-block-components-totals-coupon .wc-block-components-panel__button:focus-visible {
+  background: rgba(var(--color-forest-rgb, 23, 63, 47), 0.06);
+}

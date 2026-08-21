@@ -565,7 +565,7 @@ $svp_copy_unflagged = bhp_school_visit_freeship_copy( $svp_copy_base );
 bhp_svp_assert( $svp_copy_unflagged === $svp_copy_base, 'UNFLAGGED request: the cart/drawer free-shipping copy is returned IDENTICALLY -- an ordinary customer reads exactly what they read in 1.8.51', $failures );
 
 if ( function_exists( 'bhp_book_free_shipping_line' ) ) {
-	bhp_svp_assert( 'FREE Shipping on the complete collection' === bhp_book_free_shipping_line(), 'UNFLAGGED request: the theme\'s collection bullet is the locked sentence, byte-identical', $failures );
+	bhp_svp_assert( 'FREE Shipping on the complete collection or 3 or more books purchased' === bhp_book_free_shipping_line(), 'UNFLAGGED request: the theme\'s collection bullet is the locked sentence, byte-identical', $failures );
 } else {
 	bhp_svp_skip( 'Theme collection-bullet framing assertions', 'bhp_book_free_shipping_line() is not defined -- the theme half of this release is not installed here', $skips );
 }

@@ -1,5 +1,5 @@
 /*! Built from checkout-experience.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 1fcee33c0a916cd51df08e7607559ab3
+    source-md5: cfecd20076520f7208d485298df3fb46
     Comments stripped for transfer size; the source file is canonical. */
 .wc-block-checkout.is-mobile > .wc-block-checkout__sidebar,
 .wc-block-cart.is-mobile > .wc-block-cart__sidebar.is-duplicate {
@@ -380,4 +380,11 @@
 .bhp-checkout-free .bhp-free-bullets {
   display: inline-grid;
   margin: 0;
+}
+.wc-block-components-totals-coupon {
+background: transparent;
+}
+.wc-block-components-totals-coupon .wc-block-components-panel__button:hover,
+.wc-block-components-totals-coupon .wc-block-components-panel__button:focus-visible {
+  background: rgba(var(--color-forest-rgb, 23, 63, 47), 0.06);
 }

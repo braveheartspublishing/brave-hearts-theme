@@ -3837,6 +3837,25 @@ require_once get_template_directory() . '/inc/collection-gallery.php';
 // /complete-collection/ link if the plugin is off. Loaded AFTER book-formats.php
 // because it reads bhp_book_default_format() for format-agnostic CTAs.
 require_once get_template_directory() . '/inc/collection-cta.php';
+// ⭐ 1.19.280 — THE PURCHASE FLOW (`CYCLE165-LD-PURCHASE-FLOW-ROUND`, founder
+// carrier item 186). Every buy button finishes on /checkout/ instead of the
+// cart page. Loaded BEFORE book-formats.php's data helpers are CALLED (they
+// run at render time, not at require time) and beside collection-cta.php
+// because both encode the same "finish on /checkout/" contract — one with the
+// plugin's POST flag, this one with an allowlisted GET flag for the native
+// WooCommerce add-to-cart links the format selector renders.
+//
+// ⛔ IT REGISTERS ONE FILTER AND CHANGES NO WOOCOMMERCE SETTING. With no flag
+//    on the request it returns WooCommerce's own destination untouched, so
+//    every add-to-cart that is not one of our buy buttons is byte-identical
+//    to 1.19.279.
+require_once get_template_directory() . '/inc/purchase-flow.php';
+// ⭐ 1.19.280 — the HEADER CART CONTROL that opens the already-shipped
+// mini-cart side panel (`#bhp-cart-drawer`). Carrier item 186. It builds no
+// panel: it renders one <button> carrying the generic `data-bhp-cart-open`
+// hook that plugin 1.8.64 wires to the drawer's own openDrawer(). Loaded
+// after purchase-flow.php purely for reading order — the two are independent.
+require_once get_template_directory() . '/inc/mini-cart.php';
 // ⭐ 1.19.277 — THE COLOURING LINE ON THE STOREFRONT, and the offer surface
 // FD-579 rules. Loaded AFTER book-formats.php because its shop-card hooks sit
 // beside that file's on the same WooCommerce loop actions and its offer cards

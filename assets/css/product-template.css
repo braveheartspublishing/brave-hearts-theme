@@ -791,3 +791,62 @@
  *   53-239 px. Recorded so a future change to the title, the breadcrumb or the
  *   buy box knows it is spending a budget that is nearly empty.
  */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.280 — FOUNDER STAGING WALK, CARRIER ITEM 186, CATCH (2).
+   ═══════════════════════════════════════════════════════════════════════════
+
+   HIS WORDS (carrier item 186, ~05:1x−0600 2026-08-21; read FIRST-HAND at
+   source by the agent that wrote this block):
+
+     "Also the Add to cart button and choose your format is all on the left
+      side and should be centered on the page."
+
+   ⭐ WHAT WAS ACTUALLY MEASURED on staging 1.19.279, real Chrome, asserted
+      `window.innerWidth`, Mariana paperback product page:
+
+        1440   .bhp-formats__heading         text-align: start
+               .bhp-formats__selected-price  text-align: start
+               .bhp-formats__spec / __note   text-align: start
+               .bhp-formats__cta             text-align: center  ← already
+         390   heading is position:absolute 1x1 (SR-ONLY BY DESIGN — see
+               book-formats.css @media; ⛔ NOT a defect and NOT touched here)
+               price / spec / note           text-align: start
+               .bhp-formats__cta             text-align: center
+
+      So the buy box read RAGGED: a centred button under a flush-left price
+      under a flush-left label. That is the "all on the left side" he saw.
+
+   ⚠️⚠️ THE READING IS STATED BECAUSE "centered on the page" HAS TWO READINGS
+      AND ONLY ONE OF THEM IS SAFE TO TAKE WITHOUT HIM.
+
+      READING TAKEN — centre the CONTENTS of the buy box, so the purchase
+        block reads as one centred unit at both widths.
+      READING NOT TAKEN — move the whole summary COLUMN to the centre of the
+        1440 viewport (it sits at x 816→1338 beside the gallery). ⛔ That is
+        a change to the two-column product layout, a protected surface
+        (`21-PROTECTED-ELEMENTS-MANIFEST.md` §3.3 fixes price / selector /
+        ATC ahead of the long-form body), it is not what a product page has
+        ever done on this site, and he has walked that column many times
+        without calling it out. ⛔ NOT DONE UNILATERALLY — flagged to Gandalf
+        and to him instead.
+
+   ⛔ SCOPED TO `body.single-product` ON PURPOSE. `.bhp-formats` also renders
+      on /complete-collection/, which is the money page with its own audited
+      layout and its own protected rows (§3.4). Nothing there moves.
+
+   ⛔ POSITION ONLY. No element is added, removed, hidden, reordered or
+      reworded; no tap target shrinks; the §3.7 ordering assertion and the
+      `bhp-formats__cta` / `__grid` / `__selected-price` markers are all
+      untouched. The format cards keep their own internal centring.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+body.single-product.woocommerce div.product .bhp-formats,
+body.single-product.woocommerce div.product .bhp-formats__heading,
+body.single-product.woocommerce div.product .bhp-formats__selected-price,
+body.single-product.woocommerce div.product .bhp-formats__cta-wrap,
+body.single-product.woocommerce div.product .bhp-formats__spec,
+body.single-product.woocommerce div.product .bhp-formats__note,
+body.single-product.woocommerce div.product .bhp-formats__paperback-only {
+	text-align: center;
+}

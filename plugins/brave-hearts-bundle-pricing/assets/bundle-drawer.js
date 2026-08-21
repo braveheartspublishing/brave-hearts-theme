@@ -15,6 +15,8 @@
 	var lastFocusedElement = null;
 	var floatingBtn = null;
 	var floatingBadge = null;
+	/* 1.8.64 - every non-FAB control carrying data-bhp-cart-open. */
+	var extraOpeners = [];
 
 	function focusableElements(container) {
 		return qsa(
@@ -1082,6 +1084,7 @@
 		return getCart().then(function (cart) {
 			renderDrawer(cart, computeDrawerMeta(cart));
 			updateFloatingCartButton(cart);
+			updateExtraOpeners(cart);
 			return cart;
 		});
 	}
@@ -1770,14 +1773,86 @@
 		money: formatMoneyPlain
 	};
 
+	/**
+	 * ⭐⭐ 1.8.64 — EVERY "OPEN THE CART" CONTROL, NOT JUST THE FLOATING ONE.
+	 *
+	 * Andrew Signore, carrier item 186 (~05:1x−0600 2026-08-21), read
+	 * first-hand at source by the agent that wrote this:
+	 *
+	 *   "or at least have the cart pop up not the cart page show. … It should
+	 *    just go to check out or to the cart side panel then to check out"
+	 *
+	 * The side panel he is describing ALREADY EXISTS — this is `#bhp-cart-drawer`,
+	 * shipped since the Overnight Conversion Sprint, with line items, quantity
+	 * steppers, remove, a cross-sell, the order bump, a live Store-API summary
+	 * and a Secure Checkout button. What it did NOT have was a way to open it
+	 * from the site header; only the floating button could.
+	 *
+	 * ⭐ SO THIS GENERALISES THE OPENER AND ADDS NO SECOND PANEL. Any element
+	 *    carrying `data-bhp-cart-open` now opens the SAME drawer through the
+	 *    SAME `openDrawer()` — one panel, one state machine, one analytics
+	 *    event. A second drawer implementation is exactly the drift class this
+	 *    codebase has paid for before.
+	 *
+	 * ⛔ THE FLOATING BUTTON IS UNCHANGED. It keeps its id, its handler, its
+	 *    `floating_cart` event source and its badge. `floatingBtn` /
+	 *    `floatingBadge` still point at it, so `updateFloatingCartButton()` is
+	 *    untouched and cannot regress.
+	 *
+	 * ⭐ EACH EXTRA OPENER REPORTS ITS OWN SOURCE via `data-bhp-cart-source`,
+	 *    so `side_cart_opened` can still tell the header from the FAB.
+	 */
 	function initFloatingCartButton() {
 		floatingBtn = qs('#bhp-floating-cart');
-		if (!floatingBtn) {
+		if (floatingBtn) {
+			floatingBadge = qs('.bhp-floating-cart__badge', floatingBtn);
+			floatingBtn.addEventListener('click', function () {
+				openDrawer('floating_cart');
+			});
+		}
+
+		extraOpeners = [].slice.call(document.querySelectorAll('[data-bhp-cart-open]'));
+		extraOpeners.forEach(function (el) {
+			el.addEventListener('click', function (e) {
+				// A <button> needs no default suppressed, but an <a> fallback
+				// would navigate; suppress defensively either way.
+				if (e && typeof e.preventDefault === 'function') {
+					e.preventDefault();
+				}
+				openDrawer(el.getAttribute('data-bhp-cart-source') || 'cart_opener');
+			});
+		});
+	}
+
+	/**
+	 * Keep every extra opener's count/label/visibility in step with the same
+	 * canonical cart the floating button reads. Called from the same place.
+	 *
+	 * ⛔ AN OPENER WITH NO COUNT NODE IS LEFT ALONE rather than guessed at, and
+	 *    an opener that opts out of hiding (`data-bhp-cart-persist`) stays
+	 *    visible at zero — the header control uses that, because a control that
+	 *    appears and disappears as the cart changes moves the nav around.
+	 */
+	function updateExtraOpeners(cart) {
+		if (!extraOpeners || !extraOpeners.length) {
 			return;
 		}
-		floatingBadge = qs('.bhp-floating-cart__badge', floatingBtn);
-		floatingBtn.addEventListener('click', function () {
-			openDrawer('floating_cart');
+		var total = totalUnitsInCart(cart);
+		extraOpeners.forEach(function (el) {
+			var badge = qs('[data-bhp-cart-count]', el);
+			if (badge) {
+				badge.textContent = String(total);
+			}
+			el.setAttribute(
+				'aria-label',
+				total > 0
+					? 'Open cart, ' + total + (1 === total ? ' item' : ' items')
+					: 'Open cart'
+			);
+			el.setAttribute('data-bhp-cart-empty', total > 0 ? 'false' : 'true');
+			if (!el.hasAttribute('data-bhp-cart-persist')) {
+				el.classList.toggle('is-visible', total > 0);
+			}
 		});
 	}
 

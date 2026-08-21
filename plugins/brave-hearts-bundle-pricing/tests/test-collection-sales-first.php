@@ -242,7 +242,7 @@ bhp_csf_assert(
 $csf_default_rule = bhp_bundle_rules( bhp_bundle_default_format() )[3];
 if ( bhp_bundle_shipping_is_free( $csf_default_rule['shipping'] ) ) {
 	bhp_csf_assert(
-		substr_count( $html, 'FREE Shipping on the complete collection' ) >= 2,
+		substr_count( $html, 'FREE Shipping on the complete collection or 3 or more books purchased' ) >= 2,
 		'2: free shipping is still stated by the cold-open AND the closing CTA',
 		$failures
 	);

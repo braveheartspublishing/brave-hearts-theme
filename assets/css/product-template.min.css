@@ -1,5 +1,5 @@
 /*! Built from product-template.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 4ec6ee719846681d79ea07c64e577684
+    source-md5: dd40d3d82dc063345a936907f5db1a56
     Comments stripped for transfer size; the source file is canonical. */
 @media (max-width: 600px) {
 body.single-product.woocommerce div.product {
@@ -159,4 +159,13 @@ body.single-product.woocommerce div.product > .summary > .product_title {
 body.single-product.woocommerce .woocommerce-breadcrumb {
 		margin-bottom: 1.15rem;
 	}
+}
+body.single-product.woocommerce div.product .bhp-formats,
+body.single-product.woocommerce div.product .bhp-formats__heading,
+body.single-product.woocommerce div.product .bhp-formats__selected-price,
+body.single-product.woocommerce div.product .bhp-formats__cta-wrap,
+body.single-product.woocommerce div.product .bhp-formats__spec,
+body.single-product.woocommerce div.product .bhp-formats__note,
+body.single-product.woocommerce div.product .bhp-formats__paperback-only {
+	text-align: center;
 }

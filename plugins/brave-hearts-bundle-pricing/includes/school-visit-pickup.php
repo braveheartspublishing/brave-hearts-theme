@@ -1793,7 +1793,7 @@ function bhp_school_pickup_remove_resend_action( $actions, $order = null ) {
  * ====================================================================== */
 
 /**
- * The bullet that replaces "FREE Shipping on the complete collection" for a
+ * The bullet that replaces "FREE Shipping on the complete collection or 3 or more books purchased" for a
  * parent who arrived from a school's pre-visit link.
  *
  * ⛔ IT IS A SWAP, NEVER A DELETION. A parent still needs to know delivery

@@ -223,6 +223,37 @@ if (function_exists('bhp_print_art_defer_script'))  { bhp_print_art_defer_script
     }
     ?>
 
+    <?php
+    /*
+     * ⭐⭐ 1.19.280 — THE HEADER CART ICON (`CYCLE165-LD-PURCHASE-FLOW-ROUND`,
+     *    founder carrier item 186, read first-hand at source). It opens the
+     *    mini-cart side panel that has been shipped since the Overnight
+     *    Conversion Sprint; ⛔ it builds no panel and forks nothing. The whole
+     *    rationale, the SiteGround-cache reason no count is server-rendered,
+     *    and the three availability gates live ONCE in inc/mini-cart.php and
+     *    are deliberately not restated here.
+     *
+     * ⛔ PLACED IMMEDIATELY BEFORE `.nav-toggle`, WHICH KEEPS THE ORDER THE
+     *    COMMENT ABOVE CALLS LOAD-BEARING. `.header-inner` is
+     *    `justify-content: space-between` and the toggle must remain the
+     *    RIGHTMOST item — the 2026-07-14 P0 was a toggle pushed off the right
+     *    edge of a phone. This sits to the toggle's LEFT, exactly as the
+     *    header offer above does, so neither the toggle's position nor the
+     *    logo's box moves.
+     *
+     * ⛔ IT IS A QUIET ICON, NOT A FILLED BUTTON. It is a utility control, not
+     *    a purchase CTA, so the "one primary per page" property the protected
+     *    manifest §5.3 depends on is untouched on every page.
+     *
+     * The `function_exists()` guard is the same premium the two controls
+     * around it pay, for the same reason: this is the SITEWIDE header and a
+     * fatal here is a whole-site outage.
+     */
+    if ( function_exists( 'bhp_mini_cart_header_control' ) ) {
+      echo bhp_mini_cart_header_control(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- renderer escapes every component
+    }
+    ?>
+
     <button class="nav-toggle" aria-label="<?php esc_attr_e('Toggle navigation', 'brave-hearts'); ?>" aria-controls="primary-navigation" aria-expanded="false">&#9776;</button>
 
     <nav class="site-nav" id="primary-navigation" role="navigation" aria-label="<?php esc_attr_e('Primary navigation', 'brave-hearts'); ?>">

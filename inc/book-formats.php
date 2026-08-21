@@ -620,7 +620,43 @@ function bhp_book_free_shipping_line() {
         return bhp_school_visit_delivery_bullet();
     }
 
-    return __('FREE Shipping on the complete collection', 'brave-hearts');
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.280 — FOUNDER COPY, CARRIER ITEM 186, CATCH (4). HIS STRING.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * Andrew Signore, carrier item 186, ~05:1x−0600 2026-08-21 — READ
+     * FIRST-HAND AT SOURCE by the agent that made this edit, not relayed:
+     *
+     *   "Also Free Shipping on the complete collection needs to change to
+     *    Free Shipping on the complete collection or 3 or more books
+     *    purchased."
+     *
+     * ⭐ THE APPENDED CLAUSE IS TRUE OF THE LIVE ENGINE, AND THAT WAS
+     *    CHECKED BEFORE THE WORDS WENT UP. `bhp_bundle_colouring_policy()`
+     *    has defaulted to `any-three` since plugin 1.8.62 under `FD-583`
+     *    ("ANY 3 BOOKS FREE, DUPLICATES INCLUDED", carrier items 155–159,
+     *    sealed PART 66), and `bhp_bundle_shipping_amount()` branch A
+     *    returns 0.00 for `physical_book_count >= 3`. Staging runs 1.8.63.
+     *    ⛔ A promise the cart does not honour is the defect class this
+     *       comment exists to prevent — see `CYCLE165-OPS-018`.
+     *
+     * ⚠️⚠️ ONE PRECISION, FLAGGED RATHER THAN DECIDED HERE: he wrote
+     *    "Free Shipping" and the shipped string has always been "FREE
+     *    Shipping". His own sentence uses "Free" for BOTH halves —
+     *    including where it quotes the existing string — so the casing is
+     *    not readable as a deliberate instruction. ⭐ THIS EDIT IS
+     *    THEREFORE PURELY ADDITIVE: the locked bytes are untouched and only
+     *    his clause is appended (§9 — never silently rewrite locked prose).
+     *    ⛔ If he wants "Free Shipping", it is one literal in three files
+     *       and `test-freeship-line-parity.php` names all three. ROUTED to
+     *       him for a one-word confirmation at the re-walk; NOT decided here.
+     *
+     * ⛔ THE SCHOOL-VISIT BRANCH ABOVE IS UNTOUCHED. A flagged parent is not
+     *    being shipped anything and still gets the hand-delivery sentence —
+     *    `FD-505`/`FD-506` QA keeps that path in the bar.
+     */
+    return __('FREE Shipping on the complete collection or 3 or more books purchased', 'brave-hearts');
 }
 
 /**
@@ -728,6 +764,29 @@ function bhp_book_purchase_data($key) {
         ), get_permalink($book['pb_product']))
         : add_query_arg(['add-to-cart' => $book['pb_product']], get_permalink($book['pb_product']));
 
+    /*
+     * ⭐⭐ 1.19.280 — "it should go straight to check out honestly. We want it
+     *    easy to buy books. Not extra steps." (carrier item 186, read
+     *    first-hand at source). Both single-book add URLs are marked
+     *    "finish on /checkout/"; `inc/purchase-flow.php` turns the mark into
+     *    a redirect built from `wc_get_checkout_url()`.
+     *
+     * ⭐ MARKED HERE, IN THE ONE PLACE THE URLS ARE BUILT, so the
+     *    server-rendered anchor and the `book-formats.js` href swap
+     *    (`conf.addUrl`) can never disagree about the destination — the two
+     *    consumers this data has, and the drift class the collection sticky
+     *    bar already taught this codebase once.
+     *
+     * ⛔ THE KINDLE URL IS NOT MARKED — it leaves the site for Amazon.
+     * ⛔ THE COLLECTION URL IS NOT MARKED — that card already posts the
+     *    plugin's own allowlisted checkout-redirect form
+     *    (`bhp_collection_add_to_cart_cta()`), which is the precedent this
+     *    change follows rather than duplicates.
+     */
+    if (function_exists('bhp_purchase_flow_mark')) {
+        $add_pb = bhp_purchase_flow_mark($add_pb);
+    }
+
     return [
         'key'          => $key,
         'title'        => $book['title'],
@@ -749,7 +808,11 @@ function bhp_book_purchase_data($key) {
             'price_html'   => $hc ? $hc->get_price_html() : '',
             'price'        => $hc ? $hc->get_price() : '',
             'in_stock'     => $hc ? $hc->is_in_stock() : false,
-            'add_url'      => add_query_arg(['add-to-cart' => $book['hc_product']], get_permalink($book['hc_product'])),
+            /* ⭐ 1.19.280 — marked "finish on /checkout/"; see the paperback
+               note above. Same one-place-per-URL discipline. */
+            'add_url'      => function_exists('bhp_purchase_flow_mark')
+                ? bhp_purchase_flow_mark(add_query_arg(['add-to-cart' => $book['hc_product']], get_permalink($book['hc_product'])))
+                : add_query_arg(['add-to-cart' => $book['hc_product']], get_permalink($book['hc_product'])),
         ],
         // Kindle deliberately carries NO price. Amazon controls the live
         // price and the verified affiliate link is the only source of truth.

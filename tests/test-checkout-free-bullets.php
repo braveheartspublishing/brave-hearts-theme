@@ -195,7 +195,7 @@ bhp_cfb_assert(
 /*
  * The literals, checked against COMMENT-STRIPPED source. Each of these three
  * strings has exactly one author elsewhere in the codebase:
- *   "FREE Shipping on the complete collection"  -> inc/book-formats.php
+ *   "FREE Shipping on the complete collection or 3 or more books purchased"  -> inc/book-formats.php
  *   "FREE Activity Book ..."                    -> the plugin's
  *                                                  bhp_bundle_addon_free_offer_line()
  *   "FREE Vocabulary Card Activity"             -> the plugin's
@@ -203,7 +203,7 @@ bhp_cfb_assert(
  * A copy here would be a fourth author and would drift on the next change.
  */
 foreach ( array(
-	'FREE Shipping on the complete collection',
+	'FREE Shipping on the complete collection or 3 or more books purchased',
 	'FREE Activity Book',
 	'FREE Vocabulary Card Activity',
 ) as $literal ) {
@@ -258,7 +258,7 @@ if ( ! function_exists( 'bhp_book_free_bullet_lines' ) || ! function_exists( 'bh
 	$addon_live = function_exists( 'bhp_book_collection_includes_free_addon' ) && bhp_book_collection_includes_free_addon();
 	$vocab_live = function_exists( 'bhp_bundle_vocab_cards_live' ) && bhp_bundle_vocab_cards_live();
 
-	$has_ship  = false !== strpos( $markup, 'FREE Shipping on the complete collection' );
+	$has_ship  = false !== strpos( $markup, 'FREE Shipping on the complete collection or 3 or more books purchased' );
 	$has_addon = false !== strpos( $markup, 'FREE Activity Book' );
 	$has_vocab = false !== strpos( $markup, 'FREE Vocabulary Card Activity' );
 

@@ -819,7 +819,7 @@ foreach ( array( 'paperback', 'hardcover' ) as $cct_fmt ) {
  */
 $cct_default_rule = bhp_bundle_rules( $bhp_cct_default )[3];
 $cct_ship_is_free = bhp_bundle_shipping_is_free( $cct_default_rule['shipping'] );
-$cct_ship_claims  = substr_count( $html, 'FREE Shipping on the complete collection' );
+$cct_ship_claims  = substr_count( $html, 'FREE Shipping on the complete collection or 3 or more books purchased' );
 bhp_cct_assert(
 	$cct_ship_is_free ? $cct_ship_claims >= 2 : 0 === $cct_ship_claims,
 	'5: free shipping is stated by the surviving bullet surfaces only when it IS free'

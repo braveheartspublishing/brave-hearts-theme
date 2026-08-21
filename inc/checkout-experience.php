@@ -562,7 +562,7 @@ add_filter('render_block', 'bhp_empty_cart_invitation', 10, 2);
  * ⛔ NO NEW CUSTOMER-FACING COPY IS WRITTEN BY THIS BLOCK. Not one word. No
  *    heading, no eyebrow, no framing sentence. That is a deliberate choice
  *    rather than an omission: the first bullet is conditional by its own
- *    wording ("FREE Shipping on the complete collection"), so any heading
+ *    wording ("FREE Shipping on the complete collection or 3 or more books purchased"), so any heading
  *    general enough to sit above all three — "included with your order",
  *    "your free extras" — would assert of a one-book cart something the
  *    totals column does not agree with. The bullets each state their own
