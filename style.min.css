@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 6f1abed5db17f4561643d3e4ef321b84
+    source-md5: 9d6520b77e65e3fd26065e866b6bc623
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.286
+Version: 1.19.287
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3518,6 +3518,31 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item f
 }
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
   margin: 0 calc(var(--bhp-card-gutter) - 2px - var(--bhp-collection-frame-pad)) 0.5rem;
+}
+@media (min-width: 1280px) {
+body.woocommerce-shop .woo-expedition-shell ul.products {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px 24px;
+--bhp-card-gutter: 1.15rem;
+    --bhp-collection-frame-pad: 12px;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products:has(> li:nth-child(6):last-child) > li:nth-child(5) {
+    grid-column: 2;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.product img {
+    padding: 1.15rem 1.15rem 0.5rem;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
+    padding: 0 1.15rem;
+    font-size: 1.28rem;
+    line-height: 1.28;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .price {
+    padding: 0.4rem 1.15rem 0.85rem;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woo-card__eyebrow {
+    margin: 1rem 1.15rem 0.2rem;
+  }
 }
 .woocommerce span.onsale { top: 1rem; right: 1rem; left: auto; min-width: 0; min-height: 0; padding: .45rem .7rem; border-radius: 0; background: var(--expedition-gold); color: var(--expedition-navy); font: 700 .65rem/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
 .woocommerce div.product { display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,.85fr); gap: clamp(3rem,7vw,7rem); }

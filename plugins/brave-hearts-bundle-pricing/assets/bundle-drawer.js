@@ -509,6 +509,10 @@
 			}
 			return {
 				format: 'colouring',
+				// ⭐ 1.8.68 — BOTH DIRECTIONS OF THE PAIR CARRY THIS MARK, and
+				//    the renderer reads it instead of reading `format`. See
+				//    chooseChapterOffer() and the eyebrow suppression.
+				offer_kind: 'pair',
 				title_key: offer.title_key,
 				label: offer.label,
 				cta: offer.cta,
@@ -524,21 +528,122 @@
 		return null;
 	}
 
+	/**
+	 * ⭐⭐⭐ 1.8.68 — PASS 0b: THE SAME PAIR, READ FROM THE OTHER END. ITEM 214.
+	 *
+	 * Andrew Signore, carrier item 214, 2026-08-21. ⚠️ RELAYED through
+	 * `chief-of-staff`; ⛔ NOT witnessed first-hand by the agent that wrote
+	 * this. A cart holding the colouring book WITHOUT its chapter book is
+	 * offered the chapter book.
+	 *
+	 * ⛔⛔ THE DEFECT THIS CLOSES IS NOT "THE OFFER WAS WORDED BADLY" — IT IS
+	 *     THAT A COLOURING-ONLY CART GOT NO RAIL AT ALL. `chooseCrossSell()`
+	 *     returned `null` on `!adventures.length`, and a cart holding only a
+	 *     colouring book has zero adventures. That cart is one $11.99 book away
+	 *     from the `FD-581` $22.99 pair and the panel said nothing.
+	 *
+	 * ⭐ SAME OFFER, SAME ENGINE, SAME SAVING. `offer.saving` is the row's own
+	 *    `bhp_offer_saving()` figure — the identical number the forward
+	 *    direction quotes and the identical fee `bhp_offer_apply_fees()`
+	 *    creates server-side from what is actually in the cart. ⛔ NOTHING IS
+	 *    PRICED HERE and no second offer is invented.
+	 *
+	 * ⛔ ONE OFFER AT A TIME — Boromir's rail, unchanged. This returns a single
+	 *    offer or null.
+	 *
+	 * ⛔⛔ THREE GATES, AND THE THIRD IS THE ONE THAT MATTERS:
+	 *
+	 *   1. The colouring book must BE in the cart (a real id test).
+	 *   2. The chapter book must NOT be (a real id test).
+	 *   3. ⭐⭐ THE ADVENTURE MUST NOT BE IN THE CART IN *ANY* FORMAT. Without
+	 *      this, a cart holding the Mariana paperback + the Mariana colouring
+	 *      book satisfies gates 1 and 2 for the HARDCOVER row and would be
+	 *      offered a SECOND COPY OF A STORY IT ALREADY OWNS. ⛔ That is
+	 *      precisely the 1.8.25 defect, one offer over: the claim was honest
+	 *      and the SELECTION was wrong. `adventures` is the same distinct-title
+	 *      list across both formats that the adventure passes read.
+	 *
+	 * ⭐ FORMAT CHOICE IS NOT A SECOND RULE. `formatOrder` is the caller's —
+	 *    majority format, PAPERBACK ON A TIE (which a colouring-only cart
+	 *    always is, so the ask is the $11.99 one, not the $17.99 one), and
+	 *    ['paperback'] on a school-visit session. ⛔ Deriving it here would be
+	 *    two definitions of one rule.
+	 *
+	 * ⛔ AND IT CLAIMS NOTHING. A row with no positive saving, or no `chapter`
+	 *    payload (the server yields none unless the offer is exactly one
+	 *    chapter book, and none unless the copy resolves), is skipped. No id
+	 *    is ever offered without words.
+	 *
+	 * @param {Object} cart        Store API cart response.
+	 * @param {Array}  adventures  Distinct titles across BOTH formats.
+	 * @param {Array}  formatOrder ['paperback','hardcover'] or the reverse.
+	 * @return {Object|null}
+	 */
+	function chooseChapterOffer(cart, adventures, formatOrder) {
+		var offers = (window.bhpDrawerData && window.bhpDrawerData.colouringOffers) || [];
+		if (!offers.length) {
+			return null; // ⛔ No colouring product record on this environment.
+		}
+
+		var inCart = {};
+		(cart.items || []).forEach(function (item) {
+			inCart[parseInt(item.id, 10)] = true;
+		});
+
+		for (var f = 0; f < formatOrder.length; f++) {
+			for (var i = 0; i < offers.length; i++) {
+				var offer = offers[i];
+				if (!offer || !offer.chapter || !(offer.saving > 0)) {
+					continue;
+				}
+				if (offer.chapter.format !== formatOrder[f]) {
+					continue;
+				}
+				// GATE 1 — the colouring book is actually in the cart.
+				if (!offer.colouring_id || !inCart[parseInt(offer.colouring_id, 10)]) {
+					continue;
+				}
+				// GATE 2 — the chapter book is not.
+				if (inCart[parseInt(offer.chapter.buy_id, 10)]) {
+					continue;
+				}
+				// GATE 3 — nor is that story owned in the other format.
+				if (adventures.indexOf(offer.chapter.title_key) !== -1) {
+					continue;
+				}
+				return {
+					format: offer.chapter.format,
+					offer_kind: 'pair',
+					// ⭐ Distinguishable in GA4 from the ordinary adventure
+					//    cross-sell (bare 'mariana') and from the forward
+					//    direction ('colouring_mariana'). Same event, three
+					//    readable sources.
+					title_key: 'chapter_' + offer.chapter.title_key,
+					label: offer.chapter.label,
+					cta: offer.chapter.cta,
+					product_id: offer.chapter.product_id,
+					variation_id: offer.chapter.variation_id || 0,
+					savings: offer.saving,
+					// ⛔ One chapter book added to a cart with no adventures in
+					//    it cannot complete a three-adventure collection.
+					//    Stated, not left to a falsy default.
+					completes_collection: false
+				};
+			}
+		}
+		return null;
+	}
+
 	function chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart) {
 		var catalog = (window.bhpDrawerData && window.bhpDrawerData.catalog) || {};
 
-		if (!adventures.length) {
-			return null;
-		}
-
 		/*
-		 * ⭐ 1.8.65 — the colouring offer is chosen BEFORE the ordinary
-		 *    adventure passes but AFTER the completes-the-collection case,
-		 *    which is why the adventure choice is computed first and only
-		 *    yielded to when it earns free shipping. See chooseColouringOffer().
+		 * ⭐ 1.8.68 — `formatOrder` MOVED ABOVE THE EMPTY-CART GUARD, unchanged
+		 *    in substance. It is pure computation with no side effects; the
+		 *    reverse pair offer needs it, and the reverse pair offer has to be
+		 *    reachable on a cart with NO adventures in it. Every value it can
+		 *    take, and the school-visit override below, are identical to 1.8.67.
 		 */
-		var colouringOffer = cart ? chooseColouringOffer(cart) : null;
-
 		var majorityIsHardcover = distinct.hardcover.length > distinct.paperback.length;
 		var formatOrder = majorityIsHardcover
 			? ['hardcover', 'paperback']
@@ -556,6 +661,50 @@
 		 */
 		if (window.bhpDrawerData && window.bhpDrawerData.paperbackOnly) {
 			formatOrder = ['paperback'];
+		}
+
+		/*
+		 * ⭐ 1.8.65 — the colouring offer is chosen BEFORE the ordinary
+		 *    adventure passes but AFTER the completes-the-collection case,
+		 *    which is why the adventure choice is computed first and only
+		 *    yielded to when it earns free shipping. See chooseColouringOffer().
+		 *
+		 * ⭐⭐ 1.8.68 — AND THE SAME PAIR, READ FROM THE OTHER END, IN THE SAME
+		 *     SLOT. Forward is tried first: a cart already holding the chapter
+		 *     book has committed to that story, so completing THAT pair is the
+		 *     nearer ask than starting a different one. The two can only ever
+		 *     both apply across DIFFERENT offer rows — within one row they are
+		 *     mutually exclusive by construction (one needs the colouring book
+		 *     absent, the other needs it present).
+		 * ⛔ STILL EXACTLY ONE OFFER. `pairOffer` is a single row or null, and
+		 *    it occupies the single slot the 1.8.65 rail already defined. It is
+		 *    NOT a second box.
+		 */
+		var pairOffer = cart ? chooseColouringOffer(cart) : null;
+		if (!pairOffer && cart) {
+			pairOffer = chooseChapterOffer(cart, adventures, formatOrder);
+		}
+
+		/*
+		 * ⛔⛔ 1.8.68 — THE GUARD MOVED, AND IT NOW RETURNS THE PAIR OFFER
+		 *     RATHER THAN `null`. THE SUPERSEDED LINE, PRESERVED SO THE
+		 *     MOVEMENT IS VISIBLE AND IS NOT RE-DERIVED:
+		 *
+		 *       if (!adventures.length) { return null; }
+		 *
+		 *     ⭐ ITS PREMISE WAS THAT AN OFFER IS ALWAYS AN ADVENTURE, and
+		 *     until the colouring line existed that was true: with no adventure
+		 *     in the cart there was nothing to cross-sell FROM. ⛔ A cart
+		 *     holding one colouring book has ZERO adventures and is still one
+		 *     book from a real, server-priced pair — so `null` was the panel
+		 *     going silent on the exact cart the colouring line exists to make.
+		 *
+		 *     ⛔ THE ADVENTURE PASSES BELOW ARE UNREACHED ON AN EMPTY-ADVENTURE
+		 *     CART, EXACTLY AS BEFORE. Nothing downstream of this line runs in
+		 *     a state it was not already written for.
+		 */
+		if (!adventures.length) {
+			return pairOffer;
 		}
 
 		function offer(format, titleKey) {
@@ -652,8 +801,8 @@
 		if (adventureOffer && adventureOffer.completes_collection) {
 			return adventureOffer;
 		}
-		if (colouringOffer) {
-			return colouringOffer;
+		if (pairOffer) {
+			return pairOffer;
 		}
 		return adventureOffer;
 	}
@@ -1176,8 +1325,40 @@
 			 *    'paperback' or 'hardcover' there, so it still gets the
 			 *    approved checkout-module heading it has had since R4.
 			 */
+			/*
+			 * ⛔⛔ 1.8.68 — THE SUPPRESSION NOW TESTS `offer_kind`, AND IT HAD
+			 *     TO. THIS IS THE SAME TRUTHFULNESS FIX, ONE DIRECTION OVER.
+			 *
+			 * ⭐ THE 1.8.65 TEST WAS `'colouring' === cs.format`, and it was
+			 *    correct for the only pair offer that existed then. ⛔ THE
+			 *    REVERSE OFFER'S FORMAT IS 'paperback' — so the old test would
+			 *    have printed the gold "Complete the collection" eyebrow above
+			 *    "Adventures of Charlotte and Henry: The Mariana Trench
+			 *    (Paperback)" on a cart holding ONE COLORING BOOK.
+			 *
+			 * ⛔ THAT SENTENCE IS FALSE FOR EXACTLY THE REASON 1.8.65 RECORDED.
+			 *    The Complete Collection is THREE CHAPTER BOOKS. One chapter
+			 *    book added to a cart with no adventures in it leaves the
+			 *    customer two short, and `completes_collection` correctly says
+			 *    `false` — the eyebrow would have contradicted the offer's own
+			 *    flag on the same box.
+			 *
+			 * ⭐ SUPPRESSED, NOT REPLACED — same ruling as 1.8.65. Writing a
+			 *    pair-specific eyebrow would be coining customer copy, which is
+			 *    Andrew's. Removing a false claim needs nobody's approval.
+			 *
+			 * ⛔ THE `format` TEST IS KEPT ALONGSIDE IT, deliberately: an older
+			 *    plugin build's payload carries no `offer_kind`, and the
+			 *    forward colouring offer must go on being suppressed either
+			 *    way. Two tests, one outcome, no gap.
+			 *
+			 * ⛔ THE ADVENTURE CROSS-SELL IS STILL BYTE-UNCHANGED. It carries
+			 *    no `offer_kind` and its format is 'paperback'/'hardcover', so
+			 *    it keeps the approved checkout-module heading it has had since
+			 *    R4.
+			 */
 			var csHeading = (window.bhpDrawerData && window.bhpDrawerData.crossSellHeading) || '';
-			if ('colouring' === cs.format) {
+			if ('pair' === cs.offer_kind || 'colouring' === cs.format) {
 				csHeading = '';
 			}
 			if (csHeading) {

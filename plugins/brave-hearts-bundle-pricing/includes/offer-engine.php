@@ -588,6 +588,7 @@ function bhp_offer_drawer_payload() {
 		}
 
 		$chapter_ids  = array();
+		$chapters     = array();
 		$colouring    = null;
 		$adventure    = '';
 		foreach ( $components as $component ) {
@@ -596,6 +597,7 @@ function bhp_offer_drawer_payload() {
 				$adventure = $component['adventure'];
 			} else {
 				$chapter_ids[] = (int) $component['buy_id'];
+				$chapters[]    = $component;
 			}
 		}
 		if ( null === $colouring || empty( $chapter_ids ) ) {
@@ -623,6 +625,64 @@ function bhp_offer_drawer_payload() {
 		}
 		$cta = function_exists( 'bhp_colouring_draft_copy' ) ? bhp_colouring_draft_copy( 'panel_cta' ) : '';
 
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐⭐⭐ 1.8.68 — THE SAME ROW, READABLE FROM THE OTHER END. ITEM 214.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⭐ ANDREW SIGNORE, carrier item 214, 2026-08-21. ⚠️ RELAYED through
+		 *    `chief-of-staff`; ⛔ NOT witnessed first-hand. A cart holding the
+		 *    colouring book WITHOUT its chapter book is offered the chapter
+		 *    book, exactly as the reverse already happens.
+		 *
+		 * ⛔⛔ THIS IS NOT A SECOND OFFER AND NOT A SECOND PRICE. It is the
+		 *     SAME catalogue row, the SAME `bhp_offer_saving()` figure and the
+		 *     SAME `FD-581` $22.99 pair. Nothing new is priced here. The row
+		 *     simply grew the fields the drawer needs to name the chapter side
+		 *     — until now it published the chapter's BUY IDS and nothing else,
+		 *     because the only question ever asked of them was "are they all
+		 *     in the cart".
+		 *
+		 * ⛔ IT PUBLISHES NO NEW MONEY. `chapter` carries ids, a title and a
+		 *    format. The saving is the row's existing `saving` field, and the
+		 *    discount itself is still a server-side cart fee built by
+		 *    `bhp_offer_apply_fees()` from what is ACTUALLY in the cart — so
+		 *    adding the chapter book IS applying the offer, and the browser is
+		 *    never trusted with a figure.
+		 *
+		 * ⛔ ONE CHAPTER COMPONENT ONLY. Every offer surfaced here is
+		 *    `cart_rule === 'pair'`, which by construction is one chapter book
+		 *    plus one colouring book (see the catalogue: the multi-title rows
+		 *    are `set`, and `set` rows never reach this loop). ⭐ If that ever
+		 *    changes, the guard below yields NO chapter payload rather than
+		 *    guessing which of several books to offer, and the forward
+		 *    direction goes on working untouched.
+		 */
+		$chapter = null;
+		if ( 1 === count( $chapters ) ) {
+			$c           = $chapters[0];
+			$chapter_lbl = isset( $book_catalog[ $format ][ $c['adventure'] ]['label'] )
+				? $book_catalog[ $format ][ $c['adventure'] ]['label']
+				: '';
+			if ( '' !== $chapter_lbl && function_exists( 'bhp_colouring_draft_copy' ) ) {
+				$chapter = array(
+					'buy_id'       => (int) $c['buy_id'],
+					'product_id'   => (int) $c['product_id'],
+					'variation_id' => (int) $c['variation_id'],
+					'format'       => (string) $c['format'],
+					'title_key'    => (string) $c['adventure'],
+					'label'        => bhp_colouring_draft_copy(
+						'panel_chapter_label',
+						array( $chapter_lbl, ucfirst( $c['format'] ) )
+					),
+					'cta'          => bhp_colouring_draft_copy( 'panel_chapter_cta' ),
+				);
+				if ( '' === $chapter['label'] || '' === $chapter['cta'] ) {
+					$chapter = null; // ⛔ No words, no offer. Never a bare id.
+				}
+			}
+		}
+
 		$rows[] = array(
 			'key'          => $key,
 			'format'       => $format,
@@ -634,6 +694,8 @@ function bhp_offer_drawer_payload() {
 			'variation_id' => (int) $colouring['variation_id'],
 			'label'        => $label,
 			'cta'          => $cta,
+			// ⭐ 1.8.68 — the reverse direction's payload, or null.
+			'chapter'      => $chapter,
 			// ⭐ DERIVED, live, this request. Never stored, never a literal.
 			'saving'       => round( (float) $saving, 2 ),
 		);

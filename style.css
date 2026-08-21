@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.286
+Version: 1.19.287
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4581,6 +4581,159 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item f
 }
 body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
   margin: 0 calc(var(--bhp-card-gutter) - 2px - var(--bhp-collection-frame-pad)) 0.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐⭐ 1.19.287 — THE DESKTOP SHOP GRID GOES 4-ACROSS. CARRIER ITEM 214.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ ANDREW SIGNORE, carrier item 214, 2026-08-21. ⚠️ RELAYED through
+      `chief-of-staff` in the build brief — ⛔ NOT witnessed first-hand by the
+      agent that wrote this block. Recorded as relayed (Standing Rules §9.2
+      rule 2). The desktop shop cards SHRINK: 4 across at 1440, at the field
+      norm of roughly 300px a card, with the card contract unchanged.
+
+   ⛔⛔ THE ~300px TARGET IS MET AT 291px, NOT AT 300px, AND THE SHORTFALL IS
+      REPORTED RATHER THAN ENGINEERED AWAY. It is arithmetic, and the
+      arithmetic is fixed by a container that predates this ruling:
+
+        `.woo-expedition-shell` is `max-width: 1300px` with 32px of padding a
+        side, so at 1440 the grid gets 1236px — MEASURED in a real browser at
+        an asserted `innerWidth` of 1440, not read off this file.
+
+        1236 − (3 × 24px gap) = 1164 ÷ 4 = 291px.
+
+      ⭐ REACHING A LITERAL 300px WOULD HAVE MEANT WIDENING THE SHELL, which
+      is a sitewide container change on a page whose header, breadcrumb and
+      ordering controls all align to that same 1300px. That is a much larger
+      change than the one he asked for, on surfaces he did not mention. 291px
+      is inside the field norm and the card is 24% narrower than the 384px it
+      was, which is the shrink the item asked for.
+
+   ⛔ THE BREAKPOINT IS `min-width: 1280px`, AND IT IS CHOSEN SO NO CARD IS
+      EVER SQUEEZED. Below it the 3-across grid is BYTE-UNCHANGED. Across the
+      whole 4-across band the card stays in a 286–291px band:
+
+        1280 viewport → shell 1280 − 64 = 1216 → (1216 − 72) ÷ 4 = 286px
+        1300+         → shell 1300 − 64 = 1236 → (1236 − 72) ÷ 4 = 291px
+
+      ⭐ A LOWER BREAKPOINT WAS COSTED AND REJECTED: at 1200 the card is 266px
+      and at 1024 it is 222px, which is narrower than the MOBILE 2-up card is
+      allowed to be relative to its type. One breakpoint, named, and the band
+      it governs stated in numbers.
+
+   ⛔ SCOPED TO `body.woocommerce-shop`, AND THE SCOPE IS LOAD-BEARING — the
+      same reason blocks 1.19.284 and 1.19.286 record it. `.woo-expedition-
+      shell` also wraps the SINGLE PRODUCT page, whose related/upsell rows are
+      `ul.products li.product` too, and the search and category archives are
+      `ul.products` as well. ⭐ NONE of them moves.
+
+   ⛔ THE UNIFORM CTA CONTRACT (1.19.286, items 210+211) IS NOT RESTATED AND
+      NOT WEAKENED. Only `--bhp-card-gutter` takes a narrower value here;
+      every selector in that block reads the token, so the six buttons are
+      re-derived at the new width rather than re-specified. `min-height:48px`,
+      the flex centring, `white-space: normal` and the one label all still
+      come from the one definition above.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+
+  /* ── 1 · FOUR TRACKS ──────────────────────────────────────────────────────
+     ⛔ The gap drops from `clamp(24px,3vw,42px)` (42px at 1440) to 24px,
+        because the same 1236px has to carry one more card. 24px is the LOW
+        end of the clamp this grid already used, not a new number. */
+  body.woocommerce-shop .woo-expedition-shell ul.products {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px 24px;
+    /* ── THE TWO TOKENS TAKE THEIR 291px VALUES, AND THAT IS THE WHOLE
+       GEOMETRY ADJUSTMENT. Every selector in block D above reads them, so the
+       six CTA widths and the shared bottom baseline are RE-DERIVED here rather
+       than re-specified. There is still exactly one definition of the button.
+
+       ⛔⛔ THE TWO MOVE TOGETHER, AND THEY HAVE TO. Block D computes the
+       collection CTA's inset as `gutter − 2px − frame-pad`. At 18.4px and
+       18px that is −1.6px: a NEGATIVE margin that would hang the button
+       outside its own gold frame. ⭐ CAUGHT IN THE ARITHMETIC BEFORE IT WAS
+       BUILT, and it is exactly the class of defect the 1.19.286 block records
+       having found the hard way — three hand-tuned widths that read correct.
+       At 12px the calc is 4.4px, which mirrors today's 4px at 1.5rem/18px.
+
+       ⭐ THE GOLD "BEST VALUE" FRAME IS NOT REMOVED, NOT FLATTENED AND NOT
+       RESTYLED. Its 2px border is untouched and it still renders as the
+       design element it is; only its inline padding comes in with the card it
+       sits in — which at 291px brings its content width to within 3px of its
+       neighbours' instead of 12px short of them. ⛔ Below 1280 it is 18px,
+       byte-unchanged. */
+    --bhp-card-gutter: 1.15rem;
+    --bhp-collection-frame-pad: 12px;
+  }
+
+  /* ── 2 · ⭐⭐ SIX CARDS ARE 4 + 2, AND THE TRAILING PAIR IS CENTRED ────────
+     ⛔⛔ THIS IS THE "NO ORPHAN" RULE, AND IT IS THE ONE JUDGEMENT CALL IN
+        THIS BLOCK. Six cards over four tracks leaves row 2 half empty. Left
+        as auto-flow, the two bundle cards sit hard left with 606px of nothing
+        beside them, which reads as a grid that failed to finish loading.
+
+     ⭐ THE SPLIT IS HONEST RATHER THAN COSMETIC, and that is why 4+2 was kept
+        instead of falling back to 3+3. The served order is: three chapter
+        books, the colouring book, the pair offer, the Complete Collection. So
+        ROW 1 IS THE FOUR SINGLE TITLES AND ROW 2 IS THE TWO BUNDLES — the
+        rows already mean something, and centring the second states it.
+
+     ⛔ 3+3 AT A SIZE CAP WAS THE ALTERNATIVE AND IS RECORDED AS REJECTED: it
+        is what the grid does TODAY, so shipping it would be shipping nothing,
+        and it does not give him the 4-across he asked for.
+
+     ⭐ ONE DECLARATION DOES IT. Item 5 is pinned to column 2; auto-placement
+        then puts it in row 2 (the first row where column 2 is free) and flows
+        item 6 into column 3 beside it. ⛔ No `justify-content`, no per-card
+        widths, no second mechanism — the four tracks are untouched, so cards
+        5 and 6 are exactly as wide as cards 1 through 4.
+
+     ⛔ THE COUNT GUARD IS THE POINT, AND IT FAILS OPEN. `:has(> li:nth-child(6)
+        :last-child)` is true only when the grid has EXACTLY six children. A
+        seventh card (an Everest colouring book the day its record exists)
+        stops matching, the pin lifts, and 7 cards lay out 4+3 on their own.
+        ⭐ A browser without `:has()` gets plain 4+2, left aligned — a cosmetic
+        loss, never a wrong price or a missing card.
+        ⛔ `tests/test-bundle-cards-206-207.php` §5 already re-counts the six
+        from the SERVED markup every run, so the premise is gated, not
+        assumed. */
+  body.woocommerce-shop .woo-expedition-shell ul.products:has(> li:nth-child(6):last-child) > li:nth-child(5) {
+    grid-column: 2;
+  }
+
+  /* ── 3 · THE CARD INTERNALS, AT 291px ─────────────────────────────────────
+     ⛔ THE CONTRACT IS UNCHANGED — image · title · price · CTA, every element
+        still rendered, nothing hidden and nothing removed. Only the four
+        values a 291px card actually forces are restated.
+
+     ⭐ THE IMAGE NEEDS NO RULE AND DELIBERATELY GETS NONE. WooCommerce's own
+        `.woocommerce ul.products li.product a img { height: auto }` outranks
+        this theme's `height: 390px` on specificity (0,3,4 against 0,3,3), so
+        the cover has ALWAYS been auto-height here and scales with the card by
+        itself. ⛔ That is a PRE-EXISTING condition observed in the browser,
+        not something this block introduces, and it is not "fixed" here — a
+        390px hard height at 291px wide would letterbox the cover. Only the
+        padding comes in, so the cover gets more of the narrower card. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product img {
+    padding: 1.15rem 1.15rem 0.5rem;
+  }
+  /* ⛔ 26.4px set the title for a 384px card. At 291px the longest title on
+     the site — "Adventures of Charlotte and Henry: The Mariana Trench" — runs
+     to five lines and drives every card in its row taller. 20.5px holds it to
+     three. ⭐ Still well above the 16px body floor; no truncation, no ellipsis
+     and no shortened title: the whole name still renders. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
+    padding: 0 1.15rem;
+    font-size: 1.28rem;
+    line-height: 1.28;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .price {
+    padding: 0.4rem 1.15rem 0.85rem;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woo-card__eyebrow {
+    margin: 1rem 1.15rem 0.2rem;
+  }
 }
 
 .woocommerce span.onsale { top: 1rem; right: 1rem; left: auto; min-width: 0; min-height: 0; padding: .45rem .7rem; border-radius: 0; background: var(--expedition-gold); color: var(--expedition-navy); font: 700 .65rem/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }

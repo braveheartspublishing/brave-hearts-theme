@@ -209,6 +209,45 @@ function bhp_colouring_draft_copy($key, array $tokens = []) {
 
         /*
          * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.287 — THE SAME OFFER, READ FROM THE OTHER END.
+         *     CARRIER ITEM 214. ⚠️ NEW DRAFTS. THEY GO ON ANDREW'S LIST.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ WHY THEY EXIST: the panel could offer the coloring book to a cart
+         *    holding the chapter book, and could offer NOTHING AT ALL to a
+         *    cart holding only the coloring book. That cart is one $11.99 book
+         *    away from the same `FD-581` $22.99 pair, and the rail had no
+         *    words for the ask. ⛔ This is the SAME offer and the SAME saving
+         *    read in the other direction, not a new offer and not a new price.
+         *
+         * ⛔ NO SAVINGS FIGURE IS TYPED INTO EITHER STRING, for the same
+         *    reason `panel_label` / `panel_cta` carry none: the "- Save $X"
+         *    clause is appended by the drawer from `bhp_offer_saving()`,
+         *    recomputed live. A number here would be the derived-claim trap.
+         *
+         * ⛔ BOTH OBEY THE STANDING RAIL: no "we" (§9.1 — he is the sole
+         *    operator), no em dash, no outcome claim, no review, no statistic.
+         *
+         * ⭐ `panel_chapter_label` TAKES BOTH THE BOOK NAME AND THE FORMAT AS
+         *    TOKENS. The format is the half that matters here: this rail can
+         *    offer a paperback or a hardcover, and an unlabelled title on a
+         *    cart that is deciding between $11.99 and $17.99 is the `FD-549`
+         *    ambiguity again. ⛔ Neither word is coined — "Paperback" and
+         *    "Hardcover" are the site's own format labels.
+         *
+         * ⭐ `panel_chapter_cta` MIRRORS `panel_cta` ABOVE and deliberately
+         *    does NOT restate the title the label directly above it already
+         *    carries (`R2.6`, one thing once). ⛔ "Add This Adventure" was
+         *    rejected: it is the ADVENTURE cross-sell's approved button, it
+         *    would collide with that offer's meaning, and the thing being
+         *    offered here completes a pair rather than a collection.
+         */
+        /* translators: %1$s: book title. %2$s: format, e.g. Paperback. */
+        'panel_chapter_label' => __('%1$s (%2$s)', 'brave-hearts'),
+        'panel_chapter_cta'   => __('Add The Chapter Book', 'brave-hearts'),
+
+        /*
+         * ═══════════════════════════════════════════════════════════════════
          * ⭐⭐ 1.19.284 — THE TWO STRINGS THE PRODUCT-STYLE BUNDLE CARD NEEDS.
          *     ⚠️ NEW DRAFTS. THEY GO ON THE LIST THAT WAITS FOR ANDREW.
          * ═══════════════════════════════════════════════════════════════════
