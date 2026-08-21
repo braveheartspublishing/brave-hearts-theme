@@ -990,7 +990,36 @@
 			 * rather than added to the innerHTML string above, so a server
 			 * string can never be parsed as markup on the way in.
 			 */
+			/*
+			 * ⛔⛔ 1.8.65 — THE EYEBROW IS SUPPRESSED ON A COLOURING OFFER,
+			 *     AND THIS IS A TRUTHFULNESS FIX, NOT A STYLING ONE.
+			 *
+			 * ⭐ CAUGHT IN A REAL BROWSER, NOT BY READING THIS FILE: the first
+			 *    staging screenshot of the new offer showed the gold eyebrow
+			 *    "COMPLETE THE COLLECTION" sitting directly above "Adventures
+			 *    of Charlotte and Henry: The Mariana Trench coloring book".
+			 *
+			 * ⛔ THAT SENTENCE IS FALSE. The Complete Collection is THREE
+			 *    CHAPTER BOOKS. A coloring book does not complete it, cannot
+			 *    complete it, and `colouring-line.php` already records the same
+			 *    rule for the product rail: offering the collection as a
+			 *    "format" of a coloring book "would state that the two are the
+			 *    same object". The eyebrow made exactly that statement.
+			 *
+			 * ⭐ SUPPRESSED, NOT REPLACED. Writing a coloring-specific eyebrow
+			 *    would be coining customer copy, which is Andrew's. Removing a
+			 *    false claim needs nobody's approval; adding a new true one
+			 *    does. The box keeps its label and its button and reads fine
+			 *    without an eyebrow.
+			 *
+			 * ⛔ THE ADVENTURE CROSS-SELL IS BYTE-UNCHANGED. `cs.format` is
+			 *    'paperback' or 'hardcover' there, so it still gets the
+			 *    approved checkout-module heading it has had since R4.
+			 */
 			var csHeading = (window.bhpDrawerData && window.bhpDrawerData.crossSellHeading) || '';
+			if ('colouring' === cs.format) {
+				csHeading = '';
+			}
 			if (csHeading) {
 				var headingEl = document.createElement('p');
 				headingEl.className = 'bhp-cart-drawer__crosssell-heading';

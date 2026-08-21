@@ -291,6 +291,53 @@ pf_assert(
 	'2.14 the format switcher sets AND removes the panel hook, so it can never go stale'
 );
 
+/* ───────────────────────────────────────────────────────────────────────────
+ * §2b · THE COLOURING OFFER IN THE PANEL, AND THE FALSE CLAIM IT ALMOST MADE
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ⭐ Andrew, carrier item 186, naming both offers the surviving cart surface
+ *    should carry: "add the coloring book, add the next chapter book etc."
+ * ─────────────────────────────────────────────────────────────────────────── */
+echo "\n--- §2b the colouring offer reaches the panel ---\n";
+
+pf_assert(
+	function_exists( 'bhp_offer_drawer_payload' ),
+	'2b.1 the panel gets its colouring offers from the offer engine, not from a second catalogue'
+);
+if ( function_exists( 'bhp_offer_drawer_payload' ) ) {
+	$pf_rows = bhp_offer_drawer_payload();
+	/*
+	 * ⛔ ON PRODUCTION THIS IS EMPTY AND MUST BE — `FD-598`. The assertion is
+	 *    therefore about the GATE, not about a row existing.
+	 */
+	$pf_gated_ok = true;
+	foreach ( $pf_rows as $pf_row ) {
+		if ( ! bhp_offer_is_purchasable( $pf_row['key'] ) || ! ( $pf_row['saving'] > 0 ) ) {
+			$pf_gated_ok = false;
+		}
+	}
+	pf_assert( $pf_gated_ok, sprintf( '2b.2 ⛔ every row the panel receives is purchasable TODAY and has a real saving (%d rows)', count( $pf_rows ) ) );
+	pf_assert(
+		empty( bhp_colouring_product_ids() ) ? empty( $pf_rows ) : true,
+		'2b.3 ⛔ FD-598: with no colouring product record the panel receives NOTHING'
+	);
+}
+/*
+ * ⛔⛔ THE FALSE CLAIM THIS ALMOST SHIPPED. The gold eyebrow reads "COMPLETE
+ *     THE COLLECTION", which is true above an adventure cross-sell and FALSE
+ *     above a coloring book — the Complete Collection is three CHAPTER books.
+ *     ⭐ Caught in a real browser on the first staging screenshot, not by
+ *     reading the file. This asserts the suppression stays.
+ */
+pf_assert(
+	false !== strpos( $pf_drawer_js, "if ('colouring' === cs.format) {" ),
+	'2b.4 ⛔ the "COMPLETE THE COLLECTION" eyebrow is suppressed on a colouring offer — it would be a false claim'
+);
+pf_assert(
+	false !== strpos( $pf_drawer_js, 'completes_collection: false' ),
+	'2b.5 ⛔ …and a colouring offer NEVER reports completes_collection — a coloring book cannot earn FD-583'
+);
+
 /*
  * ⭐ THE OFFER BOXES AND THE COLLECTION CARD ALREADY DID THIS, and they still
  *    do it by the plugin's own POST contract rather than by this new flag —
