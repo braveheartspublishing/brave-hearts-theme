@@ -237,10 +237,42 @@ function bc_isolate_li( $html, $class ) {
 	return '';
 }
 
-$bc_cards = array(
-	'the pair card'       => bc_isolate_li( $bc_shop_html, 'bhp-shop-offer-item' ),
-	'the collection card' => bc_isolate_li( $bc_shop_html, 'bhp-shop-collection-item' ),
-);
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ THIS SUITE IS FD-598-AWARE, AND IT HAS TO BE TO RUN ON PRODUCTION.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE PAIR OFFER IS "MARIANA PAPERBACK + MARIANA COLOURING BOOK", so it is
+ *    purchasable only where BOTH components exist. ⭐ PRODUCTION CARRIES NO
+ *    COLOURING PRODUCT RECORD — that is FD-598, Andrew's standing ruling that
+ *    no colouring product reaches production until Bookvault has the title and
+ *    the order routing recognises the SKU.
+ *
+ * ⛔⛔ SO ON PRODUCTION THE PAIR CARD MUST BE **ABSENT**, AND THAT IS THE
+ *    CONTRACT WORKING, NOT A DEFECT. `R1.4` — nothing is advertised that cannot
+ *    be bought. A suite that demanded the card unconditionally would report
+ *    correct production behaviour as six failures, and the third time that
+ *    happens someone "fixes" it by weakening the assertion.
+ *
+ * ⭐ SO THE SUITE ASSERTS THE RULE RATHER THAN THE OUTCOME: purchasable means
+ *    the card must render AND be correct; not purchasable means the card must
+ *    NOT render at all. Both directions are gated. Neither is skipped silently.
+ */
+$bc_pair_live = function_exists( 'bhp_offer_is_purchasable' ) && bhp_offer_is_purchasable( 'mariana_pb_colouring' );
+echo 'NOTE: 3.0 the MT pair offer is ' . ( $bc_pair_live ? 'PURCHASABLE' : 'NOT purchasable (FD-598: no colouring product on this environment)' ) . " on this environment\n";
+
+$bc_pair_li_probe = bc_isolate_li( $bc_shop_html, 'bhp-shop-offer-item' );
+if ( ! $bc_pair_live ) {
+	bc_assert(
+		'' === $bc_pair_li_probe,
+		'3.1a ⛔ R1.4 — the pair is not purchasable here, so its card is correctly ABSENT from the grid'
+	);
+}
+
+$bc_cards = array( 'the collection card' => bc_isolate_li( $bc_shop_html, 'bhp-shop-collection-item' ) );
+if ( $bc_pair_live ) {
+	$bc_cards = array( 'the pair card' => $bc_pair_li_probe ) + $bc_cards;
+}
 
 foreach ( $bc_cards as $bc_what => $bc_li ) {
 	bc_assert( '' !== $bc_li, "3.2 {$bc_what} renders as an <li> in the grid" );
@@ -302,10 +334,11 @@ echo "\n=== §4 · FD-549 — THE PICTURE IS A COMPOSITE, NOT A COMPONENT'S COVE
  *    the card states that THAT BOOK costs the bundle price — the exact false
  *    claim `FD-549` was written after.
  */
-foreach ( array(
-	'the pair card'       => array( 'bhp-shop-offer-item', 'mariana_pb_colouring' ),
-	'the collection card' => array( 'bhp-shop-collection-item', 'collection' ),
-) as $bc_what => $bc_pair ) {
+$bc_fd549_targets = array( 'the collection card' => array( 'bhp-shop-collection-item', 'collection' ) );
+if ( $bc_pair_live ) {
+	$bc_fd549_targets = array( 'the pair card' => array( 'bhp-shop-offer-item', 'mariana_pb_colouring' ) ) + $bc_fd549_targets;
+}
+foreach ( $bc_fd549_targets as $bc_what => $bc_pair ) {
 	list( $bc_class, $bc_key ) = $bc_pair;
 	$bc_li = bc_isolate_li( $bc_shop_html, $bc_class );
 	if ( '' === $bc_li || empty( $bc_ids[ $bc_key ] ) ) {
@@ -331,7 +364,14 @@ echo "\n=== §5 · R2.2 (NO LITERAL) AND R2.6 (ONE PRICE, ONCE) ===\n";
  *    still fails. That is the difference between a price that is right and a
  *    price that stays right.
  */
-$bc_pair_li = bc_isolate_li( $bc_shop_html, 'bhp-shop-offer-item' );
+/*
+ * ⛔ SKIPPED-AND-SAID-SO where the pair is not purchasable (FD-598 environments).
+ *    A skip that is announced is a fact; a skip that is silent is a lie.
+ */
+$bc_pair_li = $bc_pair_live ? bc_isolate_li( $bc_shop_html, 'bhp-shop-offer-item' ) : '';
+if ( ! $bc_pair_live ) {
+	echo "SKIP: §5 the pair card is not on this environment (FD-598) — R2.2/R2.6 are asserted where it renders\n";
+}
 if ( '' !== $bc_pair_li && function_exists( 'bhp_offer_price' ) ) {
 	$bc_expected     = (float) bhp_offer_price( 'mariana_pb_colouring' );
 	$bc_expected_txt = bc_money( wc_price( $bc_expected ) );
@@ -425,11 +465,18 @@ if ( function_exists( 'bhp_offer_composite_card_image' ) ) {
 	remove_filter( 'bhp_offer_composite_attachment_id', $bc_force_zero, 99 );
 
 	/* ⭐ AND IT COMES BACK. A degrade test that left the filter attached would
-	 *    poison every assertion after it. */
-	bc_assert(
-		'' !== bhp_offer_composite_card_image( 'mariana_pb_colouring' ),
-		'6.2 …and the composite resolves again once the forced failure is removed'
-	);
+	 *    poison every assertion after it. ⛔ Gated on the composite existing at
+	 *    all, so that on an environment where the media has not been registered
+	 *    this reports the missing ATTACHMENT (§2) rather than a phantom
+	 *    filter-leak here. */
+	if ( ! empty( $bc_ids['mariana_pb_colouring'] ) ) {
+		bc_assert(
+			'' !== bhp_offer_composite_card_image( 'mariana_pb_colouring' ),
+			'6.2 …and the composite resolves again once the forced failure is removed'
+		);
+	} else {
+		echo "SKIP: 6.2 the pair composite is not registered on this environment — see §2\n";
+	}
 }
 
 /*

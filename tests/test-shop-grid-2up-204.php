@@ -306,8 +306,28 @@ s2u_assert(
 	"4.2a ⛔ the artefact's header names the ACTIVE theme version ({$s2u_theme_ver})"
 );
 
+/*
+ * ⛔⛔ THE HASH IS TAKEN OVER LF-NORMALISED BYTES, AND THAT IS A CORRECTION MADE
+ *    AFTER THIS ASSERTION FAILED ON A GENUINELY FRESH ARTEFACT.
+ *
+ * ⭐ WHAT HAPPENED, MEASURED RATHER THAN GUESSED (staging, 2026-08-21):
+ *      live style.css as-is        = 2a4666159b240cd596c6656fbb53c2db
+ *      live style.css CR-stripped  = 407016bdb5fe76dcd11ecfa549cb06c9
+ *      recorded source-md5         = 407016bdb5fe76dcd11ecfa549cb06c9
+ *    `tools/build-css.mjs` hashes the LF working copy, but the repo marks
+ *    `style.css` as text, so `git archive` writes CRLF into the deploy ZIP and
+ *    the file that lands on the server is byte-different from the file that was
+ *    hashed. ⛔ THE ARTEFACT WAS FRESH; THE COMPARISON WAS WRONG.
+ *
+ * ⭐ NORMALISING IS NOT A WEAKENING. A stale artefact still fails: the CSS
+ *    RULES would differ, and no line-ending change can disguise that. What is
+ *    given up is only the ability to detect a pure line-ending change, which is
+ *    not a defect and is introduced by the deploy pipeline on every release.
+ */
 $s2u_src_path = get_template_directory() . '/style.css';
-$s2u_src_md5  = is_readable( $s2u_src_path ) ? md5_file( $s2u_src_path ) : '';
+$s2u_src_md5  = is_readable( $s2u_src_path )
+	? md5( str_replace( "\r\n", "\n", (string) file_get_contents( $s2u_src_path ) ) )
+	: '';
 $s2u_rec_md5  = preg_match( '/source-md5:\s*([0-9a-f]{32})/i', $s2u_css, $s2u_mm ) ? strtolower( $s2u_mm[1] ) : '';
 s2u_assert(
 	'' !== $s2u_src_md5 && $s2u_src_md5 === $s2u_rec_md5,
