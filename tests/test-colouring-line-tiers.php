@@ -609,6 +609,20 @@ if ( function_exists( 'bhp_get_series_adventures' ) ) {
  */
 echo "\n[§9b] ⭐ Fulfilment routing — the colouring line resolves to an ISBN\n";
 
+/*
+ * ⛔⛔ THE STUB MUST COME OFF BEFORE THIS SECTION RUNS, AND THE FIRST DRAFT OF
+ *     THIS FILE DID NOT DO IT. §5–§7 install a `bhp_colouring_product_ids`
+ *     filter injecting a FAKE id (999901) so the tier machine can be exercised
+ *     on an environment with no product record. Leaving it hooked here made
+ *     §9b read the FAKE product — `get_sku()` on a nonexistent id returns '' —
+ *     so the section reported the record as unwired no matter what the record
+ *     actually said, and would have gone on reporting it after the real fix.
+ *
+ * ⭐ A TEST THAT CANNOT SEE THE THING IT TESTS IS WORSE THAN NO TEST, because
+ *    it produces a confident answer. Caught on the first staging run.
+ */
+remove_all_filters( 'bhp_colouring_product_ids' );
+
 $clt_expected_isbn = '9798996810840';
 
 bhp_clt_assert(
@@ -755,9 +769,28 @@ bhp_clt_assert(
  */
 echo "\n[§9c] ⛔ Hand-delivery Bookvault skip is product-agnostic\n";
 
-$clt_pickup_src = file_get_contents(
-	__DIR__ . '/../plugins/brave-hearts-bundle-pricing/includes/school-visit-pickup.php'
+/*
+ * ⛔ THE DEPLOYED LAYOUT IS NOT THE REPO LAYOUT, AND THE FIRST DRAFT ASSUMED IT
+ *    WAS. In the repository the plugin sits at `<theme>/plugins/...`; on a live
+ *    site it is installed to `WP_PLUGIN_DIR` and the theme ZIP does not carry
+ *    `plugins/` at all. Reading the repo path on staging opened nothing, and
+ *    `file_get_contents()` on a missing file returns FALSE — which made three
+ *    safety-critical assertions fail for a path bug rather than a defect.
+ *
+ * ⭐ THE INSTALLED COPY IS PREFERRED, because it is the code that actually runs.
+ */
+$clt_pickup_candidates = array(
+	( defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR : WP_CONTENT_DIR . '/plugins' )
+		. '/brave-hearts-bundle-pricing/includes/school-visit-pickup.php',
+	__DIR__ . '/../plugins/brave-hearts-bundle-pricing/includes/school-visit-pickup.php',
 );
+$clt_pickup_src = '';
+foreach ( $clt_pickup_candidates as $clt_pickup_path ) {
+	if ( is_readable( $clt_pickup_path ) ) {
+		$clt_pickup_src = (string) file_get_contents( $clt_pickup_path );
+		break;
+	}
+}
 $clt_skip_fn = strstr( $clt_pickup_src, 'function bhp_school_pickup_block_bookvault_webhook' );
 $clt_skip_fn = $clt_skip_fn ? substr( $clt_skip_fn, 0, 2200 ) : '';
 
