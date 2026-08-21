@@ -36,8 +36,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$smg_failures = 0;
-$smg_passes   = 0;
+/*
+ * ⛔ INITIALISED THROUGH `$GLOBALS`, NOT AS PLAIN LOCALS. Under
+ *    `wp eval-file` this file's top level is an eval'd scope, so
+ *    `$smg_failures = 0;` creates a LOCAL that `$GLOBALS['smg_failures']`
+ *    never sees. ⭐ FOUND ON THE FIRST STAGING RUN, not reasoned about: the
+ *    suite printed "25 passed,  failed" with an "Undefined global variable"
+ *    warning, because nothing had failed and so nothing had auto-created the
+ *    counter. A suite that cannot print its own failure count is a suite that
+ *    can hide one.
+ */
+$GLOBALS['smg_failures'] = 0;
+$GLOBALS['smg_passes']   = 0;
 
 function smg_assert( $condition, $label ) {
 	if ( $condition ) {
@@ -233,5 +243,27 @@ smg_assert(
 	&& false !== strpos( $smg_src, "woocommerce_email_enabled_" ),
 	'5.4 suppression uses WooCommerce\'s own woocommerce_email_enabled_{id} filter'
 );
+
+/*
+ * ⭐ THE NEGATIVE CONTROL — this harness is shown to be capable of failing.
+ *    ⛔ A suite that has never failed has not been shown to fail. The row
+ *       below is DELIBERATELY FALSE, is printed with a leading space so the
+ *       sweep's `^FAIL` count never sees it, and its failure is subtracted
+ *       again before the result line.
+ */
+echo "\n--- §6 negative control ---\n";
+/*
+ * ⛔ THE DELIBERATE FAILURE IS RUN WITH OUTPUT CAPTURED, so the word "FAIL" at
+ *    the start of a line never reaches the sweep's `^FAIL` count and cannot be
+ *    mistaken for a real defect by a human reading a 103-suite log.
+ */
+$smg_before = $GLOBALS['smg_failures'];
+ob_start();
+smg_assert( false, 'DELIBERATE FALSE — this row is SUPPOSED to fail' );
+$smg_captured = ob_get_clean();
+$smg_worked   = ( $GLOBALS['smg_failures'] === $smg_before + 1 )
+	&& ( 0 === strpos( $smg_captured, 'FAIL: ' ) );
+$GLOBALS['smg_failures'] = $smg_before; // ⭐ subtracted again; it was a control.
+smg_assert( $smg_worked, '6.1 the harness counts and reports a failure when one occurs' );
 
 echo "\n=== RESULT: {$GLOBALS['smg_passes']} passed, {$GLOBALS['smg_failures']} failed ===\n";

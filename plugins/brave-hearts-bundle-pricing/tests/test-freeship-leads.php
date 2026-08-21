@@ -370,8 +370,21 @@ bhp_fsl_assert(
 	'6.1 the offer is chosen by a named whole-cart function, not inside the per-format messaging loop',
 	$failures
 );
+/*
+ * ⭐ 1.8.65 — THE SIGNATURE GAINED A FIFTH ARGUMENT, `cart`, and this
+ *    assertion moves with it. ⛔ SUPERSEDED STRING, preserved so the movement
+ *    is visible rather than re-derived:
+ *
+ *      'crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated)'
+ *
+ *    The colouring offer (carrier item 186's "add the coloring book") is
+ *    matched by real Store-API line-item IDS, not by title keys, so the
+ *    chooser needs the cart itself. ⭐ The four original arguments are
+ *    unchanged and still in the same order, which is what the assertion below
+ *    still pins — this widened the call, it did not rewrite it.
+ */
 bhp_fsl_assert(
-	false !== strpos( (string) $fsl_js, 'crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated)' ),
+	false !== strpos( (string) $fsl_js, 'crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart)' ),
 	'6.1 computeDrawerMeta() delegates the choice and passes it the CROSS-FORMAT adventure list',
 	$failures
 );
