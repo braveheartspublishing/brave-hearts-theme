@@ -421,6 +421,27 @@ function bhp_colouring_shop_card_meta() {
         return;
     }
     ?>
+    <?php
+    /*
+     * ⭐ 1.19.283 — THE AGE LINE, CARRIER ITEM 204, ON THE COLOURING CARD TOO.
+     *
+     * ⛔ AND IT IS THE SAME HELPER, NOT A SECOND COPY OF THE STRING. Two
+     *    literals is how a grid ends up saying "Ages 6-9" on three cards and
+     *    something else on the fourth.
+     * ⭐ IT IS ALSO TRUE OF THIS BOOK BY ITS OWN COVER: `spec_line` above
+     *    already reads "… · ages 6-9", drafted from his own cover wording.
+     * ⛔ NO RAIL VIOLATION (`FD-549`): an age band is not a chapter-book word,
+     *    and this card still shows THIS product's cover beside THIS product's
+     *    single price. Nothing about what the object IS has changed.
+     * ⭐ `function_exists()` because `book-formats.php` is required BEFORE this
+     *    file (functions.php ~3822 vs ~3880) — so the guard should never fire,
+     *    and if the load order is ever reordered the card degrades by dropping
+     *    one line rather than fatalling on the shop archive.
+     */
+    ?>
+    <?php if (function_exists('bhp_shop_card_age_range')): ?>
+      <p class="bhp-shop-ages"><?php echo esc_html(bhp_shop_card_age_range(get_the_ID())); ?></p>
+    <?php endif; ?>
     <p class="bhp-shop-descriptor" data-bhp-card-kind="single"><?php echo esc_html($reg[$slug]['descriptor']); ?></p>
     <span class="bhp-shop-from-price bhp-shop-format-prices">
       <span class="bhp-shop-format-price">

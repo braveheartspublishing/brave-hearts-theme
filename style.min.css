@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: d41a820894f69bd806a6a06509a77df7
+    source-md5: a0de17e3e932bc6ce5de0d2cf3db8d7e
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.282
+Version: 1.19.283
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3535,7 +3535,7 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
   .interior-hero,
   body:not(.home) .home-hero { padding-inline: 24px; }
   .editorial-surface { padding: 1.5rem; }
-  .card-grid--posts,
+.card-grid--posts,
   .woocommerce ul.products { grid-template-columns: 1fr !important; }
   .blog-card .card__image { height: 220px; }
   .expedition-search__controls { grid-template-columns: 1fr; }
@@ -3543,6 +3543,60 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
   .woocommerce ul.products li.product img { height: 340px; }
   .woocommerce table.shop_table_responsive tr { margin-bottom: 1rem; border: 1px solid var(--expedition-border); background: #fffaf0; }
   body:not(.home) .footer-inner { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+body.woocommerce-shop .woo-expedition-shell ul.products {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px 14px;
+    margin: var(--space-6) 0;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.product img {
+    height: 210px;
+    padding: 10px 10px 4px;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
+    padding: 8px 10px 0;
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-from-price {
+    margin: 4px 0 0;
+    padding-inline: 8px;
+    font-size: 0.82rem;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .button {
+    align-self: stretch;
+    margin: 10px;
+    padding: 0.62rem 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-ages {
+    display: block;
+    margin: 4px 0 0;
+    padding-inline: 8px;
+    color: var(--expedition-muted);
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .kirkus-credibility,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .amazon-review-showcase {
+    display: none;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .woo-card__eyebrow,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-descriptor[data-bhp-card-kind="single"] {
+    display: none;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.product:has(.bhp-shop-format-prices) span.price {
+    display: none;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item {
+    grid-column: 1 / -1;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .btn,

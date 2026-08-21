@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.282
+Version: 1.19.283
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4514,6 +4514,19 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
   .interior-hero,
   body:not(.home) .home-hero { padding-inline: 24px; }
   .editorial-surface { padding: 1.5rem; }
+  /* ⚠️ 1.19.283 — THIS LINE IS DELIBERATELY LEFT EXACTLY AS IT WAS.
+     The /shop/ grid is now 2-up on mobile (carrier item 204) and it is
+     overridden by the SCOPED block at the end of this section, which wins on
+     specificity (0,3,1 vs 0,2,0) rather than by editing here.
+     ⛔ THE FIRST ATTEMPT DID EDIT HERE — lifting `.woocommerce ul.products`
+        out of this selector — AND IT WAS WRONG. This rule also governs
+        PRODUCT-CATEGORY and SEARCH archives, which item 204 says nothing
+        about; removing it silently took those to 2-up between 561px and 640px
+        via the `max-width: 768px` rule further up the file. ⭐ Recorded rather
+        than quietly reverted, because the next agent tempted to "tidy" this
+        selector needs to know what it is load-bearing for.
+     ⭐ `.card-grid--posts` — the BLOG grid — is in scope of nothing here and
+        stays 1-up. */
   .card-grid--posts,
   .woocommerce ul.products { grid-template-columns: 1fr !important; }
   .blog-card .card__image { height: 220px; }
@@ -4523,6 +4536,171 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
   .woocommerce table.shop_table_responsive tr { margin-bottom: 1rem; border: 1px solid var(--expedition-border); background: #fffaf0; }
   body:not(.home) .footer-inner { grid-template-columns: 1fr; }
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.283 — THE MOBILE SHOP GRID GOES 2-UP. CARRIER ITEM 204.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ ANDREW SIGNORE, carrier item 204, 2026-08-21 (⚠️ RELAYED through
+      `chief-of-staff`, NOT witnessed first-hand by the agent that wrote this
+      block): the mobile shop grid goes 2-UP, and ⛔ THE KIRKUS BADGE AND THE
+      REVIEW QUOTE COME OFF THE MOBILE CARDS. The proof lives on the product
+      page. The grid's job is to let a parent COMPARE.
+
+   ⭐ IT IS THE UNANIMOUS PATTERN OF EVERY COMPARATOR MEASURED — and the
+      measurement is Pippin's, not this file's: real Chrome, iPhone 13 profile,
+      `window.innerWidth` asserted 390 in-page on every store.
+        Barefoot Books 179px · Chronicle 165px · Highlights 165px · Powell's 195px
+      Record: `Business OS\WORKING-DRAFTS\commerce-cx\
+               COMPETITOR-MOBILE-EXPERIENCE-2026-08-21.md` §3–§8.
+      ⛔ NO CONVERSION CLAIM IS DRAWN FROM THAT DOCUMENT AND IT MAKES NONE
+         ITSELF — it observed layout on one night, not revenue. "Every
+         comparator does it" is the whole of the evidence and is all that is
+         claimed.
+
+   ⭐ HIGHLIGHTS IS THE MODELLED CARD (§5: image + title + "Ages: 6-12" +
+      price + an in-card CTA) because it is the closest audience match — a
+      children's publisher with an age-segmented catalogue. Ours reads:
+      ⭐ image · title · Ages 6-9 · the labelled price line · the CTA.
+
+   ⛔⛔ THE BREAKPOINT IS 640px, NOT THE BRIEF'S 600px, AND THAT DEPARTURE IS
+      REPORTED RATHER THAN SMUGGLED IN. 640px is the breakpoint this grid
+      ALREADY had (the `1fr !important` rule above), and every phone width sits
+      inside it. Splitting them would leave 601–640px as the one band still
+      rendering 1-up — an orphan band nobody ruled on and nobody would look at.
+      One breakpoint, named.
+
+   ⛔ THE DESKTOP GRID IS UNTOUCHED. Every rule below is inside this media
+      query, and nothing above it was reworded.
+
+   ⛔ SCOPED TO `body.woocommerce-shop`, NOT TO `ul.products`, AND THE SCOPE IS
+      LOAD-BEARING. `.woo-expedition-shell` also wraps the SINGLE PRODUCT page,
+      whose related/upsell rows are `ul.products li.product` too — styling
+      those would silently restyle a surface this ruling never mentioned.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* ── 1 · TWO TRACKS ──────────────────────────────────────────────────────
+     ⭐ THE CARD WIDTH IS ARITHMETIC, NOT TASTE: at 390 the shell's gutter is
+        `--space-4` (16px) a side, so 390 − 32 − 14 gap = 344 ÷ 2 = 172px a
+        card — inside the 165–195px band every comparator landed in. */
+  body.woocommerce-shop .woo-expedition-shell ul.products {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px 14px;
+    margin: var(--space-6) 0;
+  }
+
+  /* ── 2 · THE CARD, AT 172px ──────────────────────────────────────────────
+     ⛔ The desktop card sets a 340px image, a 1.65rem (26.4px) title and
+        1.5rem padding. All three were sized for a ~400px card and not one of
+        them survives being halved. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product img {
+    height: 210px;
+    padding: 10px 10px 4px;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
+    padding: 8px 10px 0;
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-from-price {
+    margin: 4px 0 0;
+    padding-inline: 8px;
+    font-size: 0.82rem;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .button {
+    align-self: stretch;
+    margin: 10px;
+    padding: 0.62rem 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── 3 · THE AGE LINE, WHICH ONLY EXISTS HERE ────────────────────────────
+     ⭐ `.bhp-shop-ages` is `display:none` at every other width (base rule in
+        `assets/css/book-formats.css`), so THE DESKTOP CARD IS THE CARD IT WAS.
+     ⭐ "Ages 6-9" is standing approved copy (rail §9.1 — ⛔ never 5-9) and is
+        read per product from `bhp_age_range` post meta by
+        `bhp_shop_card_age_range()`, the SAME resolution the product page's own
+        age line uses. ⛔ No new claim is coined by this block. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-ages {
+    display: block;
+    margin: 4px 0 0;
+    padding-inline: 8px;
+    color: var(--expedition-muted);
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── 4 · WHAT COMES OFF ──────────────────────────────────────────────────
+     ⛔⛔ THE KIRKUS BADGE AND THE REVIEW QUOTE — ITEM 204, HIS WORD.
+
+     ⭐ NOTHING IS DELETED AND NO REVIEW IS TOUCHED. Both components still
+        render in full on the DESKTOP card, on every product page and on the
+        home page, and the review is the same real, attributed, sourced Amazon
+        review it always was (standing rules §2/§3 — reviews are never
+        invented, and none is invented, altered or removed here). ⭐ THIS IS A
+        LAYOUT DECISION ABOUT WHERE PROOF IS READ, NOT A CLAIM CHANGE.
+
+     ⛔ AND NO PROTECTED-ELEMENTS ROW MOVED, BECAUSE THERE WAS NONE TO MOVE.
+        `tests/test-protected-elements.php`'s manifest has sections `home`,
+        `post`, `product` and `collection`. ⭐ IT HAS NO `shop` SECTION — read,
+        not assumed — so the shop card's badge was never a protected element
+        and this block amends nothing. ⛔ The `home` and `product` rows that DO
+        assert `kirkus-credibility` and `amazon-review-card__quote` are
+        untouched and still pass. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .kirkus-credibility,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .amazon-review-showcase {
+    display: none;
+  }
+
+  /* ⛔ The eyebrow and the descriptor are not in his enumerated contract and
+     there is no room for them at 172px.
+     ⭐ THE DESCRIPTOR'S `data-bhp-card-kind="single"` ATTRIBUTE — the `FD-549`
+        rail hook the suites assert on — IS STILL IN THE DOM. `display:none`
+        hides a box; it does not remove an attribute. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woo-card__eyebrow,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-descriptor[data-bhp-card-kind="single"] {
+    display: none;
+  }
+
+  /* ⭐ AND THE DUPLICATE PRICE, WHICH IS `R2.6` APPLIED ONE CARD OVER.
+     A chapter card prints WooCommerce's own bare `$11.99` AND the labelled
+     "Paperback $11.99 · Hardcover $17.99" line. At 400px that reads as a
+     headline plus a breakdown; at 172px it is the same number twice with
+     nothing to tell them apart — the exact defect `R2.6` already removed from
+     the colouring card.
+     ⛔ THE GUARD IS `:has()`, SO THIS CAN ONLY EVER HIDE A PRICE THAT IS
+        RESTATED ELSEWHERE ON THE SAME CARD. A card with no labelled line keeps
+        its bare price; a browser without `:has()` shows BOTH.
+     ⭐ EVERY DEGRADE PATH SHOWS MORE PRICE, NEVER LESS — which is the only
+        acceptable failure direction on the surface where money is quoted. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.product:has(.bhp-shop-format-prices) span.price {
+    display: none;
+  }
+
+  /* ── 5 · HONEST ROWS: THE OFFER CARDS TAKE A FULL ROW ────────────────────
+     ⭐ THE GRID IS SIX CARDS — three chapter books, the colouring book, the
+        pair offer, the Complete Collection — VERIFIED BY PARSING THE SERVED
+        `ul.products` ON STAGING, not counted from a template.
+     ⭐ Four single cards fill two clean 2-up rows; the two OFFER cards each
+        take a full-width row. ⛔ SO THERE IS NO ORPHAN HALF-WIDTH CELL.
+
+     ⛔ AND IT IS THE HONEST GEOMETRY RATHER THAN THE TIDY ONE. Both offer
+        cards render IMAGELESS BY DESIGN (`FD-549` R2.3 — no bundle composite
+        exists yet, and falling back to a component's cover would put a
+        chapter-book cover beside a bundle price, which is the exact false
+        claim `FD-549` was written after). An imageless card squeezed into a
+        172px cell beside a card that has a cover reads as a broken tile. A
+        full-width row reads as what it is: an offer. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .btn,
   .button,

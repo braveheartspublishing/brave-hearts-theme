@@ -393,6 +393,19 @@
 	opacity: 0.82;
 }
 
+/* ⭐⭐ 1.19.283 — THE SHOP CARD'S AGE LINE. CARRIER ITEM 204.
+   ⛔ HIDDEN AT EVERY WIDTH BY DEFAULT, AND THAT IS THE POINT, NOT AN
+      OVERSIGHT. The founder's contract puts "Ages 6-9" on the MOBILE card
+      (image · title · Ages 6-9 · price(s) · CTA, modelled on Highlights).
+      The DESKTOP card is ruled unchanged, so the element ships in the DOM on
+      both and is revealed only inside the ≤640px block in `style.css`.
+   ⭐ ALL OF ITS APPEARANCE LIVES THERE TOO, beside the rest of the mobile
+      card, so the whole 2-up composition is readable in one place. This rule
+      is the OFF switch and nothing else. */
+.bhp-shop-ages {
+	display: none;
+}
+
 .bhp-shop-from-price {
 	display: block;
 	margin: 2px 0 8px;

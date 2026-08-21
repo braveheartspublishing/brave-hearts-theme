@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 3c8201de1946d5c8e2aef48f0952f133
+    source-md5: f5b76eefec2007428a0b19e694ef7792
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -260,6 +260,11 @@
 	font-size: 0.86rem;
 	font-style: italic;
 	opacity: 0.82;
+}
+
+
+.bhp-shop-ages {
+	display: none;
 }
 
 .bhp-shop-from-price {

@@ -1989,6 +1989,44 @@ function bhp_book_shop_format_prices($key) {
     return $out;
 }
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.283 — THE AGE LINE ON A SHOP CARD. CARRIER ITEM 204.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ ANDREW SIGNORE, carrier item 204, 2026-08-21 (⚠️ RELAYED through
+ *    `chief-of-staff`, NOT witnessed first-hand by the agent that wrote
+ *    this): the mobile shop card reads image · title · **Ages 6-9** ·
+ *    price(s) · CTA, modelled on Highlights — the closest comparator, whose
+ *    own card carries "Ages: 6-12" in exactly this slot.
+ *
+ * ⛔ NO NEW CLAIM IS COINED HERE, and that is the whole reason this is a
+ *    three-line function rather than a string literal in a template.
+ *    "Ages 6-9" is STANDING APPROVED COPY (copy rail §9.1 — ages 6-9, ⛔
+ *    never 5-9). It already renders on the product page's first screen via
+ *    `bhp_woocommerce_product_value_prop()`, and on the home page as
+ *    `#home-trust-proof`'s badge.
+ *
+ * ⭐ SAME SOURCE, SAME PRECEDENCE, DELIBERATELY: per-product
+ *    `bhp_age_range` post meta first, the standing string only as the
+ *    fallback — byte-identical to the product page's own resolution. A
+ *    product whose band is genuinely different says so on BOTH surfaces or
+ *    on neither; it can never say one thing on the grid and another on the
+ *    page it links to.
+ *
+ * ⛔ IT IS `display:none` AT EVERY WIDTH EXCEPT MOBILE. The element is
+ *    rendered into the DOM on both, and revealed only inside the ≤640px
+ *    block in `style.css`. ⭐ THE DESKTOP CARD IS THEREFORE UNCHANGED —
+ *    which is the brief's constraint, not an accident of the CSS.
+ *
+ * @param int $product_id
+ * @return string
+ */
+function bhp_shop_card_age_range($product_id) {
+    $meta = get_post_meta($product_id, 'bhp_age_range', true);
+    return $meta ? $meta : __('Ages 6–9', 'brave-hearts');
+}
+
 /** Short adventure descriptor + one priced line per available format. */
 function bhp_book_shop_card_meta() {
     $found = bhp_book_lookup_product(get_the_ID());
@@ -2012,6 +2050,7 @@ function bhp_book_shop_card_meta() {
      *    one string, and a second place for a protected element to go missing.
      */
     ?>
+    <p class="bhp-shop-ages"><?php echo esc_html(bhp_shop_card_age_range(get_the_ID())); ?></p>
     <p class="bhp-shop-descriptor" data-bhp-card-kind="single"><?php echo esc_html($reg[$found['key']]['descriptor']); ?></p>
     <?php if ($formats): ?>
       <span class="bhp-shop-from-price bhp-shop-format-prices">
