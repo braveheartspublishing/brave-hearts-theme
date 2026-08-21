@@ -414,6 +414,40 @@
 	margin: 0.25rem 0 0.85rem;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.66 — THE FREE-SHIPPING PROGRESS LINE (founder carrier item 196).
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ HOUSE TOKENS, AND NOT ONE NEW ONE. `#5a5045` is the drawer's existing
+ *    quiet-text colour, already used by `__ship-note` and `__tax-note` and
+ *    already measured at 8.0:1 on white (A5 / D3, and F16 which fixed the
+ *    #888 that was too faint to do this job). `0.8rem` is the same quiet size
+ *    those two notes use. Nothing here introduces a new colour, weight, font
+ *    or scale step.
+ *
+ * ⛔ QUIET IS ENFORCED HERE, NOT MERELY INTENDED. No background, no badge, no
+ *    border, no accent bar, no icon, no uppercase, no letter-spacing, no
+ *    animation, no transition, no colour alarm. The founder asked for a quiet
+ *    line and this is the file where that promise is actually kept — a
+ *    "quiet" sentence in a loud box is a loud element.
+ *
+ * ⛔ IT MUST NOT READ AS A SAVINGS ROW. `__summary-row--savings` is green and
+ *    600-weight; this is deliberately neither, so a shopper does not mistake
+ *    a nudge for money already taken off. It is also not a flex row at all,
+ *    so it cannot line up as a label/value pair beside real figures.
+ *
+ * ⛔ THE BOTTOM MARGIN IS WHAT SEPARATES IT FROM "Books subtotal". It sits
+ *    directly above the first row, inside `__summary`, so without it the
+ *    sentence would touch the subtotal and read as that row's caption.
+ */
+.bhp-cart-drawer__ship-progress {
+	margin: 0 0 0.5rem;
+	font-size: 0.8rem;
+	line-height: 1.35;
+	color: #5a5045;
+	text-align: left;
+}
+
 .bhp-cart-drawer__summary-row {
 	display: flex;
 	justify-content: space-between;

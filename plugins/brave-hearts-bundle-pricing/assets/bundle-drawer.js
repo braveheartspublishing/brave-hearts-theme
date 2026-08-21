@@ -221,6 +221,119 @@
 	}
 
 	/**
+	 * ⭐⭐ 1.8.66 (item 196) — EVERY PHYSICAL, SHIPPABLE BOOK IN THE CART.
+	 *
+	 * ⛔ THIS IS THE JS SIDE OF `bhp_bundle_physical_book_count()` AND IT IS
+	 *    DELIBERATELY THE SAME TWO TERMS IN THE SAME ORDER:
+	 *
+	 *      PHP: bhp_bundle_total_quantity_in_cart() + bhp_bundle_colouring_
+	 *           quantity_in_cart()
+	 *      JS : identified catalogue lines  + identified colouring lines
+	 *
+	 *    The catalogue term reuses `identifyCartItem()`, which is driven by
+	 *    the same `bhp_bundle_catalog()` payload the PHP identifier reads. The
+	 *    colouring term reads `colouringIds`, which is `bhp_colouring_product_
+	 *    ids()` verbatim — the exact set the PHP counter matches on.
+	 *
+	 * ⛔ IT IS A QUANTITY, NOT A SET. Duplicates count, because three copies
+	 *    of one title is three printed books and three books of postage. This
+	 *    is `FD-583`'s reading, and it is the reading the shipping rule itself
+	 *    uses at `bhp_bundle_shipping_amount()` branch A.
+	 *
+	 * ⛔ WEIGHTLESS ADD-ONS ARE EXCLUDED, and they are excluded by
+	 *    CONSTRUCTION rather than by a blocklist: an item is counted only if
+	 *    it matches the six-title catalogue or a colouring id, so the digital
+	 *    activity book is never counted and can never move a tier. That
+	 *    matches the PHP comment on `bhp_bundle_physical_book_count()`
+	 *    ("weightless add-ons are excluded, and that exclusion must never
+	 *    drift") exactly.
+	 *
+	 * @param {Object} cart Store API cart response.
+	 * @return {number}
+	 */
+	function physicalBookCount(cart) {
+		var colouringIds = (window.bhpDrawerData && window.bhpDrawerData.colouringIds) || [];
+		var total = 0;
+		(cart.items || []).forEach(function (item) {
+			var qty = item.quantity || 0;
+			if (identifyCartItem(item)) {
+				total += qty;
+				return;
+			}
+			if (colouringIds.indexOf(parseInt(item.id, 10)) !== -1) {
+				total += qty;
+			}
+		});
+		return total;
+	}
+
+	/**
+	 * ⭐⭐⭐ 1.8.66 (item 196) — the free-shipping progress sentence, or ''.
+	 *
+	 * Andrew Signore, carrier item 196, 2026-08-21. ⚠️ RELAYED through
+	 * `chief-of-staff`, not witnessed first-hand by the agent that wrote this.
+	 * ⭐ THE THREE STRINGS ARE HIS AND ARE NOT AUTHORED HERE — they arrive from
+	 * `bhp_bundle_ship_progress_copy()` (PHP), so this function chooses a
+	 * string and never composes one.
+	 *
+	 * ⛔⛔ FOUR SUPPRESSIONS, AND EVERY ONE OF THEM EXISTS TO STOP THE PANEL
+	 *    MAKING A PROMISE THE CHECKOUT WOULD REFUSE:
+	 *
+	 *   1. `anyThreeActive` false — the `any-three` rule is not running, so
+	 *      "3 or more ships FREE" is simply not true on this environment.
+	 *   2. `hasUnrelated` — an item outside the six editions and the
+	 *      allowlisted add-on stops `bhp_bundle_override_shipping_cost()`
+	 *      running AT ALL, so no free-shipping claim survives. This is the
+	 *      same suppression `freeShipCopy` already applies, deliberately.
+	 *   3. A PICKUP RATE IS SELECTED — a parent on a school-visit link is
+	 *      having books HAND-DELIVERED and is not being shipped anything. A
+	 *      shipping-progress line on that path is the exact defect the founder
+	 *      caught on production on 2026-08-18 ("Shipping / FREE" on a
+	 *      hand-delivery order), one screen earlier. ⭐ THE TEST IS THE LIVE
+	 *      SELECTED RATE, NOT A SESSION FLAG BAKED INTO THE PAGE — same
+	 *      mechanism `renderSummary()` uses to choose the row LABEL, so this
+	 *      is correct on a cached page and a flagged parent who deliberately
+	 *      picks ordinary shipping still sees the line.
+	 *   4. No copy for this count — nothing is invented to fill the gap.
+	 *
+	 * ⛔ NO URGENCY, NO COUNTDOWN, NO DOLLAR FIGURE. Enforced upstream in the
+	 *    copy function; nothing is added to the string here.
+	 *
+	 * @param {Object} cart Store API cart response.
+	 * @param {Object} meta computeDrawerMeta() output.
+	 * @param {Object|null} selectedRate The rate WooCommerce reports selected.
+	 * @return {string} The sentence, or '' to draw nothing.
+	 */
+	function shipProgressLine(cart, meta, selectedRate) {
+		var data = window.bhpDrawerData || {};
+		var copy = data.shipProgressCopy || {};
+		var threshold = parseInt(data.freeShipAtCount, 10) || 0;
+
+		if (!data.anyThreeActive || !threshold) {
+			return '';
+		}
+		if (meta && meta.has_unrelated) {
+			return '';
+		}
+		if (
+			selectedRate &&
+			data.shipRowPickupMethod &&
+			selectedRate.method_id === data.shipRowPickupMethod
+		) {
+			return '';
+		}
+
+		var count = physicalBookCount(cart);
+		if (count < 1) {
+			return '';
+		}
+		if (count >= threshold) {
+			return copy.earned || '';
+		}
+		return copy[count] || copy[String(count)] || '';
+	}
+
+	/**
 	 * B4 (2026-08-03) — the REAL incremental saving from adding one more
 	 * distinct title of `format`, given the cart already holds `count` of
 	 * them.
@@ -1117,6 +1230,47 @@
 			summaryEl.appendChild(row);
 		}
 
+		/*
+		 * ⭐ 1.8.66 — THE SELECTED RATE IS RESOLVED HERE INSTEAD OF FURTHER
+		 *    DOWN. A pure MOVE of three statements, no change to any of them:
+		 *    the progress line below has to know whether a hand-delivery rate
+		 *    is selected BEFORE it draws, and it draws above the subtotal.
+		 *    The shipping ROW still reads the same two variables further down.
+		 */
+		var shippingPackage = cart.shipping_rates && cart.shipping_rates[0];
+		var selectedRate = shippingPackage && (shippingPackage.shipping_rates || []).filter(function (r) { return r.selected; })[0];
+		var shippingMinor = selectedRate ? Number(selectedRate.price) : 0;
+
+		/*
+		 * ⭐⭐⭐ 1.8.66 (founder carrier item 196) — THE FREE-SHIPPING PROGRESS
+		 *    LINE. ⭐ ABOVE THE SUBTOTAL, ON PURPOSE: it is context for the
+		 *    money that follows it, not a row of it. A shopper reads what the
+		 *    order is one step from, then reads what the order costs.
+		 *
+		 * ⛔ IT IS A QUIET LINE AND THE STYLING SAYS SO. House tokens, the
+		 *    drawer's own muted text colour, no badge, no accent bar, no
+		 *    colour alarm, no icon, no animation. The founder asked for quiet
+		 *    and the CSS is where that promise is actually kept.
+		 *
+		 * ⛔ IT RECOMPUTES ON EVERY PANEL UPDATE, WITHOUT A SEPARATE LISTENER.
+		 *    `renderSummary()` is called from `renderDrawer()`, which every add,
+		 *    remove and quantity change routes through via `refreshDrawer()`,
+		 *    and `summaryEl.innerHTML = ''` above wipes the previous line
+		 *    first. So there is no stale-line path and no second code route
+		 *    that could forget to update it.
+		 *
+		 * ⛔ `aria-live="polite"` IS ALREADY ON `__summary` (the wrapper), so
+		 *    the sentence is announced when it changes without adding a second
+		 *    live region that would double-announce the totals.
+		 */
+		var progressText = shipProgressLine(cart, meta, selectedRate);
+		if (progressText) {
+			var progressEl = document.createElement('p');
+			progressEl.className = 'bhp-cart-drawer__ship-progress';
+			progressEl.textContent = progressText;
+			summaryEl.appendChild(progressEl);
+		}
+
 		addRow('Books subtotal', money(cart.totals.total_items, minorUnit));
 
 		var bundleFees = (cart.fees || []).filter(function (f) {
@@ -1135,9 +1289,15 @@
 			addRow('Set price', money(Number(cart.totals.total_items) + totalSavingsMinor, minorUnit));
 		}
 
-		var shippingPackage = cart.shipping_rates && cart.shipping_rates[0];
-		var selectedRate = shippingPackage && (shippingPackage.shipping_rates || []).filter(function (r) { return r.selected; })[0];
-		var shippingMinor = selectedRate ? Number(selectedRate.price) : 0;
+		/*
+		 * ⭐ 1.8.66 — `shippingPackage`, `selectedRate` and `shippingMinor`
+		 *    USED to be declared here. They are now computed at the top of
+		 *    this function, unchanged, because the progress line needs
+		 *    `selectedRate` before the first row is drawn. Nothing was added
+		 *    to or removed from the calculation itself; only its position
+		 *    moved. (Same shape of note as 1.8.24's move in
+		 *    `computeDrawerMeta()`, for the same reason.)
+		 */
 
 		/*
 		 * ⭐ 1.8.55 — the row is not always called "Shipping".

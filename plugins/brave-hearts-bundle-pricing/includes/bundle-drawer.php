@@ -380,6 +380,50 @@ function bhp_bundle_drawer_assets() {
 			 *    decides which of the two labels to draw, at render time,
 			 *    from the rate the Store API actually reports as selected.
 			 */
+				/*
+				 * ═══════════════════════════════════════════════════════════
+				 * ⭐⭐⭐ 1.8.66 — THE FREE-SHIPPING PROGRESS LINE, ITEM 196.
+				 * ═══════════════════════════════════════════════════════════
+				 *
+				 * ⭐ THREE PAYLOAD KEYS, AND EVERY ONE IS READ FROM THE ENGINE
+				 *    RATHER THAN RESTATED HERE, so the line in the panel and
+				 *    the figure on the invoice have one author:
+				 *
+				 *      · `shipProgressCopy`  -> bhp_bundle_ship_progress_copy()
+				 *      · `freeShipAtCount`   -> bhp_bundle_freeship_book_threshold()
+				 *      · `colouringIds`      -> bhp_colouring_product_ids(), the
+				 *        EXACT set bhp_bundle_colouring_quantity_in_cart()
+				 *        counts, so the drawer's count and
+				 *        bhp_bundle_physical_book_count() cannot drift.
+				 *
+				 * ⛔⛔ `anyThreeActive` IS THE HONESTY GATE, NOT A FEATURE FLAG.
+				 *    The 3+ string claims free shipping. That claim is only
+				 *    true while `bhp_bundle_colouring_policy()` is `any-three`
+				 *    (`FD-583`). Under `conservative` a cart of three copies of
+				 *    one title is charged, and the panel must say nothing at
+				 *    all rather than promise a zero the checkout will refuse.
+				 *    Flip the filter and the whole line disappears in the same
+				 *    request, with no copy edit anywhere.
+				 *
+				 * ⛔ THIS PAYLOAD IS THE SAME FOR EVERY VISITOR. Nothing here
+				 *    is session-dependent, so a cached page cannot leak one
+				 *    shopper's cart state to another — the drawer decides what
+				 *    to draw at render time from the Store API response it
+				 *    already has. The school-visit suppression is made the
+				 *    same way, from the SELECTED RATE, exactly as
+				 *    `shipRowPickupLabel` below already does it.
+				 */
+				'shipProgressCopy' => function_exists( 'bhp_bundle_ship_progress_copy' )
+					? bhp_bundle_ship_progress_copy()
+					: array(),
+				'freeShipAtCount'  => function_exists( 'bhp_bundle_freeship_book_threshold' )
+					? bhp_bundle_freeship_book_threshold()
+					: 0,
+				'anyThreeActive'   => function_exists( 'bhp_bundle_colouring_policy' )
+					&& 'any-three' === bhp_bundle_colouring_policy(),
+				'colouringIds'     => function_exists( 'bhp_colouring_product_ids' )
+					? array_values( array_map( 'intval', bhp_colouring_product_ids() ) )
+					: array(),
 			'shipRowLabel'        => (string) apply_filters( 'bhp_bundle_drawer_ship_row_label', 'Shipping' ),
 			'shipRowPickupLabel'  => (string) apply_filters( 'bhp_bundle_drawer_ship_row_pickup_label', '' ),
 			'shipRowPickupMethod' => (string) apply_filters( 'bhp_bundle_drawer_ship_row_pickup_method', '' ),
