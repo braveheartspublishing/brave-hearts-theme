@@ -329,9 +329,41 @@ if ( function_exists( 'bhp_offer_drawer_payload' ) ) {
  *     ⭐ Caught in a real browser on the first staging screenshot, not by
  *     reading the file. This asserts the suppression stays.
  */
+/*
+ * ⛔⛔ CORRECTED 1.19.287 / plugin 1.8.68 (carrier item 214) — THIS ASSERTION
+ *     MATCHED A JS LITERAL THAT A CORRECT CHANGE REPLACED, AND IT FAILED ON A
+ *     BUILD WHERE THE SUPPRESSION IT GUARDS IS STRICTLY STRONGER THAN BEFORE.
+ *     Same failure class as `test-uniform-shop-cta-210-211.php` §8 at 1.19.286
+ *     ("matched CSS literals the geometry fix replaced").
+ *
+ * ⭐ THE SUPERSEDED TEST, PRESERVED SO IT IS NOT RE-DERIVED:
+ *
+ *       strpos( $pf_drawer_js, "if ('colouring' === cs.format) {" )
+ *
+ * ⭐ WHAT CHANGED AND WHY THE OLD LITERAL HAD TO GO. 1.8.68 made the pair
+ *    offer BIDIRECTIONAL, and the reverse offer's `cs.format` is 'paperback'
+ *    — so a format-only test would have let the false "COMPLETE THE
+ *    COLLECTION" eyebrow print above a cart holding one coloring book. The
+ *    suppression now tests `offer_kind`, WITH the original format test kept
+ *    beside it for an older payload. ⛔ Two tests, one outcome, no gap.
+ *
+ * ⛔ THE ASSERTION IS NOT WEAKENED — IT IS WIDENED TO THE CLAIM IT ALWAYS
+ *    MEANT: the eyebrow is suppressed on EVERY pair offer, in both
+ *    directions. Both halves are required, so neither can be dropped later.
+ *
+ * ⭐ OBSERVED LIVE ON STAGING 2026-08-21 at an asserted innerWidth of 1280 and
+ *    of 390, in a real Blocks cart: colouring-only cart -> the reverse offer
+ *    renders with NO eyebrow; Mariana-paperback-only cart -> the forward
+ *    offer renders with NO eyebrow; the ordinary adventure cross-sell KEEPS
+ *    its "Complete the collection" heading.
+ */
 pf_assert(
-	false !== strpos( $pf_drawer_js, "if ('colouring' === cs.format) {" ),
+	false !== strpos( $pf_drawer_js, "'colouring' === cs.format" ),
 	'2b.4 ⛔ the "COMPLETE THE COLLECTION" eyebrow is suppressed on a colouring offer — it would be a false claim'
+);
+pf_assert(
+	false !== strpos( $pf_drawer_js, "'pair' === cs.offer_kind" ),
+	'2b.4b ⛔⛔ …and on the REVERSE pair offer too, whose format is "paperback" — a format-only test would have let the false claim through (1.8.68)'
 );
 pf_assert(
 	false !== strpos( $pf_drawer_js, 'completes_collection: false' ),
