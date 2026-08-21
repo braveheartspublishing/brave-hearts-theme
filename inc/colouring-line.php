@@ -206,6 +206,36 @@ function bhp_colouring_draft_copy($key, array $tokens = []) {
          */
         'panel_label'      => __('%s coloring book', 'brave-hearts'),
         'panel_cta'        => __('Add The Coloring Book', 'brave-hearts'),
+
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.284 — THE TWO STRINGS THE PRODUCT-STYLE BUNDLE CARD NEEDS.
+         *     ⚠️ NEW DRAFTS. THEY GO ON THE LIST THAT WAITS FOR ANDREW.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ WHY THEY EXIST: carrier item 206 makes the bundle a PRODUCT-STYLE
+         *    CARD — "image · title · price · CTA". That splits one string into
+         *    two jobs the old `offer_cta` did at once. "ADD BOTH FOR $22.99"
+         *    was BOTH the price and the button; on a card the price is its own
+         *    line, so the button must stop restating it (`R2.6`, one price
+         *    once) and the price line needs a label of its own.
+         *
+         * ⛔ `offer_cta` IS NOT DELETED AND NOT REWORDED. It is still the
+         *    product-page control's exact label, byte for byte. Only the shop
+         *    card takes the new pair. A string he has seen keeps its wording.
+         *
+         * ⛔ BOTH OBEY THE STANDING RAIL: no "we" (§9.1 — he is the sole
+         *    operator), no em dash, no outcome claim, no review or statistic,
+         *    ⛔ AND NO FIGURE TYPED INTO EITHER OF THEM. The number comes from
+         *    `bhp_offer_price()` at render, every render.
+         *
+         * ⭐ `offer_card_price_label` SAYS WHAT THE $22.99 BUYS, which is the
+         *    job the neighbouring cards' "PAPERBACK" / "HARDCOVER" labels do.
+         *    An unlabelled figure on a bundle tile is the `FD-549` ambiguity
+         *    the whole rail contract exists to close.
+         */
+        'offer_card_price_label' => __('BOOK + COLORING BOOK', 'brave-hearts'),
+        'offer_card_cta'         => __('GET BOTH', 'brave-hearts'),
     ], $key);
 
     if (!isset($copy[$key])) {
@@ -483,27 +513,106 @@ add_action('woocommerce_after_shop_loop_item', 'bhp_colouring_restore_loop_price
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
+ * ⭐⭐ 1.19.284 — THE COMPOSITE SLUG REGISTRY (carrier item 206).
+ *
+ * ⭐ SLUGS, NOT IDS, AND THAT IS THE WHOLE POINT. An attachment id is
+ *    environment-local: staging's 4570 is not production's 4570, and a
+ *    hardcoded id is how a build renders the right picture on staging and a
+ *    random one — or nothing — on the live storefront. Every other approved
+ *    image in this theme resolves the same way
+ *    (`bhp_book_media_attachment_id()`), so this reuses that resolver rather
+ *    than inventing a second one.
+ *
+ * ⭐ THE SLUGS ARE THE FILENAMES LEGOLAS SHIPPED, prefixed. The masters are
+ *    the transparent 2000x2000 PNGs at `Business OS\WORKING-DRAFTS\
+ *    design-creative\bundle-composites\out\`; the builder's
+ *    `README-PROVENANCE.md` records that every pixel came from a real cover
+ *    file, that nothing was generated, retouched or recoloured, and why the
+ *    masters are SQUARE (this store's `woocommerce_thumbnail` is a hard-cropped
+ *    square, so a landscape master would have its outer books sliced off).
+ *
+ * ⛔ THE COLLECTION ENTRY IS NOT AN OFFER KEY. `bhp_offer_catalog()` has no
+ *    three-paperback row and must not gain one — the Complete Collection is
+ *    priced by the bundle plugin's own tier table, not by the offer engine.
+ *    `collection` is a presentation key for the shop card only, which is why
+ *    it lives in this map and nowhere near the catalogue.
+ *
+ * @return array<string,string> Composite key => attachment slug.
+ */
+function bhp_offer_composite_slugs() {
+    /**
+     * Composite key => attachment slug.
+     *
+     * @param array<string,string> $slugs
+     */
+    return apply_filters('bhp_offer_composite_slugs', [
+        'mariana_pb_colouring' => 'bhp-bundle-composite-mariana-pb-colouring',
+        'collection'           => 'bhp-bundle-composite-collection-three-paperbacks',
+    ]);
+}
+
+/**
  * The composite image for an offer, if one has been produced.
  *
- * ⛔ RETURNS 0 TODAY, ON PURPOSE, AND THAT IS THE CONTRACT WORKING. See the
- *    file header: no bundle composite exists yet, so every offer surface
- *    renders imageless rather than borrowing a component's cover.
+ * ⭐⭐ 1.19.284 — IT NOW RESOLVES. Until this release it returned 0 on purpose,
+ *    because no composite existed; the two named in `bhp_offer_composite_slugs()`
+ *    were registered as attachments for carrier item 206.
  *
- * @param string $key Offer key.
+ * ⛔ IT STILL FAILS CLOSED, AND THAT IS UNCHANGED AND NON-NEGOTIABLE. An
+ *    unresolved slug returns 0, the card renders WITH NO IMAGE, and it never
+ *    falls back to a component's cover — `FD-549` `R2.3`. A chapter-book cover
+ *    beside a bundle price states that THAT BOOK costs the bundle price.
+ *
+ * ⛔ THE HARDCOVER UPSELL HAS NO ENTRY AND MUST NOT GET ONE. It is a format
+ *    swap inside the paperback offer, not its own card, so it never asks for
+ *    an image. If it ever did, the paperback composite would be the wrong
+ *    picture for it.
+ *
+ * @param string $key Offer key, or a presentation key from the slug registry.
  * @return int Attachment id, or 0.
  */
 function bhp_offer_composite_attachment_id($key) {
+    $slugs      = bhp_offer_composite_slugs();
+    $attachment = 0;
+
+    if (isset($slugs[$key]) && function_exists('bhp_book_media_attachment_id')) {
+        $attachment = (int) bhp_book_media_attachment_id($slugs[$key]);
+    }
+
     /**
      * Attachment id of the composite image for this offer.
      *
      * ⛔ IT MUST BE A COMPOSITE OF EVERY COMPONENT. A single component's cover
      *    here would violate `FD-549` at the one place the rule exists to
-     *    protect. Registering one is Legolas's deliverable, not a code change.
+     *    protect.
      *
-     * @param int    $attachment_id 0 when no composite exists.
+     * @param int    $attachment_id 0 when no composite resolves.
      * @param string $key           Offer key.
      */
-    return (int) apply_filters('bhp_offer_composite_attachment_id', 0, $key);
+    return (int) apply_filters('bhp_offer_composite_attachment_id', $attachment, $key);
+}
+
+/**
+ * The composite, as a shop-card image, or '' when it does not resolve.
+ *
+ * ⭐ IT IS THE SAME `woocommerce_thumbnail` SIZE EVERY OTHER CARD IN THE GRID
+ *    USES, so the two bundle cards sit in the 2-up track at the same geometry
+ *    as a chapter-book card rather than at a size of their own.
+ *
+ * ⛔ EMPTY STRING, NOT A PLACEHOLDER. `R2.3` degrade-never-mix: no image is a
+ *    valid card; a wrong image is not.
+ *
+ * @param string $key Composite key.
+ * @return string HTML, or ''.
+ */
+function bhp_offer_composite_card_image($key) {
+    $attachment = bhp_offer_composite_attachment_id($key);
+    if (!$attachment) {
+        return '';
+    }
+    return wp_get_attachment_image($attachment, 'woocommerce_thumbnail', false, [
+        'class' => 'bhp-offer__composite',
+    ]);
 }
 
 /**
@@ -529,9 +638,21 @@ function bhp_offer_composite_attachment_id($key) {
  *                             heading there too would say the same thing twice
  *                             in one tile — the duplication the first staging
  *                             DOM read of this card found.
+ * @param bool   $card         ⭐ 1.19.284 / carrier item 206 — SHOP-CARD MODE.
+ *                             TRUE makes this render as the purchase half of a
+ *                             PRODUCT-STYLE card: ⛔ no media (the caller hoists
+ *                             the composite above the `<h2>`, where every other
+ *                             card in the grid carries its picture), ⭐ a
+ *                             labelled price line in the grid's own
+ *                             `.bhp-shop-format-prices` markup, and a CTA that
+ *                             does NOT restate the figure.
+ *                             ⛔ THE PRODUCT-PAGE MODE IS BYTE-FOR-BYTE WHAT IT
+ *                                WAS. One template, two modes — a second
+ *                                template would be a second place for a
+ *                                protected element to go missing (spec §7).
  * @return string HTML, or '' when the offer cannot be bought right now.
  */
-function bhp_offer_render_module($key, $class = '', $show_heading = true) {
+function bhp_offer_render_module($key, $class = '', $show_heading = true, $card = false) {
     if (!function_exists('bhp_offer_is_purchasable') || !bhp_offer_is_purchasable($key)) {
         return ''; // ⛔ R1.4: nothing is advertised that cannot be bought.
     }
@@ -554,7 +675,7 @@ function bhp_offer_render_module($key, $class = '', $show_heading = true) {
         }
     }
 
-    $composite = bhp_offer_composite_attachment_id($key);
+    $composite = $card ? 0 : bhp_offer_composite_attachment_id($key);
 
     ob_start();
     ?>
@@ -563,6 +684,10 @@ function bhp_offer_render_module($key, $class = '', $show_heading = true) {
       /*
        * ⛔ R2.3 — DEGRADE, NEVER MIX. No composite means NO IMAGE. It never
        *    falls back to one component's cover.
+       * ⭐ 1.19.284: in CARD mode `$composite` is forced to 0 here because the
+       *    picture has already been rendered by the caller, ABOVE the `<h2>`,
+       *    in the slot every other card in the grid uses. Rendering it here too
+       *    would put the same composite on one tile twice.
        */
       if ($composite) :
         ?><div class="bhp-offer__media"><?php echo wp_get_attachment_image($composite, 'woocommerce_thumbnail', false, ['class' => 'bhp-offer__composite']); ?></div><?php
@@ -572,6 +697,45 @@ function bhp_offer_render_module($key, $class = '', $show_heading = true) {
         <p class="bhp-offer__heading"><?php echo esc_html(bhp_colouring_draft_copy('offer_heading')); ?></p>
       <?php endif; ?>
 
+      <?php if ($card) : ?>
+        <?php
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.284 — THE PRICE, AS ITS OWN LINE. CARRIER ITEM 206.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ HIS CARD CONTRACT IS "image · title · price · CTA", so the price
+         *    is an ELEMENT, not a phrase inside a button. It is emitted in the
+         *    grid's OWN `.bhp-shop-from-price.bhp-shop-format-prices` markup —
+         *    the identical classes `bhp_book_shop_card_meta()` and
+         *    `bhp_colouring_shop_card_meta()` use — so the bundle card's price
+         *    sits at the same size, weight and baseline as the price on the
+         *    card beside it. ⛔ A bespoke price element here would be a second
+         *    way of printing money on one grid.
+         *
+         * ⛔ R2.2 STILL HOLDS AND IS THE REASON THIS IS SAFE: the figure is
+         *    `bhp_offer_price()`'s, resolved live from the engine every render.
+         *    ⛔ No price literal exists anywhere in this file.
+         *
+         * ⛔ AND R2.6 — ONE PRICE, ONCE. The card CTA below deliberately does
+         *    NOT carry the figure, because a labelled price line plus
+         *    "ADD BOTH FOR $22.99" is the same number twice on a 172px tile,
+         *    which is the exact duplicate-price defect `R2.6` already removed
+         *    from the colouring card.
+         *
+         * ⭐ FD-549 HOLDS BY CONSTRUCTION: this figure is the price of the
+         *    OFFER, and the picture above the `<h2>` is the composite of that
+         *    same offer's components. Image and price describe one object.
+         */
+        ?>
+        <span class="bhp-shop-from-price bhp-shop-format-prices">
+          <span class="bhp-shop-format-price">
+            <span class="bhp-shop-format-price__label"><?php echo esc_html(bhp_colouring_draft_copy('offer_card_price_label')); ?></span>
+            <span class="bhp-shop-format-price__amount"><?php echo wp_kses_post(wc_price($price)); ?></span>
+          </span>
+        </span>
+      <?php endif; ?>
+
       <form class="bhp-offer__form" method="post">
         <?php bhp_bundle_nonce_input(); ?>
         <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('offer_' . $key); ?>" />
@@ -579,7 +743,11 @@ function bhp_offer_render_module($key, $class = '', $show_heading = true) {
         <button type="submit" class="button bhp-offer__cta">
           <?php
           /* ⛔ R2.2: the figure is the ENGINE's, never a literal in this template. */
-          echo esc_html(bhp_colouring_draft_copy('offer_cta', [wp_strip_all_tags(wc_price($price))]));
+          echo esc_html(
+              $card
+                  ? bhp_colouring_draft_copy('offer_card_cta')
+                  : bhp_colouring_draft_copy('offer_cta', [wp_strip_all_tags(wc_price($price))])
+          );
           ?>
         </button>
       </form>
@@ -688,7 +856,7 @@ function bhp_offer_shop_cards($loop_end) {
         if (!bhp_offer_is_purchasable($key)) {
             continue;
         }
-        $module = bhp_offer_render_module($key, 'bhp-offer--card', false);
+        $module = bhp_offer_render_module($key, 'bhp-offer--card', false, true);
         if ('' === $module) {
             continue;
         }
@@ -701,8 +869,27 @@ function bhp_offer_shop_cards($loop_end) {
          * ⛔ THE TITLE AND THE DESCRIPTOR ARE DIFFERENT SENTENCES. Rendering
          *    the same words twice (the defect the first staging read of this
          *    card found) says nothing twice and reads as a duplication bug.
+         *
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.284 — THE COMPOSITE GOES ABOVE THE `<h2>`. CARRIER ITEM 206.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ THAT POSITION IS THE WHOLE POINT OF "PRODUCT-STYLE". WooCommerce's
+         *    own card is image → title → meta → CTA, and the shop CSS sizes the
+         *    picture off `li.product img`. Leaving the composite inside
+         *    `.bhp-offer` — below the title, where 1.19.283 put it — would have
+         *    produced a tile shaped unlike every tile beside it, which is the
+         *    "reads as a broken tile" failure the 1.19.283 full-row rule was
+         *    working around.
+         *
+         * ⛔ AND IT DEGRADES, IT DOES NOT SUBSTITUTE (`FD-549` `R2.3`). When the
+         *    slug does not resolve on this environment `bhp_offer_composite_
+         *    card_image()` returns '' and the card renders TITLE-FIRST with no
+         *    picture. ⛔ It never borrows a component's cover. A chapter-book
+         *    cover beside $22.99 states that that book costs $22.99.
          */
         $out .= '<li class="product bhp-shop-offer-item" data-bhp-card-kind="bundle">'
+            . bhp_offer_composite_card_image($key)
             . '<h2 class="woocommerce-loop-product__title">' . esc_html(bhp_colouring_draft_copy('offer_card_title')) . '</h2>'
             . '<p class="bhp-shop-descriptor">' . esc_html(bhp_colouring_draft_copy('offer_descriptor')) . '</p>'
             . $module

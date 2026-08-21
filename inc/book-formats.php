@@ -984,11 +984,27 @@ function bhp_book_purchase_data($key) {
  * ⛔ NO PRICE IS COMPUTED OR STORED HERE. Every figure is still read live from
  *    WooCommerce and the plugin's approved discount table.
  */
-function bhp_book_collection_data() {
+function bhp_book_collection_data($format_override = '') {
     $page = get_page_by_path('complete-collection');
     $url = $page && 'publish' === $page->post_status ? get_permalink($page) : home_url('/complete-collection/');
 
+    /*
+     * ⭐ 1.19.284 — `$format_override` IS ADDITIVE AND OPTIONAL. Called with no
+     *    argument this function is byte-for-byte what it was: it resolves the
+     *    format from `bhp_bundle_default_format()` and applies the school-visit
+     *    paperback-only rule. ⛔ NO EXISTING CALLER PASSES ANYTHING, so no
+     *    existing surface changes.
+     *
+     * ⭐ THE ONE CALLER THAT DOES pass a format is the shop card's SECONDARY
+     *    hardcover line (item 206), which needs the hardcover figure ALONGSIDE
+     *    the default one. ⛔ It is still gated on
+     *    `bhp_book_hardcover_is_offerable()` below, so a school-visit session
+     *    cannot be quoted a hardcover price the server would refuse to sell.
+     */
     $format = function_exists('bhp_bundle_default_format') ? bhp_bundle_default_format() : 'hardcover';
+    if ($format_override && in_array($format_override, ['paperback', 'hardcover'], true)) {
+        $format = $format_override;
+    }
     if ('hardcover' === $format && function_exists('bhp_book_hardcover_is_offerable') && !bhp_book_hardcover_is_offerable()) {
         $format = 'paperback';
     }
@@ -1451,32 +1467,58 @@ function bhp_book_enqueue_media_assets() {
      *    `bhp_book_shop_look_inside_link()` hook is still parked and this
      *    changes nothing about it — do not read the new branch below as
      *    permission to un-park it.
+     *
+     * ⛔⛔ 1.19.284 / CARRIER ITEM 207 — THE 1.19.235 PARAGRAPH IMMEDIATELY
+     *     ABOVE IS NOW HISTORY AND IS PRESERVED, NOT DELETED. The founder ruled
+     *     the collection carousel OFF the shop page (⚠️ RELAYED through
+     *     `chief-of-staff`, NOT witnessed first-hand here), so the banner is
+     *     gone from `functions.php` and its
+     *     `elseif ( bhp_cx_shop_banner_gallery_media() )` branch went with it.
+     *     ⭐ THE ORIGINAL SENTENCE AT THE TOP OF THIS NOTE IS TRUE AGAIN, WORD
+     *     FOR WORD: the shop archive is deliberately absent here, and
+     *     `bhp_book_shop_look_inside_link()` is still parked.
+     *     ⛔ REMOVING THE BRANCH IS THE POINT, NOT TIDYING: leaving it would
+     *        ship `book-media.css` and `book-media.js` to every shop visitor
+     *        for a component that no longer renders anywhere on the page.
      */
     if (function_exists('is_product') && is_product()) {
         $found = bhp_book_lookup_product(get_queried_object_id());
         if (!$found || !$found['canonical'] || !bhp_book_has_look_inside($found['key'])) {
             return;
         }
-    } elseif (function_exists('bhp_cx_shop_banner_gallery_media') && bhp_cx_shop_banner_gallery_media()) {
-        /*
-         * ⭐ 1.19.235 / `CYCLE162-LD-SHOP-CAROUSEL-V2` — the shop archive's
-         *    Complete Collection banner.
-         *
-         * ⛔ THE SAME PREDICATE THE RENDER CALLS, exactly as the funnel branch
-         *    below does and for exactly the same reason (see the head note in
-         *    `inc/collection-gallery.php`, point 3). If the Collection media
-         *    does not resolve on this environment the predicate returns null,
-         *    the banner renders copy-only, and nothing is enqueued — the
-         *    assets and the markup cannot appear without each other.
-         *
-         * ⚠ THIS BRANCH MUST STAY ABOVE the collection-page branch only in the
-         *   sense that order does not matter here: `is_shop()` and
-         *   `bhp_book_is_collection_page()` are mutually exclusive. It is
-         *   placed here so the two banner branches read together.
-         *
-         * Intentionally empty body: the predicate in the condition IS the whole
-         * check and falling through to the enqueue below is correct.
-         */
+    /*
+     * ⛔⛔ A BRANCH STOOD HERE UNTIL 1.19.284 AND WAS REMOVED UNDER CARRIER
+     *     ITEM 207. Its condition was:
+     *
+     *       } elseif ( function_exists('bhp_cx_shop_banner_gallery_media')
+     *                  && bhp_cx_shop_banner_gallery_media() ) {
+     *
+     *     ⭐ ITS OWN RECORD IS PRESERVED VERBATIM BELOW rather than deleted,
+     *        because it explains a design constraint that still binds every
+     *        OTHER branch in this chain — the enqueue gate and the render call
+     *        must ask the SAME question — and a future session that cannot see
+     *        it will re-derive it wrongly.
+     *
+     *     ─────────────────────────────────────────────────────────────────
+     *     ⭐ 1.19.235 / `CYCLE162-LD-SHOP-CAROUSEL-V2` — the shop archive's
+     *        Complete Collection banner.
+     *
+     *     ⛔ THE SAME PREDICATE THE RENDER CALLS, exactly as the funnel branch
+     *        below does and for exactly the same reason (see the head note in
+     *        `inc/collection-gallery.php`, point 3). If the Collection media
+     *        does not resolve on this environment the predicate returns null,
+     *        the banner renders copy-only, and nothing is enqueued — the
+     *        assets and the markup cannot appear without each other.
+     *
+     *     ⚠ THIS BRANCH MUST STAY ABOVE the collection-page branch only in the
+     *       sense that order does not matter here: `is_shop()` and
+     *       `bhp_book_is_collection_page()` are mutually exclusive. It is
+     *       placed here so the two banner branches read together.
+     *
+     *     Intentionally empty body: the predicate in the condition IS the whole
+     *     check and falling through to the enqueue below is correct.
+     *     ─────────────────────────────────────────────────────────────────
+     */
     } elseif (bhp_book_is_collection_page()) {
         if (!bhp_book_media('complete_collection')['has_any']) {
             return;
@@ -2103,20 +2145,139 @@ function bhp_book_shop_collection_card($loop_end) {
     ?>
     <li class="product bhp-shop-collection-item" data-bhp-card-kind="collection">
       <div class="bhp-shop-collection-card">
+        <?php
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.284 — THE COLLECTION COMPOSITE. CARRIER ITEM 206.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ Item 206 makes this a PRODUCT-STYLE card: image, title, price,
+         *    CTA. Everything but the image was already here; this adds the
+         *    picture, in the slot above the title where every other card in
+         *    the grid carries its own.
+         *
+         * ⭐⭐ FD-549, AND IT IS THE REASON THIS PARTICULAR IMAGE AND NO OTHER.
+         *    The composite shows THREE PAPERBACKS. `$collection['price_html']`
+         *    below is computed for `bhp_bundle_default_format()`, which returns
+         *    'paperback' — verified by reading `bundle-data.php` this build,
+         *    not assumed. So the picture and the figure describe the SAME
+         *    object: three paperbacks, $31.99. ⛔ If the default format ever
+         *    moved to hardcover, THIS IMAGE WOULD BECOME A CONTRACT VIOLATION —
+         *    three paperbacks beside a hardcover price — and the pairing must
+         *    be re-decided rather than left to drift. `tests/test-bundle-
+         *    cards-206-207.php` §3 asserts exactly that pairing every run, so
+         *    the drift fails a suite instead of reaching a parent.
+         *
+         * ⛔ DEGRADE, NEVER MIX (`R2.3`). An unresolved slug renders NO IMAGE
+         *    and the card is the card it was in 1.19.283. It never falls back
+         *    to one book's cover.
+         *
+         * ⛔ NO NEW MEDIA IS CREATED HERE and no registry is edited: this
+         *    resolves an already-registered attachment by slug, exactly as
+         *    every other approved image in this theme does.
+         */
+        $bhp_scc_img = function_exists('bhp_offer_composite_card_image')
+            ? bhp_offer_composite_card_image('collection')
+            : '';
+        echo $bhp_scc_img; // phpcs:ignore WordPress.Security.EscapeOutput -- wp_get_attachment_image() output.
+        ?>
         <span class="bhp-shop-collection-card__badge"><?php esc_html_e('BEST VALUE', 'brave-hearts'); ?></span>
         <h2 class="woocommerce-loop-product__title"><?php esc_html_e('The Complete Collection', 'brave-hearts'); ?></h2>
         <p class="bhp-shop-descriptor"><?php esc_html_e('All three adventures together', 'brave-hearts'); ?></p>
         <?php if ($collection['price_html']): ?>
-          <span class="bhp-shop-collection-card__price"><?php echo wp_kses_post($collection['price_html']); ?></span>
+          <span class="bhp-shop-collection-card__price bhp-shop-format-price__amount"><?php echo wp_kses_post($collection['price_html']); ?></span>
         <?php endif; ?>
-        <?php /* 1.19.197: carries the shared collection-CTA style token so this
-                 card's button reads as the same control as the nav-bar CTA. It
-                 is a plain link by design — the Shop grid sends the shopper to
-                 the Collection page to choose a format, exactly as before; only
-                 the treatment changed. */ ?>
-        <a href="<?php echo esc_url($collection['url']); ?>" class="button <?php echo esc_attr(defined('BHP_COLLECTION_CTA_CLASS') ? BHP_COLLECTION_CTA_CLASS : 'bhp-collection-cta__btn'); ?>">
-          <?php esc_html_e('GET THE COMPLETE COLLECTION', 'brave-hearts'); ?>
-        </a>
+        <?php
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.284 — THE CTA BUYS. CARRIER ITEM 206.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ SUPERSEDED, AND THE OLD NOTE IS KEPT SO THE MOVEMENT IS VISIBLE:
+         *    *"1.19.197: carries the shared collection-CTA style token … It is
+         *    a plain link by design — the Shop grid sends the shopper to the
+         *    Collection page to choose a format, exactly as before; only the
+         *    treatment changed."* ⛔ THAT IS NO LONGER WHAT THIS CONTROL DOES.
+         *
+         * ⛔⛔ NO NEW COMMERCE MECHANISM, AND THAT IS CHECKABLE RATHER THAN
+         *    ASSERTED. This is the IDENTICAL control /complete-collection/'s
+         *    own primary CTA posts: same `form.bhp-bundle-form`, same
+         *    `bhp_bundle_nonce_input()`, same `complete_{format}_smart` action,
+         *    same allowlisted `bhp_bundle_checkout_redirect_input()` flag that
+         *    has finished on /checkout/ since P2-5. ⭐ The bundle plugin, the
+         *    offer engine, the tier tables and the catalogue are all untouched
+         *    by this release, and no product record exists or is created.
+         *
+         * ⭐⭐ AND IT IS WHAT FD-549 REQUIRES ONCE THE CARD HAS A PICTURE. The
+         *    composite above shows THREE PAPERBACKS and the figure beside it is
+         *    the PAPERBACK collection price. A CTA that led to a page where the
+         *    shopper might leave with hardcovers at a different price would let
+         *    the card's own two claims come apart at the moment of purchase —
+         *    which is the failure `FD-549` is about, one step later in the
+         *    journey.
+         *
+         * ⛔⛔ THE FORMAT CHOICE IS NOT REMOVED, AND THIS IS THE LIMB THAT
+         *    MATTERS. The hardcover collection is still one tap away, as a
+         *    SECONDARY line under the primary — the exact shape the pair card
+         *    beside it already uses for its own hardcover swap
+         *    ("Prefer the hardcover? $28.99", `bhp_offer_render_module()`).
+         *    ⭐ So the grid gained a purchase and lost no path. ⛔ Paperback
+         *    remains the one default (`FD-439`); the secondary is a swap under
+         *    an offer already chosen, not a second default.
+         *
+         * ⛔ AND IT DEGRADES CLOSED. If the plugin is off, `bhp_bundle_nonce_
+         *    input()` does not exist, and the card falls back to the 1.19.197
+         *    LINK rather than rendering a dead button. A control that cannot
+         *    complete must not look like one that can.
+         *
+         * ⛔ THE HARDCOVER LINE IS GATED TWICE: on the plugin being present and
+         *    on `bhp_book_hardcover_is_offerable()`, so a school-visit session
+         *    — which the server refuses hardcover on — is never quoted one.
+         */
+        $bhp_cc_can_buy = function_exists('bhp_bundle_nonce_input')
+            && function_exists('bhp_bundle_checkout_redirect_input')
+            && function_exists('bhp_bundle_default_format');
+        $bhp_cc_cta_class = defined('BHP_COLLECTION_CTA_CLASS') ? BHP_COLLECTION_CTA_CLASS : 'bhp-collection-cta__btn';
+        ?>
+        <?php if ($bhp_cc_can_buy): ?>
+          <form class="bhp-bundle-form bhp-shop-collection-card__form" method="post">
+            <?php bhp_bundle_nonce_input(); ?>
+            <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('complete_' . $collection['format'] . '_smart'); ?>" />
+            <?php bhp_bundle_checkout_redirect_input(); ?>
+            <button type="submit" class="button <?php echo esc_attr($bhp_cc_cta_class); ?>">
+              <?php esc_html_e('GET THE COMPLETE COLLECTION', 'brave-hearts'); ?>
+            </button>
+          </form>
+          <?php
+          $bhp_cc_alt = ('paperback' === $collection['format'] && function_exists('bhp_book_hardcover_is_offerable') && bhp_book_hardcover_is_offerable())
+              ? bhp_book_collection_data('hardcover')
+              : null;
+          ?>
+          <?php if ($bhp_cc_alt && 'hardcover' === $bhp_cc_alt['format'] && $bhp_cc_alt['price_html']): ?>
+            <form class="bhp-bundle-form bhp-shop-collection-card__form bhp-shop-collection-card__form--upsell" method="post">
+              <?php bhp_bundle_nonce_input(); ?>
+              <input type="hidden" name="bhp_bundle_action" value="complete_hardcover_smart" />
+              <?php bhp_bundle_checkout_redirect_input(); ?>
+              <button type="submit" class="bhp-offer__upsell">
+                <?php
+                /* ⛔ The figure is the plugin's, recomputed every render. No
+                      price literal exists in this file. ⭐ Same sentence shape
+                      as the pair card's own hardcover swap, so one grid speaks
+                      with one voice. */
+                printf(
+                    /* translators: %s: the hardcover collection price. */
+                    esc_html__('Prefer the hardcover? %s', 'brave-hearts'),
+                    esc_html(wp_strip_all_tags($bhp_cc_alt['price_html']))
+                );
+                ?>
+              </button>
+            </form>
+          <?php endif; ?>
+        <?php else: ?>
+          <a href="<?php echo esc_url($collection['url']); ?>" class="button <?php echo esc_attr($bhp_cc_cta_class); ?>">
+            <?php esc_html_e('GET THE COMPLETE COLLECTION', 'brave-hearts'); ?>
+          </a>
+        <?php endif; ?>
       </div>
     </li>
     <?php

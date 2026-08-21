@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 643885e084c2ba7be7f532b31fcaee5c
+    source-md5: 407016bdb5fe76dcd11ecfa549cb06c9
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.283
+Version: 1.19.284
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3599,9 +3599,30 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .woo-card__ey
 body.woocommerce-shop .woo-expedition-shell ul.products li.product:has(.bhp-shop-format-prices) span.price {
     display: none;
   }
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item {
-    grid-column: 1 / -1;
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
+    padding: 0 0 14px;
+    gap: 6px;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__composite {
+    margin-bottom: 4px;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card__price {
+    font-size: 1rem;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+    padding: 0 8px 10px;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__cta,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .button {
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 0.62rem 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__upsell {
+    font-size: 0.72rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -6509,6 +6530,20 @@ min-height: 44px;
 }
 .bhp-shop-offer-item .bhp-offer {
   margin-top: 0.5rem;
+}
+.bhp-shop-offer-item .bhp-offer {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.bhp-shop-offer-item .bhp-shop-format-price,
+.bhp-shop-collection-item .bhp-shop-format-price {
+  display: block;
+  white-space: normal;
+}
+.bhp-shop-offer-item .bhp-shop-format-price__label,
+.bhp-shop-offer-item .bhp-shop-format-price__amount {
+  display: block;
 }
 .bhp-colouring-spec {
   margin: 0.5rem 0 0;

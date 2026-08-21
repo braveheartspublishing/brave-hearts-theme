@@ -133,6 +133,38 @@ function bhp_pe_status( $url ) {
  * `exact` means exactly this many — used only where a second copy is itself the
  * defect (a rail injected twice, a capture asked twice).
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THERE IS NO `shop` KEY IN THIS ARRAY, AND THAT IS DELIBERATE AND RECORDED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ NOTE ADDED AT 1.19.284 UNDER CARRIER ITEM 207, so the absence stops being
+ *    rediscovered as an ambiguity by every successive subtraction brief. The
+ *    keys below are `home`, `product`, `collection` (plus the sitewide checks
+ *    run outside this array). ⛔ /shop/ HAS NEVER HAD A PROTECTED ROW. The same
+ *    finding was reached independently at 1.19.283 (item 204, hiding the Kirkus
+ *    badge and the review quote on the MOBILE shop card) and again at 1.19.284.
+ *    It is now written down in `21-PROTECTED-ELEMENTS-MANIFEST.md` §3.6 as well
+ *    as here, so the two records agree.
+ *
+ * ⭐⭐ WHAT ITEM 207 REMOVED, AND WHY IT WAS ALLOWED TO PROCEED:
+ *      Andrew Signore, carrier item 207, 2026-08-21 (⚠️ RELAYED through
+ *      `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that made the
+ *      change — recorded as relayed per Standing Rules §9.2 rule 2) ruled the
+ *      Complete Collection carousel OFF /shop/. ⛔ THAT PAGE ONLY.
+ *
+ *      §5 of the manifest says a protected element is removed only *"on
+ *      Andrew's explicit word (Standing Rules §6)"* and that no agent edits a
+ *      row out on its own judgement. ⭐ ITEM 207 IS THAT WORD — and separately,
+ *      ⛔ THERE WAS NO ROW TO EDIT OUT. So this release removed no listed
+ *      element and relaxed no assertion in this file. ⛔ NOT ONE ROW BELOW WAS
+ *      TOUCHED, ADDED OR WEAKENED.
+ *
+ * ⛔ AND NO CTA WAS ORPHANED — the item-118 failure shape this suite's §1.11
+ *    exists to catch. The removed banner's only outbound control went to
+ *    /complete-collection/; the same destination is still on /shop/ as the
+ *    Complete Collection product card (item 206). That is asserted in
+ *    `tests/test-shop-collection-carousel.php` §4, not claimed here.
+ *
  * @return array
  */
 function bhp_pe_manifest() {

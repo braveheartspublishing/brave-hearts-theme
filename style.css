@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.283
+Version: 1.19.284
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4700,23 +4700,81 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
     display: none;
   }
 
-  /* ── 5 · HONEST ROWS: THE OFFER CARDS TAKE A FULL ROW ────────────────────
-     ⭐ THE GRID IS SIX CARDS — three chapter books, the colouring book, the
-        pair offer, the Complete Collection — VERIFIED BY PARSING THE SERVED
-        `ul.products` ON STAGING, not counted from a template.
-     ⭐ Four single cards fill two clean 2-up rows; the two OFFER cards each
-        take a full-width row. ⛔ SO THERE IS NO ORPHAN HALF-WIDTH CELL.
+  /* ── 5 · ⭐⭐ 1.19.284 — THE OFFER CARDS JOIN THE 2-UP TRACK. ITEM 206. ────
+     ⭐ ANDREW SIGNORE, carrier item 206 (⚠️ RELAYED through `chief-of-staff`,
+        NOT witnessed first-hand by the agent that wrote this block): the two
+        bundles present as PRODUCT-STYLE CARDS in the shop grid, at the same
+        2-up geometry on mobile as everything else.
 
-     ⛔ AND IT IS THE HONEST GEOMETRY RATHER THAN THE TIDY ONE. Both offer
-        cards render IMAGELESS BY DESIGN (`FD-549` R2.3 — no bundle composite
-        exists yet, and falling back to a component's cover would put a
-        chapter-book cover beside a bundle price, which is the exact false
-        claim `FD-549` was written after). An imageless card squeezed into a
-        172px cell beside a card that has a cover reads as a broken tile. A
-        full-width row reads as what it is: an offer. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item {
-    grid-column: 1 / -1;
+     ⛔⛔ THE SUPERSEDED 1.19.283 RULE, AND WHY IT WAS RIGHT THEN AND IS WRONG
+        NOW. It read:
+
+          li.bhp-shop-offer-item, li.bhp-shop-collection-item { grid-column: 1 / -1; }
+
+        Its stated reason was NOT taste, and that is why it can be retired
+        honestly rather than quietly: *"Both offer cards render IMAGELESS BY
+        DESIGN (`FD-549` R2.3 — no bundle composite exists yet) … An imageless
+        card squeezed into a 172px cell beside a card that has a cover reads as
+        a broken tile."*
+
+     ⭐⭐ THAT PREMISE IS NOW FALSE, WHICH IS THE ONLY THING THAT CHANGED. Two
+        real composites exist (Legolas's `CYCLE165-DES-BUNDLE-COMPOSITES`,
+        built in code from the real cover files, `$0`, no AI generation — see
+        `README-PROVENANCE.md`) and are registered as attachments. Both cards
+        now carry a picture in the same slot, at the same 210px height, as the
+        card beside them. There is no imageless tile left to protect.
+
+     ⛔ THE NO-ORPHAN RULE STILL HOLDS AND IS STILL ARITHMETIC, NOT LUCK: the
+        grid is SIX cards — three chapter books, the colouring book, the pair
+        offer, the Complete Collection — so 2-up is three clean rows and no
+        half-width cell. ⛔ IT IS COUNTED FROM THE SERVED `ul.products` ON
+        STAGING, not from a template, and `tests/test-bundle-cards-206-207.php`
+        §5 re-counts it every run so a seventh card cannot silently orphan the
+        row.
+
+     ⛔ AND THE DEGRADE PATH IS UNCHANGED: if a composite slug does not resolve
+        the card renders with NO IMAGE (`R2.3`) — it never borrows a
+        component's cover. A shorter tile is a cosmetic cost; a chapter-book
+        cover beside a bundle price is the false claim `FD-549` was written
+        after. */
+
+  /* ── 6 · THE COMPOSITE, AT CARD GEOMETRY ─────────────────────────────────
+     ⭐ The offer card's composite is a direct child of `li.product`, so the
+        grid's own `li.product img` rules above already size it. The COLLECTION
+        card's sits inside `.bhp-shop-collection-card`, which adds its own
+        padding, so it is pulled back out to the card edge — otherwise the
+        picture paints small inside a padded box while its neighbour fills the
+        tile, and the two read as different components. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
+    padding: 0 0 14px;
+    gap: 6px;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__composite {
+    margin-bottom: 4px;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card__price {
+    font-size: 1rem;
+  }
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+    padding: 0 8px 10px;
+  }
+  /* ⭐ Both bundle CTAs take the same stretched, small-caps treatment the
+     chapter cards' "CHOOSE YOUR FORMAT" already has at this width, so a row
+     of three different card kinds still reads as one control set. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__cta,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .button {
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 0.62rem 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+  }
+  /* ⛔ The saving line and the hardcover swap are NOT removed from the DOM —
+     they are real, recomputed claims and a control a keyboard can reach. They
+     simply take the smaller type the 172px cell has room for. */
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
+  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__upsell {
+    font-size: 0.72rem;
   }
 }
 
@@ -11348,6 +11406,48 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
    column sizing applies and no width is restated here. */
 .bhp-shop-offer-item .bhp-offer {
   margin-top: 0.5rem;
+}
+
+/* ⭐⭐ 1.19.284 — ONE CARD, NOT A CARD INSIDE A CARD. CARRIER ITEM 206.
+   ⛔ FOUND BY LOOKING AT THE RENDERED TILE ON STAGING, NOT BY READING THE CSS.
+      `.bhp-offer` carries its own border, radius, tint and 1rem padding —
+      correct on the PRODUCT PAGE, where it is a cross-sell box sitting inside
+      a page. Inside a shop tile it painted a second bordered box under the
+      composite, so the pair card read as a card containing a card while the
+      Complete Collection card beside it read as one. Item 206 says both
+      present as PRODUCT-STYLE CARDS; two different chrome treatments in one
+      row is the opposite of that.
+   ⛔ THE PRODUCT-PAGE BOX IS UNTOUCHED. This is scoped to the shop card only,
+      by the `.bhp-shop-offer-item` ancestor. */
+.bhp-shop-offer-item .bhp-offer {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* ⭐⭐ 1.19.284 — THE PRICE LINE WRAPS ON A BUNDLE CARD. ITEM 206.
+   ⛔⛔ THIS IS A REAL DEFECT CAUGHT ON THE RENDERED CARD AND IT IS THE WORST
+      CLASS THERE IS ON THIS SURFACE: at 390 the tile printed
+      "BOOK + COLORING BOO" and the $22.99 WAS CLIPPED OFF THE CARD ENTIRELY.
+      A bundle tile with a title, a picture and NO PRICE is exactly the
+      ambiguity `FD-549` exists to prevent.
+   ⭐ THE CAUSE, read rather than guessed: `.bhp-shop-format-price` in
+      `assets/css/book-formats.css` is `white-space: nowrap`, which is correct
+      for "Paperback $11.99" — it keeps a label and its own figure from being
+      split across lines — and impossible for a label as long as this one in a
+      172px cell, where `li.product`'s `overflow: hidden` then cuts it.
+   ⭐ THE FIX KEEPS THE PROMISE THE NOWRAP WAS MAKING: the label and the amount
+      are STACKED, so each stays whole on its own line and neither can be
+      orphaned beside the other's figure. ⛔ The 1.19.259 nowrap rule itself is
+      untouched and still governs every other card at every other width. */
+.bhp-shop-offer-item .bhp-shop-format-price,
+.bhp-shop-collection-item .bhp-shop-format-price {
+  display: block;
+  white-space: normal;
+}
+.bhp-shop-offer-item .bhp-shop-format-price__label,
+.bhp-shop-offer-item .bhp-shop-format-price__amount {
+  display: block;
 }
 
 /* ⛔ R2.6 — ONE PRICE, ONCE. WooCommerce's own loop price is removed on a

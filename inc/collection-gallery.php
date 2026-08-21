@@ -620,43 +620,42 @@ function bhp_cx_collection_gallery_map() {
  *
  * @return array|null The `bhp_book_media()` shape, or null.
  */
-function bhp_cx_shop_banner_gallery_media() {
-    /*
-     * ⛔ NOT MEMOISED BEFORE THE QUERY EXISTS. `is_shop()` answers a question
-     *    about the main query; asked before `wp` it is meaningless, and caching
-     *    that meaningless answer would poison every later call in the request.
-     *    Both real callers run after `wp` (one on `wp_enqueue_scripts`, one on
-     *    `woocommerce_before_main_content`), so this branch is a guard against a
-     *    future caller, not a live path.
-     */
-    if (!did_action('wp')) {
-        return null;
-    }
-
-    static $resolved = null;
-    static $done     = false;
-
-    if ($done) {
-        return $resolved;
-    }
-    $done = true;
-
-    if (is_admin() || !function_exists('is_shop') || !is_shop()) {
-        return $resolved; // null
-    }
-    if (!function_exists('bhp_book_media')) {
-        return $resolved; // null
-    }
-
-    $media = bhp_book_media('complete_collection');
-    if (empty($media['has_any']) || empty($media['items'])) {
-        return $resolved; // null — fail closed
-    }
-
-    $resolved = $media;
-
-    return $resolved;
-}
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔⛔ `bhp_cx_shop_banner_gallery_media()` WAS DEFINED HERE AND WAS REMOVED
+ *      AT 1.19.284 UNDER CARRIER ITEM 207.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE WHOLE HEAD-NOTE ABOVE IT — everything from "1.19.235 … THE SHOP-ARCHIVE
+ *    COMPLETE COLLECTION BANNER TAKES THE REAL CAROUSEL" down to this line — IS
+ *    NOW HISTORY. It is preserved verbatim and deliberately not deleted,
+ *    because it records a founder ruling of 2026-08-17 that PUT the carousel on
+ *    /shop/, and because its explanation of why the placement could not live in
+ *    `bhp_cx_collection_gallery_map()` still binds: ⛔ THE SHOP ARCHIVE SHARES
+ *    `archive-product.php` WITH EVERY `product_cat` AND `product_tag` ARCHIVE,
+ *    so a map entry would leak a component across all of them. That trap is
+ *    unchanged and a future placement must still avoid it.
+ *
+ * ⭐ WHY IT WENT: Andrew Signore, carrier item 207, 2026-08-21 (⚠️ RELAYED
+ *    through `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that
+ *    made this change) ruled the collection carousel OFF the shop page. ⛔ OFF
+ *    THAT PAGE ONLY. The function had exactly two callers and both were that
+ *    one feature — the banner in `functions.php` and the `is_shop()` enqueue
+ *    branch in `inc/book-formats.php` — so with the banner gone it resolved
+ *    media nobody rendered.
+ *
+ * ⛔⛔ NOTHING ELSE IN THIS FILE MOVED, AND THAT IS THE CONTAINMENT ITEM 207
+ *    REQUIRES. `bhp_cx_collection_gallery_map()`, `bhp_cx_collection_gallery_
+ *    config()`, `bhp_cx_collection_media_subset()` and
+ *    `bhp_cx_render_collection_gallery()` are untouched, so /complete-collection/,
+ *    the homepage, /books/ and the four funnel surfaces render exactly the
+ *    carousel they rendered at 1.19.283. `tests/test-shop-collection-carousel.php`
+ *    asserts BOTH halves of that: absent on /shop/, still present on
+ *    /complete-collection/.
+ *
+ * ⭐ TO RESTORE: the function, the banner and the enqueue branch are all in the
+ *    1.19.283 tree at commit `da7f0ed`.
+ */
 
 /**
  * The template file WordPress actually resolved for this request.

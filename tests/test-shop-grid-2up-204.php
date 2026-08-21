@@ -275,9 +275,47 @@ foreach ( $s2u_probe_ids as $s2u_label => $s2u_id ) {
 echo "\n=== §4 · THE SHIPPED ARTEFACT CARRIES THE 2-UP RULE ===\n";
 
 s2u_assert( '' !== $s2u_css, '4.1 style.min.css exists and is readable' );
+/*
+ * ⛔⛔ AMENDED AT 1.19.284. THE SUPERSEDED ASSERTION, QUOTED SO THE MOVEMENT IS
+ *    VISIBLE AND IS NOT RE-DERIVED AS A RELAXATION:
+ *
+ *      s2u_assert(
+ *          false !== strpos( $s2u_css, 'Version: 1.19.283' ),
+ *          '4.2 ⛔ the artefact was REBUILT for this release (its header names 1.19.283)'
+ *      );
+ *
+ * ⭐ WHAT IT WAS TRYING TO PROVE WAS RIGHT: that `style.min.css` is not a
+ *    stale build left over from a previous release. ⛔ HOW IT PROVED IT WAS
+ *    WRONG: a hardcoded version literal only holds for exactly one release and
+ *    then reports a CORRECT build as a failure. It did precisely that at
+ *    1.19.284 — one of the three failures this release inherited.
+ *
+ * ⭐⭐ THE REPLACEMENT IS STRICTLY STRONGER, not weaker, and that is the point.
+ *    It asserts TWO things the literal never could:
+ *      1. the artefact's header version equals the ACTIVE THEME's version —
+ *         true at every release, and false whenever a bump ships without a
+ *         rebuild, which is the actual defect;
+ *      2. the artefact's recorded `source-md5` equals the live md5 of
+ *         `style.css` — ⛔ THIS IS THE REAL FRESHNESS PROOF. A rebuild that
+ *         ran against an older source would carry the right version and the
+ *         wrong rules, and the version check alone would pass it.
+ */
+$s2u_theme_ver = wp_get_theme()->get( 'Version' );
 s2u_assert(
-	false !== strpos( $s2u_css, 'Version: 1.19.283' ),
-	'4.2 ⛔ the artefact was REBUILT for this release (its header names 1.19.283)'
+	false !== strpos( $s2u_css, 'Version: ' . $s2u_theme_ver ),
+	"4.2a ⛔ the artefact's header names the ACTIVE theme version ({$s2u_theme_ver})"
+);
+
+$s2u_src_path = get_template_directory() . '/style.css';
+$s2u_src_md5  = is_readable( $s2u_src_path ) ? md5_file( $s2u_src_path ) : '';
+$s2u_rec_md5  = preg_match( '/source-md5:\s*([0-9a-f]{32})/i', $s2u_css, $s2u_mm ) ? strtolower( $s2u_mm[1] ) : '';
+s2u_assert(
+	'' !== $s2u_src_md5 && $s2u_src_md5 === $s2u_rec_md5,
+	sprintf(
+		'4.2b ⭐ the artefact was built from THIS style.css (source-md5 %s vs live %s)',
+		'' !== $s2u_rec_md5 ? substr( $s2u_rec_md5, 0, 8 ) : 'absent',
+		'' !== $s2u_src_md5 ? substr( $s2u_src_md5, 0, 8 ) : 'unreadable'
+	)
 );
 s2u_assert(
 	(bool) preg_match(
@@ -352,38 +390,131 @@ s2u_assert(
 	'5.5 …and the age line is turned ON inside the same block'
 );
 
-echo "\n=== §6 · HONEST ROWS — NO ORPHAN CELL ===\n";
+echo "\n=== §6 · HONEST ROWS — NO ORPHAN CELL (REWRITTEN AT 1.19.284, ITEM 206) ===\n";
 
-s2u_assert(
-	(bool) preg_match( '/li\.bhp-shop-offer-item[^{]*\{[^}]*grid-column:\s*1\s*\/\s*-1/', $s2u_mobile )
-		|| (bool) preg_match( '/li\.bhp-shop-offer-item[^,]*,[^{]*\{[^}]*grid-column:\s*1\s*\/\s*-1/', $s2u_mobile ),
-	'6.1 ⭐ the pair-offer card takes a full-width row'
-);
-s2u_assert(
-	(bool) preg_match( '/bhp-shop-collection-item[^{]*\{[^}]*grid-column:\s*1\s*\/\s*-1/', $s2u_mobile ),
-	'6.2 ⭐ the Complete Collection card takes a full-width row'
-);
 /*
- * ⭐ AND THE REASON, GUARDED: both offer cards are IMAGELESS BY DESIGN
- *    (`FD-549` R2.3 — no bundle composite exists yet, and borrowing a
- *    component's cover would put a chapter-book cover beside a bundle price).
- *    If a composite is ever registered, this assertion still holds and the
- *    full-row choice can be revisited deliberately rather than by accident.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔⛔ THE 1.19.283 §6 WAS SUPERSEDED BY CARRIER ITEM 206 — NOT RELAXED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE TWO SUPERSEDED ASSERTIONS, QUOTED VERBATIM so a future session can see
+ *    exactly what stopped being true and does not read this as a weakened gate:
+ *
+ *      6.1 ⭐ the pair-offer card takes a full-width row
+ *          preg_match( '/li\.bhp-shop-offer-item[^{]*\{[^}]*grid-column:\s*1\s*\/\s*-1/', $mobile )
+ *      6.2 ⭐ the Complete Collection card takes a full-width row
+ *          preg_match( '/bhp-shop-collection-item[^{]*\{[^}]*grid-column:\s*1\s*\/\s*-1/', $mobile )
+ *
+ * ⭐⭐ AND THE OLD §6.3 PREDICTED THIS EXACT MOMENT. It read: *"If a composite
+ *    is ever registered, this assertion still holds and the full-row choice can
+ *    be revisited DELIBERATELY rather than by accident."* This is that
+ *    revisiting, and it is deliberate: the guard was written to fire, it fired,
+ *    and the decision is being recorded rather than the assertion quietly
+ *    deleted.
+ *
+ * ⭐ WHY THE PREMISE DIED. The full-row rule's stated reason was never taste —
+ *    it was that both offer cards rendered IMAGELESS (`FD-549` R2.3, no bundle
+ *    composite existed) and *"an imageless card squeezed into a 172px cell
+ *    beside a card that has a cover reads as a broken tile."* At 1.19.284 two
+ *    real composites exist and are registered as attachments, so both cards
+ *    carry a picture in the same slot as the card beside them. ⛔ THERE IS NO
+ *    IMAGELESS TILE LEFT TO PROTECT.
+ *
+ * ⛔ THE NO-ORPHAN RULE ITSELF IS UNCHANGED AND IS STILL THE POINT OF §6. It is
+ *    now enforced by ARITHMETIC on the SERVED grid (§6.3) rather than by
+ *    exempting two cards from it.
  */
-if ( function_exists( 'bhp_offer_composite_attachment_id' ) && function_exists( 'bhp_offer_catalog' ) ) {
-	$s2u_any_composite = false;
-	foreach ( array_keys( bhp_offer_catalog() ) as $s2u_ok ) {
-		if ( bhp_offer_composite_attachment_id( $s2u_ok ) ) {
-			$s2u_any_composite = true;
-		}
+
+/*
+ * ⛔ THE INVERSION, ASSERTED. The superseded rule must be GONE from the shipped
+ *    artefact, not merely overridden by a later block — a `grid-column: 1 / -1`
+ *    still present and out-ranked by specificity is a one-edit revert away from
+ *    silently returning, and CSS order bugs of that shape are invisible on
+ *    screen until a fourth chapter book lands.
+ */
+s2u_assert(
+	! preg_match( '/li\.bhp-shop-offer-item[^{}]*\{[^}]*grid-column:\s*1\s*\/\s*-1/', $s2u_mobile )
+		&& ! preg_match( '/bhp-shop-collection-item[^{}]*\{[^}]*grid-column:\s*1\s*\/\s*-1/', $s2u_mobile ),
+	'6.1 ⭐ ITEM 206 — neither bundle card is forced to a full-width row any more'
+);
+
+/*
+ * ⭐⭐ THE COMPOSITES ARE REGISTERED — AND THIS IS NOW A GATE, NOT A STATE NOTE.
+ *    It is the ENTIRE premise of dropping the full-row rule. If the composites
+ *    stop resolving, the cards go back to being imageless in a 172px cell,
+ *    which is the exact "broken tile" the superseded rule existed to prevent —
+ *    and this build would then be wrong rather than merely different.
+ *
+ * ⛔ IT DOES NOT ASSERT A HARDCODED ATTACHMENT ID. Ids are environment-local;
+ *    staging's 4570 is not production's 4570. It asserts that the SLUGS RESOLVE
+ *    on whatever environment the suite is running against, which is the thing
+ *    that actually has to be true.
+ */
+if ( function_exists( 'bhp_offer_composite_attachment_id' ) && function_exists( 'bhp_offer_composite_slugs' ) ) {
+	foreach ( bhp_offer_composite_slugs() as $s2u_ck => $s2u_slug ) {
+		$s2u_cid = (int) bhp_offer_composite_attachment_id( $s2u_ck );
+		s2u_assert(
+			$s2u_cid > 0 && 'attachment' === get_post_type( $s2u_cid ),
+			sprintf(
+				'6.2 ⭐ the "%s" composite resolves to a real attachment (slug %s -> ID %d)',
+				$s2u_ck,
+				$s2u_slug,
+				$s2u_cid
+			)
+		);
 	}
+} else {
+	s2u_assert( false, '6.2 ⛔ bhp_offer_composite_slugs()/bhp_offer_composite_attachment_id() missing — item 206 did not load' );
+}
+
+/*
+ * ⛔⛔ THE NO-ORPHAN RULE, RE-PROVED BY COUNTING THE SERVED GRID RATHER THAN BY
+ *    EXEMPTING CARDS FROM IT. Six cards in a 2-track grid is three clean rows.
+ *    An ODD count would leave exactly the half-width orphan cell the 1.19.283
+ *    rule was working around — so a seventh card cannot silently orphan the row
+ *    without this failing.
+ *
+ * ⭐ COUNTED FROM THE RENDERED `ul.products` ON THE LIVE ENVIRONMENT, not from a
+ *    template and not from a constant. The count is reported either way so the
+ *    number is in the log even when it passes.
+ */
+/*
+ * ⛔ THE SHOP ARCHIVE IS FETCHED FRESH HERE. It is NOT reused from `$s2u_html`
+ *    above — that variable holds one card's META FRAGMENT from the §2 loop, not
+ *    the archive document, and counting `<li>` in it would return 0 on a
+ *    correct build. (Caught by running the suite, not by reading it.)
+ */
+$s2u_shop_url  = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : '';
+$s2u_shop_doc  = '';
+if ( '' !== $s2u_shop_url ) {
+	$s2u_resp = wp_remote_get( $s2u_shop_url, array( 'timeout' => 45, 'sslverify' => false ) );
+	if ( ! is_wp_error( $s2u_resp ) && 200 === (int) wp_remote_retrieve_response_code( $s2u_resp ) ) {
+		$s2u_shop_doc = (string) wp_remote_retrieve_body( $s2u_resp );
+	}
+}
+
+if ( '' !== $s2u_shop_doc && preg_match( '#<ul[^>]*class="[^"]*\bproducts\b[^"]*"[^>]*>(.*?)</ul>#s', $s2u_shop_doc, $s2u_ul ) ) {
+	$s2u_card_n = preg_match_all( '/<li[^>]*\bclass="[^"]*\bproduct\b[^"]*"/', $s2u_ul[1] );
 	s2u_assert(
-		true,
+		$s2u_card_n > 0 && 0 === $s2u_card_n % 2,
+		sprintf( '6.3 ⛔ the served grid holds an EVEN number of cards, so 2-up leaves no orphan cell (%d cards)', $s2u_card_n )
+	);
+	/*
+	 * ⭐ AND BOTH BUNDLE CARDS ARE ACTUALLY IN THAT COUNT. An even number that
+	 *    happened to exclude the two offer cards would pass 6.3 while item 206
+	 *    was entirely missing from the grid.
+	 */
+	s2u_assert(
+		1 === substr_count( $s2u_ul[1], 'bhp-shop-offer-item' )
+			&& 1 === substr_count( $s2u_ul[1], 'bhp-shop-collection-item' ),
 		sprintf(
-			'6.3 (state, not a gate) bundle composite registered: %s — the full-row choice is recorded either way',
-			$s2u_any_composite ? 'YES' : 'no (FD-549 R2.3 imageless degrade in force)'
+			'6.4 ⭐ both bundle cards are IN the served grid (pair %d, collection %d)',
+			substr_count( $s2u_ul[1], 'bhp-shop-offer-item' ),
+			substr_count( $s2u_ul[1], 'bhp-shop-collection-item' )
 		)
 	);
+} else {
+	s2u_assert( false, '6.3 ⛔ the served ul.products could not be isolated to count cards' );
 }
 
 echo "\n=== §7 · THE DESKTOP CARD IS UNCHANGED ===\n";

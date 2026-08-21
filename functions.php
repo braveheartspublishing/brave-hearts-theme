@@ -836,7 +836,88 @@ function bhp_woocommerce_archive_hero() {
 }
 add_action('woocommerce_before_main_content', 'bhp_woocommerce_archive_hero', 5);
 
-/**
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔⛔ REMOVED FROM /shop/ AT 1.19.284 — CARRIER ITEM 207.
+ *     `bhp_woocommerce_shop_complete_collection_banner()` AND ITS HOOK ARE
+ *     GONE. THE WHOLE HEAD-NOTE BELOW IS THEREFORE HISTORY.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ ANDREW SIGNORE, carrier item 207, 2026-08-21. ⚠️ RELAYED through
+ *    `chief-of-staff` (Gandalf 9) in the build brief — ⛔ NOT witnessed
+ *    first-hand by the agent that made this change. Recorded as relayed, per
+ *    Standing Rules §9.2 rule 2, so the basis of the claim travels with it.
+ *    His instruction: the collection carousel / series block comes OFF the
+ *    shop page. ⛔ THERE ONLY. Every other surface that carries a Collection
+ *    gallery is untouched by this change and was verified untouched — see
+ *    below.
+ *
+ * ⭐⭐ WHY THIS SUBTRACTION WAS ALLOWED TO PROCEED, stated rather than assumed,
+ *    because `21-PROTECTED-ELEMENTS-MANIFEST.md` §5 says a blocked build is
+ *    the manifest working and no agent removes a protected element on its own
+ *    judgement:
+ *
+ *      1. ⭐ HIS OWN WORD IS THE `FD-542` AUTHORITY. §5's gate is "on Andrew's
+ *         explicit word (Standing Rules §6)". Item 207 IS that word. Nothing
+ *         here rests on this agent's judgement about whether the banner earns
+ *         its place.
+ *      2. ⛔ AND THE MANIFEST HAS NO ROW TO MOVE — READ, NOT ASSUMED. §3 has
+ *         sections HOME, POSTS, PRODUCTS, COLLECTION and SITEWIDE. ⭐ THERE IS
+ *         NO SHOP SECTION, and `bhp_pe_manifest()` in
+ *         `tests/test-protected-elements.php` has no `shop` key either. The
+ *         same finding 1.19.283 recorded when it hid the Kirkus badge on the
+ *         mobile shop card. So this removes no listed element and relaxes no
+ *         assertion. ⛔ The `home`, `product` and `collection` rows are
+ *         untouched and still pass.
+ *      3. ⛔ NO CTA IS ORPHANED, which is the failure shape of item 118 and the
+ *         thing §1.11 of the suite exists to catch. The banner's only outbound
+ *         control was "View the Complete Collection" → /complete-collection/.
+ *         ⭐ THE SAME DESTINATION IS STILL ON THE SAME PAGE: the Complete
+ *         Collection shop card carries "GET THE COMPLETE COLLECTION" to the
+ *         identical URL, and at 1.19.284 it carries the three-paperback
+ *         composite and the $31.99 price beside it (item 206). The path a
+ *         parent walks is shorter, not missing.
+ *
+ * ⛔ WHAT WAS REMOVED WITH IT, so nothing is left half-wired:
+ *      · the `woocommerce_before_main_content` hook at priority 6;
+ *      · `bhp_cx_shop_banner_gallery_media()` in `inc/collection-gallery.php` —
+ *        the predicate had exactly two callers, both of them this feature;
+ *      · the `is_shop()` branch of `bhp_book_enqueue_media_assets()` in
+ *        `inc/book-formats.php`, so `book-media.css` / `book-media.js` no
+ *        longer load on the shop archive. ⭐ Leaving that branch would have
+ *        shipped two assets to every shop visitor for a component that no
+ *        longer renders.
+ *
+ * ⭐ THE CSS IS DELIBERATELY LEFT IN PLACE, and that is a reversibility
+ *    decision rather than an oversight. `.woo-complete-collection-banner*` in
+ *    `style.css` and `assets/css/book-media.css` now matches nothing on any
+ *    page. It costs bytes and renders nothing; deleting it would spread this
+ *    change across two more built artefacts and make the restore path more
+ *    than one commit. ⚠️ FLAGGED FOR CLEANUP rather than silently kept.
+ *
+ * ⛔⛔ EVERY OTHER COLLECTION GALLERY IS UNTOUCHED, AND THIS WAS CHECKED
+ *    RATHER THAN ASSERTED. `bhp_cx_collection_gallery_map()` never had a shop
+ *    entry (see the head-note in `inc/collection-gallery.php`, which explains
+ *    that the shop archive shares `archive-product.php` with every product_cat
+ *    and product_tag archive, so a map entry would have leaked the carousel
+ *    across all of them). /complete-collection/, the homepage, /books/ and the
+ *    four funnel pages resolve through the map and through
+ *    `bhp_book_render_collection_hero_gallery()`, neither of which this change
+ *    touches. `tests/test-shop-collection-carousel.php` now asserts BOTH
+ *    halves: absent on /shop/, still present on /complete-collection/.
+ *
+ * ⭐ TO RESTORE: re-add the function and its `add_action`, the
+ *    `bhp_cx_shop_banner_gallery_media()` predicate, and the `is_shop()`
+ *    enqueue branch. All three are in the 1.19.283 tree at commit `da7f0ed`.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ⬇ WHAT FOLLOWS IS THE REMOVED COMPONENT'S OWN RECORD, PRESERVED VERBATIM AND
+ *   DELIBERATELY NOT DELETED. It documents a founder ruling of 2026-08-17 that
+ *   PUT the carousel here, and a 1.19.234 argument AGAINST it that was
+ *   overruled. A future session that cannot see both will re-derive one of
+ *   them. ⛔ NONE OF IT DESCRIBES LIVE BEHAVIOUR ANY MORE.
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
  * Complete Collection banner above the shop catalog grid (Overnight
  * Conversion Sprint, Priority 1.5) -- intercepts customers before they
  * start comparing six nearly-identical single-edition cards. Shop archive
@@ -971,54 +1052,18 @@ add_action('woocommerce_before_main_content', 'bhp_woocommerce_archive_hero', 5)
  *    fires on a bundle-plugin action the shop archive never runs. This is the
  *    only consumer of `#bhp-look-inside-complete_collection` on /shop/.
  */
-function bhp_woocommerce_shop_complete_collection_banner() {
-    if (!function_exists('is_shop') || !is_shop()) {
-        return;
-    }
-
-    $bhp_scc_media = function_exists('bhp_cx_shop_banner_gallery_media')
-        ? bhp_cx_shop_banner_gallery_media()
-        : null;
-    $bhp_scc_tpl   = $bhp_scc_media ? locate_template('template-parts/commerce/look-inside.php') : '';
-    $bhp_scc_show  = ($bhp_scc_media && '' !== $bhp_scc_tpl);
-    ?>
-    <div class="woo-complete-collection-banner<?php echo $bhp_scc_show ? ' woo-complete-collection-banner--gallery' : ''; ?>">
-      <div class="container woo-complete-collection-banner__inner">
-        <?php if ($bhp_scc_show) : ?>
-          <div class="woo-complete-collection-banner__media">
-            <?php
-            /*
-             * The documented variable contract of
-             * `template-parts/commerce/look-inside.php`. Set explicitly and
-             * completely — the template reads them from the including scope,
-             * so an unset one would inherit whatever a previous include left
-             * behind in this function's scope.
-             */
-            $media          = $bhp_scc_media;
-            $heading        = __('The Complete Collection - all three books', 'brave-hearts');
-            $heading_hidden = true;
-            $intro          = '';
-            $level          = 'h3';
-            $hero           = false;
-            $collection     = true;
-            $compact        = true;
-            $eager_first    = true;
-            include $bhp_scc_tpl;
-            ?>
-          </div>
-        <?php endif; ?>
-        <div class="woo-complete-collection-banner__lead">
-          <div class="woo-complete-collection-banner__copy">
-            <h2><?php esc_html_e('Looking for the complete series?', 'brave-hearts'); ?></h2>
-            <p><?php esc_html_e('Get all three adventures in paperback or hardcover.', 'brave-hearts'); ?></p>
-          </div>
-        </div>
-        <a class="btn btn-cta-primary" href="<?php echo esc_url(home_url('/complete-collection/')); ?>"><?php esc_html_e('View the Complete Collection', 'brave-hearts'); ?></a>
-      </div>
-    </div>
-    <?php
-}
-add_action('woocommerce_before_main_content', 'bhp_woocommerce_shop_complete_collection_banner', 6);
+/*
+ * ⛔⛔ THE FUNCTION AND ITS `add_action('woocommerce_before_main_content',
+ *     'bhp_woocommerce_shop_complete_collection_banner', 6)` STOOD HERE UNTIL
+ *     1.19.284 AND WERE REMOVED UNDER CARRIER ITEM 207. See the block above
+ *     for the ruling, the three reasons the subtraction was permitted, what
+ *     else came out with it, and the restore path (commit `da7f0ed`).
+ *
+ * ⛔ NOTHING REPLACES IT ON /shop/. The Complete Collection reaches the same
+ *    shopper as a PRODUCT-STYLE CARD IN THE GRID — composite, title, $31.99,
+ *    "GET THE COMPLETE COLLECTION" → /complete-collection/ — which is item 206
+ *    in the same release. ⭐ One offer, one place, one control.
+ */
 
 /** Add clear expedition metadata labels to product cards. */
 function bhp_woocommerce_loop_card_eyebrow() {
