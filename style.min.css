@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 407016bdb5fe76dcd11ecfa549cb06c9
+    source-md5: 5a5d4c3bea5d7360d620c0069083914b
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.284
+Version: 1.19.285
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -6621,4 +6621,25 @@ min-height: 44px;
 }
 .bhp-cart-toggle[data-bhp-cart-empty='true'] .bhp-cart-toggle__count {
   display: none;
+}
+body.woocommerce-shop .woocommerce-products-header { padding-block: 0; }
+body.woocommerce-shop .woocommerce-products-header > * { margin-block: var(--space-6); }
+body.woocommerce-shop .woo-expedition-shell ul.products { margin-top: 0; }
+body.woocommerce-shop .woo-expedition-shell { padding-top: var(--space-12); }
+body.woocommerce-shop .woocommerce-breadcrumb { margin-bottom: var(--space-4); }
+body.woocommerce-shop .woocommerce-result-count,
+body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
+@media (max-width: 640px) {
+body.woocommerce-shop header.woo-archive-hero.interior-hero {
+    padding-top: var(--space-4) !important;
+    padding-bottom: var(--space-4) !important;
+  }
+  body.woocommerce-shop .woo-archive-hero .text-lead {
+    margin-top: var(--space-3);
+    margin-bottom: 0;
+  }
+  body.woocommerce-shop .woo-expedition-shell { padding-top: var(--space-6); }
+  body.woocommerce-shop .woocommerce-breadcrumb { margin-bottom: var(--space-3); }
+  body.woocommerce-shop .woocommerce-result-count { margin-bottom: var(--space-3); }
+  body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
 }

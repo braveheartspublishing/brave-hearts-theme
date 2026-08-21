@@ -1025,7 +1025,43 @@ bhp_w1_assert(
  * Andrew's instruction was "less steps to purchase", not "these four strings
  * must appear in this file".
  */
-$w1_books_page = get_page_by_path( 'books' );
+/*
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ RETIRED 1.19.285 — CARRIER ITEM 209 MERGED /books/ INTO /shop/.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that wrote this).
+ *
+ * ⛔ B7 IS NOT REPEALED, AND THE SOURCE ASSERTION ABOVE STILL RUNS. The
+ *    "/books/ still asks for the add-to-checkout CTA" check reads
+ *    `page-books.php` FROM DISK and is untouched — the template is
+ *    deliberately still on disk so the merge reverts in one hunk.
+ *
+ * ⛔ WHAT IS RETIRED IS THE RENDERED-DOCUMENT HALF. `wp_remote_get()` follows
+ *    the 301, so this block would have received the /shop/ body and reported
+ *    four missing form fields — the MERGE misdiagnosed as a B7 regression. The
+ *    1.19.284 sweep already had to fix that exact shape once in
+ *    `test-bundle-cards-206-207.php`; this is the same lesson applied before
+ *    it costs a run.
+ *
+ * ⭐ THE RENDERED WITNESS IS NOT LOST, IT MOVED. The same shared partial is
+ *    rendered and asserted directly by `test-collection-band-freeship.php`
+ *    (which calls `get_template_part()` and never fetches a page, so no
+ *    redirect can touch it) and on the homepage by
+ *    `test-collection-purchase-path.php` §7. ⚠️ HONEST LIMIT: the two-click
+ *    checkout path had TWO rendered page witnesses and now has ONE.
+ *
+ * ⭐ Gated on the merge being in the build — revert the redirect and the block
+ *   below returns on its own.
+ */
+$w1_books_merged = function_exists( 'bhp_redirect_books_to_shop' );
+if ( $w1_books_merged ) {
+	echo "RETIRED: B7 rendered-/books/ block — merged into /shop/ by carrier item 209 (1.19.285).\n";
+	echo "RETIRED: B7's page-books.php SOURCE assertion above is untouched and DID run.\n";
+}
+
+$w1_books_page = $w1_books_merged ? null : get_page_by_path( 'books' );
 $w1_books_html = '';
 if ( $w1_books_page ) {
 	$w1_books_res = wp_remote_get( get_permalink( $w1_books_page->ID ), array( 'timeout' => 30, 'sslverify' => false ) );
@@ -1033,7 +1069,9 @@ if ( $w1_books_page ) {
 		$w1_books_html = (string) wp_remote_retrieve_body( $w1_books_res );
 	}
 }
-bhp_w1_assert( '' !== $w1_books_html, 'B7: /books/ renders (HTTP 200) so its CTA can be asserted', $failures );
+if ( ! $w1_books_merged ) {
+	bhp_w1_assert( '' !== $w1_books_html, 'B7: /books/ renders (HTTP 200) so its CTA can be asserted', $failures );
+}
 if ( '' !== $w1_books_html ) {
 	foreach ( array(
 		'name="bhp_bundle_nonce"'                                   => 'the plugin nonce',

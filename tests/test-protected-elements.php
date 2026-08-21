@@ -165,6 +165,41 @@ function bhp_pe_status( $url ) {
  *    Complete Collection product card (item 206). That is asserted in
  *    `tests/test-shop-collection-carousel.php` §4, not claimed here.
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.285 — CARRIER ITEM 209: /books/ IS MERGED INTO /shop/.
+ *     ⛔ NOT ONE ROW BELOW WAS TOUCHED, ADDED, MOVED OR WEAKENED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that wrote this
+ * note — recorded as relayed per Standing Rules §9.2 rule 2). `/books/` now
+ * answers a 301 to `/shop/` (`bhp_redirect_books_to_shop()`, functions.php).
+ *
+ * ⭐ THE BRIEF ASKED FOR ANY /books/-SCOPED ROW TO BE ANNOTATED AS MERGED
+ *    UNDER ITEM 209. ⛔ THERE IS NO SUCH ROW, AND THERE NEVER WAS.
+ *    READ, NOT ASSUMED, in the same sitting: this manifest has exactly four
+ *    sections — `home`, `post`, `product`, `collection`. No `books` section
+ *    exists, no row's marker is /books/-scoped, and §§1–5 of this suite fetch
+ *    the home page, posts, a product, /complete-collection/ and sitewide
+ *    surfaces — never /books/. So the annotation resolves to THIS NOTE plus a
+ *    recorded finding, exactly as item 207 resolved when it found no `shop`
+ *    section. An annotation invented to look like work would be a row nobody
+ *    can trace to a ruling.
+ *
+ * ⚠️ WHAT THE MERGE DOES COST IS RECORDED, NOT HIDDEN. /books/ rendered the
+ *    Complete Collection band, the Look Inside gallery, the single hero
+ *    primary, and ONE copy of the founder's free-shipping sentence. /shop/
+ *    renders none of those four. ⛔ THE MANIFEST ROW FOR THAT SENTENCE IS
+ *    /complete-collection/-SCOPED AND IS UNAFFECTED — it still requires `min 2`
+ *    there, which `tests/test-item-209-books-shop-merge.php` §3.5 re-proves
+ *    against the live page rather than assuming this note is still true.
+ *
+ * ⛔ AND NO CTA WAS ORPHANED — the item-118 failure shape §1.11 exists to
+ *    catch. The retired band's only outbound control went to
+ *    /complete-collection/; the same destination is on /shop/ as the item-206
+ *    Complete Collection card. Asserted in
+ *    `tests/test-item-209-books-shop-merge.php` §3, not claimed here.
+ *
  * @return array
  */
 function bhp_pe_manifest() {

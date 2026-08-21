@@ -535,6 +535,20 @@ function bhp_seo_filter_robots_txt($output, $public) {
 function bhp_seo_theme_redirected_paths() {
     $paths = [
         untrailingslashit((string) wp_parse_url(home_url('/teachers-guide/'), PHP_URL_PATH)),
+        /*
+         * ⭐ ADDED 1.19.285 — CARRIER ITEM 209. `/books/` -> `/shop/` via
+         *    `bhp_redirect_books_to_shop()` (functions.php, template_redirect
+         *    priority 1). Registered in the SAME sitting as the redirect,
+         *    because the 1.19.272 rule is "a URL that 301s never enters the
+         *    sitemap" and a 301 shipped without this line advertises a
+         *    redirect to Google — the precise defect the generalisation above
+         *    was written to end.
+         *
+         * ⚠ UNLIKE the Bookvault slug noted below, this one IS enumerated:
+         *   the /books/ PAGE still exists and is still published, so Rank Math
+         *   reaches it and the exclusion is guarding something real.
+         */
+        untrailingslashit((string) wp_parse_url(home_url('/books/'), PHP_URL_PATH)),
     ];
 
     return array_values(array_filter(apply_filters('bhp_seo_theme_redirected_paths', $paths)));

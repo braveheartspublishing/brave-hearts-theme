@@ -991,12 +991,37 @@ bhp_hw_assert(
    ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n=== §4 — THE SHARED HERO COMPONENT DID NOT LEAK ONTO OTHER PAGES ===\n";
 
+/*
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.285 — CARRIER ITEM 209 MERGED /books/ INTO /shop/.
+ *     THE SUPERSEDED ROW, VERBATIM:   '/books/'    => 'Books',
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that wrote this).
+ *
+ * ⛔ HALF OF THIS LOOP WOULD HAVE PASSED FOR THE WRONG REASON AND HALF WOULD
+ *    HAVE FAILED FOR THE WRONG REASON, WHICH IS WHY THE ROW MOVES RATHER THAN
+ *    STAYING. `bhp_hw_fetch()` follows the 301 to /shop/. The LEAK assertion
+ *    ("none of the three home-hero slots rendered here") is still meaningful
+ *    there. The second assertion — "its hero still renders normally", keyed on
+ *    `home-hero__title` — is a statement about a PAGE TEMPLATE, and a
+ *    WooCommerce archive correctly renders `woo-archive-hero` instead. Left in,
+ *    it would have reported a correct archive as a broken hero.
+ *
+ * ⭐ THE LEAK CHECK IS NOT LOST. It is re-asserted against /shop/ immediately
+ *    below the loop, on its own terms, so coverage of the merged door is
+ *    stronger than a row that silently measured the wrong thing.
+ */
+$hw_books_merged = function_exists( 'bhp_redirect_books_to_shop' );
 $other_pages = array(
 	'/about/'    => 'About',
-	'/books/'    => 'Books',
 	'/contact/'  => 'Contact',
 	'/teachers/' => 'Teachers',
 );
+if ( ! $hw_books_merged ) {
+	$other_pages['/books/'] = 'Books';
+}
 foreach ( $other_pages as $path => $label ) {
 	$doc = bhp_hw_fetch( home_url( $path ) );
 	if ( '' === $doc ) {
@@ -1015,6 +1040,34 @@ foreach ( $other_pages as $path => $label ) {
 		"§4 {$label} — its hero still renders normally",
 		$failures
 	);
+}
+
+/*
+ * ⭐ THE MERGED DOOR, ON ITS OWN TERMS (carrier item 209, 1.19.285). /shop/ is
+ *    a WooCommerce archive, so it is checked for the LEAK — the thing §4
+ *    actually exists to catch — and for its OWN hero, `woo-archive-hero`,
+ *    rather than for a page-template hero it was never supposed to have.
+ */
+if ( $hw_books_merged ) {
+	$hw_shop_doc = bhp_hw_fetch( function_exists( 'bhp_books_merge_destination' ) && '' !== bhp_books_merge_destination()
+		? bhp_books_merge_destination()
+		: home_url( '/shop/' ) );
+	if ( '' === $hw_shop_doc ) {
+		bhp_hw_assert( false, '§4 Shop (merged /books/) — page could not be fetched', $failures );
+	} else {
+		bhp_hw_assert(
+			false === strpos( $hw_shop_doc, 'home-founder-chip' )
+				&& false === strpos( $hw_shop_doc, 'home-hero__title-mark' )
+				&& false === strpos( $hw_shop_doc, 'home-hero__invitations' ),
+			'§4 Shop (merged /books/) — none of the three new hero slots leaked here',
+			$failures
+		);
+		bhp_hw_assert(
+			false !== strpos( $hw_shop_doc, 'woo-archive-hero' ),
+			'§4 Shop (merged /books/) — the ARCHIVE hero renders (item 209 compressed it, it did not remove it)',
+			$failures
+		);
+	}
 }
 /* ═══════════════════════════════════════════════════════════════════════════
    §1.7 — 1.19.247 (PASS4). THE DESKTOP FOLD.

@@ -1264,7 +1264,23 @@ function bhp_fallback_menu() {
         // B6: the fallback nav carries "Start Here" too, so the two nav
         // sources cannot disagree if the stored menu is ever unassigned.
         __('Start Here', 'brave-hearts')        => home_url('/find-your-adventure/'),
-        __('Books', 'brave-hearts')             => home_url('/books/'),
+        /*
+         * ⭐ 1.19.285, CARRIER ITEM 209 — the PRIMARY nav's Books entry points
+         *    at /shop/ here too. ⚠ THIS PATH IS DORMANT on both environments
+         *    (a stored menu is assigned to `primary`, so `fallback_cb` never
+         *    fires — verified, not assumed), so this line changes nothing
+         *    today. It is changed anyway because the day someone unassigns the
+         *    menu in wp-admin, the fallback becomes the nav, and a dormant copy
+         *    of a retired route is exactly how a merged page comes back.
+         *    LABEL UNCHANGED: still "Books".
+         * ⛔ `bhp_footer_fallback_menu()` is DELIBERATELY NOT changed — the
+         *    footer is outside item 209's wording, its /books/ link 301s
+         *    correctly, and widening the brief by inference is the failure this
+         *    repository keeps a subtraction record for.
+         */
+        __('Books', 'brave-hearts')             => (function_exists('bhp_books_merge_destination') && '' !== bhp_books_merge_destination())
+            ? bhp_books_merge_destination()
+            : home_url('/books/'),
         __('Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
         __('About', 'brave-hearts')             => home_url('/about/'),
         __('Blog', 'brave-hearts')              => home_url('/blog/'),
@@ -1328,6 +1344,116 @@ function bhp_redirect_legacy_teacher_resources() {
     }
 }
 add_action('template_redirect', 'bhp_redirect_legacy_teacher_resources');
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.285 — CARRIER ITEM 209, LIMB 2: /books/ IS MERGED INTO /shop/.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that wrote this —
+ * recorded as relayed per Standing Rules §9.2 rule 2). Two storefront doors
+ * become one: /books/ answers with a PERMANENT redirect to /shop/, and the
+ * primary-nav "ADVENTURE BOOKS" entry points at /shop/ with its label
+ * untouched (see `bhp_adventure_books_nav_target_shop()` below).
+ *
+ * ⛔⛔ WHAT THIS COSTS, STATED HERE RATHER THAN DISCOVERED LATER. /shop/ is a
+ *    WooCommerce archive and `page-books.php` was not. Counted in the SERVED
+ *    documents of both pages on staging 1.19.284, same origin, real browser:
+ *
+ *      marker                                      /books/   /shop/
+ *      bhp-collection-band                            2         0
+ *      "Start with Book 1" (the single hero primary)  1         0
+ *      look-inside                                    7         0
+ *      "FREE Shipping on the complete collection…"    1         0
+ *      bhp-shop-collection-card                       0         6
+ *      woocommerce-loop-product__title                0         6
+ *
+ *    So the merge RETIRES the collection band, the Look Inside gallery and the
+ *    founder's free-shipping sentence from this route, and replaces them with
+ *    the item-206 product grid and its Complete Collection card. ⭐ The
+ *    collection PURCHASE PATH survives — the card carries the same
+ *    /complete-collection/ destination — which is the item-118 "no orphaned
+ *    CTA" test, and it is asserted in `tests/test-item-209-books-shop-merge.php`
+ *    §3 rather than claimed here. ⛔ The other three are genuine subtractions
+ *    and are reported to the Chief of Staff as such, not absorbed silently.
+ *
+ * ⛔ `page-books.php` IS DELIBERATELY LEFT ON DISK, and so is every
+ *    `home_url('/books/')` link in the theme. They 301 correctly. Deleting the
+ *    template would make this one-line-reversible change a rebuild.
+ *
+ * ⭐ SITEMAP: `/books/` is registered in `bhp_seo_theme_redirected_paths()`
+ *    (inc/seo-hygiene.php) in the same sitting, because the 1.19.272 rule is
+ *    "a URL that 301s never enters the sitemap" and a redirect added without
+ *    that registration advertises a redirect to Google.
+ */
+function bhp_redirect_books_to_shop() {
+    if (is_admin()) {
+        return;
+    }
+
+    $request_path = untrailingslashit((string) wp_parse_url(wp_unslash($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH));
+    $books_path   = untrailingslashit((string) wp_parse_url(home_url('/books/'), PHP_URL_PATH));
+
+    if ('' === $books_path || $request_path !== $books_path) {
+        return;
+    }
+
+    $shop_url = bhp_books_merge_destination();
+    if ('' === $shop_url) {
+        return;
+    }
+
+    /*
+     * Query args travel. A school-visit session is carried in the query string
+     * (`?bhp_visit=…`) and dropping it here would silently un-flag a parent
+     * mid-journey — the FD-505/FD-506 path that must never break. The same
+     * applies to every UTM landing on this legacy door.
+     */
+    $query = (string) wp_parse_url(wp_unslash($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_QUERY);
+    if ('' !== $query) {
+        $shop_url .= (false === strpos($shop_url, '?') ? '?' : '&') . $query;
+    }
+
+    wp_safe_redirect($shop_url, 301, 'Brave Hearts Theme');
+    exit;
+}
+add_action('template_redirect', 'bhp_redirect_books_to_shop', 1);
+
+/**
+ * Where /books/ merges to, or '' if it cannot be resolved safely.
+ *
+ * ⛔ FAILS CLOSED, AND THAT IS THE WHOLE FUNCTION. If WooCommerce is inactive,
+ *    if the Shop page is unset, or if the resolved destination is /books/
+ *    itself, this returns '' and NOTHING redirects. A redirect that cannot
+ *    name its destination must not fire: the failure mode is a redirect loop
+ *    or a 301 into a 404, both of which are worse than the page it replaced.
+ *
+ * @return string Absolute URL, or ''.
+ */
+function bhp_books_merge_destination() {
+    $shop_url = function_exists('wc_get_page_permalink') ? (string) wc_get_page_permalink('shop') : '';
+
+    if ('' === $shop_url || false !== strpos($shop_url, 'woocommerce_shop_page_not_set')) {
+        $shop_page = get_page_by_path('shop');
+        $shop_url  = ($shop_page instanceof WP_Post && 'publish' === $shop_page->post_status)
+            ? (string) get_permalink($shop_page->ID)
+            : '';
+    }
+
+    if ('' === $shop_url) {
+        return '';
+    }
+
+    $shop_path  = untrailingslashit((string) wp_parse_url($shop_url, PHP_URL_PATH));
+    $books_path = untrailingslashit((string) wp_parse_url(home_url('/books/'), PHP_URL_PATH));
+
+    if ('' === $shop_path || $shop_path === $books_path) {
+        return '';
+    }
+
+    return $shop_url;
+}
 
 /**
  * The Bookvault WooCommerce plugin originally created the Mariana Trench
@@ -1446,11 +1572,36 @@ add_filter('wp_nav_menu_objects', 'bhp_canonicalize_teacher_menu_items');
  * reader otherwise.
  */
 function bhp_stack_adventure_books_nav_label($items) {
-    $books_path = untrailingslashit((string) wp_parse_url(home_url('/books/'), PHP_URL_PATH));
+    /*
+     * ⭐ 1.19.285, CARRIER ITEM 209 — TWO PATHS MATCH NOW, NOT ONE.
+     *
+     * ⛔ THE DEFECT THIS PRE-EMPTS. This filter used to key on /books/ alone.
+     *    Item 209 points the entry at /shop/, and the brief's own words are
+     *    "label unchanged" — so if the stored menu row is ever re-saved in
+     *    wp-admin to /shop/ directly, a /books/-only match would silently drop
+     *    the stacked "Adventure / Books" label AND the `menu-item--adventure-
+     *    books` class the aria-label filter below keys on. Nothing would error;
+     *    the nav would just quietly go back to a single-line "Books" with no
+     *    accessible name. Matching BOTH paths makes the label survive either
+     *    stored value, which is what "unchanged" has to mean here.
+     *
+     * ⚠ The stored menu row itself is NOT edited. It stays whatever it is; the
+     *   retarget happens in `bhp_adventure_books_nav_target_shop()` at
+     *   priority 25, AFTER this filter, so the label is stacked first and the
+     *   URL is rewritten second. Order is load-bearing, not incidental.
+     */
+    $match_paths = array(
+        untrailingslashit((string) wp_parse_url(home_url('/books/'), PHP_URL_PATH)),
+    );
+    $merge_dest = function_exists('bhp_books_merge_destination') ? bhp_books_merge_destination() : '';
+    if ('' !== $merge_dest) {
+        $match_paths[] = untrailingslashit((string) wp_parse_url($merge_dest, PHP_URL_PATH));
+    }
+    $match_paths = array_values(array_filter(array_unique($match_paths)));
 
     foreach ($items as $item) {
         $item_path = untrailingslashit((string) wp_parse_url($item->url, PHP_URL_PATH));
-        if ($item_path !== $books_path) {
+        if (!in_array($item_path, $match_paths, true)) {
             continue;
         }
 
@@ -1469,6 +1620,57 @@ function bhp_adventure_books_nav_aria_label($atts, $item) {
     return $atts;
 }
 add_filter('nav_menu_link_attributes', 'bhp_adventure_books_nav_aria_label', 10, 2);
+
+/**
+ * CARRIER ITEM 209, LIMB 2 — the "ADVENTURE BOOKS" entry points at /shop/.
+ *
+ * ⛔ THE LABEL IS NOT TOUCHED, AND THAT IS THE BRIEF'S OWN CONSTRAINT. This
+ *    function reads `$item->title` never, writes it never. It rewrites exactly
+ *    one property, `$item->url`, and adds the current-page classes WordPress
+ *    can no longer work out for itself once the URL and the stored object
+ *    disagree.
+ *
+ * ⚠ PRIORITY 25 — AFTER the label-stacking filter at 20. Reversed, the label
+ *   filter would meet an already-rewritten /shop/ URL. It now matches both
+ *   paths so that ordering is belt-and-braces rather than the only thing
+ *   holding the label on, but the ordering is still the intended contract.
+ *
+ * ⚠ NOT A DATABASE EDIT. The stored menu row is untouched, exactly like the
+ *   Expedition Guides and START HERE entries above — a DB menu row does not
+ *   travel in a theme ZIP, so a staging-only menu edit would mean the nav
+ *   silently still pointed at /books/ on production after an approved deploy.
+ *   Recorded as `CYCLE165-LD-209-NAV`.
+ */
+function bhp_adventure_books_nav_target_shop($items) {
+    $shop_url = bhp_books_merge_destination();
+    if ('' === $shop_url) {
+        return $items;
+    }
+
+    $books_path = untrailingslashit((string) wp_parse_url(home_url('/books/'), PHP_URL_PATH));
+    $shop_path  = untrailingslashit((string) wp_parse_url($shop_url, PHP_URL_PATH));
+    $on_shop    = function_exists('is_shop') && is_shop();
+
+    foreach ($items as $item) {
+        $item_path = untrailingslashit((string) wp_parse_url($item->url, PHP_URL_PATH));
+        if ($item_path !== $books_path && $item_path !== $shop_path) {
+            continue;
+        }
+
+        $item->url = $shop_url;
+
+        if ($on_shop) {
+            $item->current = true;
+            $item->classes = array_values(array_unique(array_merge(
+                (array) $item->classes,
+                array('current-menu-item')
+            )));
+        }
+    }
+
+    return $items;
+}
+add_filter('wp_nav_menu_objects', 'bhp_adventure_books_nav_target_shop', 25);
 
 /* =====================================================================
  * B6 — "START HERE": ONE NEW PRIMARY-NAV ENTRY

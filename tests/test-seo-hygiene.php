@@ -324,11 +324,46 @@ bhp_seoh_assert($failures, 'sitemap: /teachers-guide/ is still excluded (CYCLE16
 
 /* THE FLOOR — the assertion that catches a broad redirect pattern gutting the
    sitemap. Every one of these must SURVIVE the filter. */
-$floor = array('/', '/shop/', '/complete-collection/', '/blog/', '/teachers/', '/about/', '/books/');
+/*
+ * ⭐⭐ 1.19.285 — CARRIER ITEM 209: `/books/` MOVES OFF THE FLOOR, BY THIS
+ *     FILE'S OWN RULE. The superseded line, verbatim:
+ *
+ *       $floor = array('/', '/shop/', '/complete-collection/', '/blog/', '/teachers/', '/about/', '/books/');
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that wrote this).
+ * `/books/` now answers a 301 to `/shop/` (`bhp_redirect_books_to_shop()`), so
+ * the 1.19.272 rule this suite exists to enforce — **a URL that 301s never
+ * enters the sitemap** — now applies to it.
+ *
+ * ⛔ THIS IS NOT A WEAKENING, IT IS THE RULE FIRING. Leaving /books/ on the
+ *    floor would have asserted that a redirected URL MUST be advertised to
+ *    Google — the suite demanding the precise defect it was written to end.
+ *    It is not silently deleted either: it moves to the EXCLUSION side and is
+ *    asserted there, so the coverage count does not drop.
+ *
+ * ⛔ /shop/ STAYS ON THE FLOOR AND THAT IS THE LOAD-BEARING HALF. It is the
+ *    merge's destination; if the new registration ever over-matched and took
+ *    /shop/ with it, the storefront would leave the sitemap and this row is
+ *    what says so.
+ */
+$books_merged = function_exists('bhp_redirect_books_to_shop');
+$floor = array('/', '/shop/', '/complete-collection/', '/blog/', '/teachers/', '/about/');
+if (!$books_merged) {
+    $floor[] = '/books/';
+}
 foreach ($floor as $keep) {
     $kept = bhp_seo_exclude_redirected_from_sitemap($entry($keep), 'post', null);
     bhp_seoh_assert($failures, "sitemap FLOOR: {$keep} is NOT excluded",
         is_array($kept) && !empty($kept['loc']));
+}
+
+/* ⭐ THE OTHER HALF OF THE ITEM-209 MOVE. /books/ left the floor above; it is
+   asserted HERE rather than dropped, so the suite still says something about
+   it and a registration that silently stopped working would fail. */
+if ($books_merged) {
+    bhp_seoh_assert($failures, 'sitemap: /books/ IS excluded — it 301s to /shop/ (carrier item 209, 1.19.285)',
+        array() === bhp_seo_exclude_redirected_from_sitemap($entry('/books/'), 'post', null));
 }
 
 /* limb 2 — every NON-CANONICAL format edition is excluded, by rule, not by

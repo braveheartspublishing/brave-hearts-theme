@@ -176,9 +176,43 @@ foreach ( $funnels as $key => $conf ) {
 
 $surfaces['homepage'] = array( 'url' => home_url( '/' ), 'min' => 1 );
 
-$books_page = get_page_by_path( 'books' );
-if ( $books_page ) {
-	$surfaces['books'] = array( 'url' => get_permalink( $books_page->ID ), 'min' => 1 );
+/*
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ RETIRED 1.19.285 — CARRIER ITEM 209 MERGED /books/ INTO /shop/.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand). /books/ now answers a 301
+ * to /shop/ (`bhp_redirect_books_to_shop()`).
+ *
+ * ⛔ THIS ROW IS RETIRED RATHER THAN LEFT TO "PASS", AND THAT DISTINCTION IS
+ *    THE WHOLE POINT. `wp_remote_get()` follows redirects, so leaving the row
+ *    in would have fetched /books/, silently received the /shop/ document,
+ *    found the item-206 collection card, and reported GREEN — measuring the
+ *    SAME surface twice under two names while claiming to cover two. A suite
+ *    that passes for the wrong reason is worse than one that fails.
+ *
+ * ⭐ NO COVERAGE IS LOST: the `shop` surface immediately below is that exact
+ *    document, asserted under its real name.
+ *
+ * ⛔ GATED ON THE MERGE ACTUALLY BEING IN THE BUILD, not on a date or a
+ *    version literal. Revert the redirect and this row comes straight back,
+ *    which is what makes the retirement reversible instead of a deletion.
+ *
+ * The superseded row, verbatim:
+ *
+ *     $books_page = get_page_by_path( 'books' );
+ *     if ( $books_page ) {
+ *         $surfaces['books'] = array( 'url' => get_permalink( $books_page->ID ), 'min' => 1 );
+ *     }
+ */
+if ( function_exists( 'bhp_redirect_books_to_shop' ) ) {
+	echo "RETIRED: §2 `books` surface — merged into `shop` by carrier item 209 (1.19.285)\n";
+} else {
+	$books_page = get_page_by_path( 'books' );
+	if ( $books_page ) {
+		$surfaces['books'] = array( 'url' => get_permalink( $books_page->ID ), 'min' => 1 );
+	}
 }
 if ( function_exists( 'wc_get_page_id' ) && wc_get_page_id( 'shop' ) > 0 ) {
 	$surfaces['shop'] = array( 'url' => get_permalink( wc_get_page_id( 'shop' ) ), 'min' => 1 );

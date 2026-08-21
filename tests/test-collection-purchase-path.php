@@ -839,6 +839,47 @@ if ( ! $bhp_cpp_books_page ) {
 }
 $bhp_cpp_bands['books']['url'] = $bhp_cpp_books_page ? get_permalink( $bhp_cpp_books_page->ID ) : '';
 
+/*
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ RETIRED 1.19.285 — CARRIER ITEM 209 MERGED /books/ INTO /shop/.
+ *     ⛔ THE HOMEPAGE HALF OF §7 IS UNTOUCHED AND STILL RUNS.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that wrote this).
+ * /books/ answers a 301 to /shop/, and /shop/ is a WooCommerce archive that
+ * does not render the shared collection band at all — counted in the served
+ * documents on staging 1.19.284: `bhp-collection-band` 2 on /books/, 0 on
+ * /shop/.
+ *
+ * ⛔ THE BAND ITSELF IS NOT REPEALED AND MUST NOT BE READ AS SUCH. It still
+ *    renders on the homepage and on the four funnel pages, and §1–§6 above
+ *    still assert every one of them. What is retired is the /books/ SURFACE,
+ *    because the surface is gone — not the requirement.
+ *
+ * ⛔ WHY THIS IS A RETIREMENT AND NOT A SILENT PASS. `wp_remote_get()` follows
+ *    redirects. Left in, this loop would have fetched /books/, received the
+ *    /shop/ body, failed to find `bhp-collection-band` in it, and reported the
+ *    MERGE as a band regression — six failures on a correct build, which is
+ *    the third-time-someone-weakens-the-assertion path the 1.19.284 sweep
+ *    already had to walk once.
+ *
+ * ⭐ GATED ON THE MERGE BEING IN THE BUILD, not on a version literal: revert
+ *    `bhp_redirect_books_to_shop()` and this surface returns on its own.
+ *
+ * ⚠️ WHAT IS NO LONGER COVERED ANYWHERE, STATED RATHER THAN GLOSSED: the
+ *    two-click "add the collection and land on /checkout/" path had TWO
+ *    rendered witnesses (homepage + /books/) and now has ONE. The shared
+ *    partial's own arguments are still asserted at `test-wave1-capture.php`
+ *    B7 and `test-collection-band-freeship.php`, which render the partial
+ *    directly and are unaffected by any redirect.
+ */
+if ( function_exists( 'bhp_redirect_books_to_shop' ) ) {
+	echo "RETIRED: §7 `books` band surface — merged into /shop/ by carrier item 209 (1.19.285).\n";
+	echo "RETIRED: §7 the homepage band below is unaffected and still asserted.\n";
+	unset( $bhp_cpp_bands['books'] );
+}
+
 $bhp_cpp_default_fmt = function_exists( 'bhp_book_default_format' ) ? bhp_book_default_format() : '';
 bhp_cpp_assert( '' !== $bhp_cpp_default_fmt, '§7 the theme exposes a single default format', $failures );
 
@@ -1142,9 +1183,34 @@ if ( ! $bhp_cpp_toggle_formats ) {
  */
 echo "\n=== §7c — /books/ · THE BEST VALUE BAND OPENS FLUSH UNDER THE OVERVIEW ===\n";
 
-$bhp_cpp_gap_page = get_page_by_path( 'books' );
+/*
+ * ⭐⭐ RETIRED 1.19.285 — CARRIER ITEM 209. The whole of §7c is a statement
+ *     about the /books/ DOCUMENT: the adjacency of `#series-overview` and
+ *     `#books-complete-collection-banner`, and the CSS `+` combinator that
+ *     depends on it. /books/ now 301s to /shop/, which renders neither id.
+ *
+ * ⛔ THE RULE IT GUARDED IS RETIRED WITH ITS SURFACE, NOT WEAKENED. The CSS
+ *    pair it protects (`body:not(.home) .books-series-overview +
+ *    .books-complete-collection-banner`) is LEFT IN style.css deliberately, on
+ *    the same one-commit-restore reasoning item 207 recorded for the
+ *    `.woo-complete-collection-banner*` rules it orphaned. If /books/ is ever
+ *    un-merged, both the page and this section come back together.
+ *
+ * ⛔ Gated on the merge being in the build, so a revert restores the section
+ *    automatically rather than requiring someone to remember it exists.
+ */
+$bhp_cpp_gap_merged = function_exists( 'bhp_redirect_books_to_shop' );
+if ( $bhp_cpp_gap_merged ) {
+	echo "RETIRED: §7c — /books/ merged into /shop/ by carrier item 209 (1.19.285).\n";
+	echo "RETIRED: §7c — the #series-overview / #books-complete-collection-banner adjacency\n";
+	echo "RETIRED: §7c   has no surface to be adjacent ON. The CSS pair is kept for restore.\n";
+}
+
+$bhp_cpp_gap_page = $bhp_cpp_gap_merged ? null : get_page_by_path( 'books' );
 $bhp_cpp_gap_url  = $bhp_cpp_gap_page ? get_permalink( $bhp_cpp_gap_page->ID ) : '';
-bhp_cpp_assert( '' !== $bhp_cpp_gap_url, '§7c /books/ resolves', $failures );
+if ( ! $bhp_cpp_gap_merged ) {
+	bhp_cpp_assert( '' !== $bhp_cpp_gap_url, '§7c /books/ resolves', $failures );
+}
 
 if ( '' !== $bhp_cpp_gap_url ) {
 	$bhp_cpp_gap_res  = wp_remote_get( $bhp_cpp_gap_url, array( 'timeout' => 30, 'sslverify' => false ) );

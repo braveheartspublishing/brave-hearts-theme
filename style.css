@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.284
+Version: 1.19.285
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -11618,4 +11618,77 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 
 .bhp-cart-toggle[data-bhp-cart-empty='true'] .bhp-cart-toggle__count {
   display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.285 — CARRIER ITEM 209, LIMB 1: THE /shop/ ABOVE-FOLD COMPRESSION.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that wrote this —
+ * recorded as relayed per Standing Rules §9.2 rule 2). Item 207 took the
+ * Complete Collection carousel off /shop/ and left the space it occupied
+ * behind; this closes that space so the first product row is reached sooner.
+ *
+ * ⛔ THE THREE CONSTRAINTS THIS BLOCK HOLDS, AND THEY ARE THE BRIEF'S OWN:
+ *   1. NO ELEMENT IS REMOVED. Every node above the grid — the hero, the
+ *      breadcrumb, the (empty) products header, the result count, the ordering
+ *      select — still renders. Only spacing moves. `display:none` appears
+ *      nowhere below, deliberately.
+ *   2. NO TYPE SIZE CHANGES. Not one `font-size` in this block.
+ *   3. HOUSE RHYTHM. Every value is an existing `--space-*` token stepped DOWN
+ *      the scale. No new magic numbers are introduced.
+ *
+ * ⭐ MEASURED, NOT ESTIMATED. Before/after are real `getBoundingClientRect()`
+ *    reads at an asserted `innerWidth` of 390 and 1440 against staging — the
+ *    numbers are in the release record, not in this comment, because a number
+ *    in a comment goes stale silently.
+ *
+ * ⛔ THE BIGGEST SINGLE WIN IS NOT A TIGHTENING, IT IS A FIX.
+ *    `.woocommerce-products-header` renders on /shop/ with an EMPTY body — the
+ *    page title is suppressed sitewide by `woocommerce_show_page_title` =>
+ *    `__return_false` (functions.php), and the shop page carries no archive
+ *    description. Its `padding: var(--space-10) 0 var(--space-6)` (line ~1137)
+ *    was therefore 64px of padding around nothing.
+ *    ⚠ IT IS NOT ZEROED BLINDLY. The padding moves onto the header's CHILDREN
+ *      as margin, so the day that header does carry a description the rhythm
+ *      comes back on its own. A bare `padding:0` would have been a latent
+ *      regression on a page nobody was looking at.
+ *    ⚠ SCOPED TO `body.woocommerce-shop`. Product-category and search archives
+ *      DO print a title there and are deliberately untouched — the same
+ *      containment mistake item 204 records making once already.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- all widths -------------------------------------------------------- */
+
+body.woocommerce-shop .woocommerce-products-header { padding-block: 0; }
+body.woocommerce-shop .woocommerce-products-header > * { margin-block: var(--space-6); }
+
+/* The grid's own top margin doubled up with the ordering form's bottom margin
+   (they collapse to the larger of the two). One of them owns the gap now. */
+body.woocommerce-shop .woo-expedition-shell ul.products { margin-top: 0; }
+
+body.woocommerce-shop .woo-expedition-shell { padding-top: var(--space-12); }
+body.woocommerce-shop .woocommerce-breadcrumb { margin-bottom: var(--space-4); }
+body.woocommerce-shop .woocommerce-result-count,
+body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
+
+/* --- 390: the fold the ruling is about --------------------------------- */
+
+@media (max-width: 640px) {
+  /* Specificity 0-3-1 beats `body:not(.home) .interior-hero` (0-2-1), which
+     carries `!important` on both paddings from the interior-hero correction
+     near line 5350. Matching that `!important` is required, not stylistic. */
+  body.woocommerce-shop header.woo-archive-hero.interior-hero {
+    padding-top: var(--space-4) !important;
+    padding-bottom: var(--space-4) !important;
+  }
+  body.woocommerce-shop .woo-archive-hero .text-lead {
+    margin-top: var(--space-3);
+    margin-bottom: 0;
+  }
+  body.woocommerce-shop .woo-expedition-shell { padding-top: var(--space-6); }
+  body.woocommerce-shop .woocommerce-breadcrumb { margin-bottom: var(--space-3); }
+  body.woocommerce-shop .woocommerce-result-count { margin-bottom: var(--space-3); }
+  body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
 }

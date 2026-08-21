@@ -293,7 +293,35 @@ $i5_collection = get_page_by_path( 'complete-collection' );
 if ( $i5_collection ) {
 	$i5_pages['collection'] = get_permalink( $i5_collection );
 }
+/*
+ * ⭐⭐ 1.19.285 — CARRIER ITEM 209: THE `books` SAMPLE FOLLOWS THE REDIRECT.
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand). /books/ answers a 301 to
+ * /shop/.
+ *
+ * ⛔ THE SAMPLE IS RENAMED, NOT DROPPED, AND THE RENAME IS THE FIX.
+ *    `bhp_i5_fetch()` follows redirects, so leaving `'books'` in this list
+ *    would have kept fetching successfully and filed the /shop/ document under
+ *    the name `books`. Every §5/§6 message downstream would then have named a
+ *    page that no longer exists while describing one that does — the exact
+ *    class of quietly-wrong evidence that gets quoted later as a fact.
+ *
+ * ⭐ COUNT IS PRESERVED, so §2.2's "all N sampled pages fetched" keeps its
+ *    strength: one door replaced by one door, not a sample silently shrunk.
+ *
+ * ⚠ §3 below is the /books/-SPECIFIC part and is retired separately, with its
+ *   own citation. This line only decides which document is sampled.
+ */
+$i5_books_merged = function_exists( 'bhp_redirect_books_to_shop' );
 foreach ( array( 'books', 'about', 'contact', 'teachers', 'blog' ) as $slug ) {
+	if ( 'books' === $slug && $i5_books_merged ) {
+		$i5_pages['shop'] = function_exists( 'bhp_books_merge_destination' ) && '' !== bhp_books_merge_destination()
+			? bhp_books_merge_destination()
+			: home_url( '/shop/' );
+		echo "RETARGETED: §2 sample `books` -> `shop` (carrier item 209, 1.19.285)\n";
+		continue;
+	}
 	$i5_pages[ $slug ] = home_url( '/' . $slug . '/' );
 }
 $i5_docs   = array();
@@ -360,7 +388,29 @@ bhp_i5_assert(
 	'§3.2 "Start with Book 1" is untouched',
 	$failures
 );
-if ( isset( $i5_docs['books'] ) ) {
+/*
+ * ⭐⭐ RETIRED 1.19.285 — CARRIER ITEM 209 MERGED /books/ INTO /shop/.
+ *
+ * ⛔ §3.1 AND §3.2 ABOVE ARE UNTOUCHED AND STILL RUN. They read
+ *    `page-books.php` FROM DISK — the template is deliberately still there —
+ *    so "no secondary_link is passed" and "'Start with Book 1' is untouched"
+ *    remain enforced. If the merge is ever reverted, the page returns already
+ *    obeying item 3.
+ *
+ * ⛔ WHAT IS RETIRED IS §3.3–§3.6, WHICH MEASURE THE SERVED /books/ HERO.
+ *    `<section id="books-hero">` is not in the /shop/ document, so left in,
+ *    these four would have reported the MERGE as a one-primary regression —
+ *    four failures on a correct build.
+ *
+ * ⭐ THE ONE-PRIMARY RULE ITSELF IS NOT REPEALED. It is enforced sitewide by
+ *    `tests/test-header-offer.php` §2 (the door matrix) and on /shop/ by
+ *    `tests/test-shop-grid-2up-204.php`. This section's SURFACE went away; its
+ *    requirement did not.
+ */
+if ( $i5_books_merged ) {
+	echo "RETIRED: §3.3-§3.6 — the /books/ hero is merged into /shop/ (carrier item 209, 1.19.285).\n";
+	echo "RETIRED: §3.1-§3.2 above still assert page-books.php on disk and DID run.\n";
+} elseif ( isset( $i5_docs['books'] ) ) {
 	$hero = '';
 	if ( preg_match( '/<section id="books-hero".*?<\/section>/s', $i5_docs['books'], $m ) ) {
 		$hero = $m[0];

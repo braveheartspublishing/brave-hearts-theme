@@ -242,8 +242,33 @@ $doors = array(
  *    TEMPLATE. §2b below proves that directly, so a page renamed or a new
  *    audience landing added does not quietly escape the rule.
  */
+/*
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ RETIRED 1.19.285 — CARRIER ITEM 209 MERGED /books/ INTO /shop/.
+ *     THE SUPERSEDED ROW, VERBATIM:  'books' => home_url( '/books/' ),
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, carrier item 209, 2026-08-21 (⚠️ RELAYED through
+ * `chief-of-staff`, ⛔ NOT witnessed first-hand by the agent that wrote this).
+ *
+ * ⛔ THIS ROW WOULD HAVE FAILED, AND FOR A REASON THAT IS NOT A DEFECT.
+ *    Every entry here asserts the header offer is ABSENT, because the matrix
+ *    above measured one above-fold primary already on each of these templates.
+ *    /books/ now 301s to /shop/, `wp_remote_get()` follows it, and /shop/ is a
+ *    WooCommerce ARCHIVE — a different template, which is NOT in this matrix
+ *    and on which the header offer correctly RENDERS. So the row would have
+ *    reported a correct build as a suppression regression.
+ *
+ * ⛔ THE SUPPRESSION RULE IS KEYED ON THE TEMPLATE, NOT THE URL — §2b below
+ *    proves that directly and is untouched. Removing this URL removes a
+ *    sample, not a rule, and §2b is why that is safe rather than a hole.
+ *
+ * ⚠️ MEASUREMENT NOT CARRIED FORWARD, STATED RATHER THAN GLOSSED: the
+ *    /shop/ archive's own above-fold primary count at 390 has NOT been
+ *    re-measured for this matrix by this release. It is not added here on a
+ *    guess. `CYCLE165-LD-209-DOORS` — flagged to the Chief of Staff.
+ */
 $funnel_doors = array(
-	'books'         => home_url( '/books/' ),
 	'kit'           => home_url( '/reluctant-reader-adventure-kit/' ),
 	'typ'           => home_url( '/adventure-kit-thank-you/' ),
 	'teachers'      => home_url( '/teachers/' ),
