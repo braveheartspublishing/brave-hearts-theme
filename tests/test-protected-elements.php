@@ -221,8 +221,55 @@ function bhp_pe_manifest() {
 				'the one primary CTA — report §4 "Keeps" (sales); one primary per screen' ),
 			'bhp-landing-guarantee' => array( 'min', 1,
 				'guarantee — report §4 "Keeps" (trust)' ),
+			/*
+			 * ⭐⭐ ADDED 1.19.280 — THE FOUNDER'S FREE-SHIPPING STRING.
+			 *
+			 * Andrew Signore, carrier item 186, ~05:1x−0600 2026-08-21, read
+			 * FIRST-HAND AT SOURCE by the agent that added this row:
+			 *
+			 *   "Also Free Shipping on the complete collection needs to change
+			 *    to Free Shipping on the complete collection or 3 or more books
+			 *    purchased."
+			 *
+			 * ⭐ THIS ROW MODIFIES A LISTED TRUST STRING BY HIS OWN WORD, which
+			 *    is the ONLY thing that may move a manifest row (§5, the
+			 *    approval gate). Item 186 IS that word.
+			 *
+			 * ⭐ `min 2` IS MEASURED, NOT GUESSED: the string renders twice on
+			 *    /complete-collection/ — the cold-open bullets and the closing
+			 *    CTA bullets — observed live on staging 1.19.280 at an asserted
+			 *    innerWidth of 390 AND 1440 (newString: 2, oldStringAlone: 0).
+			 *    Both come from `bundle-landing-page.php`, and before 1.19.280
+			 *    they were two hardcoded copies of one promise.
+			 *
+			 * ⛔⛔ THE ROW DOES NOT RUN ON A SCHOOL-VISIT SESSION, AND THAT IS
+			 *    THE POINT OF THE GUARD, NOT AN EXEMPTION. A flagged parent is
+			 *    not being shipped anything and correctly sees "FREE author
+			 *    hand-delivery at your school visit" instead — verified live at
+			 *    both widths with ?bhp_visit=adams-2026-08-28 (shippingClaim: 0).
+			 *    Asserting presence unconditionally would FAIL a correctly
+			 *    behaving flagged journey, which is the `FD-505`/`FD-506` path
+			 *    that must never be broken by a gate.
+			 */
+			'FREE Shipping on the complete collection or 3 or more books purchased' => array( 'min', 2,
+				'the free-shipping promise, his exact string — carrier item 186 (trust + sales). '
+				. 'Skipped on a school-visit session, which shows hand-delivery instead.' ),
 		),
 	);
+}
+
+/**
+ * Is this run happening inside a school-visit session?
+ *
+ * ⛔ Used to skip the free-shipping row above. A flagged session REPLACES the
+ *    shipping promise with the hand-delivery sentence, by design — so on that
+ *    path the string's ABSENCE is correct behaviour, not a regression.
+ *
+ * @return bool
+ */
+function bhp_pe_visit_session() {
+	return function_exists( 'bhp_school_visit_use_delivery_framing' )
+		&& bhp_school_visit_use_delivery_framing();
 }
 
 /**
@@ -240,6 +287,19 @@ function bhp_pe_run_manifest( $tpl, $html, $where, $section, array &$failures ) 
 	foreach ( $rows[ $tpl ] as $marker => $rule ) {
 		++$i;
 		list( $mode, $want, $why ) = $rule;
+		/*
+		 * ⛔ 1.19.280 — THE ONE CONDITIONAL ROW, AND IT IS CONDITIONAL FOR A
+		 *    REASON THAT PROTECTS A JOURNEY RATHER THAN EXCUSING A FAILURE.
+		 *    On a school-visit session the shipping promise is REPLACED by the
+		 *    hand-delivery sentence by design, so asserting its presence would
+		 *    fail a correctly behaving flagged path (`FD-505`/`FD-506`).
+		 *    ⭐ Everything else in the manifest still runs on that path.
+		 */
+		if ( false !== strpos( $marker, 'FREE Shipping on the complete collection' )
+			&& function_exists( 'bhp_pe_visit_session' ) && bhp_pe_visit_session() ) {
+			echo "SKIP: §{$section}.{$i} {$marker} — school-visit session shows hand-delivery instead (by design)\n";
+			continue;
+		}
 		$got = substr_count( $html, $marker );
 		$ok  = ( 'exact' === $mode ) ? ( $got === $want ) : ( $got >= $want );
 		bhp_pe_assert(

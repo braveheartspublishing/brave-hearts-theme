@@ -29,15 +29,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$pf_failures = 0;
-$pf_passes   = 0;
+/*
+ * ⛔⛔ THE COUNTERS LIVE IN $GLOBALS DELIBERATELY, AND THE REASON IS A DEFECT
+ *     THIS SUITE ITSELF SHIPPED ONCE.
+ *
+ * `wp eval-file` executes a file INSIDE A FUNCTION, so this file's top level
+ * is NOT global scope. A `global $pf_failures` inside `pf_assert()` therefore
+ * binds to a DIFFERENT, always-empty variable, and the summary line printed
+ * "0 passed, 0 failed" on a run where 43 assertions had just printed PASS.
+ *
+ * ⭐ THAT IS THE "a gate that cannot report failure is not a gate" class — the
+ *    same class as `test-protected-elements.php`'s reason for existing. A
+ *    reader (or a deploy gate) scanning only the summary would have seen zero
+ *    failures on a totally broken build. Writing through $GLOBALS makes the
+ *    two scopes the same one under `wp eval-file` AND under a plain include.
+ */
+$GLOBALS['pf_failures'] = 0;
+$GLOBALS['pf_passes']   = 0;
 function pf_assert( $cond, $label ) {
-	global $pf_failures, $pf_passes;
 	if ( $cond ) {
-		$pf_passes++;
+		$GLOBALS['pf_passes']++;
 		echo "PASS: $label\n";
 	} else {
-		$pf_failures++;
+		$GLOBALS['pf_failures']++;
 		echo "FAIL: $label\n";
 	}
 }
@@ -399,4 +413,4 @@ pf_assert(
 	'6.2 …still reversible by the single documented filter, not rewritten'
 );
 
-echo "\n=== RESULT: $pf_passes passed, $pf_failures failed ===\n";
+echo "\n=== RESULT: {$GLOBALS['pf_passes']} passed, {$GLOBALS['pf_failures']} failed ===\n";
