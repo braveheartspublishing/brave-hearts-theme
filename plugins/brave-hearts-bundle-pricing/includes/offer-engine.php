@@ -643,6 +643,104 @@ function bhp_offer_drawer_payload() {
 }
 
 /**
+ * ⭐⭐⭐ THE OFFER FEE'S LABEL — AND THE DEFECT THAT MADE IT ITS OWN FUNCTION.
+ * ============================================================================
+ *
+ * ⛔⛔ READ THIS BEFORE CHANGING ANY FEE LABEL IN THIS PLUGIN. A WOOCOMMERCE
+ *     FEE'S IDENTITY IS ITS NAME, AND A SECOND FEE WITH THE SAME NAME IS
+ *     SILENTLY DISCARDED.
+ *
+ * `WC_Cart_Fees::add_fee()` derives the fee id from the name and then:
+ *
+ *     if ( array_key_exists( $fee_props->id, $this->fees ) ) {
+ *         return new WP_Error( 'fee_exists', 'Fee has already been added.' );
+ *     }
+ *
+ * `WC_Cart::add_fee()` throws that `WP_Error` away. ⛔ NO NOTICE, NO LOG, NO
+ *    EXCEPTION — the fee simply does not exist and the customer is charged the
+ *    higher amount.
+ *
+ * ⭐ WHAT ACTUALLY HAPPENED, AND IT IS WHY THIS COMMENT IS THIS LONG. Until
+ *    1.8.65 this fee was labelled `sprintf( 'Bundle Savings (%s)',
+ *    ucfirst( $format ) )` — BYTE-IDENTICAL to the chapter-tier fee's label in
+ *    `bhp_bundle_apply_discount_fees()`. That was harmless for as long as the
+ *    two could never fire on the same cart, which is precisely what the
+ *    pre-item-189 SUPPRESSION guaranteed.
+ *
+ * ⛔⛔ CARRIER ITEM 189 REMOVED THAT GUARANTEE. The moment stacking was turned
+ *     on, both engines fired on Frodo's Row A, both produced the id
+ *     `bundle-savings-paperback`, and WooCommerce kept the first and dropped
+ *     the second. ⭐ THE FLIP WOULD HAVE SHIPPED AS A NO-OP THAT LOOKED
+ *     IMPLEMENTED: the filter returned FALSE, the offer engine computed
+ *     −$1.99, the unit suite passed, and the shopper was charged $46.97
+ *     instead of $42.99.
+ *
+ * ⭐ FOUND IN A REAL BLOCKS CART, NOT IN THE SUITE, and then PROVED rather
+ *    than inferred — `add_fee()` was called twice on a live staging cart and
+ *    returned `fee_exists / Fee has already been added.` for the duplicate
+ *    name and accepted a distinct one. ⛔ THE STUB CART IN THE SUITE HAD NO
+ *    DEDUPLICATION, WHICH IS WHY IT LIED. It now reproduces WooCommerce's
+ *    behaviour, so this class of defect cannot pass the suite again.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⚠️ THE LABEL IS CUSTOMER-FACING COPY, AND IT IS A DRAFT FOR ANDREW
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * It renders as a line in the cart and at checkout. It is built to the house
+ * rails — the existing "Bundle Savings (…)" family so the cart still reads as
+ * one system, no "we", no em dash, no outcome claim, and no saving figure
+ * inside the string (WooCommerce prints the amount itself).
+ *
+ * ⛔ IT MUST BE UNIQUE AGAINST **BOTH** the chapter-tier labels AND every
+ *    other offer's label. Two pair offers can claim on one cart — a Mariana
+ *    paperback, a Mariana hardcover and two colouring books satisfies both —
+ *    so the format stays in the string. Dropping it would re-create the exact
+ *    defect one level down.
+ *
+ * @param string $key Offer key.
+ * @return string
+ */
+function bhp_offer_fee_label( $key ) {
+	$catalog = bhp_offer_catalog();
+	$format  = isset( $catalog[ $key ]['format'] ) ? ucfirst( $catalog[ $key ]['format'] ) : 'Offer';
+
+	/**
+	 * The cart line label for a pair-offer discount.
+	 *
+	 * @param string $label  The label.
+	 * @param string $key    Offer key.
+	 * @param string $format Ucfirst chapter format.
+	 */
+	return (string) apply_filters(
+		'bhp_offer_fee_label',
+		sprintf( 'Bundle Savings (%s + Coloring Book)', $format ),
+		$key,
+		$format
+	);
+}
+
+/**
+ * Every fee label this plugin can put on one cart, for collision testing.
+ *
+ * ⭐ EXISTS SO THE SUITE CAN ASSERT UNIQUENESS ACROSS BOTH ENGINES rather than
+ *    re-deriving the tier labels and drifting from them.
+ *
+ * @return string[]
+ */
+function bhp_offer_all_fee_labels() {
+	$labels = array();
+	foreach ( array( 'paperback', 'hardcover' ) as $format ) {
+		$labels[] = sprintf( 'Bundle Savings (%s)', ucfirst( $format ) );
+	}
+	foreach ( bhp_offer_catalog() as $key => $offer ) {
+		if ( 'pair' === $offer['cart_rule'] ) {
+			$labels[] = bhp_offer_fee_label( $key );
+		}
+	}
+	return $labels;
+}
+
+/**
  * ⭐⭐ THE CART SIDE OF THE OFFER ENGINE.
  *
  * Priority 21 — deliberately AFTER `bhp_bundle_apply_discount_fees()` at 20,
@@ -731,13 +829,7 @@ function bhp_offer_apply_fees( $cart ) {
 		}
 		$catalog = bhp_offer_catalog();
 		$cart->add_fee(
-			/*
-			 * ⛔ ONE LABEL FOR THE WHOLE LINE, matching "Bundle Savings
-			 *    (Paperback)" in shape so the cart reads as one system. The
-			 *    offer's internal label is NOT used — it is identification,
-			 *    not copy.
-			 */
-			sprintf( 'Bundle Savings (%s)', ucfirst( $catalog[ $key ]['format'] ) ),
+			bhp_offer_fee_label( $key ),
 			-1 * $saving * $instances,
 			false
 		);

@@ -60,6 +60,10 @@ class BHP_Offer_Stub_Cart {
 	public $items;
 	public $coupons;
 	public $fees = array();
+	/** Fee ids already taken, keyed exactly as WooCommerce keys them. */
+	public $fee_ids = array();
+	/** Labels WooCommerce would have SILENTLY DROPPED. Asserted, not ignored. */
+	public $refused = array();
 	public function __construct( array $items, array $coupons = array() ) {
 		$this->items   = $items;
 		$this->coupons = $coupons;
@@ -68,8 +72,32 @@ class BHP_Offer_Stub_Cart {
 		return $this->items; }
 	public function get_applied_coupons() {
 		return $this->coupons; }
+	/**
+	 * ⛔⛔ 1.8.65 — THIS NOW REPRODUCES WOOCOMMERCE'S DEDUPLICATION, AND THAT
+	 *     CORRECTION IS THE MOST IMPORTANT LINE IN THIS FILE.
+	 *
+	 * ⭐ WHAT THE OLD VERSION DID: appended every call to an array. So the stub
+	 *    happily recorded TWO fees where a real cart keeps ONE — and §5b passed
+	 *    while the live Blocks cart charged $46.97 instead of $42.99.
+	 *
+	 * ⭐ WHAT WOOCOMMERCE ACTUALLY DOES (`WC_Cart_Fees::add_fee()`, read on
+	 *    staging, not from memory): it derives the fee id from the NAME and
+	 *    refuses a duplicate with `new WP_Error( 'fee_exists', … )`, which
+	 *    `WC_Cart::add_fee()` then discards. ⛔ NO NOTICE, NO LOG. The fee
+	 *    simply does not exist and the customer pays more.
+	 *
+	 * ⛔ A STUB THAT IS MORE PERMISSIVE THAN THE REAL THING IS WORSE THAN NO
+	 *    STUB, because it converts a live defect into a green suite. Proved
+	 *    against a real staging cart before this was written.
+	 */
 	public function add_fee( $label, $amount, $taxable = false ) {
-		$this->fees[] = array(
+		$id = function_exists( 'sanitize_title' ) ? sanitize_title( $label ) : strtolower( $label );
+		if ( isset( $this->fee_ids[ $id ] ) ) {
+			$this->refused[] = $label; // Exactly what WooCommerce does: nothing.
+			return;
+		}
+		$this->fee_ids[ $id ] = true;
+		$this->fees[]         = array(
 			'label'   => $label,
 			'amount'  => (float) $amount,
 			'taxable' => $taxable,
@@ -436,6 +464,69 @@ if ( empty( $colouring_ids['mariana'] ) ) {
 		! empty( $eval_a['is_complete_collection'] ) && empty( $eval_a['has_unrelated'] )
 		&& 0.0 === (float) bhp_bundle_shipping_amount( $eval_a ),
 		'...and it still ships free — stacking did not cost the shopper FD-583',
+		$failures,
+		$passes
+	);
+
+	/* ═══════════════════════════════════════════════════════════════════════
+	 * §5c · ⛔⛔ THE FEE-LABEL COLLISION — THE DEFECT THAT ALMOST SHIPPED
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ A WooCommerce fee's identity IS its name. A second fee with the same
+	 *    name is discarded with a `WP_Error` that `WC_Cart::add_fee()` throws
+	 *    away — no notice, no log, and the customer pays more.
+	 *
+	 * ⛔ UNTIL 1.8.65 THE OFFER FEE AND THE CHAPTER-TIER FEE SHARED A LABEL.
+	 *    That was harmless only while suppression guaranteed they could never
+	 *    fire together. ⭐ ITEM 189 REMOVED THAT GUARANTEE, and on the first
+	 *    real Blocks cart the offer fee vanished: one fee, −$3.98, $46.97
+	 *    charged instead of $42.99 — a flip that flipped and changed nothing.
+	 *
+	 * ⛔ THE SUITE DID NOT CATCH IT because the stub appended fees instead of
+	 *    deduplicating them. `BHP_Offer_Stub_Cart::add_fee()` now reproduces
+	 *    WooCommerce exactly, which is what makes the §5b assertions above
+	 *    mean anything at all.
+	 * ═══════════════════════════════════════════════════════════════════════ */
+	echo "\n[§5c] Fee labels are unique across BOTH engines\n";
+
+	bhp_oe_assert(
+		empty( $cart->refused ),
+		sprintf(
+			'⛔ NOTHING WAS SILENTLY DROPPED on Frodo\'s Row A (%d refused: %s)',
+			count( $cart->refused ),
+			$cart->refused ? implode( ', ', $cart->refused ) : 'none'
+		),
+		$failures,
+		$passes
+	);
+	$labels = bhp_offer_all_fee_labels();
+	$ids    = array_map( 'sanitize_title', $labels );
+	bhp_oe_assert(
+		count( $ids ) === count( array_unique( $ids ) ),
+		sprintf(
+			'⛔ every fee label this plugin can put on one cart has a DISTINCT WooCommerce id (%d labels: %s)',
+			count( $labels ),
+			implode( ' | ', $labels )
+		),
+		$failures,
+		$passes
+	);
+	bhp_oe_assert(
+		sanitize_title( bhp_offer_fee_label( 'mariana_pb_colouring' ) ) !== sanitize_title( 'Bundle Savings (Paperback)' ),
+		'⛔ …and the pair-offer label specifically does NOT collide with the chapter-tier label it used to be identical to',
+		$failures,
+		$passes
+	);
+	/*
+	 * ⭐ THE NEGATIVE CONTROL FOR THE STUB ITSELF: it must actually refuse a
+	 *    duplicate, or §5c above proves nothing.
+	 */
+	$dup = new BHP_Offer_Stub_Cart( array() );
+	$dup->add_fee( 'Bundle Savings (Paperback)', -1.00, false );
+	$dup->add_fee( 'Bundle Savings (Paperback)', -2.00, false );
+	bhp_oe_assert(
+		1 === count( $dup->fees ) && 1 === count( $dup->refused ),
+		'⛔ the STUB reproduces WooCommerce\'s silent drop — a permissive stub turns a live defect into a green suite',
 		$failures,
 		$passes
 	);
