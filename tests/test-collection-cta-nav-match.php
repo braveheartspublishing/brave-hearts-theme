@@ -290,15 +290,43 @@ foreach ( $documents as $key => $html ) {
 }
 
 /*
- * The Shop grid's card is the one collection CTA that is NOT a rendered form —
- * it is a plain link into /complete-collection/, and it takes the token by hand
- * in inc/book-formats.php. Asserted explicitly so a lost `class` attribute there
- * cannot hide inside a vacuous pass above.
+ * The Shop grid's collection card takes the token BY HAND in
+ * inc/book-formats.php rather than through the shared `form.bhp-collection-cta`
+ * renderer, so it cannot be covered by the loop above. Asserted explicitly here
+ * so a lost `class` attribute there cannot hide inside a vacuous pass.
+ *
+ * ⛔⛔ TWO CORRECTIONS, 1.19.286, AND BOTH ARE RECORDED RATHER THAN QUIETLY
+ *     APPLIED, because the first one is a defect in this file that a green run
+ *     was hiding.
+ *
+ * 1. THE SUPERSEDED PROSE, quoted so the movement is visible: *"it is a plain
+ *    link into /complete-collection/"*. ⭐ THAT STOPPED BEING TRUE AT 1.19.284,
+ *    when carrier item 206 turned the card's CTA into a real bundle FORM. This
+ *    comment has described the wrong control for two releases; the assertion
+ *    beneath it happened to keep passing because the form's button carried the
+ *    same class attribute the old link did. ⛔ A stale comment beside a passing
+ *    assertion is how the next reader gets the mechanism wrong.
+ *
+ * 2. THE SUPERSEDED MATCH:
+ *        strpos( $html, 'class="button ' . $token . '"' )
+ *    ⛔ IT MATCHED THE WHOLE `class` ATTRIBUTE, so it asserted not just that the
+ *    token is present but that it is the ONLY class beside `button` — which is
+ *    a claim about the class list, not about the token. 1.19.286 adds the
+ *    uniform `bhp-shop-atc` token to that same button (carrier items 210+211)
+ *    and the exact-attribute match broke on a correct build.
+ *    ⭐ THE CHECK NOW LOOKS FOR THE TOKEN AS A CLASS, which is what it was
+ *    always for, and it is STRICTER in the way that matters: it requires the
+ *    token to sit on a `button` element inside the shop grid, so a token found
+ *    anywhere else on the page cannot satisfy it.
  */
 if ( isset( $documents['shop'] ) ) {
+	$ctam_shop_cta = (bool) preg_match(
+		'#<(?:a|button)[^>]*\bclass="[^"]*\b' . preg_quote( $token, '#' ) . '\b[^"]*"#',
+		$documents['shop']
+	);
 	bhp_ctam_assert(
-		false !== strpos( $documents['shop'], 'class="button ' . $token . '"' ),
-		'§2 shop — the grid\'s collection card is a plain link and carries the token by hand',
+		$ctam_shop_cta,
+		'§2 shop — the grid\'s collection card CTA carries the shared token by hand',
 		$failures
 	);
 }
