@@ -63,6 +63,37 @@ function bhp_bundle_handle_add_to_cart() {
 			return;
 		}
 		bhp_bundle_add_titles_to_cart( $format, array( $title ) );
+	} elseif ( 0 === strpos( $action, 'offer_' ) && function_exists( 'bhp_offer_add_to_cart' ) ) {
+		/*
+		 * ⭐ 1.8.62 — THE OFFER ENGINE'S ADD PATH (`FD-579`).
+		 *
+		 * ⛔ SAME CONTRACT, NOT A NEW ONE. It arrives on the same
+		 *    `bhp_bundle_action` field, behind the same `bhp_bundle_add` nonce
+		 *    verified at the top of this function, and it leaves through the
+		 *    same allowlisted redirect below. Nothing about the security or
+		 *    the redirect model changes.
+		 *
+		 * ⛔ THE KEY IS VALIDATED AGAINST THE CATALOGUE, NOT TRUSTED. An
+		 *    unknown key falls through to the `return` and adds nothing —
+		 *    the posted string never reaches a product lookup, a price or a
+		 *    redirect destination.
+		 */
+		$offer_key = substr( $action, strlen( 'offer_' ) );
+		if ( ! array_key_exists( $offer_key, bhp_offer_catalog() ) ) {
+			return;
+		}
+		/*
+		 * ⛔⛔ THE PURCHASABILITY GATE, RE-ASSERTED AT THE CART DOOR. A surface
+		 *    should never render a control for an unpurchasable offer — but a
+		 *    POST is not a render, and a form can be replayed after a product
+		 *    goes out of stock. Checking here means the gate cannot be walked
+		 *    around by a stale page.
+		 */
+		if ( ! bhp_offer_is_purchasable( $offer_key ) ) {
+			wc_add_notice( 'That offer is not available right now.', 'error' );
+			return;
+		}
+		bhp_offer_add_to_cart( $offer_key );
 	} else {
 		return;
 	}

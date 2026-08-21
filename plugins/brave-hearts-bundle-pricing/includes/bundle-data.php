@@ -1023,14 +1023,64 @@ function bhp_bundle_physical_book_count( $cart ) {
  *    customer's shipping cost on a relayed claim that no document carries is
  *    the precise failure class this corpus exists to prevent.
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.62 — THE DEFAULT IS NOW `any-three`. THE RULING IS ON DISK.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ EVERYTHING ABOVE THIS BLOCK IS PRESERVED VERBATIM AND IS NOW HISTORICAL.
+ *    ⭐ It is deliberately NOT corrected in place. It records that 1.8.61 built
+ *    both behaviours and defaulted to the stricter one BECAUSE THE RULING WAS
+ *    NOT YET IN A CANONICAL FILE — which was the correct call at the time, and
+ *    a future reader needs to see that the conservative default was a reasoned
+ *    refusal rather than an oversight.
+ *
+ * ⭐⭐ THE CONDITION 1.8.61 SET FOR FLIPPING THIS IS NOW MET, AND IT WAS MET BY
+ *    THE FOUNDER, NOT BY A BRIEF. Its own words: "DO NOT flip the default
+ *    without the founder ruling on disk."
+ *
+ * ⭐ `FD-583`, `FOUNDER-DECISIONS-2026-08-01.md` PART 66 §66.8 — ⭐⭐ READ AT
+ *    SOURCE, FIRST-HAND, BY THE AGENT THAT MADE THIS CHANGE. ⛔ NOT RELAYED,
+ *    NOT INHERITED FROM A BRIEF, NOT TAKEN FROM A PRIOR REPORT. Andrew
+ *    Signore, 2026-08-20 ~17:4x−0600, carrier item 159, verbatim:
+ *
+ *      "any 3 books - I think the margins will hold the same especially since
+ *       we increased the coloring book price to 12.99"
+ *
+ * ⭐ HE CONNECTED THE PRICE RULING TO THE SHIPPING RULING HIMSELF. §66.8
+ *    records that explicitly: "this is not an inference anyone made for him."
+ *
+ * ⭐ AND THE AMBIGUITY WAS PUT TO HIM RATHER THAN GUESSED. "3 or more books"
+ *    has two readings that build different carts — ANY three including
+ *    duplicates, or three DISTINCT titles. He was asked in the same turn
+ *    (`FD-582`, §66.7) and answered immediately. ⛔ THE DUPLICATES LIMB IS HIS.
+ *
+ * ⚠️⚠️ THIS IS A REAL COMMERCIAL MOVEMENT AND IS REPORTED AS ONE, NOT AS A
+ *    CONFIG TIDY-UP: a cart of three copies of one title shipped at $4.99 and
+ *    from 1.8.62 ships FREE. ⛔ The mixed "≥3 books but <3 distinct" $4.99 row
+ *    becomes UNREACHABLE — "the $4.99 row dies" (§66.8) — and it is left in the
+ *    table rather than deleted so a reader can still see what it used to say.
+ *
+ * ⛔ THE 00A CONTRADICTION 1.8.61 RECORDED IS RESOLVED BY THE FOUNDER, NOT BY
+ *    THIS AGENT. `00A-WHAT-GOVERNS-TODAY.md` read the policy ⛔ OPEN at
+ *    2026-08-20T09:0x−0600; `FD-583` was sealed at ~17:5x−0600 the same day.
+ *    ⭐ The document was true when written and is now STALE — the newer
+ *    founder ruling governs, and §66.1 records `00A` §5 S1 flipping to RULED
+ *    on the strength of it. No agent resolved anything (Standing Rules §7).
+ *
+ * ⛔ `conservative` IS NOT DELETED. It remains reachable through the filter, so
+ *    the 1.8.61 behaviour is one line away and every one of its tests still
+ *    runs against it.
+ *
  * @return string 'conservative'|'any-three'
  */
 function bhp_bundle_colouring_policy() {
 	/**
 	 * The free-shipping policy for carts containing colouring-line books.
 	 *
-	 * @param string $policy 'conservative' (default) or 'any-three'.
+	 * ⭐ 1.8.62: the default is `any-three` (`FD-583`). Was `conservative`.
+	 *
+	 * @param string $policy 'any-three' (default) or 'conservative'.
 	 */
-	$policy = apply_filters( 'bhp_bundle_colouring_policy', 'conservative' );
+	$policy = apply_filters( 'bhp_bundle_colouring_policy', 'any-three' );
 	return in_array( $policy, array( 'conservative', 'any-three' ), true ) ? $policy : 'conservative';
 }

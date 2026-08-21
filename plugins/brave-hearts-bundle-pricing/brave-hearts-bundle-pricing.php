@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Brave Hearts Bundle Pricing
  * Description: Fixed-dollar bundle discounts, shipping, and storefront offers for the six approved Adventures of Charlotte and Henry editions. Every bundle purchase adds the real, individually-mapped WooCommerce products as separate cart line items — Bookvault fulfillment routing and per-book tax are never altered.
- * Version: 1.8.61
+ * Version: 1.8.62
  * Author: Brave Hearts Publishing
  * Requires Plugins: woocommerce
  * Text Domain: bhp-bundle-pricing
@@ -39,6 +39,14 @@ function bhp_bundle_pricing_init() {
 
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/bundle-data.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/bundle-cart.php';
+	/*
+	 * ⭐ 1.8.62 — THE OFFER ENGINE (`FD-579`). Loaded AFTER `bundle-data.php`
+	 *    (it reads both catalogues) and AFTER `bundle-cart.php` (its fee hook
+	 *    runs at priority 21, behind the chapter-tier fees at 20), and BEFORE
+	 *    `bundle-shortcode.php`, whose add-to-cart handler dispatches the
+	 *    `offer_*` actions this file resolves.
+	 */
+	require_once BHP_BUNDLE_PRICING_DIR . 'includes/offer-engine.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/bundle-shortcode.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/bundle-shop-series.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/bundle-landing-page.php';
