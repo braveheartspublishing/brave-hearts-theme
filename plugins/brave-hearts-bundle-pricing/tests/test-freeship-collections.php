@@ -91,6 +91,16 @@ function bhp_fs_cart( array $items, array $coupons = array() ) {
 function bhp_fs_ship( array $items ) {
 	return bhp_bundle_shipping_amount( bhp_bundle_evaluate_cart( bhp_fs_cart( $items ) ) );
 }
+/*
+ * ⭐ 1.8.62 — A NAMED CALLBACK, NOT A CLOSURE, AND THAT IS DELIBERATE:
+ *    `remove_filter()` cannot remove an anonymous function, so a closure here
+ *    would leak the forced policy into every assertion after the block that
+ *    set it — silently turning later rows into tests of a policy the store
+ *    does not run. Naming it is what makes the scoping real.
+ */
+function bhp_fs_force_conservative() {
+	return 'conservative';
+}
 
 // Catalog IDs, from bhp_bundle_catalog(). Named so each cart below reads as
 // a sentence rather than as a list of integers.
@@ -162,10 +172,38 @@ bhp_fs_assert(
 	$failures
 );
 
-// A single title bought twice is still one adventure and still not a bundle.
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.62 — THIS ASSERTION IS NOW POLICY-SCOPED, BY FOUNDER RULING.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ IT IS NOT DELETED, NOT WEAKENED AND NOT "FIXED TO PASS". The rule it
+ *    tests — three copies of one title is ONE adventure and never a collection
+ *    — is STILL TRUE, and it is still asserted below, verbatim, under the
+ *    policy it was written for.
+ *
+ * ⭐ WHAT MOVED IS THE DEFAULT. `FD-583` (PART 66 §66.8, read at source):
+ *    *"any 3 books"*, DUPLICATES INCLUDED. So three copies of one paperback
+ *    now SHIP FREE while remaining two titles short of a collection for every
+ *    DISCOUNT purpose. ⭐ Both halves are asserted, because that split is
+ *    precisely the thing a future reader would otherwise get wrong.
+ */
+add_filter( 'bhp_bundle_colouring_policy', 'bhp_fs_force_conservative' );
 bhp_fs_assert(
 	1.99 === bhp_fs_ship( array( $pb( $PB_EVEREST, 3 ) ) ),
-	'2. 3 copies of ONE paperback -> $1.99 single rate, NOT free (never a collection)',
+	'2. [conservative] 3 copies of ONE paperback -> $1.99 single rate, NOT free (never a collection)',
+	$failures
+);
+remove_filter( 'bhp_bundle_colouring_policy', 'bhp_fs_force_conservative' );
+
+bhp_fs_assert(
+	0.00 === bhp_fs_ship( array( $pb( $PB_EVEREST, 3 ) ) ),
+	'2. [any-three, FD-583] 3 copies of ONE paperback -> $0.00 FREE (duplicates count)',
+	$failures
+);
+bhp_fs_assert(
+	1 === count( bhp_bundle_distinct_adventures_in_cart( bhp_fs_cart( array( $pb( $PB_EVEREST, 3 ) ) ) ) ),
+	'2. ...and it is STILL one adventure, so it is STILL not a collection for discount purposes',
 	$failures
 );
 
@@ -216,20 +254,72 @@ bhp_fs_assert(
  *    globally, or keyed it off "three or more books", or off "mixed cart",
  *    every second assertion here would fail. They pass, so the rule really
  *    is the collection and nothing else.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.62 — THE WHOLE COUNTERFACTUAL BLOCK NOW RUNS UNDER `conservative`,
+ *     AND THAT IS THE HONEST PLACE FOR IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE PARAGRAPH ABOVE IS PRESERVED VERBATIM AND STILL DESCRIBES EXACTLY
+ *    WHAT THESE THREE ROWS PROVE: that 1.8.23 keyed free shipping on DISTINCT
+ *    ADVENTURES and not on a book count. ⭐ That property of the collection
+ *    rule is unchanged and is still worth proving.
+ *
+ * ⭐ WHAT CHANGED IS WHICH RULE THE STORE RUNS BY DEFAULT. `FD-583` keys free
+ *    shipping on a BOOK COUNT of 3+, so under the shipped default every one of
+ *    these carts now ships free. ⛔ Forcing `conservative` here is NOT hiding
+ *    that — the new §4b immediately below asserts the shipped behaviour on the
+ *    SAME three carts, so both rules are proved on identical inputs and the
+ *    difference between them is visible in one screen.
  */
+add_filter( 'bhp_bundle_colouring_policy', 'bhp_fs_force_conservative' );
 bhp_fs_assert(
 	4.99 === bhp_fs_ship( array( $pb( $PB_EVEREST, 2 ), $hc( $HC_MARIANA ) ) ),
-	'4. COUNTERFACTUAL: 3 books, 2 adventures (2x Everest PB + Mariana HC) -> $4.99, NOT free',
+	'4. [conservative] COUNTERFACTUAL: 3 books, 2 adventures (2x Everest PB + Mariana HC) -> $4.99, NOT free',
 	$failures
 );
 bhp_fs_assert(
 	4.99 === bhp_fs_ship( array( $pb( $PB_MARIANA ), $hc( $HC_MARIANA ), $pb( $PB_EVEREST ) ) ),
-	'4. COUNTERFACTUAL: 3 books, 2 adventures across formats (Mariana twice) -> $4.99, NOT free',
+	'4. [conservative] COUNTERFACTUAL: 3 books, 2 adventures across formats (Mariana twice) -> $4.99, NOT free',
 	$failures
 );
 bhp_fs_assert(
 	2.99 === bhp_fs_ship( array( $pb( $PB_EVEREST, 5 ), $pb( $PB_AMAZON, 5 ) ) ),
-	'4. COUNTERFACTUAL: 10 books but only 2 adventures -> $2.99 tier-2 rate, NOT free',
+	'4. [conservative] COUNTERFACTUAL: 10 books but only 2 adventures -> $2.99 tier-2 rate, NOT free',
+	$failures
+);
+remove_filter( 'bhp_bundle_colouring_policy', 'bhp_fs_force_conservative' );
+
+/*
+ * §4b · ⭐⭐ THE SHIPPED RULE, ON THE SAME THREE CARTS. `FD-583`.
+ *
+ * ⛔ THE POINT OF REUSING THE IDENTICAL CARTS is that the delta between the
+ *    two policies is then a fact on the screen rather than a claim in a
+ *    comment. Every one of these is >= 3 PHYSICAL BOOKS, so every one is free.
+ */
+bhp_fs_assert(
+	0.00 === bhp_fs_ship( array( $pb( $PB_EVEREST, 2 ), $hc( $HC_MARIANA ) ) ),
+	'4b. [any-three, FD-583] 3 books, 2 adventures -> $0.00 FREE',
+	$failures
+);
+bhp_fs_assert(
+	0.00 === bhp_fs_ship( array( $pb( $PB_MARIANA ), $hc( $HC_MARIANA ), $pb( $PB_EVEREST ) ) ),
+	'4b. [any-three, FD-583] 3 books across formats, 2 adventures -> $0.00 FREE',
+	$failures
+);
+bhp_fs_assert(
+	0.00 === bhp_fs_ship( array( $pb( $PB_EVEREST, 5 ), $pb( $PB_AMAZON, 5 ) ) ),
+	'4b. [any-three, FD-583] 10 books, 2 adventures -> $0.00 FREE',
+	$failures
+);
+/*
+ * ⛔ AND THE FLOOR IS STILL A FLOOR. Two books is not three, under either
+ *    policy — so `FD-583` did not simply zero shipping, which is the same
+ *    counterfactual discipline the block above applies to 1.8.23.
+ */
+bhp_fs_assert(
+	3.99 === bhp_fs_ship( array( $pb( $PB_EVEREST ), $hc( $HC_MARIANA ) ) ),
+	'4b. [any-three] COUNTERFACTUAL: 2 books -> $3.99, NOT free (the 3-book floor is real)',
 	$failures
 );
 bhp_fs_assert(

@@ -138,11 +138,33 @@ foreach ( array(
  *    fails, someone has enabled a customer-facing shipping change that no
  *    canonical document authorises. That is the whole point of the assertion.
  * ═══════════════════════════════════════════════════════════════════════════ */
-echo "\n[§1] The policy default is conservative (OPEN founder decision)\n";
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.62 — §1 IS INVERTED, AND IT IS INVERTED BY THE FOUNDER.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ THE COMMENT BLOCK ABOVE IS PRESERVED VERBATIM AND IS NOW HISTORICAL. It
+ *    says: "If this assertion ever fails, someone has enabled a customer-facing
+ *    shipping change that no canonical document authorises." ⭐ THAT WAS THE
+ *    RIGHT GUARD TO WRITE, IT DID ITS JOB, AND THE CONDITION IT GUARDED
+ *    AGAINST IS NOW GONE — a canonical document authorises it.
+ *
+ * ⭐ `FD-583`, `FOUNDER-DECISIONS-2026-08-01.md` PART 66 §66.8 — read AT SOURCE
+ *    by the agent that changed this line. Andrew Signore, 2026-08-20
+ *    ~17:4x−0600, carrier item 159: *"any 3 books - I think the margins will
+ *    hold the same especially since we increased the coloring book price to
+ *    12.99"*.
+ *
+ * ⛔ THE ASSERTION IS NOT DELETED AND THE OLD BEHAVIOUR IS NOT UNTESTED. It is
+ *    INVERTED here, and `conservative` remains reachable through the filter and
+ *    is still exercised by §3, §5 and §7 below — which is exactly why 1.8.61
+ *    built both behaviours instead of one.
+ */
+echo "\n[§1] The policy default is any-three (FD-583, founder-ruled)\n";
 remove_all_filters( 'bhp_bundle_colouring_policy' );
 bhp_clt_assert(
-	'conservative' === bhp_bundle_colouring_policy(),
-	'default policy is `conservative` — the any-three rule is NOT live',
+	'any-three' === bhp_bundle_colouring_policy(),
+	'default policy is `any-three` — FD-583 is live',
 	$failures,
 	$passes
 );
@@ -156,13 +178,39 @@ bhp_clt_assert(
 remove_all_filters( 'bhp_bundle_colouring_policy' );
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * §2 · ⭐⭐ IT FAILS CLOSED TODAY — the registry resolves to NOTHING
- * ═══════════════════════════════════════════════════════════════════════════ */
-echo "\n[§2] Fails closed on the current store\n";
+ * §2 · ⭐⭐ THE REGISTRY RESOLVES ONLY WHAT ACTUALLY EXISTS
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ THIS SECTION'S ORIGINAL ASSERTION WAS `empty( $live_ids )` — "the line is
+ *    INERT". ⭐ THAT WAS TRUE OF BOTH ENVIRONMENTS WHEN 1.8.61 SHIPPED, AND IT
+ *    WAS THE RIGHT THING TO ASSERT: the fix had to land BEFORE the first
+ *    product record (`ACT-OPS-269`), and the assertion proved it had.
+ *
+ * ⭐ THE PRODUCT NOW EXISTS ON STAGING (`BHP-COLOR-MT-01`, created
+ *    2026-08-21 under `FD-570` / `FD-580`), so "inert" is no longer the
+ *    correct claim about every environment — and a test that hardcodes one
+ *    environment's state fails on the other for no defect.
+ *
+ * ⛔ WHAT REPLACES IT IS STRICTLY STRONGER, NOT WEAKER. The old assertion said
+ *    "nothing resolves". This says "ONLY a real, catalogued SKU resolves, and
+ *    every resolved id is a live product" — which is the property that
+ *    actually protects the cart on BOTH environments, before and after the
+ *    record exists. It would still catch an invented Everest entry, a
+ *    hardcoded id, or a SKU resolving to a deleted post.
+ */
+echo "\n[§2] The registry resolves only what actually exists\n";
 $live_ids = bhp_colouring_product_ids();
+$catalog_slugs = array_keys( bhp_colouring_catalog() );
+$ids_are_sane  = is_array( $live_ids );
+foreach ( (array) $live_ids as $slug => $id ) {
+	// ⛔ Never a slug outside the catalogue, never a non-product id.
+	if ( ! in_array( $slug, $catalog_slugs, true ) || (int) $id < 1 || ! wc_get_product( (int) $id ) ) {
+		$ids_are_sane = false;
+	}
+}
 bhp_clt_assert(
-	is_array( $live_ids ) && empty( $live_ids ),
-	'no colouring SKU resolves on this environment — the line is INERT (' . count( (array) $live_ids ) . ' resolved)',
+	$ids_are_sane,
+	'every resolved colouring SKU maps to a catalogued slug AND a live product (' . count( (array) $live_ids ) . ' resolved)',
 	$failures,
 	$passes
 );

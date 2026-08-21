@@ -160,12 +160,25 @@ function bhp_colouring_draft_copy($key, array $tokens = []) {
         'rail_card_name'  => __('PAPERBACK', 'brave-hearts'),
         // ⭐ His own cover's wording. Ages 6-9. No outcome claim.
         'spec_line'       => __('%1$d coloring adventures · %2$d pages · %3$s · ages 6-9', 'brave-hearts'),
-        // The offer. ⛔ "I", never "we".
-        'offer_heading'   => __('The book and its coloring book', 'brave-hearts'),
-        'offer_cta'       => __('ADD BOTH FOR %s', 'brave-hearts'),
-        'offer_saving'    => __('Save %s', 'brave-hearts'),
-        'offer_upsell'    => __('Prefer the hardcover? %s', 'brave-hearts'),
-        'offer_descriptor' => __('The book and its coloring book', 'brave-hearts'),
+        /*
+         * The offer. ⛔ "I", never "we". ⛔ THREE DIFFERENT SENTENCES, and that
+         * is deliberate: the card title NAMES the offer, the descriptor says
+         * what is in it, and the module heading is suppressed on the card so
+         * the same words never appear twice in one tile.
+         */
+        /*
+         * ⛔ THE CARD TITLE DESCRIBES, IT DOES NOT NAME. "The Mariana Trench
+         *    Pair" was drafted first and dropped: coining a product NAME for
+         *    something that is not a product would be inventing a brand term
+         *    on Andrew's behalf, and `FD-579` is explicit that no bundle
+         *    product record exists. This says what is in the cart and stops.
+         */
+        'offer_card_title' => __('The Mariana Trench: book + coloring book', 'brave-hearts'),
+        'offer_heading'    => __('The book and its coloring book', 'brave-hearts'),
+        'offer_cta'        => __('ADD BOTH FOR %s', 'brave-hearts'),
+        'offer_saving'     => __('Save %s', 'brave-hearts'),
+        'offer_upsell'     => __('Prefer the hardcover? %s', 'brave-hearts'),
+        'offer_descriptor' => __('The chapter book and its coloring book', 'brave-hearts'),
     ], $key);
 
     if (!isset($copy[$key])) {
@@ -447,11 +460,16 @@ function bhp_offer_composite_attachment_id($key) {
  *
  * ⛔ PAPERBACK IS THE DEFAULT AND NO SECOND DEFAULT IS INTRODUCED (`FD-439`).
  *
- * @param string $key   Offer key (the paperback offer).
- * @param string $class Extra wrapper classes.
+ * @param string $key          Offer key (the paperback offer).
+ * @param string $class        Extra wrapper classes.
+ * @param bool   $show_heading FALSE inside a shop card, which already carries
+ *                             its own `<h2>` and descriptor. ⛔ Printing the
+ *                             heading there too would say the same thing twice
+ *                             in one tile — the duplication the first staging
+ *                             DOM read of this card found.
  * @return string HTML, or '' when the offer cannot be bought right now.
  */
-function bhp_offer_render_module($key, $class = '') {
+function bhp_offer_render_module($key, $class = '', $show_heading = true) {
     if (!function_exists('bhp_offer_is_purchasable') || !bhp_offer_is_purchasable($key)) {
         return ''; // ⛔ R1.4: nothing is advertised that cannot be bought.
     }
@@ -488,9 +506,11 @@ function bhp_offer_render_module($key, $class = '') {
         ?><div class="bhp-offer__media"><?php echo wp_get_attachment_image($composite, 'woocommerce_thumbnail', false, ['class' => 'bhp-offer__composite']); ?></div><?php
       endif;
       ?>
-      <p class="bhp-offer__heading"><?php echo esc_html(bhp_colouring_draft_copy('offer_heading')); ?></p>
+      <?php if ($show_heading) : ?>
+        <p class="bhp-offer__heading"><?php echo esc_html(bhp_colouring_draft_copy('offer_heading')); ?></p>
+      <?php endif; ?>
 
-      <form class="bhp-bundle-form bhp-offer__form" method="post">
+      <form class="bhp-offer__form" method="post">
         <?php bhp_bundle_nonce_input(); ?>
         <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('offer_' . $key); ?>" />
         <?php bhp_bundle_checkout_redirect_input(); ?>
@@ -522,7 +542,7 @@ function bhp_offer_render_module($key, $class = '') {
          *    post-purchase one-click.
          */
         ?>
-        <form class="bhp-bundle-form bhp-offer__form bhp-offer__form--upsell" method="post">
+        <form class="bhp-offer__form bhp-offer__form--upsell" method="post">
           <?php bhp_bundle_nonce_input(); ?>
           <input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr('offer_' . $upsell_key); ?>" />
           <?php bhp_bundle_checkout_redirect_input(); ?>
@@ -606,11 +626,22 @@ function bhp_offer_shop_cards($loop_end) {
         if (!bhp_offer_is_purchasable($key)) {
             continue;
         }
-        $module = bhp_offer_render_module($key, 'bhp-offer--card');
+        $module = bhp_offer_render_module($key, 'bhp-offer--card', false);
         if ('' === $module) {
             continue;
         }
+        /*
+         * ⭐ THE CARD CARRIES AN `<h2>` IN THE SAME CLASS EVERY OTHER CARD IN
+         *    THE GRID USES. ⛔ Without it the bundle is the one tile with no
+         *    heading — invisible to a heading-navigating screen-reader user,
+         *    and visually the odd one out in a row of titled cards.
+         *
+         * ⛔ THE TITLE AND THE DESCRIPTOR ARE DIFFERENT SENTENCES. Rendering
+         *    the same words twice (the defect the first staging read of this
+         *    card found) says nothing twice and reads as a duplication bug.
+         */
         $out .= '<li class="product bhp-shop-offer-item" data-bhp-card-kind="bundle">'
+            . '<h2 class="woocommerce-loop-product__title">' . esc_html(bhp_colouring_draft_copy('offer_card_title')) . '</h2>'
             . '<p class="bhp-shop-descriptor">' . esc_html(bhp_colouring_draft_copy('offer_descriptor')) . '</p>'
             . $module
             . '</li>';
@@ -619,9 +650,23 @@ function bhp_offer_shop_cards($loop_end) {
     return $out . $loop_end;
 }
 /*
- * Priority 5 — ⭐ BEFORE `bhp_book_shop_collection_card()` at the default 10,
- * so the grid reads: three chapter books, the colouring book, the bundle, then
- * the Complete Collection. ⛔ A collection is only legible once you know what
- * it collects (spec §3.4), so it stays last.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⚠️ PRIORITY 15, AND THE REASON IS COUNTER-INTUITIVE ENOUGH TO WRITE DOWN.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Every filter on `woocommerce_product_loop_end` PREPENDS its markup to
+ * `$loop_end`. So the LAST filter to run puts its card FIRST.
+ *
+ * ⛔ THIS SHIPPED AS PRIORITY 5 AND WAS WRONG, AND IT WAS CAUGHT BY READING
+ *    THE SERVED DOM ON STAGING RATHER THAN BY REASONING ABOUT THE HOOK: at 5
+ *    the offer ran BEFORE `bhp_book_shop_collection_card()` (default 10),
+ *    which then prepended the collection card in front of it — so the grid
+ *    rendered the Complete Collection and THEN the bundle, the exact reverse
+ *    of the intended order.
+ *
+ * ⭐ AT 15 the collection card is built first and the offer is prepended in
+ *    front of it, so the grid reads: three chapter books, the colouring book,
+ *    the bundle, the Complete Collection. ⛔ A collection is only legible once
+ *    you know what it collects (spec §3.4), so it stays last.
  */
-add_filter('woocommerce_product_loop_end', 'bhp_offer_shop_cards', 5);
+add_filter('woocommerce_product_loop_end', 'bhp_offer_shop_cards', 15);

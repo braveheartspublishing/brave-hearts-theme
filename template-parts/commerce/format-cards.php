@@ -643,6 +643,40 @@ if (null === $bhp_initial_conf) {
             }
         }
     }
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.277 — THE CARD LIST AND THE PAYLOAD ARE NOW THE SAME LIST.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔⛔ FOUND BY READING THE SERVED DOM ON STAGING, NOT BY REVIEWING THIS
+     *    FILE: the colouring product page rendered TWO cards — "PAPERBACK
+     *    $12.99" and a bare "HARDCOVER" WITH NO PRICE. A purchase control
+     *    offering an edition that does not exist, priced at nothing.
+     *
+     * ⛔ THE CAUSE WAS TWO MECHANISMS FOR ONE QUESTION. Card removal ran off
+     *    `bhp_book_available_formats()`; payload removal ran off
+     *    `$bhp_hc_offerable`. They agree on a school-visit session by
+     *    coincidence — both are driven by the same predicate there — and they
+     *    disagreed the moment a caller suppressed a format any other way.
+     *
+     * ⭐ THE FIX IS THE INVARIANT, NOT A THIRD CONDITION: A CARD IS RENDERED
+     *    IF AND ONLY IF ITS PAYLOAD ENTRY EXISTS. `book-formats.js` selects a
+     *    format by looking its key up in that payload, so a card without an
+     *    entry was never selectable anyway — it was a dead control.
+     *
+     * ⛔ CONTROL PATH, AND IT IS EXACT: for an ordinary shopper the payload
+     *    holds both physical formats and this filter removes nothing, so every
+     *    chapter page renders byte-identical markup to 1.19.276. On a
+     *    school-visit session it removes `hardcover`, which
+     *    `bhp_book_available_formats()` had already removed — the same card,
+     *    for the same reason, by one rule instead of two.
+     */
+    $bhp_card_order = array_values(array_filter(
+        $bhp_card_order,
+        function ($bhp_fmt) use ($bhp_format_payload) {
+            return isset($bhp_format_payload[$bhp_fmt]);
+        }
+    ));
     foreach ($bhp_card_order as $bhp_fmt):
         $bhp_on = ($bhp_fmt === $initial);
     ?>

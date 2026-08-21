@@ -22,7 +22,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.59' );
+/*
+ * ⭐⭐ 1.8.62 — THIS CONSTANT HAD DRIFTED TO `1.8.59` WHILE THE HEADER SAID
+ *     `1.8.61`, AND FIXING IT IS NOT COSMETIC.
+ *
+ * ⛔ IT IS THE `$ver` ARGUMENT ON EVERY `wp_enqueue_script()` AND
+ *    `wp_enqueue_style()` THIS PLUGIN REGISTERS — the cart drawer, the landing
+ *    page, the add-on upsell, the checkout events and the list tracking. A
+ *    stale value means a browser that already holds `bundle-drawer.js?ver=1.8.59`
+ *    KEEPS SERVING IT and never fetches the new file.
+ *
+ * ⭐ THIS RELEASE CHANGES `bundle-drawer.js` — the `offer_*` interception fix.
+ *    Leaving the constant at `1.8.59` would have shipped that fix to the
+ *    server and to nobody's browser: the PHP would be right, the file on disk
+ *    would be right, and every returning customer would still hit the alert.
+ *    ⛔ That is the same "correct in code review, dead in the browser" failure
+ *    class the `finishBundleAdd()` comment records, and it is why this is
+ *    corrected here rather than flagged and left.
+ *
+ * ⛔ KEEP IT IN STEP WITH THE `Version:` HEADER ABOVE, every release.
+ */
+define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.62' );
 define( 'BHP_BUNDLE_PRICING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BHP_BUNDLE_PRICING_URL', plugin_dir_url( __FILE__ ) );
 

@@ -27,6 +27,16 @@ function bhp_test_assert( $condition, $label, array &$failures ) {
 	}
 }
 
+/*
+ * ⭐ 1.8.62 — A NAMED CALLBACK, NOT A CLOSURE. `remove_filter()` cannot remove
+ *    an anonymous function, so a closure would leak the forced policy into
+ *    every assertion after the block that set it, silently turning later rows
+ *    into tests of a policy the store does not run.
+ */
+function bhp_bp_force_conservative() {
+	return 'conservative';
+}
+
 /**
  * Minimal stand-in for WC_Cart, exposing only what bundle-data.php and
  * bundle-cart.php actually call: get_cart() and get_applied_coupons().
@@ -340,9 +350,33 @@ $cart_mixed_qty_ship = new BHP_Test_Stub_Cart(
  *    "you spent enough" — and it keeps faith with the Phase 4 rule that two
  *    copies of one title never qualify for anything.
  */
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.62 — POLICY-SCOPED, BY FOUNDER RULING. NOT WEAKENED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE PARAGRAPH ABOVE IS PRESERVED VERBATIM AND STILL PROVES WHAT IT SAYS
+ *    IT PROVES — under the `conservative` policy it was written for, which is
+ *    the 1.8.23 rule and is still reachable through the filter.
+ *
+ * ⭐ `FD-583` (PART 66 §66.8, read at source) moved the SHIPPED default to
+ *    "any 3 books, duplicates included", which keys free shipping on exactly
+ *    the book count this row was written to disprove. ⛔ So the row is scoped
+ *    rather than deleted, and the shipped behaviour on the IDENTICAL cart is
+ *    asserted immediately after it — the difference between the two rules is
+ *    then a fact on the screen, not a claim in a comment.
+ */
+add_filter( 'bhp_bundle_colouring_policy', 'bhp_bp_force_conservative' );
 bhp_test_assert(
 	4.99 === bhp_bundle_shipping_amount( bhp_bundle_evaluate_cart( $cart_mixed_qty_ship ) ),
-	'1.8.23 COUNTERFACTUAL: mixed cart, 3 books but only 2 adventures (2x Everest PB + Mariana HC) -> still $4.99, NOT free',
+	'1.8.23 [conservative] COUNTERFACTUAL: mixed cart, 3 books but only 2 adventures (2x Everest PB + Mariana HC) -> still $4.99, NOT free',
+	$failures
+);
+remove_filter( 'bhp_bundle_colouring_policy', 'bhp_bp_force_conservative' );
+
+bhp_test_assert(
+	0.00 === bhp_bundle_shipping_amount( bhp_bundle_evaluate_cart( $cart_mixed_qty_ship ) ),
+	'FD-583 [any-three, SHIPPED]: the same cart, 3 physical books -> $0.00 FREE',
 	$failures
 );
 

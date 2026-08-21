@@ -1573,9 +1573,51 @@
 			if (!actionField) {
 				return;
 			}
-			e.preventDefault();
 
 			var action = actionField.value;
+
+			/*
+			 * ═══════════════════════════════════════════════════════════════
+			 * ⭐⭐ 1.8.62 — AN ACTION THIS SCRIPT DOES NOT IMPLEMENT IS LEFT
+			 *     TO THE SERVER. ⛔ THE TEST IS DELIBERATELY ABOVE
+			 *     `preventDefault()`.
+			 * ═══════════════════════════════════════════════════════════════
+			 *
+			 * ⛔⛔ THE DEFECT THIS CLOSES WAS OBSERVED IN A REAL BROWSER ON
+			 *    STAGING, and it could not have been found any other way: the
+			 *    PHP was correct, the served HTML was correct, and the button
+			 *    still did not work.
+			 *
+			 * The offer engine's `offer_*` forms carry `bhp-bundle-form`, so
+			 * this listener claimed them, called `preventDefault()`, fell
+			 * through every branch below to the final `else` — which looks for
+			 * `input[name="bhp_titles[]"]:checked` — found none, and fired
+			 * `window.alert('Please choose exactly two different titles for
+			 * this bundle.')`.
+			 *
+			 * ⛔ SO THE CUSTOMER GOT A MODAL ASKING THEM TO CHOOSE TWO TITLES,
+			 *    ON AN OFFER THAT HAS NO TITLES TO CHOOSE, AND NOTHING WAS
+			 *    ADDED TO THE CART. The `catch` fallback below could not save
+			 *    it either: that branch `return`s before any promise exists.
+			 *
+			 * ⭐ THE FIX IS A CAPABILITY TEST, NOT A LIST OF NEW BRANCHES. This
+			 *    script implements exactly three action families. Anything
+			 *    else is handled by `bhp_bundle_handle_add_to_cart()` on
+			 *    `template_redirect` — a real, tested, redirect-after-POST
+			 *    path that has shipped since Phase 4. Returning BEFORE
+			 *    `preventDefault()` lets the native POST proceed untouched, so
+			 *    an unrecognised action degrades to the server rather than to
+			 *    a wrong modal.
+			 *
+			 * ⛔ CONTROL PATH: all three implemented families still match, so
+			 *    every collection, single and any-2 form behaves exactly as it
+			 *    did in 1.8.61 — same interception, same drawer, same events.
+			 */
+			if (!/^(complete_|single_|any2_)/.test(action)) {
+				return;
+			}
+
+			e.preventDefault();
 			var catalog = (window.bhpDrawerData && window.bhpDrawerData.catalog) || {};
 			var format = action.indexOf('hardcover') !== -1 ? 'hardcover' : 'paperback';
 			var titleKeys;
