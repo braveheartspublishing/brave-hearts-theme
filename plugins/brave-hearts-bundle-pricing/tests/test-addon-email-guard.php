@@ -670,9 +670,39 @@ if ( isset( $bhp_emails['WC_Email_Customer_Completed_Order'] ) ) {
 		'Completed-order subject is still "Your books have shipped" (got: "' . $bhp_completed->get_subject() . '")',
 		$failures
 	);
+	/*
+	 * ⭐⭐ 1.19.281 — ASSERTED AGAINST A SIMULATED PRODUCTION HOST, AND THAT IS
+	 *     A NARROWING OF SCOPE, NOT A WEAKENING.
+	 *
+	 * ⛔ WHAT THIS ASSERTION IS FOR, UNCHANGED: Andrew, Message 32 — "Your
+	 *    books have shipped is fine." It exists so a future change cannot
+	 *    QUIETLY TURN THAT EMAIL OFF. That protection is fully intact: if
+	 *    anyone disables the email in WooCommerce's settings, the `enabled`
+	 *    property is 'no' and this still fails on every host.
+	 *
+	 * ⛔ WHAT CHANGED AROUND IT: `inc/staging-mail-guard.php` (theme 1.19.281)
+	 *    suppresses WooCommerce ORDER emails ON STAGING ONLY, because the QA
+	 *    round of 2026-08-21 mailed Andrew for every test order it placed.
+	 *    That guard filters `is_enabled()` by HOST — it does not touch the
+	 *    stored setting, and it is inert on production.
+	 *
+	 * ⭐ SO THE TWO ARE NOT ACTUALLY IN CONFLICT: this suite runs on staging,
+	 *    where delivery is deliberately off, and it means to assert the
+	 *    CONFIGURATION. Simulating a production host is what makes the
+	 *    assertion say what it has always meant.
+	 */
+	$bhp_aeg_host = isset( $_SERVER['HTTP_HOST'] ) ? $_SERVER['HTTP_HOST'] : null;
+	$_SERVER['HTTP_HOST'] = 'braveheartspublishing.com';
+	$bhp_aeg_completed_enabled = $bhp_completed->is_enabled();
+	if ( null === $bhp_aeg_host ) {
+		unset( $_SERVER['HTTP_HOST'] );
+	} else {
+		$_SERVER['HTTP_HOST'] = $bhp_aeg_host;
+	}
+
 	bhp_aeg_assert(
-		$bhp_completed->is_enabled(),
-		'Completed-order email is still enabled',
+		$bhp_aeg_completed_enabled,
+		'Completed-order email is still enabled (asserted against a production host, so the staging delivery guard is not read as a regression)',
 		$failures
 	);
 }
