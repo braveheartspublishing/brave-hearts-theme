@@ -2151,6 +2151,49 @@ const BHP_SHOP_ATC_CLASS = 'bhp-shop-atc';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.286 — IS THIS LOOP THE SHOP GRID? THE SCOPE GATE FOR ITEMS 210+211.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE BRIEF IS EXPLICIT: *"only the SHOP CARDS change"*. `woocommerce_loop_
+ *    add_to_cart_link` is not a shop-page filter — it fires on EVERY product
+ *    loop on the site, and the PRODUCT PAGE's related/upsell rows are
+ *    `ul.products li.product` too.
+ *
+ * ⛔⛔ FOUND IN A REAL BROWSER, NOT BY READING THE CODE. Without this gate the
+ *    Mariana product page rendered TWO `bhp-shop-atc` controls in its related
+ *    row (measured on staging 1.19.286) — controls that ADD a paperback where
+ *    the superseded ones NAVIGATED, on a surface nobody ruled on, and carrying
+ *    none of the geometry, because every rule in `style.css` is deliberately
+ *    scoped to `body.woocommerce-shop`. ⭐ THAT SCOPE IS LOAD-BEARING AND IS
+ *    RECORDED AS SUCH by the 1.19.283 block; the fix is to match the PHP to it,
+ *    never to widen the CSS to match the PHP.
+ *
+ * ⭐⭐ OFF THE ARCHIVE, THE SUPERSEDED CONTROL IS RENDERED UNCHANGED — see
+ *     `bhp_book_shop_add_to_cart_link()`. So no surface outside /shop/ gains a
+ *     control, loses one, or has one behave differently than it did in
+ *     1.19.285. ⛔ THE ALTERNATIVE — simply not filtering off-archive — would
+ *     have silently REPLACED the related row's "CHOOSE YOUR FORMAT" with
+ *     WooCommerce's own default, which is a second unruled change in the
+ *     opposite direction.
+ *
+ * @return bool
+ */
+function bhp_shop_card_context() {
+    $is_shop = function_exists('is_shop') && is_shop() && !is_admin();
+    /**
+     * Whether the current product loop is the /shop/ grid.
+     *
+     * ⭐ Filterable so a WP-CLI suite can assert the archive branch, which
+     *    `is_shop()` can never be true for. A test that could only reach the
+     *    off-archive branch would assert the wrong control.
+     *
+     * @param bool $is_shop
+     */
+    return (bool) apply_filters('bhp_shop_card_context', $is_shop);
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐ 1.19.286 — THE CHAPTER CARD ADDS THE PAPERBACK. CARRIER ITEM 210.
  * ═══════════════════════════════════════════════════════════════════════════
  *
@@ -2196,6 +2239,20 @@ function bhp_book_shop_add_to_cart_link($html, $product) {
     $found = $product ? bhp_book_lookup_product($product->get_id()) : null;
     if (!$found || !$found['canonical']) {
         return $html;
+    }
+
+    /*
+     * ⛔ OFF THE SHOP ARCHIVE, THIS IS 1.19.285, BYTE FOR BYTE. The superseded
+     *    `bhp_book_shop_choose_format_link()` markup is reproduced here rather
+     *    than left hooked beside its replacement, so exactly one filter owns
+     *    this control and the related/upsell rows are unchanged by this release.
+     */
+    if (!bhp_shop_card_context()) {
+        return sprintf(
+            '<a href="%s" class="button bhp-shop-choose-format">%s</a>',
+            esc_url(get_permalink($product->get_id())),
+            esc_html__('CHOOSE YOUR FORMAT', 'brave-hearts')
+        );
     }
 
     $data = bhp_book_purchase_data($found['key']);

@@ -359,6 +359,41 @@ if ( '' !== $uc_pair_li ) {
 	);
 }
 
+echo "\n=== §5b · ⛔⛔ THE CHANGE STOPS AT /shop/ ===\n";
+
+/*
+ * ⭐ THE BRIEF'S OWN BOUNDARY: *"only the SHOP CARDS change"*. ⛔ AND IT IS NOT
+ *    FREE — `woocommerce_loop_add_to_cart_link` fires on EVERY product loop on
+ *    the site, and the PRODUCT PAGE's related/upsell rows are
+ *    `ul.products li.product` too. A real browser found TWO `bhp-shop-atc`
+ *    controls on the Mariana product page before `bhp_shop_card_context()`
+ *    existed — controls that ADD where the superseded ones NAVIGATED, on a
+ *    surface nobody ruled on, and carrying none of the geometry, because every
+ *    CSS rule in this release is scoped to `body.woocommerce-shop`.
+ * ⭐ SO THE OFF-ARCHIVE BRANCH RENDERS 1.19.285's CONTROL, BYTE FOR BYTE.
+ */
+uc_assert( function_exists( 'bhp_shop_card_context' ), '5b.1 the scope gate exists' );
+if ( function_exists( 'bhp_shop_card_context' ) && function_exists( 'bhp_book_shop_add_to_cart_link' ) && function_exists( 'bhp_book_registry' ) ) {
+	uc_assert(
+		false === bhp_shop_card_context(),
+		'5b.2 under WP-CLI the gate is CLOSED (is_shop() cannot be true here) — so the branch below is the real off-archive one'
+	);
+	$uc_off_key  = array_key_first( bhp_book_registry() );
+	$uc_off_book = bhp_book_registry()[ $uc_off_key ];
+	$uc_off_prod = function_exists( 'wc_get_product' ) ? wc_get_product( $uc_off_book['pb_product'] ) : null;
+	if ( $uc_off_prod ) {
+		$uc_off_html = bhp_book_shop_add_to_cart_link( '<a>fallback</a>', $uc_off_prod );
+		uc_assert(
+			false !== strpos( $uc_off_html, 'CHOOSE YOUR FORMAT' ),
+			'5b.3 ⭐ OFF the archive the related/upsell control is the 1.19.285 navigation anchor, unchanged'
+		);
+		uc_assert(
+			false === strpos( $uc_off_html, 'data-bhp-cart-add' ) && false === strpos( $uc_off_html, 'bhp-shop-atc' ),
+			'5b.4 ⛔ …and it carries NO panel hook and NO uniform token — no surface outside /shop/ gained a control'
+		);
+	}
+}
+
 echo "\n=== §6 · ⛔⛔ THE FOUNDER-WALKED DIRECT-BUY PATH IS UNTOUCHED ===\n";
 
 /*

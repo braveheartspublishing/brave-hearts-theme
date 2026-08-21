@@ -433,6 +433,15 @@ if ( ! function_exists( 'bhp_book_shop_add_to_cart_link' ) || ! function_exists(
 		$failures
 	);
 
+	/*
+	 * ⭐ 1.19.286 — FORCE THE ARCHIVE BRANCH. `is_shop()` can never be true
+	 *    under WP-CLI, so without this every assertion below would measure the
+	 *    OFF-ARCHIVE control (the preserved "CHOOSE YOUR FORMAT" navigation
+	 *    anchor) while claiming to test the shop card. ⛔ A suite that silently
+	 *    tests the wrong branch is worse than one that skips.
+	 */
+	add_filter( 'bhp_shop_card_context', '__return_true' );
+
 	foreach ( bhp_book_registry() as $key => $book ) {
 		$canonical = bhp_book_canonical_id( $key );
 		bhp_cos_assert(
@@ -478,6 +487,34 @@ if ( ! function_exists( 'bhp_book_shop_add_to_cart_link' ) || ! function_exists(
 					$failures
 				);
 			}
+		}
+	}
+
+	/*
+	 * ⛔ AND THE OFF-ARCHIVE BRANCH, ASSERTED RATHER THAN ASSUMED. This is the
+	 *    promise that nothing outside /shop/ moved: the product page's
+	 *    related/upsell rows still render the 1.19.285 navigation control, byte
+	 *    for byte. ⭐ Tested by REMOVING the forced context, which is the only
+	 *    way to reach the branch a real related-products row takes.
+	 */
+	remove_filter( 'bhp_shop_card_context', '__return_true' );
+	if ( function_exists( 'wc_get_product' ) ) {
+		$off_key     = array_key_first( bhp_book_registry() );
+		$off_book    = bhp_book_registry()[ $off_key ];
+		$off_product = wc_get_product( $off_book['pb_product'] );
+		if ( $off_product ) {
+			$off_html = bhp_book_shop_add_to_cart_link( '<a>fallback</a>', $off_product );
+			bhp_cos_assert(
+				strpos( $off_html, 'CHOOSE YOUR FORMAT' ) !== false
+					&& strpos( $off_html, 'data-bhp-cart-add' ) === false,
+				'§8g ⭐⭐ OFF the shop archive the control is UNCHANGED from 1.19.285 (navigation, no panel hook)',
+				$failures
+			);
+			bhp_cos_assert(
+				strpos( $off_html, esc_url( get_permalink( $off_book['pb_product'] ) ) ) !== false,
+				'§8h …and it still points at the canonical paperback product page',
+				$failures
+			);
 		}
 	}
 }

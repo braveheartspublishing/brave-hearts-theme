@@ -565,6 +565,14 @@ function bhp_colouring_shop_add_to_cart_link($html, $product) {
     if (!$product || !function_exists('bhp_shop_card_atc_label')) {
         return $html;
     }
+    /*
+     * ⛔ THE SHOP ARCHIVE ONLY — the brief's own boundary, and the same gate the
+     *    chapter cards take. Off the archive this card kept WooCommerce's own
+     *    control in 1.19.285 and keeps it now: `$html` untouched.
+     */
+    if (!function_exists('bhp_shop_card_context') || !bhp_shop_card_context()) {
+        return $html;
+    }
     $data = bhp_colouring_purchase_data($product->get_id());
     if (!$data) {
         return $html;
