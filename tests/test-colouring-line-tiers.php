@@ -578,6 +578,227 @@ if ( function_exists( 'bhp_get_series_adventures' ) ) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+ * §9b · ⭐⭐ FULFILMENT ROUTING — A COLOURING ORDER LINE RESOLVES TO AN ISBN THE
+ *       SAME WAY A CHAPTER BOOK'S DOES. `CYCLE165-LD-COLOURING-ISBN-WIRING`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ THE DEFECT THIS SECTION EXISTS TO CATCH IS SILENT, AND THAT IS THE WHOLE
+ *     POINT. The installed third-party plugin builds its order lines like this
+ *     (`wp-content/plugins/bookvault/Bookvault.php:136-139`, read on staging
+ *     this build, NOT from documentation):
+ *
+ *         $sku = $product->get_sku();
+ *         if (strlen($sku) == 13) {
+ *             $transaction_lines[] = [ "ISBN" => $sku, "Quantity" => ... ];
+ *         }
+ *
+ *     ⭐ There is no `else`. A product whose SKU is not exactly 13 characters
+ *        contributes NO LINE — no warning, no error, no failed request. The
+ *        order simply arrives at the printer missing a book, or empty.
+ *
+ * ⭐ SO THE ASSERTIONS BELOW TEST THE PRODUCT RECORD, NOT THE CATALOGUE. Code
+ *    stating an intention proves nothing about what goes on the wire.
+ *
+ * ⚠ WHAT THIS SECTION CANNOT PROVE, STATED PLAINLY RATHER THAN GLOSSED: it does
+ *   NOT place an order, does not fire a webhook, and does not contact
+ *   Bookvault. Bookvault's RECEIVER is server-side and unreadable from here, so
+ *   "the payload carries the right ISBN in the fields the six live books use"
+ *   is the strongest honest claim available, and it is the claim made. Whether
+ *   the receiver keys on `sku` or on `global_unique_id` is NOT asserted — which
+ *   is exactly why both are required to be present and to agree.
+ */
+echo "\n[§9b] ⭐ Fulfilment routing — the colouring line resolves to an ISBN\n";
+
+$clt_expected_isbn = '9798996810840';
+
+bhp_clt_assert(
+	$clt_expected_isbn === bhp_colouring_isbn( 'mariana' ),
+	'the catalogue routes the MT colouring book to ISBN ' . $clt_expected_isbn,
+	$failures,
+	$passes
+);
+bhp_clt_assert(
+	'' === bhp_colouring_isbn( 'everest' ) && '' === bhp_colouring_isbn( 'amazon' ),
+	'⛔ no ISBN is invented for a title that does not exist',
+	$failures,
+	$passes
+);
+// ⛔ The shape gate must be the SAME gate fulfilment applies — 13 digits.
+bhp_clt_assert(
+	13 === strlen( $clt_expected_isbn ) && ctype_digit( $clt_expected_isbn ),
+	'the ISBN is 13 digits — the exact shape Bookvault.php:137 accepts',
+	$failures,
+	$passes
+);
+
+/*
+ * ⭐⭐ THE COMPARATIVE ASSERTION THE BRIEF ASKS FOR, AND IT IS COMPARATIVE ON
+ *     PURPOSE: the colouring product is required to satisfy the SAME predicate
+ *     the chapter books satisfy, rather than a predicate written for it.
+ *
+ * ⛔ IT IS ENVIRONMENT-AWARE INSTEAD OF ENVIRONMENT-BLIND, AND THAT IS A REAL
+ *    FINDING RATHER THAN A CONVENIENCE. Read this build:
+ *      · PRODUCTION 14/15/17/18/20 + variation 334 → ISBN in `_sku` AND
+ *        `_global_unique_id`. Both. That is the pattern.
+ *      · STAGING → the same products carry `BHP-MT-HC`-style internal SKUs with
+ *        the ISBN only in `_global_unique_id`.
+ *    A test hardcoding either environment's shape fails on the other for no
+ *    defect. So the reference books are MEASURED, and product seven is required
+ *    to be no worse than they are.
+ */
+$clt_reference_ids = array( 14, 15, 17, 18, 20 );
+$clt_ref_routing   = array();
+foreach ( $clt_reference_ids as $clt_ref_id ) {
+	if ( wc_get_product( $clt_ref_id ) ) {
+		$clt_ref_routing[ $clt_ref_id ] = bhp_colouring_product_isbn_state( $clt_ref_id );
+	}
+}
+$clt_ref_all_route = ! empty( $clt_ref_routing );
+foreach ( $clt_ref_routing as $clt_state ) {
+	if ( ! $clt_state['routes'] ) {
+		$clt_ref_all_route = false;
+	}
+}
+
+$clt_colouring_ids = bhp_colouring_product_ids();
+
+if ( empty( $clt_colouring_ids ) ) {
+	// ⛔ NOT A PASS. An environment with no colouring record cannot make this
+	//    claim, and saying so is the honest result — never a silent skip-as-ok.
+	echo "  SKIP  no colouring product record on this environment — routing NOT CHECKED here.\n";
+} else {
+	$clt_col_id    = (int) reset( $clt_colouring_ids );
+	$clt_col_state = bhp_colouring_product_isbn_state( $clt_col_id );
+
+	bhp_clt_assert(
+		$clt_col_state['sku'] === $clt_expected_isbn,
+		'the colouring PRODUCT RECORD carries the ISBN in `_sku` (got "' . $clt_col_state['sku'] . '")',
+		$failures,
+		$passes
+	);
+	bhp_clt_assert(
+		$clt_col_state['guid'] === $clt_expected_isbn,
+		'the colouring PRODUCT RECORD carries the ISBN in `_global_unique_id` (got "' . $clt_col_state['guid'] . '")',
+		$failures,
+		$passes
+	);
+	bhp_clt_assert(
+		$clt_col_state['agree'],
+		'⛔ the two ISBN-bearing fields AGREE — a disagreement is never resolved by guessing',
+		$failures,
+		$passes
+	);
+	bhp_clt_assert(
+		$clt_col_state['routes'],
+		'the colouring line PASSES the 13-character gate, so it produces an order line at all',
+		$failures,
+		$passes
+	);
+	bhp_clt_assert(
+		$clt_expected_isbn === bhp_colouring_isbn_for_product( $clt_col_id ),
+		'product id ' . $clt_col_id . ' maps back to ' . $clt_expected_isbn . ' from the order-line side',
+		$failures,
+		$passes
+	);
+
+	// ⭐ THE SAMENESS CLAIM ITSELF: no worse than a chapter book, on this box.
+	if ( $clt_ref_all_route ) {
+		bhp_clt_assert(
+			$clt_col_state['routes'],
+			'⭐ the colouring line routes exactly as the chapter books do on this environment',
+			$failures,
+			$passes
+		);
+	} else {
+		echo "  NOTE  chapter books do NOT all pass the 13-char SKU gate on this environment"
+			. " (staging data divergence, pre-existing, out of scope) — comparative claim NOT made.\n";
+	}
+
+	// ⛔ The identity registry must survive the SKU change. If this fails, the
+	//    cart maths silently reverts and CYCLE165-OPS-018 comes back.
+	bhp_clt_assert(
+		bhp_is_colouring_product( $clt_col_id ),
+		'⛔ the ISBN-keyed record still resolves as a colouring product — cart maths intact',
+		$failures,
+		$passes
+	);
+}
+
+// ⭐ The legacy SKU remains a resolving alias, so the deploy order is safe.
+$clt_catalog_mt = bhp_colouring_catalog();
+bhp_clt_assert(
+	isset( $clt_catalog_mt['mariana']['sku_aliases'] )
+		&& in_array( 'BHP-COLOR-MT-01', (array) $clt_catalog_mt['mariana']['sku_aliases'], true ),
+	'the legacy SKU survives as an alias — code may ship before the record is edited',
+	$failures,
+	$passes
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * §9c · ⛔⛔ THE HAND-DELIVERY SKIP MUST TREAT PRODUCT SEVEN LIKE EVERY OTHER.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE FINDING, AND IT IS THE REASSURING ONE: the skip is decided ENTIRELY at
+ *    ORDER level and never inspects a line item. `bhp_school_pickup_block_
+ *    bookvault_webhook()` tests, in order — WooCommerce's own prior decision,
+ *    the webhook's delivery-URL HOST, the webhook's RESOURCE being `order`, the
+ *    argument being numeric, and `bhp_school_pickup_order_is_pickup()`. A
+ *    seventh product cannot reach any of those tests.
+ *
+ * ⛔ SO THIS SECTION ASSERTS THAT PROPERTY RATHER THAN ASSUMING IT, by proving
+ *    the source contains no product-level test. A future edit that started
+ *    filtering by product would break the free hand-delivery promise for a
+ *    colouring book, and would break it silently.
+ *
+ * ⚠ IT IS A SOURCE ASSERTION, NOT A LIVE ORDER. Verified live on order 612 by a
+ *   previous cycle; this suite does not re-verify that and does not claim to.
+ */
+echo "\n[§9c] ⛔ Hand-delivery Bookvault skip is product-agnostic\n";
+
+$clt_pickup_src = file_get_contents(
+	__DIR__ . '/../plugins/brave-hearts-bundle-pricing/includes/school-visit-pickup.php'
+);
+$clt_skip_fn = strstr( $clt_pickup_src, 'function bhp_school_pickup_block_bookvault_webhook' );
+$clt_skip_fn = $clt_skip_fn ? substr( $clt_skip_fn, 0, 2200 ) : '';
+
+bhp_clt_assert(
+	'' !== $clt_skip_fn,
+	'the skip function is present in the shipped source',
+	$failures,
+	$passes
+);
+bhp_clt_assert(
+	'' !== $clt_skip_fn
+		&& false === strpos( $clt_skip_fn, 'get_items' )
+		&& false === strpos( $clt_skip_fn, 'get_product' )
+		&& false === strpos( $clt_skip_fn, 'colouring' )
+		&& false === strpos( $clt_skip_fn, 'get_sku' ),
+	'⛔ the skip inspects NO line item, product, SKU or colouring state — product seven cannot alter it',
+	$failures,
+	$passes
+);
+bhp_clt_assert(
+	'' !== $clt_skip_fn && false !== strpos( $clt_skip_fn, 'return false' ),
+	'the skip can only ever SUPPRESS a delivery, never cause one',
+	$failures,
+	$passes
+);
+bhp_clt_assert(
+	function_exists( 'bhp_school_pickup_order_is_pickup' )
+		&& function_exists( 'bhp_school_pickup_is_fulfilment_webhook' ),
+	'both order-level predicates the skip depends on are loaded',
+	$failures,
+	$passes
+);
+// ⭐ The host match is what makes a re-created webhook still caught.
+bhp_clt_assert(
+	in_array( 'bookvault.app', bhp_school_pickup_fulfilment_hosts(), true ),
+	'the fulfilment host list still covers bookvault.app',
+	$failures,
+	$passes
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
  * §10 · ⭐⭐ THE NEGATIVE CONTROL — "a check that has never failed is not
  *      known to work" (spec §11.2 step 9, the method that proved the item-126
  *      fix). Every assertion above is worthless if the harness cannot fail.

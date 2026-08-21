@@ -827,7 +827,64 @@ function bhp_colouring_catalog() {
 		'bhp_colouring_catalog',
 		array(
 			'mariana' => array(
-				'sku'   => 'BHP-COLOR-MT-01',
+				/*
+				 * ═══════════════════════════════════════════════════════════
+				 * ⭐⭐ 1.8.63 (`CYCLE165-LD-COLOURING-ISBN-WIRING`) — THE SKU IS
+				 *     THE ISBN, BECAUSE THE SKU IS WHAT FULFILMENT READS.
+				 * ═══════════════════════════════════════════════════════════
+				 *
+				 * ⛔ THE PREVIOUS VALUE WAS `BHP-COLOR-MT-01` AND IT WOULD HAVE
+				 *    ROUTED NOWHERE. Read this build, first-hand, from the
+				 *    installed third-party plugin on staging:
+				 *
+				 *      wp-content/plugins/bookvault/Bookvault.php:136-139
+				 *        $sku = $product->get_sku();
+				 *        if (strlen($sku) == 13) {
+				 *          $transaction_lines[] = ["ISBN" => $sku, ...];
+				 *        }
+				 *
+				 *    ⭐ THE ISBN IS NOT A SEPARATE FIELD TO THAT CODE. It IS the
+				 *       SKU, gated on being exactly 13 characters long.
+				 *       `BHP-COLOR-MT-01` is 15, so the colouring book would
+				 *       have contributed NO order line at all — silently, with
+				 *       no error anywhere.
+				 *
+				 * ⭐ AND IT IS WHAT THE SIX LIVE PRODUCTS ACTUALLY DO. Read
+				 *    read-only off PRODUCTION this build (`wp post meta get`):
+				 *    every one of 14/15/17/18/20 and variation 334 carries its
+				 *    ISBN in BOTH `_sku` AND `_global_unique_id`. Matching that
+				 *    pattern is the whole task; inventing a third pattern for
+				 *    product seven is what would break it.
+				 *
+				 * ⚠ STAGING DIVERGES FROM PRODUCTION ON THIS AND IT IS RECORDED
+				 *   RATHER THAN QUIETLY FIXED — staging's chapter books carry
+				 *   internal SKUs (`BHP-MT-HC` and friends) with the ISBN only
+				 *   in `_global_unique_id`. That is a STAGING DATA defect, it
+				 *   predates this build, and repairing the six chapter records
+				 *   is NOT in this workstream's scope.
+				 */
+				'sku'   => '9798996810840',
+				/*
+				 * ⭐ THE LEGACY SKU STILL RESOLVES, AND THAT IS NOT A SECOND
+				 *    MECHANISM. It is the deploy-ordering guarantee: this code
+				 *    ships BEFORE the product record is edited, and an
+				 *    environment whose record still reads `BHP-COLOR-MT-01`
+				 *    must keep its cart maths working in the interval rather
+				 *    than going inert for a shopper mid-order.
+				 * ⛔ NOTHING MAY CREATE A NEW PRODUCT ON THE LEGACY SKU. The
+				 *    production creation step uses the ISBN, first and only.
+				 */
+				'sku_aliases' => array( 'BHP-COLOR-MT-01' ),
+				/*
+				 * ⭐ THE ISBN, STATED SEPARATELY FROM THE SKU ON PURPOSE.
+				 *    Today they are the same string. They are DIFFERENT FACTS —
+				 *    one is a store identifier, one is a printed-book identity —
+				 *    and a reader asking "what ISBN does this route to" must not
+				 *    have to infer it from a field named `sku`.
+				 * ⭐ SOURCE: `22-COLOURING-BOOK-PRODUCTION-CANON.md`, carried in
+				 *    the founder's item-183 dispatch. Not derived, not computed.
+				 */
+				'isbn'  => '9798996810840',
 				/*
 				 * ⛔ FD-557, VERBATIM. No agent shortens, re-cases or drops the
 				 *    subtitle. This string is for INTERNAL identification only;
@@ -864,9 +921,28 @@ function bhp_colouring_product_ids() {
 				if ( empty( $info['sku'] ) ) {
 					continue;
 				}
-				$id = (int) wc_get_product_id_by_sku( $info['sku'] );
-				if ( $id > 0 ) {
-					$resolved[ $slug ] = $id;
+				/*
+				 * ⭐ 1.8.63 — THE CANONICAL SKU IS TRIED FIRST, ALWAYS, AND THE
+				 *    ORDER IS LOAD-BEARING RATHER THAN COSMETIC. On an
+				 *    environment mid-migration BOTH could resolve — the ISBN on
+				 *    the real record and the legacy string on some leftover —
+				 *    and the ISBN is the one fulfilment can actually route.
+				 *    First match wins and the loop stops.
+				 */
+				$candidates = array_merge(
+					array( $info['sku'] ),
+					isset( $info['sku_aliases'] ) ? (array) $info['sku_aliases'] : array()
+				);
+				foreach ( $candidates as $candidate ) {
+					$candidate = trim( (string) $candidate );
+					if ( '' === $candidate ) {
+						continue;
+					}
+					$id = (int) wc_get_product_id_by_sku( $candidate );
+					if ( $id > 0 ) {
+						$resolved[ $slug ] = $id;
+						break;
+					}
 				}
 			}
 		}
@@ -891,6 +967,113 @@ function bhp_colouring_product_ids() {
 	 * @param array<string,int> $resolved adventure slug => product id.
 	 */
 	return apply_filters( 'bhp_colouring_product_ids', $resolved );
+}
+
+/**
+ * ⭐⭐ 1.8.63 — THE FULFILMENT IDENTITY OF A COLOURING TITLE, AS A 13-DIGIT ISBN.
+ *
+ * ⛔ WHY THIS FUNCTION EXISTS AT ALL, given the value also sits in `sku`: the
+ *    two fields answer different questions and are allowed to diverge in the
+ *    future. A caller asking "what does fulfilment route this to" must read a
+ *    function named for that question, so that the day a store SKU stops being
+ *    an ISBN, every such caller breaks visibly instead of silently shipping the
+ *    wrong book.
+ *
+ * ⛔ IT VALIDATES SHAPE, NOT CHECKSUM, AND THAT IS DELIBERATE. 13 digits is
+ *    exactly the test the installed `bookvault` plugin applies
+ *    (`Bookvault.php:137`, `strlen($sku) == 13`). Applying a STRICTER test here
+ *    than fulfilment applies would let this function report "no ISBN" for a
+ *    string fulfilment would happily accept, which is the wrong direction for a
+ *    guard: it would hide a live routing problem rather than surface it.
+ *
+ * @param string $slug Adventure slug.
+ * @return string The 13-digit ISBN, or '' when the catalogue has no usable one.
+ */
+function bhp_colouring_isbn( $slug ) {
+	$catalog = bhp_colouring_catalog();
+	$slug    = (string) $slug;
+
+	if ( ! isset( $catalog[ $slug ]['isbn'] ) ) {
+		return '';
+	}
+
+	$isbn = trim( (string) $catalog[ $slug ]['isbn'] );
+
+	// ⛔ FAILS CLOSED. A malformed entry yields '' rather than a bad route.
+	return ( 13 === strlen( $isbn ) && ctype_digit( $isbn ) ) ? $isbn : '';
+}
+
+/**
+ * ⭐ 1.8.63 — the ISBN a colouring PRODUCT ID routes to, or ''.
+ *
+ * The product-side counterpart of `bhp_colouring_isbn()`, for callers holding
+ * an order line rather than a slug.
+ *
+ * @param int $product_id Product or variation id.
+ * @return string
+ */
+function bhp_colouring_isbn_for_product( $product_id ) {
+	foreach ( bhp_colouring_product_ids() as $slug => $id ) {
+		if ( (int) $product_id === (int) $id ) {
+			return bhp_colouring_isbn( $slug );
+		}
+	}
+	return '';
+}
+
+/**
+ * ⭐⭐ 1.8.63 — THE ISBN A LIVE PRODUCT RECORD WOULD ACTUALLY ROUTE TO.
+ *
+ * ⛔ THIS IS THE ONE THAT TELLS THE TRUTH, AND IT IS NOT THE CATALOGUE. Every
+ *    function above reads the CATALOGUE — code, which states intent. This reads
+ *    the PRODUCT RECORD — data, which states what fulfilment will actually see
+ *    on the wire. When they disagree, the record wins and the catalogue is
+ *    wrong, and a test that only ever consulted the catalogue could never
+ *    discover that.
+ *
+ * ⭐ IT MIRRORS THE INSTALLED PLUGIN'S OWN RULE EXACTLY, deliberately including
+ *    the part that looks like a bug: `Bookvault.php:136-139` reads the SKU and
+ *    accepts it only at exactly 13 characters. `_global_unique_id` is read as a
+ *    SECOND opinion because the WooCommerce order webhook payload carries it
+ *    too (`class-wc-rest-orders-v2-controller.php:232`), and Bookvault's own
+ *    receiver is server-side and cannot be read from here.
+ *
+ * ⚠ SO A DISAGREEMENT BETWEEN THE TWO FIELDS IS REPORTED, NEVER RESOLVED. This
+ *   returns them both and lets the caller assert they match, because guessing
+ *   which one the remote receiver prefers is precisely the guess that would
+ *   ship the wrong book.
+ *
+ * @param int $product_id Product or variation id.
+ * @return array{sku:string,guid:string,routes:bool,agree:bool}
+ */
+function bhp_colouring_product_isbn_state( $product_id ) {
+	$out = array(
+		'sku'    => '',
+		'guid'   => '',
+		'routes' => false,
+		'agree'  => false,
+	);
+
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return $out;
+	}
+
+	$product = wc_get_product( (int) $product_id );
+	if ( ! $product ) {
+		return $out;
+	}
+
+	$out['sku'] = trim( (string) $product->get_sku() );
+
+	if ( method_exists( $product, 'get_global_unique_id' ) ) {
+		$out['guid'] = trim( (string) $product->get_global_unique_id() );
+	}
+
+	// ⭐ The plugin's own gate, character for character. Not a stricter one.
+	$out['routes'] = ( 13 === strlen( $out['sku'] ) );
+	$out['agree']  = ( '' !== $out['sku'] && $out['sku'] === $out['guid'] );
+
+	return $out;
 }
 
 /**
