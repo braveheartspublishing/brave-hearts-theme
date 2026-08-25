@@ -1,0 +1,701 @@
+/* ===========================================================================
+   READ-ALOUD TAKE-HOME LANDING — /read-aloud/
+   Theme 1.19.290 (2026-08-24, CYCLE166-CX-READALOUD-LANDING)
+   ---------------------------------------------------------------------------
+   Loaded on page-read-aloud.php ONLY, by bhp_enqueue_read_aloud_assets().
+   Nothing here is sitewide and nothing here may be written to leak: every
+   selector below is scoped under .read-aloud.
+
+   ⚠ MOBILE-FIRST, AND THAT IS NOT A HABIT — IT IS THE AUDIENCE. This page is
+     reached by scanning a QR code printed on a sheet of paper. The reader is
+     a parent holding a phone. The desktop layout is the enhancement here, not
+     the baseline, so the base rules ARE the phone rules and the only media
+     query widens them.
+
+   ⛔ NO NEW COLOUR, FONT OR BUTTON SPEC IS DECLARED. Every value is a shipped
+      design token or a shipped component class (.btn / .btn-primary /
+      .btn-outline / .acquisition-form). The site collapsed six button specs
+      into one in wave F1; this file does not add a seventh.
+   =========================================================================== */
+
+.read-aloud {
+  background: var(--color-ivory);
+  color: var(--color-text);
+}
+
+.read-aloud__inner {
+  width: min(100% - 2rem, 68rem);
+  margin-inline: auto;
+}
+
+.read-aloud__eyebrow {
+  margin: 0 0 var(--space-2);
+  color: var(--color-gold-deep);
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.read-aloud__section-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 6vw, 2.75rem);
+  line-height: 1.15;
+  color: var(--color-forest);
+}
+
+.read-aloud__section-lead {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-lead);
+  line-height: 1.55;
+  max-width: 46rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   HERO — the one section addressed to the CHILD.
+   ⭐ Deliberately loud and deliberately short. A parent scanning a QR is
+      standing up, one-handed, with a child leaning on them; this screen has
+      to land in about two seconds.
+   ───────────────────────────────────────────────────────────────────────── */
+.read-aloud-hero {
+  padding: var(--space-12) 0 var(--space-10);
+  background: var(--color-forest);
+  color: var(--color-white);
+  text-align: center;
+}
+
+.read-aloud-hero__eyebrow {
+  margin: 0 0 var(--space-3);
+  /* ⛔ --color-gold, NOT --color-gold-deep: this ground is dark. The deep gold
+        is an accessibility derivative for CREAM grounds and measures 2.5–3.0:1
+        here. See the token note in style.css. */
+  color: var(--color-gold);
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.read-aloud-hero__title {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 8.5vw, 4rem);
+  line-height: 1.05;
+  color: var(--color-white);
+}
+
+.read-aloud-hero__lead {
+  margin: 0 auto var(--space-4);
+  max-width: 38rem;
+  font-size: var(--text-lead);
+  line-height: 1.55;
+  color: var(--color-pale);
+}
+
+.read-aloud-hero__hand {
+  margin: 0 auto;
+  max-width: 34rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-gold);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE COMBO — 1.19.291. Andrew's second amendment: *"add the combo of both of
+   them as well … It should be the first option as well"*.
+   ---------------------------------------------------------------------------
+   ⛔ EVERY SELECTOR IN THIS BLOCK IS SCOPED UNDER `.read-aloud`, INCLUDING THE
+      ONES THAT TARGET PLUGIN AND SHOP CLASSES. That is not tidiness. The
+      control rendered here is the SHOP GRID'S card, and much of its dress
+      lives in `assets/css/book-formats.css`, which is enqueued on product and
+      shop pages ONLY.
+
+   ⚠️ CORRECTED AFTER THE FIRST STAGING BROWSER WALK — the superseded version of
+      this note claimed `.bhp-offer` "arrives completely unstyled" here. THAT IS
+      WRONG and is preserved so it is not re-derived. Enumerating the live
+      `document.styleSheets` on the rendered page found SIX matching rules, all
+      in the SITEWIDE `style.css`: a bare `.bhp-offer` rule gives the module a
+      panel of its own (computed `rgba(15,42,68,0.035)` ground, a hairline
+      border, 12px radius, 16/18/18 padding) on every page, plus four
+      shop-scoped rules that correctly do NOT apply here.
+   ⭐ THE CONSEQUENCE IS GOOD AND IS NOW DELIBERATE RATHER THAN LUCKY: the
+      inherited panel reads as a purchase box nested inside the parchment card,
+      which is exactly the hierarchy this block wants. The rules below LAYER ON
+      that base — they do not replace it — and the layout, price scale, button
+      fills and tap targets are what this page adds.
+   ⛔ SO DO NOT ASSUME THE MODULE IS A BLANK SLATE when editing this block.
+      Check the computed style on a real page load, the way this note was
+      corrected.
+
+   ⛔ Being scoped, none of this can alter how the module looks on `/shop/` or
+      on a product page. ⛔ Do not "simplify" any rule by dropping the
+      `.read-aloud` prefix — that would repaint the shop grid from a landing
+      page's stylesheet.
+
+   ⭐ THE COMBO IS DELIBERATELY THE LOUDEST THING IN THIS SECTION. It is the
+      first option by founder ruling, so it gets the parchment ground, the gold
+      edge and the filled CTA; the two tiles below stay white with outline
+      buttons. The hierarchy is the ruling, expressed in paint.
+
+   ⛔ NO NEW COLOUR, FONT OR RADIUS VALUE IS DECLARED. Tokens only, as above.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.read-aloud-combo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-8);
+  /* ⛔ --space-6, NOT --space-5. There IS no --space-5 in the scale (it runs
+        1,2,3,4,6,8,10,12,16,20,24,32) and an undefined custom property in a
+        shorthand invalidates the WHOLE declaration — the card would have lost
+        its padding entirely, silently, with no console error. Caught by
+        grepping the token table rather than by trusting the pattern. */
+  padding: var(--space-6);
+  background: var(--color-parchment);
+  /* The gold edge is what makes this read as "the featured one" beside two
+     plain white tiles. 2px, not 1px: at 1px on parchment it disappears. */
+  border: 2px solid var(--color-gold);
+  border-radius: var(--radius-lg);
+}
+
+.read-aloud-combo__art {
+  display: flex;
+  justify-content: center;
+  /* ⛔ min-height, not a fixed height. When the composite slug does not resolve
+        this element is not rendered at all (R2.3, degrade never mix), and the
+        block must still sit correctly without it. */
+  min-height: 1px;
+}
+
+/* The composite is the plugin's own element — sized here, not redefined. */
+/* ⛔⛔ 15rem ON THE PHONE, AND IT IS A MEASURED FIX, NOT A PREFERENCE. At the
+      22rem this shipped with, the composite rendered 291×291 inside a 343px
+      card and the WHOLE combo block measured 843px tall against an 844px
+      viewport — verified in a real 390px viewport, not estimated. The featured
+      option was consuming the entire phone screen on its own, pushing "Or pick
+      just one" and BOTH individual covers completely out of view.
+   ⛔ THAT MATTERS MORE HERE THAN ON /shop/. Andrew's ruling was that the combo
+      be the FIRST option — first among options the parent can still see. An
+      option that hides the alternatives is not first, it is only. Capping the
+      art gives the tiles back without touching the founder's ordering.
+   ⭐ The cap is lifted to 22rem at 700px, where the block is a two-column grid
+      and the picture has a column of its own to fill. */
+.read-aloud-combo__art .bhp-offer__composite,
+.read-aloud-combo__art img {
+  display: block;
+  width: 100%;
+  max-width: 15rem;
+  height: auto;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 18px rgba(var(--color-navy-rgb), 0.18);
+}
+
+.read-aloud-combo__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.read-aloud-combo__eyebrow {
+  margin: 0;
+  color: var(--color-gold-deep);
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.read-aloud-combo__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
+  line-height: 1.2;
+  color: var(--color-forest);
+}
+
+.read-aloud-combo__text {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+/* ⛔ NO `.read-aloud-combo__descriptor` RULE. The template resolves the
+      engine's descriptor but deliberately does not print it — see the long note
+      in `page-read-aloud.php` about the three restatements. A style rule for a
+      class nothing emits is dead weight that reads as a missing element. */
+
+/* ── The offer module itself. Plugin/shop classes, dressed for this page. ──
+   ⛔ `.bhp-offer` ships as a bare wrapper with no layout of its own outside
+      the shop grid, so it gets its layout here. */
+.read-aloud-combo__offer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* The price line, in the grid's own markup. ⛔ The FIGURE is the engine's and
+   appears in no stylesheet and no template — only its presentation is here. */
+.read-aloud-combo__offer .bhp-shop-from-price {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.read-aloud-combo__offer .bhp-shop-format-price__label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.read-aloud-combo__offer .bhp-shop-format-price__amount {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.1;
+  color: var(--color-forest);
+}
+
+/* The saving is a DERIVED claim, recomputed by the engine every render. It is
+   given emphasis but not a badge — a badge reads as a promotion, and this is
+   simply the arithmetic of the two component prices. */
+.read-aloud-combo__offer .bhp-offer__saving {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-gold-deep);
+}
+
+.read-aloud-combo__offer .bhp-offer__form {
+  margin: 0;
+}
+
+/* ⭐ THE PRIMARY CONTROL. Forest fill on the parchment ground — the shipped
+      light-ground CTA treatment, and the same reasoning recorded at the foot of
+      this file about why the FOREST section needed the opposite. 48px min, and
+      full width on a phone: this is a thumb, not a cursor. */
+.read-aloud-combo__offer .bhp-offer__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-6);
+  background: var(--color-forest);
+  color: var(--color-white);
+  border: 2px solid var(--color-forest);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.read-aloud-combo__offer .bhp-offer__cta:hover,
+.read-aloud-combo__offer .bhp-offer__cta:focus-visible {
+  background: var(--color-gold);
+  color: var(--color-navy);
+  border-color: var(--color-gold);
+}
+
+/* ⭐ THE HARDCOVER SWAP IS DELIBERATELY QUIETER THAN THE PRIMARY. It is a
+      format swap under an offer already chosen, not a competing option —
+      paperback stays the default (FD-439). A second filled button here would
+      make the parent choose twice. Still a 44px target. */
+.read-aloud-combo__offer .bhp-offer__upsell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  background: transparent;
+  color: var(--color-forest);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.read-aloud-combo__offer .bhp-offer__upsell:hover,
+.read-aloud-combo__offer .bhp-offer__upsell:focus-visible {
+  border-color: var(--color-forest);
+  background: var(--color-white);
+}
+
+/* ── "Or pick just one" — the divider that keeps the two tiles an OPTION ──
+   ⭐ A real heading, so the grid below sits under something in the document
+      outline. Quiet enough that it never competes with the combo. */
+.read-aloud-pair__or {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   THE PAIR — both covers, side by side.
+   ⭐ TWO COLUMNS EVEN ON A PHONE, AND THAT IS THE WHOLE POINT OF THE FOUNDER
+      AMENDMENT. Stacking them would put the chapter book below the fold on
+      the exact device this page is read on, and the pair only reads as a pair
+      when both covers are in one glance. The covers shrink; they do not stack.
+   ───────────────────────────────────────────────────────────────────────── */
+.read-aloud-pair {
+  padding: var(--space-12) 0;
+}
+
+.read-aloud-pair__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.read-aloud-pair__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 10px rgba(var(--color-navy-rgb), 0.06);
+}
+
+.read-aloud-pair__art {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  /* ⛔ min-height, not a fixed height: a tile whose cover did not resolve
+        renders WITH NO IMAGE (never a substitute, never a placeholder), and
+        the two cards must still sit level when that happens. */
+  min-height: 1px;
+}
+
+.read-aloud-pair__cover {
+  display: block;
+  width: 100%;
+  max-width: 15rem;
+  height: auto;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 18px rgba(var(--color-navy-rgb), 0.18);
+}
+
+.read-aloud-pair__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.read-aloud-pair__eyebrow {
+  margin: 0;
+  color: var(--color-gold-deep);
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.read-aloud-pair__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 3.6vw, 1.45rem);
+  line-height: 1.2;
+  color: var(--color-forest);
+}
+
+.read-aloud-pair__text {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.read-aloud-pair__cta {
+  margin-top: auto;
+  align-self: start;
+  /* A 44px minimum target — this is a thumb on a phone, not a cursor. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   FOR THE GROWN-UP
+   ───────────────────────────────────────────────────────────────────────── */
+.read-aloud-parent {
+  padding: var(--space-12) 0;
+  background: var(--color-parchment);
+}
+
+.read-aloud-parent__note {
+  max-width: 44rem;
+  margin: 0 0 var(--space-8);
+}
+
+.read-aloud-parent__note p {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+.read-aloud-parent__signoff {
+  font-style: italic;
+  color: var(--color-forest);
+}
+
+.read-aloud-parent__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.read-aloud-parent__ctas .btn {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.read-aloud-parent__shop-note {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   THE ONE CAPTURE
+   ⭐ The form itself is the SHIPPED .acquisition-form component, untouched.
+      The two rules below only relax its two-column grid on a phone, scoped to
+      this page — the shipped component keeps its geometry everywhere else.
+   ───────────────────────────────────────────────────────────────────────── */
+.read-aloud-capture {
+  padding: var(--space-12) 0 var(--space-16);
+  background: var(--color-forest);
+  color: var(--color-white);
+}
+
+.read-aloud-capture .read-aloud__eyebrow,
+.read-aloud-capture .read-aloud__section-title {
+  color: var(--color-gold);
+}
+
+.read-aloud-capture .read-aloud__section-title {
+  color: var(--color-white);
+}
+
+.read-aloud-capture__lead {
+  margin: 0 0 var(--space-8);
+  max-width: 44rem;
+  font-size: var(--text-lead);
+  line-height: 1.55;
+  color: var(--color-pale);
+}
+
+.read-aloud-capture__form {
+  max-width: 40rem;
+}
+
+.read-aloud-capture__form .acquisition-form {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.read-aloud-capture__form .acquisition-form__field input {
+  /* 16px minimum: anything smaller makes iOS Safari zoom the viewport on
+     focus, which on this page means the parent loses the page they scanned
+     to reach. */
+  font-size: 1rem;
+  min-height: 48px;
+}
+
+.read-aloud-capture__form .acquisition-form button,
+.read-aloud-capture__form .acquisition-form .btn {
+  width: 100%;
+  min-height: 48px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⛔⛔ TWO CONTRAST DEFECTS FOUND IN THE FIRST STAGING BROWSER WALK, AND THEY
+       SHARE ONE CAUSE: the shipped `.acquisition-form` component is designed
+       for a LIGHT ground, and this section paints it on FOREST. Neither was
+       visible in the PHP suite — this is exactly the class of defect that
+       only a real browser finds.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⛔ DEFECT 1 — FIELD LABELS WERE UNREADABLE. Measured live on staging, not
+      inferred: `.acquisition-form__field label` computes to
+      `rgb(7, 21, 34)` (--color-navy) on this section's `rgb(23, 63, 47)`
+      (--color-forest). That is **1.54:1** by the WCAG 2.x relative-luminance
+      formula — against a 4.5:1 requirement. "Your first name" and "Email
+      address" were near-invisible dark-on-dark.
+      ⭐ REPAINTED IN --color-pale (#f1e7d2): **9.07:1** on the same ground.
+
+   ⛔ DEFECT 2 — THE SUBMIT BUTTON WAS INVISIBLE AGAINST ITS OWN SECTION.
+      `btn-cta-primary` resolves to `--cta-primary-bg: var(--color-forest)` —
+      the SAME colour as this section's background. Button-vs-section contrast
+      was **1:1**; only its 1.5px gold border separated it from the page, and
+      the single most important control on the page read as a ghost outline.
+      ⚠ THE COMPONENT IS NOT AT FAULT. Every other placement of it sits on
+        cream, where forest-on-cream is a strong CTA. The mistake was mine, in
+        putting a light-ground CTA on a dark ground.
+
+   ⭐ THE FIX IS A GOLD FILL, WHICH IS THE SHIPPED DARK-GROUND TREATMENT — the
+      same reasoning as `.section--dark .btn-outline` in style.css, and the
+      same gold the hero eyebrow already uses on this palette. Measured:
+        gold #D9A45F on navy #071522 text  →  8.39:1  (passes AAA)
+        gold #D9A45F against forest ground →  5.00:1  (unmistakable)
+
+   ⛔ `!important` IS REQUIRED HERE AND IS NOT LAZINESS. `.btn-cta-primary`
+      declares `background`, `color` and `border` with `!important` at
+      style.css:6345-6347. A plain declaration — at any specificity — cannot
+      beat it. Matching the flag is the only way to override a flagged rule.
+
+   ⛔ SCOPED TO `.read-aloud-capture__form`, SO NOTHING ELSE MOVES. Every
+      other `.btn-cta-primary` on the site, including the header CTA and the
+      bundle submit, is byte-unaffected.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.read-aloud-capture__form .acquisition-form__field label {
+  color: var(--color-pale);
+}
+
+.read-aloud-capture__form .acquisition-form__submit {
+  background: var(--color-gold) !important;
+  color: var(--color-navy) !important;
+  border: 1.5px solid var(--color-gold) !important;
+}
+
+.read-aloud-capture__form .acquisition-form__submit:hover,
+.read-aloud-capture__form .acquisition-form__submit:focus-visible {
+  /* Ivory fill on hover keeps the label dark, so the text never has to
+     re-prove its contrast against a moving background. */
+  background: var(--color-ivory) !important;
+  color: var(--color-navy) !important;
+  border-color: var(--color-ivory) !important;
+}
+
+.read-aloud-capture__form .acquisition-form__privacy,
+.read-aloud-capture__form .acquisition-form__provider-note {
+  color: var(--color-pale);
+}
+
+.read-aloud-capture__fine-print {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-pale);
+}
+
+/* ═══════════════ 700px AND UP — the enhancement, not the baseline ══════════ */
+@media (min-width: 700px) {
+  .read-aloud-hero {
+    padding: var(--space-20) 0 var(--space-16);
+  }
+
+  .read-aloud-pair,
+  .read-aloud-parent {
+    padding: var(--space-16) 0;
+  }
+
+  .read-aloud-pair__grid {
+    gap: var(--space-8);
+  }
+
+  .read-aloud-pair__card {
+    padding: var(--space-8);
+  }
+
+  /* ⭐ THE COMBO GOES HORIZONTAL EARLY — at 700px, not 1000px like the pair
+        cards, and the difference is deliberate. The combo is ONE wide block
+        with a full-width composite of TWO books; the pair cards are two
+        half-width tiles each holding ONE cover, which is why they need the
+        extra 300px before a side-by-side reads well. Same page, two different
+        amounts of room. */
+  .read-aloud-combo {
+    display: grid;
+    grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: center;
+    padding: var(--space-8);
+  }
+
+  .read-aloud-combo__art {
+    justify-content: flex-start;
+  }
+
+  /* The cap lifted — see the 15rem note above. The grid column is 20rem, so
+     this simply lets the picture fill the column it was given. */
+  .read-aloud-combo__art .bhp-offer__composite,
+  .read-aloud-combo__art img {
+    max-width: 22rem;
+  }
+
+  /* The CTA stops being full-bleed once there is room — a 500px-wide button
+     reads as a banner, not a control. */
+  .read-aloud-combo__offer .bhp-offer__cta,
+  .read-aloud-combo__offer .bhp-offer__upsell {
+    width: auto;
+    align-self: start;
+  }
+
+  .read-aloud-combo__offer .bhp-offer__form {
+    display: flex;
+  }
+
+  .read-aloud-capture {
+    padding: var(--space-16) 0 var(--space-20);
+  }
+
+  /* Restore the shipped two-column form geometry where there is room for it. */
+  .read-aloud-capture__form .acquisition-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .read-aloud-capture__form .acquisition-form button,
+  .read-aloud-capture__form .acquisition-form .btn {
+    width: auto;
+  }
+}
+
+/* ═══════════════ 1000px AND UP — the pair goes horizontal ═══════════════
+   ⭐ ADDED AFTER THE FIRST DESKTOP WALK. At 1280px each card measured 528px
+      wide holding a 240px cover centred above 208px of text, which left a
+      wide empty gutter either side of the artwork and made the section read
+      as two sparse boxes rather than two books.
+   ⛔ IT IS A THIRD BREAKPOINT, NOT A CHANGE TO THE 700px ONE, DELIBERATELY.
+      Between 700 and 1000 the two cards are ~340px each; going horizontal
+      there would put a 240px cover beside a ~80px text column. The phone
+      layout — the one this page actually gets scanned on — is untouched. */
+@media (min-width: 1000px) {
+  .read-aloud-pair__card {
+    display: grid;
+    grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .read-aloud-pair__art {
+    justify-content: flex-start;
+  }
+
+  .read-aloud-pair__cover {
+    max-width: 9rem;
+  }
+}

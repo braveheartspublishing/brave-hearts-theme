@@ -777,7 +777,24 @@ function bhp_offer_composite_card_image($key) {
  * @return string HTML, or '' when the offer cannot be bought right now.
  */
 function bhp_offer_render_module($key, $class = '', $show_heading = true, $card = false) {
-    if (!function_exists('bhp_offer_is_purchasable') || !bhp_offer_is_purchasable($key)) {
+    /*
+     * ⛔ 1.19.288 — THE GATE MOVED FROM `bhp_offer_is_purchasable()` TO
+     *    `bhp_offer_is_offerable()`, AND THIS IS THE ONE PLACE THE PAIR CARD
+     *    IS ACTUALLY BUILT — the product-page cross-sell and the shop card
+     *    both come through here, so gating here closes both at once.
+     *
+     * ⭐ `R1.4` IS UNCHANGED AND IS NOW STRICTER: nothing is advertised that
+     *    cannot be bought, and on a visit-flagged session the pair cannot be
+     *    bought (the colouring half is refused server-side by all five seams).
+     * ⛔ CONTROL PATH: for every ordinary shopper `bhp_offer_is_offerable()`
+     *    returns exactly what `bhp_offer_is_purchasable()` returns.
+     * ✅ FAILS OPEN to the old predicate if the plugin is older than 1.8.69.
+     */
+    if (function_exists('bhp_offer_is_offerable')) {
+        if (!bhp_offer_is_offerable($key)) {
+            return '';
+        }
+    } elseif (!function_exists('bhp_offer_is_purchasable') || !bhp_offer_is_purchasable($key)) {
         return ''; // ⛔ R1.4: nothing is advertised that cannot be bought.
     }
     if (!function_exists('bhp_bundle_nonce_input') || !function_exists('bhp_bundle_checkout_redirect_input')) {
@@ -793,7 +810,12 @@ function bhp_offer_render_module($key, $class = '', $show_heading = true, $card 
     // ⭐ The hardcover swap, only if IT is purchasable too and names this offer.
     $upsell_key = '';
     foreach (bhp_offer_catalog() as $candidate => $offer) {
-        if (!empty($offer['upsell_of']) && $offer['upsell_of'] === $key && bhp_offer_is_purchasable($candidate)) {
+        // ⛔ 1.19.288 — `is_offerable`, so the HARDCOVER swap cannot appear on a
+        //    visit-flagged session even if the parent offer somehow rendered.
+        $bhp_upsell_ok = function_exists('bhp_offer_is_offerable')
+            ? bhp_offer_is_offerable($candidate)
+            : bhp_offer_is_purchasable($candidate);
+        if (!empty($offer['upsell_of']) && $offer['upsell_of'] === $key && $bhp_upsell_ok) {
             $upsell_key = $candidate;
             break;
         }

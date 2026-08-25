@@ -4167,6 +4167,20 @@ require_once get_template_directory() . '/inc/class-bhp-printed-for-you.php';
 // empty state instead of a fatal.
 require_once get_template_directory() . '/inc/author-visits.php';
 
+// Read-aloud take-home landing (2026-08-24, CYCLE166-CX-READALOUD-LANDING):
+// the decisions half of /read-aloud/, the destination of the dynamic QR printed
+// on the coloring page every child takes home from a school read-aloud. It
+// writes NOTHING -- no option, meta, session, cookie, product or setting. It
+// mints NO new funnel: the page's one capture is the EXISTING parent-funnel
+// Adventure Kit with a distinct signup CONTEXT only, per .claude/rules/funnels.md
+// ("extend the config schema, don't fork the engine"). Every call into bundle-
+// plugin territory is function_exists()-guarded.
+// ⛔ MUST load AFTER the bhp_mailchimp_signup_tags callbacks above -- and it
+//    does not RELY on that: its callback registers at priority 20 precisely so
+//    the outcome is a stated rule rather than a consequence of this line's
+//    position in the file. See the docblock on bhp_read_aloud_mailchimp_tags().
+require_once get_template_directory() . '/inc/read-aloud-landing.php';
+
 // E1 post-purchase order-confirmation email (2026-08-03): subject line and
 // inbox preheader for the WooCommerce processing-order email. The body copy
 // lives in the template override at woocommerce/emails/customer-processing-
