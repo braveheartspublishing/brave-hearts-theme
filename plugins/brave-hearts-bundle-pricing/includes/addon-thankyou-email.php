@@ -61,6 +61,40 @@
  *   on staging, not left to inference: see the QA record for this release.
  *
  * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.70 (2026-08-24) — THE TRIGGER ABOVE IS NO LONGER THE ONLY ONE.
+ *     "COMPLETED" IS A PHYSICAL EVENT IN THIS STORE, AND THE FILE WAS
+ *     WAITING ON IT.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * The text above is preserved rather than rewritten, because it is still
+ * an accurate account of the completed-order path — which still exists and
+ * still works. What it got wrong was assuming that path is ENOUGH.
+ *
+ * Andrew Signore, 2026-08-24, verbatim (⛔ RELAYED through the Chief of
+ * Staff; NOT witnessed first-hand by the agent that wrote this):
+ *
+ *   "Activity books should be sent via email after purchase."
+ *
+ * ⛔ MEASURED ON PRODUCTION, READ-ONLY, THE SAME DAY: 12 of the 13 most
+ *    recent orders contain the activity book and ALL 13 sit in
+ *    `processing`. The newest `completed` order is #576 (2026-08-12), and
+ *    it is the only one of the fourteen carrying
+ *    `_bhp_addon_thankyou_sent`. ⭐ That single marker is the proof the
+ *    mechanism is sound: the trigger was wrong, the email was not.
+ *
+ * Andrew hand-delivers school orders and ships the rest, so `completed`
+ * tracks DISPATCH. A digital file must not wait on a physical act. The
+ * four `*_to_processing_notification` hooks that close this live in
+ * `class-wc-email-bhp-addon-thankyou.php`, with the reason the obvious
+ * hook name does not exist recorded beside them.
+ *
+ * ⭐ `bhp_bundle_addon_thankyou_should_send()` below is UNCHANGED and is
+ *    what makes the earlier trigger safe: it still declines when core
+ *    reports no download row, so an unpaid or ungranted order mails
+ *    nothing, and `BHP_BUNDLE_ADDON_SENT_META` still caps delivery at one
+ *    email per order across both triggers.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
  * ⛔ WHAT THIS FILE DOES NOT DO
  * ═══════════════════════════════════════════════════════════════════════
  *

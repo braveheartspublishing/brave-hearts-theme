@@ -130,3 +130,139 @@
 	font-size: 1.1rem;
 	margin: 0.25rem 0 1rem;
 }
+
+/* =========================================================================
+ * 1.8.71 (2026-08-24, CYCLE166-LD-VISIT-STOCK-GATE) — SHELF SOLD-OUT STATE.
+ *
+ * Only ever rendered on a school-visit-flagged session for a chapter title
+ * Andrew has run out of. An ordinary shopper never receives this markup at
+ * all, so none of these selectors can match on a normal page.
+ *
+ * ⛔ ADDITIVE ONLY. No existing selector above is modified or overridden.
+ * ====================================================================== */
+
+.bhp-bundle-title--sold-out > label {
+	color: #6b6b6b;
+	cursor: not-allowed;
+}
+
+.bhp-bundle-title--sold-out input[disabled] {
+	cursor: not-allowed;
+}
+
+/*
+ * The badge. It exists because without it the label ran straight on from the
+ * book title and read as part of it: "Mount Everest Sold out for the school
+ * visit". OBSERVED on staging in a real browser, 2026-08-24, before this rule.
+ */
+.bhp-bundle-sold-out-label {
+	display: inline-block;
+	margin-left: 0.5rem;
+	padding: 0.1rem 0.5rem;
+	border: 1px solid #c9c2b4;
+	border-radius: 999px;
+	background: #f3f0ea;
+	color: #6b6b6b;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	vertical-align: middle;
+	/*
+	 * ⚠️ DELIBERATELY NOT `white-space: nowrap`.
+	 *
+	 * The badge is ~223px wide at this size (MEASURED in a real browser on
+	 * staging, 2026-08-24). Inside a padded card on a 320px phone that is
+	 * close enough to the available width that `nowrap` could push the page
+	 * into a horizontal scroll. ⛔ Viewport resizing does not work on the
+	 * build machine (`window.innerWidth` stayed at 1280 through two resize
+	 * attempts), so the narrow case COULD NOT BE OBSERVED and is not claimed
+	 * as verified. Allowing the badge to wrap removes the risk instead of
+	 * betting on an unmeasured width.
+	 */
+	max-width: 100%;
+}
+
+.bhp-bundle-card--sold-out {
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 1.25rem;
+	background: #faf8f4;
+}
+
+.bhp-bundle-card--sold-out .bhp-bundle-sold-out-label {
+	margin-left: 0;
+}
+
+.bhp-bundle-sold-out-note {
+	margin: 0.75rem 0 0;
+	color: #4a4a4a;
+}
+
+/* =========================================================================
+ * ⭐⭐ 1.8.72 (CYCLE166-LD-VISIT-STOCK-COUNTER) — THE LIVE COUNTER.
+ *
+ * ⛔ IT IS DELIBERATELY NOT A BADGE, AND THAT IS THE FOUNDER'S CONSTRAINT
+ *    EXPRESSED IN CSS, not a styling preference. Carried verbatim: the number
+ *    is "never styled as urgency theater beyond the plain fact."
+ *
+ *    So, explicitly NOT used, and each for a reason:
+ *      · no red, orange or amber      - those are alarm colors and the shelf
+ *                                       being at six is not an alarm;
+ *      · no pill, border or fill      - the sold-out badge above is a pill
+ *                                       BECAUSE it replaces a control; this
+ *                                       replaces nothing, it annotates;
+ *      · no uppercase, no letter-spacing, no bold - all three are the visual
+ *                                       vocabulary of a promotional flag;
+ *      · no animation, pulse or blink - a moving number is a countdown, and a
+ *                                       countdown is the theater itself;
+ *      · no `::before` icon           - a flame or a clock would say in a
+ *                                       glyph exactly what the words refuse
+ *                                       to say.
+ *
+ *    What is left is quiet secondary type at the same reading weight as the
+ *    rest of the row: a fact, sitting where a fact goes.
+ *
+ * ⭐ RESTYLED 1.8.74 (2026-08-25, Gandalf under G-40) — FOUNDER SUPERSESSION,
+ *    his verbatim after seeing it live: "I think it should be a little more
+ *    prominent" (carrier item 247). The counter moves from quiet grey italic
+ *    to deep gold semibold at reading size. The rationale block above is
+ *    PRESERVED, and most of it still binds: still no red, no pill, no
+ *    uppercase, no animation, no icon — prominence, not theater. Only the
+ *    "no bold / secondary type" lines are superseded, by his word.
+ *    #805800 is the theme's --color-gold-deep, the accessibility derivative
+ *    designed exactly for glyph-sized gold on cream grounds (style.css :root)
+ *    — hardcoded here because this plugin never assumes theme variables.
+ *
+ * ⛔ ADDITIVE ONLY. No selector above is modified or overridden, and an
+ *    ordinary shopper never receives this markup at all, so none of these
+ *    selectors can match on a normal page.
+ * ====================================================================== */
+
+.bhp-bundle-stock-counter {
+	display: inline-block;
+	margin-left: 0.5rem;
+	color: #805800; /* theme --color-gold-deep; was #6b6b6b (1.8.72) */
+	font-size: 0.95rem; /* was 0.85rem */
+	font-weight: 600; /* was normal */
+	font-style: normal; /* was italic */
+	vertical-align: baseline;
+	/*
+	 * ⚠️ DELIBERATELY NOT `white-space: nowrap`, for the same measured reason
+	 *    as the sold-out badge: viewport resizing does not work on the build
+	 *    machine, so the narrow-phone width COULD NOT BE OBSERVED. Allowing the
+	 *    line to wrap removes the horizontal-scroll risk instead of betting on
+	 *    an unmeasured width.
+	 */
+	max-width: 100%;
+}
+
+/*
+ * The box variant, which is a block rather than an inline annotation because
+ * the complete-collection card has no row to sit beside. OFF BY DEFAULT — see
+ * `bhp_visit_shelf_counter_on_complete_box()`.
+ */
+.bhp-bundle-stock-counter--box {
+	display: block;
+	margin: 0.5rem 0 0;
+}

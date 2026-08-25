@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Brave Hearts Bundle Pricing
  * Description: Fixed-dollar bundle discounts, shipping, and storefront offers for the six approved Adventures of Charlotte and Henry editions. Every bundle purchase adds the real, individually-mapped WooCommerce products as separate cart line items — Bookvault fulfillment routing and per-book tax are never altered.
- * Version: 1.8.68
+ * Version: 1.8.74
  * Author: Brave Hearts Publishing
  * Requires Plugins: woocommerce
  * Text Domain: bhp-bundle-pricing
@@ -42,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * ⛔ KEEP IT IN STEP WITH THE `Version:` HEADER ABOVE, every release.
  */
-define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.68' );
+define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.74' );
 define( 'BHP_BUNDLE_PRICING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BHP_BUNDLE_PRICING_URL', plugin_dir_url( __FILE__ ) );
 
@@ -137,6 +137,25 @@ function bhp_bundle_pricing_init() {
 	// defined there, and this file is a thin restriction on top of that ONE
 	// predicate rather than a second resolver. With no visit flag on the
 	// request, every hook it registers returns its input untouched.
+	// 1.8.71 (2026-08-24, CYCLE166-LD-VISIT-STOCK-GATE): SHELF STOCK. Andrew
+	// hand-delivers visit orders off a finite personal shelf, so a chapter
+	// title closes for VISITS ONLY once its remaining count reaches 1. Loaded
+	// BEFORE school-visit-paperback-only.php because that file's refused-item
+	// predicate now asks this one, and AFTER school-visit-pickup.php because
+	// it reads `BHP_SCHOOL_PICKUP_META_FLAG` and `bhp_school_visit_is_ymd()`.
+	// ⛔ It is NOT WooCommerce inventory: no `_stock_status`, product record,
+	// price or setting is touched on any environment. With the
+	// `bhp_visit_shelf_stock` option unset it is behaviourally inert -- every
+	// predicate returns "nothing is closed" and every surface renders exactly
+	// as it did in 1.8.70. Ordinary shipped orders route to Bookvault
+	// print-on-demand and consume no shelf stock, so they are untouched.
+	// 1.8.72 (2026-08-24, CYCLE166-LD-VISIT-STOCK-COUNTER): the same file now
+	// also owns the LIVE COUNTER shown when a title's remaining count is in
+	// 2..10 on a visit-flagged session. Same arithmetic, same option, same
+	// visit gate, zero new state: the number is `baseline - committed` recomputed
+	// on every render and is never stored. ⛔ Still completely invisible off a
+	// visit flag, and still inert with `bhp_visit_shelf_stock` unset.
+	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-shelf-stock.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-paperback-only.php';
 	bhp_bundle_pricing_load_dashboard_module();
 

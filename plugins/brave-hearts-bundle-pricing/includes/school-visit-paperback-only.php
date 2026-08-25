@@ -1,6 +1,19 @@
 <?php
 /**
- * Brave Hearts Bundle Pricing — A VISIT-FLAGGED SESSION IS PAPERBACK ONLY.
+ * Brave Hearts Bundle Pricing — A VISIT-FLAGGED SESSION IS CHAPTER PAPERBACKS
+ * ONLY.
+ *
+ * ⚠️ THE FILENAME AND THE FUNCTION NAMES STILL SAY "paperback_only" AND
+ *    "hardcover", AND THAT IS A DELIBERATE CHOICE, NOT AN OVERSIGHT. 1.8.69
+ *    widened the rule from "no hardcovers" to "chapter paperbacks only" (see
+ *    the 1.8.69 block further down). The names were NOT renamed with it,
+ *    because `woocommerce_add_to_cart_validation` and the four other seams
+ *    are registered BY CALLBACK NAME and are asserted by name in
+ *    `tests/test-visit-paperback-only.php` and `test-visit-flag-expiry.php`.
+ *    A rename would have been a wide, purely cosmetic diff across three
+ *    suites on a queue-jumped founder-found fix. ⭐ READ
+ *    `bhp_school_visit_is_refused_item()` FOR WHAT IS ACTUALLY REFUSED —
+ *    never infer it from a function's name in this file.
  *
  * ═══════════════════════════════════════════════════════════════════════
  * WHY THIS EXISTS
@@ -234,31 +247,279 @@ function bhp_school_visit_cart_has_hardcover( $cart ) {
 	return false;
 }
 
+/*
+ * =========================================================================
+ * ⭐⭐ 1.8.69 (`CYCLE165-LD-VISIT-COLOURING-GATE`, carrier item 217) — THE
+ *     COLOURING BOOK JOINS THE HARDCOVER ON THE REFUSED LIST.
+ * =========================================================================
+ *
+ * Andrew Signore, 2026-08-21, ⛔ RELAYED through the Chief of Staff in the
+ * `CYCLE165-LD-VISIT-COLOURING-GATE` dispatch; NOT witnessed first-hand by
+ * the agent that wrote this code. The rule as carried: a visit-flagged cart
+ * must REFUSE the colouring book, because a signed school order is CHAPTER
+ * PAPERBACKS ONLY.
+ *
+ * ⭐ SAME INVENTORY LOGIC AS THE HARDCOVER, ONE STEP FURTHER. He carries
+ *    chapter paperbacks to a school and signs them by hand. The colouring
+ *    book is a paperback, so the ORIGINAL format-shaped predicate let it
+ *    straight through: `bhp_school_visit_is_hardcover()` returns false for
+ *    it, and every one of the five seams therefore accepted it. A flagged
+ *    parent could buy a colouring book that cannot be hand-delivered, and
+ *    the failure surfaces at the read aloud, in front of a child. That is
+ *    the identical failure mode the hardcover gate exists to prevent.
+ *
+ * ⛔⛔ NOT A HARDCODED ID, AND THE ID IN THE DISPATCH IS NOT PORTABLE. The
+ *     brief names "product 618". ⭐ VERIFIED READ-ONLY OVER SSH THIS BUILD,
+ *     2026-08-21: 618 is the PRODUCTION id; the same book is 4065 ON
+ *     STAGING. A literal 618 would have gated production and enforced
+ *     NOTHING on the environment this build is QA'd on, and the suite would
+ *     have passed vacuously. Resolution goes through
+ *     `bhp_bundle_identify_colouring_item()` -> `bhp_colouring_product_ids()`
+ *     -> `bhp_colouring_catalog()`, which is SKU-keyed on the ISBN
+ *     9798996810840. Every future colouring title is therefore refused the
+ *     day its record exists, with no edit here.
+ *
+ * ✅ IT FAILS OPEN exactly like the hardcover half: no registry, no resolver,
+ *    an empty id map, a throwing filter — every one of those results in
+ *    NOBODY being blocked. On an environment with no colouring record the
+ *    map is empty and this file is byte-for-byte inert.
+ */
+
 /**
- * ⭐ THE SENTENCE. ONE AUTHOR, FOUR SEAMS.
+ * Is this product/variation pair a colouring-line book?
+ *
+ * ⛔ DELEGATES. It does not keep a list, and it does not re-implement the
+ *    parent/variation matching that `bhp_bundle_identify_colouring_item()`
+ *    already does correctly (that function matches BOTH ids, so a future
+ *    variable colouring product cannot slip past by being added as a
+ *    variation).
+ *
+ * @param int $product_id   Product id.
+ * @param int $variation_id Variation id, or 0.
+ * @return bool
+ */
+function bhp_school_visit_is_colouring( $product_id, $variation_id = 0 ) {
+	if ( ! function_exists( 'bhp_bundle_identify_colouring_item' ) ) {
+		return false; // FAIL OPEN: no registry -> nothing is ever recognised.
+	}
+
+	try {
+		return null !== bhp_bundle_identify_colouring_item( (int) $product_id, (int) $variation_id );
+	} catch ( Throwable $e ) {
+		return false; // FAIL OPEN: a resolver that throws must never cost a sale.
+	}
+}
+
+/**
+ * ⭐⭐ THE ONE PRODUCT-LEVEL PREDICATE THE FIVE SEAMS ASK.
+ *
+ * ⛔ THIS IS WHAT REPLACED `bhp_school_visit_is_hardcover()` AT THE SEAMS,
+ *    AND THE REASON IS WORTH THE LINE: a signed school order is defined by
+ *    what Andrew can CARRY AND SIGN, not by a binding. "Hardcover" was only
+ *    ever a proxy for that, and the colouring book is the case that showed
+ *    the proxy was wrong. A seam that asks "is this a hardcover" will let
+ *    the next non-chapter paperback through too.
+ *
+ * ⛔ `bhp_school_visit_is_hardcover()` IS NOT DELETED AND NOT REWORDED. It
+ *    is still the hardcover-only test, it is still public, and the existing
+ *    suite still asserts it directly. Only the SEAMS moved.
+ *
+ * @param int $product_id   Product id.
+ * @param int $variation_id Variation id, or 0.
+ * @return bool True when a visit-flagged session must refuse this item.
+ */
+function bhp_school_visit_is_refused_item( $product_id, $variation_id = 0 ) {
+	return bhp_school_visit_is_hardcover( $product_id, $variation_id )
+		|| bhp_school_visit_is_colouring( $product_id, $variation_id )
+		|| bhp_school_visit_is_sold_out_title( $product_id, $variation_id );
+}
+
+/*
+ * =========================================================================
+ * ⭐⭐ 1.8.71 (`CYCLE166-LD-VISIT-STOCK-GATE`, carrier item 235) — A CHAPTER
+ *     PAPERBACK WHOSE SHELF IS EMPTY JOINS THE REFUSED LIST, FOR VISITS ONLY.
+ * =========================================================================
+ *
+ * Andrew Signore, 2026-08-24, ⛔ RELAYED through the Chief of Staff in the
+ * `CYCLE166-LD-VISIT-STOCK-GATE` dispatch; NOT witnessed first-hand by the
+ * agent that wrote this code:
+ *
+ *   "I think once we hit 1 chatper book left - we close off the option and
+ *    say they have sold out"
+ *
+ * ⭐ THE THIRD LIMB IS A DIFFERENT KIND OF FACT FROM THE FIRST TWO, AND THE
+ *    DIFFERENCE IS WORTH THE LINE. Hardcover and colouring are refused
+ *    because of WHAT THEY ARE: no count changes that, and the refusal is
+ *    permanent for as long as the visit programme runs. A chapter paperback
+ *    is refused because of HOW MANY ARE LEFT: the same product is refused at
+ *    10:02 and available at 09:58 if Andrew restocks in between. It is a
+ *    TIME-VARYING refusal driven by live order data, so it is computed in
+ *    `school-visit-shelf-stock.php` and only asked here.
+ *
+ * ⛔ WHICH IS ALSO WHY IT NEEDED THE MESSAGE SPLIT BELOW. The existing
+ *    sentence tells a parent to "choose a chapter paperback". Printing that
+ *    at somebody who was just refused a chapter paperback would describe the
+ *    refusal as the remedy, which is the exact defect 1.8.69 recorded when
+ *    the colouring book joined the list.
+ *
+ * ✅ IT FAILS OPEN. No shelf module, no baseline option, a resolver that
+ *    throws: every one results in NOBODY being blocked. On production today
+ *    the `bhp_visit_shelf_stock` option is unset, so this limb is inert.
+ */
+
+/**
+ * Is this product/variation pair a chapter paperback whose shelf is closed?
+ *
+ * ⛔ DELEGATES. It keeps no count, no product id and no threshold of its own.
+ *
+ * @param int $product_id   Product id.
+ * @param int $variation_id Variation id, or 0.
+ * @return bool
+ */
+function bhp_school_visit_is_sold_out_title( $product_id, $variation_id = 0 ) {
+	if ( ! function_exists( 'bhp_visit_shelf_is_closed_item' ) ) {
+		return false; // FAIL OPEN: no shelf module -> nothing is ever closed.
+	}
+
+	try {
+		return (bool) bhp_visit_shelf_is_closed_item( (int) $product_id, (int) $variation_id );
+	} catch ( Throwable $e ) {
+		return false; // FAIL OPEN: a resolver that throws must never cost a sale.
+	}
+}
+
+/**
+ * ⭐ THE RIGHT SENTENCE FOR THE ACTUAL REASON THIS ITEM WAS REFUSED.
+ *
+ * ⛔ SOLD-OUT IS TESTED FIRST, DELIBERATELY. The two reasons cannot overlap
+ *    today (the shelf gate only knows chapter paperbacks; the format gate
+ *    only knows hardcovers and colouring books), but if they ever did, the
+ *    sold-out sentence is the more specific and more useful one: it names
+ *    what actually happened instead of restating a rule the parent already
+ *    complied with.
+ *
+ * @param int $product_id   Product id.
+ * @param int $variation_id Variation id, or 0.
+ * @return string The customer-facing sentence for this refusal.
+ */
+function bhp_school_visit_refusal_message( $product_id = 0, $variation_id = 0 ) {
+	if ( bhp_school_visit_is_sold_out_title( $product_id, $variation_id )
+		&& function_exists( 'bhp_visit_shelf_sold_out_message' ) ) {
+		return (string) bhp_visit_shelf_sold_out_message();
+	}
+
+	return bhp_school_visit_paperback_only_message();
+}
+
+/**
+ * The right sentence for whatever is wrong with THIS cart.
+ *
+ * ⛔ IT REPORTS THE FIRST REFUSED ITEM'S OWN REASON rather than a generic
+ *    line, because a cart holding a sold-out Everest and nothing else must
+ *    not be told that signed copies are chapter paperbacks only.
+ *
+ * @param WC_Cart|object|null $cart Cart, or any object exposing get_cart().
+ * @return string
+ */
+function bhp_school_visit_cart_refusal_message( $cart ) {
+	if ( $cart && is_object( $cart ) && method_exists( $cart, 'get_cart' ) ) {
+		foreach ( (array) $cart->get_cart() as $item ) {
+			$product_id   = isset( $item['product_id'] ) ? (int) $item['product_id'] : 0;
+			$variation_id = isset( $item['variation_id'] ) ? (int) $item['variation_id'] : 0;
+
+			if ( bhp_school_visit_is_refused_item( $product_id, $variation_id ) ) {
+				return bhp_school_visit_refusal_message( $product_id, $variation_id );
+			}
+		}
+	}
+
+	return bhp_school_visit_paperback_only_message();
+}
+
+/**
+ * Does this cart hold anything a visit-flagged session must refuse?
+ *
+ * @param WC_Cart|object|null $cart Cart, or any object exposing get_cart().
+ * @return bool
+ */
+function bhp_school_visit_cart_has_refused_item( $cart ) {
+	if ( ! $cart || ! is_object( $cart ) || ! method_exists( $cart, 'get_cart' ) ) {
+		return false;
+	}
+
+	$items = $cart->get_cart();
+	if ( empty( $items ) ) {
+		return false;
+	}
+
+	foreach ( $items as $item ) {
+		$product_id   = isset( $item['product_id'] ) ? (int) $item['product_id'] : 0;
+		$variation_id = isset( $item['variation_id'] ) ? (int) $item['variation_id'] : 0;
+
+		if ( bhp_school_visit_is_refused_item( $product_id, $variation_id ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * ⭐ THE SENTENCE. ONE AUTHOR, FIVE SEAMS.
  *
  * ⛔ §9.1 VOICE RULE, adopted by Andrew Signore 2026-08-18: no "we", "us" or
  *    "our" standing for the company in customer-facing words. This is I/me.
  * ⛔ NO EM DASH. Sitewide standing constraint.
  * ⛔ NO OUTCOME CLAIM and no apology-shaped padding. It says what is true
- *    (paperback only, and why) and what to do next (remove it, or order the
- *    hardcover separately without the school link).
+ *    (chapter paperbacks only, and why) and what to do next (choose one, or
+ *    order the other book separately without the school link).
  *
- * Four seams print this rather than four sentences, because four copies of a
+ * Five seams print this rather than five sentences, because five copies of a
  * customer-facing phrase is how two of them end up disagreeing (the same
  * reason `bhp_school_pickup_totals_label()` exists).
+ *
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⚠️ 1.8.69 — THIS STRING MOVED. FLAGGED FOR ANDREW'S EYE, NOT SELF-APPROVED.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED STRING, PRESERVED VERBATIM so the movement is visible and
+ *    is not re-derived. It shipped 1.8.65 to 1.8.68:
+ *
+ *      "I can only bring paperbacks to the school visit, so signed copies
+ *       are paperback only. Please choose the paperback. If you would like a
+ *       hardcover as well, you can order it separately from the shop."
+ *
+ * ⭐ WHY IT COULD NOT STAY. It became FALSE the moment the gate widened. It
+ *    tells a parent holding a refused colouring book that the fix is to
+ *    "choose the paperback" — and the colouring book IS a paperback. The
+ *    sentence would have described the refusal it was printed by as
+ *    something the customer had already done.
+ *
+ * ⛔ THE EDIT IS MINIMAL AND ADDS NO CLAIM. Three moves, no fourth:
+ *      1. "paperbacks" -> "chapter paperbacks" (the thing he actually carries)
+ *      2. "the paperback" -> "a chapter paperback" (there are three of them)
+ *      3. "a hardcover" -> "a hardcover or a coloring book" (the refused set)
+ *    No apology, no urgency, no outcome claim, no new fact about the visit.
+ *
+ * ⛔ "coloring", AMERICAN SPELLING, DELIBERATELY. The CODE spells it
+ *    "colouring" throughout and the CUSTOMER-FACING copy spells it
+ *    "coloring" — that split already exists and is correct. The product
+ *    record's own title reads "Coloring Adventures with Charlotte and Henry",
+ *    and every customer-facing string in `bhp_colouring_draft_copy()` reads
+ *    "coloring". A British spelling here would be the one place on the
+ *    storefront that disagreed with the book's own cover.
  *
  * @return string
  */
 function bhp_school_visit_paperback_only_message() {
 	/**
-	 * The message shown when a hardcover meets a visit-flagged session.
+	 * The message shown when a refused item meets a visit-flagged session.
 	 *
 	 * @param string $message Customer-facing sentence.
 	 */
 	return (string) apply_filters(
 		'bhp_school_visit_paperback_only_message',
-		__( 'I can only bring paperbacks to the school visit, so signed copies are paperback only. Please choose the paperback. If you would like a hardcover as well, you can order it separately from the shop.', 'brave-hearts' )
+		__( 'I can only bring the chapter paperbacks to the school visit, so signed copies are chapter paperbacks only. Please choose a chapter paperback. If you would like a hardcover or a coloring book as well, you can order it separately from the shop.', 'brave-hearts' )
 	);
 }
 
@@ -282,15 +543,16 @@ function bhp_school_visit_block_hardcover_add( $passed, $product_id = 0, $quanti
 	if ( true !== $passed ) {
 		return $passed; // Someone else already refused. Do not overwrite their reason.
 	}
-	if ( ! bhp_school_visit_is_hardcover( $product_id, $variation_id ) ) {
-		return $passed; // ⭐ ZERO CHANGE for a paperback, the add-on, or anything else.
+	if ( ! bhp_school_visit_is_refused_item( $product_id, $variation_id ) ) {
+		return $passed; // ⭐ ZERO CHANGE for a chapter paperback, the add-on, or anything else.
 	}
 	if ( ! bhp_school_visit_paperback_only() ) {
 		return $passed; // ⭐ ZERO CHANGE for every ordinary shopper.
 	}
 
 	if ( function_exists( 'wc_add_notice' ) ) {
-		wc_add_notice( bhp_school_visit_paperback_only_message(), 'error' );
+		// 1.8.71: the sentence now matches the REASON, not just the rule.
+		wc_add_notice( bhp_school_visit_refusal_message( $product_id, $variation_id ), 'error' );
 	}
 
 	return false;
@@ -327,7 +589,7 @@ function bhp_school_visit_block_hardcover_store_api_add( $product = null ) {
 		$product_id   = method_exists( $product, 'get_parent_id' ) ? (int) $product->get_parent_id() : 0;
 	}
 
-	if ( ! bhp_school_visit_is_hardcover( $product_id, $variation_id ) ) {
+	if ( ! bhp_school_visit_is_refused_item( $product_id, $variation_id ) ) {
 		return;
 	}
 	if ( ! bhp_school_visit_paperback_only() ) {
@@ -339,7 +601,10 @@ function bhp_school_visit_block_hardcover_store_api_add( $product = null ) {
 
 	throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
 		'bhp_school_visit_paperback_only',
-		bhp_school_visit_paperback_only_message(),
+		// 1.8.71: reason-aware. The error CODE is deliberately unchanged --
+		// `bundle-drawer.js` and the Store API contract key on it, and a new
+		// code would be a silent breaking change for one extra sentence.
+		bhp_school_visit_refusal_message( $product_id, $variation_id ),
 		400
 	);
 }
@@ -372,14 +637,15 @@ function bhp_school_visit_hardcover_store_api_cart_error( $errors = null, $cart 
 	if ( ! $cart && function_exists( 'WC' ) && WC()->cart ) {
 		$cart = WC()->cart;
 	}
-	if ( ! bhp_school_visit_cart_has_hardcover( $cart ) ) {
-		return; // ⭐ ZERO CHANGE for a cart with no hardcover in it.
+	if ( ! bhp_school_visit_cart_has_refused_item( $cart ) ) {
+		return; // ⭐ ZERO CHANGE for a cart with nothing refused in it.
 	}
 	if ( ! bhp_school_visit_paperback_only() ) {
 		return; // ⭐ ZERO CHANGE for every ordinary shopper, hardcover cart included.
 	}
 
-	$errors->add( 'bhp_school_visit_paperback_only', bhp_school_visit_paperback_only_message() );
+	// 1.8.71: reason-aware, from the first refused item actually in the cart.
+	$errors->add( 'bhp_school_visit_paperback_only', bhp_school_visit_cart_refusal_message( $cart ) );
 }
 add_action( 'woocommerce_store_api_cart_errors', 'bhp_school_visit_hardcover_store_api_cart_error', 20, 2 );
 
@@ -408,7 +674,7 @@ function bhp_school_visit_hardcover_classic_cart_error() {
 	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
 		return;
 	}
-	if ( ! bhp_school_visit_cart_has_hardcover( WC()->cart ) ) {
+	if ( ! bhp_school_visit_cart_has_refused_item( WC()->cart ) ) {
 		return;
 	}
 	if ( ! bhp_school_visit_paperback_only() ) {
@@ -417,7 +683,8 @@ function bhp_school_visit_hardcover_classic_cart_error() {
 
 	$said = true;
 	if ( function_exists( 'wc_add_notice' ) ) {
-		wc_add_notice( bhp_school_visit_paperback_only_message(), 'error' );
+		// 1.8.71: reason-aware.
+		wc_add_notice( bhp_school_visit_cart_refusal_message( WC()->cart ), 'error' );
 	}
 }
 add_action( 'woocommerce_check_cart_items', 'bhp_school_visit_hardcover_classic_cart_error', 20 );
@@ -482,14 +749,15 @@ add_action( 'woocommerce_check_cart_items', 'bhp_school_visit_hardcover_classic_
  * @throws Exception When a hardcover is added on a restricted session.
  */
 function bhp_school_visit_block_hardcover_cart_add( $cart_item_data, $product_id = 0, $variation_id = 0 ) {
-	if ( ! bhp_school_visit_is_hardcover( $product_id, $variation_id ) ) {
-		return $cart_item_data; // ⭐ ZERO CHANGE for anything that is not a hardcover.
+	if ( ! bhp_school_visit_is_refused_item( $product_id, $variation_id ) ) {
+		return $cart_item_data; // ⭐ ZERO CHANGE for anything not on the refused list.
 	}
 	if ( ! bhp_school_visit_paperback_only() ) {
 		return $cart_item_data; // ⭐ ZERO CHANGE for every ordinary shopper.
 	}
 
-	throw new Exception( esc_html( bhp_school_visit_paperback_only_message() ) );
+	// 1.8.71: reason-aware.
+	throw new Exception( esc_html( bhp_school_visit_refusal_message( $product_id, $variation_id ) ) );
 }
 add_filter( 'woocommerce_add_cart_item_data', 'bhp_school_visit_block_hardcover_cart_add', 20, 3 );
 
@@ -542,6 +810,24 @@ function bhp_bundle_hardcover_is_offerable() {
  * unconditionally and print nothing for an ordinary shopper.
  *
  * ⛔ NO "we". NO em dash.
+ *
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.8.69 — THIS STRING DELIBERATELY DID **NOT** MOVE WITH THE MESSAGE.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * The refusal MESSAGE above widened to "chapter paperbacks" because it is
+ * printed BY the refusal and now has to be true of a refused colouring book.
+ * ⛔ This NOTE is a different job on a different surface: it is the caption
+ *    printed beside a CHAPTER BOOK's format selector (the product rail and
+ *    the collection page's format pills), in the space a hardcover control
+ *    used to occupy. On that surface the only choice is paperback vs
+ *    hardcover, "Paperback only" is exactly true, and no colouring book is
+ *    on the page to be ambiguous about.
+ *
+ * ⛔ WIDENING IT WOULD HAVE BEEN A GRATUITOUS EDIT TO A STRING ANDREW HAS
+ *    SEEN, on a surface whose meaning did not change. A string he has seen
+ *    keeps its wording unless the build made it false. This one is still
+ *    true.
  *
  * @return string
  */

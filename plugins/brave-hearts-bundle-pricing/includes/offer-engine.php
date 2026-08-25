@@ -379,6 +379,112 @@ function bhp_offer_is_purchasable( $key ) {
 }
 
 /**
+ * ⭐⭐ 1.8.69 (`CYCLE165-LD-VISIT-COLOURING-GATE`, item 217) — MAY THIS OFFER
+ *     BE SHOWN TO **THIS** VISITOR?
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔ TWO DIFFERENT QUESTIONS, AND CONFLATING THEM WOULD HAVE MOVED MONEY.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ *   `bhp_offer_is_purchasable()` asks CAN THIS BE ASSEMBLED AND PRICED — a
+ *   fact about the catalogue and the environment, identical for everybody.
+ *   This asks MAY IT BE OFFERED TO THE PERSON IN FRONT OF ME — a fact about
+ *   the session.
+ *
+ * ⛔⛔ THE GATE IS NOT IN `bhp_offer_is_purchasable()` AND MUST NOT BE MOVED
+ *     THERE. `bhp_offer_apply_fees()` reads that function to decide whether an
+ *     offer's DISCOUNT applies to a cart. Gating it would mean a flagged
+ *     parent whose cart already holds a legally-added pair (added in an
+ *     ordinary session, THEN the school link clicked) silently loses the
+ *     discount and watches the total GO UP while reading a message telling
+ *     them the cart cannot proceed. ⭐ Pricing is left exactly as it was; the
+ *     cart is stopped by the seam in `school-visit-paperback-only.php`
+ *     instead, which is a stop, not a repricing.
+ *
+ * ⭐ PRECEDENT FOR THE SPLIT, not an invention: `bhp_bundle_hardcover_is_
+ *    offerable()` already sits beside `bhp_bundle_format_order()` for exactly
+ *    this reason — one says what exists, the other says what this visitor may
+ *    be shown.
+ *
+ * ⛔ WHAT IS REFUSED, AND WHY IT IS READ FROM THE CATALOGUE ROW RATHER THAN
+ *    FROM A LIST OF KEYS: an offer is withheld from a flagged session when it
+ *    carries ANY `colouring` component (the gate refuses the book, so
+ *    advertising it would be offering what the server will not accept) or
+ *    when its `format` is `hardcover` (already refused since 1.8.65). ⭐ Both
+ *    are read off `bhp_offer_catalog()`, so a future offer is classified the
+ *    day it is added and nobody edits this function.
+ *
+ * ✅ FAILS OPEN: no predicate, no catalogue row, a throwing resolver — every
+ *    one of those falls through to `bhp_offer_is_purchasable()` alone, which
+ *    is 1.8.68 behaviour exactly. ⛔ CONTROL PATH: for every ordinary shopper
+ *    this returns `bhp_offer_is_purchasable( $key )` and nothing else runs.
+ *
+ * @param string $key Offer key.
+ * @return bool
+ */
+function bhp_offer_is_offerable( $key ) {
+	if ( ! bhp_offer_is_purchasable( $key ) ) {
+		return false;
+	}
+
+	if ( ! function_exists( 'bhp_school_visit_paperback_only' ) ) {
+		return true; // FAIL OPEN: no visit gate loaded -> nothing is withheld.
+	}
+
+	try {
+		if ( ! bhp_school_visit_paperback_only() ) {
+			return true; // ⭐ ZERO CHANGE for every ordinary shopper.
+		}
+	} catch ( Throwable $e ) {
+		return true; // FAIL OPEN: a resolver that throws must never hide an offer.
+	}
+
+	$catalog = bhp_offer_catalog();
+	if ( ! isset( $catalog[ $key ] ) ) {
+		return true; // FAIL OPEN.
+	}
+	$offer = $catalog[ $key ];
+
+	if ( ! empty( $offer['colouring'] ) ) {
+		return false; // The gate refuses the book; the panel must not offer it.
+	}
+	if ( isset( $offer['format'] ) && 'hardcover' === $offer['format'] ) {
+		return false; // Refused since 1.8.65.
+	}
+
+	/*
+	 * ⭐⭐ 1.8.71 (2026-08-24, CYCLE166-LD-VISIT-STOCK-GATE) — AN OFFER WHOSE
+	 *     CHAPTER COMPONENT IS SOLD OUT FOR THE VISIT IS NOT OFFERED.
+	 *
+	 * ⛔ ANY ONE CLOSED CHAPTER TITLE CLOSES THE WHOLE OFFER, for the same
+	 *    reason `bhp_bundle_add_titles_to_cart()` refuses the whole box: an
+	 *    offer is priced as a unit, so a partially-deliverable one is not a
+	 *    cheaper offer, it is a broken promise at a read aloud.
+	 *
+	 * ⛔ IT READS `$offer['chapter']`, WHICH IS ALREADY TITLE SLUGS. No second
+	 *    resolution, no product ids, and nothing added to the catalogue row.
+	 *
+	 * ⛔ CONTROL PATH: only reachable on a session already known to be
+	 *    visit-flagged (checked above), and false for everyone while the shelf
+	 *    baseline option is unset.
+	 */
+	if ( ! empty( $offer['chapter'] ) && is_array( $offer['chapter'] )
+		&& function_exists( 'bhp_visit_shelf_title_is_closed' ) ) {
+		foreach ( $offer['chapter'] as $title_slug ) {
+			try {
+				if ( bhp_visit_shelf_title_is_closed( $title_slug ) ) {
+					return false;
+				}
+			} catch ( Throwable $e ) {
+				return true; // FAIL OPEN: a throwing resolver must never hide an offer.
+			}
+		}
+	}
+
+	return true;
+}
+
+/**
  * Every offer that is purchasable today, in catalogue order.
  *
  * @return string[] Offer keys.
@@ -578,6 +684,17 @@ function bhp_offer_drawer_payload() {
 		if ( 'pair' !== $offer['cart_rule'] ) {
 			continue; // ⛔ SPEC-STUB offers are never surfaced.
 		}
+		/*
+		 * ⛔ 1.8.69 — THE VISIT GATE, ON THE PANEL RAIL ITSELF. A flagged
+		 *    session's cart panel must not offer the colouring book that the
+		 *    five seams will refuse. Offering what the gate refuses is how a
+		 *    parent ends up clicking a button that errors.
+		 *    ⛔ CONTROL PATH: `bhp_offer_is_offerable()` === `is_purchasable()`
+		 *       for every ordinary shopper.
+		 */
+		if ( ! bhp_offer_is_offerable( $key ) ) {
+			continue;
+		}
 		$components = bhp_offer_components( $key );
 		if ( null === $components ) {
 			continue; // ⛔ THE GATE. No product record, no row.
@@ -736,6 +853,10 @@ function bhp_offer_shop_add_payload() {
 
 	foreach ( bhp_offer_catalog() as $key => $offer ) {
 		if ( 'pair' !== $offer['cart_rule'] ) {
+			continue;
+		}
+		// ⛔ 1.8.69 — same visit gate as the drawer rail. See bhp_offer_is_offerable().
+		if ( ! bhp_offer_is_offerable( $key ) ) {
 			continue;
 		}
 		$components = bhp_offer_components( $key );
@@ -981,19 +1102,31 @@ function bhp_offer_add_to_cart( $key ) {
 		return 0;
 	}
 
-	$catalog = bhp_offer_catalog();
-	$format  = isset( $catalog[ $key ]['format'] ) ? $catalog[ $key ]['format'] : null;
-
 	/*
-	 * ⛔ THE SCHOOL-VISIT PAPERBACK-ONLY REFUSAL, applied by name at the
-	 *    function that takes the format — belt and braces on top of seam 5,
-	 *    for the same reason `bhp_bundle_add_titles_to_cart()` does it: one
-	 *    clear sentence to the parent instead of per-component errors.
+	 * ⛔ THE SCHOOL-VISIT REFUSAL, applied at the function that assembles the
+	 *    offer — belt and braces on top of seam 5, for the same reason
+	 *    `bhp_bundle_add_titles_to_cart()` does it: one clear sentence to the
+	 *    parent instead of per-component errors.
+	 *    ⛔ CONTROL PATH: false for every ordinary shopper.
+	 *
+	 * ⭐ 1.8.69 — WIDENED FROM `'hardcover' === $format` TO THE ONE PREDICATE.
+	 *    ⚠️ `$catalog` / `$format` WERE READ HERE ONLY FOR THAT OLD CHECK and
+	 *       are gone with it; `bhp_offer_is_offerable()` reads the catalogue
+	 *       row itself, so a second read here would be a second source of
+	 *       truth about the same row.
+	 *    ⛔ THE OLD TEST WAS NOT ENOUGH AND THE REASON IS THE WHOLE BUILD:
+	 *       `mariana_pb_colouring` has `format === 'paperback'`, so it sailed
+	 *       past the hardcover check and added a colouring book to a flagged
+	 *       cart. Seam 5 would then have refused ONE of the two components
+	 *       from inside `WC_Cart::add_to_cart()`, leaving the parent with a
+	 *       half-added "pair" and a per-component error. This refuses the
+	 *       whole offer, up front, with one clear sentence — which is the
+	 *       reason this belt-and-braces check exists at all.
 	 *    ⛔ CONTROL PATH: false for every ordinary shopper.
 	 */
-	if ( 'hardcover' === $format
-		&& function_exists( 'bhp_school_visit_paperback_only' )
-		&& bhp_school_visit_paperback_only() ) {
+	if ( function_exists( 'bhp_school_visit_paperback_only' )
+		&& bhp_school_visit_paperback_only()
+		&& ! bhp_offer_is_offerable( $key ) ) {
 		wc_add_notice( bhp_school_visit_paperback_only_message(), 'error' );
 		return 0;
 	}

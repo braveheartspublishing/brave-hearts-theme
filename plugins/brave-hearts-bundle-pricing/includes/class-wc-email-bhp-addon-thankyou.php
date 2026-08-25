@@ -65,7 +65,7 @@ class WC_Email_BHP_Addon_Thankyou extends WC_Email {
 		$this->id             = 'bhp_addon_thankyou';
 		$this->customer_email = true;
 		$this->title          = __( 'Activity book download', 'bhp-bundle-pricing' );
-		$this->description    = __( 'Sent to the customer when an order containing the activity book add-on is completed. It carries the thank-you and the download link. It is a second email, in addition to the completed-order email, which is unchanged.', 'bhp-bundle-pricing' );
+		$this->description    = __( 'Sent to the customer as soon as an order containing the activity book add-on is PAID, and again as a fallback if such an order reaches completed without having been sent. It carries the thank-you and the download link, and it sends at most once per order. It is a second email, in addition to the order emails, which are unchanged.', 'bhp-bundle-pricing' );
 
 		$this->template_html  = 'emails/addon-thankyou.php';
 		$this->template_plain = 'emails/plain/addon-thankyou.php';
@@ -89,6 +89,78 @@ class WC_Email_BHP_Addon_Thankyou extends WC_Email {
 		 *   and which is what makes the signed download URL exist at all.
 		 */
 		add_action( 'woocommerce_order_status_completed_notification', array( $this, 'trigger' ), 20, 2 );
+
+		/*
+		 * ═══════════════════════════════════════════════════════════════
+		 * ⭐⭐⭐ 1.8.70 — IT NOW ALSO FIRES AT PURCHASE, NOT ONLY AT
+		 *     COMPLETION. THIS IS THE FOUNDER'S RULING, AND THE OLD
+		 *     BEHAVIOUR WAS SILENTLY DELIVERING NOTHING.
+		 * ═══════════════════════════════════════════════════════════════
+		 *
+		 * Andrew Signore, 2026-08-24, verbatim (⛔ RELAYED through the Chief
+		 * of Staff; NOT witnessed first-hand by the agent that wrote this):
+		 *
+		 *   "Activity books should be sent via email after purchase."
+		 *
+		 * ⛔⛔ THE DEFECT THIS CLOSES WAS MEASURED ON PRODUCTION, READ-ONLY,
+		 *     2026-08-24 — it was not anticipated from the code.
+		 *
+		 *     Of the 13 most recent production orders, **12 contain the
+		 *     activity book and ALL 13 sit in `processing`**. The newest
+		 *     order to reach `completed` is #576, 2026-08-12. Because this
+		 *     email hooked `completed` and nothing else, **not one of those
+		 *     12 customers has been sent their activity book.** Order #576
+		 *     does carry `_bhp_addon_thankyou_sent`, which is the proof
+		 *     that the mechanism itself is sound — the TRIGGER was wrong,
+		 *     not the email.
+		 *
+		 *     That is the shape of this store: Andrew hand-delivers school
+		 *     orders and ships the rest, so `completed` tracks PHYSICAL
+		 *     dispatch and may lag by days or never be set at all. A
+		 *     digital file must not wait on a physical act.
+		 *
+		 * ⛔⛔ THE OBVIOUS HOOK DOES NOT EXIST, AND WRITING IT WOULD HAVE
+		 *     SHIPPED A DEAD FILE. `woocommerce_order_status_processing_
+		 *     notification` is NEVER FIRED. Read from the running store
+		 *     (`WC_Emails::init_transactional_emails()`, WooCommerce 10.9.1)
+		 *     rather than assumed: the `$email_actions` list carries
+		 *     `woocommerce_order_status_completed` as a BARE status action,
+		 *     but every route into `processing` is enumerated as a
+		 *     TRANSITION PAIR. Only actions on that list ever get a
+		 *     `_notification` twin. So the four hooks below are the
+		 *     complete set, and they are exactly the four that core's own
+		 *     `WC_Email_Customer_Processing_Order` uses.
+		 *
+		 * ⚠ ORDERING, CHECKED RATHER THAN ASSUMED. `WC_Order::
+		 *   status_transition()` (`includes/class-wc-order.php`) fires
+		 *   `woocommerce_order_status_{to}` FIRST and the
+		 *   `{from}_to_{to}` pair AFTERWARDS. Core registers
+		 *   `wc_downloadable_product_permissions` on the bare
+		 *   `woocommerce_order_status_processing`
+		 *   (`wc-order-functions.php:495`), so the signed download URL
+		 *   already exists by the time these hooks run. `wc_downloadable_
+		 *   product_permissions()` does bail on a processing order when
+		 *   `woocommerce_downloads_grant_access_after_payment` is `no` —
+		 *   that option reads **`yes` on both environments**, verified
+		 *   read-only 2026-08-24. ⭐ IT IS STILL NOT TRUSTED: if the grant
+		 *   ever fails, `bhp_bundle_addon_thankyou_should_send()` finds no
+		 *   download row and DECLINES rather than mailing a broken promise,
+		 *   and the `completed` hook above remains as the second chance.
+		 *
+		 * ⭐ EXACTLY ONE EMAIL PER ORDER, STILL. `BHP_BUNDLE_ADDON_SENT_META`
+		 *    is written on a successful handoff to the mailer, so an order
+		 *    that goes pending -> processing -> completed sends once, at
+		 *    processing. No customer receives a duplicate.
+		 *
+		 * ⛔ NO WOOCOMMERCE SETTING, PRODUCT, PRICE, COUPON, STOCK OR EMAIL
+		 *    OPTION IS WRITTEN BY THIS CHANGE. It is four `add_action`
+		 *    calls. Staging remains silenced by `inc/staging-mail-guard.php`,
+		 *    which already lists `bhp_addon_thankyou` by id.
+		 */
+		add_action( 'woocommerce_order_status_pending_to_processing_notification', array( $this, 'trigger' ), 20, 2 );
+		add_action( 'woocommerce_order_status_failed_to_processing_notification', array( $this, 'trigger' ), 20, 2 );
+		add_action( 'woocommerce_order_status_cancelled_to_processing_notification', array( $this, 'trigger' ), 20, 2 );
+		add_action( 'woocommerce_order_status_on-hold_to_processing_notification', array( $this, 'trigger' ), 20, 2 );
 
 		parent::__construct();
 	}

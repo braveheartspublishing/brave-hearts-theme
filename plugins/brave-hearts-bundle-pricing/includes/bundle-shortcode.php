@@ -271,6 +271,41 @@ function bhp_bundle_add_titles_to_cart( $format, array $title_keys ) {
 		return;
 	}
 
+	/*
+	 * ⭐⭐ 1.8.71 (2026-08-24, CYCLE166-LD-VISIT-STOCK-GATE) — THE BOX CLOSES
+	 *     WHEN **ANY ONE** OF ITS TITLES IS SOLD OUT FOR THE VISIT.
+	 *
+	 * ⛔ ALL-OR-NOTHING, AND THAT IS THE FOUNDER'S RULE AS CARRIED: "the
+	 *    3-book box must close when ANY of its three titles is closed."
+	 *    Partially filling a set is the failure this refuses. Seam 5 in
+	 *    `school-visit-paperback-only.php` would otherwise refuse only the
+	 *    CLOSED component from inside `WC_Cart::add_to_cart()`, leaving a
+	 *    parent who paid for a three-book set holding two books and a
+	 *    per-title error, having been charged the set discount for a set
+	 *    that does not exist.
+	 *
+	 * ⛔ IT REFUSES BEFORE THE FIRST `add_to_cart()` CALL, not between them,
+	 *    so no half-built cart ever exists to be cleaned up.
+	 *
+	 * ⛔ CONTROL PATH: `bhp_visit_shelf_title_is_closed_for_request()` is
+	 *    false for every ordinary shopper on every environment, and false for
+	 *    everyone on any environment where the shelf baseline is unset. This
+	 *    whole block is inert until Andrew seeds `bhp_visit_shelf_stock`.
+	 */
+	if ( function_exists( 'bhp_visit_shelf_title_is_closed_for_request' ) ) {
+		foreach ( $title_keys as $title_key ) {
+			if ( bhp_visit_shelf_title_is_closed_for_request( $title_key ) ) {
+				wc_add_notice(
+					function_exists( 'bhp_visit_shelf_sold_out_message' )
+						? bhp_visit_shelf_sold_out_message()
+						: bhp_school_visit_paperback_only_message(),
+					'error'
+				);
+				return;
+			}
+		}
+	}
+
 	$catalog = bhp_bundle_catalog();
 	$added   = 0;
 
@@ -387,10 +422,74 @@ function bhp_bundle_render_offers() {
 	return ob_get_clean();
 }
 
+/*
+ * ⭐ 1.8.71 (2026-08-24, CYCLE166-LD-VISIT-STOCK-GATE) — THE THREE RENDERERS
+ *    BELOW NOW ASK THE SHELF BEFORE THEY OFFER A TITLE.
+ *
+ * ⛔ THEY DO NOT DECIDE ANYTHING. Each one reads
+ *    `bhp_visit_shelf_closed_map_for_request()`, which is EMPTY for every
+ *    ordinary shopper and empty on any environment with no shelf baseline
+ *    set. The markup below is therefore byte-identical to 1.8.70 for
+ *    everybody except a visit-flagged parent looking at a title Andrew has
+ *    run out of.
+ *
+ * ⛔ A CLOSED TITLE IS SHOWN AND DISABLED, NOT HIDDEN. A parent who came for
+ *    Everest needs to see that Everest was the thing that sold out; silently
+ *    dropping the row reads as a bug and sends them looking for it.
+ *
+ * ⛔ A BOX CLOSES ENTIRELY. "Any two" needs two open titles; the complete
+ *    collection needs all three. Offering a set the server refuses is the
+ *    incoherence the colouring gate already established as the defect class.
+ */
+
+/**
+ * Print the sold-out card that replaces a box whose titles are not all open.
+ *
+ * @param string $heading Card heading to keep the layout intact.
+ * @return void
+ */
+function bhp_bundle_render_visit_sold_out_card( $heading ) {
+	?>
+	<div class="bhp-bundle-card bhp-bundle-card--sold-out">
+		<h3><?php echo esc_html( $heading ); ?></h3>
+		<p class="bhp-bundle-sold-out-label">
+			<?php
+			echo esc_html(
+				function_exists( 'bhp_visit_shelf_sold_out_label' )
+					? bhp_visit_shelf_sold_out_label()
+					: 'Sold out for the school visit'
+			);
+			?>
+		</p>
+		<p class="bhp-bundle-sold-out-note">
+			<?php
+			echo esc_html(
+				function_exists( 'bhp_visit_shelf_sold_out_message' )
+					? bhp_visit_shelf_sold_out_message()
+					: ''
+			);
+			?>
+		</p>
+	</div>
+	<?php
+}
+
 function bhp_bundle_render_any2_section( $format, $action, $button_label ) {
 	$catalog = bhp_bundle_catalog();
 	$rules   = bhp_bundle_rules( $format );
 	$rule    = $rules[2];
+
+	$closed = function_exists( 'bhp_visit_shelf_closed_map_for_request' )
+		? bhp_visit_shelf_closed_map_for_request()
+		: array();
+
+	// Fewer than two open titles: there is no "any two" left to offer.
+	if ( ! empty( $closed )
+		&& function_exists( 'bhp_visit_shelf_open_title_count' )
+		&& bhp_visit_shelf_open_title_count( $format ) < 2 ) {
+		bhp_bundle_render_visit_sold_out_card( $rule['heading'] );
+		return;
+	}
 	?>
 	<div class="bhp-bundle-card bhp-bundle-any2">
 		<h3><?php echo esc_html( $rule['heading'] ); ?> - <?php echo esc_html( $rule['save'] ); ?></h3>
@@ -400,10 +499,24 @@ function bhp_bundle_render_any2_section( $format, $action, $button_label ) {
 			<p class="bhp-bundle-instructions">Choose exactly two different titles:</p>
 			<ul class="bhp-bundle-title-list">
 				<?php foreach ( $catalog[ $format ] as $title_key => $info ) : ?>
-					<li>
+					<?php $is_closed = isset( $closed[ $title_key ] ); ?>
+					<li<?php echo $is_closed ? ' class="bhp-bundle-title--sold-out"' : ''; ?>>
 						<label>
-							<input type="checkbox" name="bhp_titles[]" value="<?php echo esc_attr( $title_key ); ?>" />
+							<input type="checkbox" name="bhp_titles[]" value="<?php echo esc_attr( $title_key ); ?>"<?php echo $is_closed ? ' disabled="disabled"' : ''; ?> />
 							<?php echo esc_html( $info['label'] ); ?>
+							<?php if ( $is_closed ) : ?>
+								<span class="bhp-bundle-sold-out-label"><?php echo esc_html( bhp_visit_shelf_sold_out_label() ); ?></span>
+							<?php elseif ( function_exists( 'bhp_visit_shelf_render_counter' ) ) : ?>
+								<?php
+								/*
+								 * ⭐ 1.8.72 — the live count. See the note on the same
+								 *    branch in `bundle-shop-series.php`. Nothing is
+								 *    emitted outside the 2..10 window, and nothing at all
+								 *    for an unflagged session.
+								 */
+								bhp_visit_shelf_render_counter( $title_key );
+								?>
+							<?php endif; ?>
 						</label>
 					</li>
 				<?php endforeach; ?>
@@ -418,6 +531,55 @@ function bhp_bundle_render_complete_section( $format, $action, $button_label ) {
 	$catalog = bhp_bundle_catalog();
 	$rules   = bhp_bundle_rules( $format );
 	$rule    = $rules[3];
+
+	$closed = function_exists( 'bhp_visit_shelf_closed_map_for_request' )
+		? bhp_visit_shelf_closed_map_for_request()
+		: array();
+
+	/*
+	 * ⭐ THE FOUNDER'S RULE, LITERALLY: the three-book box closes when ANY of
+	 *    its three titles is closed. `array_intersect_key` against the
+	 *    format's own catalogue keys means a closed HARDCOVER title (there is
+	 *    no such thing today) could never close the paperback box by accident.
+	 */
+	if ( ! empty( $closed ) && ! empty( array_intersect_key( $closed, $catalog[ $format ] ) ) ) {
+		bhp_bundle_render_visit_sold_out_card( $rule['heading'] );
+		return;
+	}
+
+	/*
+	 * ⭐⭐ 1.8.72 (CYCLE166-LD-VISIT-STOCK-COUNTER) — THE THREE-BOOK BOX'S
+	 *     COUNTER IS OFF BY DEFAULT. THIS IS THE JUDGMENT CALL, MADE.
+	 *
+	 * ⛔ RECOMMENDATION: show NOTHING on this card. The full reasoning lives on
+	 *    `bhp_visit_shelf_counter_on_complete_box()` in
+	 *    `school-visit-shelf-stock.php` so it is beside the switch and not
+	 *    buried in a template. In one line: a single number on a three-title
+	 *    card reads as "three SETS left" when it means "three copies of ONE of
+	 *    these books", and the per-title list that says it unambiguously is
+	 *    already on the same page, directly above this card, on BOTH surfaces
+	 *    that render it.
+	 *
+	 * ⭐ THE FLIP IS ONE LINE AND NEEDS NO DEPLOY:
+	 *      add_filter( 'bhp_visit_shelf_counter_on_complete_box', '__return_true' );
+	 *    The branch below is fully implemented and covered by the suite, so
+	 *    turning it on is a switch rather than a build.
+	 *
+	 * ⛔ WHEN ON, IT NAMES THE TITLE. An unnamed number here is the ambiguity
+	 *    above; naming the constraining title removes it.
+	 */
+	$bhp_box_counter = '';
+	if ( function_exists( 'bhp_visit_shelf_counter_on_complete_box' )
+		&& bhp_visit_shelf_counter_on_complete_box()
+		&& function_exists( 'bhp_visit_shelf_constraining_title_for_request' ) ) {
+		$bhp_box_slug = bhp_visit_shelf_constraining_title_for_request( $format );
+		if ( null !== $bhp_box_slug ) {
+			$bhp_box_n = bhp_visit_shelf_counter_for_request( $bhp_box_slug );
+			if ( null !== $bhp_box_n ) {
+				$bhp_box_counter = bhp_visit_shelf_counter_label_named( $bhp_box_slug, (int) $bhp_box_n );
+			}
+		}
+	}
 	?>
 	<div class="bhp-bundle-card bhp-bundle-complete">
 		<span class="bhp-bundle-badge">Best Value - Get the Complete Collection</span>
@@ -427,6 +589,9 @@ function bhp_bundle_render_complete_section( $format, $action, $button_label ) {
 				<li><?php echo esc_html( $info['label'] ); ?></li>
 			<?php endforeach; ?>
 		</ul>
+		<?php if ( '' !== $bhp_box_counter ) : ?>
+			<p class="bhp-bundle-stock-counter bhp-bundle-stock-counter--box"><?php echo esc_html( $bhp_box_counter ); ?></p>
+		<?php endif; ?>
 		<form method="post" class="bhp-bundle-form">
 			<?php bhp_bundle_nonce_input(); /* F14: id-less nonce -- see bundle-landing-page.php */ ?>
 			<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( $action ); ?>" />

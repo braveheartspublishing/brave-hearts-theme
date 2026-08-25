@@ -99,6 +99,21 @@ function bhp_bundle_render_shop_series_format_section( $format, $format_label ) 
 function bhp_bundle_render_single_section( $format ) {
 	$catalog = bhp_bundle_catalog();
 	$action  = 'single_' . $format;
+
+	/*
+	 * ⭐ 1.8.71 (2026-08-24, CYCLE166-LD-VISIT-STOCK-GATE): a chapter title
+	 *    Andrew has run out of is shown DISABLED and labelled sold out, on a
+	 *    visit-flagged session only.
+	 *
+	 * ⛔ CONTROL PATH: `$closed` is empty for every ordinary shopper and on
+	 *    every environment with no shelf baseline set, and this renderer is
+	 *    then byte-identical to 1.8.70.
+	 * ⛔ THE ROW IS NOT REMOVED. A parent who came for one specific adventure
+	 *    must be able to see that it was that adventure that sold out.
+	 */
+	$closed = function_exists( 'bhp_visit_shelf_closed_map_for_request' )
+		? bhp_visit_shelf_closed_map_for_request()
+		: array();
 	?>
 	<div class="bhp-bundle-card bhp-bundle-single">
 		<form method="post" class="bhp-bundle-form">
@@ -107,10 +122,25 @@ function bhp_bundle_render_single_section( $format ) {
 			<p class="bhp-bundle-instructions">Choose one title:</p>
 			<ul class="bhp-bundle-title-list">
 				<?php foreach ( $catalog[ $format ] as $title_key => $info ) : ?>
-					<li>
+					<?php $is_closed = isset( $closed[ $title_key ] ); ?>
+					<li<?php echo $is_closed ? ' class="bhp-bundle-title--sold-out"' : ''; ?>>
 						<label>
-							<input type="radio" name="bhp_single_title" value="<?php echo esc_attr( $title_key ); ?>" />
+							<input type="radio" name="bhp_single_title" value="<?php echo esc_attr( $title_key ); ?>"<?php echo $is_closed ? ' disabled="disabled"' : ''; ?> />
 							<?php echo esc_html( $info['label'] ); ?>
+							<?php if ( $is_closed ) : ?>
+								<span class="bhp-bundle-sold-out-label"><?php echo esc_html( bhp_visit_shelf_sold_out_label() ); ?></span>
+							<?php elseif ( function_exists( 'bhp_visit_shelf_render_counter' ) ) : ?>
+								<?php
+								/*
+								 * ⭐ 1.8.72 — the live count, ONLY in the 2..10 window and
+								 *    ONLY on a visit-flagged session. `$is_closed` has
+								 *    already been ruled out by the branch above, so the two
+								 *    states can never print together.
+								 * ⛔ PRINTS NOTHING AT ALL otherwise. No element, no class.
+								 */
+								bhp_visit_shelf_render_counter( $title_key );
+								?>
+							<?php endif; ?>
 						</label>
 					</li>
 				<?php endforeach; ?>
