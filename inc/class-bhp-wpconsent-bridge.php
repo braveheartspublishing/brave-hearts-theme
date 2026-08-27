@@ -13,6 +13,44 @@
  * defaults, this class for the updates -- avoiding any contradictory
  * consent commands between two plugins.
  *
+ * ⛔⛔ CORRECTED 2026-08-27 (1.19.302, `CYCLE167-LD-CONSENT-GEO`) -- THE
+ * PARAGRAPH ABOVE IS FACTUALLY WRONG FOR WPCONSENT 1.1.x AND IS KEPT,
+ * NOT DELETED, BECAUSE A FUTURE READER WILL OTHERWISE RE-DERIVE IT.
+ *
+ * OBSERVED, not inferred, on staging 2026-08-27 with a real browser:
+ * clicking either banner button produces TWO `consent`/`update` commands
+ * in the dataLayer, not one. The second is WPConsent's own -- it carries
+ * `personalization_storage`, a key this class never sends.
+ *
+ * WHY: the plugin's update call lives in `unlockScripts()`
+ * (`build/frontend.js`, `src/frontend/banner.js:738`), which runs on every
+ * save and on every load that has a preferences cookie. It is NOT gated on
+ * the `google_consent_mode` setting. Only the plugin's DEFAULT emitter
+ * (`includes/frontend-scripts.php:131`) is gated by that setting.
+ *
+ * ⭐ WHY THIS IS SAFE TODAY, stated precisely so it is not over-trusted:
+ *   1. WPConsent emits only UPDATE, never DEFAULT. It therefore cannot
+ *      contradict the region-scoped defaults in BHP_Consent -- which is
+ *      the thing that would actually break the geo posture.
+ *   2. Its mapping is identical to this class's (statistics ->
+ *      analytics_storage, marketing -> the three ad_* signals), so the two
+ *      updates agree. Verified live in BOTH directions on 2026-08-27:
+ *      Reject -> both all-denied; Accept -> both all-granted.
+ *   3. On a cookieless first load it emits nothing at all. Verified: a
+ *      first-time visitor's dataLayer contained the two defaults and zero
+ *      updates.
+ *
+ * ⚠⚠ THE LATENT RISK THIS RELEASE CREATES, AND THE GUARD FOR IT: point 3
+ * holds only while WPConsent's `default_allow` is OFF and script blocking
+ * is ON. If `default_allow` were ever switched on in wp-admin,
+ * `processBannerDisplay()` would call `unlockScripts()` with every category
+ * true for a visitor who has chosen nothing -- emitting an ALL-GRANTED
+ * update, ad signals included, on first load. That would silently override
+ * this release's deliberate ad_*-denied default in every region, EEA
+ * included. It is a settings change, not a code change, so nothing in this
+ * theme would stop it -- tests/test-cycle167-consent-geo.php asserts the
+ * setting is off, so the suite fails loudly if anyone turns it on.
+ *
  * ⚠ 2026-08-05 REWRITE (theme 1.19.178, `CYCLE143-GIM-51`). Two things
  * changed and both matter:
  *
@@ -21,6 +59,18 @@
  *    denied to granted. If it fails, the site under-measures; it can never
  *    over-collect, because the server-rendered default is denied for
  *    everyone.
+ *
+ *    ⭐⭐ 2026-08-27 (1.19.302, `CYCLE167-LD-CONSENT-GEO`) -- THE SECOND
+ *    HALF OF THAT SENTENCE IS SUPERSEDED FOR NON-EEA TRAFFIC and is kept
+ *    rather than corrected in place. The server-rendered default is denied
+ *    for EEA+UK visitors and grants `analytics_storage` for everyone else
+ *    (BHP_Consent::render_default_snippet()). The consequence for THIS
+ *    class is worth stating plainly: outside the EEA it is no longer only
+ *    a raiser, it is also a LOWERER -- a non-EEA visitor who rejects, or
+ *    who arrives with GPC on, is brought DOWN from the granted default by
+ *    the update this class sends. That path is what makes the banner a
+ *    real opt-out rather than a decoration, and it is asserted directly by
+ *    tests/test-cycle167-consent-geo.php.
  *
  * 2. The sync runs in the HEAD, printed inline by BHP_GTM_Loader between
  *    the defaults snippet and the container loader -- not in the footer.
@@ -183,15 +233,47 @@ class BHP_WPConsent_Bridge {
 		storedChoice: storedChoice
 	};
 
-	// ON LOAD: the server-rendered defaults are denied for EVERY visitor,
-	// so a returning visitor who already accepted is currently denied and
-	// must be corrected here -- before the container initialises, inside
-	// the wait_for_update window. A first-time visitor has no stored
-	// choice, nothing is sent, and the denied defaults stand. That is the
-	// path CYCLE143-GIM-51 proved broken and this is the fix.
+	// Global Privacy Control. Added 2026-08-27 (1.19.302,
+	// CYCLE167-LD-CONSENT-GEO) BECAUSE the non-EEA default moved to
+	// granted: an opt-out preference signal only matters once there is
+	// something to opt out of by default, and several US state privacy
+	// regimes treat GPC as a valid opt-out. WPConsent Free ships GPC
+	// strings but exposes no enable toggle in its settings (verified by
+	// reading the live `wpconsent_settings` option on production,
+	// 2026-08-27 -- 22 keys, no GPC enable key, no geo key), so this is
+	// handled here rather than assumed to be handled there.
+	function gpcActive() {
+		try {
+			return window.navigator && window.navigator.globalPrivacyControl === true;
+		} catch ( e ) {
+			return false;
+		}
+	}
+
+	// ON LOAD, in strict precedence order:
+	//
+	//   1. The visitor's OWN recorded choice always wins. The
+	//      server-rendered EEA default is denied, so a returning European
+	//      acceptor is currently denied and must be corrected here --
+	//      before the container initialises, inside the wait_for_update
+	//      window. That is the path CYCLE143-GIM-51 proved broken.
+	//      An explicit choice also outranks GPC, deliberately: a visitor
+	//      who opened the banner and accepted has overridden their browser
+	//      setting for this site, which is the same model WPConsent's own
+	//      `gpc_override_message` describes.
+	//   2. No choice yet, but GPC is on -> deny everything. This lowers
+	//      the non-EEA granted default and can never raise anything.
+	//      ⛔ It deliberately does NOT write the bhp_consent_state mirror
+	//      cookie: a browser setting is not a choice the visitor made on
+	//      this site, and recording it as one would fabricate a decision
+	//      and mislead every later read of that cookie.
+	//   3. No choice, no GPC -> nothing is sent and the server-rendered
+	//      regional defaults stand. That is the whole point of the release.
 	var stored = storedChoice();
 	if ( stored ) {
 		applySignals( stored );
+	} else if ( gpcActive() ) {
+		updateGtag( normaliseSignals( null ) ); // all four -> denied
 	}
 
 	// ON CHOICE: the visitor's live banner interaction.

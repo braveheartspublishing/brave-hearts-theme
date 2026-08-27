@@ -47,28 +47,48 @@ $heading_id = $panel_id . '-title';
 ?>
 <aside id="<?php echo esc_attr( $panel_id ); ?>" class="bhp-post-capture" aria-labelledby="<?php echo esc_attr( $heading_id ); ?>">
 	<div class="bhp-post-capture__intro">
-		<p class="bhp-post-capture__eyebrow"><?php esc_html_e( 'Before you go', 'brave-hearts' ); ?></p>
+		<?php
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐⭐ 1.19.297 (2026-08-27, `CYCLE167-LD-CAPTURE-COPY-APPLY`) — ONE
+		 *     OFFER NAME, AND THIS SURFACE NOW USES IT.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⭐ THE FINDING (`CYCLE167-MKT-MAGNET-TEARDOWN`): TWELVE OF
+		 *    TWELVE capture surfaces described the same offer differently. This
+		 *    one said "Try a chapter tonight" and offered "the Kit"; the footer
+		 *    said "Start with one free chapter."; exit-intent said "take the
+		 *    free kit"; the quiz said "Send My Free Adventure Kit". A visitor
+		 *    who met two of them met two offers. The founder agreed in terms:
+		 *    *"we need to be consistent on the email capture across the entire
+		 *    website"*.
+		 *
+		 * ⭐ SO THE HEADLINE AND THE BUTTON ARE NOW HIS STRINGS (carrier item
+		 *    290), BYTE-IDENTICAL TO THE POPUP'S. ⛔ THE EYEBROW IS DROPPED
+		 *    RATHER THAN REWRITTEN: "Before you go" described the PLACEMENT, and
+		 *    a second line above a headline that already names the offer is the
+		 *    padding the teardown objected to.
+		 *
+		 * ⭐ THE SUPPORT SENTENCE BRIDGES chapter -> Kit, AND THE BRIDGE IS THE
+		 *    HONESTY CONDITION, NOT A FLOURISH. The offer is now the chapter;
+		 *    the artefact that arrives is still the Kit. Item 290 condition (b)
+		 *    requires the two to visibly match, so this sentence names both.
+		 * ⛔ THE CONTENTS HALF IS NOT INVENTED AND NOT REWORDED FROM MEMORY: the
+		 *    296 lane read all seven pages of the live
+		 *    `Reluctant-Reader-Adventure-Kit-1.pdf` from the production document
+		 *    root. It contains one real chapter (Chapter 7, "The Swordfish"), a
+		 *    printable explorer activity, and tips to the parent.
+		 * ⛔ NO OUTCOME CLAIM. The copy says what the Kit CONTAINS, never what it
+		 *    will do to a child. VOICE §9.1: I/me/my, no em dash, ages 6 to 9.
+		 */
+		?>
 		<h2 class="bhp-post-capture__title" id="<?php echo esc_attr( $heading_id ); ?>">
-			<?php esc_html_e( 'Try a chapter tonight', 'brave-hearts' ); ?>
+			<?php esc_html_e( 'FREE Chapter for Reluctant Readers', 'brave-hearts' ); ?>
 		</h2>
 		<p class="bhp-post-capture__reason">
 			<?php
-			/*
-			 * ⛔ THE CONTENTS SENTENCE IS THE WORDING ALREADY LIVE SITEWIDE in
-			 *    `footer-capture.php` and `exit-intent-popup.php`. It is quoted
-			 *    rather than rewritten so this placement cannot describe the Kit
-			 *    differently from the three placements that already describe it.
-			 *
-			 * ⛔ NO DELIVERY-TIMING PROMISE. An earlier draft of this line read
-			 *    "and it is on its way" -- removed, because whether a Mailchimp
-			 *    automation delivers the Kit immediately is UNVERIFIED by this
-			 *    session (`functions.php`'s own lead-magnet registry still marks
-			 *    assets "placeholder", and reading the account is `connected-operator`'s). The
-			 *    copy therefore claims only what the Kit CONTAINS, which is
-			 *    already stated on three live surfaces.
-			 */
 			esc_html_e(
-				'I send the Reluctant Reader Adventure Kit: a sample chapter, a printable activity, and tips for reading it with a 6 to 9 year old.',
+				"I'll send you the chapter now, just add your email. It arrives inside my free Reluctant Reader Adventure Kit, along with a printable activity and tips for reading it with a 6 to 9 year old.",
 				'brave-hearts'
 			);
 			?>
@@ -88,7 +108,10 @@ $heading_id = $panel_id . '-title';
 			// blog lead without erroring. Verified against `bhp_get_audience_types()`.
 			'audience_type'   => 'parents_families',
 			'lead_magnet'     => 'reluctant_reader_adventure_kit',
-			'submit_label'    => __( 'Send me the Kit', 'brave-hearts' ),
+			// ⭐ 1.19.297 — was "Send me the Kit". Send-imperative, matching the
+			//    headline above it and every other parent capture button.
+			//    ⛔ FREE never appears on a button (teardown pattern).
+			'submit_label'    => __( 'Send me the chapter', 'brave-hearts' ),
 			'email_label'     => __( 'Email address', 'brave-hearts' ),
 			'submit_class'    => 'btn-cta-primary',
 			// The wording already live on the footer capture and the parent

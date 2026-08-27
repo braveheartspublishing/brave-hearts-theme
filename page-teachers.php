@@ -90,6 +90,56 @@ get_template_part('template-parts/components/hero', null, [
     ],
 ]);
 ?>
+<?php
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — A CAPTURE PANEL
+ *    THE EDUCATOR CAN ACTUALLY REACH. DUPLICATED HIGH, NOT MOVED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE FINDING (Merry, verified live and measured at a confirmed 390px):
+ *    this page is **36.4 screens — 30,700px — on mobile**, and its ONLY
+ *    capture surface sat at **94% depth, screen 34 of 36.4.** An educator had
+ *    to read thirty-four screens before being asked for anything. Corroborated
+ *    from the Mailchimp side by `connected-operator`: zero educator contacts
+ *    since 2026-07-28.
+ *
+ * ⛔ THE EXISTING PANEL IS **NOT MOVED**, AND THAT IS DELIBERATE. It is the
+ *    natural close of a long browse and it is the anchor target of the
+ *    `#teacher-email-signup` link; moving it would break that link and take
+ *    the ask away from the reader who did go all the way down. This is an
+ *    ADDITIONAL entry point for the ~97% who never reach screen 34.
+ *
+ * ⭐ SAME FUNNEL, SAME TAGS, NO NEW SEGMENT MINTED. Identical `context`
+ *    (`teacher_resources`), `audience_type` (`teachers`) and `lead_magnet` to
+ *    the panel below, because `teacher-resource-signup.php` hardcodes the
+ *    first two and this passes the same third. ⛔ A new context string would
+ *    have minted a NEW tag in the live Mailchimp audience and split this
+ *    surface's segment in two — a Mailchimp decision, and Andrew's, not an
+ *    engineering one.
+ *
+ * ⛔ IDS CANNOT COLLIDE: `teacher-resource-signup.php` derives its heading id
+ *    and its form id from the `id` argument, so the distinct `id` below yields
+ *    a distinct section id, heading id and form id. Two forms with the same
+ *    id would have broken the PRG error-feedback path for both.
+ *
+ * ⛔ FUNNEL ISOLATION: this is the TEACHER funnel on the teacher page. It
+ *    reads and writes nothing belonging to the parent funnel, and every
+ *    parent-funnel surface independently excludes `/teachers/`.
+ */
+?>
+<div id="teacher-email-signup-top" class="container teacher-signup-wrap teacher-signup-wrap--top section">
+  <?php get_template_part('template-parts/acquisition/teacher-resource-signup', null, [
+      'id'           => 'teacher-resources-signup-top',
+      'class'        => 'teacher-signup--compact',
+      'lead_magnet'  => 'teacher_resources',
+      'source_page'  => get_permalink($page_id),
+      'title'        => __('Bring the adventure into your classroom', 'brave-hearts'),
+      'text'         => __('Join the teacher list for resource updates, read-aloud ideas, classroom printables, and new-book news.', 'brave-hearts'),
+      'submit_label' => __('Get Teacher Resource Updates', 'brave-hearts'),
+  ]); ?>
+</div>
+
 <section id="explore-topics" class="guides-hub-section section" aria-labelledby="explore-topics-title">
   <div class="container">
     <header class="component-heading component-heading--center">

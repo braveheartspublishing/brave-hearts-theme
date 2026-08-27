@@ -245,7 +245,38 @@ foreach ( $claim_patterns as $needle ) {
 	}
 }
 bhp_ei_assert( empty( $claim_hits ), 'exit modal copy carries no rating/review/award/urgency/scarcity string' . ( $claim_hits ? ' (found: ' . implode( ', ', $claim_hits ) . ')' : '' ), $failures );
-bhp_ei_assert( strpos( $template, 'Before you go, take the free kit.' ) !== false, 'approved headline is unchanged (locked prose is never silently rewritten)', $failures );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ UPDATED 1.19.297 (2026-08-27, `CYCLE167-LD-CAPTURE-COPY-APPLY`) — THE
+ *     APPROVED HEADLINE MOVED. THE GUARD DID NOT WEAKEN.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ READ THIS BEFORE CONCLUDING A GUARD WAS RELAXED TO GO GREEN. The string
+ *    this line asserts changed from "Before you go, take the free kit." to the
+ *    founder's own pick. The assertion's PURPOSE — *locked prose is never
+ *    silently rewritten* — is unchanged and was HONOURED rather than bypassed:
+ *    it failed, it was investigated, the authority was found and named, and it
+ *    is being updated in the SAME release as the change, in the open.
+ *
+ * ⭐ THE AUTHORITY: Andrew Signore, 2026-08-27, carrier item 290, verbatim —
+ *      "FREE Chapter for Reluctant Readers - I'll send you the chapter now,
+ *       just add your email - Something like that"
+ *    together with his ruling that the email capture must be consistent across
+ *    the whole website (the magnet teardown's 12-of-12 finding). Exit-intent is
+ *    a PARENT capture surface and was one of the twelve.
+ *    ⚠ RELAYED through the Chief of Staff, who witnessed it; NOT witnessed by
+ *      the desk that edited this line. ⛔ STAGING ONLY, and FLAGGED at the top
+ *      of the build report so he meets it at the deploy gate.
+ *
+ * ⭐ THE TRUST-LINE GUARD ON THE NEXT LINE IS **NOT** TOUCHED, deliberately.
+ *    "Free printable PDF. No purchase required." is still true of the real
+ *    artefact and was not part of the offer-name collision, so it stays locked.
+ *    A sweep that moved every guarded string at once would be indistinguishable
+ *    from a sweep that moved them carelessly.
+ */
+bhp_ei_assert( strpos( $template, 'FREE Chapter for Reluctant Readers' ) !== false, 'approved headline is unchanged (locked prose is never silently rewritten)', $failures );
+bhp_ei_assert( strpos( $template, 'Before you go, take the free kit.' ) === false, '⛔ the retired 1.19.296 headline is gone, not lingering beside the new one', $failures );
+bhp_ei_assert( strpos( $template, 'Send me the chapter' ) !== false, 'the CTA is the sitewide send-imperative', $failures );
 bhp_ei_assert( strpos( $template, 'Free printable PDF. No purchase required.' ) !== false, 'approved trust line is unchanged', $failures );
 
 echo "\n=== 12. Version ===\n";

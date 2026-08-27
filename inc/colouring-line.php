@@ -622,6 +622,96 @@ function bhp_colouring_shop_add_to_cart_link($html, $product) {
         return $html;
     }
 
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.295 — LINK MODE ON A VISIT-FLAGGED SESSION. `CYCLE167-LD-002`.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔⛔ THE DEFECT THIS CLOSES, STATED PLAINLY BECAUSE IT WAS BACKWARDS.
+     *     On a visit-flagged session the server REFUSES this product
+     *     (`FD-642`), and until 1.19.295 this card still rendered a fully
+     *     live-looking ADD TO CART for it. The parent pressed a real button
+     *     and got a refusal notice. ⭐ Meanwhile the BUNDLE card, which a
+     *     parent might legitimately want shipped, was hidden entirely. The
+     *     suppression was applied to the wrong one of the two.
+     *
+     * ⭐ A CONTROL THE SERVER WILL REFUSE MUST NOT LOOK LIVE. That is the
+     *    whole rule, and it is the same `R1.4` the offer module already obeys.
+     *
+     * ⛔ NO `data-bhp-cart-add` AND NO `data-product-id` IN THIS BRANCH. Those
+     *    two attributes are exactly what `bundle-drawer.js` binds to; emitting
+     *    them would keep the Store API add alive behind a relabelled button,
+     *    which is a worse lie than the one being fixed. This is a plain anchor
+     *    to a destination that genuinely sells the book.
+     *
+     * ⛔ BOTH PREDICATES, AND THE PAIR IS LOAD-BEARING.
+     *    `bhp_school_visit_is_refused_item()` is a PRODUCT-CLASSIFICATION
+     *    predicate with NO SESSION IN IT (its own file's header warns that the
+     *    names lie) — it is true of the colouring book for everyone, always.
+     *    `bhp_school_visit_paperback_only()` is the SESSION test. Taking the
+     *    classifier alone would relabel this card for every ordinary shopper
+     *    on the site.
+     *
+     * ✅ FAILS OPEN TO 1.19.294: plugin off, either predicate missing, or a
+     *    resolver that throws → the ordinary ADD TO CART, byte for byte.
+     * ⛔ CONTROL PATH: false for every ordinary shopper. Nothing below this
+     *    comment runs for anyone who has not opened a school-visit link.
+     */
+    $bhp_visit_blocked = false;
+    if (function_exists('bhp_school_visit_paperback_only')
+        && function_exists('bhp_school_visit_is_refused_item')) {
+        try {
+            $bhp_visit_blocked = bhp_school_visit_paperback_only()
+                && bhp_school_visit_is_refused_item((int) $pb['product_id'], 0);
+        } catch (Throwable $e) {
+            $bhp_visit_blocked = false; // FAIL OPEN.
+        }
+    }
+
+    if ($bhp_visit_blocked) {
+        $bhp_ship_url = bhp_colouring_ship_home_url((int) $pb['product_id']);
+        if ('' === $bhp_ship_url) {
+            return $html; // No honest destination → leave core's control alone.
+        }
+
+        /*
+         * ⛔ THE LABEL IS DELIBERATELY NOT `bhp_shop_card_atc_label()`. The
+         *    uniform grid label exists so every ADD TO CART matches; this is
+         *    NOT an add to cart, and borrowing that label would recreate the
+         *    exact "looks live, is not" defect. ⛔ No first person (a button is
+         *    read in the parent's voice, and Andrew is the "I" elsewhere on the
+         *    storefront). ⛔ American spelling. ⛔ No em dash, no outcome claim.
+         */
+        /*
+         * ⛔⛔ THE `button` CLASS IS DELIBERATELY OMITTED, AND THIS IS A
+         *     CORRECTNESS FIX RATHER THAN A STYLING PREFERENCE.
+         *     `.woocommerce ul.products li.product .button` sets
+         *     `background: … !important; color: white !important` in TWO
+         *     places (style.css:1132 and :4416). Carrying `button` here meant
+         *     the ship-home control could only be made to look different by
+         *     WINNING AN `!important` FIGHT — and a control whose honesty
+         *     depends on out-specifying someone else's `!important` is one
+         *     stylesheet edit away from silently looking live again.
+         *
+         * ⭐ DROPPING `button` REMOVES THE FIGHT INSTEAD OF WINNING IT. The
+         *    element keeps `bhp-shop-atc`, which carries ALL the grid geometry
+         *    (48px floor, wrapping label, card insets) and sets NO colour, so
+         *    the `--shiphome` rule governs the treatment outright with no
+         *    `!important` anywhere. Same "safe by construction" discipline as
+         *    the missing cart form.
+         *
+         * ⛔ NOTHING BINDS TO `.button` HERE: this is a plain link, and
+         *    `bundle-drawer.js` binds `data-bhp-cart-add`, which this control
+         *    deliberately does not have.
+         */
+        return sprintf(
+            '<a href="%1$s" class="%2$s bhp-shop-atc--shiphome" data-bhp-shiphome>%3$s</a>',
+            esc_url($bhp_ship_url),
+            esc_attr(defined('BHP_SHOP_ATC_CLASS') ? BHP_SHOP_ATC_CLASS : 'bhp-shop-atc'),
+            esc_html__('Ship to your home', 'brave-hearts')
+        );
+    }
+
     return sprintf(
         '<a href="%1$s" class="button %2$s" data-bhp-cart-add data-product-id="%3$d" data-variation-id="0">%4$s</a>',
         esc_url($pb['add_url']),
@@ -631,6 +721,114 @@ function bhp_colouring_shop_add_to_cart_link($html, $product) {
     );
 }
 add_filter('woocommerce_loop_add_to_cart_link', 'bhp_colouring_shop_add_to_cart_link', 11, 2);
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.295 — THE ONE SHIP-TO-HOME URL BUILDER FOR THE COLOURING RAIL.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ ONE BUILDER, NOT THREE. The shop card, the refusal sentence and any
+ *    future surface all need the same "this destination, with the visit flag
+ *    cleared" URL. Three copies of an `add_query_arg()` is how two of them end
+ *    up carrying a different token.
+ *
+ * ⛔ THE PARAM AND TOKEN ARE THE PLUGIN'S CONSTANTS
+ *    (`school-visit-pickup.php:251,331`), never literals. The fallbacks exist
+ *    only so the theme cannot fatal with the plugin deactivated.
+ *
+ * ⭐ CLEARING IS SAFE TO DO BY LINK: `?bhp_visit=clear` is handled first in
+ *    `bhp_school_visit_capture_intent()` and is a plain session clear. It
+ *    creates no order, mutates no product and changes no setting. It costs the
+ *    visitor their hand-delivery entitlement in THIS BROWSER, which is why
+ *    every surface that renders one of these links must also say so.
+ *
+ * @param int $product_id Destination product. 0 → the shop archive.
+ * @return string Absolute URL, or '' when nothing resolves.
+ */
+function bhp_colouring_ship_home_url($product_id = 0) {
+    $base = '';
+
+    if ($product_id > 0) {
+        $base = (string) (get_permalink((int) $product_id) ?: '');
+    }
+    if ('' === $base && function_exists('wc_get_page_permalink')) {
+        $base = (string) (wc_get_page_permalink('shop') ?: '');
+    }
+    if ('' === $base) {
+        return '';
+    }
+
+    $param = defined('BHP_SCHOOL_VISIT_PARAM') ? (string) BHP_SCHOOL_VISIT_PARAM : 'bhp_visit';
+    $token = defined('BHP_SCHOOL_VISIT_CLEAR_TOKEN') ? (string) BHP_SCHOOL_VISIT_CLEAR_TOKEN : 'clear';
+
+    return add_query_arg([$param => $token], $base);
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.295 — THE REFUSAL SENTENCE STOPS NAMING A BLOCKED ROUTE.
+ *     `CYCLE167-LD-003`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ THE DEFECT: the shipped sentence ends *"you can order it separately
+ *     from the shop."* ⭐ THE SAME SESSION FLAG THAT PRINTED THE REFUSAL ALSO
+ *     BLOCKS IT IN THE SHOP. The remedy the sentence names does not work for
+ *     the person reading it. Verified live on staging in the diagnosis pass
+ *     (S6, S7, S9), not inferred.
+ *
+ * ⛔ THIS IS A THEME-SIDE FILTER, AND THAT IS THE WHOLE REASON NO PLUGIN BUMP
+ *    IS NEEDED. `bhp_school_visit_paperback_only_message()` publishes
+ *    `bhp_school_visit_paperback_only_message` as a public filter. All five
+ *    seams print through that one function, so one filter reaches all five and
+ *    `brave-hearts-bundle-pricing` stays at 1.8.74, byte-untouched.
+ *
+ * ⛔ WHY IT LIVES IN THIS FILE rather than a new one: a new include needs a
+ *    `require` line in `functions.php`, which is shared ground carrying two
+ *    other workstreams' uncommitted work this cycle. The colouring book is
+ *    also the refusal this sentence most often prints for.
+ *
+ * ⛔ THE EDIT IS MINIMAL AND ADDS NO CLAIM. Sentences one and two are
+ *    BYTE-IDENTICAL to the plugin's, deliberately:
+ *      · "chapter paperbacks only" is asserted by the plugin's own suite
+ *        (`tests/test-visit-colouring-gate.php` §6). Rewording it would break
+ *        a passing test to fix a different sentence.
+ *      · it is a string Andrew has seen and approved. Only the FALSE clause
+ *        moves.
+ *    Sentence three drops "from the shop" and names the route that works.
+ *
+ * ⛔ RAILS: §9.1 voice is Andrew's own I/me (his sentence, his mouth) ·
+ *    ⛔ no em dash · ⛔ no outcome claim · ⛔ no apology padding ·
+ *    ⛔ "coloring", American, matching the book's own cover ·
+ *    ⛔ no school name, date or slug, so it stays true for every visit.
+ *
+ * ⚠️ THE ANCHOR SURVIVES THE NOTICE LAYER. All five consumers route into
+ *    `wc_add_notice( …, 'error' )`, which WooCommerce prints through
+ *    `wc_kses_notice()` — an allowlist that includes `<a href>`. ⭐ VERIFIED
+ *    RENDERED ON STAGING, not read from source, in this pass's QA.
+ *
+ * ✅ FAILS SAFE: no resolvable URL → the plugin's own sentence is returned
+ *    untouched. A refusal notice always prints something true.
+ *
+ * @param string $message The plugin's customer-facing sentence.
+ * @return string
+ */
+function bhp_colouring_visit_refusal_message($message) {
+    $url = bhp_colouring_ship_home_url(0);
+    if ('' === $url) {
+        return $message;
+    }
+
+    return sprintf(
+        /* translators: %s is a link to the shop with school-visit pickup switched off. */
+        __('I can only bring the chapter paperbacks to the school visit, so signed copies are chapter paperbacks only. Please choose a chapter paperback. If you would like a hardcover or a coloring book as well, you can %s. That switches this browser out of visit pickup, so those books arrive by mail instead of being handed over at the visit.', 'brave-hearts'),
+        sprintf(
+            '<a href="%1$s">%2$s</a>',
+            esc_url($url),
+            esc_html__('order it shipped to your home', 'brave-hearts')
+        )
+    );
+}
+add_filter('bhp_school_visit_paperback_only_message', 'bhp_colouring_visit_refusal_message', 10, 1);
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * THE OFFER SURFACE — `FD-579`'s "same thing we offer for the collection"
@@ -1080,6 +1278,82 @@ add_action('woocommerce_single_product_summary', 'bhp_offer_render_product_cross
  *    all today, and will produce one the day their books exist, with no code
  *    change and not one hour before.
  */
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.295 — THE SHOP CARD'S SHIP-TO-HOME CONTROL. `CYCLE167-LD-001`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * The `/shop/` twin of the `/read-aloud/` link mode: everything the cart card
+ * shows EXCEPT the ability to buy, plus one honest line about what following
+ * the link costs.
+ *
+ * ⛔ IT RENDERS ONLY FOR A SESSION THE VISIT GATE REFUSED. `purchasable` is
+ *    catalogue truth, `offerable` is that plus the session; only the gap
+ *    between them is a session refusal with a remedy. Any other reason for a
+ *    missing module returns '' here and the caller leaves the card absent.
+ *    ⛔ CONTROL PATH: '' for every ordinary shopper.
+ *
+ * ⛔ NO FORM, NO NONCE, NO `data-bhp-cart-add`, NO `add-to-cart`. FD-642 is a
+ *    structural property of this markup, not a check inside it.
+ *
+ * ⛔ THE PRICE IS `bhp_offer_price()`'s, in the GRID'S OWN price markup, so it
+ *    sits at the same size and baseline as every neighbouring card. No literal
+ *    anywhere. ⛔ The label is the engine's `offer_card_price_label`, because
+ *    an unlabelled figure beside a two-book composite is the `FD-549`
+ *    ambiguity the rail contract exists to close.
+ *
+ * ⛔ AMERICAN SPELLING · no "we/us/our" · no em dash · no outcome claim ·
+ *    no school name, date, grade or slug.
+ *
+ * @param string $key Offer key.
+ * @return string Markup, or '' when this is not a session refusal.
+ */
+function bhp_offer_shop_shiphome_module($key) {
+    if (!function_exists('bhp_offer_is_purchasable') || !function_exists('bhp_offer_is_offerable')) {
+        return '';
+    }
+
+    try {
+        if (!bhp_offer_is_purchasable($key) || bhp_offer_is_offerable($key)) {
+            return '';
+        }
+    } catch (Throwable $e) {
+        return ''; // FAIL CLOSED: an unexplained refusal is not advertised.
+    }
+
+    $url = bhp_colouring_ship_home_url(0);
+    if ('' === $url) {
+        return '';
+    }
+
+    $price = function_exists('bhp_offer_price') ? bhp_offer_price($key) : null;
+    if (null === $price || !function_exists('wc_price')) {
+        return '';
+    }
+
+    $label = function_exists('bhp_colouring_draft_copy')
+        ? (string) bhp_colouring_draft_copy('offer_card_price_label')
+        : '';
+
+    return '<div class="bhp-offer bhp-offer--card bhp-offer--shiphome" data-bhp-offer="' . esc_attr($key) . '">'
+        . '<span class="bhp-shop-from-price bhp-shop-format-prices">'
+        . '<span class="bhp-shop-format-price">'
+        . ('' !== $label ? '<span class="bhp-shop-format-price__label">' . esc_html($label) . '</span>' : '')
+        . '<span class="bhp-shop-format-price__amount">' . wp_kses_post(wc_price($price)) . '</span>'
+        . '</span></span>'
+        /* ⛔ NO `button` CLASS — see the note on the standalone card above. */
+        . '<a href="' . esc_url($url) . '" class="'
+        . esc_attr(defined('BHP_SHOP_ATC_CLASS') ? BHP_SHOP_ATC_CLASS : 'bhp-shop-atc')
+        . ' bhp-shop-atc--shiphome" data-bhp-shiphome>'
+        . esc_html__('Ship to your home', 'brave-hearts')
+        . '</a>'
+        /* ⛔ The honest half. The control never renders without it. */
+        . '<p class="bhp-offer__shiphome-note">'
+        . esc_html__('Switches this browser out of school-visit pickup, so both books arrive by mail.', 'brave-hearts')
+        . '</p>'
+        . '</div>';
+}
+
 function bhp_offer_shop_cards($loop_end) {
     if (is_admin() || !function_exists('is_shop') || !is_shop() || !function_exists('bhp_offer_catalog')) {
         return $loop_end;
@@ -1093,9 +1367,32 @@ function bhp_offer_shop_cards($loop_end) {
         if (!bhp_offer_is_purchasable($key)) {
             continue;
         }
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.295 — LINK MODE ON THE SHOP CARD TOO. `CYCLE167-LD-001`.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔ THE SAME DEFECT LIVED HERE, and `/shop/` is where the founder's
+         *    complaint bites second: on a visit-flagged session the module
+         *    returned '' and `continue` DELETED THE WHOLE BUNDLE CARD from the
+         *    grid. The parent saw the chapter books and the coloring book and
+         *    no way to get both, with nothing to explain the absence.
+         *
+         * ⛔ TWO ''-CAUSES, TWO ANSWERS, EXACTLY AS ON `/read-aloud/`.
+         *    `!purchasable` is already handled above and still `continue`s.
+         *    Reaching here with '' therefore means the SESSION was refused,
+         *    and that has a remedy the parent can choose.
+         *
+         * ⛔ FD-642 PRESERVED BY CONSTRUCTION: the ship-home module emits no
+         *    form, no nonce and no add control. Nothing on this card can put a
+         *    coloring book into a hand-delivery cart.
+         */
         $module = bhp_offer_render_module($key, 'bhp-offer--card', false, true);
         if ('' === $module) {
-            continue;
+            $module = bhp_offer_shop_shiphome_module($key);
+            if ('' === $module) {
+                continue; // Nothing honest to show → the card stays absent.
+            }
         }
         /*
          * ⭐ THE CARD CARRIES AN `<h2>` IN THE SAME CLASS EVERY OTHER CARD IN

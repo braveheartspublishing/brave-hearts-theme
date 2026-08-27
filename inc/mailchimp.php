@@ -53,15 +53,35 @@ function bhp_get_mailchimp_list_id() {
  * Confirm that MC4WP is connected closely enough to accept theme submissions.
  */
 function bhp_mailchimp_signup_is_ready() {
+    $ready = true;
+
     if (!function_exists('mc4wp_get_api_v3') || !bhp_get_mailchimp_list_id()) {
-        return false;
+        $ready = false;
+    } elseif (function_exists('mc4wp_get_api_key') && !mc4wp_get_api_key()) {
+        $ready = false;
     }
 
-    if (function_exists('mc4wp_get_api_key') && !mc4wp_get_api_key()) {
-        return false;
-    }
-
-    return true;
+    /*
+     * ⭐ 1.19.296 — FIX-2 (interim) from `CYCLE167-LD-CAPTURE-PIPE-DIAGNOSIS` §7.
+     *
+     * ⛔ THE DEFAULT IS BYTE-EQUIVALENT TO THE PREVIOUS BEHAVIOUR. The three
+     *    conditions above are unchanged and still decide `$ready`; nothing
+     *    subscribes to this filter on production.
+     *
+     * ⭐ WHY IT EXISTS: staging has no Mailchimp API key, so this returned
+     *    false there, so `bhp_get_signup_form_action()` returned '', so EVERY
+     *    signup form on staging rendered `action=""` and posted nowhere. The
+     *    email pipe could not be exercised end to end in ANY environment,
+     *    which is the diagnosis's actual P0 — it is why a suspected ten-day
+     *    outage went unseen for ten days.
+     *
+     * ⛔ AND YOU CANNOT SIMPLY ADD THE KEY TO STAGING: staging's audience ID is
+     *    byte-identical to production's, so a working key on staging would
+     *    write test subscribers into the founder's live list. The lever is
+     *    therefore a STUB, never a credential — see inc/mailchimp-staging-stub.php,
+     *    which is inert on production by construction.
+     */
+    return (bool) apply_filters('bhp_mailchimp_signup_is_ready', $ready);
 }
 
 /**
@@ -406,18 +426,72 @@ function bhp_process_signup(array $input) {
         return ['ok' => false, 'code' => $code, 'redirect' => ''];
     };
 
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — FIX-1 FROM
+     *    `CYCLE167-LD-CAPTURE-PIPE-DIAGNOSIS` §7. THE SILENT-FAILURE HOLE.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔ THE DEFECT, IN ONE SENTENCE: the three early returns below happen
+     *    BEFORE the `try` block, and `bhp_mailchimp_signup_failed` only ever
+     *    fires from that block's `catch`. So `invalid`, `missing_name` and
+     *    `unavailable` produced NO lead event, NO failure record, NO log line
+     *    — nothing, anywhere.
+     *
+     * ⛔⛔ WHY THAT IS THE WORST OF THE THREE: `unavailable` is what this
+     *    function returns when the Mailchimp API key is missing or empty. If
+     *    production's key were ever cleared, rotated badly or allowed to
+     *    expire, EVERY SIGNUP ON THE SITE WOULD FAIL WITH ZERO TRACE — the
+     *    visitor would see a normal-looking form, and no instrument anywhere
+     *    would record that the address was lost. That is not a hypothetical:
+     *    staging is in exactly that state today (§5a of the diagnosis), which
+     *    is how it stayed invisible long enough to be argued about from three
+     *    documents at once.
+     *
+     * ⭐ THE FIX IS A SIBLING ACTION, NOT A WIDENING OF THE EXISTING ONE.
+     *    `bhp_mailchimp_signup_rejected` carries the generic classifier code.
+     *    `bhp_mailchimp_signup_failed` is left BYTE-UNCHANGED and still means
+     *    exactly what it meant: a provider/API exception. Reusing it would
+     *    have merged routine validation rejections into the provider-error
+     *    stream and made both unreadable.
+     *
+     * ⛔⛔ NO EMAIL ADDRESS IS PASSED OR STORED ON THIS PATH, AND THAT IS A
+     *    CONDITION OF THE SPEC, NOT AN OVERSIGHT. Andrew has a PARKED DECISION
+     *    on failure-path email storage (see the note further down this file).
+     *    ⭐ A reason-only row closes the blind spot completely — knowing that
+     *    a signup was rejected as `unavailable` at 03:14 is the whole alarm.
+     *    ⛔ Storing the address would pre-empt his decision, so it is not done,
+     *    and the address is not even handed to the action.
+     *
+     * ⭐ THE EARLY RETURNS RUN BEFORE THE SANITISED LOCALS EXIST, so context /
+     *    audience / lead magnet are read straight from `$input` here and
+     *    sanitised on the spot with the same functions used below. They are
+     *    operational, non-PII fields.
+     */
+    $reject = static function ($code) use ($input) {
+        do_action(
+            'bhp_mailchimp_signup_rejected',
+            $code,
+            sanitize_key((string) ($input['context'] ?? 'adventure_club')),
+            bhp_normalize_audience_type(sanitize_key((string) ($input['audience_type'] ?? 'general_readers'))),
+            sanitize_key((string) ($input['lead_magnet'] ?? '')),
+            (string) ($input['source_page'] ?? home_url('/'))
+        );
+        return ['ok' => false, 'code' => $code, 'redirect' => ''];
+    };
+
     $email = sanitize_email((string) ($input['email'] ?? ''));
     if (!$email || !is_email($email)) {
-        return $fail('invalid');
+        return $reject('invalid');
     }
 
     $name = sanitize_text_field((string) ($input['name'] ?? ''));
     if (!empty($input['require_name']) && trim($name) === '') {
-        return $fail('missing_name');
+        return $reject('missing_name');
     }
 
     if (!bhp_mailchimp_signup_is_ready()) {
-        return $fail('unavailable');
+        return $reject('unavailable');
     }
 
     $context       = sanitize_key((string) ($input['context'] ?? 'adventure_club'));
@@ -472,7 +546,24 @@ function bhp_process_signup(array $input) {
     $optional_merge_tags = ['TRAFFIC'];
 
     try {
-        $api = mc4wp_get_api_v3();
+        /*
+         * ⭐ 1.19.296 — FIX-2 (interim): THE ONE INJECTION POINT.
+         *
+         * ⛔ DEFAULT PATH UNCHANGED. No subscriber to this filter means
+         *    `mc4wp_get_api_v3()` exactly as before — production is untouched
+         *    and takes the identical call it has always taken.
+         *
+         * ⭐ A subscriber (only inc/mailchimp-staging-stub.php, only on
+         *    staging) may return an object exposing `add_list_member()` and
+         *    `update_list_member_tags()` that RECORDS the payload instead of
+         *    transmitting it. That makes form -> admin-post.php -> handler ->
+         *    payload assertable, which is ~90% of the pipe at 0% of the risk
+         *    of writing a real subscriber into the founder's live audience.
+         */
+        $api = apply_filters('bhp_mailchimp_api_transport', null);
+        if (!is_object($api)) {
+            $api = mc4wp_get_api_v3();
+        }
         try {
             $subscriber = $api->add_list_member(
                 bhp_get_mailchimp_list_id(),
@@ -538,6 +629,46 @@ function bhp_process_signup(array $input) {
         );
         return $fail('error');
     }
+
+    /*
+     * ═══════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.292 (2026-08-26, `CYCLE166-CX-CAPTURE-REPAIR`) — THE SUCCESS
+     *    URL LEAVES HERE CARRYING A SINGLE-USE CONVERSION TOKEN.
+     * ═══════════════════════════════════════════════════════════════════
+     *
+     * ⛔ THE PLACEMENT IS THE POINT, AND IT IS DELIBERATELY *HERE* RATHER
+     *    THAN AT LINE ~427 WHERE `$success_redirect` IS RESOLVED. That
+     *    resolution happens BEFORE the Mailchimp subscribe and tag write,
+     *    and it happens for failures too — minting there would hand a valid
+     *    conversion token to a signup that then threw and returned
+     *    `fail('error')`. This is the only statement in the function that
+     *    is reached exactly when a real subscriber really landed.
+     *
+     * ⭐ BOTH SIGNUP TRANSPORTS INHERIT IT FROM THIS ONE LINE. The classic
+     *    303 form POST passes `$result['redirect']` to
+     *    `bhp_mailchimp_signup_redirect()`; the quiz/modal JSON endpoint
+     *    returns `$result['redirect']` to the browser. Neither needed a
+     *    change, and a future signup surface that calls
+     *    `bhp_process_signup()` gets the gate for free rather than having
+     *    to remember it.
+     *
+     * ⛔ NO PII CROSSES. `$email` and `$name` are in scope right here and
+     *    are deliberately NOT passed — the token describes WHICH OFFER
+     *    converted, never WHO. It also keeps this subsystem entirely clear
+     *    of Andrew's parked failure-path email-storage decision.
+     *
+     * ⚠️ DEGRADES TOWARDS THE CUSTOMER, NEVER AGAINST THEM. If the token
+     *    cannot be minted (transient storage unavailable),
+     *    `bhp_add_conversion_token()` returns the URL untouched: the visitor
+     *    still reaches their thank-you page and still gets their kit, and
+     *    all that is lost is one analytics event. An undercount is the
+     *    acceptable failure here; a broken redirect is not.
+     */
+    $success_redirect = bhp_add_conversion_token($success_redirect, [
+        'lead_magnet'   => $lead_magnet,
+        'audience'      => $audience_type,
+        'signup_method' => $context === 'audience_quiz' ? 'quiz' : 'form',
+    ]);
 
     return ['ok' => true, 'code' => 'success', 'redirect' => $success_redirect];
 }

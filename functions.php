@@ -1281,7 +1281,26 @@ function bhp_fallback_menu() {
         __('Books', 'brave-hearts')             => (function_exists('bhp_books_merge_destination') && '' !== bhp_books_merge_destination())
             ? bhp_books_merge_destination()
             : home_url('/books/'),
-        __('Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
+        /*
+         * ⭐ 1.19.301, CARRIER ITEM 300 ("A") — the same treatment, for the same
+         *    reason, one slot down. SUPERSEDED LINE, PRESERVED VERBATIM so the
+         *    movement is visible and is not re-derived:
+         *
+         *        __('Expedition Guides', 'brave-hearts') => home_url('/teachers/'),
+         *
+         *    ⚠ THIS PATH IS DORMANT on both environments — a stored menu IS
+         *    assigned to `primary` (term 198, verified first-hand on staging),
+         *    so `fallback_cb` never fires and this line changes nothing today.
+         *    It moves anyway, for the reason the Books note above already gives:
+         *    the day somebody unassigns the menu in wp-admin, this fallback
+         *    BECOMES the nav, and a dormant copy of a retired label is exactly
+         *    how an old route comes back.
+         * ⛔ `bhp_footer_fallback_menu()` is again DELIBERATELY NOT changed —
+         *    `footer.php` stopped calling it at 1.19.269 and the `footer` menu
+         *    location is not rendered at all, so editing it would be churn with
+         *    a failing test attached.
+         */
+        __('Free Resources', 'brave-hearts')    => home_url('/free-resources/'),
         __('About', 'brave-hearts')             => home_url('/about/'),
         __('Blog', 'brave-hearts')              => home_url('/blog/'),
         __('Contact', 'brave-hearts')           => home_url('/contact/'),
@@ -2385,14 +2404,297 @@ function bhp_get_lead_magnet_cover($magnet_key) {
         return [];
     }
 
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — THE
+     *    DIMENSIONS ARE READ FROM THE FILE, NOT TYPED INTO THIS FUNCTION.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔ THEY WERE HARDCODED `173` / `224` FOR EVERY MAGNET, AND THIS RELEASE
+     *    CAUGHT IT THE HARD WAY. The Reluctant Reader cover was regenerated at
+     *    346x448 so the popup could render it larger without going soft — and
+     *    this function carried on emitting `width="173" height="224"` for a
+     *    file that is now twice that. The suite caught it; a reader would have
+     *    seen a correctly-shaped but wrongly-described image.
+     *
+     * ⭐ A HARDCODED INTRINSIC SIZE IS A LIE WAITING FOR SOMEBODY TO REPLACE AN
+     *    ASSET. Reading the real file cannot go stale, so replacing artwork is
+     *    now a file operation rather than a file operation plus a code edit
+     *    somebody has to remember.
+     *
+     * ⛔ ZERO BEHAVIOUR CHANGE FOR THE OTHER THREE MAGNETS, VERIFIED RATHER
+     *    THAN ASSUMED: `adventure-learning-toolkit-cover.png`,
+     *    `community-reading-kit-cover.png` and `ultimate-gift-guide-cover.png`
+     *    were each measured this build and are all exactly 173x224, so
+     *    `getimagesize()` returns for them precisely what was hardcoded.
+     *
+     * ⭐ STATIC CACHE — this runs on a hidden modal on several pages, and one
+     *    `getimagesize()` per magnet per request is the whole cost.
+     * ⛔ THE OLD CONSTANTS SURVIVE AS THE FALLBACK, so an unreadable file
+     *    degrades to the previous behaviour rather than emitting `width="0"`,
+     *    which would collapse the box.
+     */
+    static $dimension_cache = [];
+    if (!isset($dimension_cache[$key])) {
+        $measured = @getimagesize(get_theme_file_path($png_rel));
+        $dimension_cache[$key] = [
+            'width'  => (is_array($measured) && !empty($measured[0])) ? (int) $measured[0] : 173,
+            'height' => (is_array($measured) && !empty($measured[1])) ? (int) $measured[1] : 224,
+        ];
+    }
+
     return [
         'url'      => get_theme_file_uri($webp_rel),
         'fallback' => get_theme_file_uri($png_rel),
-        'width'    => 173,
-        'height'   => 224,
+        'width'    => $dimension_cache[$key]['width'],
+        'height'   => $dimension_cache[$key]['height'],
         /* translators: %s: the title printed on the PDF's front cover. */
         'alt'      => sprintf(__('Front cover of %s', 'brave-hearts'), $covers[$key]['title']),
     ];
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.298 (2026-08-27, `CYCLE167-LD-POPUP-PHOTO`) — THE FOUNDER'S OWN
+ *     PHOTOGRAPH, AND THE GUARD THAT SAYS WHO IS IN IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ Andrew Signore, 2026-08-27, VERBATIM (carrier item 297):
+ *
+ *      "Did we come to a conclusion on adding a picture of me and charlotte as
+ *       a gradient right to left with like a playful squiggle in between for
+ *       the pop ups?"
+ *
+ * ⛔⛔ CHARLOTTE IS ANDREW'S NIECE. HE HAS NO CHILDREN. Carrier item 285, his
+ *     own words: *"SHE IS MY NIECE and its all over the canon docs - I DONT
+ *     HAVE KIDS"*.
+ *
+ * ⛔ THIS IS NOT A STYLE PREFERENCE AND IT IS NOT ENFORCED BY PROSE. On the
+ *    night of 2026-08-27 a brief said "daughter", a rebuild believed the brief
+ *    over the canon, and the word reached the accessibility layer of a
+ *    delivered deck PDF — a layer only a screen-reader user would ever have
+ *    met, which is exactly why no visual review caught it. The founder caught
+ *    it himself. The deck lane's answer was to move the rule out of a manifest
+ *    and into an assertion in its build; this is the same answer, in the theme,
+ *    for the same reason. A comment cannot stop a future edit. A failing test
+ *    can.
+ *
+ * ⛔ THE GUARD CHECKS BOTH DIRECTIONS, and the second one is the subtle one:
+ *      (1) no forbidden kinship word appears, AND
+ *      (2) if the text names a relationship at all, that relationship is
+ *          "niece". Quietly deleting the word rather than correcting it is not
+ *          a fix — a photograph of a man holding a baby with no relationship
+ *          stated invites the reader to supply the wrong one.
+ *    A text that names NO relationship whatsoever passes, because the founder's
+ *    rail allows exactly that ("says 'my niece Charlotte' or names no
+ *    relationship"). What it must never do is name a different one.
+ */
+function bhp_niece_canon_forbidden_terms() {
+    /*
+     * ⚠ EVERY TERM HERE IS A KINSHIP CLAIM ABOUT ANDREW, not a word that
+     *   happens to appear in parent-facing copy. "my child" is deliberately
+     *   ABSENT: a parent quoted saying "my child won't read" is legitimate
+     *   copy on this site, and a guard that fails on it would be turned off
+     *   within a week, which is how guards die.
+     */
+    return apply_filters('bhp_niece_canon_forbidden_terms', [
+        'daughter',
+        'his kid',
+        'his kids',
+        'his child',
+        'his children',
+        'my kid',
+        'my kids',
+        'as a dad',
+        'as a father',
+        'his son',
+        'my son',
+    ]);
+}
+
+/**
+ * Returns the list of canon violations in a piece of relational text. An empty
+ * array means the text is clean. Pure function: it reads nothing and writes
+ * nothing, so a test can call it directly on any string.
+ *
+ * @param string $text Alt text, aria text, caption or any other relational copy.
+ * @return string[] Human-readable violations, empty when clean.
+ */
+function bhp_niece_canon_violations($text) {
+    $low = strtolower((string) $text);
+    $violations = [];
+
+    foreach (bhp_niece_canon_forbidden_terms() as $term) {
+        if (strpos($low, strtolower($term)) !== false) {
+            $violations[] = sprintf('forbidden kinship term "%s"', $term);
+        }
+    }
+
+    /*
+     * Direction two. "uncle" is accepted alongside "niece" because it states
+     * the same relationship from the other end and the deck lane's own canon
+     * uses both.
+     */
+    $names_a_relationship = (bool) preg_match(
+        '/\b(niece|nephew|uncle|aunt|cousin|sister|brother|mother|father|parent|grand\w*)\b/i',
+        $low
+    );
+    $names_the_right_one = (strpos($low, 'niece') !== false) || (strpos($low, 'uncle') !== false);
+
+    if ($names_a_relationship && !$names_the_right_one) {
+        $violations[] = 'names a relationship that is not "niece" (or "uncle")';
+    }
+
+    return $violations;
+}
+
+/**
+ * The photograph's accessible name — the one string on this surface the guard
+ * exists for.
+ *
+ * ⭐ FIRST PERSON, because every customer-facing word on this site is his own
+ *    voice: "I / me / my", never "we". He is the sole operator.
+ * ⛔ NO EM DASH. ⛔ NO CLAIM. It describes what is in the frame and stops:
+ *    two people and a book that exists. It does not say the book was read to
+ *    her, does not say she likes it, and does not say what any child gets from
+ *    it.
+ *
+ * ⭐⭐ REWRITTEN AT 1.19.299 (`CYCLE167-LD-POPUP-PHOTO2-SWAP`) BECAUSE THE
+ *    PHOTOGRAPH CHANGED. Andrew Signore, carrier item 301, relayed:
+ *    *"im so sorry I need to change the photo on the pop up- I found a cuter
+ *    photo with charlotte smiling"*.
+ *
+ * ⛔ THE ALT TEXT WAS REWRITTEN FROM LOOKING AT THE NEW FRAME, NOT FROM
+ *    EDITING THE OLD SENTENCE. Alt text is a factual description of a
+ *    specific image; carrying the previous one across a photograph swap would
+ *    have described a picture that is no longer there, and it would have done
+ *    it in the one layer no visual review ever checks. What is actually in
+ *    frame now, observed: Charlotte is turned to the camera with a wide
+ *    open-mouth smile and one hand raised, and the paperback is held up
+ *    beside her. The previous wording said neither of those things because
+ *    the previous photograph did not show them.
+ *
+ * ⛔ STILL NO CLAIM. "Smiling" is a description of a face, not an outcome. It
+ *    does not say the book made her smile.
+ */
+function bhp_get_founder_photo_alt() {
+    return (string) apply_filters(
+        'bhp_founder_photo_alt',
+        __('Me and my niece Charlotte. She is smiling at the camera with one hand raised, and I am holding a paperback of Adventures of Charlotte and Henry: The Mariana Trench.', 'brave-hearts')
+    );
+}
+
+/**
+ * Resolves the founder photograph's two shipped crops.
+ *
+ * ⭐ TWO CROPS, FETCHED EXCLUSIVELY OF EACH OTHER. The template pairs these
+ *    with `<source media=...>`, so a visitor downloads the one crop that suits
+ *    their viewport and never both. The portrait is 4:5 for the desktop side
+ *    panel; the band is 5:4 for the mobile strip above the copy. They are
+ *    separate files rather than one file cropped twice by CSS because
+ *    `object-fit` cannot keep two faces and a book inside two shapes that
+ *    differ by that much — it was measured, not assumed, and the build script
+ *    that cuts them asserts the subjects survive every crop before it writes.
+ *
+ * ⛔ A MISSING FILE RENDERS NO PHOTOGRAPH, not a broken box — the same
+ *    contract `bhp_get_lead_magnet_cover()` has kept since 1.19.224. All four
+ *    files must be present or the whole treatment stands down and the popup
+ *    renders exactly as 1.19.297 did.
+ * ⭐ INTRINSIC DIMENSIONS ARE READ FROM THE FILES, never typed here. 1.19.296
+ *    learned that the hard way on the kit cover: a hardcoded intrinsic size is
+ *    a lie waiting for somebody to replace an asset.
+ *
+ * @return array Empty when the treatment cannot render.
+ */
+function bhp_get_founder_photo() {
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+
+    $base = 'assets/images/founder/';
+    $rel = [
+        'portrait_webp' => $base . 'andrew-charlotte-popup-portrait.webp',
+        'portrait_jpg'  => $base . 'andrew-charlotte-popup-portrait.jpg',
+        'band_webp'     => $base . 'andrew-charlotte-popup-band.webp',
+        'band_jpg'      => $base . 'andrew-charlotte-popup-band.jpg',
+    ];
+
+    foreach ($rel as $path) {
+        if (!file_exists(get_theme_file_path($path))) {
+            $cache = [];
+            return $cache;
+        }
+    }
+
+    $portrait = @getimagesize(get_theme_file_path($rel['portrait_jpg']));
+    $band     = @getimagesize(get_theme_file_path($rel['band_jpg']));
+
+    /*
+     * ⛔⛔ 1.19.299 — THE VERSION QUERY IS NOT COSMETIC. IT IS THE ONLY REASON
+     *    A PHOTOGRAPH SWAP REACHES ANYBODY WHO HAS ALREADY SEEN THE POPUP.
+     *
+     * ⭐ FOUND BY MEASUREMENT ON STAGING DURING THIS PASS, not reasoned about.
+     *    These four filenames are FIXED, and SiteGround serves them with
+     *    `Cache-Control: max-age=31536000` — one year. So the same URL had
+     *    already returned three different photographs in one night, and a
+     *    browser that met an earlier one kept it:
+     *
+     *      fetch(cache:'default') -> 44,296 bytes, 600x750, Last-Modified 08:08
+     *      fetch(cache:'reload')  -> 58,310 bytes, 560x896, Last-Modified 09:06
+     *
+     *    Same URL. Same page load. A year apart in expiry. The BROWSER was
+     *    right and the deploy was invisible to it.
+     *
+     * ⛔ WHAT THAT MEANT FOR THIS WORKSTREAM, stated plainly because it is the
+     *    whole point: the founder asked for a different photograph on the
+     *    popup, and without this line every returning visitor would have gone
+     *    on seeing the old one for up to a year while every check we run —
+     *    the suite, the file on disk, a fresh browser — reported success.
+     *    A deploy that only reaches people who have never been here is not a
+     *    deploy.
+     *
+     * ⭐ THE IDIOM IS THE THEME'S OWN. Every enqueued stylesheet and script in
+     *    this file already passes `wp_get_theme()->get('Version')` as its
+     *    version argument; these four are the exception only because they are
+     *    raw `<img>` URLs rather than enqueued handles. This makes them behave
+     *    like the rest.
+     * ⭐ THE LONG `max-age` IS KEPT AND IS THE POINT. The URL changes when the
+     *    theme version changes and never otherwise, so a returning visitor
+     *    still pays nothing on a release that did not touch the photograph.
+     */
+    $ver = wp_get_theme()->get('Version');
+    $bust = function ($rel_path) use ($ver) {
+        $uri = get_theme_file_uri($rel_path);
+        return $ver ? add_query_arg('ver', rawurlencode($ver), $uri) : $uri;
+    };
+
+    $cache = [
+        'portrait_webp'   => $bust($rel['portrait_webp']),
+        'portrait_jpg'    => $bust($rel['portrait_jpg']),
+        'band_webp'       => $bust($rel['band_webp']),
+        'band_jpg'        => $bust($rel['band_jpg']),
+        'portrait_width'  => (is_array($portrait) && !empty($portrait[0])) ? (int) $portrait[0] : 600,
+        'portrait_height' => (is_array($portrait) && !empty($portrait[1])) ? (int) $portrait[1] : 750,
+        'band_width'      => (is_array($band) && !empty($band[0])) ? (int) $band[0] : 720,
+        'band_height'     => (is_array($band) && !empty($band[1])) ? (int) $band[1] : 576,
+        'alt'             => bhp_get_founder_photo_alt(),
+    ];
+
+    /*
+     * ⛔ THE GUARD RUNS AT RENDER TIME TOO, not only in the suite. A filter can
+     *    replace the alt text in a plugin or a child theme, and the suite
+     *    cannot see that. If the replacement violates canon the photograph
+     *    STANDS DOWN — the popup renders without it rather than with a wrong
+     *    kinship claim attached to a real child. Failing closed is the only
+     *    safe direction here: a missing photograph costs a nicer popup, and a
+     *    wrong one costs the founder a correction he has already had to make
+     *    once tonight.
+     */
+    if (bhp_niece_canon_violations($cache['alt'])) {
+        $cache = [];
+    }
+
+    return $cache;
 }
 
 /**
@@ -2866,7 +3168,67 @@ function bhp_should_show_parent_ab_popup() {
      *    post type, so widening here cannot leak the popup onto an archive or
      *    a product by accident.
      */
-    if (!is_front_page() && !is_singular('post')) {
+    /*
+     * ═══════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — THE #1
+     *    HUMAN ENTRY PAGE JOINS THE GATED SURFACE. HOMEPAGE + BLOG POSTS +
+     *    `/complete-collection/`.
+     * ═══════════════════════════════════════════════════════════════════
+     *
+     * ⭐ THE FINDING (Merry, `CYCLE167-MKT-CAPTURE-ENTICEMENT-R3`, verified
+     *    live + 30 days of production access logs): `/complete-collection/`
+     *    takes **134 human entries in 30 days — rank 1 on the whole site** —
+     *    and carried the HARDEST capture gate we run. Because it is neither
+     *    the front page nor a post, it fell through to the exit-intent modal,
+     *    whose mobile trigger is 20s dwell AND 45% scroll AND a 400px upward
+     *    flick inside 600ms. Its entry:pageview ratio is 1.32, so most people
+     *    who land there see that one page and leave.
+     *    ⛔ THE PLAIN VERSION: the page that receives more first arrivals than
+     *    any other is the page where we asked for the least, latest and
+     *    hardest. A closed door with the doorbell on the inside.
+     *
+     * ⛔⛔ THIS MOVES AGAINST A RECORDED ENGINEERING FINDING, AND IT IS
+     *    FLAGGED RATHER THAN SMUGGLED. 1.19.241 excluded the commercial-intent
+     *    pages on `commerce-cx` / Pippin's `CYCLE164-CX` #3: *"interrupting
+     *    somebody who is already reading a price is the one place a capture
+     *    overlay costs more than it earns."* That finding is NOT refuted by
+     *    anything here and it is not deleted from this file.
+     *
+     * ⭐ WHAT AUTHORISES THE CHANGE: Andrew Signore, carrier item 280
+     *    (2026-08-27), naming the "placement flip on the top entry page" in
+     *    tonight's build program, and item 279's *"Emails and Sales are the 2
+     *    biggest KPIs."* ⚠ RELAYED through the Chief of Staff, not witnessed
+     *    by this build. ⛔ IT IS STAGING-ONLY UNTIL HE TOKEN-TOUCHES A DEPLOY.
+     *
+     * ⚠ A NARROWER OPTION EXISTS AND HE SHOULD SEE IT. Merry's own R4
+     *   recommends this flip on MOBILE ONLY, leaving desktop exit-intent alone
+     *   because a real mouse-leave is a genuine signal that costs a buyer
+     *   nothing. The engine reads `trigger.mode` globally rather than per
+     *   device, so mobile-only would need a config-schema extension to an
+     *   engine four surfaces share — its own piece of work, not a side effect
+     *   of this one. BUILT AS BRIEFED (both devices); the narrower option is
+     *   in this build's report so the choice is his and not this desk's.
+     *
+     * ⛔ EXCLUSIONS THAT DO **NOT** MOVE: `/shop/`, `/books/`, single product
+     *    pages, product archives, cart and checkout (already suppressed
+     *    upstream), `/teachers/` (above), and both funnels' own landing and
+     *    thank-you pages — including `/reluctant-reader-adventure-kit/`, which
+     *    the pipe diagnosis's FIX-4 also proposes reopening and which is
+     *    DELIBERATELY NOT TOUCHED HERE: that page IS this offer's destination,
+     *    and its exclusion is routed to Andrew, not absorbed by this build.
+     *
+     * ⛔ NO STORAGE KEY, EVENT PREFIX, COPY STRING OR TIMER CHANGES. This is a
+     *    surface rule only, so `.claude/rules/funnels.md`'s isolation
+     *    guarantees hold exactly as before: the parent funnel keeps
+     *    `bhp_parent_popup` / `parent_popup`, the teacher funnel is untouched
+     *    in both directions, and a visitor who dismissed this offer anywhere
+     *    is still not re-asked here.
+     */
+    $bhp_ab_popup_surface = is_front_page()
+        || is_singular('post')
+        || is_page('complete-collection');
+
+    if (!$bhp_ab_popup_surface) {
         return false;
     }
 
@@ -3473,6 +3835,44 @@ add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_typ
 }, 10, 5);
 
 /**
+ * ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — THE MARKET /
+ *    EVENT QR SURFACE (`page-market-capture.php`).
+ *
+ * ⭐ WHY IT NEEDS ITS OWN SOURCE TAG, stated because a new tag string in a
+ *    live audience is not a free action: **73 books were sold at one market
+ *    weekend and zero emails were captured** (founder-attested). Without a
+ *    distinct source, an in-person signup would be indistinguishable from a
+ *    website signup and that question stays permanently unanswerable — which
+ *    is the same source-attribution gap `CYCLE148-FIN-002` already records.
+ *
+ * ⛔ A SEPARATE `add_filter` CALL, not an edit to any existing one, so every
+ *    proven tag path above stays byte-untouched. Priority 20 so it runs after
+ *    the base map, exactly like `bhp_read_aloud_mailchimp_tags()`.
+ *
+ * ⛔ IT REGISTERS GLOBALLY AND NOT IN THE PAGE TEMPLATE, DELIBERATELY. Tags are
+ *    applied during the POST to `admin-post.php`, at which point the template
+ *    that rendered the form is not loaded. A filter added inside
+ *    `page-market-capture.php` would never fire, and the signup would land
+ *    untagged — a defect that would look exactly like the tag "not working".
+ *
+ * ⚠ THE TAG STRING IS ANDREW'S CALL AND IS FLAGGED TO HIM, not assumed. It is
+ *   modelled on the two he already has: "Source: Read-Aloud Visit" and
+ *   "Source: Blog Post".
+ */
+add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_type, $lead_magnet, $source_page) {
+    unset($audience_type, $source_page);
+
+    if ($context !== 'market_capture') {
+        return $tags;
+    }
+    if ($lead_magnet !== 'reluctant_reader_adventure_kit') {
+        return $tags;
+    }
+
+    return ['Reluctant Reader Adventure Kit', 'Audience: Parent/Grandparent', 'Source: Market Event'];
+}, 20, 5);
+
+/**
  * The audience tag for the segment submitted with the current request, or
  * '' when no valid segment was submitted. Read from the request rather than
  * threaded through `bhp_process_signup()` so the shared signup core keeps
@@ -4062,8 +4462,40 @@ function bhp_get_valid_form_action($action) {
     return $action;
 }
 
+/*
+ * ⭐ 1.19.292 (`CYCLE166-CX-CAPTURE-REPAIR`) — single-use, short-TTL
+ *    conversion tokens. REQUIRED BEFORE inc/mailchimp.php DELIBERATELY:
+ *    `bhp_process_signup()` calls `bhp_add_conversion_token()` on its
+ *    success path, and loading the provider first means that call can never
+ *    hit an undefined function regardless of how the file is reached.
+ *    Full rationale and the production log evidence: the file's own header.
+ */
+require_once get_template_directory() . '/inc/conversion-token.php';
 require_once get_template_directory() . '/inc/mailchimp.php';
+/*
+ * ⭐ 1.19.296 (`CYCLE167-LD-CAPTURE-FIX-BUILD`) — FIX-2 (interim) of the
+ *    capture-pipe diagnosis. STAGING-ONLY recording transport, so the email
+ *    pipe can be exercised end to end in an environment that is not the
+ *    founder's live audience.
+ *
+ * ⛔ REQUIRED AFTER inc/mailchimp.php DELIBERATELY: the stub only ADDS filters
+ *    to hooks that file declares. Loading it first would register callbacks
+ *    for filters that do not exist yet — harmless in WordPress, but it would
+ *    invert the dependency and hide it from the next reader.
+ *
+ * ⛔ IT IS INERT ON PRODUCTION BY CONSTRUCTION — it registers NO hooks unless
+ *    `BHP_Analytics_Config::is_staging()` is true, which compares the real
+ *    HTTP host. It contains no credential and makes no HTTP call.
+ */
+require_once get_template_directory() . '/inc/mailchimp-staging-stub.php';
 require_once get_template_directory() . '/inc/lead-magnet-settings.php';
+/*
+ * ⭐ 1.19.292 (`CYCLE166-CX-CAPTURE-REPAIR`) — the three thank-you pages are
+ *    noindex and out of the XML sitemap. The stored `rank_math_robots`
+ *    postmeta is the mechanism (Rank Math's sitemap provider reads it in raw
+ *    SQL and never runs a PHP filter); the frontend filters are backstops.
+ */
+require_once get_template_directory() . '/inc/thankyou-indexing.php';
 // Phase 2 (2026-07-30): unified one-page-per-title purchase experience.
 // Presentation layer only — no product record is merged or altered.
 require_once get_template_directory() . '/inc/book-formats.php';
@@ -4130,6 +4562,14 @@ require_once get_template_directory() . '/inc/colouring-line.php';
 // order they render, and after book-formats.php/the bundle plugin so the live
 // price helpers exist by the time header.php calls the renderer.
 require_once get_template_directory() . '/inc/header-offer.php';
+
+/*
+ * 1.19.304, `CYCLE167-LD-RETAILER-PAGE` — the bookseller/retailer trade
+ * registry. Pure data plus two resolvers; no hooks, no output. It answers one
+ * question and nothing else: WHICH EDITIONS MAY A BOOKSELLER BE TOLD TO ORDER
+ * TODAY, and on what terms. Read by `page-audience-retailers.php` alone.
+ */
+require_once get_template_directory() . '/inc/retailer-trade-terms.php';
 // 1.19.261 — the blog post template (CYCLE165-LD-DIRECTION1-STEP2-BLOG), step 2
 // of the same board build. Loaded AFTER header-offer.php because its whole
 // placement rule is "below whatever step 1 put above the fold", and after
@@ -6220,3 +6660,856 @@ function bhp_minified_style_src( $src, $handle ) {
     return $theme_uri . $min_path . $query;
 }
 add_filter( 'style_loader_src', 'bhp_minified_style_src', 10, 2 );
+
+// ============================================================
+// CYCLE166-CX-AFFILIATE-RESTORE — AFFILIATE PRESERVATION (Standing Rules §26)
+// ============================================================
+/*
+ * ⭐ 1.19.294 (2026-08-26, `CYCLE166-CX-AFFILIATE-RESTORE`) — two additions,
+ *    both ADDITIVE, neither of which may ever alter an affiliate `href`.
+ *
+ * CONTEXT. The governing rule is Standing Rules §26, sealed at FD-694. Read it
+ * there; it is deliberately NOT restated in this public repository. In short:
+ * an affiliate link is a payment instrument that happens to look like an
+ * anchor tag, and the correct mental model is the checkout button, not the
+ * paragraph around it. It is never removed, never rewritten, never stripped of
+ * its tracking code, and never lost in a redesign.
+ *
+ * ⛔ THE INVARIANT BOTH FUNCTIONS BELOW HOLD: the `href` of an affiliate
+ *    anchor is READ, never WRITTEN. No normalising, no shortening, no
+ *    re-tagging, no swapping one shortlink for another that resolves to the
+ *    same ASIN. Two posts legitimately carry DIFFERENT shortlinks for the
+ *    same book (`4tBPd0L` and `3PFKexe` both resolve to Frog and Toad,
+ *    ASIN 0439655277) and that is Andrew's to consolidate, not this code's.
+ *
+ * WHAT WAS *NOT* THE CAUSE, recorded so it is not re-investigated:
+ * `bhp_sanitize_content_links()` (priority 20 on `the_content`) rewrites
+ * ONLY brand-host URLs and continues past every other host. It has never
+ * been able to touch an `amzn.to` link. Section 26.6 leaves the cause of the
+ * original loss an open question and this pass does NOT close it.
+ */
+
+/**
+ * Maps an Amazon shortlink that appears in POST CONTENT to the adventure key
+ * the rest of the theme already uses, so an in-content anchor reports the
+ * same analytics identity as the template-rendered affiliate block.
+ *
+ * ⛔ THIS IS NOT A SOURCE OF TRUTH FOR THE LINKS THEMSELVES. Post content is.
+ *    An unmapped shortlink is still tracked; it simply reports an empty book.
+ *    Third-party titles (Frog and Toad, Mercy Watson, and the rest) are
+ *    deliberately absent -- they are not this publisher's books and have no
+ *    adventure key.
+ */
+function bhp_affiliate_content_book_map() {
+    return apply_filters('bhp_affiliate_content_book_map', [
+        '4svChYL' => 'mariana_trench',
+        '4mptuGv' => 'mount_everest',
+        '4va9me7' => 'amazon_rainforest',
+    ]);
+}
+
+/**
+ * Adds outbound-click tracking and link hygiene to in-content Amazon
+ * affiliate anchors on single blog posts.
+ *
+ * No new JavaScript: `assets/js/nav.js` already carries a sitewide delegated
+ * `[data-bhp-event]` to `window.dataLayer` handler that no-ops when no
+ * analytics platform is present. This function only supplies the attributes
+ * that handler already reads, which is why it adds no script and activates
+ * no analytics platform on its own.
+ *
+ * `rel` gains `nofollow sponsored` (Google's requirement for paid links) and
+ * `noopener` -- attributes only. The `href` is never written.
+ */
+function bhp_affiliate_content_tracking($content) {
+    if (!is_string($content) || stripos($content, 'amzn.to') === false) {
+        return $content;
+    }
+    if (!is_singular('post') || !in_the_loop() || !is_main_query()) {
+        return $content;
+    }
+    if (!class_exists('WP_HTML_Tag_Processor')) {
+        return $content; // No safe attribute-level editor available; leave content untouched.
+    }
+
+    $map       = bhp_affiliate_content_book_map();
+    $processor = new WP_HTML_Tag_Processor($content);
+
+    while ($processor->next_tag('A')) {
+        $href = $processor->get_attribute('href');
+        if (!is_string($href) || false === stripos($href, 'amzn.to/')) {
+            continue;
+        }
+        // Idempotent: never stack a second event attribute on the same anchor.
+        if (is_string($processor->get_attribute('data-bhp-event'))) {
+            continue;
+        }
+
+        $slug = '';
+        if (preg_match('~amzn\.to/([A-Za-z0-9]+)~i', $href, $m)) {
+            $slug = $m[1];
+        }
+
+        $processor->set_attribute('data-bhp-event', 'amazon_outbound_click');
+        $processor->set_attribute('data-bhp-book', isset($map[$slug]) ? $map[$slug] : '');
+        $processor->set_attribute('data-bhp-source', 'blog_in_content');
+        $processor->set_attribute('data-bhp-format', '');
+
+        $rel   = (string) $processor->get_attribute('rel');
+        $parts = array_values(array_filter(preg_split('/\s+/', strtolower($rel))));
+        foreach (['nofollow', 'sponsored', 'noopener'] as $token) {
+            if (!in_array($token, $parts, true)) {
+                $parts[] = $token;
+            }
+        }
+        $processor->set_attribute('rel', implode(' ', $parts));
+        // ⛔ `href` is deliberately NOT written anywhere in this loop.
+    }
+
+    return $processor->get_updated_html();
+}
+add_filter('the_content', 'bhp_affiliate_content_tracking', 25);
+
+/**
+ * "Also available on Amazon" on the shop archive.
+ *
+ * Added under the owner ruling sealed at FD-694 (Standing Rules §26), which
+ * asks for the "available on Amazon" links to be present here. Verified live
+ * 2026-08-26 on staging, and recorded at §26.4 for production: before this
+ * block, `/shop/` carried ZERO Amazon links of any kind.
+ *
+ * ⛔ FORMAT IS DELIBERATELY NOT NAMED. Hardcover and Kindle stay unadvertised
+ *    until their royalty economics are documented, so this block names titles
+ *    only. (Each shortlink lands on its paperback edition -- verified live in
+ *    a real browser 2026-08-26 for `4svChYL`: Paperback $8.99 selected.)
+ * ⛔ NO rating, review count, star or testimonial is emitted here, and no
+ *    `aggregateRating` or `review` schema. There is none to emit.
+ * ⛔ Reuses `bhp_get_amazon_affiliate_urls()`, the existing single source of
+ *    truth, rather than hardcoding a second copy of the links.
+ */
+function bhp_shop_amazon_availability_block() {
+    if (!function_exists('is_shop') || !is_shop()) {
+        return;
+    }
+    if (function_exists('is_paged') && is_paged()) {
+        return; // First page of the archive only.
+    }
+
+    $titles = [
+        'mariana_trench'    => __('Adventures of Charlotte and Henry: The Mariana Trench', 'brave-hearts'),
+        'mount_everest'     => __('Adventures of Charlotte and Henry: Mount Everest', 'brave-hearts'),
+        'amazon_rainforest' => __('Adventures of Charlotte and Henry: The Amazon', 'brave-hearts'),
+    ];
+
+    $links = [];
+    foreach ($titles as $key => $title) {
+        $url = bhp_get_amazon_affiliate_url($key);
+        if ($url) { // Empty entry means no link renders. Never a placeholder or search URL.
+            $links[$key] = ['url' => $url, 'title' => $title];
+        }
+    }
+    if (!$links) {
+        return;
+    }
+    ?>
+    <section class="bhp-shop-amazon" aria-labelledby="bhp-shop-amazon-heading">
+      <h2 class="bhp-shop-amazon__heading" id="bhp-shop-amazon-heading"><?php esc_html_e('Also available on Amazon', 'brave-hearts'); ?></h2>
+      <p class="bhp-shop-amazon__text"><?php esc_html_e('Prefer a familiar checkout? All three adventures are on Amazon too. Amazon pricing and delivery times may vary.', 'brave-hearts'); ?></p>
+      <ul class="bhp-shop-amazon__list">
+        <?php foreach ($links as $key => $link) : ?>
+          <li class="bhp-shop-amazon__item">
+            <a class="bhp-shop-amazon__link"
+               href="<?php echo esc_url($link['url']); ?>"
+               rel="nofollow sponsored noopener"
+               data-bhp-event="amazon_outbound_click"
+               data-bhp-book="<?php echo esc_attr($key); ?>"
+               data-bhp-source="shop_archive"
+               data-bhp-format=""><?php echo esc_html($link['title']); ?></a>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+      <p class="bhp-shop-amazon__disclosure"><?php echo esc_html(bhp_get_amazon_disclosure_text()); ?></p>
+    </section>
+    <?php
+}
+add_action('woocommerce_after_shop_loop', 'bhp_shop_amazon_availability_block', 30);
+
+/* =====================================================================
+ * ⭐⭐ `/free-resources/` — THE HUB, ITS DATA, AND THE NAV DOOR THAT MOVED
+ *     theme 1.19.301 · 2026-08-27 · `CYCLE167-LD-FREE-RESOURCES-HUB`
+ * =====================================================================
+ *
+ * ⭐ FOUNDER CARRIER ITEM 300, IN FULL — one letter, "A", answering a nav
+ *    question Gandalf put to him. Read first-hand by this desk at
+ *    `Business OS\WORKING-DRAFTS\chief-of-staff\FOUNDER-VERBATIM-2026-08-05-
+ *    PRODUCTION-DEPLOY-AUTHORIZATION.md`. ⚠ RELAYED through Gandalf, who
+ *    witnessed it; NOT witnessed by this desk, and therefore not a capability
+ *    grant and not approval for any gated action.
+ *
+ *    Option A, as he adopted it: the "Expedition Guides" nav slot becomes
+ *    FREE RESOURCES and points at the new `/free-resources/` hub. `/teachers/`
+ *    loses its nav slot and gains a PROMINENT "For Teachers and Librarians"
+ *    section inside the hub. ⭐ THE NAV COUNT IS UNCHANGED.
+ *
+ * ---------------------------------------------------------------------
+ * ⛔⛔ WHERE THIS NAV LABEL ACTUALLY LIVES — FOUR PLACES, NOT ONE, AND THE
+ *     FOURTH IS THE ONE THAT WOULD HAVE SHIPPED THE BUG.
+ * ---------------------------------------------------------------------
+ *
+ * ⭐ THE STORED WORDPRESS MENU ROW IS NOT ONE OF THEM, and that is the single
+ *    most useful fact in this comment. VERIFIED FIRST-HAND on staging,
+ *    read-only, 2026-08-27: primary menu term 198 is assigned, and its teacher
+ *    row is item 130 with stored title "Teacher's Guide" and stored url
+ *    `/teachers-guide/`. NEITHER the label NOR the target a visitor sees is in
+ *    the database — `bhp_canonicalize_teacher_menu_items()` rewrites both on
+ *    every render.
+ *    ⭐ CONSEQUENCE FOR THE DEPLOY PACKET: this nav change ships ENTIRELY IN
+ *    THE THEME ZIP. There is NO wp-admin menu edit to perform on production,
+ *    and performing one would be silently reverted by the filter anyway.
+ *
+ *   1. `bhp_canonicalize_teacher_menu_items()` (priority 10) — sets the title
+ *      and url on the live menu object. ⛔ NOT EDITED. This filter retargets
+ *      afterwards, at priority 26, exactly as `bhp_adventure_books_nav_target_
+ *      shop()` does at 25 for the Books item, and for the reason that function
+ *      records: a proven filter stays byte-untouched and the change is a new,
+ *      separately reversible one.
+ *   2. `bhp_fallback_menu()` — the primary-nav fallback. It only runs when NO
+ *      menu is assigned to the `primary` location (one IS assigned on both
+ *      environments today), but it must not disagree with the live nav, so it
+ *      is updated in the same release.
+ *   3. `bhp_footer_fallback_menu()` — ⛔ DELIBERATELY NOT TOUCHED. `footer.php`
+ *      stopped calling it at 1.19.269 and the `footer` menu location is no
+ *      longer rendered at all; its own suite still pins its current contents.
+ *      Editing an unrendered fallback to match a nav it does not render would
+ *      be churn with a failing test attached.
+ *   4. ⛔⛔ `style.css` — `.menu-item--educator-guides > a::after { content:
+ *      'Expedition Guides'; }` INSIDE `@container (min-width: 1117px)`, where
+ *      the anchor itself is set to `font-size: 0 !important`.
+ *      ⭐⭐ AT DESKTOP WIDTHS THE VISIBLE LABEL IS A CSS PSEUDO-ELEMENT, NOT
+ *      THE PHP TITLE. Changing only the PHP would have left every desktop
+ *      visitor reading "Expedition Guides" on a link that went to
+ *      `/free-resources/` — no error, no warning, and nothing else in this
+ *      repo would have failed. The `content` string moves in the same release
+ *      and the suite asserts the old string survives in no stylesheet rule.
+ *
+ * ⚠ THE CLASS NAME `menu-item--educator-guides` IS KEPT, and keeping it is
+ *   deliberate rather than lazy. It is an internal styling hook, no visitor
+ *   ever reads it, and it is the join between the PHP and the pseudo-element
+ *   above; renaming it means renaming it in two files plus every test that
+ *   pins it, to change a string nobody sees. The same call this theme already
+ *   made for the `bhp_mariana_popup` storage prefix and the
+ *   `ultimate-gift-guide-cover` filename. ⭐ `menu-item--free-resources` is
+ *   ADDED alongside it so later work has a correctly-named hook without
+ *   anything having to be removed.
+ *
+ * ⚠ WHAT IS NOT DONE HERE, BECAUSE IT IS ANDREW'S AND WAS NOT ASKED FOR: the
+ *   item's POSITION is unchanged. Merry's §23 walk recommends moving it above
+ *   "Contact" (its open decision 4) on the evidence that it currently sits in
+ *   the weakest slot in the list. That is a nav-order change nobody has
+ *   approved, so it is reported, not taken.
+ *
+ * ⚠ AND THE EVIDENCE AGAINST THE LABEL ITSELF IS RECORDED RATHER THAN BURIED:
+ *   ZERO of the six competitors Merry walked live put the word "Free" in a nav
+ *   label; all put it in the H1 and the `<title>` instead. Andrew chose
+ *   "FREE RESOURCES" in his own words and his word governs, so it ships. The
+ *   counter-evidence is written down so he can overrule himself cheaply.
+ *   ⭐ `.site-nav a` sets `text-transform: uppercase`, so the string
+ *   "Free Resources" RENDERS as "FREE RESOURCES". Both his capitals and the
+ *   house title-case convention are satisfied by one string.
+ * ===================================================================== */
+
+/**
+ * The hub's article rail — real published posts, resolved from slugs.
+ *
+ * ⛔ SLUGS, NOT IDS. Post ids differ between environments (tonight's K3 article
+ *    is 5089 on staging and 638 on production), so an id list would be correct
+ *    on exactly one environment and silently wrong on the other. Slugs are
+ *    stable across both and are what the guide registry already uses.
+ *
+ * ⭐ ORDER IS INTENTIONAL AND COMES FROM TWO SOURCES, both recorded: the four
+ *    the build brief names lead (tonight's K3 article, then the "books like
+ *    Magic Tree House" hub, the Dog Man to Magic Tree House roadmap, and "what
+ *    to read after Dog Man"), followed by the remaining five in the order
+ *    Merry's §23 walk ranked them. Where the brief and the spec could disagree,
+ *    the brief governs scope and the spec governs presentation — so the brief
+ *    picks the leaders and the spec orders the tail.
+ *
+ * ⛔ THE K3 ARTICLE IS INCLUDED, AND MERRY'S SPEC SAYS IT SHOULD NOT BE. That
+ *    disagreement is settled by EVIDENCE, not preference, and the evidence is
+ *    recorded here because a future reader will meet the spec's exclusion
+ *    first. The walk checked `/what-to-read-after-magic-tree-house/`, got a
+ *    404, and honestly flagged that "the slug may simply differ". It does: this
+ *    site puts posts under `/blog/`. VERIFIED FIRST-HAND by this desk against
+ *    PRODUCTION, read-only, 2026-08-27: post 638, `post_status` publish,
+ *    `get_permalink()` = `https://braveheartspublishing.com/blog/what-to-read-
+ *    after-magic-tree-house/`. The article is live and the exclusion is
+ *    discharged. ⭐ The presence guard below means an environment that really
+ *    does not have it simply renders eight cards instead of nine.
+ *
+ * @return string[] Post slugs, in render order.
+ */
+function bhp_free_resources_article_slugs() {
+    return apply_filters('bhp_free_resources_article_slugs', array(
+        'what-to-read-after-magic-tree-house',
+        'books-like-magic-tree-house',
+        'dog-man-to-magic-tree-house-reading-roadmap',
+        'what-to-read-after-dog-man',
+        'my-child-hates-reading-what-to-do',
+        'best-books-for-7-year-olds',
+        'bridge-books-for-struggling-readers',
+        'reading-level-by-grade-chart',
+        'what-is-a-lexile-score',
+    ));
+}
+
+/**
+ * Those slugs resolved to real, PUBLISHED posts, in the declared order.
+ *
+ * ⛔⛔ THE PRESENCE GUARD IS THE POINT OF THIS FUNCTION, NOT AN OPTIMISATION.
+ *     A slug that is unpublished, renamed, trashed or simply absent on an
+ *     environment resolves to nothing and is DROPPED. The template therefore
+ *     cannot render an empty card, a dead link or a heading over nothing, and
+ *     nobody has to maintain a per-environment list by hand. If the whole list
+ *     resolves empty the template omits the entire section.
+ *
+ * ⛔ `post_name__in` DOES NOT PRESERVE THE ORDER OF THE ARRAY YOU GIVE IT, so
+ *    the results are re-sorted against the declared order afterwards. Trusting
+ *    the query's order would have shipped a rail sorted by date, which is not
+ *    the order anyone chose.
+ *
+ * @return WP_Post[]
+ */
+function bhp_free_resources_articles() {
+    static $cache = null;
+    if (null !== $cache) {
+        return $cache;
+    }
+
+    $slugs = array_values(array_filter(array_map('sanitize_title', (array) bhp_free_resources_article_slugs())));
+    if (!$slugs) {
+        $cache = array();
+        return $cache;
+    }
+
+    $posts = get_posts(array(
+        'post_type'        => 'post',
+        'post_status'      => 'publish',
+        'posts_per_page'   => count($slugs),
+        'post_name__in'    => $slugs,
+        'no_found_rows'    => true,
+        'suppress_filters' => false,
+    ));
+
+    $by_slug = array();
+    foreach ($posts as $p) {
+        $by_slug[$p->post_name] = $p;
+    }
+
+    $ordered = array();
+    foreach ($slugs as $slug) {
+        if (isset($by_slug[$slug])) {
+            $ordered[] = $by_slug[$slug];
+        }
+    }
+
+    $cache = $ordered;
+    return $cache;
+}
+
+/**
+ * The hub's UNGATED free downloads.
+ *
+ * ⭐⭐ THIS IS THE THING THE SITE DID NOT HAVE THIS MORNING. Merry's §23 walk
+ *     verified live, by href scan on four of our own pages, that we published
+ *     ZERO instant-download PDFs while our closest analogue (Magic Tree House)
+ *     published fifteen with no gate at all. Everything free here was
+ *     email-gated and Mailchimp-delivered.
+ *
+ * ⭐ FOUNDER CARRIER ITEM 302, read first-hand by this desk, verbatim: *"Yes,
+ *    we can put the coloring book page as the first Free PDF, lets also build a
+ *    few free PDFs tonight, lets brainstorm and put them in there, not a
+ *    fillers, as actually good resources for parents?"*, and item 304: *"They
+ *    are free so lets do all 5 as well"*. ⚠ RELAYED, not witnessed here.
+ *    ⭐ His "coloring book page ... first" is why that row is first below.
+ *
+ * ⛔ EVERY FILE HERE WAS BUILT BY `design-creative` UNDER `CYCLE167-DES-FREE-
+ *    PDFS`, FROM REAL AND ATTESTED MATERIAL ONLY, AND WAS LOOKED AT BY THIS
+ *    DESK BEFORE BEING SHIPPED — not merely listed. Each is copied BYTE FOR
+ *    BYTE from that lane's `deliver\` tree and md5-verified after the copy;
+ *    nothing was re-rendered, re-compressed or edited here.
+ *    ⚠ TWO md5s IN THAT LANE'S OWN MANIFEST ARE STALE — `Backyard-Expedition`
+ *      and `How-Did-She-Do-Reading-It` were rebuilt in an R3 round after the
+ *      manifest was last written (its `proof\R3-*` renders are the evidence).
+ *      The FILES were taken as the truth and the manifest discrepancy is
+ *      reported to the Chief of Staff rather than silently reconciled.
+ *
+ * ⛔ EVERY ROW IS `file_exists()`-GUARDED AGAINST THE SHIPPED THEME. A row whose
+ *    file did not make it into the ZIP renders NOTHING rather than a download
+ *    button that 404s. Merry's walk is explicit about why that matters: *"a
+ *    padded one is unrecoverable once a parent has clicked a dead promise."*
+ *    ⛔ Do not add a row for a file you have not put on disk.
+ *
+ * ⭐ WHY THE FILES SHIP IN THE THEME RATHER THAN THE MEDIA LIBRARY: a media
+ *    upload is a per-environment content step that would have to be repeated on
+ *    production and would be forgotten exactly once. In `assets/downloads/`
+ *    they travel in the ZIP, have the same URL shape on both environments, and
+ *    reverse by reinstalling the previous ZIP. ⚠ The cost is disclosed rather
+ *    than buried: they add ~9.3 MB to the theme artefact.
+ *
+ * ⛔ NOTHING HERE IS EMAIL-GATED, AND THAT IS THE WHOLE DIFFERENCE FROM EVERY
+ *    OTHER FREE THING ON THIS SITE. The Kit, the classroom guide and the
+ *    toolkit are all delivered by Mailchimp after a signup; these open on click.
+ *
+ * ⛔ THE SIZE ON EACH CARD IS COMPUTED FROM THE FILE AT RENDER TIME, never
+ *    typed. A hardcoded "2.4 MB" is a claim that goes stale the first time a
+ *    file is replaced, and a stale number about our own artefact is exactly the
+ *    class of small lie this corpus keeps having to remove. The PAGE COUNT is
+ *    declared, because it cannot be read cheaply — each value below was
+ *    verified by this desk against that lane's own proof renders.
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function bhp_free_resources_downloads() {
+    $rows = apply_filters('bhp_free_resources_downloads', array(
+        array(
+            'key'         => 'coloring_pages',
+            'title'       => __('Three Pages to Color', 'brave-hearts'),
+            /* ⛔ NAMES THE PAID PRODUCT HONESTLY. These are three real pages out
+             *    of a 57-page book that costs money. Saying "sample pages from
+             *    the coloring book" without saying the book is a paid product
+             *    would be a true sentence assembled into a false impression. */
+            'description' => __('Three real pages from my Mariana Trench coloring book, exactly as they appear in it. The full book is a paid one. These three are free.', 'brave-hearts'),
+            'file'        => 'assets/downloads/mariana-trench-coloring-pages.pdf',
+            'cta'         => __('Open the coloring pages', 'brave-hearts'),
+            'pages'       => 4,
+            /* ⛔ DESCRIBES PAGE ONE, WHICH IS NOT A COLORING PAGE. This file's
+             *    first page is a cover sheet; the three pages to color are 2, 3
+             *    and 4. An alt text that said "a sea turtle to color" would
+             *    describe the FILE and misdescribe the PICTURE, which is the
+             *    thing a screen-reader user is actually being offered. */
+            'preview_alt' => __('Page one of the file: a cover sheet headed "Three Pages to Color", listing what is on each of the three pages that follow (the sea turtle, the four words, the anglerfish), with notes on printing them and coloring them together.', 'brave-hearts'),
+        ),
+        array(
+            'key'         => 'mantra_poster',
+            'title'       => __('Stop. Breathe. Think. Act.', 'brave-hearts'),
+            /* ⛔ The mantra is quoted in its CANON ORDER (FD-553), which is the
+             *    order printed in the books and on the sheet. The founder
+             *    corrected himself on this at carrier item 273. */
+            'description' => __('The four words from the story, big enough to pin up, with the breathing steps written out underneath.', 'brave-hearts'),
+            'file'        => 'assets/downloads/stop-breathe-think-act-poster.pdf',
+            'cta'         => __('Open the poster', 'brave-hearts'),
+            'pages'       => 1,
+            'preview_alt' => __('The poster: STOP. BREATHE. THINK. ACT. set in four wide gold bands down a dark navy sheet, with a boxed list of four numbered breathing steps underneath and two black-and-white drawings to color at the foot of the page.', 'brave-hearts'),
+            /* ⭐ ONE CARD, TWO FILES, RATHER THAN TWO CARDS. The ink-saver is
+             *    the same poster on white with outlined chips; listing it as a
+             *    separate resource would inflate the grid without adding one. */
+            'alt_file'    => 'assets/downloads/stop-breathe-think-act-poster-ink-saver.pdf',
+            'alt_label'   => __('Or open the ink-saver version', 'brave-hearts'),
+        ),
+        array(
+            'key'         => 'backyard_expedition',
+            'title'       => __('Backyard Expedition', 'brave-hearts'),
+            'description' => __('Four things to do outside with your kid. Draw, read, spot ten things, take one slow breath. No equipment, and a backyard is enough.', 'brave-hearts'),
+            'file'        => 'assets/downloads/backyard-expedition.pdf',
+            'cta'         => __('Open the activity', 'brave-hearts'),
+            'pages'       => 1,
+            'preview_alt' => __('The activity sheet: four numbered things to do outside. Draw what you see, with a blank box to draw in; read a bit outside, with lines to fill in; spot ten things, with a tick list; and one slow breath, with four numbered steps.', 'brave-hearts'),
+        ),
+        array(
+            'key'         => 'reading_ladder',
+            'title'       => __('The Reading Ladder', 'brave-hearts'),
+            'description' => __('Graphic novels, bridge books, chapter books, and what each rung actually asks of a reader. Built on format, not on a reading level number.', 'brave-hearts'),
+            'file'        => 'assets/downloads/reading-ladder.pdf',
+            'cta'         => __('Open the ladder', 'brave-hearts'),
+            'pages'       => 1,
+            'preview_alt' => __('The one-page ladder: three numbered rungs (graphic novels, bridge books, chapter books), each with a line on what it asks of a reader, followed by a checklist of titles grouped by the rung they sit on.', 'brave-hearts'),
+        ),
+        array(
+            'key'         => 'how_did_she_do',
+            'title'       => __('Your Kid Finished the Book. Now What?', 'brave-hearts'),
+            /* ⭐ FROM HIS OWN ATTESTED WORDS (carrier items 286 to 288), not
+             *    invented: "How did she do reading it?" is the question he
+             *    really asks at his market table. ⛔ It is framed as HIS
+             *    question, never as a reported parent reaction — he said
+             *    himself at item 287 that he cannot attest what parents say. */
+            'description' => __('The one question I ask at my market table, and how I read the answer. One page.', 'brave-hearts'),
+            'file'        => 'assets/downloads/how-did-she-do-reading-it.pdf',
+            'cta'         => __('Open the parent card', 'brave-hearts'),
+            'pages'       => 1,
+            'preview_alt' => __('The parent card: the question "How did she do reading it?" set large in a dark panel, with two columns underneath. One is what to do if they tell you everything, the other what to do if you get a shrug, each with a short checklist of books.', 'brave-hearts'),
+        ),
+    ));
+
+    $out = array();
+    foreach ((array) $rows as $row) {
+        $file = isset($row['file']) ? ltrim((string) $row['file'], '/') : '';
+        $path = '' === $file ? '' : get_theme_file_path($file);
+        if ('' === $file || !file_exists($path)) {
+            continue; // ⛔ FAILS TO SILENCE. Never a dead download button.
+        }
+
+        $row['url']  = get_theme_file_uri($file);
+        $pages       = isset($row['pages']) ? (int) $row['pages'] : 0;
+        $size        = size_format((int) filesize($path));
+        $row['meta'] = $pages > 1
+            /* translators: 1: page count, 2: human-readable file size. */
+            ? sprintf(__('PDF, %1$d pages, %2$s', 'brave-hearts'), $pages, $size)
+            /* translators: %s: human-readable file size. */
+            : sprintf(__('PDF, 1 page, %s', 'brave-hearts'), $size);
+
+        if (!empty($row['alt_file'])) {
+            $alt_rel  = ltrim((string) $row['alt_file'], '/');
+            $alt_path = get_theme_file_path($alt_rel);
+            if (file_exists($alt_path)) {
+                $row['alt_url'] = get_theme_file_uri($alt_rel);
+            } else {
+                unset($row['alt_label']); // ⛔ The secondary link disappears too.
+            }
+        }
+
+        /*
+         * ⭐⭐ 1.19.303 (2026-08-27, CYCLE167-LD-HUB-POLISH) — THE PAGE-ONE
+         *     PREVIEW. Founder carrier item 311: "I think there should be a
+         *     picture of each one above the box description as well. So the
+         *     audience can see what they are getting".
+         *
+         * ⭐ THE PICTURES ARE THE REAL PAGE ONES. Each was rendered from the
+         *    shipped PDF itself at 800x1036 (US Letter at ~94 DPI, which is 2.1x
+         *    the 378.9px grid slot measured live on staging — retina with
+         *    headroom). ⛔ NOT a decorative stand-in, not an illustration, not a
+         *    generated image: "so the audience can see what they are getting"
+         *    only means anything if the picture IS what they are getting.
+         *
+         * ⛔ GUARDED EXACTLY LIKE THE CARD ABOVE, AND FOR THE SAME REASON. Both
+         *    derivatives must resolve on disk or the card renders with NO image
+         *    rather than a broken one. A missing preview costs a picture; it
+         *    never costs the download.
+         *
+         * ⭐ THE FILENAME IS DERIVED, NOT TYPED. `<pdf basename>-preview.{webp,
+         *    jpg}` — so adding a row to this registry cannot leave a preview
+         *    pointing at the wrong resource, and there is no second list to keep
+         *    in step with the first.
+         *
+         * ⭐ INTRINSIC DIMENSIONS ARE READ FROM THE FILE, never typed here —
+         *    `bhp_get_founder_photo()`'s rule, learned at 1.19.296: a hardcoded
+         *    intrinsic size is a lie waiting for somebody to replace an asset.
+         *    They are emitted as width/height so the grid cannot reflow (CLS).
+         *
+         * ⛔⛔ `?ver=` IS NOT COSMETIC, AND THIS IS THE SECOND TIME THIS THEME
+         *     HAS PAID FOR LEARNING IT. These are FIXED filenames and SiteGround
+         *     serves them `Cache-Control: max-age=31536000`. 1.19.299 measured
+         *     the same URL returning two different founder photographs in one
+         *     page load, a year apart in expiry. Without this line a corrected
+         *     preview would never reach anybody who had already seen the hub,
+         *     while the file on disk, the suite and a fresh browser all reported
+         *     success. The idiom is the theme's own — every enqueued asset in
+         *     this file already passes the theme version.
+         */
+        $row['preview'] = array();
+        $stem           = preg_replace('/\.pdf$/i', '', basename($file));
+        $prev_rel       = array(
+            'webp' => 'assets/images/free-resources/' . $stem . '-preview.webp',
+            'jpg'  => 'assets/images/free-resources/' . $stem . '-preview.jpg',
+        );
+        $prev_webp_path = get_theme_file_path($prev_rel['webp']);
+        $prev_jpg_path  = get_theme_file_path($prev_rel['jpg']);
+
+        if (file_exists($prev_webp_path) && file_exists($prev_jpg_path)) {
+            $dims = @getimagesize($prev_jpg_path);
+            $ver  = wp_get_theme()->get('Version');
+            $bust = static function ($rel_path) use ($ver) {
+                $uri = get_theme_file_uri($rel_path);
+                return $ver ? add_query_arg('ver', rawurlencode($ver), $uri) : $uri;
+            };
+
+            $row['preview'] = array(
+                'webp'   => $bust($prev_rel['webp']),
+                'jpg'    => $bust($prev_rel['jpg']),
+                'width'  => (is_array($dims) && !empty($dims[0])) ? (int) $dims[0] : 0,
+                'height' => (is_array($dims) && !empty($dims[1])) ? (int) $dims[1] : 0,
+                'alt'    => isset($row['preview_alt']) ? (string) $row['preview_alt'] : '',
+            );
+
+            // ⛔ No intrinsic size and no alt text means no picture. A preview
+            //    that can cause layout shift or that a screen reader meets
+            //    unlabelled is worse than the card as it stood yesterday.
+            if (!$row['preview']['width'] || !$row['preview']['height'] || '' === $row['preview']['alt']) {
+                $row['preview'] = array();
+            }
+        }
+
+        $out[] = $row;
+    }
+
+    return $out;
+}
+
+/**
+ * ⭐ THE NAV DOOR. Priority 26 — AFTER `bhp_canonicalize_teacher_menu_items()`
+ *    at 10 (which normalises the stored row into one item carrying the
+ *    `menu-item--educator-guides` class) and after
+ *    `bhp_adventure_books_nav_target_shop()` at 25, and BEFORE
+ *    `bhp_start_here_nav_item()` at 30. The ordering is a contract, not an
+ *    accident: this filter reads a class that priority 10 puts there.
+ *
+ * ⛔ PRIMARY LOCATION ONLY. `bhp_canonicalize_teacher_menu_items()` carries no
+ *    `theme_location` guard and runs on any menu, so without this check the
+ *    retarget would follow the Expedition Guides item into any other menu that
+ *    ever renders. The `footer` location is not rendered today; "not rendered
+ *    today" is not a reason to write a filter that would misbehave if it were.
+ *
+ * ⛔⛔ AND IT FIXES THE CURRENT-ITEM STATE IN BOTH DIRECTIONS, which is the half
+ *     that gets forgotten. Once the rendered url and the stored object
+ *     disagree, WordPress's own current-page detection is working from the
+ *     wrong url:
+ *       · on `/free-resources/` it would highlight NOTHING, because no stored
+ *         item points there;
+ *       · on `/teachers/` it would highlight "FREE RESOURCES", because the
+ *         stored item still points at `/teachers/` — a nav telling the visitor
+ *         they are on a page they are not on.
+ *     Both are corrected below. `bhp_adventure_books_nav_target_shop()` only
+ *     had to handle the first case; this one has to handle both, because
+ *     `/teachers/` is still a live, reachable page that simply lost its door.
+ *
+ * @param array       $items Menu objects.
+ * @param object|null $args  `wp_nav_menu` args.
+ * @return array
+ */
+function bhp_free_resources_nav_item($items, $args = null) {
+    if (is_object($args) && isset($args->theme_location) && 'primary' !== $args->theme_location) {
+        return $items;
+    }
+
+    $teacher_path = untrailingslashit((string) wp_parse_url(home_url('/teachers/'), PHP_URL_PATH));
+    $hub_url      = home_url('/free-resources/');
+    $hub_path     = untrailingslashit((string) wp_parse_url($hub_url, PHP_URL_PATH));
+
+    $on_hub      = is_page_template('page-free-resources.php') || is_page('free-resources');
+    $on_teachers = is_page('teachers') || is_page_template('page-teachers.php');
+
+    foreach ($items as $item) {
+        $item_path = untrailingslashit((string) wp_parse_url($item->url, PHP_URL_PATH));
+        $is_target = in_array('menu-item--educator-guides', (array) $item->classes, true)
+            || $item_path === $teacher_path
+            || $item_path === $hub_path;
+
+        if (!$is_target) {
+            continue;
+        }
+
+        /*
+         * ⭐⭐ 1.19.303 (2026-08-27, CYCLE167-LD-HUB-POLISH) — FREE OVER
+         *     RESOURCES, BY ADOPTING THE ADVENTURE BOOKS MECHANISM RATHER THAN
+         *     IMITATING ITS LOOK. Founder carrier item 311, on his own walk:
+         *     "I would like Free on top of Resources just like Adventure Books
+         *      and make sure all the fonts match all teh nav bar fonts,
+         *      spacing and style."
+         *
+         * ⭐ THE SECOND CLAUSE IS WHY THIS IS TWO SPANS AND NOT A TWO-LINE
+         *    `content:` STRING. The desktop label used to be a CSS
+         *    pseudo-element, and MEASURED LIVE on staging at 1.19.302 it did
+         *    NOT match the nav:
+         *      ADVENTURE BOOKS  10.5px · letter-spacing 1.47px (.14em) · lh 12.6px
+         *      FREE RESOURCES   10.5px · letter-spacing NONE      · lh 14.175px
+         *    The pseudo-element sat outside `@container (max-width: 1236px)`'s
+         *    `.site-nav a { font-size: 10.5px; letter-spacing: .14em }`, so it
+         *    was always going to drift from the bar around it. Emitting the
+         *    same two `.site-nav__label-line` spans that
+         *    `bhp_stack_adventure_books_nav_label()` emits makes this item a
+         *    plain `.site-nav a` again — so the font, size, weight, tracking
+         *    and line-height are not COPIED from the Adventure Books item,
+         *    they are THE SAME DECLARATIONS. They cannot drift apart later.
+         *
+         * ⚠ THE STORED MENU ROW IS NOT EDITED, exactly as the Adventure Books
+         *   and Expedition Guides precedents require: a DB menu row does not
+         *   travel in a theme ZIP, so a staging-only menu edit would leave
+         *   production unchanged after an approved deploy.
+         * ⛔ The accessible name is restored explicitly by
+         *   `bhp_free_resources_nav_aria_label()` below — two block-level
+         *   spans otherwise read to a screen reader as two separate runs of
+         *   text. This is the same pairing Adventure Books already ships.
+         */
+        $item->title   = '<span class="site-nav__label-line">' . esc_html__('Free', 'brave-hearts') . '</span><span class="site-nav__label-line">' . esc_html__('Resources', 'brave-hearts') . '</span>';
+        $item->url     = $hub_url;
+        $item->classes = array_values(array_unique(array_merge(
+            (array) $item->classes,
+            array('menu-item--free-resources')
+        )));
+
+        // ⛔ See the docblock: both directions, not just the one.
+        $item->classes = array_values(array_diff((array) $item->classes, array('current-menu-item')));
+        $item->current = false;
+        if ($on_hub && !$on_teachers) {
+            $item->current   = true;
+            $item->classes[] = 'current-menu-item';
+        }
+    }
+
+    return $items;
+}
+add_filter('wp_nav_menu_objects', 'bhp_free_resources_nav_item', 26, 2);
+
+/**
+ * ⭐ 1.19.303 — the accessible name for the stacked FREE / RESOURCES item.
+ *
+ * ⛔ WITHOUT THIS THE STACKING IS AN ACCESSIBILITY REGRESSION, not a style
+ *    change. Two block-level spans read to a screen reader as two separate
+ *    runs of text ("Free", "Resources"), so the link's accessible name has to
+ *    be set explicitly. This is a byte-for-byte parallel of
+ *    `bhp_adventure_books_nav_aria_label()` above and exists for the same
+ *    reason that one does.
+ *
+ * @param array  $atts Link attributes.
+ * @param object $item Menu object.
+ * @return array
+ */
+function bhp_free_resources_nav_aria_label($atts, $item) {
+    if (in_array('menu-item--free-resources', (array) $item->classes, true)) {
+        $atts['aria-label'] = __('Free Resources', 'brave-hearts');
+    }
+    return $atts;
+}
+add_filter('nav_menu_link_attributes', 'bhp_free_resources_nav_aria_label', 10, 2);
+
+/**
+ * SEO title and meta description for the hub — ⛔ FALLBACKS ONLY.
+ *
+ * ⭐ THE PATTERN IS `bhp_audience_landing_seo_description_filter()`'s, above,
+ *    and the reason is the same one it records: Rank Math's own wp-admin value
+ *    always wins, so filling the field in the admin later takes precedence over
+ *    this with NO code change and NO redeploy. That matters more than usual
+ *    here, because the final SEO copy is not this desk's to write — it is
+ *    ChatGPT's under G-1 and Andrew's under G4. What ships below is Merry's
+ *    §23 CANDIDATE, held in code only so the page is not launched with an empty
+ *    description.
+ *
+ * ⭐ "FREE" IS IN THE TITLE AND THE H1, WHICH IS WHERE THE COMPETITOR EVIDENCE
+ *    ACTUALLY PUTS IT. Scholastic's nav says "Activities & Printables" and its
+ *    H1 says "Free Printables for Kids"; Highlights' nav says "Activities" and
+ *    its title says "Free Printables for Kids". Merry's walk found 0 of 6 using
+ *    "Free" in a nav label and used it in the heading everywhere it checked.
+ *
+ * ⛔ NO RATING, NO REVIEW COUNT, NO SUPERLATIVE, NO OUTCOME CLAIM, and the age
+ *    band is 6 to 9. A meta description is customer-facing copy and every
+ *    standing rail applies to it.
+ *
+ * ⚠ THE TITLE FILTER IS NOT `empty()`-GUARDED AND THE DESCRIPTION ONE IS, and
+ *   the asymmetry is deliberate: Rank Math always produces SOME title (it falls
+ *   back to the post title plus the site name), so an `empty()` guard there
+ *   would mean this never ran. The description genuinely comes back empty when
+ *   the admin field is unset, which is the condition worth filling.
+ */
+function bhp_free_resources_seo_title($title) {
+    if (!is_page_template('page-free-resources.php') && !is_page('free-resources')) {
+        return $title;
+    }
+    return __('Free Reading Printables and Resources for Kids Ages 6 to 9 | Brave Hearts Publishing', 'brave-hearts');
+}
+add_filter('rank_math/frontend/title', 'bhp_free_resources_seo_title', 20);
+
+function bhp_free_resources_seo_description($description) {
+    if (!empty($description)) {
+        return $description; // ⛔ wp-admin always wins.
+    }
+    if (!is_page_template('page-free-resources.php') && !is_page('free-resources')) {
+        return $description;
+    }
+    return __('Free printables you can download now, plus articles on what to read next when a child stalls. Coloring pages, an outdoor activity, a reading ladder and a free sample chapter, for readers ages 6 to 9.', 'brave-hearts');
+}
+add_filter('rank_math/frontend/description', 'bhp_free_resources_seo_description', 20);
+add_filter('rank_math/opengraph/facebook/description', 'bhp_free_resources_seo_description', 20);
+add_filter('rank_math/opengraph/twitter/description', 'bhp_free_resources_seo_description', 20);
+/**
+ * ═════════════════════════════════════════════════════════════════════════
+ * THE RETAILER / BOOKSELLER FUNNEL — theme 1.19.304, 2026-08-27,
+ * `CYCLE167-LD-RETAILER-PAGE`. Two small additions, both additive.
+ * ═════════════════════════════════════════════════════════════════════════
+ */
+
+/**
+ * 1 · THE `wholesale` CONTACT INQUIRY TYPE.
+ *
+ * ⭐ NOTHING NEW IS BUILT HERE, AND THAT IS THE POINT. The mechanism already
+ *    existed and was simply never used by this funnel:
+ *    `template-parts/contact/contact-form.php` reads `$_GET['inquiry']`,
+ *    `sanitize_key()`s it, VALIDATES IT AGAINST THE REGISTERED TYPES and
+ *    preselects the dropdown. All that was missing was a registered type, so
+ *    `/contact/?inquiry=wholesale` silently fell through to "Select an inquiry
+ *    type" and every retailer CTA landed on a bare, unfocused contact form.
+ *
+ * ⛔ ADDED THROUGH THE FILTER, NEVER BY EDITING THE SHARED ARRAY IN PLACE
+ *    (Merry §5.2). The shared array is four other funnels' contract; a
+ *    retailer requirement must not reach into it.
+ *
+ * ⭐ THE LABEL NAMES BOTH WORDS A BUYER WOULD LOOK FOR. An independent
+ *    bookstore calls it wholesale; a museum or park store calls it retail
+ *    ordering. Naming one loses the other in a dropdown they scan in a second.
+ *    ⚠️ Customer-facing copy: drafted here, ANDREW APPROVES (G-1 / H-T4).
+ *
+ * ⛔ THE EXISTING `bookseller` ROLE IS UNTOUCHED. Role and inquiry type are
+ *    different fields and both are useful — the role says who they are, the
+ *    type says what they want.
+ */
+add_filter( 'bhp_contact_inquiry_types', 'bhp_retailer_add_wholesale_inquiry_type' );
+function bhp_retailer_add_wholesale_inquiry_type( $types ) {
+    if ( ! is_array( $types ) || isset( $types['wholesale'] ) ) {
+        return $types;
+    }
+
+    /*
+     * Inserted directly after `bulk-orders`, which is the adjacent concept a
+     * buyer's eye is already travelling past. Appending it after "Other" would
+     * bury it below the escape hatch.
+     */
+    $out = array();
+    foreach ( $types as $key => $label ) {
+        $out[ $key ] = $label;
+        if ( 'bulk-orders' === $key ) {
+            $out['wholesale'] = __( 'Wholesale / Retail Ordering', 'brave-hearts' );
+        }
+    }
+    if ( ! isset( $out['wholesale'] ) ) {
+        $out['wholesale'] = __( 'Wholesale / Retail Ordering', 'brave-hearts' ); // fail-safe if the anchor key ever moves
+    }
+
+    return $out;
+}
+
+/**
+ * 2 · THE SEO TITLE — ⛔ A FALLBACK ONLY, AND DELIBERATELY NOT FINAL.
+ *
+ * ⭐ THE PATTERN IS `bhp_audience_landing_seo_description_filter()`'s and
+ *    `bhp_free_resources_seo_title()`'s, for the reason both record: Rank
+ *    Math's own wp-admin value always wins, so filling the field in the admin
+ *    later takes precedence with NO code change and NO redeploy.
+ *
+ * ⛔⛔ THAT MATTERS MORE THAN USUAL HERE, ON TWO SEPARATE COUNTS, AND NEITHER
+ *    IS CLEARED BY THIS BUILD:
+ *      · G-1 — SEO COPY IS CHATGPT'S FINAL AUTHORITY, not this desk's and not
+ *        Merry's. What ships below is Merry's §8.2 CANDIDATE, held in code only
+ *        so the page is not launched with Rank Math's bare post-title default.
+ *      · STANDING RULES §25 — no SEO decision is proposed without a Google
+ *        Analytics review first, and THIS DESK CANNOT REACH GA. ⛔ No GA review
+ *        was performed. The page is 404 on production and has no GA history to
+ *        review, but that is a reason the review would be empty, NOT a reason
+ *        the rule does not apply. It is flagged in the release report as an
+ *        uncleared precondition on PUBLICATION, which is Andrew's act anyway.
+ *
+ * ⚠️ NOT `empty()`-GUARDED, and the asymmetry with the description filter is
+ *    deliberate: Rank Math always produces SOME title (post title plus site
+ *    name), so an `empty()` guard would mean this never runs. The description
+ *    genuinely comes back empty when unset, which is the condition worth
+ *    filling — and the retailer description is ALREADY filled by the existing
+ *    `bhp_audience_landing_seo_description()` branch, which is approved copy
+ *    and is NOT rewritten here.
+ *
+ * ⛔ NO DISCOUNT, NO TERMS, NO PRICE IN THE TITLE OR THE DESCRIPTION. A meta
+ *    description is customer-facing copy and every standing rail applies to it.
+ */
+function bhp_retailer_seo_title( $title ) {
+    if ( ! is_page_template( 'page-audience-retailers.php' ) ) {
+        return $title;
+    }
+    return __( 'Wholesale & Bookstore Orders | Brave Hearts Publishing', 'brave-hearts' );
+}
+add_filter( 'rank_math/frontend/title', 'bhp_retailer_seo_title', 20 );

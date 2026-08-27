@@ -314,9 +314,86 @@ $c164_suppress = array();
 if ( isset( $c164_urls['mariana'] ) ) {
 	$c164_suppress['the Mariana product page'] = $c164_urls['mariana'];
 }
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ UPDATED 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) —
+ *    `/complete-collection/` MOVES FROM "SUPPRESSED" TO "RENDERS".
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ WHY THE SUPPRESSION WAS RIGHT AT 1.19.241, and it is not being called
+ *    wrong: `commerce-cx` / Pippin's `CYCLE164-CX` #3 found that interrupting
+ *    somebody who is already reading a price costs more than it earns. That
+ *    reasoning is intact and still applies to the product pages, the cart and
+ *    the checkout, which all stay in the suppressed set below.
+ *
+ * ⛔⛔ WHAT CHANGED IS WHAT THE PAGE TURNED OUT TO BE. Production access logs
+ *     over 30 days show `/complete-collection/` is the **#1 human entry page
+ *     on the site** — 134 entries, rank 1 — with an entry:pageview ratio of
+ *     1.32, meaning most people who land there see that one page and leave. It
+ *     is not only a price page; it is the front door. And because it matched
+ *     neither the front page nor a single post, it fell through to the
+ *     exit-intent modal, whose MOBILE trigger is 20s dwell AND 45% scroll AND
+ *     a 400px upward flick inside 600ms. The site's busiest entrance had its
+ *     hardest gate.
+ *
+ * ⭐ AUTHORISED by Andrew Signore, carrier item 280 (2026-08-27), naming the
+ *    placement flip on the top entry page. ⚠ RELAYED, not witnessed here.
+ * ⚠ A NARROWER OPTION IS ON THE RECORD for him: `marketing-growth`'s R4
+ *   recommends flipping MOBILE ONLY and leaving desktop exit-intent alone.
+ *   Reported at the deploy gate; not decided by this suite.
+ */
 $c164_coll = get_page_by_path( 'complete-collection' );
 if ( $c164_coll ) {
-	$c164_suppress['/complete-collection/'] = get_permalink( $c164_coll );
+	list( $c164_ccode, $c164_cbody ) = bhp_c164_get( get_permalink( $c164_coll ) );
+	if ( 200 !== $c164_ccode ) {
+		bhp_c164_skip( "2: /complete-collection/ returned {$c164_ccode}", $skipped );
+	} else {
+		bhp_c164_assert(
+			false !== strpos( $c164_cbody, 'mariana-popup--ab' ),
+			'2: ⭐ the popup NOW RENDERS on /complete-collection/ — the #1 entry page joins the gated surface',
+			$failures
+		);
+		/*
+		 * ⛔ AND IT IS THE PARENT A/B SURFACE, NOT THE OLD EXIT GATE. If the
+		 *    exit-intent modal were still the one rendering here, the flip
+		 *    would have achieved nothing while appearing to.
+		 *
+		 * ⭐⭐ UPDATED 1.19.300 (`CYCLE167-LD-POPUP-TIME-ONLY`) ON FOUNDER
+		 *     CARRIER ITEM 306, 2026-08-27: *"We also dont have the awareness
+		 *     or market share - I think we keep our pop ups time only."*
+		 *     ⚠ RELAYED via the Chief of Staff, not witnessed by this author.
+		 *
+		 * ⛔ THIS ASSERTION READ `"mode":"gated"` UNTIL 1.19.299, and the
+		 *    change of literal is recorded rather than quietly swapped. What
+		 *    this line has always been FOR is unchanged — proving that the
+		 *    surface rendering on /complete-collection/ is the parent A/B
+		 *    popup and not the exit-intent modal. Item 306 moved that popup
+		 *    from mode `gated` to mode `simple`; the assertion follows it.
+		 *
+		 * ⭐ WHY THIS IS THE STRONGEST EVIDENCE IN THE SUITE FOR ITEM 306:
+		 *    unlike a source-level check, this reads the popup's config out of
+		 *    the REAL RENDERED HTML of the page that takes more first arrivals
+		 *    than any other. If the new trigger did not actually reach a
+		 *    visitor, this line would fail.
+		 */
+		bhp_c164_assert(
+			false === strpos( $c164_cbody, 'exit-intent-popup' )
+				&& false !== strpos( $c164_cbody, '&quot;mode&quot;:&quot;simple&quot;' )
+				&& false === strpos( $c164_cbody, '&quot;mode&quot;:&quot;gated&quot;' ),
+			'2: ⭐ item 306: the TIME-ONLY parent popup renders there, not the exit-intent modal and not a gated trigger',
+			$failures
+		);
+
+		/* ⛔ AND THE RENDERED CONFIG CARRIES NO SCROLL THRESHOLD. Asserted on
+		 *    the HTML rather than the template, because this is the page where
+		 *    a leftover threshold would cost the most. */
+		bhp_c164_assert(
+			false === strpos( $c164_cbody, 'scrollPct' )
+				&& false === strpos( $c164_cbody, '&quot;scrollPct&quot;' ),
+			'2: ⛔ item 306: the rendered popup config on /complete-collection/ carries NO scroll threshold',
+			$failures
+		);
+	}
 }
 if ( function_exists( 'wc_get_page_permalink' ) ) {
 	$c164_suppress['the cart'] = wc_get_page_permalink( 'cart' );

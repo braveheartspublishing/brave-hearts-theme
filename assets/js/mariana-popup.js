@@ -11,6 +11,28 @@
  * No email addresses or personal data are ever stored client-side.
  *
  * ---------------------------------------------------------------------
+ * ⛔⛔ THIS FILE IS SERVED TO THE PUBLIC UNMINIFIED. ITS COMMENTS ARE
+ *     PUBLIC OUTPUT — WRITE THEM ACCORDINGLY.
+ *
+ * Stylesheets in this theme are comment-stripped at build time by
+ * `bhp_minified_style_src()` (functions.php) and `tools/build-css.mjs`, so
+ * a CSS essay costs the visitor nothing. THERE IS NO EQUIVALENT FOR JS.
+ * Every byte of this comment block is downloaded by every visitor and read
+ * by every crawler.
+ *
+ * ⛔ Therefore, in THIS file and every other file under `assets/js/`:
+ *     - NO internal call names (the conversational aliases used in briefs);
+ *     - NO internal working-draft filenames or Business OS paths;
+ *     - NO verbatim founder quotations.
+ *   Engineering reasoning stays. Internal machinery does not.
+ *
+ * ⭐ 1.19.293 (2026-08-26, `CYCLE166-CX-ANNOTATION-STRIP`) removed two
+ *    internal call names from the comments below. The wider cleanup — the
+ *    remaining quotations and identifiers in this and other served scripts —
+ *    is recommended as a JS analogue of the CSS build step, which keeps the
+ *    prose in the repository and off the wire. Until that exists, this
+ *    constraint is enforced by whoever edits the file.
+ * ---------------------------------------------------------------------
  * WAVE 1 (2026-08-04, theme 1.19.168) — THREE ADDITIONS, NO REWRITES.
  *
  * `.claude/rules/funnels.md` is explicit: "don't fork the engine to add a
@@ -101,7 +123,56 @@
 (function () {
     'use strict';
 
+    /*
+     * ═══════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.292 (2026-08-26, `CYCLE166-CX-CAPTURE-REPAIR`) — THE COOLDOWN
+     *    IS SPLIT BY HOW THE VISITOR LEFT. NOT EVERY CLOSE MEANS "NO".
+     * ═══════════════════════════════════════════════════════════════════
+     *
+     * ⭐ THE DISTINCTION IS INTENT, and it is the whole justification:
+     *
+     *    THE X BUTTON IS A DECISION. A visitor who finds the small close
+     *    control and clicks it has read the offer and declined it. Asking
+     *    again soon is nagging. → 10 DAYS, UNCHANGED, deliberately.
+     *
+     *    AN OVERLAY CLICK AND `Escape` ARE REFLEXES, NOT DECISIONS. They
+     *    are what people do to make an unexpected thing go away — very
+     *    often before reading it at all. On touch especially, an overlay
+     *    tap is frequently a MIS-TAP: the dialog does not fill the screen,
+     *    a finger lands beside it, and the offer is gone. Treating that as
+     *    a considered "no" and then hiding the offer for ten days throws
+     *    away a visitor who never actually saw it.
+     *
+     * ⭐ 24 HOURS IS THE CHOICE, and the brief allowed 24-48h. The reasoning,
+     *    recorded so it is not re-litigated from taste:
+     *      - It is the shortest of the offered options, and the asymmetry
+     *        should favour recovery: the cost of re-asking a genuinely
+     *        uninterested visitor is one dismissed overlay, while the cost
+     *        of a ten-day silence after a mis-tap is a lost subscriber.
+     *      - It still guarantees AT MOST ONE PROMPT PER DAY per surface, so
+     *        it cannot become the "popup on every page load" pattern the
+     *        session guard and dwell floor already exist to prevent.
+     *      - 48h splits the difference without buying anything: nobody has
+     *        argued a mis-tap deserves two days of silence rather than one,
+     *        and 24h is the value that can be lengthened later on evidence.
+     *        Lengthening a cooldown after launch is safe; shortening one
+     *        re-exposes visitors who already said no.
+     *
+     * ⚠️ THIS IS A JUDGEMENT, NOT A MEASUREMENT. There is no experiment
+     *    behind 24h and none is claimed. It is reversible in one constant.
+     *
+     * ⛔ NO STORAGE KEY IS ADDED, RENAMED OR SPLIT. Both paths still write
+     *    the SAME `<prefix>_dismissed_until` key, per funnel, exactly as
+     *    before — only the VALUE written differs. Funnel isolation is
+     *    therefore untouched by construction: the parent funnel writes its
+     *    key, the teacher funnel writes its own, and neither can see the
+     *    other's. The event name pushed on close is also unchanged, so no
+     *    analytics series is split or renamed.
+     */
     var DISMISS_DAYS = 10;
+
+    // A reflexive exit — overlay click or Escape. Hours, not days.
+    var SOFT_DISMISS_HOURS = 24;
 
     // Written by EVERY popup that opens, read only by popups that ask for
     // it via config.sessionGuard. See the header note on why this does not
@@ -462,7 +533,8 @@
         function trapFocus(event) {
             if (event.key === 'Escape') {
                 event.preventDefault();
-                close(true);
+                // 1.19.292: reflexive exit -> short cooldown. See SOFT_DISMISS_HOURS.
+                close(true, 'soft');
                 return;
             }
             if (event.key !== 'Tab') {
@@ -515,14 +587,35 @@
             pushEvent(config.source, eventName(config.eventPrefix, 'view'), eventExtra(viewExtra));
         }
 
-        function close(wasDismissed) {
+        /*
+         * `wasDismissed` keeps its original meaning — truthy means "the
+         * visitor closed this, write a cooldown". 1.19.292 adds an OPTIONAL
+         * second argument naming HOW they closed it, so every existing
+         * caller and every future one behaves exactly as before unless it
+         * opts in. `'soft'` is the only special value; anything else, including
+         * omitting it entirely, is the deliberate 10-day dismissal.
+         */
+        function close(wasDismissed, dismissKind) {
             popup.hidden = true;
             popup.classList.remove('is-open');
             document.removeEventListener('keydown', trapFocus, true);
 
             if (wasDismissed) {
-                var until = Date.now() + DISMISS_DAYS * 24 * 60 * 60 * 1000;
+                var cooldownMs = dismissKind === 'soft'
+                    ? SOFT_DISMISS_HOURS * 60 * 60 * 1000
+                    : DISMISS_DAYS * 24 * 60 * 60 * 1000;
+                var until = Date.now() + cooldownMs;
                 writeLocal(STORAGE_DISMISSED_UNTIL, String(until));
+                /*
+                 * ⛔ THE CLOSE EVENT IS UNCHANGED — same name, same payload,
+                 *    no new `dismiss_kind` dimension. Adding one here would
+                 *    be a GTM/GA4 change, and GTM was another desk's lane;
+                 *    two desks editing the same measurement surface in one
+                 *    night is how a container gets a half-defined field.
+                 *    Recommended as a FOLLOW-UP in the handoff instead,
+                 *    because knowing the soft/hard split would tell us
+                 *    whether 24h was the right call.
+                 */
                 pushEvent(config.source, eventName(config.eventPrefix, 'close'), eventExtra({ page_type: popup.getAttribute('data-page-type') || '' }));
             }
 
@@ -544,7 +637,9 @@
         }
         if (overlay) {
             overlay.addEventListener('click', function () {
-                close(true);
+                // 1.19.292: reflexive exit, and the most likely MIS-TAP of
+                // the four close paths -> short cooldown.
+                close(true, 'soft');
             });
         }
         if (form) {
@@ -688,11 +783,15 @@
         // a fast UPWARD flick after the visitor has already read some depth
         // (`scrollPct`). Deliberately conservative — `upThresholdPx` of
         // travel inside `upWindowMs` — so ordinary re-reading does not fire
-        // it. ⚠ Merry (`marketing-growth`) recorded a preference AGAINST a
-        // scroll-up trigger in DRAFT-2026-08-04-WAVE1-CAPTURE-COPY.md §1.4
-        // ("not a scroll-up hijack"); the build brief specified one. Both
-        // are recorded; the threshold is set high precisely because of her
-        // reservation. Nothing here hijacks or blocks the scroll — the
+        // it. ⚠ The marketing desk recorded a preference AGAINST a
+        // scroll-up trigger ("not a scroll-up hijack"); the build brief
+        // specified one. Both are recorded; the threshold is set high
+        // precisely because of that reservation. (⛔ 1.19.293
+        // `CYCLE166-CX-ANNOTATION-STRIP`: this file is SERVED UNMINIFIED to
+        // every visitor, so its comments are public. Internal call names and
+        // internal draft filenames were removed from this block for that
+        // reason and must not be reintroduced — see the note at the head of
+        // this file.) Nothing here hijacks or blocks the scroll — the
         // listener is passive and never calls preventDefault().
         //
         // -------------------------------------------------------------

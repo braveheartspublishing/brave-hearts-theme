@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.291
+Version: 1.19.306
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -645,8 +645,24 @@ body.admin-bar .site-header { top: 32px; }
 /* Adventure Books positioning (2026-07-16): stack the nav item's two lines
  * on desktop/tablet; the accessible name comes from aria-label
  * (bhp_adventure_books_nav_aria_label() in functions.php), not this text,
- * so the visual line break here is purely presentational. */
-.site-nav .menu-item--adventure-books > a {
+ * so the visual line break here is purely presentational.
+ *
+ * ⭐⭐ 1.19.303 (2026-08-27, CYCLE167-LD-HUB-POLISH) — FREE RESOURCES JOINS THIS
+ *     SELECTOR RATHER THAN GETTING A RULE OF ITS OWN. Founder carrier item 311:
+ *     "Free on top of Resources just like Adventure Books and make sure all the
+ *      fonts match all teh nav bar fonts, spacing and style."
+ *     ⛔ A SECOND RULE WITH THE SAME DECLARATIONS WOULD HAVE SATISFIED THE
+ *       SCREENSHOT AND FAILED THE INSTRUCTION. "Just like Adventure Books" is a
+ *       statement about sameness over time, and two copies of a rule drift the
+ *       first time somebody edits one. Sharing the selector means this item
+ *       cannot diverge from the item it was told to match.
+ *     ⭐ Everything else — family, size, weight, tracking, colour, hover — is
+ *       already inherited from `.site-nav a` above and from the
+ *       `@container (max-width: 1236px)` override, so nothing is restated here.
+ *       That inheritance is the whole point: the pseudo-element label this
+ *       replaces sat OUTSIDE it and had no letter-spacing at all. */
+.site-nav .menu-item--adventure-books > a,
+.site-nav .menu-item--free-resources > a {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -815,8 +831,22 @@ body.admin-bar .site-header { top: 32px; }
   .site-nav a { padding: 14px 0; font-size: 12px; }
   /* Adventure Books positioning: single line in the mobile dropdown --
    * stacking two short lines reads fine on a wide desktop nav bar but adds
-   * unneeded height to an already-long vertical mobile menu list. */
-  .site-nav .menu-item--adventure-books > a { flex-direction: row; gap: .35em; }
+   * unneeded height to an already-long vertical mobile menu list.
+   *
+   * ⭐⭐ 1.19.303 — FREE RESOURCES FOLLOWS IT HERE TOO, AND THIS IS THE ONE
+   *     PLACE THE BRIEF AND THE FOUNDER'S OWN WORDS HAD TO BE RECONCILED.
+   *     The brief said "both viewports". The founder said "just like Adventure
+   *     Books" — and Adventure Books is deliberately NOT stacked in the mobile
+   *     dropdown, for the reason written directly above. Stacking only this one
+   *     item on mobile would have made it the odd item out in the very list it
+   *     was told to match. ⛔ SO: STACKED ON DESKTOP, SINGLE LINE ON MOBILE,
+   *     IDENTICAL TO ADVENTURE BOOKS AT BOTH WIDTHS — and both viewports are
+   *     verified, which is what "both viewports" buys either way.
+   *     ⚠ REPORTED TO THE CHIEF OF STAFF AS AN INTERPRETATION CALL, not
+   *       silently made. If the founder wants it stacked on the phone as well,
+   *       it is this one selector and Adventure Books should move with it. */
+  .site-nav .menu-item--adventure-books > a,
+  .site-nav .menu-item--free-resources > a { flex-direction: row; gap: .35em; }
   /* Same "a.site-nav__cta" specificity as the base hide rule above (0,2,1)
    * -- a bare .site-nav__cta here would tie with .site-nav a's own
    * padding/font-size rule and lose to the base hide rule outside this
@@ -4534,6 +4564,78 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product form > button
   width: 100%;
 }
 
+/* ── D2 · 1.19.295 — THE SHIP-TO-HOME CONTROL. `CYCLE167-LD-002`. ────────────
+   ⛔ WHY THIS MODIFIER EXISTS. On a school-visit-flagged session the server
+      REFUSES the coloring book (`FD-642`), and until 1.19.295 this card still
+      rendered a fully live-looking ADD TO CART for it: the parent pressed a
+      real button and got a refusal notice. The control is now a plain anchor
+      to the shop with visit pickup switched off, and it must LOOK different
+      from the live adds beside it or the fix is cosmetic only.
+   ⭐ OUTLINE, NOT FILL. Every other card in this grid carries a filled primary
+      ADD TO CART. This one is deliberately quieter because it is a different
+      KIND of action with a real cost attached: following it gives up
+      hand-delivery in this browser.
+   ⛔ IT INHERITS ALL ITS GEOMETRY from `.bhp-shop-atc` above — 48px floor,
+      wrapping label, stretch width. Only the colour treatment is restated
+      here, so a future change to the card's sizing cannot leave this control
+      behind at the old measurements. */
+/* ⛔⛔ NO `!important` HERE, AND THAT IS THE WHOLE DESIGN. The markup for this
+      control deliberately does NOT carry the `button` class, so
+      `.woocommerce ul.products li.product .button`'s two
+      `background: … !important; color: white !important` declarations
+      (style.css:1132 and :4416) NEVER MATCH IT.
+   ⭐ THE FIRST ATTEMPT DID CARRY `button` and tried to out-weigh those rules
+      with `!important` of its own. That works only for as long as nobody adds
+      a later, more specific `!important` — and a control whose HONESTY depends
+      on winning a specificity fight is a control that will silently start
+      looking like a live ADD TO CART again. Removing the class removes the
+      contest.
+   ⛔ GEOMETRY STILL COMES FROM `.bhp-shop-atc` above (48px floor, wrapping
+      label, card insets), which sets no colour at all. Only the treatment is
+      here, so the two cannot drift apart. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome {
+  background: transparent;
+  color: var(--color-forest);
+  border: 2px solid var(--color-forest);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:hover,
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:focus {
+  background: var(--color-forest);
+  color: var(--color-white);
+  text-decoration: none;
+}
+
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:focus-visible {
+  outline: 3px solid var(--color-gold-deep);
+  outline-offset: 2px;
+}
+
+/* ⭐ THE HONEST HALF, on the bundle card's ship-to-home state. It is muted but
+      NOT fine print: this sentence is what tells a parent that following the
+      link gives up hand-delivery. ⛔ Never style it out of sight, and never
+      render the control without it. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-offer__shiphome-note {
+  margin: var(--space-2) var(--bhp-card-gutter) var(--bhp-card-gutter);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* The ship-home bundle card stacks price, control and note; the wrapper pins
+   to the card floor exactly as the ordinary offer card's does. */
+body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-offer--shiphome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
 /* ── D · THE WRAPPER — one width, pinned to the card floor ────────────────────
    ⭐ `margin: auto <inset> <inset>` is `margin-top: auto` (the bottom pin) plus
       that card kind's inset, in one declaration.
@@ -5473,19 +5575,82 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
  * is shown. Uses the same @container as the rest of the header so it
  * responds to header-inner's true width, not window.innerWidth. */
 @container (min-width: 1117px) {
+  /* ⭐⭐ 1.19.303 (2026-08-27, CYCLE167-LD-HUB-POLISH) — `font-size: 0` IS GONE,
+   *     AND ITS REMOVAL IS THE FIX, NOT A SIDE EFFECT.
+   *
+   *     SUPERSEDED DECLARATION, PRESERVED VERBATIM so the movement is visible
+   *     and is not re-derived:   font-size: 0 !important;
+   *
+   *     That line existed to hide the PHP title so the `::after` below could be
+   *     the visible desktop label — a trick from when the label was the long
+   *     "Expedition Guides". Founder carrier item 311 asks for two lines whose
+   *     "fonts match all teh nav bar fonts, spacing and style", and MEASURED
+   *     LIVE at 1.19.302 the pseudo-element did not: 10.5px with NO
+   *     letter-spacing, against the bar's 10.5px/.14em (1.47px). It could not
+   *     match, because it sat outside `@container (max-width: 1236px)`'s
+   *     `.site-nav a` override.
+   *
+   *     With the title visible again, this item is an ordinary `.site-nav a`
+   *     carrying two `.site-nav__label-line` spans, and the shared
+   *     `.site-nav .menu-item--adventure-books > a, .site-nav
+   *     .menu-item--free-resources > a` rule near the top of this file stacks
+   *     it. ⭐ THE FOURTH LABEL SITE IS THEREBY CLOSED: after this release the
+   *     nav label lives in PHP only, so the class of defect the hub lane
+   *     recorded here — "renaming only the PHP would have left every desktop
+   *     visitor reading the old string, with no error and no failing test" —
+   *     cannot recur, because there is no longer a second place to forget. */
   .menu-item--educator-guides > a {
-    font-size: 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
   }
 
+  /* ⭐⭐ 1.19.301 (2026-08-27, CYCLE167-LD-FREE-RESOURCES-HUB) — THE LABEL A
+   *     DESKTOP VISITOR ACTUALLY READS. Founder carrier item 300 ("A"): this
+   *     slot becomes FREE RESOURCES and points at /free-resources/.
+   *
+   *     SUPERSEDED VALUE, PRESERVED VERBATIM so the movement is visible and is
+   *     not re-derived:  content: 'Expedition Guides';
+   *
+   * ⛔⛔ THIS LINE IS WHY THE RENAME IS NOT A ONE-FILE CHANGE, AND IT IS THE
+   *     DEFECT THIS RELEASE MOST NEARLY SHIPPED. The rule above sets the anchor
+   *     to `font-size: 0 !important`, so at container widths >= 1117px the PHP
+   *     title is INVISIBLE and this pseudo-element IS the nav label. Renaming
+   *     only `bhp_canonicalize_teacher_menu_items()` would have left every
+   *     desktop visitor reading "Expedition Guides" on a link that goes to
+   *     /free-resources/ — no PHP error, no console warning, and not one test
+   *     in this repository would have failed. Merry's §23 spec named three PHP
+   *     sites for this label and did not name this one.
+   *     ⭐ `tests/test-cycle167-free-resources.php` §1c/§1d now assert BOTH the
+   *     new string's presence and the old string's absence from every rule.
+   *
+   * ⚠ THE SELECTOR KEEPS ITS NOW-HISTORICAL NAME. `menu-item--educator-guides`
+   *   is an internal hook no visitor reads, and it is the join between this
+   *   rule and the PHP that adds the class; renaming it would mean touching two
+   *   files and every test that pins it to change a string nobody sees. The
+   *   same call this theme already made for the `bhp_mariana_popup` storage
+   *   prefix. `menu-item--free-resources` is added alongside it in PHP for
+   *   future work, so nothing had to be removed here. */
+  /* ⭐⭐ 1.19.303 — THE PSEUDO-ELEMENT LABEL IS RETIRED, NOT RENAMED.
+   *
+   *     SUPERSEDED DECLARATIONS, PRESERVED VERBATIM (the second supersession
+   *     this rule has carried, and both are kept so the whole movement reads in
+   *     one place):
+   *         content: 'Expedition Guides';        <- pre-1.19.301
+   *         content: 'Free Resources';           <- 1.19.301
+   *         display: block; font-size: 10.5px; line-height: 1.35;
+   *
+   *     ⛔ THE RULE IS KEPT AND NEUTRALISED RATHER THAN DELETED. `content: none`
+   *       is what actually stops the pseudo-element generating, and leaving the
+   *       selector in place with its history attached is what stops a future
+   *       pass "restoring" a label site this release deliberately removed.
+   *     ⭐ `tests/test-cycle167-free-resources.php` §1c/§1d are rewritten to
+   *       assert the NEW arrangement: no `content:` label on this selector, the
+   *       two-span title in PHP, and — unchanged and still load-bearing — that
+   *       the string "Expedition Guides" appears in no rule anywhere. */
   .menu-item--educator-guides > a::after {
-    content: 'Expedition Guides';
-    display: block;
-    font-size: 10.5px;
-    line-height: 1.35;
+    content: none;
   }
 }
 /* The old >=1101px CTA margin-left/padding hotfix is retired: .header-inner's
@@ -9155,13 +9320,74 @@ a.header-expedition-cta {
    edge. Observed in an offline shot of this stylesheet before the staging turn
    was available. The `img` is the element with a fixed width, so it is the
    element that can be centred. */
+/* ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — THE COVER IS
+      ENLARGED, AND THE SOURCE ASSET WAS REBUILT SO IT COULD BE.
+
+   ⭐ THE FINDING: at 96px the kit's own cover title is unreadable — the
+      visitor's only sight of the document they are handing an address over
+      for, too small to read its own name.
+
+   ⛔ ENLARGING THE OLD ASSET WOULD HAVE MADE IT SOFT, NOT BIGGER. The shipped
+      artwork was 173x224 intrinsic, so 96px was 1.8x device pixels; rendering
+      that same file at 160px would have been 1.08x — visibly mushy on every
+      phone and on any retina desktop. A CSS-only "fix" here would have traded
+      one legibility defect for another.
+
+   ⭐ SO THE ASSET WAS REGENERATED AT 346x448 FROM THE REAL PDF — page 1 of
+      the live `Reluctant-Reader-Adventure-Kit-1.pdf`, fetched from the
+      production document root this build, decoded at its native 2552x3302 and
+      resampled down. At 160px that is 2.16x device pixels.
+   ⛔ THE ASPECT RATIO IS BYTE-IDENTICAL: 173/224 and 346/448 both reduce to
+      0.772321. That is load-bearing, because two OTHER surfaces render this
+      same asset (the signup modal and the Adventure Kit thank-you page) and
+      both are HEIGHT-driven with `width: auto`, taking their shape from the
+      intrinsic attributes. An aspect change would have reflowed both. It did
+      not change, so they are untouched — verified by reading both rules
+      before regenerating, not after. */
 .mariana-popup--ab .popup-ab__kit-cover img {
   display: block;
-  width: 96px;
+  width: 160px;
   height: auto;
   margin-inline: auto;
   border-radius: 3px;
   box-shadow: 0 4px 10px rgba(var(--color-jungle-rgb), 0.22);
+}
+
+/* ⭐ 1.19.296 — THE WORD **FREE**, RESTORED TO THE TREATMENT ANDREW ORDERED
+      AT 1.19.207: "ALL CAPS, bold and larger".
+
+   ⭐ The all-caps is in the string (`parent-ab-popup.php`). The BOLD and the
+      LARGER are presentation and live here, which is where his instruction
+      always said they lived. The span is emitted by
+      `bhp_popup_ab_emphasise_free()`, which escapes before it wraps.
+
+   ⛔ THIS RULE IS NO LONGER TIED TO AN EXPERIMENT, AND THAT IS THE FIX. The
+      previous incarnation of this selector was deleted at 1.19.267 alongside
+      the A/B markup, which is how a standing founder instruction became
+      collateral damage of switching a test off. It is now scoped to the
+      surface, not to the test, so turning any experiment on or off cannot
+      take it away again.
+
+   ⭐ `em` NOT `rem`: the size step is relative to the heading it sits inside,
+      so it scales with the heading's own clamp instead of fighting it. */
+.mariana-popup--ab .mariana-popup__dialog h2 .popup-ab__free {
+  font-weight: 800;
+  font-size: 1.28em;
+  letter-spacing: 0.01em;
+}
+
+/* ⭐ 1.19.296 — THE SUBHEAD SLOT.
+   ⛔ NOTHING RENDERS THIS TODAY. The template emits the element only when a
+      non-empty string arrives through `bhp_parent_popup_subhead`, and it ships
+      with no default on purpose — the audit's proposed line was an unverified
+      claim about the Kit's contents and was refused rather than softened. The
+      rule exists so the copy Andrew picks is a one-line change and not a
+      styling exercise on the night. */
+.mariana-popup--ab .popup-ab__subhead {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-ink);
 }
 
 /* 3 · THE HEADLINE — the only sentence in the dialog, so it may have the
@@ -9312,13 +9538,424 @@ a.header-expedition-cta {
     max-width: min(21rem, calc(100vw - 2 * var(--space-3)));
     padding: var(--space-6) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
   }
-  .mariana-popup--ab .popup-ab__kit-cover img { width: 84px; }
+  /* ⭐ 1.19.296 — 84px -> 132px, the same legibility fix as the desktop rule
+        above and in the same proportion. The 346px source gives 2.6x device
+        pixels here, so a phone gets the sharpest render of the three. */
+  .mariana-popup--ab .popup-ab__kit-cover img { width: 132px; }
   .mariana-popup--ab .mariana-popup__dialog h2 {
     font-size: 1.2rem;
     line-height: 1.2;
     margin-block: 0 var(--space-3);
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 9 · 1.19.298 (2026-08-27, `CYCLE167-LD-POPUP-PHOTO`) — THE FOUNDER'S
+          PHOTOGRAPH, THE RIGHT-TO-LEFT GRADIENT, AND THE PLAYFUL SQUIGGLE.
+   ══════════════════════════════════════════════════════════════════════════
+
+   ⭐ Andrew Signore, 2026-08-27, VERBATIM (carrier item 297): *"Did we come to
+      a conclusion on adding a picture of me and charlotte as a gradient right
+      to left with like a playful squiggle in between for the pop ups?"*
+
+   ⛔ EVERY SELECTOR IN THIS SECTION IS WRITTEN `--photo` FIRST AND `--ab`
+      SECOND, AND THAT ORDER IS LOAD-BEARING RATHER THAN A STYLE CHOICE. The
+      suite counts every reference to the SHARED popup block inside this
+      stylesheet section and requires each one to be immediately preceded by
+      the `--ab` scope — the guard that stops a rule here from silently
+      restyling the teacher funnel, the timed parent popup and the exit-intent
+      modal. Writing the compound the other way round would satisfy CSS and
+      break that guard, so the compound reads `--photo` then `--ab` then the
+      shared class. Do not "tidy" the order.
+
+   ⛔ EVERYTHING BELOW IS GATED ON `--photo`, WHICH THE TEMPLATE EMITS ONLY
+      WHEN ALL FOUR IMAGE FILES ARE PRESENT. A mis-deployed asset therefore
+      does not produce a half-built two-column dialog: it produces the
+      1.19.297 popup, unchanged, because none of these rules match.
+
+   ⛔ NOTHING HERE PAINTS BEFORE THE POPUP OPENS. The hidden dialog is
+      `display: none` from parse, and the photograph is `loading="lazy"`, so
+      neither the layout nor the image costs the page load anything.
+
+   ⭐ THE HIERARCHY IS UNCHANGED AND IS PROTECTED HERE, NOT JUST ASSERTED.
+      The photograph is given its own column (desktop) or its own band
+      (mobile). It never overlaps the headline, the subhead or the button, it
+      carries no text, and no rule below raises its visual weight above the
+      copy: it is masked INTO the ground rather than framed on top of it.
+   -------------------------------------------------------------------------- */
+
+/* THE GROUND, AS AN RGB TRIPLE.
+   ⚠ THIS MUST TRACK `--color-ivory` (#fffaf0). It exists because the mask and
+     the seam fade need the same colour with an alpha channel, and the palette
+     ships `--color-ivory` as a hex with no companion RGB triple the way
+     `--color-gold` and `--color-forest` both have. Declared locally rather
+     than added to the root palette, because a new global token is a palette
+     decision and this is a popup pass. */
+.mariana-popup--photo {
+  --popup-ab-ground-rgb: 255, 250, 240;
+  --popup-ab-photo-w: 296px;
+}
+
+/* 9a · THE PHOTOGRAPH ITSELF.
+   ⛔ THE LEFT EDGE IS MASKED, NOT PAINTED OVER. An ivory overlay would have
+      been the obvious way to make "a gradient right to left", and it is the
+      wrong one: an overlay milks the whole image, so the faces lose contrast
+      to buy an edge. `mask-image` removes the photograph's own pixels
+      instead, so the parts that remain are the untouched photograph and the
+      part that goes reveals the dialog's own cream behind it. The faces keep
+      every bit of their contrast.
+   ⚠ GRACEFUL WITHOUT THE MASK: a browser that supports neither the prefixed
+     nor the unprefixed property renders the photograph with a straight edge.
+     That is a plainer popup, not a broken one, which is why there is no
+     `@supports` fallback painting an overlay — the fallback would be worse
+     than the degradation.
+   ⛔ `object-fit: cover` IS SAFE HERE BY MEASUREMENT, NOT BY HOPE — and the
+      measurement is restated at 1.19.299 because the photograph changed and
+      the old numbers described the old frame.
+      ⚠ SUPERSEDED WORDING, PRESERVED so the movement is visible rather than
+        re-derived: this comment previously read *"the portrait file is cut 4:5
+        ... leaves a 6.8% margin on the tighter side ... down to an aspect of
+        0.692 ... hold the rendered panel at 0.70 or wider"*. Three of those
+        numbers were already stale at 1.19.298 — the file shipped at 0.625,
+        not 4:5, and the floor its build script asserted was 0.535, not 0.70.
+      ⭐ THE LIVE NUMBERS, and each is asserted from the other end by
+        `build_popup_photo2.py` before it writes a byte:
+          · the portrait file is cut **0.625** (560x896)
+          · the panel can never be narrower than `--popup-ab-photo-w` divided
+            by the `max-height` below: **296/540 = 0.548**
+          · the crop is safe with `cover` down to **0.5425**, which clears that
+            floor
+          · the panel measures **296x507 (0.584)** on staging in the normal
+            case */
+.mariana-popup--photo .popup-ab__photo {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  line-height: 0;
+}
+.mariana-popup--photo .popup-ab__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* ⭐ The band (§9d) is `aspect-ratio: 5 / 4`, which is the landscape file's
+     own ratio, so `cover` trims nothing there and this value is inert. The
+     desktop panel overrides it — see §9c. */
+  object-position: 50% 50%;
+}
+
+/* 9b · THE SQUIGGLE — drawn, playful, and two-pass.
+   ⭐ The `-ink` path is the pen stroke; the `-ghost` path is the same wave
+      offset by a pixel and drawn much fainter, which is what a line looks
+      like when a hand goes over it twice. A single crisp stroke reads as a
+      border, and he did not ask for a border.
+   ⛔ NO `vector-effect: non-scaling-stroke`. The SVG stretches with
+      `preserveAspectRatio="none"` and the stroke stretching slightly with it
+      is part of why it reads as ink rather than as a rule.
+   ⭐ TWO GOLDS. The palette note at the top of this stylesheet records that
+      `--color-gold` washes out on cream; this dialog's ground IS cream. So
+      the body of the stroke is `--color-gold` and the second pass is
+      `--color-gold-deep`, which gives the line enough presence to be seen
+      without turning a decorative squiggle into a hard divider. */
+.mariana-popup--photo .popup-ab__seam {
+  position: relative;
+  line-height: 0;
+  pointer-events: none;
+}
+.mariana-popup--photo .popup-ab__squiggle {
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mariana-popup--photo .popup-ab__squiggle-ink {
+  stroke: var(--color-gold);
+  stroke-width: 2.6;
+}
+.mariana-popup--photo .popup-ab__squiggle-ghost {
+  stroke: var(--color-gold-deep);
+  stroke-width: 1.4;
+  opacity: 0.34;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9c · DESKTOP — HIS LAYOUT, LITERALLY: photo RIGHT, gradient RIGHT TO LEFT,
+        squiggle IN BETWEEN.
+   ══════════════════════════════════════════════════════════════════════════
+
+   ⭐ 700px, NOT 601px, AND THE REASON IS ARITHMETIC. The two-column dialog is
+      660px wide. The stylesheet's existing phone breakpoint is 600px, so
+      keying the columns to it would have put a 660px dialog on a 620px
+      viewport. Everything from 601px to 699px therefore takes the STACKED
+      treatment below at the ordinary 360px dialog width, which is a real
+      tablet-portrait case and not a gap.
+   ⚠ THE TEMPLATE'S `<source media>` BOUNDARY IS 639px AND IS DELIBERATELY NOT
+     THIS NUMBER. Between 640px and 699px a visitor takes the stacked layout
+     while having already been served the PORTRAIT crop. That costs nothing —
+     the stacked band is `object-fit: cover` over whichever file arrived, and
+     the portrait crop survives the band's shape by the same margin the
+     landscape one does. Making the two boundaries equal would have been
+     tidier and would have bought a second breakpoint's worth of media-query
+     churn for no visitor benefit. Stated rather than hidden. */
+@media (min-width: 700px) {
+  .mariana-popup--photo.mariana-popup--ab .mariana-popup__dialog {
+    max-width: min(660px, calc(100vw - 2 * var(--space-8)));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22px var(--popup-ab-photo-w);
+    grid-template-areas: "content seam photo";
+    align-items: center;
+    column-gap: var(--space-2);
+    /* ⛔ THE RIGHT PADDING GOES TO ZERO SO THE PHOTOGRAPH REACHES THE EDGE.
+       The clipping declared below then makes the dialog's own corner radius
+       clip it, which is why the photo needs no radius of its own and cannot
+       poke a square corner out of a rounded box. */
+    padding-right: 0;
+    /* ⛔ ONE AXIS ONLY, AND THE SUITE ENFORCES IT. The shared block gives this
+       dialog a viewport-bounded `max-height` with vertical scrolling. Clipping
+       BOTH axes here would take that away, and a tall popup on a short screen
+       would have its button clipped with no way to reach it. Clipping a single
+       axis is enough to make the dialog's corner radius clip the photograph,
+       which is the only reason any clipping is wanted here.
+       ⚠ The two-axis shorthand is deliberately NOT written out in this comment.
+         The assertion that guards this rule reads the rule body as a string,
+         so quoting the thing it forbids would fail the test while changing no
+         behaviour — the same trap the shared block's own prose describes. */
+    overflow-x: hidden;
+  }
+
+  .mariana-popup--photo .popup-ab__content { grid-area: content; }
+  .mariana-popup--photo .popup-ab__seam    { grid-area: seam; height: 78%; }
+  .mariana-popup--photo .popup-ab__photo   { grid-area: photo; }
+
+  /* ⭐ THE KIT COVER STEPS DOWN, AND IT DOES NOT GO AWAY.
+     ⛔ IT MUST NOT GO AWAY. Andrew Signore, 2026-08-19: *"Keep a small picture
+        of the actual front page of the kit on the pop up"* — a standing
+        instruction — and 1.19.297 additionally made this image the popup's own
+        honesty bridge from the promised CHAPTER to the delivered KIT, because
+        its accessible name is the Kit. Removing it to make room for the
+        photograph would have broken a founder instruction and an honesty
+        guarantee in one edit.
+     ⭐ 160px -> 108px ONLY where the photograph renders and only above 700px,
+        where the copy column is narrower than the whole dialog used to be. The
+        source asset is 346px wide, so 108px is 3.2x device pixels — sharper
+        than it has ever been rendered. */
+  .mariana-popup--photo .popup-ab__kit-cover img { width: 108px; }
+
+  /* ⛔ THE PANEL'S SHAPE IS CAPPED, AND THIS IS THE RULE THAT KEEPS THE CROP
+     GUARANTEE TRUE. Stretching to the dialog's full height is what makes the
+     photograph feel built in rather than pasted on, so that is the default.
+     But an unbounded stretch means an unbounded aspect ratio, and a tall
+     enough dialog would narrow the panel until `object-fit: cover` started
+     eating the book on one side and Charlotte on the other. 540px sits just
+     inside `--popup-ab-photo-w` divided by 0.535, which is the floor the
+     shipped crop was cut against and is asserted from the other end by the
+     build script that cuts it. Past the cap the photograph stops growing.
+     ⚠ IN PRACTICE THE CAP IS NOT REACHED at any copy length seen so far — the
+       panel measures 296x507 on staging, an aspect of 0.584. The cap is the
+       backstop for a longer headline, not the normal case. */
+  /* ⭐⭐ 1.19.299 — THE PANEL ANCHORS LEFT, AND IT IS ARITHMETIC RATHER THAN
+     TASTE. It exists because photograph 2 puts the book hard against the
+     frame's left edge: the leftmost glyph of the cover title is 55px in, out
+     of 4284. `cover` at `50%` trims symmetrically, so protecting the title
+     would need spare width on the LEFT that the photograph does not contain —
+     solving it puts the crop's origin at x = -158, and there is no such pixel.
+     ⛔ OBSERVED, NOT PREDICTED: rendered at the stylesheet's own floor panel
+        shape with the centred value, the panel clipped the "C" of "Charlotte"
+        and the "&" of "& Henry" mid-word. The simulation is filed at
+        `Business OS\WORKING-DRAFTS\lead-developer\cycle167-popup-photo\`.
+     ⭐ ANCHORING LEFT COSTS NOTHING. The whole trim budget then comes off the
+        RIGHT, which in this frame is a wall, a mirror surround and a couch,
+        and there is 13.2% of it against the 12.3% the floor can ask for.
+     ⚠ SCOPED TO THIS BREAKPOINT ON PURPOSE. Below 700px the photograph is a
+       5:4 band whose file already matches its box, so `cover` trims nothing
+       and an anchor there would be a no-op dressed up as a decision. */
+  .mariana-popup--photo .popup-ab__photo img { object-position: 0% 50%; }
+
+  .mariana-popup--photo .popup-ab__photo {
+    align-self: stretch;
+    max-height: 540px;
+    /* ⭐ THE NEGATIVE MARGINS CANCEL THE DIALOG'S OWN VERTICAL PADDING, so the
+       photograph reaches the top and bottom edges as well as the right one.
+       OBSERVED, and the reason this rule exists: with the padding left in
+       place the photograph rendered as a floating rectangle inset from three
+       edges — a picture pasted onto a popup rather than a popup built around
+       a picture. The numbers mirror the dialog's own padding shorthand
+       exactly, so changing that padding in one place still lines up.
+       ⛔ THE SHAPE STAYS INSIDE THE MEASURED BUDGET. Full bleed makes the
+          panel taller, which makes it proportionally narrower; the cap above
+          is what keeps it at 0.70 or wider, which is the floor the crop was
+          cut against. Measured on staging after this change rather than
+          reasoned about. */
+    margin-block: calc(-1 * var(--space-6)) calc(-1 * var(--space-4));
+  }
+
+  /* ⭐⭐ "A GRADIENT RIGHT TO LEFT" — this is that sentence, as a rule.
+     The photograph is fully opaque at its right edge and dissolves as it
+     travels left, so its left side becomes the cream of the content field.
+     There is no seam to hide because there is no seam.
+     ⚠ The unprefixed property is listed second on purpose: browsers that
+       understand both take the later declaration, and the prefixed one is
+       there for Safari, which still wants it. */
+  /* ⛔ THE STOPS ARE MEASURED AGAINST THE SUBJECTS, NOT CHOSEN FOR LOOK, AND
+     THE FIRST SET WAS WRONG. A gradient reaching full opacity only 42% of the
+     way in from the right left the LEFT SIDE OF ANDREW'S FACE at about 0.72
+     alpha and the book's title at about 0.14 — the photograph's two most
+     important things, half dissolved. Seen on staging, not predicted.
+     ⭐ RE-MEASURED AT 1.19.299 AGAINST PHOTOGRAPH 2. THE STOPS DID NOT MOVE;
+     the numbers they are checked against did, and they still hold. Positions
+     are given as fractions OF THE RENDERED PANEL (crop fraction divided by the
+     0.934 of the crop that the typical panel shows, left-anchored), because
+     that is what the mask is actually painted across:
+        the book's title block 2%–43% · Andrew's face 35%–75% ·
+        Charlotte's face 57%–93%.
+     Reaching full opacity 62% in from the right therefore still puts BOTH
+     FACES ENTIRELY IN THE OPAQUE REGION, and lets the fade run out across the
+     book alone — which dissolves from solid at its right edge to roughly a
+     quarter alpha at its left. That is a real right-to-left gradient AND a
+     photograph whose subjects are all still there.
+     ⚠ SUPERSEDED, preserved: photograph 1's figures were "the book's title
+       block 7%–44%, Andrew's face 39%–68%, Charlotte's face 59%–86%". They
+       described a different frame and are kept so a reader can see that this
+       comment was re-checked rather than carried across. */
+  .mariana-popup--photo .popup-ab__photo {
+    -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) 62%, rgba(0, 0, 0, 0.55) 84%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) 62%, rgba(0, 0, 0, 0.55) 84%, rgba(0, 0, 0, 0) 100%);
+  }
+
+  .mariana-popup--photo .popup-ab__squiggle--v { display: block; }
+
+  /* ⛔ THE CLOSE CONTROL GETS A GROUND OF ITS OWN, and this is a real finding
+     rather than polish. At this width the × sits at the dialog's top-right —
+     which is now inside the photograph. A bare glyph over a photograph is
+     unreadable on some pixels and invisible on others, and this is the only
+     way out of the modal (the "No thanks" control was deleted at 1.19.267).
+     A solid cream disc puts it back on a known background at every scroll
+     position of every crop. The 44px tap target is untouched. */
+  .mariana-popup--photo.mariana-popup--ab .mariana-popup__close {
+    background: rgba(var(--popup-ab-ground-rgb), 0.92);
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(var(--color-jungle-rgb), 0.18);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9d · MOBILE AND TABLET-PORTRAIT — THE HONEST ADAPTATION, DECIDED RATHER
+        THAN INHERITED.
+   ══════════════════════════════════════════════════════════════════════════
+
+   ⛔ THE DESKTOP TREATMENT DOES NOT SURVIVE A PHONE, AND SHRINKING IT WOULD
+      HAVE BEEN THE DISHONEST ANSWER. A 360px dialog split into a copy column
+      and a photo column leaves roughly 150px for each: a headline set four
+      words to the line, and two faces too small to recognise. Both halves
+      would be worse than either alone.
+
+   ⭐ SO THE PHOTOGRAPH BECOMES A BAND ACROSS THE TOP, ABOVE THE COPY, with
+      the squiggle beneath it and the gradient running BOTTOM TO TOP into the
+      cream. That is the same idea rotated a quarter turn: the photograph
+      dissolves into the field the copy sits in, and the squiggle marks the
+      join. It is also the shape the competitor pattern this direction came
+      from uses on a phone.
+
+   ⛔ THE PHOTOGRAPH GOES ABOVE THE COPY VISUALLY AND STAYS BELOW IT IN THE
+      DOM. `grid-template-areas` does the reordering, so a screen reader still
+      meets the headline, the subhead and the form before it meets a
+      description of a photograph. Visual order and reading order are allowed
+      to differ here precisely because the photograph is not the offer.
+
+   ⭐ THE BAND'S SHAPE IS THE FILE'S OWN SHAPE. `aspect-ratio: 5 / 4` is
+      exactly the landscape crop's ratio, so `object-fit: cover` has nothing
+      left to trim and the band shows the whole vetted crop — both faces and
+      the book title — with no second crop layered on top of the first. */
+@media (max-width: 699px) {
+  .mariana-popup--photo.mariana-popup--ab .mariana-popup__dialog {
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-areas:
+      "photo"
+      "seam"
+      "content";
+    /* The band reaches both side edges and the top edge; the dialog's own
+       radius clips its corners. */
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+    overflow-x: hidden;   /* one axis only, for the reason given above */
+  }
+
+  .mariana-popup--photo .popup-ab__content {
+    grid-area: content;
+    padding-inline: var(--space-4);
+  }
+  /* ⚠ THE PULL-UP IS SMALL, AND THE FIRST VALUE WAS NOT. At one space-3 of
+     negative top margin the squiggle sat INSIDE the photograph's bottom 12px
+     — drawn, present in the DOM, and invisible against a busy photograph.
+     Measured on staging (seam top 317, photograph bottom 329), not spotted by
+     eye. One space-1 tucks it into the band's fade instead of behind the
+     picture. */
+  .mariana-popup--photo .popup-ab__seam {
+    grid-area: seam;
+    height: 20px;
+    margin-block: calc(-1 * var(--space-1)) var(--space-2);
+  }
+  .mariana-popup--photo .popup-ab__photo {
+    grid-area: photo;
+    aspect-ratio: 5 / 4;
+    /* ⛔ THE FADE IS SHALLOW HERE, AND DELIBERATELY SO. A fade that began at
+       58% — which is what this rule first carried, by symmetry with the
+       desktop one rather than by measurement — put Charlotte's chin at under
+       half alpha. The fade now starts below her and its whole job is to
+       dissolve the band's hard bottom edge into the cream the copy sits on.
+       ⭐⭐ 1.19.299 — THIS STOP IS WHAT SIZED THE NEW BAND CROP, rather than
+          the other way round, and that is the useful part. The first box cut
+          for photograph 2 was 3800x3040, which made both faces bigger by
+          trimming the dead right quarter of the frame and looked like the
+          better crop. It put Charlotte's chin at 91.8% — inside this fade, at
+          about 0.68 alpha, a wash across the bottom of the one face the
+          founder asked for. The box was re-cut to 4200x3360, which puts her
+          chin at 83.0% and clear of the fade. ⛔ THE STYLESHEET CONSTRAINED
+          THE ASSET; the asset did not get to constrain the stylesheet.
+       ⚠ SUPERSEDED, preserved: this comment read "Charlotte's chin sits at 88%
+         of this crop's height", which was photograph 1's number. */
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 86%, rgba(0, 0, 0, 0.45) 96%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 86%, rgba(0, 0, 0, 0.45) 96%, rgba(0, 0, 0, 0) 100%);
+  }
+
+  .mariana-popup--photo .popup-ab__squiggle--h { display: block; }
+
+  /* ⚠ THE HORIZONTAL STROKE IS THICKER THAN THE VERTICAL ONE, AND IT HAS TO BE
+     TO LOOK THE SAME WEIGHT. `preserveAspectRatio="none"` stretches this SVG's
+     400x28 viewBox into roughly 335x20, so the Y axis is squashed to about
+     0.71 while X is 0.84 — and a stroke drawn at the vertical variant's width
+     lands on a phone as a hairline. Bumping the two stroke widths in the same
+     proportion restores the drawn look rather than making it heavier. */
+  .mariana-popup--photo .popup-ab__squiggle--h .popup-ab__squiggle-ink { stroke-width: 3.6; }
+  .mariana-popup--photo .popup-ab__squiggle--h .popup-ab__squiggle-ghost { stroke-width: 2; }
+
+  /* Same finding as the desktop rule, same fix: the × now sits over the band. */
+  .mariana-popup--photo.mariana-popup--ab .mariana-popup__close {
+    background: rgba(var(--popup-ab-ground-rgb), 0.92);
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(var(--color-jungle-rgb), 0.18);
+  }
+
+  /* ⛔ THE KIT COVER SHRINKS ON A PHONE **ONLY** WHERE THE PHOTOGRAPH ALSO
+     RENDERS. Two images stacked above the copy on a 844px-tall screen is what
+     pushes the button below the fold, and the button is the point of the
+     surface. 132px -> 96px keeps both pictures and keeps the CTA in view;
+     the 346px source still gives 3.6x device pixels at that size. Where the
+     photograph does NOT render, 1.19.296's 132px is untouched. */
+  .mariana-popup--photo .popup-ab__kit-cover img { width: 96px; }
+}
+
+/* ⛔ REDUCED MOTION IS NOT RELEVANT HERE AND NOTHING IS DECLARED FOR IT.
+   There is no animation, transition or transform in this section — the
+   squiggle is a static path and the gradient is a static mask. The shared
+   block's existing reduced-motion rule already covers the dialog's own
+   entrance. Recorded so the absence reads as a decision rather than an
+   oversight. */
 
 /* ═══════════════════════════════════════════════════════════════════════
  * 1.19.210 (2026-08-09, CYCLE148-LD-02/03) — FREE-ITEM BULLETS and the
@@ -12089,4 +12726,356 @@ body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
   body.woocommerce-shop .woocommerce-breadcrumb { margin-bottom: var(--space-3); }
   body.woocommerce-shop .woocommerce-result-count { margin-bottom: var(--space-3); }
   body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
+}
+
+/* ============================================================
+   CYCLE166-CX-AFFILIATE-RESTORE — "Also available on Amazon" (shop archive)
+   1.19.294 (2026-08-26)
+
+   Renders after the product loop on /shop/ only. Deliberately quiet: this is
+   a secondary purchase path and must not out-compete the direct add-to-cart
+   route on the cards above it, which carries the better margin.
+   ============================================================ */
+.bhp-shop-amazon {
+    margin: 3rem auto 0;
+    max-width: 46rem;
+    padding: 1.75rem 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.bhp-shop-amazon__heading {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    line-height: 1.3;
+}
+
+.bhp-shop-amazon__text {
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    opacity: 0.85;
+}
+
+.bhp-shop-amazon__list {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.bhp-shop-amazon__item {
+    margin: 0;
+}
+
+.bhp-shop-amazon__link {
+    display: inline-block;
+    padding: 0.35rem 0.25rem; /* keeps the tap target comfortably above the text box */
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.bhp-shop-amazon__disclosure {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    opacity: 0.7;
+}
+
+@media (min-width: 48em) {
+    .bhp-shop-amazon__list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem 1.5rem;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MARKET / EVENT QR CAPTURE PAGE — 1.19.296, 2026-08-27,
+   `CYCLE167-LD-CAPTURE-FIX-BUILD`. Template: `page-market-capture.php`.
+
+   ⭐ THE ONLY DESIGN CONSTRAINT THAT MATTERS: this is read one-handed, on a
+      phone, standing at a stall, often on bad event wifi. Everything the
+      visitor needs is in the first screen and there is nothing else on the
+      page to scroll to.
+
+   ⛔ EVERY SELECTOR IS SCOPED TO `.bhp-market`. Nothing here can reach the
+      shared acquisition-panel or signup-form rules that six other surfaces
+      depend on.
+   ══════════════════════════════════════════════════════════════════════════ */
+.bhp-market__inner {
+  max-width: 34rem;
+  margin-inline: auto;
+  text-align: center;
+}
+.bhp-market__eyebrow { margin-bottom: var(--space-2); }
+.bhp-market__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.4rem + 2vw, 2.5rem);
+  line-height: 1.15;
+}
+.bhp-market__reason {
+  margin: 0 auto var(--space-6);
+  max-width: 46ch;
+  line-height: 1.5;
+}
+/* Height-driven with width auto, matching the other three surfaces that render
+   this same asset, so the intrinsic attributes carry the aspect ratio and the
+   block cannot reflow as the image arrives. */
+.bhp-market__cover { display: block; line-height: 0; margin: 0 auto var(--space-6); }
+.bhp-market__cover img {
+  display: block;
+  height: clamp(150px, 34vw, 224px);
+  width: auto;
+  margin-inline: auto;
+  border-radius: 3px;
+  box-shadow: 0 4px 14px rgba(var(--color-jungle-rgb), 0.24);
+}
+.bhp-market__form { margin-inline: auto; max-width: 26rem; text-align: left; }
+.bhp-market__brand {
+  margin: var(--space-8) 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--color-gold-deep, var(--color-ink));
+}
+
+/* =====================================================================
+ * ⭐⭐ 1.19.301 (2026-08-27, CYCLE167-LD-FREE-RESOURCES-HUB) — `/free-resources/`
+ * =====================================================================
+ *
+ * ⭐ ADDITIVE, AND DELIBERATELY SMALL. Every section of the hub is built from
+ *    components this stylesheet already ships — `.interior-hero`, `.section`,
+ *    `.container`, `.component-heading`, `.grid`/`.grid--2`/`.grid--3`,
+ *    `.feature-card`, `.guide-article-card`, `.btn`, `.cluster`. The only new
+ *    things below are the JUMP BAR (which has no existing analogue) and the
+ *    DOWNLOAD CARD (which needs a footer that pins to the bottom so a row of
+ *    cards with unequal copy still has its buttons on one line).
+ * ⛔ Nothing above this block is modified by it, and no existing selector is
+ *    redefined. If this whole block were deleted the hub would still render,
+ *    just without the jump bar's chrome.
+ *
+ * ⛔ NO NEW COLOUR VALUE IS INTRODUCED. Everything is a token, and gold on a
+ *    light ground is `--color-gold-deep` rather than `--color-gold`, which is
+ *    the contrast correction recorded at length near the top of this file
+ *    (#D9A45F measures 1.79:1 on cream and must not be used for text there).
+ * ===================================================================== */
+
+/* ⭐⭐ 1.19.303 (2026-08-27, CYCLE167-LD-HUB-POLISH) — THE HERO LINK STOPS BEING
+ *     GREEN ON GREEN. Founder carrier item 311, on his own walk:
+ *     "'Start with the printables' is green on a green background - should be
+ *      gold or different color."
+ *
+ * ⭐ HE IS RIGHT, AND IT IS MEASURED RATHER THAN AGREED WITH. Live on staging
+ *    at 1.19.302, `innerWidth` 1280: the link computed `rgb(23, 63, 47)`
+ *    (#173F2F, forest) over the atmospheric hero. The hero ground was
+ *    reconstructed exactly as the browser paints it — the rainforest photograph
+ *    drawn `cover` at `center 44%`, then `linear-gradient(105deg,
+ *    rgba(7,21,34,.98), rgba(7,21,34,.72))` composited over it — and sampled at
+ *    147 points across the link's own box:
+ *        mean ground rgb(15,28,39)      forest  1.47:1   gold  7.75:1
+ *        lightest    rgb(25,39,49)      forest  1.30:1   gold  6.85:1
+ *    ⛔ 1.47:1 against a 4.5:1 requirement. That is not a preference, it is a
+ *      WCAG AA failure on the hub's only in-hero call to action.
+ *
+ * ⭐ `#D9A45F` IS THE RIGHT GOLD *HERE* AND `--color-gold-deep` WOULD BE WRONG,
+ *    which is the opposite of the note at the top of this very block. That note
+ *    governs GOLD ON A LIGHT GROUND, where #D9A45F measures 1.79:1 on cream.
+ *    This ground is DARK, and on dark the deep gold is the one that fails —
+ *    the same distinction already recorded at the homepage footer rules.
+ *    Worst case 6.85:1 clears AA (4.5:1); the mean 7.75:1 clears AAA (7:1).
+ *    It is `--color-gold`, the token, not a new colour value.
+ *
+ * ⚠ SCOPED TO THE ATMOSPHERIC HERO, WHICH IS THE DEFECT CLASS AND NOT JUST THIS
+ *   PAGE. Checked before choosing the selector: four templates use
+ *   `.interior-hero--atmospheric` (404, adventure-club, family-resources,
+ *   free-resources) and `/free-resources/` is the ONLY one whose `.text-lead`
+ *   contains a link — so this rule fixes the recurrence path while changing
+ *   exactly one element on the site today. */
+.interior-hero--atmospheric .text-lead a {
+  color: var(--color-gold);
+  text-decoration-color: currentColor;
+  text-underline-offset: .2em;
+}
+
+.interior-hero--atmospheric .text-lead a:hover,
+.interior-hero--atmospheric .text-lead a:focus-visible {
+  color: #f0c88b; /* one step lighter on hover — the ground is dark, so the
+                   * hover state has to go UP in luminance, not down. */
+}
+
+/* THE JUMP BAR — Magic Tree House's pattern, from Merry's §23 walk.
+ *
+ * ⛔ NOT STICKY, AND THAT IS A DECISION RATHER THAN AN OMISSION. A sticky bar
+ *    on a phone costs a permanent strip of a 375px-wide screen for a page the
+ *    reader scrolls exactly once. This is a map at the top, not a second
+ *    navigation, so it scrolls away with the hero.
+ * ⭐ It wraps rather than scrolls horizontally: four short labels fit two-up at
+ *    375 without a hidden-overflow affordance that nobody discovers. */
+.free-resources-jump {
+  border-block: 1px solid rgba(var(--color-forest-rgb), .14);
+  background: var(--expedition-parchment-light, #f8f3e9);
+}
+
+.free-resources-jump__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  justify-content: center;
+  margin: 0;
+  padding-block: var(--space-4);
+  list-style: none;
+}
+
+.free-resources-jump__list a {
+  display: inline-block;
+  /* ⭐ 44px minimum touch target via padding, not a fixed height, so the label
+   *    can wrap on a narrow phone without the tap area collapsing. */
+  padding: var(--space-3) var(--space-2);
+  color: var(--color-forest);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-ui);
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+
+.free-resources-jump__list a:hover,
+.free-resources-jump__list a:focus-visible {
+  color: var(--color-gold-deep, var(--color-forest));
+  border-bottom-color: var(--color-gold-deep, currentColor);
+}
+
+/* Anchored sections must not land under the fixed header. */
+.free-resources-printables,
+.free-resources-start,
+.free-resources-articles,
+.free-resources-together,
+.free-resources-teachers {
+  scroll-margin-top: 96px;
+}
+
+/* THE DOWNLOAD CARD.
+ *
+ * ⛔ `flex` WITH THE CTA PUSHED DOWN BY `margin-top: auto` IS THE WHOLE POINT.
+ *    The five descriptions are different lengths, and in a plain block card
+ *    that puts five buttons at five different heights across one row — which
+ *    reads as five different kinds of thing rather than five of the same
+ *    thing. */
+.free-resource-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-8);
+  border: 1px solid rgba(var(--color-forest-rgb), .16);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+
+/* ⭐⭐ 1.19.303 — THE PAGE-ONE PREVIEW, founder carrier item 311.
+ *
+ * ⛔ `aspect-ratio` PLUS `object-fit: cover` PLUS `object-position: top` IS THE
+ *    WHOLE RULE, and each third is load-bearing. The five sheets are all US
+ *    Letter (0.7727), but a registry row added later might not be — and one
+ *    card an inch taller than its neighbours breaks the row that
+ *    `.free-resource-card__cta`'s `margin-top: auto` exists to keep straight.
+ *    Pinning the ratio here makes the grid immune to a future asset's shape.
+ * ⭐ `top`, not `center`: every one of these sheets carries its title in the
+ *    top third. A centred crop would cut the one part of the page that says
+ *    what the thing is.
+ * ⭐ 4/5 rather than the sheet's own 0.7727 — a full US Letter page at a 379px
+ *    card width is 491px tall, which pushes the description and the button off
+ *    a phone screen entirely. 4/5 shows the head of the page at a size where
+ *    the title is legible and still leaves the card readable in one glance.
+ *    The full page is one tap away; this is the shop window, not the shelf. */
+.free-resource-card__preview {
+  display: block;
+  margin: 0 0 var(--space-5);
+  border: 1px solid rgba(var(--color-forest-rgb), .16);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  overflow: hidden;
+}
+
+.free-resource-card__preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.free-resource-card__title {
+  margin: 0 0 var(--space-3);
+}
+
+.free-resource-card__text {
+  margin: 0 0 var(--space-6);
+}
+
+.free-resource-card__cta {
+  /* ⭐ Pins every button to the same baseline across the row. */
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+/* ⭐ THE SIZE AND PAGE COUNT SIT UNDER THE BUTTON, NOT INSIDE THE LABEL. A
+ *    parent on mobile data is entitled to know what a link weighs before
+ *    tapping it, and a button that reads "Open the poster (PDF, 1 page, 2 MB)"
+ *    buries the verb. */
+.free-resource-card__meta {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: var(--tracking-ui);
+  color: rgba(var(--color-forest-rgb), .72);
+}
+
+.free-resource-card__alt {
+  margin: var(--space-2) 0 0;
+  font-size: 14px;
+}
+
+/* The capture panel sits in a content-width column like the rest of the page's
+ * prose; `.acquisition-form`'s own grid handles the field/button pairing. */
+.free-resources-start__text {
+  margin-bottom: var(--space-6);
+}
+
+.free-resources-start__more,
+.free-resources-articles__more {
+  margin-top: var(--space-8);
+}
+
+.free-resources-articles__more {
+  text-align: center;
+}
+
+.free-resources-teachers__actions {
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  /* ⭐ THE GRIDS COLLAPSE TO ONE COLUMN. `.grid--3` is `repeat(3, minmax(0,1fr))`
+   *    unconditionally, and three 1fr columns inside a 375px viewport is three
+   *    unreadable slivers. Checked at a CONFIRMED innerWidth, not assumed. */
+  .free-resources-printables__grid,
+  .free-resources-articles__grid,
+  .free-resources-together__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .free-resource-card {
+    padding: var(--space-6);
+  }
+
+  .free-resources-jump__list {
+    gap: var(--space-1) var(--space-4);
+  }
 }

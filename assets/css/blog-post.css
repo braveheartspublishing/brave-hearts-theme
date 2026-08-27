@@ -380,6 +380,29 @@ article.single-post { position: relative; }
   background: var(--expedition-parchment);
 }
 
+/* ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — THE MID-POST
+      VARIANT. QUIETER THAN THE END-OF-POST BAND, ON PURPOSE.
+
+   ⭐ It interrupts a reader mid-article rather than meeting one who has
+      finished, so it takes less vertical room and a lighter ground. The
+      end-of-post band is unchanged: every property here is scoped to the
+      `--mid` modifier and the base block is BYTE-UNTOUCHED, so the surface
+      that already exists on every post cannot be restyled by this release.
+
+   ⭐ The bottom margin is symmetric with the top because this one has article
+      text BELOW it as well as above; the base block has the post's end below
+      it and correctly sets `margin-block-end: 0`. */
+.bhp-post-capture--mid {
+  margin-block: clamp(1.75rem, 4.5vw, 2.5rem);
+  padding: clamp(1rem, 3.2vw, 1.5rem);
+  background: transparent;
+  border-left: 3px solid var(--expedition-gold-deep);
+  border-radius: 0;
+}
+.bhp-post-capture--mid .bhp-post-capture__title {
+  font-size: clamp(1.2rem, 1.05rem + 0.9vw, 1.55rem);
+}
+
 .bhp-post-capture__eyebrow {
   margin: 0 0 0.35rem;
   color: var(--expedition-gold-deep);   /* 1.19.266: was --expedition-gold, 1.81:1 */

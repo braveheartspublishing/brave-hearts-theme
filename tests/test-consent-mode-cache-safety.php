@@ -116,28 +116,82 @@ foreach ($states as $label => $cookie) {
     );
 }
 
-// The strongest form of the same statement: no rendered state may ever
-// carry a granted SIGNAL VALUE, because the server never grants anything.
+// ⭐ REWRITTEN 2026-08-27 (1.19.302, `CYCLE167-LD-CONSENT-GEO`).
 //
-// Matched as the JSON pair a consent payload actually emits
-// ("analytics_storage":"granted"), not as the bare word: the bridge's
-// client-side mapping legitimately contains the token 'granted' in
-// `analytics ? 'granted' : 'denied'`, which is JavaScript the browser
-// evaluates against the visitor's own cookie -- not a server assertion
-// about anyone's consent. A bare-substring check fails on that and was
-// the first version of this assertion (fixed 2026-08-05 before release).
+// The two assertions that stood here until this release said, in effect,
+// "the server never grants anything to anyone." Andrew Signore superseded
+// that posture by his own word -- carrier item 310, 2026-08-27, "yeah lets
+// just go with US Law" -- so the assertions are rewritten to the posture he
+// ruled, rather than left to fail or quietly deleted.
+//
+// ⛔ WHAT IS **NOT** RELAXED, and this is the important half: the property
+// this suite exists for is BYTE-IDENTICAL EMISSION ACROSS EVERY COOKIE
+// STATE, and it is asserted unchanged in the loop above and again below.
+// The 2026-08-04 defect was per-visitor SERVER variation in front of a
+// page cache. Region scoping is resolved by Google in the BROWSER from the
+// visitor's IP, so the server still emits one constant byte-string. The
+// old assertions were a proxy for cache-safety; these are the real thing.
+//
+// Matched as the JSON pair a consent payload actually emits, not as the
+// bare word: the bridge's client-side mapping legitimately contains the
+// token 'granted' in `analytics ? 'granted' : 'denied'`, which is
+// JavaScript the browser evaluates against the visitor's own cookie -- not
+// a server assertion about anyone's consent. A bare-substring check fails
+// on that and was the first version of this assertion (fixed 2026-08-05).
+
+/** Extracts every gtag('consent','default',{...}) payload, in emitted order. */
+function bhp_cms_default_payloads($head) {
+    preg_match_all('/gtag\(\'consent\',\'default\',(\{[^}]*\})\)/', $head, $m);
+    return array_map(static function ($json) {
+        return json_decode($json, true);
+    }, $m[1]);
+}
+
 foreach ($states as $label => $cookie) {
-    $head = bhp_cms_render_head($cookie);
+    $head     = bhp_cms_render_head($cookie);
+    $payloads = bhp_cms_default_payloads($head);
+
     bhp_cms_test_assert(
         $failures,
-        sprintf('No server-rendered consent signal is set to "granted" for state: %s', $label),
-        0 === preg_match('/"(analytics_storage|ad_storage|ad_user_data|ad_personalization)"\s*:\s*"granted"/', $head)
+        sprintf('Exactly TWO consent default payloads are emitted (EEA-scoped + catch-all) for state: %s', $label),
+        2 === count($payloads)
+    );
+
+    if (2 !== count($payloads)) {
+        continue;
+    }
+    list($eea, $rest) = $payloads;
+
+    // --- payload 1: EEA+UK, the unchanged strict posture -----------------
+    bhp_cms_test_assert(
+        $failures,
+        sprintf('EEA payload is region-scoped and the region list is non-empty for state: %s', $label),
+        isset($eea['region']) && is_array($eea['region']) && count($eea['region']) > 0
     );
     bhp_cms_test_assert(
         $failures,
-        sprintf('The emitted consent DEFAULT payload contains no granted value at all for state: %s', $label),
-        1 === preg_match('/gtag\(\'consent\',\'default\',(\{[^}]*\})\)/', $head, $m) && false === strpos($m[1], 'granted')
+        sprintf('EEA payload grants NOTHING -- every signal denied, exactly as before 1.19.302, for state: %s', $label),
+        !in_array('granted', array_intersect_key($eea, array_flip(BHP_Consent::SIGNALS)), true)
     );
+
+    // --- payload 2: everywhere else, the posture item 310 ruled ----------
+    bhp_cms_test_assert(
+        $failures,
+        sprintf('Catch-all payload carries NO region key (it must apply everywhere the EEA list does not) for state: %s', $label),
+        !isset($rest['region'])
+    );
+    bhp_cms_test_assert(
+        $failures,
+        sprintf('Catch-all payload GRANTS analytics_storage -- the measurement item 310 asked for, for state: %s', $label),
+        isset($rest['analytics_storage']) && 'granted' === $rest['analytics_storage']
+    );
+    foreach (['ad_storage', 'ad_user_data', 'ad_personalization'] as $ad_signal) {
+        bhp_cms_test_assert(
+            $failures,
+            sprintf('Catch-all payload leaves %s DENIED -- ad signals were NOT broadened by this release, for state: %s', $ad_signal, $label),
+            isset($rest[$ad_signal]) && 'denied' === $rest[$ad_signal]
+        );
+    }
 }
 
 // ---------------------------------------------------------------------
@@ -149,11 +203,23 @@ BHP_Consent::render_default_snippet();
 $defaults = ob_get_clean();
 
 bhp_cms_test_assert($failures, 'Defaults snippet emits a gtag consent default call', false !== strpos($defaults, "gtag('consent','default'"));
+
+// ⭐ REWRITTEN 2026-08-27 (item 310). The loop that stood here asserted
+// `"<signal>":"denied"` against the WHOLE snippet, which after 1.19.302
+// would have kept passing on the EEA payload alone while saying nothing
+// about the catch-all -- a test that passes for the wrong reason is worse
+// than one that fails. Each payload is now asserted separately, by object.
 foreach (BHP_Consent::SIGNALS as $signal) {
-    bhp_cms_test_assert($failures, sprintf('Consent Mode default for %s is denied', $signal), 1 === preg_match('/"' . preg_quote($signal, '/') . '":"denied"/', $defaults));
+    bhp_cms_test_assert($failures, sprintf('EEA default for %s is denied (posture unchanged from 1.19.301)', $signal), 'denied' === BHP_Consent::eea_default_signals()[$signal]);
 }
-bhp_cms_test_assert($failures, 'Consent Mode defaults carry wait_for_update:500 so the client-side update has a window to arrive', false !== strpos($defaults, '"wait_for_update":500'));
-bhp_cms_test_assert($failures, 'default_signals() covers exactly the four Consent Mode v2 signals plus wait_for_update, nothing else', 5 === count(BHP_Consent::default_signals()));
+bhp_cms_test_assert($failures, 'Catch-all default grants analytics_storage', 'granted' === BHP_Consent::measured_default_signals()['analytics_storage']);
+foreach (['ad_storage', 'ad_user_data', 'ad_personalization'] as $ad_signal) {
+    bhp_cms_test_assert($failures, sprintf('Catch-all default leaves %s denied', $ad_signal), 'denied' === BHP_Consent::measured_default_signals()[$ad_signal]);
+}
+bhp_cms_test_assert($failures, 'BOTH Consent Mode defaults carry wait_for_update:500 so the client-side update has a window to arrive', 2 === substr_count($defaults, '"wait_for_update":500'));
+bhp_cms_test_assert($failures, 'default_signals() still covers exactly the four Consent Mode v2 signals plus wait_for_update, nothing else', 5 === count(BHP_Consent::default_signals()));
+bhp_cms_test_assert($failures, 'eea_default_signals() is default_signals() plus exactly one key: region', 6 === count(BHP_Consent::eea_default_signals()) && isset(BHP_Consent::eea_default_signals()['region']));
+bhp_cms_test_assert($failures, 'measured_default_signals() covers exactly the four signals plus wait_for_update, nothing else', 5 === count(BHP_Consent::measured_default_signals()));
 
 // Even with a granting cookie present, the DEFAULTS are unmoved.
 $_COOKIE[BHP_Consent::COOKIE_NAME] = $states['accepted everything'];
@@ -175,7 +241,11 @@ bhp_cms_test_assert($failures, 'The consent DEFAULTS snippet precedes the GTM lo
 bhp_cms_test_assert($failures, 'The client-side consent SYNC precedes the GTM loader script too (a returning visitor is corrected before the container initialises)', false !== $pos_sync && $pos_sync < $pos_loader);
 bhp_cms_test_assert($failures, 'The defaults precede the sync (denied first, then the visitor\'s own choice raises it)', $pos_default < $pos_sync);
 bhp_cms_test_assert($failures, 'Exactly one gtm.js loader is emitted', 1 === substr_count($head, 'googletagmanager.com/gtm.js'));
-bhp_cms_test_assert($failures, 'Exactly one consent default call is emitted', 1 === substr_count($head, "gtag('consent','default'"));
+// ⭐ REWRITTEN 2026-08-27 (item 310): one -> two. The region-scoped EEA
+// default and the unscoped catch-all. A THIRD would mean something else
+// started emitting consent commands, which is the failure this counts for.
+bhp_cms_test_assert($failures, 'Exactly TWO consent default calls are emitted -- the EEA-scoped one and the catch-all, and nothing else', 2 === substr_count($head, "gtag('consent','default'"));
+bhp_cms_test_assert($failures, 'BOTH consent defaults precede the GTM loader in DOM order', strrpos($head, "gtag('consent','default'") < $pos_loader);
 
 // ---------------------------------------------------------------------
 // 4. THE STORED-COOKIE UPDATE PATH (the first-visit gap CYCLE143-GIM-51

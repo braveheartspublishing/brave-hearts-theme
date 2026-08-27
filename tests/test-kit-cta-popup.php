@@ -458,9 +458,14 @@ foreach (
 	);
 }
 
+/* ⭐ UPDATED 1.19.300 (`CYCLE167-LD-POPUP-TIME-ONLY`) ON FOUNDER CARRIER ITEM
+ * 306 ("I think we keep our pop ups time only"). The FLOOR ITSELF is what this
+ * assertion has always guarded and it is untouched at 15000 ms; only the array
+ * key moved, because `simple` mode reads `delay` where `gated` mode read
+ * `minDelay`. ⚠ Item 306 relayed via the Chief of Staff, not witnessed here. */
 bhp_kit_assert(
-	2 === substr_count( $tpl, "'minDelay' => 15000" ),
-	'the founder\'s 15-second floor for the AUTOMATIC open is untouched',
+	2 === substr_count( $tpl, "'delay' => 15000" ),
+	'item 306: the founder\'s 15-second timer for the AUTOMATIC open is untouched',
 	$failures
 );
 

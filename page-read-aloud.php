@@ -108,11 +108,24 @@ $tile_copy = [
 
 <main id="primary" class="read-aloud" role="main">
 
-  <!-- ═════════════ KID CONTINUITY — the first screen ═════════════
-       ⛔ This heading is written to be read ALOUD BY THE PARENT TO THE CHILD
-          standing next to them. It is the only place on the page where the
-          child is the addressee; everything below it speaks to the parent.
-          Do not "professionalise" it. -->
+  <?php
+  /*
+   * ═════════════ KID CONTINUITY — the first screen ═════════════
+   *
+   * ⛔ THIS IS A PHP COMMENT AND NOT AN HTML ONE, DELIBERATELY, AND EVERY
+   *    OTHER NOTE ON THIS PAGE FOLLOWS THE SAME RULE. 1.19.293
+   *    (`CYCLE166-CX-ANNOTATION-STRIP`) converted five HTML comments in this
+   *    file into PHP comments. An HTML comment is SERVED — it reaches every
+   *    visitor and every crawler that views source. A PHP comment never
+   *    leaves the server. The notes were worth keeping; shipping them was
+   *    not. Do not convert any of them back.
+   *
+   * ⛔ This heading is written to be read ALOUD BY THE PARENT TO THE CHILD
+   *    standing next to them. It is the only place on the page where the
+   *    child is the addressee; everything below it speaks to the parent.
+   *    Do not "professionalise" it.
+   */
+  ?>
   <section class="read-aloud-hero">
     <div class="read-aloud__inner">
       <p class="read-aloud-hero__eyebrow"><?php esc_html_e('Welcome, explorer', 'brave-hearts'); ?></p>
@@ -126,12 +139,16 @@ $tile_copy = [
     </div>
   </section>
 
-  <!-- ═════════════ BOTH COVERS — the founder amendment ═════════════
-       ⭐ "Show both the MT book and the MT coloring book not just the coloring
-          book" (Andrew, this turn, relayed).
-       ⛔ Each tile draws its OWN cover. A tile whose cover does not resolve
-          renders WITHOUT a picture and NEVER borrows its sibling's — see the
-          FD-549 note in inc/read-aloud-landing.php. -->
+  <?php
+  /*
+   * ═════════════ BOTH COVERS — the founder amendment ═════════════
+   * ⭐ "Show both the MT book and the MT coloring book not just the coloring
+   *    book" (Andrew, relayed through the Chief of Staff).
+   * ⛔ Each tile draws its OWN cover. A tile whose cover does not resolve
+   *    renders WITHOUT a picture and NEVER borrows its sibling's — see the
+   *    `FD-549` note in inc/read-aloud-landing.php.
+   */
+  ?>
   <section class="read-aloud-pair" aria-labelledby="read-aloud-pair-title">
     <div class="read-aloud__inner">
       <h2 id="read-aloud-pair-title" class="read-aloud__section-title">
@@ -141,24 +158,28 @@ $tile_copy = [
         <?php esc_html_e('One to read together. One to color. They’re the same story, the same ocean, the same two explorers.', 'brave-hearts'); ?>
       </p>
 
-      <!-- ═════════════ THE COMBO — FIRST, BY FOUNDER RULING ═════════════
-           ⭐ "It should be the first option as well" (Andrew, relayed). It sits
-              ABOVE the two individual cards and inside this section rather than
-              in one of its own, because the section's own lead — "One to read
-              together. One to color." — is precisely the sentence that makes
-              "get both" the obvious answer. Splitting them would separate the
-              question from the answer.
-
-           ⛔ EVERYTHING HERE IS INSIDE THE `$combo` GUARD, INCLUDING THE
-              HEADING, THE PICTURE AND THE "or pick just one" LINE. An empty
-              `$combo` means the offer is not buyable on this environment or in
-              this session (a school-visit-flagged session, for one), and the
-              page must then read as though the combo had never been designed —
-              two tiles, no orphaned divider, no heading over nothing.
-
-           ⛔ THE CONTROL IS THE SHOP'S OWN CARD, NOT A COPY OF IT. Pressing ADD
-              TO CART opens the cart side panel, exactly as it does in the shop
-              grid. No new pricing path, no new nonce, no new endpoint. -->
+      <?php
+      /*
+       * ═════════════ THE COMBO — FIRST, BY FOUNDER RULING ═════════════
+       * ⭐ "It should be the first option as well" (Andrew, relayed). It sits
+       *    ABOVE the two individual cards and inside this section rather than
+       *    in one of its own, because the section's own lead — "One to read
+       *    together. One to color." — is precisely the sentence that makes
+       *    "get both" the obvious answer. Splitting them would separate the
+       *    question from the answer.
+       *
+       * ⛔ EVERYTHING HERE IS INSIDE THE `$combo` GUARD, INCLUDING THE
+       *    HEADING, THE PICTURE AND THE "or pick just one" LINE. An empty
+       *    `$combo` means the offer is not buyable on this environment or in
+       *    this session (a school-visit-flagged session, for one), and the
+       *    page must then read as though the combo had never been designed —
+       *    two tiles, no orphaned divider, no heading over nothing.
+       *
+       * ⛔ THE CONTROL IS THE SHOP'S OWN CARD, NOT A COPY OF IT. Pressing ADD
+       *    TO CART opens the cart side panel, exactly as it does in the shop
+       *    grid. No new pricing path, no new nonce, no new endpoint.
+       */
+      ?>
       <?php if (!empty($combo)) : ?>
         <div class="read-aloud-combo" data-bhp-card-kind="bundle">
           <?php if ('' !== $combo['art']) : ?>
@@ -216,7 +237,54 @@ $tile_copy = [
               <?php esc_html_e('If the story is new to your house, this is the simplest way in — the book I read from and the coloring book that page came out of, added together in one go.', 'brave-hearts'); ?>
             </p>
 
-            <?php echo $combo['html']; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source in bhp_offer_render_module(). ?>
+            <?php
+            /*
+             * ═════════════════════════════════════════════════════════════════
+             * ⭐⭐ 1.19.295 — TWO MODES. `CYCLE167-LD-001`.
+             * ═════════════════════════════════════════════════════════════════
+             *
+             * ⭐ `cart` — the ordinary shopper. BYTE-FOR-BYTE 1.19.294: the
+             *    engine's own card, its own form, its own nonce, its own ADD
+             *    TO CART opening the side panel. Nothing about the normal path
+             *    changed and nothing here may change it.
+             *
+             * ⛔⛔ `link` — a VISIT-FLAGGED session. `FD-642` forbids a
+             *     colouring product in a hand-delivery cart, so this branch
+             *     emits NO FORM, NO NONCE AND NO ADD-TO-CART CONTROL. It is a
+             *     plain anchor. There is nothing here to press that could put
+             *     a colouring book into a signed-copy order, which is why the
+             *     rule is preserved BY CONSTRUCTION rather than by a check.
+             *     ⛔ Do not "improve" this branch by giving it a form.
+             *
+             * ⭐ The price still renders, in the grid's OWN price markup, so
+             *    the parent sees what the pair costs before deciding whether
+             *    to give up hand-delivery for it. `R2.6` (one price, once)
+             *    holds: the CTA below carries no figure.
+             */
+            ?>
+            <?php if ('link' === ($combo['mode'] ?? 'cart')) : ?>
+              <div class="read-aloud-combo__shiphome">
+                <?php if ('' !== $combo['price_html']) : ?>
+                  <span class="bhp-shop-from-price bhp-shop-format-prices read-aloud-combo__shiphome-price">
+                    <span class="bhp-shop-format-price">
+                      <?php if ('' !== $combo['price_label']) : ?>
+                        <span class="bhp-shop-format-price__label"><?php echo esc_html($combo['price_label']); ?></span>
+                      <?php endif; ?>
+                      <span class="bhp-shop-format-price__amount"><?php echo wp_kses_post($combo['price_html']); ?></span>
+                    </span>
+                  </span>
+                <?php endif; ?>
+
+                <a class="read-aloud-combo__shiphome-cta" href="<?php echo esc_url($combo['url']); ?>">
+                  <?php echo esc_html($combo['cta']); ?>
+                </a>
+
+                <?php /* ⛔ The honest half. Never render the control without it. */ ?>
+                <p class="read-aloud-combo__shiphome-note"><?php echo esc_html($combo['note']); ?></p>
+              </div>
+            <?php else : ?>
+              <?php echo $combo['html']; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source in bhp_offer_render_module(). ?>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -288,9 +356,13 @@ $tile_copy = [
     </div>
   </section>
 
-  <!-- ═════════════ FOR THE GROWN-UP ═════════════
-       ⛔ The voice changes here and the heading says so out loud, because the
-          same screen is being read by two people with different questions. -->
+  <?php
+  /*
+   * ═════════════ FOR THE GROWN-UP ═════════════
+   * ⛔ The voice changes here and the heading says so out loud, because the
+   *    same screen is being read by two people with different questions.
+   */
+  ?>
   <section class="read-aloud-parent" aria-labelledby="read-aloud-parent-title">
     <div class="read-aloud__inner">
       <p class="read-aloud__eyebrow"><?php esc_html_e('For the grown-up reading this', 'brave-hearts'); ?></p>
@@ -321,12 +393,16 @@ $tile_copy = [
     </div>
   </section>
 
-  <!-- ═════════════ THE ONE CAPTURE ═════════════
-       ⛔ ONE ask on this page, and it is the EXISTING parent-funnel Adventure
-          Kit. No new magnet, no new list, no new journey, no new endpoint.
-       ⭐ `context => read_aloud_landing` is the ONLY thing that is new, and it
-          exists so Andrew can tell a school-visit signup from a website
-          signup. Tag mapping: inc/read-aloud-landing.php, priority 20. -->
+  <?php
+  /*
+   * ═════════════ THE ONE CAPTURE ═════════════
+   * ⛔ ONE ask on this page, and it is the EXISTING parent-funnel Adventure
+   *    Kit. No new magnet, no new list, no new journey, no new endpoint.
+   * ⭐ `context => read_aloud_landing` is the ONLY thing that is new, and it
+   *    exists so Andrew can tell a school-visit signup from a website
+   *    signup. Tag mapping: inc/read-aloud-landing.php, priority 20.
+   */
+  ?>
   <section id="free" class="read-aloud-capture" aria-labelledby="read-aloud-capture-title">
     <div class="read-aloud__inner">
       <?php if (!empty($download['ready'])): ?>

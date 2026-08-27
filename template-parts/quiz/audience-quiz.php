@@ -240,9 +240,39 @@ $quiz_routes = [
         'audience'        => 'parents_families',
         'result_title'    => __('Start with one small adventure.', 'brave-hearts'),
         'result_detail'   => __('Charlotte and Henry travel to real places on Earth, in short chapters with pictures all the way through. Your reader sets the pace, and there is no wrong pace.', 'brave-hearts'),
-        'result_resource' => __('Your free Reluctant Reader Adventure Kit, sent by email.', 'brave-hearts'),
-        'cta_label'       => __('Send My Free Adventure Kit', 'brave-hearts'),
-        'signup_cta'      => __('Send My Free Adventure Kit', 'brave-hearts'),
+        /*
+         * ⭐⭐ 1.19.297 (2026-08-27, `CYCLE167-LD-CAPTURE-COPY-APPLY`) — THE
+         *     PARENT ROUTE NOW NAMES THE OFFER THE WAY EVERY OTHER PARENT
+         *     CAPTURE SURFACE NAMES IT. Founder's pick, carrier item 290.
+         *
+         * ⛔ **ONLY THE `parent` ROUTE MOVES.** The `educator` and
+         *    `organization` routes below are BYTE-UNCHANGED, and that is a hard
+         *    rule rather than a scoping preference: the Adventure Learning
+         *    Toolkit is a DIFFERENT lead magnet with a different audience, a
+         *    different funnel and a different file, and putting the parent
+         *    chapter offer on an educator route would breach funnel isolation
+         *    (`.claude/rules/funnels.md`) while also promising a teacher
+         *    something the toolkit does not contain.
+         *
+         * ⛔ `destination`, `audience`, `offers_signup` and the route KEY are
+         *    all unchanged. The route key is what
+         *    `bhp_get_quiz_signup_routes()` resolves server-side into a
+         *    Mailchimp tag; a new key would mint a NEW tag in the live audience.
+         *    ⭐ ONLY THE THREE COPY STRINGS BELOW CHANGE.
+         *
+         * ⚠ `result_title` and `result_detail` are LEFT ALONE. They describe the
+         *   BOOKS ("Start with one small adventure.", Charlotte and Henry in
+         *   short chapters), not the lead magnet, so they are not part of the
+         *   offer-name collision the teardown found. Rewriting them would be
+         *   scope creep into approved quiz prose.
+         *
+         * ⭐ `result_resource` bridges chapter -> Kit (item 290 condition (b)):
+         *    it names the chapter as what is sent and the Kit as what it arrives
+         *    inside. NO OUTCOME CLAIM. VOICE §9.1.
+         */
+        'result_resource' => __("Your FREE chapter, sent by email inside my Reluctant Reader Adventure Kit.", 'brave-hearts'),
+        'cta_label'       => __('Send me the chapter', 'brave-hearts'),
+        'signup_cta'      => __('Send me the chapter', 'brave-hearts'),
         'offers_signup'   => true,
     ],
     'educator' => [

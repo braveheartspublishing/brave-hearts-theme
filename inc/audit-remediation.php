@@ -734,7 +734,56 @@ JS;
  * field, or PDF was added or changed.
  */
 add_filter( 'bhp_show_parent_popup', '__return_false' );
-add_filter( 'bhp_show_teacher_popup', '__return_false' );
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — THE TEACHER
+ *    POPUP SUPPRESSION IS LIFTED. THE LINE IS RETIRED, NOT DELETED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPPRESSED LINE, PRESERVED VERBATIM SO THE MOVEMENT STAYS VISIBLE:
+ *        add_filter( 'bhp_show_teacher_popup', '__return_false' );
+ *
+ * ⭐ THE FINDING THAT CAUSED THIS. `/teachers/` rendered ZERO popups —
+ *    verified live by `marketing-growth` (`document.querySelectorAll(
+ *    '.mariana-popup,[data-bhp-popup]').length === 0`), and corroborated
+ *    INDEPENDENTLY from the opposite end of the pipe by `connected-operator`
+ *    reading the live Mailchimp audience: there is no `Source: Teacher Popup`
+ *    tag in the audience at all, and zero educator contacts since 2026-07-28.
+ *    Two desks, two instruments, opposite ends, same conclusion: the teacher
+ *    funnel had no working front door. ⭐ THE CAUSE WAS THIS ONE LINE.
+ *
+ * ⛔⛔ AND IT WAS A FOUNDER RULING, WHICH IS WHY THIS BLOCK IS LONG. The
+ *    docblock above records it: *"2026-07-19 (Andrew, explicit): retire both
+ *    lead-magnet popups sitewide. The quiz modal becomes the ONLY popup on
+ *    the site."* ⛔ No agent reverses a founder ruling on its own judgement.
+ *
+ * ⭐ WHAT AUTHORISES THE REVERSAL — and it is his own later word, twice over:
+ *    1. ⭐ THE PARENT HALF OF THAT SAME RULING HAS ALREADY BEEN REVERSED
+ *       TWICE, BY HIM. "Turn it on" (2026-08-04) brought back exit-intent —
+ *       recorded in `functions.php` as a "knowing reversal of his 2026-07-19
+ *       one-popup ruling". "I say build it now" (2026-08-06) built the A/B
+ *       capture popup. The teacher half was simply never revisited, so a
+ *       ruling he has twice moved on kept binding one funnel and not the
+ *       other.
+ *    2. ⭐ CARRIER ITEM 280 (2026-08-27) names the "/teachers/ capture fix"
+ *       in tonight's build program, under item 279's *"Emails and Sales are
+ *       the 2 biggest KPIs - they need to be perfect."*
+ *    ⚠ BOTH ARE RELAYED through the Chief of Staff, NOT witnessed by this
+ *      build. ⛔ STAGING ONLY until Andrew token-touches a deploy, and it is
+ *      FLAGGED in this build's report as a founder-ruling reversal so he sees
+ *      it at that gate rather than discovering it afterwards.
+ *
+ * ⭐ REVERSING THE REVERSAL IS ONE LINE: restore the commented filter above.
+ *
+ * ⛔ FUNNEL ISOLATION IS UNTOUCHED AND IS WHAT MAKES THIS SAFE. The teacher
+ *    popup keeps storage prefix `bhp_mariana_popup`, event prefix
+ *    `teacher_popup` and thank-you path `mariana-guide-thank-you` — all
+ *    distinct from the parent funnel's. `bhp_should_show_teacher_popup()` is
+ *    scoped to `is_page('teachers')`, and every parent-funnel surface
+ *    independently returns false on that page, so the two can never render
+ *    together and neither can read the other's state.
+ */
 
 /* =====================================================================
  * CAPSTONE FIX WAVE — 2026-08-03

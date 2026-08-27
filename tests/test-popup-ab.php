@@ -85,73 +85,96 @@ bhp_ab_assert('' !== $js, 'mariana-popup.js exists and is readable', $failures);
 bhp_ab_assert('' !== $px, 'class-bhp-meta-pixel.php exists and is readable', $failures);
 
 /* =====================================================================
- * 1. THE TRIGGER — ENGAGEMENT **AND** TIME
+ * 1. THE TRIGGER — TIME ONLY, AT FIFTEEN SECONDS
+ *
+ * ⭐⭐ REWRITTEN 1.19.300 (`CYCLE167-LD-POPUP-TIME-ONLY`) ON FOUNDER CARRIER
+ *     ITEM 306, 2026-08-27, VERBATIM: "We also dont have the awareness or
+ *     market share - I think we keep our pop ups time only."
+ *     ⚠ RELAYED via the Chief of Staff; not witnessed by this suite's author.
+ *
+ * ⛔ THIS SECTION PREVIOUSLY ASSERTED THE OPPOSITE, and that is recorded
+ *    rather than quietly overwritten. Until 1.19.299 it asserted mode `gated`
+ *    plus two `scrollPct` thresholds, on Andrew's 2026-08-19 *"wait for
+ *    engagement and time."* Item 306 supersedes that ruling by his own word,
+ *    so the assertions invert with it. The suite is not being loosened — it
+ *    asserts the NEW shape just as strictly, including the things that must
+ *    now be ABSENT.
  * ================================================================== */
 
+/* Andrew's number, unchanged since "Make it 15 second delay". Only the KEY
+ * moved: `simple` mode reads `delay`, `gated` mode read the dwell floor. The
+ * count-exactly-twice convention is kept — it is what catches a silent edit. */
 bhp_ab_assert(
-    2 === substr_count($tpl, "'minDelay' => 15000"),
-    "the dwell floor `'minDelay' => 15000` appears exactly twice, once per device (Andrew Signore: \"Make it 15 second delay\")",
+    2 === substr_count($tpl, "'delay' => 15000"),
+    "item 306: the timer `'delay' => 15000` appears exactly twice, once per device (Andrew Signore: \"Make it 15 second delay\", his number unreduced)",
     $failures
 );
 
-// Nothing may open sooner by another number.
+// Nothing may open sooner by another number, under either key name.
 bhp_ab_assert(
-    0 === preg_match("/'minDelay'\s*=>\s*(?!15000)\d+/", $tpl),
-    'no other dwell-floor value exists anywhere in the template',
+    0 === preg_match("/'(?:min)?[Dd]elay'\s*=>\s*(?!15000)\d+/", $tpl),
+    'item 306: no other delay value exists anywhere in the template',
     $failures
 );
 
 bhp_ab_assert(
-    1 === preg_match("/'mode'\s*=>\s*'gated'/", $tpl) &&
-    0 === preg_match("/'mode'\s*=>\s*'(simple|exit)'/", $tpl),
-    "trigger mode is 'gated' — the scroll condition is inert until the floor elapses",
+    1 === preg_match("/'mode'\s*=>\s*'simple'/", $tpl) &&
+    0 === preg_match("/'mode'\s*=>\s*'(gated|exit)'/", $tpl),
+    "item 306: trigger mode is 'simple' — time alone opens the popup",
     $failures
 );
 
-/* ⛔ THE ASSERTION THIS WHOLE SECTION EXISTS FOR. Andrew Signore, 2026-08-19:
- *    "wait for engagement and time." The engine's `fallbackDelay` calls
- *    `trigger()` DIRECTLY, with no scroll test — it is a pure timer wearing a
- *    gated mode's clothes. Declaring one here would restore the exact
- *    time-only path the ruling removed, and no other assertion in this file
- *    would notice. */
-/* ⚠ THE QUOTED KEY, NOT THE BARE WORD. The template's own docblock explains
- *   at length why there is no fallback, so it names the key twice in prose. A
- *   bare-substring test would trip on the explanation of the rule it is
- *   testing — which is the exact defect this file's neighbours have been
- *   caught by twice. Only a PHP array key can actually configure anything. */
+/* ⛔⛔ THE ASSERTION THIS WHOLE SECTION NOW EXISTS FOR, AND IT IS THE EXACT
+ *    MIRROR OF THE ONE IT REPLACED. A `scrollPct` key here would do two bad
+ *    things at once: it would make the engine register a scroll listener, and
+ *    in `simple` mode it would RACE the timer rather than gate it — so the
+ *    popup could open EARLIER than fifteen seconds on a fast scroll. Item 306
+ *    asks for time only, and time only means no scroll path in either
+ *    direction.
+ * ⚠ THE QUOTED KEY, NOT THE BARE WORD — the template's docblock discusses
+ *   `scrollPct` at length in the preserved supersession note, and a
+ *   bare-substring test would trip on the explanation of the rule it tests.
+ *   That defect has been caught on this file's neighbours twice. */
+bhp_ab_assert(
+    0 === preg_match("/'scrollPct'\s*=>/", $tpl),
+    'item 306: NO scroll threshold is configured — no scroll listener is ever registered, so the popup is scroll-FREE, not merely scroll-independent',
+    $failures
+);
+
+/* A gated-mode fallback is still forbidden, for a NEW reason. It is now a
+ * dead key in `simple` mode, and reaching time-only through it would mean
+ * mode `gated` plus a fallback — same timing, but a live scroll listener and
+ * a redundant second timer shipped to every visitor. */
 bhp_ab_assert(
     false === strpos($tpl, "'fallbackDelay'"),
-    'NO ungated fallback timer is configured — time alone can never open the popup',
+    'item 306: no `fallbackDelay` — time-only is reached by mode simple, not by bolting an ungated timer onto a gated config',
     $failures
 );
 
-bhp_ab_assert(
-    2 === preg_match_all("/'scrollPct'\s*=>\s*\d+/", $tpl),
-    'an engagement threshold is configured for both devices',
-    $failures
-);
-
-// The old pure-timer key must not survive anywhere: `simple` mode reads
-// `delay` and would race the floor.
-bhp_ab_assert(
-    0 === preg_match("/'delay'\s*=>/", $tpl),
-    "the pure-timer `'delay'` key is gone — mode 'simple' cannot be reached by a leftover literal",
-    $failures
-);
-
-/* NEVER ON FIRST PAINT — asserted in the ENGINE, which is where it is
- * actually decided. In gated mode `minTimeElapsed` starts false and
- * `onScroll()` returns early while it is false, so no scroll event during the
- * first fifteen seconds can open anything. */
+/* ⭐ THE ENGINE HALF, which is where "time only" is actually decided. Asserted
+ * in the JS rather than inferred from config, because a config key means
+ * nothing if the engine stopped honouring it. */
 bhp_ab_assert(
     1 === preg_match('/var minTimeElapsed = \(mode === \x27simple\x27\);/', $js),
-    'the engine starts gated mode with the dwell gate CLOSED (minTimeElapsed is true only in simple mode)',
+    'item 306: the engine opens the gate at init in simple mode (minTimeElapsed starts true), so the timer alone governs',
     $failures
 );
 
+/* ⛔ THE LOAD-BEARING ENGINE LINE. The scroll listener is registered ONLY
+ * when a numeric threshold is present. With `scrollPct` absent from the
+ * config (asserted above), this guard is what makes the claim "no scroll
+ * listener exists" true rather than merely likely. */
 bhp_ab_assert(
-    1 === preg_match('/function onScroll\(\)\s*\{\s*if \(!minTimeElapsed \|\| typeof scrollPct !== \x27number\x27\) \{\s*return;/', $js),
-    'the engine\'s scroll handler returns early until the dwell floor has elapsed — engagement cannot fire before time',
+    1 === preg_match('/if \(typeof scrollPct === \x27number\x27\) \{\s*window\.addEventListener\(\x27scroll\x27, onScroll, \{ passive: true \}\);/', $js),
+    'item 306: the engine registers its scroll listener only behind a numeric-threshold guard — with no threshold configured, none is ever attached',
+    $failures
+);
+
+/* The simple-mode timer path itself: the engine must still arm a timer from
+ * the `delay` key, or the popup would never open at all. */
+bhp_ab_assert(
+    1 === preg_match('/if \(typeof deviceConfig\.delay === \x27number\x27\) \{\s*minTimeTimerId = window\.setTimeout\(trigger, deviceConfig\.delay\);/', $js),
+    'item 306: the engine arms the simple-mode timer from the `delay` key — the popup does open, on time alone',
     $failures
 );
 
@@ -159,15 +182,89 @@ bhp_ab_assert(
  * 2. THE COPY INVENTORY — THE "EXACTLY" TEST
  * ================================================================== */
 
-$headline = 'Free 20 Minute Reluctant Reader Kit';
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ UPDATED 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — THE WORD
+ *    **FREE** IS BACK IN CAPS, AND FIVE ASSERTIONS IN THIS FILE MOVED WITH IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ NOTHING HERE WAS RELAXED TO MAKE A BUILD GO GREEN. Every changed assertion
+ *    below still asserts exactly what it always asserted — that the founder's
+ *    headline renders once, character for character, as the dialog's only
+ *    sentence. What changed is WHICH characters, and that came from him:
+ *
+ *      · 1.19.207 (his standing order): *"Free" → "FREE" … the word must read
+ *        ALL CAPS, bold and larger wherever it appears in the popup copy.*
+ *      · 2026-08-27, carrier item 279: *"Is FREE not big enough…"* — he raised
+ *        it again, from the outside, because it had silently reverted.
+ *
+ * ⭐ WHY IT REVERTED, AND WHY THAT MATTERS TO THIS SUITE: the caps lived in the
+ *    A/B variant map and the bold-and-larger in `bhp_popup_ab_emphasise_free()`,
+ *    so switching the experiment off at 1.19.267 took a STANDING FOUNDER
+ *    INSTRUCTION with it as collateral damage — and this suite then locked the
+ *    reverted state in as if it were the intent. ⛔ THAT IS THE REAL LESSON:
+ *    a test can preserve a regression. The emphasis is now unconditional and
+ *    scoped to the surface rather than to the experiment, so no future
+ *    on/off switch can remove it again.
+ *
+ * ⚠ HIS OPEN COMPOUND IS UNTOUCHED: "20 Minute", no hyphen. Only the case of
+ *   the single word FREE moved.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ UPDATED AGAIN AT 1.19.297 (2026-08-27, `CYCLE167-LD-CAPTURE-COPY-APPLY`)
+ *     — THE HEADLINE ITSELF IS REPLACED. HE PICKED A NEW ONE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ AGAIN, NOTHING IS RELAXED. This suite's job has never been to preserve one
+ *    particular sentence — it is to guarantee that the FOUNDER'S CURRENT
+ *    headline renders EXACTLY ONCE, CHARACTER FOR CHARACTER, as the dialog's
+ *    only sentence, and that no agent edits it quietly. Every one of those
+ *    properties is still asserted below. What moved is which sentence is his.
+ *
+ * ⭐ THE AUTHORITY, carrier item 290, 2026-08-27, verbatim:
+ *      "FREE Chapter for Reluctant Readers - I'll send you the chapter now,
+ *       just add your email - Something like that"
+ *    ⚠ RELAYED through the Chief of Staff, who witnessed it. Not witnessed by
+ *      the desk that wrote this file.
+ *
+ * ⭐ NOTE WHAT SURVIVES THE REPLACEMENT UNCHANGED, because it is the point of
+ *    the 1.19.296 lesson recorded above: the FREE emphasis is still asserted,
+ *    still unconditional, still not behind an A/B flag. The new headline still
+ *    opens with the standalone token FREE, so the same guard catches the same
+ *    class of regression against a completely different sentence. A guard tied
+ *    to the PROPERTY outlives the string; a guard tied to the string would have
+ *    had to be rewritten from scratch tonight.
+ *
+ * ⚠ THE "20 Minute" OPEN-COMPOUND GUARD IS RETIRED WITH THE STRING IT GUARDED.
+ *   It is not deleted silently: the words "20 Minute" no longer appear in the
+ *   headline at all, so an assertion about their hyphenation would assert
+ *   nothing. §297.1 below replaces it with a guard that the RETIRED headline
+ *   does not linger anywhere in the rendered dialog.
+ */
+$headline = 'FREE Chapter for Reluctant Readers';
+
+/*
+ * The headline as it appears in RENDERED markup: the word FREE is wrapped by
+ * `bhp_popup_ab_emphasise_free()`, which escapes before it wraps.
+ */
+$headline_rendered = '<span class="popup-ab__free">FREE</span> Chapter for Reluctant Readers';
+
+/* ⛔ THE SUPERSEDED HEADLINE, KEPT AS A NAMED CONSTANT RATHER THAN DELETED, so
+ *    that a future reader can see what this surface used to say and so §297.1
+ *    can assert it is gone. It is his 2026-08-19 string, superseded by his own
+ *    2026-08-27 pick. */
+$headline_retired_296 = 'FREE 20 Minute Reluctant Reader Kit';
 
 /* ⚠ Counted in the RENDERED markup, not in the template. The template also
  *   carries the founder's verbatim instruction in its docblock, and that
  *   quotation must not be edited to satisfy a string count — quoting him
  *   accurately is the reason the docblock exists. */
+/* ⭐ 1.19.296: the template now routes the headline through
+ *    `bhp_popup_ab_emphasise_free()` so the caps carry the emphasis he asked
+ *    for. The string is still asserted character for character. */
 bhp_ab_assert(
-    1 === substr_count($tpl, "esc_html_e('" . $headline . "', 'brave-hearts')"),
-    'the template emits the founder\'s headline character for character (open compound "20 Minute", not "20-Minute")',
+    1 === substr_count($tpl, "bhp_popup_ab_emphasise_free(__('" . $headline . "', 'brave-hearts'))"),
+    'the template emits the founder\'s headline character for character',
     $failures
 );
 
@@ -177,15 +274,85 @@ $rendered = (string) ob_get_clean();
 
 bhp_ab_assert('' !== trim($rendered), 'the template renders', $failures);
 
+/* ⭐ 1.19.296: compared against the RENDERED form of the headline, which now
+ *    carries the emphasis span around FREE. Still exactly once, still the only
+ *    sentence in the dialog. */
 bhp_ab_assert(
-    1 === substr_count($rendered, $headline),
+    1 === substr_count($rendered, $headline_rendered),
     'the headline appears in the rendered dialog exactly once — it is the only sentence, not a repeated one',
     $failures
 );
 
 bhp_ab_assert(
-    1 === substr_count($rendered, '<h2 id="parent-ab-popup-title">' . $headline . '</h2>'),
+    1 === substr_count($rendered, '<h2 id="parent-ab-popup-title">' . $headline_rendered . '</h2>'),
     'the rendered dialog carries exactly one h2, and it is the founder\'s headline',
+    $failures
+);
+
+/* ⭐ 1.19.296 — NEW, AND IT IS THE GUARD THAT WOULD HAVE CAUGHT THE 1.19.267
+ *    REGRESSION. The emphasis must be present and must NOT depend on any
+ *    experiment being live. */
+bhp_ab_assert(
+    1 === substr_count($rendered, '<span class="popup-ab__free">FREE</span>'),
+    '⭐ the word FREE carries its emphasis span unconditionally — not behind an A/B flag',
+    $failures
+);
+
+/* ⭐ 1.19.296 — the subhead SLOT existed but rendered NOTHING until Andrew
+ *    picked a line. The audit's proposed subhead was an unsourced claim about
+ *    the Kit's contents and was refused; that assertion asserted it did not
+ *    sneak in as a default.
+ *
+ * ⭐⭐ 1.19.297 — HE PICKED THE LINE, so the slot now renders. The assertion is
+ *     INVERTED RATHER THAN DELETED, and it is worth being clear about why that
+ *     is not the same as relaxing it:
+ *       · the 296 assertion said "nothing unsourced ships here";
+ *       · the 297 assertion says "exactly HIS line ships here, verbatim".
+ *     Both refuse an invented sentence. The second is the STRONGER of the two,
+ *     because an empty slot could be filled by anything at any time, whereas a
+ *     character-for-character comparison against his words cannot.
+ *
+ * ⛔ THE REFUSED LINE IS ASSERTED ABSENT BELOW TOO. The audit's proposal ("the
+ *    three questions I ask a child who says reading is boring") was FALSE of the
+ *    real Kit, which carries three tips to the PARENT. It must not arrive later
+ *    through a filter, a default or a copy-paste. */
+$subhead = "I'll send you the chapter now, just add your email.";
+
+bhp_ab_assert(
+    1 === substr_count($rendered, '<p class="popup-ab__subhead">' . esc_html($subhead) . '</p>'),
+    '⭐ the subhead renders exactly once and is the founder\'s line character for character',
+    $failures
+);
+
+bhp_ab_assert(
+    false === strpos($rendered, 'three questions'),
+    '⛔ the audit\'s REFUSED subhead (false of the real Kit) has not arrived through any door',
+    $failures
+);
+
+/* ⛔ THE FILTER MUST STILL BE THE OVERRIDE POINT. His words are the DEFAULT
+ *    argument to `apply_filters()`, not a hardcoded echo, so blanking the slot
+ *    stays a one-filter change. Asserted by actually blanking it and
+ *    re-rendering — not by reading the template and inferring. */
+add_filter('bhp_parent_popup_subhead', '__return_empty_string', 99);
+ob_start();
+get_template_part('template-parts/acquisition/parent-ab-popup');
+$rendered_blank_subhead = (string) ob_get_clean();
+remove_filter('bhp_parent_popup_subhead', '__return_empty_string', 99);
+
+bhp_ab_assert(
+    false === strpos($rendered_blank_subhead, 'popup-ab__subhead'),
+    '⛔ filtering the subhead to empty renders NO element at all — no empty <p>, no reserved gap',
+    $failures
+);
+
+/* ⭐ §297.1 — THE RETIRED HEADLINE IS GONE FROM THE RENDERED DIALOG. His
+ *    2026-08-19 string is superseded by his 2026-08-27 pick; this catches a
+ *    partial revert that leaves both sentences on the surface at once. */
+bhp_ab_assert(
+    false === strpos(wp_strip_all_tags($rendered), $headline_retired_296)
+        && false === strpos(wp_strip_all_tags($rendered), '20 Minute Reluctant Reader Kit'),
+    '§297.1 ⛔ the retired 1.19.296 headline does not linger anywhere in the dialog',
     $failures
 );
 
@@ -226,9 +393,31 @@ bhp_ab_assert(
     $failures
 );
 
+/* ⭐ 1.19.297 — TWO paragraphs now, not one, and the second one is the reason.
+ *    ⛔ THIS IS THE ASSERTION MOST AT RISK OF BEING QUIETLY LOOSENED, so it is
+ *    tightened instead: the count moves 1 -> 2 AND both paragraphs are then
+ *    identified by class immediately below, so "two paragraphs" cannot silently
+ *    become "the privacy line plus whatever an agent added". Andrew's
+ *    2026-08-19 "the only words should be…" bare-bones rule still governs — his
+ *    own item-290 pick is what added the second line, and nothing else may. */
 bhp_ab_assert(
-    1 === substr_count($body, '<p '),
-    'exactly ONE paragraph renders in the dialog — the privacy line, and nothing else',
+    2 === substr_count($body, '<p '),
+    'exactly TWO paragraphs render in the dialog — the founder\'s subhead and the privacy line, and nothing else',
+    $failures
+);
+
+bhp_ab_assert(
+    1 === substr_count($body, '<p class="popup-ab__subhead">')
+        && 1 === substr_count($body, '<p class="acquisition-form__privacy">'),
+    '⛔ and those two paragraphs are exactly those two, identified by class, not merely counted',
+    $failures
+);
+
+/* The subhead sits BETWEEN the headline and the form, by markup order. */
+bhp_ab_assert(
+    strpos($body, 'parent-ab-popup-title') < strpos($body, 'popup-ab__subhead')
+        && strpos($body, 'popup-ab__subhead') < strpos($body, 'acquisition-form__submit'),
+    'the subhead renders after the headline and before the button, in document order',
     $failures
 );
 
@@ -247,18 +436,33 @@ bhp_ab_assert(
 
 /* ⚠ MATCHED WITH THE SURROUNDING WHITESPACE ALLOWED FOR. The shared form puts
  *   the label on its own indented line, so the rendered markup is
- *   `>\n    Join the Adventure  </button>` and never `>Join the Adventure</button>`.
- *   The tighter assertion was written first and would have failed on correct
- *   output. */
+ *   `>\n    Send me the chapter  </button>` and never
+ *   `>Send me the chapter</button>`. The tighter assertion was written first
+ *   and would have failed on correct output.
+ *
+ * ⭐ 1.19.297 — the CTA was "Join the Adventure" (his 2026-08-19 string) and is
+ *    now the send-imperative from carrier item 290. ⛔ The assertion's SHAPE is
+ *    unchanged: one submit button, that string, exactly once. */
 bhp_ab_assert(
-    1 === preg_match_all('/<button[^>]*type="submit"[^>]*>\s*Join the Adventure\s*<\/button>/s', $rendered),
-    'the CTA reads "Join the Adventure", on exactly one submit button',
+    1 === preg_match_all('/<button[^>]*type="submit"[^>]*>\s*Send me the chapter\s*<\/button>/s', $rendered),
+    'the CTA reads "Send me the chapter", on exactly one submit button',
     $failures
 );
 
 bhp_ab_assert(
-    1 === substr_count($rendered, 'Join the Adventure'),
+    1 === substr_count($rendered, 'Send me the chapter'),
     'that CTA string appears exactly once in the dialog',
+    $failures
+);
+
+/* ⛔ 1.19.297 — FREE NEVER APPEARS ON THE BUTTON. This is the magnet-teardown
+ *    pattern the founder agreed with, and it is asserted rather than trusted to
+ *    review: FREE belongs in the headline, where it is the offer, and not on the
+ *    control, where it competes with the action. */
+bhp_ab_assert(
+    1 === preg_match('/<button[^>]*type="submit"[^>]*>(.*?)<\/button>/s', $rendered, $m_submit)
+        && false === stripos($m_submit[1], 'free'),
+    '⛔ the submit button carries no form of the word "free"',
     $failures
 );
 
@@ -356,9 +560,40 @@ foreach (['webp', 'png'] as $ext) {
     );
 }
 
+/*
+ * ⭐ UPDATED 1.19.298 (2026-08-27, `CYCLE167-LD-POPUP-PHOTO`) — THE DIALOG NOW
+ *    CARRIES **TWO** IMAGES, AND THE SECOND ONE IS THE FOUNDER'S OWN REQUEST.
+ *
+ * ⛔ THIS ASSERTION WAS RIGHT AND IS SUPERSEDED, NOT BROKEN. It enforced
+ *    Andrew Signore's 2026-08-19 spec — *"one small picture"* — and it held
+ *    for eight days. Carrier item 297, 2026-08-27, is his own later
+ *    instruction and the only thing that can supersede it:
+ *
+ *      "Did we come to a conclusion on adding a picture of me and charlotte as
+ *       a gradient right to left with like a playful squiggle in between for
+ *       the pop ups?"
+ *
+ * ⛔ THE COUNT IS STILL EXACT, WHICH IS THE WHOLE POINT OF KEEPING IT. It is
+ *    now TWO and not "at least one": the kit cover, which is a standing
+ *    instruction and the popup's chapter→Kit honesty bridge, and the
+ *    photograph. A third image creeping in still fails here, which is the
+ *    regression this assertion has always existed to catch.
+ *
+ * ⚠ IT IS DELIBERATELY CONDITIONAL ON THE PHOTOGRAPH ACTUALLY RESOLVING. If
+ *   the four image files are absent from the artefact the treatment stands
+ *   down by design and the dialog is back to one image — and this suite must
+ *   assert the popup that is actually rendering, not the one that was
+ *   intended. `tests/test-cycle167-popup-photo.php` is where the assets'
+ *   PRESENCE is required; that is the right place for it and this is not.
+ */
+$photo_renders = function_exists('bhp_get_founder_photo') && !empty(bhp_get_founder_photo());
+$expected_images = $photo_renders ? 2 : 1;
+
 bhp_ab_assert(
-    1 === substr_count($rendered, '<img'),
-    'exactly ONE image renders in the dialog (found ' . substr_count($rendered, '<img') . ')',
+    $expected_images === substr_count($rendered, '<img'),
+    'exactly ' . $expected_images . ' image(s) render in the dialog — the kit cover'
+        . ($photo_renders ? ' and the founder photograph' : '')
+        . ' (found ' . substr_count($rendered, '<img') . ')',
     $failures
 );
 
@@ -399,9 +634,34 @@ bhp_ab_assert(
     $failures
 );
 
+/*
+ * ⭐ 1.19.296 — ASSERTED AGAINST THE RESOLVED COVER, NOT AGAINST TWO TYPED
+ *    NUMBERS. The artwork was regenerated at 346x448 so the popup could render
+ *    it at 160px without going soft, and this assertion's hardcoded 173/224 is
+ *    exactly the kind of duplicated constant that then fails for the wrong
+ *    reason. ⭐ The property that actually matters — the img carries its true
+ *    intrinsic dimensions, so the dialog cannot reflow as the bytes arrive —
+ *    is now tested against whatever `bhp_get_lead_magnet_cover()` resolves,
+ *    which is itself now read from the file rather than typed.
+ */
+$cover_now = bhp_get_lead_magnet_cover('reluctant_reader_adventure_kit');
 bhp_ab_assert(
-    1 === preg_match('/<img[^>]*width="173"[^>]*height="224"/s', $rendered),
+    !empty($cover_now['width']) && !empty($cover_now['height'])
+        && 1 === preg_match(
+            '/<img[^>]*width="' . (int) $cover_now['width'] . '"[^>]*height="' . (int) $cover_now['height'] . '"/s',
+            $rendered
+        ),
     'the image carries its intrinsic dimensions, so the dialog cannot reflow as it loads',
+    $failures
+);
+
+/* ⭐ 1.19.296 — and the aspect ratio must not have moved, because the signup
+ *    modal and the Adventure Kit thank-you page render this same asset
+ *    height-driven with width:auto and would silently reflow if it had. */
+bhp_ab_assert(
+    !empty($cover_now['height'])
+        && abs(($cover_now['width'] / $cover_now['height']) - (173 / 224)) < 0.000001,
+    '⛔ the cover aspect ratio is unchanged — two other surfaces take their shape from it',
     $failures
 );
 
@@ -592,9 +852,34 @@ bhp_ab_assert(
  * depends on `show_on_front` / `page_on_front` options rather than on the
  * queried object alone, so a synthesised query is not a faithful stand-in.
  * The live homepage render is verified in the browser QA instead. */
+/*
+ * ⭐ UPDATED 1.19.296 — THE SURFACE IS NOW THREE THINGS, NOT TWO.
+ *    `/complete-collection/` joins the front page and single posts.
+ *
+ * ⭐ WHY: it is the **#1 human entry page on the site** (134 entries/30d,
+ *    production access logs) and it carried the HARDEST gate we run — it fell
+ *    through to exit-intent, whose mobile trigger is 20s dwell AND 45% scroll
+ *    AND a 400px up-flick inside 600ms. Authorised by Andrew Signore, carrier
+ *    item 280 (2026-08-27), naming the placement flip on the top entry page.
+ *    ⚠ RELAYED through the Chief of Staff, not witnessed by this suite.
+ *
+ * ⛔ THE EXCLUSIONS THAT MUST NOT DRIFT ARE ASSERTED SEPARATELY BELOW, so
+ *    widening this rule cannot quietly become "everything".
+ */
 bhp_ab_assert(
-    1 === preg_match('/if \(!is_front_page\(\) && !is_singular\(\x27post\x27\)\) \{\s*return false;/', $fn),
-    'the surface rule admits exactly two things: the front page and a single post',
+    1 === preg_match('/\$bhp_ab_popup_surface = is_front_page\(\)\s*\|\| is_singular\(\x27post\x27\)\s*\|\| is_page\(\x27complete-collection\x27\);/', $fn),
+    'the surface rule admits exactly three things: the front page, a single post, and the #1 entry page',
+    $failures
+);
+
+/* ⛔ AND IT ADMITS NOTHING ELSE. The Kit landing page keeps its deliberate
+ *    suppression (it IS this offer's destination), and no product/shop surface
+ *    is named. The pipe diagnosis's FIX-4 proposes reopening the Kit page and
+ *    is explicitly Andrew's decision, not this build's. */
+bhp_ab_assert(
+    false === strpos($fn, "is_page('reluctant-reader-adventure-kit')")
+        && false === strpos($fn, "is_page('shop')"),
+    '⛔ the surface rule did not quietly widen to the Kit landing page or /shop/',
     $failures
 );
 
@@ -699,8 +984,24 @@ bhp_ab_assert(
  * 8. THE STYLESHEET
  * ================================================================== */
 
+/*
+ * ⭐ UPDATED 1.19.298 (`CYCLE167-LD-POPUP-PHOTO`) — THE MATCH IS NO LONGER
+ *    EXACT-STRING, AND THE RELAXATION IS DELIBERATE AND BOUNDED.
+ *
+ * ⛔ IT USED TO ASSERT THE CLOSING QUOTE: `class="mariana-popup
+ *    mariana-popup--ab"`. 1.19.298 appends a SECOND modifier — the one that
+ *    gates the founder photograph on all four image files being present — so
+ *    the attribute now legitimately ends differently, and the old form would
+ *    have failed for the right reason at the wrong time.
+ *
+ * ⭐ WHAT THE ASSERTION IS ACTUALLY FOR IS UNCHANGED AND IS STILL ENFORCED:
+ *    this popup carries a modifier of its own, so its styling is scoped and
+ *    cannot reach the teacher popup, the timed parent popup or the
+ *    exit-intent modal. Dropping the trailing quote weakens nothing about
+ *    that — the two class names and their order are still matched exactly.
+ */
 bhp_ab_assert(
-    false !== strpos($rendered, 'class="mariana-popup mariana-popup--ab"'),
+    false !== strpos($rendered, 'class="mariana-popup mariana-popup--ab'),
     'the popup carries its own modifier class — the styling is scoped and cannot reach the teacher or exit-intent popups',
     $failures
 );
@@ -752,13 +1053,38 @@ bhp_ab_assert(
 
 /* The deleted elements must not keep dead rules describing a popup that no
  * longer exists. */
-foreach (['popup-ab__covers', 'popup-ab__inside', 'popup-ab__check', 'popup-ab__free'] as $dead) {
+/*
+ * ⭐ UPDATED 1.19.296 — `popup-ab__free` IS NO LONGER A DEAD ELEMENT AND HAS
+ *    BEEN REMOVED FROM THIS LIST.
+ *
+ * ⛔ IT WAS NEVER SUPPOSED TO BE ON IT. The 1.19.267 pass deleted the rule
+ *    along with the A/B markup and recorded it here as "deleted" — but the
+ *    element it styled carries a STANDING FOUNDER INSTRUCTION (1.19.207: FREE
+ *    all caps, bold, larger) that no experiment switch was ever authorised to
+ *    revoke. This assertion then held the regression in place: any attempt to
+ *    restore his emphasis would have failed the suite and looked like a defect.
+ *
+ * ⭐ THE OTHER THREE ARE GENUINELY DELETED and stay asserted — the three-book
+ *    cover strip, the "what's inside" trio and its tick. Those really were
+ *    subtraction he asked for, and dead rules for them would misdescribe the
+ *    popup to the next reader.
+ */
+foreach (['popup-ab__covers', 'popup-ab__inside', 'popup-ab__check'] as $dead) {
     bhp_ab_assert(
         1 >= substr_count($block, $dead),
         "no live rule survives for the deleted `{$dead}` element (only the note recording its removal)",
         $failures
     );
 }
+
+/* ⭐ 1.19.296 — the positive assertion that replaces it: the emphasis rule must
+ *    EXIST, scoped to this popup, so the founder's instruction is enforced by
+ *    the suite rather than merely permitted by it. */
+bhp_ab_assert(
+    false !== strpos($block, '.mariana-popup--ab .mariana-popup__dialog h2 .popup-ab__free'),
+    '⭐ the FREE emphasis rule exists and is scoped to this popup',
+    $failures
+);
 
 bhp_ab_assert(
     false !== strpos($block, '.mariana-popup--ab .popup-ab__kit-cover img'),

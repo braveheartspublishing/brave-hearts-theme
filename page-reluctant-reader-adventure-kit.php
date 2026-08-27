@@ -579,18 +579,25 @@ if (function_exists('bhp_get_amazon_review_registry')) {
 </section>
 
 <!-- ===================== SEE INSIDE ===================== -->
-<!-- Sprint (2026-07-16): the interior-spread photo and 4-item media grid
-     placeholders were removed rather than left as "coming soon" on a live
-     page -- no real interior photography exists yet (confirmed: nothing in
-     assets/images qualifies, and repurposing the unused destination photos
-     in assets/images/wild-places would misrepresent this black-and-white
-     illustrated book). Replaced with a text/feature grid using the same
-     .parent-landing-card component already used elsewhere on this page
-     (no new CSS), answering "why will my child enjoy and finish these
-     books" instead of showing an unfinished image gallery. Heading, lead,
-     checklist, and pull-quote are unchanged per the approved plan. Real
-     interior photography can replace this grid later with no template
-     rework needed. -->
+<?php
+/*
+ * Sprint (2026-07-16): the interior-spread photo and 4-item media grid
+ * placeholders were removed rather than left as "coming soon" on a live
+ * page -- no real interior photography exists yet (confirmed: nothing in
+ * assets/images qualifies, and repurposing the unused destination photos
+ * in assets/images/wild-places would misrepresent this black-and-white
+ * illustrated book). Replaced with a text/feature grid using the same
+ * .parent-landing-card component already used elsewhere on this page
+ * (no new CSS), answering "why will my child enjoy and finish these
+ * books" instead of showing an unfinished image gallery. Heading, lead,
+ * checklist, and pull-quote are unchanged per the approved plan. Real
+ * interior photography can replace this grid later with no template
+ * rework needed.
+ *
+ * ⛔ Converted from an HTML comment to a PHP one in 1.19.293
+ *    (`CYCLE166-CX-ANNOTATION-STRIP`). Build annotation is never echoed.
+ */
+?>
 <section class="parent-landing__section parent-landing__section--muted">
   <div class="parent-landing__inner">
     <div class="parent-landing__header-block">
@@ -774,26 +781,33 @@ if (function_exists('bhp_get_amazon_review_registry')) {
   </div>
 </section>
 
-<!-- ===================== FOUNDER CARD (video-block replacement) ===================== -->
-<!-- Sprint (2026-07-16): no approved 60-90s author video exists yet (confirmed:
-     no video file anywhere in the repo, no doc records one as production-ready).
-     Per the approved plan, replaced the "video coming soon" placeholder with a
-     compact founder card using the existing approved founder photo. Copy here
-     is deliberately short and distinct from the longer "Why These Books Exist"
-     narrative above -- not a duplicate. When a real video is produced, this
-     section can be swapped back to a video player with no other template change.
-
-     Corrected (2026-07-17): the founder photo above (assets/images/handoff/
-     founder-and-charlotte.webp) was also being rendered here, so the exact
-     same photo appeared in two consecutive sections. Removed the image from
-     this section only -- kept in the "Written for one real kid first."
-     section above, per the approved correction. No replacement/stock/
-     generated image introduced. Reuses the existing centered
-     .parent-landing__header-block pattern (already used elsewhere on this
-     page, e.g. the PROBLEM and HOW-IT-WORKS sections) instead of the 2-column
-     .parent-landing-author grid, so removing the photo doesn't leave an
-     empty grid column -- a single centered text column reads as intentional,
-     not empty, on both desktop and mobile. Copy unchanged. -->
+<!-- ===================== FOUNDER CARD ===================== -->
+<?php
+/*
+ * Sprint (2026-07-16): no approved 60-90s author video exists yet (confirmed:
+ * no video file anywhere in the repo, no doc records one as production-ready).
+ * Per the approved plan, replaced the "video coming soon" placeholder with a
+ * compact founder card using the existing approved founder photo. Copy here
+ * is deliberately short and distinct from the longer "Why These Books Exist"
+ * narrative above -- not a duplicate. When a real video is produced, this
+ * section can be swapped back to a video player with no other template change.
+ *
+ * Corrected (2026-07-17): the founder photo above (assets/images/handoff/
+ * founder-and-charlotte.webp) was also being rendered here, so the exact
+ * same photo appeared in two consecutive sections. Removed the image from
+ * this section only -- kept in the "Written for one real kid first."
+ * section above, per the approved correction. No replacement/stock/
+ * generated image introduced. Reuses the existing centered
+ * .parent-landing__header-block pattern (already used elsewhere on this
+ * page, e.g. the PROBLEM and HOW-IT-WORKS sections) instead of the 2-column
+ * .parent-landing-author grid, so removing the photo doesn't leave an
+ * empty grid column -- a single centered text column reads as intentional,
+ * not empty, on both desktop and mobile. Copy unchanged.
+ *
+ * ⛔ Converted from an HTML comment to a PHP one in 1.19.293
+ *    (`CYCLE166-CX-ANNOTATION-STRIP`). Build annotation is never echoed.
+ */
+?>
 <section class="parent-landing__section parent-landing__section--muted">
   <div class="parent-landing__inner parent-landing__inner--narrow">
     <div class="parent-landing__header-block">

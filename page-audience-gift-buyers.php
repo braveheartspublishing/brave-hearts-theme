@@ -590,7 +590,16 @@ if (function_exists('bhp_get_amazon_review_registry')) {
   </div>
 </section>
 
-<!-- ===================== COMPASS (FD-30) ===================== -->
+<!-- ===================== COMPASS ===================== -->
+<?php
+/*
+ * ⛔ 1.19.293 (`CYCLE166-CX-ANNOTATION-STRIP`) — the internal decision
+ *    identifier that used to sit in the HTML divider above now lives here,
+ *    in a PHP comment, because an HTML comment is SERVED to every visitor
+ *    and every crawler and a PHP comment is not. The section is the
+ *    `FD-30` compass module. Do not put the identifier back in the markup.
+ */
+?>
 <?php
 /*
  * FD-30, Andrew Signore 2026-08-03 (relayed): "approve compass module".

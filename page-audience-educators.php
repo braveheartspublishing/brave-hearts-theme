@@ -509,9 +509,16 @@ if (function_exists('bhp_get_amazon_review_registry')) {
 </section>
 
 <!-- ===================== TOOLKIT PREVIEW (educator-specific module) ===================== -->
-<!-- Updated for the finished 8-page toolkit (Andrew-approved v1.0, 2026-07-16):
-     real cover image in place of the "design in progress" placeholder, and
-     copy updated to reflect a delivered asset rather than a planned one. -->
+<?php
+/*
+ * Updated for the finished 8-page toolkit (Andrew-approved v1.0, 2026-07-16):
+ * real cover image in place of the "design in progress" placeholder, and
+ * copy updated to reflect a delivered asset rather than a planned one.
+ *
+ * ⛔ Converted from an HTML comment to a PHP one in 1.19.293
+ *    (`CYCLE166-CX-ANNOTATION-STRIP`). Build annotation is never echoed.
+ */
+?>
 <section class="audience-landing__section audience-landing__section--muted">
   <div class="audience-landing__inner audience-landing-split audience-landing-split--media-lead">
     <div class="audience-landing-media audience-landing-media--tall">

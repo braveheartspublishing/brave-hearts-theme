@@ -589,14 +589,25 @@ echo "\n=== §6 — THE COPY GATE ===\n";
 // quoted customer words belong to `marketing-growth` / Andrew and are NOT this suite to police
 // (standing rule §9.1a: a quoted "we" is never edited).
 $chrome = '';
+$rail_only = '';   /* ⭐ 1.19.297 — see §6.5 below. */
+$capture_only = ''; /* ⭐ 1.19.297 — see §6.5b below. */
 $decks  = array();
 foreach ( $docs as $slug => $html ) {
 	/* 1.19.269: the rail is no longer in the served document (founder item 1),
 	   so its copy is scored from the switched-on render instead. Dropping it
 	   from the gate would stop policing copy that one filter can bring back. */
-	$chrome .= bhp_bpt_rail_block( $rail_docs[ $slug ] ?? '' ) . ' ';
-	if ( preg_match( '/<aside id="[^"]*" class="bhp-post-capture".*?<\/aside>/s', $html, $m ) ) {
-		$chrome .= $m[0] . ' ';
+	$rail_block = bhp_bpt_rail_block( $rail_docs[ $slug ] ?? '' );
+	$chrome    .= $rail_block . ' ';
+	$rail_only .= $rail_block . ' ';
+	/* ⚠ 1.19.297 — `.*?` IS NOT ENOUGH ONCE THERE ARE TWO CAPTURE PANELS ON A
+	 *   POST (mid + end, since 1.19.296). `preg_match` returns only the FIRST,
+	 *   so half the capture copy was escaping the gate. Switched to
+	 *   `preg_match_all` with a non-greedy body, which scores both. */
+	if ( preg_match_all( '/<aside id="[^"]*" class="bhp-post-capture[^"]*".*?<\/aside>/s', $html, $m ) ) {
+		foreach ( $m[0] as $aside ) {
+			$chrome       .= $aside . ' ';
+			$capture_only .= $aside . ' ';
+		}
 	}
 	if ( preg_match( '/<p class="component-heading__eyebrow bhp-post-eyebrow">(.*?)<\/p>/s', $html, $m ) ) {
 		$chrome .= $m[0] . ' ';
@@ -641,9 +652,50 @@ bhp_bpt_assert(
 	'§6.4 no outcome claim about a child in the chrome',
 	$failures
 );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.297 (2026-08-27, `CYCLE167-LD-CAPTURE-COPY-APPLY`) — §6.5 IS
+ *     NARROWED TO THE SURFACE THE FINDING WAS ABOUT, AND §6.5b IS ADDED.
+ *     ⛔ THE GATE GETS STRICTER. NOTHING IS RELAXED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHAT §6.5 USED TO DO AND WHY IT WAS RIGHT: `CYCLE164-CX-15` found the book
+ *    rail promising free reading, and the rail links to BOOK PRODUCT PAGES
+ *    where nothing free is delivered. The finding's own words are *"which no
+ *    destination can honour"* — the objection is to an UNHONOURED promise, not
+ *    to the word "free".
+ *
+ * ⚠ WHY IT HAD TO CHANGE: it scored the rail and the CAPTURE PANELS in one
+ *   blob, and those are two surfaces with two destinations. On 2026-08-27 the
+ *   founder made the free chapter the capture offer outright (carrier item
+ *   290: *"FREE Chapter for Reluctant Readers"*), and carrier items 292/293/294
+ *   record HIS OWN read of his Mailchimp journey builder showing the Active
+ *   "Parent - Acquisition Funnel" sending the Kit immediately on the signup
+ *   tag. ⭐ THE CAPTURE PANEL'S DESTINATION **DOES** HONOUR IT. The rail's
+ *   still does not.
+ *
+ * ⭐ SO: §6.5 KEEPS THE FULL PROHIBITION, ON THE RAIL, UNCHANGED. §6.5b then
+ *    requires that anywhere the chrome DOES promise a free chapter, it names
+ *    the Kit that delivers it — a requirement that DID NOT EXIST BEFORE. The
+ *    old gate let an unbacked promise through as long as it avoided three
+ *    tokens; this one tests whether the promise is backed.
+ */
 bhp_bpt_assert(
-	! preg_match( '/\b(read free|read it free|free chapter)\b/i', $chrome_text ),
-	'§6.5 the rail does not promise free reading, which no destination can honour (CYCLE164-CX-15)',
+	! preg_match( '/\b(read free|read it free|free chapter)\b/i', html_entity_decode( wp_strip_all_tags( $rail_only ), ENT_QUOTES, 'UTF-8' ) ),
+	'§6.5 the RAIL does not promise free reading, which its destination cannot honour (CYCLE164-CX-15)',
+	$failures
+);
+
+$capture_text = html_entity_decode( wp_strip_all_tags( $capture_only ), ENT_QUOTES, 'UTF-8' );
+bhp_bpt_assert(
+	! preg_match( '/\b(read free|read it free|free chapter)\b/i', $capture_text )
+		|| false !== stripos( $capture_text, 'Reluctant Reader Adventure Kit' ),
+	'§6.5b ⭐ a capture panel that promises a free chapter NAMES the Kit that delivers it (item 290 honesty condition)',
+	$failures
+);
+bhp_bpt_assert(
+	'' !== trim( $capture_text ),
+	'§6.5c the capture panels yielded scoreable text (guards §6.5b against passing on an empty string)',
 	$failures
 );
 // Aliases must never reach a public surface (standing rule §14 constraint 5).

@@ -377,6 +377,135 @@ function bhp_read_aloud_combo_key() {
 }
 
 /**
+ * This landing page's own id.
+ *
+ * ⭐ THE FAST PATH IS THE ONLY PATH THAT RUNS FOR A REAL VISITOR. When the
+ *    page is being rendered, `get_queried_object_id()` already IS this page,
+ *    the template check confirms it, and the function returns before touching
+ *    the database. ⛔ The lookup below is NOT on the front-end critical path.
+ *
+ * ⚠️ WHY THE FALLBACK EXISTS AT ALL, recorded because it was found by a test
+ *    failing rather than by foresight: under `wp eval-file` there is no main
+ *    query, so `get_queried_object_id()` is 0 and a permalink cannot resolve.
+ *    Without this, `bhp_read_aloud_ship_home_url()` returned '' and link mode
+ *    bailed to [] — meaning the suite could not exercise link mode at all, and
+ *    any future non-page render context (a shortcode, a REST preview, a CLI
+ *    audit) would silently lose the control. ⭐ Resolving the page by its own
+ *    TEMPLATE rather than by a slug or a hardcoded id keeps the same rule the
+ *    rest of this feature follows: `/read-alouds/` (a different, older page)
+ *    must never match, and renaming the page in the editor must not break it.
+ *
+ * @return int Page id, or 0.
+ */
+function bhp_read_aloud_page_id() {
+    $queried = (int) get_queried_object_id();
+    if ($queried > 0 && bhp_read_aloud_template() === get_page_template_slug($queried)) {
+        return $queried;
+    }
+
+    $found = get_posts([
+        'post_type'        => 'page',
+        'post_status'      => 'publish',
+        'numberposts'      => 1,
+        'fields'           => 'ids',
+        'meta_key'         => '_wp_page_template',
+        'meta_value'       => bhp_read_aloud_template(),
+        'no_found_rows'    => true,
+        'suppress_filters' => false,
+    ]);
+
+    if (!empty($found)) {
+        return (int) $found[0];
+    }
+
+    return $queried > 0 ? $queried : 0;
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.295 — THE SHIP-IT-HOME URL. `CYCLE167-LD-READALOUD-BUNDLE-FIX`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ WHY THIS EXISTS. A visit-flagged session cannot buy anything carrying a
+ *    colouring component (`FD-642`, enforced at `offer-engine.php:448-450`).
+ *    Until 1.19.295 the page answered that by DELETING the combo, which is
+ *    what the founder found missing (carrier item 278). The answer is not to
+ *    unlock the cart — it is to offer the parent the OTHER route, explicitly:
+ *    clear the visit flag and order the pair shipped to the house.
+ *
+ * ⛔ THE PARAM AND THE TOKEN ARE THE PLUGIN'S OWN CONSTANTS, NOT LITERALS.
+ *    `BHP_SCHOOL_VISIT_PARAM` / `BHP_SCHOOL_VISIT_CLEAR_TOKEN` are defined at
+ *    `school-visit-pickup.php:251,331`. Typing 'bhp_visit' and 'clear' here
+ *    would be a second copy of a contract owned by another workstream, and it
+ *    would go silently wrong the day that workstream renamed either one. The
+ *    fallbacks exist only so the theme cannot fatal with the plugin off.
+ *
+ * ⛔ THE DESTINATION IS THIS PAGE ITSELF, AND THAT IS DELIBERATE. Sending the
+ *    parent to a product page would land them somewhere they did not ask to
+ *    go; sending them back here re-renders the SAME block with a real, live
+ *    ADD TO CART, because the flag is gone by the time the template runs
+ *    (`capture_intent` fires on `template_redirect` at priority 5, well
+ *    before any render). ⭐ `R1.4` therefore holds through the link: the
+ *    destination genuinely sells the thing the control advertises.
+ *
+ * @param int $page_id Optional page id. Defaults to this landing page.
+ * @return string Absolute URL, or '' when no permalink resolves.
+ */
+function bhp_read_aloud_ship_home_url($page_id = 0) {
+    $page_id = $page_id ? (int) $page_id : bhp_read_aloud_page_id();
+    $base    = $page_id ? (string) (get_permalink($page_id) ?: '') : '';
+
+    if ('' === $base) {
+        return '';
+    }
+
+    $param = defined('BHP_SCHOOL_VISIT_PARAM') ? (string) BHP_SCHOOL_VISIT_PARAM : 'bhp_visit';
+    $token = defined('BHP_SCHOOL_VISIT_CLEAR_TOKEN') ? (string) BHP_SCHOOL_VISIT_CLEAR_TOKEN : 'clear';
+
+    return add_query_arg([$param => $token], $base);
+}
+
+/**
+ * TRUE when the visit gate — and ONLY the visit gate — is what is hiding an
+ * offer from this session.
+ *
+ * ⛔⛔ THE TWO EMPTY-STRING CAUSES ARE NOT THE SAME THING, AND TREATING THEM
+ *     AS ONE IS THE DEFECT THIS FUNCTION EXISTS TO PREVENT.
+ *     `bhp_offer_render_module()` returns '' for two entirely different
+ *     reasons:
+ *       · `!purchasable` — the offer does not exist on this environment, a
+ *         component is unpublished, or the price will not resolve. There is
+ *         NOTHING to sell and no link can change that. The page must stay
+ *         silent, exactly as it did before 1.19.295.
+ *       · `purchasable && !offerable` — the catalogue sells it perfectly
+ *         well; THIS SESSION is refused. That is a session fact, and a
+ *         session fact has a remedy the parent can choose.
+ *
+ * ⭐ BOTH PREDICATES ARE THE ENGINE'S OWN PUBLIC FUNCTIONS. `is_purchasable`
+ *    is environment/catalogue truth with no session in it; `is_offerable` is
+ *    that plus the session. Nothing is reimplemented here and no new notion
+ *    of "why" is invented.
+ *
+ * ✅ FAILS CLOSED TO SILENCE. Plugin off, predicates missing, or a resolver
+ *    that throws → FALSE → the caller returns [] and the block is absent,
+ *    which is 1.19.294 behaviour byte for byte.
+ *
+ * @param string $key Offer key.
+ * @return bool
+ */
+function bhp_read_aloud_offer_blocked_by_visit($key) {
+    if (!function_exists('bhp_offer_is_purchasable') || !function_exists('bhp_offer_is_offerable')) {
+        return false;
+    }
+
+    try {
+        return bhp_offer_is_purchasable($key) && !bhp_offer_is_offerable($key);
+    } catch (Throwable $e) {
+        return false; // FAIL CLOSED: an unexplained refusal is not advertised.
+    }
+}
+
+/**
  * The combo block — the pair offer, rendered through the EXISTING shop card.
  *
  * ⛔⛔ THE MODULE IS RENDERED **BEFORE** ANYTHING ELSE IS DECIDED, AND THE
@@ -388,6 +517,36 @@ function bhp_read_aloud_combo_key() {
  *     line or an "or pick just one" divider for a combo that cannot be bought
  *     (`R1.4`). ⛔ Do not reorder this so the copy is assembled first — that
  *     is exactly how a page ends up advertising a control it did not render.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.295 — THE THIRD OUTCOME: LINK MODE. `CYCLE167-LD-001`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE FOUNDER FOUND THIS, NOT QA (Standing Rules §9.2 rule 7). Carrier item
+ *    278, relayed: *"there should be the bundle of the MT book and MT coloring
+ *    book? we fixed that already and its gone"*. It was gone because his own
+ *    browser carries the Adams visit flag — and so does every Adams parent who
+ *    opened the pre-visit school email. This was never founder-only.
+ *
+ * ⛔⛔ FD-642 IS PRESERVED BY CONSTRUCTION, NOT BY CARE. Link mode emits NO
+ *     `<form>`, NO `bhp_bundle_add` nonce and NO add-to-cart control of any
+ *     kind. There is no markup on the page a parent could press to put a
+ *     colouring book into a hand-delivery cart, so the rule cannot be broken
+ *     by this block even if every predicate above it were wrong.
+ *
+ * ⛔⛔ THE SHORTCUT THAT WAS NOT TAKEN, RECORDED SO IT IS NOT RE-DERIVED AND
+ *     RE-ATTEMPTED. The plugin exposes `bhp_school_visit_paperback_only` as a
+ *     filter. Returning FALSE on this template would restore the real
+ *     add-to-cart in three lines. ⛔ IT IS UNSAFE AND MUST NOT BE DONE. The
+ *     cart and checkout seams are SESSION-scoped, not page-scoped: a colouring
+ *     book added under a page-local exemption would sit in a cart the checkout
+ *     still treats as hand-delivery, and the failure would surface as Andrew
+ *     handing a parent a book he does not have, at the read aloud, in front of
+ *     a child. Link mode routes AROUND the session instead of lying to it.
+ *
+ * ⛔ NO PRICE LITERAL, STILL. The figure in link mode is `bhp_offer_price()`'s,
+ *    resolved live on this render, formatted by `wc_price()`. It is the same
+ *    number the cart-mode card shows because it is the same call.
  *
  * ⛔ CARD MODE (`$card = true`), SO THE SIDE PANEL OPENS. See the header note.
  *    ⛔ `$show_heading = false`, because this template supplies the `<h3>` —
@@ -415,8 +574,19 @@ function bhp_read_aloud_combo() {
      *    is this page's hook and carries every visual override, scoped.
      */
     $html = (string) bhp_offer_render_module($key, 'bhp-offer--card read-aloud-combo__offer', false, true);
+
+    /*
+     * ⛔ THE FORK. '' has two causes and they get two different answers.
+     *    `!purchasable` → [] → the page reads as though the combo had never
+     *    been designed, exactly as it did in 1.19.294.
+     *    `purchasable && !offerable` → LINK MODE below.
+     */
+    $link_mode = false;
     if ('' === $html) {
-        return []; // ⛔ Not buyable → not advertised. No copy, no picture, nothing.
+        if (!bhp_read_aloud_offer_blocked_by_visit($key)) {
+            return []; // ⛔ Not buyable anywhere → not advertised. Nothing at all.
+        }
+        $link_mode = true;
     }
 
     /*
@@ -433,13 +603,96 @@ function bhp_read_aloud_combo() {
     $title      = function_exists('bhp_colouring_draft_copy') ? (string) bhp_colouring_draft_copy('offer_card_title') : '';
     $descriptor = function_exists('bhp_colouring_draft_copy') ? (string) bhp_colouring_draft_copy('offer_descriptor') : '';
 
-    return [
+    $combo = [
         'key'        => $key,
+        'mode'       => $link_mode ? 'link' : 'cart',
         'html'       => $html,
         'art'        => $art,
         'title'      => $title,
         'descriptor' => $descriptor,
+        'url'        => '',
+        'price_html' => '',
+        'price_label'=> '',
+        'cta'        => '',
+        'note'       => '',
     ];
+
+    if (!$link_mode) {
+        return $combo;
+    }
+
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * LINK MODE — everything the cart card shows EXCEPT the ability to buy.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔ NO URL, NO BLOCK. If the clear route will not resolve there is no
+     *    honest control to render, and a picture and a price with no way to
+     *    act on them is the "advertising something you cannot buy" defect
+     *    `R1.4` forbids. Returning [] here is the same silence as `!purchasable`.
+     */
+    $url = bhp_read_aloud_ship_home_url();
+    if ('' === $url) {
+        return [];
+    }
+
+    /*
+     * ⛔ THE PRICE IS THE ENGINE'S, RE-READ THIS RENDER. Not a literal, not a
+     *    cached copy, not a number carried in from the template.
+     * ⛔ NO PRICE, NO BLOCK — same reason as no URL. `bhp_offer_render_module()`
+     *    applies the identical rule (`null === $price` → '').
+     */
+    $price = function_exists('bhp_offer_price') ? bhp_offer_price($key) : null;
+    if (null === $price || !function_exists('wc_price')) {
+        return [];
+    }
+
+    $combo['url']         = $url;
+    $combo['price_html']  = (string) wc_price($price);
+    /*
+     * ⛔ THE SAME LABEL THE SHOP CARD AND THE CART-MODE CARD USE
+     *    (`offer_card_price_label` → "BOOK + COLORING BOOK"). An unlabelled
+     *    figure beside a composite of two books is the `FD-549` ambiguity the
+     *    whole rail contract exists to close, and link mode does not get an
+     *    exemption from it.
+     */
+    $combo['price_label'] = function_exists('bhp_colouring_draft_copy')
+        ? (string) bhp_colouring_draft_copy('offer_card_price_label')
+        : '';
+
+    /*
+     * ⛔ THE TWO AUTHORED STRINGS. Held to every standing copy rail:
+     *      · §9.1 VOICE — first person is I/me/my. ⛔ No "we", "us", "our".
+     *      · ⛔ NO EM DASH.
+     *      · ⛔ NO OUTCOME CLAIM. It says what the control does and what it
+     *        costs the parent. It does not say what the books will do to a child.
+     *      · ⛔ NO review, rating, testimonial, statistic, award or endorsement.
+     *      · ⛔ NO price literal. ⛔ No school name, date, grade or visit slug:
+     *        this page is school-agnostic and the note is worded so it stays
+     *        true for every visit, forever (see the header rule).
+     *
+     * ⭐ THE NOTE IS THE HONEST HALF AND IT IS NOT OPTIONAL. Following this
+     *    link gives up hand-delivery in this browser. A parent who is not told
+     *    that has been moved off a signed copy without being asked, which is
+     *    worse than the missing bundle this whole build exists to fix.
+     */
+    /*
+     * ⚠️ NO FIRST PERSON IN EITHER STRING, AND THAT IS A DELIBERATE CALL
+     *    RATHER THAN AN OVERSIGHT. §9.1 says the company voice is I/me/my
+     *    because Andrew is the sole operator. ⛔ But a BUTTON is read in the
+     *    PARENT'S voice, and "shipped to my home" on this page would put a
+     *    "my" that means the parent three lines under a paragraph whose "I"
+     *    means Andrew. Two different people behind one pronoun on one card is
+     *    worse copy than no pronoun. ⭐ So neither string uses first person at
+     *    all, which satisfies §9.1 by construction: there is no "we" because
+     *    there is no company voice here to get wrong.
+     * ⛔ AMERICAN SPELLING (founder standing rule). ⛔ No em dash. ⛔ No
+     *    outcome claim. ⛔ No school name, date, grade or slug.
+     */
+    $combo['cta']  = __('Order both, shipped to your home', 'brave-hearts');
+    $combo['note'] = __('This sends both books to your house instead of holding them for the school visit. Opening it switches this browser out of visit pickup, so the books arrive by mail rather than signed and handed over in person. Open the school visit link again to switch back.', 'brave-hearts');
+
+    return $combo;
 }
 
 /**

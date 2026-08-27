@@ -235,7 +235,59 @@ bhp_ra_ok('a stylesheet IS enqueued, on the standard hook',
     && false !== strpos(bhp_ra_strip_comments($inc_src), "'wp_enqueue_scripts'"));
 
 echo "\n===== 7. SCHOOL-AGNOSTIC =====\n";
-bhp_ra_ok('no bhp_visit argument read or emitted', false === strpos($new_src, 'bhp_visit'));
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⚠️ 1.19.295 — THIS ONE ASSERTION MOVED. `CYCLE167-LD-READALOUD-BUNDLE-FIX`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED ASSERTION, PRESERVED VERBATIM so the movement is visible
+ *    and is not re-derived by a future reader who would then "restore" it and
+ *    silently revert the founder's fix:
+ *
+ *      bhp_ra_ok('no bhp_visit argument read or emitted',
+ *          false === strpos($new_src, 'bhp_visit'));
+ *
+ * ⭐ WHY IT COULD NOT STAY, and why this is a NARROWING rather than a
+ *    loosening. The rule's REASON, stated at the head of
+ *    `inc/read-aloud-landing.php`, is that this page must never be
+ *    school-specific and must never GRANT a hand-delivery entitlement. That
+ *    reason is about the SLUG form, `?bhp_visit=<school-slug>`, which is what
+ *    `/author-visits/` carries and what confers the entitlement.
+ *
+ * ⭐ `?bhp_visit=clear` is the OPPOSITE operation. It names no school, no date
+ *    and no grade, and it grants nothing: it REVOKES. Carrier item 278 made
+ *    the page need it, because a visit-flagged parent could otherwise see no
+ *    bundle at all (`CYCLE167-LD-001`).
+ *
+ * ⛔ SO THE RULE IS NOW ASSERTED IN THE FORM THAT CARRIES ITS REASON: the only
+ *    `bhp_visit` value this feature may emit is the CLEAR token, and a visit
+ *    SLUG must appear nowhere. That is a STRICTER statement than the original
+ *    in the direction that matters, because the original could not tell a
+ *    grant from a revocation at all.
+ *
+ * ⛔ THE OTHER THREE ASSERTIONS IN THIS SECTION ARE BYTE-UNTOUCHED.
+ */
+$ra_visit_hits = [];
+if (preg_match_all('/bhp_visit[^a-z_]{0,3}([a-z0-9_-]*)/i', $new_src, $ra_vm)) {
+    foreach ($ra_vm[0] as $ra_i => $ra_whole) {
+        /* The plugin CONSTANT names are references, not emitted arguments. */
+        if (0 === strpos($ra_whole, 'bhp_visit_shelf')) {
+            continue;
+        }
+        $ra_visit_hits[] = $ra_whole;
+    }
+}
+bhp_ra_ok(
+    'no visit SLUG emitted — the only bhp_visit value is the clear token',
+    0 === preg_match('/bhp_visit["\']?\s*=>?\s*["\']?(?!clear)[a-z]+-\d{4}-\d{2}-\d{2}/i', $new_src)
+        && 0 === preg_match('/bhp_visit=(?!clear)[a-z0-9]/i', $new_src),
+    implode(' | ', $ra_visit_hits)
+);
+bhp_ra_ok(
+    'the page GRANTS no entitlement — it references the CLEAR token only',
+    false === strpos($new_src, 'BHP_SCHOOL_VISIT_SESSION_KEY')
+        && false === strpos($new_src, 'bhp_school_visit_capture_intent')
+);
 bhp_ra_ok('no visit slug / registry read', false === strpos($new_src, 'bhp_school_visit'));
 bhp_ra_ok('no school named in source', !preg_match('/\bAdams\b|\bElementary School\b/i', $new_src));
 bhp_ra_ok('no hardcoded date in customer copy', !preg_match('/\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}\b/', $tpl_src));

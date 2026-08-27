@@ -1,5 +1,5 @@
 /*! Built from read-aloud.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 6feb9b9a4fd35b62c5321f5770b7e981
+    source-md5: 42fe2c311ff831fd29b266f8f3dba0bc
     Comments stripped for transfer size; the source file is canonical. */
 .read-aloud {
   background: var(--color-ivory);
@@ -428,4 +428,69 @@ background: var(--color-ivory) !important;
 .read-aloud-pair__cover {
     max-width: 9rem;
   }
+}
+.read-aloud-combo__shiphome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+.read-aloud-combo__shiphome-price {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.read-aloud-combo__shiphome-price .bhp-shop-format-price__label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.read-aloud-combo__shiphome-price .bhp-shop-format-price__amount {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.1;
+  color: var(--color-forest);
+}
+.read-aloud-combo__shiphome-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem var(--space-6);
+  background: transparent;
+  color: var(--color-forest);
+  border: 2px solid var(--color-forest);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+white-space: normal;
+}
+.read-aloud-combo__shiphome-cta:hover,
+.read-aloud-combo__shiphome-cta:focus {
+  background: var(--color-forest);
+  color: var(--color-white);
+  text-decoration: none;
+}
+.read-aloud-combo__shiphome-cta:focus-visible {
+  outline: 3px solid var(--color-gold-deep);
+  outline-offset: 2px;
+}
+.read-aloud-combo__shiphome-note {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-muted);
 }

@@ -63,10 +63,60 @@ $adventures = bhp_get_series_adventures();
  *    the same dataLayer on the same page load; only its position in the load
  *    order moved, and no GA4 tag in the container is order-sensitive.
  */
+/*
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.292 (2026-08-26, `CYCLE166-CX-CAPTURE-REPAIR`) — THIS EVENT NOW
+ *     REQUIRES A SINGLE-USE SERVER-SIDE CONVERSION TOKEN. A BARE LOAD OF
+ *     THIS URL FIRES NOTHING.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DOCBLOCK AT THE TOP OF THIS FILE WAS WRONG, AND IT IS LEFT IN
+ *    PLACE ABOVE RATHER THAN QUIETLY CORRECTED so the movement is visible.
+ *    It asserts this page "must never be reachable via an arbitrary
+ *    redirect (only the whitelisted 'adventure_kit_thank_you' key ...
+ *    resolves to this page)". That is a true statement about how the SITE
+ *    LINKS HERE and a false statement about who can LOAD this URL. A
+ *    permalink is not a capability. Anyone — and in practice, any crawler —
+ *    could GET this page and manufacture a conversion.
+ *
+ * ⭐ MEASURED ON PRODUCTION, 2026-08-26, raw access logs read read-only
+ *    over SSH — NOT inferred from code:
+ *      2026-08-17..26  thank-you page GETs: 34   real signups: 0
+ *      2026-08-20 alone: 20 page loads, 0 signups.
+ *    Agents behind them: curl/8.12.1, HeadlessChrome, Applebot, AhrefsBot,
+ *    Amazonbot, Googlebot, an internal WordPress loopback. EVERY ONE OF
+ *    THOSE LOADS PUSHED `adventure_kit_signup`.
+ *
+ * ⭐ WHAT REPLACED WHAT. The `sessionStorage` dedup latch below is KEPT and
+ *    is now the SECOND of two guards, not the only one. It was never able
+ *    to do this job: it dedups repeat views WITHIN ONE TAB, and does
+ *    nothing whatsoever about a load that had no conversion behind it in
+ *    the first place. The token is the primary gate and is server-side,
+ *    single-use and short-TTL; the latch remains as cheap belt-and-braces
+ *    for the one case the token cannot see (a browser that replays the
+ *    same tokenised URL from bfcache within the same tab).
+ *
+ * ⛔ THE EVENT NAME AND EVERY PAYLOAD FIELD ARE BYTE-FOR-BYTE UNCHANGED, as
+ *    is the `wp_footer` priority 99 ordering contract with the Meta pixel
+ *    documented immediately above. No GTM tag, GA4 config or Meta mapping
+ *    needs to change, and no historical series is renamed or split. ONLY
+ *    WHETHER IT FIRES CHANGED.
+ *
+ * ⚠️ EXPECT THE REPORTED CONVERSION COUNT TO FALL AFTER THIS SHIPS. That is
+ *    the fix working, not a regression. The prior number was inflated by
+ *    every crawler that ever found this URL.
+ */
 add_action( 'wp_footer', function () {
     if ( ! class_exists( 'BHP_Analytics_Config' ) || ! BHP_Analytics_Config::should_render_analytics() ) {
         return;
     }
+
+    // ⭐ THE GATE. Consumes and burns the token; false for every arrival
+    //    that did not just complete a real signup.
+    if ( ! function_exists( 'bhp_is_verified_conversion' ) || ! bhp_is_verified_conversion() ) {
+        return;
+    }
+
     $bhp_akty_payload = wp_json_encode(
         array(
             'event'       => 'adventure_kit_signup',
@@ -125,13 +175,64 @@ add_action( 'wp_footer', function () {
  * ⛔ NO WORD OF THE CONFIRMATION COPY IS DELETED. The H1 is the same string;
  *    it is set smaller on phones by `.bhp-typ` in style.css. The lead
  *    sentence is the same sentence. Compaction here is TYPE and RHYTHM only.
+ *    ⚠ SUPERSEDED IN PART BY 1.19.297 — see the block immediately below. The
+ *      1.19.228 claim above was TRUE OF 1.19.228 and is preserved so the
+ *      movement is visible rather than re-derived; the eyebrow and the lead
+ *      sentence DID change at 1.19.297, for a reason that is not typography.
+ */
+?>
+<?php
+/*
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.297 (2026-08-27, `CYCLE167-LD-CAPTURE-COPY-APPLY`) — THE LANDING
+ *     SIDE OF THE CHAPTER PROMISE. THIS IS AN HONESTY FIX, NOT A COPY POLISH.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE PROBLEM IT SOLVES, STATED PLAINLY. As of 1.19.297 every parent
+ *    capture surface offers a FREE CHAPTER and every button reads "Send me the
+ *    chapter". This page is where that visitor lands. Before this change it
+ *    greeted them with "Your adventure kit is on the way" and "Your guide is on
+ *    the way" — three different nouns (chapter, kit, guide) across two clicks,
+ *    which is precisely the broken-promise shape that the founder's item-290
+ *    condition (b) exists to prevent: *"delivery-side copy must bridge
+ *    chapter -> kit so what arrives visibly matches what was promised."*
+ *
+ * ⛔ THE H1 IS **NOT** TOUCHED, AND THAT IS THE DESIGN RATHER THAN CAUTION.
+ *    "Your Reluctant Reader Adventure Kit Is on Its Way" is the correct thing
+ *    to say here, because the Kit IS what arrives in the inbox. Renaming the H1
+ *    to "chapter" would have made THIS page honest about the promise and
+ *    dishonest about the file. The bridge belongs in the sentence, which can
+ *    hold both nouns and the relationship between them. ⭐ Keeping it also
+ *    leaves `tests/test-kit-thankyou-upsell.php`'s two H1 assertions (including
+ *    an ordering check against the upsell cover) untouched and still passing —
+ *    a consequence of the right call, not the reason for it.
+ *
+ * ⭐ THE LEAD SENTENCE NOW DOES THREE THINGS IN ORDER: names the chapter the
+ *    visitor was promised, says where it is (inside the Kit), and states what
+ *    else is in there. The 15-minute arrival guidance and the spam-folder note
+ *    are KEPT VERBATIM — they are the only operationally useful words on the
+ *    page and they are the reason this page reduces support email.
+ *
+ * ⚠ "now" vs "up to 15 minutes" IS NOT A CONTRADICTION AND WAS CHECKED, NOT
+ *   ASSUMED. Item 293 records the founder's own read of his Mailchimp journey
+ *   builder: step 1 of the Active "Parent - Acquisition Funnel" sends on the
+ *   tag, "Every day as soon as possible". The SEND is immediate; ARRIVAL is a
+ *   mail-delivery fact nobody controls. Promising an immediate send and warning
+ *   about delivery latency is the honest pair. ⛔ This desk made no Mailchimp
+ *   call and carries that as HIS in-system observation, not its own.
+ *
+ * ⛔ NO OUTCOME CLAIM. NO INVENTED CONTENTS: the 296 lane read all seven pages
+ *    of the live `Reluctant-Reader-Adventure-Kit-1.pdf` from the production
+ *    document root. VOICE §9.1: I/me/my, no em dash, ages 6 to 9.
+ *    ⛔ The curly apostrophe in the old "don’t" is replaced with "do not"
+ *      rather than a straight quote, so no encoding difference rides in.
  */
 ?>
 <section class="passport-status-page section bhp-typ bhp-typ__confirm" aria-labelledby="adventure-kit-thank-you-title">
   <div class="container container--content passport-status-page__inner">
-    <p class="component-heading__eyebrow"><?php esc_html_e('Your adventure kit is on the way', 'brave-hearts'); ?></p>
+    <p class="component-heading__eyebrow"><?php esc_html_e('Your chapter is on the way', 'brave-hearts'); ?></p>
     <h1 id="adventure-kit-thank-you-title"><?php esc_html_e('Your Reluctant Reader Adventure Kit Is on Its Way', 'brave-hearts'); ?></h1>
-    <p class="text-lead"><?php esc_html_e('Your guide is on the way. Please allow up to 15 minutes for it to arrive, and check your promotions or spam folder if you don’t see it.', 'brave-hearts'); ?></p>
+    <p class="text-lead"><?php esc_html_e('Your chapter is inside the Kit, along with a printable activity and tips for reading it with a 6 to 9 year old. Please allow up to 15 minutes for it to arrive, and check your promotions or spam folder if you do not see it.', 'brave-hearts'); ?></p>
   </div>
 </section>
 

@@ -95,19 +95,73 @@ function bhp_w1_strip_comments( $php ) {
 	return $out;
 }
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ FIXED 1.19.297 (2026-08-27, `CYCLE167-LD-CAPTURE-COPY-APPLY`) — THIS
+ *     FUNCTION HAD SILENTLY STOPPED SEEING THE COPY IT EXISTS TO POLICE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT: the old pattern matched ONLY SINGLE-QUOTED PHP strings. Every
+ *    claim rail in this suite is fed by this one function — no rating, no
+ *    review, no award, no urgency, no scarcity, no number except the approved
+ *    age range, never "5 to 9". A string this function does not return is a
+ *    string NONE of those rails ever check.
+ *
+ * ⛔ HOW IT SURFACED, AND IT WAS LUCK RATHER THAN DESIGN: the founder's 2026-08-27
+ *    support line contains an apostrophe ("I'll send you the chapter now"), so
+ *    the copy had to be written as a DOUBLE-QUOTED string. The extractor
+ *    returned nothing for the whole footer block, and the one assertion that
+ *    requires a POSITIVE match ("the footer block names the ONE resource it
+ *    actually delivers") failed. ⭐ THE FAILING ASSERTION WAS THE SYMPTOM. Had
+ *    the copy contained no apostrophe, every rail would have reported PASS
+ *    while scanning an empty string.
+ *
+ * ⭐⭐ THAT IS THE REAL LESSON AND IT IS WHY THIS COMMENT IS LONG: a guard that
+ *     cannot see what it guards does not fail, it LIES. Only the assertions
+ *     that demand a positive match can ever detect it, which is why the
+ *     "yields extractable customer-facing copy" precondition below the
+ *     `$new_copy_files` loop is not a formality and must never be removed.
+ *
+ * ⛔ THE FIX WIDENS THE GUARD; IT RELAXES NOTHING. Both quote styles are now
+ *    extracted, so strictly MORE copy is scanned than before. Escapes are
+ *    unescaped per quote style: a single-quoted PHP string only honours \' and
+ *    \\, whereas a double-quoted one also honours \" and \n, so they are
+ *    decoded separately rather than with one shared `stripslashes()`.
+ */
 function bhp_w1_customer_strings( $php ) {
 	$out = array();
-	if ( preg_match_all(
-		'/(?:esc_html_e|esc_attr_e|esc_html__|esc_attr__|__|_e)\(\s*\'((?:[^\'\\\\]|\\\\.)*)\'/',
-		(string) $php,
-		$matches
-	) ) {
-		foreach ( $matches[1] as $string ) {
-			$out[] = stripslashes( $string );
+	$fns = '(?:esc_html_e|esc_attr_e|esc_html__|esc_attr__|__|_e)';
+
+	// Single-quoted.
+	if ( preg_match_all( '/' . $fns . '\(\s*\'((?:[^\'\\\\]|\\\\.)*)\'/', (string) $php, $m ) ) {
+		foreach ( $m[1] as $string ) {
+			$out[] = str_replace( array( "\\'", '\\\\' ), array( "'", '\\' ), $string );
 		}
 	}
+
+	// Double-quoted. ⭐ The half that was missing.
+	if ( preg_match_all( '/' . $fns . '\(\s*"((?:[^"\\\\]|\\\\.)*)"/', (string) $php, $m ) ) {
+		foreach ( $m[1] as $string ) {
+			$out[] = str_replace( array( '\\"', '\\\\' ), array( '"', '\\' ), $string );
+		}
+	}
+
 	return $out;
 }
+
+/*
+ * ⛔ A SELF-TEST ON THE EXTRACTOR ITSELF, because every other assertion in this
+ *    file trusts it. If this fails, no other copy result in this suite means
+ *    anything, and that must be visible rather than inferred.
+ */
+$w1_probe = bhp_w1_customer_strings(
+	'<?php esc_html_e( \'single quoted probe\', \'brave-hearts\' ); esc_html_e( "double quoted probe", \'brave-hearts\' );'
+);
+bhp_w1_assert(
+	in_array( 'single quoted probe', $w1_probe, true ) && in_array( 'double quoted probe', $w1_probe, true ),
+	'⛔ THE EXTRACTOR ITSELF sees BOTH quote styles (a guard that cannot see its subject reports PASS on nothing)',
+	$failures
+);
 
 // ==================== 1. THE FILES EXIST ====================
 
@@ -183,9 +237,56 @@ bhp_w1_assert(
 	'STILL RETIRED: the timed parent lead-magnet popup (Andrew 2026-07-19) — NOT reversed by the exit-intent ruling',
 	$failures
 );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ UPDATED 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — THE
+ *    TEACHER HALF OF THE 2026-07-19 RULING IS REVERSED, BY THE OWNER.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐⭐ THIS GUARD DID ITS JOB. The section header above says it exists to catch
+ *     "an owner ruling widened by an agent", and it failed the moment this
+ *     build lifted the teacher-popup suppression. It is being updated because
+ *     the OWNER moved, not because the build wanted a green run.
+ *
+ * ⭐ THE AUTHORITY, and it is his own later word twice over:
+ *     · Carrier item 280, 2026-08-27, names the "/teachers/ capture fix" in
+ *       that night's build programme, under item 279's *"Emails and Sales are
+ *       the 2 biggest KPIs - they need to be perfect."*
+ *     · The PARENT half of this same 2026-07-19 ruling had already been
+ *       reversed by him TWICE — "Turn it on" (2026-08-04, exit-intent) and
+ *       "I say build it now" (2026-08-06, the A/B capture popup). The teacher
+ *       half was never revisited, so this guard was holding one funnel to a
+ *       ruling he had twice moved on.
+ *   ⚠ RELAYED through the Chief of Staff. NOT witnessed by this suite.
+ *
+ * ⭐ THE EVIDENCE THAT IT MATTERED: `/teachers/` rendered ZERO popups
+ *    (verified live), and the Mailchimp audience contains no `Source: Teacher
+ *    Popup` tag at all with zero educator contacts since 2026-07-28 — two
+ *    desks, two instruments, opposite ends of the same pipe.
+ *
+ * ⛔ THE PARENT ASSERTION ABOVE IS BYTE-UNTOUCHED AND STILL PASSES. The guard
+ *    still guards everything it guarded except the one limb he re-decided.
+ * ⛔ REVERSING THIS IS ONE LINE in `inc/audit-remediation.php` plus this
+ *    assertion.
+ */
 bhp_w1_assert(
-	false === (bool) apply_filters( 'bhp_show_teacher_popup', true ),
-	'STILL RETIRED: the teacher lead-magnet popup (Andrew 2026-07-19) — NOT reversed by the exit-intent ruling',
+	true === (bool) apply_filters( 'bhp_show_teacher_popup', true ),
+	'REVERSED BY THE OWNER (carrier item 280, 2026-08-27): the teacher lead-magnet popup is restored on /teachers/',
+	$failures
+);
+
+/*
+ * ⛔ AND THE REVERSAL IS SCOPED. Restoring the teacher popup must not have
+ *    leaked the parent funnel onto the teacher page, or vice versa.
+ *    `.claude/rules/funnels.md`: never render both popups on the same page.
+ */
+bhp_w1_assert(
+	function_exists( 'bhp_should_show_parent_ab_popup' )
+		&& false !== strpos(
+			(string) file_get_contents( get_template_directory() . '/functions.php' ),
+			"// ⛔ Parent funnel only. Never on the teacher page. `.claude/rules/funnels.md`."
+		),
+	'⛔ funnel isolation held: the parent funnel is still excluded from /teachers/ server-side',
 	$failures
 );
 bhp_w1_assert(
@@ -706,6 +807,11 @@ foreach ( $new_copy_files as $rel ) {
 	 *    precaution: a plain substring scan for "star" failed on the
 	 *    approved footer heading "Start with one free chapter." The rail
 	 *    forbids a fabricated STAR RATING, not the letters s-t-a-r.
+	 *    ⚠ THAT HEADING WAS SUPERSEDED AT 1.19.297 (founder's carrier item 290;
+	 *      the footer now reads "FREE Chapter for Reluctant Readers"). The
+	 *      example is KEPT VERBATIM because it is the historical record of a
+	 *      real false positive and of why the word boundary is there — rewriting
+	 *      it to the current heading would erase the evidence for the fix.
 	 */
 	foreach ( array( 'aggregateRating', 'star', 'stars', 'rating', 'ratings', 'reviewer', 'reviewers', 'review', 'reviews', 'Limited time', 'Hurry', 'Only at', 'left in stock', 'parents bought', 'best-selling', 'bestselling', 'award', 'awards' ) as $forbidden ) {
 		bhp_w1_assert(

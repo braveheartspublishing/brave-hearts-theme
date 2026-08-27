@@ -26,10 +26,73 @@ $popup_config = wp_json_encode([
     'source'        => 'teacher_popup',
     'storagePrefix' => 'bhp_mariana_popup',
     'thankYouPath'  => 'mariana-guide-thank-you',
+    /*
+     * ═══════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.300 (2026-08-27, `CYCLE167-LD-POPUP-TIME-ONLY`) — TIME ONLY,
+     *     AT FIFTEEN SECONDS. THE SCROLL REQUIREMENT IS REMOVED.
+     * ═══════════════════════════════════════════════════════════════════
+     *
+     * ⭐ Andrew Signore, 2026-08-27, carrier item 306, VERBATIM:
+     *      "We also dont have the awareness or market share - I think we keep
+     *       our pop ups time only."
+     *    ⚠ RELAYED through the Chief of Staff, who states he read it
+     *      first-hand; NOT witnessed by this desk.
+     *
+     * ⭐ "OUR POP UPS" IS PLURAL, AND THAT IS WHY THIS FILE MOVES TOO. This is
+     *    the teacher funnel, not the parent funnel, and it KEEPS every one of
+     *    its own keys — but the trigger PHILOSOPHY is a house-wide manner, and
+     *    1.19.296 (below) set this surface's floor to the parent funnel's
+     *    number for exactly that reason: one answer to "how long before this
+     *    site interrupts anyone". That reason still holds; the answer moved.
+     *
+     * ⭐ MECHANICALLY: mode `gated` → mode `simple`, and both `scrollPct`
+     *    thresholds are removed rather than lowered. The engine registers its
+     *    scroll listener only when a threshold is present, so no scroll
+     *    listener exists on `/teachers/` at all now.
+     * ⭐ 15000 ms is UNCHANGED — only the key name differs, because `simple`
+     *    mode reads `delay`.
+     *
+     * ⛔ FUNNEL ISOLATION UNTOUCHED. `teacher_popup`, `bhp_mariana_popup` and
+     *    `mariana-guide-thank-you` above are byte-for-byte what they were. This
+     *    pass changes WHEN this popup asks, never WHOSE funnel it belongs to.
+     *
+     * ---------------------------------------------------------------------
+     * ⛔ SUPERSEDED BY ITEM 306 — PRESERVED, NOT DELETED:
+     *
+     *  > ⭐ 1.19.296 (2026-08-27, `CYCLE167-LD-CAPTURE-FIX-BUILD`) — mode
+     *  >    `simple` (a bare 5-second timer) -> mode `gated` (engagement AND
+     *  >    time), which is the treatment the parent funnel already runs.
+     *  >
+     *  > ⭐ WHY IT HAD TO MOVE AT THE SAME TIME AS THE SUPPRESSION LIFTED.
+     *  >    This config had been dormant since 2026-07-19, so it was the only
+     *  >    surface on the site that never received Andrew's 2026-08-19
+     *  >    ruling: *"Agree on the first paint day google recs - wait for
+     *  >    engagement and time."* Un-suppressing it unchanged would have
+     *  >    shipped a 5-second interrupt onto a 36-screen page — the exact
+     *  >    pattern that ruling retired, and the one Google's
+     *  >    mobile-interstitial guidance penalises on a search landing.
+     *  >    `/teachers/` IS a search landing.
+     *  >
+     *  > ⭐ scrollPct 20 / 12 were the parent funnel's MEASURED values.
+     *  >
+     *  > ⛔ NO fallbackDelay, for the same reason the parent popup had none.
+     *
+     * ⚠ THE GOOGLE POINT SURVIVES THE SUPERSESSION AND IS NOT SILENTLY
+     *   DROPPED. `/teachers/` is still a search landing, and a 15-second
+     *   time-only interstitial is still an interstitial. What changed is that
+     *   1.19.296 argued 5s was too soon and reached for scroll as the
+     *   remedy; item 306 keeps the 15s remedy and drops the scroll half. The
+     *   floor — the part Google's guidance actually turns on — is unchanged
+     *   at fifteen seconds, three times the interval that block objected to.
+     *   ⛔ FLAGGED to the Chief of Staff, NOT resolved here: whether a
+     *   time-only interstitial on a search-landing page is acceptable SEO risk
+     *   is a decision, and it is Andrew's, not this desk's.
+     * ---------------------------------------------------------------------
+     */
     'trigger'       => [
         'mode'    => 'simple',
-        'desktop' => ['delay' => 5000, 'scrollPct' => 30],
-        'mobile'  => ['delay' => 5000, 'scrollPct' => 30],
+        'desktop' => ['delay' => 15000],
+        'mobile'  => ['delay' => 15000],
     ],
 ]);
 

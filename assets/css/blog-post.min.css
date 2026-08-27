@@ -1,5 +1,5 @@
 /*! Built from blog-post.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: b1cc9e30f63bca1aed7ff1b915e08d30
+    source-md5: 8036c7df7921860996f7eefb28566ab5
     Comments stripped for transfer size; the source file is canonical. */
 body:not(.home) article.single-post.section {
   padding-block-start: clamp(0.3rem, 1.6vw, 2rem);
@@ -220,6 +220,18 @@ article.single-post { position: relative; }
   border: 1px solid var(--expedition-border);
   border-radius: 2px;
   background: var(--expedition-parchment);
+}
+
+
+.bhp-post-capture--mid {
+  margin-block: clamp(1.75rem, 4.5vw, 2.5rem);
+  padding: clamp(1rem, 3.2vw, 1.5rem);
+  background: transparent;
+  border-left: 3px solid var(--expedition-gold-deep);
+  border-radius: 0;
+}
+.bhp-post-capture--mid .bhp-post-capture__title {
+  font-size: clamp(1.2rem, 1.05rem + 0.9vw, 1.55rem);
 }
 
 .bhp-post-capture__eyebrow {

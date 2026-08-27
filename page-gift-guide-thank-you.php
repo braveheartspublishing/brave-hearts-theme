@@ -18,7 +18,23 @@ $complete_collection_url = home_url('/complete-collection/');
 // Lead-conversion signal, fired only on this dedicated confirmation page
 // (reachable only via the whitelisted redirect key), with a client-side
 // sessionStorage dedup so a refresh/back-nav does not refire it. No PII.
-if ( class_exists( 'BHP_Analytics_Config' ) && BHP_Analytics_Config::should_render_analytics() ) {
+/*
+ * ⭐ 1.19.292 (2026-08-26, `CYCLE166-CX-CAPTURE-REPAIR`) — NOW GATED ON A
+ *    SINGLE-USE SERVER-SIDE CONVERSION TOKEN, exactly as
+ *    `page-adventure-kit-thank-you.php` is. The long finding and the
+ *    production log evidence are written up once, there, and are not
+ *    restated here.
+ *
+ * ⛔ THE COMMENT DIRECTLY ABOVE IS THE SAME MISTAKE, PRESERVED RATHER THAN
+ *    SILENTLY FIXED: "reachable only via the whitelisted redirect key"
+ *    describes how the site LINKS here, not who may LOAD this URL. Crawlers
+ *    loaded it and manufactured conversions.
+ *
+ * ⭐ THIS PAGE IS THE GIFT FUNNEL AND IS TOUCHED ONLY TO ADD THE SAME GATE.
+ *    Event name, payload and dedup latch are byte-for-byte unchanged.
+ */
+if ( class_exists( 'BHP_Analytics_Config' ) && BHP_Analytics_Config::should_render_analytics()
+     && function_exists( 'bhp_is_verified_conversion' ) && bhp_is_verified_conversion() ) {
     $bhp_gg_payload = wp_json_encode(
         array(
             'event'         => 'gift_guide_signup',

@@ -24,6 +24,36 @@
  * the page cacheable -- see default_signals() for the full reasoning and
  * the live evidence behind it (`CYCLE143-GIM-51`).
  *
+ * ⭐⭐ 2026-08-27 UPDATE (theme 1.19.302, `CYCLE167-LD-CONSENT-GEO`) -- THE
+ * DEFAULTS ARE NOW GEO-AWARE, AND THE "all-denied" SENTENCE IMMEDIATELY
+ * ABOVE IS SUPERSEDED FOR NON-EEA TRAFFIC. It is kept, not corrected in
+ * place, so the movement stays legible.
+ *
+ * What changed, and only this: render_default_snippet() now emits TWO
+ * `gtag('consent','default',...)` calls instead of one --
+ *   - EEA+UK (EEA_UK_REGIONS): every signal DENIED. Byte-for-byte the
+ *     posture that was global until this release. Nothing about the
+ *     European experience of this site changes.
+ *   - everywhere else: analytics_storage GRANTED, the three ad_* signals
+ *     still DENIED. The banner stays visible to everyone and becomes a
+ *     notice with a working opt-out rather than a pre-consent gate.
+ *
+ * ⛔ THE CACHE-SAFETY PROPERTY IS UNCHANGED AND WAS THE FIRST CONSTRAINT
+ * CHECKED, NOT AN AFTERTHOUGHT: both payloads are constants, the server
+ * still performs no geo lookup and reads no header or cookie, and every
+ * visitor is still served byte-identical HTML. Google resolves `region`
+ * from the visitor's IP in the browser at tag-fire time. `CYCLE143-GIM-51`
+ * stays closed and its suite still asserts byte-identity directly.
+ *
+ * ⚠ AUTHORITY, AND ITS LIMIT: Andrew Signore, carrier item 310, 2026-08-27,
+ * verbatim -- "Omg - yeah lets just go with US Law - what are we doing" --
+ * read first-hand AT THE RECORD by this file's author, RELAYED rather than
+ * witnessed. The same carrier records that a legal-review caveat was
+ * offered in-channel and that he ruled without it. The paragraph below
+ * still stands and is not weakened by this change: this is not a legal
+ * opinion, and whether this posture fits the site's traffic mix remains
+ * Andrew's decision with appropriate counsel.
+ *
  * This is not a legal opinion. Whether Consent Mode / a cookie banner is
  * legally required for this site's traffic mix is Andrew's decision to
  * make with appropriate counsel, not something inferred here.
@@ -60,6 +90,35 @@ class BHP_Consent {
 	 * requirement) -- they are stored and read as fully separate keys.
 	 */
 	const SIGNALS = array( 'analytics_storage', 'ad_storage', 'ad_user_data', 'ad_personalization' );
+
+	/**
+	 * ⭐ 2026-08-27 (theme 1.19.302, `CYCLE167-LD-CONSENT-GEO`) — the EEA+UK
+	 * region list the strict pre-consent defaults are scoped to.
+	 *
+	 * ISO 3166-1 alpha-2. The 27 EU member states, the three non-EU EEA
+	 * states (IS, LI, NO), and GB. Google resolves `region` from the
+	 * visitor's IP at tag-fire time, so NOTHING here needs a server-side
+	 * geo lookup, a geo header, or any per-visitor variation in the
+	 * rendered HTML — which is what keeps `CYCLE143-GIM-51` closed.
+	 *
+	 * ⚠ DELIBERATELY NOT INCLUDED, so the choice is visible rather than
+	 * accidental, and each is a one-entry edit if Andrew decides otherwise:
+	 *   - CH (Switzerland, FADP) — not an EEA member; the brief scoped this
+	 *     to "EU/UK (EEA)".
+	 *   - CA (PIPEDA / Quebec Law 25) and BR (LGPD) — opt-in-leaning regimes
+	 *     that this ruling did not name. They currently fall in the
+	 *     "everywhere else" branch and are measured by default.
+	 * ⛔ This is an engineering note, not a legal opinion. The carrier
+	 * records that a legal-review caveat was offered to Andrew in-channel
+	 * and he ruled without it (carrier item 310).
+	 */
+	const EEA_UK_REGIONS = array(
+		'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
+		'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL',
+		'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+		'IS', 'LI', 'NO',
+		'GB',
+	);
 
 	/**
 	 * Reads the current consent state from the first-party cookie a future
@@ -112,7 +171,16 @@ class BHP_Consent {
 	}
 
 	/**
-	 * The Consent Mode default payload. CONSTANT BY DESIGN, 2026-08-05
+	 * The STRICT Consent Mode default payload — every signal denied.
+	 *
+	 * ⭐ 2026-08-27 (1.19.302): this is now the EEA+UK branch's base rather
+	 * than the site's only default. It is unchanged byte-for-byte; what
+	 * changed is that render_default_snippet() scopes it to a region and
+	 * emits measured_default_signals() alongside it for everywhere else.
+	 * The sentence below is preserved verbatim and is still exactly true of
+	 * THIS function — it is no longer true of the site as a whole.
+	 *
+	 * CONSTANT BY DESIGN, 2026-08-05
 	 * (`CYCLE143-GIM-51`): every signal is 'denied' for every visitor, on
 	 * every request, in every environment. It does NOT read the consent
 	 * cookie and must never be made to.
@@ -143,17 +211,81 @@ class BHP_Consent {
 	}
 
 	/**
-	 * Renders the gtag() Consent Mode default call. Must print BEFORE the
+	 * ⭐ The EEA+UK default payload: the strict pre-consent posture, scoped
+	 * to EEA_UK_REGIONS. Byte-for-byte the payload this site emitted
+	 * globally before 1.19.302, plus the `region` key.
+	 *
+	 * @return array<string,int|string|array>
+	 */
+	public static function eea_default_signals() {
+		$defaults           = self::default_signals();
+		$defaults['region'] = self::EEA_UK_REGIONS;
+		return $defaults;
+	}
+
+	/**
+	 * ⭐ The everywhere-else default payload — the one this release exists
+	 * to add. `analytics_storage` is GRANTED by default; the banner is a
+	 * notice with a working opt-out rather than a gate.
+	 *
+	 * ⛔ THE THREE AD SIGNALS STAY DENIED BY DEFAULT IN EVERY REGION, and
+	 * that is deliberate, not an oversight. The ruling this implements is
+	 * about MEASUREMENT ("half blind" — carrier items 309/310). Advertising
+	 * identifiers are a separate posture with separate US state-law
+	 * exposure, and the brief's own instruction was not to broaden the ad
+	 * signals beyond what the accepted state already grants. A visitor who
+	 * accepts "marketing" in the banner still raises all three, exactly as
+	 * before, via BHP_WPConsent_Bridge. Nothing about the granted path
+	 * changed — only the default for a visitor who has not chosen.
+	 *
+	 * @return array<string,int|string>
+	 */
+	public static function measured_default_signals() {
+		$defaults = array();
+		foreach ( self::SIGNALS as $signal ) {
+			$defaults[ $signal ] = ( 'analytics_storage' === $signal ) ? 'granted' : 'denied';
+		}
+		$defaults['wait_for_update'] = 500;
+		return $defaults;
+	}
+
+	/**
+	 * Renders the gtag() Consent Mode default calls. Must print BEFORE the
 	 * GTM/gtag loader script (Phase 4/12 ordering requirement) so GTM
 	 * initializes already aware of the current consent state rather than
 	 * assuming default "granted" behavior for a brief window.
 	 *
-	 * Output is identical for every visitor -- see default_signals().
+	 * ⭐ 2026-08-27 (theme 1.19.302, `CYCLE167-LD-CONSENT-GEO`) — TWO default
+	 * calls are now emitted, the standard documented Consent Mode v2
+	 * region pattern:
+	 *
+	 *   1. region-scoped EEA+UK  -> every signal denied  (unchanged posture)
+	 *   2. unscoped catch-all    -> analytics_storage granted, ad_* denied
+	 *
+	 * ⚠ PRECEDENCE IS BY SPECIFICITY, NOT BY ORDER: Google applies the most
+	 * specific matching `region` regardless of which call came first. The
+	 * region-scoped call is emitted first only because that is the order in
+	 * Google's own documented example, and matching the documented example
+	 * is worth more than a re-derivation.
+	 *
+	 * ⛔ STILL CONSTANT FOR EVERY VISITOR. Both payloads are compile-time
+	 * constants. The server performs NO geo lookup and reads NO header or
+	 * cookie to build them — Google resolves `region` from the visitor's IP
+	 * at tag-fire time, in the browser. That is precisely what allows this
+	 * to be geo-aware WITHOUT re-creating `CYCLE143-GIM-51`, in which a
+	 * per-visitor server-side variation was mis-served in both directions by
+	 * SiteGround's page cache. The byte-identity invariant is unchanged and
+	 * is still asserted directly by tests/test-consent-mode-cache-safety.php.
+	 *
+	 * Authority: Andrew Signore, carrier item 310, 2026-08-27 — "yeah lets
+	 * just go with US Law". RELAYED to this file's author through the record,
+	 * not witnessed.
 	 */
 	public static function render_default_snippet() {
 		printf(
-			"<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',%s);</script>\n",
-			wp_json_encode( self::default_signals() )
+			"<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',%s);gtag('consent','default',%s);</script>\n",
+			wp_json_encode( self::eea_default_signals() ),
+			wp_json_encode( self::measured_default_signals() )
 		);
 	}
 

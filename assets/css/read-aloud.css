@@ -699,3 +699,110 @@
     max-width: 9rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.295 — LINK MODE. `CYCLE167-LD-001`.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   WHAT THIS STYLES. On a school-visit-flagged session the pair cannot be added
+   to the cart (`FD-642`), so the template renders the combo WITHOUT a form:
+   composite art, engine title, engine price, one anchor that clears the visit
+   flag, and the note that says what that costs. This block is that anchor and
+   that note.
+
+   ⛔ THE CONTROL IS DELIBERATELY **SECONDARY**, AND THAT IS THE POINT RATHER
+      THAN A TASTE CALL. The cart-mode CTA above is a solid forest fill because
+      it is the primary action of the block. This one is an OUTLINE: it is a
+      real, deliberate choice with a real cost (the parent gives up
+      hand-delivery in this browser), so it must not carry the same "press me,
+      this is the obvious next step" weight as an ordinary add to cart. A
+      visitor who presses it should have meant to.
+
+   ⛔ IT STILL MEETS THE TOUCH FLOOR. 48px min-height and full width on a phone,
+      the same figures as the primary control. Secondary means quieter, never
+      harder to hit. */
+.read-aloud-combo__shiphome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* The price line reuses the grid's own markup and therefore the grid's own
+   presentation, so the figure sits at the same size and baseline it does in
+   cart mode. ⛔ The FIGURE itself is the offer engine's and appears in no
+   stylesheet and no template. */
+.read-aloud-combo__shiphome-price {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.read-aloud-combo__shiphome-price .bhp-shop-format-price__label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.read-aloud-combo__shiphome-price .bhp-shop-format-price__amount {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.1;
+  color: var(--color-forest);
+}
+
+.read-aloud-combo__shiphome-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem var(--space-6);
+  background: transparent;
+  color: var(--color-forest);
+  border: 2px solid var(--color-forest);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  /* ⛔ The overflow guard, same reasoning as the shop card's: a long label
+     wraps inside its box rather than being clipped. The founder photographed
+     that exact defect on his own desktop once already. */
+  white-space: normal;
+}
+
+.read-aloud-combo__shiphome-cta:hover,
+.read-aloud-combo__shiphome-cta:focus {
+  background: var(--color-forest);
+  color: var(--color-white);
+  text-decoration: none;
+}
+
+/* ⛔ VISIBLE FOCUS. The control is an anchor, so it must not rely on the
+   browser default being adequate against the parchment ground. */
+.read-aloud-combo__shiphome-cta:focus-visible {
+  outline: 3px solid var(--color-gold-deep);
+  outline-offset: 2px;
+}
+
+/* ⭐ THE HONEST HALF. It is muted but NOT hidden, and it is never smaller than
+   the site's small text: this sentence is what tells a parent that following
+   the link gives up hand-delivery. Shrinking it into fine print would be the
+   dishonest version of disclosing it. */
+.read-aloud-combo__shiphome-note {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}

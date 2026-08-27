@@ -937,6 +937,161 @@ function bhp_blog_inject_rail( $content ) {
 add_filter( 'the_content', 'bhp_blog_inject_rail', 12 );
 
 /* ═══════════════════════════════════════════════════════════════════════════
+ * 4b · THE MID-POST CAPTURE — 1.19.296, `CYCLE167-LD-CAPTURE-FIX-BUILD`
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Which posts carry a mid-post capture.
+ *
+ * ⭐ SCOPED TO THE TWO TOP ENTRY POSTS RATHER THAN THE WHOLE BLOG, and the
+ *    narrowness is deliberate. These two take 97 and 74 human entries per 30
+ *    days (ranks 3 and 4 sitewide, production access logs). Every other post
+ *    keeps exactly the asks it had at 1.19.295, so this change cannot alter
+ *    the shape of a post nobody investigated.
+ *
+ * ⭐ IDS, NOT SLUGS. A slug can be edited in the WordPress admin without
+ *    anybody touching code, which would silently switch this off. IDs cannot.
+ *
+ * @return int[]
+ */
+function bhp_blog_midcapture_post_ids() {
+	return (array) apply_filters( 'bhp_blog_midcapture_post_ids', array( 28, 88 ) );
+}
+
+/**
+ * Where the mid-post capture goes: immediately BEFORE the first `<h2>`, i.e.
+ * at the end of the introduction and before the article's first real section.
+ *
+ * ⛔ IT MUST LAND ABOVE THE BOOK RAIL, NOT BESIDE IT. `bhp_blog_rail_offset()`
+ *    targets `max(second <h2>, Nth </p>)`. Anchoring here to the FIRST `<h2>`
+ *    keeps the two apart by construction rather than by luck.
+ *
+ * @param string $html Rendered content.
+ * @return int|null Byte offset, or null when the shape does not fit.
+ */
+function bhp_blog_midcapture_offset( $html ) {
+	if ( ! preg_match( '/<h2[\s>]/i', $html, $m, PREG_OFFSET_CAPTURE ) ) {
+		return null;
+	}
+	$offset = (int) $m[0][1];
+
+	/*
+	 * ⛔ REFUSE A PLACEMENT THAT IS NOT ACTUALLY "AFTER THE INTRODUCTION". If
+	 *    the first heading arrives before two closing paragraphs, the post
+	 *    opens straight into a section and there is no introduction to sit
+	 *    after — insert nothing rather than wedge a form under the title.
+	 */
+	if ( ! preg_match_all( '/<\/p>/i', substr( $html, 0, $offset ), $mp ) || count( $mp[0] ) < 2 ) {
+		return null;
+	}
+
+	return $offset;
+}
+
+/**
+ * Inject the mid-post capture into the rendered post body.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ STANDING RULES §26 — THIS FUNCTION IS INSERT-ONLY, AND THAT IS THE
+ *     WHOLE SAFETY ARGUMENT. READ THIS BEFORE CHANGING A CHARACTER OF IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ These two posts carry **12 and 9 live Amazon affiliate anchors** — Andrew
+ *    Signore's personal Associates codes, earning into his account. §26: *"they
+ *    are revenue producing links"*, and the correct mental model is the
+ *    checkout button, not the paragraph around it. §26.5 names *"a build step
+ *    — minification, comment-stripping, find-and-replace, migration"* and *"a
+ *    theme or plugin deploy that changes rendered output"* as exactly the ways
+ *    they get lost. A `the_content` filter is precisely that kind of machinery.
+ *
+ * ⭐ SO THE CONTENT IS NEVER REWRITTEN, ONLY SPLIT AND REJOINED:
+ *        substr( $content, 0, $offset ) . $panel . substr( $content, $offset )
+ *    ⛔ There is no `preg_replace`, no `str_replace`, no DOM round-trip and no
+ *    re-serialisation anywhere in this path. Every byte of the original
+ *    `$content` appears in the output, in its original order. An anchor cannot
+ *    be dropped, and its `tag=` parameter cannot be altered, because nothing
+ *    ever reads or edits one. ⭐ The panel itself contains no Amazon URL, so
+ *    the affiliate count after this filter is arithmetically identical to the
+ *    count before it.
+ *
+ * ⭐ THE OFFSET IS A TAG BOUNDARY (`<h2`), so the split can never fall inside
+ *    an anchor, an attribute or the FTC disclosure paragraph.
+ *
+ * ⛔ THE COUNT-DECREASE TEST IS STILL RUN. This reasoning is why the test
+ *    should pass; it is not a substitute for running it. §26.6: a before/after
+ *    count that was not actually run is a FABRICATED CHECK.
+ *
+ * ⛔ THE FOUR GUARDS mirror `bhp_blog_inject_rail()` for the same reasons —
+ *    `the_content` is called by feeds, REST, SEO plugins and excerpt blocks.
+ *
+ * @param string $content Rendered content.
+ * @return string
+ */
+function bhp_blog_inject_midcapture( $content ) {
+	static $done = false;
+
+	if ( ! (bool) apply_filters( 'bhp_blog_midcapture_enabled', true ) ) {
+		return $content;
+	}
+	if ( $done ) {
+		return $content;
+	}
+	if ( ! bhp_blog_template_active() || ! in_the_loop() || ! is_main_query() ) {
+		return $content;
+	}
+	if ( is_feed() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		return $content;
+	}
+	if ( ! in_array( (int) get_the_ID(), array_map( 'intval', bhp_blog_midcapture_post_ids() ), true ) ) {
+		return $content;
+	}
+	if ( false !== strpos( $content, 'bhp-post-capture--mid' ) ) {
+		return $content;
+	}
+
+	$offset = bhp_blog_midcapture_offset( $content );
+	if ( null === $offset ) {
+		return $content;
+	}
+
+	ob_start();
+	get_template_part( 'template-parts/acquisition/post-mid-capture' );
+	$panel = (string) ob_get_clean();
+	if ( '' === $panel ) {
+		return $content;
+	}
+
+	$done = true;
+
+	return substr( $content, 0, $offset ) . $panel . substr( $content, $offset );
+}
+/*
+ * ⭐ PRIORITY 13 — DELIBERATELY **AFTER** THE BOOK RAIL'S 12, AND THE FIRST
+ *    VERSION OF THIS LINE HAD IT THE OTHER WAY ROUND. The wrong reasoning is
+ *    written out so it is not re-derived:
+ *
+ *    ⛔ THE WRONG ANSWER: "run first, so the two are injected in page order."
+ *       That silently breaks the rail. `bhp_blog_rail_offset()` anchors on the
+ *       **second** `<h2>` — and the panel this filter inserts CONTAINS an
+ *       `<h2>` of its own, high in the document. Injecting first would have
+ *       made the capture panel's heading count as one of the article's
+ *       headings, dragged the rail's anchor upward, and moved a commerce rail
+ *       that nobody asked to move. No test would have failed; the rail would
+ *       just have been in the wrong place.
+ *
+ *    ⭐ RUNNING LAST MEANS THE RAIL COMPUTES ITS OFFSETS ON THE ORIGINAL
+ *       ARTICLE, exactly as it did at 1.19.295. Its behaviour is unchanged by
+ *       this release, which is what "additive" has to mean.
+ *
+ *    ⭐ AND THIS FILTER IS STILL CORRECT AFTERWARDS: it anchors on the FIRST
+ *       `<h2>`, while the rail inserts at `max(second <h2>, Nth </p>)`, which
+ *       is necessarily below it on any post with two or more headings. Both
+ *       target posts have five. ⚠ VERIFIED ON STAGING BY READING THE RENDERED
+ *       DOM ORDER, not assumed from this arithmetic.
+ */
+add_filter( 'the_content', 'bhp_blog_inject_midcapture', 13 );
+
+/* ═══════════════════════════════════════════════════════════════════════════
  * 5 · THE END-OF-POST CAPTURE
  * ═══════════════════════════════════════════════════════════════════════════ */
 

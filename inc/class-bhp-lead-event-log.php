@@ -67,6 +67,8 @@ class BHP_Lead_Event_Log {
 		add_action( 'init', array( __CLASS__, 'register_post_type' ) );
 		add_action( 'bhp_mailchimp_signup_success', array( __CLASS__, 'record_success' ), 10, 7 );
 		add_action( 'bhp_mailchimp_signup_failed', array( __CLASS__, 'record_failure' ), 10, 5 );
+		// ⭐ 1.19.296 FIX-1 — rejections that never reached the provider at all.
+		add_action( 'bhp_mailchimp_signup_rejected', array( __CLASS__, 'record_rejection' ), 10, 5 );
 		add_action( 'admin_menu', array( __CLASS__, 'register_admin_page' ) );
 	}
 
@@ -185,14 +187,53 @@ class BHP_Lead_Event_Log {
 	 *                                 provider-side account/API details.
 	 */
 	public static function record_failure( $exception, $context, $audience_type, $lead_magnet, $source_page ) {
-		// bhp_handle_mailchimp_signup() also redirects with generic statuses
-		// (invalid/missing_name/unavailable) BEFORE this action ever fires --
-		// those never reach here at all, so this log only ever sees actual
-		// provider/API failures, not routine validation rejections.
+		/*
+		 * ⚠ CORRECTED 2026-08-27 (theme 1.19.296, `CYCLE167-LD-CAPTURE-FIX-BUILD`).
+		 *   The comment that stood here said the generic statuses
+		 *   (invalid/missing_name/unavailable) "never reach here at all, so this
+		 *   log only ever sees actual provider/API failures". That was TRUE when
+		 *   it was written and it is the exact sentence that described the
+		 *   blind spot: those rejections reached NOTHING, not merely "not here".
+		 *   They are now recorded by record_rejection() below.
+		 *   ⭐ THIS METHOD IS UNCHANGED IN BEHAVIOUR. It still handles only
+		 *   provider/API exceptions, and `bhp_mailchimp_signup_failed` still
+		 *   means only that. The correction is to the comment's implication,
+		 *   not to the code.
+		 */
 		$reason = is_object( $exception ) && method_exists( $exception, 'getMessage' )
 			? ( 'Provider error: ' . get_class( $exception ) )
 			: 'Unknown provider error';
 		self::write_event( 'failed', '', $context, $audience_type, $lead_magnet, $source_page, array(), $reason );
+	}
+
+	/**
+	 * ⭐ 1.19.296 — FIX-1. Record a signup REJECTED before the provider was
+	 *    ever called: a malformed address, a missing required name, or — the
+	 *    one that matters — the Mailchimp integration not being ready at all.
+	 *
+	 * ⛔ NO EMAIL ADDRESS IS ACCEPTED BY THIS METHOD OR WRITTEN BY IT. The
+	 *    caller does not pass one. Andrew's parked decision on failure-path
+	 *    email storage is NOT pre-empted; the reason and the context are what
+	 *    close the blind spot, and they are non-PII.
+	 *
+	 * ⛔ PROVENANCE IS 'real' ON THIS PATH BY CONSTRUCTION, because
+	 *    classify_provenance() is given an empty string. That is honest rather
+	 *    than convenient: without the address there is nothing to classify, and
+	 *    guessing 'test' would hide real rejections from the summary.
+	 *
+	 * @param string $code          Generic classifier: invalid|missing_name|unavailable.
+	 * @param string $context
+	 * @param string $audience_type
+	 * @param string $lead_magnet
+	 * @param string $source_page
+	 */
+	public static function record_rejection( $code, $context, $audience_type, $lead_magnet, $source_page ) {
+		$code = sanitize_key( (string) $code );
+		$allowed = array( 'invalid', 'missing_name', 'unavailable' );
+		if ( ! in_array( $code, $allowed, true ) ) {
+			$code = 'unknown';
+		}
+		self::write_event( 'failed', '', $context, $audience_type, $lead_magnet, $source_page, array(), $code );
 	}
 
 	/**

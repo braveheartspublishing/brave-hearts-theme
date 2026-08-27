@@ -32,7 +32,7 @@
  * STACKING: `sessionGuard` blocks this modal outright if the quiz modal or
  * any other engine popup has already been shown in this session.
  *
- * COPY: every string below is from Merry's approved set,
+ * COPY: every string below is from the approved set in
  * `WORKING-DRAFTS\marketing-growth\DRAFT-2026-08-04-WAVE1-CAPTURE-COPY.md`
  * §1.2 (H1/S1 recommended). `submit_label` and `privacy_text` are reused
  * VERBATIM from the live kit page so the modal and the landing page say
@@ -113,10 +113,53 @@ $popup_config = wp_json_encode([
       <span aria-hidden="true">&times;</span>
     </button>
 
-    <p class="component-heading__eyebrow"><?php esc_html_e('Free for parents', 'brave-hearts'); ?></p>
-    <h2 id="exit-intent-popup-title"><?php esc_html_e('Before you go, take the free kit.', 'brave-hearts'); ?></h2>
+    <?php
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.297 (2026-08-27, `CYCLE167-LD-CAPTURE-COPY-APPLY`) — LOCKED
+     *     PROSE CHANGED, DELIBERATELY, ON THE OWNER'S OWN LATER WORD.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔ READ THIS BEFORE ASSUMING A DRIFT. The prior headline, "Before you go,
+     *    take the free kit.", was guarded by `tests/test-exit-intent-trigger.php`
+     *    with the assertion label *"approved headline is unchanged (locked prose
+     *    is never silently rewritten)"*. ⭐ THAT GUARD DID EXACTLY ITS JOB: it
+     *    forced this change to be made in the open, with the authority named,
+     *    in the same release as the assertion it breaks. It was NOT relaxed and
+     *    NOT deleted — it now asserts the NEW approved string, so the property
+     *    it protects (this headline never moves without a recorded ruling) is
+     *    still protected.
+     *
+     * ⭐ THE AUTHORITY IS THE OWNER, carrier item 290, 2026-08-27, verbatim:
+     *    *"FREE Chapter for Reluctant Readers - I'll send you the chapter now,
+     *    just add your email - Something like that"*, together with his
+     *    agreement that *"we need to be consistent on the email capture across
+     *    the entire website"*. This surface is a PARENT capture surface and was
+     *    one of the twelve the teardown found describing the offer differently.
+     *    ⚠ RELAYED through the Chief of Staff, who witnessed it; NOT witnessed
+     *      by this desk. ⛔ STAGING ONLY. FLAGGED at the top of this build's
+     *      report so Andrew meets it at the deploy gate rather than afterwards.
+     *      If he says no, the reversal is two strings here and one assertion in
+     *      the suite.
+     *
+     * ⛔ WHAT IS **NOT** CHANGED ON THIS SURFACE, so the boundary is legible:
+     *    the `context` (`parent_popup_exit`) — a live Mailchimp tag join key —
+     *    the storage prefix, the trigger config, the 20s floor, the optional
+     *    name field, the trust caption ("Free printable PDF. No purchase
+     *    required.", separately guarded and still true of the artefact), and the
+     *    "No thanks, not tonight" dismiss control.
+     *
+     * ⭐ THE SUPPORT SENTENCE BRIDGES chapter -> Kit (item 290 condition (b)).
+     *    Its contents half is artefact-checked, not paraphrased: the 296 lane
+     *    read all seven pages of the live `Reluctant-Reader-Adventure-Kit-1.pdf`
+     *    from the production document root.
+     * ⛔ NO OUTCOME CLAIM. VOICE §9.1: I/me/my, no em dash, ages 6 to 9.
+     */
+    ?>
+    <p class="component-heading__eyebrow"><?php esc_html_e('Before you go', 'brave-hearts'); ?></p>
+    <h2 id="exit-intent-popup-title"><?php esc_html_e('FREE Chapter for Reluctant Readers', 'brave-hearts'); ?></h2>
     <p id="exit-intent-popup-desc" class="mariana-popup__text">
-      <?php esc_html_e('The Reluctant Reader Adventure Kit: a complete sample chapter to read tonight, a printable explorer activity, and simple tips for reading it with a 6 to 9 year old.', 'brave-hearts'); ?>
+      <?php esc_html_e("I'll send you the chapter now, just add your email. It arrives inside my free Reluctant Reader Adventure Kit, along with a printable activity and tips for reading it with a 6 to 9 year old.", 'brave-hearts'); ?>
     </p>
 
     <?php get_template_part('template-parts/acquisition/signup-form', null, [
@@ -131,7 +174,13 @@ $popup_config = wp_json_encode([
         'success_redirect_key' => 'adventure_kit_thank_you',
         'require_name'         => false,
         'name_label'           => __('First name (optional)', 'brave-hearts'),
-        'submit_label'         => __('Send me the free chapter & activity', 'brave-hearts'),
+        // ⭐ 1.19.297 — was "Send me the free chapter & activity". ⚠ THE OLD
+        //    STRING IS ALSO WHY THIS FILE'S HEADER DISCUSSES `white-space:
+        //    nowrap` on the submit button: it was long enough to overflow. The
+        //    new string is shorter, so that constraint is relaxed rather than
+        //    strained. ⛔ The CSS rule is NOT touched by this pass — a shorter
+        //    label cannot break a rule written to survive a longer one.
+        'submit_label'         => __('Send me the chapter', 'brave-hearts'),
         'privacy_text'         => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
         'class'                => 'mariana-popup__form',
         'aria_labelledby'      => 'exit-intent-popup-title',
