@@ -789,3 +789,304 @@ function bhp_consent_banner_cls_guard() {
     <?php
 }
 add_action('wp_head', 'bhp_consent_banner_cls_guard', 2);
+
+/**
+ * ⭐⭐⭐ 1.19.309 (2026-08-27, `CYCLE167-LD-CONSENT-BANNER-GEO`) — THE BANNER
+ *     IS SHOWN TO EEA/UK VISITORS ONLY. EVERYONE ELSE GETS NO BAR AND A
+ *     PERSISTENT "Privacy Choices" FOOTER LINK INSTEAD.
+ *
+ * ⛔⛔ READ THIS WHOLE BLOCK BEFORE CHANGING ONE LINE OF THE SCRIPT BELOW.
+ *     THE FAIL-SAFE DIRECTION IS THE DESIGN, NOT A DETAIL.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY THIS EXISTS. Founder report, 2026-08-27, carrier item 332, RELAYED to
+ * this desk through the record rather than witnessed:
+ *
+ *     "The consent bar is still firing on new browsers."
+ *
+ * 1.19.302 (`CYCLE167-LD-CONSENT-GEO`) moved the MEASUREMENT defaults to a
+ * region-scoped pair under carrier item 310 — EEA+UK denied, everywhere else
+ * analytics granted — but deliberately left the banner visible to every
+ * visitor (its own lock, purpose item 3, says so in as many words). So a US
+ * visitor was measured by default AND still shown a pre-consent gate. This
+ * release closes the second half.
+ *
+ * ⛔ MEASUREMENT IS NOT TOUCHED HERE. `BHP_Consent::render_default_snippet()`
+ *    and `BHP_WPConsent_Bridge` are BYTE-UNCHANGED by this release. Item 310's
+ *    posture stands exactly as it was. This file decides ONE thing: whether
+ *    the plugin paints its bar.
+ *
+ * ---------------------------------------------------------------------------
+ * ⭐⭐ THE ENGINEERING QUESTION, ANSWERED HONESTLY: WHY A CLIENT-SIDE
+ *     TIMEZONE HEURISTIC AND NOT A REAL GEO LOOKUP.
+ *
+ * Three candidate signals were assessed first-hand on 2026-08-27, not
+ * reasoned about:
+ *
+ *   1. A HOST-PROVIDED COUNTRY HEADER. ⛔ RULED OUT, AND CHECKED BEFORE BEING
+ *      RULED OUT. `curl -D -` against both environments returns no geo header
+ *      of any kind; there is no Cloudflare in front (`Server: nginx`, no `CF-*`);
+ *      and `php -m` on the SiteGround account lists NO geoip/maxmind module.
+ *      ⭐⭐ BUT THE HEADER'S ABSENCE IS NOT THE REAL REASON, AND THIS MATTERS:
+ *      even if one existed, USING it server-side would vary the rendered HTML
+ *      per visitor, and both environments answer with `X-Cache-Enabled: True`
+ *      and `Vary: Accept-Encoding` ONLY. That is precisely `CYCLE143-GIM-51`,
+ *      in which a per-visitor server-side consent variation was mis-served in
+ *      BOTH directions by SiteGround's page cache on production 2026-08-04.
+ *      ⛔ A server-side geo decision is therefore forbidden by the cache
+ *      regardless of whether the input exists. Byte-identical emission is the
+ *      constraint, and this release preserves it: the decision is made in the
+ *      browser, and the HTML is identical for every visitor.
+ *
+ *   2. `navigator.languages`. ⭐ USED, BUT ONLY AS A NARROW SECONDARY. A bare
+ *      `de` or `fr` is common on US browsers and would over-show badly, so
+ *      ONLY AN EXPLICIT REGION SUBTAG counts (`de-DE`, `en-GB`). That is a
+ *      high-precision signal — the user configured a European locale — and it
+ *      can only ever ADD showing, never remove it.
+ *
+ *   3. `Intl.DateTimeFormat().resolvedOptions().timeZone`. ⭐ THE PRIMARY.
+ *      It is the least-worst available signal: present in every browser this
+ *      site supports, requires no network call, no consent, and no
+ *      per-visitor server variation.
+ *
+ * ---------------------------------------------------------------------------
+ * ⛔⛔ THE FAIL-SAFE DIRECTION, STATED ONCE AND BINDING ON EVERY BRANCH:
+ *
+ *        WHEN THE SIGNAL IS AMBIGUOUS, THE BANNER SHOWS.
+ *
+ *     Over-showing costs a US visitor one dismissible bar. Under-showing in
+ *     the EEA is a compliance cost. Every `catch`, every missing value, every
+ *     unrecognised string in `shouldShowBanner()` returns TRUE. If a future
+ *     edit makes any branch return FALSE on uncertainty, it is wrong.
+ *
+ * ---------------------------------------------------------------------------
+ * ⭐⭐ THE HONEST ERROR RATES. These are real and are NOT hidden in a report:
+ *
+ *   · VPN USERS — timezone is an OS setting and a VPN does not change it. A US
+ *     visitor on a European VPN keeps `America/*` and correctly gets no bar.
+ *     ⚠ Their Consent Mode `region` still resolves from the EXIT IP, so their
+ *     measurement defaults may be the EEA's while their banner is suppressed.
+ *     That divergence is SAFE IN THE ONLY DIRECTION THAT MATTERS: they are
+ *     treated as MORE protected for measurement, not less.
+ *   · TRAVELLERS — an EEA resident in the US whose phone auto-updated its
+ *     timezone gets `America/*` and no bar. Partially mitigated by the
+ *     language subtag check (their locale is usually still `de-DE`). Not
+ *     fully solvable by any client-side signal.
+ *   · PORTUGAL / SPAIN / ICELAND ATLANTIC EDGE CASES — `Atlantic/Azores`,
+ *     `Atlantic/Madeira`, `Atlantic/Canary` and `Atlantic/Reykjavik` are all
+ *     EEA and all covered, because the whole `Atlantic/` prefix shows. That
+ *     also over-shows to Bermuda, Cape Verde, Stanley, St Helena and South
+ *     Georgia. ⭐ DELIBERATE: the prefix is simpler than an enumeration, and
+ *     it errs in the safe direction.
+ *   · CYPRUS reports `Asia/Nicosia`, not `Europe/*`. Enumerated explicitly —
+ *     this is the single easiest EEA state to miss.
+ *   · EU OUTERMOST REGIONS (French Guiana, Guadeloupe, Martinique, Réunion,
+ *     Mayotte, Miquelon, Ceuta) are GDPR territory on non-European zone
+ *     prefixes. Enumerated explicitly.
+ *   · PRIVACY-HARDENED BROWSERS — Tor and Firefox `resistFingerprinting`
+ *     report `UTC`. That carries no location, so it is AMBIGUOUS and SHOWS.
+ *   · SWITZERLAND, TURKEY, RUSSIA, UKRAINE, the Balkans — all `Europe/*`, all
+ *     over-shown. Accepted, and cheap.
+ *
+ * ⭐⭐⭐ THE POINT THAT MAKES THE WHOLE HEURISTIC DEFENSIBLE, AND IT IS THE
+ *     MOST IMPORTANT SENTENCE IN THIS BLOCK: a false negative here does NOT
+ *     cause an EEA visitor to be measured without consent. The measurement
+ *     default is still resolved BY GOOGLE FROM THEIR IP, and for the EEA it
+ *     is still DENIED (`BHP_Consent::eea_default_signals()`, untouched). The
+ *     worst case of a missed European is that they are not OFFERED the choice
+ *     in a bar — and they can still reach the full preferences UI from the
+ *     "Privacy Choices" link that this release puts in the footer of every
+ *     page. The exposure is a UX/notice gap, not an unconsented-collection
+ *     gap.
+ *
+ * ---------------------------------------------------------------------------
+ * ⭐⭐ THE MECHANISM — THE PLUGIN'S OWN SETTINGS GATE, NOT A CSS HACK.
+ *
+ * PROVEN LIVE on staging 1.19.307 against WPConsent Free 1.1.7, in a real
+ * browser, 2026-08-27T08:2x-0600, before a byte of this was written:
+ *
+ *     WPConsent.hideBanner()                        -> holder hidden
+ *     wpconsent.enable_consent_banner = false
+ *     WPConsent.showBanner()                        -> STAYS HIDDEN
+ *     click a light-DOM `.wpconsent-open-preferences`
+ *                                                   -> modal display: "flex"
+ *     ...and the banner STAYS HIDDEN throughout.
+ *
+ * `showBanner()` opens with `if (!wpconsent.enable_consent_banner) return;`
+ * (`src/frontend/banner.js:552`). `showPreferences()` has NO such gate. So
+ * flipping that one settings value suppresses the BAR and leaves the
+ * PREFERENCES UI fully functional — which is exactly the posture required.
+ *
+ * ⛔ WHY NOT `display: none` ON `#wpconsent-container`: the preferences modal
+ *    lives in the SAME shadow root as the banner (verified live: the container
+ *    holds both `#wpconsent-banner-holder` and `#wpconsent-preferences-modal`).
+ *    Hiding the host would kill the footer link's destination too. Recorded so
+ *    it is not re-proposed as the "simpler" fix.
+ *
+ * ⛔ WHY NOT `registerDisplayCheck()`, WHICH LOOKS LIKE THE INTENDED HOOK:
+ *    `runDisplayChecks()` sets `checksPassed = true` when the checks RESOLVE
+ *    *and* in its own `.catch()`. A display check therefore only ever DELAYS
+ *    the banner — it can never suppress it. Read in the plugin source, not
+ *    assumed. Recorded so the next reader does not spend a turn on it.
+ *
+ * ⛔ NOTHING ELSE MOVES. No button is added, removed, renamed, reordered or
+ *    re-bound. No category is pre-checked. No default is altered. No cookie is
+ *    written. No choice is recorded on a visitor's behalf. Script and iframe
+ *    blocking are unchanged: for a cookieless visitor `processBannerDisplay()`
+ *    took the `!enable_content_blocking` branch before this release and takes
+ *    exactly the same branch after it, because neither `default_allow` nor
+ *    `enable_script_blocking` is read by this file.
+ *
+ * ⛔ THE SERVER-SIDE SETTING IS NOT TOUCHED ON ANY ENVIRONMENT.
+ *    `wpconsent_settings.enable_consent_banner` stays `1` in the database, so
+ *    the banner TEMPLATE still renders (the preferences modal needs it) and a
+ *    single line of this script is all that stands between today and the old
+ *    behaviour. No WPConsent setting was changed by this release.
+ */
+function bhp_consent_region_gate_script() {
+    if (!bhp_consent_banner_compact_active()) {
+        return;
+    }
+    ?>
+<script id="bhp-consent-region-gate">
+(function () {
+	/* Zone PREFIXES that always show. `Atlantic/` is deliberately whole --
+	   Azores, Madeira, Canary and Reykjavik are all EEA. */
+	var SHOW_PREFIXES = [ 'Europe/', 'Atlantic/' ];
+
+	/* EEA/UK territory on zone prefixes that are NOT European. Cyprus is the
+	   one most easily missed; the rest are EU outermost regions. */
+	var SHOW_ZONES = [
+		'Asia/Nicosia', 'Asia/Famagusta',
+		'Africa/Ceuta',
+		'America/Cayenne', 'America/Guadeloupe', 'America/Marigot',
+		'America/Martinique', 'America/Miquelon', 'America/St_Barthelemy',
+		'Indian/Reunion', 'Indian/Mayotte',
+		'Antarctica/Troll'
+	];
+
+	/* Explicit region subtags only. A bare 'de' does NOT match -- see the
+	   docblock above for why. Mirrors BHP_Consent::EEA_UK_REGIONS. */
+	var SHOW_REGIONS = [
+		'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
+		'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL',
+		'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+		'IS', 'LI', 'NO',
+		'GB'
+	];
+
+	/* THE DECISION. Pure -- same inputs, same output, no globals, no side
+	   effects -- so tests/js/consent-region-harness.js can drive it directly
+	   with fixture inputs instead of asserting against a grep of this file. */
+	function shouldShowBanner( tz, langs ) {
+		/* 1. No usable timezone at all -> AMBIGUOUS -> SHOW. */
+		if ( typeof tz !== 'string' || !tz ) { return true; }
+		/* 2. Deliberately location-free zones (Tor, Firefox
+		      resistFingerprinting, servers) -> AMBIGUOUS -> SHOW. */
+		if ( tz === 'UTC' || tz === 'GMT' || tz.indexOf( 'Etc/' ) === 0 ) { return true; }
+		/* 3. European / Atlantic / enumerated EEA zone -> SHOW. */
+		for ( var i = 0; i < SHOW_PREFIXES.length; i++ ) {
+			if ( tz.indexOf( SHOW_PREFIXES[ i ] ) === 0 ) { return true; }
+		}
+		for ( var j = 0; j < SHOW_ZONES.length; j++ ) {
+			if ( tz === SHOW_ZONES[ j ] ) { return true; }
+		}
+		/* 4. Elsewhere by timezone, but the browser is configured for an
+		      EEA/UK REGION -> SHOW. Secondary signal, additive only. */
+		if ( langs && langs.length ) {
+			for ( var k = 0; k < langs.length; k++ ) {
+				if ( typeof langs[ k ] !== 'string' ) { continue; }
+				var parts = langs[ k ].toUpperCase().split( '-' );
+				for ( var m = 1; m < parts.length; m++ ) {
+					if ( SHOW_REGIONS.indexOf( parts[ m ] ) !== -1 ) { return true; }
+				}
+			}
+		}
+		/* 5. Everything else -> no bar. */
+		return false;
+	}
+
+	function readZone() {
+		try {
+			var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+			return ( typeof tz === 'string' && tz ) ? tz : '';
+		} catch ( e ) { return ''; }
+	}
+
+	function readLangs() {
+		try {
+			var l = navigator.languages;
+			if ( l && l.length ) { return Array.prototype.slice.call( l ); }
+			return navigator.language ? [ navigator.language ] : [];
+		} catch ( e ) { return []; }
+	}
+
+	var zone  = readZone();
+	var langs = readLangs();
+	var show;
+	try {
+		show = shouldShowBanner( zone, langs );
+	} catch ( e ) {
+		show = true; /* ANY failure -> SHOW. The fail-safe direction. */
+	}
+
+	window.bhpConsentRegion = {
+		shouldShowBanner: shouldShowBanner,
+		showBanner: show,
+		timeZone: zone,
+		languages: langs,
+		SHOW_PREFIXES: SHOW_PREFIXES,
+		SHOW_ZONES: SHOW_ZONES,
+		SHOW_REGIONS: SHOW_REGIONS
+	};
+
+	/* ⛔ THE EEA PATH ENDS HERE. Nothing below this line executes for a
+	   visitor the heuristic shows the banner to, so their experience of this
+	   site is byte-for-byte and behaviour-for-behaviour what it was at
+	   1.19.308. */
+	if ( show ) { return; }
+
+	function disableBanner( settings ) {
+		if ( settings ) { settings.enable_consent_banner = false; }
+		return settings;
+	}
+
+	function apply() {
+		if ( window.wpconsent ) { disableBanner( window.wpconsent ); }
+		if ( window.WPConsent && typeof window.WPConsent.registerSettingsHook === 'function' ) {
+			window.WPConsent.registerSettingsHook( disableBanner );
+			return true;
+		}
+		return false;
+	}
+
+	if ( !apply() ) {
+		/* WPConsent enqueues build/frontend.js with in_footer = true
+		   (includes/frontend-scripts.php:49), so window.WPConsent does not
+		   exist yet at wp_head time. THIS listener is registered here, in the
+		   HEAD, and therefore fires BEFORE the plugin's own DOMContentLoaded
+		   listener -- which is only registered when the FOOTER script parses.
+		   The settings hook is in place before init() reads it. */
+		document.addEventListener( 'DOMContentLoaded', apply );
+	}
+
+	/* Belt and braces, and deliberate. If the ordering above ever fails --
+	   the plugin moves to the head, a caching or optimisation plugin reorders
+	   scripts -- the bar would appear. This closes it afterwards using the
+	   plugin's own public hideBanner(). ⛔ It can only ever HIDE: it grants
+	   nothing, writes no cookie, and records no choice for the visitor. */
+	window.addEventListener( 'wpconsent_banner_initialized', function () {
+		try {
+			if ( window.WPConsent && typeof window.WPConsent.hideBanner === 'function' ) {
+				window.WPConsent.hideBanner();
+			}
+		} catch ( e ) {}
+	} );
+})();
+</script>
+    <?php
+}
+/* Priority 1: ahead of the CLS guard (2) and the compact styler (3), so
+   `window.bhpConsentRegion` is defined before anything else in this file
+   runs, and far ahead of DOMContentLoaded. */
+add_action('wp_head', 'bhp_consent_region_gate_script', 1);

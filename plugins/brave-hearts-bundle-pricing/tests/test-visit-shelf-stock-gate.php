@@ -113,6 +113,80 @@ echo 'SITE: ' . home_url() . "\n";
 echo 'PLUGIN: ' . ( defined( 'BHP_BUNDLE_PRICING_VERSION' ) ? BHP_BUNDLE_PRICING_VERSION : '?' ) . "\n";
 
 /* =========================================================================
+ * ⭐⭐⭐ §0a — 1.8.76: THE BACKORDER ALLOWANCE, AND WHY THE REST OF THIS
+ *     SUITE NOW RUNS WITH IT SWITCHED OFF.
+ *     (`CYCLE168-LD-RETAILER-BATCH-AND-BACKORDERS`)
+ * =========================================================================
+ *
+ * ⛔⛔ READ THIS BEFORE CHANGING ANYTHING BELOW. Andrew Signore, 2026-08-28,
+ *     RELAYED (carrier item 363): "I think we allow backorders and we will get
+ *     the new books in latest by Sept 10th."
+ *
+ * That ruling means an EXHAUSTED title is no longer automatically a REFUSED
+ * title. `bhp_visit_shelf_title_is_closed()` — which every surface and all five
+ * refusal seams ask — now returns false for an exhausted title while backorders
+ * are on, which is the entire point of the release.
+ *
+ * ⭐⭐ SO §2 THROUGH §7b WOULD ALL FAIL AGAINST THE NEW DEFAULT, AND THEY ARE
+ *     **NOT** DELETED AND **NOT** WEAKENED. They assert the sold-out gate, which
+ *     is still real, still shipped, still one WP-CLI line away, and is what a
+ *     parent meets the moment Andrew decides a title genuinely cannot be
+ *     backordered. ⛔ DELETING THEM WOULD DISCARD THE ONLY COVERAGE OF THE FIVE
+ *     SERVER REFUSAL SEAMS THIS PLUGIN HAS. Instead they run with backorders
+ *     explicitly OFF, which is a real supported configuration and not a stub.
+ *
+ * ⭐ THE NEW DEFAULT — backorders ON — IS ASSERTED HERE, BEFORE ANY FILTER IS
+ *   INSTALLED, and exercised end to end in the new §7c. Between the two, both
+ *   modes are covered rather than one being traded for the other.
+ * ====================================================================== */
+bhp_h( '§0a — 1.8.76 backorder allowance: the default, the switch, and the split' );
+
+$bhp_backorder_module = function_exists( 'bhp_visit_shelf_backorder_allowed' );
+bhp_t( 'the backorder module is loaded', $bhp_backorder_module );
+
+if ( $bhp_backorder_module ) {
+	foreach ( array(
+		'bhp_visit_shelf_backorder_allowed',
+		'bhp_visit_shelf_title_is_backordered_for_request',
+		'bhp_visit_shelf_backorder_label',
+		'bhp_visit_shelf_backorder_message',
+		'bhp_visit_shelf_render_backorder_line',
+	) as $fn ) {
+		bhp_t( "1.8.76 function exists: {$fn}()", function_exists( $fn ) );
+	}
+
+	/*
+	 * ⭐ THE DEFAULT IS ON, AND IT IS ASSERTED AGAINST THE REAL, UNFILTERED
+	 *    STATE OF THIS ENVIRONMENT. If somebody sets the option to `no` on a
+	 *    server, this assertion is SUPPOSED to fail there, loudly, because that
+	 *    means the founder's ruling is not in force on that environment and
+	 *    somebody needs to know.
+	 */
+	bhp_t(
+		'DEFAULT: backorders are ALLOWED with the option unset (founder item 363 in force on this environment)',
+		true === bhp_visit_shelf_backorder_allowed(),
+		'option bhp_visit_shelf_backorders = ' . var_export( get_option( 'bhp_visit_shelf_backorders', null ), true )
+	);
+
+	// The switch works in both directions, through the filter, with no write.
+	add_filter( 'bhp_visit_shelf_backorder_allowed', '__return_false', 99 );
+	bhp_t( 'the allowance can be switched OFF by filter', false === bhp_visit_shelf_backorder_allowed() );
+	remove_filter( 'bhp_visit_shelf_backorder_allowed', '__return_false', 99 );
+	bhp_t( 'removing the filter restores the default ON', true === bhp_visit_shelf_backorder_allowed() );
+
+	// ⭐ THE SPLIT ITSELF: two functions, two questions, both present.
+	bhp_t( 'the pure shelf fact is its own function: bhp_visit_shelf_title_is_exhausted()', function_exists( 'bhp_visit_shelf_title_is_exhausted' ) );
+	bhp_t( 'the purchase gate kept its old name and signature: bhp_visit_shelf_title_is_closed()', function_exists( 'bhp_visit_shelf_title_is_closed' ) );
+}
+
+/*
+ * ⛔⛔ THE SUITE-WIDE SWITCH. Everything from §2 to §7b asserts the SOLD-OUT
+ *     mode. It is removed again in §7c and re-checked in §9.
+ */
+add_filter( 'bhp_visit_shelf_backorder_allowed', '__return_false', 5 );
+echo "\n  NOTE  §2..§7b run with backorders FORCED OFF (1.8.75 gate semantics). §7c tests the 1.8.76 default.\n";
+
+/* =========================================================================
  * §0 — THE MODULE LOADED AT ALL
  * ====================================================================== */
 bhp_h( '§0 — module present' );
@@ -1111,6 +1185,221 @@ bhp_t(
 	implode( ',', $owners )
 );
 
+/*
+ * ⭐ 1.8.76 — THE SAME STRUCTURAL GUARD FOR THE NEW BACKORDER ELEMENT, and it
+ *    is TIGHTER than the counter's: exactly ONE owner, not two. There is no box
+ *    variant and there must never be a second copy.
+ */
+$bo_owners = array();
+foreach ( glob( $plugin_dir . 'includes/*.php' ) as $php ) {
+	$src = (string) file_get_contents( $php );
+	if ( false !== strpos( $src, 'class="bhp-bundle-backorder-label' ) ) {
+		$bo_owners[] = basename( $php );
+	}
+}
+sort( $bo_owners );
+bhp_t(
+	'1.8.76: the backorder element is emitted from exactly ONE place',
+	array( 'school-visit-backorder.php' ) === $bo_owners,
+	implode( ',', $bo_owners )
+);
+
+/* =========================================================================
+ * ⭐⭐⭐ §7c — 1.8.76: THE BACKORDER ALLOWANCE, ON, END TO END.
+ *     (`CYCLE168-LD-RETAILER-BATCH-AND-BACKORDERS`, founder item 363)
+ * =========================================================================
+ *
+ * ⭐ THE SUITE-WIDE "OFF" FILTER IS LIFTED HERE and everything below runs
+ *   against the SHIPPED DEFAULT.
+ *
+ * ⛔ IT FORCES THE SHELF THROUGH THE `bhp_visit_shelf_title_is_closed` FILTER,
+ *    NEVER BY WRITING `bhp_visit_shelf_stock`. Same discipline as §4a and §5:
+ *    this suite runs on live environments and writes no option. §8 proves it.
+ *
+ * ⭐⭐ THE FOUR THINGS THAT MUST ALL BE TRUE AT ONCE, and the reason this
+ *    section exists rather than a single "is it relaxed" assertion:
+ *      1. the SHELF still reports exhausted (the fact did not change);
+ *      2. the PURCHASE GATE reports open (the policy did);
+ *      3. NO NUMBER is displayed anywhere (the honesty rule is untouched);
+ *      4. the words that DO appear promise no restock and no date.
+ * ====================================================================== */
+bhp_h( '§7c — 1.8.76 DEFAULT: an exhausted title is orderable, and still shows no number' );
+
+remove_filter( 'bhp_visit_shelf_backorder_allowed', '__return_false', 5 );
+bhp_t( 'the suite-wide OFF filter is lifted; the shipped default is back', true === bhp_visit_shelf_backorder_allowed() );
+
+if ( ! function_exists( 'bhp_visit_shelf_backorder_allowed' ) ) {
+	bhp_skip( '§7c', 'backorder module not loaded' );
+} else {
+	$bo_slug = $slugs[0];
+
+	// Force THIS ONE TITLE exhausted, by filter, without touching a count.
+	$bo_force = function ( $closed, $slug ) use ( $bo_slug ) {
+		return ( $slug === $bo_slug ) ? true : $closed;
+	};
+	add_filter( 'bhp_visit_shelf_title_is_closed', $bo_force, 99, 2 );
+
+	// ── 1. THE SHELF FACT IS UNCHANGED ────────────────────────────────────
+	bhp_t(
+		"the SHELF still reports {$bo_slug} exhausted (the physical fact did not move)",
+		true === bhp_visit_shelf_title_is_exhausted( $bo_slug )
+	);
+
+	// ── 2. THE PURCHASE GATE RELAXES ──────────────────────────────────────
+	bhp_t(
+		"the PURCHASE GATE reports {$bo_slug} OPEN, because backorders are allowed (item 363)",
+		false === bhp_visit_shelf_title_is_closed( $bo_slug )
+	);
+	bhp_t(
+		'the closed-titles list no longer contains it, so no surface and no seam refuses it',
+		! in_array( $bo_slug, bhp_visit_shelf_closed_titles(), true ),
+		implode( ',', bhp_visit_shelf_closed_titles() )
+	);
+
+	/*
+	 * ⛔ THE SEAM PREDICATE ITSELF, not just the slug list. This is the exact
+	 *    function all five server refusals in `school-visit-paperback-only.php`
+	 *    call, asked about a real product id resolved from the catalog.
+	 */
+	$bo_pid = (int) ( $catalog['paperback'][ $bo_slug ]['variation_id'] ?? 0 );
+	if ( ! $bo_pid ) {
+		$bo_pid = (int) $catalog['paperback'][ $bo_slug ]['product_id'];
+	}
+	bhp_t(
+		'the REFUSAL SEAM predicate accepts the exhausted item (bhp_visit_shelf_is_closed_item)',
+		false === bhp_visit_shelf_is_closed_item( $bo_pid, 0 ),
+		"product/variation id {$bo_pid}"
+	);
+	if ( function_exists( 'bhp_school_visit_is_sold_out_title' ) ) {
+		bhp_t(
+			'and the paperback-only file agrees, through its own delegating predicate',
+			false === bhp_school_visit_is_sold_out_title( $bo_pid, 0 )
+		);
+	}
+
+	// ── 3. THE HONESTY RULE: STILL NO NUMBER, ANYWHERE ────────────────────
+	bhp_t(
+		'the COUNTER is still silent for an exhausted title (exhausted outranks counted)',
+		null === bhp_visit_shelf_title_counter( $bo_slug )
+	);
+	bhp_t(
+		'and silent through the request gate too',
+		null === bhp_visit_shelf_counter_for_request( $bo_slug )
+	);
+	bhp_t(
+		'the counter map does not carry the exhausted title',
+		! array_key_exists( $bo_slug, bhp_visit_shelf_counter_map_for_request() )
+	);
+
+	/*
+	 * ⛔⛔ THE REGRESSION THIS SPLIT EXISTS TO PREVENT, ASSERTED DIRECTLY.
+	 *     A title Andrew closes BY HAND at a healthy count must STILL print no
+	 *     number, even though backorders are on and the purchase gate is open.
+	 *     If `bhp_visit_shelf_title_counter()` ever asks the relaxed gate again,
+	 *     this is the assertion that catches it.
+	 */
+	if ( count( $slugs ) > 1 ) {
+		$hand_slug  = $slugs[1];
+		$hand_close = function ( $closed, $slug ) use ( $hand_slug ) {
+			return ( $slug === $hand_slug ) ? true : $closed;
+		};
+		add_filter( 'bhp_visit_shelf_title_is_closed', $hand_close, 100, 2 );
+		bhp_t(
+			"a HAND-CLOSED title ({$hand_slug}) prints no number even with backorders on",
+			null === bhp_visit_shelf_title_counter( $hand_slug )
+		);
+		bhp_t(
+			'and it is still orderable, because a hand-close is a shelf fact and not a refusal now',
+			false === bhp_visit_shelf_title_is_closed( $hand_slug )
+		);
+		remove_filter( 'bhp_visit_shelf_title_is_closed', $hand_close, 100 );
+	}
+
+	// ── 4. THE WORDS ──────────────────────────────────────────────────────
+	$bo_label = bhp_visit_shelf_backorder_label();
+	$bo_msg   = bhp_visit_shelf_backorder_message();
+
+	bhp_t( 'the backorder label is non-empty', '' !== trim( $bo_label ), $bo_label );
+	bhp_t( 'the backorder message is non-empty', '' !== trim( $bo_msg ) );
+
+	foreach ( array( 'label' => $bo_label, 'message' => $bo_msg ) as $what => $str ) {
+		$low = strtolower( $str );
+
+		// ⛔ §9.1 voice. Word-boundary matched so "between"/"however" do not trip it.
+		bhp_t( "backorder {$what}: no 'we'/'us'/'our' standing for the company", 0 === preg_match( '/\b(we|us|our|we\'re|we\'ll|we\'ve)\b/i', $str ), $str );
+		bhp_t( "backorder {$what}: no em dash", false === strpos( $str, "\xE2\x80\x94" ) );
+		bhp_t( "backorder {$what}: no exclamation mark (no urgency theater)", false === strpos( $str, '!' ) );
+
+		// ⛔ NO RESTOCK DATE AND NO RESTOCK PROMISE. The standing constraint on
+		//    every customer-facing string in this subsystem. "arriving before
+		//    the visit" is a restock promise with the number filed off, and it
+		//    is FALSE for Dallas Harris (09-03) and Liberty (09-04), both of
+		//    which fall BEFORE the Sept 7-11 restock.
+		bhp_t( "backorder {$what}: names no month", 0 === preg_match( '/\b(january|february|march|april|may|june|july|august|september|october|november|december|sept|sep\.)\b/i', $str ), $str );
+		bhp_t( "backorder {$what}: carries no digit (no date, no count)", 0 === preg_match( '/\d/', $str ), $str );
+		bhp_t( "backorder {$what}: makes no 'before the visit' arrival promise", false === strpos( $low, 'before the visit' ), $str );
+		bhp_t( "backorder {$what}: does not promise a restock", 0 === preg_match( '/\b(restock|arriving|on its way|in transit|shipping soon)\b/i', $str ), $str );
+
+		// ⛔ AMERICAN SPELLING, per the founder's standing rule of 2026-08-24.
+		bhp_t( "backorder {$what}: American spelling", 0 === preg_match( '/\b(colour|favourite|apologise|organise|centre|despatch)\w*/i', $str ), $str );
+	}
+
+	// ⭐ It must not read as sold out, and it must not read as in stock.
+	bhp_t( 'the backorder label does not say "sold out"', false === strpos( strtolower( $bo_label ), 'sold out' ) );
+	bhp_t( 'the backorder label is not the sold-out label', $bo_label !== bhp_visit_shelf_sold_out_label() );
+	bhp_t(
+		'the message carries the founder\'s own accepted worst case (delivery a few days after)',
+		false !== stripos( $bo_msg, 'few days' ),
+		$bo_msg
+	);
+
+	// ── THE RENDERER: exactly one element, and only on a flagged session ──
+	$bo_flagged = function_exists( 'bhp_school_visit_paperback_only' ) && bhp_school_visit_paperback_only();
+
+	ob_start();
+	bhp_visit_shelf_render_backorder_line( $bo_slug );
+	$bo_html = ob_get_clean();
+
+	if ( $bo_flagged ) {
+		bhp_t( 'FLAGGED: the backorder line renders', false !== strpos( $bo_html, 'bhp-bundle-backorder-label' ), $bo_html );
+		bhp_t( 'FLAGGED: it carries no digit', 0 === preg_match( '/\d/', wp_strip_all_tags( $bo_html ) ), $bo_html );
+		bhp_t( 'FLAGGED: the full sentence rides along for screen readers', false !== strpos( $bo_html, 'screen-reader-text' ) );
+
+		// ⭐ AND THROUGH THE SHARED RENDERER THE THREE SURFACES ACTUALLY CALL.
+		ob_start();
+		bhp_visit_shelf_render_counter( $bo_slug );
+		$bo_via_counter = ob_get_clean();
+		bhp_t(
+			'the shared render_counter() falls through to the backorder line, so all surfaces get it',
+			false !== strpos( $bo_via_counter, 'bhp-bundle-backorder-label' ),
+			$bo_via_counter
+		);
+		bhp_t(
+			'and it never prints the counter and the backorder line together',
+			false === strpos( $bo_via_counter, 'bhp-bundle-stock-counter' )
+		);
+	} else {
+		bhp_t( 'UNFLAGGED: the backorder line renders NOTHING AT ALL, not even an empty span', '' === $bo_html, var_export( $bo_html, true ) );
+	}
+
+	// ⛔ THE ABSOLUTE, RE-ASSERTED FOR THE NEW MARKUP: an unflagged session must
+	//    never receive it, whatever the shelf says.
+	if ( function_exists( 'WC' ) && WC()->session ) {
+		WC()->session->__unset( BHP_SCHOOL_VISIT_SESSION_KEY );
+		WC()->session->__unset( BHP_SCHOOL_VISIT_SET_AT_SESSION_KEY );
+	}
+	bhp_t(
+		'ABSOLUTE: with the visit flag cleared, the exhausted title is NOT backordered-for-request',
+		false === bhp_visit_shelf_title_is_backordered_for_request( $bo_slug )
+	);
+	ob_start();
+	bhp_visit_shelf_render_backorder_line( $bo_slug );
+	bhp_t( 'ABSOLUTE: and renders zero bytes for an ordinary shopper', '' === ob_get_clean() );
+
+	remove_filter( 'bhp_visit_shelf_title_is_closed', $bo_force, 99 );
+	bhp_t( 'the force is removed and the environment truth returns', is_array( bhp_visit_shelf_closed_titles() ) );
+}
+
 /* =========================================================================
  * §8 — ⛔⛔ NOTHING WAS WRITTEN. NOT AN OPTION, NOT A STOCK STATUS.
  * ====================================================================== */
@@ -1120,9 +1409,10 @@ global $wpdb;
 
 $opt_rows = $wpdb->get_results(
 	$wpdb->prepare(
-		"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN (%s,%s,%s,%s)",
+		"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN (%s,%s,%s,%s,%s)",
 		'bhp_visit_shelf_stock',
 		'bhp_school_visits',
+		'bhp_visit_shelf_backorders',
 		'woocommerce_pickup_location_settings',
 		'pickup_location_pickup_locations'
 	),
@@ -1145,15 +1435,16 @@ bhp_visit_shelf_closed_map_for_request();
 
 $opt_rows_after = $wpdb->get_results(
 	$wpdb->prepare(
-		"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN (%s,%s,%s,%s)",
+		"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN (%s,%s,%s,%s,%s)",
 		'bhp_visit_shelf_stock',
 		'bhp_school_visits',
+		'bhp_visit_shelf_backorders',
 		'woocommerce_pickup_location_settings',
 		'pickup_location_pickup_locations'
 	),
 	ARRAY_A
 );
-bhp_t( 'the four related options are byte-identical after exercising the gate', $before === wp_json_encode( $opt_rows_after ) );
+bhp_t( 'the five related options are byte-identical after exercising the gate', $before === wp_json_encode( $opt_rows_after ) );
 
 $all_instock = true;
 foreach ( $stock_before as $pid => $status ) {
@@ -1188,6 +1479,17 @@ if ( function_exists( 'WC' ) && WC()->session ) {
 }
 if ( function_exists( 'wc_clear_notices' ) ) {
 	wc_clear_notices();
+}
+
+/*
+ * ⭐ 1.8.76 — THE SUITE MUST NOT LEAVE ITS OWN SWITCH BEHIND. §7c removes it;
+ *    this asserts that it did, so a suite that exits early through a skip
+ *    cannot silently leave the founder's ruling switched off in a later test
+ *    run sharing the same request.
+ */
+remove_filter( 'bhp_visit_shelf_backorder_allowed', '__return_false', 5 );
+if ( function_exists( 'bhp_visit_shelf_backorder_allowed' ) ) {
+	bhp_t( 'the suite left the backorder allowance at its shipped default (ON)', true === bhp_visit_shelf_backorder_allowed() );
 }
 
 echo "\n" . str_repeat( '=', 78 ) . "\n";

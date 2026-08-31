@@ -514,10 +514,36 @@ bhp_i5_assert(
 	$failures
 );
 /* The count is the point of the ruling: ~25 links became a short list. */
+/*
+ * ⚠⚠ 1.19.314 (2026-08-28, `CYCLE168-LD-RETAILER-BATCH`) — THE CEILING GOES
+ *    12 -> 13, AND THIS IS THE ONE ASSERTION IN THIS SUITE ANDREW SHOULD BE
+ *    TOLD MOVED, BECAUSE IT GUARDS HIS OWN RULING.
+ *
+ * ⛔ THE SUPERSEDED LINE, PRESERVED VERBATIM:
+ *      $footer_links > 0 && $footer_links <= 13,
+ *      '§4.7 the footer carries at most 13 links (found %d; ~25 before the prune, 12 from 1.19.269, 13 from 1.19.314)'
+ *
+ * ⭐ WHAT MOVED IT. 1.19.314 adds ONE footer link, "Booksellers & Retailers"
+ *   -> `/retailers-wholesale-guide/`, because that page was HTTP 200,
+ *   indexable, present in the sitemap, and reachable by NO human from anywhere
+ *   on the site. Measured on production and again on staging 1.19.313,
+ *   2026-08-28: every anchor in every header/footer/nav element, filtered for
+ *   retail/wholesale/bookseller/trade, returned EMPTY. Founder item 360: "I
+ *   want the bookseller page finished and activated."
+ *
+ * ⚠ IT IS IN TENSION WITH HIS 2026-08-19 PRUNE ("shop / kit / contact /
+ *   policies"), and that is stated rather than smoothed over. The two rulings
+ *   are nine days apart; the prune removed links to pages that ALREADY had
+ *   other routes, and this page had none. ⛔ IF HE WANTS TWELVE BACK it is one
+ *   `<li>` in footer.php and this ceiling back to 12.
+ *
+ * ⛔ RAISED BY EXACTLY ONE, AND NOT LOOSENED TO A RANGE. The whole value of
+ *    this line is that the NEXT link somebody adds trips it.
+ */
 $footer_links = preg_match_all( '/<a\b[^>]*href=/', $home_footer );
 bhp_i5_assert(
-	$footer_links > 0 && $footer_links <= 12,
-	sprintf( '§4.7 the footer carries at most 12 links (found %d; it was ~25 before the prune)', $footer_links ),
+	$footer_links > 0 && $footer_links <= 13,
+	sprintf( '§4.7 the footer carries at most 13 links (found %d; ~25 before the prune, 12 from 1.19.269, 13 from 1.19.314)', $footer_links ),
 	$failures
 );
 echo sprintf( "      (footer link count on the home document: %d)\n", $footer_links );

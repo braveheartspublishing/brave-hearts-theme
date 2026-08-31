@@ -38,6 +38,24 @@
  *     still DENIED. The banner stays visible to everyone and becomes a
  *     notice with a working opt-out rather than a pre-consent gate.
  *
+ * ⭐⭐⭐ 2026-08-27 UPDATE (theme 1.19.312, `CYCLE167-LD-CONSENT-PIXEL-EXT`) --
+ * THE SECOND HALF OF THE LINE IMMEDIATELY ABOVE IS SUPERSEDED. Outside the
+ * EEA+UK the three ad_* signals are now GRANTED by default too, so the
+ * catch-all payload is all-four-granted. The EEA+UK payload is byte-unchanged
+ * and still all-denied. The superseded wording is kept, not corrected in
+ * place, so the movement stays legible -- see measured_default_signals() for
+ * the authority, the limit of that authority, and the reason the opt-out
+ * mechanisms are load-bearing rather than decorative.
+ *
+ * ⛔ ONE CONSEQUENCE WORTH STATING WHERE IT CANNOT BE MISSED: this is what
+ * lets BHP_Meta_Pixel initialise for a non-EEA visitor who has not chosen.
+ * That pixel is consent-STATE-driven from 1.19.312 -- it reads the same
+ * region gate and the same recorded choice this class's defaults describe,
+ * rather than waiting on a banner interaction that a US visitor no longer
+ * sees (the banner is EEA-only from 1.19.309). If this payload is ever
+ * narrowed back, narrow the pixel in the same commit or the two will
+ * disagree about the same visitor.
+ *
  * ⛔ THE CACHE-SAFETY PROPERTY IS UNCHANGED AND WAS THE FIRST CONSTRAINT
  * CHECKED, NOT AN AFTERTHOUGHT: both payloads are constants, the server
  * still performs no geo lookup and reads no header or cookie, and every
@@ -224,26 +242,64 @@ class BHP_Consent {
 	}
 
 	/**
-	 * ⭐ The everywhere-else default payload — the one this release exists
+	 * ⭐ The everywhere-else default payload — the one 1.19.302 existed
 	 * to add. `analytics_storage` is GRANTED by default; the banner is a
 	 * notice with a working opt-out rather than a gate.
 	 *
-	 * ⛔ THE THREE AD SIGNALS STAY DENIED BY DEFAULT IN EVERY REGION, and
-	 * that is deliberate, not an oversight. The ruling this implements is
-	 * about MEASUREMENT ("half blind" — carrier items 309/310). Advertising
-	 * identifiers are a separate posture with separate US state-law
-	 * exposure, and the brief's own instruction was not to broaden the ad
-	 * signals beyond what the accepted state already grants. A visitor who
-	 * accepts "marketing" in the banner still raises all three, exactly as
-	 * before, via BHP_WPConsent_Bridge. Nothing about the granted path
-	 * changed — only the default for a visitor who has not chosen.
+	 * ⛔ SUPERSEDED PARAGRAPH, PRESERVED VERBATIM AND DELIBERATELY NOT
+	 * CORRECTED IN PLACE, because a future reader will otherwise re-derive
+	 * the narrower rule from the code and "fix" this release back out. It
+	 * was exactly true of 1.19.302–1.19.311 and is false of 1.19.312:
+	 *
+	 *   > ⛔ THE THREE AD SIGNALS STAY DENIED BY DEFAULT IN EVERY REGION, and
+	 *   > that is deliberate, not an oversight. The ruling this implements is
+	 *   > about MEASUREMENT ("half blind" — carrier items 309/310). Advertising
+	 *   > identifiers are a separate posture with separate US state-law
+	 *   > exposure, and the brief's own instruction was not to broaden the ad
+	 *   > signals beyond what the accepted state already grants. A visitor who
+	 *   > accepts "marketing" in the banner still raises all three, exactly as
+	 *   > before, via BHP_WPConsent_Bridge. Nothing about the granted path
+	 *   > changed — only the default for a visitor who has not chosen.
+	 *
+	 * ⭐⭐ 2026-08-27 (theme 1.19.312, `CYCLE167-LD-CONSENT-PIXEL-EXT`) — THE
+	 * THREE AD SIGNALS ARE NOW GRANTED BY DEFAULT OUTSIDE THE EEA+UK, which is
+	 * the precise sentence the block above forbade. It is not a drift: the
+	 * question the 1.19.302 note left open ("advertising identifiers are a
+	 * separate posture") was PUT TO THE FOUNDER AND ANSWERED.
+	 *
+	 * ⚠ AUTHORITY, AND ITS LIMIT: Andrew Signore, carrier `^349. FOUNDER`
+	 * item 4, 2026-08-27, verbatim — "I guess we extend it" — given after
+	 * Gandalf explicitly clarified that the extension reaches the ad/marketing
+	 * pixel and not only measurement. ⛔ RELAYED THROUGH THE CHIEF OF STAFF,
+	 * NOT WITNESSED BY THIS FILE'S AUTHOR, and labelled so here rather than in
+	 * a report that will not travel with the code. The underlying item 310
+	 * ruling ("lets just go with US Law") is likewise relayed.
+	 *
+	 * ⛔ THIS IS NOT A LEGAL OPINION, and the caveat is stronger here than it
+	 * was for measurement. Several US state privacy regimes (CA/CO/CT/VA and
+	 * their successors) treat cross-context behavioural advertising as an
+	 * opt-OUT right rather than an opt-in one — which is the posture this
+	 * implements — but they also require the opt-out to be real and reachable.
+	 * That is why this release does not stop at the default: the "Privacy
+	 * Choices" footer link from 1.19.309 and the GPC branch in
+	 * BHP_WPConsent_Bridge are the two mechanisms that make it an opt-out
+	 * rather than a taking, and BOTH are asserted by
+	 * tests/test-cycle167-consent-pixel-ext.php. Whether this posture fits the
+	 * site's actual traffic mix remains Andrew's decision with counsel; the
+	 * carrier records that a legal-review caveat was offered and he ruled
+	 * without it.
+	 *
+	 * ⛔ THE EEA+UK PAYLOAD IS BYTE-UNCHANGED. eea_default_signals() still
+	 * returns all four signals denied. Nothing about the European experience
+	 * of this site moves in this release, and test-cycle167-consent-geo.php
+	 * asserts that directly rather than by inspection.
 	 *
 	 * @return array<string,int|string>
 	 */
 	public static function measured_default_signals() {
 		$defaults = array();
 		foreach ( self::SIGNALS as $signal ) {
-			$defaults[ $signal ] = ( 'analytics_storage' === $signal ) ? 'granted' : 'denied';
+			$defaults[ $signal ] = 'granted';
 		}
 		$defaults['wait_for_update'] = 500;
 		return $defaults;
@@ -261,6 +317,11 @@ class BHP_Consent {
 	 *
 	 *   1. region-scoped EEA+UK  -> every signal denied  (unchanged posture)
 	 *   2. unscoped catch-all    -> analytics_storage granted, ad_* denied
+	 *
+	 * ⭐ 1.19.312 (`CYCLE167-LD-CONSENT-PIXEL-EXT`): line 2 above is now
+	 * "every signal granted". Line 1 is unchanged. The shape of the emission
+	 * -- two calls, region-scoped first, both compile-time constants -- did
+	 * not move at all; only the value of three keys in the second payload did.
 	 *
 	 * ⚠ PRECEDENCE IS BY SPECIFICITY, NOT BY ORDER: Google applies the most
 	 * specific matching `region` regardless of which call came first. The

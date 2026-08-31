@@ -137,14 +137,43 @@ function bhp_sm_code_js( $src ) {
  * exact defect this suite exists to catch.
  */
 $bhp_sm_pages = array(
+	/*
+	 * ⭐⭐ 3 -> 2 AT 1.19.308 (2026-08-27, `CYCLE167-LD-KIT-PAGE-REFRESH`), AND
+	 *     THIS SUITE CAUGHT THE CHANGE ON THE FIRST RUN, WHICH IS THE SUITE
+	 *     WORKING RATHER THAN THE SUITE BREAKING.
+	 *
+	 * ⛔ WHAT CHANGED AND WHY. The HERO CTA — a button whose only job was to
+	 *    open this dialog — was REMOVED, because the dialog's own form now
+	 *    renders in the hero itself. This page is about to receive paid Meta
+	 *    traffic (founder carrier item 330), and a paid click should not have to
+	 *    buy a second click before it can reach a field. A button printed
+	 *    directly above the form it reveals is a step that costs money and buys
+	 *    nothing.
+	 *
+	 * ⛔ THE OTHER TWO ANCHORS ARE UNCHANGED AND MUST STAY: the FINAL CTA and
+	 *    the STICKY BAR are both far from the hero form, and a visitor who has
+	 *    scrolled that far genuinely needs a way back to a field. Removing
+	 *    those would be a real regression, and 2 asserts exactly that they
+	 *    survive.
+	 *
+	 * ⛔ THE MODAL ITSELF IS NOT RETIRED and every remaining anchor still opens
+	 *    it, still keeps `href="#free"` for the no-JS path, and still carries
+	 *    its own `data-bhp-signup-modal-source` label — all three asserted
+	 *    below, unchanged.
+	 *
+	 * ⚠ THE NUMBER IS THE GUARD, NOT THE VALUE. It was lowered only after the
+	 *   template was read and the missing anchor accounted for by name. Nothing
+	 *   else in this table moved: the four audience funnels are byte-untouched
+	 *   at 3.
+	 */
 	'page-reluctant-reader-adventure-kit.php' => array(
 		'label'    => 'Parent / Reluctant Reader Adventure Kit',
 		'hook'     => 'data-parent-free-cta',
 		'modal_id' => 'adventure-kit-modal',
 		'magnet'   => 'reluctant_reader_adventure_kit',
 		'audience' => 'parents_families',
-		'ctas'     => 3,
-		'anchors'  => 3,
+		'ctas'     => 2,
+		'anchors'  => 2,
 		'ready_fn' => 'bhp_get_reluctant_reader_download',
 	),
 	'page-audience-educators.php'             => array(
@@ -177,14 +206,53 @@ $bhp_sm_pages = array(
 		'anchors'  => 3,
 		'ready_fn' => 'bhp_get_community_kit_download',
 	),
+	/*
+	 * ⚠⚠ 1.19.314 (2026-08-28, `CYCLE168-LD-RETAILER-BATCH`) — THE RETAILER
+	 *    ROW DROPS BY ONE ANCHOR AND ONE HOOK, AND IT IS A DELIBERATE CHANGE TO
+	 *    A DORMANT FEATURE, NOT A REGRESSION.
+	 *
+	 * ⛔ THE SUPERSEDED EXPECTATIONS, PRESERVED VERBATIM:
+	 *      'ctas'    => 2,
+	 *      'anchors' => 3,
+	 *
+	 * ⭐ WHAT CHANGED. Founder item 366 required an ORDERING CTA above the
+	 *   fold on both viewports. The hero previously carried a
+	 *   `$download['ready']` branch whose primary button opened the gated
+	 *   Wholesale Guide modal; 1.19.314 replaces the whole hero CTA pair with
+	 *   the ipage ordering route and the UNGATED sell sheet. That removes ONE
+	 *   `href="#free"` anchor and ONE `data-audience-free-cta` hook from the
+	 *   hero, and nothing else.
+	 *
+	 * ⭐⭐ THE MAGNET ITSELF IS NOT REMOVED AND THIS SUITE STILL PROVES IT.
+	 *    The `#free` panel, the modal, the `bookstore_wholesale_guide` key, the
+	 *    Mailchimp tagging and the final-CTA opener are all untouched — §2 and
+	 *    §3 below still assert every one of them. Setting the PDF under
+	 *    Settings -> Lead Magnets still restores the panel and its modal with
+	 *    no code change and no redeploy, exactly as 1.19.304 documented.
+	 *    What is gone is the HERO opener, at one of its three appearances.
+	 *
+	 * ⚠ WHY THE HERO OPENER WAS THE ONE TO GO, stated so it can be reversed
+	 *   knowingly: a gated guide and an ungated sell sheet are the same offer
+	 *   asked for two different prices, and the retailer funnel review's Fix 2
+	 *   is explicit that gating a spec sheet from a trade buyer costs more
+	 *   orders than it captures addresses. Putting both in the same hero would
+	 *   also have pushed the third control below the fold on a 375px viewport,
+	 *   which is the exact defect item 366 reports. ⛔ ANDREW'S REVERSAL IS THE
+	 *   `$download['ready']` BRANCH BACK IN THE HERO AND THESE TWO NUMBERS BACK
+	 *   TO 2 AND 3.
+	 *
+	 * ⛔ THE OTHER FOUR PAGES IN THIS TABLE ARE UNTOUCHED. Their counts are
+	 *    deliberately NOT relaxed to a range: a range would stop catching the
+	 *    accidental removal this suite exists to catch.
+	 */
 	'page-audience-retailers.php'             => array(
 		'label'    => 'Retailers / Wholesale Guide',
 		'hook'     => 'data-audience-free-cta',
 		'modal_id' => 'retailer-wholesale-guide-modal',
 		'magnet'   => 'bookstore_wholesale_guide',
 		'audience' => 'retailers',
-		'ctas'     => 2,
-		'anchors'  => 3,
+		'ctas'     => 1,
+		'anchors'  => 2,
 		'ready_fn' => 'bhp_get_bookstore_guide_download',
 	),
 );

@@ -1301,7 +1301,25 @@ function bhp_fallback_menu() {
          *    a failing test attached.
          */
         __('Free Resources', 'brave-hearts')    => home_url('/free-resources/'),
-        __('About', 'brave-hearts')             => home_url('/about/'),
+        /*
+         * ⭐ 1.19.337, CARRIER ITEM 547 — the same treatment a third time, and
+         *    for the third time the reason is that a DORMANT copy of the nav
+         *    must not disagree with the nav.
+         *
+         *    SUPERSEDED LINE, PRESERVED VERBATIM so the movement is visible and
+         *    is not re-derived:
+         *
+         *        __('About', 'brave-hearts')             => home_url('/about/'),
+         *
+         *    ⚠ THIS PATH IS DORMANT on both environments — a stored menu IS
+         *    assigned to `primary` (term 198, verified first-hand on staging
+         *    this session with `wp menu item list`), so `fallback_cb` never
+         *    fires and this line changes nothing today.
+         * ⛔ ABOUT IS NOT ORPHANED BY THIS EDIT. `footer.php`'s Shop column
+         *    carries `/about/` directly from 1.19.337, which is the other half
+         *    of item 547.
+         */
+        __('Read-Alouds', 'brave-hearts')       => home_url('/school-read-alouds/'),
         __('Blog', 'brave-hearts')              => home_url('/blog/'),
         __('Contact', 'brave-hearts')           => home_url('/contact/'),
     ];
@@ -1639,6 +1657,178 @@ function bhp_adventure_books_nav_aria_label($atts, $item) {
     return $atts;
 }
 add_filter('nav_menu_link_attributes', 'bhp_adventure_books_nav_aria_label', 10, 2);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.337 (2026-08-30, `CYCLE170-LD-MICRO`) — CARRIER ITEM 547.
+ *     ABOUT LEAVES THE PRIMARY NAV. READ-ALOUDS TAKES ITS SLOT, STACKED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐⭐ THE FOUNDER'S WORDS, verbatim, 2026-08-30, viewing staging
+ *    `/positivity-news/`, carrier item 547:
+ *
+ *      "the nav bar looks bad - lets remove the about and put read alouds
+ *       stacked there - also this needs to always be uniform the font the
+ *       style etc"
+ *
+ *    ⛔ RELAYED to this desk through `chief-of-staff` and read first-hand at
+ *       the carrier file before this function was written. NOT witnessed here.
+ *
+ * ---------------------------------------------------------------------------
+ * ⛔⛔ WHY THIS IS A FILTER AND NOT A `wp menu item delete` ON EACH ENVIRONMENT
+ * ---------------------------------------------------------------------------
+ * The primary nav is a DATABASE menu (term 198 "Primary" on staging, verified
+ * first-hand this session with `wp menu item list`). A DB menu row does NOT
+ * travel in a theme ZIP, so a menu edit made on staging would have to be made
+ * again, by hand, on production — and the two would diverge the first time one
+ * of them was missed. ⭐ `bhp_canonicalize_teacher_menu_items()` above already
+ * established removal-by-filter in this theme, for this exact reason, and this
+ * function is the same idiom.
+ *
+ * ⭐ THE STORED ROW IS NOT DELETED. `/about/` keeps its menu item, its ID and
+ *    its position in wp-admin; it is simply not RENDERED in the primary nav.
+ *    ⛔ Reverting item 547 is deleting this one `add_filter` line. Nothing has
+ *      to be re-created in a database on either environment.
+ *
+ * ---------------------------------------------------------------------------
+ * ⛔ `/about/` DOES NOT BECOME UNREACHABLE, AND THAT IS PART OF THE RULING
+ * ---------------------------------------------------------------------------
+ * Item 547's own words: *"About goes into the FOOTER's existing link column."*
+ * That half is in `footer.php`'s Shop column, deliberately as a direct `<li>`
+ * rather than through the `footer` menu location — which `footer.php` stopped
+ * rendering at 1.19.269 and which would therefore have silently swallowed the
+ * link. ⭐ The page also keeps its sitemap entry and every in-body link to it.
+ *
+ * ---------------------------------------------------------------------------
+ * ⚠️ THE SUPERSEDED DEPLOY STEP, NAMED RATHER THAN LEFT TO COLLIDE
+ * ---------------------------------------------------------------------------
+ * `ANDREW-REVIEW/2026-08-30/bundle/DEPLOY-PLAN.md` STEP 6 reads *"nav: ADD
+ * 'Read-Alouds'; the About removal stays HELD."* ⭐ Item 547 releases the hold
+ * AND moves the implementation from a database step into theme code. ⛔ The
+ * "ADD Read-Alouds" half of STEP 6 is STILL REQUIRED on production — this
+ * function MOVES an existing Read-Alouds item, it does not create one, because
+ * inventing a menu row from a theme filter would put a link in the nav that no
+ * administrator can see or edit in wp-admin. See §3 of this release's plan.
+ *
+ * ---------------------------------------------------------------------------
+ * ⛔ SCOPED TO THE `primary` LOCATION, WHICH THE FILTERS ABOVE ARE NOT
+ * ---------------------------------------------------------------------------
+ * `wp_nav_menu_objects` fires for EVERY `wp_nav_menu()` call on the site. The
+ * three filters above this one are unscoped, which is survivable for a label
+ * rewrite and is NOT survivable for a REMOVAL: an unscoped version of this
+ * function would strip About out of any future menu anywhere. ⭐ `$args` carries
+ * the theme location and is checked before anything is touched.
+ *
+ * @param array  $items Menu item objects.
+ * @param object $args  wp_nav_menu() arguments.
+ * @return array
+ */
+function bhp_primary_nav_about_out_readalouds_in($items, $args = null) {
+    $location = is_object($args) && isset($args->theme_location) ? (string) $args->theme_location : '';
+    if ('primary' !== $location) {
+        return $items;
+    }
+
+    $about_path     = untrailingslashit((string) wp_parse_url(home_url('/about/'), PHP_URL_PATH));
+    $readaloud_path = untrailingslashit((string) wp_parse_url(home_url('/school-read-alouds/'), PHP_URL_PATH));
+    $home_host      = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
+
+    $about_index     = null;
+    $readaloud_index = null;
+
+    foreach ($items as $index => $item) {
+        $item_host = strtolower((string) wp_parse_url($item->url, PHP_URL_HOST));
+        if ($item_host && $item_host !== $home_host) {
+            continue;
+        }
+        $path = untrailingslashit((string) wp_parse_url($item->url, PHP_URL_PATH));
+        if (null === $about_index && $path === $about_path) {
+            $about_index = $index;
+        }
+        if (null === $readaloud_index && $path === $readaloud_path) {
+            $readaloud_index = $index;
+        }
+    }
+
+    /*
+     * ⭐ THE READ-ALOUDS ITEM IS RE-LABELLED WHETHER OR NOT ABOUT IS PRESENT.
+     *    Production's menu has no Read-Alouds row yet and staging's does; a
+     *    version that only ran when BOTH were found would behave differently on
+     *    the two environments, which is the exact class of divergence this
+     *    filter exists to remove.
+     */
+    if (null !== $readaloud_index) {
+        $ra = $items[$readaloud_index];
+        /*
+         * ⭐ TWO LINES, THE SAME TWO SPANS `menu-item--adventure-books` AND
+         *    `menu-item--free-resources` ALREADY USE, so the three stacked items
+         *    share ONE stylesheet rule and cannot drift apart. See the
+         *    1.19.303 note on that selector in style.css.
+         *
+         * ⚠️ THE VISIBLE SPLIT DROPS THE HYPHEN, AND THAT IS FLAGGED RATHER
+         *    THAN SLIPPED IN. "Read-" on its own line reads as a broken word.
+         *    The founder's own wording at item 547 is "read alouds", unhyphenated,
+         *    so the two rendered lines are READ / ALOUDS. ⛔ THE ACCESSIBLE NAME
+         *    IS THE CANONICAL HYPHENATED FORM — see the aria-label filter below —
+         *    so nothing a screen reader announces changes spelling, and the
+         *    stored menu title in wp-admin is untouched.
+         */
+        $ra->title   = '<span class="site-nav__label-line">' . esc_html__('Read', 'brave-hearts') . '</span><span class="site-nav__label-line">' . esc_html__('Alouds', 'brave-hearts') . '</span>';
+        $ra->classes = array_values(array_unique(array_merge((array) $ra->classes, ['menu-item--read-alouds'])));
+    }
+
+    if (null === $about_index) {
+        return array_values($items);
+    }
+
+    /*
+     * ⛔ THE MOVE IS DONE BY REBUILDING THE LIST, NOT BY SWAPPING `menu_order`.
+     *    `wp_nav_menu_objects` receives an ALREADY-SORTED array and the walker
+     *    renders it in array order; `menu_order` has already been consumed by
+     *    the time this filter runs, so writing to it would change nothing and
+     *    would read as if it had.
+     */
+    $about_position = array_search($about_index, array_keys($items), true);
+    $rebuilt        = [];
+    foreach ($items as $index => $item) {
+        if ($index === $about_index) {
+            // About's slot. Read-Alouds lands here if we have it.
+            if (null !== $readaloud_index) {
+                $rebuilt[] = $items[$readaloud_index];
+            }
+            continue; // ⛔ About itself is dropped from the RENDER only.
+        }
+        if (null !== $readaloud_index && $index === $readaloud_index) {
+            continue; // Already emitted in About's slot above.
+        }
+        $rebuilt[] = $item;
+    }
+
+    unset($about_position);
+
+    return $rebuilt;
+}
+add_filter('wp_nav_menu_objects', 'bhp_primary_nav_about_out_readalouds_in', 22, 2);
+
+/**
+ * The accessible name for the stacked Read-Alouds item.
+ *
+ * ⛔ REQUIRED, NOT COSMETIC. Two block-level spans read as one unbroken run of
+ *    text to a screen reader ("READALOUDS"), which is the same defect
+ *    `bhp_adventure_books_nav_aria_label()` above exists to fix for "Adventure
+ *    Books". ⭐ The name is the CANONICAL HYPHENATED "Read-Alouds", which is
+ *    also the stored menu title, so the accessible name and wp-admin agree.
+ *
+ * @param array  $atts Anchor attributes.
+ * @param object $item Menu item.
+ * @return array
+ */
+function bhp_readalouds_nav_aria_label($atts, $item) {
+    if (in_array('menu-item--read-alouds', (array) $item->classes, true)) {
+        $atts['aria-label'] = __('Read-Alouds', 'brave-hearts');
+    }
+    return $atts;
+}
+add_filter('nav_menu_link_attributes', 'bhp_readalouds_nav_aria_label', 10, 2);
 
 /**
  * CARRIER ITEM 209, LIMB 2 — the "ADVENTURE BOOKS" entry points at /shop/.
@@ -4488,6 +4678,29 @@ require_once get_template_directory() . '/inc/mailchimp.php';
  *    HTTP host. It contains no credential and makes no HTTP call.
  */
 require_once get_template_directory() . '/inc/mailchimp-staging-stub.php';
+/*
+ * ⭐ 1.19.313 (`CYCLE168-LD-CHECKOUT-OPTIN`, founder carrier item 360 ruling 3)
+ *    — the checkout opt-in checkbox has been rendering for weeks and NOTHING
+ *    READ ITS VALUE. This file is the missing wire from that checkbox to a
+ *    SUBSCRIBED, tagged Mailchimp contact.
+ *
+ * ⛔ REQUIRED AFTER inc/mailchimp.php AND THE STUB, DELIBERATELY: it calls
+ *    `bhp_process_signup()` and it must inherit the staging recording
+ *    transport, so that a staging checkout can be exercised end to end
+ *    WITHOUT writing a test buyer into the founder's live audience.
+ */
+require_once get_template_directory() . '/inc/checkout-optin-sync.php';
+/*
+ * ⭐ 1.19.316 (`CYCLE168-CX-EARLY-CART-CAPTURE`) — the cart-page email capture
+ *    that lets an abandoned-cart record exist at all.
+ *
+ * ⛔ SEPARATE LANE FROM checkout-optin-sync.php ABOVE, DELIBERATELY. That file
+ *    is the ORDER-time opt-in and it produces a `subscribed` contact. This one
+ *    is the CART-time save and it must produce a `transactional` contact. They
+ *    must never be merged, and this file never calls `bhp_process_signup()`.
+ *    Typing an email to save a cart is not consent to marketing.
+ */
+require_once get_template_directory() . '/inc/early-cart-capture.php';
 require_once get_template_directory() . '/inc/lead-magnet-settings.php';
 /*
  * ⭐ 1.19.292 (`CYCLE166-CX-CAPTURE-REPAIR`) — the three thank-you pages are
@@ -4607,6 +4820,110 @@ require_once get_template_directory() . '/inc/class-bhp-printed-for-you.php';
 // empty state instead of a fatal.
 require_once get_template_directory() . '/inc/author-visits.php';
 
+// Gallery page (2026-08-29, CYCLE169-LD-READALOUD-TRUST-GALLERY, PHASE 2
+// SKELETON): the category map behind the `Gallery` page template. It adds no
+// photo source of its own -- the read-alouds category is the same
+// founder-cleared set /author-visits/ renders, through the same validation.
+// NOT in any navigation menu and no production page record exists; the nav
+// command is prepared in the workstream deploy plan, not run.
+require_once get_template_directory() . '/inc/gallery-page.php';
+
+// Read-aloud request scheduler (2026-08-30, CYCLE170-LD-SCHOOL-READALOUD-MERGE):
+// the self-built request calendar behind /school-read-alouds/. School days plus
+// a Morning/Afternoon pair that may BOTH be ticked, per Andrew's ruling that he
+// can take two visits in one day. It is a REQUEST, not a booking: nothing is
+// reserved and the thank-you state says TENTATIVE in those words. Reuses the
+// theme's own admin-post + nonce + honeypot + wp_mail shape from
+// inc/audit-remediation.php rather than inventing a second form convention, and
+// reuses bhp_staging_mail_guard_is_staging() so a QA submission on staging is
+// CAPTURED to an option instead of mailing Andrew. Fails towards production:
+// no detector, or any non-staging host, and the mail is sent normally.
+require_once get_template_directory() . '/inc/readaloud-scheduler.php';
+
+// School read-alouds (2026-08-30, CYCLE170-LD-SCHOOL-READALOUD-MERGE): the ONE
+// read-aloud page, resolving the /gallery/-vs-/author-visits/ duplication on
+// Andrew's 2026-08-30 ruling. It COMPOSES the existing visits, gallery and
+// funnel-slot helpers and forks none of them, so their suites keep asserting
+// live code. Its 301 unification is gated by the staging detector and is OFF on
+// production by construction -- /author-visits/ is live there and is reached
+// from printed QR codes. Must load AFTER gallery-page.php and author-visits.php.
+require_once get_template_directory() . '/inc/school-read-alouds.php';
+
+// The APPROVED founder-voice passages (1.19.332, CYCLE170-LD-SHIP-PREP). Four
+// passages Andrew approved at carrier item 512, landed through the
+// `bhp_readaloud_funnel_copy_slots` filter exactly as gallery-page.php's own
+// docblock prescribes -- so that file stays unedited and its suite keeps
+// asserting live code. This is what turns the [PENDING READ-BACK] placeholders
+// into prose. Must load AFTER gallery-page.php, which declares the slots.
+// ⛔ It writes no option, post or page, and adds no copy of its own: every
+//    character is copied from the approved read-back sheet.
+require_once get_template_directory() . '/inc/readaloud-approved-copy.php';
+
+// The /school-read-alouds/ photo carousel's data and script (1.19.330,
+// CYCLE170-LD-READALOUD-CAROUSEL, Andrew's carrier item 497 relayed through
+// Gandalf). It COMPOSES bhp_author_visits_gallery_photos() and adds one flat,
+// newest-first list; it forks nothing and edits no registry, so
+// inc/author-visits.php and inc/gallery-page.php keep governing what they
+// already governed and /gallery/ is untouched. It writes NO option, post, page
+// or WooCommerce record. Must load AFTER author-visits.php, whose gallery
+// helper it calls -- and it does not rely on that either: the call is
+// function_exists()-guarded, so an out-of-order load degrades to "the archive
+// photographs render and the registry three do not", never to a fatal.
+// ⭐ CONSENT GATE CLOSED 2026-08-30 (1.19.332). The archive photographs were
+//    blocked for PRODUCTION by the open CYCLE141-CX-48 consent finding. Andrew
+//    closed it by attestation at carrier item 510, verbatim: "Ok to use those
+//    photos they were approved by the librarian and are already on my social
+//    media". They ship. The prior "blocked for PRODUCTION" note is superseded
+//    and is recorded here rather than silently deleted.
+// ⚠️ What his attestation rests on is stated plainly so nobody re-derives it as
+//    broader than it is: librarian approval plus prior publication on his own
+//    social media. CYCLE141-CX-48 was written about identifiable children, and
+//    guardian consent is a different instrument from a librarian's approval.
+//    The founder is the owner and this is his call to make; it is his
+//    attestation that closes the gate, not an agent's analysis.
+require_once get_template_directory() . '/inc/readaloud-carousel.php';
+
+// Coupon links: `?coupon=<code>` applies an ALREADY-EXISTING, published, enabled
+// WooCommerce coupon to the clicker's own cart (1.19.331, CYCLE170-LD-TRIPLE,
+// Andrew's carrier items 504/505 relayed through Gandalf).
+// ⛔ IT CREATES NO COUPON AND EDITS NO COUPON, PRICE, PRODUCT OR SETTING. There
+//    is no write of any kind to a coupon record in that file; a code WooCommerce
+//    does not already hold does nothing at all, and an unknown or disabled code
+//    is ignored SILENTLY so a typo'd campaign link renders an ordinary page.
+// ⛔ NO ALLOW-LIST OF CODES, DELIBERATELY -- it works for every campaign code
+//    Andrew has today and every one he creates later, because it asks
+//    WooCommerce whether the code exists rather than consulting a list somebody
+//    has to remember to update.
+// ⚠️ It is INDEPENDENT of the Complete Collection auto-coupon in
+//    plugins/brave-hearts-bundle-pricing/includes/bundle-cart.php: different
+//    session keys, neither reads the other. Both CAN be on one cart, which is
+//    WooCommerce's ordinary multi-coupon behaviour and is not introduced here;
+//    whether they should ever stack is an open pricing question for Andrew.
+require_once get_template_directory() . '/inc/coupon-url-apply.php';
+
+// Coupon auto-apply counter (1.19.337, CYCLE170-LD-MICRO). ONE server-side
+// increment each time the auto-apply above SUCCEEDS, so that "applied but did
+// not buy" becomes computable against WooCommerce's redeemed count -- which
+// records redemptions and records nothing at all about a discount that went on
+// a cart and never reached an order.
+// ⛔ IT STORES A COUPON CODE AND A CALENDAR DATE. NOTHING ELSE. No email, name,
+//    user, customer, order, cart, IP, user agent, session or timestamp finer
+//    than a day. It reads and writes NO cookie and touches no consent posture.
+// ⛔ IT CREATES, EDITS AND DELETES NO COUPON, PRICE, PRODUCT OR SETTING. Its
+//    only write anywhere is one non-autoloaded option, pruned to 180 days and
+//    capped at 50 codes so it cannot grow without bound.
+// ⛔ IT LISTENS ON AN ACTION and is never called directly, so the bundle
+//    plugin's separate auto-apply path can join the same count with one line
+//    when that plugin next ships. ⚠️ UNTIL IT DOES, THE COUNT IS PARTIAL and
+//    every reading of it must say so -- the limitation is written in full at
+//    the top of inc/coupon-apply-counter.php.
+// ⚠️ Its increment is a non-atomic read-modify-write and a concurrent apply can
+//    lose a count. That biases the number DOWN, it is documented at the writer,
+//    and it must not be promoted into a reported financial figure without being
+//    rebuilt on something atomic.
+// ⛔ MUST load AFTER coupon-url-apply.php above, which is what fires the action.
+require_once get_template_directory() . '/inc/coupon-apply-counter.php';
+
 // Read-aloud take-home landing (2026-08-24, CYCLE166-CX-READALOUD-LANDING):
 // the decisions half of /read-aloud/, the destination of the dynamic QR printed
 // on the coloring page every child takes home from a school read-aloud. It
@@ -4621,12 +4938,35 @@ require_once get_template_directory() . '/inc/author-visits.php';
 //    position in the file. See the docblock on bhp_read_aloud_mailchimp_tags().
 require_once get_template_directory() . '/inc/read-aloud-landing.php';
 
+// Positivity News (1.19.333, CYCLE170-LD-BUNDLE, carrier items 520/521): the
+// own-site signup page for the monthly newsletter at /positivity-news/. It
+// writes NOTHING -- no option, meta, session, cookie, product or setting -- and
+// mints NO new funnel: it reuses the EXISTING signup-form -> bhp_mailchimp_signup
+// pipe with a distinct signup CONTEXT only, per .claude/rules/funnels.md
+// ("extend the config schema, don't fork the engine").
+// ⛔ IT PASSES NO LEAD MAGNET, ON PURPOSE. The offer is the newsletter and
+//    nothing else, so `lead_magnet` is the empty string everywhere -- which is
+//    also what keeps every lead-magnet branch in the tag callbacks above from
+//    firing on it.
+// ⛔ MUST load AFTER the bhp_mailchimp_signup_tags callbacks above -- and it
+//    does not RELY on that: its callback registers at priority 30, one step
+//    later than inc/read-aloud-landing.php's 20, precisely so the outcome is a
+//    stated rule rather than a consequence of this line's position in the file.
+require_once get_template_directory() . '/inc/positivity-news.php';
+
 // E1 post-purchase order-confirmation email (2026-08-03): subject line and
 // inbox preheader for the WooCommerce processing-order email. The body copy
 // lives in the template override at woocommerce/emails/customer-processing-
 // order.php (and its plain/ twin). Theme code only — writes no WooCommerce
 // setting and no option, so it reverts with a theme rollback.
 require_once get_template_directory() . '/inc/post-purchase-email.php';
+
+// School-visit variant of the completed-order email (2026-08-28, theme
+// 1.19.315): the per-visit copy sets and the helpers that answer "is this
+// render a school-visit order?". MUST load BEFORE transactional-emails.php and
+// before either customer-completed-order template, both of which call into it.
+// Copy layer only -- writes no WooCommerce setting, no option, no order meta.
+require_once get_template_directory() . '/inc/visit-completed-email.php';
 
 // Transactional email COPY layer (2026-08-03): subjects, headings,
 // additional-content suppression, preheaders, the order-email-only Bookvault
@@ -4637,6 +4977,23 @@ require_once get_template_directory() . '/inc/post-purchase-email.php';
 // Theme code only -- writes no WooCommerce setting and no option, so the whole
 // copy layer reverts with a theme rollback.
 require_once get_template_directory() . '/inc/transactional-emails.php';
+
+// ⭐⭐⭐ 1.19.317 (`CYCLE169-LD-REVIEW-ASK-ENGINE`, founder carrier items 391
+// ruling 2 and 397 ruling 4) — THE STORE-SENT REVIEW ASK. Mailchimp journey 94
+// can only reach SUBSCRIBED contacts, and most buyers sync as transactional, so
+// "anyone who has bought gets the review ask" is a promise only the store can
+// keep. This is the daily runner, the qualification gates, the opt-out endpoint
+// and the KPI ledger the morning report's REVIEWS section reads.
+//
+// ⛔ IT SENDS NOTHING UNTIL `bhp_review_ask_enabled` IS SET TO `yes`. The master
+//    switch defaults OFF, so deploying this file changes no customer-facing
+//    behaviour anywhere and schedules nothing.
+//
+// MUST load AFTER transactional-emails.php (that file's preheader map reads this
+// file's copy array) and AFTER visit-completed-email.php (the school-visit
+// exclusion reuses its slug helper, which is what stops the eight Adams parents
+// being asked a second time).
+require_once get_template_directory() . '/inc/review-ask-email.php';
 
 // Bookvault dispatch tracker (2026-08-03): the scheduled checker that polls
 // Bookvault's v3 API and completes an order ONLY on an unambiguous dispatch
@@ -5365,7 +5722,37 @@ function bhp_get_product_learn_points($adventure_key) {
             __('A resilience habit for hard moments: stop, breathe, think, choose', 'brave-hearts'),
         ],
         'amazon_rainforest' => [
-            __('Real science: rainforest biodiversity and how the Amazon helps produce the air we breathe', 'brave-hearts'),
+            /*
+             * ⭐ 1.19.320 (2026-08-29) — CYCLE169-LD-REMAKES-STAGING.
+             *
+             * The oxygen framing is OUT. Andrew Signore, carrier item 447,
+             * sealed and approved at item 465 ("10 good - yes and yes"):
+             * the Amazon's own facts post (366) debunks "produces the air we
+             * breathe", so the product page must not assert it. His own
+             * carbon-protection framing replaces it, and the lungs metaphor
+             * survives as HIS framing ("which is why I call it") rather than
+             * as a claim about the world.
+             *
+             * ⛔ SUPERSEDED WORDING, preserved so it is not re-derived:
+             *   'Real science: rainforest biodiversity and how the Amazon
+             *    helps produce the air we breathe'
+             *
+             * ⚠ SCOPE, CHECKED RATHER THAN ASSUMED: this array is keyed by
+             *   adventure_key, so the sentence looks like it would reach
+             *   both Amazon editions. It does not. The hardcover product
+             *   (ID 20) REDIRECTS to the paperback URL with
+             *   ?bhp_format=hardcover — verified live on staging in a real
+             *   browser, 2026-08-29. There is one customer-facing product
+             *   page per adventure, and this edit reaches exactly the page
+             *   item 465 names.
+             *
+             * ⛔ NO AFFILIATE LINK, PRICE, STOCK, SHIPPING, COUPON OR ANY
+             *   OTHER WooCommerce RECORD IS TOUCHED BY THIS CHANGE. It is a
+             *   theme string. The §26 freeze on the affiliate link itself
+             *   holds; item 465 lifted the page-touch freeze for this edit
+             *   only.
+             */
+            __('Real science: rainforest biodiversity and the enormous amount of carbon the forest holds, which is why I call it the lungs of the Earth.', 'brave-hearts'),
             __('Real geography: the Amazon rainforest, one of Earth’s most biodiverse places', 'brave-hearts'),
             __('A resilience habit for hard moments: stop, breathe, think, choose', 'brave-hearts'),
         ],

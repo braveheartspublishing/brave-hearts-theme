@@ -185,11 +185,27 @@ foreach ($states as $label => $cookie) {
         sprintf('Catch-all payload GRANTS analytics_storage -- the measurement item 310 asked for, for state: %s', $label),
         isset($rest['analytics_storage']) && 'granted' === $rest['analytics_storage']
     );
+    /* ⭐ 1.19.312 (`CYCLE167-LD-CONSENT-PIXEL-EXT`). The superseded assertion,
+     * quoted rather than deleted so the reversal reads as deliberate:
+     *
+     *   > 'Catch-all payload leaves %s DENIED -- ad signals were NOT broadened
+     *   >  by this release, for state: %s'   ...   'denied' === $rest[$ad_signal]
+     *
+     * Andrew Signore extended the US-law posture from measurement to the
+     * ad/marketing signals (carrier `^349. FOUNDER` item 4, "I guess we extend
+     * it" — RELAYED, not witnessed). The catch-all now grants all four.
+     * ⛔ THE EEA ASSERTIONS ABOVE ARE UNTOUCHED, and they are the ones this
+     * suite exists to protect. */
     foreach (['ad_storage', 'ad_user_data', 'ad_personalization'] as $ad_signal) {
         bhp_cms_test_assert(
             $failures,
-            sprintf('Catch-all payload leaves %s DENIED -- ad signals were NOT broadened by this release, for state: %s', $ad_signal, $label),
-            isset($rest[$ad_signal]) && 'denied' === $rest[$ad_signal]
+            sprintf('Catch-all payload GRANTS %s -- the US-law posture extended to advertising (item 4), for state: %s', $ad_signal, $label),
+            isset($rest[$ad_signal]) && 'granted' === $rest[$ad_signal]
+        );
+        bhp_cms_test_assert(
+            $failures,
+            sprintf('EEA payload still DENIES %s -- the extension did not reach Europe, for state: %s', $ad_signal, $label),
+            isset($eea[$ad_signal]) && 'denied' === $eea[$ad_signal]
         );
     }
 }
@@ -213,8 +229,11 @@ foreach (BHP_Consent::SIGNALS as $signal) {
     bhp_cms_test_assert($failures, sprintf('EEA default for %s is denied (posture unchanged from 1.19.301)', $signal), 'denied' === BHP_Consent::eea_default_signals()[$signal]);
 }
 bhp_cms_test_assert($failures, 'Catch-all default grants analytics_storage', 'granted' === BHP_Consent::measured_default_signals()['analytics_storage']);
+/* ⭐ 1.19.312. Superseded, quoted rather than deleted:
+ *   > sprintf('Catch-all default leaves %s denied', $ad_signal),
+ *   >     'denied' === BHP_Consent::measured_default_signals()[$ad_signal] */
 foreach (['ad_storage', 'ad_user_data', 'ad_personalization'] as $ad_signal) {
-    bhp_cms_test_assert($failures, sprintf('Catch-all default leaves %s denied', $ad_signal), 'denied' === BHP_Consent::measured_default_signals()[$ad_signal]);
+    bhp_cms_test_assert($failures, sprintf('Catch-all default GRANTS %s (item 4 — the extension to advertising)', $ad_signal), 'granted' === BHP_Consent::measured_default_signals()[$ad_signal]);
 }
 bhp_cms_test_assert($failures, 'BOTH Consent Mode defaults carry wait_for_update:500 so the client-side update has a window to arrive', 2 === substr_count($defaults, '"wait_for_update":500'));
 bhp_cms_test_assert($failures, 'default_signals() still covers exactly the four Consent Mode v2 signals plus wait_for_update, nothing else', 5 === count(BHP_Consent::default_signals()));

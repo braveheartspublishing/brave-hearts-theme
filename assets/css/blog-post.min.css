@@ -1,5 +1,5 @@
 /*! Built from blog-post.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 8036c7df7921860996f7eefb28566ab5
+    source-md5: e66aa34a7ed29ed33559ff836b36cb5b
     Comments stripped for transfer size; the source file is canonical. */
 body:not(.home) article.single-post.section {
   padding-block-start: clamp(0.3rem, 1.6vw, 2rem);
@@ -90,8 +90,40 @@ body:not(.home) article.single-post.section {
   text-transform: uppercase;
 }
 
+
+.post-header--field-note {
+  
+  --bhp-editorial-inset: clamp(2rem, 5vw, 4rem);
+}
+
 .post-header--field-note .post-header__image {
+  --bhp-featured-max-h: 400px;
+
+  display: block;
+  width: calc(
+    min(100% - (2 * var(--gutter)), var(--container-content))
+    - (2 * var(--bhp-editorial-inset))
+  );
+  max-width: 100%;
   margin-top: clamp(1.25rem, 4vw, 2rem);
+  margin-inline: auto;
+
+  max-height: var(--bhp-featured-max-h);
+  object-fit: cover;
+  object-position: center;
+}
+
+
+@media (max-width: 640px) {
+  .post-header--field-note {
+    --bhp-editorial-inset: 1.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .post-header--field-note .post-header__image {
+    --bhp-featured-max-h: clamp(160px, 48vw, 240px);
+  }
 }
 
 
@@ -278,3 +310,128 @@ article.single-post { position: relative; }
 .bhp-post-capture * { min-width: 0; }
 .bhp-book-rail,
 .bhp-post-capture { max-width: 100%; }
+
+
+.bhp-capture-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-block: clamp(1.75rem, 5vw, 2.5rem);
+  padding-block: clamp(0.9rem, 3vw, 1.15rem);
+  border-block: 1px solid var(--expedition-border);
+  max-width: 100%;
+}
+.bhp-capture-band * { min-width: 0; }
+
+.bhp-capture-band__line {
+  
+  flex: 0 1 13rem;
+  color: var(--expedition-navy);
+  font-family: var(--font-display);
+  font-size: clamp(0.98rem, 0.94rem + 0.4vw, 1.14rem);
+  line-height: 1.3;
+}
+
+
+.bhp-capture-band .acquisition-form {
+  flex: 1 1 22rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+.bhp-capture-band .acquisition-form__field {
+  flex: 1 1 9rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.bhp-capture-band .acquisition-form__field > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.bhp-capture-band .acquisition-form__field input[type='email'] {
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px !important;   
+}
+.bhp-capture-band .acquisition-form__submit {
+  flex: 0 1 auto;
+  min-height: 48px;
+  padding-inline: 1rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.bhp-capture-band .acquisition-form__notes {
+  flex: 1 0 100%;
+  margin: 0;
+}
+.bhp-capture-band .acquisition-form__privacy {
+  margin: 0;
+  color: var(--expedition-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  
+  .bhp-capture-band { gap: 0.55rem; }
+  .bhp-capture-band__line { flex: 1 0 100%; }
+}
+@media (max-width: 420px) {
+  
+  .bhp-capture-band .acquisition-form__submit { flex: 1 0 100%; }
+}
+
+
+.single-post .post-content {
+  
+  --bhp-inbody-max-h: clamp(200px, 45vh, 460px);
+}
+
+
+.single-post .post-content :is(img, picture, video, svg) {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--bhp-inbody-max-h);
+  object-fit: scale-down;
+  object-position: center;
+  margin-inline: auto;
+}
+
+
+.single-post .post-content :is(figure, .wp-block-image) {
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+.single-post .post-content :is(figure, .wp-block-image) > figcaption {
+  text-align: center;
+}
+
+
+.single-post .post-content .bhp-book-rail :is(img, picture, video, svg, figure),
+.single-post .post-content .bhp-post-capture :is(img, picture, video, svg, figure),
+.single-post .post-content .bhp-capture-band :is(img, picture, video, svg, figure) {
+  max-width: 100%;
+  max-height: none;
+  object-fit: fill;
+  margin-inline: 0;
+}
+
+
+.single-post .post-content .bhp-book-rail :is(img, picture, svg) {
+  width: 100%;
+}

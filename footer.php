@@ -180,11 +180,118 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
        *    conversions after the page's own closing CTA.
        */
       ?>
+      <?php
+      /*
+       * ═══════════════════════════════════════════════════════════════════
+       * ⭐⭐ 1.19.314 (2026-08-28, `CYCLE168-LD-RETAILER-BATCH`) — A FIFTH
+       *     LINK: "Booksellers & Retailers". THE ONLY WAY A HUMAN CAN REACH
+       *     `/retailers-wholesale-guide/` FROM ANYWHERE ON THIS SITE.
+       * ═══════════════════════════════════════════════════════════════════
+       *
+       * ⛔⛔ THE DEFECT IT CLOSES, MEASURED RATHER THAN ASSERTED. Defect D3 of
+       *     the retailer funnel review (`ANDREW-REVIEW/2026-08-28/RETAILER-FUNNEL-AND-OUTREACH.md`, 2026-08-28),
+       *     production DOM read 2026-08-28: every anchor in every `header`,
+       *     `footer` and `nav` element site-wide, filtered for
+       *     retail/wholesale/bookseller/trade -> **EMPTY**. Re-measured on
+       *     staging 1.19.313 by this desk the same day, same result:
+       *     `footerRetail: []`. The page is HTTP 200, indexable, canonical
+       *     and present in `page-sitemap.xml`, and no visitor could navigate
+       *     to it. ⭐ Andrew's own instruction, item 360: "I want the
+       *     bookseller page finished and ACTIVATED." That review's judgement, and
+       *     it is the right one: "'Activated' is not true until this ships."
+       *
+       * ═══════════════════════════════════════════════════════════════════
+       * ⚠️⚠️ AND IT IS IN TENSION WITH HIS OWN 2026-08-19 PRUNE. SAID PLAINLY.
+       * ═══════════════════════════════════════════════════════════════════
+       *
+       * 1.19.269 cut this footer from ~25 links to four on his ruling:
+       * "shop / kit / contact / policies (+ legally required bits)". A fifth
+       * link is one more than that list contains, and pretending otherwise
+       * would be dishonest bookkeeping of his own instruction.
+       *
+       * ⭐ WHY IT IS ADDED ANYWAY, AND WHY THIS IS NOT AN AGENT OVERRULING
+       *   THE FOUNDER: the two rulings are nine days apart and the later one
+       *   is specific. The prune removed links to pages that ALREADY had
+       *   other routes; this page has NONE. Item 360 asks for the page to be
+       *   activated and item 366 has him inspecting it, so he expects it to
+       *   be reachable. ⛔ IF HE WANTS THE FOUR-LINK FOOTER BACK EXACTLY, THIS
+       *   ONE `<li>` IS THE WHOLE REVERSAL and the release report says so.
+       *
+       * ⛔ WHAT WAS **NOT** DONE, and why, because a later reader will
+       *    otherwise assume it was forgotten: NO PRIMARY-NAV ITEM WAS ADDED.
+       *    The header nav is `wp_nav_menu( theme_location => 'primary' )`,
+       *    i.e. a DATABASE menu, not theme code — verified on staging
+       *    2026-08-28: menu 198 "Primary", SIX flat items (Home, Blog,
+       *    About, Books, Contact, Teacher's Guide), no sub-levels and no
+       *    audience-page section for a trade link to join. The dispatch said
+       *    to use the existing pattern and not invent a menu section; there
+       *    is no existing pattern to use. Adding a seventh top-level item to
+       *    the CONSUMER navigation is an editorial decision about the main
+       *    nav, it is a `wp menu item add` on each environment rather than a
+       *    theme change, and it is Andrew's. The exact command is in the
+       *    deploy packet as an optional step, unrun.
+       *
+       * ⭐ THE LABEL is "Booksellers & Retailers", which is what the page's
+       *    own template name calls that audience. ⛔ NOT "Trade" (jargon a
+       *    parent scanning a footer would not decode) and NOT "Wholesale"
+       *    (which a parent might read as a discount offer to them).
+       */
+      ?>
       <p class="footer-col-title"><?php esc_html_e('Shop', 'brave-hearts'); ?></p>
       <ul>
         <li><a href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('The Books', 'brave-hearts'); ?></a></li>
         <li><a href="<?php echo esc_url(home_url('/complete-collection/')); ?>"><?php esc_html_e('The Complete Collection', 'brave-hearts'); ?></a></li>
         <li><a href="<?php echo esc_url(home_url('/reluctant-reader-adventure-kit/')); ?>"><?php esc_html_e('Free Reluctant Reader Kit', 'brave-hearts'); ?></a></li>
+        <li><a href="<?php echo esc_url(home_url('/retailers-wholesale-guide/')); ?>"><?php esc_html_e('Booksellers & Retailers', 'brave-hearts'); ?></a></li>
+        <?php
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.337 (2026-08-30, `CYCLE170-LD-MICRO`) — ABOUT LANDS HERE.
+         *     CARRIER ITEM 547, THE SECOND HALF OF THE SAME RULING.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐⭐ THE FOUNDER'S WORDS, verbatim, 2026-08-30, carrier item 547:
+         *    "the nav bar looks bad - lets remove the about and put read
+         *     alouds stacked there - also this needs to always be uniform the
+         *     font the style etc"
+         *    ⛔ RELAYED through `chief-of-staff`; read first-hand at the carrier
+         *      before this edit. NOT witnessed by this desk.
+         *
+         * ⛔⛔ THIS `<li>` IS WHY `/about/` DOES NOT BECOME AN ORPHAN. The
+         *     other half of item 547 removes About from the primary nav
+         *     (`bhp_primary_nav_about_out_readalouds_in()` in functions.php).
+         *     Removing it from the nav WITHOUT adding it here would leave the
+         *     page reachable only from the sitemap and from in-body links —
+         *     which is exactly the D3 defect the "Booksellers & Retailers"
+         *     line above this one was added to close in 1.19.314. ⭐ Not
+         *     repeating a defect the file directly above records is the whole
+         *     reason both halves ship in one release.
+         *
+         * ⛔ A DIRECT `<li>`, NOT THE `footer` MENU LOCATION, AND THE RULING
+         *    SAYS SO. Gandalf's brief: *"direct footer.php list — the footer
+         *    menu location is dead, bypass it."* ⭐ That is CORRECT and is
+         *    corroborated by this file's own record: 1.19.269 removed the
+         *    `wp_nav_menu(['theme_location' => 'footer'])` call (the preserved
+         *    block a few lines below), so the location is still REGISTERED and
+         *    is no longer RENDERED. A link added to that menu in wp-admin
+         *    appears nowhere. Adding About there would have looked done and
+         *    shipped nothing.
+         *
+         * ⚠️ AND THE SAME TENSION THE RETAILER LINE DECLARED, DECLARED AGAIN
+         *    RATHER THAN QUIETLY INHERITED: the 2026-08-19 prune set this
+         *    footer to "shop / kit / contact / policies". This is now a SIXTH
+         *    link. ⭐ It is added because the LATER and more specific ruling
+         *    (item 547, eleven days on) requires About to have a route, and
+         *    naming the footer column is the founder's own chosen route.
+         *    ⛔ IF HE WANTS THE FOUR-LINK FOOTER BACK EXACTLY, THIS `<li>` AND
+         *    THE RETAILER `<li>` ARE THE WHOLE REVERSAL.
+         *
+         * ⛔ THE LABEL IS "About", which is the page's own title and the label
+         *    it carried in the nav for its whole life. No new wording is
+         *    invented for a link that is only changing where it lives.
+         */
+        ?>
+        <li><a href="<?php echo esc_url(home_url('/about/')); ?>"><?php esc_html_e('About', 'brave-hearts'); ?></a></li>
         <li><a href="<?php echo esc_url(home_url('/contact/')); ?>"><?php esc_html_e('Contact', 'brave-hearts'); ?></a></li>
       </ul>
       <?php
@@ -305,6 +412,46 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
       <?php endif; ?>
       &nbsp;·&nbsp; <a class="footer-bottom__link" href="<?php echo esc_url($terms_url); ?>"><?php esc_html_e('Terms', 'brave-hearts'); ?></a>
       &nbsp;·&nbsp; <a class="footer-bottom__link" href="<?php echo esc_url(home_url('/contact/')); ?>"><?php esc_html_e('Contact', 'brave-hearts'); ?></a>
+      <?php
+      /*
+       * ⭐⭐ 1.19.309 (2026-08-27, `CYCLE167-LD-CONSENT-BANNER-GEO`) — THE
+       *     PERSISTENT "Privacy Choices" LINK. Founder report, carrier item 332:
+       *     "The consent bar is still firing on new browsers."
+       *
+       * From 1.19.309 the WPConsent bar is shown to EEA/UK visitors ONLY (the
+       * gate lives in `inc/consent-banner-compact.php`; read its docblock for
+       * the signal, the fail-safe direction and the honest error rates). A US
+       * visitor therefore never sees a bar — so WITHOUT THIS LINK THEY WOULD
+       * HAVE NO ROUTE TO THE PREFERENCES UI AT ALL, and the opt-out would be
+       * a claim rather than a control. This link IS the opt-out for everyone
+       * outside the EEA, which is why it is site-wide and permanent rather
+       * than conditional.
+       *
+       * ⭐ `wpconsent-open-preferences` IS THE PLUGIN'S OWN TRIGGER CLASS, not
+       *    a theme invention: WPConsent binds a delegated document click
+       *    handler to it and calls `showPreferences()` (build/frontend.js;
+       *    the same class its own `[wpconsent_preferences_button]` shortcode
+       *    emits). VERIFIED LIVE on staging against WPConsent Free 1.1.7,
+       *    2026-08-27: a light-DOM element carrying this class opened the
+       *    modal (`display: flex`) WITH the banner gate off.
+       *
+       * ⭐ THE href IS A REAL FALLBACK, NOT A `#`. The plugin's handler calls
+       *    preventDefault(), so JS wins whenever it runs; if it never runs the
+       *    visitor lands on the privacy policy instead of a dead anchor.
+       *
+       * ⛔ NO NEW CSS. It carries `footer-bottom__link`, the exact class its
+       *    sibling policy links use, so it inherits their quiet styling and
+       *    adds not one declaration to style.css.
+       *
+       * ⛔ RENDERED FOR EVERY VISITOR, IN EVERY REGION, DELIBERATELY. Making
+       *    it conditional would vary the HTML per visitor, and SiteGround's
+       *    page cache varies only on Accept-Encoding — that is
+       *    `CYCLE143-GIM-51`, and it is not being re-created for a footer
+       *    link. EEA visitors simply gain a way back into their choices.
+       */
+      if (function_exists('bhp_consent_banner_compact_active') && bhp_consent_banner_compact_active()): ?>
+        &nbsp;·&nbsp; <a class="footer-bottom__link wpconsent-open-preferences" href="<?php echo esc_url($privacy_url); ?>"><?php esc_html_e('Privacy Choices', 'brave-hearts'); ?></a>
+      <?php endif; ?>
     </p>
     <p class="footer-entry-close"><?php esc_html_e('End of entry · Close the journal', 'brave-hearts'); ?></p>
   </div>

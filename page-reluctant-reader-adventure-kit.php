@@ -130,7 +130,15 @@ $faqs = [
     [__('What’s included in the Complete Collection?', 'brave-hearts'), __('All three adventures - The Mariana Trench, Mount Everest, and The Amazon - in one purchase and one shipment.', 'brave-hearts')],
     [__('Paperback or hardcover?', 'brave-hearts'), __('Both include the same three complete stories. Paperback is lightweight and easy for small hands; hardcover is a durable keepsake edition. Your choice.', 'brave-hearts')],
     [__('How does print-on-demand shipping work?', 'brave-hearts'), __('Books are printed and shipped with tracking, and the complete collection ships free. You’ll receive one shipment with all three books.', 'brave-hearts')],
-    [__('What comes with the free sample?', 'brave-hearts'), __('You’ll get Chapter 7 from The Mariana Trench, a matching printable explorer activity, and a few simple tips for reading it together.', 'brave-hearts')],
+    /*
+     * ⭐ 1.19.308 — this answer now names the Kit, because it is the FAQ entry
+     *    a visitor reads when they want to know exactly what lands in their
+     *    inbox. Was: "You’ll get Chapter 7 from The Mariana Trench, a matching
+     *    printable explorer activity, and a few simple tips for reading it
+     *    together." ⛔ The contents are the live PDF's real contents and the
+     *    count "three" traces to the 1.19.296 lane's read of all seven pages.
+     */
+    [__('What comes with the free chapter?', 'brave-hearts'), __('The chapter arrives inside my free Reluctant Reader Adventure Kit: Chapter 7 from The Mariana Trench in full, a matching printable explorer activity, and three ways to make it feel like an adventure.', 'brave-hearts')],
     [__('How often will I receive emails?', 'brave-hearts'), __('After the free chapter, you’ll get occasional Adventure Club updates and reading resources for parents - never spam.', 'brave-hearts')],
     [__('Can I unsubscribe?', 'brave-hearts'), __('Anytime, with one click at the bottom of any email. Signing up for the free sample never requires a purchase.', 'brave-hearts')],
 ];
@@ -225,29 +233,153 @@ if (function_exists('bhp_get_amazon_review_registry')) {
 <section class="parent-landing-hero">
   <div class="parent-landing-hero__bg" aria-hidden="true"></div>
   <div class="parent-landing__inner parent-landing-hero__grid">
-    <div>
+    <?php /* ⭐ 1.19.308 — the copy column gains a CLASS. It was a bare <div>,
+             which was fine while the hero had one column and every rule could
+             target the grid itself. With the photograph beside it the column
+             needs to be addressable, and `> div:first-child` would have been a
+             selector that breaks the first time anybody adds a sibling. */ ?>
+    <div class="parent-landing-hero__copy">
       <span class="parent-landing-eyebrow parent-landing-hero__badge"><?php esc_html_e('For parents of readers ages 6–9', 'brave-hearts'); ?></span>
-      <h1><?php esc_html_e('Help your child see reading as an adventure.', 'brave-hearts'); ?></h1>
-      <p class="parent-landing__lead"><?php esc_html_e('Short chapters, illustrated discoveries, and real-world adventures - designed to give a young reader a reason to keep turning the page.', 'brave-hearts'); ?></p>
+      <?php
+      /*
+       * ⭐⭐ 1.19.308 (2026-08-27, `CYCLE167-LD-KIT-PAGE-REFRESH`) — THE OFFER
+       *     ON THIS PAGE BECOMES THE FOUNDER'S OWN, AND THIS WAS THE LAST
+       *     SURFACE STILL DESCRIBING IT THE OLD WAY.
+       *
+       * ⭐ Andrew Signore, 2026-08-27, VERBATIM (carrier item 290):
+       *
+       *      "FREE Chapter for Reluctant Readers - I'll send you the chapter
+       *       now, just add your email - Something like that"
+       *
+       * ⛔ THE SUPERSEDED COPY, PRESERVED HERE RATHER THAN DELETED, because a
+       *    reader who meets it in a screenshot, an ad account or an older
+       *    branch needs to know it moved rather than re-deriving it:
+       *      H1   was "Help your child see reading as an adventure."
+       *      lead was "Short chapters, illustrated discoveries, and real-world
+       *               adventures - designed to give a young reader a reason to
+       *               keep turning the page."
+       *    Both were fine sentences. Neither was the offer, and twelve other
+       *    capture surfaces already say the offer in the founder's words.
+       *
+       * ⛔ WHY THE URL DID NOT MOVE WITH THE COPY. `CYCLE167-LD-CAPTURE-COPY-
+       *    APPLY` deliberately left this page alone because renaming the offer
+       *    raised a URL-identity question — /reluctant-reader-adventure-kit/
+       *    names the KIT, and the offer is now the CHAPTER. The founder settled
+       *    it at carrier item 330 by choosing this page as the paid-ad
+       *    destination: the URL STAYS. It is the page his August signups
+       *    actually converted on, it is wired to the verified-healthy Parent
+       *    Acquisition Funnel, and changing a converting URL to match a
+       *    headline would trade real attribution for tidiness.
+       *
+       * ⛔ THE KIT IS STILL WHAT ARRIVES, AND THAT IS WHY THE LEAD SENTENCE
+       *    CARRIES THE BRIDGE. The visitor is promised the chapter and receives
+       *    the chapter INSIDE the Kit. That is over-delivery, and it is honest
+       *    only because every surface that says what arrives names both and the
+       *    relationship between them (founder item 290 condition (b)).
+       */
+      ?>
+      <h1 id="parent-landing-hero-title"><?php esc_html_e('FREE Chapter for Reluctant Readers', 'brave-hearts'); ?></h1>
+      <p class="parent-landing__lead"><?php esc_html_e("I'll send you the chapter now, just add your email. It arrives inside my free Reluctant Reader Adventure Kit, along with a printable activity and tips for reading it with a 6 to 9 year old.", 'brave-hearts'); ?></p>
+      <?php
+      /*
+       * ⭐⭐ 1.19.308 — THE FORM ITSELF IS IN THE HERO NOW, NOT A BUTTON THAT
+       *     OPENS ONE. This page is the destination of a paid traffic ad
+       *     (founder carrier item 330: the $0.25-CPC Meta ad, repointed at
+       *     email capture), and a paid landing's single job is the field the
+       *     visitor types in. A click that costs money should not have to buy
+       *     a second click before it can convert.
+       *
+       * ⛔ THE THREE OTHER CAPTURE PATHS ON THIS PAGE ARE ALL KEPT. Nothing is
+       *    removed, because each does a job this one does not:
+       *      - the inline #free panel is the no-JS fallback, the target of
+       *        every `href="#free"`, and what keeps the offer copy in the
+       *        indexable page body;
+       *      - the CTA modal is what every non-hero CTA still opens;
+       *      - the sticky bar is what a visitor deep in the page reaches for.
+       *
+       * ⛔⛔ THE PLUMBING DOES NOT MOVE, AND THIS IS THE LINE TO READ TWICE.
+       *     `lead_magnet`, `audience_type` and `success_redirect_key` are the
+       *     SAME VALUES the inline panel and the modal already pass, so this
+       *     form joins the existing Parent Acquisition Funnel rather than
+       *     forking one. `bhp_mailchimp_signup_tags` branches on
+       *     `$context === 'parent_popup'` and on NOTHING ELSE for this magnet,
+       *     so `parent_landing_hero` resolves to the identical trio the panel
+       *     produces — ["Reluctant Reader Adventure Kit", "Audience: Parent/
+       *     Grandparent", "Source: Parent Landing Page"]. That is the tag his
+       *     August paid signups already carry, and splitting it would split a
+       *     live segment in his audience silently.
+       * ⭐ PROVEN BY EXECUTING THE FILTER CHAIN in
+       *    `tests/test-cycle167-kit-page.php` §3, not by reading it. The
+       *    context exists for ANALYTICS PLACEMENT ONLY; it is not a tag and it
+       *    never reaches Mailchimp.
+       */
+      ?>
+      <div class="parent-landing-hero__capture">
+        <?php if ($download['ready']): ?>
+          <?php get_template_part('template-parts/acquisition/signup-form', null, [
+              'id'                   => 'parent-landing-hero-signup',
+              'context'              => 'parent_landing_hero',
+              'audience_type'        => 'parents_families',
+              'lead_magnet'          => 'reluctant_reader_adventure_kit',
+              'source_page'          => $source_page,
+              'success_redirect_key' => 'adventure_kit_thank_you',
+              'require_name'         => true,
+              'name_placeholder'     => __('First name', 'brave-hearts'),
+              'email_placeholder'    => __('Email address', 'brave-hearts'),
+              /*
+               * ⛔ THE WORD "FREE" IS DELIBERATELY ABSENT FROM THE BUTTON, and
+               *    it is the one absence most likely to be "improved" back in
+               *    by somebody editing this file alone. FREE belongs in the
+               *    headline, where it IS the offer; on the control it competes
+               *    with the action the control performs. The button says what
+               *    pressing it does, and it says "chapter" so that it matches
+               *    the headline directly above it.
+               */
+              'submit_label'         => __('Send me the chapter', 'brave-hearts'),
+              'submit_class'         => 'btn-cta-primary',
+              'privacy_text'         => __('No spam. Unsubscribe anytime.', 'brave-hearts'),
+              'class'                => 'parent-landing-hero__form',
+              'aria_labelledby'      => 'parent-landing-hero-title',
+          ]); ?>
+        <?php else: ?>
+          <?php
+          /*
+           * ⛔ FAIL-CLOSED, THE SAME CONTRACT THE #free PANEL HAS KEPT SINCE
+           *    2026-07-14. If the Kit PDF is ever unset under Settings -> Lead
+           *    Magnets there is nothing to send, and a form that collects an
+           *    address it cannot honour is a broken promise, not a capture.
+           */
+          ?>
+          <p class="parent-landing-hero__pending"><?php esc_html_e('The chapter is being prepared. Check back shortly.', 'brave-hearts'); ?></p>
+        <?php endif; ?>
+      </div>
       <?php
       /*
        * ⭐ 1.19.213 (CYCLE150-LD) — ONE CTA, NOT TWO. The secondary
        *    "Explore the collection" outline button is REMOVED, not hidden:
        *    Andrew Signore, relayed by `chief-of-staff` (⛔ not witnessed
        *    here), "it will distract from the main CTA." This is the page his
-       *    example named — the kit funnel's primary CTA stays exactly as it
-       *    is, "Get the free chapter & activity", with its event, source and
-       *    `data-parent-free-cta` scroll hook byte-unchanged.
+       *    example named.
        *
        *    Its `parent_hero_secondary_cta_click` event goes with it. The
        *    collection is still reachable from the mobile fast-purchase band,
        *    the raised Best Value card, the #collection section itself and the
        *    sticky mini-CTA.
+       *
+       * ⛔ 1.19.308 — THE PRIMARY CTA BUTTON IS NOW GONE TOO, and for the
+       *    OPPOSITE reason to the secondary one: not because it distracted,
+       *    but because the form it used to open is now sitting in its place.
+       *    A button whose only job was to reveal a field, printed directly
+       *    above that field, is a step that costs a paid click and buys
+       *    nothing. Its `parent_hero_primary_cta_click` event retires with it;
+       *    the hero form's own `lead_form_*` events replace it and are
+       *    strictly more informative, because they fire on the field rather
+       *    than on the intent to reach it.
+       * ⛔ THE MODAL IS NOT RETIRED. `data-bhp-signup-modal-open` still lives
+       *    on the final CTA and the sticky bar, which are far from the hero
+       *    form and still need it.
        */
       ?>
-      <div class="parent-landing-hero__ctas">
-        <a class="btn btn-primary" href="#free" data-parent-free-cta data-bhp-signup-modal-open="adventure-kit-modal" data-bhp-signup-modal-source="hero" data-bhp-event="parent_hero_primary_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Get the free chapter & activity', 'brave-hearts'); ?></a>
-      </div>
       <?php
       /*
        * ⭐ 1.19.213 — THE COLLECTION CAROUSEL, DIRECTLY UNDER THE PRIMARY CTA.
@@ -256,12 +388,18 @@ if (function_exists('bhp_get_amazon_review_registry')) {
        * ⛔ A MOVE, NOT AN ADDITION — the identical call that used to sit in the
        *    SEE INSIDE section further down is gone. Still exactly one
        *    instance, one DOM id, one lightbox per request.
+       *
+       * ⛔⛔ 1.19.308 — THE CALL ITSELF DID NOT MOVE FILES OR CHANGE ARGUMENTS.
+       *     It moved OUT of the copy column and became its own grid item,
+       *     spanning both columns, because the hero is two columns again at
+       *     desktop (copy + form on the left, the founder photograph on the
+       *     right). Left inside the copy column it would have been squeezed to
+       *     roughly half its width on exactly the screens where a 940px
+       *     carousel earns its space. ⭐ STILL EXACTLY ONE INSTANCE, ONE DOM id
+       *     AND ONE LIGHTBOX — the render-once guard in
+       *     `bhp_cx_render_collection_gallery()` is untouched and this is the
+       *     same single call, twelve lines lower in the same <section>.
        */
-      if (function_exists('bhp_cx_render_collection_gallery')) {
-          echo '<div class="parent-landing-hero__gallery">';
-          bhp_cx_render_collection_gallery();
-          echo '</div>';
-      }
       ?>
       <?php
       /*
@@ -339,6 +477,142 @@ if (function_exists('bhp_get_amazon_review_registry')) {
        */
       ?>
     </div>
+
+    <?php
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.308 — THE FOUNDER'S PHOTOGRAPH, THE GRADIENT AND THE SQUIGGLE.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ Andrew Signore, 2026-08-27, VERBATIM (carrier item 297, his spec for
+     *    the popups, read first-hand at the carrier):
+     *
+     *      "Did we come to a conclusion on adding a picture of me and charlotte
+     *       as a gradient right to left with like a playful squiggle in between
+     *       for the pop ups?"
+     *
+     *    and, earlier the same day (carrier item 284), the direction that
+     *    started it:
+     *
+     *      "OH My Why dont we put my picture with the kids and me with the
+     *       books at the read aloud on the email capture? I see that being done
+     *       on brightly?"
+     *
+     * ⛔ HIS SPEC NAMED THE POPUPS. THIS PAGE IS A CAPTURE SURFACE, NOT A
+     *    POPUP, so the treatment is APPLIED CONSISTENTLY rather than copied
+     *    literally — item 284 is the one that names "the email capture", and
+     *    this is the email capture his paid clicks will land on. The three
+     *    elements he named all survive the move: the real photograph, the
+     *    gradient running RIGHT TO LEFT into the field the copy sits in, and a
+     *    playful squiggle BETWEEN the two.
+     *
+     * ⛔⛔ THE NIECE GUARD BINDS THE ALT TEXT AND IT IS NOT PROSE — it is
+     *     `bhp_niece_canon_violations()`, asserted in
+     *     `tests/test-cycle167-kit-page.php`. Charlotte is Andrew's NIECE and
+     *     he has no children (carrier item 285, his own words). On 2026-08-27
+     *     an inferred "daughter" reached the accessibility layer of a delivered
+     *     PDF — the one layer no visual review meets — and the founder caught
+     *     it himself. A comment cannot stop that. A failing test can.
+     *
+     * ⛔ CONSENT RAIL SATISFIED, AND STATED SO IT IS NOT ASSUMED: this is his
+     *    own photograph of his own family, shipped on his own directive. NO
+     *    school-visit photograph containing another family's child appears
+     *    here or anywhere else without a signed release.
+     *
+     * ⛔ NOT AI. The squiggle is a hand-authored bezier chain, identical in
+     *    construction to the popup's. The photograph is altered only by crop,
+     *    scale and a render-time CSS mask — no fill, no background extension,
+     *    no retouch.
+     *
+     * ⭐ THE ASSETS ARE THE ONES ALREADY SHIPPING. `bhp_get_founder_photo()`
+     *    resolves the same four files the popup uses, reads their intrinsic
+     *    dimensions from disk and appends the theme-version cache-buster that
+     *    1.19.299 proved is the only reason a photograph swap ever reaches a
+     *    returning visitor. Nothing new is added to `assets/images/founder/`.
+     *
+     * ⛔ FAIL-CLOSED. A missing file returns an empty array and the whole
+     *    treatment stands down — the hero renders exactly as it would without
+     *    it, never as a broken box. Same contract as the popup.
+     *
+     * ⛔ THE PHOTOGRAPH IS BELOW THE FORM AT MOBILE, BY CSS ORDER, AND THAT IS
+     *    DELIBERATE. On a paid landing the field comes first; trust confirms a
+     *    decision the visitor is already making. Putting a 5:4 band above the
+     *    headline would push the one element the click paid for under the fold,
+     *    which is the exact defect this release exists to fix.
+     */
+    $bhp_kit_founder_photo = function_exists('bhp_get_founder_photo') ? bhp_get_founder_photo() : [];
+    if (!empty($bhp_kit_founder_photo['portrait_webp'])) :
+    ?>
+    <div class="parent-landing-hero__trust">
+      <?php /* Two orientations, one shown at a time: a vertical squiggle
+               between the two columns at desktop, a horizontal one between the
+               form and the band at mobile. `preserveAspectRatio="none"` lets
+               each stretch to the seam it divides without the path being
+               re-authored. Both inline, so neither costs a request; both
+               `aria-hidden`, because a divider is not content and announcing
+               it would put noise between the headline and the field. */ ?>
+      <div class="parent-landing-hero__seam" aria-hidden="true">
+        <svg class="parent-landing-hero__squiggle parent-landing-hero__squiggle--v" viewBox="0 0 28 400" preserveAspectRatio="none" focusable="false" role="presentation">
+          <path class="parent-landing-hero__squiggle-ghost" d="M15 12 C 24 47, 6 78, 14 113 S 23 161, 12 199 S 4 247, 16 285 S 24 333, 13 369 S 9 389, 15 397" />
+          <path class="parent-landing-hero__squiggle-ink" d="M14 10 C 23 46, 5 76, 13 112 S 22 160, 11 198 S 3 246, 15 284 S 23 332, 12 368 S 8 388, 14 396" />
+        </svg>
+        <svg class="parent-landing-hero__squiggle parent-landing-hero__squiggle--h" viewBox="0 0 400 28" preserveAspectRatio="none" focusable="false" role="presentation">
+          <path class="parent-landing-hero__squiggle-ghost" d="M9 15 C 47 5, 77 25, 113 16 S 161 6, 199 15 S 247 26, 285 14 S 333 4, 369 16 S 389 22, 397 15" />
+          <path class="parent-landing-hero__squiggle-ink" d="M8 14 C 46 4, 76 24, 112 15 S 160 5, 198 14 S 246 25, 284 13 S 332 3, 368 15 S 388 21, 396 14" />
+        </svg>
+      </div>
+      <?php /* `<figure>` with no `<figcaption>`: the accessible name is the
+               image's own alt text, which is the string the niece guard checks.
+               NO TEXT IS RENDERED OVER THIS IMAGE at any viewport — the
+               gradient that blends its edge is painted by a pseudo-element in
+               the stylesheet, not by an overlay carrying copy. */ ?>
+      <figure class="parent-landing-hero__photo">
+        <picture>
+          <source
+            media="(max-width: 900px)"
+            srcset="<?php echo esc_url($bhp_kit_founder_photo['band_webp']); ?>"
+            width="<?php echo (int) $bhp_kit_founder_photo['band_width']; ?>"
+            height="<?php echo (int) $bhp_kit_founder_photo['band_height']; ?>"
+            type="image/webp"
+          >
+          <source
+            media="(max-width: 900px)"
+            srcset="<?php echo esc_url($bhp_kit_founder_photo['band_jpg']); ?>"
+            width="<?php echo (int) $bhp_kit_founder_photo['band_width']; ?>"
+            height="<?php echo (int) $bhp_kit_founder_photo['band_height']; ?>"
+            type="image/jpeg"
+          >
+          <source
+            srcset="<?php echo esc_url($bhp_kit_founder_photo['portrait_webp']); ?>"
+            width="<?php echo (int) $bhp_kit_founder_photo['portrait_width']; ?>"
+            height="<?php echo (int) $bhp_kit_founder_photo['portrait_height']; ?>"
+            type="image/webp"
+          >
+          <img
+            src="<?php echo esc_url($bhp_kit_founder_photo['portrait_jpg']); ?>"
+            width="<?php echo (int) $bhp_kit_founder_photo['portrait_width']; ?>"
+            height="<?php echo (int) $bhp_kit_founder_photo['portrait_height']; ?>"
+            alt="<?php echo esc_attr($bhp_kit_founder_photo['alt']); ?>"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          >
+        </picture>
+      </figure>
+    </div>
+    <?php endif; ?>
+
+    <?php
+    /*
+     * ⭐ THE CAROUSEL, NOW ITS OWN GRID ITEM SPANNING BOTH COLUMNS. See the
+     *    1.19.308 note beside the block it moved from, twelve lines above.
+     */
+    if (function_exists('bhp_cx_render_collection_gallery')) {
+        echo '<div class="parent-landing-hero__gallery">';
+        bhp_cx_render_collection_gallery();
+        echo '</div>';
+    }
+    ?>
   </div>
 </section>
 
@@ -683,12 +957,42 @@ if (function_exists('bhp_get_amazon_review_registry')) {
     <div class="parent-landing-lead">
       <div class="parent-landing-lead__content">
         <span class="parent-landing-eyebrow"><?php esc_html_e('Start free today', 'brave-hearts'); ?></span>
-        <h2><?php esc_html_e('See it work before you buy a thing.', 'brave-hearts'); ?></h2>
-        <p class="parent-landing__lead"><?php echo wp_kses_post(__('Get a free sample of <strong>Chapter 7 from The Mariana Trench</strong> - a real chapter from a full 12-chapter adventure - plus a matching explorer activity to try together.', 'brave-hearts')); ?></p>
+        <?php
+        /*
+         * ⭐⭐ 1.19.308 — THE SAME OFFER, IN THE SAME WORDS, AS THE HERO AND AS
+         *     THE TWELVE OTHER CAPTURE SURFACES.
+         *
+         * ⛔ THE SUPERSEDED COPY, PRESERVED RATHER THAN DELETED:
+         *      eyebrow-adjacent H2 was "See it work before you buy a thing."
+         *      lead was "Get a free sample of <strong>Chapter 7 from The
+         *               Mariana Trench</strong> - a real chapter from a full
+         *               12-chapter adventure - plus a matching explorer
+         *               activity to try together."
+         *    Both are honest and neither is wrong. They are replaced because
+         *    the whole point of the founder's ruling is that a parent who meets
+         *    two of our surfaces must meet ONE offer, not two descriptions of
+         *    one.
+         *
+         * ⛔ THE CHECKLIST NOW STATES THE REAL PDF'S REAL CONTENTS AND NOTHING
+         *    ELSE. Read from the live `Reluctant-Reader-Adventure-Kit-1.pdf` by
+         *    the 1.19.296 lane, all seven pages, and recorded in this repo:
+         *      - one real chapter (Chapter 7, "The Swordfish", from *The
+         *        Mariana Trench*),
+         *      - a printable explorer activity,
+         *      - "Three Ways to Make This Feel Like an Adventure" — THREE tips
+         *        to the PARENT.
+         *    ⚠ THE COUNT "three" TRACES TO THAT LANE'S READ, NOT TO A READ THIS
+         *      PASS PERFORMED. It is sourced, not observed here. ⛔ NOTHING IS
+         *      NAMED THAT THE FILE DOES NOT CONTAIN — no workbook, no
+         *      worksheets, no lesson plan, no audio.
+         */
+        ?>
+        <h2><?php esc_html_e('FREE Chapter for Reluctant Readers', 'brave-hearts'); ?></h2>
+        <p class="parent-landing__lead"><?php esc_html_e("I'll send you the chapter now, just add your email. It arrives inside my free Reluctant Reader Adventure Kit, along with a printable activity and tips for reading it with a 6 to 9 year old.", 'brave-hearts'); ?></p>
         <div class="parent-landing-checklist parent-landing-checklist--compact parent-landing-lead__checklist">
-          <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('A complete sample chapter to read tonight', 'brave-hearts'); ?></span></div>
-          <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('A printable explorer activity that extends the story', 'brave-hearts'); ?></span></div>
-          <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('Simple tips for reading it with a 6–9 year old', 'brave-hearts'); ?></span></div>
+          <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('Chapter 7 from The Mariana Trench, in full', 'brave-hearts'); ?></span></div>
+          <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('A printable explorer activity to go with it', 'brave-hearts'); ?></span></div>
+          <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('Three ways to make it feel like an adventure', 'brave-hearts'); ?></span></div>
         </div>
 
         <?php if ($download['ready']): ?>
@@ -696,11 +1000,20 @@ if (function_exists('bhp_get_amazon_review_registry')) {
               'id'                   => 'adventure-kit-signup',
               'lead_magnet'          => 'reluctant_reader_adventure_kit',
               'audience_type'        => 'parents_families',
-              'title'                => __('Send Me the Free Adventure Kit', 'brave-hearts'),
+              /*
+               * ⛔ THE PANEL'S OLD TITLE AND OLD BUTTON ARE BOTH ON THE CAPTURE-
+               *    COPY SUITE'S RETIRED LIST and are gone from this file
+               *    entirely — not quoted here, because the suite's §5 sweep
+               *    exists precisely to catch them and a quotation is one
+               *    tokenizer change away from becoming a false positive. Read
+               *    them in `tests/test-cycle167-capture-copy.php`'s `$retired`
+               *    array, which is where the record belongs.
+               */
+              'title'                => __('FREE Chapter for Reluctant Readers', 'brave-hearts'),
               /* A6 (2026-08-03): duration claim removed. Was "A free 20-minute
                  reading adventure with a sample chapter, …". */
-              'text'                 => __('A free reading adventure with a sample chapter, an explorer activity, and simple ways to make reading feel fun again.', 'brave-hearts'),
-              'submit_label'         => __('Send me the free chapter & activity', 'brave-hearts'),
+              'text'                 => __("I'll send you the chapter now, just add your email. It arrives inside my free Reluctant Reader Adventure Kit, along with a printable activity and tips for reading it with a 6 to 9 year old.", 'brave-hearts'),
+              'submit_label'         => __('Send me the chapter', 'brave-hearts'),
               'source_page'          => $source_page,
               'success_redirect_key' => 'adventure_kit_thank_you',
               'require_name'         => true,
@@ -709,8 +1022,8 @@ if (function_exists('bhp_get_amazon_review_registry')) {
         <?php else: ?>
           <div class="parent-landing-coming-soon">
             <p class="parent-landing-eyebrow"><?php esc_html_e('Coming soon', 'brave-hearts'); ?></p>
-            <h3><?php esc_html_e('Send Me the Free Adventure Kit', 'brave-hearts'); ?></h3>
-            <p class="parent-landing__lead" style="font-size:15px;"><?php esc_html_e('The Adventure Kit is still being finished. Check back soon to get your free copy by email.', 'brave-hearts'); ?></p>
+            <h3><?php esc_html_e('FREE Chapter for Reluctant Readers', 'brave-hearts'); ?></h3>
+            <p class="parent-landing__lead" style="font-size:15px;"><?php esc_html_e('The chapter is being prepared. Check back soon to get your free copy by email.', 'brave-hearts'); ?></p>
             <span class="btn btn-primary" aria-disabled="true"><?php esc_html_e('Coming Soon', 'brave-hearts'); ?></span>
           </div>
         <?php endif; ?>
@@ -718,7 +1031,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
       <div class="parent-landing-lead__art">
         <div>
           <?php echo $mariana ? bhp_parent_landing_cover($mariana, 'large') : ''; ?>
-          <p class="tag"><?php esc_html_e('Free · Chapter 7 sample', 'brave-hearts'); ?></p>
+          <p class="tag"><?php esc_html_e('Free · Chapter 7', 'brave-hearts'); ?></p>
           <p class="sub"><?php esc_html_e('from The Mariana Trench', 'brave-hearts'); ?></p>
         </div>
       </div>
@@ -766,10 +1079,45 @@ if (function_exists('bhp_get_amazon_review_registry')) {
 <!-- ===================== AUTHOR ===================== -->
 <section class="parent-landing__section">
   <div class="parent-landing__inner parent-landing__inner--narrow">
-    <div class="parent-landing-author">
-      <div class="parent-landing-media parent-landing-media--tall parent-landing-author__photo">
-        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/handoff/founder-and-charlotte.webp'); ?>" alt="<?php esc_attr_e('Andrew, author of Adventures of Charlotte and Henry, with Charlotte', 'brave-hearts'); ?>" width="1400" height="1867" loading="lazy" decoding="async">
-      </div>
+    <?php
+    /*
+     * ⛔⛔ 1.19.308 — THE SECOND FOUNDER PHOTOGRAPH IS REMOVED FROM THIS
+     *     SECTION, AND ONLY FROM THIS SECTION. The markup removed was:
+     *
+     *       <div class="parent-landing-media parent-landing-media--tall
+     *                   parent-landing-author__photo">
+     *         <img src=".../assets/images/handoff/founder-and-charlotte.webp"
+     *              alt="Andrew, author of Adventures of Charlotte and Henry,
+     *                   with Charlotte" width="1400" height="1867" ...>
+     *       </div>
+     *
+     * ⭐ WHY. The hero now carries the founder photograph, which is a DIFFERENT
+     *    and NEWER frame of the same two people (the smiling one he asked for
+     *    at carrier item 301). Two different photographs of Andrew and
+     *    Charlotte on one landing page does not read as two moments; it reads
+     *    as a page that could not decide, and on a page whose single job is one
+     *    email field it is a second thing to look at that sells nothing.
+     *
+     * ⭐ THIS IS A PRECEDENT ON THIS EXACT PAGE, NOT A NEW JUDGEMENT. The
+     *    2026-07-17 correction recorded a few sections below removed the same
+     *    photograph from the FOUNDER CARD for the same reason — one image, one
+     *    place — and switched that section to the centered
+     *    `.parent-landing__header-block` pattern so no empty grid column was
+     *    left behind. This does exactly that, with the same pattern.
+     *
+     * ⛔ THE COPY IS BYTE-UNCHANGED. Not one word of "Written for one real kid
+     *    first." moved. ⛔ NO IMAGE FILE WAS DELETED, RENAMED OR MOVED —
+     *    `assets/images/handoff/founder-and-charlotte.webp` is still shipped
+     *    and still referenced by other templates.
+     *
+     * ⚠ FLAGGED FOR REVIEW, NOT ASSERTED AS SETTLED: this is the one change in
+     *   1.19.308 that is a presentation judgement rather than an instruction
+     *   the founder gave. Restoring it is a two-line revert of this block. If
+     *   Gandalf or Andrew wants the older frame back in this section, put it
+     *   back and nothing else in the release depends on it.
+     */
+    ?>
+    <div class="parent-landing-author parent-landing-author--no-photo">
       <div>
         <span class="parent-landing-eyebrow"><?php esc_html_e('Why these books exist', 'brave-hearts'); ?></span>
         <h2><?php esc_html_e('Written for one real kid first.', 'brave-hearts'); ?></h2>
@@ -838,9 +1186,33 @@ if (function_exists('bhp_get_amazon_review_registry')) {
 <section class="parent-landing__section parent-landing__section--major parent-landing-final">
   <div class="parent-landing__inner parent-landing-final__inner">
     <h2><?php esc_html_e('Tonight’s chapter could be the one that changes how they feel about reading.', 'brave-hearts'); ?></h2>
-    <p><?php esc_html_e('Start with one free chapter tonight - or bring home all three adventures at once.', 'brave-hearts'); ?></p>
+    <?php
+    /*
+     * ⛔⛔ 1.19.308 — THIS LINE WAS A RETIRED OFFER NAME HIDING IN A SENTENCE,
+     *     AND THE SUITE IS WHY IT WAS FOUND. It read "Start with one free
+     *     chapter tonight - or bring home all three adventures at once." The
+     *     first six words are one of the twelve names the magnet teardown
+     *     retired, embedded mid-paragraph where no per-surface headline test
+     *     would ever have looked at it.
+     * ⭐ THE MEANING IS KEPT EXACTLY. Two routes, free first, purchase second.
+     *    Only the phrasing moves off the retired string.
+     */
+    ?>
+    <p><?php esc_html_e('Get the free chapter tonight - or bring home all three adventures at once.', 'brave-hearts'); ?></p>
     <div class="parent-landing-final__ctas">
-      <a class="btn btn-gold" href="#free" data-parent-free-cta data-bhp-signup-modal-open="adventure-kit-modal" data-bhp-signup-modal-source="final_cta" data-bhp-event="parent_final_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Get the free chapter & activity', 'brave-hearts'); ?></a>
+      <?php
+      /*
+       * ⭐ 1.19.308 — the label follows the offer. Was "Get the free chapter &
+       *    activity". ⛔ THIS IS AN ANCHOR THAT OPENS A DIALOG, NOT A SUBMIT
+       *    CONTROL, so the teardown's "FREE never on the button" rule does not
+       *    reach it — that rule is about the control that performs the send,
+       *    where "free" competes with the action. Here "free" is still doing
+       *    the job it does in the headline: naming the offer.
+       * ⛔ THE EVENT NAME, THE SOURCE AND THE MODAL TARGET ARE BYTE-UNCHANGED.
+       *    A copy change must not rename an analytics event.
+       */
+      ?>
+      <a class="btn btn-gold" href="#free" data-parent-free-cta data-bhp-signup-modal-open="adventure-kit-modal" data-bhp-signup-modal-source="final_cta" data-bhp-event="parent_final_cta_click" data-bhp-source="adventure_kit_landing"><?php esc_html_e('Get the free chapter', 'brave-hearts'); ?></a>
       <?php
       /*
        * 2026-08-05 — was `href="#collection"`. The collection section now sits
@@ -864,9 +1236,9 @@ if (function_exists('bhp_get_amazon_review_registry')) {
 <!-- ===================== STICKY MINI-CTA ===================== -->
 <div class="parent-landing-stickybar" data-parent-stickybar>
   <div class="parent-landing-stickybar__row">
-    <span class="parent-landing-stickybar__text"><?php esc_html_e('Free Chapter 7 + explorer activity - no purchase needed.', 'brave-hearts'); ?></span>
+    <span class="parent-landing-stickybar__text"><?php esc_html_e('FREE chapter for reluctant readers - no purchase needed.', 'brave-hearts'); ?></span>
     <div class="parent-landing-stickybar__ctas">
-      <a class="btn btn-gold" href="#free" data-parent-free-cta data-bhp-signup-modal-open="adventure-kit-modal" data-bhp-signup-modal-source="sticky_bar"><?php esc_html_e('Get it free', 'brave-hearts'); ?></a>
+      <a class="btn btn-gold" href="#free" data-parent-free-cta data-bhp-signup-modal-open="adventure-kit-modal" data-bhp-signup-modal-source="sticky_bar"><?php esc_html_e('Get the chapter', 'brave-hearts'); ?></a>
       <?php
       /*
        * 2026-08-05 — the footer-bar "Collection" control Andrew named. Was an
@@ -924,9 +1296,9 @@ if ($download['ready']) {
         'source_page'          => $source_page,
         'success_redirect_key' => 'adventure_kit_thank_you',
         'eyebrow'              => __('Free for parents', 'brave-hearts'),
-        'title'                => __('Send Me the Free Adventure Kit', 'brave-hearts'),
-        'text'                 => __('A free reading adventure with a sample chapter, an explorer activity, and simple ways to make reading feel fun again.', 'brave-hearts'),
-        'submit_label'         => __('Send me the free chapter & activity', 'brave-hearts'),
+        'title'                => __('FREE Chapter for Reluctant Readers', 'brave-hearts'),
+        'text'                 => __("I'll send you the chapter now, just add your email. It arrives inside my free Reluctant Reader Adventure Kit, along with a printable activity and tips for reading it with a 6 to 9 year old.", 'brave-hearts'),
+        'submit_label'         => __('Send me the chapter', 'brave-hearts'),
         'privacy_text'         => __('Adventure Club updates and resource news. Unsubscribe anytime.', 'brave-hearts'),
         'trust_text'           => __('Free printable PDF. No purchase required.', 'brave-hearts'),
     ]);

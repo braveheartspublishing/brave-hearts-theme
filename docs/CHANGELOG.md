@@ -2,6 +2,54 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## 2026-08-28 (newest) — STAGING ONLY: theme 1.19.314 + bundle plugin 1.8.76 — the retailer ordering route, and school-visit backorders
+
+⛔ **STAGING ONLY. NO PRODUCTION WRITE OF ANY KIND.** Production was read **read-only** and is
+**theme `1.19.312` / plugin `1.8.74`**, verified live with `wp theme list --status=active` and
+`wp plugin list`. Staging is **1.19.314 / 1.8.76**, verified the same way after the install.
+
+Combined production candidate, both components in one plan:
+`Business OS/ANDREW-REVIEW/2026-08-28/PROD-CANDIDATE-CYCLE168-theme-1.19.314-plugin-1.8.76/`.
+It **supersedes** the standalone 1.19.313 checkout-opt-in candidate, whose two files ride inside it.
+
+**Theme `1.19.314`** (founder items 363, 364, 365, 366 + the retailer funnel review's D1/D2/D3):
+the retailer hero's primary CTA becomes an **ordering route to ipage** with an **ungated sell-sheet PDF**
+beside it, both above the fold at 1440x900 and at 375x812 (measured, `innerWidth` asserted);
+hero spacing tightened through a **scoped** `--tight` modifier that touches no other audience page;
+the **sixth ISBN** `9798996810833` opens and every "still being set up" line is removed;
+`Imprint: Brave Hearts Publishing LLC` is printed beside the ordering route;
+`ipage` becomes a real link; and a sitewide footer link finally makes the page reachable by a human.
+Files: `page-audience-retailers.php` · `footer.php` · `inc/retailer-trade-terms.php` ·
+`assets/css/audience-landing.css` (+ rebuilt `.min`) · `assets/downloads/bhp-retailer-sell-sheet.pdf` (new).
+
+**Bundle plugin `1.8.76`** (founder item 363, *"I think we allow backorders"*): "the shelf is empty" and
+"the parent may not buy" become two different facts. `bhp_visit_shelf_title_is_exhausted()` is the physical
+shelf and governs the counter; `bhp_visit_shelf_title_is_closed()` keeps its name and every caller, and now
+relaxes when backorders are allowed. **Default ON**, one WP-CLI line to reverse, no deploy.
+⛔ **Not a WooCommerce backorder setting**: no `_stock`, `_stock_status`, `_manage_stock` or `_backorders`
+value is read-modified or written on any environment. New file `includes/school-visit-backorder.php`.
+
+**Tests.** Every suite covering the changed code is green on staging: retailer funnel **184/0**,
+shelf-stock gate **358/0**, stock suppression **112/0**, archive surface **57/0**, signup modal ALL PASS,
+CRO-iterate5 ALL PASS, style minification ALL PASS. ⚠ Test sections were **updated deliberately, never
+deleted** — the sold-out refusal seams now run with backorders explicitly OFF (a real supported mode) and
+new sections exercise the shipped default.
+
+### ⚠ Three findings recorded rather than absorbed
+
+1. **`docs/security-investigation-nlo-finance-redirect-2026-07-09.md` reached four staging builds.** It is
+   `export-ignore` in `.gitattributes` because shipping it once triggered SiteGround malware quarantine
+   (2026-08-04). Working-tree ZIP builds **do not honour `export-ignore`**; only `git archive` does, and it
+   cannot be used while the tree carries uncommitted lane work. Excluded from the artefact and removed from
+   staging. **Any future working-tree build must exclude it by hand.**
+2. **Internal agent aliases are in 20+ shipped files** on a **public** GitHub repo (standing rule §14
+   constraint 5). `test-cro-iterate5.php` §7.3 only checks three of them. This lane removed every alias it
+   introduced and left the pre-existing ones for a lane of their own.
+3. **`assets/covers/` — 439 MB, untracked, not on either environment.** A working-tree ZIP build picks it
+   up by default; the first build of this release was **478 MB** before it was excluded.
+
+---
+
 ## 2026-08-03 (newest) — STAGING ONLY: theme 1.19.165 — native review system, review-pass fixes
 
 ⛔ **STAGING ONLY. NOT DEPLOYED TO PRODUCTION.** Production was re-verified read-only after this work and is **theme `1.19.161` / plugin `1.8.19`** — see the FOURTH CORRECTION block at the top of `PROJECT_STATE.md`. **Staging is at least four theme releases ahead of production and they would ship as one package.**

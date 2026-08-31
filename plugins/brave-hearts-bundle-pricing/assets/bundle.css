@@ -266,3 +266,39 @@
 	display: block;
 	margin: 0.5rem 0 0;
 }
+
+/* =========================================================================
+ * ⭐⭐ 1.8.76 (2026-08-28, `CYCLE168-LD-RETAILER-BATCH-AND-BACKORDERS`) —
+ *     THE BACKORDER LINE. Founder item 363: "I think we allow backorders".
+ *
+ * ⭐ IT IS STYLED AS A QUIET FACT, DELIBERATELY NEUTRAL BETWEEN THE OTHER TWO
+ *    STATES. The counter is gold (a real scarcity signal) and the sold-out
+ *    badge is a refusal; this is neither. A parent reading it is being told
+ *    they CAN order, so it must not borrow the alarm colouring of the state it
+ *    replaces, and it must not borrow the urgency colouring of the count it
+ *    replaces either.
+ *
+ * ⛔ NO ANIMATION, NO BADGE PLATE, NO ICON, NO EXCLAMATION. The standing
+ *    constraint on this whole subsystem, in the founder's own words carried in
+ *    `school-visit-shelf-stock.php`: "never styled as urgency theater beyond
+ *    the plain fact."
+ *
+ * ⛔ ADDITIVE ONLY. No selector above is modified or overridden, and an
+ *    ordinary shopper never receives this markup at all, so this selector
+ *    cannot match on a normal page.
+ *
+ * ⚠️ DELIBERATELY NOT `white-space: nowrap`, for the same reason as the two
+ *    selectors above it: allow the line to wrap rather than bet on an
+ *    unmeasured narrow-phone width.
+ * ====================================================================== */
+
+.bhp-bundle-backorder-label {
+	display: inline-block;
+	margin-left: 0.5rem;
+	color: #4a4a4a;
+	font-size: 0.95rem;
+	font-weight: 600;
+	font-style: normal;
+	vertical-align: baseline;
+	max-width: 100%;
+}

@@ -83,7 +83,20 @@ while (have_posts()): the_post(); ?>
       <h1 class="post-header__title"><?php the_title(); ?></h1>
     <?php endif; ?>
 
-    <?php if (has_post_thumbnail()): ?>
+    <?php
+    /*
+     * 1.19.323 — the masthead featured image is now behind
+     * bhp_blog_featured_image_on_single(), default TRUE. With no subscriber
+     * this condition is exactly `has_post_thumbnail()`, which is what it was
+     * at 1.19.322. The helper is null-guarded so a partial deploy that lands
+     * single.php without inc/blog-post-template.php degrades to the old
+     * behaviour rather than fatalling.
+     */
+    $bhp_show_featured = function_exists('bhp_blog_featured_image_on_single')
+        ? bhp_blog_featured_image_on_single(get_post())
+        : true;
+    ?>
+    <?php if ($bhp_show_featured && has_post_thumbnail()): ?>
       <?php the_post_thumbnail('large', ['class' => 'post-header__image']); ?>
     <?php endif; ?>
   </header>

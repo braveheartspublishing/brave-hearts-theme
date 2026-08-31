@@ -122,18 +122,47 @@ if (2 === count($m[1])) {
     // -- the measured one ----------------------------------------------
     bhp_geo_assert($failures, 'The catch-all payload carries NO region key, so it applies everywhere the EEA list does not', !isset($rest['region']));
     bhp_geo_assert($failures, 'Catch-all payload: analytics_storage is GRANTED (this is the whole release)', isset($rest['analytics_storage']) && 'granted' === $rest['analytics_storage']);
+
+    /* ⭐⭐ 1.19.312 (`CYCLE167-LD-CONSENT-PIXEL-EXT`) — THE THREE ASSERTIONS
+     * REPLACED HERE ARE THE ONES THE FOUNDER'S RULING REVERSES, AND THEY ARE
+     * QUOTED RATHER THAN DELETED so that a reader diffing this suite can see
+     * a deliberate reversal instead of guessing at a weakened test:
+     *
+     *   > foreach (['ad_storage', 'ad_user_data', 'ad_personalization'] as $ad_signal) {
+     *   >     bhp_geo_assert($failures, sprintf('Catch-all payload: %s is DENIED
+     *   >         -- ad signals were not broadened anywhere by this release',
+     *   >         $ad_signal), isset($rest[$ad_signal]) && 'denied' === $rest[$ad_signal]);
+     *   > }
+     *   > bhp_geo_assert($failures, 'NO payload grants any ad_* signal in any
+     *   >     region -- asserted across both, so a future edit to either is caught', ...);
+     *
+     * Authority: Andrew Signore, carrier `^349. FOUNDER` item 4 — "I guess we
+     * extend it", after Gandalf clarified the extension reaches the
+     * ad/marketing pixel. ⛔ RELAYED, not witnessed by this suite's author.
+     *
+     * ⭐ THE REPLACEMENT IS NOT WEAKER, AND THAT IS THE POINT: the old
+     * cross-payload invariant is inverted rather than dropped. It now asserts
+     * that the EEA payload grants NOTHING while the catch-all grants
+     * EVERYTHING — so a future edit that leaks an ad signal into the European
+     * default still fails here, which is the failure that actually matters. */
     foreach (['ad_storage', 'ad_user_data', 'ad_personalization'] as $ad_signal) {
-        bhp_geo_assert($failures, sprintf('Catch-all payload: %s is DENIED -- ad signals were not broadened anywhere by this release', $ad_signal), isset($rest[$ad_signal]) && 'denied' === $rest[$ad_signal]);
+        bhp_geo_assert($failures, sprintf('Catch-all payload: %s is GRANTED -- the US-law posture extended to advertising (item 4)', $ad_signal), isset($rest[$ad_signal]) && 'granted' === $rest[$ad_signal]);
     }
     bhp_geo_assert($failures, 'Catch-all payload carries wait_for_update:500', isset($rest['wait_for_update']) && 500 === $rest['wait_for_update']);
 
     // -- the invariant that spans both ----------------------------------
     bhp_geo_assert(
         $failures,
-        'NO payload grants any ad_* signal in any region -- asserted across both, so a future edit to either is caught',
-        'denied' === $eea['ad_storage'] && 'denied' === $rest['ad_storage']
-            && 'denied' === $eea['ad_user_data'] && 'denied' === $rest['ad_user_data']
-            && 'denied' === $eea['ad_personalization'] && 'denied' === $rest['ad_personalization']
+        'The EEA payload grants NO signal while the catch-all grants EVERY signal -- asserted across both, so an ad signal leaking into the European default is caught here',
+        'denied' === $eea['analytics_storage'] && 'granted' === $rest['analytics_storage']
+            && 'denied' === $eea['ad_storage'] && 'granted' === $rest['ad_storage']
+            && 'denied' === $eea['ad_user_data'] && 'granted' === $rest['ad_user_data']
+            && 'denied' === $eea['ad_personalization'] && 'granted' === $rest['ad_personalization']
+    );
+    bhp_geo_assert(
+        $failures,
+        'The two payloads are not accidentally identical -- if a future edit ever makes the EEA branch equal the catch-all, the European posture has been silently destroyed and this catches it',
+        $eea !== $rest
     );
 }
 

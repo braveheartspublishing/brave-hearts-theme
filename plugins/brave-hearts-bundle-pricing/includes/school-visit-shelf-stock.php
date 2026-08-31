@@ -51,11 +51,56 @@
  *    environment.
  *
  * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.76 (2026-08-28, `CYCLE168-LD-RETAILER-BATCH-AND-BACKORDERS`) —
+ *     "SOLD OUT" AND "MAY NOT BUY" STOP BEING THE SAME SENTENCE.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-28, verbatim (⛔ RELAYED, carrier item 363):
+ *
+ *   "I think we allow backorders and we will get the new books in latest by
+ *    Sept 10th. If not we will figure something out, Like dropping off the
+ *    books a few days later"
+ *
+ * ⭐⭐ THE RULING SPLITS ONE FACT INTO TWO, AND THIS FILE IS SPLIT TO MATCH:
+ *
+ *      `bhp_visit_shelf_title_is_exhausted()`  the SHELF. Physical, honest,
+ *                                              unchanged arithmetic. Governs
+ *                                              the counter.
+ *      `bhp_visit_shelf_title_is_closed()`     the PURCHASE GATE. Same name,
+ *                                              same signature, same callers —
+ *                                              now relaxed when backorders
+ *                                              are allowed. Governs every
+ *                                              surface and all five refusal
+ *                                              seams.
+ *
+ * ⛔ NOT ONE CALLER IN THIS PLUGIN WAS EDITED. That is the point of keeping the
+ *    old name on the gate rather than on the fact: `school-visit-paperback-
+ *    only.php`, `offer-engine.php`, `bundle-shortcode.php` and
+ *    `bundle-shop-series.php` all keep asking the identical question and
+ *    receive the founder's new answer, atomically, with no possibility of a
+ *    surface and a seam disagreeing.
+ *
+ * ⛔ THE HONESTY RULES ARE UNCHANGED. No count is ever displayed higher than
+ *    the real one; the 2..10 counter window is untouched; the counter's guard
+ *    was moved onto the PURE shelf fact precisely so a relaxed purchase gate
+ *    could never make a suppressed number reappear. The allowance, its default,
+ *    its one-line reversal and the wording that was REFUSED all live in
+ *    `school-visit-backorder.php`.
+ *
+ * ⚠️ THE 1.8.75 STOCK-PRIVACY FILE'S CLOSING PARAGRAPH IS NOW ANSWERED. It
+ *    registered exactly this residual and said resolving it needed his word.
+ *    ⛔ Its own claim that a backorder "would be a WooCommerce product-
+ *    configuration change" turned out to be WRONG, and that is recorded rather
+ *    than quietly corrected: the sold-out state was never WooCommerce
+ *    inventory, so relaxing it touches no product record at all.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
  * THE ARITHMETIC
  * ═══════════════════════════════════════════════════════════════════════
  *
  *     remaining = baseline - committed
- *     closed    = remaining <= BHP_VISIT_SHELF_BUFFER   (buffer = 1)
+ *     exhausted = remaining <= BHP_VISIT_SHELF_BUFFER   (buffer = 1)
+ *     closed    = exhausted AND NOT backorders_allowed  (1.8.76)
  *
  * ⭐ `<= 1`, NOT `<= 0`, AND THAT IS THE RULING ITSELF. The last copy is
  *    deliberately kept back as buffer: "once we hit 1 chapter book left we
@@ -448,7 +493,7 @@ function bhp_visit_shelf_remaining() {
 }
 
 /**
- * ⭐ IS THIS TITLE CLOSED FOR SCHOOL VISITS?
+ * ⭐ IS THIS TITLE'S SHELF EXHAUSTED? THE PURE PHYSICAL FACT, AND NOTHING ELSE.
  *
  * ⛔ THIS FUNCTION DOES NOT ASK WHETHER THE SESSION IS FLAGGED. It answers a
  *    question about the SHELF, which is true or false regardless of who is
@@ -456,10 +501,45 @@ function bhp_visit_shelf_remaining() {
  *    a test or a future admin screen can ask "what is actually low" without
  *    having to fake a session.
  *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.76 (`CYCLE168-LD-RETAILER-BATCH-AND-BACKORDERS`) — THIS FUNCTION
+ *     WAS CALLED `bhp_visit_shelf_title_is_closed()` UNTIL THIS RELEASE, AND
+ *     THE RENAME IS THE WHOLE POINT OF THE CHANGE.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ ITS BODY IS BYTE-FOR-BYTE WHAT IT WAS, INCLUDING ITS FILTER NAME. Not one
+ *    line of the arithmetic moved. What moved is the QUESTION IT IS ANSWERING.
+ *
+ * ⭐⭐ WHY THE SPLIT EXISTS. Item 363 allows visit-flagged parents to order
+ *    past the shelf count. That makes "the shelf is empty" and "the parent may
+ *    not buy" two DIFFERENT facts for the first time — they were the same fact
+ *    from 1.8.71 to 1.8.75, which is why one function served both. Keeping one
+ *    function would have forced a choice between two wrong outcomes:
+ *      · relax it, and the COUNTER's "closed outranks counted" guard relaxes
+ *        with it, so a title Andrew closed by hand at remaining = 6 starts
+ *        printing "Only 6 left" again;
+ *      · leave it, and the five refusal seams keep refusing an order the
+ *        founder said to accept.
+ *
+ * ⭐ SO: THIS function is the SHELF (used by the counter's guard, by reports
+ *   and by the backorder module). `bhp_visit_shelf_title_is_closed()` below is
+ *   the PURCHASE GATE (used by every surface and every refusal seam). The two
+ *   are identical whenever backorders are off, which is why 1.8.75 behaviour is
+ *   recoverable with one filter.
+ *
+ * ⛔ THE FILTER IS STILL NAMED `bhp_visit_shelf_title_is_closed`, DELIBERATELY
+ *    AND DESPITE THE RENAME. Andrew's documented one-liner for closing or
+ *    reopening a title by hand uses that name, it may already be sitting in a
+ *    mu-plugin, and silently invalidating a documented operator command to buy
+ *    tidier naming is a bad trade. ⭐ A hand-close through it still suppresses
+ *    the counter and still marks the title exhausted; whether that ALSO blocks
+ *    the purchase is now the backorder allowance's business, one layer up.
+ *
+ * @since 1.8.76 Renamed from `bhp_visit_shelf_title_is_closed()`.
  * @param string $slug Title slug.
  * @return bool True when remaining <= the buffer.
  */
-function bhp_visit_shelf_title_is_closed( $slug ) {
+function bhp_visit_shelf_title_is_exhausted( $slug ) {
 	$slug = sanitize_key( (string) $slug );
 	if ( '' === $slug ) {
 		return false;
@@ -468,7 +548,7 @@ function bhp_visit_shelf_title_is_closed( $slug ) {
 	$remaining = bhp_visit_shelf_remaining();
 
 	/*
-	 * ⛔ NO BASELINE FOR THIS TITLE -> NOT CLOSED. That is the fail-open
+	 * ⛔ NO BASELINE FOR THIS TITLE -> NOT EXHAUSTED. That is the fail-open
 	 *    default, and it is what makes this whole file inert on an
 	 *    environment where `bhp_visit_shelf_stock` has never been set.
 	 */
@@ -477,7 +557,7 @@ function bhp_visit_shelf_title_is_closed( $slug ) {
 	$closed         = $has_baseline && $remaining_here <= (int) BHP_VISIT_SHELF_BUFFER;
 
 	/**
-	 * Whether one title is closed for school visits.
+	 * Whether one title's shelf is exhausted for school visits.
 	 *
 	 * ⭐ FILTERABLE so Andrew can reopen a title he has found more copies of,
 	 *    or close one by hand, without a code change and without a deploy.
@@ -488,7 +568,10 @@ function bhp_visit_shelf_title_is_closed( $slug ) {
 	 *    state WITHOUT writing the option on a live environment. Returning the
 	 *    default unchanged keeps the fail-open behaviour exactly as documented.
 	 *
-	 * @param bool     $closed    True when the title is closed.
+	 * ⛔ NAME KEPT AT `bhp_visit_shelf_title_is_closed` ACROSS THE 1.8.76
+	 *    RENAME. See this function's header for why.
+	 *
+	 * @param bool     $closed    True when the title's shelf is exhausted.
 	 * @param string   $slug      Title slug.
 	 * @param int|null $remaining Copies remaining, or null when uncounted.
 	 */
@@ -497,6 +580,78 @@ function bhp_visit_shelf_title_is_closed( $slug ) {
 		$closed,
 		$slug,
 		$remaining_here
+	);
+}
+
+/**
+ * ⭐⭐ IS THIS TITLE CLOSED TO PURCHASE FOR SCHOOL VISITS?
+ *
+ * ⭐ THE ONE PREDICATE EVERY SURFACE AND EVERY REFUSAL SEAM ASKS, directly or
+ *   through `bhp_visit_shelf_closed_titles()` / `_closed_map_for_request()` /
+ *   `bhp_visit_shelf_is_closed_item()`. Its NAME AND SIGNATURE ARE UNCHANGED
+ *   from 1.8.71, which is why not one caller in this plugin had to be edited:
+ *   all five refusal seams, `offer-engine.php`, `bundle-shortcode.php` and
+ *   `bundle-shop-series.php` keep asking the same question and get the
+ *   founder's new answer.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THE RELAXATION IS APPLIED **HERE AND ONLY HERE**, AND THAT IS THE
+ *     PROPERTY THAT STOPS A SURFACE FROM EVER DISAGREEING WITH A SEAM.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * This file's oldest invariant, from `bhp_visit_shelf_closed_titles()`: "the
+ * server would refuse a title the page had just offered ... Asking the
+ * predicate about every known title is the only way the two can never drift."
+ * ⭐ One relaxation point keeps that invariant intact. Relaxing the surfaces
+ * and the seams separately is how a page grows an Add to Cart button that the
+ * checkout then rejects, in front of a parent.
+ *
+ * ⛔ IT FAILS TO THE 1.8.75 BEHAVIOUR. With the backorder module absent — an
+ *    older plugin build, a partial deploy, a file that failed to load — this
+ *    returns exactly what it returned in 1.8.75: exhausted means closed. A
+ *    missing module can therefore only ever be MORE restrictive, never less,
+ *    which is the safe direction for a gate.
+ *
+ * @since 1.8.76 Now consults the backorder allowance; arithmetic unchanged.
+ * @param string $slug Title slug.
+ * @return bool True when the title may NOT be added on a visit-flagged session.
+ */
+function bhp_visit_shelf_title_is_closed( $slug ) {
+	$exhausted = bhp_visit_shelf_title_is_exhausted( $slug );
+
+	if ( ! $exhausted ) {
+		return false; // Nothing to relax.
+	}
+
+	$blocked = true;
+	if ( function_exists( 'bhp_visit_shelf_backorder_allowed' ) ) {
+		try {
+			if ( bhp_visit_shelf_backorder_allowed( $slug ) ) {
+				$blocked = false; // ⭐ ITEM 363: the order is accepted anyway.
+			}
+		} catch ( Throwable $e ) {
+			$blocked = true; // FAIL TO 1.8.75.
+		}
+	}
+
+	/**
+	 * Whether one title is closed to PURCHASE for school visits.
+	 *
+	 * ⛔ A SEPARATE FILTER FROM `bhp_visit_shelf_title_is_closed`, on purpose.
+	 *    That one is the SHELF FACT and still governs the counter; this one is
+	 *    the PURCHASE GATE. Confusing them is the whole reason 1.8.76 split
+	 *    them, and giving them one name would rebuild the confusion.
+	 *
+	 * @since 1.8.76
+	 * @param bool   $blocked   True when the title may not be added.
+	 * @param string $slug      Title slug.
+	 * @param bool   $exhausted True when the physical shelf is at or below the buffer.
+	 */
+	return (bool) apply_filters(
+		'bhp_visit_shelf_title_is_blocked',
+		$blocked,
+		$slug,
+		$exhausted
 	);
 }
 
@@ -634,9 +789,27 @@ function bhp_visit_shelf_title_counter( $slug ) {
 
 	$ceiling = (int) apply_filters( 'bhp_visit_shelf_counter_max', (int) BHP_VISIT_SHELF_COUNTER_MAX, $slug );
 
+	/*
+	 * ⛔⛔ 1.8.76 — THIS GUARD ASKS `_is_exhausted()`, NOT `_is_closed()`, AND
+	 *     THE ONE-WORD DIFFERENCE IS A HONESTY GUARANTEE, NOT A TIDY-UP.
+	 *
+	 *     `_is_closed()` now RELAXES when backorders are allowed. If this guard
+	 *     still asked it, then a title Andrew had closed BY HAND at remaining=6
+	 *     through the `bhp_visit_shelf_title_is_closed` filter would become
+	 *     "not closed" the moment backorders were on, and this function would
+	 *     start printing "Only 6 left for the school visit" for a title he had
+	 *     deliberately taken off the shelf. ⛔ THE COUNTER MUST FOLLOW THE
+	 *     PHYSICAL FACT, ALWAYS. It reports what is on the shelf; it does not
+	 *     report what somebody is allowed to order.
+	 *
+	 * ⭐ THE ORIGINAL RULE IS UNCHANGED IN SPIRIT AND IN EFFECT: CLOSED
+	 *   OUTRANKS COUNTED. The window is still `> BHP_VISIT_SHELF_BUFFER`, so
+	 *   the smallest number this can print is still 2 and an exhausted title
+	 *   still prints nothing at all.
+	 */
 	$out = null;
 	if ( $has_baseline
-		&& ! bhp_visit_shelf_title_is_closed( $slug )   // ⛔ CLOSED OUTRANKS COUNTED.
+		&& ! bhp_visit_shelf_title_is_exhausted( $slug )   // ⛔ EXHAUSTED OUTRANKS COUNTED.
 		&& $live > (int) BHP_VISIT_SHELF_BUFFER
 		&& $live <= $ceiling ) {
 		$out = $live;
@@ -669,6 +842,10 @@ function bhp_visit_shelf_title_counter( $slug ) {
 /**
  * ⭐ THE VISIT-MODE COUNTER. null for every ordinary shopper, always.
  *
+ * ⭐⭐ 1.8.75 (`CYCLE168-LD-AMITY-STOCK-SUPPRESSION`) ADDS THE SECOND GATE.
+ *     See `bhp_visit_shelf_counter_map_for_request()` below for why it is here
+ *     and not inside `bhp_visit_shelf_title_counter()`.
+ *
  * @param string $slug Title slug.
  * @return int|null
  */
@@ -680,6 +857,11 @@ function bhp_visit_shelf_counter_for_request( $slug ) {
 	try {
 		if ( ! bhp_school_visit_paperback_only() ) {
 			return null; // ⭐⭐ ZERO STOCK MARKUP for every ordinary shopper.
+		}
+		// ⭐ 1.8.75 — this visit does not show quantities. Amity, by founder ruling.
+		if ( function_exists( 'bhp_school_visit_hide_stock_for_request' )
+			&& bhp_school_visit_hide_stock_for_request() ) {
+			return null;
 		}
 	} catch ( Throwable $e ) {
 		return null; // FAIL SILENT.
@@ -696,6 +878,27 @@ function bhp_visit_shelf_counter_for_request( $slug ) {
  *    once at the top and branch on it with no visit check of its own, which is
  *    what stops a surface from becoming a second source of truth about stock.
  *
+ * ⭐⭐ 1.8.75 (`CYCLE168-LD-AMITY-STOCK-SUPPRESSION`) — AND EMPTY FOR A VISIT
+ *     WHOSE PARENTS MUST NOT SEE A QUANTITY. Andrew Signore, 2026-08-28, on
+ *     Amity (⛔ RELAYED, carrier item 359): *"I just want Amity not to see the
+ *     current stock since we will have 75 more books coming Sept 7-11."*
+ *
+ * ⛔ THE GATE IS HERE AND IN `bhp_visit_shelf_counter_for_request()`, NOT
+ *    INSIDE `bhp_visit_shelf_title_counter()`, AND THE PLACEMENT IS THE WHOLE
+ *    DESIGN. That function's own header says it "does not ask whether the
+ *    session is flagged" because it answers a question about the SHELF, so a
+ *    report or a suite can ask what is actually low without faking a session.
+ *    Putting a session check inside it would break that contract and would
+ *    make the arithmetic itself lie to Andrew's own tooling. ⭐ These two
+ *    `_for_request` functions are, by this file's own rule, THE ONLY TWO A
+ *    SURFACE MAY CALL — so gating both gates every surface, including
+ *    `bhp_visit_shelf_constraining_title_for_request()`, which reads this map.
+ *
+ * ⛔ IT SUPPRESSES A NUMBER AND NOTHING ELSE. The sold-out state, the buffer,
+ *    the closed map and all five server refusal seams are untouched: an Amity
+ *    session sees the ordinary purchasable page, and sees "Sold out for the
+ *    school visit" if and only if that title really is closed.
+ *
  * @return array<string,int> Title slug => copies remaining. Empty when nothing shows.
  */
 function bhp_visit_shelf_counter_map_for_request() {
@@ -706,6 +909,11 @@ function bhp_visit_shelf_counter_map_for_request() {
 	try {
 		if ( ! bhp_school_visit_paperback_only() ) {
 			return array(); // ⭐⭐ ZERO STOCK MARKUP for every ordinary shopper.
+		}
+		// ⭐ 1.8.75 — this visit does not show quantities. Amity, by founder ruling.
+		if ( function_exists( 'bhp_school_visit_hide_stock_for_request' )
+			&& bhp_school_visit_hide_stock_for_request() ) {
+			return array();
 		}
 	} catch ( Throwable $e ) {
 		return array();
@@ -1079,13 +1287,41 @@ function bhp_visit_shelf_counter_label_named( $slug, $count ) {
  */
 function bhp_visit_shelf_render_counter( $slug ) {
 	$n = bhp_visit_shelf_counter_for_request( $slug );
-	if ( null === $n ) {
+
+	if ( null !== $n ) {
+		printf(
+			'<span class="bhp-bundle-stock-counter">%s</span>',
+			esc_html( bhp_visit_shelf_counter_label( (int) $n ) )
+		);
 		return;
 	}
-	printf(
-		'<span class="bhp-bundle-stock-counter">%s</span>',
-		esc_html( bhp_visit_shelf_counter_label( (int) $n ) )
-	);
+
+	/*
+	 * ⭐⭐ 1.8.76 — THE BACKORDER FALL-THROUGH, AND IT IS PUT HERE ON PURPOSE.
+	 *
+	 * All three purchase surfaces already share the identical shape:
+	 *      if ( $is_closed )  -> sold-out label
+	 *      elseif ( ... )     -> bhp_visit_shelf_render_counter( $slug )
+	 * With backorders on, `$is_closed` is false for an exhausted title, so
+	 * every one of those surfaces lands in THIS function. Wiring the new line
+	 * here rather than editing `bundle-shop-series.php`, `bundle-shortcode.php`
+	 * (twice) and the WooCommerce loop gives all four ONE implementation and
+	 * makes it impossible for a fifth surface to grow a copy that forgets the
+	 * visit gate. Exactly the reason this function owns the counter markup.
+	 *
+	 * ⛔ IT PRINTS NOTHING IN THE ORDINARY CASE. `_is_backordered_for_request()`
+	 *    is false for every unflagged session, false with no shelf baseline,
+	 *    false when the shelf is fine, and false when backorders are switched
+	 *    off — so an ordinary shopper's HTML is byte-identical to 1.8.75.
+	 *
+	 * ⛔ IT CAN NEVER PRINT ALONGSIDE THE COUNTER: the counter branch above
+	 *    returns. It can never print alongside the sold-out label either, since
+	 *    that branch is `$is_closed`, which is exactly the negation of the
+	 *    backorder allowance for an exhausted title.
+	 */
+	if ( function_exists( 'bhp_visit_shelf_render_backorder_line' ) ) {
+		bhp_visit_shelf_render_backorder_line( $slug );
+	}
 }
 
 /* =========================================================================

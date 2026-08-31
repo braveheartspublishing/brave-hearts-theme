@@ -136,6 +136,9 @@ $reserved_fields = [
     'bhp_form_id',
     'bhp_signup_nonce',
     'bhp_success_redirect_key',
+    // 1.19.323 — reserved so a caller's own hidden_fields cannot shadow the
+    // form-moment attribution field with a value the pipe would then trust.
+    'bhp_attr_now',
     'bhp_website',
     'bhp_segment',
     $email_name,
@@ -173,6 +176,39 @@ $success_redirect_key = sanitize_key($args['success_redirect_key']);
   <input type="hidden" name="audience_type" value="<?php echo esc_attr($audience_type); ?>">
   <input type="hidden" name="lead_magnet" value="<?php echo esc_attr(sanitize_key($args['lead_magnet'])); ?>">
   <input type="hidden" name="source_page" value="<?php echo esc_url($source_page); ?>">
+
+  <?php
+  /*
+   * ⭐⭐ 1.19.323 (`CYCLE169-LD-R3-IMGCAP-ATTRIBUTION`) — THE FORM-MOMENT
+   *    ATTRIBUTION FIELD. Andrew: *"Lets do that right now please."*
+   *
+   * ⛔⛔ IT IS EMITTED ONLY WHEN THE CURRENT PAGE URL ACTUALLY CARRIES A CLICK
+   *     ID OR A UTM. On a clean URL `bhp_get_signup_attribution_field_value()`
+   *     returns '' and NO INPUT IS WRITTEN — so the rendered markup of every
+   *     form on this site is BYTE-IDENTICAL to 1.19.322 for every ordinary
+   *     visitor, and every existing assertion about this template's output
+   *     still describes what it emits.
+   *
+   * ⛔ IT CARRIES NO URL AND NO `landing_page`. The value is a query-string
+   *    fragment rebuilt from a fixed whitelist of campaign and click-ID
+   *    parameters and nothing else — see `bhp_get_attribution_capture_params()`
+   *    in `inc/mailchimp.php`, where the privacy exclusion is stated and
+   *    enforced. No PII can reach this field.
+   *
+   * ⛔ IT IS THE THIRD-CHOICE READING, NOT THE FIRST. The pipe prefers the
+   *    referer, which is read fresh at submission and therefore immune to page
+   *    caching. This field is the fallback for a browser that strips it.
+   *
+   * ⛔ NO COOKIE IS WRITTEN AND NO CONSENT POSTURE CHANGES. This is one hidden
+   *    input on one form, and it lives only as long as the request.
+   */
+  $bhp_attr_now = function_exists('bhp_get_signup_attribution_field_value')
+      ? bhp_get_signup_attribution_field_value()
+      : '';
+  ?>
+  <?php if ($form_ready && '' !== $bhp_attr_now): ?>
+    <input type="hidden" name="bhp_attr_now" value="<?php echo esc_attr($bhp_attr_now); ?>">
+  <?php endif; ?>
 
   <?php foreach ($args['hidden_fields'] as $name => $value): ?>
     <?php if (!in_array($name, $reserved_fields, true)): ?>

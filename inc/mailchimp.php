@@ -163,7 +163,7 @@ function bhp_get_mailchimp_merge_field_map() {
  *
  * @return string '' when nothing is known.
  */
-function bhp_get_signup_traffic_source() {
+function bhp_get_signup_traffic_source($form_moment = null) {
     if (!class_exists('BHP_UTM_Attribution')) {
         return '';
     }
@@ -172,64 +172,315 @@ function bhp_get_signup_traffic_source() {
     $last  = isset($attribution['last_touch']) && is_array($attribution['last_touch']) ? $attribution['last_touch'] : [];
     $first = isset($attribution['first_touch']) && is_array($attribution['first_touch']) ? $attribution['first_touch'] : [];
 
-    if (!$last && !$first) {
+    /*
+     * ⭐⭐ 1.19.323 (`CYCLE169-LD-R3-IMGCAP-ATTRIBUTION`) — THE FORM-MOMENT
+     *    SOURCE. Andrew: *"Lets do that right now please."*
+     *
+     * ⛔ NULL MEANS "COLLECT IT YOURSELF"; AN ARRAY MEANS "USE EXACTLY THIS".
+     *    The default is null so that EVERY existing caller of
+     *    `bhp_process_signup()` — popup, inline forms, the capture band, the
+     *    footer/end-of-post block, the quiz's JSON endpoint, and any surface
+     *    added later — inherits the new behaviour without a line of its own.
+     *    That is the "fix it at the pipe level" requirement expressed in the
+     *    signature rather than in a comment. Passing `[]` opts out explicitly,
+     *    which is what the tests use to isolate the cookie path.
+     */
+    if (null === $form_moment) {
+        $form_moment = bhp_get_form_moment_attribution();
+    }
+    $form_moment = is_array($form_moment) ? $form_moment : [];
+
+    if (!$last && !$first && !$form_moment) {
         return '';
     }
 
-    $describe = static function (array $touch) {
-        $source   = isset($touch['utm_source']) ? trim((string) $touch['utm_source']) : '';
-        $medium   = isset($touch['utm_medium']) ? trim((string) $touch['utm_medium']) : '';
-        $campaign = isset($touch['utm_campaign']) ? trim((string) $touch['utm_campaign']) : '';
-
-        /*
-         * A click ID with no utm_source is still a paid click, and it is the
-         * shape an ad platform's auto-tagging produces. Naming the platform is
-         * more useful than printing the opaque ID, which is per-click and would
-         * make every contact's value unique and un-groupable.
-         */
-        if ('' === $source) {
-            $click_ids = [
-                'gclid'   => 'google',
-                'fbclid'  => 'facebook',
-                'ttclid'  => 'tiktok',
-                'msclkid' => 'microsoft',
-            ];
-            foreach ($click_ids as $param => $platform) {
-                if (!empty($touch[$param])) {
-                    $source = $platform;
-                    if ('' === $medium) {
-                        $medium = 'cpc';
-                    }
-                    break;
-                }
-            }
-        }
-
-        if ('' === $source && '' === $medium && '' === $campaign) {
-            return '';
-        }
-
-        $parts = [
-            '' !== $source ? $source : 'unknown',
-            '' !== $medium ? $medium : 'unknown',
-        ];
-        if ('' !== $campaign) {
-            $parts[] = $campaign;
-        }
-
-        return implode(' / ', $parts);
-    };
-
-    $value = $describe($last);
+    /*
+     * ⛔⛔ PRECEDENCE, AND THE ONE ORDERING DECISION IN THIS CHANGE:
+     *
+     *   1. cookie LAST touch, if it carries a campaign signal
+     *   2. cookie FIRST touch, if it carries a campaign signal
+     *   3. ⭐ the FORM MOMENT — a click ID or UTM on the page the visitor was
+     *      actually standing on when they typed their address
+     *   4. "direct" — a cookie exists and no signal anywhere
+     *   5. '' — nothing is known, and the merge field is not sent at all
+     *
+     * ⭐ THE COOKIE STILL WINS, AND IT SHOULD: it carries cross-page history,
+     *    so it can say "this visitor arrived from Facebook three pages ago and
+     *    signed up here", which a single URL cannot.
+     *
+     * ⚠️ BUT IT WINS ONLY WHEN IT ACTUALLY SAYS SOMETHING. A consenting
+     *    visitor who arrived directly LAST WEEK has a cookie with no campaign
+     *    signal; if they come back today on a live `?fbclid=…` click and sign
+     *    up, ranking that empty cookie above the click would file a paid
+     *    conversion as "direct" — a WRONG fact, not merely a missing one, and
+     *    §3's never-invent rule reaches invented attribution the same way it
+     *    reaches invented reviews. So the form moment is ranked ABOVE "direct"
+     *    and BELOW any real cookie signal. ⛔ RECORDED AS THIS DESK'S CALL, not
+     *    the founder's, and flagged in the round-3 report for Gandalf.
+     *
+     * ⛔ CASE 5 IS STILL NOT "direct", and that distinction is PRESERVED
+     *    EXACTLY as 1.19.211 built it. No attribution cookie is written until
+     *    the visitor grants analytics consent, so a consent-declining visitor
+     *    on a clean URL has neither cookie nor click ID — and calling them
+     *    "direct" would invent a fact about where they came from. Unknown
+     *    stays unknown and the field is dropped.
+     */
+    $value = bhp_describe_traffic_source($last);
     if ('' === $value) {
-        $value = $describe($first);
+        $value = bhp_describe_traffic_source($first);
     }
     if ('' === $value) {
+        $value = bhp_describe_traffic_source($form_moment);
+    }
+    if ('' === $value && ($last || $first)) {
         // A cookie exists and carries no campaign signal. That IS direct.
         $value = 'direct';
     }
+    if ('' === $value) {
+        return '';
+    }
 
     return substr(sanitize_text_field($value), 0, 100);
+}
+
+/**
+ * Format one attribution snapshot as the short `TRAFFIC` string.
+ *
+ * ⭐ EXTRACTED VERBATIM at 1.19.323 from the closure that lived inside
+ *    `bhp_get_signup_traffic_source()`. Not one rule of it changed. It is a
+ *    named function now for exactly one reason: the cookie path and the new
+ *    form-moment path MUST produce identically-shaped values, and the only way
+ *    to guarantee that is for there to be one formatter rather than two that
+ *    agree today. A second copy is how "facebook / cpc" and "Facebook/CPC"
+ *    end up in the same audience.
+ *
+ * @param array $touch Whitelisted campaign/click fields. Never PII.
+ * @return string '' when the snapshot carries no campaign signal at all.
+ */
+function bhp_describe_traffic_source(array $touch) {
+    $source   = isset($touch['utm_source']) ? trim((string) $touch['utm_source']) : '';
+    $medium   = isset($touch['utm_medium']) ? trim((string) $touch['utm_medium']) : '';
+    $campaign = isset($touch['utm_campaign']) ? trim((string) $touch['utm_campaign']) : '';
+
+    /*
+     * A click ID with no utm_source is still a paid click, and it is the
+     * shape an ad platform's auto-tagging produces. Naming the platform is
+     * more useful than printing the opaque ID, which is per-click and would
+     * make every contact's value unique and un-groupable.
+     */
+    if ('' === $source) {
+        foreach (bhp_get_attribution_click_id_platforms() as $param => $platform) {
+            if (!empty($touch[$param])) {
+                $source = $platform;
+                if ('' === $medium) {
+                    $medium = 'cpc';
+                }
+                break;
+            }
+        }
+    }
+
+    if ('' === $source && '' === $medium && '' === $campaign) {
+        return '';
+    }
+
+    $parts = [
+        '' !== $source ? $source : 'unknown',
+        '' !== $medium ? $medium : 'unknown',
+    ];
+    if ('' !== $campaign) {
+        $parts[] = $campaign;
+    }
+
+    return implode(' / ', $parts);
+}
+
+/**
+ * The four click-ID parameters and the platform each one names.
+ *
+ * One list, filterable, used by BOTH the formatter above and the request
+ * parser below — so a fifth ad platform is one row, not three edits.
+ */
+function bhp_get_attribution_click_id_platforms() {
+    return apply_filters('bhp_attribution_click_id_platforms', [
+        'gclid'   => 'google',
+        'fbclid'  => 'facebook',
+        'ttclid'  => 'tiktok',
+        'msclkid' => 'microsoft',
+    ]);
+}
+
+/**
+ * Every query parameter the form-moment capture will look at.
+ *
+ * ⛔⛔ `landing_page` AND `timestamp` ARE DELIBERATELY ABSENT, and their absence
+ *     is the privacy posture, not an oversight. The cookie carries
+ *     `landing_page`; `bhp_get_signup_traffic_source()` has excluded it from
+ *     the Mailchimp payload since 1.19.211 because it is a URL that can pick
+ *     up arbitrary query parameters and this value goes to a third-party
+ *     marketing platform. ⭐ THE ROUND-3 BRIEF RESTATES THAT EXCLUSION AS A
+ *     REQUIREMENT — *"no landing_page forwarding (keep the existing privacy
+ *     exclusion)"* — so the new path never even reads it.
+ *
+ * ⛔ NO PII IS REACHABLE THROUGH THIS LIST BY CONSTRUCTION. Every entry is a
+ *    campaign label or an opaque ad-click identifier.
+ */
+function bhp_get_attribution_capture_params() {
+    return apply_filters('bhp_attribution_capture_params', array_merge(
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'],
+        array_keys(bhp_get_attribution_click_id_platforms())
+    ));
+}
+
+/**
+ * Pull the whitelisted attribution parameters out of one query string or URL.
+ *
+ * @param string $query A raw query string, or a full URL.
+ * @return array Sanitized, capped, whitelisted. [] when nothing matched.
+ */
+function bhp_extract_attribution_params($query) {
+    $query = (string) $query;
+    if ('' === $query) {
+        return [];
+    }
+
+    if (false !== strpos($query, '://') || 0 === strpos($query, '/')) {
+        $query = (string) wp_parse_url($query, PHP_URL_QUERY);
+    }
+    $query = ltrim($query, '?');
+    if ('' === $query) {
+        return [];
+    }
+
+    $parsed = [];
+    wp_parse_str($query, $parsed);
+    if (!is_array($parsed)) {
+        return [];
+    }
+
+    $clean = [];
+    foreach (bhp_get_attribution_capture_params() as $key) {
+        if (!isset($parsed[$key]) || !is_scalar($parsed[$key])) {
+            continue;
+        }
+        /*
+         * Same defence-in-depth shape `BHP_UTM_Attribution::read_cookie()`
+         * applies to the cookie: 200-character cap then sanitize_text_field().
+         * A form-moment value and a cookie value are therefore directly
+         * comparable and neither can carry markup or an oversized string.
+         */
+        $value = sanitize_text_field(substr((string) $parsed[$key], 0, 200));
+        if ('' !== $value) {
+            $clean[$key] = $value;
+        }
+    }
+
+    return $clean;
+}
+
+/**
+ * ⭐⭐ 1.19.323 — THE FORM MOMENT. The attribution visible on the page the
+ *    visitor was standing on when they submitted, read from the LIVE REQUEST
+ *    rather than from any stored cookie.
+ *
+ * ⛔⛔ WHY THIS EXISTS: the `TRAFFIC` merge field reaches Mailchimp only from
+ *     consent-gated cookies. `assets/js/bhp-attribution.js` fails CLOSED — no
+ *     analytics consent, no cookie, no attribution — so a visitor who declines
+ *     or ignores the banner and then signs up arrives with the field blank.
+ *     That is the correct privacy behaviour and it is NOT being changed here.
+ *     ⭐ This adds a second, consent-independent reading of a click identifier
+ *     the ad platform itself put in the URL the visitor is already on.
+ *
+ * ⛔⛔ WHAT THIS DOES **NOT** DO, stated so it cannot be over-read:
+ *     · ⛔ IT WRITES NO COOKIE. Not one, not a session value, not a transient.
+ *     · ⛔ IT CHANGES NO CONSENT POSTURE. `bhp-attribution.js` is untouched,
+ *          still fail-closed, and the consent banner is not consulted or
+ *          altered. Nothing here is persisted beyond this single request.
+ *     · ⛔ IT FORWARDS NO `landing_page` AND NO URL. Only the whitelist above.
+ *     · ⛔ IT DOES NOT DEMOTE THE COOKIE. See the precedence note on
+ *          `bhp_get_signup_traffic_source()`.
+ *
+ * ⚠️ THREE CANDIDATE READINGS, IN ORDER, AND EACH ONE COVERS A REAL HOLE THE
+ *    ONE BEFORE IT LEAVES OPEN. All three are client-supplied, all three go
+ *    through the same whitelist and sanitiser, and none can produce a value a
+ *    visitor could not already produce by typing a UTM into their own address
+ *    bar — so there is no new trust surface, only new coverage:
+ *
+ *      1. `$_GET` ON THIS REQUEST. Correct whenever the submitting request's
+ *         own URL carries the parameters.
+ *      2. ⭐ THE REFERER'S QUERY STRING. This is the one that does the work for
+ *         a classic form POST: the browser posts to `admin-post.php`, so
+ *         `$_GET` is empty, but the referer is the actual page the visitor was
+ *         reading — `?fbclid=…` and all. Same-origin navigations send the FULL
+ *         URL under the default referrer policy. ⛔ HOST-CHECKED, so an
+ *         off-site referer cannot inject anything.
+ *      3. THE POSTED HIDDEN FIELD, rendered server-side by
+ *         `template-parts/acquisition/signup-form.php`. It is the fallback for
+ *         a browser or extension that strips the referer entirely.
+ *
+ * ⚠️ AND THE HONEST LIMITATION OF READING #3, STATED RATHER THAN HIDDEN: a
+ *    hidden field is rendered when the PAGE is rendered, so a full-page cache
+ *    could in principle serve one visitor's parameters to the next. That is
+ *    why it is ranked LAST — the referer is read fresh on every submission and
+ *    wins whenever it exists. It is also why the field is emitted ONLY when
+ *    the page URL actually carried something: on a clean URL no field is
+ *    written at all, so the cached HTML of a clean page carries nothing to
+ *    leak. ⭐ Verified on staging that a page requested with a click ID does
+ *    not serve another request's value — evidence in the round-3 record.
+ *
+ * @return array Whitelisted, sanitized. [] when the live request knows nothing.
+ */
+function bhp_get_form_moment_attribution() {
+    $candidates = [];
+
+    if (!empty($_GET)) {
+        $candidates[] = bhp_extract_attribution_params(
+            http_build_query(wp_unslash($_GET)) // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only, whitelisted, never trusted for authorisation.
+        );
+    }
+
+    $referer = wp_get_raw_referer();
+    if ($referer) {
+        $referer_host = strtolower((string) wp_parse_url($referer, PHP_URL_HOST));
+        $home_host    = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
+        if ('' === $referer_host || $referer_host === $home_host) {
+            $candidates[] = bhp_extract_attribution_params($referer);
+        }
+    }
+
+    if (isset($_POST['bhp_attr_now'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- callers verify the nonce before reaching the pipe; this value is whitelisted and never authorises anything.
+        $candidates[] = bhp_extract_attribution_params(
+            (string) wp_unslash($_POST['bhp_attr_now']) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        );
+    }
+
+    foreach ($candidates as $candidate) {
+        if ($candidate && '' !== bhp_describe_traffic_source($candidate)) {
+            return $candidate;
+        }
+    }
+
+    return [];
+}
+
+/**
+ * The value of the hidden field `template-parts/acquisition/signup-form.php`
+ * renders. '' when the current page URL carries nothing worth carrying, in
+ * which case the template emits NO field at all and the rendered markup of
+ * every existing form is byte-identical to 1.19.322 on a clean URL.
+ *
+ * @return string A query-string fragment, or ''.
+ */
+function bhp_get_signup_attribution_field_value() {
+    $params = empty($_GET)
+        ? []
+        : bhp_extract_attribution_params(http_build_query(wp_unslash($_GET))); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+    if (!$params || '' === bhp_describe_traffic_source($params)) {
+        return '';
+    }
+
+    return http_build_query($params);
 }
 
 /**
@@ -410,12 +661,24 @@ function bhp_mailchimp_signup_redirect($status, $source_page, $form_id, $success
  * existing standalone form run the exact same subscriber logic — there is
  * still only ONE place that talks to Mailchimp.
  *
- * Deliberately pure with respect to the request: it never reads a
- * superglobal, never redirects and never exits. Callers decide how to
- * present the outcome (303 redirect for classic forms, JSON for the quiz).
+ * It never redirects and never exits. Callers decide how to present the
+ * outcome (303 redirect for classic forms, JSON for the quiz).
+ *
+ * ⚠️ CORRECTED AT 1.19.323 — THIS DOCBLOCK USED TO CLAIM THE FUNCTION IS
+ *    "deliberately pure with respect to the request: it never reads a
+ *    superglobal". ⛔ THAT WAS ALREADY FALSE BEFORE THIS RELEASE: since
+ *    1.19.211 it has called `bhp_get_signup_traffic_source()`, which reads
+ *    `$_COOKIE` through `BHP_UTM_Attribution`. 1.19.323 widens that reading to
+ *    the request's own query string and referer. ⭐ THE CLAIM IS CORRECTED
+ *    RATHER THAN LEFT STANDING — a comment that describes a property the code
+ *    does not have is worse than no comment, because the next person builds on
+ *    it. What IS still true, and is the part that was load-bearing: this
+ *    function performs NO redirect, NO exit and NO output, so both transports
+ *    can call it. Request reading is confined to the one attribution helper,
+ *    and any caller may pass `form_attribution` to suppress it entirely.
  *
  * $input keys: email, name, require_name, context, audience_type,
- * lead_magnet, source_page, success_redirect_key.
+ * lead_magnet, source_page, success_redirect_key, form_attribution (optional).
  *
  * Returns ['ok' => bool, 'code' => string, 'redirect' => string]. `code` is
  * one of success|invalid|missing_name|unavailable|error and is always a
@@ -507,7 +770,14 @@ function bhp_process_signup(array $input) {
         // CYCLE148-FIN-002. '' when unknown, and an empty value is skipped
         // below exactly like an empty lead magnet — see the long note on
         // bhp_get_signup_traffic_source().
-        'traffic_source' => bhp_get_signup_traffic_source(),
+        //
+        // 1.19.323: `form_attribution` is normally ABSENT, and absent means
+        // "collect the form moment from the live request". A caller may pass
+        // an explicit array to override it, or [] to suppress it — which is
+        // how the tests isolate the cookie path from the URL path.
+        'traffic_source' => bhp_get_signup_traffic_source(
+            array_key_exists('form_attribution', $input) ? $input['form_attribution'] : null
+        ),
     ];
     $merge_fields = [];
 

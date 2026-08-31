@@ -21,6 +21,42 @@
  *
  * 1. ⛔ NOTHING REACHES META BEFORE THE VISITOR GRANTS MARKETING CONSENT.
  *
+ *    ⭐⭐⭐ 2026-08-27 (1.19.312, `CYCLE167-LD-CONSENT-PIXEL-EXT`) — THIS
+ *    INVARIANT IS NOW REGION-SCOPED, AND THE HEADLINE SENTENCE ABOVE IS NO
+ *    LONGER TRUE OUTSIDE THE EEA/UK. It is preserved rather than rewritten
+ *    because the two mechanisms below are UNCHANGED and still describe
+ *    exactly what happens on the denied path — what moved is WHICH VISITORS
+ *    are on that path.
+ *
+ *    ⛔ THE INVARIANT AS IT NOW STANDS, and it is the honest wording:
+ *
+ *        NOTHING REACHES META WHILE THE VISITOR'S EFFECTIVE MARKETING
+ *        CONSENT IS DENIED — and it is denied by default for the EEA/UK,
+ *        for any visitor the region heuristic cannot confidently place
+ *        outside it, for any visitor sending Global Privacy Control, and
+ *        for any visitor who has opted out anywhere on earth.
+ *
+ *    Outside the EEA/UK, absent GPC and absent an opt-out, consent is now
+ *    GRANTED BY DEFAULT and the SDK does load on first page view. That is
+ *    the founder's ruling (carrier `^349. FOUNDER` item 4, "I guess we
+ *    extend it" — RELAYED through the Chief of Staff, not witnessed here),
+ *    extending carrier item 310's US-law measurement posture to advertising.
+ *    ⛔ It is not a legal opinion; see BHP_Consent::measured_default_signals()
+ *    for the full authority note, its limit, and why the opt-out mechanisms
+ *    are load-bearing rather than decorative.
+ *
+ *    ⚠ TWO HONEST CONSEQUENCES, STATED HERE RATHER THAN IN A REPORT THAT
+ *      WILL NOT TRAVEL WITH THE CODE:
+ *        · The Lighthouse claim below is now true only of a denied visitor.
+ *          A US visitor pays the real third-party cost of fbevents.js on
+ *          first load, without having clicked anything. Said plainly rather
+ *          than left implied by a synthetic number.
+ *        · An opt-out cannot un-send what already went. Revoking stops all
+ *          FURTHER transmission — proven by observation, see the QA record —
+ *          but a PageView fired before the visitor reached the "Privacy
+ *          Choices" link has already left the browser. That is inherent to
+ *          an opt-out regime and is not a defect in this file.
+ *
  *    Two independent layers, either of which alone would be sufficient:
  *
  *      LAYER 1 — Meta's own consent API. `fbq('consent','revoke')` is the
@@ -822,6 +858,135 @@ class BHP_Meta_Pixel {
 		try { return JSON.parse( raw ); } catch ( e ) { return null; }
 	}
 
+	/* ══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐⭐ 1.19.312 (`CYCLE167-LD-CONSENT-PIXEL-EXT`) — THE PIXEL IS NOW
+	 *     CONSENT-STATE-DRIVEN, NOT BANNER-DRIVEN. READ THIS BEFORE TOUCHING
+	 *     ANY LINE BELOW IT.
+	 * ══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ THE BUG THIS FIXES IS NOT COSMETIC, AND IT WAS INTRODUCED BY A
+	 *    CORRECT RELEASE. Until now the only input to this runtime was the
+	 *    `wpconsent_preferences` cookie — i.e. "has the visitor interacted
+	 *    with the banner". 1.19.309 (`CYCLE167-LD-CONSENT-BANNER-GEO`) stopped
+	 *    showing that banner to non-EEA visitors. A US visitor therefore had
+	 *    no cookie, could not get one, and this pixel could NEVER leave the
+	 *    revoked state — no SDK, no init, no PageView, no Lead. The founder's
+	 *    leads campaign was pointed at a signal path that was structurally
+	 *    incapable of firing. Banner-driven consent and an EEA-only banner are
+	 *    individually correct and jointly a dead pixel.
+	 *
+	 * ⭐ THE FIX: read the SAME state Consent Mode reads, from the SAME two
+	 *    inputs, in the SAME precedence order as BHP_WPConsent_Bridge. The
+	 *    pixel and the Consent Mode defaults must never disagree about one
+	 *    visitor, and the only way to guarantee that is to derive both from
+	 *    one rule rather than to keep two in sync by care.
+	 *
+	 *    PRECEDENCE, and it is deliberately identical to the bridge's:
+	 *
+	 *      1. AN EXPLICIT RECORDED CHOICE ALWAYS WINS, in either direction.
+	 *         `wpconsent_preferences` first (the CMP's own cookie is
+	 *         authoritative), then `bhp_consent_state` (the bridge's mirror,
+	 *         the fallback if the consent surface is ever swapped). A visitor
+	 *         who accepted marketing is granted anywhere on earth, EEA
+	 *         included. A visitor who opted out is revoked anywhere on earth,
+	 *         US included — that is the half that makes this a real opt-out.
+	 *      2. NO CHOICE, BUT GPC IS ON -> DENIED. Same rule, same reason, same
+	 *         `navigator.globalPrivacyControl` read as the bridge. An opt-out
+	 *         preference signal only matters once there is something to opt
+	 *         out of by default, and from 1.19.312 there is.
+	 *      3. NO CHOICE, NO GPC -> the REGION default, taken from
+	 *         `window.bhpConsentRegion.showBanner`, which
+	 *         `bhp_consent_region_gate_script()` publishes at wp_head
+	 *         priority 1 — two priorities ahead of this file's own head
+	 *         render (priority 3), so it is always defined by the time this
+	 *         runs. `showBanner === false` means "the heuristic is confident
+	 *         this visitor is outside the EEA/UK" -> GRANTED.
+	 *
+	 * ⛔⛔ THE FAIL-SAFE DIRECTION, AND IT IS INVERTED RELATIVE TO THE BANNER
+	 *     SCRIPT. Say this out loud before editing: the banner script shows on
+	 *     ambiguity; THIS runtime DENIES on ambiguity. They are not
+	 *     inconsistent — both err toward protecting the visitor, and for a
+	 *     third-party advertising pixel that means silence. Every path that is
+	 *     not an affirmative, confident "outside the EEA" or an affirmative
+	 *     recorded accept resolves to DENIED: a missing `bhpConsentRegion`
+	 *     (the region gate did not print because the compact banner is
+	 *     inactive), a `showBanner` that is not exactly `false`, a thrown
+	 *     exception, `UTC`/Tor/resistFingerprinting, a malformed cookie. If a
+	 *     future edit makes any branch here return granted on uncertainty, it
+	 *     is wrong.
+	 *
+	 * ⚠ THE ONE DIVERGENCE FROM CONSENT MODE, DISCLOSED RATHER THAN BURIED.
+	 *   Google resolves its `region` from the visitor's IP, in the browser, at
+	 *   tag-fire time. Meta's fbq has no region concept at all, so this
+	 *   runtime must decide client-side, and the only client-side signal
+	 *   available is the timezone/locale heuristic from 1.19.309. The two
+	 *   therefore disagree for a VPN user: a US visitor on a European exit
+	 *   node keeps `America/*` (timezone is an OS setting a VPN does not
+	 *   change) and so gets the pixel, while Google sees the European exit IP
+	 *   and applies the EEA measurement default. ⭐ THE DIVERGENCE IS NOT
+	 *   SYMMETRIC AND THAT IS WHY IT IS ACCEPTABLE IN ONE DIRECTION ONLY: an
+	 *   ACTUAL European is protected by the heuristic's own bias, because
+	 *   `Europe/*` shows the banner and therefore denies the pixel. The
+	 *   population this over-serves is US-resident VPN users, not Europeans.
+	 *   The mitigations are the ones already in the tree — the language-subtag
+	 *   secondary signal, and the "Privacy Choices" footer link that reaches
+	 *   the full preferences UI from every page in every region.
+	 *
+	 * ⛔ NO STORAGE. Invariant 3 is untouched: this block reads two cookies
+	 *    and one already-published global. It writes nothing, and it records
+	 *    no choice on a visitor's behalf — a default is not a decision, and
+	 *    writing a cookie here would fabricate one.
+	 */
+
+	// The bridge's mirror cookie. Marketing consent for pixel purposes is
+	// `ad_storage`, which is what BHP_WPConsent_Bridge::toSignals() writes
+	// from the same `marketing` category this file reads.
+	function mirroredMarketing() {
+		var raw = readCookie( 'bhp_consent_state' );
+		if ( !raw ) { return null; }
+		try {
+			var signals = JSON.parse( raw );
+			if ( !signals || typeof signals !== 'object' ) { return null; }
+			return signals.ad_storage === 'granted';
+		} catch ( e ) { return null; }
+	}
+
+	function gpcActive() {
+		try {
+			return window.navigator && window.navigator.globalPrivacyControl === true;
+		} catch ( e ) {
+			return false;
+		}
+	}
+
+	// TRUE only for a confident, affirmative "outside the EEA/UK". Anything
+	// else -- absent global, non-boolean value, throw -- is ambiguous and
+	// resolves to false, which denies.
+	function regionAllowsDefault() {
+		try {
+			var r = window.bhpConsentRegion;
+			return !!r && r.showBanner === false;
+		} catch ( e ) {
+			return false;
+		}
+	}
+
+	// The single rule. Pure with respect to its argument so the QA harness can
+	// drive it with a fixture instead of asserting against a grep of this file.
+	//   prefs === undefined -> read the recorded choice from cookies
+	//   prefs === an object -> an explicit live choice (a banner save event)
+	function effectiveMarketingConsent( prefs ) {
+		if ( typeof prefs !== 'undefined' && prefs !== null ) {
+			return marketingAccepted( prefs );   // 1. explicit, live
+		}
+		var stored = storedPreferences();
+		if ( stored ) { return marketingAccepted( stored ); }   // 1. explicit, recorded
+		var mirrored = mirroredMarketing();
+		if ( mirrored !== null ) { return mirrored; }           // 1. explicit, mirrored
+		if ( gpcActive() ) { return false; }                    // 2. GPC lowers
+		return regionAllowsDefault();                           // 3. region default
+	}
+
 	// The ONLY place fbevents.js is ever requested. Before this runs there is
 	// no third-party script on the page.
 	//
@@ -870,6 +1035,20 @@ class BHP_Meta_Pixel {
 		if ( granted ) { return; }
 		granted = true;
 		loadSdk( function () {
+			/* ⛔ 1.19.312 — RE-CHECK, AND IT IS LOAD-BEARING. `loadSdk` is
+			 * ASYNCHRONOUS: the callback runs on the script's onload/onerror,
+			 * which can be hundreds of milliseconds after grant() returned.
+			 * Before this release a visitor could not revoke inside that
+			 * window, because the only way to reach revoke() was a banner
+			 * click and the banner had to be open before the SDK was ever
+			 * requested. From 1.19.312 the pixel starts granted for a US
+			 * visitor on page load, so "opt out while fbevents.js is still in
+			 * flight" is now an ORDINARY path rather than an impossible one —
+			 * and without this guard the opt-out would be silently undone by
+			 * a grant issued from a stale closure. THIS IS THE LINE THAT MAKES
+			 * "Privacy Choices genuinely revokes the pixel" true during the
+			 * load window as well as after it. */
+			if ( !granted ) { return; }
 			window.fbq( 'consent', 'grant' );
 			flushQueueCookie();
 		} );
@@ -881,8 +1060,12 @@ class BHP_Meta_Pixel {
 		window.fbq( 'consent', 'revoke' );
 	}
 
+	/* 1.19.312. `prefs` is now optional. Called with an object it is an
+	 * explicit live choice (a banner save/update event); called with nothing
+	 * it means "resolve the effective state from cookies, GPC and region",
+	 * which is what the on-load wiring at the bottom of this file does. */
 	function applyPreferences( prefs ) {
-		if ( marketingAccepted( prefs ) ) { grant(); } else { revoke(); }
+		if ( effectiveMarketingConsent( prefs ) ) { grant(); } else { revoke(); }
 	}
 
 	/* ---------- event emission ---------- */
@@ -1003,7 +1186,19 @@ class BHP_Meta_Pixel {
 
 	/* ---------- wiring ---------- */
 
-	applyPreferences( storedPreferences() );
+	/* ⭐ 1.19.312. ON LOAD, resolve the EFFECTIVE state rather than the banner
+	 * cookie. The superseded call was `applyPreferences( storedPreferences() )`
+	 * — passing null when no cookie existed, which `marketingAccepted( null )`
+	 * read as a refusal. That is why an EEA-only banner produced a dead pixel
+	 * for every US visitor. Passing NOTHING now means "work it out", and the
+	 * cookie is still the first thing effectiveMarketingConsent() looks at, so
+	 * a visitor who has actually chosen is unaffected in either direction. */
+	applyPreferences();
+
+	/* ON CHOICE: a live banner interaction is an explicit choice and is passed
+	 * through as one, so it outranks region and GPC exactly as the recorded
+	 * cookie does. `{}` for a save with no detail resolves to denied, which is
+	 * the fail-safe direction. */
 	window.addEventListener( 'wpconsent_consent_saved', function ( e ) { applyPreferences( e.detail || {} ); } );
 	window.addEventListener( 'wpconsent_consent_updated', function ( e ) { applyPreferences( e.detail || {} ); } );
 
@@ -1013,7 +1208,23 @@ class BHP_Meta_Pixel {
 		queue: function () { return ( window.fbq && window.fbq.queue ) || []; },
 		// 1.19.253. The Lead actually emitted on this page load, or null. QA
 		// reads this rather than reconstructing intent from the raw queue.
-		lead: function () { return NS.lead || null; }
+		lead: function () { return NS.lead || null; },
+		/* ⭐ 1.19.312. The consent inputs and the resolved answer, so QA can
+		 * observe WHY a visitor was granted or denied instead of inferring it
+		 * from the outcome — and so the opt-out path can be proven by
+		 * observation rather than by reading this file. Read-only: calling any
+		 * of these changes no state and emits no event. */
+		consent: function () {
+			return {
+				effective:     effectiveMarketingConsent(),
+				storedChoice:  storedPreferences(),
+				mirrored:      mirroredMarketing(),
+				gpc:           gpcActive(),
+				regionDefault: regionAllowsDefault(),
+				regionKnown:   !!window.bhpConsentRegion,
+				timeZone:      ( window.bhpConsentRegion && window.bhpConsentRegion.timeZone ) || ''
+			};
+		}
 	};
 })();
 JS;

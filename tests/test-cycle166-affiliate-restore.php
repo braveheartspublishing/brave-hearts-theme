@@ -83,8 +83,12 @@ function bhp_aff_inventory($html) {
  */
 $expected = [
     28 => [
+        // 4uzvoYn (Captain Underpants) removed 2026-08-29: its entry and
+        // button were deleted from post 28 by founder ruling, carrier item
+        // 464 (A2 remake approved in full). Total drops 12 -> 11. Fix
+        // approved by Andrew with the CYCLE169 publish word.
         '3PFKexe' => 1, '3RlKS3x' => 1, '42RbPP0' => 1, '4mptuGv' => 3,
-        '4svChYL' => 3, '4urr79a' => 1, '4uzvoYn' => 1, '4wPVjfQ' => 1,
+        '4svChYL' => 3, '4urr79a' => 1, '4wPVjfQ' => 1,
     ],
     88 => [
         '3QpnT7d' => 1, '4cJ8BkZ' => 1, '4mptuGv' => 1, '4svChYL' => 2,

@@ -1020,3 +1020,137 @@
 		max-width: 100%;
 	}
 }
+
+/* ==================================================================
+   ⭐⭐ 1.19.314 (2026-08-28, `CYCLE168-LD-RETAILER-BATCH`) — THE TIGHT
+      HERO, THE ORDERING LINK, THE IMPRINT LINE AND THE SELL SHEET.
+   ==================================================================
+
+   ⭐⭐ WHY A MODIFIER CLASS AND NOT AN EDIT TO THE SHARED HERO RULES.
+      Andrew Signore, 2026-08-28, carrier item 366, verbatim:
+
+        "So the CTA is not above the fold and there is too much space
+         between nav bar and headline and books photos on that page"
+
+      ⛔ "ON THAT PAGE" IS LOAD-BEARING. `.audience-landing-hero__grid`
+         is the hero of FIVE audience landing pages. Editing its
+         padding to satisfy a complaint about ONE of them would
+         restyle four pages nobody asked about, and would do it
+         invisibly — the kind of change that is only discovered weeks
+         later by somebody wondering why the educators page moved.
+      ⭐ So every value below hangs off `.audience-landing-hero--tight`,
+        which appears on exactly one template. Removing the class
+        reverts the page to 1.19.313 spacing with no other effect.
+
+   ⭐⭐ MEASURED BEFORE AND AFTER IN A REAL BROWSER, `innerWidth`
+      ASSERTED IN THE SAME READ (staging, 2026-08-28). The BEFORE
+      column is 1.19.313 as it actually rendered, not as it was
+      believed to render:
+
+        DESKTOP 1440x900     before -> after
+          nav bottom            80  ->   80   (untouched)
+          hero padding-top      72  ->   40
+          badge top            152  ->  120
+          h1 top               215  ->  171
+          primary CTA top      606  ->  ~540
+          grid column gap       56  ->   40
+
+        MOBILE 375x812       before -> after
+          nav bottom            93  ->   93   (untouched)
+          hero padding-top    25.6  ->   12
+          badge top            118  ->  105
+          h1 top               182  ->  157
+          primary CTA top      500  ->  ~452
+          row gap (text->art)   56  ->   32   <- "headline and books photos"
+
+   ⛔ NOTHING BUT SPACING MOVES. No colour, no font size, no font
+      family, no radius, no shadow, no border, no transition and no
+      breakpoint is changed by this block. The h1 clamp is deliberately
+      NOT reduced: shrinking the headline would "fix" the fold by
+      making the page's own first sentence quieter, which is a
+      different decision and one nobody asked for.
+   ================================================================== */
+
+.audience-landing-hero--tight .audience-landing-hero__grid {
+	padding-block: clamp(1.6rem, 3vw, 2.5rem) clamp(2.4rem, 4.5vw, 4rem);
+	gap: 40px;
+}
+.audience-landing-hero--tight .audience-landing-hero__badge {
+	margin-bottom: 0;
+}
+.audience-landing .audience-landing-hero--tight h1 {
+	margin-top: 10px; /* was 22px on the shared rule */
+}
+.audience-landing-hero--tight p.audience-landing__lead {
+	margin-top: 14px; /* was 24px */
+}
+.audience-landing-hero--tight .audience-landing-hero__ctas {
+	margin-top: 20px; /* was 32px */
+}
+.audience-landing-hero--tight .audience-landing-hero__proof {
+	margin-top: 20px; /* was 28px */
+}
+
+/* ⭐ THE DEMOTED WHOLESALE-INQUIRY ROUTE. A text link, not a third
+      button: three stacked buttons on a 375px viewport push the last
+      one past the fold, which is the defect item 366 reports. The
+      route itself is not removed — see the note in the template. */
+.audience-landing-hero__subcta {
+	margin: 14px 0 0;
+	font-size: 15px;
+	line-height: 1.5;
+}
+.audience-landing-hero__subcta a {
+	color: var(--al-text-muted);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.audience-landing-hero__subcta a:hover,
+.audience-landing-hero__subcta a:focus-visible {
+	color: var(--al-forest, #1f3d29);
+}
+
+/* ⭐ THE `ipage` LINK INSIDE THE ORDERING SENTENCE (funnel review D1). It is
+      underlined rather than merely coloured, on purpose: a trade page
+      has few links and colour alone is not an affordance at this
+      contrast. */
+.retailer-ipage-link {
+	color: var(--al-forest, #1f3d29);
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+/* ⭐ THE IMPRINT LINE (item 365). Quiet, factual, and typographically
+      a caption rather than a claim — it is a search key, not an offer. */
+.retailer-imprint {
+	margin: 14px 0 0;
+	font-size: 15px;
+	color: var(--al-text-muted);
+	letter-spacing: .01em;
+}
+
+/* ⭐ THE UNGATED SELL SHEET, in the ordering block. The note beside the
+      button says "No sign-up" because the absence of a gate is the
+      thing a trade buyer needs told (funnel review §3.1 Fix 2). */
+.retailer-sellsheet-inline {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 16px;
+	margin: 22px 0 0;
+}
+.retailer-sellsheet-inline__note {
+	font-size: 14px;
+	color: var(--al-text-muted);
+}
+
+@media (max-width: 640px) {
+	.audience-landing-hero--tight .audience-landing-hero__grid {
+		padding-top: 12px;
+		gap: 32px;
+	}
+	.retailer-sellsheet-inline .btn {
+		flex: 1 1 100%;
+	}
+}

@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.306
+Version: 1.19.339
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -116,6 +116,15 @@ Tags: woocommerce, children, books, education
   --color-gold-deep: #805800;
   --color-gold-rgb: 217, 164, 95;
   --color-ivory: #fffaf0;
+  /* ⭐ 1.19.337 (CYCLE170-LD-MICRO) — the RGB triple for `--color-ivory`, added
+     so a gradient can fade a photograph INTO the ivory ground with the token
+     rather than a re-typed hex. ⛔ IT IS `#fffaf0` DECOMPOSED AND NOTHING ELSE:
+     ff = 255, fa = 250, f0 = 240. It introduces no new colour, changes no
+     existing declaration, and follows the exact pattern already used by
+     `--color-gold-rgb`, `--color-navy-rgb`, `--color-forest-rgb`,
+     `--color-jungle-rgb` and `--color-earth-rgb` above and below it.
+     ⚠ IF `--color-ivory` EVER CHANGES, CHANGE THIS WITH IT. */
+  --color-ivory-rgb: 255, 250, 240;
   --color-parchment: #f1e7d2;
   --color-jungle: #12271d;
   --color-jungle-rgb: 18, 39, 29;
@@ -661,8 +670,24 @@ body.admin-bar .site-header { top: 32px; }
  *       `@container (max-width: 1236px)` override, so nothing is restated here.
  *       That inheritance is the whole point: the pseudo-element label this
  *       replaces sat OUTSIDE it and had no letter-spacing at all. */
+/* ⭐⭐ 1.19.337 (2026-08-30, CYCLE170-LD-MICRO) — READ-ALOUDS JOINS THE SAME
+ *     SELECTOR, FOR THE SAME REASON THE 1.19.303 NOTE ABOVE GIVES.
+ *     Founder carrier item 547: "lets remove the about and put read alouds
+ *     stacked there - also this needs to always be uniform the font the
+ *     style etc".
+ *     ⛔ A THIRD RULE WITH THE SAME DECLARATIONS WOULD SATISFY THE SCREENSHOT
+ *       AND FAIL THE INSTRUCTION. "always be uniform" is a statement about
+ *       sameness OVER TIME, and three copies of a rule drift the first time
+ *       somebody edits one. Sharing the selector means this item cannot
+ *       diverge from the two it was told to match.
+ *     ⭐ Family, size, weight, tracking, casing, colour and hover are ALL
+ *       inherited from `.site-nav a` above and from the
+ *       `@container (max-width: 1236px)` override. Nothing is restated here,
+ *       and `tests/test-cycle170-micro.php` §1 asserts that no `.site-nav`
+ *       item-level rule anywhere in this sheet declares any of them. */
 .site-nav .menu-item--adventure-books > a,
-.site-nav .menu-item--free-resources > a {
+.site-nav .menu-item--free-resources > a,
+.site-nav .menu-item--read-alouds > a {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -845,8 +870,14 @@ body.admin-bar .site-header { top: 32px; }
    *     ⚠ REPORTED TO THE CHIEF OF STAFF AS AN INTERPRETATION CALL, not
    *       silently made. If the founder wants it stacked on the phone as well,
    *       it is this one selector and Adventure Books should move with it. */
+  /* ⭐ 1.19.337 — READ-ALOUDS TAKES THE IDENTICAL TREATMENT AT BOTH WIDTHS.
+   *   Item 547's own words are "always be uniform", so the third stacked item
+   *   follows the two above it here as well: stacked on desktop, single line
+   *   in the mobile dropdown. ⛔ Making this one item the exception on a phone
+   *   is precisely the "odd item out" failure the 1.19.303 note above rejected. */
   .site-nav .menu-item--adventure-books > a,
-  .site-nav .menu-item--free-resources > a { flex-direction: row; gap: .35em; }
+  .site-nav .menu-item--free-resources > a,
+  .site-nav .menu-item--read-alouds > a { flex-direction: row; gap: .35em; }
   /* Same "a.site-nav__cta" specificity as the base hide rule above (0,2,1)
    * -- a bare .site-nav__cta here would tie with .site-nav a's own
    * padding/font-size rule and lose to the base hide rule outside this
@@ -4215,6 +4246,25 @@ body:not(.home) {
   --color-jungle: var(--expedition-jungle);
   --color-parchment: var(--expedition-parchment);
   --color-ivory: var(--expedition-parchment-light);
+  /* ⛔⛔ THE COMPANION TOKEN, REMAPPED WITH ITS PARENT — 1.19.338
+        (`CYCLE170-LD-WALKFIX`, patch 2). `--color-ivory-rgb` (~line 127) is the
+        channel-triplet twin of `--color-ivory`, and this block had been
+        remapping the parent WITHOUT the twin since the expedition palette
+        landed. Root ships `255, 250, 240` (#fffaf0); this block's ivory is
+        `--expedition-parchment-light` = **#f8f3e9 = 248, 243, 233**.
+     ⛔ THE CONSEQUENCE THE WALK MEASURED: every `rgba(var(--color-ivory-rgb), …)`
+        stop on an interior page faded toward the WRONG cream — 7/7/7 channels
+        too bright — so the Positivity photograph's gradient never met the card
+        it sits on and left a visible seam.
+     ⭐ BLAST RADIUS IS EXACTLY ONE PHOTOGRAPH. `--color-ivory-rgb` has eight
+        consumers in this entire stylesheet and all eight are the two Positivity
+        photo gradients (~lines 15999–16021). Verified by grep before the edit,
+        not assumed. Nothing else on any interior page can move.
+     ⚠ The triplet is hand-kept in sync with `--expedition-parchment-light`
+        because CSS cannot derive channels from a hex custom property. If that
+        hex ever changes, THIS LINE MUST CHANGE WITH IT — `test-cycle170-walkfix`
+        §2 asserts the pair. */
+  --color-ivory-rgb: 248, 243, 233;
   --color-accent: var(--expedition-gold);
   --color-focus: var(--expedition-focus);
   --color-text: #342f28;
@@ -10527,6 +10577,151 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
   .author-visits-card__cta .btn { width: auto; }
 }
 
+/* ==========================================================================
+   AUTHOR VISITS — THE TRUST COLUMN, THE GALLERY AND THE OCTOBER CTA
+   1.19.319 (2026-08-29, CYCLE169-LD-READALOUD-TRUST-GALLERY)
+   ==========================================================================
+   Andrew Signore, carrier item 432: "putting a column for past read alouds on
+   the read-aloud site- I want more trust on that and lets put a picture gallery
+   of the read alouds on that page too."
+
+   THE ONE RULE THIS BLOCK MUST NOT BREAK. The page above it is deliberately
+   single-column at every width because it is reached from PRINTED QR CODES and
+   the phone reader is the primary reader. So the split below 64rem does not
+   exist at all: `author-visits-columns` is a plain block, the two columns stack,
+   and upcoming comes first in the DOM and therefore first on screen. Nothing
+   here uses `order`, `row-reverse` or absolute positioning, so the reading order
+   a screen reader announces is the order a sighted reader sees, at every width.
+
+   64rem, not 40rem, is the split point. At 40rem-63rem the container is still
+   narrow enough that two columns would give each about 18rem of text, which
+   breaks the school names onto three lines and makes the past notes unreadable.
+
+   THE GALLERY IS `auto-fill` + `minmax`, NOT A FIXED COLUMN COUNT. The three
+   Adams photographs have wildly different aspect ratios (1200x675, 585x756,
+   1000x261 -- a banner, a portrait and a letterbox strip), because they are
+   crops of real phone photographs rather than a designed set. A fixed grid would
+   letterbox or crop them; `align-items: start` plus intrinsic height lets each
+   one keep its own shape. `width`/`height` on the <img> reserves the box so the
+   CTA below does not jump as they lazy-load.
+   ========================================================================== */
+.author-visits-columns { display: block; }
+
+.author-visits-col--past { margin-top: var(--space-10); }
+
+.author-visits-past {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* A past item is a QUIETER card than an upcoming one, on purpose. It is a
+   record, not an offer: no accent border, no button, nothing to act on. */
+.author-visits-past__item {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.author-visits-past__school {
+  margin: 0 0 var(--space-2);
+  font-size: 1.05rem;
+  line-height: var(--leading-tight);
+}
+
+.author-visits-past__when {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-ui);
+  color: var(--color-text-muted);
+}
+
+.author-visits-past__note {
+  margin: 0 0 var(--space-3);
+  line-height: 1.55;
+}
+.author-visits-past__note:last-child { margin-bottom: 0; }
+
+.author-visits-past__recap { margin: 0; }
+.author-visits-past__recap a {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-ui);
+}
+
+/* ---- The gallery ---- */
+.author-visits-gallery {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.author-visits-gallery__figure {
+  margin: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* `height: auto` is what keeps the intrinsic aspect ratio once the width/height
+   attributes have done their job of reserving the box. Without it the attribute
+   height wins and every photograph is distorted. */
+.author-visits-gallery__img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.author-visits-gallery__caption {
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+/* ---- The October booking CTA ---- */
+.author-visits-booking__inner { max-width: 60ch; }
+.author-visits-booking__title { margin: 0 0 var(--space-3); font-size: 1.35rem; line-height: var(--leading-tight); }
+.author-visits-booking__lead { margin: 0 0 var(--space-6); line-height: 1.55; }
+.author-visits-booking__cta { margin: 0 0 var(--space-3); }
+.author-visits-booking__cta .btn { width: 100%; }
+.author-visits-booking__address {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 40rem) {
+  .author-visits-booking__cta .btn { width: auto; }
+  .author-visits-gallery { grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+}
+
+@media (min-width: 64rem) {
+  .author-visits-columns--split {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--space-10);
+    align-items: start;
+  }
+  /* The heading of the right-hand column must sit on the same baseline as the
+     left one, so the margin that separated them when stacked is removed. */
+  .author-visits-columns--split .author-visits-col--past { margin-top: 0; }
+}
+
 /* ============================================================================
    CYCLE164-LD-HOMEPAGE-WARMTH (2026-08-18, theme 1.19.241)
    The Homepage Warmth Board, built. HOMEPAGE ONLY.
@@ -13078,4 +13273,3169 @@ body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
   .free-resources-jump__list {
     gap: var(--space-1) var(--space-4);
   }
+}
+
+/* ============================================================================
+   READ-ALOUD FUNNEL — /gallery/ (staging page 6087)
+   1.19.325 (2026-08-29, CYCLE169-LD-READALOUD-FUNNEL)
+   ----------------------------------------------------------------------------
+   Andrew rejected the 1.19.319 build of this page as "a photo wall, not a
+   funnel" (carrier item 480). This block dresses the rebuild. Read-alouds are
+   currently FREE (item 481) and NO PRICE APPEARS ANYWHERE BELOW.
+
+   ⛔ EVERY SELECTOR IS SCOPED TO `.readaloud-funnel` OR `.bhp-copy-placeholder`.
+      This sheet is sitewide and nothing here may leak onto another page. The
+      gallery itself reuses the SHIPPED `.author-visits-gallery` rules further
+      up this file and is not restyled here — the photographs are approved and
+      approved things are not redesigned by a lane that was asked for a funnel.
+   ========================================================================= */
+
+/* ---- The hero. Its whole job is to put the CTA above the fold. ----
+   ⛔ THE PADDING IS DELIBERATELY SMALLER THAN THE SITEWIDE SECTION PADDING, and
+      the headline is deliberately smaller than `--text-hero`. Both exist to
+      satisfy a MEASURED founder requirement: the "Book a FREE read-aloud"
+      button must be visible without scrolling at 1440 AND at 375, under a
+      sticky ~93px header. Restore the sitewide values here and that breaks.
+   ⛔ The specificity is `body:not(.home) .readaloud-funnel__hero.section`
+      because `body:not(.home) .section` (line ~4400) would otherwise win. */
+body:not(.home) .readaloud-funnel__hero.section,
+.readaloud-funnel__hero.section {
+  padding-block: clamp(2rem, 4.5vw, 3.5rem);
+}
+
+.readaloud-funnel__hero-title {
+  /* Smaller than --text-hero on purpose. See the note above. */
+  font-size: clamp(2.25rem, 5.5vw, 3.75rem);
+  margin: 0 0 var(--space-4);
+}
+
+/* ⭐ THE EYEBROW IS GOLD ON THIS HERO — 1.19.338 (`CYCLE170-LD-WALKFIX`, patch 1).
+      MEASURED by the aesthetic walk `CYCLE170-DC-WALK-R2`: the inherited eyebrow
+      colour on this `.section--dark` hero resolved to **2.91:1** against the hero
+      ground — under AA for any text size. Gold takes it to **8.36:1**.
+   ⛔ It is the SAME move `.interior-hero .component-heading__eyebrow` already
+      makes (~line 4323, `var(--expedition-gold)`), so this is the house pattern
+      reused, not a new colour introduced. `--color-gold` and `--expedition-gold`
+      are the same value (#D9A45F); this block uses `--color-gold` because the
+      read-aloud funnel styles the rest of its hero from the `--color-*` tier.
+   ⛔ Colour only. Not one character of copy is touched.
+
+   ⛔⛔ THE SPECIFICITY PREFIX IS LOAD-BEARING AND IT IS NOT DECORATION.
+      The walk's patch was written as the bare `.readaloud-funnel__hero
+      .component-heading__eyebrow` — (0,2,0). `body:not(.home)
+      .component-heading__eyebrow` (~line 4459) is **(0,2,1)** — `:not()`
+      carries its argument's specificity — and it declares
+      `color: var(--color-gold-deep)` (#805800). ⛔ IT WINS, AND THE PATCH DID
+      NOTHING. MEASURED on staging at 1.19.338 build 1, `innerWidth` asserted
+      1440: the eyebrow still computed `rgb(128, 88, 0)` at **2.91:1** — the
+      walk's own pre-patch number, unmoved.
+   ⭐ THIS FILE ALREADY WARNED ABOUT EXACTLY THIS, EIGHT THOUSAND LINES UP, ON
+      THIS SAME COMPONENT: *"The specificity is `body:not(.home)
+      .readaloud-funnel__hero.section` because `body:not(.home) .section` would
+      otherwise win."* Same page, same remap tier, same trap. The prefixed form
+      is (0,3,1) and wins; the bare form is kept beside it so the rule still
+      holds if this component is ever used on the home page. */
+body:not(.home) .readaloud-funnel__hero .component-heading__eyebrow,
+.readaloud-funnel__hero .component-heading__eyebrow {
+  margin-bottom: var(--space-2);
+  color: var(--color-gold);
+}
+
+.readaloud-funnel__hero-lead {
+  margin: 0 0 var(--space-6);
+  max-width: 46ch;
+}
+
+/* The button sits ABOVE the supporting line, so the note carries no margin
+   that could push the button down the screen. */
+.readaloud-funnel__hero-cta { margin: 0 0 var(--space-3); }
+
+.readaloud-funnel__hero-note {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-sky);
+}
+
+/* Full-width tap target on a phone, natural width from 40rem up — the same
+   shape the shipped booking CTA on /author-visits/ already uses. */
+.readaloud-funnel__btn { width: 100%; }
+
+.readaloud-funnel__cta { margin: var(--space-6) 0 var(--space-3); }
+
+.readaloud-funnel__address {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* ⚠ `--space-5` DOES NOT EXIST in this design system (the scale is 1,2,3,4,6,
+   8,10,12,16,20,24,32). Reaching for it here resolved to nothing and the suite
+   caught it — the same trap the 1.19.319 block hit. `--space-6` is the real
+   token. */
+.readaloud-funnel__copy { margin: 0 0 var(--space-6); line-height: 1.6; }
+
+.readaloud-funnel__fine-print {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+@media (min-width: 40rem) {
+  .readaloud-funnel__btn { width: auto; }
+}
+
+/* ---- ⛔⛔ THE PENDING-COPY PLACEHOLDER. IT IS UGLY ON PURPOSE. ----
+   Hazard stripes, a heavy dashed red rule, monospace, shouting capitals.
+   Nobody — Andrew included — should be able to mistake one of these for
+   approved copy, because a placeholder that looks like finished design is
+   exactly how unapproved words reach a customer. If a later pass "tidies"
+   this styling, it removes the only visual signal that the page is unfinished.
+   ⛔ The colours are literals rather than brand tokens ON PURPOSE. This block
+      must look like it does not belong to the brand, because it does not. */
+.bhp-copy-placeholder {
+  margin: 0 0 var(--space-6);
+  padding: 14px 16px;
+  border: 3px dashed #C62828;
+  background-color: #FFF6D6;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(198, 40, 40, 0.14) 0 12px,
+    transparent 12px 24px
+  );
+  color: #7A1010;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.bhp-copy-placeholder__flag {
+  margin: 0 0 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.bhp-copy-placeholder__label {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.bhp-copy-placeholder__spec {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ---- ⛔⛔ THE PRICING SLOT. STRUCTURAL, AND OFF. ----
+   There is no price for a read-aloud (item 481) and this slot carries no
+   figure, no currency symbol and no fee word. It is hidden two ways —
+   the `hidden` attribute in the template and this rule — so that removing
+   one of them by accident does not put an empty "Booking details" heading in
+   front of a teacher. */
+.readaloud-funnel__pricing[hidden],
+.readaloud-funnel__pricing[data-readaloud-pricing="off"] {
+  display: none !important;
+}
+
+.readaloud-funnel__pricing[data-readaloud-pricing="on"] {
+  display: block;
+  padding-block: var(--section-space);
+}
+
+/* ============================================================
+   THE READ-ALOUD REQUEST SCHEDULER — 1.19.326
+   (2026-08-30, CYCLE170-LD-SCHOOL-READALOUD-MERGE)
+   ============================================================
+   Andrew Signore, 2026-08-30: "a self created calendar schedule that shows
+   morning or Afternoon option on the day they want. That way I can do a
+   morning visit or an afternoon visit ans possibly 2 in one day."
+
+   ⛔ EVERY TAP TARGET IN HERE IS SIZED, NOT LEFT TO THE BROWSER. The primary
+      reader of this form is a teacher on a phone, and "finger-friendly" is a
+      founder requirement rather than a preference. `--bhp-sched-touch` is 48px,
+      above the 44px floor, and it is a variable so a later pass cannot shrink
+      one control and leave the others behind. If this number goes down, the
+      requirement quietly breaks.
+
+   ⛔ THE DAY TILES AND THE SLOT TOGGLES ARE REAL RADIO AND CHECKBOX INPUTS
+      WITH A STYLED label SIBLING. The input is moved off-screen, never
+      `display:none` and never `visibility:hidden` — both of those take the
+      control out of the accessibility tree and out of the keyboard tab order,
+      which would leave the picker unusable by keyboard and unannounced by a
+      screen reader. `:focus-visible` on the input paints a ring on the label,
+      so keyboard focus is visible even though the input itself is not.
+
+   ⛔ NO SCRIPT IS INVOLVED IN ANY STATE BELOW. Checked, hover and focus are all
+      CSS. The section works with JavaScript off.
+
+   ⚠ THE SPACING SCALE HAS NO `--space-5`. It runs 1,2,3,4,6,8,10,12,16,20,24,32.
+     A rule referencing `--space-5` resolves to nothing and silently collapses.
+     That exact defect shipped at 1.19.325 and only the test suite caught it. */
+
+.readaloud-sched {
+  --bhp-sched-touch: 48px;
+}
+
+.readaloud-sched__lead {
+  max-width: 60ch;
+  margin: 0 0 var(--space-6);
+  color: var(--color-text);
+}
+
+/* ---- The status banner shown after the redirect. ----
+   ⛔ Colour is never the only signal: the title text itself states the outcome,
+      because a red border means nothing to a reader who cannot see it. */
+.readaloud-sched__status {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-4);
+  border-left: 4px solid var(--color-primary);
+  background-color: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+}
+
+.readaloud-sched__status--error {
+  border-left-color: #C62828;
+}
+
+.readaloud-sched__status-title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+.readaloud-sched__status-text {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* ---- The honeypot. ----
+   ⛔ OFF-SCREEN, NOT `display:none`. A bot that parses CSS skips a hidden
+      field; one that fills every input it can find still fills this. It is
+      also `aria-hidden` and `tabindex="-1"` in the markup, so no real visitor
+      and no assistive technology can reach it by accident. */
+.readaloud-sched__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.readaloud-sched__fieldset {
+  margin: 0 0 var(--space-8);
+  padding: 0;
+  border: 0;
+}
+
+.readaloud-sched__legend {
+  padding: 0;
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.readaloud-sched__hint {
+  margin: 0 0 var(--space-4);
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.readaloud-sched__month {
+  margin: 0 0 var(--space-6);
+}
+
+.readaloud-sched__month-label {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* ---- The day grid. ----
+   ⭐ `auto-fill` with a `--bhp-sched-touch` minimum means the row count adapts
+      to the width instead of being declared per breakpoint, so there is no
+      viewport at which a tile is narrower than a fingertip.
+
+   ⚠ SUPERSEDED AT 1.19.331 (CYCLE170-LD-TRIPLE, item 498) AND KEPT DELIBERATELY.
+     Nothing emits `.readaloud-sched__days` any more — the flat chip list it laid
+     out was replaced by the real month grid further down this section
+     (`.readaloud-sched__grid`). It is preserved rather than deleted for one
+     honest reason: a page served from a cache built before the deploy still
+     carries the old markup, and this rule is what keeps that page laid out
+     instead of collapsed. It can be removed once the caches have turned over.
+     `.readaloud-sched__day` below is NOT superseded — the new grid reuses that
+     exact class, which is why the selected, hover and focus states did not have
+     to be written twice. */
+.readaloud-sched__days {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--bhp-sched-touch), 1fr));
+  gap: var(--space-2);
+}
+
+/* ⛔ OFF-SCREEN, NOT HIDDEN. See the block comment at the top of this section. */
+.readaloud-sched__day-input,
+.readaloud-sched__slot-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.readaloud-sched__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--bhp-sched-touch);
+  min-height: var(--bhp-sched-touch);
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  line-height: 1.1;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.readaloud-sched__day-dow {
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.readaloud-sched__day-num {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.readaloud-sched__day:hover {
+  border-color: var(--color-primary);
+}
+
+.readaloud-sched__day-input:checked + .readaloud-sched__day {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.readaloud-sched__day-input:checked + .readaloud-sched__day .readaloud-sched__day-dow {
+  color: var(--color-white);
+}
+
+/* ⭐ Keyboard focus is visible on the LABEL even though the input is off-screen. */
+.readaloud-sched__day-input:focus-visible + .readaloud-sched__day,
+.readaloud-sched__slot-input:focus-visible + .readaloud-sched__slot {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   THE MONTH GRID — 1.19.331 (CYCLE170-LD-TRIPLE, carrier item 498)
+
+   Andrew Signore: "look like a calendar that you can scroll by month."
+   RELAYED THROUGH GANDALF, NOT WITNESSED BY THIS BUILD.
+
+   EVERY SELECTOR HERE IS SCOPED UNDER `.readaloud-sched__`. Nothing in this
+   block can reach another page or another component.
+
+   THE TOUCH MINIMUM IS ARITHMETIC, NOT A HOPE. A month grid is seven fixed
+   columns, so unlike the `auto-fill` chip grid it replaces, the column width is
+   decided by the container and cannot reflow to stay finger-sized. Measured on
+   staging: `.container--content` renders 343px wide at a 375px viewport, so a
+   column is 343 / 7 = 49px before gaps. `min-height` on the day pill holds the
+   vertical axis at the same 44px minimum. If a later pass adds horizontal
+   padding to the container, THAT is the change that would break the founder's
+   "finger-friendly" requirement — not this block.
+
+   A DEAD SQUARE IS A `<span>`, NOT A DISABLED INPUT, so there is no
+   `:disabled` state to style here and no `+ label` sibling selector to write:
+   `.readaloud-sched__day--off` IS the element. See the template's block comment
+   for why a submittable control is never printed for an unofferable day.
+   ========================================================================== */
+
+.readaloud-sched__cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+
+/* The one live-region month title, shown when the pager is running. Without the
+   script it stays empty-looking beside the arrows, which is why each month
+   keeps its own `.readaloud-sched__month-label` heading in the DOM. */
+.readaloud-sched__cal-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* Same round control the photo carousel's arrows are, at the same 44px touch
+   minimum, so the two components on this page do not present two different
+   idioms for "step to the next thing". */
+.readaloud-sched__cal-arrow {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--color-navy);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.readaloud-sched__cal-arrow:hover { border-color: var(--color-primary); }
+
+.readaloud-sched__cal-arrow:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* DISABLED, NOT HIDDEN, at the first and last month — the same rule the photo
+   carousel states: a control that vanishes moves the one beside it. */
+.readaloud-sched__cal-arrow[disabled] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ⭐ WITH THE PAGER RUNNING, the one live-region title above names the month, so
+      the per-month heading would be the same words twice in a row. It is hidden
+      ONLY under `[data-bhp-cal-ready]`, which the script sets — so with the
+      script absent every month keeps its own visible heading and the stack is
+      readable. */
+[data-bhp-cal-ready] .readaloud-sched__month-label { display: none; }
+
+/* ⛔⛔ THE `table.` QUALIFIER IS LOAD-BEARING AND WAS ADDED AT 1.19.333 TO FIX A
+      LIVE DEFECT. DO NOT "SIMPLIFY" IT AWAY.
+
+   `.readaloud-sched__grid` IS DECLARED TWICE IN THIS FILE FOR TWO DIFFERENT
+   ELEMENTS: this calendar `<table>`, and the "Who and where" `<div>` about 130
+   lines below, which sets `display: grid`. The div's rule is LATER in source
+   order, so at equal specificity it won — and it won on the TABLE as well.
+
+   VERIFIED LIVE ON STAGING 1.19.332, 2026-08-30, by reading computed styles in
+   a real browser rather than by reading this file:
+     table.readaloud-sched__grid  display              = "grid"   (not "table")
+                                  grid-template-columns = "350px"  (ONE column)
+     thead                        display              = "block"
+     th                           width                = 14.3px
+
+   ⭐ SO THE "CALENDAR" HAS NEVER RENDERED AS A SEVEN-COLUMN GRID SINCE 1.19.331
+      SHIPPED IT. `table-layout: fixed` and `border-collapse` were both inert on
+      a grid container, the weekday header collapsed to a 14px stripe, and the
+      day squares stacked. ⛔ THIS IS THE STRUCTURAL CAUSE OF THE FOUNDER'S
+      "make it look like a wall calendar" note (item 518) — the restyle below
+      would have been painted onto a broken layout without this line.
+
+   ⛔ FIXED BY ELEMENT-QUALIFYING BOTH RULES, NOT BY RENAMING THE CLASS. A
+      rename would have changed the rendered markup and invalidated every
+      shipped assertion that reads `.readaloud-sched__grid`; qualifying changes
+      no HTML at all and each selector now matches exactly the element it was
+      written for. */
+table.readaloud-sched__grid {
+  width: 100%;
+  border-collapse: collapse;
+  /* Seven equal columns regardless of content width, so a two-digit day cannot
+     make its column wider than the rest and skew the grid. */
+  table-layout: fixed;
+}
+
+.readaloud-sched__dow {
+  padding: 0 0 var(--space-2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.readaloud-sched__cell {
+  padding: 2px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* The padding squares before the 1st and after the last. They hold the column
+   open so the weekday alignment is real, and they are `aria-hidden`. */
+.readaloud-sched__pad {
+  display: block;
+  min-height: var(--bhp-sched-touch);
+}
+
+/* ⭐ THE GRID REUSES `.readaloud-sched__day` rather than declaring a second day
+      pill, so the checked, hover and focus states written for the flat list
+      apply here unchanged. Only the two overrides a square needs are stated: it
+      is one line of text rather than two stacked, and it fills its column. */
+.readaloud-sched__grid .readaloud-sched__day {
+  width: 100%;
+  flex-direction: row;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* ---- A day that cannot be asked for --------------------------------------
+   ⛔ NOT COLOUR ALONE. The muted fill is the obvious signal, but colour is not
+      available to every reader: the pill also loses its border and its pointer
+      cursor, and the template gives it `aria-disabled` plus a spoken reason
+      ("Not a school day", "Too soon to ask for"). Three independent channels. */
+.readaloud-sched__day--off {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+  opacity: 0.55;
+  cursor: default;
+  font-weight: 400;
+}
+
+/* ⛔ AND IT MUST NOT ANSWER TO THE POINTER. Without this the shared
+      `.readaloud-sched__day:hover` rule would light a dead square's border on
+      hover and promise something that cannot be clicked. */
+.readaloud-sched__day--off:hover {
+  border-color: transparent;
+}
+
+/* Weekends read as structurally different from a weekday that merely falls
+   outside the window — the columns stay legible as columns. */
+.readaloud-sched__day--weekend {
+  opacity: 0.4;
+}
+
+.readaloud-sched__cal-summary {
+  margin: var(--space-3) 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ---- Phone ---------------------------------------------------------------
+   At 375 the container is 343px, so a column is 49px and the pill's own
+   `min-height: var(--bhp-sched-touch)` holds the other axis. The cell padding
+   drops to 1px to buy those columns back their width rather than to make the
+   squares smaller. */
+@media (max-width: 26.5625rem) {
+  .readaloud-sched__cell { padding: 1px; }
+  .readaloud-sched__grid .readaloud-sched__day { font-size: 0.95rem; }
+}
+
+/* ---- Motion --------------------------------------------------------------
+   The day pill inherits a `transition` from `.readaloud-sched__day`; the arrows
+   declare their own. Both are turned off together here so the calendar has one
+   reduced-motion answer rather than two. */
+@media (prefers-reduced-motion: reduce) {
+  .readaloud-sched__cal-arrow,
+  .readaloud-sched__grid .readaloud-sched__day { transition: none; }
+}
+
+/* ---- Morning / Afternoon. ----
+   ⭐ These are CHECKBOXES and BOTH may be on at once. That is the founder's
+      model, not a UI choice: ticking both says "either one works". Do not
+      convert them to a radio pair. */
+.readaloud-sched__slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.readaloud-sched__slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--bhp-sched-touch);
+  padding: 0 var(--space-6);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.readaloud-sched__slot:hover {
+  border-color: var(--color-primary);
+}
+
+.readaloud-sched__slot-input:checked + .readaloud-sched__slot {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+/* ---- Who and where. ----
+   ⛔ THE `div.` QUALIFIER IS LOAD-BEARING. See the long note on
+      `table.readaloud-sched__grid` above: this rule and that one share a class
+      name for two different elements, and this one being later in source order
+      was silently turning the calendar table into a one-column grid container
+      on the live site. Both are now element-qualified. */
+div.readaloud-sched__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-6);
+}
+
+@media (min-width: 40rem) {
+  div.readaloud-sched__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .readaloud-sched__field--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.readaloud-sched__field {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.readaloud-sched__label {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.readaloud-sched__optional {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* ⛔ 16px MINIMUM ON THE INPUT FONT SIZE, AND IT IS LOAD-BEARING RATHER THAN
+      TYPOGRAPHIC. iOS Safari zooms the whole page when a focused input's text
+      is smaller than 16px, which throws a teacher out of the layout mid-form.
+      Do not reduce this to make the form look tidier on a desktop mock. */
+.readaloud-sched__input {
+  min-height: var(--bhp-sched-touch);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-text);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.readaloud-sched__textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.readaloud-sched__input:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.readaloud-sched__note {
+  margin-top: var(--space-2);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================================
+   ⭐⭐ THE TOOLKIT OPT-IN — 1.19.337 (CYCLE170-LD-MICRO), items 553 / 554
+   ----------------------------------------------------------------------------
+   ⛔⛔ THIS CONTROL IS STYLED TO BE SEEN AND TO BE EASY TO UNTICK. That is not
+      an aesthetic preference; it is the whole basis on which the founder's
+      "smuggle the consent" instruction was turned into something shippable.
+      Read the block comment on the markup in `inc/school-read-alouds.php`.
+
+   ⭐ THEREFORE, EXPLICITLY, AND EACH ONE IS A DECISION:
+        · full body colour, NOT `--color-text-muted`. It is not fine print.
+        · a bordered panel, so it reads as a control rather than as a caption
+          that happens to have a box beside it.
+        · a 1.35rem box with `accent-color`, well above a default checkbox, so
+          it is a real target on a phone.
+        · the LABEL is the target too — `<label for>` means a tap anywhere on
+          the sentence toggles it, which is what "easy to untick" means on
+          glass.
+        · `cursor: pointer` on both halves.
+
+   ⛔ IT IS NOT `position: absolute`, NOT `opacity: 0`, NOT `visibility: hidden`,
+      NOT `height: 0` and NOT off-screen. `tests/test-cycle170-micro.php` §4
+      asserts that no rule in this sheet hides it, because "visible consent" is
+      the kind of property that gets refactored away by accident.
+   ========================================================================= */
+.readaloud-sched__optin {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-forest);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-soft-white);
+}
+
+.readaloud-sched__optin-input {
+  flex: 0 0 auto;
+  width: 1.35rem;
+  height: 1.35rem;
+  /* ⭐ Nudged down so the box's optical centre lines up with the first line of
+     the label rather than with the top of its line box. */
+  margin: 0.15rem 0 0;
+  accent-color: var(--color-forest);
+  cursor: pointer;
+}
+
+.readaloud-sched__optin-label {
+  /* ⛔ FULL WEIGHT AND FULL COLOUR. See the note above. */
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.readaloud-sched__optin:focus-within {
+  border-color: var(--color-forest);
+  box-shadow: 0 0 0 3px rgba(var(--color-forest-rgb), 0.22);
+}
+
+.readaloud-sched__submit {
+  margin: 0 0 var(--space-3);
+}
+
+.readaloud-sched__btn {
+  min-height: var(--bhp-sched-touch);
+}
+
+/* ⛔⛔ THE TENTATIVE LINE. It sits under the button BEFORE the click, not only
+      on the thank-you state, so a visitor knows what the button does before
+      they press it. It is never styled down into fine print. */
+.readaloud-sched__tentative {
+  margin: 0 0 var(--space-3);
+  max-width: 60ch;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.readaloud-sched__alt {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+/* ============================================================================
+   SCHOOL READ-ALOUDS — VERTICAL RHYTHM TIGHTENING
+   1.19.327 (2026-08-30, CYCLE170-LD-READALOUD-POLISH)
+   ----------------------------------------------------------------------------
+   Andrew Signore's verdict on the 1.19.326 staging page, relayed in the fix
+   brief: *"there is so much white space- bring it all a little closer in."*
+
+   ⭐ IT IS DONE WITH ONE CUSTOM-PROPERTY OVERRIDE ON THE PAGE WRAPPER, NOT WITH
+      PADDING RULES ON EACH SECTION. `body:not(.home)` (line ~4230) declares
+      `--section-space` and `body:not(.home) .section` (line ~4400) consumes it.
+      Custom properties inherit, so redeclaring `--section-space` on
+      `.school-readalouds` retunes every `.section` INSIDE this page and reaches
+      nothing outside it. No `!important`, no per-section selector list, no
+      specificity fight, and the sitewide rhythm is not touched — which matters,
+      because `--section-space` sets the pacing of every non-home page on the
+      site and this brief was about ONE page.
+
+   ⛔ EVERY SELECTOR BELOW IS SCOPED TO `.school-readalouds`. This sheet is
+      sitewide. /read-aloud/, /read-alouds/, /teachers/ and every other page
+      that uses `.section`, `.component-heading` or `.author-visits-gallery`
+      renders byte-identically after this block.
+
+   ⛔ THE HERO IS RETUNED, NOT LOOSENED. The founder-ruled requirement is that
+      the CTA is visible without scrolling at 1440 AND 375 under the ~93px
+      sticky header. Every number below moves the button UP the screen, never
+      down, so the requirement can only get safer. It is re-measured after
+      deploy at both widths with `window.innerWidth` asserted in the same eval.
+
+   MEASURED BEFORE (staging 1.19.326, innerWidth asserted, 2026-08-30):
+     1440 — section padding 128px/side · inter-section air 184,256,256,256,256,128
+            (1336px total) · heading margin-bottom 72px · wrapper 6177px
+      375 — section padding  80px/side · inter-section air 112,160,160,160,160,80
+            ( 832px total) · heading margin-bottom 40px · wrapper 7185px
+   ========================================================================= */
+
+/* ---- The one declaration that does most of the work. ----
+   1440: 6vw = 86.4 → clamped to 84px   (was 128px, −34%)
+   1024: 6vw = 61.4 → 61px              (was  92px, −33%)
+    768: 6vw = 46.1 → floor 52px        (was  80px, −35%)
+    375: 6vw = 22.5 → floor 52px        (was  80px, −35%)
+   The floor is 3.25rem rather than the sitewide 5rem so a phone tightens by the
+   same proportion as a desktop; the ceiling is 5.25rem rather than 8rem so a
+   1920 monitor does too, instead of drifting back towards the old figure. */
+/* ⭐⭐ RETUNED AT 1.19.337 (CYCLE170-LD-MICRO) FOR CARRIER ITEM 548 — ROUND 2.
+   ⛔⛔ THE VALUES ARE REPLACED IN PLACE RATHER THAN A SECOND RULE BEING ADDED
+      BELOW, AND THAT IS A CORRECTION MADE DURING THIS BUILD RATHER THAN A
+      PREFERENCE. The first attempt DID add a second live
+      `.readaloud-funnel.school-readalouds { --section-space: … }` further down
+      the sheet. Both declarations were live, the later one won at runtime, and
+      the page looked exactly right — so nothing would have caught it except
+      `tests/test-cycle170-micro.php` §3b, which asserts the 1.19.327 value is
+      SUPERSEDED and not merely joined. ⭐ It failed, and it was correct to:
+      two live declarations of one custom property on one selector is precisely
+      the drift this file keeps warning about. One declaration, here, where a
+      reader looks for it.
+
+   SUPERSEDED VALUES (1.19.327), PRESERVED VERBATIM so the movement is visible
+   and the first cut is not re-derived as a regression:
+
+       --section-space: clamp(3.25rem, 6vw, 5.25rem);
+       --section-space-sm: clamp(2.25rem, 4vw, 3.5rem);
+
+   ⭐ The full round-2 rationale, the measured before-values and the reason the
+      air came back by ADDITION rather than by the first cut failing, are in the
+      "COMPRESSION ROUND 2" block further down this sheet. They are not restated
+      here so the two cannot drift apart. */
+.readaloud-funnel.school-readalouds {
+  --section-space: clamp(2.25rem, 4vw, 3.5rem);
+  --section-space-sm: clamp(1.5rem, 2.75vw, 2.25rem);
+}
+
+/* ---- Heading-to-content air. The second largest block of white space. ----
+   `body:not(.home) .component-heading` ships clamp(2.5rem,5vw,4.5rem) — 72px at
+   1440, 40px at 375 — between every section title and the first thing under it.
+   Five of those render on this page. Scoped down here only.
+   1440: 3vw = 43.2 → 43px (was 72px, −40%) · 375: floor 28px (was 40px, −30%)
+
+   ⚠ THE `body:not(.home)` PREFIX IS LOAD-BEARING AND WAS ADDED AFTER A FAILED
+     MEASUREMENT, not guessed at. `.school-readalouds .component-heading` alone
+     is two classes (0,2,0); the sitewide rule is `body:not(.home)
+     .component-heading`, which is one element plus two classes (0,2,1) and
+     WINS. The first deploy of this block measured 72px unchanged at 1440 for
+     exactly that reason. The hero override two rules down already carried the
+     prefix; this one did not. Do not "simplify" it away. */
+body:not(.home) .school-readalouds .component-heading,
+.school-readalouds .component-heading {
+  margin-bottom: clamp(1.75rem, 3vw, 2.75rem);
+}
+
+/* ---- The hero. Smaller padding than the sitewide section, smaller still now.
+   1440: 3.5vw = 50.4 → clamped to 44px (was 56px) · 375: floor 26px (was 32px)
+   Both move the CTA UP. See the note at the top of this block. */
+body:not(.home) .school-readalouds .readaloud-funnel__hero.section,
+.school-readalouds .readaloud-funnel__hero.section {
+  padding-block: clamp(1.625rem, 3.5vw, 2.75rem);
+}
+
+/* ---- Block-level gaps inside the sections. ----
+   The pending-copy placeholders stack three deep in the founder section, and
+   the gallery tiles carry the shipped 24px grid gap. Both come in a step.
+   ⛔ The placeholder's own INTERNAL padding and its hazard styling are NOT
+      touched — it is ugly on purpose (see the 1.19.325 block) and tightening
+      the gap between placeholders must not start making them look finished. */
+.school-readalouds .bhp-copy-placeholder { margin-bottom: var(--space-4); }
+.school-readalouds .author-visits-gallery { gap: var(--space-4); }
+.school-readalouds .author-visits-how { margin-top: var(--space-6); }
+.school-readalouds .readaloud-sched__lead { margin-bottom: var(--space-4); }
+
+/* ============================================================================
+   SCHOOL READ-ALOUDS — ⭐⭐ COMPRESSION ROUND 2 + THE PROOF PAIR
+   1.19.337 (2026-08-30, CYCLE170-LD-MICRO), carrier items 548 / 552
+   ----------------------------------------------------------------------------
+   ⭐⭐ FOUNDER, verbatim, 2026-08-30 (RELAYED through chief-of-staff, read
+      first-hand at the carrier file; NOT witnessed by this desk):
+
+        item 548 — "There also so much white space and buffering on the read
+                    aloud page"
+        item 552 — "I think we should bring the carousel up and put it with the
+                    'About' make the carousel a little smaller so it fits. Then
+                    bring up the pick a week as close as possible to it"
+
+   ⚠️⚠️ THIS IS THE SECOND CUT ON THE SAME PAGE AND THE FIRST ONE WAS NOT WRONG.
+      1.19.327 took inter-section air down ~34% on his identical complaint. Four
+      new sections have landed on this page since (the chips, the visit points,
+      the carousel, the week picker), and each one arrived with a fresh
+      `--section-space` gap above it. ⭐ THE AIR CAME BACK BY ADDITION, not by
+      the first cut regressing — recorded so nobody re-opens 1.19.327 looking
+      for a bug that is not there.
+
+   ⭐ SAME TECHNIQUE, DELIBERATELY: custom properties redeclared on the page
+      wrapper. `body:not(.home)` declares `--section-space`, `body:not(.home)
+      .section` consumes it, custom properties inherit, so retuning them on
+      `.school-readalouds` retunes every `.section` INSIDE this page and reaches
+      nothing outside it. No `!important`, no per-section selector list, no
+      specificity fight.
+
+   ⛔ EVERY SELECTOR BELOW IS SCOPED TO `.school-readalouds`. This sheet is
+      sitewide. /read-aloud/, /read-alouds/, /teachers/, /gallery/,
+      /author-visits/ and every other page using `.section`,
+      `.component-heading` or `.bhp-photo-carousel` renders byte-identically.
+
+   ⛔ THE HERO IS RETUNED, NOT LOOSENED — the same constraint 1.19.327 wrote
+      down. Every number below moves the hero CTA UP the screen, never down, so
+      the founder-ruled "CTA visible without scrolling at 1440 and 375" can only
+      get safer. Re-measured at both widths after deploy with `innerWidth`
+      asserted in the same eval.
+
+   ⛔ NOT ONE FONT SIZE, LINE HEIGHT OR STRING IS TOUCHED BY THIS BLOCK. It is
+      margins and paddings only. Compression that shrinks the type would be a
+      readability change wearing a spacing change's clothes.
+   ========================================================================= */
+
+/* ---- Round 2 on the one declaration that does most of the work. ----
+   SUPERSEDED VALUES, PRESERVED VERBATIM so the movement is visible and is not
+   re-derived (1.19.327):
+       --section-space:    clamp(3.25rem, 6vw, 5.25rem);
+       --section-space-sm: clamp(2.25rem, 4vw, 3.5rem);
+
+   1440: 4vw = 57.6 → clamped to 56px   (was 84px, −33%; was 128px pre-1.19.327)
+   1024: 4vw = 41.0 → 41px              (was 61px, −33%)
+    768: 4vw = 30.7 → floor 36px        (was 52px, −31%)
+    375: 4vw = 15.0 → floor 36px        (was 52px, −31%)
+   ⛔ THE FLOOR IS 2.25rem RATHER THAN LOWER because below ~32px two sections
+      stop reading as two sections and the page becomes one undifferentiated
+      column — which is a different complaint, and one he has not made.
+
+   ⛔⛔ THE DECLARATION ITSELF IS NOT HERE, AND ITS ABSENCE IS DELIBERATE. The
+      round-2 values are written INTO the existing 1.19.327 rule higher up this
+      sheet (search `.readaloud-funnel.school-readalouds {`), with the
+      superseded values quoted beside them.
+      ⭐ THIS BUILD ORIGINALLY PUT A SECOND LIVE RULE HERE AND IT WAS WRONG. Two
+      live declarations of one custom property on one selector both applied, the
+      later won, the page rendered correctly, and NOTHING would have caught it —
+      except `tests/test-cycle170-micro.php` §3b, which asserts the old value is
+      superseded rather than merely joined. It failed, the duplicate was removed,
+      and this note is here so the shortcut is not taken again. */
+
+/* ---- Heading-to-content air, round 2. Five section titles render on this
+   page, so this multiplies by five.
+   SUPERSEDED (1.19.327): clamp(1.75rem, 3vw, 2.75rem)
+   1440: 1.8vw = 25.9 → 26px (was 43px, −40%) · 375: floor 16px (was 28px, −43%)
+
+   ⚠ THE `body:not(.home)` PREFIX IS LOAD-BEARING AND IS NOT A TYPO. The
+     sitewide rule is `body:not(.home) .component-heading` — one element plus
+     two classes (0,2,1) — which BEATS a bare `.school-readalouds
+     .component-heading` (0,2,0). 1.19.327 measured 72px unchanged at 1440 the
+     first time it shipped without this prefix. Do not "simplify" it away. */
+body:not(.home) .school-readalouds .component-heading,
+.school-readalouds .component-heading {
+  margin-bottom: clamp(1rem, 1.8vw, 1.625rem);
+}
+
+/* ---- The hero, round 2.
+   SUPERSEDED (1.19.327): clamp(1.625rem, 3.5vw, 2.75rem)
+   1440: 2.5vw = 36 → clamped to 32px (was 44px) · 375: floor 20px (was 26px)
+   Both move the CTA UP. See the constraint note at the top of this block. */
+body:not(.home) .school-readalouds .readaloud-funnel__hero.section,
+.school-readalouds .readaloud-funnel__hero.section {
+  padding-block: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+/* ---- Intra-section air. The visit list and the founder passage both carried
+   sitewide paragraph rhythm inside an already-tightened section. ---- */
+.school-readalouds .readaloud-visit__points { margin-block: 0 var(--space-4); }
+.school-readalouds .readaloud-visit__closing { margin-bottom: 0; }
+.school-readalouds .readaloud-funnel__copy { margin-bottom: var(--space-4); }
+.school-readalouds .readaloud-funnel__copy:last-child { margin-bottom: 0; }
+
+/* ============================================================================
+   ⭐⭐ THE PROOF PAIR — ABOUT BESIDE THE CAROUSEL (item 552)
+   ----------------------------------------------------------------------------
+   ⛔ ONE GRID, TWO CHILDREN, IN DOM ORDER. No `order`, no absolute positioning,
+      no transform — so the keyboard sequence is the visible sequence at every
+      width. Same rule `RELEASES/HOMEPAGE_HERO_MOBILE_ORDER_1_19_120.md` set for
+      the homepage hero and the same one /positivity-news/ follows this release.
+
+   ⭐ THE BREAKPOINT IS A `min-width` MEDIA QUERY, SO MOBILE IS THE DEFAULT.
+      Single column is what the markup already produces; the second column is
+      added only where there is room for it. A phone therefore cannot inherit a
+      desktop grid it has to undo.
+
+   ⚠ 60rem (960px) IS CHOSEN, NOT COPIED. `container--content` is capped at
+     1000px; splitting it below ~960 leaves the prose column under ~26rem, which
+     is where a paragraph starts breaking into ragged three-word lines. Above it
+     the About column measures ~29rem and the photo rail ~24rem.
+   ========================================================================= */
+.school-readalouds__proof-grid {
+  display: grid;
+  /* ⛔⛔ `minmax(0, 1fr)` AND NOT THE IMPLICIT DEFAULT. THIS ONE DECLARATION IS
+     A REAL DEFECT THIS BUILD SHIPPED AND THEN MEASURED, and it is written down
+     rather than quietly corrected because the failure mode is genuinely
+     invisible.
+
+     WHAT HAPPENED. The first version of this rule declared no
+     `grid-template-columns` at all, trusting the single implicit column. An
+     implicit grid column is `auto`, whose MINIMUM is `min-content` — and the
+     photo carousel's min-content is the width of its rail, not the width of its
+     container. MEASURED on staging 1.19.337, real browser, `innerWidth`
+     asserted 375: the grid box was 343px wide and BOTH ITS CHILDREN WERE 518px,
+     ending at x=534, i.e. 159px past the right edge of the phone.
+
+     ⛔⛔ AND `document.documentElement.scrollWidth` STILL READ 375, so the
+     ordinary horizontal-overflow check PASSED on a broken layout. An ancestor's
+     overflow clipped it, so the About passage's text was being CUT OFF at the
+     screen edge with no scrollbar to reveal it — the same silent-clipping class
+     as the 320px hero defect recorded in
+     `RELEASES/HOMEPAGE_HERO_MOBILE_ORDER_1_19_120.md`.
+
+     ⭐ `minmax(0, 1fr)` sets the minimum to 0 instead of min-content, so the
+     column is the container's width and the carousel's rail scrolls INSIDE it,
+     which is what the rail is built to do. ⚠️ DO NOT "SIMPLIFY" THIS BACK TO AN
+     IMPLICIT COLUMN. `tests/test-cycle170-micro.php` §3c asserts it. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 60rem) {
+  .school-readalouds__proof-grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(var(--space-6), 3vw, var(--space-10));
+  }
+  /* ⛔ A SINGLE-CHILD GRID MUST NOT RENDER A HALF-WIDTH COLUMN BESIDE EMPTY
+     SPACE. `--solo` is emitted by the template when the carousel has zero
+     photographs — which is the state PRODUCTION is in today, because the
+     `bhp_school_visit_notes` option does not exist there. This is the same
+     defect `.author-visits-columns--split` hit at 1.19.333 and it is
+     pre-empted here rather than discovered on the founder's screen. */
+  .school-readalouds__proof-grid--solo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ⭐ The About column's heading already carries the page's tightened
+   `.component-heading` margin. Its passage needs no bottom margin at all — the
+   grid gap is the separation now. */
+.school-readalouds__proof-about > *:last-child { margin-bottom: 0; }
+
+/* ---- "make the carousel a little smaller so it fits" ----
+   ⭐ ONE CUSTOM-PROPERTY OVERRIDE, WHICH IS HOW THE CAROUSEL WAS BUILT TO BE
+      RESIZED. `.bhp-photo-carousel` computes `--bhp-pc-stage-max` from viewport
+      height; redeclaring it here caps the rail for this one placement and
+      leaves /gallery/, /author-visits/ and every other caller untouched.
+   ⛔ NOT A `transform: scale()` AND NOT A WIDTH OVERRIDE. A scale would blur the
+      photograph and shrink the arrows below the 44px touch target; a width
+      override would fight the grid. This changes the STAGE HEIGHT, which is the
+      dimension the component itself treats as the adjustable one.
+   ⛔ `object-fit: contain` IS UNCHANGED, so nothing crops — a shorter stage
+      letterboxes exactly as the 1.19.331 clamp already does. */
+.school-readalouds__proof-photos .bhp-photo-carousel {
+  --bhp-pc-stage-max: max(200px, min(20rem, calc(var(--bhp-pc-viewport) - var(--bhp-pc-nav) - var(--bhp-pc-breathing) - var(--bhp-pc-chrome))));
+}
+
+/* ⛔ THE CAROUSEL'S HEADING IS AN `<h2>` LIKE THE ABOUT HEADING BESIDE IT, and
+   at half measure two full-size section titles side by side read as a
+   competition. It is stepped down VISUALLY only — the element, the id, the
+   `aria-labelledby` relationship and the document outline are unchanged. */
+.school-readalouds__proof-photos .text-section-title {
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+}
+
+/* ---- "Then bring up the pick a week as close as possible to it" ----
+   ⛔ THE GAP IS CLOSED FROM BOTH SIDES, and it has to be: `.section` puts
+      `--section-space` on the bottom of the pair AND on the top of the
+      scheduler, so halving one still leaves the other. Measured on staging
+      1.19.336 the two together were 168px at 1440.
+   ⭐ WHAT SURVIVES IS `--space-4` (16px) EACH SIDE, i.e. ~32px between the last
+      photograph and "Pick a week". That is "as close as possible" while still
+      being two sections rather than one run-on block.
+   ⛔ THE SCHEDULER'S OWN INTERNAL PADDING, ITS CARD, ITS FIELDSETS AND EVERY
+      TOUCH TARGET IN IT ARE UNTOUCHED. `.readaloud-sched__day` and
+      `.readaloud-sched__slot` keep their minimum touch size — compressing a
+      form a teacher fills in on a phone is not what item 548 asked for. */
+body:not(.home) .school-readalouds .school-readalouds__proof.section,
+.school-readalouds .school-readalouds__proof.section {
+  padding-bottom: var(--space-4);
+}
+
+body:not(.home) .school-readalouds .readaloud-sched.section,
+.school-readalouds .readaloud-sched.section {
+  padding-top: var(--space-4);
+}
+
+/* ============================================================================
+   SCHOOL READ-ALOUDS — HERO PHOTOGRAPH
+   1.19.329 (2026-08-30, CYCLE170-LD-READALOUD-HERO-PHOTO)
+   ----------------------------------------------------------------------------
+   Andrew Signore, carrier item 492, relayed in the fix brief: *"there should be
+   a small photo on the upper right hand side of the header where the free read
+   aloud CTA is of me reading to the kids."*
+
+   ⛔ EVERY SELECTOR BELOW IS SCOPED TO `.school-readalouds`. This sheet is
+      sitewide. Nothing here may reach /read-aloud/, /teachers/, /blog/ or any
+      other page, and the suite proves it rather than this comment asserting it.
+
+   ⛔⛔ THE ABOVE-THE-FOLD RULING IS PROTECTED BY DOM ORDER, NOT BY A MEDIA
+      QUERY. The figure is the LAST child of the hero container, so in the
+      single-column (phone) case it falls BELOW the CTA in normal flow and
+      cannot move the button by one pixel. The two-column grid only ever LIFTS
+      it out of that flow into column two. That is why there is no `order:`,
+      no `row-reverse`, and no absolute positioning anywhere in this block:
+      each of those would make visual order diverge from reading order and
+      would put the founder-ruled requirement at the mercy of a breakpoint.
+
+   ⭐ SMALL MEANS SUPPORTING. The desktop column is 300px inside an 820px
+      container — 37% of the hero's width, beside the headline, never over it.
+      The brief's range is 260–320px and 300 sits in the middle of it.
+
+   MEASURED BEFORE (staging 1.19.328, `window.innerWidth` asserted in the same
+   eval, 2026-08-30):
+     1440x900 — hero 80 → 443.77 (h 363.77) · CTA bottom 363.58 · container 820
+      375x812 — hero 92.80 → 395.58 (h 302.78) · CTA bottom 333.39 · container 343
+   ========================================================================= */
+
+/* ---- Phone and tablet: one column. The figure is simply the last thing in
+   the hero, under the CTA and the note. It is capped well below the container
+   width so it reads as a supporting photograph rather than a banner. ---- */
+.school-readalouds__hero-photo {
+  margin: var(--space-6) 0 0;
+  max-width: 15rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* `height: auto` is what keeps the intrinsic ratio once the width/height
+   attributes have done their job of reserving the box — the same reasoning,
+   and the same pair of declarations, as the shipped `.author-visits-gallery__img`
+   rule further up this file. Without it the attribute height wins and the
+   photograph is distorted. */
+.school-readalouds__hero-photo-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---- 60rem up: two columns, photograph upper-right. ----
+   The hero container is `.container--content`, which computes to 820px at every
+   viewport at or above ~884px, so the second column is stated as a flat 300px
+   rather than a percentage that would resolve against a width that never moves.
+   Text column = 820 − 300 − 32 (column-gap) = 488px.
+
+   ⛔ `align-items: start` AND `grid-row: 1` ON BOTH CHILDREN ARE BOTH LOAD-BEARING.
+      Without the explicit row the figure auto-places into row 2 and lands under
+      the copy; without `start` it stretches to the copy column's height and the
+      photograph is no longer "upper right", it is "the whole right side".
+   ⛔ `minmax(0, 1fr)` NOT `1fr` — a bare `1fr` is `minmax(auto, 1fr)`, whose auto
+      minimum is the copy column's longest unbreakable word, which would let a
+      long headline push the grid wider than its container. */
+@media (min-width: 60rem) {
+  .school-readalouds__hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18.75rem;
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .school-readalouds__hero-copy {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .school-readalouds__hero-photo {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    max-width: none;
+  }
+}
+
+/* ==========================================================================
+   SCHOOL READ-ALOUDS — PHOTO CAROUSEL (1.19.330, CYCLE170-LD-READALOUD-CAROUSEL)
+
+   Andrew's carrier item 497: "I want a large carousel gallery on the read aloud
+   page and I want you to add the read aloud pictures from last year too."
+   RELAYED THROUGH GANDALF, NOT WITNESSED BY THIS BUILD.
+
+   EVERY SELECTOR IN THIS BLOCK IS SCOPED TO `.bhp-photo-carousel`. Nothing here
+   can reach another page, and the block is one contiguous, self-bounded append:
+   deleting it from the first comment line to the closing brace leaves a rail
+   that still scrolls, still snaps and still shows every photograph, because the
+   scroller is markup and the styling is presentation.
+
+   THE RAIL IS THE CAROUSEL. `overflow-x: auto` plus `scroll-snap-type: x
+   mandatory` is the same mechanism `.bhp-gallery__thumbs` in
+   `assets/css/book-media.css` already uses; this is that idiom at slide scale
+   rather than a second engine. Native swipe, native momentum, native keyboard
+   scrolling, and a component that still works with the script absent - all from
+   the platform rather than from code.
+
+   THE STAGE IS A FIXED 16/9 BOX WITH `object-fit: contain`, AND THAT IS
+   MEASURED, NOT STYLISTIC. Five of the six photographs are exactly 1200x675
+   (16/9) and fill it edge to edge with no bands at all. The sixth,
+   `adams-elementary-read-aloud-reading.jpg`, is 1200x851 (1.410) - it fits by
+   height and takes a 24px band on each side of a 1200px stage, i.e. 2% per
+   side. `cover` was rejected: it would crop about 20% of that photograph's
+   height, and Andrew and the book are near its top edge. A ratio driven
+   per-slide from JS was rejected too: it would make the section's height change
+   under a visitor's thumb, on a page whose whole previous release was about
+   height.
+
+   NO `order:`, NO `row-reverse`, NO `position: absolute` ON A SLIDE. Visual
+   order is DOM order, at every width, so the newest-first order the founder
+   asked for cannot be inverted by a breakpoint. The suite asserts all three
+   absences. The two arrows ARE absolutely positioned - they are chrome over the
+   frame, not content, and they are the only absolutely positioned things here.
+   ========================================================================== */
+
+.bhp-photo-carousel {
+  /* A stacking context of its own, so the arrows cannot paint over the section
+     below and nothing outside can paint into the frame. */
+  position: relative;
+  isolation: isolate;
+
+  /* ────────────────────────────────────────────────────────────────────────
+     1.19.331 (CYCLE170-LD-TRIPLE, item 507) — THE WHOLE BOX FITS THE SCREEN.
+
+     Andrew Signore, carrier item 507, RELAYED THROUGH GANDALF, NOT WITNESSED
+     BY THIS BUILD: "too big for the screen... it should fit nicely between the
+     nav bar and the bottom of the page to see the entire box."
+
+     ⚠️ WHAT WAS ACTUALLY MEASURED ON STAGING 1.19.330 BEFORE THIS WAS WRITTEN,
+        recorded because it does NOT match the shape of the complaint and the
+        next reader deserves the real numbers rather than a tidy story.
+        Real browser, staging, carousel box height vs (viewport - header):
+
+          1440x900 - box 669, budget 820  -> FITS, 151px to spare
+          375x812  - box 296, budget 719  -> FITS, 423px to spare
+          1440x700 - box 669, budget 620  -> OVERFLOWS BY 49px
+
+     ⭐ SO THE DEFECT IS REAL BUT IT IS HEIGHT-DRIVEN, NOT WIDTH-DRIVEN. The box
+        is a fixed 669px tall on every desktop width (the photograph is capped
+        at the 1000px `container--content`), so whether it fits depends ONLY on
+        how tall the window is. A laptop with a bookmarks bar is where it
+        breaks. At the two viewports the brief names it already fitted, and
+        this comment says so rather than claiming a fix for something that was
+        not broken there.
+
+     ⛔ THEREFORE THIS IS A CLAMP, NOT A RESIZE. It is a no-op at every height
+        where the box already fits (both named viewports included, verified
+        after deploy) and it only bites when the window is too short. Nothing
+        gets smaller on Andrew's desktop unless his window is genuinely short.
+
+     ⛔ AND IT NEVER CROPS. `object-fit: contain` is already on the image and is
+        unchanged. When the clamp bites, the box becomes wider than 16/9 and the
+        photograph letterboxes with `--color-surface` bands left and right -
+        exactly the behaviour the 1200x851 archive photograph already has
+        vertically. `cover` was rejected for that photograph and is rejected
+        here for the same reason.
+
+     THE BUDGET, and every number in it is measured, not chosen:
+       · nav 93px  - the sticky `.site-header`, measured at 375 (it is 80 at
+                     desktop widths; the LARGER is reserved so one number is
+                     safe at both and cannot under-reserve on a phone).
+       · breathing 2rem - so the box is not wedged edge to edge against the
+                     header and the fold.
+       · chrome 7rem (112px) - the caption, its border and the dots row, which
+                     live OUTSIDE the image and must come out of the budget or
+                     the dots fall below the fold and the founder still cannot
+                     "see the entire box". Measured: 108px desktop
+                     (caption 46 + border 2 + margin 16 + dots 44) and 104px at
+                     375. 112 covers both with a margin for a wrapped caption.
+
+     `dvh` WITH A `vh` FALLBACK, AND THAT MATTERS ON A PHONE: `100vh` is the
+     LARGE viewport (URL bar retracted), so on mobile a `vh` budget over-reserves
+     nothing and under-reserves the visible area whenever the URL bar is showing.
+     `100dvh` is the live one. The fallback is declared first so a browser
+     without `dvh` still gets a working clamp rather than no clamp.
+     ──────────────────────────────────────────────────────────────────────── */
+  --bhp-pc-viewport: 100vh;
+  --bhp-pc-nav: 93px;
+  --bhp-pc-breathing: 2rem;
+  --bhp-pc-chrome: 7rem;
+  /* The floor is not decoration: without it a very short window (a landscape
+     phone) would compute a negative or unusably small stage and the carousel
+     would read as broken rather than as small. */
+  --bhp-pc-stage-max: max(
+    180px,
+    calc(var(--bhp-pc-viewport) - var(--bhp-pc-nav) - var(--bhp-pc-breathing) - var(--bhp-pc-chrome))
+  );
+}
+
+@supports (height: 100dvh) {
+  .bhp-photo-carousel { --bhp-pc-viewport: 100dvh; }
+}
+
+.bhp-photo-carousel__frame {
+  position: relative;
+}
+
+.bhp-photo-carousel__rail {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  /* Scrolls in its OWN wrapper, never the page - the rule
+     `.bhp-gallery__thumbs` already states for the thumbnail rail. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  /* The scrollbar is redundant once the dots exist and it eats 15px of
+     photograph on desktop Windows. The rail stays scrollable either way. */
+  scrollbar-width: none;
+}
+
+.bhp-photo-carousel__rail::-webkit-scrollbar { display: none; }
+
+/* The rail is `tabindex="0"` because a scroll container is not focusable by
+   default in Firefox, so it must show focus like any other focusable thing. */
+.bhp-photo-carousel__rail:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+.bhp-photo-carousel__slide {
+  margin: 0;
+  /* `0 0 100%` and NOT `0 0 auto`: every slide is exactly one rail-width, which
+     is what makes `scrollLeft / slideWidth` a reliable index and what makes
+     `scroll-snap-align: start` land on a whole photograph every time. */
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.bhp-photo-carousel__figure {
+  margin: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.bhp-photo-carousel__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* `aspect-ratio` and `contain` together: the box is reserved before the
+     photograph arrives (zero layout shift) and the photograph is never
+     distorted or cropped inside it. */
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: var(--color-surface);
+  /* 1.19.331, item 507. The clamp. `width` stays 100% and stays definite, so
+     when this bites the BOX gets shorter and wider than 16/9 while the
+     PHOTOGRAPH, held by `object-fit: contain` immediately above, letterboxes
+     inside it untouched. No crop is possible from this declaration. */
+  max-height: var(--bhp-pc-stage-max);
+}
+
+.bhp-photo-carousel__caption {
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ---- Arrows: the same round white control `.bhp-gallery__arrow` already is -- */
+.bhp-photo-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  /* 44x44 minimum touch target. */
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--color-navy);
+  background: rgba(255, 255, 255, 0.92);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 32, 51, 0.28);
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.bhp-photo-carousel__arrow:hover { background: #fff; }
+
+.bhp-photo-carousel__arrow:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* DISABLED, NOT HIDDEN, at the ends. A control that vanishes moves the two
+   beside it; a dimmed one keeps the frame still and still announces itself. */
+.bhp-photo-carousel__arrow[disabled] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.bhp-photo-carousel__arrow--prev { left: 0.6rem; }
+.bhp-photo-carousel__arrow--next { right: 0.6rem; }
+
+/* ---- Dots and counter ---------------------------------------------------- */
+.bhp-photo-carousel__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.bhp-photo-carousel__dots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.bhp-photo-carousel__dot-item { margin: 0; }
+
+.bhp-photo-carousel__dot {
+  display: block;
+  /* A 44x44 hit area with a 10px visible dot drawn inside it, so the target
+     meets the touch minimum without a row of large circles. */
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.bhp-photo-carousel__dot::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--color-border);
+  border: 1px solid var(--color-text-muted);
+  transition: background-color 0.15s ease;
+}
+
+/* Selected state is not colour alone: the current dot is also larger. */
+.bhp-photo-carousel__dot[aria-current="true"]::before {
+  background: var(--color-navy);
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+}
+
+.bhp-photo-carousel__dot:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: -6px;
+  border-radius: 50%;
+}
+
+.bhp-photo-carousel__counter {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A single-photograph carousel is a photograph. */
+.bhp-photo-carousel--single .bhp-photo-carousel__arrow,
+.bhp-photo-carousel--single .bhp-photo-carousel__controls {
+  display: none;
+}
+
+/* ---- Motion ------------------------------------------------------------- */
+/* This governs the rail's OWN scrolling - a trackpad flick, a swipe, and the
+   arrow keys' native scroll. The arrow and dot controls read
+   `prefers-reduced-motion` from `matchMedia` in `assets/js/photo-carousel.js`
+   instead of inferring it from this declaration.
+
+   ⚠ THAT SPLIT IS DELIBERATE AND IT CAME FROM AN OBSERVED FAILURE. The script's
+     first version passed `behavior: 'auto'` to `scrollTo()`, which per CSSOM
+     View means "use the CSS value" - so it inherited `smooth` from here, the
+     smooth animation never completed in the QA browser, and every control on
+     the carousel silently did nothing while `scrollLeft` stayed at 0. The
+     script now asks for smooth and then VERIFIES it arrived. Turning this
+     declaration off does not disable the controls; it only stops the rail
+     animating its own scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  .bhp-photo-carousel__rail { scroll-behavior: auto; }
+  .bhp-photo-carousel__arrow,
+  .bhp-photo-carousel__dot::before { transition: none; }
+}
+
+/* ---- Phone -------------------------------------------------------------- */
+@media (max-width: 39.999rem) {
+  /* On a phone the arrows sit on top of a photograph that is already only
+     about 343px wide, and the gesture that reaches every slide is the swipe.
+     The dots stay: they are the position indicator, and they are also the only
+     way to jump rather than step. */
+  .bhp-photo-carousel__arrow { display: none; }
+
+  .bhp-photo-carousel__caption {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+/* ==========================================================================
+   COUPON LINK NOTICE — 1.19.331 (CYCLE170-LD-TRIPLE, carrier items 504/505)
+
+   Andrew's carrier items 504/505, RELAYED THROUGH GANDALF, NOT WITNESSED BY
+   THIS BUILD: a `?coupon=` link should apply the discount by itself and say so.
+
+   EVERY SELECTOR IN THIS BLOCK IS SCOPED TO `.bhp-coupon-notice`. Nothing here
+   can reach another component, and the block is one contiguous, self-bounded
+   append: deleting it from this comment to the final closing brace leaves an
+   unstyled but perfectly readable line of text and a working dismiss button,
+   because the notice is markup and this is presentation.
+
+   IT IS IN THE FLOW, NOT FIXED OR STICKY, AND THAT IS THE IMPORTANT DECISION.
+   The notice renders at `wp_body_open`, i.e. immediately below the sticky
+   header, and it PUSHES the page down rather than floating over it. A fixed
+   banner would overlap the sticky nav, would need its own z-index in a theme
+   that already coordinates several, and would cover content on a phone. This
+   one appears, is read, is dismissed, and takes its space with it.
+
+   NO COLOUR-ONLY MEANING: the notice carries `role="status"` in the markup, so
+   it is announced rather than merely seen, and its text states the fact in
+   words. The tint is reinforcement, not the message.
+   ========================================================================== */
+
+.bhp-coupon-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border-bottom: 2px solid var(--color-primary);
+  color: var(--color-text);
+}
+
+.bhp-coupon-notice__text {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* 44x44 touch minimum, the same floor every other control on this site holds. */
+.bhp-coupon-notice__dismiss {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.bhp-coupon-notice__dismiss:hover { color: var(--color-text); }
+
+.bhp-coupon-notice__dismiss:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -4px;
+  border-radius: 50%;
+}
+
+/* ---- Phone --------------------------------------------------------------
+   The text wraps to as many lines as it needs and the dismiss button stays on
+   the same row, so the notice never becomes two stacked blocks of chrome above
+   the page a visitor came to read. */
+@media (max-width: 39.999rem) {
+  .bhp-coupon-notice {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+  }
+  .bhp-coupon-notice__text { text-align: left; }
+}
+
+/* ============================================================================
+   1.19.333 — CYCLE170-LD-BUNDLE
+   THE WALL CALENDAR · THE HERO CHIPS · WHAT A VISIT LOOKS LIKE · POSITIVITY NEWS
+   ----------------------------------------------------------------------------
+   ⛔ EVERY READ-ALOUD SELECTOR BELOW IS SCOPED TO `.school-readalouds`, and every
+      newsletter selector to `.bhp-positivity`. This sheet is sitewide. /gallery/,
+      /read-aloud/, /read-alouds/, /teachers/, /author-visits/ and every other
+      surface that uses `.section`, `.component-heading`, `.readaloud-sched__*` or
+      `.author-visits-*` renders byte-identically after this block.
+
+   ⚠ ONE SHIPPED RULE IS NOW DEAD AND IS DELIBERATELY NOT DELETED:
+     `.school-readalouds .author-visits-how { margin-top: var(--space-6); }`
+     (1.19.327 block above). "How It Works" is a PARENT-zone element and item 524
+     removed it from this template, so the selector matches nothing here. It is
+     left in place because deleting one line out of that block's measured set
+     would make the 1.19.327 measurements unreadable, and a selector that matches
+     nothing costs nothing. Flagged rather than tidied.
+   ============================================================================ */
+
+/* ============================================================================
+   A · THE WALL CALENDAR — carrier item 518
+   ----------------------------------------------------------------------------
+   Andrew Signore, item 518, relayed in the CYCLE170-LD-BUNDLE brief: it must
+   read as a kids' wall calendar at a glance. Bold month masthead, strong visible
+   grid lines, big date cells, brand colours, an unmistakable selected state, and
+   Morning/Afternoon prominent.
+
+   ⛔⛔ READ THE NOTE ON `table.readaloud-sched__grid` FIRST. Until 1.19.333 that
+      table computed `display: grid` with ONE column because of a class-name
+      collision with the "Who and where" div, VERIFIED LIVE on staging 1.19.332.
+      The seven-column calendar this block paints did not previously exist to
+      paint. ⛔ THAT FIX IS THE PREREQUISITE, NOT PART OF THE RESTYLE.
+
+   ⛔⛔ NOT ONE VALIDATION OR CAPTURE MECHANIC IS TOUCHED BY ANY RULE HERE.
+      Every selectable square is still the same `<input type="radio"
+      name="visit_date">` with the same `value` and the same `required`; a dead
+      square is still a `<span>` with no input in it; the honeypot is still
+      off-screen; the nonce, the server-side re-derivation of the offered dates
+      in `bhp_readaloud_scheduler_date_is_offered()` and the staging mail capture
+      are all untouched. THIS IS PAINT. If a later pass needs to change what can
+      be submitted, this is the wrong file.
+
+   ⛔ THE TOUCH TARGET, MEASURED RATHER THAN ASSERTED. `--bhp-sched-touch` is
+      48px. Measured on staging with `window.innerWidth` asserted in the same
+      eval, 2026-08-30:
+        1440  day square 111 x 56   (both axes above the token)
+         375  day square  46 x 48   (height on the token; width is 321/7)
+      ⚠ THE 46px WIDTH IS SET BY THE SEVEN-COLUMN GEOMETRY, NOT BY THIS BLOCK: a
+        calendar is seven fixed columns, so the column is the container divided
+        by seven and no rule here can widen it without breaking the grid. It
+        clears the 44px WCAG target and sits 2px under this component's own
+        token. Stated because an earlier draft of this block claimed the squares
+        were larger than the token at EVERY width, and that was false by 2px.
+
+   ⛔ COLOUR IS NEVER THE ONLY SIGNAL. The selected day gains a fill, a ring AND
+      a weight change; an unavailable day loses its border and its cursor and
+      keeps the template's spoken reason. Three channels each, as before.
+   ============================================================================ */
+
+/* ---- The card. A calendar on a wall is an object with an edge. ---- */
+.school-readalouds .readaloud-sched__cal {
+  border: 3px solid var(--color-navy);
+  border-radius: var(--radius-md);
+  background-color: var(--color-ivory);
+  overflow: hidden;
+  /* Lifts the card off the page ground so it reads as a hung object rather than
+     as another band of the page. Deliberately soft: this is a classroom object,
+     not a UI panel. */
+  box-shadow: 0 6px 18px rgba(var(--color-navy-rgb), 0.10);
+}
+
+/* ---- The masthead. NAVY BAND, GOLD MONTH NAME, and it is the loudest thing
+        in the component on purpose: it is what makes the object legible as a
+        calendar in the first half-second. ---- */
+.school-readalouds .readaloud-sched__cal-nav {
+  margin: 0;
+  padding: var(--space-3) var(--space-3);
+  background-color: var(--color-navy);
+  gap: var(--space-2);
+}
+
+.school-readalouds .readaloud-sched__cal-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  /* ⛔ `--color-gold`, NOT `--color-gold-deep`. The deep derivative exists for
+     gold glyphs on CREAM and measures 2.5–3.0:1 on dark grounds — worse than
+     the brand gold. On this navy band `--color-gold` is the correct and the
+     accessible choice, and the tokens block at the top of this file states that
+     rule explicitly. */
+  color: var(--color-gold);
+}
+
+/* ---- The arrows, restyled to sit on the navy band. ----
+   ⛔ STILL 44px, STILL ROUND, STILL DISABLED-NOT-HIDDEN at the ends. Only the
+      colours move: a cream ring on navy instead of a navy glyph on white. */
+.school-readalouds .readaloud-sched__cal-arrow {
+  color: var(--color-ivory);
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+}
+
+.school-readalouds .readaloud-sched__cal-arrow:hover {
+  border-color: var(--color-gold);
+  background: rgba(var(--color-gold-rgb), 0.14);
+}
+
+.school-readalouds .readaloud-sched__cal-arrow:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.school-readalouds .readaloud-sched__cal-arrow[disabled] {
+  opacity: 0.4;
+}
+
+/* ---- The month block inside the card. ---- */
+.school-readalouds .readaloud-sched__month {
+  margin: 0;
+  padding: var(--space-3);
+  background-color: var(--color-ivory);
+}
+
+/* The no-script per-month heading. It only renders when the pager is absent
+   (`[data-bhp-cal-ready]` hides it), so it has to carry the masthead's job on
+   its own — hence the same navy/gold treatment rather than a quiet label. */
+.school-readalouds .readaloud-sched__month-label {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-navy);
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ---- STRONG VISIBLE GRID LINES. ----
+   ⛔ THE LINES ARE ON THE CELLS, NOT ON THE TABLE, and `border-collapse:
+      collapse` (declared on `table.readaloud-sched__grid` above) merges
+      neighbouring borders into one 2px rule instead of two abutting 2px rules.
+      That is what makes the grid read as ruled paper rather than as a set of
+      boxed tiles. */
+.school-readalouds table.readaloud-sched__grid {
+  border: 2px solid var(--color-navy);
+  background-color: var(--color-soft-white);
+}
+
+/* The weekday header band: forest on cream, a real header rather than a caption. */
+.school-readalouds .readaloud-sched__dow {
+  padding: var(--space-2) 0;
+  border: 2px solid var(--color-navy);
+  background-color: var(--color-forest);
+  color: var(--color-ivory);
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ⛔ ZERO CELL PADDING SO THE SQUARE FILLS ITS CELL EDGE TO EDGE. With padding
+      the day pill floats inside a box and the ruled lines read as a table of
+      buttons. A wall calendar's date sits IN its square. */
+.school-readalouds .readaloud-sched__cell {
+  padding: 0;
+  border: 2px solid rgba(var(--color-navy-rgb), 0.55);
+}
+
+.school-readalouds .readaloud-sched__pad {
+  min-height: 3.5rem;
+  background-color: var(--color-parchment);
+  opacity: 0.35;
+}
+
+/* ---- BIG DATE CELLS. ----
+   3.5rem = 56px at the default root, comfortably above the 48px touch minimum
+   and enough for the numeral to be read at arm's length, which is the actual
+   test in item 518 ("at a glance"). */
+.school-readalouds .readaloud-sched__grid .readaloud-sched__day {
+  min-height: 3.5rem;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: var(--color-soft-white);
+  color: var(--color-navy);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.school-readalouds .readaloud-sched__grid .readaloud-sched__day:hover {
+  background-color: rgba(var(--color-gold-rgb), 0.28);
+  border-color: transparent;
+}
+
+/* ---- THE UNMISTAKABLE SELECTED STATE. ----
+   ⛔ FOUR SIMULTANEOUS SIGNALS, AND NOT ONE OF THEM IS COLOUR ALONE: a forest
+      fill, a cream numeral, a 4px GOLD RING drawn INSIDE the square, and the
+      numeral steps up in size. `box-shadow: inset` is used for the ring rather
+      than `border` because a border would move the numeral by 4px and make the
+      whole row jump when a day is picked. */
+.school-readalouds .readaloud-sched__day-input:checked + .readaloud-sched__day {
+  background-color: var(--color-forest);
+  color: var(--color-ivory);
+  box-shadow: inset 0 0 0 4px var(--color-gold);
+  font-size: 1.7rem;
+}
+
+/* ---- A day that cannot be asked for. Parchment, not a hole in the grid. ----
+   ⛔ IT KEEPS ITS RULED CELL. Making an unavailable day invisible would break
+      the weekday alignment a calendar depends on. It reads as "there, but not
+      for you", which is what a crossed-out square on a wall calendar means. */
+.school-readalouds .readaloud-sched__grid .readaloud-sched__day--off {
+  background-color: var(--color-parchment);
+  color: var(--color-text-muted);
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.school-readalouds .readaloud-sched__grid .readaloud-sched__day--off:hover {
+  background-color: var(--color-parchment);
+}
+
+.school-readalouds .readaloud-sched__grid .readaloud-sched__day--weekend {
+  opacity: 0.5;
+}
+
+/* ---- The "You picked …" line, as the card's footer band. ---- */
+.school-readalouds .readaloud-sched__cal-summary {
+  margin: 0;
+  padding: var(--space-3);
+  border-top: 3px solid var(--color-navy);
+  background-color: var(--color-parchment);
+  color: var(--color-navy);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  text-align: center;
+}
+
+/* ---- Phone. ----
+   ⛔⛔ THE HEIGHT STAYS AT THE 48px TOUCH TOKEN. THIS RULE WAS CORRECTED AFTER
+      MEASUREMENT, and the correction is recorded rather than the number quietly
+      changed.
+
+      The first draft set `min-height: 2.875rem` (46px) and its comment claimed
+      the squares were "LARGER than the touch minimum at every width, never
+      smaller". MEASURED on staging at an asserted `window.innerWidth` of 375:
+      46px. That is above the 44px WCAG target size but BELOW this component's
+      own 48px `--bhp-sched-touch` token, so the claim was false by 2px and the
+      rule was a small regression against the founder's finger-friendly
+      requirement. Corrected to 3rem.
+
+   ⚠ THE WIDTH IS 46px AND THIS RULE CANNOT CHANGE THAT — stated plainly rather
+     than implied. A month grid is seven fixed columns, so the column width is
+     the container divided by seven: measured 321px / 7 = 46px inside
+     `.container--content` at 375. The square is therefore 46 wide x 48 tall on a
+     phone. ⛔ IF A LATER PASS ADDS HORIZONTAL PADDING TO THE CONTAINER, THAT is
+     what would push the width below 44 and break the requirement, not this
+     block. */
+@media (max-width: 26.5625rem) {
+  .school-readalouds .readaloud-sched__cal-nav { padding: var(--space-2); }
+  .school-readalouds .readaloud-sched__month { padding: var(--space-2); }
+  .school-readalouds .readaloud-sched__cell { border-width: 1px; }
+  .school-readalouds .readaloud-sched__dow {
+    border-width: 1px;
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+  }
+  .school-readalouds .readaloud-sched__pad { min-height: 3rem; }
+  .school-readalouds .readaloud-sched__grid .readaloud-sched__day {
+    min-height: 3rem;
+    font-size: 1.2rem;
+  }
+  .school-readalouds .readaloud-sched__day-input:checked + .readaloud-sched__day {
+    box-shadow: inset 0 0 0 3px var(--color-gold);
+    font-size: 1.35rem;
+  }
+}
+
+/* ---- MORNING / AFTERNOON, PROMINENT. ----
+   ⭐ THESE ARE STILL CHECKBOXES AND BOTH MAY BE ON AT ONCE. That is the
+      founder's model, not a UI choice: ticking both says "either one works".
+      ⛔ DO NOT CONVERT THEM TO A RADIO PAIR to make the styling tidier.
+
+   They grow to the scale of the calendar above them because they are the second
+   half of the same question. `flex: 1 1 12rem` lets the pair sit side by side on
+   a phone and stretch on a desktop rather than shrinking to their text. */
+.school-readalouds .readaloud-sched__slots {
+  gap: var(--space-3);
+}
+
+.school-readalouds .readaloud-sched__slot {
+  flex: 1 1 12rem;
+  justify-content: center;
+  min-height: 3.75rem;
+  padding: var(--space-3) var(--space-4);
+  border: 3px solid var(--color-forest);
+  border-radius: var(--radius-md);
+  background-color: var(--color-ivory);
+  color: var(--color-forest);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.school-readalouds .readaloud-sched__slot:hover {
+  background-color: rgba(var(--color-gold-rgb), 0.22);
+}
+
+.school-readalouds .readaloud-sched__slot-input:checked + .readaloud-sched__slot {
+  background-color: var(--color-forest);
+  color: var(--color-ivory);
+  box-shadow: inset 0 0 0 4px var(--color-gold);
+}
+
+/* The two legends step up with the controls they label, so the scheduler reads
+   as one component rather than a big calendar followed by small chrome. */
+.school-readalouds .readaloud-sched__legend {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+/* ---- Motion. One reduced-motion answer for the whole component. ---- */
+@media (prefers-reduced-motion: reduce) {
+  .school-readalouds .readaloud-sched__cal-arrow,
+  .school-readalouds .readaloud-sched__slot,
+  .school-readalouds .readaloud-sched__week,
+  .school-readalouds .readaloud-sched__week-pick,
+  .school-readalouds .readaloud-sched__grid .readaloud-sched__day { transition: none; }
+}
+
+/* ============================================================================
+   A2 · THE WEEK CARDS — 1.19.335, CYCLE170-LD-WEEKPICKER, carrier item 534
+   ----------------------------------------------------------------------------
+   Andrew Signore, item 534, relayed through Gandalf: the scheduler's final form
+   is a WEEK PICKER, because his hospital schedule posts about a month at a time
+   and a week is the unit he can actually answer.
+
+   ⭐⭐ THIS BLOCK KEEPS THE ITEM-518 LANGUAGE RATHER THAN INVENTING A SECOND ONE,
+      AND IT REUSES THE SAME TOKENS AS THE WALL CALENDAR ABOVE IT: the navy card
+      edge and masthead, the gold display type on navy, the forest-fill /
+      gold-ring selected state, the cream and parchment grounds. A teacher who
+      saw the calendar and returns to a week list must recognise the same object.
+
+   ⛔⛔ EVERY RULE HERE IS PAINT. Not one validation or capture mechanic is
+      touched by any selector below. The first choice is still an
+      `<input type="radio" name="visit_week" required>`, the backup is still an
+      `<input type="radio" name="visit_week_backup">` with no `required`, the
+      honeypot is still off-screen, the nonce is unchanged, and
+      `bhp_readaloud_scheduler_week_is_offered()` re-derives the offered weeks on
+      POST. IF A LATER PASS NEEDS TO CHANGE WHAT CAN BE SUBMITTED, THIS IS THE
+      WRONG FILE.
+
+   ⛔ THE MONTH-GRID RULES ABOVE (block A) ARE NOW DEAD ON THIS TEMPLATE AND ARE
+      DELIBERATELY NOT DELETED. `bhp_readaloud_scheduler_build_months()` is still
+      live code, three suites still assert it, and this file already carries the
+      same decision for `.readaloud-sched__days` (1.19.331) and
+      `.school-readalouds .author-visits-how` (1.19.333). Deleting one measured
+      block's rules would make that block's recorded measurements unreadable.
+      ⭐ FLAGGED, NOT TIDIED — the same convention this file has used twice.
+
+   ⛔ COLOUR IS NEVER THE ONLY SIGNAL, exactly as in block A. A chosen card gains
+      a fill, a ring AND a weight change, and each pick control keeps its own
+      spoken label ("First choice: Week of October 5, Monday, October 5 to
+      Friday, October 9") in a `.screen-reader-text` span.
+
+   ⛔ THE TOUCH TARGET IS THE COMPONENT'S OWN 48px MINIMUM, and unlike the
+      calendar squares NOTHING CONSTRAINS THE WIDTH: a week card is one row, so
+      the pick controls can be as wide as they need. This block sets 3rem
+      (48px) minimum height on both pick controls at every width.
+   ============================================================================ */
+
+/* ============================================================================
+   1.19.339 — `CYCLE170-LD-FINAL2`, CARRIER ITEM 562.
+   THE SEPTEMBER LINE, AND THE MONTH TABS.
+   ============================================================================
+
+   ⛔⛔ TWO THINGS CHANGED SHAPE HERE AND NEITHER CHANGED A GATE. The four
+      September cards left the picker (their DATA, their status labels and their
+      self-expiry are all still live and still tested); and the flat twelve-row
+      week list became three month panels behind three tabs. The server floor,
+      `week_is_offered()` and every validation are byte-identical to 1.19.338.
+
+   ⚠️ THE `.readaloud-sched__week--closed` RULES FURTHER DOWN THIS FILE ARE KEPT,
+      NOT DELETED, even though nothing on this page renders that class any more.
+      Three reasons, so a later tidy-up pass does not undo them by accident:
+      `bhp_readaloud_scheduler_closed_weeks()` is still live and a future month
+      may draw cards again; `tests/test-cycle170-final.php` and
+      `tests/test-cycle170-walkfix.php` both assert those rules exist, and
+      walkfix asserts the 1.19.338 CONTRAST FIX inside one of them; and deleting
+      a working accessibility fix to save four rules of CSS is how the fix gets
+      re-derived wrong later.
+   ========================================================================== */
+
+/* ---- The September line. ONE QUIET SENTENCE, and quiet is the specification. ----
+   ⛔ IT IS NOT A CALLOUT, NOT AN ALERT, NOT A BADGE AND NOT A BANNER. It replaced
+      four rows of card UI precisely because that block was the loudest thing at
+      the top of the picker. Styling it as a notice would spend the weight again
+      on one line instead of four.
+   ⭐ `--color-earth` RATHER THAN `--color-text-muted`, AND THE REASON IS
+      MEASURED, NOT AESTHETIC. 1.19.338 (`CYCLE170-LD-WALKFIX`, patch 3) found the
+      muted token measuring 4.32:1 on this page's tinted grounds because it is
+      calibrated against white. `--color-earth` measured 6.43:1 and 5.55:1 on the
+      two grounds in question. A new element taking the muted token would have
+      re-opened the defect that release closed. */
+.school-readalouds .readaloud-sched__september {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-earth);
+}
+
+/* ---- The masthead becomes two rows: the title, then the month strip. ----
+   ⛔ THE BASE `.readaloud-sched__cal-nav` IS `flex` WITH `space-between`, which
+      was right when it held a title between two pager arrows. With a title and a
+      three-tab strip it would push the title hard left and the strip hard right,
+      and the title's own `text-align: center` would then centre inside a box that
+      is no longer full width. Stacking is what makes it read as a masthead with a
+      month strip under it rather than as a toolbar. */
+.school-readalouds .readaloud-sched__cal-nav {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ---- The month strip. THE CALENDAR'S OWN GOLD-ON-NAVY REGISTER. ----
+   ⭐ IT SITS ON THE NAVY BAND, so it reads as part of the object rather than as a
+      web widget bolted above it. That is the whole argument for tabs over a
+      native `<select>`: the select would have been an OS-grey control on a
+      hand-drawn calendar, and it would have hidden two of the three months. */
+.school-readalouds .readaloud-sched__monthtabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+}
+
+/* ---- One month tab. ----
+   ⛔ THE 48px MINIMUM IS THE COMPONENT'S OWN AND IT IS LOAD-BEARING AT 375. This
+      form's primary reader is a teacher on a phone; the week cards and the
+      Morning/Afternoon slots already carry the same minimum, and a tab strip that
+      undercut it would be the one control on the page a thumb misses.
+   ⛔ `flex: 1 1 auto` WITH A `min-width`, NOT A FIXED WIDTH. Three months fit in
+      a row at 375; a fourth wraps to a second row rather than shrinking any tab
+      under the touch minimum. */
+.school-readalouds .readaloud-sched__monthtab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 5.5rem;
+  min-height: 3rem; /* 48px. */
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  /* The interior-page ivory on the navy band. Cream on navy, not gold on navy,
+     so the ACTIVE tab is the only gold thing in the strip and the selection is
+     legible without relying on the ring alone. */
+  color: var(--color-ivory);
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.school-readalouds .readaloud-sched__monthtab:hover {
+  border-color: var(--color-gold);
+  background-color: rgba(var(--color-gold-rgb), 0.16);
+  color: var(--color-gold);
+}
+
+/* ⛔ THE SELECTED TAB IS A COLOUR INVERSION, NOT AN UNDERLINE AND NOT AN OPACITY
+      CHANGE. `aria-selected` drives it as well as the class, so the state a
+      screen reader is told and the state an eye is shown come from one source
+      and cannot disagree. `opacity` is deliberately not used anywhere in this
+      component: it dims text and ground together and takes the contrast with it,
+      which is the same reason `.readaloud-sched__week--closed` refuses it. */
+.school-readalouds .readaloud-sched__monthtab.is-active,
+.school-readalouds .readaloud-sched__monthtab[aria-selected="true"] {
+  border-color: var(--color-gold);
+  background-color: var(--color-gold);
+  color: var(--color-navy);
+}
+
+.school-readalouds .readaloud-sched__monthtab:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* ---- The strip on a phone. ⛔ MEASURED, NOT GUESSED. ----
+   ⛔⛔ THE FLEX FORM ABOVE WRAPS AT 375 AND IT WAS OBSERVED DOING IT. Measured on
+      staging at an asserted `innerWidth: 375`: October and November took row one
+      and DECEMBER SAT ALONE ON ROW TWO AT FULL WIDTH (321px), which reads as a
+      different kind of control rather than as the third of three tabs. The strip
+      lives inside `.container--content`, which is 321px wide at 375, and three
+      tabs at the desktop type size need roughly 385px. They were never going to
+      fit, so the desktop rule is not "fixed" here — it is replaced for this width.
+
+   ⭐ AN EQUAL-COLUMN GRID, NOT A TIGHTER FLEX. Every column is `1fr`, so the tabs
+      are exactly equal whatever their labels say and "May" beside "September"
+      cannot produce a lopsided strip in a later month. Flex with `flex: 1 1 auto`
+      sizes to content and does exactly that.
+
+   ⛔ `auto-fit` WITH A FLOOR, NOT A HARDCODED `repeat(3, 1fr)`. The month count
+      is DERIVED from the offer list, not fixed at three, so a rule that assumed
+      three would break the first time the floor or the twelve-week cap produced
+      two months or four. `minmax(5.5rem, 1fr)` keeps a column from being squeezed
+      under 88px: at 375 that yields exactly three columns of 103px (measured),
+      and a fourth month would drop to a second row AT THE SAME 103px width
+      rather than stretching across it, which is the failure this block exists to
+      remove.
+
+   ⭐ MEASURED AFTER, same asserted 375: three tabs at 103 x 48, ONE row, all
+      three left edges 27 / 136 / 245, and `scrollWidth === clientWidth` on each
+      (99 = 99), so no label is clipped.
+
+   ⛔ THE 48px HEIGHT IS NOT TOUCHED BY ANY RULE IN HERE. `min-height: 3rem` is
+      inherited from the block above and is the founder's finger-friendly
+      requirement; the width falls to 103px, which is still more than twice the
+      44px minimum in the dimension a thumb misses. If a later pass adds
+      horizontal padding to the container, THAT is what would squeeze these, not
+      this block. */
+@media (max-width: 30rem) {
+  .school-readalouds .readaloud-sched__monthtabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    gap: var(--space-2) 6px;
+  }
+
+  .school-readalouds .readaloud-sched__monthtab {
+    min-width: 0;
+    padding: var(--space-2) var(--space-1);
+    font-size: 0.8rem;
+    letter-spacing: 0.01em;
+  }
+}
+
+/* ---- The panel. ----
+   ⛔ THE `[hidden]` GUARD IS EXPLICIT AND IS NOT DECORATION. The script hides a
+      panel with the `hidden` ATTRIBUTE rather than a class, because a hidden
+      container still submits its inputs and a `disabled` one does not — a first
+      choice picked in October and a backup picked in December must both post.
+      A `display` value on the base rule would out-specify the user-agent's
+      `[hidden] { display: none }`, so the panel is declared block and hidden is
+      restated immediately after it. Deleting either line breaks the other. */
+.school-readalouds .readaloud-sched__monthpanel {
+  display: block;
+}
+
+.school-readalouds .readaloud-sched__monthpanel[hidden] {
+  display: none;
+}
+
+/* ⛔ The panel is focusable so a keyboard user can Tab from the strip straight
+      into the cards. It must not then draw a focus ring around the entire month,
+      which reads as an error state; `:focus-visible` gives it a ring only when
+      the browser judges the focus keyboard-driven. */
+.school-readalouds .readaloud-sched__monthpanel:focus {
+  outline: none;
+}
+
+.school-readalouds .readaloud-sched__monthpanel:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: -3px;
+}
+
+/* ---- The month name inside the panel. ----
+   ⭐ VISIBLE ONLY WHEN THE SCRIPT IS ABSENT. With the tabs running, the script
+      adds `screen-reader-text` to this paragraph, because the tab above is
+      already printing the month and the panel takes its accessible name from
+      that tab. With no script it is the ONLY thing separating one month's cards
+      from the next, so it is styled as a real subhead rather than left bare. */
+.school-readalouds .readaloud-sched__monthname {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-parchment);
+  border-bottom: 2px solid rgba(var(--color-navy-rgb), 0.55);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-navy);
+}
+
+/* The list itself sits inside the same navy-edged card the calendar used, so
+   `.readaloud-sched__cal` above still paints the border, the ivory ground and
+   the lift. Only the masthead loses its arrows: there is nothing to page. */
+.school-readalouds .readaloud-sched__weeklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---- One week. A ruled row on the calendar's own paper. ----
+   ⛔ THE DIVIDER IS A TOP BORDER ON EVERY ROW BUT THE FIRST, not a bottom border
+      on every row, so the last card never draws a line against the summary
+      band's own 3px rule and produce a doubled edge. */
+.school-readalouds .readaloud-sched__week {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  padding: var(--space-3);
+  background-color: var(--color-soft-white);
+  /* ⭐ `box-shadow` joins the transition at 1.19.336 so the auto-highlight's
+     6px bar and gold ring arrive with the ground colour instead of snapping in
+     a frame ahead of it. */
+  transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.school-readalouds .readaloud-sched__week + .readaloud-sched__week {
+  border-top: 2px solid rgba(var(--color-navy-rgb), 0.55);
+}
+
+/* ---- "Week of October 5". The card's own masthead type, at row scale. ---- */
+.school-readalouds .readaloud-sched__week-label {
+  flex: 1 1 11rem;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: var(--color-navy);
+}
+
+/* ---- "Monday, October 5 to Friday, October 9". ----
+   The concrete days inside the week, so "Week of" is never ambiguous and the
+   partial first week (which opens on the floor, not on its Monday) states its
+   own real span rather than implying five days. */
+.school-readalouds .readaloud-sched__week-range {
+  flex: 1 1 100%;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+}
+
+/* ⭐ MUTED TEXT ON TINTED GROUNDS — 1.19.338 (`CYCLE170-LD-WALKFIX`, patch 3).
+   ⛔ `--color-text-muted` is calibrated against WHITE. These two strings do not
+      sit on white — they sit on the tinted week card and the tinted funnel
+      panel — and the walk `CYCLE170-DC-WALK-R2` measured both under AA there.
+      `--color-earth` (#7A4E2D) is the darker brand tone already used elsewhere
+      for exactly this ground.
+   ⚠ SCOPED TO `.school-readalouds` ON PURPOSE. `--color-text-muted` is right
+      everywhere it sits on white, so the token is NOT changed — only these two
+      strings, only on this page. Changing the token would repaint the site.
+   ⛔ Colour only. Not one character of copy is touched. */
+.school-readalouds .readaloud-sched__week-range,
+.school-readalouds .readaloud-funnel__fine-print {
+  color: var(--color-earth);
+}
+
+/* ---- The two pick controls. ---- */
+.school-readalouds .readaloud-sched__week-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* ⛔ THE RADIOS ARE VISUALLY HIDDEN, NEVER `display: none`. `display: none`
+      removes a control from the accessibility tree and from the tab order, which
+      would make the whole picker unreachable by keyboard. This is the same
+      clip-rect idiom `.readaloud-sched__day-input` already uses above. */
+.school-readalouds .readaloud-sched__week-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.school-readalouds .readaloud-sched__week-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  min-width: 7.5rem;
+  padding: var(--space-2) var(--space-3);
+  border: 3px solid var(--color-forest);
+  border-radius: var(--radius-md);
+  background-color: var(--color-ivory);
+  color: var(--color-forest);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+/* The backup reads as the quieter of the two before either is chosen, because
+   one of them is optional and the visual weight should say so. */
+.school-readalouds .readaloud-sched__week-pick--backup {
+  border-color: rgba(var(--color-navy-rgb), 0.45);
+  color: var(--color-navy);
+  font-weight: 400;
+}
+
+.school-readalouds .readaloud-sched__week-pick:hover {
+  background-color: rgba(var(--color-gold-rgb), 0.22);
+}
+
+/* ---- THE UNMISTAKABLE SELECTED STATE, the calendar's own. ----
+   Forest fill, cream text, a gold ring drawn INSIDE with `box-shadow: inset` so
+   nothing shifts by the ring's width when a card is picked. */
+.school-readalouds .readaloud-sched__week-input:checked + .readaloud-sched__week-pick {
+  background-color: var(--color-forest);
+  border-color: var(--color-forest);
+  color: var(--color-ivory);
+  box-shadow: inset 0 0 0 4px var(--color-gold);
+  font-weight: 700;
+}
+
+.school-readalouds .readaloud-sched__week-input:focus-visible + .readaloud-sched__week-pick {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   ⭐⭐ THE AUTO-HIGHLIGHT — 1.19.336 (`CYCLE170-LD-CHAIN`, founder item 538:
+   "auto highlight"). SELECTING A WEEK LIGHTS THE WHOLE CARD, UNMISTAKABLY.
+   ----------------------------------------------------------------------------
+   ⛔ SUPERSEDED AT 1.19.336, and the old rules are quoted rather than deleted so
+      the movement is visible:
+
+        .readaloud-sched__week[data-bhp-week-state="first"]  { background-color: rgba(var(--color-gold-rgb), 0.18); }
+        .readaloud-sched__week[data-bhp-week-state="backup"] { background-color: rgba(var(--color-gold-rgb), 0.08); }
+
+      Two tints of ONE hue, at 18% and 8%. They were findable-at-a-glance, which
+      is what 1.19.335 asked for. They are NOT "unmistakable", and 8% gold on
+      soft white is close to invisible on a phone in daylight — which is where
+      this page is actually read.
+
+   ⭐⭐ FIRST CHOICE AND BACKUP NOW DIFFER BY HUE, NOT BY OPACITY. Gold for the
+      first choice, navy for the backup. A difference of hue survives a dim
+      screen, a colour-shifted phone panel and a printout; a difference of alpha
+      on the same hue does not. ⛔ AND NEITHER RELIES ON COLOUR ALONE: the card
+      also gains a 6px inset bar on its leading edge (forest vs navy), and the
+      pick control inside it still carries its own forest fill, gold ring and its
+      own words ("First choice" / "Backup").
+
+   ⛔ THE RINGS ARE `inset` BOX-SHADOWS, so nothing shifts by the ring's width
+      when a card is picked. The same reason the pick control's ring is inset.
+   ============================================================================ */
+
+.school-readalouds .readaloud-sched__week[data-bhp-week-state="first"] {
+  background-color: rgba(var(--color-gold-rgb), 0.42);
+  box-shadow:
+    inset 6px 0 0 0 var(--color-forest),
+    inset 0 0 0 3px var(--color-gold);
+}
+
+.school-readalouds .readaloud-sched__week[data-bhp-week-state="backup"] {
+  background-color: rgba(var(--color-navy-rgb), 0.12);
+  box-shadow: inset 6px 0 0 0 var(--color-navy);
+}
+
+/* ---- The no-script fallback, and it is DELIBERATELY A SEPARATE RULE SET. ----
+   ⛔ A browser that does not understand `:has()` DROPS THE WHOLE RULE IT
+      APPEARS IN. Merging these selectors into the two rules above would
+      therefore take the working `[data-bhp-week-state]` highlight down with them
+      on that browser. Kept apart, an unsupported `:has()` costs nothing and the
+      script-driven attribute still paints the card.
+   ⭐ WHAT THIS BUYS: the highlight now works with JavaScript disabled, which the
+      1.19.335 tint never did. The script remains the primary mechanism because
+      it is also what clears a backup that duplicates the first choice. */
+.school-readalouds .readaloud-sched__week:has(.readaloud-sched__week-input--first:checked) {
+  background-color: rgba(var(--color-gold-rgb), 0.42);
+  box-shadow:
+    inset 6px 0 0 0 var(--color-forest),
+    inset 0 0 0 3px var(--color-gold);
+}
+
+.school-readalouds .readaloud-sched__week:has(.readaloud-sched__week-input--backup:checked) {
+  background-color: rgba(var(--color-navy-rgb), 0.12);
+  box-shadow: inset 6px 0 0 0 var(--color-navy);
+}
+
+/* ⛔ THE FIRST CHOICE OUTRANKS THE BACKUP when a card somehow carries both.
+      The script clears that case, but the CSS must not depend on the script to
+      avoid painting a card in two colours at once. */
+.school-readalouds .readaloud-sched__week[data-bhp-week-state="first"],
+.school-readalouds .readaloud-sched__week:has(.readaloud-sched__week-input--first:checked) {
+  border-top-color: var(--color-gold);
+}
+
+/* ============================================================================
+   ⭐⭐ THE SEPTEMBER CARDS — 1.19.336, founder-sealed items 537 / 538 / 540.
+   ----------------------------------------------------------------------------
+   ⛔ THEY MUST READ AS A DIFFERENT KIND OF THING AT A GLANCE, and they must do
+      it without becoming unreadable: a greyed card a teacher cannot read is a
+      worse answer than no card. So the ground is dimmed and the type is NOT.
+      Label and status stay at full navy strength; only the ground and the range
+      line soften.
+   ⛔ NO `opacity`. Dimming the whole element would take the text contrast down
+      with it, which is the usual way a "disabled" style quietly fails WCAG.
+   ============================================================================ */
+.school-readalouds .readaloud-sched__week--closed {
+  background-color: rgba(var(--color-navy-rgb), 0.07);
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 7px,
+    rgba(var(--color-navy-rgb), 0.05) 7px,
+    rgba(var(--color-navy-rgb), 0.05) 14px
+  );
+  box-shadow: inset 6px 0 0 0 rgba(var(--color-navy-rgb), 0.35);
+  cursor: default;
+}
+
+.school-readalouds .readaloud-sched__week--closed .readaloud-sched__week-label {
+  color: var(--color-navy);
+}
+
+/* ⭐ THE CLOSED CARD'S RANGE TAKES THE SAME CORRECTION — 1.19.338
+      (`CYCLE170-LD-WALKFIX`, patch 3, second target).
+   ⛔⛔ THE WALK'S PATCH LIST NAMED ONLY THE BASE RULE, AND THIS ONE OUTRANKS IT.
+      This selector is (0,3,0) and sits LATER in the file than the patch at
+      ~line 15275, so the base override lost twice over. Preserved verbatim:
+
+          color: var(--color-text-muted);
+
+      MEASURED on staging at 1.19.338 build 1, `innerWidth` asserted 1440: the
+      FOUR closed September cards still rendered `rgb(111, 104, 91)` on the
+      closed card's `rgb(231, 227, 219)` ground = **4.32:1**, under AA. The four
+      open October cards had already taken `--color-earth` and passed — which is
+      how the split was found at all.
+   ⭐ `--color-earth` on this ground measures **5.55:1** — AA, and still visibly
+      secondary to the card's navy label, so the closed state reads as
+      de-emphasised without being unreadable. The de-emphasis was never the
+      defect; the contrast was.
+   ⛔ Fixed in the rule that already OWNS this state rather than by stacking a
+      more specific override on top of it. A specificity arms race on one
+      colour is how this component got here. */
+.school-readalouds .readaloud-sched__week--closed .readaloud-sched__week-range {
+  color: var(--color-earth);
+}
+
+/* ---- "Booked" / "Unavailable". Sits where the pick controls sit on a live
+        card, so the eye finds the answer in the same column all the way down
+        the list rather than hunting for it. ---- */
+.school-readalouds .readaloud-sched__week-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  min-width: 7.5rem;
+  margin: 0 0 0 auto;
+  padding: var(--space-2) var(--space-3);
+  border: 3px dashed rgba(var(--color-navy-rgb), 0.45);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-navy);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+/* ⛔ DASHED, NOT SOLID, AND THAT IS THE POINT. A solid bordered pill in this
+      position is what the two PICK CONTROLS look like, and a teacher scanning
+      the list must never mistake a status badge for something clickable. */
+.school-readalouds .readaloud-sched__week--booked .readaloud-sched__week-status {
+  border-color: rgba(var(--color-forest-rgb), 0.55);
+}
+
+@media (max-width: 33.75rem) {
+  .school-readalouds .readaloud-sched__week-status {
+    width: 100%;
+    margin-left: 0;
+    min-width: 0;
+  }
+}
+
+/* ---- The honest line — item 534, above the picker. ----
+   ⛔ IT IS NOT A CALLOUT BOX AND NOT AN ALERT. It is him talking, so it is set
+      as a paragraph with a gold rule beside it rather than as UI chrome a reader
+      learns to skip. */
+.school-readalouds .readaloud-sched__honest {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 5px solid var(--color-gold);
+  background-color: var(--color-parchment);
+  color: var(--color-navy);
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+/* ---- The weekday preference boxes. ----
+   ⭐ THEY REUSE `.readaloud-sched__slot`, so Monday-to-Friday and
+      Morning/Afternoon are visibly the same KIND of answer: a preference. They
+      are set one step smaller because there are five of them and they are the
+      optional pair of the two. */
+.school-readalouds .readaloud-sched__slot--weekday {
+  flex: 1 1 6rem;
+  min-height: 3rem;
+  font-size: 1.05rem;
+}
+
+/* ---- Phone. ----
+   The pick controls take the full row width below the label, because a 375px
+   row cannot hold an 11rem label and two 7.5rem controls side by side without
+   one of them dropping under the 48px target. */
+@media (max-width: 33.75rem) {
+  .school-readalouds .readaloud-sched__week-picks {
+    margin-left: 0;
+    width: 100%;
+  }
+  .school-readalouds .readaloud-sched__week-pick {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .school-readalouds .readaloud-sched__slot--weekday {
+    flex: 1 1 5rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* ============================================================================
+   B · THE HERO CHIPS — carrier item 522
+   ----------------------------------------------------------------------------
+   ⛔ THEY SIT BELOW THE CTA IN DOM ORDER AND THIS BLOCK NEVER MOVES THEM ABOVE
+      IT. No `order:`, no negative margin large enough to overlap, no absolute
+      positioning. The founder-ruled requirement is that the CTA is visible
+      without scrolling at 1440 AND 375; anything printed after it may only
+      occupy space further down the page.
+
+   ⚠ THEY DO ADD HEIGHT BELOW THE BUTTON, which is why the CTA's above-fold
+     position is RE-MEASURED after deploy at both widths with `window.innerWidth`
+     asserted in the same eval, rather than assumed to be safe.
+   ============================================================================ */
+.school-readalouds__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: var(--space-3) 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.school-readalouds__chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  /* The hero is `.section--dark`. Cream at 0.88 keeps the chips clearly
+     secondary to the white headline without dropping under AA. */
+  color: rgba(255, 250, 240, 0.88);
+}
+
+/* ⭐ THE SEPARATOR IS GENERATED CONTENT, NOT A CHARACTER IN THE APPROVED COPY.
+      The three strings are founder-attested and are stored without punctuation;
+      inserting a middot into them would make the stored copy differ from what
+      was approved.
+   ⛔⛔ SUPERSEDED AT 1.19.338 (`CYCLE170-LD-WALKFIX`, patch 4). The rule below
+      WAS, and the reasoning it carried was WRONG IN THE DIRECTION THAT MATTERS —
+      preserved verbatim so nobody re-derives it:
+
+          .school-readalouds__chip + .school-readalouds__chip::before {
+            content: "·"; margin-right: var(--space-3);
+            color: var(--color-gold); font-weight: 700;
+          }
+          "It is also `::before` on every chip but the first, so it can never
+           appear as a trailing mark when the list wraps to one item per line."
+
+      ⛔ TRUE ABOUT TRAILING MARKS, AND IT MISSED THE OPPOSITE FAILURE. A
+         `::before` on a wrapped chip appears at the START of the new line — an
+         ORPHANED separator hanging in the left margin with nothing before it.
+         OBSERVED by the aesthetic walk `CYCLE170-DC-WALK-R2` at 375, where this
+         three-chip list wraps to one chip per line.
+   ⭐ `::after` on every chip but the LAST fixes both failures at once: the mark
+      lives INSIDE the chip's own inline-flex box, so it wraps WITH the chip it
+      belongs to and can never lead a line; and `:not(:last-child)` means it can
+      never trail the list. The `<ul>` holds `<li class="…__chip">` and nothing
+      else (`page-school-read-alouds.php` ~line 230), so `:last-child` is exact.
+   ⛔ Generated content only. The stored strings remain byte-identical.
+
+   ⛔⛔ THE `::after` REPLACEMENT WAS BUILT, DEPLOYED AND MEASURED — AND IT IS
+      SUPERSEDED TOO, BY THE MEASUREMENT BELOW. Preserved verbatim, because it is
+      the walk's certified drop-in and a reader needs to see exactly what was
+      tried before concluding it was skipped:
+
+          .school-readalouds__chip:not(:last-child)::after {
+            content: "·"; margin-left: var(--space-3);
+            color: var(--color-gold); font-weight: 700;
+          }
+
+      ⭐ THERE IS NO SEPARATOR RULE ANY MORE. Read the next block for why. */
+
+/* ⛔⛔ AND THE HALF THE `::after` SWAP ALONE DOES NOT FIX — MEASURED, NOT REASONED.
+      `::after` cures the LEADING orphan and, at any width where this list wraps,
+      it MIRRORS it into a TRAILING one. OBSERVED on staging at 1.19.338 build 2,
+      `innerWidth` asserted 375, screenshot filed: the three chips wrap 2 + 1, and
+      chip 2's separator hangs alone at the end of line 1 —
+
+          Free for Boise-area schools · October onward ·
+          I confirm every request personally
+
+      ⛔ A dangling mark at a line END is a smaller defect than one at a line
+         START, and it is the SAME defect. Shipping it would have met the letter
+         of the patch and not its purpose.
+
+   ⛔⛔⛔ AND THEN THE MEASUREMENT THAT SETTLED IT, TAKEN AT 1440 BECAUSE THE
+      375 RESULT LOOKED LIKE A MOBILE-ONLY PROBLEM AND WAS NOT:
+
+          hero copy column width, 1440   488.0px      (`school-readalouds__hero-copy`)
+          chips 195.5 + 120.9 + 219.6  = 536.0px
+          + two 12px column gaps       = 560.0px  ⛔ NEEDED
+          fits on one line                FALSE
+
+      ⭐⭐ THE CHIPS LIVE IN THE HERO'S COPY COLUMN, NOT THE VIEWPORT. That column
+      is grid-capped at 488px at 1440 and gets NARROWER, never wider, as the
+      viewport shrinks. ⛔ **THE THREE CHIPS THEREFORE NEVER FIT ON ONE LINE AT
+      ANY VIEWPORT WIDTH.** The row form always wraps, so the separator always
+      orphans — at 1440 exactly as at 375, which is where a viewport-conditional
+      fix would have quietly left it.
+   ⛔ A `@media (max-width: 40rem)` version of this fix was built, deployed and
+      MEASURED at 1.19.338 build 3, and the 1440 sweep found the trailing mark
+      still there. It is recorded rather than deleted because "just do it on
+      mobile" is the obvious wrong answer and somebody will reach for it again.
+   ⭐ THE FIX WITH NO WIDTH DEPENDENCY TO GET WRONG: the list stacks, always, and
+      the separator never renders. Three short claims, one per line, is what this
+      list is; punctuation between stacked items is noise even when it is not an
+      orphan. ⛔ CSS cannot detect a line break, so no conditional form of the
+      separator can be correct here.
+   ⚠ COST, STATED AND MEASURED: the list is 84.6px tall stacked versus ~54px
+      wrapped — one extra line, ~31px. It sits BELOW the hero CTA, so the
+      above-the-fold CTA position the micro lane measured is untouched (measured
+      after: CTA bottom 327.4 at `innerHeight` 812).
+   ⚠⚠ THIS IS THE ONE PLACE THIS PASS WENT BEYOND THE WALK'S CERTIFIED DROP-IN,
+      and it went there on a measurement, not a preference. If Legolas or Andrew
+      wants the row form back, the whole reversal is: delete this rule, restore
+      `flex-direction: row`, and re-add the `::after` block above — and the
+      trailing mark comes back with it, at every width. */
+.school-readalouds__chips {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* ============================================================================
+   C · WHAT A VISIT LOOKS LIKE — carrier item 523
+   ----------------------------------------------------------------------------
+   ⛔ THE NUMERALS ARE THE LIST'S OWN MARKERS, drawn by CSS from the `<ol>`.
+      They are NOT characters in the approved strings, so the copy stored in
+      `bhp_readaloud_visit_shape_points()` stays byte-identical to what was
+      approved and a renumbering can never edit a founder sentence.
+   ============================================================================ */
+.readaloud-visit__points {
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+  counter-reset: bhp-visit;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.readaloud-visit__point {
+  counter-increment: bhp-visit;
+  position: relative;
+  padding-left: 3.25rem;
+  min-height: 2.25rem;
+  font-size: 1.08rem;
+  line-height: 1.55;
+  color: var(--color-text);
+}
+
+.readaloud-visit__point::before {
+  content: counter(bhp-visit);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: var(--color-forest);
+  color: var(--color-ivory);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* The closing couplet is the founder's statement of intent and is set apart from
+   the four mechanics above it. Gold rule, not a box: it is a signature line. */
+.readaloud-visit__closing {
+  margin: 0;
+  padding-left: var(--space-4);
+  border-left: 4px solid var(--color-gold);
+  max-width: 60ch;
+  font-family: var(--font-body);
+  font-size: 1.12rem;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+/* ============================================================================
+   D · PAST READ-ALOUDS, standing alone
+   ----------------------------------------------------------------------------
+   ⛔ THE SHIPPED `.author-visits-past*` RULES ARE NOT TOUCHED — they still
+      govern `/author-visits/`, which is unedited. This is one scoped rule that
+      lets the list use the full content column now that it is no longer the
+      right-hand half of a two-column split.
+   ============================================================================ */
+@media (min-width: 48rem) {
+  .school-readalouds__past .author-visits-past {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: var(--space-6);
+  }
+}
+
+/* ============================================================================
+   E · /positivity-news/ — THE NEWSLETTER SIGNUP PAGE
+   1.19.333, carrier items 520 / 521
+   ----------------------------------------------------------------------------
+   ⛔ EVERY SELECTOR IS SCOPED TO `.bhp-positivity`. Nothing here reaches another
+      page, and the page reuses the SHIPPED `signup-form.php` template part and
+      the SHIPPED `.acquisition-form` styles rather than declaring a second form
+      system — the same rule that stopped this site growing a seventh button spec.
+
+   ⭐ THE PALETTE IS NOT INVENTED AND IT IS NOT THE BRIEF'S GUESS EITHER. It is
+      read off the LIVE newsletter artefact, Mailchimp campaign 8118924, as
+      captured in
+      `WORKING-DRAFTS\connected-operator\CYCLE170-GIM-NEWSLETTER-FINAL-R2\NEWSLETTER-01-CONTENT-LOADED.html`:
+        #fffaf0 cream (39 uses) · #071522 navy (14) · #D9A45F gold (9)
+        #173f2f forest (9) · #342f28 body (7)
+      Those five are `--color-ivory`, `--color-navy`, `--color-gold`,
+      `--color-forest` and `--color-charcoal` — i.e. the email and the theme
+      already share one palette, and this page uses the TOKENS rather than
+      re-typing the hexes.
+
+   ⭐ THAT ALSO SETTLES CONTRADICTION `C1` from
+      `CYCLE170-GIM-LANDING-FILL\RESULT-42351-2026-08-30.md`, which recorded two
+      different "navy" values for this page (#071522 from the brief, #173f2f from
+      the copy deck) and correctly refused to pick. ⛔ IT IS NOT PICKED HERE
+      EITHER — the live artefact uses BOTH, as two different roles: #071522 is
+      the masthead ground, #173f2f is the button. Reading the artefact dissolved
+      the contradiction instead of resolving it by preference. ⚠ C1 remains open
+      for the MAILCHIMP-hosted page, which is a different surface and is Gimli's.
+   ============================================================================ */
+
+.bhp-positivity {
+  background-color: var(--color-ivory);
+}
+
+/* ---- The navy logo band. ---- */
+.bhp-positivity__band {
+  padding: var(--space-8) var(--space-4);
+  background-color: var(--color-navy);
+  text-align: center;
+}
+
+.bhp-positivity__logo {
+  display: inline-block;
+  width: auto;
+  max-width: min(320px, 70vw);
+  height: auto;
+}
+
+/* ---- The cream card the whole page lives in. ---- */
+.bhp-positivity__card {
+  max-width: 42rem;
+  margin: calc(var(--space-8) * -1) auto var(--space-12);
+  padding: var(--space-8) var(--space-6);
+  position: relative;
+  background-color: var(--color-ivory);
+  border: 1px solid var(--color-parchment);
+  border-top: 5px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(var(--color-navy-rgb), 0.12);
+}
+
+@media (max-width: 39.999rem) {
+  .bhp-positivity__card {
+    margin: calc(var(--space-6) * -1) var(--space-3) var(--space-8);
+    padding: var(--space-6) var(--space-4);
+  }
+}
+
+.bhp-positivity__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--color-navy);
+  text-align: center;
+}
+
+.bhp-positivity__subhead {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-body);
+  font-size: clamp(1.15rem, 2.6vw, 1.4rem);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--color-forest);
+  text-align: center;
+}
+
+.bhp-positivity__rule {
+  width: 4rem;
+  height: 3px;
+  margin: 0 auto var(--space-6);
+  border: 0;
+  background-color: var(--color-gold);
+}
+
+.bhp-positivity__body p {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  line-height: 1.65;
+  color: var(--color-charcoal);
+}
+
+.bhp-positivity__form {
+  margin-top: var(--space-6);
+}
+
+/* ⛔ THE BUTTON IS FOREST BECAUSE THE LIVE NEWSLETTER'S BUTTON IS FOREST. It is
+   painted here rather than by adding another `btn-*` class, so the shipped
+   button system gains no new variant for one page. `!important` matches how
+   `.btn-cta-primary` already asserts itself over `.btn-primary` in this file;
+   without it the sitewide `.btn-primary` colour list wins on source order. */
+/* ⭐⭐ THE PRIMARY CTA IS GOLD, LIKE EVERY OTHER FUNNEL CTA — 1.19.338
+      (`CYCLE170-LD-WALKFIX`, patch 5). GANDALF'S RULING, carrier item 513
+      consistency.
+   ⛔⛔ SUPERSEDED. This page had a PAGE-SCOPED FOREST OVERRIDE and nothing else
+      on the site did. Preserved verbatim so the movement is visible:
+
+          background-color: var(--color-forest) !important;
+          border-color:     var(--color-forest) !important;
+          color:            var(--color-ivory)  !important;
+          :hover/:focus-visible → var(--color-jungle)
+
+      One page's primary action was a different colour from every other primary
+      action a visitor meets. That is the defect — not the forest itself.
+   ⭐ THE SITEWIDE PATTERN IS GOLD GROUND, NAVY TEXT, and it is already declared
+      at `.woocommerce input.button.alt` (~line 4402:
+      `background: var(--expedition-gold) !important; color: var(--expedition-navy) !important`).
+      This block now matches it. `--expedition-gold` is named directly, as that
+      rule names it, rather than through the `--color-*` tier.
+   ⛔ The `!important`s are KEPT, not added — they were already here, and they
+      are what beats the block-editor button styles this form inherits.
+   ⚠ HOVER goes DARKER-GOLD, not to another hue: `--expedition-gold-dark` if it
+      exists is not assumed — a hand-checked #B8863F is used, and
+      `test-cycle170-walkfix` §5 asserts the pair. Navy stays navy on hover, so
+      the contrast never drops below the resting state. */
+.bhp-positivity .acquisition-form__submit {
+  background-color: var(--expedition-gold) !important;
+  border-color: var(--expedition-gold) !important;
+  color: var(--expedition-navy) !important;
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+
+.bhp-positivity .acquisition-form__submit:hover,
+.bhp-positivity .acquisition-form__submit:focus-visible {
+  background-color: #B8863F !important;
+  border-color: #B8863F !important;
+  color: var(--expedition-navy) !important;
+}
+
+.bhp-positivity__fine-print {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ---- The thank-you state. ----
+   ⛔ IT PROMISES A NEWSLETTER AND NOTHING ELSE. There is no lead magnet on this
+      page, so there is no download link, no "check your email for the PDF" and
+      no second offer. See `inc/positivity-news.php`. */
+.bhp-positivity__thanks {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-6) var(--space-4);
+  border: 2px solid var(--color-forest);
+  border-radius: var(--radius-md);
+  background-color: var(--color-soft-white);
+  text-align: center;
+}
+
+.bhp-positivity__thanks-title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-forest);
+}
+
+.bhp-positivity__thanks-text {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--color-charcoal);
+}
+
+.bhp-positivity__sign-off {
+  margin: var(--space-8) 0 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-navy);
+  text-align: center;
+}
+
+/* ============================================================================
+   E2 · /positivity-news/ — ABOVE-THE-FOLD COMPRESSION + THE GRADIENT PHOTO
+   1.19.337 (2026-08-30, CYCLE170-LD-MICRO), carrier items 545 / 546
+   ----------------------------------------------------------------------------
+   ⭐⭐ FOUNDER, verbatim, 2026-08-30 (RELAYED through chief-of-staff, read
+      first-hand at the carrier file, NOT witnessed by this desk):
+        item 546 — "also the email address area should be above the fold"
+        item 545 — "Excellent if we can do a gradient picture below it of the
+                    read aloud with the kiddos that would make it pop"
+
+   ⛔ EVERY SELECTOR BELOW IS SCOPED TO `.bhp-positivity`. This sheet is
+      sitewide; nothing here reaches another page, and no token, no button
+      spec and no shared component is redefined.
+
+   ⭐ MEASURED BEFORE, staging 1.19.336, real browser, `innerWidth` ASSERTED IN
+      THE SAME EVAL, 2026-08-30:
+        1440 x 900 — email input top 625 · SUBMIT BOTTOM 683   (above the fold)
+         375 x 812 — email input top 638 · SUBMIT BOTTOM 758   (54px of margin)
+
+   ⚠️ 758 IS TECHNICALLY ABOVE 812 AND THAT IS WHY THE FIX IS NOT "NOTHING".
+      812 is the iPhone X CSS viewport with NO browser chrome. Safari's real
+      toolbars take roughly 100-150px of it, which puts a 758px button under
+      the fold on the device the founder was actually holding. ⛔ The honest
+      statement is that this desk could not reproduce Safari's toolbars (the
+      same limitation `RELEASES/SCREENSHOT_FIXES_1_19_121.md` states), so the
+      target is set with headroom rather than to the emulator's edge.
+
+   ⭐ THE FIX IS TWO HALVES AND ONLY ONE OF THEM IS HERE:
+        1. `page-positivity-news.php` moves the FORM above the two body
+           paragraphs — DOM order, not CSS `order`, so keyboard order still
+           matches visible order.
+        2. This block takes the air out of everything above the form.
+      ⛔ NO APPROVED STRING IS CHANGED, SHORTENED OR RE-WRAPPED by either half.
+   ========================================================================= */
+
+/* ---- The navy band. It is a masthead, not a hero, and it was paying hero
+   padding. 32px/32px + a 78px logo = 151px before a word is read.
+   1440: unchanged in kind, tightened · 375: 32 -> 14 per side. ---- */
+.bhp-positivity__band {
+  padding: clamp(0.875rem, 2vw, 1.5rem) var(--space-4);
+}
+
+/* ⛔ THE LOGO IS CAPPED BY HEIGHT, NOT BY WIDTH, and the distinction is the
+   point: `max-width` on a 338x100 asset leaves the height free to be whatever
+   the width implies, which is what produced 78px. Capping the height caps the
+   band. `width: auto` keeps the aspect ratio exact — the mark is never
+   squashed, only smaller. */
+.bhp-positivity__logo {
+  max-height: clamp(2.75rem, 6vw, 4.25rem);
+}
+
+/* ---- The card. Its top padding is the last thing between the band and the
+   headline. ---- */
+/* ⛔ A LITERAL, NOT A TOKEN, AND DELIBERATELY SO: this sheet has no
+   `--space-5`, the scale jumps var(--space-4) 1rem -> var(--space-6) 1.5rem,
+   and 1rem is too tight under a 5px gold border while 1.5rem is what we are
+   removing. Inventing a sitewide `--space-5` for one declaration on one page
+   would be a token change dressed as a spacing fix. */
+.bhp-positivity__card {
+  padding-top: 1.25rem;
+}
+
+/* ---- Headline, subhead and rule. Three stacked bottom margins totalling
+   ~60px at 375 before the form could begin. Each comes in a step; NONE of the
+   type sizes drops below the sitewide minimum readable size. ---- */
+.bhp-positivity__subhead {
+  margin-bottom: var(--space-4);
+}
+
+.bhp-positivity__rule {
+  margin-bottom: var(--space-4);
+}
+
+/* ⛔ THE FORM'S TOP MARGIN IS NOW THE SMALL ONE, because the block above it is
+   the gold rule rather than two paragraphs of prose. */
+.bhp-positivity__form {
+  margin-top: var(--space-4);
+}
+
+/* ---- The body copy, which now sits UNDER the form. It is the reinforcement,
+   so it gets a clear separation above it and tighter leading between its own
+   paragraphs. ⛔ THE TEXT IS UNCHANGED — this is margin only. ---- */
+.bhp-positivity__body {
+  margin-top: var(--space-6);
+}
+
+.bhp-positivity__body p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- Phone. The founder's own device class, and where every number matters
+   most. ---- */
+@media (max-width: 39.999rem) {
+  .bhp-positivity__title {
+    font-size: clamp(1.7rem, 7.5vw, 2.1rem);
+    margin-bottom: var(--space-2);
+  }
+  .bhp-positivity__subhead {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-3);
+  }
+  .bhp-positivity__rule {
+    margin-bottom: var(--space-3);
+  }
+  .bhp-positivity__form {
+    margin-top: var(--space-3);
+  }
+}
+
+/* ============================================================================
+   ⭐⭐ THE GRADIENT PHOTOGRAPH — item 545.
+   ----------------------------------------------------------------------------
+   ⛔⛔ THE IMAGE FILE IS NOT TOUCHED. No crop, no re-encode, no mask baked into
+      an asset, nothing generated. `adams-elementary-read-aloud-group.jpg` is
+      the photograph Andrew already published, already shipping in this theme,
+      already rendered by /school-read-alouds/, /gallery/ and /author-visits/.
+      ⭐ The entire treatment is one overlay on top of the untouched file, so
+      reverting item 545 is deleting this block and one <figure>.
+
+   ⭐ "BLENDING INTO THE PAGE BACKGROUND" IS TAKEN LITERALLY. The overlay is a
+      gradient from fully transparent to `--color-ivory` — the exact token the
+      card and the page ground use — so the photograph's bottom edge does not
+      exist. There is no border, no rounded rectangle at the foot and no shadow
+      under it; the frame dissolves rather than being drawn.
+
+   ⛔ `rgba(var(--color-ivory-rgb), …)` RATHER THAN A RE-TYPED `#fffaf0`. The
+      token is added at the top of this sheet beside `--color-gold-rgb` and its
+      four siblings. A hardcoded cream here would drift the day the ground
+      changes and would leave a visible seam nobody could grep for.
+
+   ⚠️ THE HONEST LIMITATION: this fades to ivory because the ground under it IS
+      ivory (`.bhp-positivity { background-color: var(--color-ivory) }`). It is
+      NOT a transparency mask — on any other ground it would paint a cream
+      wash. ⛔ That is why every selector here is scoped to `.bhp-positivity`
+      and why this must not be lifted into a shared component.
+
+   ⛔ THE OVERLAY IS `pointer-events: none` AND CARRIES NO TEXT. It is decoration
+      over a photograph; it must never intercept a tap on a phone, and it
+      contributes nothing to the accessibility tree.
+   ========================================================================= */
+.bhp-positivity__photo {
+  position: relative;
+  margin: var(--space-6) 0 0;
+  /* ⛔ NEGATIVE INLINE MARGINS PULL IT TO THE CARD'S EDGES, and they are exactly
+     the card's own padding so the photograph is flush and never overflows.
+     `overflow: hidden` on the figure is what keeps the rounded card corners
+     honest if a later pass gives the image a radius. */
+  margin-inline: calc(var(--space-6) * -1);
+  overflow: hidden;
+}
+
+.bhp-positivity__photo-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* ⛔ THE REAL 1200x675 RATIO, DECLARED. It reserves the box before the lazy
+     image arrives, so nothing under it (the sign-off) jumps. */
+  aspect-ratio: 1200 / 675;
+  object-fit: cover;
+}
+
+/* ⭐ THE GRADIENT ITSELF. Three stops, and each one earns its place:
+     · 0%   fully transparent — the top of the frame is the photograph, plain.
+     · 55%  still transparent — the faces and the books are in the upper two
+            thirds of this frame, and nothing washes over them.
+     · 100% solid ivory — the bottom edge disappears into the page.
+   ⛔ A single 0%-to-100% fade would have hazed the children's faces, which is
+      the opposite of "makes it pop". The stop position is a content decision
+      about THIS photograph, not a default. */
+.bhp-positivity__photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(var(--color-ivory-rgb), 0) 0%,
+    rgba(var(--color-ivory-rgb), 0) 55%,
+    rgba(var(--color-ivory-rgb), 0.72) 84%,
+    rgba(var(--color-ivory-rgb), 1) 100%
+  );
+}
+
+/* ⭐ AND A NARROW SIDE FADE, so the photograph loses its left and right edges
+   too rather than only its bottom one. ⛔ 8% per side, which is ~34px on a
+   375px phone — enough to soften a hard vertical line, not enough to reach a
+   face at either margin. */
+.bhp-positivity__photo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: linear-gradient(
+    to right,
+    rgba(var(--color-ivory-rgb), 1) 0%,
+    rgba(var(--color-ivory-rgb), 0) 8%,
+    rgba(var(--color-ivory-rgb), 0) 92%,
+    rgba(var(--color-ivory-rgb), 1) 100%
+  );
+}
+
+@media (max-width: 39.999rem) {
+  .bhp-positivity__photo {
+    margin-top: var(--space-4);
+    margin-inline: calc(var(--space-4) * -1);
+  }
+}
+
+/* ⛔ THE SIGN-OFF COMES IN, because the photograph now sits above it and a
+   32px gap under a dissolving image reads as a mistake rather than as space. */
+.bhp-positivity__sign-off {
+  margin-top: var(--space-4);
 }

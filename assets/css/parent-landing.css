@@ -605,3 +605,467 @@
    numeral-sized 51px and read as off-centre in the dark trust band. Long-word
    tiles take a snug size that fits the tile at every grid width. */
 .parent-landing-stat__num--word { font-size: 38px; margin-top: 7px; }
+
+/* ==========================================================================
+   ⭐⭐ 1.19.308 (2026-08-27, `CYCLE167-LD-KIT-PAGE-REFRESH`) — THE PAID-AD
+       HERO: THE FORM ABOVE THE FOLD, AND THE FOUNDER'S PHOTOGRAPH BESIDE IT.
+   ==========================================================================
+
+   ⭐ WHY THIS BLOCK EXISTS. This page is the destination of a paid Meta
+      traffic ad (founder carrier item 330 — the $0.25-CPC ad, repointed at
+      email capture). A paid landing has ONE job, and the measure of whether it
+      does that job is whether the field is on the first screen of a phone.
+
+   ⭐ HIS SPEC FOR THE PHOTOGRAPH, VERBATIM (carrier item 297):
+        "a picture of me and charlotte as a gradient right to left with like a
+         playful squiggle in between"
+      All three elements survive: the real photograph, the gradient running
+      RIGHT TO LEFT into the cream field the copy sits in, and a hand-drawn
+      squiggle BETWEEN them. The construction is deliberately the SAME as the
+      popup's in `style.css` §9 — two-pass bezier ink, two golds, a mask rather
+      than a baked-in fade — so the two surfaces read as one treatment rather
+      than as two people's interpretations of one sentence.
+
+   ⛔ THE HERO IS TWO COLUMNS AGAIN AT DESKTOP, AND THAT REVERSES NOTHING THE
+      FOUNDER RULED. The centring introduced at 1.19.213 was recorded in
+      `audience-landing.css` as "the consequence of the founder's structure,
+      not an independent design change" — its stated cause was that the art
+      column had been deleted and "there is no second column to balance
+      against". There is one again. Below 901px the hero stays exactly as
+      centred as it was, because that reasoning still holds on a phone.
+
+   ⛔ THE CAROUSEL SPANS BOTH COLUMNS. Left inside the copy column it would
+      have rendered at roughly half of the 940px it was tuned for, on exactly
+      the screens where it earns that width.
+
+   ⚠ EVERY RULE HERE IS APPENDED, NOT EDITED IN. Not one byte above this
+     comment was altered, so a revert is a deletion of this block. The dead
+     `__art` / `__covers` / `__logo` rules further up stay dead and stay in
+     place, for the reason their own comments give.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1 · THE COPY COLUMN AND THE FORM.
+   -------------------------------------------------------------------------- */
+
+/* The form sits directly under the lead sentence with real air around it, and
+   is width-capped so the two fields and the button do not stretch into a
+   letterbox on a wide screen. A capture form wider than its own headline reads
+   as a newsletter footer, not as the point of the page. */
+.parent-landing-hero__capture {
+	width: 100%;
+	max-width: 34rem;
+	margin: 22px auto 0;
+	text-align: left;
+}
+
+.parent-landing-hero__form { margin: 0; }
+
+/* ⛔ THE SUBMIT CONTROL IS FULL WIDTH AT EVERY VIEWPORT, and that is a paid-
+   traffic decision rather than a stylistic one: on a phone the button is the
+   single largest tap target on the first screen, and a button that fits only
+   its own label leaves a visitor aiming. */
+.parent-landing-hero__form .acquisition-form__submit,
+.parent-landing-hero__form button[type="submit"] { width: 100%; }
+
+/* The fail-closed state (Kit PDF unset). Deliberately quiet — it is a message,
+   not an offer, and it must not look like a disabled form. */
+.parent-landing-hero__pending {
+	margin: 22px auto 0;
+	max-width: 34rem;
+	font-size: 15px;
+	color: var(--pl-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   2 · THE SQUIGGLE — drawn, playful, two-pass. Same construction as the
+       popup's, stated once there and mirrored here for `.parent-landing`,
+       which is a separate design system with its own class prefix.
+   --------------------------------------------------------------------------
+   ⭐ The `-ink` path is the pen stroke; `-ghost` is the same wave offset by a
+      pixel and drawn much fainter, which is what a line looks like when a hand
+      goes over it twice. A single crisp stroke reads as a border, and he did
+      not ask for a border.
+   ⛔ NO `vector-effect: non-scaling-stroke`. The SVG stretches with
+      `preserveAspectRatio="none"`, and the stroke stretching with it is part of
+      why it reads as ink rather than as a rule. */
+.parent-landing-hero__trust {
+	position: relative;
+	width: 100%;
+	min-width: 0;
+}
+
+.parent-landing-hero__seam {
+	position: relative;
+	line-height: 0;
+	pointer-events: none;
+}
+
+.parent-landing-hero__squiggle {
+	display: none;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	fill: none;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+/* ⭐ TWO GOLDS, for the reason the popup's own note records: `--color-gold`
+   alone washes out on cream, and this hero's ground is cream. */
+.parent-landing-hero__squiggle-ink {
+	stroke: var(--color-gold, #c8a35a);
+	stroke-width: 2.6;
+}
+
+.parent-landing-hero__squiggle-ghost {
+	stroke: var(--color-gold-deep, #9c7a33);
+	stroke-width: 1.4;
+	opacity: 0.34;
+}
+
+/* --------------------------------------------------------------------------
+   3 · THE PHOTOGRAPH.
+   --------------------------------------------------------------------------
+   ⛔ NO TEXT IS RENDERED OVER THIS IMAGE AT ANY VIEWPORT. The gradient is a
+      `mask-image` on the picture itself — it removes the photograph's own
+      pixels toward the edge so what shows through is whatever the hero's
+      background happens to be, rather than a hard-coded cream overlay that
+      would go wrong the moment the section's ground changed. */
+.parent-landing-hero__photo {
+	margin: 0;
+	line-height: 0;
+	min-width: 0;
+}
+
+.parent-landing-hero__photo picture,
+.parent-landing-hero__photo img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: 50% 42%;
+}
+
+/* --------------------------------------------------------------------------
+   4 · DESKTOP (>= 901px) — HIS LAYOUT, LITERALLY: photo RIGHT, gradient RIGHT
+       TO LEFT, squiggle IN BETWEEN.
+   --------------------------------------------------------------------------
+   ⭐ 901px, NOT 860px. The existing two-column rule in this file keys off
+      860px and is explicitly undone by the funnel block above, so re-using
+      that number would have meant two rules arguing inside one query. 901px
+      also puts the split above every tablet-portrait width, where a 360px copy
+      column beside a 300px photograph would have made both worse than either
+      alone — the same arithmetic the popup's 700px note records. */
+@media (min-width: 901px) {
+	.parent-landing-hero__grid {
+		grid-template-columns: minmax(0, 1.12fr) 26px minmax(0, 0.88fr);
+		grid-template-areas:
+			"copy seam photo"
+			"gallery gallery gallery";
+		column-gap: clamp(1rem, 2vw, 2rem);
+		align-items: center;
+		text-align: left;
+	}
+
+	.parent-landing-hero__copy    { grid-area: copy; }
+	.parent-landing-hero__gallery { grid-area: gallery; margin-top: 26px; }
+
+	/* `display: contents` on the wrapper lets the seam and the figure become
+	   grid items of the HERO grid, so the squiggle sits in a track of its own
+	   between the two columns — which is what "in between" means — without a
+	   second nested grid whose height would have to be kept in sync with the
+	   first. ⛔ It also means the wrapper contributes no box of its own; every
+	   rule that shapes the pair below therefore targets the CHILDREN. */
+	.parent-landing-hero__trust { display: contents; }
+
+	.parent-landing-hero__seam {
+		grid-area: seam;
+		height: 82%;
+		align-self: center;
+	}
+	.parent-landing-hero__squiggle--v { display: block; }
+
+	.parent-landing-hero__photo {
+		grid-area: photo;
+		/* ⛔ THE SHAPE IS CAPPED. Stretching to the column's full height is what
+		   makes the photograph feel built in rather than pasted on, but an
+		   unbounded stretch is an unbounded aspect ratio, and a tall enough hero
+		   would narrow the frame until `object-fit: cover` started eating the
+		   book on one side and Charlotte on the other. */
+		aspect-ratio: 4 / 5;
+		max-height: 560px;
+		align-self: center;
+		border-radius: 14px;
+		overflow: hidden;
+		/* ⭐⭐ 1.19.310 — THE CROP ANCHORS TOP, AND IT IS ARITHMETIC RATHER THAN
+		   TASTE. See the `object-position` override below; it is stated once,
+		   there, next to the value it explains. */
+		/* ⭐⭐ THE GRADIENT, RIGHT TO LEFT — his words, as a mask. Fully opaque
+		   across the right 62% of the frame, then falling away to nothing at the
+		   left edge, so the photograph dissolves INTO the field the copy sits in
+		   instead of ending at a line. The stops are the popup's own, so the two
+		   surfaces fade at the same rate. */
+		-webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) 62%, rgba(0, 0, 0, 0.55) 84%, rgba(0, 0, 0, 0) 100%);
+		mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) 62%, rgba(0, 0, 0, 0.55) 84%, rgba(0, 0, 0, 0) 100%);
+	}
+
+	/* ⭐⭐ 1.19.310 (`CYCLE167-LD-KIT-PHOTO-CROP-FIX`) — FOUNDER-REPORTED LIVE
+	   DEFECT, FIXED BY MEASUREMENT. Andrew, on the live page at 1.19.309:
+	   "My face is cutoff on desktop."
+
+	   ⛔ THE BUG, AND IT WAS A BORROWED NUMBER. The base rule in §3 sets
+	      `object-position: 50% 42%`. That 42% was never measured against THIS
+	      panel. The popup's portrait panel is 296x507 — an aspect of 0.584,
+	      NARROWER than the 0.625 file — so `cover` there trims HORIZONTALLY and
+	      the vertical value is inert (which is why the popup's own desktop rule
+	      is `0% 50%`, anchoring left, and says so). This page's panel is 4/5 =
+	      0.800, WIDER than the file. `cover` therefore scales by WIDTH and the
+	      whole trim budget comes off the TOP AND BOTTOM — the one axis the
+	      inherited number was never chosen for.
+
+	   ⭐ THE ARITHMETIC, and every figure below was MEASURED on the live page
+	      (2026-08-27, `getBoundingClientRect()` at seven widths) rather than
+	      reasoned about:
+	        · the portrait file is 560x896, an aspect of 0.625
+	        · the panel is 448x560 at >=1280 and scales DOWN below that
+	          (901 -> 341.44x426.80 · 1024 -> 393.39x491.73 ·
+	           1100 -> 425.48x531.84 · 1280/1440/1920/2560 -> 448x560)
+	        · ⭐ THE SHAPE IS A CONSTANT 0.800 AT ALL SEVEN. The grid is
+	          `max-width: 1160px`, so the photo track caps at 448 and the
+	          `max-height` above is reached exactly as the cap is. The panel
+	          only ever SCALES; it never CHANGES SHAPE. That is what makes a
+	          single value correct across the whole desktop range, and it is
+	          the reason this needs neither a page-scoped `aspect-ratio` nor a
+	          second cut of the source.
+	        · `cover` renders the file at 448x716.8, so 156.8px overflows —
+	          21.875% of the file's height, split by this very property
+	        · at 42% that put 82.3 source px ABOVE the frame. His forehead
+	          starts at y=0 and his EYES are at y~35-50. The number was cutting
+	          straight through them.
+
+	   ⭐ 0% IS THE ONLY VALUE THAT SATISFIES THE STANDING RULE — the popup
+	      lane's "faces survive every crop". The source file ALREADY cuts his
+	      hair at its own top edge, so any positive value eats forehead, and
+	      anything above ~15% eats eyes. Anchoring top spends the entire 196px
+	      budget on the BOTTOM, where the file holds a forearm, the child's legs
+	      and a couch. Nothing is paid for it: the visible window becomes source
+	      rows 0..700, and the cover title block ends at y~400 with the "Andrew"
+	      byline at y~590 — both comfortably inside.
+	   ⛔ VERIFIED BY LOOKING, NOT BY ARITHMETIC ALONE. The four candidate crops
+	      (42/20/10/0) were rendered at true 448x560 with this block's mask
+	      applied and compared as images before this value was chosen.
+	   ⚠ SCOPED TO THIS BREAKPOINT ON PURPOSE, exactly as the popup scopes its
+	     own anchor. Below 901px the photograph is a 5:4 band and the file is
+	     720x576 = 1.25, which IS 5/4 — `cover` trims nothing, so the base 42%
+	     is inert there and an override would be a no-op dressed up as a
+	     decision. §5's band is deliberately untouched by this fix. */
+	.parent-landing-hero__photo picture,
+	.parent-landing-hero__photo img { object-position: 50% 0%; }
+
+	/* The copy column stops centring itself once it has a neighbour to balance
+	   against. These override the funnel block's `margin: … auto …`, which is
+	   what does the centring — same selector shape, later in the file. */
+	.parent-landing .parent-landing-hero h1,
+	.parent-landing-hero p.parent-landing__lead { margin-inline: 0; }
+	.parent-landing-hero__capture { margin-inline: 0; }
+	.parent-landing-hero__badge   { display: inline-block; }
+}
+
+/* --------------------------------------------------------------------------
+   5 · TABLET AND PHONE (<= 900px) — THE HONEST ADAPTATION, DECIDED RATHER
+       THAN INHERITED.
+   --------------------------------------------------------------------------
+   ⛔ THE DESKTOP TREATMENT DOES NOT SURVIVE A PHONE AND SHRINKING IT WOULD BE
+      THE DISHONEST ANSWER. So the photograph becomes a BAND, the squiggle sits
+      above it, and the gradient runs TOP TO BOTTOM into the cream — the same
+      idea rotated a quarter turn.
+
+   ⭐⭐ AND IT SITS BELOW THE FORM, WHICH IS THE WHOLE POINT OF THE RELEASE. The
+       popup puts its band ABOVE the copy; this page must not, because a 5:4
+       band above the headline would push the field the paid click came for
+       under the fold. Trust confirms a decision the visitor is already making;
+       it does not need to come first.
+   ⭐ THE BAND'S SHAPE IS THE FILE'S OWN SHAPE. `aspect-ratio: 5 / 4` is exactly
+      the landscape crop's ratio, so `object-fit: cover` has nothing left to
+      trim and the band shows the whole vetted crop — both faces and the book
+      title — with no second crop layered over the first. */
+@media (max-width: 900px) {
+	.parent-landing-hero__trust {
+		max-width: 30rem;
+		margin: 20px auto 0;
+	}
+
+	.parent-landing-hero__seam { height: 22px; margin-bottom: -2px; }
+	.parent-landing-hero__squiggle--h { display: block; }
+	.parent-landing-hero__squiggle--h .parent-landing-hero__squiggle-ink { stroke-width: 3.6; }
+	.parent-landing-hero__squiggle--h .parent-landing-hero__squiggle-ghost { stroke-width: 2; }
+
+	.parent-landing-hero__photo {
+		aspect-ratio: 5 / 4;
+		border-radius: 14px;
+		overflow: hidden;
+		-webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 86%, rgba(0, 0, 0, 0.45) 96%, rgba(0, 0, 0, 0) 100%);
+		mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 86%, rgba(0, 0, 0, 0.45) 96%, rgba(0, 0, 0, 0) 100%);
+	}
+}
+
+/* --------------------------------------------------------------------------
+   6 · THE AUTHOR SECTION WITHOUT ITS PHOTOGRAPH.
+   --------------------------------------------------------------------------
+   `.parent-landing-author` is `repeat(auto-fit, minmax(260px, 1fr))`, which
+   with one child already collapses to a single column — so this rule buys
+   nothing structural and exists to keep the surviving text column readable
+   rather than running to 100ch on a wide screen. Same treatment the 2026-07-17
+   correction gave the founder card, for the same reason. */
+.parent-landing-author--no-photo { max-width: 62ch; margin-inline: auto; text-align: center; }
+.parent-landing-author--no-photo blockquote { margin-inline: auto; }
+
+/* ==========================================================================
+   ⭐⭐ 1.19.311 (2026-08-27, `CYCLE167-LD-KIT-FOLD-FIX`) — THE DESKTOP FOLD
+       BUDGET, DECLARED AND THEN MET. SECOND FOUNDER-REPORTED DEFECT ON THIS
+       PAGE, SAME SITTING AS THE CROP FIX ABOVE.
+   ==========================================================================
+
+   ⭐ THE REPORT, VERBATIM. Andrew Signore, on the live page at 1.19.309/310:
+        "Also the CTA is not above the fold on desktop"
+      ⛔ RELAYED by `chief-of-staff` (Gandalf) in the brief. This desk did not
+        witness it directly and does not describe it as first-hand.
+
+   ⛔⛔ THE FIRST THING THIS BLOCK MUST SAY IS THAT THE OBVIOUS DIAGNOSIS WAS
+      WRONG, BECAUSE A LATER READER WILL OTHERWISE "FIX" IT BACK.
+      MEASURED on the staged page at 1.19.309 before a byte was written, by
+      DOM geometry at an asserted viewport (`getBoundingClientRect().bottom +
+      scrollY` on the submit control, nav rendered, `scrollY` 0):
+
+        1920 x 1080  button bottom 634   1080p budget 940   slack +306  PASSES
+        1440 x  790  button bottom 634                                  PASSES
+        1366 x  630  button bottom 630   laptop budget 630  slack    0  ON THE LINE
+        1280 x  630  button bottom 625                      slack   +5  ON THE LINE
+        1024 x  630  button bottom 616                      slack  +14
+         901 x  630  button bottom 610                      slack  +20
+
+      ⭐ AT 1080p THE BUTTON WAS ALREADY ABOVE THE FOLD, WITH 306px TO SPARE.
+        The brief's acceptance criterion was therefore already satisfied at
+        1.19.309, and a pass against it would have proved nothing about what
+        the founder actually saw. ⛔ Do not read the 1080p budget as the
+        binding one. It is not, and it never was.
+
+      ⭐⭐ THE REAL FAILURE IS THE LAPTOP FOLD, AND IT FAILED BY ZERO PIXELS.
+        1366x768 is the most common laptop panel; browser chrome (tab strip +
+        omnibox) takes ~88px, a bookmarks bar another ~32, a Windows taskbar
+        ~40. The usable viewport is ~630px on a good day and ~600 on a normal
+        one. At exactly 630 the button's bottom edge and the fold were the
+        same pixel — so the control was visible only with no bookmarks bar, no
+        taskbar and no consent banner, and invisible the moment any one of
+        those existed. ⛔ THAT IS NOT A MARGINAL PASS. It is a defect whose
+        reproduction depends on the visitor's browser furniture, which is
+        exactly why QA missed it and the founder did not.
+
+   ⭐ THE BUDGET THIS BLOCK COMMITS TO, stated so it can be tested rather than
+      admired: THE FIRST-NAME FIELD, THE EMAIL FIELD AND THE SUBMIT CONTROL'S
+      BOTTOM EDGE ALL SIT INSIDE 630px OF VIEWPORT, WITH THE STICKY NAV
+      RENDERED, AT EVERY WIDTH FROM 901 TO 2560. The 1080p budget follows for
+      free and is not the target.
+
+   ⛔ WHAT WAS NOT ALLOWED TO PAY FOR IT — the brief's own rails, and they held:
+      · NO COPY WAS CUT. Not one word of the headline, the lead sentence, the
+        field labels, the button or the privacy line changed. This block is
+        pure vertical rhythm.
+      · NO HEADLINE SCALE WAS CUT. `--h1-size` is untouched: 46.97px at 1366,
+        48px at 1920, exactly as before. Against an 18px lead that is 2.6x —
+        hierarchy dominance is not merely preserved, it is byte-identical.
+        ⭐ SPACING FIRST, SCALE SECOND, COPY NEVER — and scale was never
+        reached, because spacing alone was enough.
+
+   ⭐⭐ THE ONE RULE THAT MAKES THE OTHER TEN WORK, AND IT IS NOT OBVIOUS:
+      `align-self: start` ON THE COPY COLUMN.
+      §4 above sets `align-items: center` on the hero grid. At 1.19.309 the
+      copy column measured 562px and the photo panel 560 — near enough equal
+      that centring cost nothing and nobody noticed it was there. The moment
+      this block shortens the copy, the photo becomes the taller item, the row
+      height stays 560, and a centred copy column is pushed DOWN by half of
+      whatever was just saved. ⛔ WITHOUT THIS ONE DECLARATION, EVERY SAVING
+      BELOW IS EXACTLY HALVED. Measured, not reasoned: 76px of savings
+      delivered 76px of lift with it, and would have delivered 38 without.
+
+   ⭐⭐ THE CROP FIX ABOVE IS UNTOUCHED, AND THIS BLOCK IS BUILT ON IT RATHER
+      THAN OVER IT. `CYCLE167-LD-KIT-PHOTO-CROP-FIX` (1.19.310) anchors
+      `object-position: 50% 0%` on the strength of the panel being a constant
+      448x560 / 0.800 at every desktop width — its own note says the value is
+      correct only because "the panel only ever SCALES; it never CHANGES
+      SHAPE."
+      ⛔ THEREFORE NOTHING HERE TOUCHES THE PHOTOGRAPH: not `aspect-ratio`,
+        not `max-height`, not `width`, not `object-position`, not the mask,
+        not the photo's own `align-self`. The copy column is start-aligned;
+        the panel stays centred in the row and keeps its own geometry.
+      ⭐ PROVEN BY MEASUREMENT AFTER THIS BLOCK, NOT ASSERTED: the panel is
+        448x560 at 1280/1366/1440/1920 before and after, identically, and
+        335x418 / 386x483 at 901 / 1024 before and after. The crop lane's
+        constant-shape premise survives this change intact.
+
+   ⛔ DESKTOP ONLY, AND SCOPED THAT WAY ON PURPOSE RATHER THAN BY ACCIDENT.
+      Every declaration lives inside `min-width: 901px` — the same breakpoint
+      §4 uses — so the mobile band, the mobile fold the kit lane verified, and
+      the 44px minimum tap target are all untouched BY CONSTRUCTION rather
+      than by hope. ⭐ VERIFIED: the full geometry dump at 375x812, 390x844
+      and 768x1024 is BYTE-IDENTICAL with and without this block.
+
+   ⚠ THE HONEST LIMIT OF THIS FIX, recorded rather than buried. A first-time
+     visitor arriving from the paid ad may meet the consent banner, which is
+     `position: fixed` and therefore consumes NO layout space but DOES overlay
+     the viewport. This block cannot measure it (the QA profile has already
+     dismissed it) and does not claim to have handled it. The 76px of slack
+     bought here is real margin against that, not a proof against it. Flagged
+     to Gandalf as a separate question, not silently absorbed.
+
+   ⚠ EVERY RULE HERE IS APPENDED, NOT EDITED IN. Not one byte above this
+     comment was altered — including the crop lane's block — so a revert of
+     this release is a deletion of this block and nothing else.
+   ========================================================================== */
+
+@media (min-width: 901px) {
+
+	/* 1 · THE LOAD-BEARING ONE. See the note above; without it the ten
+	   declarations below deliver half of what they measure. */
+	.parent-landing-hero__copy { align-self: start; }
+
+	/* 2 · The hero's top padding. `padding-block` above resolves to 28.16px at
+	   1366; 20px is still a clear separation from the sticky nav's lower edge
+	   and is the cheapest 8px on the page. ⛔ Only the START edge is set — the
+	   bottom padding stays on its clamp, because the gallery below it is not
+	   competing for the fold. */
+	.parent-landing-hero__grid { padding-block-start: 20px; }
+
+	/* 3 · The headline's approach and leading. ⛔ THE FONT SIZE IS NOT TOUCHED.
+	   1.1 -> 1.05 is 2.4px per line on a two-line headline; at 46.97px the
+	   headline still sets at a 49.3px rhythm, which is loose enough to read as
+	   a display face rather than as a squeezed one. */
+	.parent-landing .parent-landing-hero h1 { margin-top: 6px; line-height: 1.05; }
+
+	/* 4 · The lead sentence. 1.5 -> 1.4 on an 18px face is 25.2px leading —
+	   still above the 1.35 floor this codebase treats as the comfortable
+	   minimum for body copy, and the sentence keeps all of its words. */
+	.parent-landing-hero p.parent-landing__lead { margin-top: 8px; line-height: 1.4; }
+
+	/* 5 · The gap the form opens with. */
+	.parent-landing-hero__capture { margin-top: 14px; }
+
+	/* 6 · THE FORM'S OWN RHYTHM — where the largest single saving is, because
+	   the pattern repeats twice. Label-to-field 8 -> 5, field-to-field 12 -> 9,
+	   and the label's own 1.7 leading (24.5px on a 14.4px face, inherited from
+	   the body rule and never chosen for a form label) down to 1.35. */
+	.parent-landing-hero__form { row-gap: 9px; }
+	.parent-landing-hero__form .acquisition-form__field { row-gap: 5px; }
+	.parent-landing-hero__form .acquisition-form__field label { line-height: 1.35; }
+
+	/* 7 · The controls. ⛔ THESE ARE THE TWO NUMBERS MOST LIKELY TO BE READ AS
+	   "make the form smaller", so the reasoning is stated: the fields go
+	   59px -> 53px and the button 52px -> 48px. Both remain well clear of the
+	   44px minimum target, and this rule CANNOT reach a phone — it is inside
+	   `min-width: 901px`, where the input is driven by a mouse. The mobile
+	   controls stay at 59px and 52px, measured and unchanged. */
+	.parent-landing-hero__form input[type="text"],
+	.parent-landing-hero__form input[type="email"] { padding-top: 9px; padding-bottom: 9px; }
+	.parent-landing-hero__form .acquisition-form__submit { padding-top: 15px; padding-bottom: 15px; }
+}

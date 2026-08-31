@@ -176,12 +176,34 @@ bhp_mp_assert(
  * Meta's own published snippet. The grant must be a LIVE call made from the
  * script's `onload`, which is what this asserts.
  */
+/*
+ * ⚠ THE THIRD LINE OF B3b WAS RELAXED AT 1.19.312, AND THE OLD PATTERN IS
+ * QUOTED HERE RATHER THAN DELETED so the change reads as deliberate:
+ *
+ *   > preg_match( '/loadSdk\(\s*function \(\) \{\s*window\.fbq\( \x27consent\x27, \x27grant\x27 \);/', $runtime ) === 1
+ *
+ * It required the grant to be the FIRST statement inside the onReady callback.
+ * `CYCLE167-LD-CONSENT-PIXEL-EXT` puts a `if ( !granted ) { return; }` re-check
+ * ahead of it, because from 1.19.312 a US visitor starts granted on page load
+ * and can therefore opt out WHILE fbevents.js is still in flight — a window
+ * that could not previously be reached, since the only route to revoke() was a
+ * banner click and the banner had to be open before the SDK was ever asked for.
+ * ⭐ B3b is not weaker for it: the ordering claim is unchanged and now carries
+ * the guard as a REQUIREMENT (B3c below), so removing the guard fails the suite.
+ */
 bhp_mp_assert(
 	$failures,
 	'B3b ⭐ the grant is issued from the SDK script\'s onload — never queued behind the revoke that stalls the drain',
 	false !== strpos( $runtime, 's.onload = onReady;' )
 		&& false !== strpos( $runtime, 's.onerror = onReady;' )
-		&& preg_match( '/loadSdk\(\s*function \(\) \{\s*window\.fbq\( \x27consent\x27, \x27grant\x27 \);/', $runtime ) === 1
+		&& preg_match( '/loadSdk\(\s*function \(\) \{.*?window\.fbq\( \x27consent\x27, \x27grant\x27 \);/s', $runtime ) === 1
+);
+bhp_mp_assert(
+	$failures,
+	'B3c ⭐ 1.19.312 — the onload callback RE-CHECKS `granted` before signalling, so an opt-out taken while fbevents.js is in flight is not undone by a stale closure',
+	'' !== $bhp_mp_grant_body
+		&& false !== strpos( $bhp_mp_grant_body, 'if ( !granted ) { return; }' )
+		&& strpos( $bhp_mp_grant_body, 'if ( !granted ) { return; }' ) < strpos( $bhp_mp_grant_body, "window.fbq( 'consent', 'grant' )" )
 );
 bhp_mp_assert( $failures, 'B4 consent is read from the MARKETING category only, and only on a strict true', false !== strpos( $runtime, "prefs[ config.category ] === true" ) );
 bhp_mp_assert( $failures, 'B5 the runtime listens to WPConsent\'s own save/update events', false !== strpos( $runtime, 'wpconsent_consent_saved' ) && false !== strpos( $runtime, 'wpconsent_consent_updated' ) );

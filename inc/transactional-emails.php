@@ -163,9 +163,29 @@ function bhp_email_resolve( $current, $email, $key, $new, $fallback = null ) {
  *    same filter would make the winner depend on include order.
  */
 
+/**
+ * E2's subject, with the school-visit fork.
+ *
+ * ⛔ ONE CALLBACK, NOT TWO. The visit branch is INSIDE this closure rather
+ *    than registered as a second callback on the same filter, because two
+ *    callbacks would make the winner depend on include order - the exact trap
+ *    documented for E1 immediately above.
+ *
+ * ⭐ THE VISIT BRANCH STILL DEFERS TO A REAL ADMIN VALUE, through the same
+ *    `bhp_email_resolve()` everything else uses. A subject typed into
+ *    WooCommerce -> Settings -> Emails wins over BOTH strings, which is the
+ *    behaviour this whole file promises and would be quietly broken by an
+ *    early return.
+ */
 add_filter(
 	'woocommerce_email_subject_customer_completed_order',
 	function ( $subject, $order = null, $email = null ) {
+		$visit = bhp_visit_email_string( $email, 'subject' );
+
+		if ( '' !== $visit ) {
+			return bhp_email_resolve( $subject, $email, 'subject', $visit );
+		}
+
 		// Deck §3.2 VARIANT A. True only under the mark-complete-after-dispatch rule.
 		return bhp_email_resolve( $subject, $email, 'subject', __( 'Your books have shipped', 'brave-hearts' ) );
 	},
@@ -255,9 +275,16 @@ add_filter(
 	3
 );
 
+/** E2's H1, with the school-visit fork. Same single-callback rule as the subject. */
 add_filter(
 	'woocommerce_email_heading_customer_completed_order',
 	function ( $heading, $order = null, $email = null ) {
+		$visit = bhp_visit_email_string( $email, 'heading' );
+
+		if ( '' !== $visit ) {
+			return bhp_email_resolve( $heading, $email, 'heading', $visit );
+		}
+
 		return bhp_email_resolve( $heading, $email, 'heading', __( 'Your books have shipped', 'brave-hearts' ) );
 	},
 	10,
@@ -369,7 +396,7 @@ unset( $bhp_email_id );
  * @return array<string,string>
  */
 function bhp_email_preheaders() {
-	return array(
+	$preheaders = array(
 		// E1's preheader is already approved and shipped. Carried verbatim.
 		'customer_processing_order'         => __( 'A quick note on how your books are made, and when to expect us again.', 'brave-hearts' ),
 		'customer_completed_order'          => __( 'They are on their way to you now.', 'brave-hearts' ),
@@ -380,6 +407,32 @@ function bhp_email_preheaders() {
 		'customer_note'                     => __( 'A quick update from us.', 'brave-hearts' ),
 		'customer_cancelled_order'          => __( 'Nothing will be printed or sent.', 'brave-hearts' ),
 	);
+
+	/*
+	 * ⭐ 1.19.317 — THE REVIEW ASK'S PREHEADER JOINS THE SAME MAP, AND IT IS
+	 *    PULLED FROM THAT FEATURE'S COPY ARRAY RATHER THAN RETYPED.
+	 *
+	 * ⛔ WHY IT IS HERE RATHER THAN IN A SECOND `woocommerce_mail_content`
+	 *    FILTER OF ITS OWN: `bhp_email_inject_preheader()` PATCHES THE
+	 *    ASSEMBLED HTML AND UNSETS ITS MARKER GLOBAL. A second injector on the
+	 *    same filter would either double-inject a hidden div or race the first
+	 *    one for the global, and which won would depend on include order. One
+	 *    injector, one map, one entry per email id.
+	 *
+	 * ⚠ `function_exists` guarded because this file is required BEFORE
+	 *   `inc/review-ask-email.php`. The map is built at render time, long after
+	 *   both are loaded, so the guard is belt and braces rather than the
+	 *   mechanism.
+	 */
+	if ( function_exists( 'bhp_review_ask_copy' ) && defined( 'BHP_REVIEW_ASK_EMAIL_ID' ) ) {
+		$bhp_review_copy = bhp_review_ask_copy();
+
+		if ( ! empty( $bhp_review_copy['preheader'] ) ) {
+			$preheaders[ BHP_REVIEW_ASK_EMAIL_ID ] = (string) $bhp_review_copy['preheader'];
+		}
+	}
+
+	return $preheaders;
 }
 
 /**
@@ -396,6 +449,23 @@ function bhp_email_preheaders() {
 function bhp_email_mark_rendering( $email_heading, $email = null ) {
 	if ( $email instanceof WC_Email ) {
 		$GLOBALS['bhp_rendering_email_id'] = $email->id;
+
+		/*
+		 * ⭐ THE VISIT SLUG IS CAPTURED HERE FOR THE SAME REASON THE ID IS.
+		 *    `woocommerce_mail_content` receives ONLY the assembled HTML - no
+		 *    email object, no order - so by the time the preheader is injected
+		 *    there is nothing left to ask. This action does receive `$email`,
+		 *    and `$email->object` is still the order, so the question is
+		 *    answered here and the answer is carried forward.
+		 *
+		 * ⛔ ALWAYS SET, INCLUDING TO ''. Leaving the key untouched on a
+		 *    non-visit render would let a previous render's slug survive into
+		 *    the next one inside a single request - the stale-global defect
+		 *    that the `unset()` in the injector already guards against for the
+		 *    id, and the reason a WP-CLI loop over several orders is the
+		 *    dangerous case rather than a browser request.
+		 */
+		$GLOBALS['bhp_rendering_email_visit_slug'] = bhp_visit_email_slug( $email );
 	}
 }
 add_action( 'woocommerce_email_header', 'bhp_email_mark_rendering', 1, 2 );
@@ -424,7 +494,29 @@ function bhp_email_inject_preheader( $content ) {
 	$id = $GLOBALS['bhp_rendering_email_id'];
 	unset( $GLOBALS['bhp_rendering_email_id'] );
 
+	$visit_slug = isset( $GLOBALS['bhp_rendering_email_visit_slug'] )
+		? (string) $GLOBALS['bhp_rendering_email_visit_slug']
+		: '';
+	unset( $GLOBALS['bhp_rendering_email_visit_slug'] );
+
 	$preheaders = bhp_email_preheaders();
+
+	/*
+	 * ⭐ THE SCHOOL-VISIT PREHEADER REPLACES E2's, AND ONLY E2's. The map above
+	 *    is keyed by email id, so this override is applied after the lookup
+	 *    rather than by mutating the map - the map stays a plain, readable
+	 *    list of the seven standing strings, and the fork stays visible.
+	 *
+	 * ⛔ THE SLUG IS ONLY EVER NON-EMPTY FOR `customer_completed_order`:
+	 *    `bhp_visit_email_order()` returns null for every other email id, so
+	 *    no other preheader can be reached from here.
+	 */
+	if ( '' !== $visit_slug ) {
+		$visit_copy = bhp_visit_email_copy( $visit_slug );
+		if ( isset( $visit_copy['preheader'] ) && is_string( $visit_copy['preheader'] ) && '' !== $visit_copy['preheader'] ) {
+			$preheaders[ $id ] = $visit_copy['preheader'];
+		}
+	}
 
 	if ( ! isset( $preheaders[ $id ] ) ) {
 		return $content;
@@ -464,6 +556,43 @@ function bhp_email_footer_note_lines() {
 		__( 'Printed and fulfilled by our publishing partner, Bookvault.', 'brave-hearts' ),
 		__( 'Reply to this email and it comes to a real person.', 'brave-hearts' ),
 	);
+}
+
+/**
+ * The footer-note lines for ONE email, with the school-visit fulfilment
+ * sentence removed.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THE BOOKVAULT SENTENCE IS FALSE FOR A HAND-DELIVERED VISIT ORDER, AND
+ *     DROPPING IT IS A FOUNDER RULING, NOT AN ENGINEERING PREFERENCE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Carrier item 377 ruling 1: *"the false Bookvault fulfilment footer
+ * DROPPED for visit orders, standard shipped orders untouched."* Nothing was
+ * printed by Bookvault for these orders - `_bhp_school_pickup_bv_skipped` is
+ * set on every one of the eight Adams orders, verified read-only on production
+ * 2026-08-28 - so the sentence would tell a parent something that did not
+ * happen.
+ *
+ * ⭐ THE REPLY ROUTE SURVIVES. It is the one line in that footer that is true
+ *    on every order and the only route a parent has back to a person.
+ *
+ * ⛔ `bhp_email_footer_note_lines()` ABOVE IS LEFT BYTE-UNTOUCHED and is still
+ *    the source of both strings. This function subtracts; it never rewrites,
+ *    and it can never add a line the standard footer does not already carry.
+ *
+ * @param WC_Email|null $email Email object.
+ * @return string[] Lines in render order.
+ */
+function bhp_email_footer_note_lines_for( $email = null ) {
+	$lines = bhp_email_footer_note_lines();
+
+	if ( ! bhp_visit_email_is_visit( $email ) ) {
+		return $lines;
+	}
+
+	// Drop the fulfilment sentence; keep everything after it, in order.
+	return array_values( array_slice( $lines, 1 ) );
 }
 
 /**
@@ -512,11 +641,24 @@ function bhp_email_footer_note_html( $email = null ) {
 		return;
 	}
 
-	$lines = bhp_email_footer_note_lines();
+	$lines = bhp_email_footer_note_lines_for( $email );
+
+	if ( empty( $lines ) ) {
+		return;
+	}
+
+	/*
+	 * ⚠ JOINED WITH A LOOP RATHER THAN `$lines[0] . '<br>' . $lines[1]`, WHICH
+	 *   IS WHAT THIS WAS. The visit fork makes the array one element shorter,
+	 *   and the old indexed form would have emitted an undefined-index notice
+	 *   and a trailing `<br>` on every visit email. Same rendered output,
+	 *   byte for byte, on the two-line standard path.
+	 */
+	$escaped = array_map( 'esc_html', $lines );
 
 	echo '<hr style="border:none;border-top:1px solid #e5e0d3;margin:28px 0 14px;">';
 	echo '<p style="font-size:12px;color:#6b6b60;margin:0;"><small>'
-		. esc_html( $lines[0] ) . '<br>' . esc_html( $lines[1] )
+		. implode( '<br>', $escaped ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each element escaped above.
 		. '</small></p>';
 }
 add_action( 'woocommerce_email_footer', 'bhp_email_footer_note_html', 5 );
@@ -539,7 +681,9 @@ function bhp_email_plain_footer( $email = null ) {
 	$is_order_email = ( $email instanceof WC_Email && in_array( $email->id, bhp_email_order_ids(), true ) );
 
 	if ( $is_order_email ) {
-		foreach ( bhp_email_footer_note_lines() as $line ) {
+		// The school-visit fork drops the Bookvault sentence here too, so the
+		// plain reader gets exactly the promises the HTML reader gets.
+		foreach ( bhp_email_footer_note_lines_for( $email ) as $line ) {
 			echo esc_html( $line ) . "\n";
 		}
 		echo "\n";

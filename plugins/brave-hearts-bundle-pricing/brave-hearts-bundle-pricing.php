@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Brave Hearts Bundle Pricing
  * Description: Fixed-dollar bundle discounts, shipping, and storefront offers for the six approved Adventures of Charlotte and Henry editions. Every bundle purchase adds the real, individually-mapped WooCommerce products as separate cart line items — Bookvault fulfillment routing and per-book tax are never altered.
- * Version: 1.8.74
+ * Version: 1.8.76
  * Author: Brave Hearts Publishing
  * Requires Plugins: woocommerce
  * Text Domain: bhp-bundle-pricing
@@ -42,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * ⛔ KEEP IT IN STEP WITH THE `Version:` HEADER ABOVE, every release.
  */
-define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.74' );
+define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.76' );
 define( 'BHP_BUNDLE_PRICING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BHP_BUNDLE_PRICING_URL', plugin_dir_url( __FILE__ ) );
 
@@ -155,7 +155,36 @@ function bhp_bundle_pricing_init() {
 	// visit gate, zero new state: the number is `baseline - committed` recomputed
 	// on every render and is never stored. ⛔ Still completely invisible off a
 	// visit flag, and still inert with `bhp_visit_shelf_stock` unset.
+	// 1.8.76 (2026-08-28, CYCLE168-LD-RETAILER-BATCH-AND-BACKORDERS): THE
+	// BACKORDER ALLOWANCE. Andrew Signore, RELAYED (carrier item 363): "I think
+	// we allow backorders and we will get the new books in latest by Sept 10th.
+	// If not we will figure something out, Like dropping off the books a few
+	// days later." Loaded BEFORE school-visit-shelf-stock.php because that
+	// file's purchase gate now asks this one's predicate, and AFTER
+	// school-visit-pickup.php because its `_for_request` gate reads the visit
+	// flag. ⛔ It is NOT a WooCommerce backorder setting: `_backorders`,
+	// `_stock`, `_stock_status` and `_manage_stock` are never read-modified or
+	// written on any environment. It relaxes a gate THIS PLUGIN invented.
+	// ⛔ Its default is ON, per the ruling, and it is behaviourally inert while
+	// `bhp_visit_shelf_stock` is unset because nothing is exhausted to relax.
+	// One WP-CLI line switches it off with no deploy; see the file header.
+	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-backorder.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-shelf-stock.php';
+	// 1.8.75 (2026-08-28, CYCLE168-LD-AMITY-STOCK-SUPPRESSION): PER-VISIT STOCK
+	// PRIVACY. A visit whose parents are buying off a shelf that has not arrived
+	// yet must not be shown today's count. Andrew Signore, 2026-08-28, RELAYED
+	// (carrier item 359): "I just want Amity not to see the current stock since
+	// we will have 75 more books coming Sept 7-11." Loaded AFTER
+	// school-visit-pickup.php (it reads the visit record and the new optional
+	// `hide_stock` registry field) and AFTER school-visit-shelf-stock.php (whose
+	// two `_for_request` counter gates now ask this file's predicate).
+	// ⛔ DISPLAY ONLY. It removes a number and never substitutes a larger one; it
+	// changes no product record, no stock status, no backorder setting, no
+	// purchasability and no server refusal seam, on any environment. Off a
+	// hide-stock visit flag every hook it registers returns its input untouched,
+	// so an ordinary shopper, an Adams session, a Dallas Harris session and a
+	// Liberty session are byte-identical to 1.8.74.
+	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-stock-privacy.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-paperback-only.php';
 	bhp_bundle_pricing_load_dashboard_module();
 

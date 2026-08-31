@@ -574,7 +574,28 @@ function bhp_school_visit_is_open_on( $visit_date, $today ) {
  *    would have silently deleted the three visits already seeded on both
  *    environments the moment this version shipped.
  *
- * @return array<string,array{slug:string,school:string,date:string,cutoff:string,time:string}>
+ * ⭐⭐ 1.8.75 (`CYCLE168-LD-AMITY-STOCK-SUPPRESSION`) ADDS AN OPTIONAL
+ *     `hide_stock` BOOLEAN, and it takes the SAME tolerance as `time` for the
+ *     same reason: a row without it is a COMPLETE row. It defaults to FALSE,
+ *     so every visit already seeded on either environment keeps exactly the
+ *     behaviour it had at 1.8.74 on the strength of the registry alone.
+ *
+ * ⛔ NO REAL SCHOOL, SLUG OR DATE IS NAMED IN THIS FILE, AND THE ONE THAT THIS
+ *    RELEASE IS FOR IS NOT NAMED HERE EITHER. §3 of
+ *    `tests/test-school-visit-pickup.php` greps THIS FILE for real visit data
+ *    and fails on a match — including a match inside a comment, which is
+ *    correct and is how this note came to be reworded. The founder-ruled slug
+ *    lives in `school-visit-stock-privacy.php`, in one filterable list, and is
+ *    covered by its own suite.
+ *
+ * ⛔ THE RULING IS NOT CARRIED BY THIS FIELD ALONE, AND THAT IS DELIBERATE.
+ *    Setting `hide_stock` on a production row is a production DATA write and
+ *    therefore Andrew's gate; a build that depended on it would ship inert and
+ *    the ruling would silently not be in force. THIS FIELD IS THE FORWARD
+ *    PATH — the next visit that needs stock hidden is one
+ *    `wp option patch update` away and never a deploy.
+ *
+ * @return array<string,array{slug:string,school:string,date:string,cutoff:string,time:string,hide_stock:bool}>
  */
 function bhp_school_visit_records() {
 	$raw = get_option( BHP_SCHOOL_VISIT_OPTION, array() );
@@ -597,14 +618,47 @@ function bhp_school_visit_records() {
 		}
 
 		$out[ $slug ] = array(
-			'slug'   => $slug,
-			'school' => $school,
-			'date'   => $date,
-			'cutoff' => $cutoff,
-			'time'   => bhp_school_visit_sanitize_time( isset( $row['time'] ) ? $row['time'] : '' ),
+			'slug'       => $slug,
+			'school'     => $school,
+			'date'       => $date,
+			'cutoff'     => $cutoff,
+			'time'       => bhp_school_visit_sanitize_time( isset( $row['time'] ) ? $row['time'] : '' ),
+			'hide_stock' => bhp_school_visit_flag_is_on( isset( $row['hide_stock'] ) ? $row['hide_stock'] : false ),
 		);
 	}
 	return $out;
+}
+
+/**
+ * ⭐ 1.8.75 — Read an OPTIONAL boolean registry field tolerantly.
+ *
+ * ⛔ IT DEFAULTS TO FALSE ON EVERYTHING IT DOES NOT RECOGNISE, and that is the
+ *    safe direction for every flag this shape will ever carry: an unreadable
+ *    value leaves the visit behaving exactly as it did before the field
+ *    existed, rather than silently switching a behaviour on for a real school.
+ *
+ * ⭐ IT ACCEPTS BOTH SHAPES AN OPERATOR CAN ACTUALLY PRODUCE. `wp option update
+ *    --format=json` stores a real JSON `true`; a hand-edited serialised row, or
+ *    one round-tripped through a form, arrives as the string `"1"`, `"yes"` or
+ *    `"true"`. Accepting only one of those would make the field work on one
+ *    entry route and fail silently on the other, which is worse than not having
+ *    it. `"0"`, `""`, `"no"`, `"false"` and every unrecognised value are FALSE.
+ *
+ * @param mixed $value Raw option value.
+ * @return bool
+ */
+function bhp_school_visit_flag_is_on( $value ) {
+	if ( is_bool( $value ) ) {
+		return $value;
+	}
+	if ( is_int( $value ) || is_float( $value ) ) {
+		return (int) $value === 1;
+	}
+	if ( ! is_string( $value ) ) {
+		return false;
+	}
+
+	return in_array( strtolower( trim( $value ) ), array( '1', 'yes', 'true', 'on' ), true );
 }
 
 /**
@@ -656,7 +710,7 @@ function bhp_school_visit_is_ymd( $value ) {
  *    on the very next request rather than at the end of somebody's session.
  *
  * @param string $slug Visit slug.
- * @return array{slug:string,school:string,date:string,cutoff:string,time:string}|null
+ * @return array{slug:string,school:string,date:string,cutoff:string,time:string,hide_stock:bool}|null
  */
 function bhp_school_visit_resolve( $slug ) {
 	$slug = sanitize_key( (string) $slug );
@@ -991,7 +1045,7 @@ function bhp_school_visit_capture_intent() {
  *    worst thing an expiry can do to a shopper mid-journey is put the ordinary
  *    storefront and the ordinary shipping rate back in front of them.
  *
- * @return array{slug:string,school:string,date:string,cutoff:string,time:string}|null
+ * @return array{slug:string,school:string,date:string,cutoff:string,time:string,hide_stock:bool}|null
  */
 function bhp_school_visit_active() {
 	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
@@ -1063,7 +1117,7 @@ function bhp_school_visit_has_session_cookie() {
  *    two filtered options would recurse without bound. While the guard is up
  *    the filters return the stored value unchanged, which is the safe answer.
  *
- * @return array{slug:string,school:string,date:string,cutoff:string,time:string}|null
+ * @return array{slug:string,school:string,date:string,cutoff:string,time:string,hide_stock:bool}|null
  */
 function bhp_school_visit_request_record() {
 	static $busy = false;

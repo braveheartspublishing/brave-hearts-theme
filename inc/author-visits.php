@@ -306,6 +306,311 @@ function bhp_author_visits_build_rows( $records, $today ) {
 	return $rows;
 }
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PAST READ-ALOUDS — THE TRUST RECORD. Theme 1.19.319 (2026-08-29,
+ * `CYCLE169-LD-READALOUD-TRUST-GALLERY`).
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, verbatim, 2026-08-29 (carrier item 432, first-hand to the
+ * Chief of Staff, commissioning this agent BY NAME):
+ *   *"Also I would like aragorn to work on putting a column for past read
+ *   alouds on the read-aloud site- I want more trust on that and lets put a
+ *   picture gallery of the read alouds on that page too."*
+ *
+ * ⛔ THIS IS THE OTHER HALF OF THE `$date < $today` BRANCH ABOVE, NOT A CHANGE
+ *    TO IT. `bhp_author_visits_build_rows()` still drops a past visit from the
+ *    UPCOMING list, byte-for-byte as it did at 1.19.239. Nothing about the
+ *    upcoming list, the open/closed window or the greyed button moved. A past
+ *    visit stopped vanishing from the PAGE; it did not stop vanishing from the
+ *    LIST, and conflating those two would have broken the ordering window.
+ *
+ * ⛔ THE SECOND OPTION EXISTS BECAUSE THE FIRST ONE MAY NOT GROW. The registry
+ *    `bhp_school_visits` is the BUNDLE PLUGIN's and it drives checkout
+ *    entitlement — `bhp_school_visit_resolve()` reads it before it will hand a
+ *    parent free author delivery. Editorial matter (a sentence about what
+ *    happened, a link to a recap, a list of photographs) has no business in the
+ *    structure a checkout gate reads. So notes live in their OWN option,
+ *    `bhp_school_visit_notes`, keyed by the same slug and joined at render time.
+ *    A malformed or absent notes option degrades to "no note, no photos" and
+ *    the past row still renders its school and date.
+ *
+ * ⛔ AND IT IS AN OPTION RATHER THAN AN ARRAY IN THIS FILE BECAUSE
+ *    `tests/test-author-visits-page.php` FORBIDS THE ALTERNATIVE, correctly:
+ *    it asserts that no school name, no visit slug and no literal visit row
+ *    appears anywhere in this file's or the template's source. Writing a real
+ *    school's name here to give it a caption would fail that assertion — and
+ *    the assertion is right, because visit data is data.
+ *
+ * ⛔ EVERY WORD OF EVERY NOTE IS FOUNDER-ATTESTED. The note text shipped for
+ *    the first past visit is drawn from carrier items 368 and 377, which are
+ *    Andrew's own first-hand account of that morning. NOTHING may be added to a
+ *    note that he did not say: no parent reaction, no teacher reaction, no
+ *    child reaction, no outcome, no count that he did not give. The librarian
+ *    is NEVER named (his standing instruction, and she is a private individual).
+ *    No child is ever named. Standing Rules §3.
+ */
+
+/**
+ * The editorial notes and photo sets for past visits, keyed by visit slug.
+ *
+ * ⛔ READ-ONLY, AND IT WRITES NOTHING. Shape, per slug:
+ *      note      string  One factual sentence or two. Founder-attested only.
+ *      recap_url string  Absolute or site-root-relative URL, or ''.
+ *      photos    array   [ { file, alt, w, h }, ... ]
+ *
+ * ⛔ `file` IS A BARE BASENAME INSIDE `assets/img/read-alouds/`, AND IT IS
+ *    FORCED TO ONE BY `basename()` PLUS AN EXTENSION WHITELIST. An option is
+ *    editable by anyone who can reach WP-CLI or the options table, so a value
+ *    like `../../../wp-config.php` must not be able to become a URL. It cannot:
+ *    the path is rebuilt from the basename, never concatenated from the input.
+ *
+ * @return array<string,array<string,mixed>>
+ */
+function bhp_author_visits_notes() {
+	$raw = get_option( 'bhp_school_visit_notes', array() );
+	if ( ! is_array( $raw ) ) {
+		return array();
+	}
+
+	$out = array();
+	foreach ( $raw as $slug => $entry ) {
+		$slug = sanitize_key( (string) $slug );
+		if ( '' === $slug || ! is_array( $entry ) ) {
+			continue;
+		}
+
+		$photos = array();
+		if ( isset( $entry['photos'] ) && is_array( $entry['photos'] ) ) {
+			foreach ( $entry['photos'] as $photo ) {
+				if ( ! is_array( $photo ) ) {
+					continue;
+				}
+				// ⛔ basename() FIRST, always. Never trust the stored string as a path.
+				$file = isset( $photo['file'] ) ? basename( wp_strip_all_tags( (string) $photo['file'] ) ) : '';
+				$ext  = strtolower( (string) pathinfo( $file, PATHINFO_EXTENSION ) );
+				if ( '' === $file || ! in_array( $ext, array( 'jpg', 'jpeg', 'png', 'webp' ), true ) ) {
+					continue;
+				}
+				// ⛔ AN IMAGE WITH NO ALT TEXT IS DROPPED, NOT RENDERED EMPTY. Andrew
+				//    asked for "meta tags of course"; a decorative-looking photograph
+				//    of real children is not decorative, and an empty alt attribute
+				//    would be a lie to a screen reader.
+				$alt = isset( $photo['alt'] ) ? trim( wp_strip_all_tags( (string) $photo['alt'] ) ) : '';
+				if ( '' === $alt ) {
+					continue;
+				}
+				$photos[] = array(
+					'file' => $file,
+					'alt'  => $alt,
+					'w'    => isset( $photo['w'] ) ? absint( $photo['w'] ) : 0,
+					'h'    => isset( $photo['h'] ) ? absint( $photo['h'] ) : 0,
+				);
+			}
+		}
+
+		$out[ $slug ] = array(
+			'note'      => isset( $entry['note'] ) ? trim( wp_strip_all_tags( (string) $entry['note'] ) ) : '',
+			'recap_url' => isset( $entry['recap_url'] ) ? esc_url_raw( (string) $entry['recap_url'] ) : '',
+			'photos'    => $photos,
+		);
+	}
+
+	return $out;
+}
+
+/**
+ * The public URL of a read-aloud photograph shipped with the theme.
+ *
+ * ⭐ THE PHOTOGRAPHS ARE THEME ASSETS, NOT MEDIA-LIBRARY ATTACHMENTS, and that
+ *    is a deliberate decision worth recording because the obvious alternative
+ *    looks easier and is wrong. The three Adams photographs already exist in
+ *    the PRODUCTION media library as attachments 668, 669 and 670 — but those
+ *    IDs exist ONLY on production. Staging has no recap post and no such
+ *    attachments (verified live 2026-08-29). A gallery keyed by attachment ID
+ *    would render on production and render BROKEN on staging, which is the one
+ *    environment QA actually looks at. Theme assets deploy inside the ZIP, so
+ *    both environments hold byte-identical files at a byte-identical path.
+ *
+ * ⚠ CONSEQUENCE, STATED RATHER THAN DISCOVERED LATER: Rank Math's sitemap
+ *   setting `include_images` is `on`, but it harvests images out of POST
+ *   CONTENT. Template-rendered images are not in post content, so these
+ *   photographs are NOT in the XML sitemap and will not be by this route.
+ *   That is a phase-2 item and is written up in the gallery spec, not silently
+ *   accepted here.
+ *
+ * @param string $file Bare basename, already validated by bhp_author_visits_notes().
+ * @return string
+ */
+function bhp_author_visits_photo_url( $file ) {
+	$file = basename( (string) $file );
+	if ( '' === $file ) {
+		return '';
+	}
+	return get_theme_file_uri( 'assets/img/read-alouds/' . $file );
+}
+
+/**
+ * Turn registry records into PAST display rows. PURE, for the same reason
+ * `bhp_author_visits_build_rows()` is: every date boundary becomes an assertion
+ * instead of something you can only observe by waiting for a Tuesday.
+ *
+ * ⛔ THE BOUNDARY IS THE EXACT COMPLEMENT OF THE UPCOMING LIST'S. Upcoming keeps
+ *    a row while `$date >= $today`; past takes it while `$date < $today`. The
+ *    two conditions are written to be complements so a visit can never appear
+ *    twice and can never disappear from both. `tests/test-cycle169-visits-trust-
+ *    gallery.php` asserts exactly that partition across the visit-day boundary
+ *    rather than trusting this comment.
+ *
+ * ⭐ MOST RECENT FIRST. The upcoming list is soonest-first because the next
+ *    visit is the useful one; the past list is newest-first for the same reason.
+ *
+ * @param array  $records Records shaped like `bhp_school_visit_records()`.
+ * @param string $today   `Y-m-d` in the site's timezone.
+ * @param array  $notes   Notes map from `bhp_author_visits_notes()`.
+ * @return array<int,array{slug:string,school:string,date:string,date_display:string,note:string,recap_url:string,photos:array}>
+ */
+function bhp_author_visits_build_past_rows( $records, $today, $notes = array() ) {
+	if ( ! is_array( $records ) ) {
+		return array();
+	}
+	$today = (string) $today;
+	$notes = is_array( $notes ) ? $notes : array();
+
+	// ⛔ WITH NO "TODAY" THERE IS NO PAST. An empty $today makes every upcoming
+	//    row render; it must not simultaneously make every row render as history.
+	if ( '' === $today ) {
+		return array();
+	}
+
+	$rows = array();
+	foreach ( $records as $record ) {
+		if ( ! is_array( $record ) ) {
+			continue;
+		}
+		$slug   = isset( $record['slug'] ) ? sanitize_key( (string) $record['slug'] ) : '';
+		$school = isset( $record['school'] ) ? trim( wp_strip_all_tags( (string) $record['school'] ) ) : '';
+		$date   = isset( $record['date'] ) ? (string) $record['date'] : '';
+
+		// ⛔ `cutoff` IS NOT REQUIRED HERE and its absence must not drop a past
+		//    row. The ordering window is meaningless for a visit that already
+		//    happened; requiring it would silently lose history.
+		if ( '' === $slug || '' === $school || '' === $date ) {
+			continue;
+		}
+
+		if ( $date >= $today ) {
+			continue;
+		}
+
+		$note = isset( $notes[ $slug ] ) ? $notes[ $slug ] : array();
+
+		$rows[] = array(
+			'slug'         => $slug,
+			'school'       => $school,
+			'date'         => $date,
+			'date_display' => bhp_author_visits_format_past_date( $date ),
+			'note'         => isset( $note['note'] ) ? (string) $note['note'] : '',
+			'recap_url'    => isset( $note['recap_url'] ) ? (string) $note['recap_url'] : '',
+			'photos'       => isset( $note['photos'] ) && is_array( $note['photos'] ) ? $note['photos'] : array(),
+		);
+	}
+
+	// Most recent first; slug as the stable tiebreak, mirroring the upcoming list.
+	usort(
+		$rows,
+		static function ( $a, $b ) {
+			if ( $a['date'] === $b['date'] ) {
+				return strcmp( $a['slug'], $b['slug'] );
+			}
+			return strcmp( $b['date'], $a['date'] );
+		}
+	);
+
+	return $rows;
+}
+
+/**
+ * Format a past date. "August 28, 2026".
+ *
+ * ⛔ THE YEAR IS PRESENT, and that is the whole difference from
+ *    `bhp_author_visits_format_date()`. "Friday, August 28" is right for a
+ *    visit that is about to happen and wrong for a trust record that will still
+ *    be on the page in two years. Weekday is dropped for the same reason: which
+ *    weekday it fell on stops being useful the moment it is history.
+ *
+ * @param string $ymd Date.
+ * @return string
+ */
+function bhp_author_visits_format_past_date( $ymd ) {
+	$ymd = (string) $ymd;
+	$ts  = $ymd ? strtotime( $ymd . ' 12:00:00' ) : false;
+	if ( ! $ts || ! function_exists( 'wp_date' ) ) {
+		return $ymd;
+	}
+	return (string) wp_date( 'F j, Y', $ts );
+}
+
+/**
+ * The past rows to render right now, read live from the registry and notes.
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function bhp_author_visits_past_rows() {
+	$records = function_exists( 'bhp_school_visit_records' ) ? bhp_school_visit_records() : array();
+
+	/**
+	 * Filter the past rows rendered on `/author-visits/`.
+	 *
+	 * Exists so the trust column can be previewed or exercised without writing
+	 * either live option. It is NOT a route for hardcoding visits.
+	 *
+	 * @param array $rows    Built rows.
+	 * @param array $records The raw records they came from.
+	 */
+	return apply_filters(
+		'bhp_author_visits_past_rows',
+		bhp_author_visits_build_past_rows( $records, bhp_author_visits_today(), bhp_author_visits_notes() ),
+		$records
+	);
+}
+
+/**
+ * Every photo across every past visit, flattened, newest visit first.
+ *
+ * ⭐ THE GALLERY IS DERIVED FROM THE PAST ROWS, NOT LISTED SEPARATELY. One
+ *    source of truth means a visit cannot appear in the trust column with no
+ *    photographs while its photographs appear in the gallery under no visit.
+ *    It is also exactly the shape phase 2's `/gallery/` page needs, which is
+ *    why it is a public function rather than a loop inside the template.
+ *
+ * @param array|null $past_rows Optional pre-built rows; read live when omitted.
+ * @return array<int,array{file:string,alt:string,w:int,h:int,school:string,date_display:string,slug:string}>
+ */
+function bhp_author_visits_gallery_photos( $past_rows = null ) {
+	$rows = is_array( $past_rows ) ? $past_rows : bhp_author_visits_past_rows();
+	$out  = array();
+
+	foreach ( $rows as $row ) {
+		if ( empty( $row['photos'] ) || ! is_array( $row['photos'] ) ) {
+			continue;
+		}
+		foreach ( $row['photos'] as $photo ) {
+			$out[] = array(
+				'file'         => isset( $photo['file'] ) ? (string) $photo['file'] : '',
+				'alt'          => isset( $photo['alt'] ) ? (string) $photo['alt'] : '',
+				'w'            => isset( $photo['w'] ) ? (int) $photo['w'] : 0,
+				'h'            => isset( $photo['h'] ) ? (int) $photo['h'] : 0,
+				'school'       => isset( $row['school'] ) ? (string) $row['school'] : '',
+				'date_display' => isset( $row['date_display'] ) ? (string) $row['date_display'] : '',
+				'slug'         => isset( $row['slug'] ) ? (string) $row['slug'] : '',
+			);
+		}
+	}
+
+	return $out;
+}
+
 /**
  * The rows to render right now, read live from the registry.
  *

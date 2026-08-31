@@ -140,6 +140,24 @@ function bhp_staging_mail_guard_email_ids() {
 			'customer_note',
 			// This project's own order email (class-wc-email-bhp-addon-thankyou.php).
 			'bhp_addon_thankyou',
+			/*
+			 * ⭐⭐ 1.19.317 — THE STORE-SENT REVIEW ASK
+			 *    (inc/class-wc-email-bhp-review-ask.php).
+			 *
+			 * ⛔ IT IS THE MOST DANGEROUS EMAIL IN THIS STORE TO LEAVE
+			 *    UNGUARDED, and that is why it is listed here in the same
+			 *    change that created it rather than afterwards. It is the only
+			 *    email that is sent to a customer WEEKS after their order, by a
+			 *    scheduled runner, with no human in the loop. A staging refresh
+			 *    copies production's real orders, so an unguarded run on
+			 *    staging would email real past customers a review ask from a
+			 *    test environment.
+			 *
+			 * ⭐ THE GUARD REACHES IT AT ALL ONLY BECAUSE IT IS A REAL
+			 *    `WC_Email`. See that class's header: a hand-rolled `wp_mail()`
+			 *    would have walked straight past this list.
+			 */
+			'bhp_review_ask',
 		)
 	);
 }

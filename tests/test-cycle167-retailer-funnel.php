@@ -150,7 +150,7 @@ bhp_rtl_ok( '1.2  the template calls the resolver instead',
 	false !== strpos( $tpl_prose, 'bhp_retailer_orderable_titles' ) );
 
 // ══════════════════════════════════════════════════════════════════════════
-bhp_rtl_head( '2. ⭐⭐ THE FIVE ORDERABLE EDITIONS, AND THEIR VERIFIED TERMS' );
+bhp_rtl_head( '2. ⭐⭐ THE SIX ORDERABLE EDITIONS, AND THEIR VERIFIED TERMS' );
 // ══════════════════════════════════════════════════════════════════════════
 
 $rows = function_exists( 'bhp_retailer_orderable_titles' ) ? bhp_retailer_orderable_titles() : array();
@@ -159,7 +159,23 @@ foreach ( $rows as $r ) {
 	$by_isbn[ $r['isbn'] ] = $r;
 }
 
-bhp_rtl_ok( '2.0  exactly FIVE rows render', 5 === count( $rows ), count( $rows ) );
+/*
+ * ⭐⭐ 1.19.314 (2026-08-28, `CYCLE168-LD-RETAILER-BATCH`) — FIVE BECAME SIX.
+ *
+ * ⛔ THE SUPERSEDED ASSERTION, PRESERVED VERBATIM so the movement is visible:
+ *      bhp_rtl_ok( '2.0  exactly FIVE rows render', 5 === count( $rows ), count( $rows ) );
+ *
+ * ⭐ Andrew Signore, 2026-08-28, carrier item 364, his own first-hand read of
+ *   the authenticated IngramSpark console: "The amazon HC is active on ingram -
+ *   saw it this morning after approval". Item 363: "Should be 6 ISBNs now with
+ *   the Amazon hardcover active."
+ *
+ * ⛔ THIS NUMBER IS DELIBERATELY HARDCODED AND DELIBERATELY NOT DERIVED. A
+ *    count read from the registry would agree with any registry, including one
+ *    somebody widened by accident. Six is the number the founder stated, and
+ *    this line is where a seventh row would be caught.
+ */
+bhp_rtl_ok( '2.0  exactly SIX rows render', 6 === count( $rows ), count( $rows ) );
 
 /*
  * ⛔ THE EXPECTED SET IS WRITTEN OUT LONGHAND ON PURPOSE. A test that derived
@@ -174,6 +190,18 @@ $expected = array(
 	'9798996810802' => array( 'Paperback', '12.99', '55%', 'Yes - Destroy', 'The Amazon' ),
 	'9798996810819' => array( 'Hardcover', '19.99', '55%', 'Yes - Destroy', 'The Mariana Trench' ),
 	'9798996810826' => array( 'Hardcover', '19.99', '55%', 'Yes - Destroy', 'Mount Everest' ),
+	/*
+	 * ⭐⭐ 1.19.314 — THE SIXTH ROW. ⚠️ AND ITS PROVENANCE IS WEAKER THAN THE
+	 *    OTHER FIVE, WHICH IS STATED HERE RATHER THAN LEVELLED UP.
+	 *    STATUS was read first-hand by the founder (item 364, 2026-08-28).
+	 *    The four TERM values below are carried from the two sibling hardcovers
+	 *    and from item 363's own restatement; nobody has read THIS ISBN's own
+	 *    four fields. See `inc/retailer-trade-terms.php` for the full note and
+	 *    the recheck. ⛔ If the next Ingram pass finds a different figure, THIS
+	 *    line is the one that must change first, and 2.91 will already have
+	 *    failed by then because the terms will no longer be uniform.
+	 */
+	'9798996810833' => array( 'Hardcover', '19.99', '55%', 'Yes - Destroy', 'The Amazon' ),
 );
 
 foreach ( $expected as $isbn => $exp ) {
@@ -194,9 +222,9 @@ foreach ( $expected as $isbn => $exp ) {
 		false !== strpos( $have['label'], 'Adventures of Charlotte and Henry' ), $have['label'] );
 }
 
-bhp_rtl_ok( '2.90  three paperbacks and two hardcovers',
+bhp_rtl_ok( '2.90  three paperbacks and three hardcovers',
 	3 === count( array_filter( $rows, function ( $r ) { return 'Paperback' === $r['format_label']; } ) )
-	&& 2 === count( array_filter( $rows, function ( $r ) { return 'Hardcover' === $r['format_label']; } ) ) );
+	&& 3 === count( array_filter( $rows, function ( $r ) { return 'Hardcover' === $r['format_label']; } ) ) );
 
 bhp_rtl_ok( '2.91  terms are uniform, so the page may summarise them once',
 	function_exists( 'bhp_retailer_terms_are_uniform' ) && bhp_retailer_terms_are_uniform() );
@@ -205,9 +233,25 @@ bhp_rtl_ok( '2.91  terms are uniform, so the page may summarise them once',
 bhp_rtl_head( '3. ⛔⛔ THE DO-NOT-LIST PAIR IS ABSENT — the assertion that matters most' );
 // ══════════════════════════════════════════════════════════════════════════
 
+/*
+ * ⛔⛔ 1.19.314 — `9798996810833` LEFT THIS LIST, AND IT IS THE ONLY ONE THAT
+ *     MAY. The superseded entry, preserved verbatim:
+ *
+ *       '9798996810833' => 'The Amazon HARDCOVER — Processing, Enabled for
+ *                           Distribution: No, never entered production',
+ *
+ * ⭐ It is now asserted as PRESENT, with its terms, in §2 above. Moving an
+ *   ISBN from the forbidden list to the expected list is the single most
+ *   dangerous edit anybody can make to this file, so it is made once, with the
+ *   founder's own words attached, and never again without them.
+ *
+ * ⛔⛔ THE COLOURING BOOK IS MORE FIRMLY FORBIDDEN THAN BEFORE, NOT LESS.
+ *    Item 358: Ingram customer service pushed it through, AND HE IS
+ *    DELIBERATELY NOT APPROVING IT pending the interior remake. Its reason is
+ *    upgraded from an Ingram state to a founder decision.
+ */
 $forbidden_isbns = array(
-	'9798996810833' => 'The Amazon HARDCOVER — Processing, Enabled for Distribution: No, never entered production',
-	'9798996810840' => 'Mariana Ocean COLORING BOOK — Processing, Enabled for Distribution: No, never entered production',
+	'9798996810840' => 'Mariana Ocean COLORING BOOK — the FOUNDER is withholding it (item 358, 2026-08-28) pending the interior remake. Not an Ingram state: his decision.',
 	'9798996810857' => 'Mount Everest colouring book — ISBN assigned, never submitted to Ingram at all',
 );
 
@@ -218,10 +262,11 @@ foreach ( $forbidden_isbns as $isbn => $why ) {
 }
 
 $withheld = function_exists( 'bhp_retailer_withheld_isbns' ) ? bhp_retailer_withheld_isbns() : array();
-bhp_rtl_ok( '3.90  the registry names both withheld ISBNs WITH A REASON, rather than omitting them',
-	isset( $withheld['9798996810833'] ) && isset( $withheld['9798996810840'] )
-	&& '' !== trim( (string) $withheld['9798996810833'] )
-	&& '' !== trim( (string) $withheld['9798996810840'] ) );
+bhp_rtl_ok( '3.90  the registry names the withheld colouring ISBN WITH A REASON, rather than omitting it',
+	isset( $withheld['9798996810840'] ) && '' !== trim( (string) $withheld['9798996810840'] ),
+	wp_json_encode( array_keys( $withheld ) ) );
+bhp_rtl_ok( '3.90a 1.19.314: the Amazon hardcover is NO LONGER withheld, because the founder read it ACTIVE (item 364)',
+	! isset( $withheld['9798996810833'] ) );
 
 bhp_rtl_ok( '3.91  the colouring ISBN is not in bhp_bundle_catalog() either, so it cannot leak by the join',
 	false === strpos( wp_json_encode( bhp_bundle_catalog() ), '9798996810840' ) );
@@ -244,8 +289,11 @@ $bhp_rtl_inject = function ( $registry ) {
 		'discount'     => '55%',
 		'returnable'   => 'Yes - Destroy',
 	);
-	// And re-enable the withheld Amazon hardcover, the likeliest real-world mistake.
-	$registry['9798996810833']['orderable'] = true;
+	// And re-enable the withheld COLOURING BOOK, which is now the likeliest
+	// real-world mistake — the founder is holding it (item 358) and a
+	// well-meaning edit could open it. (Until 1.19.314 this line re-enabled
+	// `…0833`, which is legitimately open now and so can no longer be the probe.)
+	$registry['9798996810840']['orderable'] = true;
 	return $registry;
 };
 add_filter( 'bhp_retailer_trade_registry', $bhp_rtl_inject, 99 );
@@ -255,12 +303,12 @@ $injected_isbns = wp_list_pluck( $rows_injected, 'isbn' );
 
 bhp_rtl_ok( '4.1  an ISBN absent from bhp_bundle_catalog() is REFUSED even when the registry allows it',
 	! in_array( '9799999999999', $injected_isbns, true ) );
-bhp_rtl_ok( '4.2  ⚠️ a registry flip DOES surface a catalog ISBN — the registry is the ONLY gate for a real edition, which is exactly why §2/§3 pin it',
-	in_array( '9798996810833', $injected_isbns, true ) );
+bhp_rtl_ok( '4.2  ⭐⭐ the COLOURING BOOK cannot be surfaced by a registry flip either, because it is not in bhp_bundle_catalog() — two independent gates, and the founder-withheld title sits behind BOTH',
+	! in_array( '9798996810840', $injected_isbns, true ) );
 
 remove_filter( 'bhp_retailer_trade_registry', $bhp_rtl_inject, 99 );
-bhp_rtl_ok( '4.3  the filter was removed and the set is back to five',
-	5 === count( bhp_retailer_orderable_titles() ) );
+bhp_rtl_ok( '4.3  the filter was removed and the set is back to six',
+	6 === count( bhp_retailer_orderable_titles() ) );
 
 // ══════════════════════════════════════════════════════════════════════════
 bhp_rtl_head( '5. ⛔ FORBIDDEN VOCABULARY — every one an independent absence' );
@@ -392,8 +440,34 @@ bhp_rtl_ok( '6.12  the lead-magnet key is unchanged and still bookstore_wholesal
  *    rendered number is a classic way to write an assertion that is wrong in a
  *    way nobody notices.
  */
-bhp_rtl_ok( '6.13  every CTA event keeps the retailer_ prefix (4 in source, 3 rendered)',
-	4 === substr_count( $tpl_prose, 'data-bhp-event="retailer_' ), substr_count( $tpl_prose, 'data-bhp-event="retailer_' ) );
+/*
+ * ⭐⭐ 1.19.314 — THE COUNT MOVED FROM 4 TO 6, AND THE ASSERTION'S JOB DID NOT.
+ *
+ * ⛔ THE SUPERSEDED LINE, PRESERVED VERBATIM:
+ *      bhp_rtl_ok( '6.13  every CTA event keeps the retailer_ prefix (4 in source, 3 rendered)',
+ *          4 === substr_count( $tpl_prose, 'data-bhp-event="retailer_' ), ... );
+ *
+ * ⚠ THE COUNT IS NOT THE POINT AND NEVER WAS — funnel isolation is. This
+ *   line exists to prove no event on this page borrows the parent or teacher
+ *   prefix, which 6.14 asserts directly. The number is a tripwire for somebody
+ *   adding a control without thinking about which funnel it belongs to, so it
+ *   is UPDATED rather than loosened to a range: a range would stop tripping.
+ *
+ * ⭐ THE SIX, NAMED, so the next person can tell an addition from a drift:
+ *      1 retailer_hero_primary_cta_click     hero, now the ipage ordering route
+ *      2 retailer_hero_sell_sheet_click      hero, the ungated PDF
+ *      3 retailer_hero_secondary_cta_click   hero, the demoted inquiry text link
+ *      4 retailer_ordering_sell_sheet_click  B2 ordering block, the same PDF
+ *      5 retailer_sticky_order_click         sticky bar, the ordering route
+ *      6 retailer_wholesale_contact_click    final CTA section, the inquiry
+ *
+ * ⭐ AND THE SOURCE/RENDERED GAP IS GONE. The old note explained that the hero
+ *   primary appeared TWICE in source because of the `$download['ready']`
+ *   branch; 1.19.314 removed that branch from the hero, so all six source
+ *   occurrences now render. Source count and rendered count finally agree.
+ */
+bhp_rtl_ok( '6.13  every CTA event keeps the retailer_ prefix (6 in source, 6 rendered)',
+	6 === substr_count( $tpl_prose, 'data-bhp-event="retailer_' ), substr_count( $tpl_prose, 'data-bhp-event="retailer_' ) );
 bhp_rtl_ok( '6.14  and NO event on this page carries a foreign funnel prefix',
 	false === strpos( $tpl_prose, 'data-bhp-event="parent_' )
 	&& false === strpos( $tpl_prose, 'data-bhp-event="teacher_' ) );
@@ -501,7 +575,7 @@ bhp_rtl_head( '9. ⭐ THE PROTECTED SENTENCES — kept byte-verbatim' );
 
 $verbatim = array(
 	'9.1  B10, the pricing disclaimer (the sentence that makes the rest of the page safe)'
-		=> 'Prices shown are current consumer list prices on braveheartspublishing.com, not wholesale or trade pricing - wholesale terms, margins, and minimums are discussed directly and are not yet published.',
+		=> 'Prices shown are current consumer list prices on braveheartspublishing.com, not wholesale or trade pricing. The wholesale discount and returns terms for each orderable edition are listed above. For minimums or anything not covered here, contact me directly.',
 	'9.2  the hero H1'
 		=> 'A visually distinctive adventure series for your shelves.',
 	'9.3  the hero lead'
@@ -525,8 +599,24 @@ bhp_rtl_ok( '9.10 Kirkus is never attributed to Everest or The Amazon',
 bhp_rtl_head( '10. ⭐ THE NEW COPY IS THE FOUNDER\'S, AND THE INGRAM ROUTE IS RIGHT' );
 // ══════════════════════════════════════════════════════════════════════════
 
-bhp_rtl_ok( '10.1  the ordering block names ipage',
-	false !== strpos( $tpl_prose, 'Search the ISBN in ipage' ) );
+/*
+ * ⭐⭐ 1.19.314 — 10.1 WAS REWRITTEN BECAUSE THE SENTENCE IS NOW SPLIT, NOT
+ *    BECAUSE IT CHANGED. The superseded assertion, preserved verbatim:
+ *
+ *      bhp_rtl_ok( '10.1  the ordering block names ipage',
+ *          false !== strpos( $tpl_prose, 'Search the ISBN in ipage' ) );
+ *
+ * ⛔ Merry's D1 — "ipage is named in the copy but is NOT a link" — is fixed by
+ *    wrapping the word in an anchor, which necessarily splits the translatable
+ *    string in two. The SENTENCE a visitor reads is byte-identical; only the
+ *    markup between two of its words changed. Both halves are asserted, plus
+ *    the anchor, so this is strictly MORE coverage than the line it replaces.
+ */
+bhp_rtl_ok( '10.1a the ordering block still says "Search the ISBN in"',
+	false !== strpos( $tpl_prose, 'Search the ISBN in ' ) );
+bhp_rtl_ok( '10.1b and the word ipage is now a real anchor, not bare prose (Merry D1)',
+	false !== strpos( $tpl_prose, 'retailer-ipage-link' )
+	&& false !== strpos( $tpl_prose, "esc_html_e('ipage'" ) );
 bhp_rtl_ok( '10.2  ⛔ and does NOT claim the record is findable there ("and it is there" is unverified)',
 	false === stripos( $tpl_prose, 'and it is there' ) );
 bhp_rtl_ok( '10.3  Ingram Content Group is named as where an account is created',
@@ -576,6 +666,120 @@ bhp_rtl_ok( '12.4  it records the Yes-Deliver -> Yes-Destroy correction so it ca
 	false !== strpos( $terms_src, 'Yes-Deliver' ) && false !== strpos( $terms_src, 'Yes - Destroy' ) );
 bhp_rtl_ok( '12.5  the superseded "coming soon" guard is preserved verbatim in the template docblock',
 	false !== strpos( $tpl_src, 'must never claim active Ingram availability' ) );
+
+// ==========================================================================
+bhp_rtl_head( '13. ⭐⭐ 1.19.314 — ORDERING ROUTE, SELL SHEET, IMPRINT, FOOTER LINK, TIGHT HERO' );
+// ==========================================================================
+/*
+ * ⛔ SOURCE-SIDE ASSERTIONS ONLY. What a browser actually renders — the CTA
+ *    above the fold at 1440x900 AND at 375x812, the six ISBNs in the visible
+ *    text, the PDF returning 200, the footer link on three unrelated page
+ *    types — is in the QA evidence, measured in a real browser with
+ *    `window.innerWidth` asserted in the same read. Neither substitutes for
+ *    the other, and a passing suite here is NOT a rendered-page claim.
+ */
+
+// -- 13.1  THE IPAGE ORDERING LINK (Merry D1, founder items 360/366) --------
+bhp_rtl_ok( '13.1a the ipage URL literal appears exactly ONCE in the template',
+	1 === substr_count( $tpl_prose, "'https://ipage.ingramcontent.com'" ),
+	substr_count( $tpl_prose, "'https://ipage.ingramcontent.com'" ) );
+bhp_rtl_ok( '13.1b every use goes through the $ipage_url variable, so the button and the prose can never disagree',
+	substr_count( $tpl_prose, '$ipage_url' ) >= 3,
+	substr_count( $tpl_prose, '$ipage_url' ) );
+bhp_rtl_ok( '13.1c the hero primary CTA is an ordering route, not a same-page anchor',
+	false !== strpos( $tpl_prose, "Order on Ingram (ipage)" ) );
+bhp_rtl_ok( '13.1d ⛔ no control says "IngramSpark" — a bookseller cannot buy there, and the R3 sell sheet does not say it either',
+	false === strpos( $tpl_prose, 'IngramSpark' ) );
+bhp_rtl_ok( '13.1e outbound ipage links carry rel="noopener"',
+	substr_count( $tpl_prose, 'rel="noopener"' ) >= 3,
+	substr_count( $tpl_prose, 'rel="noopener"' ) );
+bhp_rtl_ok( '13.1f ⛔ no tracking parameter was bolted onto somebody else\'s URL',
+	false === strpos( $tpl_prose, 'ingramcontent.com?' )
+	&& false === strpos( $tpl_prose, 'ingramcontent.com/?' ) );
+/*
+ * ⭐ 13.1g IS SCOPED TO THE HERO, DELIBERATELY. "See the ISBNs and terms"
+ *    survives as the SECONDARY control in the page's closing CTA section,
+ *    which is correct: down there the buyer has read the page and an anchor
+ *    back to the table is useful. What must not survive is that label as the
+ *    page's PRIMARY above-the-fold control, which is item 366's whole point.
+ */
+$bhp_rtl_hero_at  = strpos( $tpl_prose, 'retailer_hero_primary_cta_click' );
+$bhp_rtl_hero_ctx = false !== $bhp_rtl_hero_at
+	? substr( $tpl_prose, max( 0, $bhp_rtl_hero_at - 400 ), 400 )
+	: '';
+bhp_rtl_ok( '13.1g the hero PRIMARY CTA points at ipage and is no longer a same-page anchor',
+	false !== strpos( $bhp_rtl_hero_ctx, '$ipage_url' )
+	&& false === strpos( $bhp_rtl_hero_ctx, '#titles' ),
+	$bhp_rtl_hero_ctx );
+bhp_rtl_ok( '13.1h the wholesale-inquiry route survives its demotion (it is still in the template)',
+	false !== strpos( $tpl_prose, '#contact' )
+	&& false !== strpos( $tpl_prose, 'Start a Wholesale Inquiry' ) );
+
+// -- 13.2  THE SELL SHEET, UNGATED (Merry D2 / Fix 2) -----------------------
+$bhp_rtl_pdf = get_template_directory() . '/assets/downloads/bhp-retailer-sell-sheet.pdf';
+bhp_rtl_ok( '13.2a the sell-sheet PDF actually ships inside the theme',
+	file_exists( $bhp_rtl_pdf ), $bhp_rtl_pdf );
+bhp_rtl_ok( '13.2b it is a real PDF, not a placeholder or a truncated copy',
+	file_exists( $bhp_rtl_pdf )
+	&& filesize( $bhp_rtl_pdf ) > 100000
+	&& '%PDF' === (string) file_get_contents( $bhp_rtl_pdf, false, null, 0, 4 ),
+	file_exists( $bhp_rtl_pdf ) ? filesize( $bhp_rtl_pdf ) . ' bytes' : 'missing' );
+bhp_rtl_ok( '13.2c the template offers it in the hero AND in the ordering block',
+	substr_count( $tpl_prose, '$sell_sheet_url' ) >= 4,
+	substr_count( $tpl_prose, '$sell_sheet_url' ) );
+bhp_rtl_ok( '13.2d ⛔ UNGATED: the download is a plain anchor, not a signup modal or lead-magnet CTA',
+	false !== strpos( $tpl_prose, 'Download the sell sheet (PDF)' )
+	&& false === strpos( $tpl_prose, 'sell-sheet-modal' ) );
+bhp_rtl_ok( '13.2e the button is SUPPRESSED rather than 404ing when the file is absent',
+	false !== strpos( $tpl_prose, '$sell_sheet_rel' )
+	&& false !== strpos( $tpl_prose, 'file_exists(' ) );
+bhp_rtl_ok( '13.2f ⛔ the founder-withheld colouring ISBN is not inside the shipped PDF either',
+	! file_exists( $bhp_rtl_pdf )
+	|| false === strpos( (string) file_get_contents( $bhp_rtl_pdf ), '9798996810840' ) );
+
+// -- 13.3  THE IMPRINT LINE (founder item 365, his answer: "LLC") -----------
+bhp_rtl_ok( '13.3a the imprint of record is on the page',
+	false !== strpos( $tpl_prose, 'Brave Hearts Publishing LLC' ) );
+bhp_rtl_ok( '13.3b it is labelled as the imprint, so it reads as a search key and not a byline',
+	false !== strpos( $tpl_prose, "'Imprint:'" ) );
+bhp_rtl_ok( '13.3c ⛔ the legal entity name is NOT passed through a translation function',
+	false === strpos( $tpl_prose, "__( 'Brave Hearts Publishing LLC'" )
+	&& false === strpos( $tpl_prose, "esc_html_e( 'Brave Hearts Publishing LLC'" ) );
+
+// -- 13.4  THE PAGE IS NO LONGER ORPHANED (Merry D3) ------------------------
+$bhp_rtl_footer = (string) file_get_contents( get_template_directory() . '/footer.php' );
+bhp_rtl_ok( '13.4a the sitewide footer links the retailer page',
+	false !== strpos( $bhp_rtl_footer, '/retailers-wholesale-guide/' ) );
+bhp_rtl_ok( '13.4b under a label a bookseller will recognise',
+	false !== strpos( $bhp_rtl_footer, 'Booksellers & Retailers' ) );
+bhp_rtl_ok( '13.4c ⚠ the footer records that this is a FIFTH link against the 2026-08-19 four-link prune',
+	false !== stripos( $bhp_rtl_footer, 'A FIFTH' ) );
+bhp_rtl_ok( '13.4d ⛔ and no primary-nav item was invented in theme code (that menu is a DB menu and Andrew\'s call)',
+	false === strpos( $bhp_rtl_footer, "theme_location' => 'primary'" ) );
+
+// -- 13.5  THE TIGHT HERO (founder item 366, second half) -------------------
+$bhp_rtl_css     = (string) file_get_contents( get_template_directory() . '/assets/css/audience-landing.css' );
+$bhp_rtl_css_min = file_exists( get_template_directory() . '/assets/css/audience-landing.min.css' )
+	? (string) file_get_contents( get_template_directory() . '/assets/css/audience-landing.min.css' )
+	: '';
+bhp_rtl_ok( '13.5a the template carries the scoped spacing modifier',
+	false !== strpos( $tpl_prose, 'audience-landing-hero--tight' ) );
+bhp_rtl_ok( '13.5b the CSS defines it',
+	false !== strpos( $bhp_rtl_css, '.audience-landing-hero--tight' ) );
+bhp_rtl_ok( '13.5c ⛔ SCOPED: the shared five-page hero grid rule is untouched, so four other audience pages do not move',
+	false !== strpos( $bhp_rtl_css, 'grid-template-columns: repeat(auto-fit, minmax(380px, 1fr))' ) );
+bhp_rtl_ok( '13.5d the minified artefact was REBUILT from the edited source (a stale artefact would serve the old spacing)',
+	false !== strpos( $bhp_rtl_css_min, 'audience-landing-hero--tight' ) );
+
+// -- 13.6  PROVENANCE FOR THE SIXTH ISBN, IN THE CODE -----------------------
+bhp_rtl_ok( '13.6a the registry cites the founder items that opened it and that withhold the colouring book',
+	false !== strpos( $terms_src, '364' ) && false !== strpos( $terms_src, '358' ) );
+bhp_rtl_ok( '13.6b ⚠ and states plainly that its four TERM values were not field-read for this ISBN',
+	false !== stripos( $terms_src, 'NOT A FIELD READ' ) );
+bhp_rtl_ok( '13.6c the superseded withheld row is preserved verbatim rather than deleted',
+	false !== stripos( $terms_src, 'THE SUPERSEDED ROW, PRESERVED VERBATIM' ) );
+bhp_rtl_ok( '13.6d the 2026-08-28 date the sixth row was opened is recorded on the row',
+	false !== strpos( $terms_src, "'read_on'      => '2026-08-28'" ) );
 
 // ══════════════════════════════════════════════════════════════════════════
 echo "\n";

@@ -198,8 +198,96 @@ body:not(.home) article.single-post.section {
   text-transform: uppercase;
 }
 
+/* ⭐⭐ 1.19.322 (`CYCLE169-LD-BLOG-LAYOUT-R2`) — THE FEATURED IMAGE IS BROUGHT
+      BACK INSIDE THE TEXT COLUMN AND CROPPED TO A WIDE SHORT BAND.
+
+   ⛔ THE MEASURED DEFECT, NOT AN OPINION. Round 1 measured this image rendering
+      at 139% OF THE CONTENT BOX on staging at an asserted `window.innerWidth`
+      of 1440 — literally wider than the words underneath it. The cause is two
+      inherited rules in `style.css`, neither of them wrong on its own:
+      `.post-header { max-width: 960px }` sets the masthead box, and
+      `.post-header__image { width: 100% }` fills it. The article's own measure
+      is `--container-content`, which is narrower. 960 over that measure is the
+      139%. Founder, relayed in the round-2 brief: *"the pictures are still
+      HUGE... its ostentatious."*
+
+   ⭐ THE WIDTH EXPRESSION IS THE ARTICLE'S OWN, COPIED TOKEN FOR TOKEN from
+      `.content-narrow` in `style.css` rather than restated as a number. That is
+      what makes "no breakout" true by construction instead of by coincidence:
+      if the site's measure is ever retuned, the image follows it in the same
+      commit. A hardcoded `780px` here would drift the first time it moved.
+
+   ⭐ HEIGHT IS A CROP, NOT A SQUASH. `object-fit: cover` with a max-height
+      keeps the subject's aspect ratio and trims the top and bottom, which is
+      the competitor pattern the brief cites: "noticeable but not dominant".
+      `object-position: center` is stated rather than left to the default so the
+      crop is a decision on the record.
+
+   ⚠ MOBILE IS PROPORTIONATE, NOT 400px. At 375 the column is roughly 343px
+      wide, so a 400px cap would render a PORTRAIT block — taller than it is
+      wide, the opposite of a "wide short band". The viewport-relative cap below
+      holds the crop near 2:1 at both ends of the range instead of holding one
+      number at both.
+
+   ⭐ TUNABLE IN ONE PLACE: `--bhp-featured-max-h`. A ruling on the height is a
+      one-value change, the same discipline the band's copy carries in PHP.
+
+   ⛔ SCOPE IS THE MASTHEAD IMAGE ONLY. This selector pairs `.post-header--field-
+      note` with `.post-header__image`; it never mentions `.post-content`, so
+      the in-body 60% cap added at 1.19.321 and the book rail's own artwork are
+      both untouched. `tests/test-cycle169-blog-layout.php` §5.4a asserts the
+      two families stay disjoint. */
+.post-header--field-note {
+  /* ⛔ THE INSET MIRRORS `.editorial-surface`'s PADDING IN `style.css`, AND THE
+        DUPLICATION IS DELIBERATE, DECLARED, AND TESTED — it is not an oversight.
+
+     The article's readable measure is NOT `.post-content`'s box. That box is an
+     820px CARD at 1440; the card carries `padding: clamp(2rem, 5vw, 4rem)`, so
+     the TEXT inside it runs to 690px. A first pass of this release matched the
+     card and shipped an image at 118.8% of the text — better than the 139% the
+     founder complained about, and still wider than the words. MEASURED IN A
+     BROWSER AT `window.innerWidth` 1440, which is the only reason it was caught.
+
+     `.post-header` is a SIBLING of `.post-content`, not a child, so it cannot
+     inherit that padding and there is no CSS way to read it back. The choice was
+     to duplicate the expression here or to leave the image misaligned. It is
+     duplicated — and `tests/test-cycle169-blog-layout.php` §5.15/§5.16 assert
+     that BOTH halves still match `style.css` character for character, so a
+     future retune of `.editorial-surface` produces a FAILING TEST rather than a
+     silently drifting image. A duplicate that shouts when it drifts is a
+     different risk from one that does not. */
+  --bhp-editorial-inset: clamp(2rem, 5vw, 4rem);
+}
+
 .post-header--field-note .post-header__image {
+  --bhp-featured-max-h: 400px;
+
+  display: block;
+  width: calc(
+    min(100% - (2 * var(--gutter)), var(--container-content))
+    - (2 * var(--bhp-editorial-inset))
+  );
+  max-width: 100%;
   margin-top: clamp(1.25rem, 4vw, 2rem);
+  margin-inline: auto;
+
+  max-height: var(--bhp-featured-max-h);
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Below 640px `style.css` drops `.editorial-surface` to a flat 1.5rem, so the
+   inset follows it down. Same mirror, same test. */
+@media (max-width: 640px) {
+  .post-header--field-note {
+    --bhp-editorial-inset: 1.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .post-header--field-note .post-header__image {
+    --bhp-featured-max-h: clamp(160px, 48vw, 240px);
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -454,3 +542,289 @@ article.single-post { position: relative; }
 .bhp-post-capture * { min-width: 0; }
 .bhp-book-rail,
 .bhp-post-capture { max-width: 100%; }
+
+/* --------------------------------------------------------------------------
+   7 · THE SLIM CAPTURE BAND — 1.19.321, CYCLE169-LD-BLOG-LAYOUT-TEMPLATE
+   --------------------------------------------------------------------------
+   ONE ROW, NOT A CARD, and the brief said so in those words. The end-of-post
+   capture above is the big ask; this is the quiet one mid-article, so it is
+   deliberately lighter than `.bhp-post-capture`: a hairline rule top and bottom
+   instead of a filled, bordered, shadowed panel.
+
+   It is NOT fixed and NOT sticky. Rubric row 1 allows exactly one above-fold
+   primary and that is step 1's header offer; anything lifted out of flow here
+   would be a second one. `test-blog-post-template.php` §5.3 asserts the same
+   property for the other two blocks and `test-cycle169-blog-layout.php` §3
+   asserts it for this one. */
+.bhp-capture-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-block: clamp(1.75rem, 5vw, 2.5rem);
+  padding-block: clamp(0.9rem, 3vw, 1.15rem);
+  border-block: 1px solid var(--expedition-border);
+  max-width: 100%;
+}
+.bhp-capture-band * { min-width: 0; }
+
+.bhp-capture-band__line {
+  /* ⚠ `0 1` NOT `1 1`, AND IT IS MEASURED. Letting the line GROW took the free
+     space away from the email field, which measured 168px in a browser -- a
+     field too narrow to show a typed address. Denying the line the growth hands
+     that slack to the form instead and the field measures about 223px. */
+  flex: 0 1 13rem;
+  color: var(--expedition-navy);
+  font-family: var(--font-display);
+  font-size: clamp(0.98rem, 0.94rem + 0.4vw, 1.14rem);
+  line-height: 1.3;
+}
+
+/* The form is the second cell of the row, not a block beneath the line.
+   ⚠ THE FLEX BASES ARE MEASURED, NOT GUESSED. The article column is 690px at
+     1440, so `13rem + 22rem` (560px) plus the row gap leaves the two cells to
+     grow into roughly 263px and 407px. Inside the form, `9rem` for the field
+     against an intrinsic button leaves the field about 199px -- wide enough for
+     an email address, and it fits on ONE ROW, which the first build did not.
+     Re-measured in a browser after the change rather than trusted. */
+.bhp-capture-band .acquisition-form {
+  flex: 1 1 22rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+.bhp-capture-band .acquisition-form__field {
+  flex: 1 1 9rem;
+  min-width: 0;
+  margin: 0;
+}
+/* The visible line is the accessible name for the whole band, so the field's
+   own label is redundant to a sighted reader and duplicated to a screen reader.
+   It is CLIPPED, never `display: none` -- a hidden label is not announced, and
+   removing it outright would leave the input unlabelled. */
+.bhp-capture-band .acquisition-form__field > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.bhp-capture-band .acquisition-form__field input[type='email'] {
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px !important;   /* iOS zooms any field under 16px on focus. */
+}
+.bhp-capture-band .acquisition-form__submit {
+  flex: 0 1 auto;
+  min-height: 48px;
+  padding-inline: 1rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+/* ⛔ THE WRAPPER IS `__notes`, NOT `__privacy`, AND THE FIRST BUILD TARGETED THE
+   WRONG ONE. `signup-form.php` puts the privacy sentence inside a
+   `.acquisition-form__notes` div, so that div -- not the paragraph inside it --
+   is the flex child. Styling the paragraph left the div in the row, which is
+   part of why the first build stacked instead of sitting on one line. Found by
+   reading the rendered DOM, not the template. */
+.bhp-capture-band .acquisition-form__notes {
+  flex: 1 0 100%;
+  margin: 0;
+}
+.bhp-capture-band .acquisition-form__privacy {
+  margin: 0;
+  color: var(--expedition-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  /* Below this the line and the form each take the full width. A 13rem line and
+     a 22rem form cannot share a row, and a 6rem email field is not a field. */
+  .bhp-capture-band { gap: 0.55rem; }
+  .bhp-capture-band__line { flex: 1 0 100%; }
+}
+@media (max-width: 420px) {
+  /* At 390 the field and the button cannot share a row either. */
+  .bhp-capture-band .acquisition-form__submit { flex: 1 0 100%; }
+}
+
+/* --------------------------------------------------------------------------
+   8 · IN-BODY CONTENT IMAGES — capped and centred
+   1.19.321 (width only) → ⭐⭐ 1.19.323 REWRITTEN: HEIGHT IS NOW THE CAP
+   --------------------------------------------------------------------------
+   CSS-LEVEL AND NOT PER-POST, DELIBERATELY. The brief's requirement is that
+   this reaches existing AND future posts, so it is a rule about the editorial
+   surface rather than markup added to any article. ⛔ NO POST'S STORED CONTENT
+   IS TOUCHED BY THIS, on any environment.
+
+   ═══════════════════════════════════════════════════════════════════════════
+   ⛔⛔ WHY 1.19.321's RULE DID NOT FIX THE FOUNDER'S COMPLAINT — DIAGNOSED ON
+        THE RENDERED PAGE, NOT REASONED FROM SOURCE
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Founder, relayed in the round-3 brief: *"its every blog picture that is the
+   issue - They take up 80% of the page."*
+
+   ⭐ 1.19.321 CAPPED **WIDTH** AND LEFT **HEIGHT** UNBOUNDED. That is the whole
+      defect. `max-width: 60%` + `height: auto` on a PORTRAIT graphic produces a
+      SHORT WIDTH and a TALL BOX, which is exactly the shape being complained
+      about. MEASURED IN A BROWSER at `window.innerWidth` 1440 / innerHeight 900
+      on post 5089 (`what-to-read-after-magic-tree-house`), the only post whose
+      in-body image is a book-interior page: the image rendered **312 × 473 px
+      = 53% of the viewport height**, inside a `<figure>` that was **569 px tall
+      = 63% of the viewport**. Nothing in 1.19.321 could have stopped that,
+      because 1.19.321 never mentioned height.
+
+   ⛔ AND A SECOND, INDEPENDENT BYPASS ON THE SAME ELEMENT: that figure carries
+      an INLINE `style="margin:2em auto;max-width:520px;"` in the post's stored
+      content. An inline declaration beats any stylesheet selector, so the
+      figure's own width was never governed by 1.19.321 at all. A height cap on
+      the IMG is immune to it — which is the second reason the cap belongs on
+      the replaced element rather than on the wrapper.
+
+   ⭐ THE HEIGHT CAP IS APPLIED TO THE REPLACED ELEMENT (img / picture / video /
+      svg), NEVER TO THE `<figure>`. A figure is not a replaced element: a
+      `max-height` on it would CLIP or overflow a caption instead of scaling the
+      picture. The figure gets a width ceiling only.
+
+   ⛔⛔ `object-fit: scale-down` IS THE GEOMETRY, AND `width: 100%` IS THE
+        RESERVED BOX. A FIRST PASS OF THIS RULE USED `width: auto`, WHICH IS
+        THE TIDIER EXPRESSION AND WAS REJECTED. Recorded so it is not restored:
+
+        With `width: auto` the CSS 2.1 §10.4 constraint table scales the image
+        down with its aspect ratio preserved and no letterboxing at all — a
+        1560×2364 portrait meeting a 405px cap becomes exactly 267×405, and the
+        element box is exactly the picture. ⛔ BUT AN IMAGE THAT HAS NOT LOADED
+        YET HAS NO INTRINSIC WIDTH, SO UNDER `width: auto` ITS BOX IS 0 × 0
+        UNTIL THE BYTES ARRIVE. The `width`/`height` attributes supply an aspect
+        RATIO, not a width basis, so they cannot rescue it. That means the
+        article reflows the moment each picture lands — the layout-shift class
+        of defect — and it is why the rule reserves space instead.
+
+        ⭐ `width: 100%` GIVES THE ELEMENT A REAL BOX BEFORE THE BYTES ARRIVE:
+           full column width, and a height that is the attribute-derived aspect
+           height clamped by the cap. The space is reserved; nothing jumps.
+        ⭐ `object-fit: scale-down` THEN DOES THE FITTING INSIDE THAT BOX. It is
+           defined as the SMALLER of `none` and `contain`, which means
+           ⛔ IT NEVER CROPS (that is `cover`, and a book-interior page with
+           words on it loses its meaning when trimmed) and ⛔ IT NEVER UPSCALES
+           a small image to fill a wide column, which plain `contain` and
+           1.19.321's `width: 100%` on `figure > img` both did.
+
+   ⚠ THE ONE COST, STATED RATHER THAN HIDDEN: because the box is the full
+     column and the picture is fitted inside it, an image much shorter than the
+     cap reserves some vertical whitespace above and below itself. It is bounded
+     by the cap and invisible against the page, and it is the better trade
+     against a stretched blurry upscale (1.19.321) or a reflow on every load.
+
+   ⚠⚠ AND ONE HONEST LIMIT ON THE EVIDENCE BEHIND THIS PARAGRAPH, BECAUSE A
+      CLAIM THAT WAS NOT ACTUALLY CHECKED IS WORSE THAN NO CLAIM. An earlier
+      draft of this comment asserted that `width: auto` also stopped
+      `loading="lazy"` images loading at all, citing a staging observation at
+      375. ⛔ THAT CLAIM IS WITHDRAWN. The observation was real but the cause
+      was the harness: `document.hidden` was `true` throughout, and Chrome does
+      not run lazy-image loading in a hidden document, so the same image failed
+      to load with `width: 100%` too. ⭐ THE LAYOUT-SHIFT REASONING ABOVE STANDS
+      ON ITS OWN AND IS WHAT JUSTIFIES THE RULE. Whether a zero-size lazy image
+      ALSO fails to load was NOT VERIFIED HERE and is not claimed.
+
+   ⚠ THE WIDTH CEILING MOVES 60% → 100% OF THE TEXT COLUMN, ON INSTRUCTION, AND
+     THIS IS A DELIBERATE SPEC CHANGE FROM ROUND 1 rather than a drift. The
+     round-3 brief specifies *"max-width 100% of the text column"*. It is safe
+     to widen precisely BECAUSE height is now bounded: dominance is a height
+     problem on this blog's portrait artwork, and a 60% width ceiling only ever
+     made LANDSCAPE images needlessly small while doing nothing about the tall
+     ones. Recorded here so a future reader does not "restore" the 60%.
+
+   ⭐ THE CAP IS VIEWPORT-RELATIVE AND CLAMPED AT BOTH ENDS:
+        clamp(200px, 45vh, 460px)
+      45vh is the brief's number. The 460px ceiling holds the desktop cap inside
+      the briefed 420–480px band on tall monitors (at 1200px tall, 45vh = 540px
+      and would exceed it). The 200px floor stops a landscape phone from
+      shrinking an image below legibility.
+
+   ⭐ MARKUP-PATH AGNOSTIC, WHICH IS THE POINT OF THE ROUND-3 BRIEF. The selector
+      names the replaced elements themselves rather than any wrapper class, so
+      it reaches a bare `<img>`, a `<figure><img>`, a Gutenberg
+      `.wp-block-image`, a `<picture>`, a Squarespace import's nested divs (post
+      30 is one), an `srcset` image, a `<video>` and an inline `<svg>` — all by
+      the same rule. There is no per-block selector to keep in sync.
+
+   SCOPE: the article body only. The masthead's featured image
+   (`.post-header__image`) is OUTSIDE `.post-content`, and THIS rule never
+   reaches it — see §2 of this file, which governs it separately. Card, social
+   and OG images are likewise untouched.
+
+   ⛔ THE FEATURED IMAGE IS DELIBERATELY NOT CHANGED BY THIS RELEASE. Its
+      `object-fit: cover` crop is open finding R1 from 1.19.322 and is ANDREW'S
+      DECISION, not this desk's. Switching it to `contain` here would resolve a
+      question that belongs to him.
+
+   The three BHP blocks injected INTO the body carry their own sizing and are
+   restored explicitly below, because this rule outranks them on specificity. */
+.single-post .post-content {
+  /* One tunable. A ruling on the height is a one-value change. */
+  --bhp-inbody-max-h: clamp(200px, 45vh, 460px);
+}
+
+/* The replaced elements: capped on BOTH axes, aspect preserved, never cropped,
+   never upscaled, centred — and given a real box before they load. */
+.single-post .post-content :is(img, picture, video, svg) {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--bhp-inbody-max-h);
+  object-fit: scale-down;
+  object-position: center;
+  margin-inline: auto;
+}
+
+/* The wrappers: width ceiling only — NEVER a height, so a caption cannot be
+   clipped. `.wp-block-image` is listed as well as `figure` because Gutenberg
+   emits it on the figure itself in some block versions and on a div in others. */
+.single-post .post-content :is(figure, .wp-block-image) {
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+.single-post .post-content :is(figure, .wp-block-image) > figcaption {
+  text-align: center;
+}
+
+/* Restore the theme's own injected blocks. The rules above outrank their
+   component selectors, so each is re-asserted rather than left to lose the
+   cascade — this is the same discipline 1.19.321/.322 already used here, with
+   the two NEW properties (`max-height`, `object-fit`) added to the reset so a
+   45vh cap cannot reach artwork that is deliberately sized by its own slot. */
+.single-post .post-content .bhp-book-rail :is(img, picture, video, svg, figure),
+.single-post .post-content .bhp-post-capture :is(img, picture, video, svg, figure),
+.single-post .post-content .bhp-capture-band :is(img, picture, video, svg, figure) {
+  max-width: 100%;
+  max-height: none;
+  object-fit: fill;
+  margin-inline: 0;
+}
+
+/* ⛔ SEPARATE, AND IT IS KEPT DELIBERATELY EVEN THOUGH IT IS NOW REDUNDANT.
+      The book rail's cover fills its `.bhp-book-rail__cover` slot and declares
+      `width: 100%` at (0,1,0). It happens to agree with the (0,3,0) rule above
+      today — but that agreement is an accident of this release's fix, not a
+      guarantee. A first pass of the rule above used `width: auto`, which would
+      have collapsed a 176px composite to its intrinsic size, and this line is
+      what would have stopped it. ⭐ It is one declaration and it pins the rail
+      against the next person who retunes the shared rule.
+
+      The capture blocks are NOT given `width: 100%`: they carry no image today,
+      and inventing a stretch rule for markup that does not exist would be a
+      guess rather than a restoration. */
+.single-post .post-content .bhp-book-rail :is(img, picture, svg) {
+  width: 100%;
+}

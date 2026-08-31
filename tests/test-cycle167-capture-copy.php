@@ -185,6 +185,37 @@ $parent_surfaces = array(
 	 *    source exactly as they cover `page-market-capture.php`.
 	 */
 	'page-free-resources.php',
+	/*
+	 * ⭐⭐⭐ 1.19.308 (2026-08-27, `CYCLE167-LD-KIT-PAGE-REFRESH`) — THE
+	 *      FOURTEENTH SURFACE, AND THE ONE THIS SUITE WAS SHIPPED WITHOUT.
+	 *
+	 * ⛔⛔ /reluctant-reader-adventure-kit/ WAS THE LAST PARENT CAPTURE SURFACE
+	 *     STILL DESCRIBING THE PRE-FREE-CHAPTER OFFER, AND IT WAS OMITTED ON
+	 *     PURPOSE, NOT BY OVERSIGHT. `CYCLE167-LD-CAPTURE-COPY-APPLY` left it
+	 *     alone because renaming the offer raised a question no engineer may
+	 *     answer: the URL names the KIT and the offer is now the CHAPTER, so
+	 *     changing the copy without changing the slug looked like a mismatch
+	 *     and changing the slug would have thrown away the attribution on the
+	 *     one page his August signups actually converted on. That was recorded
+	 *     as G-116 and escalated rather than decided.
+	 *
+	 * ⭐ THE FOUNDER SETTLED IT AT CARRIER ITEM 330 by choosing this page as
+	 *    the destination for the returning $0.25-CPC Meta ad. THE URL STAYS.
+	 *    Only the copy moves — which is what makes this row safe to add.
+	 *
+	 * ⛔ IT IS A PAGE TEMPLATE, so §8 cannot render it headless — it needs a
+	 *    real main query. Its rendered evidence is a real browser at a stated
+	 *    `window.innerWidth`, in the handoff, exactly as `page-market-capture.
+	 *    php` and `page-free-resources.php` are handled. §1 to §7 below cover
+	 *    its source.
+	 *
+	 * ⚠ THIS PAGE CARRIES THREE FORMS, NOT ONE — the hero capture, the inline
+	 *   #free panel and the CTA modal — so §2b/§2c below assert THREE
+	 *   `submit_label` literals for this row where every other row asserts one.
+	 *   That is the point rather than a quirk: three forms on one page is
+	 *   exactly the shape in which a single edited label goes unnoticed.
+	 */
+	'page-reluctant-reader-adventure-kit.php',
 );
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -452,6 +483,17 @@ $contexts = array(
 	 *    `test-cycle167-free-resources.php` §4b, not by reading it.
 	 */
 	'page-free-resources.php'                          => "'free_resources_hub'",
+	/*
+	 * ⭐ 1.19.308 — the kit landing hero's own analytics identity. ⛔ IT IS NOT
+	 *    A TAG. For `reluctant_reader_adventure_kit` the tag callback branches
+	 *    on `$context === 'parent_popup'` and on NOTHING ELSE, so every other
+	 *    context — this one included — resolves to the SAME existing trio
+	 *    ["Reluctant Reader Adventure Kit", "Audience: Parent/Grandparent",
+	 *    "Source: Parent Landing Page"]. That is the tag his August paid
+	 *    signups already carry. ⭐ PROVEN BY EXECUTING THE FILTER CHAIN in
+	 *    `test-cycle167-kit-page.php` §3, not by reading it.
+	 */
+	'page-reluctant-reader-adventure-kit.php'          => "'parent_landing_hero'",
 );
 foreach ( $contexts as $rel => $ctx ) {
 	bhp_ccc_ok(
@@ -491,6 +533,33 @@ bhp_ccc_ok(
 	'§7e the popup keeps its storage prefix and thank-you path (funnel identity)',
 	false !== strpos( $popup_code, "'bhp_parent_popup'" )
 		&& false !== strpos( $popup_code, "'adventure-kit-thank-you'" )
+);
+
+/*
+ * ⭐⭐ §7f (1.19.308) — THE ONE ASSERTION THAT PROTECTS THE FOUNDER'S PAID
+ *     ATTRIBUTION, AND IT IS AN ABSENCE.
+ *
+ * ⛔ The landing page must NEVER declare the `parent_popup` context. It is the
+ *    single string that flips this magnet's third tag from "Source: Parent
+ *    Landing Page" to "Source: Parent Popup" — and the landing tag is the one
+ *    his August signups carry and the one the returning Meta ad will be judged
+ *    on. It would be an easy thing to paste in while copying markup from the
+ *    popup, which is exactly what this release did, and nothing else in the
+ *    repository would notice.
+ */
+bhp_ccc_ok(
+	'§7f ⛔⛔ the kit landing page never declares the parent_popup context',
+	false === strpos(
+		bhp_ccc_code_only( 'page-reluctant-reader-adventure-kit.php' ),
+		"'parent_popup'"
+	)
+);
+bhp_ccc_ok(
+	'§7g the kit landing page keeps the adventure_kit_thank_you redirect on every form',
+	3 === substr_count(
+		bhp_ccc_code_only( 'page-reluctant-reader-adventure-kit.php' ),
+		"'adventure_kit_thank_you'"
+	)
 );
 
 /* ═══════════════════════════════════════════════════════════════════════════

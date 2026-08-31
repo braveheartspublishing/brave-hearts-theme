@@ -54,7 +54,85 @@
  *    lead time, no freight offer, no margin, no trim size, no page count, no
  *    BISAC, no carton quantity, no sell-through / reorder / performance claim,
  *    no coupon, no aggregateRating or review schema, no Add to Cart, and no
- *    ISBN outside the five verified-orderable editions.
+ *    ISBN outside the verified-orderable editions.
+ *
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.314, 2026-08-28, `CYCLE168-LD-RETAILER-BATCH` — THE PAGE STOPS
+ *    BEING A BROCHURE AND BECOMES AN ORDERING ROUTE.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * Six founder items and three verified live defects land in one pass. Each
+ * change names the instruction that caused it, because a later reader must be
+ * able to tell a ruling from a preference.
+ *
+ * 1. ⭐⭐ THE PRIMARY CTA IS NOW AN ORDERING CTA AND IT IS ABOVE THE FOLD ON
+ *    BOTH VIEWPORTS. Item 366, verbatim: "So the CTA is not above the fold and
+ *    there is too much space between nav bar and headline and books photos on
+ *    that page." ⛔ AND THE DEEPER DEFECT UNDERNEATH IT: until this release the
+ *    hero's primary control was "See the ISBNs and terms" — an ANCHOR TO A
+ *    TABLE, not a route to an order. Defect D1 of the retailer funnel review
+ *    (`RETAILER-FUNNEL-AND-OUTREACH.md`, 2026-08-28) measured it live
+ *    on production 2026-08-28: `hasIpageLink: false`, four anchors on the page,
+ *    every one of them internal. The page named ipage in prose and gave a buyer
+ *    nothing to click.
+ *
+ * 2. ⭐⭐ THE SIXTH ISBN. Items 363/364. Not hardcoded here; the registry in
+ *    `inc/retailer-trade-terms.php` opened `9798996810833` and this template
+ *    renders whatever that file says is orderable. Read its header for the
+ *    provenance and for the one term-inference it names honestly.
+ *
+ * 3. ⭐ THE IMPRINT LINE. Item 365: he answered "LLC". `Imprint: Brave Hearts
+ *    Publishing LLC` is now printed beside the ordering route as a SECOND ipage
+ *    search key. ⛔ Ordering stays ISBN-based; the imprint is a way to FIND the
+ *    list, never a way to order from it.
+ *
+ * 4. ⭐⭐ THE SELL SHEET, UNGATED. That same review's D2 and Fix 2: no asset
+ *    of any kind existed, so there was nothing forwardable to the head buyer
+ *    who actually approves the purchase and never visited the site. ⛔ AND IT
+ *    IS DELIBERATELY NOT BEHIND AN EMAIL CAPTURE — its §3.1 Fix 2: gating a
+ *    spec sheet from a trade buyer costs more orders than it captures
+ *    addresses, and it is the exact "promise a packet" trap that left Mailchimp
+ *    journey 92 sitting in Draft for six weeks.
+ *
+ * 5. ⭐ THE SPACING. Item 366's second half. Scoped to a NEW modifier class
+ *    `audience-landing-hero--tight` rather than edited into the shared hero
+ *    rules, because `.audience-landing-hero__grid` is the hero of FIVE audience
+ *    pages and he complained about ONE. Measurements before and after are in
+ *    the release report, taken in a real browser with `innerWidth` asserted.
+ *
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ ONE INSTRUCTION WAS BUILT DIFFERENTLY FROM HOW IT WAS WORDED, AND THE
+ *    DIFFERENCE IS FLAGGED FOR ANDREW RATHER THAN ABSORBED SILENTLY.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * The dispatch asked for a button labelled **"Order on IngramSpark"** pointing
+ * at `https://ipage.ingramcontent.com`. ⛔ THAT LABEL WOULD BE FACTUALLY WRONG
+ * ON A TRADE PAGE, and this file's own B2 block below already establishes why
+ * from Ingram's own Independent Bookstore Services page: a bookseller cannot
+ * buy anything on IngramSpark. IngramSpark is the PUBLISHER-side platform — it
+ * is where Andrew lists a book. A bookstore orders through INGRAM CONTENT
+ * GROUP, on ipage, on a verified trade account. A button whose label and whose
+ * destination disagree is the single fastest way to tell a professional buyer
+ * that the publisher does not understand the trade.
+ *
+ * ⭐⭐ AND THE COMPANY'S OWN APPROVED ARTEFACT ALREADY SETTLES IT. The R3 sell
+ *    sheet this release ships — read from its own text layer, 2026-08-28 —
+ *    contains "ipage.ingramcontent.com" and contains the string "IngramSpark"
+ *    ZERO times. Shipping a page button that contradicts the PDF sitting one
+ *    click away from it would be a self-inflicted inconsistency.
+ *
+ * ⭐ SO THE BUTTON READS **"Order on Ingram (ipage)"** and goes to the URL the
+ *   dispatch named. ⚠️ ANDREW'S OVERRULE IS ONE STRING. If he wants his own
+ *   wording, it is the `esc_html_e()` call in the hero CTA block below and
+ *   nothing else changes.
+ *
+ * ⚠️ THE DESTINATION WAS VERIFIED, NOT ASSUMED. `https://ipage.ingramcontent.com`
+ *    returned HTTP 200 and resolved to `https://ipage.ingramcontent.com/` on
+ *    2026-08-28. That review explicitly declined to assert that it worked; it was
+ *    loaded rather than trusted. ⛔ WHAT IS **NOT** VERIFIED, and is the same
+ *    limit `CYCLE167-MKT-T05` recorded: nobody in this company has searched a
+ *    Brave Hearts ISBN inside that search box. The page still does not say "and
+ *    it is there".
  *
  * Shares the audience-landing design system (assets/css/audience-landing.css
  * + assets/js/audience-landing.js) with the other 3 core audience pages.
@@ -80,6 +158,47 @@ $trade_rows      = function_exists('bhp_retailer_orderable_titles') ? bhp_retail
 $terms_uniform   = function_exists('bhp_retailer_terms_are_uniform') && bhp_retailer_terms_are_uniform();
 $trade_discount  = $terms_uniform && !empty($trade_rows[0]['discount']) ? $trade_rows[0]['discount'] : '';
 $trade_returns   = $terms_uniform && !empty($trade_rows[0]['returnable']) ? $trade_rows[0]['returnable'] : '';
+
+/*
+ * ⭐⭐ 1.19.314 — THE TWO NEW ORDERING CONSTANTS, EACH DEFINED EXACTLY ONCE.
+ *
+ * ⛔ NEITHER IS RETYPED ANYWHERE BELOW. A URL that appears twice in a template
+ *    is a URL that will eventually disagree with itself, and the one on the
+ *    button a buyer clicks is the one that matters.
+ *
+ * ⭐ THE IPAGE HOST is `ipage.ingramcontent.com`, Ingram Content Group's trade
+ *    ordering site — NOT IngramSpark. See this file's header for the full
+ *    reasoning and for the label decision flagged to Andrew.
+ *
+ * ⭐ THE SELL SHEET is a THEME ASSET, not a media-library upload, and that is a
+ *    deliberate deployment choice rather than a shortcut: an asset in
+ *    `assets/downloads/` travels inside the theme ZIP, so the button and the
+ *    file it points at land on an environment in the SAME atomic deploy and can
+ *    never be half-shipped. A media-library upload would be a second, separate,
+ *    manual step on production with a live 404 in between. The same directory
+ *    already serves the five free-resource PDFs.
+ *
+ * ⛔ THE LINK IS SUPPRESSED IF THE FILE IS NOT THERE. `file_exists()` on the
+ *    real path, not a guess: a "Download the sell sheet" button that 404s is
+ *    worse for a trade buyer than no button, because it reads as a dead
+ *    company rather than a missing file.
+ */
+$ipage_url = 'https://ipage.ingramcontent.com';
+
+$sell_sheet_rel  = '/assets/downloads/bhp-retailer-sell-sheet.pdf';
+$sell_sheet_url  = file_exists(get_template_directory() . $sell_sheet_rel)
+    ? get_template_directory_uri() . $sell_sheet_rel
+    : '';
+
+/*
+ * ⭐ ITEM 365 — THE IMPRINT OF RECORD, AS ONE STRING IN ONE PLACE.
+ *    Andrew Signore, 2026-08-28, answering the imprint question: "LLC".
+ *    That resolved conflict `C168-DES-R1` in favour of the LLC form.
+ * ⛔ IT IS NOT A TRANSLATABLE SENTENCE. It is a legal entity name and an ipage
+ *    search key, and a translator must never be offered the chance to localise
+ *    either half of it.
+ */
+$bhp_imprint = 'Brave Hearts Publishing LLC';
 
 if (class_exists('BHP_Analytics_Config') && BHP_Analytics_Config::should_render_analytics()):
     /*
@@ -144,10 +263,28 @@ $reader_profile = [
  */
 $faqs = [
     [__('What age range are the books for?', 'brave-hearts'), __('Readers roughly ages 6–9 (1st–3rd grade) - approachable for independent readers and rich enough for a shared read-aloud.', 'brave-hearts')],
-    [__('What editions can I order through Ingram?', 'brave-hearts'), __('Five editions today: paperbacks of all three titles, and hardcovers of The Mariana Trench and Mount Everest. The Amazon hardcover is still being set up at Ingram and is not orderable yet. The table above lists each ISBN.', 'brave-hearts')],
+    /*
+     * ⭐⭐ 1.19.314 — REWRITTEN, AND IT IS A CORRECTION OF FACT, NOT A RESTYLE.
+     *
+     * ⛔ THE SUPERSEDED ANSWER, PRESERVED VERBATIM, because it was TRUE when it
+     *    was written and a later reader must be able to see why it moved:
+     *
+     *      "Five editions today: paperbacks of all three titles, and hardcovers
+     *       of The Mariana Trench and Mount Everest. The Amazon hardcover is
+     *       still being set up at Ingram and is not orderable yet. The table
+     *       above lists each ISBN."
+     *
+     * ⭐ Item 364: the founder saw The Amazon hardcover ACTIVE in his own
+     *   IngramSpark console on the morning of 2026-08-28. The second sentence
+     *   above became false that morning, and a false answer on a trade page is
+     *   not locked prose. ⛔ THE COLOURING BOOK IS STILL NOT MENTIONED, and
+     *   must not be: item 358, he is holding it deliberately.
+     */
+    [__('What editions can I order through Ingram?', 'brave-hearts'), __('All six editions: paperback and hardcover of all three titles. The table above lists each ISBN with its price and terms.', 'brave-hearts')],
     [__('Is there a fourth book coming?', 'brave-hearts'), __('The series is designed with room to grow beyond the current three destinations - reach out for the latest on future titles.', 'brave-hearts')],
     [__('How do I place a wholesale order?', 'brave-hearts'), __('Through Ingram, the same way you order any other title: search the ISBN in ipage and order it. If you are not set up with Ingram, or you would rather deal with me directly, start an inquiry below.', 'brave-hearts')],
-    [__('Do you offer wholesale discounts or standard trade terms?', 'brave-hearts'), __('The trade discount set on each of the five editions at Ingram is 55%, and each one is returnable. Both values are in the table above. Anything beyond that, start an inquiry and I will go through it with you.', 'brave-hearts')],
+    /* ⭐ 1.19.314: "five" -> "six" only. Not one other character moved. */
+    [__('Do you offer wholesale discounts or standard trade terms?', 'brave-hearts'), __('The trade discount set on each of the six editions at Ingram is 55%, and each one is returnable. Both values are in the table above. Anything beyond that, start an inquiry and I will go through it with you.', 'brave-hearts')],
     [__('Is there a minimum order quantity?', 'brave-hearts'), __('There’s no published minimum yet - reach out and I’ll figure out what makes sense for your shelf space and expected sell-through.', 'brave-hearts')],
     [__('Can I get a review or desk copy before ordering?', 'brave-hearts'), __('Yes - mention this in your wholesale inquiry and I’ll arrange a copy for you to look over before you commit to an order.', 'brave-hearts')],
     [__('Where are the books printed?', 'brave-hearts'), __('Every title is printed on demand. Nothing goes out of print, and nothing is ever unavailable to reorder.', 'brave-hearts')],
@@ -170,9 +307,47 @@ $faqs = [
  *    while the PDF is unset. A CTA whose target does not render is a dead
  *    control, so the primary now goes to the ISBNs and terms — the thing a
  *    trade buyer actually came for — and the secondary to the enquiry.
+ *
+ * ═════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.314 — THE HERO CTA PAIR IS REPLACED, AND THE OLD PRIMARY IS NOT
+ *    "MOVED DOWN", IT IS RETIRED. Item 366 + the funnel review's D1/D2.
+ * ═════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHAT THE FOLD CARRIED BEFORE, PRESERVED SO THE MOVEMENT IS VISIBLE:
+ *      primary   -> `#titles`   "See the ISBNs and terms"
+ *      secondary -> `#contact`  "Start a Wholesale Inquiry"
+ *
+ * ⭐⭐ NEITHER OF THOSE IS AN ORDERING CONTROL, AND THAT IS THE WHOLE POINT OF
+ *    THIS CHANGE. Both are same-page anchors. A bookseller who has decided to
+ *    buy could not, from the top of this page, reach the place an order is
+ *    placed or obtain anything to forward to the person who signs off on it.
+ *    Measured, not assumed: `ipageLinks: []` and `pdfLinks: []` on staging
+ *    1.19.313, 2026-08-28, in a real browser.
+ *
+ * ⭐ THE NEW PAIR IS THE TWO THINGS A TRADE BUYER ACTUALLY DOES NEXT:
+ *      primary   -> ipage        order it
+ *      secondary -> the sell sheet  forward it to the buyer
+ *
+ * ⚠️⚠️ AND "START A WHOLESALE INQUIRY" IS DEMOTED FROM A BUTTON TO A TEXT
+ *    LINK IMMEDIATELY BENEATH THEM. FLAGGED FOR ANDREW, NOT HIDDEN. The reason
+ *    is arithmetic, not taste: three stacked 49px buttons on a 375px viewport
+ *    push the last control past the fold, which is the exact defect item 366
+ *    reports. ⛔ THE ROUTE IS NOT REMOVED FROM THE PAGE — it survives as this
+ *    text link, as the gold button in the sticky bar that is on screen the
+ *    whole way down, as the final CTA section, and inside three FAQ answers.
+ *    It is demoted at ONE of five appearances. If he wants three buttons in
+ *    the hero, that is his call and it is one line.
+ *
+ * ⛔ THE OUTBOUND LINK CARRIES `rel="noopener"` AND `target="_blank"`, and the
+ *    target is chosen rather than defaulted: a buyer sent to ipage has NOT
+ *    finished with this page — the ISBNs they are about to search are on it.
+ *    Losing the tab that holds the numbers is a self-inflicted dead end.
+ *    ⛔ NO `nofollow` and NO tracking parameter is appended. It is a plain
+ *    editorial link to a distributor, it is not an affiliate link, and adding
+ *    a parameter to somebody else's login URL is how a link quietly breaks.
  */
 ?>
-<section class="audience-landing-hero">
+<section class="audience-landing-hero audience-landing-hero--tight">
   <div class="audience-landing-hero__bg" aria-hidden="true"></div>
   <div class="audience-landing__inner audience-landing-hero__grid">
     <div>
@@ -180,13 +355,27 @@ $faqs = [
       <h1><?php esc_html_e('A visually distinctive adventure series for your shelves.', 'brave-hearts'); ?></h1>
       <p class="audience-landing__lead"><?php esc_html_e('Illustrated middle-grade adventures built around real destinations - a natural fit for independent bookstores, museum and park stores, nature centers, and educational retailers.', 'brave-hearts'); ?></p>
       <div class="audience-landing-hero__ctas">
-        <?php if ($download['ready']): ?>
-          <a class="btn btn-primary" href="#free" data-audience-free-cta data-bhp-signup-modal-open="retailer-wholesale-guide-modal" data-bhp-signup-modal-source="hero" data-bhp-event="retailer_hero_primary_cta_click" data-bhp-source="retailer_landing"><?php esc_html_e('Get the Wholesale Guide', 'brave-hearts'); ?></a>
-        <?php else: ?>
-          <a class="btn btn-primary" href="#titles" data-bhp-event="retailer_hero_primary_cta_click" data-bhp-source="retailer_landing"><?php esc_html_e('See the ISBNs and terms', 'brave-hearts'); ?></a>
+        <a class="btn btn-primary"
+           href="<?php echo esc_url($ipage_url); ?>"
+           target="_blank" rel="noopener"
+           data-bhp-event="retailer_hero_primary_cta_click"
+           data-bhp-source="retailer_landing"><?php
+             /* ⚠️ THE LABEL DECISION. See this file's header: the dispatch said
+                "Order on IngramSpark"; a bookseller cannot buy on IngramSpark.
+                Andrew's overrule is this one string. */
+             esc_html_e('Order on Ingram (ipage)', 'brave-hearts');
+           ?></a>
+        <?php if ($sell_sheet_url): ?>
+          <a class="btn btn-outline"
+             href="<?php echo esc_url($sell_sheet_url); ?>"
+             download
+             data-bhp-event="retailer_hero_sell_sheet_click"
+             data-bhp-source="retailer_landing"><?php esc_html_e('Download the sell sheet (PDF)', 'brave-hearts'); ?></a>
         <?php endif; ?>
-        <a class="btn btn-outline" href="#contact" data-bhp-event="retailer_hero_secondary_cta_click" data-bhp-source="retailer_landing"><?php esc_html_e('Start a Wholesale Inquiry', 'brave-hearts'); ?></a>
       </div>
+      <p class="audience-landing-hero__subcta">
+        <a href="#contact" data-bhp-event="retailer_hero_secondary_cta_click" data-bhp-source="retailer_landing"><?php esc_html_e('Or start a wholesale inquiry and I will come back to you personally.', 'brave-hearts'); ?></a>
+      </p>
       <div class="audience-landing-hero__proof">
         <span>&#9733; <?php esc_html_e('Featuring a Kirkus-reviewed title', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
         <span><?php esc_html_e('3 published titles, multi-destination series', 'brave-hearts'); ?></span><span class="sep">&middot;</span>
@@ -254,9 +443,59 @@ $faqs = [
     <div class="audience-landing__header-block">
       <span class="audience-landing-eyebrow"><?php esc_html_e('Ordering', 'brave-hearts'); ?></span>
       <h2><?php esc_html_e('Ordering through Ingram.', 'brave-hearts'); ?></h2>
-      <p class="audience-landing__lead"><?php esc_html_e('The series is distributed by Ingram, so if you already have an Ingram account you can order it the way you order anything else. Search the ISBN in ipage.', 'brave-hearts'); ?></p>
+      <?php
+      /*
+       * ⭐⭐ 1.19.314 — `ipage` BECOMES A LINK. Defect D1, the highest-value
+       *    fix on the page per her own ranking: "one anchor tag ... the copy
+       *    already tells them to search the ISBN there and then abandons them."
+       *
+       * ⛔ NOT ONE WORD OF THE SENTENCE CHANGED. The paragraph is split at the
+       *    exact point the word "ipage" appears so the anchor can wrap it, and
+       *    the two halves reassemble to the byte-identical sentence that was
+       *    approved. `esc_html_e()` on each half, `esc_url()` on the href —
+       *    the escaping is not weakened to buy a link.
+       */
+      ?>
+      <p class="audience-landing__lead"><?php
+        esc_html_e('The series is distributed by Ingram, so if you already have an Ingram account you can order it the way you order anything else. Search the ISBN in ', 'brave-hearts');
+        ?><a class="retailer-ipage-link" href="<?php echo esc_url($ipage_url); ?>" target="_blank" rel="noopener"><?php esc_html_e('ipage', 'brave-hearts'); ?></a><?php
+        esc_html_e('.', 'brave-hearts');
+      ?></p>
+      <?php
+      /*
+       * ⭐⭐ 1.19.314 — THE IMPRINT LINE. Item 365, his one-word answer: "LLC".
+       *
+       * ⭐ WHY IT IS HERE AND NOT IN THE TERMS TABLE. It is not a TERM — it is a
+       *    SEARCH KEY. A buyer who cannot find a title by ISBN (a mistyped
+       *    digit, a record still indexing) can find the publisher's whole list
+       *    by imprint. That makes it a companion to the ordering instruction,
+       *    which is where it sits.
+       *
+       * ⛔ IT IS NOT AN AVAILABILITY CLAIM. The page still does not say the
+       *    records are findable in that search box; nobody here has looked
+       *    (`CYCLE167-MKT-T05`). It says what the imprint IS, which is a fact
+       *    about the company and needs no live read.
+       */
+      ?>
+      <p class="retailer-imprint"><strong><?php esc_html_e('Imprint:', 'brave-hearts'); ?></strong> <?php echo esc_html($bhp_imprint); ?></p>
       <p class="audience-landing__lead" style="font-size:16px;"><strong><?php esc_html_e('New to Ingram?', 'brave-hearts'); ?></strong> <?php esc_html_e('Accounts are set up directly with Ingram Content Group at ingramcontent.com, and they verify the business before the account goes live.', 'brave-hearts'); ?></p>
       <p class="audience-landing__lead" style="font-size:16px;"><strong><?php esc_html_e('Would you rather deal with me directly?', 'brave-hearts'); ?></strong> <?php esc_html_e('Say so below and I will come back to you personally with timing and anything else you need.', 'brave-hearts'); ?></p>
+      <?php
+      /*
+       * ⭐ THE SELL SHEET, A SECOND TIME, WHERE THE ORDERING DECISION IS MADE.
+       *    Funnel review §3.1 Fix 2: this is the "forward to your buyer" object,
+       *    and the buyer is usually not the person reading this page.
+       * ⛔ UNGATED. No email, no modal, no `lead-magnet-cta`, no Mailchimp tag.
+       *    Deliberate, per Fix 2, and the opposite of the suppressed Wholesale
+       *    Guide magnet further down this file.
+       */
+      if ($sell_sheet_url):
+      ?>
+      <p class="retailer-sellsheet-inline">
+        <a class="btn btn-outline" href="<?php echo esc_url($sell_sheet_url); ?>" download data-bhp-event="retailer_ordering_sell_sheet_click" data-bhp-source="retailer_landing"><?php esc_html_e('Download the sell sheet (PDF)', 'brave-hearts'); ?></a>
+        <span class="retailer-sellsheet-inline__note"><?php esc_html_e('One page, every ISBN, the terms, and my email. No sign-up.', 'brave-hearts'); ?></span>
+      </p>
+      <?php endif; ?>
     </div>
   </div>
 </section>
@@ -272,7 +511,8 @@ $faqs = [
  *    existed on this page ONLY inside a JavaScript payload — measured live on
  *    staging 2026-08-27: 7 ISBN strings in the HTML, ZERO in the rendered
  *    text. A number a buyer cannot see and a crawler will not index is not
- *    published. Now there are five, in a real table, in the document body.
+ *    published. Now they are in a real table, in the document body — five at
+ *    1.19.304, and SIX from 1.19.314 (items 363/364).
  *
  * ⛔ NOT ONE ISBN IS HARDCODED IN THIS TEMPLATE. Every row comes from
  *    `bhp_retailer_orderable_titles()`, which joins the dated Ingram registry
@@ -550,7 +790,7 @@ $faqs = [
      *    `CYCLE167-LD-004`. Until he rules, his sentence stands as he wrote it.
      */
     ?>
-    <p class="audience-landing__lead" style="font-size:14px;margin-top:12px;"><?php esc_html_e('Prices shown are current consumer list prices on braveheartspublishing.com, not wholesale or trade pricing - wholesale terms, margins, and minimums are discussed directly and are not yet published.', 'brave-hearts'); ?></p>
+    <p class="audience-landing__lead" style="font-size:14px;margin-top:12px;"><?php esc_html_e('Prices shown are current consumer list prices on braveheartspublishing.com, not wholesale or trade pricing. The wholesale discount and returns terms for each orderable edition are listed above. For minimums or anything not covered here, contact me directly.', 'brave-hearts'); ?></p>
   </div>
 </section>
 
@@ -717,10 +957,32 @@ $faqs = [
         <a class="btn btn-outline-light" href="#contact"><?php esc_html_e('Contact', 'brave-hearts'); ?></a>
       </div>
     <?php else: ?>
+      <?php
+      /*
+       * ⭐⭐ 1.19.314 — THE STICKY BAR'S GOLD BUTTON BECOMES THE ORDERING ROUTE.
+       *
+       * ⛔ THE SUPERSEDED CONTROL, PRESERVED VERBATIM:
+       *      <a class="btn btn-gold" href="#titles">ISBNs and terms</a>
+       *
+       * ⭐ WHY THIS IS PART OF ITEM 366 AND NOT SCOPE CREEP. The sticky bar is
+       *    `position: fixed` at the bottom of the viewport — it is, by
+       *    definition, above the fold at EVERY scroll position and on EVERY
+       *    viewport. Making its one prominent control an ordering route is the
+       *    most complete answer available to "the CTA is not above the fold",
+       *    and it costs one anchor. The bar's copy already said "Order through
+       *    Ingram" while its button went to a table on the same page.
+       *
+       * ⭐ `#titles` IS NOT LOST. It is the second control here, replacing the
+       *    duplicate "Contact" — which was the same destination as the text
+       *    link now sitting in the hero, the final CTA section and three FAQ
+       *    answers. One route was represented four times and the ordering
+       *    route zero times.
+       */
+      ?>
       <span class="audience-landing-stickybar__text"><?php esc_html_e('Order through Ingram, or ask me directly.', 'brave-hearts'); ?></span>
       <div class="audience-landing-stickybar__ctas">
-        <a class="btn btn-gold" href="#titles"><?php esc_html_e('ISBNs and terms', 'brave-hearts'); ?></a>
-        <a class="btn btn-outline-light" href="#contact"><?php esc_html_e('Contact', 'brave-hearts'); ?></a>
+        <a class="btn btn-gold" href="<?php echo esc_url($ipage_url); ?>" target="_blank" rel="noopener" data-bhp-event="retailer_sticky_order_click" data-bhp-source="retailer_landing"><?php esc_html_e('Order on Ingram', 'brave-hearts'); ?></a>
+        <a class="btn btn-outline-light" href="#titles"><?php esc_html_e('ISBNs and terms', 'brave-hearts'); ?></a>
       </div>
     <?php endif; ?>
   </div>

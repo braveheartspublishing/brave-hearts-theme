@@ -57,6 +57,24 @@ if ( have_posts() ) {
 
 $bhp_visit_rows = function_exists( 'bhp_author_visits_rows' ) ? bhp_author_visits_rows() : array();
 $bhp_kit_url    = home_url( '/reluctant-reader-adventure-kit/' );
+
+/*
+ * ⭐ 1.19.319 (2026-08-29, `CYCLE169-LD-READALOUD-TRUST-GALLERY`) — THE TRUST
+ *    COLUMN, THE GALLERY AND THE OCTOBER BOOKING CTA.
+ *
+ * Andrew Signore, verbatim, carrier item 432 (first-hand to the Chief of Staff,
+ * commissioning this agent by name): *"putting a column for past read alouds on
+ * the read-aloud site- I want more trust on that and lets put a picture gallery
+ * of the read alouds on that page too."* And carrier item 412: *"I can take read
+ * alouds in boise starting in october not I cant do them this season"*, restated
+ * at item 429 as *"Yes, October is open for business"*.
+ *
+ * ⛔ EVERY GUARD IS `function_exists()`. This template must render on a site
+ *    where `inc/author-visits.php` is present but older — the page degrades to
+ *    exactly what it rendered at 1.19.239 rather than fataling.
+ */
+$bhp_visit_past   = function_exists( 'bhp_author_visits_past_rows' ) ? bhp_author_visits_past_rows() : array();
+$bhp_visit_photos = function_exists( 'bhp_author_visits_gallery_photos' ) ? bhp_author_visits_gallery_photos( $bhp_visit_past ) : array();
 ?>
 
 <section class="section section--dark author-visits-hero" aria-labelledby="author-visits-title">
@@ -71,6 +89,26 @@ $bhp_kit_url    = home_url( '/reluctant-reader-adventure-kit/' );
 
 <section class="section author-visits-list-section" aria-labelledby="author-visits-list-title">
   <div class="container container--content">
+
+  <?php
+  /*
+   * ⭐ THE TWO COLUMNS. Andrew asked for a "column for past read alouds", and
+   *    this is that word taken literally: at 64rem and wider, upcoming sits
+   *    beside past. BELOW 64rem THEY STACK, upcoming first, and the page is
+   *    single-column exactly as it has been since 1.19.233.
+   *
+   * ⛔ THAT ORDER IS NOT COSMETIC. This page is reached from PRINTED QR CODES
+   *    taped to classroom doors, so the phone reader is the primary reader, and
+   *    the thing they scanned the code to find is the NEXT visit. History must
+   *    never push the ordering button below the fold on a phone. The grid is
+   *    declared so the DOM order and the visual order agree at every width —
+   *    no `order`, no `row-reverse`, nothing a screen reader would read in a
+   *    different sequence than a sighted reader sees.
+   */
+  ?>
+  <div class="author-visits-columns<?php echo empty( $bhp_visit_past ) ? '' : ' author-visits-columns--split'; ?>">
+
+    <div class="author-visits-col author-visits-col--upcoming">
     <header class="component-heading">
       <h2 id="author-visits-list-title" class="text-section-title"><?php esc_html_e( 'Upcoming Visits', 'brave-hearts' ); ?></h2>
     </header>
@@ -173,6 +211,74 @@ $bhp_kit_url    = home_url( '/reluctant-reader-adventure-kit/' );
         <?php endforeach; ?>
       </ul>
 
+    <?php endif; ?>
+    </div><?php /* .author-visits-col--upcoming */ ?>
+
+    <?php if ( ! empty( $bhp_visit_past ) ) : ?>
+      <?php
+      /*
+       * ⛔ THE TRUST COLUMN. It exists because Andrew asked for "more trust on
+       *    that", and trust here means one thing only: a verifiable record that
+       *    these visits actually happened. So EVERY WORD IN IT IS EITHER
+       *    REGISTRY DATA OR FOUNDER-ATTESTED NOTE TEXT read from an option.
+       *
+       * ⛔ NOTHING IN THIS BLOCK CLAIMS A REACTION. No parent said, no teacher
+       *    said, no child said, no "loved", no count that Andrew did not give.
+       *    Standing Rules §3's never-invent list is not a style preference here:
+       *    a trust section is precisely where a fabricated reaction would do the
+       *    most damage and be the least likely to be challenged.
+       *
+       * ⛔ THE SCHOOL NAME COMES FROM THE REGISTRY AND THE LIBRARIAN IS NEVER
+       *    NAMED. A school is an institution and is already public on this page
+       *    for the upcoming list; a librarian is a private individual.
+       *
+       * ⭐ NO BUTTON, NO ORDERING AFFORDANCE, NO `?bhp_visit=` LINK. A past visit
+       *    can never be ordered for, so the row carries no control that could
+       *    imply otherwise. The only link is to the recap, and only if one exists.
+       */
+      ?>
+      <div class="author-visits-col author-visits-col--past">
+        <header class="component-heading">
+          <h2 id="author-visits-past-title" class="text-section-title"><?php esc_html_e( 'Past Read-Alouds', 'brave-hearts' ); ?></h2>
+        </header>
+
+        <ul class="author-visits-past" aria-labelledby="author-visits-past-title">
+          <?php foreach ( $bhp_visit_past as $bhp_past ) : ?>
+            <li class="author-visits-past__item">
+              <h3 class="author-visits-past__school"><?php echo esc_html( $bhp_past['school'] ); ?></h3>
+              <p class="author-visits-past__when"><?php echo esc_html( $bhp_past['date_display'] ); ?></p>
+
+              <?php if ( '' !== $bhp_past['note'] ) : ?>
+                <p class="author-visits-past__note"><?php echo esc_html( $bhp_past['note'] ); ?></p>
+              <?php endif; ?>
+
+              <?php if ( '' !== $bhp_past['recap_url'] ) : ?>
+                <p class="author-visits-past__recap">
+                  <a href="<?php echo esc_url( $bhp_past['recap_url'] ); ?>">
+                    <?php esc_html_e( 'Read what happened', 'brave-hearts' ); ?>
+                    <span class="screen-reader-text"><?php echo esc_html( $bhp_past['school'] ); ?></span>
+                  </a>
+                </p>
+              <?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+    <?php endif; ?>
+
+  </div><?php /* .author-visits-columns */ ?>
+
+  <?php
+  /*
+   * ⛔ "HOW IT WORKS" MOVED OUT OF THE COLUMNS, AND ITS CONDITION IS UNCHANGED.
+   *    It still renders if and only if there is at least one UPCOMING visit,
+   *    exactly as it did at 1.19.239 — it describes how to order, and there is
+   *    nothing to order when the upcoming list is empty. It sits below both
+   *    columns rather than inside the left one so it reads as instructions for
+   *    the page, not as a footnote to the upcoming list.
+   */
+  ?>
+  <?php if ( ! empty( $bhp_visit_rows ) ) : ?>
       <div class="author-visits-how">
         <h2 class="author-visits-how__title"><?php esc_html_e( 'How It Works', 'brave-hearts' ); ?></h2>
         <ol class="author-visits-how__steps">
@@ -181,8 +287,132 @@ $bhp_kit_url    = home_url( '/reluctant-reader-adventure-kit/' );
           <li><?php esc_html_e( 'I sign the books and hand them to your child at the school on the day of the visit.', 'brave-hearts' ); ?></li>
         </ol>
       </div>
+  <?php endif; ?>
 
-    <?php endif; ?>
+  </div>
+</section>
+
+<?php
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * THE PICTURE GALLERY. Item 432: *"lets put a picture gallery of the read
+ * alouds on that page too"*.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE PERMISSION POSITION, WRITTEN DOWN BECAUSE IT IS THE RISKIEST THING ON
+ *    THIS PAGE. Every photograph rendered here is one Andrew has ALREADY
+ *    PUBLISHED HIMSELF on the recap post, by his own hands (carrier item 424).
+ *    Their clearance rests on his first-hand statement at item 368: *"all kids
+ *    already had permission slips signed to have photos taken which I can
+ *    use"*, and on item 393, where he asked for read-aloud pictures *"with all
+ *    the kids"* in customer-facing material. Nothing here is a new disclosure.
+ *
+ * ⛔ NO CHILD IS NAMED, IN THE MARKUP OR IN ANY ALT STRING. The librarian is
+ *    not named either. Alt text describes what is in the frame and stops.
+ *
+ * ⛔ THE ALT TEXT IS NOT WRITTEN HERE. It travels with each photograph in the
+ *    notes option and is the same text already published on the recap post, so
+ *    the two surfaces cannot drift into describing the same photograph
+ *    differently. A photo with no alt text is DROPPED by
+ *    `bhp_author_visits_notes()` rather than rendered with an empty attribute.
+ *
+ * ⭐ `loading="lazy"` + `decoding="async"` + explicit `width`/`height`. The
+ *    dimensions are not decoration: without them the browser cannot reserve the
+ *    box before the bytes arrive and the October CTA below jumps down the page
+ *    as each photograph loads. This page is mostly read on a phone on a school
+ *    parking lot connection.
+ */
+?>
+<?php if ( ! empty( $bhp_visit_photos ) ) : ?>
+<section class="section author-visits-gallery-section" aria-labelledby="author-visits-gallery-title">
+  <div class="container container--content">
+    <header class="component-heading">
+      <h2 id="author-visits-gallery-title" class="text-section-title"><?php esc_html_e( 'From the Read-Alouds', 'brave-hearts' ); ?></h2>
+    </header>
+
+    <ul class="author-visits-gallery">
+      <?php foreach ( $bhp_visit_photos as $bhp_photo ) : ?>
+        <?php
+        $bhp_photo_url = function_exists( 'bhp_author_visits_photo_url' ) ? bhp_author_visits_photo_url( $bhp_photo['file'] ) : '';
+        if ( '' === $bhp_photo_url ) {
+          continue;
+        }
+        ?>
+        <li class="author-visits-gallery__item">
+          <figure class="author-visits-gallery__figure">
+            <img
+              class="author-visits-gallery__img"
+              src="<?php echo esc_url( $bhp_photo_url ); ?>"
+              alt="<?php echo esc_attr( $bhp_photo['alt'] ); ?>"
+              <?php if ( $bhp_photo['w'] && $bhp_photo['h'] ) : ?>
+              width="<?php echo esc_attr( (string) $bhp_photo['w'] ); ?>"
+              height="<?php echo esc_attr( (string) $bhp_photo['h'] ); ?>"
+              <?php endif; ?>
+              loading="lazy"
+              decoding="async"
+            />
+            <?php if ( '' !== $bhp_photo['school'] || '' !== $bhp_photo['date_display'] ) : ?>
+              <figcaption class="author-visits-gallery__caption">
+                <?php
+                /* Registry data only. The caption states which visit the photograph is from and nothing else. */
+                echo esc_html( trim( $bhp_photo['school'] . ( '' !== $bhp_photo['date_display'] ? ', ' . $bhp_photo['date_display'] : '' ) ) );
+                ?>
+              </figcaption>
+            <?php endif; ?>
+          </figure>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * THE OCTOBER BOOKING CTA. Carrier items 412 and 429.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THIS CLOSES THE NO-BOOKING-SURFACE GAP. Until now the visits page listed
+ *    where Andrew is going and offered a teacher or librarian reading it NO WAY
+ *    TO ASK HIM TO COME. Item 412 amended item 309's calendar-full position:
+ *    *"I can take read alouds in boise starting in october"*.
+ *
+ * ⛔ IT IS A `mailto:`, NOT A NEW FORM, AND THAT IS A DELIBERATE SCOPE LINE.
+ *    Building a request-form system — fields, validation, storage, spam
+ *    handling, notification — is a separate build with its own approval
+ *    surface. The email address is already public on this site and is the route
+ *    Andrew gave parents himself in the visit-completed email (item 377:
+ *    *"Feel free to email me any time at Andrew@braveheartspublishing.com"*).
+ *    A proper request form is FLAGGED FOR PHASE 2, not quietly half-built here.
+ *
+ * ⛔ THE SUBJECT LINE IS PRE-FILLED AND THE BODY IS NOT. A prefilled body puts
+ *    words in a stranger's mouth and gets deleted before it is read; a subject
+ *    line just files the mail.
+ *
+ * ⛔ NO PROMISE IS MADE. It does not say he will say yes, does not name a fee,
+ *    does not state availability beyond the month he actually gave, and does
+ *    not claim any past school was pleased.
+ */
+$bhp_visit_email   = 'andrew@braveheartspublishing.com';
+$bhp_visit_subject = rawurlencode( 'Read-aloud request' );
+?>
+<section class="section section--muted author-visits-booking" aria-labelledby="author-visits-booking-title">
+  <div class="container container--content">
+    <div class="author-visits-booking__inner">
+      <h2 id="author-visits-booking-title" class="author-visits-booking__title"><?php esc_html_e( 'Book a read-aloud for your school', 'brave-hearts' ); ?></h2>
+      <p class="author-visits-booking__lead">
+        <?php esc_html_e( 'My calendar is open for Boise-area classroom read-alouds from October onward. If you are a teacher or a librarian and you would like me to come and read, email me and tell me your school and which grades you have in mind.', 'brave-hearts' ); ?>
+      </p>
+      <p class="author-visits-booking__cta">
+        <a class="btn btn-primary" href="<?php echo esc_url( 'mailto:' . $bhp_visit_email . '?subject=' . $bhp_visit_subject ); ?>">
+          <?php esc_html_e( 'Email me about a read-aloud', 'brave-hearts' ); ?>
+        </a>
+      </p>
+      <p class="author-visits-booking__address">
+        <?php echo esc_html( $bhp_visit_email ); ?>
+      </p>
+    </div>
   </div>
 </section>
 

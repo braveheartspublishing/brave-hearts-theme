@@ -9,14 +9,63 @@
  *    EDITIONS MAY A BOOKSELLER BE TOLD TO ORDER TODAY, and on what terms. It is
  *    read by `page-audience-retailers.php` and by nothing else.
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.19.314, 2026-08-28, `CYCLE168-LD-RETAILER-BATCH` — THE SIXTH ISBN
+ *    OPENS. THE AMAZON HARDCOVER `9798996810833` IS NOW ORDERABLE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED PARAGRAPH, PRESERVED VERBATIM so the movement is visible
+ *    and nobody re-derives the withholding and reverts this row:
+ *
+ *      "`bhp_bundle_catalog()` holds SIX chapter-book editions. Only FIVE of
+ *       them can be ordered through Ingram. The sixth — The Amazon HARDCOVER,
+ *       `9798996810833` — sits in Ingram's `Processing` state with `Enabled
+ *       for Distribution: No` and NO production date."
+ *
+ * ⭐⭐ WHAT CHANGED IT, AND IT IS THE STRONGEST INSTRUMENT THIS COMPANY HAS.
+ *    Andrew Signore, 2026-08-28, carrier items 358 / 363 / 364 (⛔ RELAYED to
+ *    this desk through the Chief of Staff; NOT witnessed first-hand here, and
+ *    that limit is stated rather than glossed):
+ *
+ *      358: "I approved the Amazon hardcover on ingram btw, customer service
+ *            got back to me and pushed both the hardcover and coloring book
+ *            through. I have not approved the coloring book due to our
+ *            reiterations."
+ *      363: "Should be 6 ISBNs now with the Amazon hardcover active."
+ *      364: "The amazon HC is active on ingram - saw it this morning after
+ *            approval"
+ *
+ * ⭐ ITEM 364 IS THE OWNER'S OWN FIRST-HAND CONSOLE OBSERVATION, in the
+ *    authenticated IngramSpark account, on the morning of 2026-08-28. It is a
+ *    live read of the same field the connected-accounts operator read on
+ *    2026-08-27, taken later, by the
+ *    account holder. It supersedes the 08-27 `Processing / Distribution: No`
+ *    state for this one ISBN and for no other.
+ *
+ * ⚠️ WHAT IS **NOT** RE-VERIFIED, STATED PLAINLY RATHER THAN ASSUMED. The
+ *    founder reported that the title is ACTIVE. He did not re-read the four
+ *    TERM fields. The $19.99 list, the 55% discount and the `Yes - Destroy`
+ *    returns setting on this row are carried over from the 2026-08-27
+ *    read of the SIBLING hardcovers (`…0819`, `…0826`), which were submitted
+ *    in the same batch on 9-AUG-26 and carry identical terms, plus carrier
+ *    item 363's own "$19.99, 55%, Yes-Destroy" restatement. ⛔ THAT IS AN
+ *    INFERENCE FROM TWO SIBLINGS AND ONE RELAYED SENTENCE, NOT A FIELD READ.
+ *    ⭐ RECHECK: the next Ingram pass confirms this ISBN's own four fields.
+ *    If any differs, `bhp_retailer_terms_are_uniform()` returns false by
+ *    itself and the page renders per-row columns instead of a false summary —
+ *    the mechanism that makes a wrong term visible rather than silent.
+ *
+ * ⛔ THE COLOURING BOOK `9798996810840` IS **STILL WITHHELD, AND MORE FIRMLY
+ *    THAN BEFORE**. Item 358: he deliberately has NOT approved it, pending the
+ *    interior remake. Its row below is unchanged in substance and its reason
+ *    is upgraded from "not yet processed" to "the founder is holding it".
+ *
  * ---------------------------------------------------------------------------
  * ⭐⭐ WHY IT IS AN ALLOWLIST AND NOT A FILTER OVER THE CATALOG
  * ---------------------------------------------------------------------------
- * `bhp_bundle_catalog()` holds SIX chapter-book editions. Only FIVE of them can
- * be ordered through Ingram. The sixth — The Amazon HARDCOVER, `9798996810833`
- * — sits in Ingram's `Processing` state with `Enabled for Distribution: No` and
- * NO production date. A seventh ISBN exists for the colouring book,
- * `9798996810840`, in the same state.
+ * `bhp_bundle_catalog()` holds SIX chapter-book editions and ALL SIX can now be
+ * ordered through Ingram. A seventh ISBN exists for the colouring book,
+ * `9798996810840`, which is deliberately withheld.
  *
  * ⛔⛔ AN ISBN PRINTED ON A RETAILER PAGE IS A PROMISE THAT A PROFESSIONAL CAN
  *    ORDER THAT BOOK TODAY. A buyer who searches an ISBN in ipage and finds
@@ -149,23 +198,43 @@ function bhp_retailer_trade_registry() {
 			'read_on'      => '2026-08-27',
 		),
 
-		// ── ⛔ WITHHELD. Both read live as Processing / distribution No / no
-		//    production date. NEITHER may appear on the page in any form.
+		/*
+		 * ⭐⭐ 1.19.314 — OPENED. Founder's own first-hand IngramSpark read,
+		 *    2026-08-28 (carrier item 364), after he approved the title
+		 *    himself (item 358). Terms carried from the two sibling
+		 *    hardcovers and item 363; see the ⚠️ note in this file's header
+		 *    for exactly which of these four values were field-read and
+		 *    which were not.
+		 *
+		 * ⛔ THE SUPERSEDED ROW, PRESERVED VERBATIM:
+		 *      'orderable'    => false,
+		 *      'ingram_status'=> 'Processing',
+		 *      'withheld'     => 'Enabled for Distribution: No. Original in
+		 *          Production Date: "-" (never entered production). Submitted
+		 *          9-AUG-26 alongside two siblings that are live.',
+		 *      'source'       => 'CYCLE167-GIM-INGRAM-READ-2-2026-08-27 §2 row 6 and §3',
+		 *      'read_on'      => '2026-08-27',
+		 */
 		'9798996810833' => array(
-			'orderable'    => false,
+			'orderable'    => true,
 			'format'       => 'hardcover',
-			'ingram_status'=> 'Processing',
-			'withheld'     => 'Enabled for Distribution: No. Original in Production Date: "-" (never entered production). Submitted 9-AUG-26 alongside two siblings that are live.',
-			'source'       => 'CYCLE167-GIM-INGRAM-READ-2-2026-08-27 §2 row 6 and §3',
-			'read_on'      => '2026-08-27',
+			'format_label' => __( 'Hardcover', 'brave-hearts' ),
+			'list_us'      => '19.99',
+			'discount'     => '55%',
+			'returnable'   => 'Yes - Destroy',
+			'ingram_status'=> 'Title Available',
+			'source'       => 'FOUNDER-VERBATIM item 364 (status, first-hand 2026-08-28) + item 363 and CYCLE167-GIM-INGRAM-READ-2-2026-08-27 sibling hardcovers (terms, NOT field-read for this ISBN)',
+			'read_on'      => '2026-08-28',
 		),
+
+		// ── ⛔ WITHHELD. It may not appear on the page in any form. ──────────
 		'9798996810840' => array(
 			'orderable'    => false,
 			'format'       => 'paperback',
 			'ingram_status'=> 'Processing',
-			'withheld'     => 'Colouring book. Enabled for Distribution: No. Never entered production. Submitted 20-AUG-26.',
-			'source'       => 'CYCLE167-GIM-INGRAM-READ-2-2026-08-27 §2 row 7 and §3',
-			'read_on'      => '2026-08-27',
+			'withheld'     => 'Colouring book. ⭐ 2026-08-28, carrier item 358: Ingram customer service pushed it through, and THE FOUNDER IS DELIBERATELY NOT APPROVING IT pending the interior remake (items 356-357). Withheld by his choice, not by Ingram\'s state. Never advertise it, on any surface.',
+			'source'       => 'FOUNDER-VERBATIM item 358 (2026-08-28); previously CYCLE167-GIM-INGRAM-READ-2-2026-08-27 §2 row 7 and §3',
+			'read_on'      => '2026-08-28',
 		),
 	);
 

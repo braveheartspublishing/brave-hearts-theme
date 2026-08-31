@@ -148,6 +148,56 @@ function bhp_blog_template_active() {
 	return bhp_blog_template_enabled() && is_singular( 'post' );
 }
 
+/**
+ * ⭐⭐ 1.19.323 (`CYCLE169-LD-R3-IMGCAP-ATTRIBUTION`) — THE FEATURED-IMAGE
+ *    HIDE TOGGLE. PREPARED AND SHIPPED **OFF**.
+ *
+ * ⛔⛔ THE DEFAULT IS `true`, WHICH IS BYTE-EQUIVALENT TO 1.19.322's BEHAVIOUR.
+ *     Nothing subscribes to this filter on any environment. `single.php` asks
+ *     this question where it previously asked only `has_post_thumbnail()`, and
+ *     with no subscriber the two ask the same thing. ⭐ THIS RELEASE DOES NOT
+ *     CHANGE WHAT ANY VISITOR SEES.
+ *
+ * ⭐ WHY IT EXISTS: open finding **R1** from 1.19.322 is Andrew's, not this
+ *    desk's — this blog's featured images are designed PORTRAIT POSTERS WITH
+ *    TEXT BAKED IN (23 of 36 published posts carry a portrait thumbnail;
+ *    counted on staging 2026-08-29, not estimated), and the briefed
+ *    `object-fit: cover` crop cuts their headlines. One of the outcomes he may
+ *    choose is simply not to show them on the single post at all. This makes
+ *    that a ONE-LINE FLIP in either direction instead of a release.
+ *
+ *      add_filter( 'bhp_blog_featured_image_on_single', '__return_false' );
+ *
+ * ⛔ SCOPE IS THE SINGLE-POST MASTHEAD, AND ONLY THAT. It does not touch the
+ *    post thumbnail itself, `index.php`'s blog cards, the related-article grid
+ *    (`template-parts/guides/article-card.php`), Open Graph / Twitter images,
+ *    Rank Math's schema, or any feed. Those read the thumbnail through their
+ *    own calls and never pass through here — verified by grep, and asserted in
+ *    `tests/test-cycle169-blog-layout.php` §6.
+ *
+ * ⛔ IT IS DELIBERATELY **NOT** GATED ON `bhp_blog_template_active()`. That
+ *    helper means "the round-1 blog component is on"; this is a separate
+ *    question about one image, and coupling them would mean turning the
+ *    component off silently changed featured-image behaviour too.
+ *
+ * @param int|WP_Post|null $post Optional post context handed to subscribers.
+ * @return bool True to render the masthead featured image (the default).
+ */
+function bhp_blog_featured_image_on_single( $post = null ) {
+	return (bool) apply_filters( 'bhp_blog_featured_image_on_single', true, $post );
+}
+
+/*
+ * ⭐ FOUNDER RULING 2026-08-29 — carrier item 474, verbatim "Hide them":
+ * featured images are HIDDEN on single blog posts sitewide. Articles open
+ * with the writing. Cards, related-article grid, Open Graph / Twitter,
+ * Rank Math schema, feeds and Pinterest duty are unaffected (see the scope
+ * note above — they never pass through this gate; asserted in
+ * tests/test-cycle169-blog-layout.php §6). Applied by chief-of-staff under
+ * G-40, staging 1.19.324. Remove this ONE line to restore the masthead.
+ */
+add_filter( 'bhp_blog_featured_image_on_single', '__return_false' );
+
 /* ═══════════════════════════════════════════════════════════════════════════
  * 1 · THE HEADER — reclaiming the dead band
  * ═══════════════════════════════════════════════════════════════════════════ */
@@ -842,41 +892,199 @@ function bhp_blog_rail_min_paragraphs() {
 }
 
 /**
+ * ⭐⭐ 1.19.321 — HOW FAR DOWN THE ARTICLE THE RAIL SITS, AS A FRACTION.
+ *
+ * `CYCLE169-LD-BLOG-LAYOUT-TEMPLATE` moves the book-sales module off the top of
+ * the article and down to roughly the three-quarter mark. This is the tunable.
+ *
+ * Clamped rather than trusted: a filter returning 0 or 2 would put a commerce
+ * control above the fold or off the end of the document, and rubric row 1
+ * (exactly one above-fold primary) is a standing constraint, not a preference.
+ *
+ * @return float
+ */
+function bhp_blog_rail_position_ratio() {
+	$ratio = (float) apply_filters( 'bhp_blog_rail_position_ratio', 0.75 );
+
+	return min( 0.95, max( 0.05, $ratio ) );
+}
+
+/**
+ * Visible-text length of `$html` up to `$offset`, in bytes of stripped text.
+ *
+ * ⭐ WHY TEXT AND NOT RAW BYTES. "Three quarters of the way down the article" is
+ *    a claim about what the READER has read, and raw byte offsets do not measure
+ *    that: post 28 carries eleven affiliate anchors whose markup is several
+ *    hundred bytes of `href`, `rel`, `aria-label` and `data-bhp-*` attributes
+ *    that a reader never sees. Measuring raw bytes would pull the rail upward on
+ *    exactly the posts that carry the most commerce markup, which is the wrong
+ *    direction for the wrong reason.
+ *
+ * @param string $html   Rendered content.
+ * @param int    $offset Byte offset.
+ * @return int
+ */
+function bhp_blog_visible_text_length( $html, $offset ) {
+	return strlen( wp_strip_all_tags( substr( $html, 0, (int) $offset ) ) );
+}
+
+/**
  * Choose the byte offset in rendered post HTML at which the rail is inserted.
  *
- * ⭐ "AFTER THE FIRST USEFUL ANSWER" IS IMPLEMENTED AS THE LATER OF TWO
- *    POSITIONS, and both limbs are load-bearing:
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.321 — THE RAIL MOVED FROM THE TOP OF THE ARTICLE TO THE 3/4 MARK
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- *      · immediately BEFORE THE SECOND `<h2>` — i.e. after the first H2 section
- *        has actually been answered. On a post that opens with an intro and then
- *        answers the headline question, this is exactly the reader's first
- *        payoff moment.
- *      · after the Nth closing `</p>` (N = 3) — the floor. A post whose second
- *        H2 arrives after two sentences would otherwise put a commerce control
- *        within a screen of the H1, which at 390 risks the fold.
+ * ⛔ SUPERSEDED BEHAVIOUR, PRESERVED IN WORDS SO IT IS NOT RE-DERIVED. Until
+ *    1.19.320 this function returned `max( second <h2>, Nth </p> )` — "after the
+ *    first useful answer". On a five-heading post that is roughly a fifth of the
+ *    way down, which is what the brief means by "the books-on-top placement".
+ *    The reasoning for it was sound at the time (bridge early, stay below the
+ *    fold) and it is not being called a bug; it is being MOVED, on instruction.
+ *
+ * ⭐ THE SHAPE OF THE ANSWER IS DELIBERATELY UNCHANGED, AND THAT MATTERS. It is
+ *    still the LATER of two anchors:
+ *
+ *      · `$h2_offset` — the last `<h2>` section boundary at or before the target
+ *        mark, never the first heading. Inserting immediately before a heading
+ *        is the cleanest possible break: it never lands between a heading and
+ *        the paragraph it introduces.
+ *      · `$p_offset`  — the last `</p>` boundary at or before the target mark,
+ *        floored at `bhp_blog_rail_min_paragraphs()`. On a post with no usable
+ *        heading this is the whole answer.
  *
  *    Taking the LATER of the two means the floor can only ever push the rail
- *    DOWN the page, never up. That is the direction that keeps rubric row 1
- *    safe, and it is why `max()` is correct here and `min()` would be a bug.
+ *    DOWN the page, never up. `max()` is correct here and `min()` would be a bug
+ *    — the same invariant this function has always carried, and the same one
+ *    `test-blog-post-template.php` §5.4 asserts.
  *
- * Returns null when neither anchor is present, in which case the caller appends
- * rather than injecting — a post with no H2 and under three paragraphs is short
- * enough that the end IS after the first useful answer.
+ * ⛔ IT IS STILL AN OFFSET INTO UNMODIFIED CONTENT AND STILL A TAG BOUNDARY.
+ *    Every candidate is the start of an `<h2` or the end of a `</p>`, so the
+ *    split can never fall inside an anchor, an attribute or the FTC disclosure
+ *    paragraph. The §26 insert-only argument in `bhp_blog_inject_midcapture()`
+ *    applies here word for word.
+ *
+ * ⚠ ONE MEASURED IMPRECISION, DISCLOSED RATHER THAN HIDDEN. The capture band
+ *   (priority 11) is already in `$html` when this runs at priority 12, so its
+ *   dozen or so words count toward the visible-text total and nudge the target
+ *   fractionally later. It is well under one percent of a real article and the
+ *   rendered position is verified in a browser rather than trusted from this
+ *   arithmetic.
+ *
+ * Returns null when neither anchor is present, in which case the caller appends.
  *
  * @param string $html Rendered content.
  * @return int|null
  */
+/**
+ * ⭐⭐ 1.19.321 — THE MINIMUM GAP BETWEEN THE CAPTURE BAND AND THE RAIL.
+ *
+ * ⛔ THIS EXISTS BECAUSE THE FIRST BUILD PUT THEM 1.7% APART ON A REAL POST, AND
+ *    A BROWSER FOUND IT, NOT A UNIT TEST. On staging post 28 the band anchored at
+ *    70.6% of visible text and the rail at 72.3% — an email ask and a buy control
+ *    stacked with about 150 characters between them. The cause is structural
+ *    rather than arithmetical: that post's second section is an eight-book list
+ *    that runs to two thirds of the article, so "after section two" is genuinely
+ *    late on that post. Both anchors were individually behaving as specified.
+ *
+ * ⭐ THE RAIL IS THE ONE THAT YIELDS, AND THE DIRECTION IS DELIBERATE. It only
+ *    ever moves DOWN, which is the same invariant every other limb of this
+ *    function carries: a control can be pushed further from the fold, never
+ *    closer to it. Moving the BAND up instead would have silently overridden the
+ *    brief's explicit "after the second H2", which is not this build's call.
+ *
+ * @return float
+ */
+function bhp_blog_rail_min_gap_ratio() {
+	$ratio = (float) apply_filters( 'bhp_blog_rail_min_gap_ratio', 0.08 );
+
+	return min( 0.5, max( 0.0, $ratio ) );
+}
+
+/**
+ * The latest boundary at or before `$target`, or — when none clears `$floor` —
+ * the earliest boundary that does.
+ *
+ * @param string $html   Rendered content.
+ * @param array  $hits   preg_match_all PREG_OFFSET_CAPTURE hits.
+ * @param int    $target Visible-text target.
+ * @param int    $floor  Visible-text floor the candidate must clear.
+ * @param bool   $at_end True to take the offset AFTER the matched token.
+ * @param int    $skip   Number of leading hits to ignore.
+ * @return int|null
+ */
+function bhp_blog_rail_pick( $html, $hits, $target, $floor, $at_end, $skip ) {
+	$best     = null;
+	$fallback = null;
+	foreach ( $hits as $index => $hit ) {
+		if ( $index < $skip ) {
+			continue;
+		}
+		$candidate = $at_end ? (int) $hit[1] + strlen( $hit[0] ) : (int) $hit[1];
+		$text      = bhp_blog_visible_text_length( $html, $candidate );
+		if ( $text < $floor ) {
+			continue;
+		}
+		if ( null === $fallback ) {
+			$fallback = $candidate; // Earliest boundary clearing the gap floor.
+		}
+		if ( $text <= $target ) {
+			$best = $candidate;     // Latest boundary at or before the target.
+		}
+	}
+
+	return ( null !== $best ) ? $best : $fallback;
+}
+
 function bhp_blog_rail_offset( $html ) {
+	$total = strlen( wp_strip_all_tags( $html ) );
+	if ( $total < 1 ) {
+		return null;
+	}
+	$target = (int) round( $total * bhp_blog_rail_position_ratio() );
+
+	/*
+	 * The band is already in `$html` at this point (priority 11 against this
+	 * filter's 12), so the gap is measured against where it actually landed
+	 * rather than against where it was predicted to land.
+	 */
+	$floor   = 0;
+	$band_at = strpos( $html, 'bhp-capture-band' );
+	if ( false !== $band_at ) {
+		$floor = bhp_blog_visible_text_length( $html, $band_at )
+			+ (int) round( $total * bhp_blog_rail_min_gap_ratio() );
+	}
+
 	$h2_offset = null;
-	if ( preg_match_all( '/<h2[\s>]/i', $html, $m, PREG_OFFSET_CAPTURE ) && count( $m[0] ) >= 2 ) {
-		$h2_offset = (int) $m[0][1][1];
+	if ( preg_match_all( '/<h2[\s>]/i', $html, $m, PREG_OFFSET_CAPTURE ) ) {
+		// Skip 1: never the opening section's own heading.
+		$h2_offset = bhp_blog_rail_pick( $html, $m[0], $target, $floor, false, 1 );
 	}
 
 	$p_offset = null;
 	if ( preg_match_all( '/<\/p>/i', $html, $mp, PREG_OFFSET_CAPTURE ) ) {
-		$need = bhp_blog_rail_min_paragraphs();
-		if ( count( $mp[0] ) >= $need ) {
-			$p_offset = (int) $mp[0][ $need - 1 ][1] + strlen( $mp[0][ $need - 1 ][0] );
+		$need     = bhp_blog_rail_min_paragraphs();
+		$p_offset = bhp_blog_rail_pick( $html, $mp[0], $target, $floor, true, $need - 1 );
+		if ( null === $p_offset && count( $mp[0] ) >= $need ) {
+			/*
+			 * A post short enough that its Nth paragraph is already past the
+			 * target. The paragraph floor wins, exactly as it did before
+			 * 1.19.321 — BUT ONLY IF IT ALSO CLEARS THE BAND GAP.
+			 *
+			 * ⛔ THIS CONDITION WAS MISSING IN THE FIRST 1.19.321 BUILD AND THE
+			 *    REGRESSION TEST IN `test-cycle169-blog-layout.php` §3.5 CAUGHT
+			 *    IT: on a lopsided fixture the gap guard correctly rejected every
+			 *    candidate, and then this branch handed back the THIRD PARAGRAPH
+			 *    — putting the sales module at 7.7% of the article, which is the
+			 *    exact defect this release exists to remove. Failing to null here
+			 *    is better than failing upward: null makes the caller APPEND the
+			 *    rail at the end of the article, which is below everything and
+			 *    cannot collide with anything.
+			 */
+			$nth = (int) $mp[0][ $need - 1 ][1] + strlen( $mp[0][ $need - 1 ][0] );
+			if ( bhp_blog_visible_text_length( $html, $nth ) >= $floor ) {
+				$p_offset = $nth;
+			}
 		}
 	}
 
@@ -1033,6 +1241,38 @@ function bhp_blog_inject_midcapture( $content ) {
 	if ( ! (bool) apply_filters( 'bhp_blog_midcapture_enabled', true ) ) {
 		return $content;
 	}
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⚠⚠ 1.19.321 — THIS PANEL STANDS DOWN WHERE THE STANDARD BAND RENDERS.
+	 *     ⛔ THIS IS THE ONE JUDGEMENT CALL IN `CYCLE169-LD-BLOG-LAYOUT-
+	 *        TEMPLATE` AND IT IS FLAGGED TO THE CHIEF OF STAFF, NOT ABSORBED.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * THE ARITHMETIC THAT FORCED IT. This panel is scoped to posts 28 and 88.
+	 * Post 28 is also one of the two pilot posts for the standard band. Without
+	 * this guard post 28 would carry, in one article: this panel after the
+	 * introduction, the standard band after section two, the end-of-post
+	 * capture, and the popup — FOUR asks, three of them the same offer, on the
+	 * page the brief describes as the "standard blog-post layout pattern".
+	 * "Automatically and consistently" cannot mean two posts get a different
+	 * and heavier shape than the other thirty-four.
+	 *
+	 * ⛔ NOTHING IS DELETED. The panel, its template, its post-ID list, its
+	 *    offset function and its own filter are all untouched and all still
+	 *    tested. `add_filter( 'bhp_blog_capture_band_enabled', '__return_false' )`
+	 *    brings this panel straight back, in one line, with no code restored —
+	 *    and `bhp_blog_midcapture_enabled` still turns it off independently. A
+	 *    switch that only travels one way is not a switch.
+	 *
+	 * ⚠ WHAT THIS COSTS, STATED PLAINLY: posts 28 and 88 lose their after-the-
+	 *   introduction ask, which `CYCLE167` added on a real measurement (ranks 3
+	 *   and 4 by human entries). They gain the section-two band instead, which
+	 *   is LOWER on the page. If Andrew wants the earlier ask kept on those two,
+	 *   the one-line reversal above is the answer and no rebuild is needed.
+	 */
+	if ( bhp_blog_capture_band_enabled() ) {
+		return $content;
+	}
 	if ( $done ) {
 		return $content;
 	}
@@ -1090,6 +1330,421 @@ function bhp_blog_inject_midcapture( $content ) {
  *       DOM ORDER, not assumed from this arithmetic.
  */
 add_filter( 'the_content', 'bhp_blog_inject_midcapture', 13 );
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 4c · THE SLIM CAPTURE BAND — 1.19.321, `CYCLE169-LD-BLOG-LAYOUT-TEMPLATE`
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * THE STANDARD PATTERN, applied to every post automatically rather than to a
+ * hand-kept list: one line, one field, one button, on a single row, after the
+ * article's second main content section.
+ *
+ * ⛔ IT IS NOT A NEW SIGNUP PATH. `post-capture-band.php` renders
+ *    `signup-form.php` with the same `lead_magnet` and the same `context` as the
+ *    end-of-post capture, so it reaches the same handler, nonce, MC4WP audience
+ *    and Mailchimp tags the footer capture already uses. The brief was explicit
+ *    about this and nothing here invents a second pipe.
+ * ⛔ IT ADDS NO POPUP and changes no funnel storage key or analytics prefix.
+ * ⛔ It changes no price, coupon, shipping tier, stock status, product record or
+ *    WooCommerce setting, and it does not modify one character of any post's
+ *    stored `post_content`.
+ */
+
+/**
+ * Whether the standard band renders at all. Default ON.
+ *
+ * ⭐ TURNING THIS OFF IS A COMPLETE RETURN TO 1.19.320 BEHAVIOUR, not a partial
+ *    one: it also un-stands-down the posts 28/88 mid capture (see
+ *    `bhp_blog_inject_midcapture()`), so a single line restores the previous
+ *    layout on every post including those two.
+ *
+ * @return bool
+ */
+function bhp_blog_capture_band_enabled() {
+	return (bool) apply_filters( 'bhp_blog_capture_band_enabled', true );
+}
+
+/**
+ * ⭐⭐ 1.19.322 — AFTER WHICH PARAGRAPH THE BAND SITS. DEFAULT 2.
+ *
+ * ⛔ SUPERSEDED TUNABLE, NAMED IN WORDS SO A LIVE FILTER IS NOT SILENTLY
+ *    ORPHANED: 1.19.321 shipped `bhp_blog_capture_band_after_section` (default
+ *    2), which counted `<h2>` tokens and anchored on the heading that OPENED
+ *    section 3. THAT FILTER NAME NO LONGER EXISTS. It was removed rather than
+ *    left in place returning a value nothing reads — a tunable that tunes
+ *    nothing is worse than an absent one, because it reports success. Nothing
+ *    in this theme or its suites registered against it (checked by grep across
+ *    every `.php` in the tree before removal); an external caller would now get
+ *    a PHP notice rather than a silent no-op, which is the honest failure.
+ *
+ * ⭐ WHY IT MOVED, AND IT IS A MEASURED PROBLEM RATHER THAN A PREFERENCE. The
+ *    section-2 anchor was round 1's own finding B3: it landed at 29.6% of post
+ *    32 and 70.6% of post 28, because post 28's second section is an eight-book
+ *    list running to two thirds of the article. Both were "after section two"
+ *    exactly as briefed, and the spread is inherent to counting headings —
+ *    a heading anchor measures the AUTHOR's structure, not the READER's depth.
+ *
+ * ⚠ THE FOUNDER'S INSTRUCTION IS RELAYED, NOT WITNESSED BY THIS AGENT. Quoted
+ *   in the round-2 brief as: *"Not many people finish the blogs - I think the
+ *   email ask needs to be much high on the page. Right after the first
+ *   paragraph or second paragraph."* Recorded with its provenance because a
+ *   relayed quote and a first-hand one are different evidence (§9.2 rule 2).
+ *
+ * @return int
+ */
+function bhp_blog_capture_band_after_paragraph() {
+	return max( 1, (int) apply_filters( 'bhp_blog_capture_band_after_paragraph', 2 ) );
+}
+
+/**
+ * The block-level elements a paragraph can be BURIED IN, for the purpose of
+ * deciding whether it is a "clean top-level paragraph".
+ *
+ * ⛔ `div` IS DELIBERATELY ABSENT, AND THE OMISSION IS THE DESIGN. Gutenberg
+ *    wraps ordinary groups of ordinary paragraphs in `<div class="wp-block-
+ *    group">`, so counting every `div` as a container would classify perfectly
+ *    clean prose as buried and push the band down the page — the exact opposite
+ *    of what this release is for. The brief's words are "list/blockquote/embed
+ *    structure", and this list is that, spelled out. Embeds are covered by
+ *    `figure`, which is what `wp-block-embed` renders as.
+ *
+ * @return string[]
+ */
+function bhp_blog_capture_band_containers() {
+	return (array) apply_filters(
+		'bhp_blog_capture_band_containers',
+		array(
+			'blockquote',
+			'figure',
+			'picture',
+			'details',
+			'table',
+			'thead',
+			'tbody',
+			'tfoot',
+			'video',
+			'audio',
+			'aside',
+			'form',
+			'pre',
+			'ul',
+			'ol',
+			'li',
+			'dl',
+			'dt',
+			'dd',
+			'tr',
+			'td',
+			'th',
+		)
+	);
+}
+
+/**
+ * Every paragraph in `$html`, in document order, with the offset just AFTER its
+ * `</p>` and whether it was top-level.
+ *
+ * ⭐ ONE LEFT-TO-RIGHT PASS OVER TAG TOKENS, WITH A DEPTH COUNTER. It is not a
+ *    DOM parse and it deliberately is not one: `DOMDocument` would re-serialise
+ *    the article, and re-serialisation is precisely the class of change §26
+ *    forbids on a page carrying live affiliate anchors. This function only ever
+ *    READS offsets; the caller splices at one of them and never rewrites a byte.
+ *
+ * ⚠ THE ALTERNATION ORDER IS LOAD-BEARING: the container names are emitted
+ *   BEFORE the bare `p`, so `<picture>` and `<pre>` match as themselves rather
+ *   than as a `<p>` followed by stray characters. PHP's alternation is
+ *   first-match-wins, so reordering this list would be a real bug.
+ *
+ * @param string $html Rendered content.
+ * @return array<int,array{end:int,top:bool}>
+ */
+function bhp_blog_capture_band_paragraphs( $html ) {
+	$containers = array_map( 'preg_quote', bhp_blog_capture_band_containers() );
+	$pattern    = '/<(\/?)(' . implode( '|', $containers ) . '|p)(?=[\s>\/])/i';
+
+	if ( ! preg_match_all( $pattern, $html, $m, PREG_OFFSET_CAPTURE | PREG_SET_ORDER ) ) {
+		return array();
+	}
+
+	$depth    = 0;
+	$open_top = false;
+	$out      = array();
+
+	foreach ( $m as $set ) {
+		$closing = ( '/' === $set[1][0] );
+		$tag     = strtolower( $set[2][0] );
+		$offset  = (int) $set[0][1];
+
+		if ( 'p' === $tag ) {
+			if ( $closing ) {
+				$out[] = array(
+					'end' => $offset + 4,            // just past `</p>`
+					'top' => ( $open_top && 0 === $depth ),
+				);
+				$open_top = false;
+			} else {
+				$open_top = ( 0 === $depth );
+			}
+			continue;
+		}
+
+		// `max(0, …)` so malformed markup can never drive the depth negative and
+		// make a buried paragraph look top-level.
+		$depth = $closing ? max( 0, $depth - 1 ) : $depth + 1;
+	}
+
+	return $out;
+}
+
+/**
+ * ⭐⭐ 1.19.322 — THE BAND'S ONE LINE OF COPY. THE STANDARDIZED ITEM-290 OFFER
+ * HEADLINE, AND ROUND 1'S FINDING B1 IS CLOSED BY THIS.
+ *
+ * ⛔ SUPERSEDED WORDING, PRESERVED IN WORDS BECAUSE THE MOVEMENT IS THE POINT:
+ *    1.19.321 shipped *"Want a free chapter to test on your kiddo?"* — the
+ *    round-1 brief's own draft line, shipped as briefed and FLAGGED in the same
+ *    sitting as a THIRTEENTH wording of one offer. `CYCLE167-MKT-MAGNET-
+ *    TEARDOWN` had found twelve of twelve capture surfaces naming that offer
+ *    twelve different ways; the founder then picked ONE name (carrier item
+ *    290), and since 1.19.297 the popup, the footer capture, the mid capture,
+ *    the end-of-post capture and the two landing pages have carried
+ *    byte-identical strings for that reason.
+ *
+ * ⭐ THE STRING BELOW IS BYTE-IDENTICAL TO ALL OF THEM. It is not a paraphrase
+ *    and not a near-match: the same literal, the same `brave-hearts`
+ *    textdomain, so `test-cycle167-capture-copy.php`'s `$offer_headline`
+ *    constant matches it character for character.
+ *
+ * ⛔ THE WORD "test" IS NOW ABSENT FROM THE BAND ENTIRELY — an explicit
+ *    constraint in the round-2 brief, and it is what the superseded line
+ *    carried ("to test on your kiddo"). Asserted on the RENDERED band, at
+ *    `tests/test-cycle169-blog-layout.php` §2.24, not on this source line.
+ *
+ * ⚠ THIS FUNCTION SURVIVES RATHER THAN THE LITERAL BEING INLINED, AND THAT IS
+ *   ON INSTRUCTION: the round-2 brief says to keep the copy "in the single
+ *   filterable spot — the founder may still swap the phrase in-thread". So the
+ *   indirection stays and a future ruling remains a one-line change.
+ *
+ * VOICE §9.1: no "we". No em dash. No outcome claim. Reading age 6 to 9.
+ *
+ * @return string
+ */
+function bhp_blog_capture_band_line() {
+	return (string) apply_filters(
+		'bhp_blog_capture_band_line',
+		__( 'FREE Chapter for Reluctant Readers', 'brave-hearts' )
+	);
+}
+
+/**
+ * The band's button label.
+ *
+ * ⭐ THE SITEWIDE STRING, BYTE-IDENTICAL to the popup, the footer capture, the
+ *    mid capture and the end-of-post capture (founder's pick, carrier item 290).
+ *    The control is where the one-offer-name rule bites hardest, and the brief
+ *    specified a line and a button but not a NEW button string, so this one is
+ *    inherited rather than invented. Filterable alongside the line above.
+ *
+ * @return string
+ */
+function bhp_blog_capture_band_button() {
+	return (string) apply_filters(
+		'bhp_blog_capture_band_button',
+		__( 'Send me the chapter', 'brave-hearts' )
+	);
+}
+
+/**
+ * ⭐⭐ 1.19.322 — WHERE THE BAND GOES: IMMEDIATELY AFTER THE SECOND CLEAN
+ * TOP-LEVEL PARAGRAPH OF THE ARTICLE.
+ *
+ * ⛔ SUPERSEDED BEHAVIOUR, PRESERVED IN WORDS SO IT IS NOT RE-DERIVED. 1.19.321
+ *    returned the offset of the `<h2>` that opened section 3 — "after section
+ *    two". It is not being called a bug; it did exactly what round 1 briefed.
+ *    It is being MOVED, on instruction, because a heading anchor measures the
+ *    AUTHOR's structure and the founder's complaint is about the READER's
+ *    depth: the same rule put the ask at 29.6% of one pilot post and 70.6% of
+ *    another (round 1, finding B3).
+ *
+ * ⭐ THE TWO-STEP RULE, EXACTLY AS BRIEFED, AND IN THIS ORDER:
+ *
+ *      1. If the article's SECOND paragraph is clean and top-level, the band
+ *         goes immediately after it.
+ *      2. Otherwise — the second paragraph is inside a list, a blockquote, a
+ *         table or an embed — the band FALLS BACK to immediately after the
+ *         FIRST clean top-level paragraph.
+ *
+ *    ⚠ STEP 2 IS "THE FIRST CLEAN ONE", NOT "THE SECOND CLEAN ONE", AND THE
+ *      DIFFERENCE IS DELIBERATE. On an article that opens with one paragraph
+ *      and then a pull-quote, counting only clean paragraphs would push the ask
+ *      PAST the quote to whatever came after it. The brief's wording is
+ *      "fall back to after the first clean top-level paragraph", which places
+ *      it EARLIER, and earlier is the entire point of this release.
+ *
+ * ⛔ THE REFUSAL SURVIVES, AND IT IS STILL A REFUSAL RATHER THAN A GUESS. An
+ *    article with no clean top-level paragraph at all gets NO band, and so does
+ *    one whose anchor lands past `bhp_blog_capture_band_max_ratio` of the
+ *    visible text — on a two-paragraph post the end-of-post capture is already
+ *    a screen below, and two asks a screen apart is worse than one.
+ *
+ *    ⭐ The escape hatch is unchanged: `[bhp_capture_band]` placed in the body
+ *       by an editor renders the band exactly there. It is a real WordPress
+ *       shortcode, so this theme still performs no string surgery on post
+ *       content.
+ *
+ * ⚠ MEASURED CONSEQUENCE, DISCLOSED RATHER THAN HIDDEN: the band now lands in
+ *   the first tenth of a normal article, so the rail's minimum-gap floor
+ *   (`bhp_blog_rail_min_gap_ratio()`, computed in `bhp_blog_rail_offset()` from
+ *   where the band ACTUALLY landed) resolves to roughly 15% and can no longer
+ *   bind against a 75% target. The collision the guard was written for is
+ *   structurally gone; the guard STAYS, because it costs nothing and the next
+ *   ratio ruling could reintroduce the condition.
+ *
+ * @param string $html Rendered content.
+ * @return int|null Byte offset, or null when the shape does not fit.
+ */
+function bhp_blog_capture_band_offset( $html ) {
+	$paragraphs = bhp_blog_capture_band_paragraphs( $html );
+	if ( ! $paragraphs ) {
+		return null;
+	}
+
+	$want   = bhp_blog_capture_band_after_paragraph();
+	$offset = null;
+
+	if ( isset( $paragraphs[ $want - 1 ] ) && $paragraphs[ $want - 1 ]['top'] ) {
+		$offset = (int) $paragraphs[ $want - 1 ]['end'];      // step 1
+	} else {
+		foreach ( $paragraphs as $paragraph ) {               // step 2
+			if ( $paragraph['top'] ) {
+				$offset = (int) $paragraph['end'];
+				break;
+			}
+		}
+	}
+
+	if ( null === $offset ) {
+		return null;
+	}
+
+	/*
+	 * ⛔ THE STAND-DOWN GUARD, CARRIED OVER FROM 1.19.321 UNCHANGED IN VALUE
+	 *    (0.85) THOUGH ITS FAILURE MODE HAS CHANGED. It used to catch a long
+	 *    section 2; it now catches a SHORT ARTICLE, where paragraph two is
+	 *    already most of the body and the end-of-post capture sits just under
+	 *    it. Same guard, same tunable, different shape of post — worth stating,
+	 *    because the reason a line of code exists is not always the reason it
+	 *    still earns its place.
+	 */
+	$total = strlen( wp_strip_all_tags( $html ) );
+	if ( $total > 0 ) {
+		$max = min( 0.95, max( 0.1, (float) apply_filters( 'bhp_blog_capture_band_max_ratio', 0.85 ) ) );
+		if ( bhp_blog_visible_text_length( $html, $offset ) > $total * $max ) {
+			return null;
+		}
+	}
+
+	return $offset;
+}
+
+/**
+ * Render the band.
+ *
+ * @return string HTML, or ''.
+ */
+function bhp_blog_capture_band_html() {
+	if ( ! bhp_blog_capture_band_enabled() ) {
+		return '';
+	}
+	ob_start();
+	get_template_part( 'template-parts/acquisition/post-capture-band' );
+
+	return (string) ob_get_clean();
+}
+
+/**
+ * The editor-placed marker: `[bhp_capture_band]`.
+ *
+ * ⭐ A REAL SHORTCODE, EXPANDED BY WORDPRESS ITSELF at `do_shortcode`'s priority
+ *    11 on `the_content`. That is the whole reason it is a shortcode and not a
+ *    string this theme searches for and replaces: core removes the marker and
+ *    substitutes the markup, so THIS FILE never performs a replacement on post
+ *    content and the §26 insert-only property of the whole path is preserved.
+ *
+ * @return string
+ */
+function bhp_blog_capture_band_shortcode() {
+	if ( ! bhp_blog_template_active() ) {
+		return '';
+	}
+
+	return bhp_blog_capture_band_html();
+}
+add_shortcode( 'bhp_capture_band', 'bhp_blog_capture_band_shortcode' );
+
+/**
+ * Inject the band into the rendered post body.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ STANDING RULES §26 — INSERT-ONLY, exactly as `bhp_blog_inject_midcapture()`
+ * ═══════════════════════════════════════════════════════════════════════════
+ * The two pilot posts carry eleven and one live Amazon affiliate anchors on
+ * Andrew's own Associates code. This function never rewrites content: it splits
+ * it at a tag boundary and rejoins it around the band. There is no
+ * `preg_replace`, no `str_replace`, no DOM round-trip and no re-serialisation in
+ * this path, so every original byte appears in the output in its original order,
+ * and the band itself contains no Amazon URL. ⛔ The rendered before/after
+ * anchor diff is still RUN on staging — §26.6 is explicit that a count which was
+ * not actually run is a fabricated check.
+ *
+ * ⭐ PRIORITY 11 — BEFORE THE RAIL'S 12, AND THE ORDER IS LOAD-BEARING. The band
+ *    emits NO `<h2>`, so the rail's heading arithmetic at priority 12 sees the
+ *    same heading tokens it would have seen on the untouched article. Running
+ *    the band LAST instead would have meant measuring an article that already
+ *    contained the mid capture's `<h2>`, which would have shifted the band's own
+ *    anchor by one section on exactly the two posts that carry that panel.
+ *
+ * ⛔ THE FOUR GUARDS mirror the other two injectors for the same reasons:
+ *    `the_content` is also called by feeds, REST, SEO plugins building meta
+ *    descriptions, and any block rendering a post excerpt.
+ *
+ * @param string $content Rendered content.
+ * @return string
+ */
+function bhp_blog_inject_capture_band( $content ) {
+	static $done = false;
+
+	if ( ! bhp_blog_capture_band_enabled() ) {
+		return $content;
+	}
+	if ( $done ) {
+		return $content;
+	}
+	if ( ! bhp_blog_template_active() || ! in_the_loop() || ! is_main_query() ) {
+		return $content;
+	}
+	if ( is_feed() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		return $content;
+	}
+	if ( false !== strpos( $content, 'bhp-capture-band' ) ) {
+		return $content; // An editor placed the marker; that placement wins.
+	}
+
+	$offset = bhp_blog_capture_band_offset( $content );
+	if ( null === $offset ) {
+		return $content;
+	}
+
+	$band = bhp_blog_capture_band_html();
+	if ( '' === $band ) {
+		return $content;
+	}
+
+	$done = true;
+
+	return substr( $content, 0, $offset ) . $band . substr( $content, $offset );
+}
+add_filter( 'the_content', 'bhp_blog_inject_capture_band', 11 );
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * 5 · THE END-OF-POST CAPTURE
