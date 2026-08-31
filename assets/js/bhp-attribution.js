@@ -34,6 +34,19 @@
  * against the visitor's own stored choice — fail-closed: no recognised
  * grant, no cookie. A visitor who accepts on this very page is captured
  * on the acceptance event, so attribution is not lost.
+ *
+ * ⭐⭐ 2026-08-31 UPDATE (theme 1.19.343, `CYCLE173-LD-CONSENT-CHECKOUT`) —
+ * THE WORDS "against the visitor's own stored choice" IMMEDIATELY ABOVE ARE
+ * SUPERSEDED. They are kept, not corrected in place, so the movement stays
+ * legible. Between 1.19.302 and 1.19.342 that condition became UNSATISFIABLE
+ * for the site's actual traffic: the banner is deliberately suppressed
+ * outside the EEA+UK, so a US visitor has no way to record a choice, so
+ * these two cookies were never written for anyone. The gate now reads the
+ * site's own region-scoped consent posture — the same one GA4 and the Meta
+ * pixel already run on — with the stored choice still winning outright in
+ * both directions. Full reasoning, the live evidence and the precedence
+ * order are at analyticsConsentGranted() below. ⛔ Its production deploy is
+ * a separately-approved Andrew decision.
  */
 (function () {
 	'use strict';
@@ -129,20 +142,20 @@
 	}
 
 	/**
-	 * True only when the visitor's own recorded choice grants
-	 * analytics_storage. Fail-closed in every other case: no cookie, an
-	 * unparseable cookie, an unrecognised value, or no consent surface at
-	 * all all resolve to false.
+	 * Returns the visitor's OWN recorded choice for analytics_storage, or
+	 * null when they have never made one. Never guesses.
 	 *
 	 * Prefers window.bhpConsentBridge (printed in <head> ahead of the GTM
 	 * container, and the single source of truth for consent) and falls back
 	 * to reading the cookies directly, so this file still behaves correctly
 	 * on a page where the container is not emitted at all.
+	 *
+	 * @return {boolean|null} true = granted, false = refused, null = no choice
 	 */
-	function analyticsConsentGranted() {
+	function storedAnalyticsChoice() {
 		if (window.bhpConsentBridge && typeof window.bhpConsentBridge.storedChoice === 'function') {
 			var stored = window.bhpConsentBridge.storedChoice();
-			return !! stored && 'granted' === stored.analytics_storage;
+			return stored ? ('granted' === stored.analytics_storage) : null;
 		}
 
 		var own = readCookie('bhp_consent_state');
@@ -155,6 +168,120 @@
 			return true === cmp.statistics;
 		}
 
+		return null;
+	}
+
+	/**
+	 * Global Privacy Control. Mirrors the branch BHP_WPConsent_Bridge
+	 * already runs — the same signal must not mean two different things in
+	 * two files that gate the same visitor.
+	 */
+	function gpcActive() {
+		try {
+			return window.navigator && true === window.navigator.globalPrivacyControl;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.19.343 (2026-08-31, `CYCLE173-LD-CONSENT-CHECKOUT`) — THIS GATE
+	 *     WAS LEFT BEHIND BY 1.19.302/1.19.312 AND IS THE REASON NO VISITOR
+	 *     ON THIS SITE HAS FIRST-PARTY ATTRIBUTION.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔⛔ READ THIS BEFORE CHANGING ANYTHING BELOW. THE PRODUCTION DEPLOY OF
+	 *     THIS PARTICULAR CHANGE IS AN EXPLICIT ANDREW DECISION and is
+	 *     carried as its own line item in the 1.19.343 DEPLOY-PLAN. It is on
+	 *     staging so it can be seen working; it is not approved for
+	 *     production by the existence of this code.
+	 *
+	 * ⚠ THE OBSERVED FACT. Production, real browser, 2026-08-31, theme
+	 *   1.19.342, a US visitor (`America/Denver`, `en-US`):
+	 *
+	 *     window.bhpConsentRegion.showBanner .... false   (banner suppressed)
+	 *     window.wpconsent.enable_consent_banner  false
+	 *     gtag consent default (catch-all) ...... all four GRANTED
+	 *     cookies present ....................... _ga, _ga_7M42X19Z2T,
+	 *                                             _gcl_au, _fbp, sbjs_*
+	 *     cookies ABSENT ........................ bhp_attr_first,
+	 *                                             bhp_attr_last,
+	 *                                             wpconsent_preferences,
+	 *                                             bhp_consent_state
+	 *
+	 *   GA4 measures that visitor. The Meta pixel measures that visitor.
+	 *   WooCommerce's own sourcebuster attribution measures that visitor.
+	 *   THIS FILE DOES NOT — and it is the only one of the four that asks
+	 *   for a STORED CHOICE rather than for the site's consent STATE.
+	 *
+	 * ⛔ AND A US VISITOR CANNOT MAKE A STORED CHOICE. The banner is
+	 *   deliberately suppressed outside the EEA+UK (theme 1.19.309,
+	 *   `CYCLE167-LD-CONSENT-BANNER-GEO`, on Andrew's ruling). So the
+	 *   pre-1.19.343 condition was not strict — it was UNSATISFIABLE. That
+	 *   is Frodo's gap G-E, measured: `_bhp_lead_first_touch` and
+	 *   `_bhp_lead_last_touch` empty on ALL 12 most recent lead events;
+	 *   order-side first-touch 6/22, last-touch 4/22.
+	 *
+	 * ⭐ THE CORRECTION IS AN ALIGNMENT, NOT A NEW POSTURE. This file now
+	 *   reads the SAME region decision and the SAME precedence the rest of
+	 *   the consent system already runs, from the SAME shipped object
+	 *   (`window.bhpConsentRegion`, published at wp_head priority 1 by
+	 *   `bhp_consent_region_gate_script()`). No second region list, no
+	 *   second heuristic, no copy of the EEA table — a divergence between
+	 *   two lists is the obvious future bug and there is now nothing to
+	 *   diverge.
+	 *
+	 *   PRECEDENCE, and it is deliberately identical to the bridge's:
+	 *     1. An explicit stored choice ALWAYS wins, in both directions. An
+	 *        EEA visitor who accepted is captured; ANY visitor who refused
+	 *        is not, banner or no banner. ⛔ This is the limb that makes the
+	 *        opt-out real, and it must never be reordered below 2 or 3.
+	 *     2. No choice + GPC on -> NO capture. Lowers the granted default,
+	 *        can never raise anything.
+	 *     3. No choice, no GPC, banner correctly suppressed for this region
+	 *        -> capture, because `analytics_storage` is GRANTED by default
+	 *        for exactly that visitor (BHP_Consent::measured_default_signals).
+	 *     4. Anything else -> NO capture. That covers every EEA and every
+	 *        ambiguous visitor (the region gate fails SAFE toward showing
+	 *        the banner, so ambiguity lands here), and it also covers the
+	 *        region object being absent, malformed or throwing.
+	 *
+	 * ⛔ THE FAIL-SAFE DIRECTION IS UNCHANGED AND IS ASSERTED BY THE SUITE.
+	 *   Every uncertain path still returns false. If a future edit makes any
+	 *   branch here capture on uncertainty, it is wrong.
+	 *
+	 * ⛔ NOT WIDENED: no new cookie, no new field, no PII. The two cookies
+	 *   and their contents are byte-for-byte what they were — campaign and
+	 *   click identifiers plus the landing path. Only the CONDITION under
+	 *   which they are written moved, and it moved onto the site's existing
+	 *   approved posture rather than off it.
+	 */
+	function analyticsConsentGranted() {
+		var choice = storedAnalyticsChoice();
+
+		// 1. The visitor's own recorded choice, both directions.
+		if (null !== choice) {
+			return choice;
+		}
+
+		// 2. No choice, but the browser signals opt-out.
+		if (gpcActive()) {
+			return false;
+		}
+
+		// 3. No choice, no GPC: defer entirely to the region gate that
+		//    already decided this visitor's Consent Mode default.
+		try {
+			var region = window.bhpConsentRegion;
+			if (region && false === region.showBanner) {
+				return true;
+			}
+		} catch (e) {
+			return false; // 4. ANY failure -> no capture.
+		}
+
+		// 4. Banner shown (EEA / ambiguous), or no region gate at all.
 		return false;
 	}
 

@@ -1,6 +1,74 @@
 /**
- * Brave Hearts Bundle Pricing — add_shipping_info / add_payment_info
- * (Phase 1B correction pass, 2026-07-06).
+ * Brave Hearts Bundle Pricing — begin_checkout / add_shipping_info /
+ * add_payment_info (Phase 1B correction pass, 2026-07-06).
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.8.78 (2026-08-31, `CYCLE173-LD-CONSENT-CHECKOUT`) — begin_checkout
+ *     MOVES HERE, AND THE REASON IT WAS MISSING IS A RACE, NOT AN OMISSION.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ THE FINDING. Frodo's funnel-observability audit (2026-08-31) records
+ *   that GA4 carries view_item, add_to_cart and purchase but NO
+ *   begin_checkout at all, so cart→checkout drop-off is unmeasurable.
+ *   The reflex reading is "it was never built". IT WAS BUILT, and reading
+ *   the code is what shows why it does not arrive:
+ *
+ *     bundle-drawer.js, side-cart checkout button (pre-1.8.78):
+ *         checkoutBtn.addEventListener('click', function () {
+ *             getCart().then(function (cart) {      <-- async round trip
+ *                 pushEvent('begin_checkout', {...});
+ *             });
+ *         });
+ *
+ *   The button is a real link to /checkout/. The browser begins unloading
+ *   the document immediately; the Store API `getCart()` round trip and the
+ *   dataLayer push that depends on it are racing that navigation, and
+ *   GTM's own tag then has to fire after them. On a normal connection the
+ *   navigation wins. ⛔ It is not that the event is wrong — it is that it
+ *   is emitted in the one moment of the page lifecycle where an async
+ *   emission is least likely to survive.
+ *
+ * ⭐ THE FIX, and why THIS file. begin_checkout is now emitted on
+ *   /checkout/ PAGE LOAD, where nothing is unloading, from the script that
+ *   already owns every other checkout-page event and already has the cart
+ *   helpers, the catalog map and a Store API client. One event source per
+ *   surface. It fires EXACTLY ONCE per checkout page load, and only when
+ *   the cart actually has items.
+ *
+ * ⛔ THE SIDE-CART EVENT IS RENAMED, NOT DUPLICATED — `side_cart_checkout_click`.
+ *   Leaving both as `begin_checkout` would double-count every side-cart
+ *   customer the moment the reliable one started arriving, which is a worse
+ *   defect than the one being fixed. The click is still a real, useful
+ *   intent signal, so it keeps a name of its own rather than being deleted.
+ *   ⚠ FLAGGED: if a GTM tag is bound to `begin_checkout`, it now fires from
+ *   the checkout page load instead of the drawer click — that is the intent.
+ *   Nothing in the GTM container was inspected or changed by this release;
+ *   the container is not reachable from this desk.
+ *
+ * ⛔ CONSENT IS NOT GATED HERE, AND THAT IS THE HOUSE PATTERN, NOT AN
+ *   OVERSIGHT. Every dataLayer push on this site is unconditional so the
+ *   rendered page stays byte-identical for every visitor — `CYCLE143-GIM-51`
+ *   proved that a per-visitor gate in front of SiteGround's page cache is
+ *   defeated in both directions. Collection is gated downstream by Google
+ *   Consent Mode (BHP_Consent's region-scoped defaults plus
+ *   BHP_WPConsent_Bridge's update), exactly as it is for view_item,
+ *   add_to_cart, view_cart, add_shipping_info, add_payment_info and
+ *   purchase. This event is gated identically to all six.
+ *
+ * ⚠ KNOWN LIMITATION, RECORDED RATHER THAN FIXED (brief: note, do not build):
+ *   `add_shipping_info` and `add_payment_info` below fire from PAGE-LOAD
+ *   state, not from a customer interaction. Shipping fires whenever a Store
+ *   API cart response already carries a selected rate — and this store has
+ *   exactly one flat-rate method per zone, which WooCommerce auto-selects,
+ *   so a returning customer with a saved address produces the event without
+ *   ever touching the shipping step. Payment fires from
+ *   `checkPreselectedPayment()` on whichever gateway is pre-checked. Both
+ *   are deliberate (the alternative was losing the event entirely for
+ *   customers who never interact), but they measure ARRIVAL AT the step,
+ *   not COMPLETION OF it. ⛔ Do not read a funnel drop-off between
+ *   add_shipping_info and add_payment_info as customer behaviour.
+ *
+ * ───────────────────────────────────────────────────────────────────────
  *
  * This store's checkout is the WooCommerce Blocks Checkout block (a
  * single scrollable page with distinct Contact/Shipping/Payment
@@ -35,6 +103,12 @@
 	var STORE_API_CART = '/wp-json/wc/store/v1/cart';
 	var lastShippingRateId = null;
 	var lastPaymentMethod = null;
+	// ⛔ THE LATCH. Module-scoped, so it lives exactly as long as this
+	// checkout page load does. A same-page cart recalculation, a Blocks
+	// re-render, or the fetch observer below seeing a second /cart response
+	// can never produce a second begin_checkout; a genuine second visit to
+	// /checkout/ is a new document and correctly emits a new one.
+	var beginCheckoutFired = false;
 
 	function pushEvent(eventName, extra) {
 		if (typeof window.dataLayer === 'undefined' || !Array.isArray(window.dataLayer)) {
@@ -118,6 +192,42 @@
 	}
 
 	/**
+	 * ⭐ begin_checkout — exactly once per /checkout/ page load, and only
+	 * with a non-empty cart.
+	 *
+	 * ⛔ AN EMPTY CART DOES NOT LATCH. If the first cart response this page
+	 *    sees has no items, nothing is emitted AND nothing is consumed, so a
+	 *    later response that does carry items still produces the event. The
+	 *    ordering matters: WooCommerce redirects an empty cart away from
+	 *    /checkout/, but Blocks can render this page from a cached/empty
+	 *    Store API response before the real one resolves, and latching on
+	 *    that would silently lose the event for a real customer. Absence of
+	 *    items is "not yet", never "no".
+	 *
+	 * The payload keys match what bhp_bundle_print_datalayer_push() nests
+	 * server-side and what add_shipping_info/add_payment_info already send
+	 * client-side: currency, value, items. `value` is items-only (excludes
+	 * shipping and tax), the same basis every other GA4 event on this site
+	 * uses — do not "improve" it to the order total, or begin_checkout and
+	 * purchase stop being comparable.
+	 */
+	function maybeFireBeginCheckout(cart) {
+		if (beginCheckoutFired) {
+			return;
+		}
+		if (!cart || !cart.items || !cart.items.length) {
+			return;
+		}
+		beginCheckoutFired = true;
+		pushEvent('begin_checkout', {
+			source: 'checkout_page',
+			currency: cartCurrency(cart),
+			value: cartItemsValue(cart),
+			items: ga4ItemsFromCart(cart)
+		});
+	}
+
+	/**
 	 * Wraps fetch non-invasively: always calls through to the original and
 	 * returns its exact result unchanged (a clone is read separately for
 	 * observation, so Blocks' own body-read is never affected). Only
@@ -137,6 +247,7 @@
 					.clone()
 					.json()
 					.then(function (cart) {
+						maybeFireBeginCheckout(cart);
 						maybeFireShippingInfo(cart);
 					})
 					.catch(function () {
@@ -220,9 +331,38 @@
 		}, 30000);
 	}
 
+	/**
+	 * ⭐ THE PRIMARY begin_checkout TRIGGER — an explicit cart read on load.
+	 *
+	 * ⛔ WHY NOT RELY ON THE FETCH OBSERVER ALONE. The observer above only
+	 *    sees requests Blocks itself makes. Blocks hydrates from the
+	 *    server-rendered `wcSettings` payload and, for a straightforward
+	 *    guest checkout with no saved address, may make no /cart request at
+	 *    all before the customer starts typing. Depending on it would
+	 *    reproduce the class of bug the fixed-1500ms-setTimeout had in
+	 *    watchForPreselectedPayment(): an event that arrives for some
+	 *    customers and silently not for others. This read is unconditional.
+	 *
+	 * ⛔ originalFetch, NOT window.fetch: this must not re-enter the observer
+	 *    (which would work, but through a path that only exists by accident).
+	 *    The latch makes the two routes idempotent whichever wins the race.
+	 *
+	 * A failed read is swallowed. An observability event never breaks a
+	 * customer's checkout — the same rule the observer above follows.
+	 */
+	function fireBeginCheckoutFromCart() {
+		currentCart().then(maybeFireBeginCheckout).catch(function () {
+			/* network or shape failure -- never break checkout over an observability failure */
+		});
+	}
+
 	if ('loading' === document.readyState) {
-		document.addEventListener('DOMContentLoaded', watchForPreselectedPayment);
+		document.addEventListener('DOMContentLoaded', function () {
+			fireBeginCheckoutFromCart();
+			watchForPreselectedPayment();
+		});
 	} else {
+		fireBeginCheckoutFromCart();
 		watchForPreselectedPayment();
 	}
 })();

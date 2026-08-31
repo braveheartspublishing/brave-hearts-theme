@@ -1851,9 +1851,38 @@
 
 		var checkoutBtn = qs('.bhp-cart-drawer__checkout', drawer);
 		if (checkoutBtn) {
+			/*
+			 * ⭐⭐ 1.8.78 (2026-08-31, `CYCLE173-LD-CONSENT-CHECKOUT`) —
+			 * THIS EVENT WAS `begin_checkout` AND IS NOW
+			 * `side_cart_checkout_click`. It is a rename, not a removal.
+			 *
+			 * ⛔ WHY. This handler is bound to a real link to /checkout/.
+			 *    The `getCart()` Store API round trip below, and the
+			 *    dataLayer push that depends on it, race the browser's
+			 *    navigation away from this document — and on a normal
+			 *    connection the navigation wins. That is the reason GA4
+			 *    carries no begin_checkout at all despite it being wired
+			 *    since Phase 1B (Frodo's funnel-observability audit,
+			 *    2026-08-31). The event was not missing; it was emitted at
+			 *    the one moment an async emission is least likely to survive.
+			 *
+			 * ⭐ The reliable begin_checkout now fires on /checkout/ PAGE
+			 *    LOAD from bhp-checkout-events.js, where nothing is
+			 *    unloading. Keeping THIS one named `begin_checkout` too
+			 *    would double-count every side-cart customer the moment the
+			 *    reliable one started arriving — a worse defect than the one
+			 *    being fixed. The click is still a genuine intent signal
+			 *    (it distinguishes "left via the drawer" from "left via the
+			 *    cart page"), so it keeps a name of its own.
+			 *
+			 * ⚠ It is still subject to the same navigation race — it is
+			 *    best-effort and must not be treated as a reliable count.
+			 *    It is NOT the funnel's checkout-entry number; that is
+			 *    begin_checkout.
+			 */
 			checkoutBtn.addEventListener('click', function () {
 				getCart().then(function (cart) {
-					pushEvent('begin_checkout', {
+					pushEvent('side_cart_checkout_click', {
 						source: 'side_cart',
 						currency: cartCurrency(cart),
 						value: cartItemsValue(cart),
