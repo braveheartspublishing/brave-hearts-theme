@@ -50,6 +50,40 @@ class BHP_Lead_Event_Log {
 	const META_PROVENANCE     = '_bhp_lead_provenance'; // 'real' | 'test'
 	const META_HOST           = '_bhp_lead_host';
 
+	/**
+	 * ⭐⭐ 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`, audit gap G-E) — THE FORM-MOMENT
+	 *    ATTRIBUTION THIS SIGNUP RESOLVED TO, STORED LOCALLY.
+	 *
+	 * ⛔ THE ASYMMETRY THIS CLOSES, OBSERVED ON PRODUCTION 2026-08-31. The
+	 *    `TRAFFIC` merge field sent to Mailchimp resolves through
+	 *    `bhp_get_signup_traffic_source()`, which has a form-moment fallback
+	 *    that does NOT require consent. The two fields above
+	 *    (`META_FIRST_TOUCH` / `META_LAST_TOUCH`) read the consent-gated
+	 *    COOKIES and are therefore blank for any visitor who declined or
+	 *    never answered the banner. Result: **all 12 of the most recent lead
+	 *    events had both touch fields empty while Mailchimp held a source for
+	 *    the same signups.** The third party knew more about our own funnel
+	 *    than our own log did, and when the two disagreed the local log was
+	 *    the one that was wrong.
+	 *
+	 * ⭐ SO THE LOCAL RECORD NOW STORES WHAT WAS ACTUALLY SENT. This is not a
+	 *    third attribution instrument — it is the SAME value the Mailchimp
+	 *    pipe resolved, written down on this side of the wire so the two can
+	 *    be reconciled without a Mailchimp login.
+	 *
+	 * ⛔ IT IS NOT A CONSENT BYPASS AND CHANGES NO CONSENT POSTURE. It writes
+	 *    no cookie and reads none. It records a value the visitor supplied in
+	 *    their own request (their URL or their same-origin referer) and that
+	 *    this site was already transmitting to a third party. Recording
+	 *    locally what we already send outward is strictly less exposure, not
+	 *    more. The consent-gated cookie capture is untouched.
+	 *
+	 * ⛔ NO PII. The value passes `bhp_extract_attribution_params()`, a fixed
+	 *    campaign/click-ID whitelist. Same shape, same cap, same rules as the
+	 *    two touch fields, so all three are directly comparable.
+	 */
+	const META_FORM_MOMENT    = '_bhp_lead_form_moment';
+
 	const PROVENANCE_REAL = 'real';
 	const PROVENANCE_TEST = 'test';
 
@@ -159,6 +193,20 @@ class BHP_Lead_Event_Log {
 		update_post_meta( $post_id, self::META_FAILURE_REASON, sanitize_text_field( (string) $failure_reason ) );
 		update_post_meta( $post_id, self::META_FIRST_TOUCH, $attribution['first_touch'] ? wp_json_encode( $attribution['first_touch'] ) : '' );
 		update_post_meta( $post_id, self::META_LAST_TOUCH, $attribution['last_touch'] ? wp_json_encode( $attribution['last_touch'] ) : '' );
+
+		/*
+		 * G-E. Written on the SAME request the signup happened on, so it sees
+		 * exactly what the Mailchimp pipe saw. `function_exists()` rather than
+		 * an assumption: this log is loaded independently of `inc/mailchimp.php`
+		 * and must degrade to an empty string, never fatal, if that file is not
+		 * present. An empty string here means "the request carried no campaign
+		 * signal", which is a real and common answer — it is NOT a failure and
+		 * must not be read as one.
+		 */
+		$form_moment = function_exists( 'bhp_get_form_moment_attribution' )
+			? (array) bhp_get_form_moment_attribution()
+			: array();
+		update_post_meta( $post_id, self::META_FORM_MOMENT, $form_moment ? wp_json_encode( $form_moment ) : '' );
 		update_post_meta( $post_id, self::META_PROVENANCE, self::classify_provenance( $email ) );
 		update_post_meta( $post_id, self::META_HOST, isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' );
 

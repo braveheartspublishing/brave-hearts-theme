@@ -489,29 +489,28 @@ function bhp_school_readalouds_render_scheduler() {
 	        /*
 	         * ⭐ 1.19.336 — THE CAMPAIGN FALLBACK FIELD. `CYCLE170-LD-CHAIN`.
 	         *
-	         * ⛔ IT IS THE THIRD AND LAST READING, NOT THE FIRST.
-	         *    `bhp_get_form_moment_attribution()` prefers `$_GET`, then the
-	         *    same-origin referer (which carries the real landing URL on a
-	         *    classic form POST). This field only covers a browser or
-	         *    extension that strips the referer entirely.
+	         * ⛔⛔ 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`, G-A): THE VALUE IS NO LONGER
+	         *     RENDERED SERVER-SIDE. It is emitted empty and filled by
+	         *     `assets/js/bhp-attr-now.js` from the visitor's own
+	         *     `location.search`, in the visitor's own browser.
 	         *
-	         * ⛔ EMITTED ONLY WHEN THE PAGE URL ACTUALLY CARRIED SOMETHING, which
-	         *    is the cache-poisoning guard the signup form already relies on:
-	         *    on a clean URL no field is written at all, so the cached HTML of
-	         *    a clean page has nothing to serve to the next visitor. This is
-	         *    why it is ranked last and why the referer wins whenever it
-	         *    exists. ⛔ `source_page` is NOT widened to carry any of this —
-	         *    it is host-checked and reused as a redirect target.
+	         * ⛔ THE SUPERSEDED GUARD, PRESERVED SO IT IS NOT RE-DERIVED: this
+	         *    field used to be *"emitted only when the page URL actually
+	         *    carried something, which is the cache-poisoning guard the signup
+	         *    form already relies on"*. ⭐ THAT GUARD DOES NOT HOLD ON THIS
+	         *    HOST. SiteGround's full-page cache strips `utm_*` and `fbclid`
+	         *    from the cache key, so the campaign render and the clean render
+	         *    share ONE cache entry — verified live on production 2026-08-31,
+	         *    where an anonymous no-query GET returned a real visitor's
+	         *    `fbclid`. "Only sometimes" is not a guard when the cache key
+	         *    cannot see the sometimes.
+	         *
+	         * ⛔ `source_page` is NOT widened to carry any of this — it is
+	         *    host-checked and reused as a redirect target.
 	         */
-	        $bhp_attr_now = function_exists( 'bhp_get_signup_attribution_field_value' )
-	          ? (string) bhp_get_signup_attribution_field_value()
-	          : '';
-	        if ( '' !== $bhp_attr_now ) :
-	          ?>
-	          <input type="hidden" name="bhp_attr_now" value="<?php echo esc_attr( $bhp_attr_now ); ?>" />
-	          <?php
-	        endif;
 	        ?>
+	        <input type="hidden" name="bhp_attr_now" value="" data-bhp-attr-now />
+	        <?php
 	        <?php wp_nonce_field( BHP_READALOUD_REQUEST_ACTION, 'bhp_readaloud_nonce', false ); ?>
 
 	        <?php

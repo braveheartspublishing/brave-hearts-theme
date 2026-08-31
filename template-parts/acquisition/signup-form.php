@@ -179,35 +179,53 @@ $success_redirect_key = sanitize_key($args['success_redirect_key']);
 
   <?php
   /*
-   * ⭐⭐ 1.19.323 (`CYCLE169-LD-R3-IMGCAP-ATTRIBUTION`) — THE FORM-MOMENT
-   *    ATTRIBUTION FIELD. Andrew: *"Lets do that right now please."*
+   * ═════════════════════════════════════════════════════════════════════════
+   * ⛔⛔ 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`, G-A) — THIS FIELD IS NOW EMPTY IN
+   *     THE RENDERED HTML AND IS FILLED BY JAVASCRIPT IN THE VISITOR'S OWN
+   *     BROWSER. IT MUST NEVER AGAIN CARRY A SERVER-RENDERED VALUE.
+   * ═════════════════════════════════════════════════════════════════════════
    *
-   * ⛔⛔ IT IS EMITTED ONLY WHEN THE CURRENT PAGE URL ACTUALLY CARRIES A CLICK
-   *     ID OR A UTM. On a clean URL `bhp_get_signup_attribution_field_value()`
-   *     returns '' and NO INPUT IS WRITTEN — so the rendered markup of every
-   *     form on this site is BYTE-IDENTICAL to 1.19.322 for every ordinary
-   *     visitor, and every existing assertion about this template's output
-   *     still describes what it emits.
+   * ⛔ WHAT WENT WRONG, OBSERVED ON PRODUCTION 2026-08-31 (audit gap G-A).
+   *    1.19.323 rendered this field's value server-side from `$_GET`, reasoning
+   *    that a clean URL emits no field at all and therefore "the cached HTML of
+   *    a clean page carries nothing to leak". ⭐ THE REASONING WAS SOUND AND THE
+   *    PREMISE WAS FALSE: SiteGround's full-page cache STRIPS `utm_*` and
+   *    `fbclid` FROM THE CACHE KEY, so `/page/?fbclid=X` and `/page/` are the
+   *    SAME cache entry. The render that happened to carry a real visitor's
+   *    Facebook click ID was stored under the clean key and served to everyone
+   *    who followed. Anonymous no-query GETs returned a live `fbclid`, and
+   *    organic signups were stamped `facebook / paid` in Mailchimp.
    *
-   * ⛔ IT CARRIES NO URL AND NO `landing_page`. The value is a query-string
-   *    fragment rebuilt from a fixed whitelist of campaign and click-ID
-   *    parameters and nothing else — see `bhp_get_attribution_capture_params()`
-   *    in `inc/mailchimp.php`, where the privacy exclusion is stated and
-   *    enforced. No PII can reach this field.
+   * ⛔⛔ THIS IS THE SAME FAILURE CLASS AS `CYCLE143-GIM-51` (2026-08-05), which
+   *     removed a per-visitor consent gate for exactly this reason and recorded
+   *     the rule in `inc/class-bhp-analytics-config.php`: *a per-visitor
+   *     server-side gate in front of a full-page cache is defeated in both
+   *     directions.* Any per-visitor value rendered into cacheable HTML is
+   *     wrong. There is no variant of "only render it sometimes" that is safe,
+   *     because the cache key does not know about the sometimes.
    *
-   * ⛔ IT IS THE THIRD-CHOICE READING, NOT THE FIRST. The pipe prefers the
-   *    referer, which is read fresh at submission and therefore immune to page
-   *    caching. This field is the fallback for a browser that strips it.
+   * ⭐ THE FIX IS ARCHITECTURAL, NOT A NARROWER CONDITION. The field is now
+   *    emitted UNCONDITIONALLY and ALWAYS EMPTY, so every visitor receives
+   *    byte-identical HTML and the page is honestly cacheable.
+   *    `assets/js/bhp-attr-now.js` fills it from `location.search` — the
+   *    VISITOR'S OWN URL, read in the visitor's own browser — on load and again
+   *    on submit. A cached page therefore carries nothing to leak, and capture
+   *    still works for the visitor who actually arrived with a campaign.
    *
-   * ⛔ NO COOKIE IS WRITTEN AND NO CONSENT POSTURE CHANGES. This is one hidden
-   *    input on one form, and it lives only as long as the request.
+   * ⛔ NO PII, UNCHANGED. The JS applies the same fixed whitelist of campaign
+   *    and click-ID parameters the PHP side used (`bhp_get_attribution_capture_params()`
+   *    in `inc/mailchimp.php` remains the canonical list and the server
+   *    re-filters whatever arrives). No URL, no path, no `landing_page`.
+   *
+   * ⛔ NO COOKIE, NO STORAGE, NO CONSENT POSTURE CHANGE. This is one hidden
+   *    input on one form and it lives only as long as the request — exactly the
+   *    posture 1.19.323 had. It is NOT the consent-gated cookie capture in
+   *    `assets/js/bhp-attribution.js`, which is a different instrument with a
+   *    different rule and is untouched by this change.
    */
-  $bhp_attr_now = function_exists('bhp_get_signup_attribution_field_value')
-      ? bhp_get_signup_attribution_field_value()
-      : '';
   ?>
-  <?php if ($form_ready && '' !== $bhp_attr_now): ?>
-    <input type="hidden" name="bhp_attr_now" value="<?php echo esc_attr($bhp_attr_now); ?>">
+  <?php if ($form_ready): ?>
+    <input type="hidden" name="bhp_attr_now" value="" data-bhp-attr-now>
   <?php endif; ?>
 
   <?php foreach ($args['hidden_fields'] as $name => $value): ?>

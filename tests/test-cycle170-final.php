@@ -52,6 +52,17 @@ function bhp_fin_assert( $cond, $msg ) {
 	}
 }
 
+/**
+ * Read a theme-relative source file. Added 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`)
+ * so the G-A block can assert on the JS filler's contract. Returns '' when the
+ * file is missing, so a rename fails the assertion loudly rather than fataling
+ * the whole suite halfway through.
+ */
+function bhp_fin_file( $rel ) {
+	$path = get_template_directory() . '/' . ltrim( $rel, '/' );
+	return is_readable( $path ) ? (string) file_get_contents( $path ) : '';
+}
+
 echo "\n=== CYCLE170-LD-CHAIN · theme 1.19.336 ===\n";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -475,18 +486,121 @@ if ( 200 === $bhp_fin_code && '' !== $bhp_fin_b ) {
 	bhp_fin_assert( 0 === substr_count( $bhp_fin_b, 'name="visit_date"' ), '⛔ no day control has come back' );
 
 	/*
-	 * ⛔ THE HIDDEN ATTRIBUTION FIELD IS ABSENT ON A CLEAN URL. This is the
-	 *    cache-poisoning guard: nothing to serve to the next visitor.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⛔⛔ REWRITTEN 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`, G-A). THE TWO
+	 *     ASSERTIONS THAT USED TO LIVE HERE BOTH PASSED WHILE PRODUCTION WAS
+	 *     BROKEN. Preserved verbatim below so the failure mode is not
+	 *     re-derived, and so nobody restores them thinking they were fine:
+	 *
+	 *       bhp_fin_assert( 0 === substr_count( $b, 'name="bhp_attr_now"' ),
+	 *         '⛔⛔ NO bhp_attr_now field on a clean URL — a cached clean page
+	 *          carries nothing to leak' );
+	 *       bhp_fin_assert( false !== strpos( $b2, 'name="bhp_attr_now"' ) &&
+	 *          false !== strpos( $b2, 'utm_source' ),
+	 *         '⭐⭐ the bhp_attr_now field DOES appear when the landing URL
+	 *          carries a campaign' );
+	 *
+	 * ⭐ WHY THEY PASSED ANYWAY — THE LESSON WORTH KEEPING. They asserted
+	 *    against a FRESH PHP RENDER. The bug lived in SiteGround's full-page
+	 *    proxy cache, which strips `utm_*`/`fbclid` from the cache key and
+	 *    therefore serves the campaign render under the clean URL. Both
+	 *    statements were true of the origin and false of what visitors got.
+	 *    ⛔ A TEST THAT EXERCISES THE ORIGIN CANNOT SEE AN EDGE-CACHE BUG, AND
+	 *    THE GREEN TICK IS WORSE THAN NO TEST, because it was cited as proof.
+	 *
+	 * ⭐ THE FIX IS TO ASSERT A DIFFERENT INVARIANT — one that holds at the
+	 *    origin and MAKES THE EDGE BUG IMPOSSIBLE rather than merely looking
+	 *    for its symptom. Under 1.19.342 the field is rendered ALWAYS and
+	 *    ALWAYS EMPTY, so there is no render, under any query string, that
+	 *    could put a value into a cache entry. That is checkable right here,
+	 *    and it is the assertion that would have caught 1.19.323 on day one.
+	 * ═══════════════════════════════════════════════════════════════════════
 	 */
-	bhp_fin_assert( 0 === substr_count( $bhp_fin_b, 'name="bhp_attr_now"' ), '⛔⛔ NO bhp_attr_now field on a clean URL — a cached clean page carries nothing to leak' );
 
-	/* ⭐ AND IT APPEARS WHEN THE URL ACTUALLY CARRIES ONE. */
-	$bhp_fin_res2 = wp_remote_get( add_query_arg( array( 'utm_source' => 'facebook', 'utm_medium' => 'paid' ), $bhp_fin_url ), array( 'timeout' => 45, 'sslverify' => false ) );
-	$bhp_fin_b2   = wp_remote_retrieve_body( $bhp_fin_res2 );
+	/* 5e-1 · The field is PRESENT on a clean URL — identical HTML for everyone
+	   is what makes the page honestly cacheable. */
 	bhp_fin_assert(
-		false !== strpos( $bhp_fin_b2, 'name="bhp_attr_now"' ) && false !== strpos( $bhp_fin_b2, 'utm_source' ),
-		'⭐⭐ the bhp_attr_now field DOES appear when the landing URL carries a campaign'
+		substr_count( $bhp_fin_b, 'name="bhp_attr_now"' ) > 0,
+		'⭐ bhp_attr_now IS rendered on a clean URL (unconditional = cache-safe)'
 	);
+
+	/* 5e-2 · ⛔⛔ AND IT IS EMPTY. THIS IS THE LOAD-BEARING ASSERTION OF THE
+	   WHOLE RELEASE. */
+	bhp_fin_assert(
+		substr_count( $bhp_fin_b, 'name="bhp_attr_now" value=""' ) === substr_count( $bhp_fin_b, 'name="bhp_attr_now"' ),
+		'⛔⛔ EVERY bhp_attr_now field on a clean URL has an EMPTY value'
+	);
+
+	/*
+	 * 5e-3 · ⛔⛔ THE ONE THAT WOULD HAVE CAUGHT G-A. The SAME request, but
+	 *        carrying a campaign and a click ID. Before 1.19.342 this render
+	 *        embedded them in the field and the proxy cache then served that
+	 *        HTML to everyone. It must now be byte-identical to the clean
+	 *        render as far as this field is concerned.
+	 */
+	$bhp_fin_res2 = wp_remote_get(
+		add_query_arg(
+			array(
+				'utm_source'   => 'facebook',
+				'utm_medium'   => 'paid',
+				'utm_campaign' => 'cycle172-regression-probe',
+				'fbclid'       => 'CYCLE172PROBEVALUE',
+			),
+			$bhp_fin_url
+		),
+		array( 'timeout' => 45, 'sslverify' => false )
+	);
+	$bhp_fin_b2 = wp_remote_retrieve_body( $bhp_fin_res2 );
+
+	bhp_fin_assert(
+		0 === substr_count( $bhp_fin_b2, 'CYCLE172PROBEVALUE' ),
+		'⛔⛔ the click ID from the REQUEST URL never reaches the rendered HTML — nothing for the cache to capture'
+	);
+	bhp_fin_assert(
+		0 === substr_count( $bhp_fin_b2, 'name="bhp_attr_now" value="utm_source' ),
+		'⛔⛔ bhp_attr_now carries NO server-rendered campaign value even when the URL has one'
+	);
+	bhp_fin_assert(
+		substr_count( $bhp_fin_b2, 'name="bhp_attr_now" value=""' ) === substr_count( $bhp_fin_b, 'name="bhp_attr_now" value=""' ),
+		'⭐⭐ the campaign render and the clean render emit the SAME empty fields — the two are cache-interchangeable, which is exactly what SiteGround assumes'
+	);
+
+	/* 5e-4 · The capture still actually works — it moved to the browser, it did
+	   not disappear. Asserted on the JS contract; the live browser proof is in
+	   the release record, because a PHP test cannot execute the filler. */
+	$bhp_fin_js = bhp_fin_file( 'assets/js/bhp-attr-now.js' );
+	bhp_fin_assert(
+		false !== strpos( $bhp_fin_js, 'data-bhp-attr-now' ) && false !== strpos( $bhp_fin_js, 'location.search' ),
+		'⭐ the filler reads the VISITOR\'S OWN location.search into the marked field'
+	);
+	bhp_fin_assert(
+		false === strpos( $bhp_fin_js, 'document.cookie' ) && false === strpos( $bhp_fin_js, 'localStorage' ),
+		'⛔ the filler writes NO cookie and NO storage — it is not the consent-gated instrument'
+	);
+	bhp_fin_assert(
+		false !== strpos( $bhp_fin_b, 'bhp-attr-now.js' ),
+		'⭐ the filler is actually enqueued on the rendered page'
+	);
+
+	/*
+	 * ⚠️⚠️ WHAT THIS BLOCK STILL CANNOT PROVE, STATED RATHER THAN IMPLIED.
+	 *
+	 * `wp_remote_get()` from inside WordPress reaches the ORIGIN. It does not
+	 * traverse SiteGround's proxy cache, so NOTHING HERE OBSERVES A CACHE HIT.
+	 * ⛔ DO NOT READ A PASS HERE AS "the cache is clean" — that is precisely
+	 *    the inference that made the superseded assertions above worthless.
+	 *
+	 * ⭐ WHAT IT DOES PROVE, AND WHY THAT IS ENOUGH: the origin cannot emit a
+	 *    per-visitor value under ANY query string, so there is no such value
+	 *    for a cache entry to capture. The edge is taken out of the trust
+	 *    chain rather than tested through.
+	 *
+	 * ⭐ THE EDGE ITSELF IS VERIFIED SEPARATELY AND MUST STAY THAT WAY — by an
+	 *    anonymous external HTTPS GET that reads `X-Proxy-Cache: HIT` and
+	 *    greps the body. That is an out-of-process check (it cannot run from
+	 *    `wp eval-file`, which is inside the origin) and it is recorded in the
+	 *    release evidence for this cycle.
+	 */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

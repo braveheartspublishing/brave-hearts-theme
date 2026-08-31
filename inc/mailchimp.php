@@ -439,7 +439,40 @@ function bhp_get_form_moment_attribution() {
         );
     }
 
-    $referer = wp_get_raw_referer();
+    /*
+     * ⛔⛔ 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`, G-A hardening) — `$_SERVER['HTTP_REFERER']`
+     *     DIRECTLY, **NOT** `wp_get_raw_referer()`. THIS IS NOT A STYLE CHOICE.
+     *
+     * WordPress core's `wp_get_raw_referer()` returns `$_REQUEST['_wp_http_referer']`
+     * FIRST and only falls back to the real `HTTP_REFERER` header:
+     *
+     *     if ( ! empty( $_REQUEST['_wp_http_referer'] ) ) { return …; }
+     *     elseif ( ! empty( $_SERVER['HTTP_REFERER'] ) ) { return …; }
+     *
+     * ⛔ `_wp_http_referer` IS A HIDDEN FIELD RENDERED INTO THE PAGE BY
+     *    `wp_nonce_field()`, WHICH MEANS IT IS RENDERED INTO CACHEABLE HTML AND
+     *    IS EXACTLY AS POISONABLE AS `bhp_attr_now` WAS. Observed on production
+     *    2026-08-31: the bundle plugin's add-to-cart forms on the parent landing
+     *    page carried a `_wp_http_referer` frozen with a previous visitor's UTMs
+     *    in the same cached response that carried the leaked `fbclid`.
+     *
+     * ⭐ THE SIGNUP FORM ITSELF IS CURRENTLY SAFE — it calls
+     *   `wp_nonce_field( …, false )`, so it emits no referer field and nothing
+     *   poisonable reaches `$_REQUEST` on a signup POST. ⛔ THAT IS A PROPERTY
+     *   OF ONE `false` ARGUMENT IN ONE TEMPLATE, AND IT IS THE ONLY THING
+     *   STANDING BETWEEN THE CACHE AND THE SECOND-RANKED READING. Flipping that
+     *   argument, or adding any form that posts a referer field into this pipe,
+     *   would silently reopen G-A one rank lower — where it would be much harder
+     *   to see, because the poisoned value would arrive through a core function
+     *   that looks authoritative.
+     *
+     * Reading the header directly removes the possibility instead of relying on
+     * that argument staying `false` forever. The header is set by the browser on
+     * the live request, cannot be cached, and is still HOST-CHECKED below.
+     */
+    $referer = isset($_SERVER['HTTP_REFERER'])
+        ? (string) wp_unslash($_SERVER['HTTP_REFERER'])
+        : '';
     if ($referer) {
         $referer_host = strtolower((string) wp_parse_url($referer, PHP_URL_HOST));
         $home_host    = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));

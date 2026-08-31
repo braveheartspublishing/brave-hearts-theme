@@ -213,6 +213,30 @@ function bhp_enqueue_assets() {
     if ( BHP_Analytics_Config::should_render_analytics() ) {
         wp_enqueue_script('bhp-attribution', get_template_directory_uri() . '/assets/js/bhp-attribution.js', [], $theme_version, true);
     }
+
+    /*
+     * ⭐⭐ 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`, audit gap G-A) — THE FORM-MOMENT
+     *    ATTRIBUTION FILLER. Fills the (always-empty, always-rendered)
+     *    `bhp_attr_now` hidden field from the visitor's own `location.search`,
+     *    replacing the server-rendered value that SiteGround's full-page cache
+     *    was serving from one visitor to the next.
+     *
+     * ⛔⛔ IT IS ENQUEUED UNCONDITIONALLY, AND THAT IS THE WHOLE POINT.
+     *     Wrapping it in `should_render_analytics()` — as `bhp-attribution.js`
+     *     above legitimately is — would make the RENDERED HTML VARY BY VISITOR
+     *     (logged-in admins and internal traffic would get a different script
+     *     tag), which is precisely the class of bug this release exists to
+     *     remove. `CYCLE143-GIM-51` is the standing precedent. The file itself
+     *     is a no-op on any page with no `[data-bhp-attr-now]` field and on any
+     *     URL with no campaign parameters.
+     *
+     * ⛔ IT IS NOT CONSENT-GATED AND NEEDS NO GATE: it writes no cookie, no
+     *    storage and makes no network request. It moves a value from the
+     *    visitor's own address bar into their own form submission. The
+     *    consent-gated instrument is `bhp-attribution.js`, which is a
+     *    different file answering to a different rule.
+     */
+    wp_enqueue_script('bhp-attr-now', get_template_directory_uri() . '/assets/js/bhp-attr-now.js', [], $theme_version, true);
 }
 add_action('wp_enqueue_scripts', 'bhp_enqueue_assets');
 
@@ -5013,6 +5037,16 @@ require_once get_template_directory() . '/inc/audit-remediation.php';
 // _failed above -- never modifies the actual signup handling in
 // inc/mailchimp.php). See docs/phase1c-lead-capture-architecture.md.
 require_once get_template_directory() . '/inc/class-bhp-lead-event-log.php';
+
+/*
+ * ⭐ 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`, audit gap G-B) — GA4 purchase-event
+ *    coverage: the order-received-page breadcrumb and the read-only
+ *    reconciliation that turns "GA4 is quietly missing orders" into a named
+ *    number with the missing order IDs attached. Read the file header before
+ *    changing it — it records which candidate causes were ELIMINATED by live
+ *    evidence, so they do not get re-investigated from scratch.
+ */
+require_once get_template_directory() . '/inc/purchase-event-coverage.php';
 
 // Phase 1D: content funnel classification (audience/funnel-stage/intent/
 // goals). Read-only bridge to the existing bhp_get_guide_registry() for
