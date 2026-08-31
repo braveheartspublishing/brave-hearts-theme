@@ -97,7 +97,25 @@ bhp_c173_assert($failures, 'items use the shared catalog-aware builder, not a se
 bhp_c173_assert($failures, 'bundle-drawer.js emits NO begin_checkout event of any kind', false === strpos($drawer_js, "pushEvent('begin_checkout'"));
 bhp_c173_assert($failures, 'The side-cart click keeps its own distinct name instead of being deleted', false !== strpos($drawer_js, "pushEvent('side_cart_checkout_click'"));
 bhp_c173_assert($failures, 'The renamed event still carries source: side_cart, so the two routes stay distinguishable', (bool) preg_match('/pushEvent\(\'side_cart_checkout_click\',[^;]*source: \'side_cart\'/s', $drawer_js));
-bhp_c173_assert($failures, 'Exactly one begin_checkout emission exists across both shipped client scripts', 1 === (substr_count($checkout_js, "pushEvent('begin_checkout'") + substr_count($drawer_js, "pushEvent('begin_checkout'")));
+/*
+ * ⚠ THIS ASSERTION COUNTS CODE, NOT COMMENTS — and it was wrong on the
+ *   first staging run, which is how the defect was found rather than
+ *   reasoned about. The 1.8.78 docblock quotes the OLD emission verbatim
+ *   ("pushEvent('begin_checkout', {...});") to show what was moved, so a
+ *   naive substr_count over the raw file returned 2 and reported a
+ *   double-count that does not exist. Stripping comments first is the
+ *   correction: the claim being made is about emissions the browser
+ *   executes, so the instrument must look at exactly that.
+ */
+$strip_comments = static function ($js) {
+    $js = preg_replace('!/\*.*?\*/!s', '', $js);
+    return preg_replace('!^\s*//.*$!m', '', $js);
+};
+$checkout_code = $strip_comments($checkout_js);
+$drawer_code   = $strip_comments($drawer_js);
+bhp_c173_assert($failures, 'The comment stripper actually removed the docblocks it is relied on to remove', strlen($checkout_code) < strlen($checkout_js) && strlen($drawer_code) < strlen($drawer_js));
+bhp_c173_assert($failures, 'Exactly one begin_checkout emission exists in EXECUTABLE code across both shipped client scripts', 1 === (substr_count($checkout_code, "pushEvent('begin_checkout'") + substr_count($drawer_code, "pushEvent('begin_checkout'")));
+bhp_c173_assert($failures, 'And it is in the checkout-page script, not the drawer', 1 === substr_count($checkout_code, "pushEvent('begin_checkout'") && 0 === substr_count($drawer_code, "pushEvent('begin_checkout'"));
 
 // ------------------------------------------------------------------
 // 4. ⛔ THE BANNER POSTURE DID NOT MOVE. This release stopped that item;
