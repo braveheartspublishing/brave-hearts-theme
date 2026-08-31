@@ -3,3 +3,46 @@
 # shipping it to a host triggers malware scanners (SiteGround, 2026-08-04).
 # It stays in git; it must never ship in a deploy artifact.
 docs/security-investigation-nlo-finance-redirect-2026-07-09.md export-ignore
+
+# ⭐⭐ 1.19.343 (2026-08-31, `CYCLE173-LD-CONSENT-CHECKOUT`) — TWO ARTEFACT
+#    DEFECTS THAT ONLY A BYTE DIFF AGAINST A LIVE ENVIRONMENT REVEALS.
+#    Both were found by diffing the deployed staging theme against the
+#    pre-deploy backup, not by reading the build command.
+#
+# 1. `assets/covers/` — 117 tracked cover-design source and proof files
+#    (`*-source-v1.png`, `*-dark-proof-v1.jpg`). COUNTED, not estimated:
+#    referenced by ZERO php/js/css in this theme, and present on NEITHER
+#    environment — production and staging were both 610 files before this
+#    release, and neither had this directory. A repo-built ZIP silently
+#    added all 117 to staging.
+#
+#    ⛔ This is the SAME RULE `tools/` already lives under, in the same
+#       spirit the RUNBOOK states it: ARTEFACTS DEPLOY, SOURCES DO NOT.
+#       These are design masters, not runtime assets. Excluding them keeps
+#       the deployed file set equal to what production actually runs, so a
+#       post-deploy byte diff stays a usable instrument.
+#
+#    ⚠ If a cover image is ever genuinely needed at runtime, the fix is to
+#      add THAT ONE optimised file somewhere served, not to delete this
+#      line and ship 117 design masters onto a public web server.
+assets/covers export-ignore
+
+# ⛔ LINE ENDINGS IN THE DEPLOY ARTEFACT — READ THIS BEFORE BUILDING A ZIP.
+#
+# This repository is worked on a Windows box with `core.autocrlf=true`, so
+# a plain `git archive` writes CRLF into every text file in the ZIP. Both
+# live environments run LF (verified: `tr -cd '\r' < 404.php | wc -c`
+# returns 0 on production, 2026-08-31).
+#
+# The consequence is not a broken site — PHP, JS, CSS and Markdown are all
+# indifferent — it is that EVERY TEXT FILE IN THE THEME CHANGES BYTE-WISE
+# ON DEPLOY. That destroys the one instrument that proves a release changed
+# only what it claims to: on the first 1.19.343 staging deploy the raw diff
+# reported ~250 files "differ" when the real number was 4.
+#
+# ⭐ THE FIX IS AT BUILD TIME, and the RUNBOOK carries it:
+#       git -c core.autocrlf=false -c core.eol=lf archive …
+#    It is deliberately NOT a `* text eol=lf` rule here, because that would
+#    rewrite the working tree for every future checkout on this machine and
+#    produce one enormous unrelated diff. The build flag is narrow and
+#    affects only the artefact.
