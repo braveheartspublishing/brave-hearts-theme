@@ -107,7 +107,10 @@ if ( ! defined( 'BHP_AUDIENCE_COUPON_META_KEY' ) ) {
  * ⭐ REPRODUCED DETERMINISTICALLY ON STAGING BEFORE ANY FIX WAS WRITTEN
  *    (`wp eval-file`, theme 1.19.342 / plugin 1.8.76 / WC 10.9.1, cart
  *    334 + 15 + 18, subtotal $35.97). Same coupon, same cart, key `0` vs key `1`:
- *      · key 0 → `PARENT10 Savings -3.20` + `Bundle Savings (Paperback) -3.98`
+ *      · key 0 → `[CODE] Savings -3.20` + `Bundle Savings (Paperback) -3.98`
+ *        (⛔ the code itself is redacted here on purpose — this repository is
+ *        public and BHP-AGENT-STANDING-RULES §4.1 makes coupon codes private.
+ *        The unredacted evidence is in the private release folder.)
  *      · key 1 → **no fees at all**, and PHP emitted
  *        `Warning: Undefined array key 0 … bundle-cart.php on line 715`.
  *    The warning had been there the whole time, invisible on a production
