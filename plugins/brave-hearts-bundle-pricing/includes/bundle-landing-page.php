@@ -274,12 +274,44 @@ function bhp_bundle_landing_price_facts( $format ) {
  * `bhp_bundle_handle_add()`'s own check, which uses the name. The value, the
  * action string and the referer field are all unchanged.
  */
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔ 1.8.77 (2026-08-31, `CYCLE172-LD-COUPON-DEFECT`) — `F1`: THE REFERER FIELD
+ *    IS GONE, BECAUSE ON A FULL-PAGE-CACHED SITE IT PUBLISHES ONE VISITOR'S URL
+ *    TO THE NEXT VISITOR.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ OBSERVED LIVE ON PRODUCTION, not inferred: `CYCLE172-CX-FUNNEL-E2E`
+ *    recorded *"another party's `?utm_source=verifyprobe` served to me from
+ *    cache in 4 `_wp_http_referer` fields"*, and `CYCLE172-LD-FUNNEL-FIX` raised
+ *    it as finding **F1** against this plugin. `wp_referer_field()` renders the
+ *    CURRENT request's full path and query string into the HTML; SiteGround's
+ *    proxy cache then serves that HTML — Facebook `fbclid`, `utm_*` and all —
+ *    to every later visitor of the same page.
+ *
+ * ⭐ THE THEME ALREADY CLOSED ITS HALF (theme 1.19.342 stopped the pipe reading
+ *    `$_REQUEST['_wp_http_referer']`), which bounded the impact to information
+ *    exposure. ⛔ EXPOSURE IS STILL THE DEFECT. This closes the emitting half,
+ *    and the two halves live in two different deployables, which is why it took
+ *    two releases.
+ *
+ * ⛔ NOTHING ABOUT VERIFICATION CHANGES, AND THAT WAS CHECKED RATHER THAN
+ *    ASSUMED. `wp_verify_nonce()` reads the nonce VALUE only; it never looks at
+ *    `_wp_http_referer`. `bhp_bundle_handle_add_to_cart()` verifies by NAME
+ *    (`$_POST['bhp_bundle_nonce']`) and builds its redirect from
+ *    `wc_get_cart_url()` / `wc_get_checkout_url()`, never from `wp_get_referer()`.
+ *    Grepped: this plugin contains no `wp_get_referer()` caller at all.
+ *
+ * ⚠ THE ADMIN DASHBOARD'S OWN `wp_nonce_field()` IS DELIBERATELY LEFT ALONE.
+ *   It is a logged-in wp-admin screen, it is not page-cached, and it verifies
+ *   through `check_admin_referer()`. Removing its referer field would change
+ *   admin behaviour to fix a leak that surface does not have.
+ */
 function bhp_bundle_nonce_input() {
 	printf(
 		'<input type="hidden" name="bhp_bundle_nonce" value="%s" />',
 		esc_attr( wp_create_nonce( 'bhp_bundle_add' ) )
 	);
-	wp_referer_field( true );
 }
 
 function bhp_bundle_render_landing_page() {

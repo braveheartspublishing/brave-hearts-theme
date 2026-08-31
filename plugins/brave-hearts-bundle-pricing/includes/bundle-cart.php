@@ -51,6 +51,90 @@ if ( ! defined( 'BHP_AUDIENCE_COUPON_META_KEY' ) ) {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.8.77 (2026-08-31, `CYCLE172-LD-COUPON-DEFECT`) — THE APPLIED-COUPON
+ *     LIST IS **NOT** A ZERO-INDEXED LIST, AND THREE PLACES IN THIS FILE
+ *     ASSUMED IT WAS. THAT ASSUMPTION CHARGED CUSTOMERS MORE THAN NO COUPON.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT, AS A CUSTOMER SAW IT. Escalated as `CYCLE172-CX-FUNNEL-E2E`
+ *    **E-1**, reproduced on PRODUCTION in a real browser on 2026-08-31: on a
+ *    three-paperback cart, two of the three audience coupons rendered
+ *    *"Your 10% discount code … is applied"* and then charged **$35.97** —
+ *    **$3.98 MORE than applying no coupon at all** ($31.99), and **$7.18 more**
+ *    than the third audience coupon on the byte-identical cart ($28.79). Both
+ *    the *"[CODE] Savings"* line AND the *"Bundle Savings"* line vanished while
+ *    the banner still said the discount was on.
+ *
+ * ⛔ WHAT IT WAS **NOT**, and this is the part that cost the diagnosis time:
+ *    it was **not** a difference between the coupon RECORDS. All three
+ *    audience coupons' postmeta were confirmed byte-identical
+ *    (`percent` · `10` · `individual_use yes` · `exclude_sale_items yes` ·
+ *    `_bhp_audience_coupon yes`). Nothing in this plugin branches on a code
+ *    STRING. The discriminator was never the coupon. It was the **array key**.
+ *
+ * ⭐⭐ THE MECHANISM, READ OUT OF WOOCOMMERCE'S OWN SOURCE ON THE SERVER
+ *     (`includes/class-wc-cart.php`, WooCommerce 10.9.1) RATHER THAN ASSUMED:
+ *
+ *       · `WC_Cart::remove_coupon()`  → `unset( $this->applied_coupons[ $key ] )`
+ *         — it **unsets**, it does not reindex.
+ *       · `WC_Cart::set_applied_coupons()` → `$this->applied_coupons = (array) $value`
+ *         — no reindex on the way in either.
+ *       · `WC_Cart::apply_coupon()` → `$this->applied_coupons[] = $coupon_code`
+ *         — `[]` appends at *max integer key + 1*, which `unset()` does not reset.
+ *
+ *     So the moment an `individual_use` coupon replaces another **inside one
+ *     request** — which is exactly what `apply_coupon()` does, it calls
+ *     `remove_coupon()` on the incumbent and then appends — the cart holds
+ *     `array( 1 => 'the-new-code' )`. There is no element `0`. And because
+ *     `WC_Cart_Session` persists and restores that array verbatim, **the gap
+ *     survives every subsequent page load for the rest of the session.**
+ *
+ * ⛔ WHY THAT PRODUCED THE WORST POSSIBLE SHAPE OF FAILURE. Three call sites
+ *    read `$applied[0]`, and the two that decide MONEY both went quiet, while
+ *    the one that decides APPEARANCE kept working:
+ *      · `bhp_audience_coupon_apply_savings_fee()` — no *"[CODE] Savings"* fee.
+ *      · `bhp_bundle_apply_discount_fees()`        — no *"Bundle Savings"* fee,
+ *        because its `$only_audience_coupon` test also read index 0. **The
+ *        customer therefore lost a discount they would have had with NO coupon
+ *        at all.**
+ *      · `bhp_audience_coupon_zero_native_discount()` reads the coupon OBJECT,
+ *        never an index, so it kept zeroing WooCommerce's own 10% — which is
+ *        why the Store API reported `total_discount: "0"` and nothing anywhere
+ *        said "error".
+ *    Silent, self-consistent, and wrong in the customer's disfavour.
+ *
+ * ⭐ REPRODUCED DETERMINISTICALLY ON STAGING BEFORE ANY FIX WAS WRITTEN
+ *    (`wp eval-file`, theme 1.19.342 / plugin 1.8.76 / WC 10.9.1, cart
+ *    334 + 15 + 18, subtotal $35.97). Same coupon, same cart, key `0` vs key `1`:
+ *      · key 0 → `PARENT10 Savings -3.20` + `Bundle Savings (Paperback) -3.98`
+ *      · key 1 → **no fees at all**, and PHP emitted
+ *        `Warning: Undefined array key 0 … bundle-cart.php on line 715`.
+ *    The warning had been there the whole time, invisible on a production
+ *    install with display_errors off.
+ *
+ * ⛔ THE FIX IS THIS ONE FUNCTION, AND EVERY READER GOES THROUGH IT. Returning
+ *    `array_values()` makes "the first applied coupon" mean the first applied
+ *    coupon rather than "whatever happens to sit at offset zero". It is
+ *    deliberately NOT a per-site `isset()` patch: three sites drifted apart
+ *    once already, and a fourth reader added later would reintroduce the bug
+ *    exactly. ⭐ It also cannot mask a real problem — a cart with no coupons
+ *    still returns `array()`, and callers still assert `1 === count()`.
+ *
+ * ⚠ NO COUPON RECORD WAS READ FOR THIS DIAGNOSIS AND NONE WAS CHANGED, on any
+ *   environment. The defect was always in this file.
+ *
+ * @param object|WC_Cart $cart Any cart-like object.
+ * @return string[] Applied coupon codes, densely reindexed from 0.
+ */
+function bhp_cart_applied_coupons( $cart ) {
+	if ( ! is_object( $cart ) || ! is_callable( array( $cart, 'get_applied_coupons' ) ) ) {
+		return array();
+	}
+	return array_values( (array) $cart->get_applied_coupons() );
+}
+
+/**
  * True if a coupon CODE carries audience-coupon scope: normally by the
  * per-coupon meta flag, and only additionally by a privately-defined
  * literal list (empty in this repository). This is the one
@@ -645,7 +729,9 @@ function bhp_audience_coupon_savings_amount( $cart ) {
 	if ( ! is_callable( array( $cart, 'get_applied_coupons' ) ) ) {
 		return 0.0;
 	}
-	$applied = (array) $cart->get_applied_coupons();
+	// 1.8.77: densely reindexed. See bhp_cart_applied_coupons() for why
+	// `$applied[0]` was not a safe expression and what it cost.
+	$applied = bhp_cart_applied_coupons( $cart );
 	if ( 1 !== count( $applied ) || ! class_exists( 'WC_Coupon' ) ) {
 		return 0.0;
 	}
@@ -670,7 +756,10 @@ function bhp_audience_coupon_apply_savings_fee( $cart ) {
 	if ( ! function_exists( 'WC' ) || ! WC()->cart || ! is_object( $cart ) ) {
 		return;
 	}
-	$applied = $cart->get_applied_coupons();
+	// 1.8.77: densely reindexed. See bhp_cart_applied_coupons(). Before this,
+	// an individual_use swap inside one request left the code at key 1 and this
+	// guard read a non-existent key 0 -- so the savings fee silently vanished.
+	$applied = bhp_cart_applied_coupons( $cart );
 	if ( 1 !== count( $applied ) || ! bhp_is_audience_coupon_code( $applied[0] ) ) {
 		return;
 	}
@@ -710,7 +799,11 @@ function bhp_bundle_apply_discount_fees( $cart ) {
 	// coupon can be applied at all. This is an exception for coupons
 	// explicitly flagged as audience coupons on their own record, never
 	// a generic "any coupon can stack" rule.
-	$applied_coupons = $cart->get_applied_coupons();
+	// 1.8.77: densely reindexed. See bhp_cart_applied_coupons(). This line is
+	// where the customer-visible loss actually happened: reading a missing key 0
+	// made $only_audience_coupon false, which suppressed Bundle Savings entirely
+	// -- so applying an audience coupon cost MORE than applying none.
+	$applied_coupons = bhp_cart_applied_coupons( $cart );
 	if ( ! empty( $applied_coupons ) ) {
 		$only_audience_coupon = ( 1 === count( $applied_coupons ) ) && bhp_is_audience_coupon_code( $applied_coupons[0] );
 		if ( ! $only_audience_coupon || ! bhp_audience_coupon_cart_qualifies( $cart ) ) {

@@ -117,7 +117,17 @@ function bhp_bundle_render_single_section( $format ) {
 	?>
 	<div class="bhp-bundle-card bhp-bundle-single">
 		<form method="post" class="bhp-bundle-form">
-			<?php wp_nonce_field( 'bhp_bundle_add', 'bhp_bundle_nonce' ); ?>
+			<?php
+			/*
+			 * 1.8.77 (`F1`): third argument `false` = emit NO `_wp_http_referer`
+			 * field. On a page-cached site that field publishes one visitor's
+			 * full query string (fbclid, utm_*) to the next visitor. See the
+			 * long note on `bhp_bundle_nonce_input()` in bundle-landing-page.php
+			 * for the live observation and for why nonce verification is
+			 * unaffected.
+			 */
+			wp_nonce_field( 'bhp_bundle_add', 'bhp_bundle_nonce', false );
+			?>
 			<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( $action ); ?>" />
 			<p class="bhp-bundle-instructions">Choose one title:</p>
 			<ul class="bhp-bundle-title-list">
