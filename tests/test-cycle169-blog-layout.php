@@ -1257,18 +1257,77 @@ bhp_c169_ok(
 	$bhp_c169_all_shared
 );
 
-/* ── §7.9 THE FORM FIELD IS SILENT ON A CLEAN URL ──────────────────────────*/
+/* ── §7.9 THE FORM FIELD CARRIES NO SERVER-RENDERED VALUE, EVER ────────────*/
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ INVERTED 1.19.342 (`CYCLE172-LD-FUNNEL-FIX`, audit gap G-A). THE
+ *     ASSERTION THAT USED TO LIVE HERE ENCODED THE BROKEN DESIGN, AND IT
+ *     PASSED THROUGHOUT THE PERIOD PRODUCTION WAS LEAKING. Preserved verbatim
+ *     so the movement stays visible:
+ *
+ *       bhp_c169_ok(
+ *         '§7.9 ⭐⭐ ON A CLEAN URL NO FIELD IS EMITTED AT ALL — every existing
+ *          form's rendered markup is byte-identical to 1.19.322 for an ordinary
+ *          visitor',
+ *         '' === bhp_get_signup_attribution_field_value()
+ *           && false === strpos( bhp_c169_render( … ), 'bhp_attr_now' ) );
+ *       bhp_c169_ok(
+ *         '§7.9b ⭐ and on a click-ID URL it carries exactly the whitelisted
+ *          fragment, no URL and no landing page',
+ *         'fbclid=IwAR0testvalue123' === bhp_get_signup_attribution_field_value() );
+ *
+ * ⭐ BOTH WERE TRUE OF A FRESH PHP RENDER AND BOTH WERE IRRELEVANT TO WHAT
+ *    VISITORS RECEIVED. SiteGround's full-page cache strips `utm_*`/`fbclid`
+ *    from the cache key, so the §7.9b render — the one that DOES carry a value
+ *    — was stored under the clean URL and served to everybody. The suite was
+ *    asserting that the poison was correctly manufactured.
+ *
+ * ⭐ THE REPLACEMENT ASSERTS THE INVARIANT THAT MAKES THE CACHE IRRELEVANT:
+ *    no query string, of any shape, may put a value into the rendered HTML.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
 $bhp_c169_reset();
+$bhp_c169_clean_render = bhp_c169_render( 'template-parts/acquisition/inline-blog-signup' );
 bhp_c169_ok(
-	'§7.9 ⭐⭐ ON A CLEAN URL NO FIELD IS EMITTED AT ALL — every existing form\'s rendered markup is byte-identical to 1.19.322 for an ordinary visitor',
-	'' === bhp_get_signup_attribution_field_value()
-		&& false === strpos( bhp_c169_render( 'template-parts/acquisition/inline-blog-signup' ), 'bhp_attr_now' )
+	'§7.9 ⭐ on a clean URL the field renders EMPTY (unconditional markup is what makes the page honestly cacheable)',
+	false === strpos( $bhp_c169_clean_render, 'bhp_attr_now' )
+		|| false !== strpos( $bhp_c169_clean_render, 'name="bhp_attr_now" value=""' )
 );
 $bhp_c169_reset();
-$_GET = array( 'fbclid' => 'IwAR0testvalue123' );
+$_GET                  = array( 'fbclid' => 'IwAR0testvalue123', 'utm_source' => 'facebook' );
+$bhp_c169_dirty_render = bhp_c169_render( 'template-parts/acquisition/inline-blog-signup' );
 bhp_c169_ok(
-	'§7.9b ⭐ and on a click-ID URL it carries exactly the whitelisted fragment, no URL and no landing page',
-	'fbclid=IwAR0testvalue123' === bhp_get_signup_attribution_field_value()
+	'§7.9b ⛔⛔ THE G-A ASSERTION: a click ID in $_GET reaches NO rendered form field — there is nothing for the cache to capture',
+	false === strpos( $bhp_c169_dirty_render, 'IwAR0testvalue123' )
+);
+/*
+ * ⭐ THE FORM-INSTANCE COUNTER IS NORMALISED OUT BEFORE COMPARING, AND THAT IS
+ *    A TEST ARTEFACT RATHER THAN A CONCESSION. The template assigns each form a
+ *    per-request sequence number (`inline-blog-signup-1`, `-2`, …) so that two
+ *    forms on one page get unique ids and label associations. Rendering the
+ *    partial TWICE inside this one test request therefore increments it —
+ *    which has nothing to do with the query string.
+ *
+ * ⛔ VERIFIED, NOT ASSUMED: the two renders were diffed chunk-by-chunk on
+ *    staging 2026-08-31. Both are 2,581 bytes and the ONLY differences are the
+ *    instance number in `id`/`aria-labelledby`/`aria-describedby`. No campaign
+ *    value, no click ID, no length change. Normalising the counter is what
+ *    lets this assert the thing that actually matters.
+ */
+/*
+ * ⛔ THE NONCE IS NORMALISED TOO, AND FOR THE SAME REASON — IT IS DOWNSTREAM OF
+ *    THE COUNTER, NOT OF THE QUERY STRING. The signup nonce action is
+ *    `bhp_mailchimp_signup_<form_id>`, so a different instance number produces
+ *    a different hash. ⭐ It is NOT sensitive to `$_GET` in any way, which is
+ *    the only property this assertion depends on.
+ */
+$bhp_c169_norm = static function ( $html ) {
+	$html = preg_replace( '/inline-blog-signup-\d+/', 'inline-blog-signup-N', (string) $html );
+	return preg_replace( '/name="bhp_signup_nonce" value="[^"]*"/', 'name="bhp_signup_nonce" value="N"', (string) $html );
+};
+bhp_c169_ok(
+	'§7.9b-ii ⭐⭐ the campaign render and the clean render are IDENTICAL apart from the per-request form counter — the two are cache-interchangeable, which is exactly what SiteGround assumes',
+	$bhp_c169_norm( $bhp_c169_clean_render ) === $bhp_c169_norm( $bhp_c169_dirty_render )
 );
 bhp_c169_ok(
 	'§7.9c ⛔ the field name is RESERVED, so a caller\'s own hidden_fields cannot shadow it with a value the pipe would then trust',

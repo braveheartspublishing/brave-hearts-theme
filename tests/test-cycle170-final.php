@@ -114,7 +114,16 @@ $bhp_fin_ver = isset( $bhp_fin_vm[1] ) ? $bhp_fin_vm[1] : '';
  *
  *      bhp_fin_assert( '1.19.339' === $bhp_fin_ver, "style.css declares 1.19.339, got '{$bhp_fin_ver}'" );
  */
-bhp_fin_assert( '1.19.341' === $bhp_fin_ver, "style.css declares 1.19.341, got '{$bhp_fin_ver}'" );
+/*
+ * ⭐ PIN MOVED TO 1.19.342 BY `CYCLE172-LD-FUNNEL-FIX` (2026-08-31). Same
+ *    discipline every note above records: the lane that bumps the theme owns
+ *    every pin it breaks. The four stale pins belonging to OTHER lanes
+ *    (ship-prep, triple, school-readaloud, cycle169-funnel) were already stale
+ *    before this build and are STILL deliberately left alone — adopting them
+ *    would silently transfer another lane's evidence to this one.
+ *    SUPERSEDED VALUE, PRESERVED: 1.19.341.
+ */
+bhp_fin_assert( '1.19.342' === $bhp_fin_ver, "style.css declares 1.19.342, got '{$bhp_fin_ver}'" );
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * 1 · THE SEPTEMBER CARDS — items 537 / 538 / 540
@@ -573,9 +582,14 @@ if ( 200 === $bhp_fin_code && '' !== $bhp_fin_b ) {
 		false !== strpos( $bhp_fin_js, 'data-bhp-attr-now' ) && false !== strpos( $bhp_fin_js, 'location.search' ),
 		'⭐ the filler reads the VISITOR\'S OWN location.search into the marked field'
 	);
+	/* ⛔ COMMENTS STRIPPED FIRST. The filler's header documents in prose that it
+	   writes no cookie and no storage, so a raw strpos() matches the
+	   DOCUMENTATION SAYING SO and fails correct code. Caught on staging
+	   2026-08-31; see the longer note in `tests/test-cycle172-funnel-fix.php`. */
+	$bhp_fin_js_code = (string) preg_replace( array( '#/\*.*?\*/#s', '#(^|\s)//[^\n]*#' ), ' ', $bhp_fin_js );
 	bhp_fin_assert(
-		false === strpos( $bhp_fin_js, 'document.cookie' ) && false === strpos( $bhp_fin_js, 'localStorage' ),
-		'⛔ the filler writes NO cookie and NO storage — it is not the consent-gated instrument'
+		false === strpos( $bhp_fin_js_code, 'document.cookie' ) && false === strpos( $bhp_fin_js_code, 'localStorage' ),
+		'⛔ the filler CODE writes NO cookie and NO storage — it is not the consent-gated instrument'
 	);
 	bhp_fin_assert(
 		false !== strpos( $bhp_fin_b, 'bhp-attr-now.js' ),

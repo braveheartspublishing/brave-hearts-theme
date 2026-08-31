@@ -102,12 +102,28 @@ c172_assert(
 	false !== strpos( $c172_js, 'window.location.search' ),
 	'⭐ the filler reads the visitor\'s OWN location.search'
 );
+/*
+ * ⛔⛔ COMMENTS ARE STRIPPED BEFORE THIS CHECK, AND THE FIRST VERSION OF IT
+ *     FAILED BECAUSE THEY WERE NOT. The filler's own header documents, in
+ *     prose, that it writes *"NO COOKIE, NO localStorage, NO sessionStorage"* —
+ *     so a naive `strpos()` for those identifiers matched the DOCUMENTATION
+ *     SAYING THE CODE DOES NOT DO IT and reported a violation.
+ *
+ * ⭐ CAUGHT ON STAGING 2026-08-31, AND WORTH KEEPING AS A LESSON: a
+ *    source-text assertion tests the TEXT, not the BEHAVIOUR. This one failed
+ *    safe — it cried wolf about correct code. The same class of mistake in the
+ *    other direction (an assertion that passes because the string it needs
+ *    happens to sit in a comment) is invisible, and that is exactly how the
+ *    superseded G-A assertions stayed green for 26 days.
+ */
+$c172_js_code = (string) preg_replace( array( '#/\*.*?\*/#s', '#(^|\s)//[^\n]*#' ), ' ', $c172_js );
 c172_assert(
-	false === strpos( $c172_js, 'document.cookie' )
-		&& false === strpos( $c172_js, 'localStorage' )
-		&& false === strpos( $c172_js, 'sessionStorage' )
-		&& false === strpos( $c172_js, 'fetch(' ),
-	'⛔ the filler writes NO cookie/storage and makes NO request — no consent gate needed, and none claimed'
+	false === strpos( $c172_js_code, 'document.cookie' )
+		&& false === strpos( $c172_js_code, 'localStorage' )
+		&& false === strpos( $c172_js_code, 'sessionStorage' )
+		&& false === strpos( $c172_js_code, 'fetch(' )
+		&& false === strpos( $c172_js_code, 'XMLHttpRequest' ),
+	'⛔ the filler CODE writes NO cookie/storage and makes NO request — no consent gate needed, and none claimed'
 );
 
 /*
