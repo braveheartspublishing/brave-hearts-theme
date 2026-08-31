@@ -136,9 +136,22 @@ $cart_src = file_get_contents( BHP_BUNDLE_PRICING_DIR . 'includes/bundle-cart.ph
  *    is precisely how the three existing readers drifted apart in the first
  *    place. A grep is the only tool that sees a call site nobody executed.
  */
+/*
+ * ⚠ EXACTLY ONE, NOT ZERO — and the first draft of this assertion said zero and
+ *   FAILED on the fix that had just been proven correct in §4. The normaliser
+ *   itself must call the method; it is the one place allowed to. Recorded rather
+ *   than quietly rewritten, because "the test was wrong" is a claim that has to
+ *   be earned: §4 observed the real cart producing identical totals at key 0 and
+ *   key 1 in the same run this assertion failed.
+ */
 bhp_ck_assert(
-	false === strpos( $cart_src, '$cart->get_applied_coupons()' ),
-	'bundle-cart.php calls get_applied_coupons() only through bhp_cart_applied_coupons()',
+	1 === substr_count( $cart_src, '$cart->get_applied_coupons()' ),
+	'bundle-cart.php calls get_applied_coupons() exactly once — inside the normaliser and nowhere else',
+	$failures
+);
+bhp_ck_assert(
+	false !== strpos( $cart_src, 'return array_values( (array) $cart->get_applied_coupons() );' ),
+	'…and that one call is the normaliser\'s own array_values() return',
 	$failures
 );
 bhp_ck_assert(
