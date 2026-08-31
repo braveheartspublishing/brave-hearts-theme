@@ -151,7 +151,25 @@ echo "\n=== 0 · VERSION ===\n";
 
 preg_match( '/^Version:\s*(\S+)/m', $bhp_wfx_raw, $bhp_wfx_vm );
 $bhp_wfx_ver = isset( $bhp_wfx_vm[1] ) ? $bhp_wfx_vm[1] : '';
-bhp_wfx_assert( '1.19.339' === $bhp_wfx_ver, "style.css declares 1.19.339, got '{$bhp_wfx_ver}'" );
+/*
+ * ⭐ PIN MOVED TO 1.19.341 BY `CYCLE171-LD-341` (2026-08-31, later the same
+ *    night). Same discipline the 1.19.340 note below records: the lane that
+ *    bumps the theme owns every pin it breaks. The four stale pins belonging to
+ *    OTHER lanes (ship-prep, triple, school-readaloud, cycle169-funnel) were
+ *    already stale before this build and are STILL deliberately left alone.
+ *    SUPERSEDED VALUE, PRESERVED: 1.19.340.
+ * ⭐ PIN MOVED TO 1.19.340 BY `CYCLE170-LD-NAMEFIELD` (2026-08-31). This lane
+ *    bumped the theme, so this lane owns the pin it broke — the same discipline
+ *    every CYCLE170 lane before it followed. ⛔ The pins that were ALREADY red
+ *    at 1.19.339 (ship-prep 1.19.332, triple 1.19.331, school-readaloud
+ *    1.19.330) are STILL deliberately left alone: those are other lanes' debt,
+ *    and adopting them would hide it.
+ *
+ *    SUPERSEDED ASSERTION, PRESERVED VERBATIM:
+ *
+ *      bhp_wfx_assert( '1.19.339' === $bhp_wfx_ver, "style.css declares 1.19.339, got '{$bhp_wfx_ver}'" );
+ */
+bhp_wfx_assert( '1.19.341' === $bhp_wfx_ver, "style.css declares 1.19.341, got '{$bhp_wfx_ver}'" );
 
 /* ⭐ THE MINIFIED ARTEFACT IS WHAT THE BROWSER ACTUALLY LOADS. A patch that
       lands in style.css and never reaches style.min.css is invisible on the
@@ -365,12 +383,12 @@ bhp_wfx_assert( '' !== $bhp_wfx_pn, '/positivity-news/ returns a body' );
 /* The version-stamped asset. A stale `?ver=` is the classic "deployed but the
    browser is still on the old sheet" failure. */
 bhp_wfx_assert(
-	false !== strpos( $bhp_wfx_sr, 'style.min.css?ver=1.19.339' ),
-	'/school-read-alouds/ links style.min.css?ver=1.19.339'
+	false !== strpos( $bhp_wfx_sr, 'style.min.css?ver=1.19.341' ),
+	'/school-read-alouds/ links style.min.css?ver=1.19.341'
 );
 bhp_wfx_assert(
-	false !== strpos( $bhp_wfx_pn, 'style.min.css?ver=1.19.339' ),
-	'/positivity-news/ links style.min.css?ver=1.19.339'
+	false !== strpos( $bhp_wfx_pn, 'style.min.css?ver=1.19.341' ),
+	'/positivity-news/ links style.min.css?ver=1.19.341'
 );
 
 /* ⛔ THE COPY IS UNCHANGED BY THIS RELEASE. Three chips, still three, and the
@@ -385,7 +403,7 @@ if ( preg_match( '#<ul class="school-readalouds__chips">(.*?)</ul>#s', $bhp_wfx_
 }
 
 /* The served minified sheet actually carries the patches. */
-$bhp_wfx_served = wp_remote_retrieve_body( wp_remote_get( get_template_directory_uri() . '/style.min.css?ver=1.19.339', array( 'timeout' => 45, 'sslverify' => false ) ) );
+$bhp_wfx_served = wp_remote_retrieve_body( wp_remote_get( get_template_directory_uri() . '/style.min.css?ver=1.19.341', array( 'timeout' => 45, 'sslverify' => false ) ) );
 bhp_wfx_assert( '' !== $bhp_wfx_served, 'the minified stylesheet is fetchable' );
 bhp_wfx_assert(
 	1 === preg_match( '/\.school-readalouds__chips\s*\{[^}]*flex-direction:\s*column/s', $bhp_wfx_served ) &&

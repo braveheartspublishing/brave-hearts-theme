@@ -1,5 +1,5 @@
 /*! Built from blog-post.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: e66aa34a7ed29ed33559ff836b36cb5b
+    source-md5: 7f15bb8a5297a078bb07302577261162
     Comments stripped for transfer size; the source file is canonical. */
 body:not(.home) article.single-post.section {
   padding-block-start: clamp(0.3rem, 1.6vw, 2rem);
@@ -96,20 +96,22 @@ body:not(.home) article.single-post.section {
   --bhp-editorial-inset: clamp(2rem, 5vw, 4rem);
 }
 
+
 .post-header--field-note .post-header__image {
-  --bhp-featured-max-h: 400px;
+  --bhp-featured-max-h: 320px;
 
   display: block;
-  width: calc(
+  width: auto;
+  height: auto;
+  max-width: calc(
     min(100% - (2 * var(--gutter)), var(--container-content))
     - (2 * var(--bhp-editorial-inset))
   );
-  max-width: 100%;
   margin-top: clamp(1.25rem, 4vw, 2rem);
   margin-inline: auto;
 
   max-height: var(--bhp-featured-max-h);
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 }
 
@@ -120,9 +122,10 @@ body:not(.home) article.single-post.section {
   }
 }
 
+
 @media (max-width: 767px) {
   .post-header--field-note .post-header__image {
-    --bhp-featured-max-h: clamp(160px, 48vw, 240px);
+    --bhp-featured-max-h: clamp(220px, 40vw, 280px);
   }
 }
 

@@ -423,37 +423,78 @@ bhp_bun_assert(
 	'⛔ the footer-capture callback returns $show UNCHANGED off-template'
 );
 
-echo "\n=== 6 · noindex ON BOTH NEW SURFACES ===\n";
+echo "\n=== 6 · ROBOTS: /positivity-news/ STAYS noindex, /school-read-alouds/ IS NOW INDEXABLE ===\n";
 
+/*
+ * ⚠⚠ SECTION 6 REVERSED IN HALF AT 1.19.341 (`CYCLE171-LD-341` item 3), AND THE
+ *    REVERSAL IS THE POINT OF THE NEW ASSERTIONS RATHER THAN A DELETION.
+ *
+ *    It used to read "noindex ON BOTH NEW SURFACES" and asserted that
+ *    /school-read-alouds/ registered a robots callback on each of the two hooks.
+ *    Founder reversal 2026-08-31 of carrier item 525 ("Yes... make it
+ *    indexable") deleted both of that page's callbacks from
+ *    `inc/school-read-alouds.php`, so those two assertions could not survive.
+ *
+ * ⛔ THEY ARE REPLACED BY THEIR INVERSE, NOT DROPPED. Deleting them outright
+ *    would leave the new ruled state completely uncovered — a future pass could
+ *    re-add a noindex filter and no suite would notice. The assertions below
+ *    prove the ABSENCE, which is now the specified behaviour.
+ *
+ * ⛔ THE /positivity-news/ HALF IS UNCHANGED AND STILL BINDING. That page stays
+ *    noindex by the founder's ruling the same night. Keeping both halves in one
+ *    section is deliberate: it is what stops the two pages' robots policies
+ *    drifting into each other.
+ */
 foreach ( array(
 	'wp_robots'                => 'bhp_school_readalouds_robots',
 	'rank_math/frontend/robots' => 'bhp_school_readalouds_rankmath_robots',
 ) as $bhp_bun_hook => $bhp_bun_cb ) {
-	bhp_bun_assert( false !== has_filter( $bhp_bun_hook, $bhp_bun_cb ), "⛔ /school-read-alouds/ registers {$bhp_bun_cb} on {$bhp_bun_hook}" );
+	bhp_bun_assert(
+		false === has_filter( $bhp_bun_hook, $bhp_bun_cb ),
+		"⭐ item 525 REVERSED: /school-read-alouds/ no longer registers {$bhp_bun_cb} on {$bhp_bun_hook}"
+	);
+	bhp_bun_assert(
+		! function_exists( $bhp_bun_cb ),
+		"⛔ {$bhp_bun_cb} is genuinely GONE, not left registered-but-inert"
+	);
 }
 foreach ( array(
 	'wp_robots'                => 'bhp_positivity_news_robots',
 	'rank_math/frontend/robots' => 'bhp_positivity_news_rankmath_robots',
 ) as $bhp_bun_hook => $bhp_bun_cb ) {
-	bhp_bun_assert( false !== has_filter( $bhp_bun_hook, $bhp_bun_cb ), "⛔ /positivity-news/ registers {$bhp_bun_cb} on {$bhp_bun_hook}" );
+	bhp_bun_assert( false !== has_filter( $bhp_bun_hook, $bhp_bun_cb ), "⛔ /positivity-news/ STILL registers {$bhp_bun_cb} on {$bhp_bun_hook}" );
 }
 
 /*
- * ⛔ AND EVERY ROBOTS CALLBACK IS A NO-OP OFF-TEMPLATE. Under CLI both
- *    `_is_page()` helpers are false, so an unrelated page's robots directives
- *    must come back byte-identical. If this fails, the whole site went noindex.
+ * ⛔ AND /positivity-news/'s ROBOTS CALLBACKS ARE STILL A NO-OP OFF-TEMPLATE.
+ *    Under CLI the `_is_page()` helper is false, so an unrelated page's robots
+ *    directives must come back byte-identical. If this fails, the whole site
+ *    went noindex. The school-read-alouds half of this assertion is gone with
+ *    its callbacks; its replacement is the `! function_exists()` pair above.
  */
 $bhp_bun_robots_in = array( 'index' => true, 'follow' => true, 'max-image-preview' => 'large' );
 bhp_bun_assert(
-	$bhp_bun_robots_in === bhp_school_readalouds_robots( $bhp_bun_robots_in )
-		&& $bhp_bun_robots_in === bhp_positivity_news_robots( $bhp_bun_robots_in ),
-	'⛔⛔ the wp_robots callbacks return their input UNCHANGED off-template'
+	$bhp_bun_robots_in === bhp_positivity_news_robots( $bhp_bun_robots_in ),
+	'⛔⛔ the /positivity-news/ wp_robots callback returns its input UNCHANGED off-template'
 );
 $bhp_bun_rm_in = array( 'index' => 'index', 'follow' => 'follow' );
 bhp_bun_assert(
-	$bhp_bun_rm_in === bhp_school_readalouds_rankmath_robots( $bhp_bun_rm_in )
-		&& $bhp_bun_rm_in === bhp_positivity_news_rankmath_robots( $bhp_bun_rm_in ),
-	'⛔⛔ the Rank Math callbacks return their input UNCHANGED off-template'
+	$bhp_bun_rm_in === bhp_positivity_news_rankmath_robots( $bhp_bun_rm_in ),
+	'⛔⛔ the /positivity-news/ Rank Math callback returns its input UNCHANGED off-template'
+);
+
+/*
+ * ⭐ THE POSITIVE HALF OF THE REVERSAL, ASSERTED AT SOURCE. Nothing anywhere in
+ *    the theme may write a robots directive for this page any more — a
+ *    replacement filter added under a different callback name in some other
+ *    file would defeat the reversal just as effectively as restoring these two.
+ */
+$bhp_bun_sra_src = (string) @file_get_contents( get_stylesheet_directory() . '/inc/school-read-alouds.php' );
+bhp_bun_assert(
+	'' !== $bhp_bun_sra_src
+		&& false === strpos( $bhp_bun_sra_src, "add_filter( 'wp_robots'" )
+		&& false === strpos( $bhp_bun_sra_src, "add_filter( 'rank_math/frontend/robots'" ),
+	'⭐⭐ inc/school-read-alouds.php registers NO robots filter at all — the page meta governs'
 );
 
 echo "\n=== 7 · /positivity-news/ — COPY, TAGS, AND THE MISSING LEAD MAGNET ===\n";
@@ -528,12 +569,43 @@ bhp_bun_assert(
 	(bool) preg_match( "/'lead_magnet'\s*=>\s*''/", $bhp_bun_pn_src ),
 	'⛔⛔ the signup form is passed an EMPTY lead_magnet'
 );
-foreach ( array( 'reluctant_reader_adventure_kit', 'teacher_adventure_toolkit', 'mariana_trench', 'success_redirect_key', 'require_name' ) as $bhp_bun_forbidden ) {
+/*
+ * ⛔⛔ AMENDED AT 1.19.340 (`CYCLE170-LD-NAMEFIELD`, 2026-08-31) — `require_name`
+ *     LEAVES THE FORBIDDEN-SUBSTRING LIST. FOUNDER ORDER (relayed through
+ *     `chief-of-staff`): the page gains an OPTIONAL first-name field.
+ *
+ *     SUPERSEDED LIST, PRESERVED VERBATIM so the movement is visible:
+ *
+ *       foreach ( array( 'reluctant_reader_adventure_kit', 'teacher_adventure_toolkit', 'mariana_trench', 'success_redirect_key', 'require_name' ) as $bhp_bun_forbidden ) {
+ *
+ * ⭐⭐ THE INTENT OF THE OLD ASSERTION IS KEPT AND IS MADE STRONGER, NOT
+ *     DROPPED. What it was really protecting is that a newsletter signup can
+ *     never be REJECTED for a missing name. A bare substring search can no
+ *     longer express that, because the page now legitimately contains the text
+ *     `require_name` — as `'require_name'  => false`. So the check below asserts
+ *     the VALUE rather than the absence of the word, which is what actually
+ *     matters and what a substring search only ever approximated.
+ *
+ * ⛔ THE OTHER FOUR ARE UNCHANGED AND STILL FORBIDDEN. No lead magnet, no
+ *    thank-you redirect. That is the rule this page exists to keep.
+ */
+foreach ( array( 'reluctant_reader_adventure_kit', 'teacher_adventure_toolkit', 'mariana_trench', 'success_redirect_key' ) as $bhp_bun_forbidden ) {
 	bhp_bun_assert(
 		false === strpos( $bhp_bun_pn_src, $bhp_bun_forbidden ),
 		"⛔ the newsletter page carries no `{$bhp_bun_forbidden}`"
 	);
 }
+
+/* ⛔⛔ AND THE NAME IS OPTIONAL, ASSERTED ON THE VALUE. `require_name => true`
+      would make the pipe reject a blank name with `missing_name`. */
+bhp_bun_assert(
+	(bool) preg_match( "/'require_name'\s*=>\s*false/", $bhp_bun_pn_src ),
+	'⛔⛔ the newsletter page passes `require_name => false` (optional means optional)'
+);
+bhp_bun_assert(
+	! preg_match( "/'require_name'\s*=>\s*true/", $bhp_bun_pn_src ),
+	'⛔⛔ the newsletter page NEVER passes `require_name => true`'
+);
 
 echo "\n=== 8 · THE CSS CLASS COLLISION — the wall calendar's prerequisite ===\n";
 
@@ -832,15 +904,49 @@ bhp_bun_assert(
 	'⛔⛔ the form posts an EMPTY lead_magnet'
 );
 
-/* ⛔ ONE FIELD. The deck specifies email only and the Mailchimp page carries one
-      field; both surfaces ask for the same one thing. */
+/* ⛔ EXACTLY ONE EMAIL INPUT — unchanged, and still the point: this page must
+      never grow a second capture. */
 bhp_bun_assert(
 	1 === preg_match_all( '/<input[^>]+type="email"/', $bhp_bun_pb ),
 	'⛔ exactly ONE email input on the page'
 );
+
+/*
+ * ⛔⛔ AMENDED AT 1.19.340 (`CYCLE170-LD-NAMEFIELD`, 2026-08-31). FOUNDER ORDER,
+ *     relayed through `chief-of-staff`: an OPTIONAL first-name field.
+ *
+ *     SUPERSEDED ASSERTION AND ITS RATIONALE, PRESERVED VERBATIM so a later
+ *     reader does not "restore" email-only as a tidy-up:
+ *
+ *       ⛔ ONE FIELD. The deck specifies email only and the Mailchimp page
+ *          carries one field; both surfaces ask for the same one thing.
+ *
+ *       bhp_bun_assert(
+ *           ! preg_match( '/name="first_name"/', $bhp_bun_pb ),
+ *           '⛔ NO first-name field renders'
+ *       );
+ *
+ * ⚠️ THE "BOTH SURFACES ASK FOR THE SAME ONE THING" CLAIM IS NOW FALSE AND IS
+ *   FLAGGED RATHER THAN DELETED: this page asks for a name, the Mailchimp-hosted
+ *   page 42351 still does not. ⛔ 42351 IS NOT THIS BUILD'S TO CHANGE — it is
+ *   Gimli's surface and Andrew's publish click. Recorded as a handover finding.
+ *
+ * ⭐ THE ASSERTION IS INVERTED, NOT REMOVED, AND IT GAINS THE THREE NEGATIVES
+ *    THAT DISTINGUISH AN OPTIONAL FIELD FROM A REQUIRED ONE — which is the
+ *    difference no screenshot can show. `test-cycle170-namefield.php` is the
+ *    full treatment; these are the load-bearing ones kept in the bundle suite.
+ */
 bhp_bun_assert(
-	! preg_match( '/name="first_name"/', $bhp_bun_pb ),
-	'⛔ NO first-name field renders'
+	(bool) preg_match( '/name="first_name"/', $bhp_bun_pb ),
+	'⭐ the OPTIONAL first-name field renders (founder order, 1.19.340)'
+);
+bhp_bun_assert(
+	! preg_match( '/name="bhp_require_name"/', $bhp_bun_pb ),
+	'⛔⛔ NO `bhp_require_name` hidden field — a blank name can never be rejected'
+);
+bhp_bun_assert(
+	1 === preg_match_all( '/<input[^>]+type="text"[^>]*name="first_name"|<input[^>]+name="first_name"[^>]*type="text"/', $bhp_bun_pb ),
+	'⛔ exactly ONE first-name input on the page'
 );
 /* ⛔ WHITESPACE-TOLERANT, BECAUSE THE TEMPLATE INDENTS ITS BUTTON LABEL. The
       first run failed on `>Subscribe<` against a real
@@ -944,7 +1050,29 @@ echo "\n=== 12 · VERSION ===\n";
  *
  *      bhp_bun_assert( (bool) preg_match( '/^Version:\s*1\.19\.337\s*$/m', $bhp_bun_css ), 'style.css declares 1.19.337' );
  */
-bhp_bun_assert( (bool) preg_match( '/^Version:\s*1\.19\.339\s*$/m', $bhp_bun_css ), 'style.css declares 1.19.339' );
+/*
+ * ⭐ PIN MOVED TO 1.19.340 BY `CYCLE170-LD-NAMEFIELD` (2026-08-31). Same
+ *    discipline again: this lane bumped the theme, so this lane owns the pin it
+ *    broke. The four stale pins belonging to OTHER lanes (ship-prep, triple,
+ *    school-readaloud, cycle169-funnel) are STILL deliberately left alone.
+ *
+ *    SUPERSEDED ASSERTION, PRESERVED VERBATIM:
+ *
+ *      bhp_bun_assert( (bool) preg_match( '/^Version:\s*1\.19\.339\s*$/m', $bhp_bun_css ), 'style.css declares 1.19.339' );
+ */
+/*
+ * ⭐ PIN MOVED TO 1.19.341 BY `CYCLE171-LD-341` (2026-08-31, later the same
+ *    night). Same discipline once more: this lane bumped the theme — item 3 of
+ *    that build edits `inc/school-read-alouds.php`, which this very suite
+ *    covers — so this lane owns the pin it broke. The four stale pins belonging
+ *    to OTHER lanes (ship-prep, triple, school-readaloud, cycle169-funnel) are
+ *    STILL deliberately left alone.
+ *
+ *    SUPERSEDED ASSERTION, PRESERVED VERBATIM:
+ *
+ *      bhp_bun_assert( (bool) preg_match( '/^Version:\s*1\.19\.340\s*$/m', $bhp_bun_css ), 'style.css declares 1.19.340' );
+ */
+bhp_bun_assert( (bool) preg_match( '/^Version:\s*1\.19\.341\s*$/m', $bhp_bun_css ), 'style.css declares 1.19.341' );
 
 /* ⭐ THE MINIFIED STYLESHEET MUST HAVE BEEN REBUILT. It embeds the source md5,
       so a stale .min.css is detectable rather than silently shipped. */

@@ -88,7 +88,22 @@ $bhp_fin_ver = isset( $bhp_fin_vm[1] ) ? $bhp_fin_vm[1] : '';
  *
  *      bhp_fin_assert( '1.19.337' === $bhp_fin_ver, "style.css declares 1.19.337, got '{$bhp_fin_ver}'" );
  */
-bhp_fin_assert( '1.19.339' === $bhp_fin_ver, "style.css declares 1.19.339, got '{$bhp_fin_ver}'" );
+/*
+ * ⭐ PIN MOVED TO 1.19.341 BY `CYCLE171-LD-341` (2026-08-31, later the same
+ *    night). Same discipline the 1.19.340 note below records: the lane that
+ *    bumps the theme owns every pin it breaks. The four stale pins belonging to
+ *    OTHER lanes (ship-prep, triple, school-readaloud, cycle169-funnel) were
+ *    already stale before this build and are STILL deliberately left alone.
+ *    SUPERSEDED VALUE, PRESERVED: 1.19.340.
+ * ⭐ PIN MOVED TO 1.19.340 BY `CYCLE170-LD-NAMEFIELD` (2026-08-31). This lane
+ *    bumped the theme, so this lane owns the pin it broke. The four stale pins
+ *    belonging to OTHER lanes are STILL deliberately left alone.
+ *
+ *    SUPERSEDED ASSERTION, PRESERVED VERBATIM:
+ *
+ *      bhp_fin_assert( '1.19.339' === $bhp_fin_ver, "style.css declares 1.19.339, got '{$bhp_fin_ver}'" );
+ */
+bhp_fin_assert( '1.19.341' === $bhp_fin_ver, "style.css declares 1.19.341, got '{$bhp_fin_ver}'" );
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * 1 · THE SEPTEMBER CARDS — items 537 / 538 / 540

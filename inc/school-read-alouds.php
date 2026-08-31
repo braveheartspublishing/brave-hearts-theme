@@ -1269,8 +1269,70 @@ function bhp_school_readalouds_suppress_footer_capture( $show ) {
 add_filter( 'bhp_show_footer_capture', 'bhp_school_readalouds_suppress_footer_capture' );
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * ⭐ 1.19.333 — `noindex`. THE PAGE STAYS IN THE NAV; IT LEAVES THE INDEX.
+ * ⭐⭐ 1.19.341 (`CYCLE171-LD-341` item 3) — SUPERSEDES THE 1.19.333 BLOCK BELOW.
+ *     THE PAGE IS INDEXABLE. BOTH ROBOTS FILTERS ARE GONE.
  * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ FOUNDER REVERSAL, 2026-08-31, of carrier item 525's "not for SEO" ruling.
+ *    Relayed in the build brief as: *"Yes... make it indexable."* Recorded with
+ *    its provenance (§9.2 rule 2) because a relayed quote and a first-hand one
+ *    are different evidence.
+ *
+ * ⛔ WHAT WAS REMOVED, NAMED SO IT IS NOT RE-DERIVED AS MISSING:
+ *    `bhp_school_readalouds_robots()` on `wp_robots`, and
+ *    `bhp_school_readalouds_rankmath_robots()` on `rank_math/frontend/robots`.
+ *    Both the functions AND their registrations are deleted.
+ *
+ * ⛔ THEY WERE DELETED RATHER THAN LEFT RETURNING THEIR INPUT. A callback that
+ *    is registered and does nothing still reports success to every reader of
+ *    this file — the same "a tunable that tunes nothing is worse than an absent
+ *    one" reasoning `bhp_blog_capture_band_after_paragraph()` records for the
+ *    retired heading anchor. With no theme filter in the way, the page's OWN
+ *    Rank Math `rank_math_robots` post meta governs, which is the stated intent
+ *    of the reversal.
+ *
+ * ⭐ THE POST META IS ALREADY `index,follow` ON PRODUCTION — set and verified
+ *    stored as a proper array by chief-of-staff on 2026-08-31, BEFORE this code
+ *    change. So the deploy does not need a WP-CLI meta step the way 1.19.333's
+ *    deploy plan did; it needs the meta CONFIRMED, which the deploy plan lists.
+ *
+ * ⭐ THE XML SITEMAP FOLLOWS THE META, NOT THIS FILE. Rank Math reads
+ *    `rank_math_robots` post meta for sitemap inclusion (the 1.19.333 block
+ *    below states this correctly and it is still true). The `noindex` meta was
+ *    what excluded the URL; with the meta at `index,follow` and no frontend
+ *    filter overriding it, the page is eligible for `page-sitemap.xml`.
+ *
+ * ⚠⚠ WHAT STAGING CANNOT PROVE, STATED PLAINLY RATHER THAN GLOSSED:
+ *    staging2 is SITE-WIDE `noindex` at the environment level, so a staging page
+ *    fetch will show `noindex` no matter what this file does. Staging can prove
+ *    (a) the two callbacks no longer exist, (b) nothing is registered on either
+ *    hook for this page, and (c) the stored meta resolves to index,follow.
+ *    It CANNOT prove the rendered production robots tag or sitemap membership.
+ *    Those are POST-DEPLOY PRODUCTION CHECKS and are listed as such in
+ *    DEPLOY-PLAN.md. Do not report them as verified from staging.
+ *
+ * ⛔ `inc/positivity-news.php`'s robots filters are UNTOUCHED. That page STAYS
+ *    noindex by the founder's ruling the same night. Do not generalise this
+ *    reversal to it.
+ *
+ * ⛔ The `follow` half of the old behaviour is moot now, but the reasoning the
+ *    block below gives for it — this page links to the shop, the books and the
+ *    educator resources, so nofollow would leak internal link equity — is why
+ *    an indexable state is the more natural one for it anyway.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ⛔ SUPERSEDED 1.19.333 BLOCK, PRESERVED VERBATIM BELOW rather than deleted,
+ *    so the movement stays visible and the reasoning is not re-derived. Every
+ *    statement in it was true of 1.19.333. Its RULING is reversed; its
+ *    TECHNICAL observations (noindex is not nofollow, a robots.txt block hides
+ *    the directive rather than serving it, WordPress writes the robots meta and
+ *    Rank Math overwrites it, the sitemap reads post meta not the frontend
+ *    filter) all still hold and are the reason the removal is safe.
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * ⭐ 1.19.333 — `noindex`. THE PAGE STAYS IN THE NAV; IT LEAVES THE INDEX.
+ *
+ * [SUPERSEDED 2026-08-31 — reversed by the founder ruling above.]
  *
  * Andrew Signore, carrier item **525**, relayed in the brief: this page is
  * **not for SEO**. It is the destination of a personal ask to a named school,
@@ -1300,38 +1362,22 @@ add_filter( 'bhp_show_footer_capture', 'bhp_school_readalouds_suppress_footer_ca
  *    theme's job.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-/**
- * WordPress core's robots meta.
+/*
+ * ⭐⭐ 1.19.341 — `bhp_school_readalouds_robots()` and
+ *     `bhp_school_readalouds_rankmath_robots()` STOOD HERE and are DELETED.
  *
- * @param array<string,mixed> $robots Directives.
- * @return array<string,mixed>
+ * They forced `noindex` on `wp_robots` and `rank_math/frontend/robots`
+ * respectively. The founder reversed item 525 on 2026-08-31; see the block
+ * comment above for the full record, including what staging can and cannot
+ * prove about the result. Nothing in this theme now writes a robots directive
+ * for /school-read-alouds/ — the page's own `rank_math_robots` post meta
+ * governs, which is exactly what the reversal asked for.
+ *
+ * ⛔ DO NOT "RESTORE" THESE BY REFLEX if a future reader finds the page in the
+ *    index and assumes a regression. Being in the index IS the ruled state.
+ *
+ * ⛔ `inc/positivity-news.php` keeps its equivalent pair. That page stays
+ *    noindex. `tests/test-cycle170-bundle.php` § 6 asserts BOTH halves — this
+ *    page's absence and that page's presence — so the two cannot drift into
+ *    each other.
  */
-function bhp_school_readalouds_robots( $robots ) {
-	if ( ! bhp_school_readalouds_is_page() ) {
-		return $robots;
-	}
-	$robots['noindex'] = true;
-	unset( $robots['index'] );
-	return $robots;
-}
-add_filter( 'wp_robots', 'bhp_school_readalouds_robots' );
-
-/**
- * Rank Math's robots meta, which overwrites core's.
- *
- * ⛔ `follow` IS PRESERVED. See the block comment above for why this page is
- *    noindex but not nofollow.
- *
- * @param array<string,string> $robots Rank Math directives.
- * @return array<string,string>
- */
-function bhp_school_readalouds_rankmath_robots( $robots ) {
-	if ( ! bhp_school_readalouds_is_page() ) {
-		return $robots;
-	}
-	return array(
-		'index'  => 'noindex',
-		'follow' => 'follow',
-	);
-}
-add_filter( 'rank_math/frontend/robots', 'bhp_school_readalouds_rankmath_robots' );

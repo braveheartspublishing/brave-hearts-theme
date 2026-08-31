@@ -345,4 +345,16 @@ $bhp_pn_success = ( 'success' === $bhp_pn_status && $bhp_pn_form === $bhp_pn_for
       <figure class="bhp-positivity__photo">
         <img class="bhp-positivity__photo-img"
              src="<?php echo esc_url( $bhp_pn_photo['url'] ); ?>"
-             width="<?php echo esc_attr( (string) $bhp_pn_photo['w'] ); 
+             width="<?php echo esc_attr( (string) $bhp_pn_photo['w'] ); ?>"
+             height="<?php echo esc_attr( (string) $bhp_pn_photo['h'] ); ?>"
+             loading="lazy" decoding="async"
+             alt="<?php echo esc_attr( $bhp_pn_photo['alt'] ); ?>">
+      </figure>
+    <?php endif; ?>
+
+    <p class="bhp-positivity__sign-off"><?php echo esc_html( $bhp_pn_copy['sign_off'] ); ?></p>
+
+  </div>
+</div>
+
+<?php get_footer(); ?>

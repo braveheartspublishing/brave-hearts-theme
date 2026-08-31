@@ -145,7 +145,25 @@ $bhp_mic_ver = isset( $bhp_mic_vm[1] ) ? $bhp_mic_vm[1] : '';
  *
  *      bhp_mic_assert( '1.19.337' === $bhp_mic_ver, "style.css declares 1.19.337, got '{$bhp_mic_ver}'" );
  */
-bhp_mic_assert( '1.19.339' === $bhp_mic_ver, "style.css declares 1.19.339, got '{$bhp_mic_ver}'" );
+/*
+ * ⭐ PIN MOVED TO 1.19.341 BY `CYCLE171-LD-341` (2026-08-31, later the same
+ *    night). Same discipline the 1.19.340 note below records: the lane that
+ *    bumps the theme owns every pin it breaks. The four stale pins belonging to
+ *    OTHER lanes (ship-prep, triple, school-readaloud, cycle169-funnel) were
+ *    already stale before this build and are STILL deliberately left alone.
+ *    SUPERSEDED VALUE, PRESERVED: 1.19.340.
+ * ⭐ PIN MOVED TO 1.19.340 BY `CYCLE170-LD-NAMEFIELD` (2026-08-31). This lane
+ *    bumped the theme, so this lane owns the pin it broke — the same discipline
+ *    every CYCLE170 lane before it followed. ⛔ The pins that were ALREADY red
+ *    at 1.19.339 (ship-prep 1.19.332, triple 1.19.331, school-readaloud
+ *    1.19.330) are STILL deliberately left alone: those are other lanes' debt,
+ *    and adopting them would hide it.
+ *
+ *    SUPERSEDED ASSERTION, PRESERVED VERBATIM:
+ *
+ *      bhp_mic_assert( '1.19.339' === $bhp_mic_ver, "style.css declares 1.19.339, got '{$bhp_mic_ver}'" );
+ */
+bhp_mic_assert( '1.19.341' === $bhp_mic_ver, "style.css declares 1.19.341, got '{$bhp_mic_ver}'" );
 
 /* ⭐ THE MINIFIED STYLESHEET MUST HAVE BEEN REBUILT. It embeds the source md5,
    so a stale `.min.css` is detectable rather than invisible — which matters

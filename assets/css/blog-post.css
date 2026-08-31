@@ -259,20 +259,79 @@ body:not(.home) article.single-post.section {
   --bhp-editorial-inset: clamp(2rem, 5vw, 4rem);
 }
 
+/* ⭐⭐ 1.19.341 (`CYCLE171-LD-341` item 2) — THE IMAGE IS UN-HIDDEN AND THE CROP
+      IS RETIRED WITH IT. HEIGHT NOW LEADS; WIDTH FOLLOWS THE PICTURE.
+
+   ⭐ FOUNDER, 2026-08-31, reversing item 474: *"all the blogs should have a
+      small heading picture - it looks so bland now. Use the picture it has on
+      the blog page but just make it a tailored to the page."*
+
+   ⛔ THE SUPERSEDED DECLARATIONS, NAMED IN WORDS SO THE MOVEMENT IS VISIBLE:
+      `width: calc(...)` (the full article measure), `max-height: 400px`, and
+      `object-fit: cover`. The 1.19.322 reasoning for each is preserved above
+      this rule and was correct for a LANDSCAPE band. What changed is not the
+      goal — "noticeable but not dominant" still holds — but the evidence about
+      what these particular images ARE.
+
+   ⚠⚠ THE MEASUREMENT THAT DROVE IT, taken on staging 2026-08-31 by direct
+      query rather than estimated: of 37 published posts, **23 carry a PORTRAIT
+      thumbnail at 683x1024 (ratio 0.67)**, 10 landscape, 3 square, 1 none. This
+      confirms open finding R1 rather than assuming it. A 683x1024 poster forced
+      to fill a ~690px column and then cropped to a 400px band displays roughly
+      THE MIDDLE 39% OF ITSELF — and this blog's posters carry their headline
+      baked into the top of the artwork, so `cover` decapitates 23 of 37 posts.
+      That is the defect behind item 474's "hide them". Un-hiding without fixing
+      it would have shipped the complaint back.
+
+   ⭐ THE FIX IS TO STOP TREATING THE BOX AS THE THING TO FILL. `width` and
+      `height` are `auto`, `max-height` caps the height, and `max-width` still
+      carries the article measure. The browser then scales the picture down
+      preserving its aspect ratio until it satisfies both caps, and THE ELEMENT
+      SHRINKS TO THE PICTURE. Nothing is cut, at any aspect ratio:
+        · 683x1024 portrait -> ~213x320, a small centred card
+        · 1024x576 landscape -> ~569x320, a wide short banner
+      Both are the same height, which is what makes the treatment read as one
+      house pattern across a mixed library rather than two.
+
+   ⛔ THE ELEMENT MUST HUG THE PICTURE, AND THAT IS A CORRECTNESS POINT RATHER
+      THAN A REFINEMENT. `style.css` gives `.post-header__image` a
+      `box-shadow` and a `border-radius`; those paint the ELEMENT's box, not the
+      picture's. Keeping the full-measure `width` and letterboxing a portrait
+      inside it with `object-fit: contain` would have drawn a shadowed rounded
+      rectangle around 690px of mostly empty space — a phantom frame, visibly
+      worse than either the crop or the hide. Auto width removes the failure
+      instead of patching over it, and the shadow lands on the artwork.
+
+   ⭐ `object-fit: contain` IS KEPT ANYWAY AS A BELT-AND-BRACES GUARANTEE. With
+      auto width there is nothing to letterbox, which makes it a no-op today. It
+      stays so that a future rule which reintroduces a fixed width or height
+      cannot silently reintroduce a crop; the worst it could then do is
+      letterbox. `object-fit: cover` must not come back to this selector.
+
+   ⭐ NO BREAKOUT IS STILL TRUE BY CONSTRUCTION. The measure expression is
+      unchanged token for token — it simply moved from `width` to `max-width`,
+      which is the stricter of the two here. §5.15/§5.16's drift alarm on the
+      duplicated inset is unaffected.
+
+   ⚠ CLS: the image keeps its intrinsic `width`/`height` attributes from
+     `the_post_thumbnail()`, so the aspect ratio is known before load and the
+     box does not jump. Capping height rather than setting it is what lets a
+     landscape image be shorter than the cap instead of being padded to it. */
 .post-header--field-note .post-header__image {
-  --bhp-featured-max-h: 400px;
+  --bhp-featured-max-h: 320px;
 
   display: block;
-  width: calc(
+  width: auto;
+  height: auto;
+  max-width: calc(
     min(100% - (2 * var(--gutter)), var(--container-content))
     - (2 * var(--bhp-editorial-inset))
   );
-  max-width: 100%;
   margin-top: clamp(1.25rem, 4vw, 2rem);
   margin-inline: auto;
 
   max-height: var(--bhp-featured-max-h);
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 }
 
@@ -284,9 +343,18 @@ body:not(.home) article.single-post.section {
   }
 }
 
+/* ⭐ 1.19.341: mobile stays PROPORTIONATE and stays SHORTER than desktop, which
+      is the founder's brief. The numbers move up slightly (was
+      `clamp(160px, 48vw, 240px)`) because the old cap was tuned for a CROPPED
+      band, where 160px still filled the column edge to edge. Under the
+      aspect-preserving rule above, a 683x1024 poster capped at 160px tall is
+      only ~107px WIDE — a thumbnail, not a heading picture. At the values below
+      the same poster is ~147-187px wide on a phone: small, legible, and still
+      well under a third of a 667px-tall viewport. Landscape images are wider at
+      the same height and remain bounded by `max-width`. */
 @media (max-width: 767px) {
   .post-header--field-note .post-header__image {
-    --bhp-featured-max-h: clamp(160px, 48vw, 240px);
+    --bhp-featured-max-h: clamp(220px, 40vw, 280px);
   }
 }
 

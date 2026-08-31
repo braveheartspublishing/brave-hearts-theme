@@ -278,7 +278,15 @@ bhp_c169_head( '§2 LIMB 2 — the slim capture band' );
  *   paragraph count, and the old filter name was removed rather than left
  *   returning a value nothing reads. This assertion follows the rename.
  */
-bhp_c169_ok( '§2.1 the paragraph tunable exists and defaults to 2', function_exists( 'bhp_blog_capture_band_after_paragraph' ) && 2 === bhp_blog_capture_band_after_paragraph() );
+/*
+ * ⚠⚠ §2.1 CHANGED AGAIN AT 1.19.341 (`CYCLE171-LD-341` item 4): DEFAULT 2 -> 5.
+ *    Founder, 2026-08-31, having seen the result on the Adams post: the band at
+ *    paragraph 2 splits the opening argument, and the article's opening must
+ *    read uninterrupted. `CYCLE171-MKT-2` found the same thing independently.
+ *    This MOVES an ask; it does not add one — the two-asks-one-bridge doctrine
+ *    (carrier 110/119) is unchanged and §2.6 still guards the band's shape.
+ */
+bhp_c169_ok( '§2.1 the paragraph tunable exists and defaults to 5', function_exists( 'bhp_blog_capture_band_after_paragraph' ) && 5 === bhp_blog_capture_band_after_paragraph() );
 bhp_c169_ok(
 	'§2.1b ⛔ the RETIRED heading tunable is genuinely gone, not left as a no-op',
 	! function_exists( 'bhp_blog_capture_band_after_section' )
@@ -293,15 +301,33 @@ bhp_c169_ok(
  *   implementation's own helper, so the assertion cannot pass by agreeing with
  *   a bug in the code it is testing.
  */
+/*
+ * ⚠ §2.2 / §2.2b FOLLOW THE 1.19.341 SPEC CHANGE. The anchor is the byte just
+ *   past the FIFTH top-level `</p>`, not the second. Computed here from the
+ *   FIXTURE rather than from the implementation's own helper, so the assertion
+ *   still cannot pass by agreeing with a bug in the code it is testing.
+ */
 $band_off = bhp_blog_capture_band_offset( $body );
 preg_match_all( '/<\/p>/i', $body, $mp2, PREG_OFFSET_CAPTURE );
-$second_p_end = (int) $mp2[0][1][1] + 4;
+$fifth_p_end = (int) $mp2[0][4][1] + 4;
 
-bhp_c169_ok( '§2.2 ⭐ it anchors immediately after the SECOND top-level paragraph', (int) $band_off === $second_p_end, "band={$band_off} expected={$second_p_end}" );
+bhp_c169_ok( '§2.2 ⭐ it anchors immediately after the FIFTH top-level paragraph', (int) $band_off === $fifth_p_end, "band={$band_off} expected={$fifth_p_end}" );
+
+/*
+ * ⚠⚠ §2.2b IS THE ASSERTION THAT REVERSED, AND IT IS NOW A BAND RATHER THAN A
+ *    CEILING. At 1.19.322 it read `< 15.0` and its label was "and that is EARLY
+ *    in the article — the whole point of 1.19.322". Item 4 is the founder
+ *    ruling that early was TOO early: the ask split the opening argument.
+ *
+ * ⛔ A BARE `< 35` WOULD STILL PASS AT PARAGRAPH ONE, which is the regression
+ *    this release exists to prevent — so the FLOOR is the load-bearing half.
+ *    The window says: past the opening, still nowhere near the end.
+ */
+$band_pct = bhp_c169_text_pct( substr( $body, 0, $band_off ) . '<!--BAND-->' . substr( $body, $band_off ), '<!--BAND-->' );
 bhp_c169_ok(
-	'§2.2b ⭐ and that is EARLY in the article — the whole point of 1.19.322',
-	bhp_c169_text_pct( substr( $body, 0, $band_off ) . '<!--BAND-->' . substr( $body, $band_off ), '<!--BAND-->' ) < 15.0,
-	bhp_c169_text_pct( substr( $body, 0, $band_off ) . '<!--BAND-->' . substr( $body, $band_off ), '<!--BAND-->' ) . '%'
+	'§2.2b ⭐⭐ the opening now reads UNINTERRUPTED — the band clears the first tenth of the article (item 4) and still sits well inside the first third',
+	$band_pct > 10.0 && $band_pct < 35.0,
+	$band_pct . '%'
 );
 
 /*
@@ -364,10 +390,77 @@ bhp_c169_ok(
 		&& 5 === count( array_filter( $buried_ps, function ( $p ) { return ! empty( $p['top'] ); } ) ),
 	count( $buried_ps ) . ' paragraphs'
 );
+/*
+ * ⚠⚠ §2.4d REVERSED DIRECTION AT 1.19.341, AND THIS IS THE SINGLE MOST
+ *    IMPORTANT ASSERTION IN ITEM 4 — the half a version-bump-only change would
+ *    have got silently wrong.
+ *
+ * ⛔ WHAT IT USED TO ASSERT, PRESERVED IN WORDS: *"when paragraph two is inside
+ *    a blockquote, it falls back to after the FIRST clean one — earlier, never
+ *    later"*, i.e. a BACKWARD search to the top of the article. That was right
+ *    for a target of 2, where "earlier" meant paragraph one and the release
+ *    wanted early.
+ *
+ * ⛔ AT A TARGET OF 5 THE SAME RULE IS THE DEFECT. Any article whose fifth
+ *    paragraph sits in a list — routine in this blog's listicles — would have
+ *    dumped the ask after paragraph ONE, which is exactly what the founder
+ *    ruled against, reached by a path nobody would think to look at. So step 2
+ *    now falls FORWARD.
+ *
+ * ⭐ The `$buried` fixture no longer exercises the fallback at all (its fifth
+ *    paragraph is clean, so step 1 wins), so it is asserted for what it now
+ *    proves, and a PURPOSE-BUILT fixture below exercises both fallback limbs.
+ */
+$buried_fifth_end = (int) ( strpos( $buried, 'Body two, written at a realistic editorial length.</p>' ) + strlen( 'Body two, written at a realistic editorial length.</p>' ) );
 bhp_c169_ok(
-	'§2.4d ⭐⭐ when paragraph two is inside a blockquote, it falls back to after the FIRST clean one — earlier, never later',
-	(int) $buried_off === (int) $first_p_end,
-	"got={$buried_off} expected={$first_p_end}"
+	'§2.4d ⭐ with a clean fifth paragraph, step 1 wins and the blockquote earlier in the article is simply skipped over',
+	(int) $buried_off === $buried_fifth_end,
+	"got={$buried_off} expected={$buried_fifth_end}"
+);
+
+/* ── ⭐⭐ NEW AT 1.19.341 — THE FORWARD FALLBACK, both limbs. ─────────────── */
+
+/* Four clean paragraphs, then the FIFTH buried in a list, then two more clean.
+   The band must land after paragraph SIX (the next clean one going forward),
+   never after paragraph one. */
+$fwd = '<p>Opening paragraph, written at a realistic editorial length for the measurement.</p>'
+	. '<p>Second paragraph, written at a realistic editorial length for the measurement.</p>'
+	. '<p>Third paragraph, written at a realistic editorial length for the measurement.</p>'
+	. '<p>Fourth paragraph, written at a realistic editorial length for the measurement.</p>'
+	. '<ul><li><p>Fifth paragraph, buried inside a list exactly like a listicle item.</p></li></ul>'
+	. '<p>Sixth paragraph, clean and top level, written at a realistic length.</p>'
+	. '<p>Seventh paragraph, clean and top level, written at a realistic length.</p>'
+	. '<p>Eighth paragraph, clean and top level, written at a realistic length.</p>'
+	. '<p>Ninth paragraph, clean and top level, written at a realistic length.</p>';
+$fwd_off       = bhp_blog_capture_band_offset( $fwd );
+$fwd_sixth_end = (int) ( strpos( $fwd, 'Sixth paragraph, clean and top level, written at a realistic length.</p>' ) + strlen( 'Sixth paragraph, clean and top level, written at a realistic length.</p>' ) );
+$fwd_first_end = (int) ( strpos( $fwd, '</p>' ) + 4 );
+
+bhp_c169_ok(
+	'§2.4d-1 ⭐⭐ FORWARD FALLBACK: a buried fifth paragraph sends the band to the SIXTH, the next clean one going forward',
+	(int) $fwd_off === $fwd_sixth_end,
+	"got={$fwd_off} expected={$fwd_sixth_end}"
+);
+bhp_c169_ok(
+	'§2.4d-2 ⛔⛔ AND EMPHATICALLY NOT BACK TO PARAGRAPH ONE — the pre-1.19.341 backward fallback would have landed here, splitting the opening the founder ruled must read uninterrupted',
+	(int) $fwd_off !== $fwd_first_end,
+	"got={$fwd_off} para1={$fwd_first_end}"
+);
+
+/* The last-resort limb: a SHORT article can never reach paragraph five, so it
+   looks backward to the LAST clean paragraph rather than refusing outright and
+   silently dropping the mid-post ask from every short post on the blog. Padded
+   with a long tail so the max-ratio guard does not stand it down first. */
+$short = '<p>First paragraph of a short post, written at a realistic editorial length.</p>'
+	. '<p>Second paragraph of a short post, written at a realistic editorial length.</p>'
+	. '<p>Third paragraph of a short post, written at a realistic editorial length.</p>'
+	. '<figure><p>' . str_repeat( 'A long trailing caption that carries most of the visible text. ', 40 ) . '</p></figure>';
+$short_off      = bhp_blog_capture_band_offset( $short );
+$short_third_end = (int) ( strpos( $short, 'Third paragraph of a short post, written at a realistic editorial length.</p>' ) + strlen( 'Third paragraph of a short post, written at a realistic editorial length.</p>' ) );
+bhp_c169_ok(
+	'§2.4d-3 ⭐ LAST RESORT: a post too short to reach paragraph five anchors on its LAST clean paragraph, as deep as the article allows',
+	(int) $short_off === $short_third_end,
+	"got={$short_off} expected={$short_third_end}"
 );
 bhp_c169_ok( '§2.4e ⭐ a list buries paragraphs the same way a blockquote does', 1 === count( array_filter( bhp_blog_capture_band_paragraphs( '<p>top</p><ul><li><p>in a list</p></li></ul>' ), function ( $p ) { return ! empty( $p['top'] ); } ) ) );
 bhp_c169_ok( '§2.4f ⭐ and so does a figure, which is what a WordPress embed renders as', 1 === count( array_filter( bhp_blog_capture_band_paragraphs( '<p>top</p><figure class="wp-block-embed"><p>caption-ish</p></figure>' ), function ( $p ) { return ! empty( $p['top'] ); } ) ) );
@@ -385,8 +478,8 @@ $para1_off = bhp_blog_capture_band_offset( $body );
 remove_filter( 'bhp_blog_capture_band_after_paragraph', 'bhp_c169_para_one' );
 
 bhp_c169_ok( '§2.4h ⭐ the paragraph tunable genuinely moves the band', (int) $para1_off === (int) ( strpos( $body, '</p>' ) + 4 ), "1 -> {$para1_off}" );
-bhp_c169_ok( '§2.4i ⭐ and it moved UP, never down', (int) $para1_off < (int) $band_off, "p1={$para1_off} p2={$band_off}" );
-bhp_c169_ok( '§2.4j the filter is removed again and the default is restored', 2 === bhp_blog_capture_band_after_paragraph() && (int) bhp_blog_capture_band_offset( $body ) === (int) $band_off );
+bhp_c169_ok( '§2.4i ⭐ and it moved UP, never down', (int) $para1_off < (int) $band_off, "p1={$para1_off} p5={$band_off}" );
+bhp_c169_ok( '§2.4j the filter is removed again and the 1.19.341 default is restored', 5 === bhp_blog_capture_band_after_paragraph() && (int) bhp_blog_capture_band_offset( $body ) === (int) $band_off );
 
 $band = bhp_c169_render( 'template-parts/acquisition/post-capture-band' );
 bhp_c169_ok( '§2.5 the band renders', '' !== $band );
@@ -494,10 +587,35 @@ bhp_c169_ok(
 		&& false !== strpos( $blog_src, 'return substr( $content, 0, $offset ) . $band . substr( $content, $offset );' )
 );
 
-/* The insert-only proof, simulated on content carrying both anchor shapes. */
+/*
+ * The insert-only proof, simulated on content carrying both anchor shapes.
+ *
+ * ⚠⚠ FIXTURE LENGTHENED AT 1.19.341 (`CYCLE171-LD-341` item 4), AND THE REASON
+ *    MATTERS MORE THAN THE EDIT. The original fixture held exactly FIVE
+ *    top-level paragraphs, ending on the last one. When the band's anchor moved
+ *    from paragraph 2 to paragraph 5, that anchor landed at 100% of the visible
+ *    text, the max-ratio guard CORRECTLY stood the band down, and
+ *    `bhp_blog_capture_band_offset()` returned `null` — so §3.3d was no longer
+ *    splicing anything and the §26 insert-only proof had quietly stopped
+ *    proving its own subject.
+ *
+ * ⛔ THE ASSERTION WAS NOT RELAXED TO ACCOMMODATE THAT. §26 is the rule that
+ *    protects live affiliate revenue on real posts; a guard that passes because
+ *    it tested nothing is worse than a failing one, because it reports success.
+ *    The FIXTURE is extended so the band genuinely renders again, and the
+ *    assertion below is unchanged from the form it has always had.
+ *
+ * ⭐ BOTH AFFILIATE ANCHORS ARE UNTOUCHED, including the tagged one §3.3c reads
+ *    byte-for-byte — the added paragraphs carry no links, so `$before_n` is
+ *    still 2 and the shape §3.3a pins is preserved.
+ */
 $aff = '<p>Intro one.</p><p>Intro two with <a href="https://amzn.to/3PFKexe">a link</a>.</p>'
 	. '<h2>One</h2><p><a href="https://www.amazon.com/dp/0375813659?tag=bravehearts0e-20">tagged</a></p>'
-	. '<h2>Two</h2><p>More.</p><h2>Three</h2><p>End.</p>';
+	. '<h2>Two</h2><p>More.</p><h2>Three</h2><p>End of the original fixture.</p>'
+	. '<h2>Four</h2><p>A sixth paragraph, added at 1.19.341 so the paragraph-five anchor is not the last thing in the article.</p>'
+	. '<p>A seventh paragraph, likewise, giving the max-ratio guard room to let the band render.</p>'
+	. '<p>An eighth paragraph, carrying no link of its own.</p>'
+	. '<p>A ninth and final paragraph, closing the sample out.</p>';
 $before_n = bhp_c169_affiliate_count( $aff );
 $off3     = bhp_blog_capture_band_offset( $aff );
 $spliced  = substr( $aff, 0, $off3 ) . '<aside class="bhp-capture-band">band</aside>' . substr( $aff, $off3 );
@@ -556,9 +674,17 @@ $lop .= '<h2>Third</h2><p>After the list.</p><h2>Fourth</h2><p>Nearly the end.</
 
 $lop_band = bhp_blog_capture_band_offset( $lop );
 $lop_bpct = ( null === $lop_band ) ? -1.0 : round( 100 * bhp_blog_visible_text_length( $lop, $lop_band ) / strlen( wp_strip_all_tags( $lop ) ), 1 );
+/*
+ * ⚠ §3.5b2's WINDOW FOLLOWS ITEM 4 (1.19.341): was `< 15.0`. Round 1 finding B3
+ *   is still what this asserts — the lopsided roundup must not push the band to
+ *   70.6% — and that is still structurally fixed by counting paragraphs instead
+ *   of headings. What changed is that "early" is no longer the target: the
+ *   founder ruled on 2026-08-31 that the opening must read uninterrupted. The
+ *   FLOOR is the new half and the CEILING is the original protection.
+ */
 bhp_c169_ok(
-	'§3.5b2 ⭐⭐ CASE A2: ROUND 1 FINDING B3 IS STRUCTURALLY FIXED — the lopsided roundup that pushed the band to 70.6% now anchors early like every other post',
-	null !== $lop_band && $lop_bpct < 15.0,
+	'§3.5b2 ⭐⭐ CASE A2: ROUND 1 FINDING B3 STAYS FIXED — the lopsided roundup that pushed the band to 70.6% now anchors in the same window as every other post, clear of the opening',
+	null !== $lop_band && $lop_bpct > 10.0 && $lop_bpct < 35.0,
 	"{$lop_bpct}%"
 );
 
@@ -599,15 +725,26 @@ $b_pct     = round( 100 * bhp_blog_visible_text_length( $mid_band, (int) strpos(
 $r_pct     = ( null === $mid_rail ) ? 100.0 : round( 100 * bhp_blog_visible_text_length( $mid_band, $mid_rail ) / $mid_total, 1 );
 
 /*
- * ⚠⚠ §3.5d CHANGED AT 1.19.322 — 30–85% BECOMES 0–25%, AND THIS IS THE ONE
- *    ASSERTION THAT LOOKS LIKE A WEAKENING IF READ WITHOUT ITS REASON. It is
- *    not. The old window encoded the OLD spec (an ask somewhere in the middle);
- *    the founder's round-2 instruction is that the ask belongs "much high on the
- *    page". A band still sitting at 30–85% would now be a DEFECT, so the window
- *    moved to where the spec moved. ⭐ The bound that does the real protective
- *    work is §3.5e's gap requirement, and it is UNCHANGED at 8 points.
+ * ⚠⚠ §3.5d HAS NOW MOVED TWICE, AND THE HISTORY IS THE POINT. It is the one
+ *    assertion in this suite that looks like a weakening whichever direction it
+ *    goes, so each move is recorded with the ruling that caused it:
+ *
+ *      1.19.321  30–85%  — "an ask somewhere in the middle"
+ *      1.19.322  0–25%   — founder: the ask belongs "much high on the page"
+ *      1.19.341  10–40%  — founder, 2026-08-31, having SEEN the result on the
+ *                          Adams post: paragraph 2 splits the opening argument;
+ *                          the article's opening must read uninterrupted
+ *
+ * ⛔ THE FLOOR IS WHAT ITEM 4 ADDED, AND IT IS THE HALF THAT NOW DOES WORK. A
+ *    window of `0–40%` would still pass with the band after paragraph one,
+ *    which is the exact placement the founder ruled against. `>= 0.0` could
+ *    never fail; `> 10.0` can.
+ *
+ * ⭐ The bound that does the real protective work against the ORIGINAL defect
+ *    (band and rail stacked) is §3.5e's gap requirement, and it is UNCHANGED at
+ *    8 points across all three moves.
  */
-bhp_c169_ok( '§3.5d ⭐ CASE B: the band renders EARLY, in the first quarter', null !== $band_at && $b_pct >= 0.0 && $b_pct < 25.0, "{$b_pct}%" );
+bhp_c169_ok( '§3.5d ⭐ CASE B: the band clears the opening and still renders well inside the first half', null !== $band_at && $b_pct > 10.0 && $b_pct < 40.0, "{$b_pct}%" );
 bhp_c169_ok(
 	'§3.5e ⛔⛔ REGRESSION: the rail is never stacked on the band (>= the minimum gap)',
 	( $r_pct - $b_pct ) >= 8.0,
@@ -811,19 +948,41 @@ if ( preg_match( '/\.post-header--field-note \.post-header__image \{(.*?)\}/s', 
 }
 
 bhp_c169_ok( '§5.7 [source] the featured-image rule is found and non-empty', '' !== $feat );
+/*
+ * ⚠⚠ §5.8 / §5.9 / §5.10 AMENDED AT 1.19.341 (`CYCLE171-LD-341` item 2). The
+ *    founder reversed item 474 and asked for a SMALL heading picture. Un-hiding
+ *    the image unchanged would have re-shipped the crop defect that produced
+ *    item 474: measured on staging 2026-08-31, 23 of 37 published posts carry a
+ *    683x1024 PORTRAIT poster with its headline baked into the artwork, and
+ *    `object-fit: cover` in a 400px band shows the middle ~39% of it.
+ *
+ *    So the rule now caps HEIGHT and lets width follow the picture's aspect
+ *    ratio. Three assertions move with it, and each keeps its original INTENT:
+ *      §5.8  no breakout      -> the same token expression, on `max-width`
+ *      §5.9  a small cap      -> 320px, was 400px
+ *      §5.10 no squash        -> now also NO CROP: `contain`, was `cover`
+ */
 bhp_c169_ok(
-	'§5.8 ⭐⭐ [source] NO BREAKOUT: the width is the article measure MINUS the editorial inset, in tokens, never a hardcoded pixel value',
-	false !== strpos( preg_replace( '/\s+/', ' ', $feat ), 'width: calc( min(100% - (2 * var(--gutter)), var(--container-content)) - (2 * var(--bhp-editorial-inset)) );' )
+	'§5.8 ⭐⭐ [source] NO BREAKOUT: the measure is the article measure MINUS the editorial inset, in tokens, never a hardcoded pixel value — on max-width since 1.19.341',
+	false !== strpos( preg_replace( '/\s+/', ' ', $feat ), 'max-width: calc( min(100% - (2 * var(--gutter)), var(--container-content)) - (2 * var(--bhp-editorial-inset)) );' )
 );
 bhp_c169_ok(
 	'§5.8b ⛔ [source] the measure half is the SAME expression .content-narrow uses in style.css',
 	false !== strpos( bhp_c169_file( 'style.css' ), 'width: min(100% - (2 * var(--gutter)), var(--container-content));' )
 );
-bhp_c169_ok( '§5.9 ⭐ [source] it is capped at 400px tall on desktop', false !== strpos( $feat, '--bhp-featured-max-h: 400px;' ) && false !== strpos( $feat, 'max-height: var(--bhp-featured-max-h);' ) );
-bhp_c169_ok( '§5.10 ⭐ [source] the height is a CROP, not a squash', false !== strpos( $feat, 'object-fit: cover;' ) && false !== strpos( $feat, 'object-position: center;' ) );
+bhp_c169_ok(
+	'§5.8c ⭐⭐ [source] 1.19.341: width and height are AUTO, so the element hugs the picture — this is what keeps style.css\'s box-shadow off 690px of empty space beside a portrait poster',
+	false !== strpos( $feat, 'width: auto;' ) && false !== strpos( $feat, 'height: auto;' )
+);
+bhp_c169_ok( '§5.9 ⭐ [source] it is capped at 320px tall on desktop — "small" is the founder\'s word', false !== strpos( $feat, '--bhp-featured-max-h: 320px;' ) && false !== strpos( $feat, 'max-height: var(--bhp-featured-max-h);' ) );
+bhp_c169_ok( '§5.10 ⭐⭐ [source] the height is NEVER A CROP — 23 of 37 posts are portrait posters with baked-in headlines', false !== strpos( $feat, 'object-fit: contain;' ) && false !== strpos( $feat, 'object-position: center;' ) );
+bhp_c169_ok(
+	'§5.10b ⛔⛔ [source] AND `cover` MUST NOT COME BACK to this selector — it is the exact declaration that decapitated the posters and produced founder item 474',
+	false === strpos( $feat, 'object-fit: cover;' )
+);
 bhp_c169_ok( '§5.11 ⭐ [source] it is centred under the title and meta', false !== strpos( $feat, 'margin-inline: auto;' ) && false !== strpos( $feat, 'display: block;' ) );
 bhp_c169_ok(
-	'§5.12 ⭐ [source] mobile is PROPORTIONATE, not the same 400px — a 400px cap on a ~343px column would render a portrait block',
+	'§5.12 ⭐ [source] mobile is PROPORTIONATE and SHORTER than desktop, expressed as a clamp rather than one number at both ends',
 	1 === preg_match( '/@media \(max-width: 767px\) \{\s*\.post-header--field-note \.post-header__image \{\s*--bhp-featured-max-h: clamp\(/s', $css_src )
 );
 /* ⛔ The scope guard, stated as a second, independent assertion rather than
@@ -831,7 +990,7 @@ bhp_c169_ok(
 bhp_c169_ok( '§5.13 ⛔ [source] the featured rule never mentions .post-content', false === strpos( $feat, '.post-content' ) );
 bhp_c169_ok(
 	'§5.14 ⛔ [source] the minified stylesheet carries the calc() intact — a minifier that strips spaces inside calc() would ship a broken rule',
-	false !== strpos( preg_replace( '/\s+/', ' ', bhp_c169_file( 'assets/css/blog-post.min.css' ) ), 'width: calc( min(100% - (2 * var(--gutter)), var(--container-content)) - (2 * var(--bhp-editorial-inset)) );' )
+	false !== strpos( preg_replace( '/\s+/', ' ', bhp_c169_file( 'assets/css/blog-post.min.css' ) ), 'max-width: calc( min(100% - (2 * var(--gutter)), var(--container-content)) - (2 * var(--bhp-editorial-inset)) );' )
 );
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1146,9 +1305,26 @@ bhp_c169_ok( '§7.11 ⭐ the suite left no request state behind', array() === ar
 bhp_c169_head( '§8 — featured-image hide toggle [behavioural, shipped OFF]' );
 
 bhp_c169_ok( '§8.1 the helper exists', function_exists( 'bhp_blog_featured_image_on_single' ) );
+/*
+ * ⚠⚠ §8.2 AND §8.4 REVERSED AT 1.19.341 (`CYCLE171-LD-341` item 2), AND THE
+ *    HISTORY OF THIS PAIR IS WORTH KEEPING BECAUSE IT HAS NOW MOVED TWICE:
+ *
+ *      1.19.323  shipped the toggle ON  -> the helper resolved TRUE
+ *      1.19.324  founder item 474 "Hide them" (2026-08-29) added
+ *                `__return_false` -> the helper resolved FALSE
+ *      1.19.341  founder REVERSED item 474 (2026-08-31, "all the blogs should
+ *                have a small heading picture") -> the line is removed and the
+ *                helper resolves TRUE again
+ *
+ * ⛔ THE ASSERTIONS FOLLOW THE RULED STATE, WHICH IS THE ONLY HONEST THING THEY
+ *    CAN DO — but note what has NOT changed across all three moves: §8.3 still
+ *    proves the toggle actually does something when flipped, and §8.7 still
+ *    proves it cannot reach a card, a social image or the OG tag. A toggle
+ *    proven only to hold its current value is not proven to be a toggle.
+ */
 bhp_c169_ok(
-	'§8.2 ⛔⛔ IT RESOLVES FALSE — founder ruling item 474 ("Hide them", 2026-08-29) flipped the shipped add_filter to __return_false at 1.19.324; assertion updated to the ruled state by chief-of-staff with that ruling cited',
-	false === bhp_blog_featured_image_on_single()
+	'§8.2 ⭐⭐ IT RESOLVES TRUE — founder REVERSAL of item 474 (2026-08-31) removed the shipped __return_false at 1.19.341; the image is back, small',
+	true === bhp_blog_featured_image_on_single()
 );
 
 $bhp_c169_flip = static function () {
@@ -1157,7 +1333,26 @@ $bhp_c169_flip = static function () {
 add_filter( 'bhp_blog_featured_image_on_single', $bhp_c169_flip, 10, 1 );
 bhp_c169_ok( '§8.3 ⭐⭐ FLIPPING IT WORKS — one line turns it off', false === bhp_blog_featured_image_on_single() );
 remove_filter( 'bhp_blog_featured_image_on_single', $bhp_c169_flip, 10 );
-bhp_c169_ok( '§8.4 ⭐ and removing the test filter returns to the shipped state — false since item 474’s __return_false ships in the theme itself', false === bhp_blog_featured_image_on_single() );
+bhp_c169_ok( '§8.4 ⭐ and removing the test filter returns to the shipped state — TRUE since 1.19.341 removed item 474’s __return_false from the theme', true === bhp_blog_featured_image_on_single() );
+/*
+ * ⚠ §8.4b IS ANCHORED TO THE START OF A LINE, AND THE FIRST DRAFT OF IT WAS NOT
+ *   — IT FAILED ON ITS FIRST RUN AGAINST A CORRECT BUILD, AND THE ERROR WAS
+ *   MINE, NOT THE BUILD'S. An unanchored pattern also matches the 1.19.323
+ *   docblock, which quotes `add_filter( 'bhp_blog_featured_image_on_single',
+ *   '__return_false' );` verbatim as the documented one-line flip. That comment
+ *   is DOCUMENTATION and must stay. A real registration sits at column zero;
+ *   the docblock's copy is indented behind ` * `.
+ *
+ * ⛔ THE BUILD WAS CHECKED BEFORE THE ASSERTION WAS TOUCHED rather than the
+ *   pattern being loosened until it went green: §8.2 and §8.4 both resolve the
+ *   helper to TRUE at runtime, which is only possible with no such filter
+ *   registered. This assertion adds the SOURCE-level proof that the runtime
+ *   result is not merely a later filter out-competing a surviving one.
+ */
+bhp_c169_ok(
+	'§8.4b ⛔⛔ AND THE __return_false LINE IS GENUINELY GONE FROM THE SOURCE — not merely out-competed by a later filter at another priority',
+	0 === preg_match( "/^add_filter\(\s*'bhp_blog_featured_image_on_single',\s*'__return_false'/m", bhp_c169_file( 'inc/blog-post-template.php' ) )
+);
 
 $bhp_c169_single = bhp_c169_file( 'single.php' );
 bhp_c169_ok(

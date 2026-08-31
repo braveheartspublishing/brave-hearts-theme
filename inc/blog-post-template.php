@@ -187,16 +187,62 @@ function bhp_blog_featured_image_on_single( $post = null ) {
 	return (bool) apply_filters( 'bhp_blog_featured_image_on_single', true, $post );
 }
 
-/*
- * ⭐ FOUNDER RULING 2026-08-29 — carrier item 474, verbatim "Hide them":
- * featured images are HIDDEN on single blog posts sitewide. Articles open
- * with the writing. Cards, related-article grid, Open Graph / Twitter,
- * Rank Math schema, feeds and Pinterest duty are unaffected (see the scope
- * note above — they never pass through this gate; asserted in
- * tests/test-cycle169-blog-layout.php §6). Applied by chief-of-staff under
- * G-40, staging 1.19.324. Remove this ONE line to restore the masthead.
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.341 (`CYCLE171-LD-341` item 2) — THE MASTHEAD IMAGE IS BACK, SMALL.
+ *     THE `__return_false` LINE THAT STOOD HERE IS REMOVED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ FOUNDER REVERSAL, 2026-08-31, of carrier item 474. Relayed in the build
+ *    brief, verbatim: *"all the blogs should have a small heading picture - it
+ *    looks so bland now. Use the picture it has on the blog page but just make
+ *    it a tailored to the page."* Recorded with its provenance (§9.2 rule 2).
+ *
+ * ⛔ THE SUPERSEDED 1.19.324 COMMENT IS PRESERVED VERBATIM BELOW rather than
+ *    deleted, so item 474 does not vanish from the file's history and a future
+ *    reader can see that the hide was a RULING, correctly applied, and then
+ *    reversed — not a bug that was fixed:
+ *
+ *      "⭐ FOUNDER RULING 2026-08-29 — carrier item 474, verbatim 'Hide them':
+ *       featured images are HIDDEN on single blog posts sitewide. Articles open
+ *       with the writing. Cards, related-article grid, Open Graph / Twitter,
+ *       Rank Math schema, feeds and Pinterest duty are unaffected (see the scope
+ *       note above — they never pass through this gate; asserted in
+ *       tests/test-cycle169-blog-layout.php §6). Applied by chief-of-staff under
+ *       G-40, staging 1.19.324. Remove this ONE line to restore the masthead."
+ *
+ * ⭐ THE HELPER AND ITS FILTER SURVIVE UNTOUCHED, and that is why this reversal
+ *    is a one-line DELETION rather than a release. `bhp_blog_featured_image_on_
+ *    single()` returns to its shipped default of `true`. The toggle is still
+ *    there, still flippable in one line in either direction, still asserted by
+ *    `tests/test-cycle169-blog-layout.php` §8. 1.19.323 built it for exactly
+ *    this: "one of the outcomes he may choose". He chose, then chose again, and
+ *    both cost one line.
+ *
+ * ⚠⚠ "SMALL" IS THE FOUNDER'S WORD AND IT IS LOAD-BEARING, BECAUSE THE ORIGINAL
+ *    COMPLAINT THAT LED TO THE HIDE IS STILL TRUE OF THESE IMAGES. Open finding
+ *    R1 (1.19.322/1.19.323) records that this blog's featured images are
+ *    designed as PORTRAIT POSTERS WITH TEXT BAKED IN, and that an
+ *    `object-fit: cover` crop cuts their headlines. That is not a stale note:
+ *    ⭐ MEASURED ON STAGING 2026-08-31 by direct query, not estimated —
+ *    37 published posts, **23 portrait** (683x1024, ratio 0.67), 10 landscape,
+ *    3 square, 1 with no thumbnail. A 683x1024 poster filling a ~690px column
+ *    and cropped to a 400px band shows roughly the middle 39% of itself, with
+ *    the baked-in headline off the top.
+ *
+ * ⭐ SO THE CROP IS GONE ALONG WITH THE HIDE. `assets/css/blog-post.css` § 2 now
+ *    constrains the image by HEIGHT and lets the width follow the picture's own
+ *    aspect ratio, so nothing is ever cut: a portrait poster renders as a small
+ *    centred card, a landscape photo as a wide short banner, both capped at the
+ *    same height. Un-hiding without that change would have re-shipped the exact
+ *    defect that produced item 474 in the first place. The full reasoning,
+ *    including why the element must hug the picture rather than letterbox it,
+ *    is in that stylesheet next to the rule.
+ *
+ * ⛔ SCOPE IS UNCHANGED AND IS STILL THE SINGLE-POST MASTHEAD ONLY. Cards, the
+ *    related-article grid, Open Graph / Twitter images, Rank Math schema and
+ *    feeds never pass through this gate and are untouched by this reversal in
+ *    either direction — asserted by §8.7, which is unchanged.
  */
-add_filter( 'bhp_blog_featured_image_on_single', '__return_false' );
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * 1 · THE HEADER — reclaiming the dead band
@@ -1390,10 +1436,43 @@ function bhp_blog_capture_band_enabled() {
  *   paragraph or second paragraph."* Recorded with its provenance because a
  *   relayed quote and a first-hand one are different evidence (§9.2 rule 2).
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.341 (`CYCLE171-LD-341` item 4) — THE DEFAULT MOVES 2 → 5.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE FOUNDER SAW THE RESULT AND RULED AGAINST IT. 2026-08-31, on the Adams
+ *    post: the band at paragraph 2 splits the article's opening argument, and
+ *    the gap it leaves reads as a break in the writing. `CYCLE171-MKT-2`
+ *    documented the same thing independently. The instruction is that the
+ *    article's opening must read UNINTERRUPTED.
+ *
+ * ⛔ THIS MOVES AN ASK. IT DOES NOT ADD ONE. The two-asks-one-bridge doctrine
+ *    (carrier 110/119) is intact: still exactly one mid-post band and one
+ *    end-of-post capture, still the same `lead_magnet`, `context`, handler,
+ *    nonce, audience and tags. Nothing about the count or the pipe changed.
+ *
+ * ⛔ IT IS A PARAGRAPH COUNT AGAIN, NOT A RESTORED HEADING ANCHOR, even though
+ *    the brief offered "after the first H2 section ends" as an option. The
+ *    heading anchor is the thing 1.19.321 shipped and 1.19.322 REMOVED for a
+ *    measured reason recorded immediately above: it landed at 29.6% of one
+ *    pilot post and 70.6% of another, because it measures the AUTHOR's
+ *    structure rather than the READER's depth. Re-introducing it to solve a
+ *    depth complaint would re-introduce that spread. The brief's own words were
+ *    "whichever the existing mechanism supports most cleanly" — the mechanism
+ *    supports paragraph counting cleanly and heading counting badly, and it was
+ *    deliberately stripped of the latter.
+ *
+ * ⚠ 5, NOT 6, AND THE CHOICE IS DISCLOSED RATHER THAN PRESENTED AS OBVIOUS. The
+ *   brief said "~paragraph 5-6". 5 is the lower end because the max-ratio guard
+ *   below stands the band down entirely on a post that is not long enough to
+ *   host it — so erring later costs a real ask on a short post, while erring
+ *   earlier costs nothing but a slightly earlier one on a long post. The value
+ *   is one filtered integer; a ruling either way is a one-value change.
+ *
  * @return int
  */
 function bhp_blog_capture_band_after_paragraph() {
-	return max( 1, (int) apply_filters( 'bhp_blog_capture_band_after_paragraph', 2 ) );
+	return max( 1, (int) apply_filters( 'bhp_blog_capture_band_after_paragraph', 5 ) );
 }
 
 /**
@@ -1566,20 +1645,45 @@ function bhp_blog_capture_band_button() {
  *    depth: the same rule put the ask at 29.6% of one pilot post and 70.6% of
  *    another (round 1, finding B3).
  *
- * ⭐ THE TWO-STEP RULE, EXACTLY AS BRIEFED, AND IN THIS ORDER:
+ * ⭐ THE TWO-STEP RULE, AS AMENDED AT 1.19.341, AND IN THIS ORDER:
  *
- *      1. If the article's SECOND paragraph is clean and top-level, the band
- *         goes immediately after it.
- *      2. Otherwise — the second paragraph is inside a list, a blockquote, a
- *         table or an embed — the band FALLS BACK to immediately after the
- *         FIRST clean top-level paragraph.
+ *      1. If the article's Nth paragraph (N = the tunable, now 5) is clean and
+ *         top-level, the band goes immediately after it.
+ *      2. Otherwise — the Nth paragraph is inside a list, a blockquote, a table
+ *         or an embed — the band FALLS FORWARD to immediately after the NEXT
+ *         clean top-level paragraph after it.
  *
- *    ⚠ STEP 2 IS "THE FIRST CLEAN ONE", NOT "THE SECOND CLEAN ONE", AND THE
- *      DIFFERENCE IS DELIBERATE. On an article that opens with one paragraph
- *      and then a pull-quote, counting only clean paragraphs would push the ask
- *      PAST the quote to whatever came after it. The brief's wording is
- *      "fall back to after the first clean top-level paragraph", which places
- *      it EARLIER, and earlier is the entire point of this release.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.341 — STEP 2 REVERSED DIRECTION, AND IT HAD TO. THIS IS THE HALF OF
+ *     ITEM 4 A VERSION-BUMP-ONLY CHANGE WOULD HAVE GOT SILENTLY WRONG.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED STEP 2, PRESERVED IN WORDS SO IT IS NOT RE-DERIVED: it fell
+ *    back to "the FIRST clean top-level paragraph" — i.e. it searched BACKWARD,
+ *    to the top of the article. The 1.19.322 note justifying that is preserved
+ *    verbatim here because it was CORRECT FOR ITS OWN TARGET and the reasoning
+ *    is worth keeping:
+ *
+ *      "STEP 2 IS 'THE FIRST CLEAN ONE', NOT 'THE SECOND CLEAN ONE', AND THE
+ *       DIFFERENCE IS DELIBERATE. On an article that opens with one paragraph
+ *       and then a pull-quote, counting only clean paragraphs would push the ask
+ *       PAST the quote to whatever came after it. The brief's wording is
+ *       'fall back to after the first clean top-level paragraph', which places
+ *       it EARLIER, and earlier is the entire point of this release."
+ *
+ * ⭐ WHY IT INVERTS NOW: with a target of 2, "earlier" meant paragraph 1 — a
+ *    negligible move, and the release wanted early. With a target of 5, the old
+ *    backward fallback would fire on any article whose fifth paragraph sits in
+ *    a list — extremely common in this blog's listicles — and dump the ask
+ *    after paragraph ONE. That is not a near miss of the founder's instruction,
+ *    it is the exact defect he ruled against, reached by a code path nobody
+ *    would look at. Raising the default without inverting this would have
+ *    shipped item 4 as a regression on precisely the posts it was meant to fix.
+ *
+ * ⛔ FALLING FORWARD CANNOT RUN AWAY WITH THE ASK. The max-ratio guard below is
+ *    unchanged and still binding: if the forward search lands past 85% of the
+ *    visible text, the band stands down entirely and the reader gets the
+ *    end-of-post capture alone. An honest refusal, not a badly-placed ask.
  *
  * ⛔ THE REFUSAL SURVIVES, AND IT IS STILL A REFUSAL RATHER THAN A GUESS. An
  *    article with no clean top-level paragraph at all gets NO band, and so does
@@ -1615,10 +1719,33 @@ function bhp_blog_capture_band_offset( $html ) {
 	if ( isset( $paragraphs[ $want - 1 ] ) && $paragraphs[ $want - 1 ]['top'] ) {
 		$offset = (int) $paragraphs[ $want - 1 ]['end'];      // step 1
 	} else {
-		foreach ( $paragraphs as $paragraph ) {               // step 2
-			if ( $paragraph['top'] ) {
-				$offset = (int) $paragraph['end'];
+		/*
+		 * Step 2, 1.19.341: FORWARD from the target, never backward to the top
+		 * of the article. See the block comment above for why the direction
+		 * inverted when the default moved 2 -> 5.
+		 */
+		for ( $i = $want - 1, $n = count( $paragraphs ); $i < $n; $i++ ) {
+			if ( $i >= 0 && ! empty( $paragraphs[ $i ]['top'] ) ) {
+				$offset = (int) $paragraphs[ $i ]['end'];
 				break;
+			}
+		}
+
+		/*
+		 * ⛔ AND ONLY IF THERE IS NOTHING CLEAN AT OR AFTER THE TARGET AT ALL
+		 *    does it look backward, to the LAST clean paragraph before it. This
+		 *    is the short-article case: a three-paragraph post can never reach
+		 *    paragraph five, and refusing outright there would silently drop the
+		 *    mid-post ask from every short post on the blog. It is the LAST one
+		 *    before the target rather than the first, so it still lands as deep
+		 *    as the article allows. The max-ratio guard below then decides
+		 *    whether even that is too deep to be worth placing.
+		 */
+		if ( null === $offset ) {
+			foreach ( $paragraphs as $index => $paragraph ) {
+				if ( $index < $want - 1 && ! empty( $paragraph['top'] ) ) {
+					$offset = (int) $paragraph['end'];
+				}
 			}
 		}
 	}

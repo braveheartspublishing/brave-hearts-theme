@@ -564,7 +564,20 @@ if (function_exists('bhp_get_amazon_review_registry')) {
          no new CSS; the full star treatment stays on the review quote
          below, which is the primary star display per Andrew's direction. */ ?>
       <div class="audience-landing-stat"><div class="audience-landing-stat__num"><?php esc_html_e('5-star', 'brave-hearts'); ?></div><p class="audience-landing-stat__label"><?php esc_html_e('verified family reviews', 'brave-hearts'); ?></p></div>
-      <div class="audience-landing-stat"><div class="audience-landing-stat__num"><?php esc_html_e('Kirkus', 'brave-hearts'); ?></div><p class="audience-landing-stat__label"><?php esc_html_e('featured title', 'brave-hearts'); ?></p></div>
+      <?php /* ⭐ 1.19.341 (`CYCLE171-LD-341` item 1) — the label was "featured title".
+         Founder-ordered 2026-08-31. FACT BASIS, verified live on kirkusreviews.com
+         the same night: the Mariana Trench review carries Kirkus's own "GET IT"
+         verdict label, so the tile now names the verdict rather than the softer
+         and vaguer "featured title". The claim is Kirkus's published wording,
+         not this desk's characterisation of it.
+         ⛔ SCOPE IS THIS ONE TILE. The identical "Kirkus / featured title" tile
+            also stands in page-audience-educators.php, page-audience-organizations.php
+            and page-audience-retailers.php and is DELIBERATELY UNTOUCHED this pass —
+            the order named the gift-buyers page. The three are listed in the
+            build report so the divergence is on the record, not discovered later.
+         ⛔ The neighbouring "5-star / verified family reviews" tile and the scanbar's
+            "Featuring a Kirkus-reviewed title" are both accurate and unchanged. */ ?>
+      <div class="audience-landing-stat"><div class="audience-landing-stat__num"><?php esc_html_e('Kirkus', 'brave-hearts'); ?></div><p class="audience-landing-stat__label"><?php esc_html_e('“Get It” verdict', 'brave-hearts'); ?></p></div>
       <div class="audience-landing-stat"><div class="audience-landing-stat__num">2</div><p class="audience-landing-stat__label"><?php esc_html_e('formats - paperback & hardcover keepsake', 'brave-hearts'); ?></p></div>
     </div>
     <div class="audience-landing-review">
