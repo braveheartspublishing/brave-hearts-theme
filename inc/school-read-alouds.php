@@ -510,7 +510,6 @@ function bhp_school_readalouds_render_scheduler() {
 	         */
 	        ?>
 	        <input type="hidden" name="bhp_attr_now" value="" data-bhp-attr-now />
-	        <?php
 	        <?php wp_nonce_field( BHP_READALOUD_REQUEST_ACTION, 'bhp_readaloud_nonce', false ); ?>
 
 	        <?php
