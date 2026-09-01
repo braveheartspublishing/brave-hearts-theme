@@ -1026,6 +1026,13 @@ function bhp_blog_rail_enabled() {
  *
  * @return int
  */
+/*
+ * ⛔⛔ SUPERSEDED AT 1.19.345 (`CYCLE174-LD-345`, founder item 590). The rail's
+ *     paragraph floor was part of the visible-text anchor arithmetic; its job is
+ *     now done by `bhp_blog_ask_paragraph_targets()`, which places the rail by
+ *     depth and holds it clear of both neighbours. ⛔ NOT DELETED and still
+ *     filterable; nothing in this theme calls it any more.
+ */
 function bhp_blog_rail_min_paragraphs() {
 	return max( 1, (int) apply_filters( 'bhp_blog_rail_min_paragraphs', 3 ) );
 }
@@ -1043,7 +1050,16 @@ function bhp_blog_rail_min_paragraphs() {
  * @return float
  */
 function bhp_blog_rail_position_ratio() {
-	$ratio = (float) apply_filters( 'bhp_blog_rail_position_ratio', 0.75 );
+	/*
+	 * ⛔⛔ SUPERSEDED DEFAULT AT 1.19.345 (`CYCLE174-LD-345`, founder item 590):
+	 *     0.75 -> 2/3. ⭐ AND THE UNIT CHANGED WITH IT: this is now a fraction of
+	 *     the article's CLEAN TOP-LEVEL PARAGRAPHS, not of its visible-text
+	 *     bytes. `bhp_blog_rail_offset()` carries the full reasoning. The filter
+	 *     NAME is deliberately unchanged so a live override keeps working, but a
+	 *     reader who assumes it still means bytes will misread it by design, so
+	 *     the change of unit is stated here and not only there.
+	 */
+	$ratio = (float) apply_filters( 'bhp_blog_rail_position_ratio', 2 / 3 );
 
 	return min( 0.95, max( 0.05, $ratio ) );
 }
@@ -1134,6 +1150,14 @@ function bhp_blog_visible_text_length( $html, $offset ) {
  *
  * @return float
  */
+/*
+ * ⛔⛔ SUPERSEDED AT 1.19.345 (`CYCLE174-LD-345`, founder item 590). The gap
+ *     between the band and the rail is now counted in PARAGRAPHS by
+ *     `bhp_blog_ask_min_paragraph_gap()`, because a visible-text ratio can be
+ *     defeated by a post with long paragraphs — two controls 8% of the text
+ *     apart can still be adjacent siblings in the DOM. ⛔ NOT DELETED and still
+ *     filterable; nothing in this theme calls it any more.
+ */
 function bhp_blog_rail_min_gap_ratio() {
 	$ratio = (float) apply_filters( 'bhp_blog_rail_min_gap_ratio', 0.08 );
 
@@ -1175,7 +1199,83 @@ function bhp_blog_rail_pick( $html, $hits, $target, $floor, $at_end, $skip ) {
 	return ( null !== $best ) ? $best : $fallback;
 }
 
+/**
+ * ⭐⭐ 1.19.345 (`CYCLE174-LD-345`, founder item 590) — THE RAIL'S OFFSET, NOW
+ *     MEASURED IN PARAGRAPHS.
+ *
+ * ⛔⛔ THIS REPLACES THE ANCHOR ARITHMETIC, AND THE SUPERSEDED MECHANISM IS
+ *     DESCRIBED HERE RATHER THAN DELETED SO IT IS NOT RE-DERIVED. Until this
+ *     release the rail sat at `max(second <h2>, Nth </p>)` against a target of
+ *     75% of VISIBLE TEXT, with a `bhp_blog_rail_min_gap_ratio()` floor measured
+ *     in visible-text bytes. The dispatch carrying item 590 is explicit that the
+ *     rail is "repositioned to ~2/3 measured by paragraph count", so both the
+ *     depth and the instrument changed.
+ *
+ * ⭐ WHAT IS GAINED, AND IT IS THE 1.19.321 DEFECT CLOSED AT THE ROOT. The old
+ *    floor could be defeated by a post whose paragraphs are long: two controls
+ *    can sit 8% of the visible text apart and still be adjacent siblings in the
+ *    DOM. Counting paragraphs makes "never adjacent" a structural fact —
+ *    `bhp_blog_ask_paragraph_targets()` guarantees at least
+ *    `bhp_blog_ask_min_paragraph_gap()` paragraphs of article between them, and
+ *    at least one more before the end-of-post capture.
+ *
+ * ⛔ WHAT IS LOST, STATED PLAINLY RATHER THAN GLOSSED: the `<h2>` anchor meant
+ *    the rail always landed on a section boundary and never mid-section. It now
+ *    lands after a paragraph, which may be inside a section. That is the
+ *    deliberate trade — 1.19.322 already recorded that a heading anchor
+ *    "measures the AUTHOR's structure, not the READER's depth" and landed at
+ *    29.6% of one pilot post and 70.6% of another. Item 590 is stated as a
+ *    depth, so depth wins over tidiness.
+ *
+ * ⛔ THE `bhp_blog_rail_position_ratio` FILTER SURVIVES AND IS STILL READ (via
+ *    `bhp_blog_ask_depth_ratios()`), now as a fraction of PARAGRAPHS rather than
+ *    of visible text. Its clamp is unchanged. Anything already filtering it
+ *    still moves the rail in the same direction.
+ *
+ * ⛔ `bhp_blog_rail_min_gap_ratio()` and `bhp_blog_rail_min_paragraphs()` are
+ *    NOT deleted and NOT called from this path any more. They are left in place,
+ *    still filterable, and marked superseded at their own definitions.
+ *
+ * Returns null when the article cannot host a rail at depth, in which case the
+ * caller APPENDS it at the end — below everything, colliding with nothing.
+ *
+ * @param string $html Rendered content.
+ * @return int|null
+ */
 function bhp_blog_rail_offset( $html ) {
+	$total = strlen( wp_strip_all_tags( $html ) );
+	if ( $total < 1 ) {
+		return null;
+	}
+
+	/*
+	 * ⛔ THE BAND (priority 11) IS ALREADY IN `$html` WHEN THIS RUNS AT 12, and
+	 *    the band's own markup contains NO `<p>` — `post-capture-band.php` emits
+	 *    a `<span>` line plus `signup-form.php`. ⚠️ VERIFIED BY READING BOTH
+	 *    TEMPLATES, and asserted by this build's suite rather than assumed,
+	 *    because a `<p>` appearing in either would silently shift every ordinal
+	 *    this function computes and move the rail with no test failing.
+	 */
+	$tops    = bhp_blog_ask_top_paragraphs( $html );
+	$targets = bhp_blog_ask_paragraph_targets( count( $tops ) );
+
+	if ( null === $targets['rail'] || ! isset( $tops[ $targets['rail'] - 1 ] ) ) {
+		return null; // Short article, or no clean paragraph at depth. Caller appends.
+	}
+
+	return (int) $tops[ $targets['rail'] - 1 ]['end'];
+}
+
+/**
+ * ⛔ SUPERSEDED AT 1.19.345 — the visible-text anchor arithmetic, kept as dead
+ *    but callable code for one release so an external caller does not fatal, and
+ *    so the movement is visible in the diff rather than only in the history.
+ *    Nothing in this theme calls it. See `bhp_blog_rail_offset()` above.
+ *
+ * @param string $html Rendered content.
+ * @return int|null
+ */
+function bhp_blog_rail_offset_by_visible_text( $html ) {
 	$total = strlen( wp_strip_all_tags( $html ) );
 	if ( $total < 1 ) {
 		return null;
@@ -1503,8 +1603,242 @@ function bhp_blog_capture_band_enabled() {
 	return (bool) apply_filters( 'bhp_blog_capture_band_enabled', true );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 4d · THE STANDARD POST ASK ARCHITECTURE — 1.19.345, `CYCLE174-LD-345`
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-08-31, verbatim (⛔ RELAYED to this desk through the
+ * Chief of Staff's `CYCLE174-LD-345` dispatch as founder item 590; ⛔ NOT
+ * witnessed first-hand by the agent that wrote this):
+ *
+ *   "Each blog should have the small add your email ask for the free chapter
+ *    1/3 down. 2/3 down the book look inside and 3/3 the Free chapter full box
+ *    for email capture - Every blog"
+ *
+ * ⭐ THE THREE TOUCHPOINTS, AND THEIR DEPTHS ARE NOW ONE ARITHMETIC:
+ *
+ *      1/3   the SMALL inline email ask   `post-capture-band.php`
+ *      2/3   the book rail / look inside  `bhp_blog_rail_html()`
+ *      3/3   the FULL capture box         `post-end-capture.php`
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ WHAT THIS SUPERSEDES. THREE STANDING RULES MOVE, AND NONE IS DELETED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ SUPERSEDED 1 — "THE BAND SITS AFTER PARAGRAPH 5."
+ *    `bhp_blog_capture_band_after_paragraph()` (1.19.341, default 5, itself
+ *    superseding 1.19.322's default 2) was a FIXED ORDINAL. It is now a
+ *    FALLBACK ONLY, consulted when the depth arithmetic cannot run. The reason
+ *    a fixed ordinal had to go is the same reason 1.19.322 removed the heading
+ *    anchor, and it is worth restating rather than re-deriving: paragraph 5 is
+ *    28% of a nineteen-paragraph article and 83% of a six-paragraph one. A
+ *    fixed ordinal measures the ARTICLE's length, not the READER's depth, and
+ *    item 590 is stated as a depth.
+ *
+ * ⛔ SUPERSEDED 2 — "THE RAIL SITS AT 75% OF VISIBLE TEXT, ANCHORED ON THE
+ *    SECOND `<h2>`." `bhp_blog_rail_position_ratio()` (1.19.321, default 0.75)
+ *    and the `max(second <h2>, Nth </p>)` anchor arithmetic. Item 590 says
+ *    two thirds, and the dispatch says MEASURED BY PARAGRAPH COUNT. Both halves
+ *    moved: the depth (0.75 -> 2/3) and the instrument (visible-text bytes plus
+ *    a heading token -> top-level paragraph ordinals).
+ *    ⭐ THE RATIO FILTER IS KEPT AND STILL HONOURED — see
+ *      `bhp_blog_rail_position_ratio()`, which is now read as a PARAGRAPH
+ *      fraction. A live filter that moved the rail still moves the rail.
+ *
+ * ⛔ SUPERSEDED 3 — THE CARRIER-110/119 "TWO ASKS, ONE BRIDGE" COMMENTS.
+ *    Several docblocks in this file and in `post-capture-band.php` assert
+ *    "exactly one mid-post band and one end-of-post capture" and count the
+ *    asks at two. ⭐ ITEM 590 RULES A THIRD TOUCHPOINT ONTO EVERY POST BY NAME,
+ *    and the rail is a commerce bridge rather than a fourth email ask, so the
+ *    magnet count is UNCHANGED at two (band + end capture, one magnet, one
+ *    context, one pipe). ⛔ `CYCLE173-LD-5` raised "three asks for one magnet"
+ *    as ANDREW'S DECISION; item 590 is the founder answering it, and the answer
+ *    is that the shape is deliberate. The old comments are marked superseded in
+ *    place, never deleted.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ THE SHORT-POST RULE, DEFINED AND DOCUMENTED BECAUSE THE DISPATCH ASKED
+ *     FOR IT BY NAME, AND BECAUSE THIRDS ARE MEANINGLESS ON A SHORT ARTICLE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * On a post with FEWER THAN `bhp_blog_ask_short_post_threshold()` (9) clean
+ * top-level paragraphs, thirds collapse: 1/3 and 2/3 of six paragraphs are
+ * paragraphs 2 and 4, which on a short article are one screen apart. So:
+ *
+ *      band  -> after paragraph 2
+ *      rail  -> before the LAST THREE paragraphs, i.e. after paragraph n-3
+ *      and the gap rule below still binds, so a post too short to hold both
+ *      loses the RAIL, never the email ask.
+ *
+ * ⭐ THE RAIL IS THE ONE THAT YIELDS, and the direction is inherited rather
+ *    than invented: `bhp_blog_rail_min_gap_ratio()` already established that
+ *    "the rail is the one that yields ... a control can be pushed further from
+ *    the fold, never closer to it." An article that cannot host both keeps the
+ *    email ask because that is the standing offer on every post; the rail is
+ *    additionally recoverable at the end of the article, which is where a null
+ *    offset makes `bhp_blog_inject_rail()` append it.
+ *
+ * ⛔ NEVER STACKED, AND IT IS ENFORCED RATHER THAN HOPED FOR.
+ *    `bhp_blog_ask_min_paragraph_gap()` (2) is the minimum number of top-level
+ *    paragraphs that must sit BETWEEN the band and the rail. The 1.19.321
+ *    incident this replaces is on the record: the band at 70.6% and the rail at
+ *    72.3% of one real post, "an email ask and a buy control stacked with about
+ *    150 characters between them", found by a browser and not by a unit test.
+ *    ⭐ That guard measured visible-text bytes; this one counts paragraphs, so
+ *    it can no longer be defeated by a post whose paragraphs are long.
+ *
+ * ⛔ THE RAIL IS ALSO HELD OFF THE LAST PARAGRAPH. `n - 1` is the deepest
+ *    ordinal it may take, so at least one paragraph of article always separates
+ *    it from the end-of-post capture box. A rail flush against the 3/3 capture
+ *    is the same stacking defect at the other end of the page.
+ *
+ * ⛔ NO NEW SIGNUP PATH, NO NEW MAGNET, NO NEW CONTEXT, NO NEW TAG. The small
+ *    ask is the SAME `post-capture-band.php` rendering the SAME
+ *    `signup-form.php` with the SAME `lead_magnet`, `context`, handler, nonce,
+ *    MC4WP audience and Mailchimp tag set. Funnel isolation
+ *    (`.claude/rules/funnels.md`) is untouched: no popup, no storage key and no
+ *    analytics prefix is added, renamed or read here. The `bhp_attr_now`
+ *    discipline of 1.19.342/343 (server renders it EMPTY, JS fills it) is
+ *    inherited unchanged because no new form markup is introduced.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ⭐ THE DEPTH FRACTIONS. Item 590's thirds, as one filterable pair.
+ *
+ * ⛔ CLAMPED RATHER THAN TRUSTED, and ORDERED rather than assumed: a filter
+ *    that returned a rail fraction above the band's would invert the page.
+ *
+ * @return array{band:float,rail:float}
+ */
+function bhp_blog_ask_depth_ratios() {
+	/*
+	 * ⛔ THE RAIL FRACTION COMES FROM `bhp_blog_rail_position_ratio()`, NOT FROM
+	 *    A SECOND `apply_filters()` ON THE SAME HOOK NAME. Applying one filter
+	 *    from two places with two different defaults is how a tunable starts
+	 *    reporting a value nothing uses. That function is the one owner and its
+	 *    own clamp runs there.
+	 */
+	$band = (float) apply_filters( 'bhp_blog_ask_band_depth_ratio', 1 / 3 );
+	$rail = (float) bhp_blog_rail_position_ratio();
+
+	$band = min( 0.9, max( 0.05, $band ) );
+
+	if ( $rail < $band ) {
+		$rail = $band; // The gap rule below then separates them properly.
+	}
+
+	return array(
+		'band' => $band,
+		'rail' => $rail,
+	);
+}
+
+/**
+ * Below this many clean top-level paragraphs, the short-post rule applies.
+ *
+ * @return int
+ */
+function bhp_blog_ask_short_post_threshold() {
+	return max( 2, (int) apply_filters( 'bhp_blog_ask_short_post_threshold', 9 ) );
+}
+
+/**
+ * ⭐ THE MINIMUM NUMBER OF TOP-LEVEL PARAGRAPHS BETWEEN THE BAND AND THE RAIL.
+ *
+ * @return int
+ */
+function bhp_blog_ask_min_paragraph_gap() {
+	return max( 1, (int) apply_filters( 'bhp_blog_ask_min_paragraph_gap', 2 ) );
+}
+
+/**
+ * ⭐⭐ THE ONE ARITHMETIC. Given a count of clean top-level paragraphs, return
+ *     the 1-based ordinals the band and the rail should follow.
+ *
+ * ⛔ IT IS PURE. No `$html`, no post, no filter side effects, no globals — so
+ *    the suite can assert every shape of article without rendering one, which
+ *    is the property that makes the short-post rule testable at all.
+ *
+ * ⛔ A null RAIL IS A REAL, INTENDED ANSWER and means "this article cannot host
+ *    a rail at depth without stacking it". The caller appends the rail at the
+ *    end of the article rather than dropping it.
+ *
+ * @param int $count Clean top-level paragraphs in the article.
+ * @return array{band:int|null,rail:int|null} 1-based paragraph ordinals.
+ */
+function bhp_blog_ask_paragraph_targets( $count ) {
+	$count = (int) $count;
+	$none  = array(
+		'band' => null,
+		'rail' => null,
+	);
+
+	if ( $count < 1 ) {
+		return $none;
+	}
+
+	$gap    = bhp_blog_ask_min_paragraph_gap();
+	$ratios = bhp_blog_ask_depth_ratios();
+
+	if ( $count < bhp_blog_ask_short_post_threshold() ) {
+		// ⭐ THE SHORT-POST RULE. See this section's header.
+		$band = 2;
+		$rail = $count - 3;
+	} else {
+		$band = (int) round( $count * $ratios['band'] );
+		$rail = (int) round( $count * $ratios['rail'] );
+	}
+
+	// The band never precedes the first paragraph, and never takes the last one.
+	$band = max( 1, min( $band, $count ) );
+
+	/*
+	 * ⛔ THE RAIL MUST CLEAR THE BAND BY THE GAP **AND** LEAVE AT LEAST ONE
+	 *    PARAGRAPH BEFORE THE END-OF-POST CAPTURE. When both cannot hold, the
+	 *    rail stands down to null rather than being wedged against a neighbour.
+	 */
+	$rail = max( $rail, $band + $gap );
+	if ( $rail > $count - 1 ) {
+		$rail = null;
+	}
+
+	return array(
+		'band' => $band,
+		'rail' => $rail,
+	);
+}
+
+/**
+ * The clean top-level paragraphs of `$html`, in document order.
+ *
+ * ⭐ A THIN PROJECTION OF `bhp_blog_capture_band_paragraphs()`, which is the one
+ *    owner of the "is this paragraph buried in a list/quote/embed" question.
+ *    Both the band and the rail now read the SAME list, which is what makes
+ *    "never adjacent" arithmetic rather than coincidence.
+ *
+ * @param string $html Rendered content.
+ * @return array<int,array{end:int,top:bool}> Re-indexed, clean paragraphs only.
+ */
+function bhp_blog_ask_top_paragraphs( $html ) {
+	$out = array();
+	foreach ( bhp_blog_capture_band_paragraphs( $html ) as $paragraph ) {
+		if ( ! empty( $paragraph['top'] ) ) {
+			$out[] = $paragraph;
+		}
+	}
+	return $out;
+}
+
 /**
  * ⭐⭐ 1.19.322 — AFTER WHICH PARAGRAPH THE BAND SITS. DEFAULT 2.
+ *
+ * ⛔⛔ SUPERSEDED AT 1.19.345 (`CYCLE174-LD-345`, founder item 590) — THIS IS NOW
+ *     A FALLBACK, NOT THE RULE. The band's ordinal is computed from article
+ *     depth by `bhp_blog_ask_paragraph_targets()`; this value is consulted only
+ *     when that arithmetic cannot run (no clean top-level paragraph at all).
+ *     ⭐ THE FILTER IS KEPT AND STILL HONOURED in that fallback, deliberately:
+ *     removing a live tunable that something may already be filtering is the
+ *     failure this file's own 1.19.322 note describes.
  *
  * ⛔ SUPERSEDED TUNABLE, NAMED IN WORDS SO A LIVE FILTER IS NOT SILENTLY
  *    ORPHANED: 1.19.321 shipped `bhp_blog_capture_band_after_section` (default
@@ -1806,6 +2140,40 @@ function bhp_blog_capture_band_offset( $html ) {
 		return null;
 	}
 
+	/*
+	 * ⭐⭐ 1.19.345 (`CYCLE174-LD-345`, founder item 590) — THE TARGET IS NOW
+	 *    DERIVED FROM ARTICLE DEPTH, NOT FROM A FIXED ORDINAL.
+	 *
+	 * ⛔ THE TWO-STEP RULE BELOW IS UNCHANGED AND STILL RUNS. Only the value of
+	 *    `$want` moved. Step 1 (clean top-level paragraph at the target), step 2
+	 *    (fall FORWARD to the next clean one), the backward short-article branch
+	 *    and the max-ratio stand-down guard all behave exactly as they did at
+	 *    1.19.341 — which is why this is a repositioning and not a rewrite.
+	 *
+	 * ⛔ `$want` COUNTS CLEAN TOP-LEVEL PARAGRAPHS; `$paragraphs` IS EVERY
+	 *    PARAGRAPH INCLUDING BURIED ONES. The two indexes are not interchangeable,
+	 *    so the target ordinal is resolved against the clean list and then
+	 *    translated back to an offset. Indexing `$paragraphs` with a clean-list
+	 *    ordinal is the bug this comment exists to prevent.
+	 */
+	$tops    = bhp_blog_ask_top_paragraphs( $html );
+	$targets = bhp_blog_ask_paragraph_targets( count( $tops ) );
+
+	if ( null !== $targets['band'] && isset( $tops[ $targets['band'] - 1 ] ) ) {
+		$offset = (int) $tops[ $targets['band'] - 1 ]['end'];
+
+		$total = strlen( wp_strip_all_tags( $html ) );
+		if ( $total > 0 ) {
+			$max = min( 0.95, max( 0.1, (float) apply_filters( 'bhp_blog_capture_band_max_ratio', 0.85 ) ) );
+			if ( bhp_blog_visible_text_length( $html, $offset ) > $total * $max ) {
+				return null; // Same stand-down guard, same tunable.
+			}
+		}
+
+		return $offset;
+	}
+
+	// ⛔ FALLBACK ONLY: no clean top-level paragraph at the computed depth.
 	$want   = bhp_blog_capture_band_after_paragraph();
 	$offset = null;
 
