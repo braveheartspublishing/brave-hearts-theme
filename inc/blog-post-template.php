@@ -965,8 +965,8 @@ function bhp_blog_rail_html( $post = null ) {
  * │ │   not an observation of the page — which is precisely the failure class
  * │ │   Standing Rules §9.2 exists to stop.
  * │ │
- * │ │ ⭐ MEASURED IN THE LIVE STAGING DOM at theme 1.19.344 — who: Aragorn
- * │ │    (`CYCLE173-LD-344B`) · when: 2026-08-31 · with: a real browser at a
+ * │ │ ⭐ MEASURED IN THE LIVE STAGING DOM at theme 1.19.344 — who: the
+ * │ │    `CYCLE173-LD-344B` lane · when: 2026-08-31 · with: a real browser at a
  * │ │    VERIFIED `window.innerWidth` of 375 and again at 1440, on
  * │ │    `/blog/amazon-rainforest-facts-for-kids/` (post 546, a non-registry
  * │ │    post, i.e. the fallback path this change actually governs).
@@ -979,8 +979,13 @@ function bhp_blog_rail_html( $post = null ) {
  * │ │      .bhp-post-capture   4388px  "FREE Chapter for Reluctant Readers"
  * │ │                                  + <input type=email>          ← ASK 2
  * │ │      .guide-continuation 4868px  related guides                (nav)
- * │ │      #parent-ab-popup    (in DOM, storagePrefix bhp_parent_popup,
- * │ │                           thankYouPath adventure-kit-thank-you) ← ASK 3
+ * │ │      the parent popup    present in the DOM, configured for the SAME
+ * │ │                          lead magnet as both captures above  ← ASK 3
+ * │ │                          (⚠ its storage-key literal is deliberately NOT
+ * │ │                           reproduced here — §9.3 of
+ * │ │                           `tests/test-blog-post-template.php` forbids
+ * │ │                           either funnel's key appearing in this file,
+ * │ │                           and that guard caught this note when it did)
  * │ │
  * │ │ ⛔ THAT IS **THREE** ASKS FOR THE SAME LEAD MAGNET, NOT TWO, and TWO OF
  * │ │    THEM CARRY THE BYTE-IDENTICAL HEADLINE "FREE Chapter for Reluctant
@@ -995,8 +1000,8 @@ function bhp_blog_rail_html( $post = null ) {
  * │ │ ⛔ THE REMAINING DUPLICATION IS NOT RESOLVED HERE, AND DELIBERATELY SO.
  * │ │    Whether a second identical email capture should also go is a founder
  * │ │    decision of exactly the kind Standing Rules §7 forbids an agent from
- * │ │    taking, and Gandalf's brief was explicit that the mid-post capture
- * │ │    band STAYS. It is recorded as `CYCLE173-LD-5` and routed to Andrew.
+ * │ │    taking, and the supervising brief was explicit that the mid-post
+ * │ │    capture band STAYS. Recorded as `CYCLE173-LD-5`, routed to Andrew.
  * │ │    ⚠ Do not "finish the job" by deleting one of them without his word.
  * │ │
  * │ │ ⚠ AND THE ASK COUNTER IN `tests/test-protected-elements.php` STILL DOES
