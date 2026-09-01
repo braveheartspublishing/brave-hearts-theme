@@ -917,6 +917,43 @@ function bhp_blog_rail_html( $post = null ) {
  *    carries exactly **two asks** (end-of-post capture + popup) **and one book
  *    bridge**, which is what both rulings say together.
  *
+ * ┌───────────────────────────────────────────────────────────────────────────
+ * │ ⭐⭐ SUPERSEDED IN PART, 2026-08-31, theme 1.19.344 (`CYCLE173-LD-344`).
+ * │ ⛔ THE PARAGRAPH IMMEDIATELY ABOVE IS PRESERVED VERBATIM AND DELIBERATELY
+ * │    NOT CORRECTED IN PLACE (additive-only discipline). Read this before
+ * │    relying on its ask count.
+ * │
+ * │ ⭐ FOUNDER ORDER, 2026-08-31, ⚠ RELAYED by the Chief of Staff and NOT
+ * │    witnessed first-hand by the session that wrote this note:
+ * │
+ * │      "There is Big redundancy on the blog pages! - we have FREE chapter
+ * │       for reluctant readers then another box saying get the free reluctant
+ * │       reader kit - Remove the Get the Free kit and keep the email capture
+ * │       one-"
+ * │
+ * │ ⛔ WHAT THE COUNT ABOVE MISSED. It says a post carries "exactly two asks",
+ * │    and `tests/test-protected-elements.php` asserted exactly that — but its
+ * │    counter only ever looked at `.bhp-post-capture`, the popup and the
+ * │    footer capture. It NEVER counted the end-of-article contextual-CTA
+ * │    block. Measured in the live production DOM on 2026-08-31, a
+ * │    non-registry post also rendered "Get the Free Reluctant Reader
+ * │    Adventure Kit" -> "Get the Free Kit", asking for the SAME lead magnet
+ * │    as the capture directly above it. So the doctrine held on paper while a
+ * │    third ask shipped, and the founder found it by looking at the page.
+ * │
+ * │ ⭐ WHAT CHANGED: that block is now suppressed on single posts at its call
+ * │    site — `template-parts/guides/related-content.php`, which carries the
+ * │    full record and the founder's words. `BHP_CTA_Engine` itself is
+ * │    untouched, so every other surface is unaffected.
+ * │
+ * │ ⭐ WHAT DID NOT CHANGE, so this is not misread as reopening item 110/118:
+ * │    the BOOK RAIL still renders and is still a book bridge, not an ask. The
+ * │    end-of-post capture still renders. The popup still renders. The footer
+ * │    capture is still suppressed. The ask count in the sentence above is
+ * │    therefore still **two** — it is now two in the rendered page as well as
+ * │    in the counter, which is the part that was not true before.
+ * └───────────────────────────────────────────────────────────────────────────
+ *
  * ⚠ STILL A FILTER, DELIBERATELY. `add_filter( 'bhp_blog_rail_enabled',
  *   '__return_false' )` turns it off again in one line, with no code deleted,
  *   exactly as the reverse direction did. A switch that only travels one way is

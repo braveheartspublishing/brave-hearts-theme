@@ -19,7 +19,75 @@ if (!$data) {
     // never renders two near-identical CTA blocks. has_shortcode() is
     // WordPress's own parser, not text matching, so this is accurate
     // even if the shortcode has attributes or unusual whitespace.
-    if (class_exists('BHP_CTA_Engine') && !has_shortcode($post->post_content, 'bhp_contextual_cta')) {
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.344 (2026-08-31, `CYCLE173-LD-344`) — THIS FALLBACK NO LONGER
+     *     RUNS ON A SINGLE BLOG POST. FOUNDER ORDER.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ Andrew Signore, 2026-08-31, ⚠ RELAYED by the Chief of Staff and NOT
+     *    witnessed first-hand by the session that wrote this line (Standing
+     *    Rules §9.2 rule 3 — the distinction is recorded, not glossed):
+     *
+     *      "There is Big redundancy on the blog pages! - we have FREE chapter
+     *       for reluctant readers then another box saying get the free
+     *       reluctant reader kit - Remove the Get the Free kit and keep the
+     *       email capture one-"
+     *
+     * WHAT HE WAS LOOKING AT, MEASURED IN THE LIVE PRODUCTION DOM rather than
+     * inferred from this template (`/blog/how-was-mount-everest-formed-for-
+     * kids/`, real browser, 2026-08-31). Document order inside <article>:
+     *
+     *     .bhp-book-rail          "The book this came from"        (KEPT)
+     *     .bhp-post-capture       "FREE Chapter for Reluctant       (KEPT)
+     *                              Readers" + inline email form
+     *     THIS BLOCK              "Get the Free Reluctant Reader   (REMOVED)
+     *                              Adventure Kit" -> "Get the Free Kit"
+     *
+     * ⛔ BOTH ASKED FOR THE SAME LEAD MAGNET. The capture posts to Mailchimp
+     *    for `reluctant_reader_adventure_kit`; this block's CTA resolves to
+     *    `adventure_kit_signup` and links to the kit page. Two consecutive
+     *    boxes, one offer. That is the redundancy, and it is real.
+     *
+     * ⭐⭐ THIS SUPERSEDES THE CARRIER-110/119 "TWO ASKS" DOCTRINE FOR SINGLE
+     *     POSTS, AND THE DOCTRINE COMMENT IS DELIBERATELY NOT DELETED. It is
+     *     at `inc/blog-post-template.php` ~917 and carries a dated supersession
+     *     note pointing here. ⛔ Do not read this change as reopening item
+     *     110/118: the BOOK RAIL is a book bridge, not an ask, and is
+     *     untouched.
+     *
+     * ⚠ WHY THE DOCTRINE DID NOT CATCH THIS ITSELF — worth knowing before
+     *   trusting its counter again. `tests/test-protected-elements.php` counts
+     *   asks as `.bhp-post-capture` + the popup + the footer capture. It never
+     *   counted a contextual-CTA block, so a third ask for the same magnet
+     *   could sit on every non-registry post and the assertion still read
+     *   exactly 2. The count was right about what it measured and blind to
+     *   this block. Registered as `CYCLE173-LD-3`.
+     *
+     * ⛔ SUPPRESSED AT THE CALL SITE, NOT IN THE ENGINE. `BHP_CTA_Engine` and
+     *    the `[bhp_contextual_cta]` shortcode are BYTE-UNTOUCHED, so landing
+     *    pages, product surfaces and any editor-placed shortcode keep the
+     *    exact behaviour they had at 1.19.343. The founder's order was about
+     *    blog pages; retiring the CTA everywhere would have been a far larger
+     *    change than he asked for.
+     *
+     * ⭐ AND IT IS A TWO-WAY SWITCH. `add_filter(
+     *    'bhp_blog_end_cta_fallback_enabled', '__return_true' )` restores it in
+     *    one line with no code deleted — the house rule from
+     *    `bhp_blog_rail_enabled()`: "a switch that only travels one way is not
+     *    a switch."
+     *
+     * ⚠ IN PRACTICE THIS TEMPLATE IS ONLY EVER LOADED FROM `single.php`, so
+     *   the default below disables the fallback on every real page load today.
+     *   The `is_singular('post')` test is still written explicitly rather than
+     *   hardcoding `false`: the test suite calls this template part directly
+     *   outside the loop, and a future non-post caller should inherit the
+     *   pre-1.19.344 behaviour rather than this founder ruling about blogs.
+     */
+    $bhp_end_cta_enabled = ! is_singular('post');
+    $bhp_end_cta_enabled = (bool) apply_filters('bhp_blog_end_cta_fallback_enabled', $bhp_end_cta_enabled, $post);
+
+    if ($bhp_end_cta_enabled && class_exists('BHP_CTA_Engine') && !has_shortcode($post->post_content, 'bhp_contextual_cta')) {
         BHP_CTA_Engine::render_for_post($post->ID, 'blog_end_of_article');
     }
     return;

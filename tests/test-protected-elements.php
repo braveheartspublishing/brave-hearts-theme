@@ -479,6 +479,8 @@ $pe_bad_cap    = array();
 $pe_bad_popup  = array();
 $pe_bad_asks   = array();
 $pe_bad_price  = array();
+/* 1.19.344 — posts still carrying the removed end-of-article kit CTA. */
+$pe_bad_endcta = array();
 /* 1.19.273 — the rail contract's four collectors (item 126). */
 $pe_bad_contract = array();
 $pe_bad_imgclass = array();
@@ -527,13 +529,53 @@ foreach ( $pe_posts as $pe_p ) {
 	 *     item 1). Both hold, because the rail is a BOOK BRIDGE and not an ask.
 	 *     An "ask" here is an email capture: the end-of-post form and the
 	 *     popup. The footer capture must still be gone.
+	 *
+	 * ┌─────────────────────────────────────────────────────────────────────
+	 * │ ⭐⭐ 1.19.344 (2026-08-31, `CYCLE173-LD-344`) — A FOURTH TERM WAS ADDED
+	 * │     TO THIS SUM, AND THE REASON IS THAT THIS COUNTER WAS BLIND.
+	 * │ ⛔ THE COMMENT ABOVE IS PRESERVED AND IS STILL CORRECT ABOUT WHAT IT
+	 * │    MEANT. It is the ENUMERATION that was incomplete.
+	 * │
+	 * │ Until now the sum counted three things: the end-of-post capture, the
+	 * │ popup, and the footer capture. It never counted the end-of-article
+	 * │ CONTEXTUAL CTA. So on every non-registry post a THIRD ask for the same
+	 * │ lead magnet — "Get the Free Reluctant Reader Adventure Kit" -> "Get
+	 * │ the Free Kit", sitting directly beneath the capture that offers the
+	 * │ same Kit — shipped while this assertion happily read exactly 2.
+	 * │
+	 * │ ⛔ THE FOUNDER FOUND IT BY LOOKING AT THE PAGE, which is now the third
+	 * │    time a post-surface defect has arrived that way (items 118, 126,
+	 * │    and this). Verbatim, ⚠ RELAYED by the Chief of Staff and not
+	 * │    witnessed by the session that wrote this:
+	 * │
+	 * │      "There is Big redundancy on the blog pages! - we have FREE chapter
+	 * │       for reluctant readers then another box saying get the free
+	 * │       reluctant reader kit - Remove the Get the Free kit and keep the
+	 * │       email capture one-"
+	 * │
+	 * │ The block is suppressed on single posts as of 1.19.344 — see
+	 * │ `template-parts/guides/related-content.php`. Counting it here means the
+	 * │ sum is 2 because the page really carries two asks, not because the
+	 * │ counter could not see the third. Registered as `CYCLE173-LD-3`.
+	 * └─────────────────────────────────────────────────────────────────────
 	 */
 	$pe_asks = substr_count( $pe_doc, 'class="bhp-post-capture"' )
 		+ ( false !== strpos( $pe_doc, 'parent-ab-popup' ) ? 1 : 0 )
 		+ ( ( false !== strpos( $pe_doc, 'id="footer-capture"' )
-			|| false !== strpos( $pe_doc, 'acquisition-form--footer-capture' ) ) ? 1 : 0 );
+			|| false !== strpos( $pe_doc, 'acquisition-form--footer-capture' ) ) ? 1 : 0 )
+		+ substr_count( $pe_doc, 'data-bhp-cta-placement="blog_end_of_article"' );
 	if ( 2 !== $pe_asks ) {
 		$pe_bad_asks[] = $pe_p->post_name . '=' . $pe_asks;
+	}
+
+	/*
+	 * ⭐ AND THE REMOVAL IS ASSERTED DIRECTLY, NOT ONLY THROUGH THE SUM. If a
+	 *    future change ever removed one of the two KEPT asks while
+	 *    reintroducing this block, the total would still be 2 and the
+	 *    assertion above would pass. This limb cannot be satisfied that way.
+	 */
+	if ( false !== strpos( $pe_doc, 'data-bhp-cta-placement="blog_end_of_article"' ) ) {
+		$pe_bad_endcta[] = $pe_p->post_name;
 	}
 
 	/*
@@ -663,8 +705,16 @@ bhp_pe_assert(
 bhp_pe_assert(
 	empty( $pe_bad_asks ),
 	sprintf(
-		'§2.6 the ASK COUNT on every post is exactly TWO — capture + popup%s  ⭐ PROTECTED: report §4 item 1. The rail is a BOOK, not an ask, which is why §2.2 and this assertion are both true at once',
+		'§2.6 the ASK COUNT on every post is exactly TWO — capture + popup%s  ⭐ PROTECTED: report §4 item 1. The rail is a BOOK, not an ask, which is why §2.2 and this assertion are both true at once. ⭐ 1.19.344: the sum now ALSO counts the end-of-article contextual CTA, which it was blind to until the founder found the redundancy himself',
 		$pe_bad_asks ? ' — WRONG on: ' . implode( ', ', $pe_bad_asks ) : ''
+	),
+	$failures
+);
+bhp_pe_assert(
+	empty( $pe_bad_endcta ),
+	sprintf(
+		'§2.6b the END-OF-ARTICLE KIT CTA ("Get the Free Kit") is ABSENT from every post%s  ⭐ PROTECTED: founder redundancy order 2026-08-31 (RELAYED). Asserted separately from §2.6 so that swapping this block back in for one of the two kept asks cannot pass by keeping the total at two',
+		$pe_bad_endcta ? ' — STILL PRESENT on: ' . implode( ', ', $pe_bad_endcta ) : ''
 	),
 	$failures
 );

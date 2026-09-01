@@ -244,6 +244,69 @@ bhp_cta_test_assert(
 	$failures
 );
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * 9 · ⭐⭐ 1.19.344 (2026-08-31, `CYCLE173-LD-344`) — THE END-OF-ARTICLE KIT CTA
+ *        IS SUPPRESSED ON SINGLE POSTS. FOUNDER REDUNDANCY ORDER.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ WHY THE ASSERTIONS IN §4/§5 ABOVE STILL EXPECT THE CTA TO RENDER, AND WHY
+ *   THAT IS CORRECT RATHER THAN A MISSED UPDATE. `wp eval-file` runs with no
+ *   main query set up, so `is_singular('post')` is FALSE there and those
+ *   direct `get_template_part()` calls exercise the NON-POST path — which is
+ *   deliberately unchanged by 1.19.344. Leaving them asserting the old
+ *   behaviour is the point: they now pin the behaviour that must NOT move.
+ *
+ * ⛔ SO THE NEW BEHAVIOUR NEEDS ITS OWN COVERAGE, and it has to simulate the
+ *    single-post query rather than assume it. That is what this block does.
+ *    The served-document proof — the CTA absent from all 36 real posts over
+ *    HTTP — lives in `test-protected-elements.php` §2.6b.
+ */
+if ( $real_posts && function_exists( 'bhp_get_guide_post_data' ) ) {
+	global $wp_query;
+	$bhp_344_saved_query = $wp_query;
+
+	$bhp_344_post = clone $real_posts[0];
+	$bhp_344_post->post_name    = 'zzz-344-suppression-' . wp_generate_password( 8, false );
+	$bhp_344_post->post_content = 'Plain content with no shortcode at all.';
+	bhp_cta_test_assert( ! bhp_get_guide_post_data( $bhp_344_post ), 'Test fixture: the 1.19.344 slug is confirmed absent from the guide registry (so the fallback path is genuinely the one under test)', $failures );
+
+	// Simulate a real single-post request: is_singular('post') reads
+	// $wp_query->is_singular and then the queried object's post_type.
+	$wp_query = new WP_Query();
+	$wp_query->is_singular         = true;
+	$wp_query->is_single           = true;
+	$wp_query->queried_object      = $bhp_344_post;
+	$wp_query->queried_object_id   = $bhp_344_post->ID;
+
+	bhp_cta_test_assert( is_singular( 'post' ), 'Test fixture: the simulated query really does report is_singular(post) -- without this the suppression assertion below would pass vacuously', $failures );
+
+	ob_start();
+	get_template_part( 'template-parts/guides/related-content', null, array( 'post' => $bhp_344_post ) );
+	$bhp_344_on_post = ob_get_clean();
+	bhp_cta_test_assert( false === strpos( $bhp_344_on_post, 'data-bhp-cta-placement="blog_end_of_article"' ), 'FOUNDER ORDER 2026-08-31 (relayed): on a SINGLE POST the end-of-article "Get the Free Kit" CTA does not render', $failures );
+	bhp_cta_test_assert( '' === trim( $bhp_344_on_post ), 'A non-registry SINGLE POST now renders nothing after the article from this template part -- the capture above it is the only remaining ask', $failures );
+
+	// The switch travels both ways -- house rule from bhp_blog_rail_enabled().
+	add_filter( 'bhp_blog_end_cta_fallback_enabled', '__return_true', 99 );
+	ob_start();
+	get_template_part( 'template-parts/guides/related-content', null, array( 'post' => $bhp_344_post ) );
+	$bhp_344_forced = ob_get_clean();
+	remove_filter( 'bhp_blog_end_cta_fallback_enabled', '__return_true', 99 );
+	bhp_cta_test_assert( false !== strpos( $bhp_344_forced, 'data-bhp-cta-placement="blog_end_of_article"' ), 'The suppression is a TWO-WAY switch: bhp_blog_end_cta_fallback_enabled => true restores the block with no code deleted', $failures );
+
+	// ...and forcing it off must also work, so neither direction is hardcoded.
+	$wp_query = new WP_Query(); // not a single post -> default is "enabled"
+	add_filter( 'bhp_blog_end_cta_fallback_enabled', '__return_false', 99 );
+	ob_start();
+	get_template_part( 'template-parts/guides/related-content', null, array( 'post' => $bhp_344_post ) );
+	$bhp_344_forced_off = ob_get_clean();
+	remove_filter( 'bhp_blog_end_cta_fallback_enabled', '__return_false', 99 );
+	bhp_cta_test_assert( false === strpos( $bhp_344_forced_off, 'data-bhp-cta-placement="blog_end_of_article"' ), 'The filter also suppresses the block OFF a single post, so the default is not hardcoded in either direction', $failures );
+
+	$wp_query = $bhp_344_saved_query;
+	bhp_cta_test_assert( ! is_singular( 'post' ), 'Test teardown: the global query was restored, so later suites are not left inside a simulated single-post request', $failures );
+}
+
 // ==================== Result ====================
 if ( $failures ) {
 	echo count( $failures ) . " TEST(S) FAILED\n";

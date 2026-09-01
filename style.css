@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.343
+Version: 1.19.344
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4236,6 +4236,80 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
   --expedition-focus: #d8bd7d;
   --expedition-error: #9c352f;
   --expedition-success: #2f6949;
+  /* ⭐⭐ 1.19.344 (2026-08-31, `CYCLE173-LD-344`) — THE IN-BODY BLOG LINK INK.
+     ═══════════════════════════════════════════════════════════════════════
+     FOUNDER ORDER, relayed by the Chief of Staff (⚠ RELAYED, not witnessed by
+     the session that wrote this): the blog's in-body links are "very hard to
+     see on mobile", must be "much brighter and underlined so they understand
+     it a link", on all blog pages.
+
+     ⛔ WHAT WAS ACTUALLY WRONG, MEASURED ON THE LIVE PRODUCTION POST rather
+        than inferred from this stylesheet — and it was NOT what the report
+        described. The brief anticipated a light-green rule winning the
+        cascade over `.entry-content a:not(.btn)`. THERE IS NO SUCH RULE.
+        `getComputedStyle` on an in-body anchor of
+        `/blog/how-was-mount-everest-formed-for-kids/` (2026-08-31, real
+        browser, production) returned `rgb(23, 63, 47)` — i.e. line ~4375's
+        `--expedition-forest` IS the winning declaration, and a survey of
+        every anchor on that page found no light green anywhere on it.
+
+        The two REAL defects, both measured:
+
+        1. ⛔ THERE IS NO UNDERLINE AT ALL. `textDecorationLine` computes to
+           `none`. The base rule `a { text-decoration: none }` (line ~348)
+           kills the line; the `.entry-content` rule then sets only
+           `text-decoration-COLOR` and `text-underline-offset` and never
+           re-enables `text-decoration-line`. It has been styling the colour
+           of a line that was never drawn.
+
+        2. ⛔ THE LINK IS INDISTINGUISHABLE FROM THE PROSE AROUND IT. Body
+           copy computes to `rgb(52, 47, 40)`. Link #173f2f against body text
+           #342f28 is **1.13:1**. The link's contrast against the GROUND was
+           never the problem (11.2:1); its contrast against its NEIGHBOURS
+           was, and no amount of darkening fixes that. With no underline and
+           no perceptible hue shift at 400 weight on a warm cream, a reader
+           has nothing to go on. That is a WCAG 1.4.1 (Use of Colour) failure
+           on top of the missing affordance, and it is exactly the thing the
+           founder described.
+
+     ⭐ WHY #2f6949, DERIVED THE SAME WAY `--color-gold-deep` WAS. It is the
+        BRIGHTEST value in the brand's green family that still clears AA
+        (4.5:1) on the DARKEST cream in circulation. Recomputed this session
+        with the WCAG 2.x relative-luminance formula, against the composited
+        ground actually measured on the live post (`rgba(255,250,240,.75)`
+        over `#f8f3e9` = **#fdf8ee**) and against the two harsher creams the
+        1.19.266 audit enumerated:
+
+            #2f6949 on #fdf8ee (measured live)   6.13  PASS
+                    on #f8f3e9 (parchment-light) 5.86  PASS
+                    on #f1e7d2 (parchment)       5.28  PASS
+                    on #efdcc1 (darkest pill)    4.84  PASS
+
+        One notch brighter was tried first and REJECTED, so the ceiling is
+        recorded rather than left to be re-derived: **#2A7050 measures 4.44:1
+        on #efdcc1** and would have repeated the `--color-gold-deep` defect
+        one shade up.
+
+     ⭐ AND IT SEPARATES FROM THE PROSE, which is the half that actually
+        answers the founder. #2f6949 against body-copy #342f28 is **2.04:1**,
+        up from 1.13:1 — a real perceptual step, on top of a real underline.
+        Relative luminance rises from 0.0394 to 0.1119, **2.84x**: "much
+        brighter" is met literally, not just nominally.
+
+     ⚠ IT SHARES A LITERAL WITH `--expedition-success` TODAY, AND THAT IS A
+       COINCIDENCE OF ARITHMETIC, NOT A RELATIONSHIP. They are declared
+       separately on purpose: a future change to the success/affirmation
+       colour must NOT silently move every blog link, and vice versa. Do not
+       collapse one into `var()` of the other.
+
+     ⛔ NOT A BRAND COLOUR AND NOT FOR DARK GROUNDS. Measured 2.84:1 on
+        `--expedition-navy` (#071522). Links on dark grounds keep the ink
+        they have; this token must never be used on one. */
+  --expedition-link: #2f6949;
+  /* The hover/focus deepening. Stays inside the same hue (152°) and only
+     drops value, so it can never be LESS legible than the resting state:
+     measured 9.42:1 on #fdf8ee and 7.44:1 on #efdcc1. */
+  --expedition-link-hover: #1d4b33;
 }
 
 body:not(.home) {
@@ -4372,7 +4446,114 @@ body:not(.home) .contact-hero .btn-outline { color: var(--expedition-navy); }
 .page-content { max-width: var(--container-content); padding-block: var(--section-space-sm); }
 .editorial-surface { padding: clamp(2rem,5vw,4rem); border: 1px solid var(--expedition-border); background: rgba(255,250,240,.75); box-shadow: 0 18px 55px rgba(53,43,27,.06); }
 .entry-content > :where(h2,h3,h4) { margin-top: 1.5em; }
+/* ⚠ 1.19.344 — THIS RULE IS PRESERVED AND STILL GOVERNS `page.php`'s
+   `.entry-content` (the /about/, /teachers/, landing-page family). It is NO
+   LONGER the winning rule inside a blog post body — see the
+   `.post-content.entry-content` block immediately below, which is scoped to
+   `single.php` alone and deliberately does not reach pages. The founder's
+   order named "all blog pages"; widening it to every editorial surface on the
+   site would have been a larger change than he asked for. */
 .entry-content a:not(.btn) { color: var(--expedition-forest); text-decoration-color: var(--expedition-gold); text-underline-offset: .2em; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.344 (2026-08-31, `CYCLE173-LD-344`) — BLOG POST BODY LINKS.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * Founder order (RELAYED by the Chief of Staff, ⚠ not witnessed by this
+ * session): make the blog's in-body link colour "much brighter and underlined
+ * so they understand it a link". The measurement that motivates the colour,
+ * and the correction to what the defect actually was, live on
+ * `--expedition-link` above. This is the placement.
+ *
+ * ⭐ THE SELECTOR IS `.post-content.entry-content`, AND THE COMPOUND IS THE
+ *    POINT. That exact pair of classes occurs in ONE place in the theme —
+ *    `single.php` line ~104 — so this reaches blog post bodies and nothing
+ *    else. `.entry-content` alone would also have caught every `page.php`
+ *    page; `article.single-post` would have been wrong for the documented
+ *    reason at line ~1095 (WordPress's `body_class()` puts `single-post` on
+ *    <body> independently of this theme's `post_class()`).
+ *
+ * ⛔ A REAL UNDERLINE, NOT AN OFFSET HAIRLINE. `text-decoration-line` is set
+ *    EXPLICITLY, because the base `a { text-decoration: none }` at line ~348
+ *    is what removed it, and the old rule here set only the decoration COLOUR
+ *    — it was tinting a line that was never drawn. `2px` at the post's
+ *    1.18rem body size is a visible rule, not a hairline, and the offset is
+ *    pulled in from `.2em` to `.16em` so it reads as an underline belonging
+ *    to the word rather than a border floating beneath it.
+ *
+ * ⛔ `skip-ink: auto` is stated rather than left to the UA so descenders in
+ *    "g", "y" and "p" break the line instead of being struck through it.
+ *
+ * ⚠ FONT WEIGHT WAS CONSIDERED AND DELIBERATELY NOT CHANGED. A 600 weight
+ *   would separate the link further, but it reflows every one of the 36
+ *   published posts and the founder asked for two things — brighter, and
+ *   underlined. Recorded so the next session knows it was a decision and not
+ *   an oversight.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+.post-content.entry-content a:not(.btn) {
+  color: var(--expedition-link);
+  text-decoration-line: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 2px;
+  text-decoration-skip-ink: auto;
+  text-underline-offset: .16em;
+}
+.post-content.entry-content a:not(.btn):hover,
+.post-content.entry-content a:not(.btn):focus-visible {
+  color: var(--expedition-link-hover);
+  text-decoration-thickness: 3px;
+}
+
+/* ⛔ THE HOLD-OUTS, AND THEY ARE LOAD-BEARING RATHER THAN TIDINESS.
+ *    Three components are INJECTED INTO `the_content()` and therefore sit
+ *    INSIDE `.post-content.entry-content` even though they are chrome, not
+ *    prose: the book rail (`bhp_blog_inject_rail`, priority 12), the mid-post
+ *    capture (priority 13) and the capture band (priority 11). Verified in the
+ *    live DOM, not assumed: on the production Everest post,
+ *    `.entry-content.contains(.bhp-book-rail)` returned **true** and 3 of the
+ *    9 anchors inside `.entry-content` belonged to the rail.
+ *
+ *    The brief's scope is explicit that rails and capture bands are not to be
+ *    restyled, so they are pinned back here.
+ *
+ * ⚠ THEY ARE PINNED TO WHAT THEY ACTUALLY RENDER TODAY (#173f2f, no
+ *   underline), NOT to what their own component stylesheet asks for. The rail
+ *   declares `color: var(--expedition-navy)` at `assets/css/blog-post.css`
+ *   ~476, but `.entry-content a:not(.btn)` (0,2,1) has been outranking
+ *   `.bhp-book-rail__title a` (0,1,1) all along, so the rail has been forest,
+ *   not navy, in production. ⛔ THAT PRE-EXISTING OVERRIDE IS REPORTED, NOT
+ *   FIXED HERE — repainting the rail navy would be a visible change the
+ *   founder did not ask for, inside a release about link legibility. Pinning
+ *   to the rendered value keeps the rail byte-identical on screen.
+ *
+ * ⭐ EQUAL SPECIFICITY (0,3,1) TO THE RULE ABOVE, WINNING ON SOURCE ORDER.
+ *    Written this way on purpose instead of `:not(.bhp-book-rail *)`: complex
+ *    `:not()` arguments only reached Safari in 16.4, and a stale iOS would
+ *    have dropped the WHOLE selector — silently taking the founder's fix off
+ *    exactly the mobile browsers he was complaining about. */
+.post-content.entry-content .bhp-book-rail a:not(.btn),
+.post-content.entry-content .bhp-capture-band a:not(.btn),
+.post-content.entry-content .bhp-post-capture a:not(.btn) {
+  color: var(--expedition-forest);
+  text-decoration-line: none;
+  text-decoration-color: var(--expedition-gold);
+  text-decoration-thickness: auto;
+  text-underline-offset: .2em;
+}
+/* ⛔ AND THE HOVER STATE COMES BACK WITH IT — this half was nearly missed and
+ *    is the reason the hold-out is two rules instead of one. Killing
+ *    `text-decoration-line` at (0,3,1) also outranks `a:hover` (0,1,1) and
+ *    `.bhp-book-rail__title a:hover` (0,2,1), so writing only the resting
+ *    state above would have SILENTLY REMOVED the rail's existing hover
+ *    underline — a regression introduced by a rule whose whole purpose was to
+ *    change nothing about the rail. */
+.post-content.entry-content .bhp-book-rail a:not(.btn):hover,
+.post-content.entry-content .bhp-book-rail a:not(.btn):focus-visible,
+.post-content.entry-content .bhp-capture-band a:not(.btn):hover,
+.post-content.entry-content .bhp-capture-band a:not(.btn):focus-visible,
+.post-content.entry-content .bhp-post-capture a:not(.btn):hover,
+.post-content.entry-content .bhp-post-capture a:not(.btn):focus-visible {
+  text-decoration-line: underline;
+}
 .entry-content blockquote { margin: 2.5rem 0; padding: 1.5rem 2rem; border-left: 3px solid var(--expedition-gold); color: var(--expedition-navy); font-family: var(--font-display); font-size: 1.45rem; }
 .blog-index { padding-block: var(--section-space); }
 .card-grid--posts { grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(24px,3vw,42px); }

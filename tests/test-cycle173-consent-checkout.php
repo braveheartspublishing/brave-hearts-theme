@@ -68,7 +68,26 @@ if (!is_string($attr_js) || !is_string($checkout_js) || !is_string($drawer_js)) 
 // ------------------------------------------------------------------
 // 1. VERSIONS — the deployed artefact is the one this suite describes.
 // ------------------------------------------------------------------
-bhp_c173_assert($failures, 'Theme version is 1.19.343', '1.19.343' === wp_get_theme()->get('Version'));
+/*
+ * ⭐ 1.19.344 (2026-08-31, `CYCLE173-LD-344`) — LOOSENED FROM `===` TO
+ *    `version_compare(>=)`, and the reason matters.
+ *
+ * ⛔ THE PREVIOUS LINE, PRESERVED SO THE MOVEMENT IS VISIBLE:
+ *      bhp_c173_assert($failures, 'Theme version is 1.19.343', '1.19.343' === wp_get_theme()->get('Version'));
+ *
+ * This suite is a CONTRACT for the consent/checkout behaviour introduced in
+ * 1.19.343. Pinning `===` meant the very next release — this one, which
+ * touches only blog link styling and an end-of-post CTA — failed a suite it
+ * had nothing to do with. That is a false negative, and a suite that cries
+ * wolf on every version bump stops being read.
+ *
+ * ⛔ IT IS LOOSENED, NOT WEAKENED. `>=` still fails if the artefact under test
+ *    is OLDER than the release this contract describes, which is the failure
+ *    the assertion actually exists to catch: running these assertions against
+ *    a build that predates the behaviour they assert. Every behavioural
+ *    assertion below is unchanged and still exact.
+ */
+bhp_c173_assert($failures, 'Theme version is at least 1.19.343 (the release this contract describes); actual: ' . wp_get_theme()->get('Version'), version_compare(wp_get_theme()->get('Version'), '1.19.343', '>='));
 bhp_c173_assert($failures, 'Bundle plugin version constant is 1.8.78', defined('BHP_BUNDLE_PRICING_VERSION') && '1.8.78' === BHP_BUNDLE_PRICING_VERSION);
 
 // ------------------------------------------------------------------
