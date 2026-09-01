@@ -131,9 +131,54 @@ function bhp_lv_token( $css, $name ) {
 }
 
 $theme_dir = get_template_directory();
-$style     = (string) @file_get_contents( $theme_dir . '/style.css' );
+$style_raw = (string) @file_get_contents( $theme_dir . '/style.css' );
 
-bhp_lv_assert( '' !== $style, 'style.css is readable', $failures );
+bhp_lv_assert( '' !== $style_raw, 'style.css is readable', $failures );
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ CORRECTED 2026-08-31 by `CYCLE173-LD-344B` — EVERY ASSERTION BELOW READS
+ *     THE STYLESHEET WITH ITS COMMENTS STRIPPED. `CYCLE173-LD-4`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT, AND IT FAILED THE SUITE THE FIRST TIME THE SUITE WAS EVER RUN.
+ *    `CYCLE173-LD-344` wrote this file and was killed before running it. On the
+ *    first real execution (staging, 2026-08-31, theme 1.19.344) §5.5 FAILED —
+ *    the "no complex :not()" guard reported a complex `:not()` in the blog-link
+ *    path.
+ *
+ * ⭐ THE CODE WAS NEVER WRONG. The match was inside `style.css`'s own EXPLANATORY
+ *    COMMENT, which quotes the very construct it is explaining that it avoided:
+ *
+ *        "Written this way on purpose instead of `:not(.bhp-book-rail *)`"
+ *
+ *    `:not(.bhp-book-rail *)` contains a descendant combinator, so the guard's
+ *    regex matched the PROSE DESCRIBING the rejected approach and reported it as
+ *    if it had been shipped. Verified after stripping comments: every `:not()` in
+ *    a real selector in the blog-link path is `:not(.btn)` — twelve of them, all
+ *    simple, all safe on Safari < 16.4. ⛔ NO CSS WAS CHANGED TO MAKE THIS PASS.
+ *
+ * ⭐ WHY THE STRIP IS APPLIED TO ALL ASSERTIONS AND NOT JUST §5.5 — this is the
+ *    half that matters more. §5.5 is a NEGATIVE assertion, so a comment made it
+ *    fail LOUDLY. §4.x and §5.3/§5.4 are POSITIVE assertions, and a comment
+ *    containing selector-shaped text would have made them PASS SILENTLY without
+ *    any rule existing. This stylesheet's comments are unusually long and quote
+ *    selectors constantly, so that is a live risk here, not a hypothetical one.
+ *    A test that can pass on its own documentation is worse than one that fails
+ *    on it. Both classes are closed by reading code rather than prose.
+ *
+ * ⚠ THE TOKEN LOOKUPS READ THE STRIPPED TEXT TOO, for the same reason: the
+ *   comment above `--expedition-link` discusses hex values at length, and a
+ *   token reader that can pick a number out of prose is not reading the
+ *   declaration.
+ */
+$style = preg_replace( '#/\*.*?\*/#s', '', $style_raw );
+
+bhp_lv_assert(
+	is_string( $style ) && '' !== $style && strlen( $style ) < strlen( $style_raw ),
+	'the comment-stripped stylesheet is non-empty and genuinely shorter than the raw file  ⛔ without this, a broken strip would silently make every assertion below read an empty string',
+	$failures
+);
 
 /* ── §1 · THE TOKENS ─────────────────────────────────────────────────────── */
 
