@@ -952,6 +952,57 @@ function bhp_blog_rail_html( $post = null ) {
  * │    capture is still suppressed. The ask count in the sentence above is
  * │    therefore still **two** — it is now two in the rendered page as well as
  * │    in the counter, which is the part that was not true before.
+ * │
+ * │ ┌─────────────────────────────────────────────────────────────────────────
+ * │ │ ⛔⛔ CORRECTED 2026-08-31 by `CYCLE173-LD-344B` — THE "STILL TWO"
+ * │ │     SENTENCE DIRECTLY ABOVE IS WRONG. `CYCLE173-LD-5`.
+ * │ │
+ * │ │ ⛔ THE PARAGRAPH ABOVE IS PRESERVED VERBATIM AND DELIBERATELY NOT
+ * │ │    EDITED IN PLACE (additive-only discipline). Do not rely on its count.
+ * │ │
+ * │ │ ⚠ IT WAS WRITTEN BY `CYCLE173-LD-344`, WHICH WAS KILLED BEFORE IT COULD
+ * │ │   RUN A BROWSER AGAINST THE RESULT. It is an inference from the diff,
+ * │ │   not an observation of the page — which is precisely the failure class
+ * │ │   Standing Rules §9.2 exists to stop.
+ * │ │
+ * │ │ ⭐ MEASURED IN THE LIVE STAGING DOM at theme 1.19.344 — who: Aragorn
+ * │ │    (`CYCLE173-LD-344B`) · when: 2026-08-31 · with: a real browser at a
+ * │ │    VERIFIED `window.innerWidth` of 375 and again at 1440, on
+ * │ │    `/blog/amazon-rainforest-facts-for-kids/` (post 546, a non-registry
+ * │ │    post, i.e. the fallback path this change actually governs).
+ * │ │
+ * │ │    Document order inside <article>, with measured offsets:
+ * │ │
+ * │ │      .bhp-capture-band   1582px  "FREE Chapter for Reluctant Readers"
+ * │ │                                  + <input type=email>          ← ASK 1
+ * │ │      .bhp-book-rail      2963px  "The book this came from"     (bridge)
+ * │ │      .bhp-post-capture   4388px  "FREE Chapter for Reluctant Readers"
+ * │ │                                  + <input type=email>          ← ASK 2
+ * │ │      .guide-continuation 4868px  related guides                (nav)
+ * │ │      #parent-ab-popup    (in DOM, storagePrefix bhp_parent_popup,
+ * │ │                           thankYouPath adventure-kit-thank-you) ← ASK 3
+ * │ │
+ * │ │ ⛔ THAT IS **THREE** ASKS FOR THE SAME LEAD MAGNET, NOT TWO, and TWO OF
+ * │ │    THEM CARRY THE BYTE-IDENTICAL HEADLINE "FREE Chapter for Reluctant
+ * │ │    Readers". `article input[type=email]` returns **2**.
+ * │ │
+ * │ │ ⭐ THE 1.19.344 CHANGE IS STILL CORRECT AND IS NOT WEAKENED BY THIS.
+ * │ │    The founder's order was to remove the box that said "Get the Free
+ * │ │    Kit", and it is GONE — `Get the Free Kit` now matches ZERO times in
+ * │ │    the rendered page, verified at both viewports. What is corrected here
+ * │ │    is only the CLAIM ABOUT THE RESULTING COUNT.
+ * │ │
+ * │ │ ⛔ THE REMAINING DUPLICATION IS NOT RESOLVED HERE, AND DELIBERATELY SO.
+ * │ │    Whether a second identical email capture should also go is a founder
+ * │ │    decision of exactly the kind Standing Rules §7 forbids an agent from
+ * │ │    taking, and Gandalf's brief was explicit that the mid-post capture
+ * │ │    band STAYS. It is recorded as `CYCLE173-LD-5` and routed to Andrew.
+ * │ │    ⚠ Do not "finish the job" by deleting one of them without his word.
+ * │ │
+ * │ │ ⚠ AND THE ASK COUNTER IN `tests/test-protected-elements.php` STILL DOES
+ * │ │   NOT COUNT `.bhp-capture-band`. Extending it was left alone on purpose:
+ * │ │   it would encode an answer to the open question above. Same finding.
+ * │ └─────────────────────────────────────────────────────────────────────────
  * └───────────────────────────────────────────────────────────────────────────
  *
  * ⚠ STILL A FILTER, DELIBERATELY. `add_filter( 'bhp_blog_rail_enabled',
