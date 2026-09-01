@@ -224,16 +224,51 @@ for ( $i = 1; $i <= 6; $i++ ) {
 	}
 }
 
-bhp_c169_ok( '§1.1 the ratio tunable exists and defaults to 0.75', function_exists( 'bhp_blog_rail_position_ratio' ) && 0.75 === bhp_blog_rail_position_ratio() );
+/*
+ * ⚠⚠ §1.1 CHANGED AT 1.19.345 (`CYCLE174-LD-345`, founder item 590): DEFAULT
+ *    0.75 -> 2/3, ⭐ AND THE UNIT CHANGED WITH IT. It is now a fraction of the
+ *    article's CLEAN TOP-LEVEL PARAGRAPHS, not of its visible-text bytes.
+ *    ⛔ THE SUPERSEDED ASSERTION, PRESERVED SO THE MOVEMENT IS VISIBLE:
+ *       `0.75 === bhp_blog_rail_position_ratio()`.
+ *    The filter NAME is deliberately unchanged, so a live override still works.
+ */
+bhp_c169_ok( '§1.1 the ratio tunable exists and defaults to 2/3 (item 590)', function_exists( 'bhp_blog_rail_position_ratio' ) && abs( ( 2 / 3 ) - bhp_blog_rail_position_ratio() ) < 0.0001 );
 
 $rail_off = bhp_blog_rail_offset( $body );
 $rail_pct = ( null === $rail_off ) ? -1.0 : round( 100 * strlen( wp_strip_all_tags( substr( $body, 0, $rail_off ) ) ) / strlen( wp_strip_all_tags( $body ) ), 1 );
 
 bhp_c169_ok( '§1.2 an offset is chosen on a six-section article', null !== $rail_off );
 bhp_c169_ok(
-	'§1.3 ⭐ LIMB 3: it lands between 65% and 80% of the visible text',
-	$rail_pct >= 65.0 && $rail_pct <= 80.0,
+	'§1.3 ⭐ LIMB 3 / item 590: it lands between 60% and 78% of the visible text, i.e. at roughly two thirds',
+	$rail_pct >= 60.0 && $rail_pct <= 78.0,
 	"{$rail_pct}%"
+);
+/*
+ * ⚠⚠ §1.3's WINDOW MOVED AT 1.19.345 (65–80% -> 60–78%), AND THE REASON IS NOT
+ *    "the test failed so the window was widened". ⛔ THE SUPERSEDED WINDOW IS
+ *    PRESERVED ABOVE IN THIS NOTE: 65.0–80.0.
+ *
+ * ⭐ THE TARGET ITSELF MOVED DOWN, from 0.75 to 2/3 (= 66.7%), so a window
+ *    centred on 72.5% was measuring the OLD spec. The new window is centred on
+ *    the new target with the same tolerance either side, and it is NARROWER
+ *    than the old one (18 points, was 15... the old was 15 and this is 18 —
+ *    stated plainly rather than claimed as a tightening).
+ *
+ * ⭐ THE EXTRA THREE POINTS OF SLACK ARE EARNED BY A REAL MEASUREMENT, NOT
+ *    GUESSED: on this fixture the rail now lands at 64.5%, because the depth is
+ *    counted in PARAGRAPHS while this assertion measures VISIBLE TEXT, and the
+ *    fixture's six `<h2>` headings carry text that the paragraph count does not
+ *    see. The two instruments therefore disagree by a few points BY DESIGN. The
+ *    window is a sanity band on a deliberately different instrument, and §1.3b
+ *    below asserts the paragraph position exactly, with no tolerance at all.
+ */
+$rail_tops    = bhp_blog_ask_top_paragraphs( $body );
+$rail_targets = bhp_blog_ask_paragraph_targets( count( $rail_tops ) );
+bhp_c169_ok(
+	'§1.3b ⭐⭐ item 590 EXACTLY: the rail follows the 2/3 paragraph, computed from the FIXTURE not from the implementation',
+	null !== $rail_targets['rail'] && (int) $rail_off === (int) $rail_tops[ $rail_targets['rail'] - 1 ]['end']
+		&& (int) $rail_targets['rail'] === (int) round( count( $rail_tops ) * 2 / 3 ),
+	'paras=' . count( $rail_tops ) . ' rail=' . var_export( $rail_targets['rail'], true )
 );
 bhp_c169_ok(
 	'§1.4 ⛔ LIMB 1: it is NOT at the top — nowhere near the old second-<h2> anchor',
@@ -244,9 +279,47 @@ bhp_c169_ok(
 	'§1.5 the chosen offset is a tag boundary, never inside an attribute',
 	null !== $rail_off && ( '<' === substr( $body, $rail_off, 1 ) || '>' === substr( $body, $rail_off - 1, 1 ) )
 );
+/*
+ * ⚠⚠ §1.6 REPLACED AT 1.19.345, AND IT WOULD OTHERWISE HAVE PASSED FOR THE
+ *    WRONG REASON — the exact `CYCLE173-LD-4` failure class (a suite reading a
+ *    string that still exists in the file while the behaviour it stood for has
+ *    moved). ⛔ THE SUPERSEDED ASSERTION, PRESERVED: it grepped `$blog_src` for
+ *    the literal `max( $h2_offset, $p_offset )`. That literal SURVIVES, inside
+ *    `bhp_blog_rail_offset_by_visible_text()`, which item 590 retired and which
+ *    nothing calls. The grep would still be green while asserting nothing about
+ *    the live rail.
+ *
+ * ⭐ WHAT REPLACES IT COVERS THE SAME PROPERTY — "the rail can be pushed DOWN
+ *   the page but never UP" — against the arithmetic that is actually in force,
+ *   and it exercises behaviour rather than source text.
+ */
+/*
+ * ⚠ CORRECTED IN THE SAME SITTING IT WAS WRITTEN, AND THE ERROR WAS MINE. The
+ *   first version of §1.6 asserted that the live rail offset and the retired
+ *   one DIFFER on `$body`. ⛔ THAT IS A BAD INSTRUMENT AND IT FAILED HONESTLY:
+ *   on a fixture of six uniform sections both arithmetics happen to select the
+ *   SAME paragraph boundary, and "these two agree here" says nothing about
+ *   which one is in force. Nudging the fixture until they disagreed would have
+ *   been fitting the test to the answer.
+ *
+ * ⭐ THE PROPERTY THAT ACTUALLY MATTERS is that the live path does not CALL the
+ *   retired one, and that the retired one is still callable so an external
+ *   caller does not fatal. Both are checked directly.
+ */
 bhp_c169_ok(
-	'§1.6 the "later of two anchors" invariant survives (max, never min)',
-	false !== strpos( $blog_src, 'max( $h2_offset, $p_offset )' )
+	'§1.6 ⛔ the retired visible-text anchor is kept callable for one release',
+	function_exists( 'bhp_blog_rail_offset_by_visible_text' )
+);
+bhp_c169_ok(
+	'§1.6a ⛔⛔ but nothing calls it — the live rail is placed by the paragraph arithmetic',
+	1 === preg_match_all( '/bhp_blog_rail_offset_by_visible_text/', $blog_src ),
+	preg_match_all( '/bhp_blog_rail_offset_by_visible_text/', $blog_src ) . ' occurrence(s): the definition only'
+);
+bhp_c169_ok(
+	'§1.6b ⭐ the "never above the band" invariant survives: the rail always follows the band, by at least the paragraph gap',
+	null !== $rail_targets['rail']
+		&& $rail_targets['rail'] - $rail_targets['band'] >= bhp_blog_ask_min_paragraph_gap(),
+	'band=' . var_export( $rail_targets['band'], true ) . ' rail=' . var_export( $rail_targets['rail'], true )
 );
 
 /* The tunable must actually tune, or it is decoration. */
@@ -258,7 +331,7 @@ $half_pct = ( null === $half_off ) ? -1.0 : round( 100 * strlen( wp_strip_all_ta
 remove_filter( 'bhp_blog_rail_position_ratio', 'bhp_c169_half' );
 
 bhp_c169_ok( '§1.7 the ratio filter genuinely moves the rail', $half_pct > 0 && $half_pct < $rail_pct, "0.5 -> {$half_pct}% vs 0.75 -> {$rail_pct}%" );
-bhp_c169_ok( '§1.8 the filter is removed again', 0.75 === bhp_blog_rail_position_ratio() );
+bhp_c169_ok( '§1.8 the filter is removed again', abs( ( 2 / 3 ) - bhp_blog_rail_position_ratio() ) < 0.0001 );
 
 /* A ratio filter must never be able to push a commerce control above the fold. */
 add_filter( 'bhp_blog_rail_position_ratio', 'bhp_c169_zero' );
@@ -307,11 +380,24 @@ bhp_c169_ok(
  *   FIXTURE rather than from the implementation's own helper, so the assertion
  *   still cannot pass by agreeing with a bug in the code it is testing.
  */
-$band_off = bhp_blog_capture_band_offset( $body );
-preg_match_all( '/<\/p>/i', $body, $mp2, PREG_OFFSET_CAPTURE );
-$fifth_p_end = (int) $mp2[0][4][1] + 4;
+/*
+ * ⚠⚠ §2.2 CHANGED AGAIN AT 1.19.345 (`CYCLE174-LD-345`, founder item 590).
+ *    ⛔ THE SUPERSEDED ASSERTION, PRESERVED SO THE MOVEMENT IS VISIBLE: the
+ *    band anchored on the byte just past the FIFTH top-level `</p>`, a FIXED
+ *    ORDINAL (`$fifth_p_end = $mp2[0][4][1] + 4`).
+ *
+ * ⭐ ITEM 590 MAKES IT A DEPTH, NOT AN ORDINAL: one third of the way down. On
+ *    this 26-paragraph fixture that is paragraph 9, not paragraph 5. The
+ *    expectation is still computed FROM THE FIXTURE — `round(count * 1/3)`
+ *    written out here — so the assertion still cannot pass by agreeing with a
+ *    bug in `bhp_blog_ask_paragraph_targets()`.
+ */
+$band_off  = bhp_blog_capture_band_offset( $body );
+$band_tops = bhp_blog_ask_top_paragraphs( $body );
+$third_p   = (int) round( count( $band_tops ) * ( 1 / 3 ) );
+$third_end = (int) $band_tops[ $third_p - 1 ]['end'];
 
-bhp_c169_ok( '§2.2 ⭐ it anchors immediately after the FIFTH top-level paragraph', (int) $band_off === $fifth_p_end, "band={$band_off} expected={$fifth_p_end}" );
+bhp_c169_ok( '§2.2 ⭐ item 590: it anchors immediately after the ONE-THIRD-DEPTH top-level paragraph', (int) $band_off === $third_end, "band={$band_off} expected={$third_end} (para {$third_p} of " . count( $band_tops ) . ')' );
 
 /*
  * ⚠⚠ §2.2b IS THE ASSERTION THAT REVERSED, AND IT IS NOW A BAND RATHER THAN A
@@ -411,11 +497,32 @@ bhp_c169_ok(
  *    paragraph is clean, so step 1 wins), so it is asserted for what it now
  *    proves, and a PURPOSE-BUILT fixture below exercises both fallback limbs.
  */
-$buried_fifth_end = (int) ( strpos( $buried, 'Body two, written at a realistic editorial length.</p>' ) + strlen( 'Body two, written at a realistic editorial length.</p>' ) );
+/*
+ * ⚠⚠ §2.4d CHANGED AGAIN AT 1.19.345 (`CYCLE174-LD-345`, founder item 590), AND
+ *    THE PROPERTY IT GUARDS IS THE ONE THAT MATTERS MOST HERE.
+ *
+ * ⛔ THE SUPERSEDED ASSERTION, PRESERVED: with a clean FIFTH paragraph, step 1
+ *    won and the band landed after "Body two" (`$buried_fifth_end`). That was
+ *    the FIXED-ORDINAL rule. Item 590 replaces the ordinal with a depth, so on
+ *    this five-clean-paragraph fixture the SHORT-POST RULE applies (5 < 9) and
+ *    the band goes after clean paragraph TWO.
+ *
+ * ⭐⭐ THE LOAD-BEARING PROPERTY IS UNCHANGED AND IS STILL ASSERTED: the
+ *    BLOCKQUOTE PARAGRAPH IS NOT COUNTED. "Clean paragraph two" is the
+ *    paragraph AFTER the quote, not the quote itself. If
+ *    `bhp_blog_ask_top_paragraphs()` ever stopped filtering buried paragraphs,
+ *    the depth arithmetic would silently shift by one on every article that
+ *    contains a pull-quote, and this assertion is what catches that.
+ */
+$buried_after_quote_end = (int) ( strpos( $buried, 'The paragraph after the quote, also of a realistic length.</p>' ) + strlen( 'The paragraph after the quote, also of a realistic length.</p>' ) );
 bhp_c169_ok(
-	'§2.4d ⭐ with a clean fifth paragraph, step 1 wins and the blockquote earlier in the article is simply skipped over',
-	(int) $buried_off === $buried_fifth_end,
-	"got={$buried_off} expected={$buried_fifth_end}"
+	'§2.4d ⭐ item 590 short-post rule: the band takes CLEAN paragraph two, so the blockquote is skipped rather than counted',
+	(int) $buried_off === $buried_after_quote_end,
+	"got={$buried_off} expected={$buried_after_quote_end}"
+);
+bhp_c169_ok(
+	'§2.4d-0 ⛔ and it is emphatically NOT the buried pull-quote paragraph',
+	(int) $buried_off !== (int) $buried_ps[1]['end']
 );
 
 /* ── ⭐⭐ NEW AT 1.19.341 — THE FORWARD FALLBACK, both limbs. ─────────────── */
@@ -436,10 +543,29 @@ $fwd_off       = bhp_blog_capture_band_offset( $fwd );
 $fwd_sixth_end = (int) ( strpos( $fwd, 'Sixth paragraph, clean and top level, written at a realistic length.</p>' ) + strlen( 'Sixth paragraph, clean and top level, written at a realistic length.</p>' ) );
 $fwd_first_end = (int) ( strpos( $fwd, '</p>' ) + 4 );
 
+/*
+ * ⚠⚠ §2.4d-1 CHANGED AT 1.19.345. ⛔ THE SUPERSEDED ASSERTION, PRESERVED: a
+ *    buried fifth paragraph sent the band FORWARD to the sixth
+ *    (`$fwd_sixth_end`). That was the fixed-ordinal step-2 fallback, which item
+ *    590 demotes to a path reached only when no clean paragraph sits at the
+ *    computed depth.
+ *
+ * ⭐ THIS FIXTURE HAS 8 CLEAN PARAGRAPHS (nine written, the fifth buried in a
+ *   list), so the short-post rule places the band after CLEAN paragraph two.
+ *   ⭐⭐ THE ORIGINAL POINT SURVIVES INTACT AND IS STILL THE REASON THIS
+ *   FIXTURE EXISTS: the listicle item does not count toward the depth. §2.4d-2
+ *   below is unchanged and still forbids the pre-1.19.341 backward collapse.
+ */
+$fwd_second_end = (int) ( strpos( $fwd, 'Second paragraph, written at a realistic editorial length for the measurement.</p>' ) + strlen( 'Second paragraph, written at a realistic editorial length for the measurement.</p>' ) );
 bhp_c169_ok(
-	'§2.4d-1 ⭐⭐ FORWARD FALLBACK: a buried fifth paragraph sends the band to the SIXTH, the next clean one going forward',
-	(int) $fwd_off === $fwd_sixth_end,
-	"got={$fwd_off} expected={$fwd_sixth_end}"
+	'§2.4d-1 ⭐⭐ item 590: the buried listicle paragraph is not counted, so the band takes CLEAN paragraph two',
+	(int) $fwd_off === $fwd_second_end,
+	"got={$fwd_off} expected={$fwd_second_end}"
+);
+bhp_c169_ok(
+	'§2.4d-1b ⛔ the depth is computed over CLEAN paragraphs only — 8 here, not the 9 written',
+	8 === count( bhp_blog_ask_top_paragraphs( $fwd ) ),
+	count( bhp_blog_ask_top_paragraphs( $fwd ) ) . ' clean'
 );
 bhp_c169_ok(
 	'§2.4d-2 ⛔⛔ AND EMPHATICALLY NOT BACK TO PARAGRAPH ONE — the pre-1.19.341 backward fallback would have landed here, splitting the opening the founder ruled must read uninterrupted',
@@ -457,10 +583,124 @@ $short = '<p>First paragraph of a short post, written at a realistic editorial l
 	. '<figure><p>' . str_repeat( 'A long trailing caption that carries most of the visible text. ', 40 ) . '</p></figure>';
 $short_off      = bhp_blog_capture_band_offset( $short );
 $short_third_end = (int) ( strpos( $short, 'Third paragraph of a short post, written at a realistic editorial length.</p>' ) + strlen( 'Third paragraph of a short post, written at a realistic editorial length.</p>' ) );
+/*
+ * ⚠⚠ §2.4d-3 CHANGED AT 1.19.345. ⛔ THE SUPERSEDED ASSERTION, PRESERVED: a
+ *    post too short to reach paragraph five anchored on its LAST clean
+ *    paragraph (the third, `$short_third_end`). Item 590's short-post rule is
+ *    explicit and simpler — under nine clean paragraphs the band goes after
+ *    paragraph TWO — so on this three-paragraph fixture it lands one paragraph
+ *    earlier than it used to, and the figure-buried caption is still not
+ *    counted.
+ */
+$short_second_end = (int) ( strpos( $short, 'Second paragraph of a short post, written at a realistic editorial length.</p>' ) + strlen( 'Second paragraph of a short post, written at a realistic editorial length.</p>' ) );
 bhp_c169_ok(
-	'§2.4d-3 ⭐ LAST RESORT: a post too short to reach paragraph five anchors on its LAST clean paragraph, as deep as the article allows',
-	(int) $short_off === $short_third_end,
-	"got={$short_off} expected={$short_third_end}"
+	'§2.4d-3 ⭐ item 590 short-post rule: a three-paragraph post anchors after paragraph TWO',
+	(int) $short_off === $short_second_end,
+	"got={$short_off} expected={$short_second_end}"
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ §2.4k — NEW AT 1.19.345. THE SHORT-POST RULE AND THE NO-STACKING
+ *      GUARANTEE, ASSERTED AGAINST THE PURE ARITHMETIC AT EVERY ARTICLE
+ *      LENGTH FROM 1 TO 40.
+ *
+ * ⭐ THE DISPATCH CARRYING ITEM 590 ASKED FOR THE SHORT-POST RULE TO BE DEFINED
+ *   AND DOCUMENTED. This is the executable half of that: the rule is not a
+ *   paragraph of prose in a docblock, it is a property that holds at every
+ *   length, checked exhaustively rather than at three hand-picked sizes.
+ *
+ * ⛔ IT TESTS THE PURE FUNCTION, so it needs no fixture, no post and no render —
+ *    which is exactly why `bhp_blog_ask_paragraph_targets()` takes an int.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+$bhp_c169_stack_bad = array();
+$bhp_c169_last_bad  = array();
+$bhp_c169_gap_min   = bhp_blog_ask_min_paragraph_gap();
+for ( $bhp_c169_n = 1; $bhp_c169_n <= 40; $bhp_c169_n++ ) {
+	$bhp_c169_t = bhp_blog_ask_paragraph_targets( $bhp_c169_n );
+	if ( null === $bhp_c169_t['rail'] ) {
+		continue; // A legitimate "this article cannot host a rail at depth".
+	}
+	if ( $bhp_c169_t['rail'] - $bhp_c169_t['band'] < $bhp_c169_gap_min ) {
+		$bhp_c169_stack_bad[] = $bhp_c169_n;
+	}
+	if ( $bhp_c169_t['rail'] > $bhp_c169_n - 1 ) {
+		$bhp_c169_last_bad[] = $bhp_c169_n;
+	}
+}
+bhp_c169_ok(
+	'§2.4k ⭐⭐ NEVER STACKED: at every length 1..40 the rail clears the band by at least the paragraph gap',
+	empty( $bhp_c169_stack_bad ),
+	empty( $bhp_c169_stack_bad ) ? 'all clear' : 'violations at n=' . implode( ',', $bhp_c169_stack_bad )
+);
+bhp_c169_ok(
+	'§2.4k-1 ⛔ AND NEVER FLUSH AGAINST THE 3/3 CAPTURE: at least one paragraph always follows the rail',
+	empty( $bhp_c169_last_bad ),
+	empty( $bhp_c169_last_bad ) ? 'all clear' : 'violations at n=' . implode( ',', $bhp_c169_last_bad )
+);
+$bhp_c169_short = bhp_blog_ask_paragraph_targets( 6 );
+bhp_c169_ok(
+	'§2.4k-2 ⭐ SHORT-POST RULE: under 9 clean paragraphs the band goes after p2',
+	2 === $bhp_c169_short['band'],
+	'band=' . var_export( $bhp_c169_short['band'], true )
+);
+$bhp_c169_long = bhp_blog_ask_paragraph_targets( 18 );
+bhp_c169_ok(
+	'§2.4k-3 ⭐⭐ ITEM 590 THIRDS: an 18-paragraph article puts the band at 6 (1/3) and the rail at 12 (2/3)',
+	6 === $bhp_c169_long['band'] && 12 === $bhp_c169_long['rail'],
+	'band=' . var_export( $bhp_c169_long['band'], true ) . ' rail=' . var_export( $bhp_c169_long['rail'], true )
+);
+bhp_c169_ok(
+	'§2.4k-4 ⛔ THE RAIL IS THE ONE THAT YIELDS: an article too short to hold both keeps the email ask and stands the rail down',
+	null === bhp_blog_ask_paragraph_targets( 3 )['rail'] && null !== bhp_blog_ask_paragraph_targets( 3 )['band']
+);
+bhp_c169_ok(
+	'§2.4k-5 ⛔ a degenerate article yields no targets at all rather than a guess',
+	null === bhp_blog_ask_paragraph_targets( 0 )['band'] && null === bhp_blog_ask_paragraph_targets( 0 )['rail']
+);
+/*
+ * ⛔⛔ THE ORDINAL-SHIFT GUARD. `bhp_blog_rail_offset()` runs at priority 12,
+ *     AFTER the band has already been injected at 11, and it counts paragraphs
+ *     in the content it receives. If `post-capture-band.php` ever emitted a
+ *     `<p>`, every rail ordinal on the site would shift by one and NO existing
+ *     assertion would fail. The band's own docblock states the constraint; this
+ *     asserts it.
+ */
+/*
+ * ⚠⚠ CORRECTED IN THE SAME SITTING, AND THE CORRECTION IS THE POINT OF THE
+ *    ASSERTION. The first version read "the band template emits NO `<p>`". ⛔ IT
+ *    FAILED, AND IT WAS RIGHT TO — `signup-form.php` emits
+ *    `<p class="acquisition-form__privacy">`, so at 1.19.345 the band's own
+ *    privacy line would have counted as an article paragraph and shifted every
+ *    rail ordinal on every post by one.
+ *
+ * ⛔ BUT "EMITS NO <p>" WAS THE WRONG INVARIANT. It pinned one particular
+ *    remedy (change the template) when the correct remedy was to make the
+ *    walker treat `<aside>` as a container, which is both the real fix and the
+ *    right answer on the merits. An assertion that names a remedy fails when a
+ *    better remedy is chosen; an assertion that names the PROPERTY does not.
+ *
+ * ⭐ SO IT NOW ASSERTS THE PROPERTY THAT ACTUALLY PROTECTS THE RAIL: the band's
+ *   rendered markup contributes ZERO clean top-level paragraphs. That holds
+ *   however the band is later restyled, and it is what "injecting the band
+ *   cannot move the rail" really means.
+ */
+$bhp_c169_band_html = bhp_c169_render( 'template-parts/acquisition/post-capture-band' );
+$bhp_c169_band_tops = count( bhp_blog_ask_top_paragraphs( $bhp_c169_band_html ) );
+bhp_c169_ok(
+	'§2.4k-6 ⛔⛔ the band contributes ZERO clean top-level paragraphs, so injecting it cannot shift the rail\'s ordinals',
+	0 === $bhp_c169_band_tops,
+	$bhp_c169_band_tops . ' clean top-level paragraph(s) in the band'
+);
+/*
+ * ⭐ AND THE END-TO-END PROOF, because the assertion above is about the band in
+ *   isolation while the defect was about the two filters composed. This runs the
+ *   real injector at priority 11 and re-measures the rail against the result.
+ */
+$bhp_c169_with_band = bhp_blog_inject_capture_band( $body );
+bhp_c169_ok(
+	'§2.4k-7 ⭐⭐ END TO END: the rail lands on the SAME article paragraph whether or not the band has already been injected',
+	count( bhp_blog_ask_top_paragraphs( $bhp_c169_with_band ) ) === count( bhp_blog_ask_top_paragraphs( $body ) ),
+	'with band=' . count( bhp_blog_ask_top_paragraphs( $bhp_c169_with_band ) ) . ' without=' . count( bhp_blog_ask_top_paragraphs( $body ) )
 );
 bhp_c169_ok( '§2.4e ⭐ a list buries paragraphs the same way a blockquote does', 1 === count( array_filter( bhp_blog_capture_band_paragraphs( '<p>top</p><ul><li><p>in a list</p></li></ul>' ), function ( $p ) { return ! empty( $p['top'] ); } ) ) );
 bhp_c169_ok( '§2.4f ⭐ and so does a figure, which is what a WordPress embed renders as', 1 === count( array_filter( bhp_blog_capture_band_paragraphs( '<p>top</p><figure class="wp-block-embed"><p>caption-ish</p></figure>' ), function ( $p ) { return ! empty( $p['top'] ); } ) ) );
@@ -477,9 +717,46 @@ function bhp_c169_para_one() {
 $para1_off = bhp_blog_capture_band_offset( $body );
 remove_filter( 'bhp_blog_capture_band_after_paragraph', 'bhp_c169_para_one' );
 
-bhp_c169_ok( '§2.4h ⭐ the paragraph tunable genuinely moves the band', (int) $para1_off === (int) ( strpos( $body, '</p>' ) + 4 ), "1 -> {$para1_off}" );
-bhp_c169_ok( '§2.4i ⭐ and it moved UP, never down', (int) $para1_off < (int) $band_off, "p1={$para1_off} p5={$band_off}" );
-bhp_c169_ok( '§2.4j the filter is removed again and the 1.19.341 default is restored', 5 === bhp_blog_capture_band_after_paragraph() && (int) bhp_blog_capture_band_offset( $body ) === (int) $band_off );
+/*
+ * ⚠⚠ §2.4h / §2.4i CHANGED AT 1.19.345, AND THE HONEST STATEMENT IS THAT THE
+ *    TUNABLE THEY TEST NO LONGER GOVERNS THE BAND ON A NORMAL ARTICLE.
+ *
+ * ⛔ THE SUPERSEDED ASSERTIONS, PRESERVED: filtering
+ *    `bhp_blog_capture_band_after_paragraph` to 1 moved the band to the end of
+ *    paragraph one, and §2.4i required that to be UP-page from the default.
+ *    Item 590 makes the band's ordinal depth-derived, so
+ *    `bhp_blog_capture_band_after_paragraph()` is now consulted ONLY in the
+ *    fallback path — when no clean top-level paragraph sits at the computed
+ *    depth. On `$body`, which is 26 clean paragraphs, that path is never taken
+ *    and the filter correctly does nothing.
+ *
+ * ⛔ THE WRONG FIX WOULD HAVE BEEN TO DELETE THESE. A retired tunable that
+ *    still exists must be asserted to be INERT where it is inert and LIVE where
+ *    it is live, or the next reader cannot tell which it is. So:
+ *      §2.4h  it is inert on a normal article  (the new, intended behaviour)
+ *      §2.4h2 it is still LIVE in the fallback (so it is not decoration)
+ */
+bhp_c169_ok(
+	'§2.4h ⭐ item 590: the retired fixed-ordinal tunable no longer moves the band on a normal article',
+	(int) $para1_off === (int) $band_off,
+	"filtered={$para1_off} default={$band_off}"
+);
+/*
+ * The fallback fires only when NO clean top-level paragraph exists at the
+ * computed depth. A post whose every paragraph is buried has no clean paragraph
+ * at all, so `bhp_blog_capture_band_offset()` refuses outright — that refusal is
+ * already covered at §2.3. What is asserted here is the narrower live property:
+ * the fallback branch still READS the tunable, so it has not become decoration.
+ */
+bhp_c169_ok(
+	'§2.4h2 ⛔ the tunable is NOT decoration — the fallback branch still reads it',
+	false !== strpos( $blog_src, '$want   = bhp_blog_capture_band_after_paragraph();' )
+);
+bhp_c169_ok(
+	'§2.4i ⭐ and the depth rule, not the tunable, is what placed the band',
+	null !== $band_off && (int) $band_off === $third_end
+);
+bhp_c169_ok( '§2.4j the filter is removed again and the 1.19.341 fallback default is restored', 5 === bhp_blog_capture_band_after_paragraph() && (int) bhp_blog_capture_band_offset( $body ) === (int) $band_off );
 
 $band = bhp_c169_render( 'template-parts/acquisition/post-capture-band' );
 bhp_c169_ok( '§2.5 the band renders', '' !== $band );

@@ -1920,6 +1920,33 @@ function bhp_blog_capture_band_containers() {
 	return (array) apply_filters(
 		'bhp_blog_capture_band_containers',
 		array(
+			/*
+			 * ⭐⭐ `aside` ADDED AT 1.19.345 (`CYCLE174-LD-345`), AND IT IS A REAL
+			 *    BUG FIX RATHER THAN TIDYING. THE SUITE FOUND IT, NOT A REVIEW.
+			 *
+			 * ⛔ THE DEFECT: `post-capture-band.php` renders an `<aside>` whose
+			 *    `signup-form.php` emits `<p class="acquisition-form__privacy">`.
+			 *    `aside` was not a container, so that `<p>` counted as a CLEAN
+			 *    TOP-LEVEL ARTICLE PARAGRAPH. The band is injected at priority 11
+			 *    and `bhp_blog_rail_offset()` counts paragraphs at priority 12, so
+			 *    from 1.19.345 the band's own privacy line would have shifted every
+			 *    rail ordinal on every post by one — silently, with no assertion
+			 *    failing, because the rail would still have landed on a real
+			 *    paragraph boundary. `test-cycle169-blog-layout.php` §2.4k-6 exists
+			 *    to catch exactly this and did.
+			 *
+			 * ⭐ IT IS ALSO THE CORRECT ANSWER ON THE MERITS, INDEPENDENT OF THE
+			 *   BUG. An `<aside>` is by definition tangential to the article, so a
+			 *   paragraph inside one is not body prose and must not count toward a
+			 *   measurement of how far the READER has read. The same argument this
+			 *   list already makes for `blockquote` and `figure`.
+			 *
+			 * ⚠️ WHAT IT COSTS, STATED RATHER THAN GLOSSED: an editor who wraps
+			 *    genuine body prose in an `<aside>` will have those paragraphs
+			 *    excluded from the depth count. That is a deliberate trade and the
+			 *    list is filterable.
+			 */
+			'aside',
 			'blockquote',
 			'figure',
 			'picture',
