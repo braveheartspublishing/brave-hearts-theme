@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Brave Hearts Bundle Pricing
  * Description: Fixed-dollar bundle discounts, shipping, and storefront offers for the six approved Adventures of Charlotte and Henry editions. Every bundle purchase adds the real, individually-mapped WooCommerce products as separate cart line items — Bookvault fulfillment routing and per-book tax are never altered.
- * Version: 1.8.78
+ * Version: 1.8.79
  * Author: Brave Hearts Publishing
  * Requires Plugins: woocommerce
  * Text Domain: bhp-bundle-pricing
@@ -42,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * ⛔ KEEP IT IN STEP WITH THE `Version:` HEADER ABOVE, every release.
  */
-define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.78' );
+define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.79' );
 define( 'BHP_BUNDLE_PRICING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BHP_BUNDLE_PRICING_URL', plugin_dir_url( __FILE__ ) );
 
@@ -186,6 +186,28 @@ function bhp_bundle_pricing_init() {
 	// Liberty session are byte-identical to 1.8.74.
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-stock-privacy.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-paperback-only.php';
+
+	/*
+	 * ⭐⭐ 1.8.79 (`CYCLE174-LD-345`, founder items 588/589) — THE SHELF ADMIN
+	 *    SCREEN. WooCommerce -> Signed Copies.
+	 *
+	 * ⛔ LOADED LAST OF THE VISIT MODULES, AND ONLY IN wp-admin. It READS the
+	 *    shelf functions defined above (`bhp_visit_shelf_baseline()`,
+	 *    `_committed()`, `_title_counter()`, the label functions), so loading it
+	 *    earlier would fatal on a partial deploy. It defines no storefront
+	 *    behaviour of its own and has no front-end output at all, so gating it on
+	 *    `is_admin()` keeps it entirely out of a customer request.
+	 *
+	 * ⛔ IT WRITES EXACTLY ONE OPTION, `bhp_visit_shelf_stock`. No product
+	 *    record, no WooCommerce stock field, no price, no coupon.
+	 */
+	if ( is_admin() ) {
+		require_once BHP_BUNDLE_PRICING_DIR . 'includes/school-visit-shelf-admin.php';
+		if ( class_exists( 'BHP_Visit_Shelf_Admin' ) ) {
+			BHP_Visit_Shelf_Admin::init();
+		}
+	}
+
 	bhp_bundle_pricing_load_dashboard_module();
 
 	add_action( 'wp_enqueue_scripts', 'bhp_bundle_pricing_assets' );
