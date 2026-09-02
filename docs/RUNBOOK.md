@@ -16,7 +16,7 @@ server's `/tmp`, and `wp theme install --force` installs it — all
 confirmed working end to end. Under owner decision G-40 (2026-08-02),
 local builds and remote writes to **staging** (`scp`, staging
 `wp theme install --force`, staging cache purge and staging QA) are
-standing-authorized within a Gandalf-approved build brief and do not
+standing-authorized within a `chief-of-staff`-approved build brief and do not
 require repeated per-command approval. Production remote writes remain
 gated by Andrew's explicit current-turn approval. Read-only checks remain
 permitted on either environment when relevant and safe.
@@ -77,10 +77,29 @@ TOP_PHP=$(git ls-tree HEAD --name-only | grep '\.php$')
 git archive --format=zip --prefix=brave-hearts-theme-deploy-explorer-expedition-guides/ \
   -o /path/to/build.zip HEAD style.css style.min.css theme.json assets inc template-parts \
   content-engine docs tests woocommerce Brand-Soul-Audit.md CLAUDE.md \
-  Homepage-Implementation-Notes.md Logo.jpg README.md Theme-Freeze.md $TOP_PHP
+  Homepage-Implementation-Notes.md Logo.jpg README.md Theme-Freeze.md $TOP_PHP \
+  ':(exclude)assets/covers'
 ```
 The `--prefix` must exactly match the active theme's slug or the install
 creates a new, inactive theme instead of replacing the live one.
+
+> ### ⛔ ADDED 2026-09-02 (`CYCLE179-LD-350`) - `assets/covers/` must be excluded, and the `assets` path above pulls it in
+>
+> `assets` is listed wholesale, so a plain `git archive` sweeps in **`assets/covers/`: 117 tracked
+> print-source and proof masters, roughly 500 MB**, referenced by **zero** PHP, JS or CSS files and
+> present on **neither** environment. A repo-built ZIP was silently adding all 117 to staging until
+> theme 1.19.343 caught it by byte-diffing the deployed theme against the pre-deploy backup.
+>
+> The exclusion is now in the command above as a pathspec, `':(exclude)assets/covers'`. It is verified
+> working on `git version 2.49.0.windows.1`; on an older git that does not honour exclude pathspecs in
+> `git archive`, build the list without `assets` and name the real asset subdirectories instead.
+>
+> ⭐ **The rule this makes explicit is the one `tools/` already follows: artefacts deploy, sources do
+> not.** The assertion `grep -c 'assets/covers/'  # MUST be 0` below is what proves it on each build.
+>
+> ⚠ **Do not widen this exclusion.** `assets/look-inside/` (33 files, 3.8 MB, added by theme 1.19.349)
+> is a **deployed** asset directory and rides inside the same `assets` path. An exclusion written as
+> `assets/cover*` or as a broad `assets/*-sources` would drop it and blank the product pages.
 
 **Then assert the artefact BEFORE installing it. This step is not optional:**
 ```bash
@@ -88,10 +107,42 @@ unzip -l /path/to/build.zip | tail -2                              # >= the prev
 unzip -l /path/to/build.zip | grep -c '[\\]'                       # MUST be 0
 unzip -l /path/to/build.zip | grep -cE 'woocommerce/|tests/test-'  # MUST be >= 23
 unzip -l /path/to/build.zip | grep -c 'content-engine/'            # MUST be >= 23
-unzip -l /path/to/build.zip | grep -c '\.min\.css'                 # MUST be 10
+unzip -l /path/to/build.zip | grep -c '\.min\.css'                 # MUST be >= 14
 unzip -l /path/to/build.zip | grep -c 'tools/'                     # MUST be 0
+unzip -l /path/to/build.zip | grep -c 'assets/covers/'             # MUST be 0
 md5sum /path/to/build.zip                                          # record it in the release doc
 ```
+> ### ⛔ CORRECTED 2026-09-02 (`CYCLE178-LD-DOCS-SYNC`, applied `CYCLE179-LD-350`) - the minified-CSS assertion was an equality on a stale number, and it fails a CORRECT build
+>
+> **The superseded line read `# MUST be 10`, and it is preserved here rather than deleted:**
+>
+> ```bash
+> # SUPERSEDED 2026-09-02 - the repository tracks 14 minified stylesheets, not 10
+> unzip -l /path/to/build.zip | grep -c '\.min\.css'                 # MUST be 10
+> ```
+>
+> **Verified live 2026-09-02, not inferred:** `git ls-files '*.min.css'` at HEAD returns **14** paths,
+> being **13 under `assets/css/`** plus **`style.min.css`**. A correctly built artefact therefore failed
+> this gate, and this runbook's documented response to a failed gate is to **stop and investigate a build
+> that is in fact correct**. That is the more expensive failure: it teaches the next builder to distrust a
+> passing artefact.
+>
+> ⭐ **It is corrected to a FLOOR (`>= 14`) rather than to an exact number**, which is the same form the
+> two assertions directly above it already use (`>= 23` twice). The floor still catches the failure this
+> assertion exists for, a build that **silently dropped** artefacts, because a dropped stylesheet takes
+> the count below the floor. What it no longer does is go stale the next time a stylesheet is **added**,
+> which is exactly how the `10` became wrong. This file's own note immediately below says the same thing
+> about the superseded "expect 356 entries" figure: **a fixed number goes stale and then gets corrected
+> downward by someone trusting it.** An equality assertion is that failure with a hard edge on it.
+>
+> ⚠ **The working tree is already at 15**, not 14: `assets/css/pdp-content.min.css` was added by theme
+> 1.19.349 and is untracked at the time of writing, so `git ls-files` counts 14 while a working-tree
+> build counts 15. **Both satisfy the floor. That is the point of a floor**, and it is why this was not
+> corrected to an exact 14 or an exact 15.
+>
+> ⚠ **The `10` also survives, correctly, in the note below** ("the ten `*.min.css` build artefacts"),
+> where it is describing the **1.19.201-era artefact** as a historical accounting. That sentence is
+> scoped to a past build and is **not** an assertion about a current one, so it is left alone.
 > **⚠ The "expect 356 entries" figure is superseded and is preserved in this note rather than left inline, where it would be read as a target.** It was correct for the 1.19.154-era artefact. The 1.19.201 artefact is **462 entries**, and the growth is accounted for: `content-engine/` (31), the ten `*.min.css` build artefacts, four mobile image variants and the docs added since. **A fixed number goes stale and then gets "corrected" downward by someone trusting it — compare against the PREVIOUS ARTEFACT and against the live file count instead.**
 >
 > **The assertion that actually protects you:** count files in the live theme directory over SSH and confirm the ZIP is a superset. At 1.19.201 that was 404 live files against 414 file entries in the ZIP.
@@ -142,6 +193,12 @@ ssh -i ~/.ssh/id_ed25519 -p <port> <user>@<host> \
 ```
 Exits non-zero on any failure. Run this after any deploy that touches
 `functions.php`'s Kirkus functions or `template-parts/components/kirkus-credibility.php`.
+
+**Always pass `--url=<site-url>` to every `wp eval-file tests/...` run** (added 2026-09-02,
+CYCLE179-LD-9). Under WP-CLI `$_SERVER['HTTP_HOST']` is unset, so any suite that routes
+through `BHP_Analytics_Config::is_staging()` (`inc/class-bhp-analytics-config.php`) takes the
+wrong branch without it and reports a phantom failure or a phantom pass. Baselines and
+comparisons are only valid when both runs used the same `--url`.
 
 ## After any CSS/JS-only change: bump the theme Version, not just the file
 `wp_enqueue_style`/`script` cache-bust off `wp_get_theme()->get('Version')`
@@ -212,6 +269,22 @@ installed, not after.
 - `wp theme list --status=active` (or `wp plugin get <slug>`) confirms the expected version is live.
 - `wp eval 'echo "ok";'` confirms no PHP fatal.
 - Relevant `wp eval-file tests/test-*.php` suites pass on production itself, not just staging.
+  > ### ⛔ 2026-09-02 (`CYCLE179-LD-002`, recorded by `CYCLE179-LD-350`) - THIS LINE CANNOT BE SATISFIED BY AN AGENT. The post-deploy suite runs on STAGING.
+  >
+  > The `PreToolUse` gate `G1-PRODUCTION-WRITE` blocks `wp eval` and `wp eval-file` against the
+  > production doc root **permanently and by design**, not by an expired token. Its own reasoning:
+  > both run arbitrary PHP against the live database, so a read and a write are **not distinguishable
+  > by inspecting the command**. `wp theme list`, `wp plugin list`, `wp option get` and the other
+  > read-only verbs are **not** blocked and still run.
+  >
+  > ⭐ **Standing disposition until Andrew rules:** the `wp eval-file` suites are run on **staging**
+  > against the byte-identical artefact (same ZIP md5), and the production checks are the read-only
+  > verbs above plus a real logged-out browser smoke test. **State that substitution in the release
+  > record rather than reporting a production suite run that did not happen** (Standing Rules §3, §9.2).
+  >
+  > ⚠ **This line is left standing rather than rewritten**, because it describes the verification the
+  > project actually wants. **`CYCLE179-LD-002` is OPEN and is Andrew's.** The fix the gate itself
+  > proposes is an explicit allow-list of exact read-only eval strings, added by him.
 - SiteGround cache purged.
 - A real, logged-out browser smoke test of the changed area — `curl` proves the page shell loads, not that cart/checkout/JS-driven behavior works.
 - No new entries in `php_errorlog` since the deploy.

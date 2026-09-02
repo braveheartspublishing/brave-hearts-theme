@@ -198,7 +198,7 @@ bhp_pipe_head( '§4 ⭐ synthetic submission reaches the API boundary' );
 
 BHP_Mailchimp_Staging_Stub::clear();
 
-$probe_email = 'aragorn+bhptest' . time() . '@bhptest.invalid';
+$probe_email = 'leaddev+bhptest' . time() . '@bhptest.invalid';
 
 $GLOBALS['bhp_pipe_success_fired'] = 0;
 add_action( 'bhp_mailchimp_signup_success', function () {
@@ -208,7 +208,7 @@ add_action( 'bhp_mailchimp_signup_success', function () {
 $result = bhp_process_signup(
 	array(
 		'email'         => $probe_email,
-		'name'          => 'Aragorn Test',
+		'name'          => 'Leaddev Test',
 		'require_name'  => true,
 		'context'       => 'parent_popup_ab',
 		'audience_type' => 'parents_families',
@@ -241,7 +241,7 @@ if ( null !== $add ) {
 	bhp_pipe_ok( '§4.6 ⭐ status is subscribed', 'subscribed' === ( $add['args']['status'] ?? '' ) );
 	$mf = isset( $add['args']['merge_fields'] ) ? (array) $add['args']['merge_fields'] : array();
 	bhp_pipe_ok( '§4.7 ⭐ the merge fields carry the audience segmentation', isset( $mf['AUDIENCE'] ) || ! empty( $mf ), implode( ',', array_keys( $mf ) ) );
-	bhp_pipe_ok( '§4.8 the first name rode along', ( $mf['FNAME'] ?? '' ) === 'Aragorn Test', (string) ( $mf['FNAME'] ?? '' ) );
+	bhp_pipe_ok( '§4.8 the first name rode along', ( $mf['FNAME'] ?? '' ) === 'Leaddev Test', (string) ( $mf['FNAME'] ?? '' ) );
 	bhp_pipe_ok(
 		'§4.9 ⛔ it addressed the STUB audience, never production\'s',
 		BHP_Mailchimp_Staging_Stub::LIST_ID === ( $add['list_id'] ?? '' )
@@ -301,7 +301,7 @@ add_action( 'bhp_mailchimp_signup_rejected', function ( $code, $context ) {
 add_filter( 'bhp_mailchimp_signup_is_ready', '__return_false', 999 );
 $unavail = bhp_process_signup(
 	array(
-		'email'         => 'aragorn+bhptest.unavail@bhptest.invalid',
+		'email'         => 'leaddev+bhptest.unavail@bhptest.invalid',
 		'context'       => 'parent_popup_ab',
 		'audience_type' => 'parents_families',
 		'lead_magnet'   => 'reluctant_reader_adventure_kit',
@@ -357,7 +357,7 @@ bhp_pipe_ok(
 
 $missing = bhp_process_signup(
 	array(
-		'email'        => 'aragorn+bhptest.noname@bhptest.invalid',
+		'email'        => 'leaddev+bhptest.noname@bhptest.invalid',
 		'require_name' => true,
 		'name'         => '   ',
 		'context'      => 'parent_popup_ab',

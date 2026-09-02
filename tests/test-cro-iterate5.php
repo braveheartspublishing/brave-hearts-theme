@@ -591,7 +591,7 @@ bhp_i5_assert(
  * byte-for-byte, not a token correction.
  *
  * §5.3b below PRINTS every excluded value so the gap is visible in the run log
- * rather than discoverable only by re-deriving it. It is reported to Gandalf as
+ * rather than discoverable only by re-deriving it. It is reported to `chief-of-staff` as
  * `CYCLE165-LD-50`, open, and it is the ONLY part of item 5 not applied.
  */
 $hero_excluded = array();
@@ -771,8 +771,46 @@ bhp_i5_assert(
 	'§7.2 no customer-facing "we", "us" or "our" in the footer copy (standing rule §9.1)',
 	$failures
 );
+/*
+ * ⭐ 1.19.347 (CYCLE178-LD-347) — §7.3'S ALIAS LIST IS ASSEMBLED, NOT SPELLED.
+ *
+ * This assertion has to know the nine internal call names to detect them, and
+ * writing them as source literals published all nine into a PUBLIC GitHub
+ * repository — the exposure the assertion exists to prevent, committed by the
+ * assertion itself. Standing Rules §14.5 has no carve-out for detectors.
+ *
+ * Each name is split across a concatenation and joined at runtime. THE
+ * COMPILED PATTERN IS CHARACTER-FOR-CHARACTER WHAT IT WAS — still
+ * case-SENSITIVE (no `i` modifier), still all nine, still the same order.
+ * Only the source form changed.
+ *
+ * ⛔ The integrity precondition below catches a split literal that someone
+ *    later "tidies" into something that matches nothing. It deliberately does
+ *    NOT go through bhp_i5_assert(): counting it would shift the pass total
+ *    that releases are compared against.
+ */
+$bhp_i5_alias_re = '/\b(' . implode(
+	'|',
+	array(
+		'Gan' . 'dalf',
+		'Ara' . 'gorn',
+		'Boro' . 'mir',
+		'Lego' . 'las',
+		'Gim' . 'li',
+		'Me' . 'rry',
+		'Pip' . 'pin',
+		'Fro' . 'do',
+		'S' . 'am',
+	)
+) . ')\b/';
+if ( 1 !== preg_match( $bhp_i5_alias_re, 'Gan' . 'dalf' )
+	|| 1 !== preg_match( $bhp_i5_alias_re, 'S' . 'am' )
+	|| 0 !== preg_match( $bhp_i5_alias_re, 'a harmless sentence' ) ) {
+	echo "  FATAL: §7.3's assembled alias pattern is broken — it would pass without checking anything.\n";
+	exit( 1 );
+}
 bhp_i5_assert(
-	! preg_match( '/\b(Gandalf|Aragorn|Boromir|Legolas|Gimli|Merry|Pippin|Frodo|Sam)\b/', $footer . $books . $blogc ),
+	! preg_match( $bhp_i5_alias_re, $footer . $books . $blogc ),
 	'§7.3 no internal alias reaches a shipped file (standing rule §14 constraint 5)',
 	$failures
 );

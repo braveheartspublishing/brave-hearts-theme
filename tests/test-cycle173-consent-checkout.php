@@ -88,7 +88,36 @@ if (!is_string($attr_js) || !is_string($checkout_js) || !is_string($drawer_js)) 
  *    assertion below is unchanged and still exact.
  */
 bhp_c173_assert($failures, 'Theme version is at least 1.19.343 (the release this contract describes); actual: ' . wp_get_theme()->get('Version'), version_compare(wp_get_theme()->get('Version'), '1.19.343', '>='));
-bhp_c173_assert($failures, 'Bundle plugin version constant is 1.8.78', defined('BHP_BUNDLE_PRICING_VERSION') && '1.8.78' === BHP_BUNDLE_PRICING_VERSION);
+/*
+ * ⚠️⚠️ 1.19.352 (`CYCLE179-LD-2`) - THIS ASSERTION WAS AN EQUALITY PIN AND IT
+ *    IS NOW A FLOOR. The superseded line is preserved verbatim below.
+ *
+ * ⭐ WHAT IT WAS DOING WRONG: it pinned the bundle plugin to EXACTLY 1.8.78.
+ *    The plugin has since shipped 1.8.79 (chief-of-staff seal 757, ruled SHIP), so the
+ *    assertion FAILED ON A CORRECT BUILD. It is a STALE ASSERTION OF AN
+ *    INTENDED CHANGE, and it failed identically at 1.19.349, 1.19.351 and here.
+ *
+ * ⛔ WORSE THAN STALE: IT WAS ENVIRONMENT-DEPENDENT. Production runs 1.8.78 and
+ *    staging runs 1.8.79, so this one line passed on production and failed on
+ *    staging while describing the same code. A suite whose result depends on
+ *    which box it runs on cannot be a regression gate.
+ *
+ * ⭐ A FLOOR IS WHAT THE COMMENT BLOCK ABOVE ALREADY ASKS FOR - "the failure
+ *    the assertion actually exists to catch: running these assertions against a
+ *    build that PREDATES the behaviour they assert". The sibling theme
+ *    assertion on the line above is already written as a floor; this one was
+ *    the same intent written as an equality by mistake. It is the same
+ *    equality-versus-floor defect `docs/RUNBOOK.md` corrected on 2026-09-02 for
+ *    the minified-stylesheet count, and the correction has the same shape:
+ *    a floor still catches a too-old build, and does not go stale on the next
+ *    legitimate version bump.
+ *
+ * ```
+ * SUPERSEDED 2026-09-02 - equality pin, fails on every plugin release after 1.8.78
+ * bhp_c173_assert($failures, 'Bundle plugin version constant is 1.8.78', defined('BHP_BUNDLE_PRICING_VERSION') && '1.8.78' === BHP_BUNDLE_PRICING_VERSION);
+ * ```
+ */
+bhp_c173_assert($failures, 'Bundle plugin version constant is at least 1.8.78 (the release this contract describes); actual: ' . (defined('BHP_BUNDLE_PRICING_VERSION') ? BHP_BUNDLE_PRICING_VERSION : 'undefined'), defined('BHP_BUNDLE_PRICING_VERSION') && version_compare(BHP_BUNDLE_PRICING_VERSION, '1.8.78', '>='));
 
 // ------------------------------------------------------------------
 // 2. begin_checkout — EXACTLY ONCE, ON THE CHECKOUT PAGE, NON-EMPTY CART.

@@ -544,7 +544,7 @@ $_POST = $saved_post;
 $routes = bhp_get_capture_segment_routes();
 bhp_w1_assert(
 	array_keys( $routes ) === array( 'parent', 'educator', 'gift', 'organization' ),
-	'segment routes are exactly the four LIVE segments (Merry SET A), in order',
+	'segment routes are exactly the four LIVE segments (marketing-growth SET A), in order',
 	$failures
 );
 $expected_labels = array(
@@ -585,7 +585,7 @@ bhp_w1_assert(
  * ⛔ WHAT THIS CANNOT PROVE, stated so a PASS is not over-read: it never calls
  *    Mailchimp. It proves the map, the merge-tag shape and the cookie->value
  *    derivation. Whether the `TRAFFIC` field EXISTS in the audience is a
- *    console fact, not a code fact, and it is verified by Andrew/Gimli in
+ *    console fact, not a code fact, and it is verified by Andrew/`connected-operator` in
  *    Mailchimp — see the deploy packet.
  */
 $w1_map = bhp_get_mailchimp_merge_field_map();
@@ -739,7 +739,7 @@ bhp_w1_assert(
 );
 bhp_w1_assert(
 	false === stripos( $footer_copy, 'gift guide' ) && false === stripos( $footer_copy, 'gift kit' ),
-	'the footer block PROMISES no gift guide and no gift kit (capture + tag only, Gandalf ruling; CYCLE143-MKT-131)',
+	'the footer block PROMISES no gift guide and no gift kit (capture + tag only, chief-of-staff ruling; CYCLE143-MKT-131)',
 	$failures
 );
 bhp_w1_assert(
@@ -932,7 +932,7 @@ bhp_w1_assert(
  *
  *    Superseded assertion, verbatim:
  *      false !== strpos( (string) $cc_src, 'Best value: all three adventures in one Complete Collection.' )
- *      'the claim-free collection primacy line ships (Merry C3)'
+ *      'the claim-free collection primacy line ships (marketing-growth C3)'
  *
  * ⛔ THE LINE NO LONGER SHIPS, BY OWNER ORDER. Andrew Signore, 2026-08-05
  *    (⛔ RELAYED through the Chief of Staff — not witnessed by this suite's
@@ -940,7 +940,7 @@ bhp_w1_assert(
  *    redundancy: every one of its three claims is already on screen inside
  *    the same box, above it — "Best value" is the badge, "one Complete
  *    Collection" is the <h2>, and "all three adventures" is the description
- *    directly above, which also names the three titles. Merry's C3 was a
+ *    directly above, which also names the three titles. The `marketing-growth` C3 was a
  *    correct call in 1.19.169 and is superseded by a later owner call, not
  *    by this suite's opinion.
  *

@@ -268,7 +268,7 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
          *     reason both halves ship in one release.
          *
          * ⛔ A DIRECT `<li>`, NOT THE `footer` MENU LOCATION, AND THE RULING
-         *    SAYS SO. Gandalf's brief: *"direct footer.php list — the footer
+         *    SAYS SO. The `chief-of-staff` brief: *"direct footer.php list — the footer
          *    menu location is dead, bypass it."* ⭐ That is CORRECT and is
          *    corroborated by this file's own record: 1.19.269 removed the
          *    `wp_nav_menu(['theme_location' => 'footer'])` call (the preserved

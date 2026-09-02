@@ -182,7 +182,7 @@ bhp_c166_assert(
 
 /*
  * ⛔ THE EVENT NAME AND PAYLOAD ARE UNCHANGED. If these move, every GA4 and
- *    Meta mapping in Gimli's container silently stops matching.
+ *    Meta mapping in the `connected-operator` container silently stops matching.
  */
 bhp_c166_assert(
 	false !== strpos( $akty_code, "'event'       => 'adventure_kit_signup'" )

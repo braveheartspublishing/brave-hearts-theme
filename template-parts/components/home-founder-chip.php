@@ -6,7 +6,7 @@
  *
  * WHAT THIS IS
  * ------------
- * Move 1 of three on the Homepage Warmth Board (`design-creative` / Legolas,
+ * Move 1 of three on the Homepage Warmth Board (`design-creative`,
  * `FD-391`, 2026-08-17): a real photograph of Andrew and a line in his own
  * voice, in the hero, instead of 4,177 px down the page.
  *

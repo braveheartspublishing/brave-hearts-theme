@@ -149,7 +149,7 @@ bhp_vfe_assert( count( $bhp_vfe_records ) >= 1, '§2 the registry resolves at le
 /*
  * ⛔ THE EXPECTED DATES ARE ASSERTED, because "all rows are open" is vacuously
  *    true of an empty or silently-truncated registry. These three are the rows
- *    Gandalf verified live on 2026-08-19; if the registry no longer matches,
+ *    `chief-of-staff` verified live on 2026-08-19; if the registry no longer matches,
  *    that is a finding and not something for this suite to paper over.
  */
 $bhp_vfe_expected = array(

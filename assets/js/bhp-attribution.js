@@ -219,7 +219,7 @@
 	 *   deliberately suppressed outside the EEA+UK (theme 1.19.309,
 	 *   `CYCLE167-LD-CONSENT-BANNER-GEO`, on Andrew's ruling). So the
 	 *   pre-1.19.343 condition was not strict — it was UNSATISFIABLE. That
-	 *   is Frodo's gap G-E, measured: `_bhp_lead_first_touch` and
+	 *   is the `finance-analytics` gap G-E, measured: `_bhp_lead_first_touch` and
 	 *   `_bhp_lead_last_touch` empty on ALL 12 most recent lead events;
 	 *   order-side first-touch 6/22, last-touch 4/22.
 	 *

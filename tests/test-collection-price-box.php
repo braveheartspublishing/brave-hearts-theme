@@ -10,7 +10,7 @@
  * ═══════════════════════════════════════════════════════════════════════
  *
  * Andrew Signore, 2026-08-14, as relayed in the build brief (⛔ RELAYED
- * through `chief-of-staff` (Gandalf); NOT witnessed first-hand by the agent
+ * through `chief-of-staff`; NOT witnessed first-hand by the agent
  * that wrote this file):
  *
  *   "the collection price display goes INSIDE the existing FREE box (the

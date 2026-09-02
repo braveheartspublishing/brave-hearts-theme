@@ -216,7 +216,7 @@ function bhp_get_signup_traffic_source($form_moment = null) {
      *    §3's never-invent rule reaches invented attribution the same way it
      *    reaches invented reviews. So the form moment is ranked ABOVE "direct"
      *    and BELOW any real cookie signal. ⛔ RECORDED AS THIS DESK'S CALL, not
-     *    the founder's, and flagged in the round-3 report for Gandalf.
+     *    the founder's, and flagged in the round-3 report for `chief-of-staff`.
      *
      * ⛔ CASE 5 IS STILL NOT "direct", and that distinction is PRESERVED
      *    EXACTLY as 1.19.211 built it. No attribution cookie is written until

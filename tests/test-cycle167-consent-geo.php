@@ -137,7 +137,7 @@ if (2 === count($m[1])) {
      *   >     region -- asserted across both, so a future edit to either is caught', ...);
      *
      * Authority: Andrew Signore, carrier `^349. FOUNDER` item 4 — "I guess we
-     * extend it", after Gandalf clarified the extension reaches the
+     * extend it", after `chief-of-staff` clarified the extension reaches the
      * ad/marketing pixel. ⛔ RELAYED, not witnessed by this suite's author.
      *
      * ⭐ THE REPLACEMENT IS NOT WEAKER, AND THAT IS THE POINT: the old

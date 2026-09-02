@@ -269,7 +269,7 @@ class BHP_Consent {
 	 *
 	 * ⚠ AUTHORITY, AND ITS LIMIT: Andrew Signore, carrier `^349. FOUNDER`
 	 * item 4, 2026-08-27, verbatim — "I guess we extend it" — given after
-	 * Gandalf explicitly clarified that the extension reaches the ad/marketing
+	 * `chief-of-staff` explicitly clarified that the extension reaches the ad/marketing
 	 * pixel and not only measurement. ⛔ RELAYED THROUGH THE CHIEF OF STAFF,
 	 * NOT WITNESSED BY THIS FILE'S AUTHOR, and labelled so here rather than in
 	 * a report that will not travel with the code. The underlying item 310

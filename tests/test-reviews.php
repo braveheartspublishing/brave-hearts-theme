@@ -290,7 +290,7 @@ if (is_wp_error($page)) {
 }
 
 // =====================================================================
-// 1.19.165 — the three HIGH and four LOW defects from Pippin's staging QA
+// 1.19.165 — the three HIGH and four LOW defects from the `commerce-cx` staging QA
 // (`commerce-cx`, CYCLE142-CX-070 … -079). Every section below exists
 // because a specific, measured defect got through the 1.19.164 suite.
 // =====================================================================
@@ -301,7 +301,7 @@ if (is_wp_error($page)) {
 $reviews_css = (string) file_get_contents(get_theme_file_path('assets/css/reviews.css'));
 bhp_test_assert($failures, 'CX-070: .bhp-review-section is given grid-column 1/-1 inside div.product',
     (bool) preg_match('/\.woocommerce\s+div\.product\s+\.bhp-review-section\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/s', $reviews_css));
-// Pippin's explicit warning: .bhp-cc-upsell sits in the same grid at 614px and
+// The `commerce-cx` explicit warning: .bhp-cc-upsell sits in the same grid at 614px and
 // is intended. A selector that widened it would be a new defect. Comments are
 // stripped first — the class IS named in a comment, on purpose, so the next
 // reader knows not to widen it.
@@ -614,7 +614,7 @@ bhp_test_assert($failures, 'CX-074: and it yields the moment anything else holds
     strpos($reviews_js, 'document.activeElement') !== false);
 
 // ---------------------------------------------------------------------
-// 21. Regression guard — the two hard requirements Pippin verified must
+// 21. Regression guard — the two hard requirements `commerce-cx` verified must
 //     still hold after all of the above.
 // ---------------------------------------------------------------------
 foreach ($keys as $key) {

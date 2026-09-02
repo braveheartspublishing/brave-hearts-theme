@@ -1426,7 +1426,7 @@ bhp_c169_ok(
  *    "direct". Ranking that above a live click ID would file a paid conversion
  *    as direct traffic — a WRONG fact rather than a missing one. So the form
  *    moment sits ABOVE "direct" and BELOW any real cookie signal. If Andrew or
- *    Gandalf rules the other way this is the one assertion that flips.
+ *    `chief-of-staff` rules the other way this is the one assertion that flips.
  */
 $bhp_c169_reset();
 $_GET = array( 'fbclid' => 'IwAR0testvalue123' );

@@ -270,6 +270,54 @@ function bhp_author_visits_build_rows( $records, $today ) {
 			$open = ( '' === $last ) ? false : ( ( '' === $today ) ? true : ( $today <= $last ) );
 		}
 
+		/*
+		 * ⭐⭐ 1.19.350-FIX (`CYCLE179-LD-350-FIX` fix 1) — THE PRINTED DEADLINE
+		 *    NOW COMES FROM THE SAME FUNCTION THE SHOP BAND READS.
+		 *
+		 * ⛔ THE DEFECT IT CLOSES: this page printed `cutoff` while the shop
+		 *    band computed `visit - 2`, with no shared code between them. Two
+		 *    customer-facing surfaces could state two different deadlines for
+		 *    the same visit, and on one live production row they did.
+		 *
+		 * ⚠️ 1.19.352 (`CYCLE179-LD-1`) - THE SENTENCE ABOVE NAMED THAT ROW BY
+		 *    ITS REAL SLUG, AND THAT WAS A DEFECT THIS FILE'S OWN TEST CAUGHT.
+		 *    `tests/test-author-visits-page.php` and
+		 *    `tests/test-cycle169-visits-trust-gallery.php` both assert that NO
+		 *    real visit slug appears in this file or the template, because the
+		 *    registry is DATA and this file is CODE. A slug in a comment is
+		 *    still a slug in the source: it dates the file, it survives into a
+		 *    public repository, and it invites the next reader to treat one
+		 *    school's row as the shape every row has. ⛔ The two suites were
+		 *    RIGHT and the comment was WRONG, so the comment moved and neither
+		 *    assertion was touched. The row it referred to is identified in the
+		 *    release record, which is where a specific school belongs.
+		 *
+		 * ⭐⭐ THE STATED DEADLINE IS STILL WHAT PRINTS ON EVERY CONVENTIONALLY
+		 *    ENTERED ROW, AND THAT IS A PROVABLE PROPERTY RATHER THAN AN
+		 *    INTENTION. `bhp_visit_deadline_display()` returns the stated
+		 *    `cutoff` whenever `cutoff <= visit - 2`, and the online close
+		 *    otherwise — so its result is NEVER LATER than the stated cutoff.
+		 *    ⛔ It therefore cannot advertise the grace window under any row,
+		 *    which is the founder instruction quoted in this file's header and
+		 *    on `bhp_school_visit_last_order_date()`. All three `visit - 3` rows
+		 *    print byte-identically to before this change.
+		 *
+		 * ⚠️ WHAT DOES MOVE: a hand-entered row whose `cutoff` falls AFTER the
+		 *    online close stops printing a deadline the button has already
+		 *    refused. `cutoff` itself is untouched, still sanitised, still
+		 *    carried in this row for anything that needs the stated value.
+		 *
+		 * ⛔ NO REGISTRY ROW IS READ FOR WRITING, EDITED OR DEFAULTED HERE. The
+		 *    fallback exists only so a deactivated plugin renders a page instead
+		 *    of a fatal, the same shape as `bhp_author_visits_today()` above.
+		 */
+		$deadline = function_exists( 'bhp_visit_deadline_display' )
+			? bhp_visit_deadline_display( array( 'date' => $date, 'cutoff' => $cutoff ) )
+			: '';
+		if ( '' === $deadline ) {
+			$deadline = $cutoff;
+		}
+
 		$rows[] = array(
 			'slug'         => $slug,
 			'school'       => $school,
@@ -277,6 +325,7 @@ function bhp_author_visits_build_rows( $records, $today ) {
 			'date_display' => bhp_author_visits_format_date( $date ),
 			'time'         => $time,
 			'cutoff'       => $cutoff,
+			'deadline'     => $deadline,
 			'open'         => $open,
 			// ⛔ A CLOSED ROW CARRIES NO URL AT ALL. The string is empty, so a
 			//    template CANNOT render a link to an entitlement the site would
@@ -313,8 +362,16 @@ function bhp_author_visits_build_rows( $records, $today ) {
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * Andrew Signore, verbatim, 2026-08-29 (carrier item 432, first-hand to the
- * Chief of Staff, commissioning this agent BY NAME):
- *   *"Also I would like aragorn to work on putting a column for past read
+ * Chief of Staff, commissioning this agent BY NAME).
+ *
+ * ⚠ ONE EDITORIAL SUBSTITUTION IN THE QUOTE BELOW, MARKED WITH SQUARE
+ *   BRACKETS AS SUBSTITUTIONS ALWAYS ARE. He used this desk's internal call
+ *   name; internal call names may not appear in this repository, which is
+ *   public (Standing Rules §14.5), so the bracket carries the technical agent
+ *   ID instead. NOTHING ELSE IN HIS SENTENCE IS ALTERED, and the bracket is
+ *   visible precisely so no future reader mistakes it for his own wording.
+ *
+ *   *"Also I would like [lead-developer] to work on putting a column for past read
  *   alouds on the read-aloud site- I want more trust on that and lets put a
  *   picture gallery of the read alouds on that page too."*
  *

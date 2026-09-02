@@ -140,17 +140,45 @@ dd_assert(
 	! empty( $dd_blocks ),
 	'1.1 the artefact contains at least one @media (min-width: 1280px) block'
 );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ UPDATED 2026-09-02 BY 1.19.350 (`CYCLE179-LD-350-BUILD`). ITEM 214'S
+ *     RULING IS *"DESKTOP GETS MORE CARDS ACROSS"*, AND THAT SURVIVES INTACT —
+ *     IT GETS ONE MORE THAN IT DID.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE THREE SUPERSEDED ASSERTIONS, PRESERVED SO THE MOVEMENT IS VISIBLE:
+ *      1.2  'grid-template-columns: repeat(4, minmax(0, 1fr))'
+ *      1.3  'body.woocommerce-shop .woo-expedition-shell ul.products { grid-template-columns: repeat(4'
+ *      1.4  'gap: 28px 24px'
+ *
+ * ⭐ FOUR TRACKS WAS CORRECT WHILE THE GRID CARRIED SIX CARDS — four titles
+ *    plus two injected bundle tiles. 1.19.350 moves the bundles to a strip
+ *    BELOW the grid, so the grid is exactly the five things a reader chooses
+ *    between, and five tracks is what puts the whole catalog in one row. The
+ *    column gap comes down from 24px to 20px because the same 1236px now has
+ *    to carry one more card.
+ *
+ * ⛔ THE SCOPE TOKEN MOVES TOO, `body.woocommerce-shop` → `body.bhp-catalog-grid`.
+ *    ⭐ 1.3's OWN STATED CONCERN — *"the product page … does not move"* — IS
+ *    STILL ENFORCED, and by a predicate that tests `is_product()` FIRST. What
+ *    HAS deliberately changed is the other half of its sentence: the search
+ *    archive and the category archives DO move now, because giving them the
+ *    same card is the founder's own scope (seal 691) and the point of the
+ *    release. That half is superseded knowingly, not by accident.
+ */
 dd_assert(
-	false !== strpos( $dd_desktop, 'grid-template-columns: repeat(4, minmax(0, 1fr))' ),
-	'1.2 ⭐ four tracks, declared inside the desktop block'
+	false !== strpos( $dd_desktop, 'grid-template-columns: repeat(5, minmax(0, 1fr))' ),
+	'1.2 ⭐ 1.19.350: FIVE tracks, declared inside the desktop block (was four while the bundles were in the grid)'
 );
 dd_assert(
-	false !== strpos( $dd_desktop, 'body.woocommerce-shop .woo-expedition-shell ul.products { grid-template-columns: repeat(4' ),
-	'1.3 ⛔ …and SCOPED to body.woocommerce-shop — the product page, the search archive and the category archives do not move'
+	false !== strpos( $dd_desktop, 'body.bhp-catalog-grid .woo-expedition-shell ul.products {' )
+		&& false !== strpos( $dd_desktop, 'grid-template-columns: repeat(5' ),
+	'1.3 ⛔ …and SCOPED to body.bhp-catalog-grid — the PRODUCT PAGE still does not move (the archives now do, by design)'
 );
 dd_assert(
-	false !== strpos( $dd_desktop, 'gap: 28px 24px' ),
-	'1.4 the 24px column gap, which is what makes the card 291px at 1440'
+	false !== strpos( $dd_desktop, 'gap: 28px 20px' ),
+	'1.4 the 20px column gap, which is what fits five cards in the width four used'
 );
 
 echo "\n=== §2 · 4 + 2, CENTRED, WITH AN EXACTLY-SIX COUNT GUARD ===\n";
@@ -219,20 +247,28 @@ dd_assert(
  *    gives the SHOP GRID four tracks. That is the claim worth gating — it is
  *    what stops a phone rendering four 96px cards.
  */
-if ( preg_match_all( '/body\.woocommerce-shop[^{}]*ul\.products[^{}]*\{[^{}]*\}/', $dd_out, $dd_shop_rules ) ) {
+/*
+ * ⭐ 1.19.350: the token moves and the FLOOR MOVES WITH THE GRID. The claim
+ *    worth gating is unchanged and is stated in this block's own words —
+ *    *"what stops a phone rendering four 96px cards"*. With five tracks on the
+ *    desktop grid, the thing a phone must never inherit is FOUR OR MORE, so the
+ *    scan tests `repeat(4..9)` rather than `repeat(4)` alone. ⛔ Widening the
+ *    grid must not narrow its own guard.
+ */
+if ( preg_match_all( '/body\.bhp-catalog-grid[^{}]*ul\.products[^{}]*\{[^{}]*\}/', $dd_out, $dd_shop_rules ) ) {
 	$dd_bad = 0;
 	foreach ( $dd_shop_rules[0] as $dd_rule ) {
-		if ( preg_match( '/grid-template-columns:\s*repeat\(\s*4/', $dd_rule ) ) {
+		if ( preg_match( '/grid-template-columns:\s*repeat\(\s*[4-9]/', $dd_rule ) ) {
 			$dd_bad++;
 		}
 	}
 	dd_assert(
 		0 === $dd_bad,
-		'3.3 ⛔⛔ NO SHOP-GRID RULE OUTSIDE THE 1280 BLOCK DECLARES FOUR TRACKS ('
-			. count( $dd_shop_rules[0] ) . ' shop rules scanned) — a phone never gets a 4-across grid'
+		'3.3 ⛔⛔ NO CATALOG-GRID RULE OUTSIDE THE 1280 BLOCK DECLARES FOUR OR MORE TRACKS ('
+			. count( $dd_shop_rules[0] ) . ' catalog rules scanned) — a phone never gets a 4-across grid'
 	);
 } else {
-	dd_assert( false, '3.3 ⛔ no body.woocommerce-shop ul.products rules found outside the block — the scope itself has gone missing' );
+	dd_assert( false, '3.3 ⛔ no body.bhp-catalog-grid ul.products rules found outside the block — the scope itself has gone missing' );
 }
 dd_assert(
 	false === strpos( $dd_desktop, 'max-width' ),

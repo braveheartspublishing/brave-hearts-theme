@@ -1,5 +1,52 @@
 # AI Context Index
 
+> ## ⭐⭐ NEWEST, 2026-09-02 (later the same day) - **PRODUCTION IS THEME `1.19.354` / BUNDLE PLUGIN `1.8.79`.** The correction block immediately below, which records `1.19.349` / `1.8.78`, is **SUPERSEDED ON BOTH VERSION NUMBERS** and is preserved rather than rewritten.
+>
+> Five theme releases were built and staging-verified on 2026-09-02. **`1.19.353` then `1.19.354` were
+> deployed to production on 2026-09-02**, each with the owner's explicit approval, and **bundle plugin
+> `1.8.79` was deployed to production on 2026-09-02**. `1.19.350`, `1.19.351` and `1.19.352` did not ship on
+> their own; their contents reached production inside `1.19.353`.
+>
+> **Canonical for this series:** `RELEASES/PRODUCTION_RELEASE_1_19_350_354.md` (release record, contents,
+> tests, rollback artefact names, known issues) and the 2026-09-02 `CHANGELOG.md` entry headed "PRODUCTION
+> IS NOW THEME `1.19.354`" (per-release detail). Open issues: `KNOWN_ISSUES.md`. Rules recorded from this
+> series: `DECISIONS.md`.
+>
+> ⚠️ **Relayed, not read from production by this block.** Verify with `wp theme list --status=active` and
+> `wp plugin get brave-hearts-bundle-pricing --field=version` over SSH before quoting these numbers.
+
+> ## ⛔⛔ CORRECTION 2026-09-02 - **PRODUCTION IS THEME `1.19.349` / BUNDLE PLUGIN `1.8.78`.** Every version line below this block, INCLUDING the 2026-08-03 correction block, is **SUPERSEDED ON THE VERSION NUMBER**.
+>
+> ⭐ **VERIFIED WITH THE DEFINITIVE INSTRUMENT, 2026-09-02, and this is the difference from the block
+> below it.** Read-only over SSH against the production document root:
+> `wp theme list --status=active` returns **`1.19.349`** and
+> `wp plugin get brave-hearts-bundle-pricing --field=version` returns **`1.8.78`**.
+>
+> **Corroborated independently** by a read-only HTTP GET of the production home page (HTTP 200,
+> 248,926 bytes, canonical `https://braveheartspublishing.com/`, zero `staging2` occurrences):
+> **14 theme assets enqueued at `ver=1.19.349`** and **6 plugin assets at `ver=1.8.78`**.
+> **Two instruments, agreeing.**
+>
+> ⛔ **No production write of any kind was made by the pass that wrote this block.** The only production
+> contact was the read-only version query above and the read-only GET. `wp eval` and `wp eval-file` are
+> blocked against production by the `G1-PRODUCTION-WRITE` gate by design (`CYCLE179-LD-002`, OPEN, and
+> recorded in `RUNBOOK.md`'s production verification checklist).
+>
+> ⚠️ **A CONTRADICTION IS RECORDED HERE RATHER THAN RESOLVED, per the refusal duty.** The build brief
+> that authorised this documentation pass stated that production **"stays 1.19.344 tonight"** and that
+> the 1.19.349 production deploy **"did not happen"**. **Both instruments say otherwise.** The
+> engineering lane that found it does not own the question of how 1.19.349 reached production, and has
+> not answered it. **Routed to `chief-of-staff` and to Andrew. Recorded, not decided.**
+>
+> ⭐ **Production moved from `1.19.157` to `1.19.349` between the block below and this one**, and this
+> file recorded none of it. The releases immediately preceding the current state are written up in
+> `docs/CHANGELOG.md`: **1.19.342**, **plugin 1.8.77**, **1.19.343 / 1.8.78**, **1.19.344**,
+> **1.19.345 / plugin 1.8.79**, **1.19.346**, **1.19.347**, **1.19.348** and **1.19.349**. **Everything
+> between `1.19.157` and `1.19.342` still has no record here, and that gap is named rather than filled.**
+>
+> **Every block and header line below is preserved verbatim rather than edited, so the movement stays
+> visible and is not re-derived.**
+
 > ## ⛔⛔ CORRECTION, SAME DAY — **PRODUCTION IS THEME `1.19.157` / BUNDLE PLUGIN `1.8.16`.** The header line below says `1.19.156` and is **SUPERSEDED ON THE VERSION NUMBER**.
 >
 > **Verified live 2026-08-03:** the production home page (HTTP 200) enqueues **11 theme assets at `ver=1.19.157`** and 4 plugin assets at `ver=1.8.16`.

@@ -618,6 +618,217 @@
 	}
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   1.19.347 (CYCLE178-LD-347) — THE 150px CAP IS FOR A ONE-IMAGE GALLERY,
+   AND IT MUST NOT APPLY TO A MULTI-IMAGE ONE.
+   ----------------------------------------------------------------------
+   THE TWO RULES ABOVE (the 782px block and the 782px + 700px-tall block)
+   both cap `.woocommerce-product-gallery` at 150px. That was written on
+   2026-07-30 for a gallery holding exactly one image — the cover — where
+   shrinking it lifts the format cards and the CTA into the first screen.
+   IT IS STILL CORRECT FOR THE SIX CHAPTER BOOKS. Their gallery meta is
+   empty (verified live on staging 2026-09-02: products 14, 17 and 20 all
+   return an empty `_product_image_gallery`), so their PDP renders exactly
+   as it did before this block existed. NOTHING BELOW TOUCHES THEM.
+
+   ⛔ IT IS WRONG FOR THE COLOURING LINE. Product 4065 carries six gallery
+   images of interior pages (verified live on staging 2026-09-02). Those
+   previews ARE the purchase argument for a colouring book, and at 150px
+   on a phone they cannot be read at all.
+
+   THE GATE IS SERVER-SIDE: `body.bhp-gallery-multi`, set by
+   `bhp_body_classes()` in `functions.php` when the product's
+   `get_gallery_image_ids()` is non-empty. A `:has()` selector would say
+   the same thing but fails silently on Firefox < 121 and pre-2023 Safari,
+   leaving a phone stuck at 150px with nothing in the DOM to show why. The
+   class carries no such failure mode, so no fallback is needed here.
+
+   SPECIFICITY: (0,4,2) against the capping rules' (0,3,1), so this wins
+   on weight and not merely on source order.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 782px) {
+	body.bhp-gallery-multi.single-product div.product .woocommerce-product-gallery {
+		max-width: 100%;
+	}
+
+	/* The thumbnail rail is the navigation for six interior previews now,
+	   not a vestigial single swatch. 46px sits barely over the 44px minimum
+	   touch target and, at six across with a 6px gap, leaves nothing to aim
+	   at; 56px keeps two rows of three comfortably inside 375px. */
+	body.bhp-gallery-multi.single-product div.product .flex-control-thumbs li {
+		width: 56px;
+	}
+
+	/* ══════════════════════════════════════════════════════════════════
+	   1.19.348 (CYCLE179-LD-348) — ONE ROW THAT SCROLLS, NOT TWO THAT WRAP.
+	   ------------------------------------------------------------------
+	   ⭐ THE COMMENT DIRECTLY ABOVE SAYS "two rows of three comfortably
+	      inside 375px", AND THAT IS EXACTLY WHAT IT DOES — measured on
+	      staging at an asserted 375x812 on 2026-09-02: seven tiles, TWO
+	      rows, 56px each, and the rail alone is 118px of the 548px gallery
+	      block. Two rows was the right call for a rail that had to fit; it
+	      is the wrong call now that the founder's complaint (seal 672) is
+	      specifically about vertical space above the buy button.
+	   ⭐ ONE ROW THAT SCROLLS COSTS 62px AND LOSES NOTHING: every tile is
+	      still 56px (over the 44px WCAG 2.5.8 floor), all seven are still
+	      reachable, and the seventh tile being half-visible at the right
+	      edge is the standard affordance that tells a reader there is more
+	      — Baymard's own truncation guidance, and it is what Amazon does
+	      on the same product.
+	   ⛔ `body.bhp-gallery-multi` ONLY, so the three chapter books — whose
+	      gallery meta is empty and whose rail is a single swatch — cannot
+	      be reached by any of it. Nothing above this comment is reworded.
+	   ⚠️ THIS DOES NOT, ON ITS OWN, PUT THE COLOURING-BOOK CTA ABOVE THE
+	      FOLD AT 375x812, and the report says so with the arithmetic. The
+	      button is 337px below the fold on staging; 62px is 62px.
+	   ══════════════════════════════════════════════════════════════════ */
+	body.bhp-gallery-multi.single-product div.product .flex-control-thumbs {
+		flex-wrap: nowrap;
+		justify-content: flex-start;
+		overflow-x: auto;
+		overscroll-behavior-inline: contain;
+		scroll-snap-type: inline proximity;
+		scrollbar-width: none;
+	}
+
+	body.bhp-gallery-multi.single-product div.product .flex-control-thumbs::-webkit-scrollbar {
+		display: none;
+	}
+
+	body.bhp-gallery-multi.single-product div.product .flex-control-thumbs li {
+		flex: 0 0 auto;
+		scroll-snap-align: start;
+	}
+
+	/* ══════════════════════════════════════════════════════════════════
+	   ⭐⭐ 1.19.349 (`CYCLE179-LD-349`) — THE COLOURING BOOK'S PHONE
+	       GALLERY IS CAPPED SO ADD TO CART CLEARS THE FOLD.
+	   ------------------------------------------------------------------
+	   ⛔⛔ THIS DELIBERATELY REVERSES PART OF `CYCLE178-LD-347`, WHICH IS
+	       FOUR DAYS OLD, AND IT IS DONE ON AN EXPLICIT RULING RATHER THAN
+	       ON THIS LANE'S OPINION. The comment above states 347's case:
+	       "Interior previews ARE the purchase argument for a colouring
+	       book, and at 150px on a phone they cannot be read at all." That
+	       reasoning is sound and it is NOT being dismissed — 150px is not
+	       what this restores. THE RULING, from the `chief-of-staff` 349 brief,
+	       "Rulings from the 348 report", verbatim: "the founder's rule
+	       (CTA above the fold, seal 672) outranks CYCLE178's 'big mobile
+	       gallery' ruling. Follow CONCEPT-A-MOBILE-375.png: on phones the
+	       gallery is the cover + a compact thumbnail row ... the coloring
+	       PDP CTA must clear 812 with margin."
+
+	   ⭐ THE NUMBERS ARE THE DESIGN LANE'S, READ OFF THE VISUAL OF RECORD
+	      (`CONCEPT-A-MOBILE-375.png`, founder seal 679): a 250px cover and
+	      a real 44px thumbnail strip. 44px is also the WCAG 2.5.8 target
+	      floor, so the rail stays tappable at the smaller size — it is the
+	      floor, not a value chosen to save pixels and then justified.
+
+	   ⭐ WHY THIS IS NOT A RETURN TO 150px, AND THE DISTANCE MATTERS. At
+	      150px the interior previews were unreadable, which is 347's whole
+	      point. At 250px the cover is 66% larger than that cap and the
+	      SEVEN interior tiles are all still reachable in the scrolling
+	      rail 348 built. What is lost is roughly 130px of cover height on
+	      a phone; what is bought is the buy button on the first screen,
+	      which is the founder's own stated requirement.
+
+	   ⛔ `body.bhp-gallery-multi` ONLY. The three chapter books have empty
+	      gallery meta, never carry this class, and cannot be reached by
+	      any rule in this block. Their phone fold is handled by spacing in
+	      `product-template.css` §3c, which is where 348 left it.
+
+	   ⛔ NO CROP AND NO DISTORTION. `max-height` with `width: auto` lets
+	      the BOX take the image's own aspect; `object-fit: contain` is
+	      inherited from `style.css`, so there is nothing to letterbox.
+	   ══════════════════════════════════════════════════════════════════ */
+	body.bhp-gallery-multi.single-product div.product .woocommerce-product-gallery__image img {
+		max-height: 235px;
+		width: auto;
+		height: auto;
+		margin-inline: auto;
+	}
+
+	body.bhp-gallery-multi.single-product div.product .flex-control-thumbs li {
+		width: 44px;
+	}
+
+	/* The parchment box's own padding is the last cheap 24px on this
+	   screen. It is not decoration being removed: the box keeps a visible
+	   inset, it is simply proportionate to a 250px cover rather than to a
+	   382px one. */
+	body.bhp-gallery-multi.single-product div.product .woocommerce-product-gallery {
+		padding: 0.9rem;
+	}
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.349 (`CYCLE179-LD-349`) — THE DESKTOP CARD IS COMPACTED, AND IT
+       IS COMPACTED BECAUSE THIS RELEASE MADE IT TALLER.
+   ----------------------------------------------------------------------
+   ⛔ THE HONEST CAUSE, STATED FIRST. Moving the spec line above the format
+      picker (`commerce-cx` §6, Concept A's order) inserts a 23px row ABOVE ADD TO
+      CART, and 1.19.348 had left the colouring book clearing a 768px fold
+      by only 32px. ⭐ MEASURED on staging 1.19.349 at an asserted
+      1366x768: the button's bottom edge landed at 759 against a 768 fold,
+      a NINE PIXEL clearance. That is not a pass, it is a coin toss, and it
+      was caused by this release rather than inherited by it.
+
+   ⭐ WHERE THE PIXELS COME FROM, itemised off the live DOM at 1366x768 on
+      the colouring page so the next reader can audit rather than re-derive:
+
+          product_title    margin-bottom  20 -> 12   =  -8px
+          value-prop block margin-bottom  16 ->  8   =  -8px
+          .bhp-formats     margin-top     22 -> 10   = -12px
+          spec line        margin-top     12 ->  4   =  -8px
+          heading          margin-bottom  10 ->  6   =  -4px
+          selected price   margin-top     14 ->  8   =  -6px
+          cta wrap         margin-top     12 ->  8   =  -4px
+                                                      --------
+                                                       -50px
+
+   ⛔ SPACING ONLY, EXACTLY AS 1.19.348 §3c DID FOR THE PHONE. No type is
+      resized, no element is hidden or removed, no order changes, and
+      `.bhp-formats__cta` keeps its full height, so no touch target moves.
+
+   ⭐ IT APPLIES AT EVERY DESKTOP WIDTH, NOT ONLY THE SHORT LAPTOP, AND
+      THAT IS THE INTENT RATHER THAN A SIDE EFFECT: Concept A's purchase
+      card is a compact card, and a card tuned only for 768px height would
+      be two different cards to keep in step.
+
+   ⛔ `min-width: 901px` MATCHES THE EXISTING BOUNDARY and nothing below it
+      is reachable. The phone layout is governed by
+      `product-template.css`'s `@media (max-width: 600px)` block, which was
+      measured separately and must not be perturbed from here.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 901px) {
+	.woocommerce div.product > .summary > .product_title {
+		margin-bottom: 12px;
+	}
+
+	.woocommerce div.product > .summary > .bhp-product-value-prop {
+		margin-bottom: 8px;
+	}
+
+	.woocommerce div.product .bhp-formats {
+		margin-top: 10px;
+	}
+
+	.woocommerce div.product .bhp-formats__spec {
+		margin-top: 4px;
+	}
+
+	.woocommerce div.product .bhp-formats .bhp-formats__heading {
+		margin-bottom: 6px;
+	}
+
+	.woocommerce div.product .bhp-formats__selected-price {
+		margin-top: 8px;
+	}
+
+	.woocommerce div.product .bhp-formats__cta-wrap {
+		margin-top: 8px;
+	}
+}
+
 /* D3 (2026-07-31): belt-and-braces for related/upsell book covers. The
    portrait `bhp-book-card` derivative now matches the box, but `contain`
    guarantees that if any square derivative is ever served again it is

@@ -238,7 +238,7 @@ $bhp_visit_close  = function_exists( 'bhp_readaloud_visit_shape_closing' ) ? bhp
       /*
        * ═══════════════════════════════════════════════════════════════════════
        * ⛔⛔ THE HERO NOTE IS REMOVED AT 1.19.339 (`CYCLE170-LD-FINAL2`, carrier
-       *     item 562, GANDALF'S IMPLEMENTATION RULING). THE SUPERSEDED BLOCK IS
+       *     item 562, THE `chief-of-staff` IMPLEMENTATION RULING). THE SUPERSEDED BLOCK IS
        *     QUOTED VERBATIM RATHER THAN DELETED.
        * ═══════════════════════════════════════════════════════════════════════
        *

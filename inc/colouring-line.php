@@ -31,7 +31,7 @@
  *    the bundle price — a false claim assembled from two true facts, and the
  *    exact defect `FD-549` was written after.
  *
- * ⚠️ NO BUNDLE COMPOSITE EXISTS TODAY. It is Legolas's (`design-creative`)
+ * ⚠️ NO BUNDLE COMPOSITE EXISTS TODAY. It is the `design-creative`
  *    launch deliverable in the spec's §8 imagery plan. ⭐ SO EVERY OFFER
  *    SURFACE IN THIS FILE RENDERS IMAGELESS, BY DESIGN, UNTIL ONE IS
  *    REGISTERED THROUGH `bhp_offer_composite_attachment_id`. That is the
@@ -158,8 +158,78 @@ function bhp_colouring_draft_copy($key, array $tokens = []) {
         // Product page — the one-format rail. ⛔ NOT a question: there is no choice.
         'rail_heading'    => __('Paperback · 8.5 × 11', 'brave-hearts'),
         'rail_card_name'  => __('PAPERBACK', 'brave-hearts'),
-        // ⭐ His own cover's wording. Ages 6-9. No outcome claim.
-        'spec_line'       => __('%1$d coloring adventures · %2$d pages · %3$s · ages 6-9', 'brave-hearts'),
+        /*
+         * ═════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.349 — THE COLOURING SHIPPING LINE. `CYCLE179-LD-349`,
+         *     the fix for `WHATS-INSIDE-COPY.md` §0 finding 5, seal 687.
+         * ═════════════════════════════════════════════════════════════════
+         *
+         * ⛔⛔ THE DEFECT WAS LIVE AND IT UNDERSTATED WHAT THE CART CHARGES.
+         *     This rail set `rail_spec` but NO `rail_note`, so the shipping
+         *     sentence fell through to the chapter-book default,
+         *     `bhp_book_ship_note_single(bhp_bundle_single_shipping('paperback'))`
+         *     = "$1.99". A cart holding exactly one colouring book charges
+         *     $2.99 (`bhp_colouring_single_shipping()`, plugin 1.8.66,
+         *     founder carrier item 195, 2026-08-21). ⭐ MEASURED, NOT
+         *     INFERRED: the live staging PDP at 1.19.348 rendered
+         *     "Shipping starts at $1.99 in the contiguous US" on this page,
+         *     read out of the DOM at an asserted 1440x900 on 2026-09-02.
+         *
+         * ⛔ THE FIX IS A THEME STRING. NOT A WOOCOMMERCE SETTING, not a
+         *    zone, not a method, not a tier number. Nothing about what the
+         *    cart charges changes; the sentence stops disagreeing with it.
+         *
+         * ⛔ THE FIGURE IS NEVER TYPED. `%s` is filled at render time from
+         *    the plugin's own approved table, so this sentence cannot drift
+         *    away from the charge the way the inherited one did.
+         *
+         * ⭐ THE WORDING IS THE APPROVED ONE, seal 687, proven by
+         *    `CYCLE179-CX-SHIP-CART-TEST`. ⛔ "I", never "we" (§9.1 — and
+         *    `21-PROTECTED-ELEMENTS-MANIFEST.md` §3.3 protects the string
+         *    "Ships from my print partner" at min 1 on a product page, which
+         *    this keeps). ⛔ No em dash. ⛔ "contiguous US" retained.
+         */
+        /* translators: %s is a dollar amount, e.g. 2.99 */
+        'rail_note'       => __('Ships from my print partner. Shipping is $%s for this book on its own in the contiguous US. 3 or more books ship FREE.', 'brave-hearts'),
+        /*
+         * ═════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.350 — THE TRIM COMES OUT OF THIS LINE. ONE THING ONCE.
+         *     `CYCLE179-LD-350-BUILD`, the second 349 cosmetic.
+         * ═════════════════════════════════════════════════════════════════
+         *
+         * ⛔ THE SUPERSEDED STRING, PRESERVED SO THE MOVEMENT IS VISIBLE:
+         *
+         *      '%1$d coloring adventures · %2$d pages · %3$s · ages 6-9'
+         *
+         * ⛔⛔ THE DEFECT WAS LIVE AND IT WAS MEASURED, NOT INFERRED. On the
+         *     colouring product page at an asserted 1440x900 on staging2,
+         *     2026-09-02, the trim printed TWICE, 23px apart, in two
+         *     different glyphs:
+         *
+         *       y503  .bhp-formats__spec     "… · 118 pages · 8.5 x 11 · ages 6-9"
+         *       y526  .bhp-formats__heading  "Paperback · 8.5 × 11"
+         *
+         *     Same fact, twice, with an ASCII `x` in one and a multiplication
+         *     sign in the other, which reads as two different measurements to
+         *     anyone who notices and as a duplication bug to anyone who does.
+         *
+         * ⭐ THE HEADING KEEPS IT AND THIS LINE LOSES IT, not the other way
+         *    round, because the heading is the FORMAT CARD'S OWN NAME and the
+         *    trim is part of naming the format: "Paperback · 8.5 × 11" is what
+         *    the object IS. This line lists what is inside it. ⛔ Nothing is
+         *    lost from the page: the trim still renders, 23px lower, once.
+         *
+         * ⛔ `%3$s` IS RETAINED IN THE ARGUMENT LIST AND SIMPLY NOT PRINTED —
+         *    see `bhp_colouring_purchase_data()`, which still passes designs,
+         *    pages and trim. Removing the token here rather than the argument
+         *    there means the registry's `trim` field stays the single source
+         *    for the heading and nothing else had to move.
+         *
+         * ⭐ His own cover's wording. Ages 6-9. ⛔ No outcome claim, no "we",
+         *    no em dash.
+         */
+        /* translators: %1$d: number of designs. %2$d: number of pages. %3$s: trim size, retained for callers and deliberately not printed since 1.19.350. */
+        'spec_line'       => __('%1$d coloring adventures · %2$d pages · ages 6-9', 'brave-hearts'),
         /*
          * The offer. ⛔ "I", never "we". ⛔ THREE DIFFERENT SENTENCES, and that
          * is deliberate: the card title NAMES the offer, the descriptor says
@@ -275,6 +345,15 @@ function bhp_colouring_draft_copy($key, array $tokens = []) {
          */
         'offer_card_price_label' => __('BOOK + COLORING BOOK', 'brave-hearts'),
         /*
+         * ⭐ 1.19.350 — the CARD's hardcover swap label. See the long note at
+         *    the swap's own render site. ⛔ It NAMES the two objects in the
+         *    cart, exactly as `offer_card_price_label` above does, and it never
+         *    says "pair". ⛔ No figure is typed: `%s` is filled from
+         *    `bhp_offer_price()` at render. ⛔ No "we", no em dash, no claim.
+         */
+        /* translators: %s is a dollar amount, e.g. $28.99. */
+        'offer_card_upsell'      => __('HARDCOVER + COLORING BOOK %s', 'brave-hearts'),
+        /*
          * ═══════════════════════════════════════════════════════════════════
          * ⭐⭐ 1.19.286 — CARRIER ITEM 211. THE CARD CTA BECOMES THE ONE WORD.
          * ═══════════════════════════════════════════════════════════════════
@@ -297,6 +376,45 @@ function bhp_colouring_draft_copy($key, array $tokens = []) {
         'offer_card_cta'         => function_exists('bhp_shop_card_atc_label')
             ? bhp_shop_card_atc_label()
             : __('ADD TO CART', 'brave-hearts'),
+
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.346 — THE VALUE-PROP LINE UNDER THE H1.
+         *     `CYCLE178-LD-345-PDP-LINE`, from the `commerce-cx` colouring-line
+         *     launch review (see internal release notes) F-list. ⚠️ NEW DRAFT.
+         *     IT GOES ON THE LIST
+         *     THAT WAITS FOR ANDREW, exactly like every other key in here.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔ THE DEFECT: `bhp_woocommerce_product_value_prop()` in
+         *    `functions.php` renders ONE hardcoded sentence for EVERY product
+         *    page — "Adventure chapter books for ages 6-9 that combine real
+         *    places, science, history, courage, and kindness." On the colouring
+         *    PDP that is a FALSE DESCRIPTION OF THE OBJECT BEING SOLD: the book
+         *    has no chapters, no history and no science. It is the same class
+         *    of defect as `CYCLE165-OPS-019` (a colouring cover beside a
+         *    chapter-book price) read on the copy side instead of the price
+         *    side — two true facts about DIFFERENT objects, assembled into one
+         *    false claim about this one.
+         *
+         * ⛔ THE SPEC LINE ABOVE ALREADY CARRIES THE COUNTS. This line must NOT
+         *    restate the designs, pages or trim (`R2.6`, one thing once) — it
+         *    says what the object IS and stops, which is the job the chapter
+         *    books' own hook does for them.
+         *
+         * ⛔ IT OBEYS THE STANDING RAIL, and every clause was checked rather
+         *    than assumed: no "we" (§9.1 — he is the sole operator) · ⛔ NO EM
+         *    DASH, and "ages 6 to 9" is spelled with the word "to" rather than
+         *    the en dash the chapter-book hook uses, because the brief
+         *    specified this wording · ⭐ ages 6-9, never 5-9 · ⛔ no outcome
+         *    claim (what the book IS, never what it will do to a child) · ⛔ no
+         *    review, rating, statistic or comparison.
+         *
+         * ⭐ "coloring adventure" IS HIS OWN COVER'S NOUN ("57 COLORING
+         *    ADVENTURES INSIDE!"), singular here because the line describes the
+         *    book, not the count inside it. Nothing is coined.
+         */
+        'value_prop_hook'        => __('A coloring adventure for ages 6 to 9', 'brave-hearts'),
     ], $key);
 
     if (!isset($copy[$key])) {
@@ -429,6 +547,27 @@ function bhp_colouring_purchase_data($product_id) {
             [$reg[$slug]['designs'], $reg[$slug]['pages'], $reg[$slug]['trim']]
         ),
         'rail_heading'    => bhp_colouring_draft_copy('rail_heading'),
+        /*
+         * ⭐ 1.19.349 — THE SHIPPING SENTENCE FOR THIS RAIL. See the long note
+         *    on the `rail_note` string in `bhp_colouring_draft_copy()`.
+         *
+         * ⛔ THE NUMBER IS READ, NEVER TYPED, and it is read from the ONE
+         *    function that owns it. `function_exists()` is the gate, not
+         *    decoration: `bhp_colouring_single_shipping()` lives in the bundle
+         *    PLUGIN and this is the THEME. With the plugin deactivated this
+         *    falls back to `2.99`, which is the same figure the plugin returns
+         *    today (verified by reading `bundle-data.php` this build), so a
+         *    plugin-less site shows a correct sentence rather than a blank one
+         *    or a fatal.
+         */
+        'rail_note'       => bhp_colouring_draft_copy('rail_note', [
+            number_format(
+                function_exists('bhp_colouring_single_shipping')
+                    ? (float) bhp_colouring_single_shipping()
+                    : 2.99,
+                2
+            ),
+        ]),
     ];
 }
 
@@ -534,10 +673,49 @@ function bhp_colouring_shop_card_meta() {
       <p class="bhp-shop-ages"><?php echo esc_html(bhp_shop_card_age_range(get_the_ID())); ?></p>
     <?php endif; ?>
     <p class="bhp-shop-descriptor" data-bhp-card-kind="single"><?php echo esc_html($reg[$slug]['descriptor']); ?></p>
+    <?php
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.350 — THE COLOURING CHIP CARRIES THE TRIM, NOT A SECOND PRICE.
+     *     `CYCLE179-LD-350-BUILD`.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔ THE SUPERSEDED CHIP, PRESERVED SO THE MOVEMENT IS VISIBLE:
+     *      label = `rail_card_name` ("PAPERBACK"), amount = wc_price(get_price()).
+     *
+     * ⭐ WHY IT CHANGES. Until 1.19.349 this card was the ONE card in the grid
+     *    with no `.price` element: `bhp_colouring_hide_loop_price()` removed
+     *    WooCommerce's own line so that the labelled chip could carry the only
+     *    figure, which was `R2.6`'s correct answer WHEN THE CHIP WAS THE ONLY
+     *    PLACE A PRICE COULD GO. From 1.19.350 every card in the catalog grid
+     *    has the same shape — one big price, then format chips — and a card
+     *    that opts out of the big price is a card shaped unlike its neighbours.
+     *
+     * ⭐ SO THE PRICE MOVES UP INTO THE SLOT EVERY OTHER CARD USES, AND THE
+     *    CHIP CARRIES THE OTHER FACT A BUYER OF A COLOURING BOOK WANTS: the
+     *    trim. That is what the founder-approved concept of record draws
+     *    (the design lane's shop concept set, seal 686:
+     *    "PAPERBACK / 8.5 x 11").
+     *
+     * ⛔ `R2.6` IS NOT WEAKENED, IT IS SATISFIED THE OTHER WAY. The figure
+     *    still appears EXACTLY ONCE on the card — in `.price` instead of in
+     *    the chip. See `bhp_colouring_hide_loop_price()` below, which now
+     *    stands down on a catalog grid for precisely this reason.
+     *
+     * ⛔ THE TRIM IS READ FROM THE REGISTRY, never typed. It is the same
+     *    `trim` field the product page's format heading reads, so the card and
+     *    the page cannot state two different sizes.
+     */
+    $bhp_col_trim = isset($reg[$slug]['trim']) ? (string) $reg[$slug]['trim'] : '';
+    ?>
     <span class="bhp-shop-from-price bhp-shop-format-prices">
-      <span class="bhp-shop-format-price">
+      <span class="bhp-shop-format-price bhp-shop-format-price--selected">
         <span class="bhp-shop-format-price__label"><?php echo esc_html(bhp_colouring_draft_copy('rail_card_name')); ?></span>
-        <span class="bhp-shop-format-price__amount"><?php echo wp_kses_post(wc_price((float) $product->get_price())); ?></span>
+        <?php if ('' !== $bhp_col_trim && function_exists('bhp_catalog_grid_context') && bhp_catalog_grid_context()): ?>
+          <span class="bhp-shop-format-price__trim"><?php echo esc_html($bhp_col_trim); ?></span>
+        <?php else: ?>
+          <span class="bhp-shop-format-price__amount"><?php echo wp_kses_post(wc_price((float) $product->get_price())); ?></span>
+        <?php endif; ?>
       </span>
     </span>
     <?php
@@ -552,6 +730,23 @@ function bhp_colouring_hide_loop_price() {
         return;
     }
     if (null === bhp_colouring_slug_for_product(get_the_ID())) {
+        return;
+    }
+    /*
+     * ⭐⭐ 1.19.350 — IT STANDS DOWN ON A CATALOG GRID, AND `R2.6` STILL HOLDS.
+     *
+     * ⛔ THE RULE HAS NOT CHANGED: each distinct price appears exactly once on
+     *    a card. What changed is WHERE the single figure lives. From 1.19.350
+     *    the colouring chip carries the TRIM ("8.5 x 11") instead of the price,
+     *    so removing WooCommerce's own `.price` here would leave the card with
+     *    NO figure at all, which is a worse defect than the duplicate this
+     *    removal was written to prevent.
+     *
+     * ⭐ EVERYWHERE ELSE THIS IS 1.19.349, BYTE FOR BYTE. Off a catalog grid
+     *    the chip still carries the price, so the removal still has a duplicate
+     *    to prevent and still performs it.
+     */
+    if (function_exists('bhp_catalog_grid_context') && bhp_catalog_grid_context()) {
         return;
     }
     remove_action('woocommerce_after_shop_loop_item_title', 'woocommerce_template_loop_price', 10);
@@ -704,6 +899,26 @@ function bhp_colouring_shop_add_to_cart_link($html, $product) {
          *    `bundle-drawer.js` binds `data-bhp-cart-add`, which this control
          *    deliberately does not have.
          */
+        /*
+         * ⭐⭐ 1.19.350 — THIS CARD NOW CARRIES THE NOTE TOO. `R9a`, seal 698.
+         *
+         * ⛔ THE DEFECT, VERIFIED LIVE ON PRODUCTION 2026-09-02
+         *    (`VISIT-SHOP-AUDIT.md` §E2): the BUNDLE card rendered an
+         *    explanatory line under its ship-home control and THIS card
+         *    rendered none. A parent tapping the coloring book because their
+         *    child wants it lost hand delivery for the chapter books too, in
+         *    one tap, with nothing on the page saying so.
+         *
+         * ⛔ A FILTER ON `woocommerce_loop_add_to_cart_link` CAN ONLY RETURN
+         *    THE CONTROL, so the note cannot be appended here. The flag below
+         *    is read by `bhp_colouring_shop_shiphome_note()` on
+         *    `woocommerce_after_shop_loop_item`, which is the next hook inside
+         *    the same `<li>`. ⭐ It is set at the LAST possible moment, after
+         *    every degrade path above has already returned, so a card that does
+         *    not render the control can never render the note.
+         */
+        $GLOBALS['bhp_colouring_shiphome_card'] = (int) get_the_ID();
+
         return sprintf(
             '<a href="%1$s" class="%2$s bhp-shop-atc--shiphome" data-bhp-shiphome>%3$s</a>',
             esc_url($bhp_ship_url),
@@ -758,11 +973,174 @@ function bhp_colouring_ship_home_url($product_id = 0) {
         return '';
     }
 
-    $param = defined('BHP_SCHOOL_VISIT_PARAM') ? (string) BHP_SCHOOL_VISIT_PARAM : 'bhp_visit';
-    $token = defined('BHP_SCHOOL_VISIT_CLEAR_TOKEN') ? (string) BHP_SCHOOL_VISIT_CLEAR_TOKEN : 'clear';
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐⭐ 1.19.350 — THE LINK NO LONGER CLEARS THE SESSION. `R9c` / `E2`,
+     *      founder seal 698: *"the gate's 'Ship to your home' link must NOT
+     *      clear the visit session for the whole browser without a
+     *      confirmation step"*.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔ THE SUPERSEDED RETURN, PRESERVED SO THE MOVEMENT IS VISIBLE:
+     *
+     *      return add_query_arg([$param => $token], $base);
+     *
+     *    where `$param` / `$token` were `bhp_visit` / `clear`. Following it
+     *    called `bhp_school_visit_clear_session()` on `template_redirect`,
+     *    BEFORE a single pixel rendered. VERIFIED LIVE on production
+     *    2026-09-02: the parent lost hand delivery for the whole browser, the
+     *    counters vanished, the pickup arrangement vanished, shipping
+     *    reappeared, and nothing told them any of it had happened. Recovery
+     *    meant re-scanning the flyer QR code, which most parents would not know
+     *    to do.
+     *
+     * ⭐ THE LINK NOW ASKS. It carries `?bhp_shiphome=<product id>`, which
+     *    clears NOTHING. The destination page renders a confirmation panel
+     *    (`bhp_colouring_shiphome_confirm_notice()`), and only the parent's own
+     *    click on that panel's confirm control carries `?bhp_visit=clear`.
+     *
+     * ⛔ THE CLEAR TOKEN ITSELF IS UNCHANGED AND STILL WORKS. `?bhp_visit=clear`
+     *    is still handled first in `bhp_school_visit_capture_intent()`, still a
+     *    plain session clear, still safe for anyone to hit, and is still what
+     *    QA and Andrew's own phone use. Only the AUTOMATIC route to it is gone.
+     *
+     * ⭐ ONE BUILDER, SO ALL THREE SURFACES GAIN THE STEP AT ONCE — the single
+     *    coloring card, the bundle card's ship-home module, and the refusal
+     *    sentence. That is exactly why this file insisted on one builder.
+     *
+     * ⛔ IT WRITES NOTHING. No session, no cookie, no cart, no order, no
+     *    product, no setting. It builds a URL.
+     */
+    $param = defined('BHP_COLOURING_SHIPHOME_PARAM') ? (string) BHP_COLOURING_SHIPHOME_PARAM : 'bhp_shiphome';
 
-    return add_query_arg([$param => $token], $base);
+    return add_query_arg([$param => ($product_id > 0 ? (int) $product_id : 'shop')], $base);
 }
+
+/**
+ * The query parameter that ASKS for ship-to-home. ⛔ It grants nothing and
+ * clears nothing; it only makes the confirmation panel render.
+ *
+ * @since 1.19.350
+ */
+if (!defined('BHP_COLOURING_SHIPHOME_PARAM')) {
+    define('BHP_COLOURING_SHIPHOME_PARAM', 'bhp_shiphome');
+}
+
+/**
+ * ⭐⭐ THE CONFIRMATION STEP. `R9c` / `E2`, founder seal 698.
+ *
+ * ⛔ IT RENDERS ONLY WHEN THERE IS SOMETHING TO LOSE. No `?bhp_shiphome`, or a
+ *    session with no live visit, means no panel: an ordinary shopper who
+ *    somehow lands on this URL sees the ordinary page and nothing else.
+ *
+ * ⛔ NO JAVASCRIPT. Two links, both plain GETs, both idempotent. A parent on a
+ *    school corridor with one bar of signal gets a working choice.
+ *
+ * ⭐ THE COPY SAYS WHAT IS LOST, NOT WHAT IS SWITCHED (`R9b`). The superseded
+ *    note read *"Switches this browser out of school-visit pickup, so both
+ *    books arrive by mail"* — accurate, and it buries the cost in the word
+ *    "switches". ⛔ No "we" (§9.1). ⛔ No em dash. ⛔ No outcome claim, no
+ *    figure, no urgency that is not the real deadline.
+ *
+ * @since 1.19.350
+ * @return void
+ */
+function bhp_colouring_shiphome_confirm_notice() {
+    $param = BHP_COLOURING_SHIPHOME_PARAM;
+
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display flag; it grants nothing and changes nothing.
+    if (empty($_GET[$param])) {
+        return;
+    }
+    if (!function_exists('bhp_school_visit_active')) {
+        return;
+    }
+
+    $record = bhp_school_visit_active();
+    if (!$record) {
+        return; // ⛔ Nothing to give up. No panel, no alarm.
+    }
+
+    $school = isset($record['school']) ? (string) $record['school'] : '';
+
+    $here    = remove_query_arg($param);
+    $vparam  = defined('BHP_SCHOOL_VISIT_PARAM') ? (string) BHP_SCHOOL_VISIT_PARAM : 'bhp_visit';
+    $vtoken  = defined('BHP_SCHOOL_VISIT_CLEAR_TOKEN') ? (string) BHP_SCHOOL_VISIT_CLEAR_TOKEN : 'clear';
+    $confirm = add_query_arg([$vparam => $vtoken], $here);
+    ?>
+    <section class="bhp-shiphome-confirm" role="region" aria-label="<?php esc_attr_e('Confirm how this order is delivered', 'brave-hearts'); ?>">
+      <div class="bhp-shiphome-confirm__inner">
+        <p class="bhp-shiphome-confirm__lead">
+          <?php
+          if ('' !== $school) {
+              printf(
+                  /* translators: %s: the school's name. */
+                  esc_html__('This one is not on the signed shelf for %s.', 'brave-hearts'),
+                  esc_html($school)
+              );
+          } else {
+              esc_html_e('This one is not on the signed shelf for the school visit.', 'brave-hearts');
+          }
+          ?>
+        </p>
+        <p class="bhp-shiphome-confirm__body">
+          <?php esc_html_e('Ordering it posts your whole order and ends school visit pickup in this browser. The signed, hand delivered copies would be mailed instead, and shipping would apply.', 'brave-hearts'); ?>
+        </p>
+        <p class="bhp-shiphome-confirm__actions">
+          <a class="bhp-shiphome-confirm__keep" href="<?php echo esc_url($here); ?>"><?php esc_html_e('Keep school visit pickup', 'brave-hearts'); ?></a>
+          <a class="bhp-shiphome-confirm__go" href="<?php echo esc_url($confirm); ?>" data-bhp-shiphome-confirm><?php esc_html_e('Mail my whole order instead', 'brave-hearts'); ?></a>
+        </p>
+      </div>
+    </section>
+    <?php
+}
+add_action('woocommerce_before_main_content', 'bhp_colouring_shiphome_confirm_notice', 6);
+
+/**
+ * The ship-home note on the SINGLE coloring card. `R9a` + `R9b`, seal 698.
+ *
+ * ⛔ PARITY, NOT A NEW IDEA: the bundle card has rendered a note under this
+ *    control since 1.19.295 and this card rendered none. One class, one
+ *    sentence, one place it is emitted from.
+ *
+ * ⭐ THE SENTENCE IS THE `R9b` REWRITE and it is the same wording the
+ *    confirmation panel uses, so a parent reads the same fact twice in the same
+ *    words rather than two paraphrases that could drift.
+ *
+ * @since 1.19.350
+ * @return void
+ */
+function bhp_colouring_shop_shiphome_note() {
+    if (empty($GLOBALS['bhp_colouring_shiphome_card'])) {
+        return;
+    }
+    if ((int) $GLOBALS['bhp_colouring_shiphome_card'] !== (int) get_the_ID()) {
+        return;
+    }
+    unset($GLOBALS['bhp_colouring_shiphome_card']);
+    ?>
+    <p class="bhp-offer__shiphome-note"><?php esc_html_e('Not on the signed shelf. Ordering it posts your whole order and ends school visit pickup in this browser.', 'brave-hearts'); ?></p>
+    <?php
+}
+/*
+ * ⛔⛔ PRIORITY 15, AND 5 WAS WRONG IN A WAY ONLY THE RENDERED PAGE SHOWS.
+ *
+ * The flag this reads is set INSIDE `bhp_colouring_shop_add_to_cart_link()`,
+ * which is a filter on `woocommerce_loop_add_to_cart_link` — and that filter
+ * runs inside `woocommerce_template_loop_add_to_cart()`, which is hooked to
+ * THIS action at priority 10. At priority 5 the button has not been built yet,
+ * so the flag is unset and the note silently does not render.
+ *
+ * ⭐ OBSERVED, NOT REASONED: the flagged `/shop/` page at an asserted 1440x900
+ *    on staging rendered "SHIP TO YOUR HOME" on the coloring card with NO note
+ *    under it — which is exactly the `E2` defect this fix exists to remove,
+ *    reproduced by the fix itself.
+ *
+ * ⭐ 15 ALSO PUTS THE SENTENCE WHERE IT BELONGS: under the control it explains,
+ *    matching the bundle card, whose note has sat under its control since
+ *    1.19.295.
+ */
+add_action('woocommerce_after_shop_loop_item', 'bhp_colouring_shop_shiphome_note', 15);
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -845,7 +1223,7 @@ add_filter('bhp_school_visit_paperback_only_message', 'bhp_colouring_visit_refus
  *    (`bhp_book_media_attachment_id()`), so this reuses that resolver rather
  *    than inventing a second one.
  *
- * ⭐ THE SLUGS ARE THE FILENAMES LEGOLAS SHIPPED, prefixed. The masters are
+ * ⭐ THE SLUGS ARE THE FILENAMES `design-creative` SHIPPED, prefixed. The masters are
  *    the transparent 2000x2000 PNGs at `Business OS\WORKING-DRAFTS\
  *    design-creative\bundle-composites\out\`; the builder's
  *    `README-PROVENANCE.md` records that every pixel came from a real cover
@@ -1168,7 +1546,33 @@ function bhp_offer_render_module($key, $class = '', $show_heading = true, $card 
               <?php bhp_bundle_checkout_redirect_input(); ?>
             <?php endif; ?>
             <button type="submit" class="bhp-offer__upsell">
-              <?php echo esc_html(bhp_colouring_draft_copy('offer_upsell', [wp_strip_all_tags(wc_price($upsell_price))])); ?>
+              <?php
+              /*
+               * ⭐⭐ 1.19.350 — ON A CARD THE SWAP NAMES WHAT IT BUYS.
+               *
+               * ⛔ THE BRIEF IS EXPLICIT AND IT IS A FINANCE CORRECTION, NOT A
+               *    STYLE NOTE (`finance-analytics`, seal 690): the two offers
+               *    must read
+               *    "book + coloring book $22.99" and "hardcover + coloring book
+               *    $28.99", and MUST NOT read "paperback pair" / "hardcover
+               *    pair" — because two PAPERBACKS save $0.99, not $1.99, and a
+               *    label saying "pair" invites the reader to price the wrong
+               *    pair. ⚠️ The founder-approved concept of record draws
+               *    "PAPERBACK PAIR" / "HARDCOVER PAIR" on these two chips; the
+               *    brief supersedes the mock on this one point and the brief is
+               *    followed. Recorded in the build report, not silently chosen.
+               *
+               * ⛔ THE PRODUCT-PAGE STRING IS UNTOUCHED. `offer_upsell`
+               *    ("Prefer the hardcover? %s") is still what the product page
+               *    renders, byte for byte. Only the card takes the new one.
+               *
+               * ⛔ THE FIGURE IS STILL THE ENGINE'S, never a literal.
+               */
+              echo esc_html(bhp_colouring_draft_copy(
+                  $card ? 'offer_card_upsell' : 'offer_upsell',
+                  [wp_strip_all_tags(wc_price($upsell_price))]
+              ));
+              ?>
             </button>
           </form>
           <?php
@@ -1347,16 +1751,49 @@ function bhp_offer_shop_shiphome_module($key) {
         . ' bhp-shop-atc--shiphome" data-bhp-shiphome>'
         . esc_html__('Ship to your home', 'brave-hearts')
         . '</a>'
-        /* ⛔ The honest half. The control never renders without it. */
+        /*
+         * ⛔ The honest half. The control never renders without it.
+         *
+         * ⭐⭐ 1.19.350 — `R9b`: IT NOW SAYS WHAT IS LOST, NOT WHAT IS SWITCHED.
+         *    ⛔ THE SUPERSEDED SENTENCE, PRESERVED: *"Switches this browser out
+         *    of school-visit pickup, so both books arrive by mail."* Accurate,
+         *    and it buries the cost in the word "switches" — a parent reads it
+         *    as a delivery preference rather than as giving up the signed,
+         *    hand-delivered copies. ⭐ The replacement is the SAME WORDING the
+         *    single coloring card and the confirmation panel now use, so all
+         *    three state one fact in one form.
+         */
         . '<p class="bhp-offer__shiphome-note">'
-        . esc_html__('Switches this browser out of school-visit pickup, so both books arrive by mail.', 'brave-hearts')
+        . esc_html__('Not on the signed shelf. Ordering it posts your whole order and ends school visit pickup in this browser.', 'brave-hearts')
         . '</p>'
         . '</div>';
 }
 
-function bhp_offer_shop_cards($loop_end) {
-    if (is_admin() || !function_exists('is_shop') || !is_shop() || !function_exists('bhp_offer_catalog')) {
-        return $loop_end;
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.19.350 — THE BUNDLE CARDS BUILD HERE AND RENDER BELOW THE GRID.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE MARKUP IS UNCHANGED, BYTE FOR BYTE, AND THAT IS THE WHOLE DESIGN OF
+ *    THIS REFACTOR. `bhp_offer_shop_cards()` below used to inline this loop and
+ *    prepend the result to `woocommerce_product_loop_end`. It now calls this,
+ *    and so does the strip renderer. ⛔ Nothing about how a bundle card is
+ *    BUILT moved — the price, the recomputed saving, the hardcover swap, the
+ *    ship-home degrade and all five `FD-642` refusal seams are the same code
+ *    they were in 1.19.349. Only where the `<li>` is printed has changed.
+ *
+ * ⛔ WHY IT MOVED (brief `CYCLE179-LD-350`, founder concept seal 686): a bundle
+ *    is not a title. Two bundle cards inside a five-up product row make the row
+ *    seven wide and push the five actual books off the fold, and a reader
+ *    cannot tell a set from a book at a glance. The strip states the pair under
+ *    the row, where a reader who has just seen the components can price it.
+ *
+ * @since 1.19.350
+ * @return string Zero or more `<li class="product bhp-shop-offer-item">`.
+ */
+function bhp_offer_shop_card_items() {
+    if (is_admin() || !function_exists('bhp_offer_catalog')) {
+        return '';
     }
 
     $out = '';
@@ -1430,8 +1867,71 @@ function bhp_offer_shop_cards($loop_end) {
             . '</li>';
     }
 
-    return $out . $loop_end;
+    return $out;
 }
+
+/**
+ * The 1.19.349 injection point, retained for every surface that is NOT a
+ * catalog grid.
+ *
+ * ⛔ ON A CATALOG GRID IT NOW RETURNS `$loop_end` UNTOUCHED and the cards are
+ *    rendered by `bhp_offer_catalog_bundle_strip()` on
+ *    `woocommerce_after_shop_loop` instead. ⭐ Two renderers can never both
+ *    fire, because each tests the same predicate in opposite directions.
+ *
+ * ⭐ THE `is_shop()` GATE IS DELIBERATELY NOT WIDENED. A bundle strip belongs
+ *    under the full catalog, not under a two-product category term where the
+ *    pair's components may not both be present.
+ */
+function bhp_offer_shop_cards($loop_end) {
+    if (is_admin() || !function_exists('is_shop') || !is_shop()) {
+        return $loop_end;
+    }
+    if (function_exists('bhp_catalog_grid_context') && bhp_catalog_grid_context()) {
+        return $loop_end; // ⭐ 1.19.350: the strip owns these cards now.
+    }
+    return bhp_offer_shop_card_items() . $loop_end;
+}
+
+/**
+ * ⭐⭐ THE BUNDLE STRIP — one row, under the grid, above the trust strip.
+ *
+ * ⛔ IT IS A `<ul class="products">` BECAUSE THE CARDS ARE `<li>`. Reusing the
+ *    existing card markup unchanged is what makes this a RELOCATION rather than
+ *    a rewrite; the price of that is that the container has to be a list. It
+ *    carries its own modifier class so no grid rule reaches it.
+ *
+ * ⛔ IT RENDERS NOTHING WHEN THERE IS NOTHING BUYABLE. `bhp_offer_shop_card_
+ *    items()` already returns '' for an offer that is not purchasable, and an
+ *    empty strip is not emitted at all.
+ *
+ * ⭐ PRIORITY 20, AHEAD OF THE TRUST STRIP AT 30. A reader meets the offer
+ *    while the products are still in view, and the proof comes last.
+ *
+ * @since 1.19.350
+ * @return void
+ */
+function bhp_offer_catalog_bundle_strip() {
+    if (!function_exists('bhp_catalog_grid_context') || !bhp_catalog_grid_context()) {
+        return;
+    }
+    if (!function_exists('is_shop') || !is_shop()) {
+        return; // ⛔ The full catalog only. See the note on the gate above.
+    }
+
+    $items = bhp_offer_shop_card_items();
+    if ('' === trim($items)) {
+        return;
+    }
+    ?>
+    <section class="bhp-catalog-bundle-strip" aria-label="<?php esc_attr_e('Book and coloring book together', 'brave-hearts'); ?>">
+      <ul class="products bhp-catalog-bundle-strip__list">
+        <?php echo $items; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped at source in bhp_offer_shop_card_items(). ?>
+      </ul>
+    </section>
+    <?php
+}
+add_action('woocommerce_after_shop_loop', 'bhp_offer_catalog_bundle_strip', 20);
 /*
  * ═══════════════════════════════════════════════════════════════════════════
  * ⚠️ PRIORITY 15, AND THE REASON IS COUNTER-INTUITIVE ENOUGH TO WRITE DOWN.

@@ -331,12 +331,12 @@ $bhp_cc_classes = trim('homepage-section home-sales-paths section ' . $bhp_cc['s
       /*
        * WAVE 1 (2026-08-04) — COLLECTION PRIMACY LINE.
        *
-       * ⭐ THE CLAIM-FREE VARIANT SHIPS. Merry's C3, verbatim:
+       * ⭐ THE CLAIM-FREE VARIANT SHIPS. The `marketing-growth` C3, verbatim:
        *    "Best value: all three adventures in one Complete Collection."
        *    It carries no dollar figure, so it is unaffected by F2's "remove
        *    the cost numbers" and stays true through any price change.
        *
-       * The FIGURE-BEARING variant (Merry's recommended line, with the
+       * The FIGURE-BEARING variant (the `marketing-growth` recommended line, with the
        * approved literals "Save $4.98 in hardcover, $3.98 in paperback"
        * from `bhp_bundle_rules()`) is behind the SAME single flag as the
        * card price cues, because it is the same owner question. Hardcover
@@ -360,7 +360,7 @@ $bhp_cc_classes = trim('homepage-section home-sales-paths section ' . $bhp_cc['s
        * Andrew Signore, 2026-08-05, current-turn order (⛔ RELAYED through
        * the Chief of Staff — NOT witnessed first-hand by the agent that
        * wrote this), verbatim: "fix all the other issues on the homepage
-       * while you're at it - redundancies etc", adopting Gandalf's reviewed
+       * while you're at it - redundancies etc", adopting the `chief-of-staff` reviewed
        * recommendation to remove this line specifically.
        *
        * ⭐ THE REASON IS THAT EVERY WORD OF IT IS ALREADY ON SCREEN, WITHIN

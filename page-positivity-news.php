@@ -205,14 +205,14 @@ $bhp_pn_success = ( 'success' === $bhp_pn_status && $bhp_pn_form === $bhp_pn_for
          *
          *       "⛔ ONE FIELD. `require_name` AND `show_name` ARE BOTH LEFT AT
          *        THEIR DEFAULT FALSE, so no first-name input renders. The copy
-         *        deck specifies email-only, and Gimli's Mailchimp read-back
+         *        deck specifies email-only, and the `connected-operator` Mailchimp read-back
          *        confirmed the hosted page carries a single `EMAIL` field.
          *        Both surfaces ask for the same one thing."
          *
          * ⚠️ THAT LAST SENTENCE IS NOW FALSE OF THE TWO SURFACES, and it is
          *   recorded rather than quietly dropped: this page now asks for a
          *   name, the Mailchimp-hosted page 42351 still does not. ⛔ NOTHING IN
-         *   THIS BUILD TOUCHES 42351 — it is Gimli's surface and Andrew's
+         *   THIS BUILD TOUCHES 42351 — it is the `connected-operator` surface and Andrew's
          *   publish click. The divergence is a finding for the handover, not a
          *   defect this file may fix.
          *

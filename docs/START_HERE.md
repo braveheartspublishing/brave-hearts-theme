@@ -1,5 +1,23 @@
 # Start Here
 
+> ## ⭐⭐ READ THIS FIRST, 2026-09-02 · **PRODUCTION IS THEME `1.19.354` / BUNDLE PLUGIN `1.8.79`.** Every version number below this block is SUPERSEDED.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-02** | **`1.19.354`** | **`1.8.79`** |
+>
+> `1.19.353` then `1.19.354` were deployed to production on 2026-09-02, each with the owner's explicit
+> approval; bundle plugin `1.8.79` was deployed on 2026-09-02. `1.19.350`, `1.19.351` and `1.19.352` were
+> built and staging-verified the same day and did not ship on their own; their contents reached production
+> inside `1.19.353`.
+>
+> **Where to read what:** release record `RELEASES/PRODUCTION_RELEASE_1_19_350_354.md` · per-release detail
+> `CHANGELOG.md` (2026-09-02 entry) · open issues `KNOWN_ISSUES.md` · rules from this series `DECISIONS.md`.
+>
+> ⚠️ **The version numbers above are relayed from the deploying lane, not read from production by this
+> block.** Verify with `wp theme list --status=active` over SSH before relying on them. **Staging and
+> production parity is not asserted here and should be checked, not assumed.**
+
 > ## ⛔⛔⛔⛔⛔ READ THIS FIRST — 2026-08-05, LATER THE SAME DAY · **PRODUCTION IS NOW THEME `1.19.201` / BUNDLE PLUGIN `1.8.28`.** The block immediately below it, which says production is `1.19.199`, is SUPERSEDED.
 >
 > ⭐ **Verified live 2026-08-05 with the definitive instrument** — `wp theme list --status=active` and `wp plugin list` over SSH, run against **both** environments in one command:

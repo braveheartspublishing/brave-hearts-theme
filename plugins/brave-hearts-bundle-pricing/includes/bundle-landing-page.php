@@ -96,7 +96,7 @@ function bhp_bundle_landing_format_copy( $format ) {
  * ═══════════════════════════════════════════════════════════════════════
  *
  * Andrew Signore, 2026-08-14, as relayed in the build brief (⛔ RELAYED
- * through `chief-of-staff` (Gandalf); NOT witnessed first-hand by the agent
+ * through `chief-of-staff`; NOT witnessed first-hand by the agent
  * that wrote this file):
  *
  *   "the collection price display goes INSIDE the existing FREE box …
@@ -1014,7 +1014,7 @@ function bhp_bundle_render_landing_cold_open() {
 			 * ═══════════════════════════════════════════════════════════
 			 *
 			 * Andrew Signore, 2026-08-11/12, VERBATIM as relayed in the
-			 * brief (⛔ RELAYED through Gandalf; NOT witnessed here):
+			 * brief (⛔ RELAYED through `chief-of-staff`; NOT witnessed here):
 			 * "the FREE lines need to be a bit bigger as well they are tiny
 			 * on mobile lets match it".
 			 *
@@ -1216,7 +1216,7 @@ function bhp_bundle_landing_testimonial_quote() {
  * Andrew Signore, 2026-08-11/12, on the reviewed options for this page:
  * "I agree with all changes" — of which B was, verbatim in the brief,
  * `GET THE COMPLETE COLLECTION – FREE SHIPPING` → `GET THE COMPLETE
- * COLLECTION`. ⛔ RELAYED through `chief-of-staff` (Gandalf); NOT
+ * COLLECTION`. ⛔ RELAYED through `chief-of-staff`; NOT
  * witnessed first-hand by this agent.
  *
  * The superseded body, preserved verbatim so the movement is visible:
@@ -1573,7 +1573,7 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 			 *
 			 * Andrew Signore, 2026-08-11/12, on the reviewed options for this
 			 * page: "I agree with all changes". ⛔ RELAYED through
-			 * `chief-of-staff` (Gandalf); NOT witnessed first-hand here.
+			 * `chief-of-staff`; NOT witnessed first-hand here.
 			 *
 			 * The superseded markup, preserved verbatim so the movement is
 			 * visible and is not re-derived — it is the 1.8.32 bold-bullet

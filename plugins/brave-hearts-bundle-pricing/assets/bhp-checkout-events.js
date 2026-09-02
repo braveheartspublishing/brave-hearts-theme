@@ -7,7 +7,7 @@
  *     MOVES HERE, AND THE REASON IT WAS MISSING IS A RACE, NOT AN OMISSION.
  * ═══════════════════════════════════════════════════════════════════════
  *
- * ⚠ THE FINDING. Frodo's funnel-observability audit (2026-08-31) records
+ * ⚠ THE FINDING. The `finance-analytics` funnel-observability audit (2026-08-31) records
  *   that GA4 carries view_item, add_to_cart and purchase but NO
  *   begin_checkout at all, so cart→checkout drop-off is unmeasurable.
  *   The reflex reading is "it was never built". IT WAS BUILT, and reading

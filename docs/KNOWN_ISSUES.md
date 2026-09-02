@@ -1,6 +1,95 @@
 # Known Issues — Open Items Only
 
 
+> ## ⭐⭐ ADDED 2026-09-02 · Open at the end of the `1.19.350` to `1.19.354` series (production is theme `1.19.354` / bundle plugin `1.8.79`)
+>
+> Six open items, none of them fixed by that series. Release record:
+> `RELEASES/PRODUCTION_RELEASE_1_19_350_354.md`. **Nothing below is resolved here; each is recorded with
+> what is actually established and what is not.**
+>
+> ### `F-08` · School-visit surface on mobile · **OPEN. AND THE CONDITION IT NAMES HAS NEVER BEEN TESTED.**
+>
+> **The report:** at 375x812 a flagged visit URL rendered no school-visit surface at all.
+>
+> **What is established:** at a 375 viewport **with a desktop user agent**, on `1.19.349` and again on
+> `1.19.350`, the flagged page rendered all three shelf counters, the `bhp-bundle-stock-counter` markup
+> three times in the served HTML, and the school name in the visible text, identical to 1440x900. **It did
+> not reproduce.**
+>
+> ⛔ **What is NOT established, and this is the whole point:** `F-08`'s stated condition is the **mobile
+> Android user agent**. CDP's `Emulation.setDeviceMetricsOverride` with `mobile: true` changes the viewport,
+> the device-pixel behaviour and touch emulation. **It does not change the User-Agent string.** A dedicated
+> re-run confirmed both the "mobile UA" and "desktop UA" jobs reported the same desktop UA. **The one
+> variable `F-08` names was never exercised, at any point, by the lane that reported the non-reproduction.**
+>
+> **Therefore: no cause is claimed, no fix exists, and one non-reproduction under the wrong instrument does
+> not close it.** The next attempt must set a real mobile User-Agent string explicitly, not rely on viewport
+> emulation. **A real phone outranks every instrument named here.**
+>
+> ### `F-09` · `?bhp_visit=clear` consistency across `/shop/` and `/book-bundles/` · **OPEN, and unaddressed by the whole series.**
+>
+> The clear flag does not behave consistently across the two surfaces. **It did not reproduce in one run:**
+> after a flagged session, `/book-bundles/?bhp_visit=clear` at 1440x900 rendered zero shelf counters, zero
+> `bhp-bundle-stock-counter` markup and zero visit text. The clear took.
+>
+> ⛔ **That does not close it.** The original observation was of a **different sequence**, and one
+> non-reproduction is not a fix. The structural reason it stayed unaddressed is worth recording:
+> **`/book-bundles/` is a plugin-rendered landing page, outside the theme's catalog predicate**, so the
+> theme-side work in this series could not have made the two consistent even incidentally. The `1.19.350`
+> ship-to-home confirmation step changes how a parent **reaches** the clear; it does not change what the
+> clear does once reached.
+>
+> ### `LD-10` · The band and the shelf counters can name different schools · **OPEN. NEEDS THE OWNER'S RULING.**
+>
+> Introduced by `1.19.353`, knowingly and recorded at the time.
+>
+> On a request where **the session holds an open visit** and **the URL names a registered visit that is past
+> its online close**, the band correctly names the URL's school and shows that school's closed state, while
+> the **per-card shelf counters, which are the plugin's and session-driven, still count the session
+> school's shelf.** One page, two schools.
+>
+> ⛔ **This is deliberately not fixed.** `bhp_visit_band_body_class()` keys off the session because that is
+> the same question the shelf counter asks, which keeps the flagged-card geometry married to the counter
+> markup it exists to pay for. **Reconciling the two is an entitlement change, not a display change**, and
+> it is the owner's ruling to make. Until it is made, this is the highest-value open item in the series
+> because it is the only one that can put a wrong number in front of a parent.
+>
+> ### `LD-12` · CSS specificity trap in `style.css` · **OPEN as a documentation gap, not a defect.**
+>
+> `body:not(.home) .section` and `body:not(.home) .component-heading` are specificity **(0,2,1)**. A rule
+> written against either as a **bare class selector is (0,2,0) and loses silently**: it computes nothing,
+> renders nothing, and produces no error anywhere.
+>
+> **It has already cost two rules in a single pass.** One of them was written, built, shipped to staging and
+> only then measured as a no-op; it was removed rather than forced, with the reasoning preserved in
+> `style.css`. The `1.19.354` padding rules are deliberately written at **(0,3,1)** for this reason.
+>
+> **The fix is four lines of comment near the `body:not(.home)` block**, so the next author sees the rail
+> before writing against it rather than after a deploy cycle. It was out of scope for `1.19.354` because
+> that is a shared region of the sheet and the release was scoped to one page. **Cheapest open item on this
+> list.**
+>
+> ### A test-harness dependency that changes verdicts · **OPEN.**
+>
+> A suite's result can depend on whether `wp eval-file` is invoked with `--url`. **Two runs are comparable
+> only if both used it.** Every `1.19.354` run did. Runs from earlier in the series that omitted it are not
+> comparable line-for-line with runs that included it. Until this is settled, **state the invocation
+> alongside any suite result**, or the number does not mean what it appears to mean.
+>
+> ### Pre-existing cosmetic items on other pages · **PARKED, not scheduled.**
+>
+> A list of vertical-rhythm and colour-token items on pages other than `/author-visits/`, of the same kind
+> as the fold fix that became `1.19.354`. **Deliberately not built:** that release was scoped to one page.
+> It needs the owner's go-ahead before any of it becomes work, and it should be **re-checked against the
+> live pages first**, because five releases have shipped since it was written. See `CURRENT_TASK.md`.
+>
+> ### One more thing, recorded so a future diff does not read as a defect
+>
+> `docs/RUNBOOK.md` inside the theme tree changed **while the `1.19.354` artefact was being built**, outside
+> any declared writer scope. The content was correct and useful. The consequence: **the `1.19.354` artefact
+> carries a `docs/RUNBOOK.md` that differs from the one `1.19.353` shipped.** Documentation only. No
+> rendered byte and no test result is affected.
+
 > ## ⭐ UPDATE 2026-08-05, LATER THE SAME DAY · **FIXED AND VERIFIED ON STAGING IN THEME 1.19.202. STILL LIVE ON PRODUCTION.**
 >
 > **The block immediately below is preserved verbatim** — it is still an accurate description of what

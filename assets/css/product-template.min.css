@@ -1,5 +1,5 @@
 /*! Built from product-template.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 725becb016d85b5f50e3466523255631
+    source-md5: 3312c63b4db8ce813db4c2b4a7b71e2b
     Comments stripped for transfer size; the source file is canonical. */
 @media (max-width: 600px) {
 body.single-product.woocommerce div.product {
@@ -91,6 +91,35 @@ body.single-product.woocommerce div.product .bhp-formats__selected-price { order
 	body.single-product.woocommerce div.product .bhp-formats__cta-wrap       { order: 4; }
 	body.single-product.woocommerce div.product .bhp-formats__spec           { order: 5; }
 	body.single-product.woocommerce div.product .bhp-formats__note           { order: 6; }
+body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__heading {
+		grid-row: 1;
+		grid-column: 1 / -1;
+	}
+body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__selected-price {
+		order: 2;
+		grid-row: 2;
+		grid-column: 1;
+		align-self: center;
+		margin: 0;
+	}
+body.single-product.woocommerce div.product .bhp-formats--single .bhp-format-card[data-bhp-format="paperback"] {
+		order: 2;
+		grid-row: 2;
+		grid-column: 2;
+		align-self: center;
+		margin-bottom: 0;
+	}
+body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__cta-wrap { grid-row: 3; grid-column: 1 / -1; }
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__spec     { grid-row: 4; grid-column: 1 / -1; }
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__note     { grid-row: 5; grid-column: 1 / -1; }
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-product-guarantee { grid-row: 6; grid-column: 1 / -1; }
+body.single-product.woocommerce .woo-expedition-shell {
+		padding-top: 20px;
+	}
+body.single-product.woocommerce div.product > .woocommerce-product-gallery,
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero {
+		margin-bottom: 10px;
+	}
 body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="kindle"],
 	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="collection"] {
 		order: 7;
@@ -112,6 +141,21 @@ min-height: 48px;
 	}
 body.single-product.woocommerce div.product .bhp-formats__cta-wrap {
 		margin: 0;
+	}
+body.single-product.woocommerce div.product > .summary > .product_title {
+		margin-top: 0.2rem;       
+	}
+body.single-product.woocommerce div.product .bhp-product-value-prop__age {
+		margin: 0 0 0.15rem;      
+	}
+body.single-product.woocommerce div.product .bhp-formats__selected-price {
+		margin: 0.25rem 0 0.2rem; 
+	}
+body.single-product.woocommerce div.product .bhp-format-card {
+		margin-bottom: 4px;       
+	}
+body.single-product.woocommerce div.product > .bhp-media-gallery--hero > .bhp-gallery-cue {
+		margin-top: 0;            
 	}
 body.single-product.woocommerce .woocommerce-breadcrumb {
 		margin-bottom: 0.45rem;   

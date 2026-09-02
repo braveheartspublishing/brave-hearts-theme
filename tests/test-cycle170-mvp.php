@@ -617,7 +617,7 @@ foreach ( array( 'adventure-kit-thank-you', 'parent_popup', 'adventure_kit' ) as
 }
 
 /*
- * ⚠ PRINTED, NOT ASSERTED, AND ROUTED TO GANDALF AS AN INHERITED FINDING.
+ * ⚠ PRINTED, NOT ASSERTED, AND ROUTED TO `chief-of-staff` AS AN INHERITED FINDING.
  *   The sitewide Meta Pixel inline script ships full PHP-docblock-style
  *   COMMENTARY to every page — it is why two naive needles in this suite went
  *   red on their first run. It costs bytes on every page load and it defeats

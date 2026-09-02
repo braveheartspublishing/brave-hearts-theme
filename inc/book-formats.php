@@ -279,7 +279,7 @@ function bhp_book_collection_free_ship_note() {
      * ⭐ THE FOUNDER'S INSTRUCTION WAS "harmonize". ⚠️ RELAYED through
      *    `chief-of-staff`, NOT witnessed first-hand here.
      *
-     * ⚠️⚠️⚠️ THE EXACT WORDING BELOW IS **GANDALF'S DEFAULT, NOT A FOUNDER
+     * ⚠️⚠️⚠️ THE EXACT WORDING BELOW IS **THE `chief-of-staff` DEFAULT, NOT A FOUNDER
      *    RULING**, AND IT IS FLAGGED FOR HIS VETO AT THE WALK. He ruled the
      *    DIRECTION ("harmonize"); he did not dictate these seven words. This
      *    is the default-not-ruling pattern: a build cannot ship a blank, so a
@@ -777,6 +777,88 @@ function bhp_book_free_shipping_line() {
 }
 
 /**
+ * ⚠️⚠️ DRAFT COPY — FOUNDER-GATED. NOT APPROVED. AWAITING ANDREW'S READ-BACK.
+ *
+ * The PDP's compact shipping/returns link text, step 13 of the approved
+ * product-page hierarchy, rendered by
+ * `bhp_woocommerce_product_teacher_shipping_section()` in `functions.php`.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ CYCLE178-LD-346 (2026-09-02) — THE PDP CONTRADICTED ITSELF, LIVE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT. This link read **"Flat-rate shipping, secure checkout,
+ *    tracking on every order"** while the format card a few hundred pixels
+ *    above it read **"Ships from my print partner. Shipping starts at $1.99
+ *    in the contiguous US."** and **"3 or more books ship FREE."** Two
+ *    shipping claims, on one product page, that cannot both be true. A
+ *    parent reading them learns that one of them is wrong and has no way to
+ *    tell which.
+ *
+ * ⭐ WHICH ONE IS TRUE, AND HOW THAT WAS ESTABLISHED — READ, NOT ASSUMED.
+ *    Both, of two DIFFERENT things, which is exactly why the old string
+ *    survived the 2026-08-02 correction that fixed its neighbour:
+ *
+ *      · THE ZONE CONFIGURATION is a flat rate. VERIFIED READ-ONLY ON
+ *        PRODUCTION 2026-09-02 over SSH (`wp wc shipping_zone list`,
+ *        `wp wc shipping_zone_method list 1`,
+ *        `wp option get woocommerce_flat_rate_1_settings`): exactly one zone
+ *        (`Contiguous United States`), exactly one method (`flat_rate`,
+ *        instance 1, titled "Contiguous US Shipping"), cost `3.99`.
+ *
+ *      · WHAT THE CUSTOMER ACTUALLY PAYS IS TIERED, and that is the only
+ *        fact a customer-facing sentence is allowed to describe.
+ *        `bhp_bundle_override_shipping_cost()` (priority 20 on
+ *        `woocommerce_package_rates`, plugin 1.8.78 active on production,
+ *        verified same session) rewrites that cost from the approved tier
+ *        table before the shopper ever sees it: $1.99 / $2.99 / $3.99 /
+ *        $4.99, and $0.00 at three books. Owner ruling, 2026-08-02:
+ *        *"Shipping is tiered per amount of books ordered."*
+ *
+ *    ⛔ "Flat-rate shipping" describes the SETTING, not the CHARGE. It is
+ *       the same conflation `.claude/rules/woocommerce.md` and the repo
+ *       `CLAUDE.md` each already record as a superseded sentence
+ *       (`CYCLE140-DEV-2`); this link is simply a THIRD carrier of it that
+ *       neither correction reached.
+ *
+ * ⭐ WHY THIS LIVES HERE AND NOT INLINE IN `functions.php`. That is the
+ *    whole cause of the bug: the string sat inline, so the 2026-08-02 pass
+ *    that fixed `template-parts/commerce/format-cards.php` had no way to see
+ *    it. Shipping copy has one home in this codebase, next to
+ *    `bhp_book_ship_note_single()` and `bhp_book_free_shipping_line()`, for
+ *    precisely this reason. Moving it here is what stops a fourth carrier.
+ *
+ * ⛔ THE FREE CLAUSE IS A LIVE READ, NOT A COPY DECISION. It is gated on
+ *    `bhp_book_any_three_ships_free()`, the same gate
+ *    `bhp_book_collection_free_ship_note()` uses. If a tier ever moves off
+ *    $0.00 the clause stops rendering in the same deploy, with no copy edit
+ *    and no stale promise on a purchase page (`CYCLE165-OPS-018`).
+ *
+ * ⛔ NO SHIPPING RATE, ZONE, METHOD OR TIER NUMBER WAS CHANGED BY THE PASS
+ *    THAT WROTE THIS. That is an Andrew gate and it was not crossed. This is
+ *    a theme string.
+ *
+ * ⚠️ "secure checkout, tracking on every order" IS CARRIED FORWARD UNCHANGED
+ *    AND IS NOT VERIFIED BY THIS PASS. It is pre-existing copy, outside the
+ *    contradiction being fixed, and it is REPORTED rather than silently
+ *    absorbed or silently edited.
+ *
+ * ⛔ NO EM DASH. §9.1 VOICE: no "we", "us" or "our". No outcome claim.
+ *
+ * SUPERSEDED wording, retained so the movement is visible and is not
+ * re-derived: "Flat-rate shipping, secure checkout, tracking on every order".
+ *
+ * @return string Translated, unescaped.
+ */
+function bhp_book_pdp_shipping_link_text() {
+    if (function_exists('bhp_book_any_three_ships_free') && bhp_book_any_three_ships_free()) {
+        return __('Tiered shipping, free at 3 books, secure checkout, tracking on every order', 'brave-hearts');
+    }
+
+    return __('Tiered shipping, secure checkout, tracking on every order', 'brave-hearts');
+}
+
+/**
  * The bullet list as markup, with the emphasis the ruling requires.
  *
  * Returns '' when there is nothing free to say, so every caller can echo it
@@ -897,8 +979,10 @@ function bhp_book_purchase_data($key) {
      *        'finish on /checkout/'; `inc/purchase-flow.php` turns the mark
      *        into a redirect built from `wc_get_checkout_url()`."
      *
-     *    ⭐ ITEM 186 DELEGATED THE MECHANISM ("whatever you and boromir thinks
-     *       is best"). ITEM 188 IS HIM CHOOSING. The panel is where the
+     *    ⭐ ITEM 186 DELEGATED THE MECHANISM ("whatever you and [ads-knowledge]
+     *       thinks is best" — the bracket is an editorial substitution of an
+     *       internal call name, per Standing Rules §14.5; nothing else in his
+     *       sentence is altered). ITEM 188 IS HIM CHOOSING. The panel is where the
      *       upsells and the running totals already live, and it is the surface
      *       he says he built for this. His choice governs.
      *
@@ -1404,7 +1488,24 @@ function bhp_book_display_title($title, $id = null) {
     // filter, so a cart line still says "(Paperback)" / "(Hardcover)" — which
     // is exactly right: format matters once something is IN the cart.)
     $on_canonical_page = is_product() && (int) $id === (int) get_queried_object_id();
-    $in_catalog = (function_exists('is_shop') && (is_shop() || is_product_taxonomy()));
+    /*
+     * ⭐ 1.19.350 — WIDENED TO THE CATALOG PREDICATE. ⛔ THE SUPERSEDED LINE,
+     *    PRESERVED: `(function_exists('is_shop') && (is_shop() ||
+     *    is_product_taxonomy()))`.
+     *
+     * ⛔ IT OMITTED WOOCOMMERCE PRODUCT SEARCH, which renders the same card
+     *    through the same loop. So `/?s=trench&post_type=product` printed
+     *    "… The Mariana Trench (Paperback)" where `/shop/` printed
+     *    "… The Mariana Trench" — the same product, two names, on two surfaces
+     *    a shopper reaches in one session. ⭐ `bhp_catalog_grid_context()` is
+     *    the same predicate the card, its stylesheet and its purchase control
+     *    now use, so all four agree about which surfaces are the catalog.
+     * ✅ The `is_shop() || is_product_taxonomy()` fallback is kept so the
+     *    function behaves exactly as it did if the catalog file is absent.
+     */
+    $in_catalog = function_exists('bhp_catalog_grid_context')
+        ? bhp_catalog_grid_context()
+        : (function_exists('is_shop') && (is_shop() || is_product_taxonomy()));
 
     /*
      * Related and upsell cards sit ON a product page but are not the queried
@@ -1431,9 +1532,37 @@ add_filter('the_title', 'bhp_book_display_title', 10, 2);
 // ============================================================
 // RENDERING
 // ============================================================
-/** Assets load only where the selector actually renders. */
+/**
+ * Assets load only where the selector actually renders.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.350 — THE CONDITION NOW MATCHES WHERE THE CARD RENDERS.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED CONDITION, PRESERVED: `is_product() || is_shop()`.
+ *
+ * ⛔⛔ IT WAS A REAL, MEASURED DEFECT THE MOMENT THE CARD WIDENED, AND IT IS
+ *     THE KIND ONLY A BROWSER FINDS. `book-formats.css` carries the card's BASE
+ *     rules — including `.bhp-shop-ages { display: none }`, which is the OFF
+ *     switch for the age line at every width above mobile. On a taxonomy
+ *     archive that stylesheet was never enqueued, so from 1.19.350 the archive
+ *     card rendered the age line VISIBLY at 30px where `/shop/` rendered it at
+ *     0. MEASURED on staging at an asserted 1366x768: archive card 596px,
+ *     `/shop/` card 544px, and the 52px difference put every archive card's
+ *     bottom at y813 against a 768 fold while `/shop/` cleared it at y760.
+ *
+ * ⭐ SO THE ENQUEUE FOLLOWS THE CARD. `bhp_catalog_grid_context()` is the same
+ *    predicate that decides whether the card renders at all, so the markup and
+ *    its stylesheet can no longer disagree about which pages they are for.
+ *
+ * ⛔ NOTHING NEW IS LOADED ANYWHERE THE CARD DOES NOT RENDER. The predicate is
+ *    false on the home page, on every ordinary page and post, in the admin, and
+ *    on the single product page's related rows (`is_product()` is handled by
+ *    its own limb, unchanged). ⭐ The JS is still product-page only.
+ */
 function bhp_book_enqueue_assets() {
-    if (!function_exists('is_product') || !(is_product() || is_shop())) {
+    $bhp_bfa_catalog = function_exists('bhp_catalog_grid_context') && bhp_catalog_grid_context();
+    if (!function_exists('is_product') || !(is_product() || is_shop() || $bhp_bfa_catalog)) {
         return;
     }
     $ver = wp_get_theme()->get('Version');
@@ -1641,7 +1770,7 @@ function bhp_book_hero_gallery_media($product_id) {
  *     CUE. Making the video FINDABLE, not adding a video.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ THE FINDING IT ANSWERS (`commerce-cx` / Pippin, `CYCLE164-CX` #1,
+ * ⭐ THE FINDING IT ANSWERS (`commerce-cx`, `CYCLE164-CX` #1,
  *    `ONLINE-GAP-BOOKS-IN-KIDS-HANDS-2026-08-18.md`): the flip-through already
  *    exists and already plays — it is just invisible. VERIFIED LIVE on staging
  *    2026-08-18 before a line was written, at an asserted `innerWidth` of 390:
@@ -2018,6 +2147,36 @@ function bhp_book_shop_format_prices($key) {
         $out[] = [
             'label'      => __('Paperback', 'brave-hearts'),
             'price_html' => wc_price((float) $data['paperback']['price']),
+            /*
+             * ⭐⭐ 1.19.350 — `selected` IS WHAT STOPS THE CARD PRINTING ONE
+             *    NUMBER TWICE. `CYCLE179-LD-350-BUILD`, the 349 chip cosmetic.
+             *
+             * ⛔ MEASURED, NOT INFERRED: at 1.19.349 a chapter card rendered
+             *    `.price` = "$11.99" AND a chip reading "Paperback $11.99".
+             *    Read out of the live staging DOM at an asserted 1440x900 on
+             *    2026-09-02. The same figure, twice, 90px apart, with nothing
+             *    to tell a parent they are the same thing.
+             *
+             * ⭐ PAPERBACK IS THE SELECTED FORMAT AND THAT IS `FD-439`, NOT A
+             *    PREFERENCE: it is the format the card's ADD TO CART actually
+             *    buys (`bhp_book_shop_add_to_cart_link()` adds the paperback).
+             *    So the big number IS the paperback price, the paperback chip
+             *    carries a tick instead of repeating it, and the hardcover chip
+             *    carries the only other figure. ⛔ NO PRICE IS REMOVED FROM THE
+             *    CARD — every distinct figure still appears, exactly once, and
+             *    the format selector still lives on the product page.
+             *
+             * ⚠️ A WORDING AMBIGUITY IS RECORDED RATHER THAN RESOLVED. The
+             *    brief says "chip prices: selected chip only", which read
+             *    literally is the opposite arrangement (price on the paperback
+             *    chip, nothing on the hardcover). The founder-approved concept
+             *    of record (the design lane's shop concept set, seal 686) draws
+             *    PAPERBACK
+             *    with a tick and HARDCOVER with $17.99, and the visual of record
+             *    is what is built. Flagged to `chief-of-staff` in the build
+             *    report.
+             */
+            'selected'   => true,
         ];
     }
 
@@ -2025,6 +2184,7 @@ function bhp_book_shop_format_prices($key) {
         $out[] = [
             'label'      => __('Hardcover', 'brave-hearts'),
             'price_html' => wc_price((float) $data['hardcover']['price']),
+            'selected'   => false,
         ];
     }
 
@@ -2098,9 +2258,23 @@ function bhp_book_shop_card_meta() {
       <span class="bhp-shop-from-price bhp-shop-format-prices">
         <?php foreach ($formats as $i => $format): ?>
           <?php if ($i > 0): ?><span class="bhp-shop-format-prices__sep" aria-hidden="true"> · </span><?php endif; ?>
-          <span class="bhp-shop-format-price">
+          <?php $bhp_fmt_sel = !empty($format['selected']); ?>
+          <span class="bhp-shop-format-price<?php echo $bhp_fmt_sel ? ' bhp-shop-format-price--selected' : ''; ?>">
             <span class="bhp-shop-format-price__label"><?php echo esc_html($format['label']); ?></span>
-            <span class="bhp-shop-format-price__amount"><?php echo wp_kses_post($format['price_html']); ?></span>
+            <?php if ($bhp_fmt_sel): ?>
+              <?php
+              /*
+               * ⛔ THE TICK IS DECORATION AND IS HIDDEN FROM ASSISTIVE
+               *    TECHNOLOGY; the MEANING travels in a real sentence beside
+               *    it. A screen-reader user hears "Paperback, this card's
+               *    price", not "Paperback, black heavy check mark".
+               */
+              ?>
+              <span class="bhp-shop-format-price__tick" aria-hidden="true">&#10003;</span>
+              <span class="screen-reader-text"><?php esc_html_e('the price shown above', 'brave-hearts'); ?></span>
+            <?php else: ?>
+              <span class="bhp-shop-format-price__amount"><?php echo wp_kses_post($format['price_html']); ?></span>
+            <?php endif; ?>
           </span>
         <?php endforeach; ?>
       </span>
@@ -2168,6 +2342,47 @@ const BHP_SHOP_ATC_CLASS = 'bhp-shop-atc';
  *    RECORDED AS SUCH by the 1.19.283 block; the fix is to match the PHP to it,
  *    never to widen the CSS to match the PHP.
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔⛔ SUPERSEDED 2026-09-02 BY 1.19.350 (`CYCLE179-LD-350-BUILD`). READ THIS
+ *      BEFORE ACTING ON THE PARAGRAPH ABOVE. The paragraph is PRESERVED, not
+ *      deleted, because deleting it would hide that the rule ever existed and
+ *      the next reader would re-derive it.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE SENTENCE *"the fix is to match the PHP to it, never to widen the CSS
+ *    to match the PHP"* NO LONGER GOVERNS. 1.19.350 does the opposite,
+ *    deliberately, under the founder's own scope (seal 691, verbatim: *"its not
+ *    just liberty its the shop catalog across the entire website"*) and with
+ *    the `chief-of-staff` brief. `commerce-cx` recorded the collision in
+ *    advance as
+ *    `CYCLE179-CX-007` with the instruction that this comment be superseded in
+ *    the same change or the next reader would read the change as a regression.
+ *    This is that supersession.
+ *
+ * ⭐ WHY IT WAS RIGHT THEN AND IS WRONG NOW, AND IT IS ONE FACT, NOT A CHANGE
+ *    OF TASTE. The paragraph's real subject was never "/shop/ versus the
+ *    archives". It was `ul.products li.product` ON A SINGLE PRODUCT PAGE, where
+ *    WooCommerce renders the related and upsell rows through the same markup.
+ *    The 1.19.286 author had exactly one predicate available, `is_shop()`, and
+ *    it happened to exclude both the archives and the PDP rows in one stroke.
+ *    ⛔ Excluding the archives was COLLATERAL, not the intent — and it is what
+ *    left 18 taxonomy archives plus product search rendering a 1110px tile with
+ *    one price and a navigation link wearing a button, MEASURED LIVE
+ *    2026-09-02 (`CATALOG-SURFACES-INVENTORY.md` §3).
+ *
+ * ⭐ SO THE SCOPE IS KEPT AND ITS BOUNDARY MOVES TO WHERE IT ALWAYS MEANT TO
+ *    BE. The CSS is now scoped to `body.bhp-catalog-grid`, which
+ *    `bhp_catalog_body_class()` emits on exactly the requests
+ *    `bhp_catalog_grid_context()` is true for, and THAT PREDICATE RETURNS FALSE
+ *    ON `is_product()` FIRST, before anything else it tests.
+ *
+ * ⛔⛔ THE THING THIS PARAGRAPH WAS PROTECTING IS STILL PROTECTED, BYTE FOR
+ *     BYTE. The PDP related and upsell rows get no `bhp-shop-atc`, no grid
+ *     geometry, and the same "CHOOSE YOUR FORMAT" navigation link they have had
+ *     since 1.19.285. Only the pages it was protecting them FROM have changed.
+ *     ⭐ Regression-measured rather than argued: `inc/catalog-surfaces.php` and
+ *     the 350 build report carry the related-row geometry before and after.
+ *
  * ⭐⭐ OFF THE ARCHIVE, THE SUPERSEDED CONTROL IS RENDERED UNCHANGED — see
  *     `bhp_book_shop_add_to_cart_link()`. So no surface outside /shop/ gains a
  *     control, loses one, or has one behave differently than it did in
@@ -2179,9 +2394,25 @@ const BHP_SHOP_ATC_CLASS = 'bhp-shop-atc';
  * @return bool
  */
 function bhp_shop_card_context() {
-    $is_shop = function_exists('is_shop') && is_shop() && !is_admin();
+    /*
+     * ⭐ 1.19.350 — ONE PREDICATE, TWO NAMES, AND THE OLD NAME STILL WORKS.
+     *
+     * ⛔ THE SUPERSEDED BODY, PRESERVED: `$is_shop = function_exists('is_shop')
+     *    && is_shop() && !is_admin();`. It is now the FALLBACK, reached only if
+     *    `inc/catalog-surfaces.php` is absent, so a theme missing that file
+     *    degrades to exactly 1.19.349's behaviour rather than fatalling.
+     *
+     * ⭐ THE `bhp_shop_card_context` FILTER IS DELIBERATELY KEPT AND STILL RUNS
+     *    LAST. `test-uniform-shop-cta-210-211.php` and its neighbours drive the
+     *    on-archive branch through it, and renaming it would have broken those
+     *    suites for no gain. A suite filtering it still wins.
+     */
+    $is_shop = function_exists('bhp_catalog_grid_context')
+        ? bhp_catalog_grid_context()
+        : (function_exists('is_shop') && is_shop() && !is_admin());
+
     /**
-     * Whether the current product loop is the /shop/ grid.
+     * Whether the current product loop is a customer-facing catalog grid.
      *
      * ⭐ Filterable so a WP-CLI suite can assert the archive branch, which
      *    `is_shop()` can never be true for. A test that could only reach the
@@ -2442,7 +2673,7 @@ function bhp_book_shop_collection_card($loop_end) {
          *    every bundle form that omits the field, since Phase 4. ⛔ There is
          *    no server-side "open the panel", because opening it would need a
          *    URL parameter and a URL that opens the panel is one that can be
-         *    bookmarked, shared and crawled (`inc/purchase-flow.php`, Boromir's
+         *    bookmarked, shared and crawled (`inc/purchase-flow.php`, the `ads-knowledge`
          *    second condition). A correct cart page is a degradation; a
          *    panel any link can open is a defect.
          */
@@ -2679,3 +2910,527 @@ function bhp_book_add_hardcover_offer($data) {
     return $data;
 }
 add_filter('rank_math/json_ld', 'bhp_book_add_hardcover_offer', 999);
+
+/* ═════════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.349 — PDP REDESIGN PHASE 2, CONCEPT A. `CYCLE179-LD-349`, seal 679.
+ *     THE LEFT COLUMN: "Look inside" plates, then "What is inside" bullets.
+ * ═════════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ WHAT THIS FILLS. 1.19.348 removed 1,072-1,953px of PAINTED dead parchment
+ *    with `align-items: start`. It did not put anything in the space, and said
+ *    so. This does: the two things a parent actually decides on, which are the
+ *    printed pages and what is in the book.
+ *
+ * ⛔⛔ THE SOURCE IS A THEME REGISTRY, NOT PRODUCT META, AND THE FIVE REASONS
+ *     ARE THE COMMERCE LANE'S, VERIFIED, NOT PREFERENCES
+ *     (`WHATS-INSIDE-COPY.md` §4):
+ *      1. `/complete-collection/` HAS NO PRODUCT RECORD (`FD-579`, VERIFIED
+ *         LIVE 2026-09-02). A product-meta design leaves one of the five
+ *         surfaces with no source at all, which means a second mechanism,
+ *         which means two places for one claim set to drift.
+ *      2. THE HARDCOVER RECORDS ARE NEVER SERVED. All three hardcover URLs
+ *         301 to the paperback with `?bhp_format=hardcover`, so there is
+ *         exactly ONE `post_content` per title. This is the same argument
+ *         A1 / CX-008 already won for the format-reactive spec line, and the
+ *         comment in `format-cards.php` states it: "no amount of editing a
+ *         hardcover product record could have fixed it, because that record's
+ *         page is never served."
+ *      3. THE COLOURING PRODUCT HAS A DIFFERENT ID PER ENVIRONMENT — 618
+ *         production, 4065 staging, one SKU. Anything keyed on a hardcoded
+ *         product ID is right on one environment and silently wrong on the
+ *         other. The registry plus `bhp_colouring_slug_for_product()` travels.
+ *      4. WRITING PRODUCT META IS AN ANDREW GATE. A theme string is not. This
+ *         ships today and he reviews rendered pages instead of approving
+ *         eleven meta writes across two environments before he can see one.
+ *      5. ONE AUTHORED PLACE IS ONE REVIEW SURFACE. Every bullet below carries
+ *         an SOP-10 claims row in `WHATS-INSIDE-COPY.md` §2. Five titles across
+ *         two environments would be ten records where a claim can be edited
+ *         out of step with its audit row.
+ *
+ * ⭐ THE OVERRIDE EXISTS ON DAY ONE AND IS EMPTY EVERYWHERE. `bhp_whats_inside`
+ *    product meta is read FIRST; `bhp_book_whats_inside` is a filter. Neither
+ *    is populated by this release, on any environment, and populating the meta
+ *    is Andrew's gate. It is here so that a typo does not require a deploy the
+ *    day he wants that.
+ *
+ * ⛔ NOT IN THIS BLOCK, AND THE ABSENCES ARE DELIBERATE:
+ *      · NO Lexile on The Amazon or on the colouring book. `CYCLE141-CX-40a`
+ *        is a fabricated third-party reading measurement and it is guarded by
+ *        an assertion in `tests/test-cycle179-pdp-349.php`, not by care.
+ *      · NO page count for any chapter book. No approved source publishes one
+ *        (`WHATS-INSIDE-COPY.md` §3, "UNAVAILABLE"). Not estimated, not
+ *        invented, not used.
+ *      · NO rating, review, star, award, outcome claim or comparison.
+ *      · NO "I can do hard things" end-of-book claim. Founder seal item 685
+ *        says the books do not end with it; `MOTIF-MANTRA-AUDIT.md` §1 proves
+ *        the three motif lines are different in each book. The claim is being
+ *        removed from the PDPs, so it is certainly not being added here.
+ *      · NO em dash and NO en dash in any string below (rule 608a, BOR-004
+ *        ruling seal 681). Asserted programmatically.
+ *      · Ages are "6 to 9". NEVER 5 to 9.
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * The "Look inside" plates, by content key.
+ *
+ * ⭐ THE FILES ARE THEME ASSETS, NOT MEDIA-LIBRARY ATTACHMENTS, and that is a
+ *    decision with a reason: an attachment ID differs per environment exactly
+ *    as product 618/4065 does, so an ID-keyed design would be correct on
+ *    production and silently wrong on staging. A theme path is the same string
+ *    on both, ships in the same artefact as the code that references it, and
+ *    needs no upload, no media write and no Andrew gate.
+ *
+ * ⭐ ORDER IS THE DESIGN LANE'S HANDLING NOTE 1, NOT ALPHABETICAL: the
+ *    illustrated
+ *    spread first (it is what sells), the short-chapter spread second (it is
+ *    what reassures the parent of a reluctant reader).
+ *
+ * ⛔ THE THREE COLLECTION FILES ARE BYTE-IDENTICAL COPIES of each chapter
+ *    book's illustrated spread, so the Collection page exposes NO printed page
+ *    that is not already exposed on a book page. Page-exposure stays at 4 of a
+ *    cap of 6 per title (`MANIFEST.md` §5, recomputed not asserted).
+ *
+ * ⛔ THE COLOURING PAIRS ARE NOT SPREADS AND ARE NEVER CALLED ONE. Every design
+ *    in that book sits on a recto facing a BLANK verso, so pages 95/101 and
+ *    99/109 are not facing pages and never were. `design-creative` rendered
+ *    them as
+ *    two-up sample plates with a visible gap and two page shadows, and the alt
+ *    text says "two coloring pages". `bhp_pdp_look_inside_noun()` below is what
+ *    keeps the visible caption honest as well.
+ *
+ * @return array<string,array<int,array>>
+ */
+function bhp_pdp_look_inside_registry() {
+    return apply_filters('bhp_pdp_look_inside_registry', [
+        'mariana_trench' => [
+            [
+                'stem'  => 'look-inside-mariana-trench-pp04-05',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '4 and 5',
+                'alt'   => __('Pages 4 and 5 of The Mariana Trench: text ending with Mom asking “Are you ready to be brave?”, facing a full-page pencil illustration of Charlotte sitting cross-legged beside her pup Henry, who wears goggles, over an open book that glows.', 'brave-hearts'),
+            ],
+            [
+                'stem'  => 'look-inside-mariana-trench-pp16-17',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '16 and 17',
+                'alt'   => __('Pages 16 and 17 of The Mariana Trench: Chapter 3 ends with the line “big places need brave hearts”, facing the opening page of Chapter 4, The Water Start, under a drawing of a kite.', 'brave-hearts'),
+            ],
+        ],
+        'mount_everest' => [
+            [
+                'stem'  => 'look-inside-mount-everest-pp22-23',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '22 and 23',
+                'alt'   => __('Pages 22 and 23 of Mount Everest: an illustration of a loaded yak tangled in rope beside a small tree, with a Mountain Fact caption about yaks, facing text in which the yak is freed and says his name is Ama.', 'brave-hearts'),
+            ],
+            [
+                'stem'  => 'look-inside-mount-everest-pp18-19',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '18 and 19',
+                'alt'   => __('Pages 18 and 19 of Mount Everest: an illustration of a plane towing a glider over jungle and mountains at the end of Chapter 3, facing the opening page of Chapter 4, The Yak, under a drawing of a loaded yak.', 'brave-hearts'),
+            ],
+        ],
+        'amazon_rainforest' => [
+            [
+                'stem'  => 'look-inside-the-amazon-pp12-13',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '12 and 13',
+                'alt'   => __('Pages 12 and 13 of The Amazon: Charlotte and Henry meet a man in a wide-brimmed hat who introduces himself as Theodore Roosevelt, shown in an illustration spreading a map across a table inside a thatched hut.', 'brave-hearts'),
+            ],
+            [
+                'stem'  => 'look-inside-the-amazon-pp26-27',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '26 and 27',
+                'alt'   => __('Pages 26 and 27 of The Amazon: Chapter 5 ends with the motorcycle\'s front tire going flat in the rainforest, facing the opening page of Chapter 6, The Sound, under a drawing of rainforest trees.', 'brave-hearts'),
+            ],
+        ],
+        'colouring_mariana' => [
+            [
+                'stem'  => 'look-inside-mariana-coloring-book-pp95-101',
+                'w'     => 1600,
+                'h'     => 1045,
+                'pages' => '95 and 101',
+                'alt'   => __('Two coloring pages from The Mariana Trench Coloring Book, pages 95 and 101: Charlotte and Henry at a submersible porthole, and an anglerfish with its lit lure above the seafloor.', 'brave-hearts'),
+            ],
+            [
+                'stem'  => 'look-inside-mariana-coloring-book-pp99-109',
+                'w'     => 1600,
+                'h'     => 1045,
+                'pages' => '99 and 109',
+                'alt'   => __('Two coloring pages from The Mariana Trench Coloring Book, pages 99 and 109: a shells and reef-fish page lettered STEADY HEAD. BRAVE HEART., and an empty submersible porthole captioned “I left this window empty. Draw what you would see.”', 'brave-hearts'),
+            ],
+        ],
+        'collection' => [
+            [
+                'stem'  => 'look-inside-complete-collection-mariana-trench-pp04-05',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '4 and 5',
+                'alt'   => __('Pages 4 and 5 of The Mariana Trench: text ending with Mom asking “Are you ready to be brave?”, facing a full-page pencil illustration of Charlotte sitting cross-legged beside her pup Henry, who wears goggles, over an open book that glows.', 'brave-hearts'),
+            ],
+            [
+                'stem'  => 'look-inside-complete-collection-mount-everest-pp22-23',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '22 and 23',
+                'alt'   => __('Pages 22 and 23 of Mount Everest: an illustration of a loaded yak tangled in rope beside a small tree, with a Mountain Fact caption about yaks, facing text in which the yak is freed and says his name is Ama.', 'brave-hearts'),
+            ],
+            [
+                'stem'  => 'look-inside-complete-collection-the-amazon-pp12-13',
+                'w'     => 1600,
+                'h'     => 1262,
+                'pages' => '12 and 13',
+                'alt'   => __('Pages 12 and 13 of The Amazon: Charlotte and Henry meet a man in a wide-brimmed hat who introduces himself as Theodore Roosevelt, shown in an illustration spreading a map across a table inside a thatched hut.', 'brave-hearts'),
+            ],
+        ],
+    ]);
+}
+
+/**
+ * The visible caption noun for one plate on one surface.
+ *
+ * ⛔ THE WHOLE FUNCTION EXISTS FOR ONE HONEST DISTINCTION. The chapter books
+ *    are true physical spreads: even PDF page is the verso, odd is the recto,
+ *    read off the running heads in CYCLE166 and re-asserted in the design
+ *    lane's build
+ *    code. The COLOURING BOOK IS NOT. Its designs each sit on a recto facing a
+ *    blank verso (verified by rendering v7 pages 94, 96, 98, 100, 102, 108 and
+ *    110, all blank), so 95/101 and 99/109 are not facing pages and never were.
+ *    Calling them a "spread" in visible copy would be a small false claim about
+ *    the printed object, which is exactly the class of thing this build is
+ *    removing from the PDPs elsewhere.
+ *
+ * @param string $key Content key.
+ * @return string Translated, unescaped.
+ */
+function bhp_pdp_look_inside_noun($key) {
+    if (0 === strpos((string) $key, 'colouring_')) {
+        /* translators: %s: printed page numbers, e.g. "95 and 101". */
+        return __('Two coloring pages, %s', 'brave-hearts');
+    }
+    /* translators: %s: printed page numbers, e.g. "4 and 5". */
+    return __('Pages %s', 'brave-hearts');
+}
+
+/**
+ * "What is inside" bullets for one content key.
+ *
+ * ⭐ EVERY BULLET IS THE COMMERCE LANE'S, VERBATIM, WITH A PER-LINE CLAIMS
+ *    AUDIT AT
+ *    `ANDREW-REVIEW\2026-09-02\pdp-redesign\WHATS-INSIDE-COPY.md` §2. Nothing
+ *    here was written, shortened or reworded by this build. ⛔ THE COLOURING
+ *    BULLETS ARE THE FOUNDER-APPROVED 618 LONG DESCRIPTION, REUSED VERBATIM —
+ *    seven of them, which is the top of the 5-to-7 range and is correct.
+ *    Approved copy is locked (Standing Rules §9): it is not trimmed to hit a
+ *    design target. If the column cannot hold seven, the column changes.
+ *
+ * ⚠️ TWO THINGS A REVIEWER MUST KNOW, STATED HERE RATHER THAN DISCOVERED.
+ *
+ *    1. ⛔ THE AMAZON'S BULLETS 1, 2 AND 4 (chapters, motorcycle, route) REST
+ *       ON A DESIGN-LANE EXTRACTION, `EDITION-OF-RECORD-amazon-text.txt`, and
+ *       `commerce-cx` states plainly that it did NOT re-verify it against the
+ *       printer's file. `CYCLE142-OPS-028` records The Amazon's paperback
+ *       edition of record as an open founder question. → `CYCLE179-CX-W1`,
+ *       ANDREW. If he cannot confirm it, those three bullets come out and the
+ *       other three stand on the live PDP and the story bank alone. They ship
+ *       on staging so he can read them on the page; they are NOT approved.
+ *
+ *    2. ⭐ THE ONE "we" IN THE WHOLE FILE IS DELIBERATE AND IS NOT A VOICE-RULE
+ *       BREACH. The Amazon bullet 5 ends "we are all connected to it". Standing
+ *       Rules §9.1 forbids the CORPORATE "we" because Andrew is the sole
+ *       operator. This "we" is HUMANITY, inside his own quoted intention, and
+ *       `23-FOUNDER-STORY-BANK.md` SB-C7 clears the sentence in his words. The
+ *       QA scan in `tests/test-cycle179-pdp-349.php` allows exactly one
+ *       occurrence, on exactly this key, and zero everywhere else — so a future
+ *       stray "we" still fails the suite. If Andrew would rather it went, the
+ *       bullet ends at "lives in the Amazon."
+ *
+ * @param string $key Content key.
+ * @return array<int,string> Bullet strings, or [] for an unknown key.
+ */
+function bhp_book_whats_inside($key) {
+    $key = (string) $key;
+
+    /*
+     * ⭐ THE OVERRIDE IS READ FIRST AND IS EMPTY EVERYWHERE TODAY. It accepts
+     *    either an array or a newline list, because a human filling this in
+     *    through an admin box will type lines, not serialise an array.
+     * ⛔ NOTHING IN THIS RELEASE WRITES IT. Populating product meta is an
+     *    Andrew gate on either environment.
+     */
+    $bullets = [];
+    if (function_exists('is_product') && is_product()) {
+        $meta = get_post_meta((int) get_queried_object_id(), 'bhp_whats_inside', true);
+        if (is_array($meta)) {
+            $bullets = $meta;
+        } elseif (is_string($meta) && '' !== trim($meta)) {
+            $bullets = preg_split('/\r\n|\r|\n/', trim($meta));
+        }
+    }
+
+    if (empty($bullets)) {
+        $defaults = [
+            'mariana_trench' => [
+                __('12 short chapters, illustrated throughout. I designed the cover and made the interior illustrations myself.', 'brave-hearts'),
+                __('Charlotte and her dog Henry find a glowing book under the bed and end up seven miles down, at the deepest place on Earth.', 'brave-hearts'),
+                __('A page at the front that introduces the real explorers who turn up in the story: Claudius Ptolemy, Jacques-Yves Cousteau, Philippe Cousteau Jr. and Sylvia Earle.', 'brave-hearts'),
+                __('Real ocean the whole way down: a sea turtle caught in a net, a wall of coral, a humpback whale named Blue, an anglerfish, and the creatures on the trench floor that make their own light.', 'brave-hearts'),
+                __('When the dive goes sideways, Charlotte has a choice to make. That is the part of the book I care most about.', 'brave-hearts'),
+                __('Written for ages 6 to 9. Independent readers in grades 2 to 3, Lexile 580L. It reads aloud from age 4.', 'brave-hearts'),
+            ],
+            'mount_everest' => [
+                __('12 short chapters, illustrated throughout. I designed the cover and made the interior illustrations myself.', 'brave-hearts'),
+                __('Charlotte and Henry open a blue book and land in Nepal, on the way to the highest mountain on Earth, 29,032 feet.', 'brave-hearts'),
+                __('Tenzing Norgay meets them at the start and guides them, and the chapters follow the real route: the yak trail, the cliff, the Khumbu Icefall, the South Col camp, the summit and the descent.', 'brave-hearts'),
+                __('The air up there is so thin a candle will not stay lit, and every step costs twice what it costs at home.', 'brave-hearts'),
+                __('Turning back can be the bravest choice of all. That is the lesson I brought home from Nepal and gave to Charlotte.', 'brave-hearts'),
+                __('Written for ages 6 to 9. Independent readers in grades 2 to 3, Lexile 500L. It reads aloud from age 4.', 'brave-hearts'),
+            ],
+            /*
+             * ⛔ NO LEXILE ON THIS TITLE, BY DESIGN AND BY ASSERTION. The Amazon
+             *    has no measure and must carry none. Wave E: "⛔ NOTHING. No
+             *    measure exists." Confirmed again 2026-09-02: `Lexile` returns
+             *    ZERO occurrences in the served production HTML of this PDP
+             *    while 580L and 500L are present on the other two.
+             */
+            'amazon_rainforest' => [
+                __('12 short chapters, illustrated throughout. I designed the cover and made the interior illustrations myself.', 'brave-hearts'),
+                __('Charlotte and Henry pull a green book out from under the vines, and the next thing they are on a motorcycle with Henry riding in the sidecar.', 'brave-hearts'),
+                __('A page at the front that introduces the real explorers who turn up in the story: Theodore Roosevelt, Alexander von Humboldt, and a character inspired by the life and work of Jane Goodall.', 'brave-hearts'),
+                __('The trip runs from the Llanos basin down the Rio Negro to the Meeting of the Waters, with a jaguar, a fire and a stretch of cleared forest along the way.', 'brave-hearts'),
+                __('About one in every ten known species on Earth lives in the Amazon, and this book is my way of saying that we are all connected to it.', 'brave-hearts'),
+                __('Written for ages 6 to 9. Independent readers in grades 2 to 3. It reads aloud from age 4.', 'brave-hearts'),
+            ],
+            'collection' => [
+                __('All three adventures: The Mariana Trench, Mount Everest and The Amazon. They are numbered book one, book two and book three inside the covers.', 'brave-hearts'),
+                __('12 short chapters each, illustrated throughout. I designed all three covers and made the interior illustrations myself.', 'brave-hearts'),
+                __('Three real places: the deepest place in the ocean, the highest mountain on Earth, and the greatest rainforest on Earth.', 'brave-hearts'),
+                __('Real people from history turn up in the stories. Claudius Ptolemy and Sylvia Earle in the trench, Tenzing Norgay on Everest, Theodore Roosevelt and Alexander von Humboldt in the Amazon.', 'brave-hearts'),
+                __('Every book puts Charlotte in front of a choice she has to make herself. That is the whole reason I write them.', 'brave-hearts'),
+                __('Written for ages 6 to 9, in paperback or hardcover. They read aloud from age 4.', 'brave-hearts'),
+            ],
+            /*
+             * ⭐ THE FOUNDER-APPROVED 618 LONG DESCRIPTION, VERBATIM. Zero words
+             *    added, zero re-ordered, zero removed. Every bullet already
+             *    carries a J5 claims-audit row.
+             * ⚠️ ON STAGING THESE BULLETS ALSO LIVE INSIDE PRODUCT 4065's
+             *    Description tab, so they render TWICE there until that record
+             *    or that tab changes. PRODUCTION 618 renders no Description tab
+             *    at all, so on production this block is the ONLY place they
+             *    appear. Both facts are verified live 2026-09-02. The staging
+             *    duplication is reported as a QA observation and is deliberately
+             *    NOT fixed by writing to a product record.
+             */
+            'colouring_mariana' => [
+                __('57 coloring adventures across 118 pages, 8.5 by 11 inches', 'brave-hearts'),
+                __('Charlotte and Henry on the page together, the same two explorers from the chapter book', 'brave-hearts'),
+                __('Sea creatures drawn from the story: sea turtles, mobula rays, jellyfish, a marlin, a humpback whale, an anglerfish, and the creatures on the trench floor that make their own light', 'brave-hearts'),
+                __('17 short quote pages. Each one sets a brave heart line in big letters, with seashells and sea creatures tucked into the open space around it. Stop. Breathe. Think. Act. I can do hard things. Steady head. Brave heart.', 'brave-hearts'),
+                __('Big, simple line art, and captions under the pictures that are mostly lines lifted straight from the story', 'brave-hearts'),
+                __('Every picture has a page to itself, and the back of every picture page is left blank', 'brave-hearts'),
+                __('A page near the front to write your name on, and a page near the end where I left the submarine window empty so a child can draw the creature they would want to see', 'brave-hearts'),
+            ],
+        ];
+        $bullets = isset($defaults[$key]) ? $defaults[$key] : [];
+    }
+
+    $bullets = array_values(array_filter(array_map(function ($line) {
+        return trim(wp_strip_all_tags((string) $line));
+    }, (array) $bullets), function ($line) {
+        return '' !== $line;
+    }));
+
+    return (array) apply_filters('bhp_book_whats_inside', $bullets, $key);
+}
+
+/**
+ * Which content key does the CURRENT request belong to?
+ *
+ * ⛔ ID-BASED AND HELPER-BASED, NEVER A TITLE SUBSTRING. `CYCLE165-OPS-019` was
+ *    exactly that bug — a title-substring match that put a colouring cover
+ *    beside a chapter-book price. `bhp_book_lookup_product()` already maps BOTH
+ *    the paperback and the hardcover product ID of a title to one key, which is
+ *    precisely the behaviour requirement 2 needs: the block is authored once
+ *    per title and does not change when the format selector changes.
+ *
+ * @return string Content key, or '' when this surface has none.
+ */
+function bhp_pdp_content_key() {
+    if (function_exists('is_page') && is_page('complete-collection')) {
+        return 'collection';
+    }
+    if (!function_exists('is_product') || !is_product()) {
+        return '';
+    }
+    $product_id = (int) get_queried_object_id();
+
+    if (function_exists('bhp_colouring_slug_for_product')) {
+        $slug = bhp_colouring_slug_for_product($product_id);
+        if ($slug) {
+            return 'colouring_' . $slug;
+        }
+    }
+
+    $found = bhp_book_lookup_product($product_id);
+    return $found ? $found['key'] : '';
+}
+
+/**
+ * True when this request should render the phase-2 left column at all.
+ *
+ * ⛔ RETURNS FALSE, AND THE COLUMN RENDERS NOTHING, WHENEVER THERE IS NOTHING
+ *    TO SAY. A block that renders an empty `h2` is worse than no block
+ *    (`commerce-cx` §4). Both halves are optional independently: a key with
+ *    plates but
+ *    no bullets renders only the plates, and vice versa.
+ */
+function bhp_pdp_has_left_column($key) {
+    if ('' === (string) $key) {
+        return false;
+    }
+    $plates = bhp_pdp_look_inside_registry();
+    return !empty($plates[$key]) || !empty(bhp_book_whats_inside($key));
+}
+
+/**
+ * Render the left column. One partial, five surfaces.
+ *
+ * ⭐ THE COLLECTION PAGE USES THE SAME PARTIAL, WHICH IS THE BRIEF'S OWN
+ *    REQUIREMENT ("the Collection is a page, not a product: give it the same
+ *    look-inside strip via the same partial"). It reaches it through the bundle
+ *    plugin's existing `bhp_bundle_landing_hero_media` action rather than
+ *    through a `the_content` append, so the strip lands UNDER THE HERO MEDIA —
+ *    the same position it occupies on a product page — instead of below the
+ *    final CTA where a content filter would have put it.
+ *
+ * @param string $context 'product' | 'collection'
+ */
+function bhp_pdp_render_left_column($context = 'product') {
+    $key = bhp_pdp_content_key();
+    if (!bhp_pdp_has_left_column($key)) {
+        return;
+    }
+    $tpl = locate_template('template-parts/commerce/pdp-left-column.php');
+    if ('' === $tpl) {
+        return; // Template missing: render nothing rather than emit a warning.
+    }
+    $bhp_pdp_key     = $key;
+    $bhp_pdp_context = $context;
+    include $tpl;
+}
+
+/**
+ * Product pages. Priority 3 on `woocommerce_after_single_product_summary`.
+ *
+ * ⛔ WHY 3 AND NOT 5, 10 OR 15, stated so a later lane does not "tidy" it:
+ *      4  `bhp_review_product_section`      (reviews, full width)
+ *      5  `bhp_woocommerce_product_amazon_reviews_section` (full width)
+ *      10 `woocommerce_output_product_data_tabs`  (full width)
+ *      15 `bhp_product_collection_upsell`
+ *      30 `bhp_woocommerce_product_amazon_section`
+ *      40 `bhp_woocommerce_product_adventure_kit_cta`
+ *    Every one of those is a FULL-WIDTH band with `grid-column: 1/-1`. This
+ *    block is the only thing that belongs in COLUMN ONE, so it has to be the
+ *    first item this hook emits or the grid places it after a full-width row
+ *    and it lands below them all.
+ */
+function bhp_pdp_render_product_left_column() {
+    bhp_pdp_render_left_column('product');
+}
+add_action('woocommerce_after_single_product_summary', 'bhp_pdp_render_product_left_column', 3);
+
+/**
+ * The Complete Collection page.
+ *
+ * ⛔⛔ THE FIRST ATTEMPT REGRESSED THE MONEY PAGE AND IS RECORDED RATHER THAN
+ *     QUIETLY REPLACED, because the failure is the instructive part.
+ *
+ *     It hooked the bundle plugin's `bhp_bundle_landing_hero_media` action,
+ *     which looked ideal: it is the existing seam, it is where the collection
+ *     gallery already renders, and it puts the strip "under the gallery" the
+ *     way Concept A draws it on a product page. ⭐ MEASURED ON STAGING
+ *     1.19.349 AT AN ASSERTED 1440x900, 1366x768 AND 375x812: that action
+ *     fires INSIDE the hero and ABOVE the hero's primary CTA, so inserting
+ *     three plates and six bullets there pushed `.bhp-landing-cta--primary`
+ *     from 232px ABOVE the fold to 775px BELOW it at 1440, and to 1,686px
+ *     below at 375. On `/complete-collection/`, which is the money page.
+ *     ⛔ IT WAS CAUGHT BY THE MEASUREMENT PASS, NOT BY REVIEWING THIS FILE.
+ *        The hook name gives no clue that the CTA sits below it.
+ *
+ * ⭐ THE FIX PUTS THE BLOCK AFTER THE HERO INSTEAD OF INSIDE IT, by filtering
+ *    the rendered content and inserting before the first `bhp-landing-singles`
+ *    section — the band that follows the hero. That is still high on the page,
+ *    still directly under the hero media, and it is BELOW the primary CTA, so
+ *    it cannot move it at any width.
+ *
+ * ⛔ IT FAILS SAFE IN BOTH DIRECTIONS. If the marker is absent (the plugin is
+ *    off, or a future version renames that section) the block is APPENDED
+ *    rather than dropped, so the content still reaches the page and the only
+ *    cost is position. And it is gated on `is_page('complete-collection')` +
+ *    `is_main_query()` + `in_the_loop()`, so no excerpt, feed, widget or
+ *    secondary query can be filtered by it.
+ *
+ * ⛔ `str_replace` WITH A LIMIT OF ONE, NOT A REGEX OVER PLUGIN MARKUP. The
+ *    needle is a literal opening tag; nothing is parsed, nothing is rewritten,
+ *    and the plugin's own output is returned byte-identical either side of the
+ *    insertion point.
+ *
+ * @param string $content
+ * @return string
+ */
+function bhp_pdp_collection_left_column_content($content) {
+    if (!function_exists('is_page') || !is_page('complete-collection')) {
+        return $content;
+    }
+    if (!in_the_loop() || !is_main_query()) {
+        return $content;
+    }
+    if (!bhp_pdp_has_left_column('collection')) {
+        return $content;
+    }
+
+    ob_start();
+    bhp_pdp_render_left_column('collection');
+    $block = ob_get_clean();
+    if ('' === trim($block)) {
+        return $content;
+    }
+
+    $needle = '<section class="bhp-landing-singles"';
+    $at = strpos($content, $needle);
+    if (false === $at) {
+        return $content . $block; // Fail safe: present, lower down.
+    }
+
+    return substr($content, 0, $at) . $block . substr($content, $at);
+}
+add_filter('the_content', 'bhp_pdp_collection_left_column_content', 20);
+
+/**
+ * The phase-2 stylesheet. Enqueued only where the block can render.
+ *
+ * ⛔ NOT SITEWIDE. `bhp_pdp_has_left_column()` is the same predicate the
+ *    renderer uses, so a page that renders nothing also downloads nothing.
+ */
+function bhp_pdp_enqueue_content_css() {
+    if (is_admin()) {
+        return;
+    }
+    $key = bhp_pdp_content_key();
+    if (!bhp_pdp_has_left_column($key)) {
+        return;
+    }
+    wp_enqueue_style(
+        'bhp-pdp-content',
+        get_stylesheet_directory_uri() . '/assets/css/pdp-content.css',
+        [],
+        wp_get_theme()->get('Version')
+    );
+}
+add_action('wp_enqueue_scripts', 'bhp_pdp_enqueue_content_css', 20);

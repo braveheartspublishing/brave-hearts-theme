@@ -42,7 +42,7 @@
  *    button beside a placeholder graphic that literally reads "Guide cover in
  *    progress". A professional buyer who sees a placeholder decides the
  *    publisher is not real, and that is the whole page's credibility lost to
- *    an unfinished JPEG (Merry, `02-RETAILER-FUNNEL-SPEC.md` §5.1). The
+ *    an unfinished JPEG (`marketing-growth`, `02-RETAILER-FUNNEL-SPEC.md` §5.1). The
  *    entire block is now SUPPRESSED while the PDF is unset, and the trade
  *    enquiry is the single call to action.
  *    ⭐ THE `$download['ready']` BRANCH IS INTACT AND UNCHANGED. Setting the
@@ -205,7 +205,7 @@ if (class_exists('BHP_Analytics_Config') && BHP_Analytics_Config::should_render_
      * ⭐ FUNNEL ISOLATION, RAIL 1. `retailer_landing_view` ALREADY EXISTS and is
      *    reused verbatim. No second event is minted for this page, and no
      *    `parent_popup` / `teacher_popup` prefix is read or written anywhere in
-     *    this funnel. `.claude/rules/funnels.md`, and Merry §5.3.
+     *    this funnel. `.claude/rules/funnels.md`, and `marketing-growth` §5.3.
      */
     $bhp_retailer_landing_payload = wp_json_encode([
         'event'      => 'retailer_landing_view',
@@ -257,7 +257,7 @@ $reader_profile = [
  *        published here, because they were read live.
  *      · "When will Ingram distribution be ready?" said there is no confirmed
  *        date. It is ready.
- *    ⛔ The two answers Merry flagged as needing Andrew's decision — the
+ *    ⛔ The two answers `marketing-growth` flagged as needing Andrew's decision — the
  *      minimum-order answer and the unbounded review-copy answer (FMC-7) — are
  *      NOT bounded here. Bounding them is his call, not this desk's.
  */
@@ -411,7 +411,7 @@ $faqs = [
  *    AND IT IS DELIBERATELY THE FIRST THING AFTER THE FOLD.
  * ═════════════════════════════════════════════════════════════════════════
  *
- * ⭐ ORDERING PRINCIPLE (Merry §3.2): a trade buyer scans for METADATA and an
+ * ⭐ ORDERING PRINCIPLE (`marketing-growth` §3.2): a trade buyer scans for METADATA and an
  *    ORDERING ROUTE first and reads prose second. The old page led with brand
  *    and buried the ISBNs in a JS payload. That is inverted here.
  *
@@ -420,7 +420,7 @@ $faqs = [
  *    ⛔ A BOOKSELLER CANNOT BUY ANYTHING ON INGRAMSPARK. IngramSpark is the
  *    PUBLISHER-side platform — it is where HE lists the book. A bookstore
  *    orders through INGRAM CONTENT GROUP, on ipage, on a verified trade
- *    account. Merry established this from Ingram's own Independent Bookstore
+ *    account. `marketing-growth` established this from Ingram's own Independent Bookstore
  *    Services page, fetched 2026-08-27. If this page said "order on
  *    IngramSpark", every professional buyer who read it would know instantly
  *    that the publisher does not understand the trade.
@@ -521,14 +521,14 @@ $faqs = [
  *    catalog, and the title strings are the catalog's own.
  *
  * ⚠️ THE PRICE COLUMN IS THE **INGRAM** LIST PRICE, LABELLED AS SUCH, AND THAT
- *    IS A DELIBERATE DEPARTURE FROM MERRY'S §4.3 WHICH KEPT IT OFF THE PAGE.
+ *    IS A DELIBERATE DEPARTURE FROM THE `marketing-growth` §4.3 WHICH KEPT IT OFF THE PAGE.
  *    His reason was sound at the time: `T07`, the $12.99 Ingram / $11.99 site
  *    asymmetry invites a question the page could not answer. It is on the page
  *    now because the brief requires the verified terms and because a trade
  *    table without a list price is not a trade table — a bookseller computes
  *    their cost from list minus discount, and omitting list makes the 55%
  *    meaningless. ⛔ THE ASYMMETRY ITSELF IS NOT RESOLVED HERE AND IS NOT
- *    MINE TO RESOLVE. It is recorded, still open, still Andrew's + Frodo's.
+ *    MINE TO RESOLVE. It is recorded, still open, still Andrew's + `finance-analytics`'s.
  *    The two prices are kept in separate blocks and each is labelled by whose
  *    price it is.
  */
@@ -653,7 +653,7 @@ $faqs = [
  *      out. That is truthful and it is the page's strategy.
  *
  * ⛔ NO NEW FACT IS CREATED HERE. Both bullets restate things already true and
- *    already on the page. ⛔ The "a copy to look at first" bullet Merry drafted
+ *    already on the page. ⛔ The "a copy to look at first" bullet `marketing-growth` drafted
  *    is NOT included: it depends on FMC-7, the review-copy boundary, which is
  *    Andrew's and is unanswered. The unbounded FAQ answer is left exactly as he
  *    approved it rather than quietly bounded here.
@@ -810,7 +810,7 @@ $faqs = [
  *
  * ⛔ THAT IS THE PAGE'S CREDIBILITY, LOST TO AN UNFINISHED JPEG. The whole
  *    block is now suppressed instead, and the trade enquiry becomes the single
- *    call to action, which is Merry §5.1's recommendation and is `FMC-8` —
+ *    call to action, which is the `marketing-growth` §5.1 recommendation and is `FMC-8` —
  *    ⚠️ ANDREW'S DECISION, NOT SETTLED BY THIS BUILD. It is built the
  *    recommended way and is one wp-admin field away from the other way.
  *

@@ -469,7 +469,7 @@ function bhp_seo_filter_robots_txt($output, $public) {
  *     301s MUST NOT ALSO BE ADVERTISED IN THE SITEMAP.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ THE FINDING (`connected-operator` / Gimli,
+ * ⭐ THE FINDING (`connected-operator`,
  *    `DRAFT-2026-08-18-INDEXING-AUDIT.md`): `/teachers-guide/` sits in
  *    `page-sitemap.xml` while returning a 301 to `/teachers/`.
  *
@@ -565,7 +565,7 @@ function bhp_seo_theme_redirected_paths() {
  *    (standing rules §4.1) and the founder verbatim lives in the Business OS
  *    chief-of-staff founder-verbatim record.
  *
- * ⭐ THE EVIDENCE, from `marketing-growth` (Merry),
+ * ⭐ THE EVIDENCE, from `marketing-growth`,
  *    `Business OS\WORKING-DRAFTS\marketing-growth\BRIDGE-IMPRESSIONS-AND-SEO-HEALTH-2026-08-19.md`
  *    §2.3 — every URL in all four PRODUCTION sitemaps fetched and
  *    status-checked, 2026-08-19, 103 URLs. **Nine were not 200:**
@@ -616,7 +616,7 @@ function bhp_seo_theme_redirected_paths() {
  *
  * ⚠ `/checkout/` IS EXCLUDED BY NAME, NOT BY ITS REDIRECT. Its 302 is
  *   empty-cart behaviour and disappears the moment a cart has contents, so a
- *   redirect-derived rule would be non-deterministic. Merry's §2.3 note is the
+ *   redirect-derived rule would be non-deterministic. The `marketing-growth` §2.3 note is the
  *   right reason and it is the one used here: a checkout URL should never be in
  *   a sitemap at all, redirect or no redirect.
  */

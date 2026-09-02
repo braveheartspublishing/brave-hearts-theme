@@ -500,12 +500,39 @@ if ( '' !== $i209_css ) {
 	 *    whitespace, which is the more useful fix than correcting the spacing.
 	 */
 	$i209_css_flat = preg_replace( '/\s+/', '', $i209_css );
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ UPDATED 2026-09-02 BY 1.19.350 (`CYCLE179-LD-350-BUILD`). CHANGES 1
+	 *     TO 3 OF 4 IN THIS FILE. THE SCOPE TOKEN IS NOW `body.bhp-catalog-grid`.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ THE FIVE SUPERSEDED NEEDLES, PRESERVED SO THE MOVEMENT IS VISIBLE:
+	 *      body.woocommerce-shop.woocommerce-products-header{padding-block:0
+	 *      body.woocommerce-shop.woocommerce-products-header>*{margin-block
+	 *      body.woocommerce-shop.woo-expedition-shellul.products{margin-top:0
+	 *      body.woocommerce-shop.woo-expedition-shell{padding-top
+	 *      body.woocommerce-shop.woocommerce-breadcrumb{margin-bottom
+	 *
+	 * ⭐ ITEM 209'S RULING IS NOT WEAKENED AND ITS COLLATERAL RISK IS NOT
+	 *    IGNORED. The note above says the one real risk is that the empty
+	 *    products-header padding "also exists on product-category and search
+	 *    archives, where the header is NOT empty". ⛔ THAT IS NO LONGER TRUE OF
+	 *    1.19.350: `bhp_woocommerce_archive_hero()` now renders the same one-line
+	 *    band on every catalog grid and the TERM NAME is that band's H1, so
+	 *    `.woocommerce-products-header` is empty on the archives for exactly the
+	 *    reason it was already empty on `/shop/`. The scope widening is
+	 *    therefore the correct behaviour rather than the collateral this
+	 *    assertion was written to catch, and the widened scope is what is now
+	 *    asserted. ⛔ The PDP is still excluded, which is the exclusion that
+	 *    actually mattered: `bhp_catalog_grid_context()` returns FALSE on
+	 *    `is_product()` first.
+	 */
 	foreach ( array(
-		'body.woocommerce-shop.woocommerce-products-header{padding-block:0'   => 'the empty products header stops padding nothing (64px at 390)',
-		'body.woocommerce-shop.woocommerce-products-header>*{margin-block'    => '…with the rhythm moved onto its children, so a description still breathes',
-		'body.woocommerce-shop.woo-expedition-shellul.products{margin-top:0'  => 'the grid stops double-counting the ordering form\'s gap',
-		'body.woocommerce-shop.woo-expedition-shell{padding-top'              => 'the space the item-207 carousel vacated is closed',
-		'body.woocommerce-shop.woocommerce-breadcrumb{margin-bottom'          => 'the breadcrumb gap steps down the space scale',
+		'body.bhp-catalog-grid.woocommerce-products-header{padding-block:0'   => 'the empty products header stops padding nothing (64px at 390)',
+		'body.bhp-catalog-grid.woocommerce-products-header>*{margin-block'    => '…with the rhythm moved onto its children, so a description still breathes',
+		'body.bhp-catalog-grid.woo-expedition-shellul.products{margin-top:0'  => 'the grid stops double-counting the ordering form\'s gap',
+		'body.bhp-catalog-grid.woo-expedition-shell{padding-top'              => 'the space the item-207 carousel vacated is closed',
+		'body.bhp-catalog-grid.woocommerce-breadcrumb{margin-bottom'          => 'the breadcrumb gap steps down the space scale',
 	) as $i209_rule => $i209_why ) {
 		bhp_i209_assert(
 			false !== strpos( $i209_css_flat, $i209_rule ),
@@ -518,16 +545,78 @@ if ( '' !== $i209_css ) {
 	 * ⛔⛔ THE BRIEF'S TWO PROHIBITIONS, ENFORCED ON THE BLOCK ITSELF RATHER
 	 *     THAN TRUSTED. "No element removed, no type-size change."
 	 */
-	$i209_block_at = strpos( $i209_css, 'body.woocommerce-shop .woocommerce-products-header' );
-	$i209_block    = false !== $i209_block_at ? substr( $i209_css, $i209_block_at ) : '';
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐ 1.19.350, CHANGE 3 OF 4. ⛔ THE TWO PROHIBITIONS THEMSELVES ARE
+	 *    UNCHANGED — no element removed, no type-size change — and they are
+	 *    still enforced. What changed is WHAT THEY ARE ENFORCED OVER.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔⛔ THE SUPERSEDED SCAN WAS `substr( $css, $anchor )` — EVERYTHING AFTER
+	 *     THE ANCHOR TO END OF FILE. That was harmless in 1.19.343, when item
+	 *     209's rules were near the tail. 1.19.350 appends a large catalog block
+	 *     AFTER them which legitimately sets `font-size` (the band, the card,
+	 *     the chips) and one `display:none` (the mobile breadcrumb) on rules
+	 *     that are NOT item 209's, so the unbounded scan reported a CORRECT
+	 *     build as two failures.
+	 *
+	 * ⛔ BOUNDING IT AT A BANNER COMMENT WAS TRIED AND IS RECORDED AS WRONG:
+	 *    `tools/build-css.mjs` STRIPS COMMENTS, so the marker does not exist in
+	 *    the artefact this suite reads, `strpos()` returned false, and the block
+	 *    ran to end of file exactly as before. A bound that silently does
+	 *    nothing is worse than no bound.
+	 *
+	 * ⭐ SO THE SCAN IS NOW PER-RULE, WHICH IS THE PROPERTY THAT ACTUALLY
+	 *    MATTERS: for each of item 209's OWN five selectors, that rule's body
+	 *    must contain no `display:none` and no `font-size`. It cannot drift with
+	 *    the file, it cannot be defeated by the minifier, and it fails for the
+	 *    right reason if someone hides one of these elements later.
+	 */
+	$i209_owned = array(
+		'body.bhp-catalog-grid .woocommerce-products-header',
+		'body.bhp-catalog-grid .woo-expedition-shell ul.products',
+		'body.bhp-catalog-grid .woo-expedition-shell',
+		'body.bhp-catalog-grid .woocommerce-breadcrumb',
+		'body.bhp-catalog-grid .woocommerce-result-count',
+	);
+	$i209_bad_hide = array();
+	$i209_bad_size = array();
+	$i209_seen     = 0;
+	foreach ( $i209_owned as $i209_sel ) {
+		$i209_at = strpos( $i209_css, $i209_sel . ' {' );
+		if ( false === $i209_at ) {
+			$i209_at = strpos( $i209_css, $i209_sel . ',' );
+		}
+		if ( false === $i209_at ) {
+			continue;
+		}
+		$i209_seen++;
+		$i209_open = strpos( $i209_css, '{', $i209_at );
+		$i209_shut = false !== $i209_open ? strpos( $i209_css, '}', $i209_open ) : false;
+		if ( false === $i209_open || false === $i209_shut ) {
+			continue;
+		}
+		$i209_body = substr( $i209_css, $i209_open, $i209_shut - $i209_open );
+		if ( false !== strpos( str_replace( ' ', '', $i209_body ), 'display:none' ) ) {
+			$i209_bad_hide[] = $i209_sel;
+		}
+		if ( false !== strpos( $i209_body, 'font-size' ) ) {
+			$i209_bad_size[] = $i209_sel;
+		}
+	}
 	bhp_i209_assert(
-		'' !== $i209_block && false === strpos( $i209_block, 'display:none' ),
-		'6.4 ⛔ NO ELEMENT REMOVED: the item-209 block contains no display:none',
+		$i209_seen >= 4,
+		sprintf( '6.3b the item-209 rules are findable in the artefact (%d of %d)', $i209_seen, count( $i209_owned ) ),
 		$failures
 	);
 	bhp_i209_assert(
-		'' !== $i209_block && 0 === preg_match( '/body\.woocommerce-shop[^{}]*\{[^{}]*font-size/', $i209_block ),
-		'6.5 ⛔ NO TYPE-SIZE CHANGE: no shop-scoped rule in the block sets a font-size',
+		empty( $i209_bad_hide ),
+		sprintf( '6.4 ⛔ NO ELEMENT REMOVED: no item-209 rule sets display:none (%s)', empty( $i209_bad_hide ) ? 'none' : implode( ', ', $i209_bad_hide ) ),
+		$failures
+	);
+	bhp_i209_assert(
+		empty( $i209_bad_size ),
+		sprintf( '6.5 ⛔ NO TYPE-SIZE CHANGE: no item-209 rule sets a font-size (%s)', empty( $i209_bad_size ) ? 'none' : implode( ', ', $i209_bad_size ) ),
 		$failures
 	);
 }
@@ -535,17 +624,54 @@ if ( '' !== $i209_css ) {
 /* ⭐ …and the elements themselves are still SERVED. §6.4 proves the CSS does
      not hide them; this proves the markup still emits them. Both are needed —
      a rule that hides nothing is no comfort if the node stopped rendering. */
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ UPDATED 2026-09-02 BY 1.19.350. CHANGE 4 OF 4 IN THIS FILE, AND IT IS THE
+ *     ONE THAT CHANGES A BEHAVIOUR RATHER THAN A TOKEN.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED LIST, PRESERVED IN FULL: the five classes above were
+ *    asserted PRESENT on `/shop/`, including `woocommerce-result-count` and
+ *    `woocommerce-ordering`. Item 209 tightened their SPACING and its whole
+ *    prohibition was "no element removed", so asserting they still rendered was
+ *    exactly right for 1.19.343.
+ *
+ * ⭐⭐ 1.19.350 REMOVES BOTH, DELIBERATELY, AND THE COUNT IS REMOVED BECAUSE IT
+ *     IS FALSE RATHER THAN BECAUSE IT IS UGLY. `/shop/` rendered "Showing all 4
+ *     results" above SIX cards and product search rendered "Showing all 2
+ *     results" above FOUR, because the bundle and collection cards are injected
+ *     outside the WooCommerce query. VERIFIED LIVE on both environments
+ *     2026-09-02 (`CYCLE179-CX-002`, `F-03`). A customer-facing sentence that
+ *     states a wrong number is a defect however it is fixed. The sort select
+ *     goes with it: a five-item catalog with no pagination has nothing to sort,
+ *     and the two share a row.
+ *
+ * ⛔ THEY ARE REMOVED FROM THE DOM, NOT HIDDEN, which is why this is an
+ *    ABSENCE assertion and not a CSS one. `display:none` would leave the false
+ *    sentence in the accessibility tree and in the text a crawler reads.
+ *
+ * ⭐ THE THREE ELEMENTS ITEM 209 ACTUALLY RULED ON ARE STILL ASSERTED PRESENT,
+ *    so its "no element removed" prohibition still has a live gate.
+ */
 if ( '' !== $i209_shop ) {
 	foreach ( array(
 		'woo-archive-hero'            => 'the archive hero',
 		'woocommerce-breadcrumb'      => 'the breadcrumb',
 		'woocommerce-products-header' => 'the products header element itself',
-		'woocommerce-result-count'    => 'the result count',
-		'woocommerce-ordering'        => 'the ordering select',
 	) as $i209_cls => $i209_label ) {
 		bhp_i209_assert(
 			false !== strpos( $i209_shop, $i209_cls ),
 			"6.6 still rendered on /shop/: {$i209_label}",
+			$failures
+		);
+	}
+	foreach ( array(
+		'woocommerce-result-count' => 'the result count (it stated a wrong number)',
+		'woocommerce-ordering'     => 'the ordering select',
+	) as $i209_cls => $i209_label ) {
+		bhp_i209_assert(
+			false === strpos( $i209_shop, $i209_cls ),
+			"6.7 ⭐ 1.19.350: REMOVED from /shop/, not hidden: {$i209_label}",
 			$failures
 		);
 	}

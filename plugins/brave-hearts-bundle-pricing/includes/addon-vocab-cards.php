@@ -19,7 +19,7 @@
  *   the activity book (any-book purchase).
  *
  * ⚠ "SAME GRANT MECHANICS AS THE ACTIVITY BOOK" IS AN INTERPRETATION THE
- *   BRIEF STATES AS SUCH: it is recorded there as "Gandalf's recorded
+ *   BRIEF STATES AS SUCH: it is recorded there as the `chief-of-staff` recorded
  *   interpretation of 'along with the activity book'". It is implemented
  *   here exactly as briefed and is flagged rather than presented as
  *   Andrew's own words.

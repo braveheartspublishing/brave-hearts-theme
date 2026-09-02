@@ -27,7 +27,7 @@
  *     teacher event prefix and the teacher thank-you path appear NOWHERE in the
  *     hub, and that `/teachers/` is still linked and still live.
  *
- * ⛔⛔ THREE — A DEAD DOWNLOAD BUTTON. Merry's §23 walk is explicit about the
+ * ⛔⛔ THREE — A DEAD DOWNLOAD BUTTON. The `marketing-growth` §23 walk is explicit about the
  *     cost: *"a padded one is unrecoverable once a parent has clicked a dead
  *     promise."* §8 does not merely check that the shipped rows resolve; it
  *     INJECTS a row pointing at a file that does not exist and proves the guard
@@ -143,7 +143,7 @@ function bhp_fr_copy_rails( $prefix, $copy ) {
 	bhp_fr_ok( "{$prefix} ⛔ no outcome claim about a child", 0 === preg_match( '/\b(will (?:love|read|improve)|turns? your|makes? your child|guaranteed|proven)\b/i', $copy ) );
 	bhp_fr_ok( "{$prefix} ⛔ no price literal", 0 === preg_match( '/\$\s?\d/', $copy ) );
 	bhp_fr_ok( "{$prefix} ⛔ AMERICAN spelling — \"coloring\", never \"colouring\"", 0 === preg_match( '/colour/i', $copy ) );
-	/* ⛔ NO "COMING SOON" PADDING. Merry's walk: a promise with no file behind it
+	/* ⛔ NO "COMING SOON" PADDING. The `marketing-growth` walk: a promise with no file behind it
 	 *   is the dead click that costs a parent's trust. */
 	bhp_fr_ok( "{$prefix} ⛔⛔ no \"coming soon\" and no unbacked promise of future files", 0 === preg_match( '/\b(coming soon|check back|more to come|stay tuned)\b/i', $copy ) );
 }
@@ -568,7 +568,7 @@ bhp_fr_copy_rails( '§6k registry', $dl_copy );
 
 /* ⛔ THE COLORING CARD MUST SAY THE FULL BOOK IS PAID. Three free pages out of
  *   a paid book, described without that fact, is a true sentence assembled into
- *   a false impression — and Merry's walk flagged exactly this trap. */
+ *   a false impression — and the `marketing-growth` walk flagged exactly this trap. */
 bhp_fr_ok(
 	'§6l ⛔⛔ the coloring card states that the full book is a paid product',
 	false === strpos( $dl_copy, 'coloring book' ) || false !== stripos( $dl_copy, 'paid' )
@@ -825,7 +825,7 @@ $actual = array_map( static function ( $p ) { return $p->post_name; }, (array) $
 bhp_fr_ok( '§9e ⭐ the declared order survives the query', $declared === $actual, implode( ',', $actual ) );
 
 /*
- * ⭐ THE K3 ARTICLE. Merry's spec excluded it on a live 404 at a slug WITHOUT
+ * ⭐ THE K3 ARTICLE. The `marketing-growth` spec excluded it on a live 404 at a slug WITHOUT
  *    `/blog/`; this desk verified against production that post 638 is published
  *    at `/blog/what-to-read-after-magic-tree-house/`. Asserted conditionally so
  *    the suite is honest on an environment that genuinely lacks the post.

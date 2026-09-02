@@ -2,7 +2,567 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
-## 2026-08-28 (newest) — STAGING ONLY: theme 1.19.314 + bundle plugin 1.8.76 — the retailer ordering route, and school-visit backorders
+## 2026-09-02 - PRODUCTION IS NOW THEME `1.19.354` / BUNDLE PLUGIN `1.8.79` (releases 1.19.350 through 1.19.354)
+
+> ⭐ **This block supersedes, on the version number only, the entry immediately below it, which recorded
+> production as theme `1.19.349` / plugin `1.8.78` earlier the same day.** That entry is correct for the
+> moment it describes and is deliberately NOT rewritten. Read this one first.
+
+**Production, 2026-09-02: theme `1.19.354`, bundle plugin `brave-hearts-bundle-pricing` `1.8.79`.**
+Five theme releases were built and staging-verified on 2026-09-02. **`1.19.353` and then `1.19.354` were
+deployed to production on 2026-09-02**, each under the founder's explicit approval; **plugin `1.8.79` was
+deployed to production on 2026-09-02.** `1.19.350`, `1.19.351` and `1.19.352` never shipped to production
+on their own: their contents reached production **inside** `1.19.353` and `1.19.354`, which are cumulative
+builds of the same working tree. They are recorded below individually because each is a distinct staging
+release with its own tests and its own rollback artefact, and because the record of what changed should not
+be collapsed into the version number that happened to carry it.
+
+**Release contents and per-release detail: `docs/RELEASES/PRODUCTION_RELEASE_1_19_350_354.md`.**
+
+---
+
+### `1.19.354` - 2026-09-02 - `/author-visits/` fold and hero body colour - **DEPLOYED TO PRODUCTION 2026-09-02**
+
+Cosmetic release, single page, staging-verified before deployment.
+
+- `/author-visits/` hero `padding-block` 128px to 72px at 1440 and 80px to 56px at 375; the list section's
+  top padding 128px to 64px and 80px to 44px. The first visit card now clears the fold complete with its
+  status pill at both viewports (1440x900: card bottom 984 to 808 against a 900 fold; 375x812: 850 to 766
+  against an 812 fold). The page is reached from printed QR codes, so the next visit clearing the fold is
+  the page's whole job.
+- Hero body copy moved from the inherited `--color-sky` to `--color-parchment`, a colour the brand kit
+  carries. 15.02:1 on navy. `.section--dark` is unchanged and no sitewide token was repointed.
+- Both padding rules are written at specificity (0,3,1) because `body:not(.home) .section` is (0,2,1); a
+  bare class selector is a silent no-op there. A third rule written at (0,2,0) was shipped to staging,
+  measured as a no-op and removed, with the reasoning preserved in `style.css`. See `KNOWN_ISSUES.md`
+  `LD-12`.
+- New standing gate `tests/test-cycle179-author-visits-fold-354.php`, 27 assertions, covering the
+  specificity rail, the colour token, artefact parity, the one-template blast radius and the untouched copy.
+- No copy, visit data, deadline-resolver, closed-state or visit-band change.
+- Full suite, 124 suites, run with `--url` on every invocation: **zero new failures** against the accepted
+  `1.19.353` baseline (75 failing assertions on both trees, 9 non-zero exits on both).
+
+### `1.19.353` - 2026-09-02 - School-visit band: the slug in the URL wins (F-10) - **DEPLOYED TO PRODUCTION 2026-09-02**
+
+**Defect F-10.** A browser holding one school's live visit session that opened a DIFFERENT school's QR URL
+kept showing the FIRST school's band. Reproduced on staging at `1.19.352` at an asserted `innerWidth` of
+1440: with `?bhp_visit=<second-school>` in the address bar, the band still named the first school and its
+hand-delivery date.
+
+**Fixed.** An explicit `?bhp_visit=<slug>` that names a registered visit now decides the band, open or
+closed, whatever the session holds. A slug that resolves renders the open band; a registered slug past its
+online close renders that slug's closed band (`1.19.351` behaviour, now reachable from a flagged session).
+A slug absent from the registry still names no visit and changes nothing.
+
+- `inc/visit-band.php`: new `bhp_visit_band_request_slug()` and `bhp_visit_band_decide()` (pure);
+  `bhp_visit_band_state()` consults the URL before the session and reads the session only when the URL
+  named no registered visit; `bhp_visit_band_body_class()` keys off the session, which is the same question
+  the shelf counter asks, so the flagged-card geometry stays married to the counter markup it pays for.
+- `tests/test-cycle179-visit-band-f10.php`: new suite, 43 assertions, covering all four session-versus-URL
+  cases plus the unknown-slug and clear-token no-ops.
+- `style.css` / `style.min.css`: version bump only.
+
+**Display only.** No session is written or cleared, no entitlement changes, and the 14-day TTL, the
+visit-close guard, the paperback-only gate, the deadline resolver and the `?bhp_shiphome=` confirmation
+path are untouched. No registry write. No WooCommerce product, price, coupon, stock, shipping, tax or
+payment change.
+
+**Known divergence, open, registered as `LD-10` in `KNOWN_ISSUES.md`:** on a session-open plus
+URL-slug-closed request the band names the URL's school while the per-card counters, which are the
+plugin's and session-driven, still count the session school's shelf. Reconciling them is an entitlement
+change and needs the founder's ruling.
+
+### `1.19.352` - 2026-09-02 - Production-readiness pass - reached production inside `1.19.353`
+
+- Desktop catalog card: the age line is hidden with `display: none`. Verified `getClientRects().length === 0`
+  and `offsetParent === null` at 1920, 1440 and 1366, so no zero-height ghost remains. The mobile card is
+  untouched and still renders the line at 19px at an asserted 375x812.
+- Removed a live production school-visit slug that `1.19.351` had written into a code comment in
+  `inc/author-visits.php`. Caught independently by two suites. The code moved; neither assertion was touched.
+- `tests/test-cycle173-consent-checkout.php` pinned the bundle plugin version by equality to `1.8.78`, so it
+  failed on a correct build and gave opposite results on production and staging. Converted to a floor,
+  matching the sibling theme assertion. The superseded line is preserved verbatim.
+- Three new standing gates lock the age-line ruling in: mobile renders the line, desktop hides it with
+  `display:none`, and the desktop hide leaves no zero-height ghost.
+- Full 122-suite set run on the deployed artefact, against a real `1.19.349` baseline created by installing
+  the `1.19.349` rollback tarball and running all 121 suites against it: 15 failing suites / 31 failing
+  assertions at `1.19.349` against 14 / 30 at `1.19.352`. **Zero new failures.**
+
+**A separate no-version-bump pass on the same day** removed 45 internal-role call-name occurrences from 12
+files in this repository and replaced them with the technical role ID or a neutral phrase. Every occurrence
+was a code comment or a test assertion label; **no selector, value, statement, assertion logic or rendered
+string changed**, so the version stayed at `1.19.352`. The three rebuilt CSS artefacts differ by exactly one
+line each, the builder's own source-md5 provenance header, proved by diff against artefacts rebuilt from the
+pre-edit sources. The full 122-suite set was re-run and compared per suite against the accepted `1.19.352`
+baseline: the diff is empty, zero new failures. A post-scrub grep over the working tree, the extracted
+deploy artefact, the deployed staging theme and the rendered DOM each return zero.
+
+### `1.19.351` - 2026-09-02 - Deadline single source of truth, age line restored - reached production inside `1.19.353`
+
+- **One deadline across every surface.** New `bhp_visit_deadline_display()` in `inc/visit-band.php` returns
+  the **earlier** of the registry's stated cutoff and the online close, and is read by the shop band (open
+  and closed) and by `/author-visits/` (open and closed rows). Nothing else computes a deadline. Asserted
+  across 600 synthetic rows, 0 violations. A printed deadline can never be later than what parents were
+  told, and never later than the date the site will actually accept an order. **Rule recorded in
+  `DECISIONS.md`.**
+- **The order gate is unchanged.** `bhp_school_visit_last_order_date()` (visit minus 2) and
+  `bhp_school_visit_is_open_on()` are not touched. This changes a display, never entitlement, and no
+  registry row was edited on any environment. The brief's premise that the gate read the registry cutoff was
+  corrected rather than implemented; a standing test gate locks the correction in.
+- Age line restored on the catalog card at both viewports; the desktop rule scoped to `min-width: 641px` so
+  the approved mobile geometry is unaffected. Cost, stated as a loss: at 375 the Complete Collection card no
+  longer peeks above the fold (y779 to y824). Four of five cards still clear it.
+- Closed-state band verified on staging against a real registered slug past its close.
+- `test-cycle167-readaloud-bundle-visit.php` was failing five assertions at `1.19.350` while the `1.19.350`
+  record reported it green. Assertions moved to the new `?bhp_shiphome=` route; **superseded assertions
+  preserved verbatim**.
+
+### `1.19.350` - 2026-09-02 - The catalog card, sitewide - reached production inside `1.19.353`
+
+Every customer-facing surface that lists a product now renders one card. The shop, the six product-category
+archives, the twelve product-tag archives and WooCommerce product search share one predicate
+(`bhp_catalog_grid_context`) and one CSS scope (`body.bhp-catalog-grid`), replacing an `is_shop()` gate that
+gave `/shop/` a real card and the other twenty surfaces a 1110px tile with one price and a navigation link
+wearing a button. **Rule recorded in `DECISIONS.md`.**
+
+- The stacked 279px archive hero becomes one band of roughly 98px. H1 wording unchanged.
+- The WooCommerce result count and sort select are **removed from the DOM** on catalog grids. The count was
+  stating a wrong number (four results above six cards on `/shop/`, two above four on search).
+- Five-up grid at 1280+, two-up at 640 and below; reading order set by a `pre_get_posts` filter. **No
+  `menu_order` was written; ordering is theme code, not product data.**
+- The card: fixed cover well, per-card eyebrow ("Book 1 of 3"), italic place line, one "From" price, format
+  chips with a tick on the selected binding so no figure prints twice.
+- The Kirkus badge and the Amazon review showcase move from inside the card to one strip below the grid.
+  Wording untouched; both components still render.
+- The two bundle cards move from inside the grid to a strip below it, with corrected labels.
+- **F-01 closed:** `/product-category/hardcover-books/` 301s to `/shop/`; any product archive that renders no
+  card is noindexed. Hardcovers remain hidden from the grid and remain purchasable.
+- School visits: a band above the fold carrying the school name, "Order by <date>" (or "Order by today,
+  <date>" on the last order date) and the pickup line, plus a **CLOSED state** where a flagged URL past its
+  close previously rendered the ordinary storefront in silence.
+- "Ship to your home" no longer clears the visit session on click. It asks first, on a confirmation panel
+  with two plain links, and the single coloring card now carries the same explanatory note the bundle card
+  has carried since `1.19.295`.
+- Two `1.19.349` cosmetics: the coloring product page printed the trim size twice, 23px apart, in two
+  different glyphs; the selected format chip repeated the card's own price.
+- `assets/downloads/mariana-trench-coloring-pages.pdf` replaced with v2, md5
+  `49ae06f1402bf7b6dc0f821ddb5c60a9`.
+- `inc/book-formats.php`'s asset enqueue widened from `is_product() || is_shop()` to the catalog predicate,
+  because the archives were rendering the card without its own stylesheet.
+- New suite `tests/test-cycle179-catalog-350.php`, 106 assertions, all passing.
+
+### Bundle plugin `brave-hearts-bundle-pricing` `1.8.79` - **DEPLOYED TO PRODUCTION 2026-09-02**
+
+Plugin `1.8.79` was built and recorded on 2026-09-02 alongside theme `1.19.345` (see that entry below for
+what it contains: the single blog-ask arithmetic and the Signed Copies admin screen under WooCommerce). It
+**reached production on 2026-09-02**, in the same window as the theme releases above. The earlier entry
+recording production at plugin `1.8.78` is correct for the moment it describes and is not rewritten.
+
+### Not changed by any of the above, on any environment
+
+No product record, no variation, no price, no coupon, no stock, no shipping, tax, payment or checkout
+setting, no `menu_order`, no `bhp_school_visits` registry row. **Content updates on production the same day
+were made by the owner and are not theme releases.**
+
+---
+
+## 2026-09-02 - Production state re-verified with the definitive instrument, and two deploy-runbook assertions corrected
+
+**Production is theme `1.19.349` / bundle plugin `1.8.78`.** Verified 2026-09-02, read-only over SSH
+against the production document root: `wp theme list --status=active` returns `1.19.349` and
+`wp plugin get brave-hearts-bundle-pricing --field=version` returns `1.8.78`. Corroborated
+independently by a read-only HTTP GET of the production home page (HTTP 200, canonical
+`https://braveheartspublishing.com/`, zero `staging2` occurrences), which enqueues **14 theme assets at
+`ver=1.19.349`** and **6 plugin assets at `ver=1.8.78`**. **Two instruments, agreeing.**
+
+⚠️ **A contradiction is recorded rather than resolved.** The build brief authorising this documentation
+pass stated that production "stays 1.19.344 tonight" and that the 1.19.349 production deploy "did not
+happen". Both instruments say otherwise. **How 1.19.349 reached production is not this record's to
+answer, and it is not answered here.** Escalated.
+
+⛔ **No production write of any kind was made by the pass that wrote this entry.** The only production
+contact was the two read-only checks above.
+
+**`docs/RUNBOOK.md`, correction 1: the minified-CSS gate.** The deploy-artefact block asserted that a
+built ZIP `MUST be 10` minified stylesheets. `git ls-files '*.min.css'` at HEAD returns **14** (13 under
+`assets/css/` plus `style.min.css`), and a working-tree build now returns **15**. A correctly built
+artefact therefore **failed that gate**, and the runbook's documented response to a failed gate is to
+stop and investigate a build that is in fact correct. ⭐ **The gate is now a floor (`>= 14`) rather than
+an equality**, matching the two assertions immediately above it and the file's own standing warning that
+a fixed number goes stale and then gets corrected downward by someone trusting it. A floor still catches
+the failure the assertion exists for, a build that silently dropped artefacts, while adding a stylesheet
+no longer falsifies it. **The superseded value is preserved beside it rather than deleted.**
+
+**`docs/RUNBOOK.md`, correction 2: `assets/covers/` is now excluded from the deploy artefact.** The
+`git archive` path list names `assets` wholesale, which sweeps in 117 tracked print-source and proof
+masters, roughly 500 MB, referenced by zero PHP, JS or CSS files and present on neither environment. The
+exclusion is now a pathspec in the documented command, with a matching `MUST be 0` pre-install
+assertion. ⚠️ **The note warns explicitly against widening it**: `assets/look-inside/` is a deployed
+asset directory added by 1.19.349 and rides inside the same `assets` path.
+
+**`docs/RUNBOOK.md`, correction 3: the production verification checklist cannot be fully satisfied by an
+agent.** Its `wp eval-file tests/test-*.php` line is blocked against production by the
+`G1-PRODUCTION-WRITE` gate, permanently and by design rather than by an expired token, because a read
+and a write are not distinguishable by inspecting an eval command. **The post-deploy suite therefore
+runs on staging against the byte-identical artefact**, and the production checks are the read-only verbs
+plus a real logged-out browser smoke test. The line is left standing rather than rewritten, because it
+describes the verification the project wants. The gap is open and is Andrew's.
+
+**Internal call names removed from this public repository's `docs/`.** Three occurrences across
+`RUNBOOK.md`, `CURRENT_TASK.md` and one release record now name the technical role IDs instead. No
+customer-facing string changed.
+
+---
+
+## 2026-09-02 - Theme 1.19.349: product-page redesign phase 2, and a live shipping understatement fixed (CYCLE179-LD-349)
+
+Fills the column 1.19.348 emptied.
+
+A new left-column block renders "Look inside" plates and "What is inside" bullets on all six product
+surfaces, from one theme registry (`bhp_book_whats_inside()` / `bhp_pdp_look_inside_registry()` in
+`inc/book-formats.php`) with an optional `bhp_whats_inside` product-meta override that ships empty
+everywhere. ⭐ **The registry was chosen over product meta for three reasons that are each independently
+decisive**: `/complete-collection/` has no product record at all, the three hardcover records are never
+served, and the coloring product has a different post ID on every environment. 33 new image assets,
+md5-verified against the source manifest.
+
+The purchase card is reordered to spec strip, picker, price, CTA, trust line, and **the duplicate price
+is removed from the selected format chip, so every distinct price now appears exactly once.**
+
+**A live understatement was corrected on the coloring product page.** The page said shipping starts at
+`$1.99` where the cart charges `$2.99`. The sentence is repointed at `bhp_colouring_single_shipping()`
+through a new `rail_note`. Proven in a real WooCommerce Blocks cart on staging: `$12.99 + $2.99 =
+$15.98`, one shipping method, zero "BookVAULT" occurrences. **No shipping rate, zone, method or tier was
+changed on any environment.**
+
+The phone gallery is capped (235px cover, 44px rail) and 36px of top-of-page chrome trimmed, taking the
+coloring book's Add to Cart from **257px below** the fold at 375x812 to **33px above**, and the Mariana
+title's clearance from 6px to 42px. The desktop card is compacted by 50px, restoring the 1366x768
+clearance the reorder had cost.
+
+Three motif-audit strings applied: **the series no longer claims that "stop, breathe, think, choose" is
+a habit the books teach.** That is a design-truth correction, not a copy tweak.
+
+New suite `test-cycle179-pdp-349.php`, 173 assertions, all passing; nine existing suites still green.
+**Six further copy strings were prepared and deliberately NOT applied, because they are founder gates.**
+No product record, WooCommerce setting, price, coupon, stock or shipping configuration was changed.
+
+---
+
+## 2026-09-02 - Theme 1.19.348: product-page redesign phase 1, and a gallery that went blank on resize (CYCLE179-LD-348)
+
+Two defects, both reported from a real device rather than found by reading code.
+
+**Dead space under the gallery.** `.woocommerce div.product` defaulted to `align-items: stretch`, which
+inflated the gallery box to the purchase column's height. Set to `start`: **1,072px of dead space to
+0px** on the coloring page, **1,953px to 0px** on Mariana, and 0px on all four product-page types at
+1440x900 and 1366x768.
+
+**The main image is now capped against the viewport, not against the image file:**
+`min(560px, calc(100vh - 400px))` for the WooCommerce gallery and
+`--bhp-stage-h: min(520px, calc(100vh - 415px))` for the chapter-book hero. The coloring image ended
+21px below the fold at 1440x900 and 152px below at 1366x768; it now ends 149px and 153px **above**.
+
+**F3, the gallery that blanked after a resize, was fixed in CSS with no JS added.** FlexSlider's stale
+inline slide widths and translate are retired above 901px and the slides are driven by its own
+`.flex-active-slide` class instead.
+
+The desktop thumbnail rail is one non-wrapping row with all seven tiles visible (it was two rows), and
+the mobile rail is one horizontal scroller on `body.bhp-gallery-multi`. 22px of mobile spacing takes
+Mariana's Add to Cart from 16px below the fold to 6px above at 375x812. Columns move from 613.6/521.6 to
+592.8/592.8 at 1440.
+
+New suite `test-cycle179-pdp-348.php`, 37 assertions, all passing; 7 existing suites still green.
+
+⛔ **NOT done, and named rather than buried:** the coloring book's Add to Cart was still 257px below the
+fold at 375x812 (improved from 337px) and needed a content decision, which 1.19.349 then made. **The
+sticky purchase column was asked for and deliberately not built, because measurement showed it would be
+a no-op.** No copy, no bundle, no WooCommerce data or setting, no production write.
+
+---
+
+## 2026-09-02 - Theme 1.19.347: internal call names scrubbed from a public repository, and the phone gallery widened for multi-image products (CYCLE178-LD-347)
+
+**264 occurrences of nine internal call names across 89 files**, replaced with the technical role IDs
+they resolve to. ⭐ **This closed a LIVE exposure, not a hypothetical one:** `assets/js/` is served
+unminified and two of its comments carried call names, and one test suite was **already failing on
+staging** for exactly this reason. That assertion now passes.
+
+**No call name appeared in a customer-facing rendered string.** All 264 were comments, docblocks, test
+labels or fixtures, so no customer-visible text changed.
+
+⭐ **The most instructive finding: three test files whose job is to detect call names spelled all nine
+out as regex literals. The guard against publishing them was publishing them.** Their patterns are now
+assembled at runtime from split literals. The compiled regex is character for character unchanged, and
+each carries an integrity precondition, so a later tidy-up of a split literal cannot leave an assertion
+that passes while checking nothing.
+
+Five founder-verbatim quotations contained a call name. Removing it is required on a public surface and
+altering a quotation is forbidden. Resolved with marked square-bracket editorial substitution plus a
+note at each site, and **flagged for ratification rather than settled in the lane that found it.**
+
+**Second item, the phone gallery.** `book-formats.css` capped the product gallery at `max-width: 150px`
+under 782px. Correct when the gallery held one cover, wrong now that the coloring page carries six
+interior previews, which are the purchase argument for a coloring book and were unreadable on a phone.
+`bhp_body_classes()` now emits `bhp-gallery-multi` when the product has gallery images, and one scoped
+rule takes the gallery to 100% and the thumbnails to 56px under 782px. ⭐ **A server-side class rather
+than `:has()`**, which fails silently on Firefox below 121 and pre-2023 Safari, where the phone would
+keep the 150px cap with nothing in the DOM to explain why. Keyed on gallery metadata, not on a product
+ID. Verified on staging at asserted `innerWidth` 375: gallery 343px (was 150), seven 56x56 thumbnails,
+no horizontal overflow, console clean.
+
+⚠️ **Call names remained in `docs/` after this release**, which is public and ships in the deploy
+artefact. That was out of scope for this pass and is closed by the 2026-09-02 entry at the top of this
+file.
+
+---
+
+## 2026-09-02 - Theme 1.19.346: the product page told the coloring book it was a chapter book (CYCLE178-LD-345-PDP-LINE, CYCLE178-LD-346-FOLLOWUPS)
+
+**The value-proposition line under the H1 is now product-aware.** The coloring title rendered the
+chapter-book sentence, which describes an object that book is not. It now renders a coloring-specific
+line. Chapter-book product pages are unchanged, verbatim.
+
+⭐ **Classification uses the existing SKU-keyed coloring resolver rather than a product ID, and the
+reason is the useful part: the coloring product has a different post ID on each environment** (618 on
+production, 4065 on staging, same SKU). **An ID check would have been inert on staging**, which is to
+say it would have passed QA by never running. Degrades to the previous sentence when the resolver is
+unavailable. New suite `tests/test-cycle178-pdp-value-prop.php`, 21 assertions, covering the coloring
+page, the regression on every non-coloring page, and the degrade path.
+
+**A shipping-copy contradiction on the same page was resolved.** The shipping and returns link read
+"flat-rate shipping" while the format card directly above it read "shipping starts at $1.99, three or
+more books ship free". ⭐ **Both sentences were true of different things**, which is exactly why the
+contradiction survived: the zone method **is** a single flat rate, and what the customer actually pays
+is **tiered** by the bundle plugin. The string moved out of an inline literal in `functions.php` into
+`bhp_book_pdp_shipping_link_text()` in `inc/book-formats.php`, beside the rest of the store's shipping
+copy. **Being inline is why it escaped the 2026-08-02 correction that fixed its neighbour.** The free
+clause is gated on a live engine read. **No shipping rate, zone, method or tier was changed.**
+
+**Test correction, and the second half is the serious one.** Two CTA-href assertions in
+`tests/test-book-formats.php` required `href` to be the attribute immediately following
+`data-bhp-format-cta`. Release 1.19.281 had inserted three attributes between them, so the positive
+assertion failed on all three titles **and the negative assertion PASSED VACUOUSLY**. Both now extract
+the anchor's opening tag and assert against the decoded href, and a third assertion guards anchor
+presence **so that none of them can pass by finding nothing.** Suite 193/193. No product code was
+changed for this item.
+
+---
+
+## 2026-09-02 - Theme 1.19.345 / plugin 1.8.79: one arithmetic for every blog ask, and shelf counts off the command line (CYCLE174-LD-345)
+
+**Blog ask placement is now derived from post depth rather than from fixed ordinals.** The small email
+ask sits at one third and the book rail at two thirds, both measured in clean top-level paragraphs
+rather than in fixed positions or visible-text bytes, with a minimum two-paragraph gap so the two can
+never render adjacent. The whole rule lives in one pure, testable function.
+
+**Every superseded rule is preserved in place with a dated note rather than deleted:** the
+band-after-paragraph-5 ordinal survives as the fallback for when no clean paragraph sits at the target,
+and the previous visible-text arithmetic is kept callable for one release. **A short post loses the
+RAIL, never the email ask**, which is the deliberate half of the short-post rule: under nine clean
+paragraphs the band goes after paragraph two and the rail appends at the end of the article.
+
+**No new signup path, magnet, context, tag, popup, storage key or analytics prefix. Funnel isolation is
+untouched.**
+
+**Plugin 1.8.79 adds a Signed Copies admin screen under WooCommerce.** ⭐ **The gap it closes is
+operational, not technical: until now the only way to set a shelf count was a WP-CLI line over SSH, and
+the person who knows how many books are on the shelf is the person holding the books. A count that needs
+a terminal goes stale, and a stale count is a false scarcity claim on a storefront.** Follows the
+existing dashboard page exactly: capability checked on both the menu and the save handler, nonce and
+referer checked, redirect after save, admin-only load, zero front-end output.
+
+It writes **exactly one option**. No product record, no stock or backorder field, no price, no coupon,
+no shipping setting. The WP-CLI route is unchanged and still documented as the fallback. ⚠️ **The
+gross-versus-net warning is rendered on the screen beside the fields, because that is where the mistake
+gets made.**
+
+---
+
+## 2026-08-31 - Theme 1.19.344: blog body links made visible, and a third ask for one lead magnet removed (CYCLE173-LD-344, CYCLE173-LD-344B)
+
+Two founder orders of 2026-08-31, **both relayed rather than witnessed by the implementing session, and
+both recorded as relayed.**
+
+**Item 1, in-body blog link visibility.** The brief expected a light-green rule to be winning the
+cascade. Measured on the live production post instead, `.entry-content a:not(.btn)` **was** the winning
+rule at `rgb(23,63,47)`, and there is no light green anywhere on the page. The two real defects were
+different: `text-decoration-line` computed to `none`, so the rule was setting the colour of a line that
+was never drawn; and the link was near-indistinguishable from body copy.
+
+A new `--expedition-link: #2f6949` is the brightest green in the brand family that still clears AA on
+the darkest cream in circulation, at **4.84:1 on `#efdcc1`**. `#2A7050` was tried and rejected at
+**4.44:1**. ⭐ **Both ratios were recomputed independently for this entry** from the shipped hex values
+(WCAG relative luminance) and both match the implementing lane's figures. A real 2px underline is drawn
+in the link's own colour at `.16em` offset, with `text-decoration-skip-ink: auto` stated rather than
+left to the user agent. Font weight was considered and deliberately not changed, because a 600 weight
+reflows every published post and the order asked for two things, brighter and underlined.
+
+Scoped to `.post-content.entry-content`, a class pair unique to `single.php`, so pages are untouched.
+The rail, capture band and mid-capture are injected into `the_content` and therefore fall inside that
+scope, so they are pinned back explicitly in both resting and hover state.
+
+**Item 2, the redundant end-of-post kit box.** Live DOM order was: book rail, then a free-chapter
+capture, then a free-kit box. **Two consecutive boxes for one lead magnet.** Suppressed at its call site
+in `related-content.php` behind a two-way filter. `BHP_CTA_Engine` and the shortcode are **byte-
+untouched**, so every other surface keeps 1.19.343 behaviour. The two-asks doctrine comment is
+superseded in place rather than deleted: its ask counter never counted a contextual-CTA block, which is
+how a third ask for the same magnet shipped while the assertion read exactly two.
+
+### ⚠ Two corrections to this release, kept in the record rather than folded away
+
+1. **The claim that the rendered ask count was "still two" was an inference from a diff, not an
+   observation**, because the lane that wrote it was killed before it could open a browser. Measured
+   afterwards in the live staging DOM at 1.19.344, in a real browser at both 375px and 1440px width,
+   the page carried **three** asks for one lead magnet, two of them under a byte-identical headline,
+   with `article input[type=email]` returning 2.
+2. **The correction note itself then failed two of the theme's own guards**: one because it named
+   internal role call names, which are forbidden on a public surface, and one because it reproduced a
+   funnel storage-key literal. Both were rewritten. ⭐ **Both guards did exactly what they exist to do,
+   and caught it in the same sitting.**
+
+**Test correction in the same lane.** `test-cycle173-blog-link-visibility.php` section 5.5 failed on
+first execution, reporting a complex `:not()` in the blog-link path. The CSS was never wrong: the match
+was inside `style.css`'s own explanatory comment, which quotes the very construct it is explaining that
+it avoided. After stripping comments, all twelve `:not()` in real selectors in that path are
+`:not(.btn)`, which is simple and safe on Safari below 16.4. **No CSS was changed to make a test pass.**
+The comment strip is now applied to every assertion in the file, not just 5.5, and ⭐ **that is the
+larger half of the fix**: 5.5 is a negative assertion, so a comment made it fail loudly, whereas the
+positive assertions would have passed **silently** with no rule present.
+
+Commits: `159ff91`, `a3f80d6`, `5b6650a`, `e2d98cc`.
+
+---
+
+## 2026-08-31 - Theme 1.19.343 / plugin 1.8.78: begin_checkout was built, and it was losing a race (CYCLE173-LD-CONSENT-CHECKOUT)
+
+GA4 carried `view_item`, `add_to_cart` and `purchase` but **no `begin_checkout` at all**. The event was
+never missing from the code. The side-cart checkout button is a real link to `/checkout/`, and its
+handler did an asynchronous Store API `getCart()` and **then** pushed `begin_checkout`, both racing the
+browser's navigation away from the document. On a normal connection the navigation wins. ⭐ **The event
+was emitted at the one moment an asynchronous emission is least likely to survive.**
+
+`begin_checkout` now fires on `/checkout/` page load from `bhp-checkout-events.js`, where nothing is
+unloading. It is latched to exactly once per page load, guarded on a non-empty cart, and driven by an
+unconditional cart read rather than by hoping Blocks makes a request. The drawer's click event is
+**renamed** to `side_cart_checkout_click` rather than left in place, because keeping both would
+double-count every side-cart customer the moment the reliable one started arriving.
+
+**Second defect, left behind by 1.19.302 and 1.19.312: the attribution gate.**
+`assets/js/bhp-attribution.js` asked for a **stored choice**, while GA4, the Meta pixel and
+WooCommerce's own sourcebuster all run on the site's consent **state**. Since 1.19.309 the banner is
+deliberately suppressed outside the EEA and UK, so a US visitor **cannot** record a choice. ⭐ **The
+condition was not merely strict, it was unsatisfiable, and neither attribution cookie had ever been
+written for anyone.** Verified on production in a real browser on 2026-08-31 at 1.19.342: the GA4, Google
+Ads, Meta and `sbjs_*` cookies were all present, while `bhp_attr_first` and `bhp_attr_last` were both
+absent.
+
+The gate now reads the same shipped `window.bhpConsentRegion` object the rest of the consent system runs
+on. No second region list, no second heuristic. Precedence matches `BHP_WPConsent_Bridge` exactly: an
+explicit stored choice wins in both directions, then GPC, then the region default, then no capture.
+Every uncertain path still returns false. **No new cookie, no new field, no personal data.**
+
+### ⛔ Two briefed items were stopped, not implemented
+
+1. **"Make the consent banner display" would reverse Andrew's own ruling.** Non-display outside the EEA
+   and UK is theme 1.19.309's designed behaviour, on his report that the consent bar was still firing on
+   new browsers and his ruling to go with US law. Section 4 of the new suite guards against a future
+   release reversing it by accident.
+2. **The `returnMethod: ReturnByMail` rider is refused.** The live returns page says, verbatim, that
+   because every book is printed on demand there is nothing to send back. `ReturnByMail` would publish a
+   claim the store's own policy contradicts. The omission was already deliberate and documented in
+   `functions.php`.
+
+**Build correction in the same version, and it was found by byte-diffing the deployed staging theme
+against the pre-deploy backup rather than by reading the build command.** The raw diff reported roughly
+250 files changed; **the real number was 4.** Everything else was CRLF versus LF, because this
+workstation runs `core.autocrlf=true` while both environments run LF. Separately, `assets/covers/` holds
+117 cover-design source and proof masters, referenced by **zero** PHP, JS or CSS files and present on
+**neither** environment, and a repo-built ZIP was silently adding all 117 to staging. That directory now
+lives under the same rule `tools/` already does: **artefacts deploy, sources do not.**
+
+**Test correction, and the sequence is the useful part.** The `begin_checkout` count assertion used
+`substr_count` over the raw file and matched the `pushEvent('begin_checkout', ...)` literal quoted inside
+the new 1.8.78 docblock, reporting a double emission that does not exist. Comments are stripped before
+counting now, because the claim was always about emissions the browser executes, so the instrument has
+to look at exactly that. The corrected assertion is **stricter** than the original: it also pins which
+file the single emission lives in. ⭐ **This failure was found on the first staging run and then found
+again by the artefact rebuild**, because the fix had been copied straight to staging and never
+committed, so the ZIP built from HEAD carried the pre-fix suite. **Deploying the artefact rather than
+hand-copied files is what surfaced that, which is the argument for the whole-artefact rule.**
+
+Commits: `0c67302`, `7ca04e2`, `a675a18`.
+
+---
+
+## 2026-08-31 - Plugin 1.8.77: a live money defect on production, caused by an array key (CYCLE172-LD-COUPON-DEFECT)
+
+Two of three audience coupons showed as "applied" on a three-paperback cart and charged **35.97**, which
+is **3.98 more than applying no coupon at all** and **7.18 more** than the third coupon on a
+byte-identical cart. Real money, on production, with no error surfaced anywhere.
+
+The cause was neither the coupon records (byte-identical) nor the coupon code strings (nothing in the
+codebase branches on one). `WC_Cart::remove_coupon()` unsets **without reindexing**, and `apply_coupon()`
+appends at max-key plus one, so an `individual_use` swap inside a single request leaves the
+applied-coupons array as `array(1 => 'code')`. Three call sites in `bundle-cart.php` read index `0`, a
+key that no longer existed, and each silently produced no fee:
+
+- `bhp_audience_coupon_savings_amount()` produced no savings fee
+- `bhp_audience_coupon_apply_savings_fee()` produced no savings fee
+- `bhp_bundle_apply_discount_fees()` produced no "Bundle Savings" fee
+
+Meanwhile `bhp_audience_coupon_zero_native_discount()` reads the coupon **object** rather than the array,
+so it kept correctly zeroing WooCommerce's own 10 percent. ⭐ **That is why the total discount read zero
+and nothing anywhere reported a problem: one half of the mechanism kept working perfectly.**
+
+**Fix:** a single normaliser, `bhp_cart_applied_coupons()`, returning `array_values()`, with every reader
+routed through it. Reproduced deterministically on staging before the fix (key 0 gives both fees; key 1
+gives none, plus an "Undefined array key 0" notice).
+
+**Shipped in the same deployable:** `bhp_bundle_nonce_input()` no longer emits `wp_referer_field()`, and
+`bundle-shop-series.php` passes `$referer = false`. On a page-cached site that hidden field publishes one
+visitor's click and campaign parameters to the next visitor, which was observed live on production.
+Nonce verification is unaffected, because `wp_verify_nonce()` never reads `_wp_http_referer` and this
+plugin has no `wp_get_referer()` caller.
+
+New suite: `tests/test-cycle172-coupon-key.php`. A follow-up commit corrected the suite's own source
+assertion so it pins that the normaliser itself calls `get_applied_coupons()` exactly once. A third
+commit **redacted a coupon code literal from a source comment, because this repository is public**, and
+no coupon code literal is reproduced in this entry for the same reason.
+
+Commits: `8aa099e`, `ba04e0b`, `5b51585`.
+
+---
+
+## 2026-08-31 - Theme 1.19.342: four funnel-observability leaks closed (CYCLE172-LD-FUNNEL-FIX)
+
+Closed four defects found by the funnel-observability audit of 2026-08-31. The headline one is
+architectural rather than cosmetic: an attribution field was being manufactured into rendered HTML from
+the query string, which **on a page-cached site means one visitor's click IDs can be served to the next
+visitor.** ⭐ **The fix does not tighten the condition, it removes the mechanism**, so the edge cache
+stops being able to poison anything regardless of URL shape.
+
+**The accompanying test correction is the more instructive half and is recorded rather than folded
+away.** The existing suite (`test-cycle169` sections 7.9 and 7.9b) asserted that a clean URL emits no
+field and a click-ID URL emits one carrying the value. Both assertions passed against a fresh PHP
+render, both were true, and both were irrelevant to what visitors actually received: ⭐ **the suite was
+asserting that the poison was correctly manufactured.** They are replaced by the invariant that makes
+the cache irrelevant, namely that no query string of any shape may put a value into the rendered HTML.
+The superseded assertion text is preserved in place rather than deleted.
+
+Two further source-text assertions were matching the filler's own documentation. They grepped for
+`localStorage` and `document.cookie` and hit comments **saying the code uses neither**. Comments are
+stripped before the check now. Caught on staging, not by reading the diff.
+
+Version pin moved 1.19.341 to 1.19.342 by this lane, which owns that pin. Four stale pins owned by other
+lanes were deliberately left alone.
+
+Commits: `486799e` (theme 1.19.342), `3b9858e` (stray PHP opener in the school-read-alouds edit),
+`f07a5af` (test assertion inversion).
+
+---
+
+## 2026-08-28 — STAGING ONLY: theme 1.19.314 + bundle plugin 1.8.76 — the retailer ordering route, and school-visit backorders
 
 ⛔ **STAGING ONLY. NO PRODUCTION WRITE OF ANY KIND.** Production was read **read-only** and is
 **theme `1.19.312` / plugin `1.8.74`**, verified live with `wp theme list --status=active` and

@@ -136,7 +136,7 @@ if ( '' !== trim( (string) $copy['email']['link_note'] ) ) :
  *    line in italics, exactly as the approved draft sets it out.
  *
  * ⚠ OPEN ANDREW CONFIRM. Signing as a person rather than an unsigned
- *   company voice is Merry's gate G-C and is not settled. See
+ *   company voice is the `marketing-growth` gate G-C and is not settled. See
  *   `bhp_bundle_addon_thankyou_copy()`'s `open_confirms`.
  *
  * ⚠ "Brave Hearts Publishing" will appear a SECOND time immediately below

@@ -12,7 +12,7 @@
  * ⭐ WHAT THIS SUITE IS FOR, AND WHY IT IS A DIFFERENT SHAPE FROM ITS SIBLINGS
  * ---------------------------------------------------------------------------
  *
- * ⭐ THE FINDING IT ENFORCES (Merry, `CYCLE167-MKT-MAGNET-TEARDOWN`): TWELVE OF
+ * ⭐ THE FINDING IT ENFORCES (`marketing-growth`, `CYCLE167-MKT-MAGNET-TEARDOWN`): TWELVE OF
  *    TWELVE email-capture surfaces described the SAME offer with a DIFFERENT
  *    name. "Try a chapter tonight" · "Start with one free chapter." · "Before
  *    you go, take the free kit." · "Send My Free Adventure Kit" · "Send me the

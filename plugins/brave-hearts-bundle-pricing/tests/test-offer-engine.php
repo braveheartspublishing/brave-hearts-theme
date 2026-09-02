@@ -397,7 +397,7 @@ if ( empty( $colouring_ids['mariana'] ) ) {
 	);
 
 	/* ═══════════════════════════════════════════════════════════════════════
-	 * §5b · ⭐⭐⭐ FRODO'S ROW A, END TO END — BOTH ENGINES OVER ONE CART
+	 * §5b · ⭐⭐⭐ THE `finance-analytics` ROW A, END TO END — BOTH ENGINES OVER ONE CART
 	 * ═══════════════════════════════════════════════════════════════════════
 	 *
 	 * ⭐⭐ THIS IS THE ONLY ASSERTION IN THE SUITE THAT RUNS *BOTH* FEE
@@ -415,7 +415,7 @@ if ( empty( $colouring_ids['mariana'] ) ) {
 	 *    SHOPPER IS CHARGED IS A DIFFERENT CLAIM AND IS VERIFIED IN A REAL
 	 *    BLOCKS CART, in a browser, in the QA evidence for this build.
 	 * ═══════════════════════════════════════════════════════════════════════ */
-	echo "\n[§5b] Frodo's Row A: the four-item cart carries BOTH discounts\n";
+	echo "\n[§5b] finance-analytics Row A: the four-item cart carries BOTH discounts\n";
 
 	$row_a = array_merge( $three_pb, array( $col ) );
 
@@ -449,7 +449,7 @@ if ( empty( $colouring_ids['mariana'] ) ) {
 	);
 	bhp_oe_assert(
 		abs( ( $components + $cart->fee_total() ) - 42.99 ) < 0.001,
-		sprintf( 'the cart charges $42.99 before tax and shipping — Frodo\'s Row A (got %.2f)', $components + $cart->fee_total() ),
+		sprintf( 'the cart charges $42.99 before tax and shipping — finance-analytics Row A (got %.2f)', $components + $cart->fee_total() ),
 		$failures,
 		$passes
 	);
@@ -492,7 +492,7 @@ if ( empty( $colouring_ids['mariana'] ) ) {
 	bhp_oe_assert(
 		empty( $cart->refused ),
 		sprintf(
-			'⛔ NOTHING WAS SILENTLY DROPPED on Frodo\'s Row A (%d refused: %s)',
+			'⛔ NOTHING WAS SILENTLY DROPPED on finance-analytics Row A (%d refused: %s)',
 			count( $cart->refused ),
 			$cart->refused ? implode( ', ', $cart->refused ) : 'none'
 		),

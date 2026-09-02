@@ -11,7 +11,7 @@
  *    FOUNDER-VERBATIM-2026-08-05-PRODUCTION-DEPLOY-AUTHORIZATION.md`):
  *    *"a page dedicated to articles and content that help kids read more, have
  *    parents engage with their kids, and give them some free PDFs"*.
- *    ⚠ RELAYED through Gandalf, who witnessed it. NOT witnessed by this desk,
+ *    ⚠ RELAYED through `chief-of-staff`, which witnessed it. NOT witnessed by this desk,
  *    and therefore not a capability grant and not approval for any gated action.
  *
  * ⭐ AND THE NAV RULING (carrier item 300, in full: *"A"*): the "Expedition
@@ -24,7 +24,7 @@
  *     MATTERS MOST IF YOU EDIT IT: NOTHING HERE IS PADDING.
  * ---------------------------------------------------------------------------
  *
- * ⭐ Merry's §23 competitor walk (`CYCLE167-MKT-FREE-RESOURCES-WALK`, read IN
+ * ⭐ The `marketing-growth` §23 competitor walk (`CYCLE167-MKT-FREE-RESOURCES-WALK`, read IN
  *    FULL by this desk before a byte of this file was written) verified live, by
  *    href scan on four of our own pages, that WE PUBLISHED ZERO INSTANT-DOWNLOAD
  *    PDFs. Every free thing was email-gated. Our closest analogue, Magic Tree
@@ -35,7 +35,7 @@
  *     *"Yes, we can put the coloring book page as the first Free PDF, lets also
  *     build a few free PDFs tonight, lets brainstorm and put them in there, not
  *     a fillers, as actually good resources for parents?"*, and item 304:
- *     *"They are free so lets do all 5 as well"*. Legolas built all five under
+ *     *"They are free so lets do all 5 as well"*. `design-creative` built all five under
  *     `CYCLE167-DES-FREE-PDFS`, from real and attested material only.
  *
  * ⛔ SO THE SECTION SHIPS WITH REAL FILES — AND THE WALK'S RULE IS NOT WEAKENED
@@ -454,7 +454,7 @@ $downloads = function_exists('bhp_free_resources_downloads') ? bhp_free_resource
  * ⛔ `/teachers/` IS ALSO THE SITE'S ARTICLE TOPIC-HUB ANCHOR TARGET, WHICH IS
  *    WHY IT IS NEVER RENAMED, REPOINTED OR RETIRED. VERIFIED LIVE on PRODUCTION
  *    post content by this desk, 2026-08-27, read-only: post 56 carries three
- *    `teachers/#reading-growing` links and post 96 carries one. Merry's walk
+ *    `teachers/#reading-growing` links and post 96 carries one. The `marketing-growth` walk
  *    raised this from `docs\CONTENT\BLOG_STATUS.md` and honestly labelled it
  *    READ FROM DOCUMENTATION; this is that claim promoted to observed. ⭐ ONLY
  *    THE NAV DOOR MOVED.

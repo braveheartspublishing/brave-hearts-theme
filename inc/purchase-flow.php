@@ -31,10 +31,16 @@
  *    books. Not extra steps. or at least have the cart pop up not the cart
  *    page show. I honestly dont like having this cart page in the middle of a
  *    purchase. It should just go to check out or to the cart side panel then
- *    to check out (whatever you and boromir thinks is best)"
+ *    to check out (whatever you and [ads-knowledge] thinks is best)"
  *
- * ⭐ THE MECHANISM WAS DELEGATED — "whatever you and boromir thinks is best" —
- *    and Gandalf's call (Boromir validating in parallel) is: BUY BUTTONS GO
+ * ⚠ THE SQUARE BRACKETS ABOVE ARE AN EDITORIAL SUBSTITUTION, not his word. He
+ *   used that agent's internal call name; internal call names may not appear in
+ *   this repository, which is public (Standing Rules §14.5). Nothing else in
+ *   the quotation is altered, and the same substitution is marked the same way
+ *   everywhere this sentence is quoted.
+ *
+ * ⭐ THE MECHANISM WAS DELEGATED — "whatever you and [ads-knowledge] thinks is best" —
+ *    and the `chief-of-staff` call (`ads-knowledge` validating in parallel) is: BUY BUTTONS GO
  *    STRAIGHT TO CHECKOUT, using the mechanism the collection card already
  *    uses; a MINI-CART SIDE PANEL serves the multi-item shopper; the CART PAGE
  *    leaves the purchase flow while its URL keeps working.
@@ -139,7 +145,7 @@ const BHP_PURCHASE_FLOW_VALUE = 'checkout';
  *    intent onward to /checkout/, where the coupon field lives.
  *
  * ⛔ THIS REFINES ITEM 186, IT DOES NOT CONTRADICT IT. 1.19.280 read the
- *    delegated mechanism ("whatever you and boromir thinks is best") as
+ *    delegated mechanism ("whatever you and [ads-knowledge] thinks is best") as
  *    ATC → /checkout/. He then chose for himself. ⭐ HIS CHOICE GOVERNS, and
  *    the earlier reading is superseded rather than defended.
  *
@@ -149,7 +155,7 @@ const BHP_PURCHASE_FLOW_VALUE = 'checkout';
  *     ⭐ HE WALKED THAT PATH HIMSELF. It still goes straight to checkout, and
  *     nothing in this file's `panel` path is wired to it.
  *
- * ⛔⛔ THE PANEL NEVER SELF-OPENS ON LANDING — Boromir's second condition.
+ * ⛔⛔ THE PANEL NEVER SELF-OPENS ON LANDING — the `ads-knowledge` second condition.
  *     ⭐ NOTE WHAT THIS CONSTANT DELIBERATELY DOES NOT DO: it does not send
  *     any "open the panel" flag onward in a URL. There is NO query parameter
  *     anywhere in this build that opens the panel, so no bookmark, no shared
@@ -305,7 +311,7 @@ add_filter( 'woocommerce_add_to_cart_redirect', 'bhp_purchase_flow_redirect', 20
  *    product page with the item in the cart and WooCommerce's own "added to
  *    cart" notice. The panel does NOT open, because opening it would need a
  *    URL parameter, and a URL that opens the panel is a URL that can be
- *    bookmarked, shared and landed on — Boromir's second condition. ⭐ A
+ *    bookmarked, shared and landed on — the `ads-knowledge` second condition. ⭐ A
  *    JavaScript-less shopper getting a correct product page instead of a
  *    panel is a degradation. A panel that any link can open is a defect.
  *

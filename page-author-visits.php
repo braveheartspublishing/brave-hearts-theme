@@ -147,7 +147,11 @@ $bhp_visit_photos = function_exists( 'bhp_author_visits_gallery_photos' ) ? bhp_
                 printf(
                   /* translators: %s: the last date an order may be placed, e.g. "Monday, August 25" */
                   esc_html__( 'Order by %s and I will have your child’s book signed and in my bag on the day.', 'brave-hearts' ),
-                  esc_html( bhp_author_visits_format_date( $bhp_row['cutoff'] ) )
+                  /* ⭐ 1.19.350-FIX: `deadline`, not `cutoff` — the ONE date the shop band
+                     also prints. It equals `cutoff` on every conventionally entered row and
+                     can never be later than it, so the grace window stays unadvertised.
+                     ⛔ SUPERSEDED, PRESERVED: this printed `$bhp_row['cutoff']` directly. */
+                  esc_html( bhp_author_visits_format_date( $bhp_row['deadline'] ) )
                 );
                 ?>
               </p>
@@ -197,7 +201,12 @@ $bhp_visit_photos = function_exists( 'bhp_author_visits_gallery_photos' ) ? bhp_
                 printf(
                   /* translators: %s: the deadline that was published for this visit, e.g. "Monday, August 25" */
                   esc_html__( 'Order by %s.', 'brave-hearts' ),
-                  esc_html( bhp_author_visits_format_date( $bhp_row['cutoff'] ) )
+                  /* ⭐ 1.19.350-FIX: `deadline`, not `cutoff`. Identical on every
+                     `visit - 3` row — the sentence above about the STATED deadline still
+                     holds, and still cannot mention the grace window, because
+                     `bhp_visit_deadline_display()` never returns a date later than
+                     `cutoff`. ⛔ SUPERSEDED, PRESERVED: this printed `$bhp_row['cutoff']`. */
+                  esc_html( bhp_author_visits_format_date( $bhp_row['deadline'] ) )
                 );
                 ?>
               </p>

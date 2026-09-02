@@ -451,7 +451,7 @@
 	 * surface should carry: "add the coloring book, add the next chapter book
 	 * etc." ⛔ Only the second existed until now.
 	 *
-	 * ⭐ ONE OFFER AT A TIME — Boromir's rail. This returns a single offer or
+	 * ⭐ ONE OFFER AT A TIME — the `ads-knowledge` rail. This returns a single offer or
 	 *    null, exactly as the adventure passes do, and the rail renders
 	 *    exactly one box. ⛔ It is NOT a second box and NOT a stack of offers.
 	 *
@@ -548,7 +548,7 @@
 	 *    creates server-side from what is actually in the cart. ⛔ NOTHING IS
 	 *    PRICED HERE and no second offer is invented.
 	 *
-	 * ⛔ ONE OFFER AT A TIME — Boromir's rail, unchanged. This returns a single
+	 * ⛔ ONE OFFER AT A TIME — the `ads-knowledge` rail, unchanged. This returns a single
 	 *    offer or null.
 	 *
 	 * ⛔⛔ THREE GATES, AND THE THIRD IS THE ONE THAT MATTERS:
@@ -1862,7 +1862,7 @@
 			 *    navigation away from this document — and on a normal
 			 *    connection the navigation wins. That is the reason GA4
 			 *    carries no begin_checkout at all despite it being wired
-			 *    since Phase 1B (Frodo's funnel-observability audit,
+			 *    since Phase 1B (the `finance-analytics` funnel-observability audit,
 			 *    2026-08-31). The event was not missing; it was emitted at
 			 *    the one moment an async emission is least likely to survive.
 			 *

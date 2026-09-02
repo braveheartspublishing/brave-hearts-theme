@@ -97,7 +97,7 @@ get_template_part('template-parts/components/hero', null, [
  *    THE EDUCATOR CAN ACTUALLY REACH. DUPLICATED HIGH, NOT MOVED.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ THE FINDING (Merry, verified live and measured at a confirmed 390px):
+ * ⭐ THE FINDING (`marketing-growth`, verified live and measured at a confirmed 390px):
  *    this page is **36.4 screens — 30,700px — on mobile**, and its ONLY
  *    capture surface sat at **94% depth, screen 34 of 36.4.** An educator had
  *    to read thirty-four screens before being asked for anything. Corroborated

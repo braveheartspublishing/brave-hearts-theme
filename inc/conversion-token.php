@@ -76,7 +76,7 @@
  *    receives exactly the same `adventure_kit_signup` object it always did,
  *    with the same keys, so no GTM tag, GA4 config or Meta mapping needs to
  *    change and no historical series is renamed. ONLY WHETHER IT FIRES
- *    CHANGED. GTM is Gimli's lane and is deliberately untouched.
+ *    CHANGED. GTM is the `connected-operator` lane and is deliberately untouched.
  */
 
 defined( 'ABSPATH' ) || exit;

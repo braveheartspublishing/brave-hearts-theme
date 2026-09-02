@@ -84,7 +84,7 @@
  * ---------------------------------------------------------------------------
  * ⭐ SOURCE: `Business OS\WORKING-DRAFTS\connected-operator\
  *    CYCLE167-GIM-INGRAM-READ-2-2026-08-27.md` §2 and §2.1.
- * ⭐ INSTRUMENT: Gimli (`connected-operator`) read each title's own
+ * ⭐ INSTRUMENT: `connected-operator` read each title's own
  *    distribution page at `/Titles/TitleDetails/<id>/B` inside the
  *    AUTHENTICATED IngramSpark account `9885354`, 2026-08-27 ~04:40 MDT.
  * ⭐ CLASS: OBSERVED LIVE, per that document's own claim ledger (§9).
@@ -96,14 +96,14 @@
  *    THESE COLUMNS EXIST AT ALL. `17-CURRENT-OPERATING-STATE.md` said BOTH
  *    "55% CONFIRMED (FD-319)" (L4520) and "NOT a live field value, must never
  *    be reported as Ingram's current setting" (L6094, L6185) — the conflict
- *    Merry logged as `CYCLE167-MKT-T03` and correctly refused to resolve from
+ *    `marketing-growth` logged as `CYCLE167-MKT-T03` and correctly refused to resolve from
  *    documents. It was not resolved by picking a document. It was resolved by
  *    somebody opening the account and reading the field. That is §9.2.
  *
  * ⛔⛔ ONE CORRECTION THE RECORD NEEDED, CARRIED HERE SO IT CANNOT BE LOST:
  *    the returnable flag is **`Yes - Destroy`**, NOT the `Yes-Deliver` that
  *    `DRAFT-2026-08-19-INGRAM-PULL.md` recorded. Material, and it is the row
- *    booksellers care about most. Gimli's §6 C1.
+ *    booksellers care about most. The `connected-operator` §6 C1.
  *
  * ⛔ NOTHING IS GLOSSED. `Yes - Destroy` is rendered as Ingram's own words.
  *    A plain-English explanation of what happens to a returned copy would be a
@@ -114,13 +114,13 @@
  * ⛔ NO TERM IS INVENTED HERE AND NONE MAY BE ADDED WITHOUT A LIVE READ.
  *    Minimum order quantity, lead time, freight, margin, trim size, page count,
  *    BISAC, imprint and carton quantity are ABSENT — every one of them is blank
- *    in the corpus (Merry §6, FMC-5) and a plausible number would be a
+ *    in the corpus (`marketing-growth` §6, FMC-5) and a plausible number would be a
  *    fabrication. Ingram's own "free freight on 20+ units" is Ingram's offer to
  *    the store, NOT Brave Hearts', and restating it here would make it read as
  *    ours (`CYCLE167-MKT-T02`).
  *
  * ⚠️ RECHECK BY 2026-11-27 for discount and returns, 2026-09-27 for price —
- *    the recheck dates Gimli's own claim ledger sets. A term is a live field,
+ *    the recheck dates the `connected-operator` claim ledger sets. A term is a live field,
  *    and this file is a dated copy of one.
  */
 

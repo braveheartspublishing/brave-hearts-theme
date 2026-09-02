@@ -13,7 +13,7 @@
  *    file): the mobile shop grid goes 2-UP, and ⛔ THE KIRKUS BADGE AND THE
  *    REVIEW QUOTE COME OFF THE MOBILE CARDS.
  *
- * ⭐ THE COMPARATOR EVIDENCE IS PIPPIN'S, NOT THIS FILE'S, and it is layout
+ * ⭐ THE COMPARATOR EVIDENCE IS THE `commerce-cx` ONE, NOT THIS FILE'S, and it is layout
  *    evidence only: Barefoot 179px · Chronicle 165px · Highlights 165px ·
  *    Powell's 195px, each measured in real Chrome at an asserted
  *    `window.innerWidth` of 390. `Business OS\WORKING-DRAFTS\commerce-cx\
@@ -337,12 +337,35 @@ s2u_assert(
 		'' !== $s2u_src_md5 ? substr( $s2u_src_md5, 0, 8 ) : 'unreadable'
 	)
 );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ UPDATED 2026-09-02 BY 1.19.350 (`CYCLE179-LD-350-BUILD`). CHANGE 1 OF 4
+ *     IN THIS FILE. THE SCOPE TOKEN IS NOW `body.bhp-catalog-grid`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED ASSERTION, PRESERVED SO THE MOVEMENT IS VISIBLE:
+ *      '/body\.woocommerce-shop[^{]*ul\.products\s*\{[^}]*grid-template-columns:\s*repeat\(2/'
+ *      '4.3 ⭐ two grid tracks, scoped to body.woocommerce-shop'
+ *
+ * ⭐ THE PROPERTY BEING ASSERTED HAS NOT CHANGED AND IS NOT WEAKENED: the 2-up
+ *    mobile grid must be scoped to the catalog, and must NOT reach the single
+ *    product page's related and upsell rows, which are `ul.products li.product`
+ *    too. Only the token that expresses "this is the catalog" has moved, from
+ *    `body.woocommerce-shop` (which excluded 18 taxonomy archives and product
+ *    search as collateral) to `body.bhp-catalog-grid` (which excludes the PDP
+ *    and nothing else). `bhp_catalog_grid_context()` returns FALSE on
+ *    `is_product()` before anything else it tests.
+ *
+ * ⛔ ITEM 204'S RULING IS UNTOUCHED. Two tracks on a phone, the Kirkus badge and
+ *    the review quote off the mobile card. §5, §6 and §7 below still assert all
+ *    three, and they still pass.
+ */
 s2u_assert(
 	(bool) preg_match(
-		'/body\.woocommerce-shop[^{]*ul\.products\s*\{[^}]*grid-template-columns:\s*repeat\(2/',
+		'/body\.bhp-catalog-grid[^{]*ul\.products\s*\{[^}]*grid-template-columns:\s*repeat\(\s*2/',
 		$s2u_css
 	),
-	'4.3 ⭐ two grid tracks, scoped to body.woocommerce-shop'
+	'4.3 ⭐ two grid tracks, scoped to body.bhp-catalog-grid (1.19.350; was body.woocommerce-shop)'
 );
 /*
  * ⛔ THE SCOPE IS ASSERTED, NOT ASSUMED. `.woo-expedition-shell` also wraps the
@@ -373,7 +396,16 @@ if ( preg_match_all( '/([^{}]*ul\.products[^{}]*)\{([^}]*)\}/', $s2u_mobile, $s2
 		if ( ! preg_match( '/grid-template-columns:\s*repeat\(\s*2/', $s2u_rule[2] ) ) {
 			continue;
 		}
-		if ( false === strpos( $s2u_rule[1], 'body.woocommerce-shop' ) ) {
+		/*
+		 * ⭐ CHANGE 2 OF 4, 1.19.350. SUPERSEDED LINE, PRESERVED:
+		 *      if ( false === strpos( $s2u_rule[1], 'body.woocommerce-shop' ) ) {
+		 * ⛔ The walk itself is unchanged and is still the right shape: every
+		 *    rule inside the mobile block that sets two tracks on `ul.products`
+		 *    must carry the catalog scope in its OWN selector. Only the token
+		 *    moved. ⛔ The test-defect note above this loop still applies and is
+		 *    the reason this is a rule walk rather than a substring search.
+		 */
+		if ( false === strpos( $s2u_rule[1], 'body.bhp-catalog-grid' ) ) {
 			$s2u_unscoped[] = trim( $s2u_rule[1] );
 		}
 	}
@@ -381,7 +413,7 @@ if ( preg_match_all( '/([^{}]*ul\.products[^{}]*)\{([^}]*)\}/', $s2u_mobile, $s2
 s2u_assert(
 	empty( $s2u_unscoped ),
 	sprintf(
-		'4.4 ⛔ every 2-up rule in the mobile block is scoped to body.woocommerce-shop (unscoped: %s)',
+		'4.4 ⛔ every 2-up rule in the mobile block is scoped to body.bhp-catalog-grid (unscoped: %s)',
 		empty( $s2u_unscoped ) ? 'none' : implode( ' | ', $s2u_unscoped )
 	)
 );
@@ -515,22 +547,66 @@ if ( '' !== $s2u_shop_url ) {
 
 if ( '' !== $s2u_shop_doc && preg_match( '#<ul[^>]*class="[^"]*\bproducts\b[^"]*"[^>]*>(.*?)</ul>#s', $s2u_shop_doc, $s2u_ul ) ) {
 	$s2u_card_n = preg_match_all( '/<li[^>]*\bclass="[^"]*\bproduct\b[^"]*"/', $s2u_ul[1] );
-	s2u_assert(
-		$s2u_card_n > 0 && 0 === $s2u_card_n % 2,
-		sprintf( '6.3 ⛔ the served grid holds an EVEN number of cards, so 2-up leaves no orphan cell (%d cards)', $s2u_card_n )
-	);
 	/*
-	 * ⭐ AND BOTH BUNDLE CARDS ARE ACTUALLY IN THAT COUNT. An even number that
-	 *    happened to exclude the two offer cards would pass 6.3 while item 206
-	 *    was entirely missing from the grid.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ UPDATED 2026-09-02 BY 1.19.350. CHANGES 3 AND 4 OF 4 IN THIS FILE.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ THE SUPERSEDED ASSERTIONS, PRESERVED SO THE MOVEMENT IS VISIBLE:
+	 *
+	 *      6.3  $s2u_card_n > 0 && 0 === $s2u_card_n % 2
+	 *           "the served grid holds an EVEN number of cards, so 2-up leaves
+	 *            no orphan cell"
+	 *      6.4  1 === substr_count( $ul, 'bhp-shop-offer-item' )
+	 *             && 1 === substr_count( $ul, 'bhp-shop-collection-item' )
+	 *           "both bundle cards are IN the served grid"
+	 *
+	 * ⭐⭐ 6.4 IS NOW FALSE ON A CORRECT BUILD, AND THAT IS THE POINT OF THE
+	 *     RELEASE, NOT A REGRESSION. 1.19.350 moves the bundle cards OUT of the
+	 *     grid into `.bhp-catalog-bundle-strip` below it (brief
+	 *     `CYCLE179-LD-350`, founder concept seal 686), because a bundle is not
+	 *     a title and two bundle tiles inside a five-up product row push the
+	 *     five actual books off the fold. ⛔ THE CARDS ARE NOT DELETED. The
+	 *     assertion is INVERTED rather than dropped: the pair must be absent
+	 *     from the grid AND present on the page, so a build that silently loses
+	 *     the offer still fails here.
+	 *
+	 * ⭐ 6.3's EVEN-COUNT RULE GOES WITH IT, and it goes for an arithmetic
+	 *    reason rather than a preference. The grid is now the five things a
+	 *    reader chooses between: three chapter books, the Complete Collection,
+	 *    the coloring book. Five is ODD, so 2-up leaves one half-width cell in
+	 *    the last row BY DESIGN — and that cell is where the founder default
+	 *    (seal 704) wants the mobile reader to see the catalog continue. ⛔ The
+	 *    replacement still guards the thing that mattered: the grid must hold
+	 *    the FIVE expected cards, so a sixth appearing (or a fifth vanishing)
+	 *    still fails.
 	 */
 	s2u_assert(
-		1 === substr_count( $s2u_ul[1], 'bhp-shop-offer-item' )
+		5 === $s2u_card_n,
+		sprintf( '6.3 ⭐ 1.19.350: the served grid holds exactly the FIVE catalog cards (%d found; was "an even number" while the bundles were in the grid)', $s2u_card_n )
+	);
+	s2u_assert(
+		0 === substr_count( $s2u_ul[1], 'bhp-shop-offer-item' )
 			&& 1 === substr_count( $s2u_ul[1], 'bhp-shop-collection-item' ),
 		sprintf(
-			'6.4 ⭐ both bundle cards are IN the served grid (pair %d, collection %d)',
+			'6.4 ⭐ 1.19.350: the pair card is OUT of the grid and the Collection card is IN it (pair %d, collection %d)',
 			substr_count( $s2u_ul[1], 'bhp-shop-offer-item' ),
 			substr_count( $s2u_ul[1], 'bhp-shop-collection-item' )
+		)
+	);
+	/*
+	 * ⛔⛔ AND IT IS STILL ON THE PAGE. Without this, a build that deleted the
+	 *     bundle offer outright would pass 6.4 and lose a real, purchasable
+	 *     offer silently. The strip is asserted on the DOCUMENT, not on the
+	 *     grid, which is exactly where it now lives.
+	 */
+	s2u_assert(
+		1 === substr_count( $s2u_shop_doc, 'bhp-catalog-bundle-strip__list' )
+			&& 1 === substr_count( $s2u_shop_doc, 'bhp-shop-offer-item' ),
+		sprintf(
+			'6.4b ⛔ 1.19.350: the pair card MOVED, it was not deleted (strip %d, offer card %d)',
+			substr_count( $s2u_shop_doc, 'bhp-catalog-bundle-strip__list' ),
+			substr_count( $s2u_shop_doc, 'bhp-shop-offer-item' )
 		)
 	);
 } else {

@@ -213,7 +213,7 @@ bhp_fs_assert(
 /*
  * ⭐ THE DECISION, RECORDED WHERE IT IS TESTED: a cart holding all three
  *    ADVENTURES ships free regardless of which format each one is in.
- *    Gandalf's direction for this build: mixed 3-distinct-book carts ship
+ *    The `chief-of-staff` direction for this build: mixed 3-distinct-book carts ship
  *    free as part of the same bundle family. The customer has the complete
  *    collection and it goes in one shipment.
  *
@@ -502,7 +502,7 @@ bhp_fs_assert(
 // =====================================================================
 /*
  * ⚠ COPY STATUS: drafted from Andrew's stated intent ("free shipping with
- *   the purchase of this book"), PENDING MERRY (`marketing-growth`) REVIEW.
+ *   the purchase of this book"), PENDING `marketing-growth` REVIEW.
  *   These assertions test the CONSTRAINTS the wording must satisfy, not the
  *   exact sentence, so an approved rewording changes one string and does not
  *   break the suite.

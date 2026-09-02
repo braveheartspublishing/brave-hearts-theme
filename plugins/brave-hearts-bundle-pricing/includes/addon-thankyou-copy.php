@@ -18,7 +18,7 @@
  * ═══════════════════════════════════════════════════════════════════════
  *
  * ⛔ THE PLACEHOLDER PROSE THAT USED TO BE HERE IS GONE. Every customer-
- *    facing string below is now Merry's (`marketing-growth`) drafted copy,
+ *    facing string below is now the `marketing-growth` drafted copy,
  *    read this session from the DRIVE mount at
  *
  *      Business OS\WORKING-DRAFTS\marketing-growth\
@@ -46,18 +46,18 @@
  *    not a bare `APPROVED`":
  *
  *   1. LICENCE WORDING. "Print the pages you like, as many times as you
- *      like. It is yours to keep." is IN, on Gandalf's review direction.
+ *      like. It is yours to keep." is IN, on the `chief-of-staff` review direction.
  *      It is a licence statement and no licence text exists for this
- *      product. Merry's gate G-B; her conflict `CYCLE143-MKT-123`. The
+ *      product. The `marketing-growth` gate G-B; its conflict `CYCLE143-MKT-123`. The
  *      teacher-class-set question is the one that will actually be asked.
  *   2. SIGN-OFF NAME. "Andrew" is IN, on the same direction. The build
  *      brief said "from Brave Hearts Publishing"; every shipped
- *      transactional email in the theme signs "Andrew". Merry's gate G-C;
+ *      transactional email in the theme signs "Andrew". The `marketing-growth` gate G-C;
  *      her conflict `CYCLE143-MKT-125`.
  *
  * ⭐ HOW EACH CLOSED - Andrew Signore, 2026-08-04, MESSAGES 35-36,
  *    witnessed by the main session and relayed to this build session by
- *    Gandalf (`chief-of-staff`). ⚠ RELAYED, not witnessed first-hand here.
+ *    `chief-of-staff`. ⚠ RELAYED, not witnessed first-hand here.
  *    Recorded at `Business OS\WORKING-DRAFTS\chief-of-staff\
  *    OVERNIGHT-EXECUTION-REGISTER-2026-08-04.md` lines 167-170.
  *
@@ -69,7 +69,7 @@
  *        "Print the pages you like, as many times as you like, for your
  *         home or your classroom. It is yours to keep."
  *
- *      ⚠ MINIMAL EDIT ON PURPOSE. One clause added inside Merry's own
+ *      ⚠ MINIMAL EDIT ON PURPOSE. One clause added inside the `marketing-growth`
  *        sentence; her cadence, her verbs and her closing line are
  *        untouched. It grants a permission and claims NOTHING - no
  *        licence text, no rights statement, no school or district
@@ -88,11 +88,11 @@
  * ⛔ ONE SENTENCE OF THE APPROVED DRAFT WAS DELIBERATELY OMITTED
  * ═══════════════════════════════════════════════════════════════════════
  *
- * Merry's paragraph 2 ends "...and the answer key is on the last two
- * pages." ⛔ OMITTED on Gandalf's review direction. It is TRUE OF v4 AND
+ * The `marketing-growth` paragraph 2 ends "...and the answer key is on the last two
+ * pages." ⛔ OMITTED on the `chief-of-staff` review direction. It is TRUE OF v4 AND
  * OF NO OTHER VERSION (v1/v2: one page at 20; v3: two pages at 20 and 21;
  * v4: two pages at 25 and 26), and which PDF the live product will carry
- * is pending Andrew's v4/v5 word. Merry's own conflict `CYCLE143-MKT-121`
+ * is pending Andrew's v4/v5 word. The `marketing-growth` conflict `CYCLE143-MKT-121`
  * says it in her words: "Attach v4, or delete the clause. Do not reword it
  * to be vaguely true." It is deleted, not reworded.
  *
@@ -111,7 +111,7 @@
  *   - READING AGE: the band is "6 to 9" and NOTHING ELSE IS EVER
  *     PERMITTED. ⚠ CHANGED FROM THE 1.8.21 PLACEHOLDER, which claimed no
  *     age at all. The approved copy DOES carry the band, and it is sourced
- *     (Merry's claim 6: company audience of record, printed in B1 and B2
+ *     (the `marketing-growth` claim 6: company audience of record, printed in B1 and B2
  *     front matter, on the activity book cover). Standing Rules §9 fixes
  *     it at 6-9 and never 5-9. The test suite now screens for ANY age band
  *     other than "6 to 9" rather than for any age band at all, which is a
@@ -143,7 +143,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * ⭐ RENDER ORDER, and why the array has the shape it has.
  *
- *    Merry's drafted body puts the download button after the FIRST
+ *    The `marketing-growth` drafted body puts the download button after the FIRST
  *    paragraph and three more paragraphs after it. The 1.8.21 template
  *    rendered every paragraph before the button, so loading her copy into
  *    the old shape would have reordered approved prose. The template gained
@@ -196,7 +196,7 @@ function bhp_bundle_addon_thankyou_copy() {
 		'email'         => array(
 
 			/*
-			 * Merry's Subject A, chosen over B by Gandalf's direction.
+			 * The `marketing-growth` Subject A, chosen over B by the `chief-of-staff` direction.
 			 * 26 characters. WooCommerce's {order_number} / {order_date} /
 			 * {site_title} placeholders are available and deliberately
 			 * unused.
@@ -204,7 +204,7 @@ function bhp_bundle_addon_thankyou_copy() {
 			'subject'          => __( 'Your activity book is here', 'bhp-bundle-pricing' ),
 
 			/*
-			 * ⛔ CARRIED, NOT WIRED. Merry's preheader (inbox preview
+			 * ⛔ CARRIED, NOT WIRED. The `marketing-growth` preheader (inbox preview
 			 *    line), 66 characters.
 			 *
 			 * ⚠ The preheader mechanism is `bhp_email_preheaders()` in the
@@ -217,13 +217,13 @@ function bhp_bundle_addon_thankyou_copy() {
 			 *     'bhp_addon_thankyou' => __( '<this string>', 'brave-hearts' ),
 			 *
 			 *   That is a THEME change and this is a PLUGIN build, so it is
-			 *   out of scope here and handed to Gandalf instead. Until it
+			 *   out of scope here and handed to `chief-of-staff` instead. Until it
 			 *   lands, this email sends with NO preheader and the inbox
 			 *   preview falls back to the first body line. That is a
 			 *   cosmetic gap, not a defect, and it is stated rather than
 			 *   implied.
 			 *
-			 * Merry's shorter backup, if a theme ever needs one:
+			 * The `marketing-growth` shorter backup, if a theme ever needs one:
 			 * "Your download is inside, and it is yours to keep." (48 chars)
 			 */
 			'preheader'        => __( 'Coloring pages, word searches and mazes from all three adventures.', 'bhp-bundle-pricing' ),
@@ -255,7 +255,7 @@ function bhp_bundle_addon_thankyou_copy() {
 			 *
 			 * ⚠ NO `%s` ANY MORE, AND THAT IS A DELIBERATE MECHANISM
 			 *   CHANGE. The 1.8.21 placeholder was "Download %s" and
-			 *   interpolated WooCommerce's stored FILE name. Merry's
+			 *   interpolated WooCommerce's stored FILE name. The `marketing-growth`
 			 *   approved label names the artefact instead, which is both
 			 *   her exact words and safer: a file renamed in the product's
 			 *   Downloads panel can no longer rewrite an approved
@@ -295,7 +295,7 @@ function bhp_bundle_addon_thankyou_copy() {
 			/* Body paragraphs rendered AFTER the download. */
 			'paragraphs_after' => array(
 				/*
-				 * ⛔ Merry's sentence ends here. Her clause "and the answer
+				 * ⛔ The `marketing-growth` sentence ends here. Its clause "and the answer
 				 *    key is on the last two pages" is OMITTED - version-
 				 *    coupled to v4, pending Andrew's v4/v5 word. See the
 				 *    file header and `CYCLE143-MKT-121`.
@@ -337,7 +337,7 @@ function bhp_bundle_addon_thankyou_copy() {
 			'link_note'        => '',
 
 			/*
-			 * Last line of the body. Merry reuses the shipped E2 pattern
+			 * Last line of the body. `marketing-growth` reuses the shipped E2 pattern
 			 * ("reply to this email, it comes to a real person") verbatim,
 			 * which is why it reads like the rest of the house voice.
 			 */
@@ -356,7 +356,7 @@ function bhp_bundle_addon_thankyou_copy() {
 			 *   sign-off. Not corrected here, for two reasons: this is
 			 *   approved copy and must not be silently rewritten, and the
 			 *   footer is a store-wide WooCommerce option that no agent
-			 *   changes without Andrew. Flagged to Gandalf as cosmetic.
+			 *   changes without Andrew. Flagged to `chief-of-staff` as cosmetic.
 			 */
 			'signoff'          => array(
 				__( 'Andrew', 'bhp-bundle-pricing' ),
@@ -371,7 +371,7 @@ function bhp_bundle_addon_thankyou_copy() {
 
 			/*
 			 * ⛔ THE GUARD MESSAGE. Shown when the cart contains the
-			 *    activity book and nothing else. Merry's PRIMARY
+			 *    activity book and nothing else. The `marketing-growth` PRIMARY
 			 *    recommended string, verbatim.
 			 *
 			 * ⚠ NO `%s` ANY MORE. The 1.8.21 placeholder interpolated the
@@ -399,7 +399,7 @@ function bhp_bundle_addon_thankyou_copy() {
 			'addon_only_generic' => __( 'The Adventure Activity Book is a companion download, so it needs at least one Charlotte and Henry book in your cart. Add a book and you can check out.', 'bhp-bundle-pricing' ),
 
 			/*
-			 * Merry's shorter alternate, carried but NOT USED. Recorded so
+			 * The `marketing-growth` shorter alternate, carried but NOT USED. Recorded so
 			 * that choosing it later (her gate G-E) is a one-line swap and
 			 * nobody has to reopen a Drive document to find the wording:
 			 *

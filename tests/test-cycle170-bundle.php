@@ -173,7 +173,7 @@ $bhp_bun_points = array(
 $bhp_bun_closing = 'These books are made for early readers, to help them gain reading confidence and confidence in life. My goal is to empower kids to be better little humans, in the classroom and outside of it.';
 
 /*
- * ⛔⛔ AMENDED AT 1.19.339 (`CYCLE170-LD-FINAL2`, carrier item 562, Gandalf's
+ * ⛔⛔ AMENDED AT 1.19.339 (`CYCLE170-LD-FINAL2`, carrier item 562, the `chief-of-staff`
  *     implementation ruling). CHIP 1 DROPPED THE WORD "Free".
  *
  * ⛔ SUPERSEDED FIXTURE, QUOTED VERBATIM RATHER THAN DELETED:
@@ -663,7 +663,7 @@ foreach ( array(
  *     ⛔ A RED HERE WOULD BE A RED THIS LANE CANNOT CLEAR WITHOUT EDITING SEVEN
  *        UNRELATED COMPONENTS' SPACING — a visual change to the homepage, the
  *        Amazon review showcase and the free-resource card, none of which is in
- *        this brief. So it is REPORTED to Gandalf as an inherited finding and
+ *        this brief. So it is REPORTED to `chief-of-staff` as an inherited finding and
  *        left for a decision, not absorbed and not silently "fixed".
  *
  *     ⚠ AND IT IS NOT SUPPRESSED EITHER: the count is printed on every run, so
@@ -677,7 +677,7 @@ bhp_bun_assert(
 	"⚠ NO rule in THIS LANE'S block references the nonexistent `--space-5`"
 );
 echo '  NOTE  INHERITED, NOT THIS LANE: sitewide `var(--space-5)` references in style.css = '
-	. substr_count( $bhp_bun_css, 'var(--space-5)' ) . " (each one silently collapses; routed to Gandalf)\n";
+	. substr_count( $bhp_bun_css, 'var(--space-5)' ) . " (each one silently collapses; routed to chief-of-staff)\n";
 
 echo "\n=== 9 · THE RENDERED TEACHER PAGE ===\n";
 
@@ -929,7 +929,8 @@ bhp_bun_assert(
  * ⚠️ THE "BOTH SURFACES ASK FOR THE SAME ONE THING" CLAIM IS NOW FALSE AND IS
  *   FLAGGED RATHER THAN DELETED: this page asks for a name, the Mailchimp-hosted
  *   page 42351 still does not. ⛔ 42351 IS NOT THIS BUILD'S TO CHANGE — it is
- *   Gimli's surface and Andrew's publish click. Recorded as a handover finding.
+ *   the `connected-operator` surface and Andrew's publish click. Recorded as a
+ *   handover finding.
  *
  * ⭐ THE ASSERTION IS INVERTED, NOT REMOVED, AND IT GAINS THE THREE NEGATIVES
  *    THAT DISTINGUISH AN OPTIONAL FIELD FROM A REQUIRED ONE — which is the

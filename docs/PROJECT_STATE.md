@@ -1,5 +1,34 @@
 # Project State — Brave Hearts Publishing (Executive Summary)
 
+> ## ⭐⭐ NEWEST, 2026-09-02 · **PRODUCTION IS THEME `1.19.354` / BUNDLE PLUGIN `1.8.79`.** Every version number below this block is SUPERSEDED.
+>
+> **`1.19.353` and then `1.19.354` were deployed to production on 2026-09-02, each with the owner's
+> explicit approval. Bundle plugin `1.8.79` was deployed to production on 2026-09-02.**
+>
+> `1.19.350`, `1.19.351` and `1.19.352` were built and staging-verified the same day and **did not ship on
+> their own**; they are cumulative builds of the same tree, so their contents reached production inside
+> `1.19.353`.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-02** | **`1.19.354`** | **`1.8.79`** |
+>
+> **Release record:** `RELEASES/PRODUCTION_RELEASE_1_19_350_354.md`.
+> **Per-release detail:** `CHANGELOG.md`, the 2026-09-02 entry headed "PRODUCTION IS NOW THEME `1.19.354`".
+> **Open issues at the end of this series:** `KNOWN_ISSUES.md` (F-08, F-09, LD-10, LD-12, the `--url` test
+> caveat, and the parked cosmetic list).
+> **Two rules recorded from this series:** `DECISIONS.md` (the visit deadline resolver, and the catalog card
+> on every catalog surface).
+>
+> ⚠️ **Provenance, stated rather than implied.** This block was written by the documentation-sync lane on
+> 2026-09-02 from the build lanes' own records. **The version numbers above are relayed from the deploying
+> lane, not read from production by this block.** Before relying on them for anything consequential, re-run
+> the definitive instrument: `wp theme list --status=active` and
+> `wp plugin get brave-hearts-bundle-pricing --field=version` over SSH, read-only. Every correction block in
+> this file's history exists because a version number was trusted past its verification.
+>
+> **Content updates made on production the same day were made by the owner and are not theme releases.**
+
 > ## ⛔⛔⛔⛔ FOURTH CORRECTION, SAME DAY — **PRODUCTION IS THEME `1.19.161` / PLUGIN `1.8.19`.** Every correction block below is **SUPERSEDED ON BOTH VERSION NUMBERS.**
 >
 > **Verified live 2026-08-03T23:07−06:00** by read-only HTTP GET of the production home page (HTTP 200): **11 theme assets enqueued at `ver=1.19.161`** and **4 plugin assets at `ver=1.8.19`**. `1.19.161` was independently read the same evening at **2026-08-03T22:21:38−06:00** by `wp theme list --status=active` over SSH — **two instruments, two sessions, same theme number.**

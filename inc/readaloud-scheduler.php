@@ -105,7 +105,7 @@ function bhp_readaloud_scheduler_lead_days() {
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐ THE CALENDAR FLOOR — 1.19.334 (2026-08-30, `CYCLE170-LD-MVP`).
- *     Bundle finding #1, RULED BY GANDALF from founder items 412 and 429.
+ *     Bundle finding #1, RULED BY `chief-of-staff` from founder items 412 and 429.
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * ⛔⛔ THE DEFECT THIS CLOSES IS AN HONESTY DEFECT, NOT A LAYOUT ONE. The hero
@@ -294,7 +294,7 @@ function bhp_readaloud_scheduler_dates() {
  * THE MONTH GRID — 1.19.331 (`CYCLE170-LD-TRIPLE`, carrier item 498).
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * Andrew Signore, carrier item 498, ⛔ RELAYED THROUGH GANDALF, NOT WITNESSED BY
+ * Andrew Signore, carrier item 498, ⛔ RELAYED THROUGH `chief-of-staff`, NOT WITNESSED BY
  * THIS BUILD: *"look like a calendar that you can scroll by month."*
  *
  * ⭐ THIS FUNCTION ADDS A SHAPE. IT ADDS NO PERMISSION. The set of days a
@@ -485,7 +485,7 @@ function bhp_readaloud_scheduler_months() {
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐⭐ THE WEEK PICKER — 1.19.335 (2026-08-30, `CYCLE170-LD-WEEKPICKER`).
- *      Carrier item **534**, founder-sealed, ⛔ RELAYED THROUGH GANDALF AND NOT
+ *      Carrier item **534**, founder-sealed, ⛔ RELAYED THROUGH `chief-of-staff` AND NOT
  *      WITNESSED BY THIS BUILD.
  * ═══════════════════════════════════════════════════════════════════════════
  *
@@ -755,7 +755,7 @@ function bhp_readaloud_scheduler_weeks() {
  * ⛔⛔ THE LABELS AND THE STATUSES ARE THE FOUNDER'S, VERBATIM, AND THIS BUILD
  *     AUTHORED NEITHER. Items 537/538/540: "Week of September 1 — Booked",
  *     "Week of September 14 — Booked", "Week of September 21 — Unavailable",
- *     "Week of September 28 — Unavailable". ⛔ RELAYED THROUGH GANDALF IN THE
+ *     "Week of September 28 — Unavailable". ⛔ RELAYED THROUGH `chief-of-staff` IN THE
  *     BRIEF, NOT WITNESSED FIRST-HAND BY THIS BUILD (§9.2 rule 3).
  *
  * ⛔ NO SCHOOL IS NAMED ON A CARD. The brief records WHY two weeks are booked
@@ -894,7 +894,7 @@ function bhp_readaloud_scheduler_week_by_value( $value ) {
  * ⭐⭐ THE HONEST LINE — carrier item 534, VERBATIM, and it is a founder
  *     statement about himself rather than copy this build wrote.
  *
- * ⛔ IT IS RELAYED THROUGH GANDALF AND WAS NOT WITNESSED BY THIS BUILD, and it
+ * ⛔ IT IS RELAYED THROUGH `chief-of-staff` AND WAS NOT WITNESSED BY THIS BUILD, and it
  *    is recorded that way here for the same reason item 498 is: a founder fact
  *    that entered through a brief is evidence of a relay, not of a first-hand
  *    hearing.
@@ -946,12 +946,12 @@ function bhp_readaloud_scheduler_honest_line() {
  *    and it is the first thing a teacher's eye lands on. One sentence answers the
  *    same question in the same place and spends no card on it.
  *
- * ⛔⛔ THE WORDS ARE THE FOUNDER'S, RELAYED THROUGH GANDALF IN THE CARRIER-562
+ * ⛔⛔ THE WORDS ARE THE FOUNDER'S, RELAYED THROUGH `chief-of-staff` IN THE CARRIER-562
  *     BRIEF, AND ⛔ NOT WITNESSED FIRST-HAND BY THIS BUILD (§9.2 rule 3) — the
  *     same provenance, stated the same way, as item 534's honest line and item
  *     541's fifth visit point.
  *
- * ⚠️⚠️ ONE HONESTY NUANCE, FLAGGED TO GANDALF RATHER THAN SETTLED HERE, BECAUSE
+ * ⚠️⚠️ ONE HONESTY NUANCE, FLAGGED TO `chief-of-staff` RATHER THAN SETTLED HERE, BECAUSE
  *      IT IS A COPY QUESTION AND COPY IS NOT THIS LANE'S TO DECIDE. The sealed
  *      September rows are TWO "Booked" and TWO "Unavailable". "September is full."
  *      is literally true as a statement about AVAILABILITY — no September week can
@@ -1177,7 +1177,7 @@ function bhp_readaloud_scheduler_slots() {
  *
  * ⛔ NO MILEAGE FIGURE IS PRINTED. Carrier item 309 carries a 25 mile radius,
  *    and whether that number is stated publicly is an OPEN founder decision
- *    (Merry's read-back sheet, decision 5). Printing it here would decide it
+ *    (the `marketing-growth` read-back sheet, decision 5). Printing it here would decide it
  *    for him. The wording below states the four cities and stops.
  *
  * @return array<string,string>
@@ -1515,7 +1515,7 @@ function bhp_readaloud_request_compose( $req ) {
  *
  * ⭐⭐ FOUNDER, item 553: *"If a teacher fills out their information for the read
  *    aloud- they should be put into the funnel"* — with the "smuggle the consent"
- *    half REJECTED by Gandalf and the rejection ACCEPTED by Andrew in the same
+ *    half REJECTED by `chief-of-staff` and the rejection ACCEPTED by Andrew in the same
  *    exchange (*"Ok thats great"*), then re-confirmed at item 554. The visible
  *    pre-checked control is in `inc/school-read-alouds.php`; read its block
  *    comment for the consent position. ⛔ RELAYED, read first-hand at the carrier.

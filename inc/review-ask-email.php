@@ -21,7 +21,7 @@
  *
  * ⛔ MAILCHIMP JOURNEY 94 CANNOT DELIVER THAT. Its entry filter is
  *    `Email subscription status is one of Subscribed`, and store-synced
- *    buyers arrive as TRANSACTIONAL contacts. On 2026-08-28 Gimli's live read
+ *    buyers arrive as TRANSACTIONAL contacts. On 2026-08-28 a `connected-operator` live read
  *    recorded 23 contacts tagged `Customer - Purchased` and 3 started in
  *    journey 94. ⭐ "Anyone who has bought" is therefore a promise only the
  *    STORE can keep, because the store is the only system that knows every
@@ -39,7 +39,7 @@
  * person who bought from this store is a RELATIONSHIP email in ordinary
  * retail practice. ⚠ It is NOT unambiguously a CAN-SPAM "transactional or
  * relationship message" under the statute's narrowly enumerated categories,
- * and Merry's build spec §2.2 says so plainly rather than pretending
+ * and the `marketing-growth` build spec §2.2 says so plainly rather than pretending
  * otherwise. That analysis is preserved, not overridden.
  *
  * ⭐ THE ENGINEERING ANSWER TO AN UNRESOLVED LEGAL QUESTION IS TO SATISFY THE
@@ -57,7 +57,7 @@
  * ⛔ NO COUPON, NO DISCOUNT, NO PRICE, NO SHIPPING FIGURE, NO UPSELL, NO
  *    PRODUCT BLOCK, NO LEAD MAGNET. That is not tidiness: a number that is not
  *    in the email cannot go stale, and conflict `C-B` (Collection shipping
- *    $3.99/$4.99 versus $0.00) is still OPEN and unresolved. Merry's spec §3
+ *    $3.99/$4.99 versus $0.00) is still OPEN and unresolved. The `marketing-growth` spec §3
  *    removed every figure for exactly this reason and the removal is load-
  *    bearing. ⛔ Do not add one back.
  *
@@ -90,7 +90,7 @@
  *    overdue at the 21-day delay.
  *    ➡ CLOSED BY AN EXCLUSION LIST: `bhp_review_ask_excluded_emails()`.
  *      ⛔ IT SHIPS EMPTY AND IT IS EMPTY-SAFE. Their identities are knowable
- *      only from Mailchimp, so the list is a seam Gandalf/Gimli fill with the
+ *      only from Mailchimp, so the list is a seam `chief-of-staff`/`connected-operator` fill with the
  *      four billing addresses BEFORE the production deploy. An empty list is
  *      not a bug in the code; it is an unfinished step in the deploy plan, and
  *      the deploy plan says so.
@@ -229,7 +229,7 @@ if ( ! defined( 'BHP_REVIEW_ASK_OPTOUT_QUERY' ) ) {
  *
  * ⛔⛔ CHANGING THIS ALONE MAKES THE APPROVED COPY UNTRUE, AND THE ENGINE
  *     REFUSES TO SEND RATHER THAN LIE. The first sentence of the approved
- *     email reads *"Your book turned up about three weeks ago"*. Merry's spec
+ *     email reads *"Your book turned up about three weeks ago"*. The `marketing-growth` spec
  *     §3 claim check states the wiring explicitly: *"Only true if the delay is
  *     21 days. If you keep 35 days, this line must read 'about five weeks
  *     ago.' They are wired together."*
@@ -386,7 +386,7 @@ function bhp_review_ask_copy() {
 		 *     DECISION AN ENGINEER MADE. IT IS FLAGGED FOR ANDREW, NOT HIDDEN.
 		 * ═══════════════════════════════════════════════════════════════════
 		 *
-		 * ⛔ THE APPROVED COPY HAS NO HEADING. Merry's spec §3 gives a subject,
+		 * ⛔ THE APPROVED COPY HAS NO HEADING. The `marketing-growth` spec §3 gives a subject,
 		 *    a preheader and a body that opens straight on "Hi ...,". There is
 		 *    no founder-approved H1 string for this email, and inventing one
 		 *    would be writing copy into an email whose copy is locked.
@@ -430,7 +430,7 @@ function bhp_review_ask_copy() {
 		'links_lead'      => __( 'Find the one you read:', 'brave-hearts' ),
 
 		/*
-		 * ⭐ THREE NAMED DOORS, NOT A GUESS. Merry's spec §4 sets out why: a
+		 * ⭐ THREE NAMED DOORS, NOT A GUESS. The `marketing-growth` spec §4 sets out why: a
 		 *    WooCommerce order knows which book was bought, but the ask is the
 		 *    same for every title and a reader disambiguates three names in a
 		 *    quarter of a second. Option B (branch by product) and Option C (a
@@ -440,7 +440,7 @@ function bhp_review_ask_copy() {
 		 * ⛔ THE ASINs ARE NOT TYPED FROM MEMORY. They are the canonical values
 		 *    in repo `docs\PROJECT_STATE.md` lines 347-349, checked against that
 		 *    file on 2026-08-29. The three `create-review` URLs were fetched by
-		 *    Merry's lane on 2026-08-29 and returned HTTP 200.
+		 *    the `marketing-growth` lane on 2026-08-29 and returned HTTP 200.
 		 *
 		 * ⚠ WHAT 200 DOES NOT PROVE, carried forward from the spec rather than
 		 *   quietly dropped: it was a SIGNED-OUT fetch. It does not prove the
@@ -887,7 +887,7 @@ function bhp_review_ask_record_customer( $email, $order = null ) {
  * this store can find them, and inventing a list from order dates would be a
  * guess dressed as a fact.
  *
- * ⭐ SO THIS IS A SEAM, NOT A GUESS. Gandalf/Gimli read the four billing
+ * ⭐ SO THIS IS A SEAM, NOT A GUESS. `chief-of-staff`/`connected-operator` read the four billing
  *    addresses out of Mailchimp and fill it BEFORE the production deploy, by
  *    either route:
  *      - `wp option update bhp_review_ask_excluded_emails '["a@x.com", ...]' --format=json`

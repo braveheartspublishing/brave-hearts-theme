@@ -3,7 +3,7 @@
  * CYCLE170-LD-TRIPLE — three founder-sealed changes in one build. Theme
  * 1.19.331 (2026-08-30). STAGING ONLY.
  *
- * The three, each RELAYED THROUGH GANDALF, NOT WITNESSED BY THIS BUILD:
+ * The three, each RELAYED THROUGH `chief-of-staff`, NOT WITNESSED BY THIS BUILD:
  *
  *   · item 507 — the photo carousel: *"too big for the screen... it should fit
  *     nicely between the nav bar and the bottom of the page to see the entire

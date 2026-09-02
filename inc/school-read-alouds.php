@@ -15,7 +15,7 @@
  * ⭐⭐ WHAT THIS RESOLVES, AND IT IS THE POINT OF THE WHOLE LANE.
  * ---------------------------------------------------------------------------
  * The site had grown FOUR read-aloud surfaces, and three of them overlapped.
- * Merry recorded it as conflict **C-A** on 2026-08-29 and did not resolve it,
+ * `marketing-growth` recorded it as conflict **C-A** on 2026-08-29 and did not resolve it,
  * correctly, because it was Andrew's to resolve. He resolved it: **ONE page.**
  *
  *   /author-visits/  upcoming visits, past read-alouds, gallery, booking CTA
@@ -46,7 +46,7 @@
  * ⛔ TWO SURFACES ARE **NOT** PART OF THIS MERGE AND ARE NOT TOUCHED, NOT
  *    REDIRECTED AND NOT RENAMED. Naming them here because their slugs are one
  *    character apart from each other and from this one, which is exactly the
- *    trap Merry flagged as conflict C-F:
+ *    trap `marketing-growth` flagged as conflict C-F:
  *      · `/read-aloud/`  — the QR take-home landing page a child's colouring
  *        sheet points at. Printed material points at it. Breaking it breaks paper.
  *      · `/read-alouds/` — page id 108, an older classroom-resources article.
@@ -105,7 +105,7 @@ function bhp_school_readalouds_url() {
  * ⭐⭐ THE ONE BEHAVIOURAL CHANGE FROM 1.19.325: THIS SCROLLS, IT DOES NOT MAIL.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔ At 1.19.325 the hero button was a `mailto:`. Merry flagged the honesty gap
+ * ⛔ At 1.19.325 the hero button was a `mailto:`. `marketing-growth` flagged the honesty gap
  *    in her read-back sheet (decision 4): the button says "Book" and a `mailto:`
  *    books nothing, it opens a mail client. The founder's 2026-08-30 ruling
  *    closes that gap by asking for a real scheduler, so the button now takes the
@@ -379,7 +379,7 @@ function bhp_school_readalouds_render_scheduler() {
 	       *    TYPOGRAPHIC ONE (U+2019), AND THE FLAG BELOW IS CLOSED.
 	       *
 	       *    1.19.333 shipped a STRAIGHT apostrophe (U+0027) because that is
-	       *    how the brief typed it, and flagged the divergence for Gandalf
+	       *    how the brief typed it, and flagged the divergence for `chief-of-staff`
 	       *    rather than deciding it. ⭐ HE RULED FOR HOUSE TYPOGRAPHY: every
 	       *    other visible string on this page uses U+2019, and one straight
 	       *    quote in a section heading reads as a typo on the founder's own
@@ -468,7 +468,7 @@ function bhp_school_readalouds_render_scheduler() {
 	       *    character against item 534.
 	       *
 	       * ⛔ IT IS NOT A CLAIM THIS BUILD MADE. It is the founder's statement
-	       *    about his own work, relayed through Gandalf in the brief.
+	       *    about his own work, relayed through `chief-of-staff` in the brief.
 	       */
 	      ?>
 	      <p class="readaloud-sched__honest">
@@ -698,7 +698,7 @@ function bhp_school_readalouds_render_scheduler() {
 	               * ⛔ UI CHROME, NOT FOUNDER-SEALED COPY. No approved string is
 	               *    edited by this change — the four card labels, the four
 	               *    status words and the honest line are untouched. ⚠️ Flagged
-	               *    to Gandalf in the deploy plan rather than assumed.
+	               *    to `chief-of-staff` in the deploy plan rather than assumed.
 	               */
 	              ?>
 	              <?php
@@ -710,7 +710,7 @@ function bhp_school_readalouds_render_scheduler() {
 	               *    ahead" is still literally true of what sits under it,
 	               *    reverting would be a copy change nobody asked for, and
 	               *    `test-cycle170-final.php` §5c asserts the superseded
-	               *    string stays gone. Flagged to Gandalf, not decided here.
+	               *    string stays gone. Flagged to `chief-of-staff`, not decided here.
 	               */
 	              ?>
 	              <p class="readaloud-sched__cal-title"><?php esc_html_e( 'The weeks ahead', 'brave-hearts' ); ?></p>
@@ -964,7 +964,7 @@ function bhp_school_readalouds_render_scheduler() {
 	           *    preference that materially changes whether he can take the visit
 	           *    at all. The WEEKDAY boxes, which the brief calls optional in so
 	           *    many words, are genuinely optional and carry no `required`.
-	           *    ⭐ FLAGGED TO GANDALF RATHER THAN DECIDED SILENTLY. Making these
+	           *    ⭐ FLAGGED TO `chief-of-staff` RATHER THAN DECIDED SILENTLY. Making these
 	           *    optional is a one-line handler change if he rules the other way.
 	           */
 	          ?>
@@ -1044,7 +1044,7 @@ function bhp_school_readalouds_render_scheduler() {
 	         *       they should be put into the funnel and we should smuggle the
 	         *       consent into"
 	         *
-	         *    ⛔⛔ AND THE PART THAT MATTERS MORE THAN THE INSTRUCTION: GANDALF
+	         *    ⛔⛔ AND THE PART THAT MATTERS MORE THAN THE INSTRUCTION: `chief-of-staff`
 	         *      PUSHED BACK ON "smuggle" — buried consent is a spam-complaint,
 	         *      a Mailchimp-compliance and a brand risk — and proposed a
 	         *      VISIBLE, PRE-CHECKED, CLEARLY LABELLED box instead. ⭐ ANDREW

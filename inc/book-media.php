@@ -253,7 +253,7 @@ function bhp_book_media_registry() {
                  *         issues"
                  *
                  *    ⚠ RELAYED, NOT WITNESSED FIRST-HAND. It reached this
-                 *      session through `chief-of-staff` (Gandalf) in the build
+                 *      session through `chief-of-staff` in the build
                  *      brief, and it is described here as a relay rather than
                  *      dressed up as a direct observation.
                  *
@@ -302,7 +302,7 @@ function bhp_book_media_registry() {
                  *     "spelling issues", so this session did NOT read it as
                  *     covering a wrong product identifier, and did NOT resolve
                  *     the question either way. It is STAGED and ESCALATED:
-                 *     `CYCLE148-LD-12`, routed to Andrew through Gandalf.
+                 *     `CYCLE148-LD-12`, routed to Andrew through `chief-of-staff`.
                  *     ⛔ Do not deploy this slug to production until Andrew has
                  *     answered it. The other three carry text artefacts only.
                  *
@@ -567,7 +567,7 @@ function bhp_book_media_registry() {
                  *         then all the pictures with the dark blue gray
                  *         background"
                  *
-                 *    ⚠ RELAYED through `chief-of-staff` (Gandalf) in the build
+                 *    ⚠ RELAYED through `chief-of-staff` in the build
                  *      brief. NOT witnessed first-hand by this session. The
                  *      durable record is the founder-decision entry handed to
                  *      `business-ops-knowledge` in the same sitting — a code

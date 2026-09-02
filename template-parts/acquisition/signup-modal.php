@@ -5,8 +5,8 @@
  *
  * WHAT IT IS. A modal that a visitor OPENS BY CLICKING A CTA, so they can
  * type an email address and subscribe without scrolling to the inline
- * capture panel. Andrew Signore, current turn, relayed through Gandalf
- * (`chief-of-staff`): the funnel CTAs that currently scroll down to the
+ * capture panel. Andrew Signore, current turn, relayed through
+ * `chief-of-staff`: the funnel CTAs that currently scroll down to the
  * signup panel must instead open a signup popup — "no scrolling, immediate
  * capture".
  *
@@ -116,7 +116,7 @@ $force_open       = ($submitted_form === $form_id && $submitted_status && $submi
 
 /*
  * ⭐ THE FRONT COVER OF THIS FUNNEL'S OWN PDF. Andrew Signore, relayed through
- *    Gandalf, 2026-08-13: each page's popup carries the front cover of its own
+ *    `chief-of-staff`, 2026-08-13: each page's popup carries the front cover of its own
  *    lead magnet, top right. `bhp_get_lead_magnet_cover()` resolves it from a
  *    page-1 render of the REAL PDF and returns [] when there is no cover — the
  *    retailers modal never renders at all (no PDF on either environment), so

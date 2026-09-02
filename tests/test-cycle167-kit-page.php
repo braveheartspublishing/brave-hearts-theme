@@ -641,7 +641,7 @@ bhp_kit_ok(
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * §5e · ⭐⭐ THE DESKTOP FOLD BUDGET — theme 1.19.311,
- *        `CYCLE167-LD-KIT-FOLD-FIX`. Founder-reported, RELAYED by Gandalf:
+ *        `CYCLE167-LD-KIT-FOLD-FIX`. Founder-reported, RELAYED by `chief-of-staff`:
  *        "Also the CTA is not above the fold on desktop"
  * ═══════════════════════════════════════════════════════════════════════════
  *

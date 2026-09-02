@@ -777,7 +777,30 @@ function bhp_enqueue_collection_band_assets() {
 }
 add_action('wp_enqueue_scripts', 'bhp_enqueue_collection_band_assets');
 
-function bhp_woo_columns($columns) { return 3; }
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.350 — `loop_shop_columns` NOW AGREES WITH THE CSS. `CYCLE179-CX-004`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED LINE, PRESERVED: `function bhp_woo_columns($columns) {
+ *    return 3; }`. It returned 3 while the grid rendered FOUR cards per row at
+ *    1440 and above, because the effective column count is set by
+ *    `grid-template-columns` in `style.css` and CSS wins. VERIFIED LIVE
+ *    2026-09-02: PHP said 3, the DOM measured 4. Anyone changing the grid in
+ *    PHP alone saw no effect, which is exactly what `CYCLE179-CX-004` records.
+ *
+ * ⭐ SO BOTH MOVE TOGETHER AND THE PHP STATES THE TRUTH. Five on a catalog
+ *    grid, matching the five-up row in the founder-approved concept and the
+ *    `grid-template-columns: repeat(5, …)` rule that actually lays it out.
+ *
+ * ⛔ THREE EVERYWHERE ELSE, UNCHANGED. This filter fires on every product loop
+ *    on the site, including the product page's related and upsell rows. Those
+ *    are not a catalog grid, nobody has ruled on them, and they keep 1.19.349's
+ *    number byte for byte.
+ */
+function bhp_woo_columns($columns) {
+    return (function_exists('bhp_catalog_grid_context') && bhp_catalog_grid_context()) ? 5 : 3;
+}
 add_filter('loop_shop_columns', 'bhp_woo_columns');
 
 function bhp_woo_per_page($num) { return 12; }
@@ -802,6 +825,47 @@ function bhp_body_classes($classes) {
     if (is_page()) {
         $classes[] = 'page-' . get_post_field('post_name', get_post());
     }
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.349 (`CYCLE179-LD-349`) — THE STAGING-ONLY CTA COLOUR PREVIEW.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ WHY IT EXISTS. `design-creative` recommends FOREST for the primary
+     *    button and
+     *    both Concept mocks draw it forest: the Brand Identity Kit lists four
+     *    approved button grounds and none of them is gold, and forest #173f2f
+     *    on parchment-light type measures 10.62:1, which is AAA. ⛔ GOLD IS
+     *    AND REMAINS THE DEFAULT — it is the founder's, it is what is live on
+     *    both environments today, and a button colour is a BRAND decision, not
+     *    a layout fix (the `chief-of-staff` consolidated proposal, "Not in
+     *    scope"). This
+     *    lets him see the alternative on the real page instead of in a mock,
+     *    and it changes nothing until he says so.
+     *
+     * ⛔⛔ IT CANNOT RUN ON PRODUCTION. The host test is the gate, not the
+     *     query parameter. `braveheartspublishing.com` never sees this class
+     *     no matter what is appended to a URL, so a shared or crawled link
+     *     cannot repaint the live buy button. `staging2.` is matched at the
+     *     START of the host, so a lookalike domain ending in the same string
+     *     does not satisfy it.
+     *
+     * ⛔ IT IS PRESENTATION ONLY. It adds one body class. It reads nothing
+     *    else from the request, writes no option, sets no cookie, touches no
+     *    session, and changes no price, product, cart or setting. No nonce is
+     *    needed because nothing is mutated; the value is compared against one
+     *    literal rather than interpolated anywhere.
+     *
+     * ⛔ NOT A FEATURE FLAG AND NOT A HALF-SHIPPED DECISION. When Andrew
+     *    chooses, one of two things happens: the block is deleted, or the
+     *    forest rule in `style.css` loses its `body.bhp-cta-forest` prefix.
+     */
+    if (isset($_GET['bhp_cta'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- presentational only; nothing is mutated.
+        $bhp_host = isset($_SERVER['HTTP_HOST']) ? strtolower(sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST']))) : '';
+        if (0 === strpos($bhp_host, 'staging2.')
+            && 'forest' === sanitize_key(wp_unslash($_GET['bhp_cta']))) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $classes[] = 'bhp-cta-forest';
+        }
+    }
     if (function_exists('is_woocommerce') && is_woocommerce()) {
         $classes[] = 'woo-page';
     }
@@ -811,6 +875,45 @@ function bhp_body_classes($classes) {
             $adventure_key = bhp_get_adventure_key_for_product($product);
             if ($adventure_key) {
                 $classes[] = 'bhp-book-' . $adventure_key;
+            }
+
+            /*
+             * ⭐ 1.19.347 (CYCLE178-LD-347) — MULTI-IMAGE GALLERY SIGNAL.
+             *
+             * THE DEFECT IT FIXES: `assets/css/book-formats.css` caps the
+             * WooCommerce product gallery at `max-width: 150px` under 782px.
+             * That cap was written on 2026-07-30 for a gallery that held ONE
+             * image — the cover — where shrinking it lifts the format cards
+             * and the CTA into the first screen. It is still right for the six
+             * chapter books, whose `_product_image_gallery` is empty (verified
+             * live on staging 2026-09-02: products 14, 17 and 20 all return an
+             * empty gallery meta).
+             *
+             * ⛔ IT IS WRONG FOR THE COLOURING LINE. Product 4065 carries six
+             * gallery images of interior pages (verified live on staging
+             * 2026-09-02: `_product_image_gallery` = 7343,7344,7345,7346,7347,
+             * 7348). Interior previews are the whole purchase argument for a
+             * colouring book, and at 150px on a phone they are unreadable.
+             *
+             * ⭐ WHY A SERVER-SIDE CLASS AND NOT `:has()`. A CSS
+             * `.woocommerce-product-gallery:has(.flex-control-thumbs li + li)`
+             * would express the same condition, but it is unsupported in
+             * Firefox before 121 and in every pre-2023 Safari, and the failure
+             * mode is silent — the phone simply keeps the 150px cap with no
+             * way to tell from the page that the rule never matched. The class
+             * is computed once, from product data, and is inspectable in the
+             * DOM. No fallback is required because there is no query to fail.
+             *
+             * ⭐ THE TEST IS THE GALLERY META, NOT THE PRODUCT TYPE. Any
+             * product that gains a second image gets the wider gallery without
+             * a code change, and any product that loses one goes back to the
+             * compact cover. Nothing is hardcoded to 4065.
+             */
+            if (method_exists($product, 'get_gallery_image_ids')) {
+                $bhp_gallery_ids = $product->get_gallery_image_ids();
+                if (is_array($bhp_gallery_ids) && count($bhp_gallery_ids) > 0) {
+                    $classes[] = 'bhp-gallery-multi';
+                }
             }
         }
     }
@@ -843,17 +946,70 @@ add_action('woocommerce_after_main_content', 'bhp_woo_wrapper_end', 10);
  * replacing product markup, schema, variation forms, or checkout behavior.
  */
 function bhp_woocommerce_archive_hero() {
-    if (!function_exists('is_shop') || (!is_shop() && !is_product_taxonomy())) {
+    if (!function_exists('is_shop') || (!is_shop() && !is_product_taxonomy() && !bhp_catalog_grid_context())) {
         return;
     }
 
     $title = is_shop() ? __('The Expedition Catalog', 'brave-hearts') : woocommerce_page_title(false);
+
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐⭐ 1.19.350 — ONE BAND INSTEAD OF FOUR. `CYCLE179-LD-350-BUILD`, M1.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⭐ ANDREW SIGNORE, seal 680, verbatim: *"also we need to look at the
+     *    actual 'Adventure books page' and look at the competition and fix it
+     *    as well. Look at whats above the fold."* Concept approved at seal 686.
+     *
+     * ⛔⛔ THE SUPERSEDED HERO, PRESERVED SO THE MOVEMENT IS VISIBLE AND IS NOT
+     *     RE-DERIVED. Until this release this function rendered:
+     *
+     *       <header class="interior-hero interior-hero--product woo-archive-hero">
+     *         <div class="container">
+     *           <p class="component-heading__eyebrow">Real places. Doors into wonder.</p>
+     *           <h1>{title}</h1>
+     *           <p class="text-lead">Choose the real-world adventure and edition
+     *              that fits your reader.</p>
+     *         </div>
+     *       </header>
+     *
+     *     — an eyebrow stacked above a headline above a subheading, MEASURED
+     *     LIVE at 279px at 1440x900 on staging2 on 2026-09-02, on top of an
+     *     80px header, a 34px breadcrumb and a 62px count-and-sort row. 455px
+     *     of furniture before the first cover, on a catalog of five items.
+     *
+     * ⛔ THE WORDS OF THE H1 ARE UNCHANGED, AND THAT IS A FOUNDER DEFAULT, NOT
+     *    A CHOICE MADE HERE (seal 704): the H1 stays "The Expedition Catalog"
+     *    unless he rules "Adventure Books" to match the nav label. That ruling
+     *    is still OPEN (`A7` in `SHOP-RECON-AND-PROPOSAL.md` §5). ⛔ Locked
+     *    copy is proposed, never changed.
+     *
+     * ⚠️ ONE DELIBERATE DEVIATION FROM THE CONCEPT OF RECORD, RECORDED RATHER
+     *    THAN SMOOTHED: the mock draws "Adventures of Charlotte and Henry" as
+     *    the band's own display line, which would REPLACE the H1's words. The
+     *    founder default says the H1's words do not move. Both are satisfied by
+     *    carrying the series name as the band's eyebrow ON ITS OWN ROW and
+     *    leaving the H1 as the display line beside the diamond and the brand
+     *    line. That costs about 24px against the mock's single row and is why
+     *    this band is ~96px rather than the mock's 72px. Flagged to
+     *    `chief-of-staff`.
+     *
+     * ⛔ NO NEW CLAIM. Every string in this band is already live on the site:
+     *    the series name, the brand line "Big Places. Brave Hearts." and the
+     *    formats-and-ages note, which is the standing approved age band (6 to 9,
+     *    ⛔ never 5 to 9). ⛔ No "we" (§9.1). ⛔ No em dash (608a). ⛔ No outcome
+     *    claim.
+     */
     ?>
-    <header class="interior-hero interior-hero--product woo-archive-hero">
-      <div class="container">
-        <p class="component-heading__eyebrow"><?php esc_html_e('Real places. Doors into wonder.', 'brave-hearts'); ?></p>
-        <h1><?php echo esc_html($title); ?></h1>
-        <p class="text-lead"><?php esc_html_e('Choose the real-world adventure and edition that fits your reader.', 'brave-hearts'); ?></p>
+    <header class="interior-hero interior-hero--product woo-archive-hero bhp-catalog-band">
+      <div class="container bhp-catalog-band__inner">
+        <p class="bhp-catalog-band__series"><?php esc_html_e('Adventures of Charlotte and Henry', 'brave-hearts'); ?></p>
+        <div class="bhp-catalog-band__row">
+          <h1 class="bhp-catalog-band__title"><?php echo esc_html($title); ?></h1>
+          <span class="bhp-catalog-band__diamond" aria-hidden="true">&#9670;</span>
+          <p class="bhp-catalog-band__line"><?php esc_html_e('Big Places. Brave Hearts.', 'brave-hearts'); ?></p>
+          <p class="bhp-catalog-band__meta"><?php esc_html_e('Paperback and hardcover · Ages 6 to 9', 'brave-hearts'); ?></p>
+        </div>
       </div>
     </header>
     <?php
@@ -868,7 +1024,7 @@ add_action('woocommerce_before_main_content', 'bhp_woocommerce_archive_hero', 5)
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * ⭐ ANDREW SIGNORE, carrier item 207, 2026-08-21. ⚠️ RELAYED through
- *    `chief-of-staff` (Gandalf 9) in the build brief — ⛔ NOT witnessed
+ *    `chief-of-staff` (brief item 9) in the build brief — ⛔ NOT witnessed
  *    first-hand by the agent that made this change. Recorded as relayed, per
  *    Standing Rules §9.2 rule 2, so the basis of the claim travels with it.
  *    His instruction: the collection carousel / series block comes OFF the
@@ -1089,9 +1245,22 @@ add_action('woocommerce_before_main_content', 'bhp_woocommerce_archive_hero', 5)
  *    in the same release. ⭐ One offer, one place, one control.
  */
 
-/** Add clear expedition metadata labels to product cards. */
+/**
+ * Add clear expedition metadata labels to product cards.
+ *
+ * ⭐ 1.19.350 — THE EYEBROW NOW SAYS WHERE THE READER STARTS. The superseded
+ *    body printed the SAME string, "Brave Hearts Expedition", on all five
+ *    cards, which is a label that distinguishes nothing in a grid where every
+ *    card is a Brave Hearts expedition. `bhp_catalog_card_eyebrow()` reads the
+ *    position out of the registry's own order, so the grid and the product
+ *    pages cannot disagree about which book is Book 1, and it falls back to the
+ *    superseded string for any card it cannot place.
+ */
 function bhp_woocommerce_loop_card_eyebrow() {
-    echo '<p class="woo-card__eyebrow">' . esc_html__('Brave Hearts Expedition', 'brave-hearts') . '</p>';
+    $bhp_eyebrow = function_exists('bhp_catalog_card_eyebrow')
+        ? bhp_catalog_card_eyebrow(get_the_ID())
+        : __('Brave Hearts Expedition', 'brave-hearts');
+    echo '<p class="woo-card__eyebrow">' . esc_html($bhp_eyebrow) . '</p>';
 }
 add_action('woocommerce_shop_loop_item_title', 'bhp_woocommerce_loop_card_eyebrow', 5);
 
@@ -2517,7 +2686,7 @@ function bhp_get_lead_magnets() {
  *
  * ⭐ EVERY IMAGE THIS RETURNS IS A PAGE-1 RENDER OF THE REAL PDF, AND THAT
  *    PROVENANCE IS THE WHOLE POINT OF THE FUNCTION. Andrew Signore, relayed
- *    through Gandalf: each funnel's popup carries "the front cover of its own
+ *    through `chief-of-staff`: each funnel's popup carries "the front cover of its own
  *    PDF". Nothing here is illustrated, generated, mocked up or borrowed from
  *    a neighbouring magnet — the never-invent rule covers imagery that claims
  *    to be a real artefact exactly as it covers a claim in prose.
@@ -3319,7 +3488,7 @@ function bhp_should_show_parent_ab_popup() {
      *    IS NOW HOMEPAGE-ONLY. IT IS NARROWED, NOT KILLED.
      * ═══════════════════════════════════════════════════════════════════
      *
-     * ⭐ THE FINDING (`commerce-cx` / Pippin, `CYCLE164-CX` #3): this popup
+     * ⭐ THE FINDING (`commerce-cx`, `CYCLE164-CX` #3): this popup
      *    fires at ~16s at 100% of viewports on the homepage, the Complete
      *    Collection page AND the product pages. VERIFIED LIVE on staging
      *    2026-08-18 before the change: `.mariana-popup--ab` was present in
@@ -3372,7 +3541,7 @@ function bhp_should_show_parent_ab_popup() {
      *    and both funnels' own landing and thank-you pages. Interrupting
      *    somebody who is already reading a price is the one place a capture
      *    overlay costs more than it earns — that finding
-     *    (`commerce-cx` / Pippin, `CYCLE164-CX` #3) is unchanged and this
+     *    (`commerce-cx`, `CYCLE164-CX` #3) is unchanged and this
      *    release does not touch it.
      *
      * ⛔ `is_singular('post')` IS THE NARROWEST TEST THAT MEANS "A BLOG POST".
@@ -3389,7 +3558,7 @@ function bhp_should_show_parent_ab_popup() {
      *    `/complete-collection/`.
      * ═══════════════════════════════════════════════════════════════════
      *
-     * ⭐ THE FINDING (Merry, `CYCLE167-MKT-CAPTURE-ENTICEMENT-R3`, verified
+     * ⭐ THE FINDING (`marketing-growth`, `CYCLE167-MKT-CAPTURE-ENTICEMENT-R3`, verified
      *    live + 30 days of production access logs): `/complete-collection/`
      *    takes **134 human entries in 30 days — rank 1 on the whole site** —
      *    and carried the HARDEST capture gate we run. Because it is neither
@@ -3403,7 +3572,7 @@ function bhp_should_show_parent_ab_popup() {
      *
      * ⛔⛔ THIS MOVES AGAINST A RECORDED ENGINEERING FINDING, AND IT IS
      *    FLAGGED RATHER THAN SMUGGLED. 1.19.241 excluded the commercial-intent
-     *    pages on `commerce-cx` / Pippin's `CYCLE164-CX` #3: *"interrupting
+     *    pages on the `commerce-cx` `CYCLE164-CX` #3: *"interrupting
      *    somebody who is already reading a price is the one place a capture
      *    overlay costs more than it earns."* That finding is NOT refuted by
      *    anything here and it is not deleted from this file.
@@ -3414,7 +3583,7 @@ function bhp_should_show_parent_ab_popup() {
      *    biggest KPIs."* ⚠ RELAYED through the Chief of Staff, not witnessed
      *    by this build. ⛔ IT IS STAGING-ONLY UNTIL HE TOKEN-TOUCHES A DEPLOY.
      *
-     * ⚠ A NARROWER OPTION EXISTS AND HE SHOULD SEE IT. Merry's own R4
+     * ⚠ A NARROWER OPTION EXISTS AND HE SHOULD SEE IT. The `marketing-growth` R4
      *   recommends this flip on MOBILE ONLY, leaving desktop exit-intent alone
      *   because a real mouse-leave is a genuine signal that costs a buyer
      *   nothing. The engine reads `trigger.mode` globally rather than per
@@ -3970,7 +4139,7 @@ function bhp_should_show_footer_capture() {
  *    nothing else.
  *
  * The four labels are the four LIVE segments, verbatim from
- * `/find-your-adventure/` — Merry's SET A, adopted so every selection maps
+ * `/find-your-adventure/` — the `marketing-growth` SET A, adopted so every selection maps
  * to a segment the business already recognises rather than to an unrouted
  * "Other" bucket (`CYCLE143-MKT-135`).
  */
@@ -4031,7 +4200,7 @@ function bhp_resolve_capture_segment($key) {
  *    tag for all four segments. The segment only adds an audience tag and
  *    a distinct source tag. In particular the gift lane gets
  *    "Audience: Gift Buyer" and NOT "Meaningful Gift Guide", because
- *    Gandalf's ruling is capture-and-tag only until a gift journey exists.
+ *    The `chief-of-staff` ruling is capture-and-tag only until a gift journey exists.
  */
 add_filter('bhp_mailchimp_signup_tags', function ($tags, $context, $audience_type, $lead_magnet, $source_page) {
     if ($context === 'footer_capture') {
@@ -4167,7 +4336,7 @@ function bhp_home_price_cues_enabled() {
  * ⛔ NO PRICE STRING IS HARDCODED. The number is the lowest live format
  *    price for that title, formatted by WooCommerce, exactly as the
  *    activity-book module does it. If prices move, this moves with them —
- *    which is the whole reason Merry flagged "From $11.99" as carrying a
+ *    which is the whole reason `marketing-growth` flagged "From $11.99" as carrying a
  *    recheck date if it were typed into a template.
  *
  * Returns '' when no price is available, so the card renders unchanged.
@@ -4272,7 +4441,7 @@ function bhp_extract_price_amounts($price_html) {
  *    OVERNIGHT-EXECUTION-REGISTER-2026-08-04.md` (Message 38), and accepted
  *    with "Accept" in the same session. This is a FOUNDER-ATTESTED FACT about
  *    his own distribution, which is the one category of claim he is himself
- *    the primary source for. It closes Merry's gate G-W1-5 / CYCLE143-MKT-134.
+ *    the primary source for. It closes the `marketing-growth` gate G-W1-5 / CYCLE143-MKT-134.
  *
  * ⚠️ IT IS AN ATTESTATION, NOT A RETAILER SWEEP. Nobody crawled Amazon. If
  *    the book is ever listed anywhere else, this line becomes false on the
@@ -4328,7 +4497,7 @@ function bhp_get_activity_book_framing() {
             : '',
         'title'   => __('The Adventure Activity Book', 'brave-hearts'),
         'benefit' => $benefit,
-        // Merry §5.4, the claim-free line that ships today.
+        // `marketing-growth` §5.4, the claim-free line that ships today.
         'note'    => __('A companion download you can add to any book order.', 'brave-hearts'),
     ];
 }
@@ -4799,6 +4968,30 @@ require_once get_template_directory() . '/inc/colouring-line.php';
 // order they render, and after book-formats.php/the bundle plugin so the live
 // price helpers exist by the time header.php calls the renderer.
 require_once get_template_directory() . '/inc/header-offer.php';
+/*
+ * ⭐⭐⭐ 1.19.350, `CYCLE179-LD-350-BUILD` — THE CATALOG SURFACES.
+ *
+ * Loaded AFTER `book-formats.php` and `colouring-line.php` because it UNHOOKS
+ * two of their neighbours' card hooks (`bhp_woocommerce_loop_kirkus_badge`,
+ * `bhp_woocommerce_loop_amazon_review_badge`) and reads both registries for the
+ * grid's reading order. ⛔ Every removal it performs runs on `wp`, well after
+ * every file above has registered, so load order here cannot cause a silent
+ * no-op the way a `remove_action()` at include time would.
+ *
+ * ⛔ IT FAILS CLOSED WHERE THE CATALOG IS ABSENT. Every hook it registers gates
+ *    on `bhp_catalog_grid_context()`, which is false on admin, on a single
+ *    product page and on every non-catalog request, so a site without the shop
+ *    renders exactly what it rendered in 1.19.349.
+ */
+require_once get_template_directory() . '/inc/catalog-surfaces.php';
+/*
+ * ⭐⭐ 1.19.350 — THE SCHOOL-VISIT BAND. Loaded AFTER `catalog-surfaces.php`
+ *    because it gates on `bhp_catalog_grid_context()`, and it is a THEME file
+ *    on purpose: production runs bundle plugin 1.8.78 and staging 1.8.79, so a
+ *    plugin-side band would have turned a theme release into a two-artefact
+ *    release. Every plugin call inside it is `function_exists()`-guarded.
+ */
+require_once get_template_directory() . '/inc/visit-band.php';
 
 /*
  * 1.19.304, `CYCLE167-LD-RETAILER-PAGE` — the bookseller/retailer trade
@@ -4885,7 +5078,7 @@ require_once get_template_directory() . '/inc/readaloud-approved-copy.php';
 
 // The /school-read-alouds/ photo carousel's data and script (1.19.330,
 // CYCLE170-LD-READALOUD-CAROUSEL, Andrew's carrier item 497 relayed through
-// Gandalf). It COMPOSES bhp_author_visits_gallery_photos() and adds one flat,
+// `chief-of-staff`). It COMPOSES bhp_author_visits_gallery_photos() and adds one flat,
 // newest-first list; it forks nothing and edits no registry, so
 // inc/author-visits.php and inc/gallery-page.php keep governing what they
 // already governed and /gallery/ is untouched. It writes NO option, post, page
@@ -4909,7 +5102,7 @@ require_once get_template_directory() . '/inc/readaloud-carousel.php';
 
 // Coupon links: `?coupon=<code>` applies an ALREADY-EXISTING, published, enabled
 // WooCommerce coupon to the clicker's own cart (1.19.331, CYCLE170-LD-TRIPLE,
-// Andrew's carrier items 504/505 relayed through Gandalf).
+// Andrew's carrier items 504/505 relayed through `chief-of-staff`).
 // ⛔ IT CREATES NO COUPON AND EDITS NO COUPON, PRICE, PRODUCT OR SETTING. There
 //    is no write of any kind to a coupon record in that file; a code WooCommerce
 //    does not already hold does nothing at all, and an unknown or disabled code
@@ -5482,12 +5675,49 @@ function bhp_woocommerce_product_value_prop() {
     $bhp_age_mark = function_exists('bhp_product_ages_mark_html') && function_exists('bhp_product_template_enabled') && bhp_product_template_enabled()
         ? bhp_product_ages_mark_html()
         : '';
+
+    /*
+     * ⭐ 1.19.346 (2026-09-02, CYCLE178-LD-345-PDP-LINE) — THE HOOK IS
+     *    PRODUCT-AWARE. `commerce-cx`'s colouring-line launch review (see
+     *    internal release notes) found the chapter-book sentence verbatim on the
+     *    COLOURING PDP, where it describes an object that does not exist: that
+     *    book has no chapters, no history and no science.
+     *
+     * ⛔ THE TEST IS THE PLUGIN'S SKU-KEYED ID RESOLVER, VIA THE THEME'S
+     *    `bhp_colouring_slug_for_product()`, and the choice is load-bearing
+     *    rather than stylistic. THE COLOURING PRODUCT HAS A DIFFERENT POST ID
+     *    ON EACH ENVIRONMENT — verified first-hand this build by SKU lookup:
+     *    **618 on production, 4065 on staging**, both SKU `9798996810840`.
+     *    A hardcoded `618` would therefore be correct on production and
+     *    SILENTLY WRONG on staging, which is the environment this fix is
+     *    verified on — the defect would "pass QA" and ship unfixed. The SKU
+     *    resolver is the single source of truth on both, and is exactly what
+     *    `bhp_colouring_is_product_page()` and the format rail already use.
+     *
+     * ⛔ TITLE-SUBSTRING MATCHING IS NOT AN OPTION HERE: `CYCLE165-OPS-019` was
+     *    that bug, and `colouring-line.php` says so where the resolver lives.
+     *
+     * ⛔ DEGRADES TO EXACTLY 1.19.345's OUTPUT. With the include absent or the
+     *    plugin's resolver unavailable, `function_exists()` fails and the
+     *    chapter-book sentence renders as before on every page, colouring
+     *    included. No page loses its line.
+     *
+     * ⭐ THE AGE LINE IS DELIBERATELY UNCHANGED. "Ages 6-9" is true of the
+     *    colouring book (his own cover says so) and 4065 carries no
+     *    `bhp_age_range` override, so it takes the same correct fallback.
+     */
+    $bhp_is_colouring = function_exists('bhp_colouring_slug_for_product')
+        && null !== bhp_colouring_slug_for_product($product->get_id());
+
+    $bhp_hook = $bhp_is_colouring && function_exists('bhp_colouring_draft_copy')
+        ? bhp_colouring_draft_copy('value_prop_hook')
+        : __('Adventure chapter books for ages 6–9 that combine real places, science, history, courage, and kindness.', 'brave-hearts');
     ?>
     <div class="bhp-product-value-prop">
         <span class="bhp-product-value-prop__age"><?php
         echo $bhp_age_mark; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static, pre-escaped SVG from bhp_product_ages_mark_html().
         ?><?php echo esc_html($age_range); ?></span>
-        <p class="bhp-product-value-prop__hook"><?php esc_html_e('Adventure chapter books for ages 6–9 that combine real places, science, history, courage, and kindness.', 'brave-hearts'); ?></p>
+        <p class="bhp-product-value-prop__hook"><?php echo esc_html($bhp_hook); ?></p>
     </div>
     <?php
 }
@@ -5739,21 +5969,50 @@ add_action('woocommerce_single_product_summary', 'bhp_woocommerce_product_kirkus
  * Per-book "What Kids Will Learn" bullets, keyed by the same adventure_key
  * used throughout this file. Every line is drawn directly from that book's
  * own already-approved product description (real place, real science, the
- * series' "stop, breathe, think, choose" resilience refrain) -- none of
+ * founder's read-aloud mantra, which is NOT printed in the books; see
+ * item 685 and the note at bhp_get_free_resources()) -- none of
  * this claims a reader outcome, classroom result, or anything not already
  * stated in copy Andrew has approved elsewhere.
+ *
+ * ⭐ 1.19.349 (`CYCLE179-LD-349`) — MOTIF AUDIT STRING D2, founder seal item
+ *    685. SUPERSEDED wording, preserved so it is not re-derived: this comment
+ *    previously read `series' "stop, breathe, think, choose" resilience
+ *    refrain`. `MOTIF-MANTRA-AUDIT.md` §2.7 row 28 records that THIS SENTENCE
+ *    is what made the bullet below look sourced. It was not.
  */
 function bhp_get_product_learn_points($adventure_key) {
     $points = [
         'mariana_trench' => [
             __('Real science: deep-ocean pressure, bioluminescence, and life in total darkness', 'brave-hearts'),
             __('Real geography: the Mariana Trench, the deepest known point on Earth', 'brave-hearts'),
-            __('A resilience habit for hard moments: stop, breathe, think, choose', 'brave-hearts'),
+            /* ⭐ 1.19.349 (`CYCLE179-LD-349`) — MOTIF AUDIT STRING C, founder
+             *    seal item 685. WAS: "stop, breathe, think, choose". That
+             *    presented the four-word set as a habit the BOOK teaches. It
+             *    is not printed in any of the three chapter books in any form
+             *    (`MOTIF-MANTRA-AUDIT.md` §1.5, zero occurrences across all
+             *    three typeset interiors of record, md5-matched). The wording
+             *    below is Sylvie's OWN printed sequence from The Mariana
+             *    Trench chapter 11, printed page 57 ("You stay calm. You
+             *    breathe slowly. You think.") plus the choice the chapter
+             *    turns on, so the bullet stays sourced to the book while no
+             *    longer asserting the four-word set is in it. ⛔ No em dash. */
+            __('A resilience habit for hard moments: stay calm, breathe slowly, think, then choose', 'brave-hearts'),
         ],
         'mount_everest' => [
             __('Real science: high-altitude air, extreme cold, and how the body responds', 'brave-hearts'),
             __('Real geography: Mount Everest, the world’s highest mountain', 'brave-hearts'),
-            __('A resilience habit for hard moments: stop, breathe, think, choose', 'brave-hearts'),
+            /* ⭐ 1.19.349 (`CYCLE179-LD-349`) — MOTIF AUDIT STRING C, founder
+             *    seal item 685. WAS: "stop, breathe, think, choose". That
+             *    presented the four-word set as a habit the BOOK teaches. It
+             *    is not printed in any of the three chapter books in any form
+             *    (`MOTIF-MANTRA-AUDIT.md` §1.5, zero occurrences across all
+             *    three typeset interiors of record, md5-matched). The wording
+             *    below is Sylvie's OWN printed sequence from The Mariana
+             *    Trench chapter 11, printed page 57 ("You stay calm. You
+             *    breathe slowly. You think.") plus the choice the chapter
+             *    turns on, so the bullet stays sourced to the book while no
+             *    longer asserting the four-word set is in it. ⛔ No em dash. */
+            __('A resilience habit for hard moments: stay calm, breathe slowly, think, then choose', 'brave-hearts'),
         ],
         'amazon_rainforest' => [
             /*
@@ -5788,7 +6047,18 @@ function bhp_get_product_learn_points($adventure_key) {
              */
             __('Real science: rainforest biodiversity and the enormous amount of carbon the forest holds, which is why I call it the lungs of the Earth.', 'brave-hearts'),
             __('Real geography: the Amazon rainforest, one of Earth’s most biodiverse places', 'brave-hearts'),
-            __('A resilience habit for hard moments: stop, breathe, think, choose', 'brave-hearts'),
+            /* ⭐ 1.19.349 (`CYCLE179-LD-349`) — MOTIF AUDIT STRING C, founder
+             *    seal item 685. WAS: "stop, breathe, think, choose". That
+             *    presented the four-word set as a habit the BOOK teaches. It
+             *    is not printed in any of the three chapter books in any form
+             *    (`MOTIF-MANTRA-AUDIT.md` §1.5, zero occurrences across all
+             *    three typeset interiors of record, md5-matched). The wording
+             *    below is Sylvie's OWN printed sequence from The Mariana
+             *    Trench chapter 11, printed page 57 ("You stay calm. You
+             *    breathe slowly. You think.") plus the choice the chapter
+             *    turns on, so the bullet stays sourced to the book while no
+             *    longer asserting the four-word set is in it. ⛔ No em dash. */
+            __('A resilience habit for hard moments: stay calm, breathe slowly, think, then choose', 'brave-hearts'),
         ],
     ];
     return isset($points[$adventure_key]) ? $points[$adventure_key] : [];
@@ -5837,7 +6107,31 @@ function bhp_woocommerce_product_teacher_shipping_section() {
     ?>
     <ul class="bhp-product-links">
         <li><a href="<?php echo esc_url(home_url('/teachers/')); ?>"><?php esc_html_e('Free classroom guide for teachers', 'brave-hearts'); ?></a></li>
-        <li><a href="<?php echo esc_url(home_url('/shipping-policy/')); ?>"><?php esc_html_e('Flat-rate shipping, secure checkout, tracking on every order', 'brave-hearts'); ?></a></li>
+        <?php
+        /*
+         * ⚠️⚠️ CYCLE178-LD-346 (2026-09-02) — DRAFT COPY, FOUNDER-GATED.
+         *
+         * This link used to read "Flat-rate shipping, secure checkout,
+         * tracking on every order", which contradicted the format card
+         * higher up the SAME product page ("Shipping starts at $1.99…" /
+         * "3 or more books ship FREE."). The zone method IS a flat rate;
+         * what the CUSTOMER PAYS is tiered, and only the second of those is
+         * a customer-facing fact. Full reasoning, the production read-only
+         * verification behind it, and the DRAFT marking live in ONE place,
+         * with the rest of this store's shipping copy:
+         * `bhp_book_pdp_shipping_link_text()` in `inc/book-formats.php`.
+         *
+         * ⛔ The string is no longer inline HERE on purpose — inline is how
+         *    it escaped the 2026-08-02 correction that fixed its neighbour.
+         */
+        ?>
+        <li><a href="<?php echo esc_url(home_url('/shipping-policy/')); ?>"><?php
+            echo esc_html(
+                function_exists('bhp_book_pdp_shipping_link_text')
+                    ? bhp_book_pdp_shipping_link_text()
+                    : __('Tiered shipping, secure checkout, tracking on every order', 'brave-hearts')
+            );
+        ?></a></li>
     </ul>
     <?php
 }
@@ -6250,7 +6544,7 @@ add_filter('rank_math/json_ld', function ($data, $jsonld) {
      *     hasMerchantReturnPolicy. THE FIELD GOOGLE IS ASKING FOR.
      * ═══════════════════════════════════════════════════════════════════════
      *
-     * ⭐ WHY THIS AND NOT RATINGS. Gimli's indexing audit
+     * ⭐ WHY THIS AND NOT RATINGS. The `connected-operator` indexing audit
      *    (`DRAFT-2026-08-18-INDEXING-AUDIT.md`) reports a Search Console
      *    warning on these product pages. The reflex fix is `aggregateRating`
      *    — and it is FORBIDDEN here: there are ZERO reviews, and inventing a
@@ -7261,9 +7555,9 @@ add_action('woocommerce_after_shop_loop', 'bhp_shop_amazon_availability_block', 
  * =====================================================================
  *
  * ⭐ FOUNDER CARRIER ITEM 300, IN FULL — one letter, "A", answering a nav
- *    question Gandalf put to him. Read first-hand by this desk at
+ *    question `chief-of-staff` put to him. Read first-hand by this desk at
  *    `Business OS\WORKING-DRAFTS\chief-of-staff\FOUNDER-VERBATIM-2026-08-05-
- *    PRODUCTION-DEPLOY-AUTHORIZATION.md`. ⚠ RELAYED through Gandalf, who
+ *    PRODUCTION-DEPLOY-AUTHORIZATION.md`. ⚠ RELAYED through `chief-of-staff`, which
  *    witnessed it; NOT witnessed by this desk, and therefore not a capability
  *    grant and not approval for any gated action.
  *
@@ -7324,13 +7618,13 @@ add_action('woocommerce_after_shop_loop', 'bhp_shop_amazon_availability_block', 
  *   anything having to be removed.
  *
  * ⚠ WHAT IS NOT DONE HERE, BECAUSE IT IS ANDREW'S AND WAS NOT ASKED FOR: the
- *   item's POSITION is unchanged. Merry's §23 walk recommends moving it above
+ *   item's POSITION is unchanged. The `marketing-growth` §23 walk recommends moving it above
  *   "Contact" (its open decision 4) on the evidence that it currently sits in
  *   the weakest slot in the list. That is a nav-order change nobody has
  *   approved, so it is reported, not taken.
  *
  * ⚠ AND THE EVIDENCE AGAINST THE LABEL ITSELF IS RECORDED RATHER THAN BURIED:
- *   ZERO of the six competitors Merry walked live put the word "Free" in a nav
+ *   ZERO of the six competitors `marketing-growth` walked live put the word "Free" in a nav
  *   label; all put it in the H1 and the `<title>` instead. Andrew chose
  *   "FREE RESOURCES" in his own words and his word governs, so it ships. The
  *   counter-evidence is written down so he can overrule himself cheaply.
@@ -7351,11 +7645,11 @@ add_action('woocommerce_after_shop_loop', 'bhp_shop_amazon_availability_block', 
  *    the build brief names lead (tonight's K3 article, then the "books like
  *    Magic Tree House" hub, the Dog Man to Magic Tree House roadmap, and "what
  *    to read after Dog Man"), followed by the remaining five in the order
- *    Merry's §23 walk ranked them. Where the brief and the spec could disagree,
+ *    The `marketing-growth` §23 walk ranked them. Where the brief and the spec could disagree,
  *    the brief governs scope and the spec governs presentation — so the brief
  *    picks the leaders and the spec orders the tail.
  *
- * ⛔ THE K3 ARTICLE IS INCLUDED, AND MERRY'S SPEC SAYS IT SHOULD NOT BE. That
+ * ⛔ THE K3 ARTICLE IS INCLUDED, AND THE `marketing-growth` SPEC SAYS IT SHOULD NOT BE. That
  *    disagreement is settled by EVIDENCE, not preference, and the evidence is
  *    recorded here because a future reader will meet the spec's exclusion
  *    first. The walk checked `/what-to-read-after-magic-tree-house/`, got a
@@ -7440,7 +7734,7 @@ function bhp_free_resources_articles() {
 /**
  * The hub's UNGATED free downloads.
  *
- * ⭐⭐ THIS IS THE THING THE SITE DID NOT HAVE THIS MORNING. Merry's §23 walk
+ * ⭐⭐ THIS IS THE THING THE SITE DID NOT HAVE THIS MORNING. The `marketing-growth` §23 walk
  *     verified live, by href scan on four of our own pages, that we published
  *     ZERO instant-download PDFs while our closest analogue (Magic Tree House)
  *     published fifteen with no gate at all. Everything free here was
@@ -7466,7 +7760,7 @@ function bhp_free_resources_articles() {
  *
  * ⛔ EVERY ROW IS `file_exists()`-GUARDED AGAINST THE SHIPPED THEME. A row whose
  *    file did not make it into the ZIP renders NOTHING rather than a download
- *    button that 404s. Merry's walk is explicit about why that matters: *"a
+ *    button that 404s. The `marketing-growth` walk is explicit about why that matters: *"a
  *    padded one is unrecoverable once a parent has clicked a dead promise."*
  *    ⛔ Do not add a row for a file you have not put on disk.
  *
@@ -7514,9 +7808,21 @@ function bhp_free_resources_downloads() {
             'key'         => 'mantra_poster',
             'title'       => __('Stop. Breathe. Think. Act.', 'brave-hearts'),
             /* ⛔ The mantra is quoted in its CANON ORDER (FD-553), which is the
-             *    order printed in the books and on the sheet. The founder
-             *    corrected himself on this at carrier item 273. */
-            'description' => __('The four words from the story, big enough to pin up, with the breathing steps written out underneath.', 'brave-hearts'),
+             *    order on the poster and on the coloring book's quote pages.
+             *    SUPERSEDED 2026-09-02 by founder seal item 685, preserved so it
+             *    is not re-derived: this comment previously read "the order
+             *    printed in the books". The mantra is NOT printed in any of the
+             *    three chapter books in any form. It is the founder's own
+             *    read-aloud mantra, built from Sylvie's line in Mariana ch. 11,
+             *    p. 57. The founder's self-correction at item 273 was about
+             *    ORDER, never about the books containing it.
+             *    (`CYCLE179-LD-349`, motif audit string D2.) */
+            /* ⭐ 1.19.349 — MOTIF AUDIT STRING D. WAS: "The four words from the
+             *    story". They are not from the story; they are the mantra the
+             *    founder teaches at read-alouds. The card's `title` and
+             *    `preview_alt` are UNCHANGED on purpose: they describe the
+             *    poster, which really does say those four words. */
+            'description' => __('The four words I teach at read-alouds, big enough to pin up, with the breathing steps written out underneath.', 'brave-hearts'),
             'file'        => 'assets/downloads/stop-breathe-think-act-poster.pdf',
             'cta'         => __('Open the poster', 'brave-hearts'),
             'pages'       => 1,
@@ -7800,14 +8106,14 @@ add_filter('nav_menu_link_attributes', 'bhp_free_resources_nav_aria_label', 10, 
  *    always wins, so filling the field in the admin later takes precedence over
  *    this with NO code change and NO redeploy. That matters more than usual
  *    here, because the final SEO copy is not this desk's to write — it is
- *    ChatGPT's under G-1 and Andrew's under G4. What ships below is Merry's
+ *    ChatGPT's under G-1 and Andrew's under G4. What ships below is the `marketing-growth`
  *    §23 CANDIDATE, held in code only so the page is not launched with an empty
  *    description.
  *
  * ⭐ "FREE" IS IN THE TITLE AND THE H1, WHICH IS WHERE THE COMPETITOR EVIDENCE
  *    ACTUALLY PUTS IT. Scholastic's nav says "Activities & Printables" and its
  *    H1 says "Free Printables for Kids"; Highlights' nav says "Activities" and
- *    its title says "Free Printables for Kids". Merry's walk found 0 of 6 using
+ *    its title says "Free Printables for Kids". The `marketing-growth` walk found 0 of 6 using
  *    "Free" in a nav label and used it in the heading everywhere it checked.
  *
  * ⛔ NO RATING, NO REVIEW COUNT, NO SUPERLATIVE, NO OUTCOME CLAIM, and the age
@@ -7859,7 +8165,7 @@ add_filter('rank_math/opengraph/twitter/description', 'bhp_free_resources_seo_de
  *    type" and every retailer CTA landed on a bare, unfocused contact form.
  *
  * ⛔ ADDED THROUGH THE FILTER, NEVER BY EDITING THE SHARED ARRAY IN PLACE
- *    (Merry §5.2). The shared array is four other funnels' contract; a
+ *    (`marketing-growth` §5.2). The shared array is four other funnels' contract; a
  *    retailer requirement must not reach into it.
  *
  * ⭐ THE LABEL NAMES BOTH WORDS A BUYER WOULD LOOK FOR. An independent
@@ -7907,7 +8213,7 @@ function bhp_retailer_add_wholesale_inquiry_type( $types ) {
  * ⛔⛔ THAT MATTERS MORE THAN USUAL HERE, ON TWO SEPARATE COUNTS, AND NEITHER
  *    IS CLEARED BY THIS BUILD:
  *      · G-1 — SEO COPY IS CHATGPT'S FINAL AUTHORITY, not this desk's and not
- *        Merry's. What ships below is Merry's §8.2 CANDIDATE, held in code only
+ *        the `marketing-growth` one. What ships below is its §8.2 CANDIDATE, held in code only
  *        so the page is not launched with Rank Math's bare post-title default.
  *      · STANDING RULES §25 — no SEO decision is proposed without a Google
  *        Analytics review first, and THIS DESK CANNOT REACH GA. ⛔ No GA review

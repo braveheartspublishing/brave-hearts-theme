@@ -254,7 +254,7 @@ echo "\n--- 2b. THE APPROVED COPY, ASSERTED BY CONTENT ---\n";
  *    later edit to the copy file cannot quietly diverge from it. Source:
  *    `DRAFT-2026-08-04-UPSELL-THANKYOU-EMAIL.md` (DRIVE mount, 2026-08-04).
  */
-bhp_aeg_assert( 'Your activity book is here' === $copy['email']['subject'], 'Subject is Merry\'s Subject A, verbatim (got: "' . $copy['email']['subject'] . '")', $failures );
+bhp_aeg_assert( 'Your activity book is here' === $copy['email']['subject'], 'Subject is the `marketing-growth` Subject A, verbatim (got: "' . $copy['email']['subject'] . '")', $failures );
 bhp_aeg_assert( is_string( $copy['email']['preheader'] ) && '' !== trim( $copy['email']['preheader'] ), 'The approved preheader string is carried in the copy file', $failures );
 bhp_aeg_assert( isset( $copy['email']['paragraphs_after'] ) && count( $copy['email']['paragraphs_after'] ) === 3, 'Three body paragraphs render AFTER the download, in the approved order', $failures );
 bhp_aeg_assert( isset( $copy['email']['signoff'] ) && in_array( 'Andrew', (array) $copy['email']['signoff'], true ), 'The sign-off is present and reads "Andrew" (gate G-C, closed 2026-08-04, string unchanged)', $failures );
@@ -311,7 +311,7 @@ bhp_aeg_assert(
  *
  * "the answer key is on the last two pages" is true of v4 and of no other
  * version (v1/v2 one page at 20; v3 two at 20-21; v4 two at 25-26), and
- * which PDF ships is pending Andrew's v4/v5 word. Omitted on Gandalf's
+ * which PDF ships is pending Andrew's v4/v5 word. Omitted on the `chief-of-staff`
  * direction. This assertion is the thing that stops it creeping back in.
  * `CYCLE143-MKT-121`.
  */

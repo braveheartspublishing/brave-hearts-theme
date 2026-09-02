@@ -106,6 +106,14 @@
   also the Complete Collection's default format
   (`bhp_bundle_default_format()`).
 
+  > **CORRECTED 2026-09-02 (CYCLE179-CX-015).** The sentence above about the
+  > Complete Collection default is STALE. Since bundle plugin 1.8.57
+  > (CYCLE164, paperback-default), `/complete-collection/` pre-selects
+  > **Paperback $31.99**; hardcover $48.99 is offered as the alternative.
+  > Observed live on production 2026-09-02 in a real browser at 1440 and 375
+  > (both selections render). The stock-status facts in this bullet are
+  > unaffected. Retained rather than rewritten so the movement is visible.
+
   **SUPERSEDED statement, retained so it is not re-derived:** this file
   previously read *"Hardcover editions are intentionally out-of-stock."* That
   was true of an earlier period and is **no longer current**. It was already

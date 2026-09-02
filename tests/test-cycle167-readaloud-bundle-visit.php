@@ -380,19 +380,57 @@ bhp_c167_ok(
     'the page is school-agnostic and the link must not leak the visit'
 );
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ SUPERSEDED 2026-09-02 BY THEME 1.19.350 (`CYCLE179-LD-350-BUILD` D8),
+ *     ASSERTIONS UPDATED BY `CYCLE179-LD-350-FIX`.
+ *
+ * ⚠️⚠️ THIS SUITE WAS REPORTED GREEN IN THE 1.19.350 BUILD RECORD AND IT WAS
+ *      NOT. It failed five assertions at 1.19.350 — §4.6, §4.7, §5.4, §5b.4 and
+ *      §6.2 — every one of them on the same superseded token. Recorded here as
+ *      a failure rather than quietly repaired, because the 350 record's claim
+ *      *"Visit suites, run and unchanged, all green"* is what a future reader
+ *      would otherwise trust. The FIX pass caught it by re-running the suite.
+ *
+ * ⭐ WHAT ACTUALLY CHANGED IN THE PRODUCT, AND WHY THESE ASSERTIONS MOVED. D8
+ *    made the ship-to-home link ASK instead of silently clearing the visit
+ *    flag: `bhp_colouring_ship_home_url()` now builds
+ *    `?bhp_shiphome=<product id|shop>`, which renders a confirmation panel, and
+ *    the confirmation is what performs the clear. `?bhp_visit=clear` still
+ *    exists and still works — it is simply no longer the AUTOMATIC route, and
+ *    `tests/test-cycle179-catalog-350.php` §8.2 asserts that directly.
+ *
+ * ⛔ THE PROPERTY UNDER TEST IS NOT WEAKENED. It was "the ship-home control
+ *    routes somewhere that actually takes the parent out of visit pickup"; it
+ *    still is. Only the token changed. §4.2 above is UNTOUCHED and still
+ *    passing: the combo URL on the read-aloud page does still carry
+ *    `?bhp_visit=clear`, so the clear route itself is still asserted somewhere.
+ *
+ * ⛔ SUPERSEDED ASSERTIONS, PRESERVED VERBATIM SO THE MOVEMENT IS VISIBLE:
+ *      §4.6 'it carries the clear token'
+ *           strpos($shop_url, $param . '=' . $token)
+ *      §4.7 'a product ship-home URL resolves to that product with the token'
+ *           strpos($prod_url, $param . '=' . $token)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+$bhp_c167_sh_param = defined('BHP_COLOURING_SHIPHOME_PARAM') ? (string) BHP_COLOURING_SHIPHOME_PARAM : 'bhp_shiphome';
+
 $bhp_c167_shop_url = bhp_colouring_ship_home_url(0);
 bhp_c167_ok('§4.5 the shop ship-home URL resolves', '' !== $bhp_c167_shop_url);
 bhp_c167_ok(
-    '§4.6 it carries the clear token',
-    false !== strpos((string) $bhp_c167_shop_url, $bhp_c167_param . '=' . $bhp_c167_token)
+    '§4.6 ⭐ 1.19.350: it carries the ASK token, not the silent clear token',
+    false !== strpos((string) $bhp_c167_shop_url, $bhp_c167_sh_param . '=')
+);
+bhp_c167_ok(
+    '§4.6b ⛔ …and it does NOT clear the visit flag on its own',
+    false === strpos((string) $bhp_c167_shop_url, $bhp_c167_param . '=' . $bhp_c167_token),
+    'D8: the link asks; the confirmation panel performs the clear'
 );
 
 $bhp_c167_cid = (int) (bhp_colouring_product_ids()['mariana'] ?? 0);
 $bhp_c167_prod_url = bhp_colouring_ship_home_url($bhp_c167_cid);
 bhp_c167_ok(
-    '§4.7 a product ship-home URL resolves to that product with the token',
+    '§4.7 ⭐ 1.19.350: a product ship-home URL resolves to that product with the ASK token',
     $bhp_c167_cid > 0
-        && false !== strpos((string) $bhp_c167_prod_url, $bhp_c167_param . '=' . $bhp_c167_token)
+        && false !== strpos((string) $bhp_c167_prod_url, $bhp_c167_sh_param . '=' . $bhp_c167_cid)
         && 0 === strpos((string) $bhp_c167_prod_url, (string) get_permalink($bhp_c167_cid))
 );
 
@@ -427,9 +465,12 @@ if ($bhp_c167_product) {
         false !== stripos($bhp_c167_card_f, 'bhp-shop-atc--shiphome')
             && false !== stripos($bhp_c167_card_f, 'data-bhp-shiphome')
     );
+    /* ⛔ SUPERSEDED BY 1.19.350 D8 — see the block at §4.6. PRESERVED:
+         '§5.4 FLAGGED: its href carries the clear token'
+         strpos($bhp_c167_card_f, $bhp_c167_param . '=' . $bhp_c167_token)  */
     bhp_c167_ok(
-        '§5.4 FLAGGED: its href carries the clear token',
-        false !== strpos($bhp_c167_card_f, $bhp_c167_param . '=' . $bhp_c167_token)
+        '§5.4 ⭐ 1.19.350 FLAGGED: its href carries the ASK token',
+        false !== strpos($bhp_c167_card_f, $bhp_c167_sh_param . '=')
     );
     bhp_c167_ok(
         '§5.5 ⛔ FLAGGED: the label is NOT the uniform ADD TO CART label',
@@ -495,9 +536,12 @@ bhp_c167_ok(
             bhp_c167_plain(wc_price(bhp_offer_price($bhp_c167_key)))
         )
 );
+/* ⛔ SUPERSEDED BY 1.19.350 D8 — see the block at §4.6. PRESERVED:
+     '§5b.4 it carries the ?bhp_visit=clear route'
+     strpos($bhp_c167_shopmod, $bhp_c167_param . '=' . $bhp_c167_token)  */
 bhp_c167_ok(
-    '§5b.4 it carries the ?bhp_visit=clear route',
-    false !== strpos($bhp_c167_shopmod, $bhp_c167_param . '=' . $bhp_c167_token)
+    '§5b.4 ⭐ 1.19.350: it carries the ship-home ASK route',
+    false !== strpos($bhp_c167_shopmod, $bhp_c167_sh_param . '=')
 );
 bhp_c167_ok(
     '§5b.5 ⭐ it carries the honest trade-off note',
@@ -612,9 +656,20 @@ bhp_c167_ok(
     false === stripos($bhp_c167_msg, 'from the shop'),
     'the same flag blocks the shop, so that remedy did not work for the reader'
 );
+/* ⛔ SUPERSEDED BY 1.19.350 D8 — see the block at §4.6. PRESERVED:
+     '§6.2 ⭐ it names the route that DOES work (?bhp_visit=clear)'
+     strpos($bhp_c167_msg, $bhp_c167_param . '=' . $bhp_c167_token)
+   ⭐ The PROPERTY is unchanged and is the one CYCLE167-LD-003 was written for:
+      the refusal sentence must name a route that ACTUALLY works for the reader,
+      not one the same flag blocks. It now names the ask route, which reaches the
+      confirmation panel and from there the clear. */
 bhp_c167_ok(
-    '§6.2 ⭐ it names the route that DOES work (?bhp_visit=clear)',
-    false !== strpos($bhp_c167_msg, $bhp_c167_param . '=' . $bhp_c167_token)
+    '§6.2 ⭐ 1.19.350: it names the route that DOES work (the ship-home ask)',
+    false !== strpos($bhp_c167_msg, $bhp_c167_sh_param . '=')
+);
+bhp_c167_ok(
+    '§6.2b ⛔ …and that route is a real link on this site, not bare prose',
+    false !== strpos($bhp_c167_msg, 'href="' . home_url())
 );
 bhp_c167_ok(
     '§6.3 ⭐ it still says "chapter paperbacks only" — the plugin suite asserts this',

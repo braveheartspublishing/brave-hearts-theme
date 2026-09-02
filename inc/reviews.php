@@ -208,7 +208,7 @@ function bhp_review_reject_honeypot($commentdata) {
 
 /**
  * ⚠ CYCLE142-CX-071 / CYCLE142-CX-072 — the two defects this section exists to
- *   fix, both found in Pippin's staging QA of 1.19.164 and both real.
+ *   fix, both found in the `commerce-cx` staging QA of 1.19.164 and both real.
  *
  * `-071`: the form carries `novalidate` and NOTHING replaced it, so every
  *   validation failure was a full-page POST that ended on WordPress's
@@ -243,7 +243,7 @@ function bhp_review_reject_honeypot($commentdata) {
  *
  * THE DECISION ON A RATING-LESS SUBMISSION, recorded rather than left implicit:
  * it is REJECTED with a message, not silently accepted and not accepted with a
- * null rating. Accepting it produces the contradictory page state Pippin
+ * null rating. Accepting it produces the contradictory page state `commerce-cx`
  * derived — `bhp_review_count()` ≥ 1 while `bhp_review_average()` is 0.0, so
  * the invitation renders "1 reader review" directly above a section that says
  * "No reader has reviewed this yet". Two contradictory statements about the

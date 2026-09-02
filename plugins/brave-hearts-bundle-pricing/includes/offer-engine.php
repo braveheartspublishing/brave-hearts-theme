@@ -103,14 +103,14 @@
  *
  *      "So no cap and stack is the way to go?"
  *
- *    asked as adoption of the recommendation after Frodo (`finance-analytics`)
+ *    asked as adoption of the recommendation after `finance-analytics`
  *    returned the math his item-187 condition required ("Stack and see what
  *    the math says").
  *
  * ⭐ SO, FROM 1.8.65: A PAIR OFFER STACKS WITH THE CHAPTER-TIER LADDER, AND
  *    THE PAIR OFFER CARRIES NO QUANTITY CAP.
  *
- *    Frodo's Row A, the cart the ruling was decided on, and the one the suite
+ *    the `finance-analytics` Row A, the cart the ruling was decided on, and the one the suite
  *    now asserts: 3 chapter paperbacks + 1 Mariana colouring book.
  *
  *        components   3 × $11.99 + $12.99          = $48.96
@@ -149,14 +149,14 @@
  *          costs, and no advertised claim on this site is broken by declining
  *          to invent one. The shopper still receives the full collection
  *          discount AND `FD-583` free shipping. ⚠️ IT IS A JUDGEMENT, IT IS
- *          REPORTED AS ONE TO GANDALF AND ANDREW, and it is the conservative
+ *          REPORTED AS ONE TO `chief-of-staff` AND ANDREW, and it is the conservative
  *          direction (Standing Rules §1: the stricter reading applies until
  *          Andrew decides otherwise)."
  *
  * ⚠️ WHAT HIS RULING ACTUALLY COSTS, STATED PLAINLY RATHER THAN BURIED: the
  *    Mariana paperback in a four-item cart IS now discounted by two engines
  *    at once. That is the deliberate outcome, not an oversight. The figure is
- *    Frodo's, not this file's: $1.85 per affected cart, identical in all four
+ *    the `finance-analytics` one, not this file's: $1.85 per affected cart, identical in all four
  *    shapes he modelled, no negative cart on any known cost.
  *    ⛔ THIS FILE STILL COMPUTES NO CONTRIBUTION FIGURE AND MAKES NO
  *       PROFITABILITY CLAIM. `STACKING-MATH-FOR-ANDREW.pdf` is the record.
@@ -912,7 +912,7 @@ function bhp_offer_shop_add_payload() {
  *    pre-item-189 SUPPRESSION guaranteed.
  *
  * ⛔⛔ CARRIER ITEM 189 REMOVED THAT GUARANTEE. The moment stacking was turned
- *     on, both engines fired on Frodo's Row A, both produced the id
+ *     on, both engines fired on the `finance-analytics` Row A, both produced the id
  *     `bundle-savings-paperback`, and WooCommerce kept the first and dropped
  *     the second. ⭐ THE FLIP WOULD HAVE SHIPPED AS A NO-OP THAT LOOKED
  *     IMPLEMENTED: the filter returned FALSE, the offer engine computed

@@ -1,6 +1,33 @@
 # Current Task
 
 
+> ## ⭐⭐ NEWEST, 2026-09-02 · **NO ENGINEERING TASK IS ACTIVE.** Production is theme `1.19.354` / bundle plugin `1.8.79`.
+>
+> The `1.19.350` through `1.19.354` series is closed. `1.19.353` and `1.19.354` are deployed to production
+> as of 2026-09-02, the release record is written, and this file, `PROJECT_STATE.md`, `START_HERE.md`,
+> `NEXT_TASK.md`, `AI_CONTEXT_INDEX.md`, `KNOWN_ISSUES.md`, `DECISIONS.md` and `CHANGELOG.md` are in sync
+> with it. **Everything below this block is a task record from an earlier state and is history, not the
+> current task.**
+>
+> ### What is parked, not active
+>
+> **A cosmetic list for other pages.** It was written up during the `1.19.354` pass and deliberately not
+> built: only `/author-visits/` was in scope for that release. It is a queue of vertical-rhythm and colour
+> token items on other pages, of the same kind as the `/author-visits/` fold fix. **It needs the owner's
+> go-ahead before any of it becomes work**, and it should be re-checked against the live pages before it is
+> started, because five releases have shipped since it was written.
+>
+> ### What is genuinely open and would need a decision before it becomes work
+>
+> - **`LD-10`** in `KNOWN_ISSUES.md`. The `1.19.353` band and the plugin's per-card shelf counters can name
+>   different schools on one specific request shape. **Reconciling them is an entitlement change, not a
+>   display change, and it needs the owner's ruling before it is built.**
+> - **`F-08` and `F-09`** in `KNOWN_ISSUES.md`, both still open, neither scoped to a release yet.
+> - **`LD-12`**, a documentation gap in `style.css` rather than a defect.
+>
+> ⚠️ **The version numbers above are relayed, not read from production by this block.** Verify before
+> relying on them.
+
 > ## ⭐⭐⭐⭐ NEWEST 2026-08-03 (later) — **PRODUCTION IS THEME `1.19.157` / PLUGIN `1.8.16`.** Two more releases shipped after the block below was written.
 >
 > **Verified live 2026-08-03** by HTTP against the production home page (200): **11 theme assets at `ver=1.19.157`**, 4 plugin assets at `ver=1.8.16`. ⚠️ **`wp theme list --status=active` was NOT run for this check** — the session that wrote it holds no SSH credentials.
@@ -88,7 +115,7 @@
 > 2. **Hardcovers 14 / 17 / 20** — same Lexile bullet, **prepared, not applied.** 20 gets nothing.
 > 3. **The `“One flip-through”` heading** on the Adventure Kit page now sits over two flip-throughs. Approved copy is locked — flagged, not rewritten.
 > 4. **The MetaMetrics attribution line stays BLOCKED** — not invented. No citation block shipped.
-> 5. **Standing Rules §3 still calls the Island Peak specifics “unconfirmed”.** Three of four are now confirmed; that file is Sam's and Andrew's. Amendment prepared, not applied.
+> 5. **Standing Rules §3 still calls the Island Peak specifics “unconfirmed”.** Three of four are now confirmed; that file is `business-ops-knowledge`'s and Andrew's. Amendment prepared, not applied.
 >
 > ---
 

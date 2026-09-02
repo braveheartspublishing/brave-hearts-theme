@@ -494,7 +494,7 @@ foreach ( $registry as $key => $book ) {
  *
  *    ➡ FLAGGED FOR THE RECORD, NOT CHANGED HERE: tightening the parameter to
  *      an exact-match test would be a behaviour change outside this brief, and
- *      it touches the legacy hardcover 301's landing path. Gandalf's call.
+ *      it touches the legacy hardcover 301's landing path. The `chief-of-staff` call.
  */
 foreach ( $registry as $key => $book ) {
 	$pb = (int) $book['pb_product'];

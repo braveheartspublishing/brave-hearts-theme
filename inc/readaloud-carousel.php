@@ -4,7 +4,8 @@
  *
  * Andrew's carrier item 497: "I want a large carousel gallery on the read aloud
  * page and I want you to add the read aloud pictures from last year too."
- * ⛔ RELAYED THROUGH GANDALF, NOT WITNESSED BY THIS FILE'S AUTHOR.
+ * ⛔ RELAYED THROUGH THE CHIEF OF STAFF (`chief-of-staff`), NOT WITNESSED BY
+ * THIS FILE'S AUTHOR.
  *
  * ---------------------------------------------------------------------------
  * ⛔ WHY THE ARCHIVE PHOTOGRAPHS ARE IN CODE AND NOT IN THE VISIT REGISTRY

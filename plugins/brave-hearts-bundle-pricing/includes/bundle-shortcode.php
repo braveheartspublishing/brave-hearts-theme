@@ -170,7 +170,7 @@ function bhp_bundle_handle_add_to_cart() {
 	 *
 	 * ⛔ AND IT NEVER OPENS THE PANEL. It sends no flag onward, because a URL
 	 *    parameter that opens the panel is one that can be bookmarked, shared,
-	 *    linked and crawled — Boromir's second condition, recorded in the
+	 *    linked and crawled — the `ads-knowledge` second condition, recorded in the
 	 *    theme's `inc/purchase-flow.php`. A JavaScript-less shopper getting a
 	 *    correct product page instead of a panel is a degradation; a panel any
 	 *    link can open is a defect.

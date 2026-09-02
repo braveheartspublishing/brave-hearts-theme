@@ -968,7 +968,7 @@ if ( isset( $bhp_html ) && is_string( $bhp_html ) && '' !== $bhp_html ) {
 	      A layout lane that quietly reworded a founder-approved line would be a
 	      worse failure than one that shipped no photograph at all.
 
-	   ⛔⛔ AMENDED AT 1.19.339 (`CYCLE170-LD-FINAL2`, carrier item 562, Gandalf's
+	   ⛔⛔ AMENDED AT 1.19.339 (`CYCLE170-LD-FINAL2`, carrier item 562, the `chief-of-staff`
 	       implementation ruling). "There is no charge." IS REMOVED FROM THE HERO
 	       AND IS THEREFORE REMOVED FROM THIS LIST.
 

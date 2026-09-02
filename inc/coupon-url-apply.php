@@ -5,7 +5,8 @@
  * `CYCLE170-LD-TRIPLE`, carrier items 504 / 505. STAGING BUILD.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * Andrew Signore, carrier items 504 and 505, ⛔ RELAYED THROUGH GANDALF, NOT
+ * Andrew Signore, carrier items 504 and 505, ⛔ RELAYED THROUGH THE CHIEF OF
+ * STAFF (`chief-of-staff`), NOT
  * WITNESSED BY THIS FILE'S AUTHOR: a link carrying a discount code should apply
  * the discount by itself, so a newsletter or a card can send someone straight to
  * a page with the discount already on.

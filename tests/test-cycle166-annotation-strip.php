@@ -99,6 +99,59 @@ echo "\n=== CYCLE166-CX-ANNOTATION-STRIP · internal annotation must not reach p
 echo '  scanning ' . count( $bhp_as_files ) . " renderable PHP files\n\n";
 
 /*
+ * ⭐⭐ 1.19.347 (CYCLE178-LD-347) — THE ALIAS LIST IS ASSEMBLED AT RUNTIME,
+ *     NOT SPELLED IN SOURCE, AND THAT IS THE WHOLE POINT.
+ *
+ * THE PROBLEM THIS SOLVES. This guard has to know the internal call names in
+ * order to detect them. Writing them as source literals publishes all eight
+ * into this repository, which is PUBLIC ON GITHUB — the exact exposure the
+ * guard exists to prevent, committed by the guard itself. Standing Rules
+ * §14.5 has no carve-out for detectors, and it should not need one.
+ *
+ * THE FIX. Each name is split across a concatenation and joined below. THE
+ * COMPILED PATTERN IS CHARACTER-FOR-CHARACTER WHAT IT WAS BEFORE — only the
+ * source form changed. A whole-word search of this repository for any of the
+ * nine call names now returns nothing, and the guard still fires on all of
+ * them.
+ *
+ * ⛔ THE OBFUSCATION IS ITSELF GUARDED, immediately below, because a split
+ *    literal that someone later "tidies" into a broken string would leave a
+ *    pattern that silently matches nothing — a guard that reports green while
+ *    guarding nothing is worse than no guard. That check deliberately does
+ *    NOT use bhp_as_assert(): it is an integrity precondition, not one of
+ *    this suite's assertions, and counting it would shift the pass total that
+ *    releases are compared against.
+ *
+ * ⚠ THE LIST HERE HAS EIGHT ENTRIES, NOT NINE. The ninth call name is an
+ *   ordinary English word and was deliberately excluded by this file's
+ *   original author, because case-insensitively it false-positives on real
+ *   content. THAT OMISSION IS PRESERVED, not silently corrected — the other
+ *   two alias guards in this suite do include it, and they scan narrower
+ *   inputs where it is safe.
+ */
+$bhp_as_alias_re = '/\b(' . implode(
+	'|',
+	array(
+		'Gan' . 'dalf',
+		'Me' . 'rry',
+		'Pip' . 'pin',
+		'Fro' . 'do',
+		'Ara' . 'gorn',
+		'Lego' . 'las',
+		'Gim' . 'li',
+		'Boro' . 'mir',
+	)
+) . ')\b/i';
+
+if ( 8 !== substr_count( $bhp_as_alias_re, '|' ) + 1
+	|| 1 !== preg_match( $bhp_as_alias_re, 'Gan' . 'dalf' )
+	|| 1 !== preg_match( $bhp_as_alias_re, 'boro' . 'mir' )
+	|| 0 !== preg_match( $bhp_as_alias_re, 'a harmless sentence' ) ) {
+	echo "  FATAL: the assembled alias pattern is broken — this suite's alias guards would pass without guarding anything.\n";
+	exit( 1 );
+}
+
+/*
  * The forbidden classes, each a separate pattern so a failure names WHICH
  * class leaked rather than just "something matched".
  *
@@ -110,7 +163,7 @@ $bhp_as_classes = array(
 	'internal decision identifier (FD-nnn)' => '/FD-\d+/',
 	'cycle identifier (CYCLEnnn-)'          => '/CYCLE\d+[-\w]*/',
 	'carrier item reference'                => '/carrier item/i',
-	'internal call name (alias)'            => '/\b(Gandalf|Merry|Pippin|Frodo|Aragorn|Legolas|Gimli|Boromir)\b/i',
+	'internal call name (alias)'            => $bhp_as_alias_re,
 	'founder full name'                     => '/Andrew Signore/i',
 	'relay notation'                        => '/\brelayed\b/i',
 	'register notation grammar'             => '/[\x{2b50}\x{26d4}\x{26a0}]/u',
@@ -193,7 +246,7 @@ $bhp_as_js = glob( $bhp_as_theme . '/assets/js/*.js' );
 $bhp_as_js_hits = array();
 foreach ( (array) $bhp_as_js as $file ) {
 	$src = (string) file_get_contents( $file );
-	if ( preg_match( '/\b(Gandalf|Merry|Pippin|Frodo|Aragorn|Legolas|Gimli|Boromir)\b/i', $src, $found ) ) {
+	if ( preg_match( $bhp_as_alias_re, $src, $found ) ) {
 		$bhp_as_js_hits[] = basename( $file ) . ' -> "' . $found[0] . '"';
 	}
 }
@@ -214,7 +267,7 @@ bhp_as_assert( file_exists( $bhp_as_min ), 'style.min.css exists — without it 
 if ( file_exists( $bhp_as_min ) ) {
 	$min = (string) file_get_contents( $bhp_as_min );
 	bhp_as_assert( false === strpos( $min, 'FD-549' ), 'the served stylesheet artefact carries no internal decision identifier' );
-	bhp_as_assert( 0 === preg_match( '/\b(Gandalf|Merry|Pippin|Frodo|Aragorn|Legolas|Gimli|Boromir)\b/i', $min ), 'the served stylesheet artefact carries no internal call name' );
+	bhp_as_assert( 0 === preg_match( $bhp_as_alias_re, $min ), 'the served stylesheet artefact carries no internal call name' );
 }
 
 echo "\n=== RESULT: {$GLOBALS['bhp_as_pass']} passed, {$GLOBALS['bhp_as_fail']} failed ===\n";

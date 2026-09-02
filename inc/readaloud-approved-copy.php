@@ -322,7 +322,7 @@ add_filter( 'bhp_readaloud_funnel_copy_slots', 'bhp_readaloud_land_approved_copy
  *
  * ⛔⛔ THE FIFTH POINT IS VERBATIM, CHARACTER-EXACT, AND THIS BUILD WROTE NONE
  *     OF IT. Item 541: "I leave a signed copy for your classroom library,
- *     free." ⛔ RELAYED THROUGH GANDALF IN THE BRIEF, NOT WITNESSED FIRST-HAND
+ *     free." ⛔ RELAYED THROUGH `chief-of-staff` IN THE BRIEF, NOT WITNESSED FIRST-HAND
  *     BY THIS BUILD (§9.2 rule 3), and recorded that way for the same reason
  *     item 534's honest line is.
  *
@@ -364,7 +364,7 @@ function bhp_readaloud_visit_shape_closing() {
  * The three hero chips under the CTA.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⭐⭐ AMENDED AT 1.19.339 (`CYCLE170-LD-FINAL2`, carrier item 562, GANDALF'S
+ * ⭐⭐ AMENDED AT 1.19.339 (`CYCLE170-LD-FINAL2`, carrier item 562, THE `chief-of-staff`
  *     IMPLEMENTATION RULING). CHIP 1 DROPS THE WORD "Free".
  * ═══════════════════════════════════════════════════════════════════════════
  *

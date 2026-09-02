@@ -358,8 +358,8 @@ function bhp_bundle_shipping_is_free( $amount ) {
  * ⭐ 1.8.23 — THE TWO FREE-SHIPPING LINES. **BUILT TO BE SWAPPED.**
  * ═══════════════════════════════════════════════════════════════════════
  *
- * ⚠ COPY STATUS: DRAFTED FROM ANDREW'S STATED INTENT, **PENDING MERRY
- *   (`marketing-growth`) REVIEW.** His phrasing intent, relayed: *"free
+ * ⚠ COPY STATUS: DRAFTED FROM ANDREW'S STATED INTENT, **PENDING
+ *   `marketing-growth` REVIEW.** His phrasing intent, relayed: *"free
  *   shipping with the purchase of this book."* These are this build's
  *   rendering of that intent, not his verbatim words, and they are
  *   deliberately reachable from a one-line filter so review can change them
@@ -601,7 +601,7 @@ function bhp_bundle_distinct_titles_in_cart( $cart ) {
  * ("Complete Paperback Collection", −$3.98). Free shipping was ruled on the
  * COLLECTION, and a customer holding Mariana in paperback, Everest in
  * paperback and Amazon in hardcover has the collection — three adventures,
- * one shipment. Gandalf's direction for this build, verbatim: *"mixed
+ * one shipment. The `chief-of-staff` direction for this build, verbatim: *"mixed
  * 3-distinct-book carts ALSO ship free (same bundle family)"*.
  *
  * ⛔ IT IS A UNION OF TITLES, NEVER A COUNT OF BOOKS, and that is the whole

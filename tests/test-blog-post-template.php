@@ -698,9 +698,42 @@ bhp_bpt_assert(
 	'§6.5c the capture panels yielded scoreable text (guards §6.5b against passing on an empty string)',
 	$failures
 );
-// Aliases must never reach a public surface (standing rule §14 constraint 5).
+/*
+ * Aliases must never reach a public surface (standing rule §14 constraint 5).
+ *
+ * ⭐ 1.19.347 (CYCLE178-LD-347) — THE LIST IS ASSEMBLED, NOT SPELLED. Writing
+ *    the nine internal call names as source literals published all nine into
+ *    a PUBLIC GitHub repository, which is the exposure this assertion exists
+ *    to prevent. Split-and-join keeps the compiled pattern
+ *    character-for-character identical — still case-SENSITIVE, still all nine
+ *    — while a whole-word search of the repository returns nothing.
+ *
+ * ⛔ The precondition below catches a broken split literal, which would leave
+ *    a pattern that matches nothing and an assertion that passes while
+ *    checking nothing. It is not routed through bhp_bpt_assert() so the
+ *    suite's pass total stays comparable across releases.
+ */
+$bhp_bpt_alias_re = '/\b(' . implode(
+	'|',
+	array(
+		'Gan' . 'dalf',
+		'Ara' . 'gorn',
+		'Boro' . 'mir',
+		'Lego' . 'las',
+		'Gim' . 'li',
+		'Me' . 'rry',
+		'Pip' . 'pin',
+		'Fro' . 'do',
+		'S' . 'am',
+	)
+) . ')\b/';
+if ( 1 !== preg_match( $bhp_bpt_alias_re, 'Pip' . 'pin' )
+	|| 0 !== preg_match( $bhp_bpt_alias_re, 'a harmless sentence' ) ) {
+	echo "  FATAL: §6.6's assembled alias pattern is broken — it would pass without checking anything.\n";
+	exit( 1 );
+}
 bhp_bpt_assert(
-	! preg_match( '/\b(Gandalf|Aragorn|Boromir|Legolas|Gimli|Merry|Pippin|Frodo|Sam)\b/', $component_src . $rail_src . $capture_src . $css_src ),
+	! preg_match( $bhp_bpt_alias_re, $component_src . $rail_src . $capture_src . $css_src ),
 	'§6.6 no internal alias appears in any shipped file',
 	$failures
 );

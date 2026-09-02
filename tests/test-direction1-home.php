@@ -395,7 +395,7 @@ bhp_d1h_assert(
       quietly shipped a mock's placeholder line would have turned a proposal
       into live customer-facing copy without anyone deciding to.
 
-   ⛔ THE QUESTION EYEBROW IS REPORTED TO GANDALF AS PROPOSED, NOT SHIPPED.
+   ⛔ THE QUESTION EYEBROW IS REPORTED TO `chief-of-staff` AS PROPOSED, NOT SHIPPED.
    ═══════════════════════════════════════════════════════════════════════════ */
 echo "\n=== §5 — NO UNAPPROVED BOARD COPY SHIPPED ===\n";
 

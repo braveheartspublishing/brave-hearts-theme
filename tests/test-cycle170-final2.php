@@ -5,7 +5,7 @@
  * STAGING ONLY.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * Carrier item 562, relayed through Gandalf in the build brief. ⛔ RELAYED, NOT
+ * Carrier item 562, relayed through `chief-of-staff` in the build brief. ⛔ RELAYED, NOT
  * WITNESSED FIRST-HAND BY THIS SUITE'S AUTHOR (§9.2 rule 3) — the same
  * provenance, stated the same way, as items 534 and 541.
  *

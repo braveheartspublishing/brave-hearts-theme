@@ -1113,7 +1113,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
      * ⚠ FLAGGED FOR REVIEW, NOT ASSERTED AS SETTLED: this is the one change in
      *   1.19.308 that is a presentation judgement rather than an instruction
      *   the founder gave. Restoring it is a two-line revert of this block. If
-     *   Gandalf or Andrew wants the older frame back in this section, put it
+     *   `chief-of-staff` or Andrew wants the older frame back in this section, put it
      *   back and nothing else in the release depends on it.
      */
     ?>

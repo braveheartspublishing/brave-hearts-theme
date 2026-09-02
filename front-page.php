@@ -422,7 +422,7 @@ if ($hero_preview_books) {
  *    THE HERO GAINS A PERSON, A DRAWN UNDERLINE, AND TWO INVITATIONS.
  * =======================================================================
  *
- * SOURCE: the Homepage Warmth Board (`design-creative` / Legolas, `FD-391`,
+ * SOURCE: the Homepage Warmth Board (`design-creative`, `FD-391`,
  * 2026-08-17), `Business OS\WORKING-DRAFTS\design-creative\
  * homepage-warmth-board\`. Andrew Signore opened the taste gate on it
  * 2026-08-18 (RELAYED through the Chief of Staff, NOT witnessed first-hand

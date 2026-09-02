@@ -248,12 +248,12 @@ if ( function_exists( 'bhp_book_purchase_data' ) && function_exists( 'bhp_book_r
 }
 
 /*
- * ⭐⭐ THE PANEL IS OPENED BY A CLICK, NEVER BY A URL — Boromir's second
+ * ⭐⭐ THE PANEL IS OPENED BY A CLICK, NEVER BY A URL — the `ads-knowledge` second
  *     condition, asserted structurally rather than promised in a comment.
  *
  * ⛔ IF ANY FUTURE BUILD ADDS AN "OPEN THE PANEL" QUERY PARAMETER, THIS FAILS.
  *    A URL that opens the panel is a URL that can be bookmarked, shared,
- *    crawled and landed on, which is precisely the self-open Boromir ruled
+ *    crawled and landed on, which is precisely the self-open `ads-knowledge` ruled
  *    out. The two legitimate openers are both DOM hooks on controls the
  *    shopper clicks: `data-bhp-cart-add` and `data-bhp-cart-open`.
  */
@@ -267,7 +267,7 @@ pf_assert(
 	false === strpos( $pf_drawer_js, 'bhp_cart=open' )
 	&& false === strpos( $pf_drawer_js, 'bhp_open_cart' )
 	&& false === strpos( $pf_flow_code, 'bhp_cart=open' ),
-	'2.11 ⛔ BOROMIR CONDITION 2: no query parameter anywhere can open the panel'
+	'2.11 ⛔ ads-knowledge CONDITION 2: no query parameter anywhere can open the panel'
 );
 pf_assert(
 	false !== strpos( $pf_flow_code, "option_woocommerce_cart_redirect_after_add" ),
@@ -574,7 +574,7 @@ pf_assert(
  *      item 187, ~05:2x−0600:  "Stack and see what the math says"
  *      item 189, ~06:0x−0600:  "So no cap and stack is the way to go?"
  *
- *    Item 187 attached a condition — Frodo's contribution read — and item 189
+ *    Item 187 attached a condition — the `finance-analytics` contribution read — and item 189
  *    is him adopting the recommendation once that read came back.
  *
  * ⭐ THE ARITHMETIC IS ASSERTED IN THE OFFER SUITE (§5, §5b of

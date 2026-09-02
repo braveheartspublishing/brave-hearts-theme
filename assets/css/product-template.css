@@ -346,6 +346,117 @@
 	body.single-product.woocommerce div.product .bhp-formats__spec           { order: 5; }
 	body.single-product.woocommerce div.product .bhp-formats__note           { order: 6; }
 
+	/* ---- 3d. 1.19.349 (CYCLE179-LD-349) — THE ONE-CARD RAIL PUTS ITS
+	           PRICE AND ITS CHIP ON ONE ROW ------------------------------
+	 *
+	 * ⭐ CONCEPT A'S 375 MOCK (`CONCEPT-A-MOBILE-375.png`, founder seal 679)
+	 *    draws the colouring book's price and its single format chip on the
+	 *    SAME LINE: "$12.99  [PAPERBACK]". On a rail with one card, stacking
+	 *    them spends a whole row saying two things that fit side by side, and
+	 *    a row on this screen is the difference between the buy button being
+	 *    on the first screen and being under it.
+	 *
+	 * ⛔ IT APPLIES ONLY TO A ONE-CARD RAIL. `bhp-formats--single` is emitted
+	 *    by the server from `rail_single`. A chapter book has two physical
+	 *    cards side by side already and its price belongs UNDER them, where it
+	 *    labels whichever one is pressed; putting a price beside a pair of
+	 *    chips would be ambiguous about which chip it belongs to, which is the
+	 *    `FD-549` rail-contract ambiguity in miniature.
+	 *
+	 * ⛔ THE PROTECTED PRICE NODE IS UNMOVED IN THE DOM AND UNCHANGED IN
+	 *    CONTENT. This is `order` and `grid-column` only.
+	 */
+	/*
+	 * ⚠️ EVERY ROW IS EXPLICIT HERE, AND THE FIRST ATTEMPT PROVED WHY. Setting
+	 *    `order: 2` and `grid-column` on the two nodes was not enough: they
+	 *    still rendered on separate rows, MEASURED on staging 1.19.349 at an
+	 *    asserted 375x812 (card 742 to 808, price 808 to 844). The cause is
+	 *    grid auto-placement, not specificity — the computed values were
+	 *    already `order: 2 / column 2` on the card and `order: 2 / column 1` on
+	 *    the price, read out of the live DOM. The card comes FIRST in document
+	 *    order, so the placement cursor had already passed column 1 by the time
+	 *    the price was placed, and a sparse `grid-auto-flow: row` sends an item
+	 *    with a definite column behind the cursor to the NEXT row.
+	 *    ⭐ Explicit `grid-row` on every child of this rail removes the cursor
+	 *       from the question entirely. It is written out for all six children
+	 *       rather than for the two that needed it, because a half-explicit
+	 *       grid is exactly where the next auto-placement surprise comes from.
+	 */
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__heading {
+		grid-row: 1;
+		grid-column: 1 / -1;
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__selected-price {
+		order: 2;
+		grid-row: 2;
+		grid-column: 1;
+		align-self: center;
+		margin: 0;
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-format-card[data-bhp-format="paperback"] {
+		order: 2;
+		grid-row: 2;
+		grid-column: 2;
+		align-self: center;
+		margin-bottom: 0;
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__cta-wrap { grid-row: 3; grid-column: 1 / -1; }
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__spec     { grid-row: 4; grid-column: 1 / -1; }
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__note     { grid-row: 5; grid-column: 1 / -1; }
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-product-guarantee { grid-row: 6; grid-column: 1 / -1; }
+
+	/* ---- 3e. 1.19.349 — THE TOP-OF-PAGE CHROME, MEASURED AND TRIMMED ----
+	 *
+	 * ⭐ WHERE THE FOLD ACTUALLY GOES ON THIS TEMPLATE, read off the live DOM
+	 *    at an asserted 375x812 rather than estimated. Every number below is a
+	 *    measurement, not a target:
+	 *
+	 *        0 to 93     sticky site header
+	 *       93 to 149    56px of shell padding      <- 36px of this is trimmed
+	 *      149 to 192    breadcrumb                 <- KEPT, see below
+	 *      192 to 199    7px
+	 *      199 to 522    the gallery box
+	 *      522 to 561    39px, of which 36 is the gallery's own margin-bottom
+	 *      561 to 710    the H1                     <- NOT TOUCHED, see below
+	 *      710 to 742    the age pill and its gaps
+	 *      742 to 892    format card, price, ADD TO CART
+	 *
+	 *    ADD TO CART's bottom edge was 892 against an 812 fold: 80px under.
+	 *
+	 * ⛔ THE BREADCRUMB IS KEPT. It is navigation and it is the page's own
+	 *    hierarchy signal; deleting a wayfinding element to win 43px would be
+	 *    trading a real function for a measurement.
+	 *
+	 * ⛔ THE H1 IS NOT RESIZED. Section 2's own comment forbids it in terms:
+	 *    "if it breaks, the fix is spacing inside this media query, NOT a
+	 *    smaller H1", and 1.19.266 raised it off a 28px accessibility floor.
+	 *    149px of title stays 149px of title.
+	 *
+	 * ⭐ SO THIS IS SPACING, AGAIN, AND ONLY SPACING — the same discipline
+	 *    1.19.348 §3c used for the last 16px. Nothing is hidden, nothing is
+	 *    removed, no type is resized, no touch target shrinks.
+	 *
+	 * ⚠️ IT HELPS EVERY PRODUCT PAGE ON A PHONE, NOT ONLY THE COLOURING BOOK,
+	 *    and that is the point rather than a side effect: 1.19.348 left Mariana
+	 *    clearing the fold by SEVEN PIXELS and flagged that as a knife edge
+	 *    that "the next copy edit to that title puts back over". This is the
+	 *    structural headroom that finding asked for.
+	 */
+	body.single-product.woocommerce .woo-expedition-shell {
+		padding-top: 20px;
+	}
+
+	/* The gallery's own trailing margin, on both gallery kinds. 36px of empty
+	   parchment between a picture and a title is desktop rhythm applied to a
+	   375px screen where every row is contested. */
+	body.single-product.woocommerce div.product > .woocommerce-product-gallery,
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero {
+		margin-bottom: 10px;
+	}
+
 	/* The two separate offers: same controls, one screen lower. */
 	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="kindle"],
 	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="collection"] {
@@ -378,6 +489,71 @@
 
 	body.single-product.woocommerce div.product .bhp-formats__cta-wrap {
 		margin: 0;
+	}
+
+	/* ---- 3c. 1.19.348 (CYCLE179-LD-348) — THE LAST 16px, AND EXACTLY WHY
+	           IT IS 16px AND NOT A ROUNDING ERROR --------------------------
+	 *
+	 * ⭐ THE DEFECT, MEASURED ON STAGING 2026-09-02 AT AN ASSERTED 375x812,
+	 *    ONE PRODUCT AT A TIME — because "mobile fails" was not true and the
+	 *    per-product split is the whole finding:
+	 *        Mariana paperback   ADD TO CART bottom 828 -> **16px BELOW** the fold
+	 *        Mount Everest       ADD TO CART bottom 791 -> 21px ABOVE, passes
+	 *        The Amazon          ADD TO CART bottom 742 -> 70px ABOVE, passes
+	 *    ⭐ ONE product misses, by 16px, and the cause is ONE EXTRA TITLE LINE:
+	 *       Mariana's H1 measures 112px against 74px for the other two. 38px of
+	 *       title, 16px over the fold. `ads-knowledge` recorded the same miss
+	 *       independently on production as `CYCLE179-BOR-002`, and its number
+	 *       was 16px too.
+	 *
+	 * ⛔ WHAT WAS NOT DONE, AND THE FILE ITSELF SAYS WHY. Section 2's own
+	 *    comment reads: "The ATC fold ... is RE-MEASURED after deploy; if it
+	 *    breaks, the fix is spacing inside this media query, NOT a smaller H1."
+	 *    The H1 is 34px because 1.19.266 raised it off a 28px rubric floor.
+	 *    ⭐ SO THIS IS SPACING, AND ONLY SPACING. No type is resized, no
+	 *       element is hidden, no content is removed, no order is changed, and
+	 *       every touch target is untouched — `.bhp-formats__cta` keeps its
+	 *       48px, the cards keep theirs.
+	 *
+	 * ⭐ WHERE THE 22px COMES FROM, itemised so the next reader can audit it
+	 *    rather than re-derive it:
+	 *        title margin-top        0.7rem  -> 0.2rem    =  -8.0px
+	 *        age line margin-bottom  0.4rem  -> 0.15rem   =  -4.0px
+	 *        selected price margins  .45/.35 -> .25/.2rem =  -5.6px
+	 *        format card margin-bottom  6px  -> 4px       =  -2.0px
+	 *        gallery cue margin-top   4.8px  -> 0         =  -4.8px
+	 *                                                      ---------
+	 *                                                       -24.4px nominal,
+	 *    and 22px measured in the browser (sub-pixel rounding, not a discrepancy
+	 *    worth chasing).
+	 *
+	 * ⚠️⚠️ THE CLEARANCE IS 7px ON MARIANA AND THAT IS A KNIFE EDGE, SAID HERE
+	 *    RATHER THAN IN A REPORT NOBODY WILL RE-READ. Measured after this
+	 *    block, at an asserted 375x812: Mariana -7px, Everest -43px, Amazon
+	 *    -93px. Seven pixels is one copy edit away from being sixteen again.
+	 *    ⛔ THE DURABLE FIX IS STRUCTURAL AND IT IS NOT AN ENGINEERING CALL:
+	 *       either the 44px flip-through cue comes off the mobile stack, or the
+	 *       title wraps to three lines instead of four. Both are content
+	 *       decisions. Escalated with these numbers, NOT decided here.
+	 * ------------------------------------------------------------------ */
+	body.single-product.woocommerce div.product > .summary > .product_title {
+		margin-top: 0.2rem;       /* 1.19.348: was 0.7rem */
+	}
+
+	body.single-product.woocommerce div.product .bhp-product-value-prop__age {
+		margin: 0 0 0.15rem;      /* 1.19.348: was 0 0 0.4rem */
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats__selected-price {
+		margin: 0.25rem 0 0.2rem; /* 1.19.348: was 0.45rem 0 0.35rem */
+	}
+
+	body.single-product.woocommerce div.product .bhp-format-card {
+		margin-bottom: 4px;       /* 1.19.348: was 6px */
+	}
+
+	body.single-product.woocommerce div.product > .bhp-media-gallery--hero > .bhp-gallery-cue {
+		margin-top: 0;            /* 1.19.348: was 4.8px, inherited from slot 8 */
 	}
 
 	/* ---- 4. The breadcrumb, compact ---------------------------------- */

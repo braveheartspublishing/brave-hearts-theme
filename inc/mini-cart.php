@@ -15,7 +15,12 @@
  *   "or at least have the cart pop up not the cart page show. I honestly dont
  *    like having this cart page in the middle of a purchase. It should just go
  *    to check out or to the cart side panel then to check out (whatever you
- *    and boromir thinks is best)"
+ *    and [ads-knowledge] thinks is best)"
+ *
+ * ⚠ THE SQUARE BRACKETS ABOVE ARE AN EDITORIAL SUBSTITUTION, not his word.
+ *   He used that agent's internal call name; internal call names may not
+ *   appear in this repository, which is public (Standing Rules §14.5).
+ *   Nothing else in the quotation is altered.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * ⛔⛔ THIS FILE BUILDS NO PANEL. THE PANEL ALREADY EXISTS AND ALREADY WORKS.

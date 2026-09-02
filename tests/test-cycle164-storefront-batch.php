@@ -13,7 +13,7 @@
  *   2. The A/B capture popup is homepage-only    (`CYCLE164-CX` #3)
  *   3. The 30-day guarantee on the product page  (`CYCLE164-CX` #4)
  *   4. hasMerchantReturnPolicy + the sitemap/redirect contradiction
- *                                                (Gimli's indexing audit)
+ *                            (the `connected-operator` indexing audit)
  *
  * ═══════════════════════════════════════════════════════════════════════
  * ⛔ THE ASSERTIONS THAT MATTER MOST ARE THE NEGATIVE ONES
@@ -321,7 +321,7 @@ if ( isset( $c164_urls['mariana'] ) ) {
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * ⭐ WHY THE SUPPRESSION WAS RIGHT AT 1.19.241, and it is not being called
- *    wrong: `commerce-cx` / Pippin's `CYCLE164-CX` #3 found that interrupting
+ *    wrong: the `commerce-cx` `CYCLE164-CX` #3 found that interrupting
  *    somebody who is already reading a price costs more than it earns. That
  *    reasoning is intact and still applies to the product pages, the cart and
  *    the checkout, which all stay in the suppressed set below.

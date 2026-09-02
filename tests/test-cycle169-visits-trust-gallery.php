@@ -4,7 +4,9 @@
  * photo gallery and the October booking CTA. Theme 1.19.319 (2026-08-29).
  *
  * Andrew Signore, verbatim, carrier item 432 (first-hand to the Chief of Staff,
- * commissioning this agent by name): *"Also I would like aragorn to work on
+ * commissioning this agent by name; the square brackets below are an editorial
+ * substitution of an internal call name, per Standing Rules §14.5 — nothing else
+ * in his sentence is altered): *"Also I would like [lead-developer] to work on
  * putting a column for past read alouds on the read-aloud site- I want more
  * trust on that and lets put a picture gallery of the read alouds on that page
  * too."*

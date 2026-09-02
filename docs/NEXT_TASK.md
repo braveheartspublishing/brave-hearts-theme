@@ -1,6 +1,27 @@
 # Next Task
 
 
+> ## ⭐⭐ NEWEST, 2026-09-02 · Production is theme `1.19.354` / bundle plugin `1.8.79`. **Everything below this block predates the `1.19.350` to `1.19.354` series.**
+>
+> **Nothing here is scheduled.** These are the candidates a next session would pick from, in the order that
+> most reduces risk. Each one needs the owner's go-ahead before it becomes work.
+>
+> 1. **`LD-10`, the band-versus-counter divergence** (`KNOWN_ISSUES.md`). It is the only open item in this
+>    series that can show a parent one school's name beside another school's shelf count. **It cannot be
+>    fixed without a ruling**, because reconciling the two changes entitlement, not display. Getting that
+>    ruling is the highest-value next step even though it is not itself engineering work.
+> 2. **`F-08` and `F-09`**, the mobile visit surface and clear-flag consistency. Open since before this
+>    series and unscoped. They should be re-verified against live `1.19.354` before being specified, because
+>    the visit band changed three times in this series and the original findings predate all three.
+> 3. **`LD-12`**, the CSS specificity trap. A four-line comment near the `body:not(.home)` block in
+>    `style.css`. It has already cost two rules in one pass and is the cheapest item on this list.
+> 4. **The parked cosmetic list** described in `CURRENT_TASK.md`. Re-check it against the live pages first.
+> 5. **The `--url` test-harness dependency** in `KNOWN_ISSUES.md`. Until it is settled, two suite runs are
+>    only comparable if both used `--url`.
+>
+> ⚠️ **Verify production's version with `wp theme list --status=active` before starting any of these.** The
+> numbers in this block are relayed from the deploying lane, not read from production here.
+
 > ## ⭐⭐⭐⭐ NEWEST 2026-08-03 — **ITEMS 0 AND 1 BELOW ARE DISCHARGED.** Production is theme `1.19.157` / plugin `1.8.16`.
 >
 > ### ✅ Item 0 — DISCHARGED. The 1.19.156 release record exists.

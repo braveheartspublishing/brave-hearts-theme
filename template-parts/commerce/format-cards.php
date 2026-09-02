@@ -243,6 +243,38 @@ if ('' !== $bhp_collection_free_ship) {
 }
 
 /*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.349 (`CYCLE179-LD-349`) — A CALLER MAY REPLACE THE SHIPPING
+ *     SENTENCE FOR ITS OWN PRODUCT KIND, exactly as `rail_spec` above already
+ *     replaces the spec line for the same reason.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ THIS IS A CORRECTNESS FIX AND IT WAS A LIVE DEFECT. `rail_spec` was
+ *     added in 1.19.277 because "12 short chapters" is FALSE of a colouring
+ *     book. The sentence one line lower had the identical problem and was
+ *     missed: the colouring rail set no `note`, so it inherited
+ *     `bhp_book_ship_note_single(bhp_bundle_single_shipping('paperback'))` and
+ *     printed **"Shipping starts at $1.99"** on a page whose only single-item
+ *     cart charges **$2.99**. ⭐ VERIFIED LIVE on staging 1.19.348 at an
+ *     asserted 1440x900, 2026-09-02, read out of the rendered DOM — not
+ *     inferred from this file. Found by `commerce-cx` as
+ *     `WHATS-INSIDE-COPY.md` §0 finding 5 and escalated as a live customer-
+ *     facing defect.
+ *
+ * ⛔ THE FIGURE IS THE PLUGIN'S, NOT A LITERAL. The caller builds the sentence
+ *    from `bhp_colouring_single_shipping()` at render time. Nothing about the
+ *    store's shipping configuration, zone, method or tier table is touched by
+ *    this release on any environment.
+ *
+ * ⛔ CONTROL PATH: `rail_note` is not set by `bhp_book_purchase_data()`, so
+ *    every chapter-book page keeps the Andrew-approved per-format sentences
+ *    above, byte-identical to 1.19.348.
+ */
+if (!empty($data['rail_note'])) {
+    $bhp_shipping_note_paperback = $data['rail_note'];
+}
+
+/*
  * ⭐ 2D (2026-08-03) — THE COLLECTION CARD'S SHIPPING NOW FOLLOWS THE DEFAULT
  *    FORMAT, because its PRICE already did and the two disagreed.
  *
@@ -504,10 +536,83 @@ if (null === $bhp_initial_conf) {
     $bhp_initial_conf = $bhp_format_payload[$initial];
 }
 ?>
-<div class="bhp-formats" data-bhp-formats
+<?php
+/*
+ * ⭐ 1.19.349 (`CYCLE179-LD-349`) — A ONE-CARD RAIL DECLARES ITSELF IN THE
+ *    MARKUP, so the phone stylesheet can put the price and the single chip on
+ *    ONE ROW, which is what Concept A's 375 mock draws ("$12.99  [PAPERBACK]").
+ *
+ * ⛔ IT IS A CLASS, NOT A COUNT, AND THAT IS DELIBERATE. CSS cannot count
+ *    siblings without `:has()` / `:nth-last-child` gymnastics that fail
+ *    silently on older Safari and Firefox — the exact failure mode
+ *    `bhp-gallery-multi` exists to avoid, recorded in `functions.php`. The
+ *    server already knows the answer (`rail_single`), so it says so.
+ *
+ * ⛔ CONTROL PATH: `rail_single` is not set by `bhp_book_purchase_data()`, so
+ *    every chapter-book page emits `class="bhp-formats"` byte-identical to
+ *    1.19.348 and no rule keyed on the modifier can reach it.
+ */
+$bhp_rail_single = !empty($data['rail_single']);
+?>
+<div class="bhp-formats<?php echo $bhp_rail_single ? ' bhp-formats--single' : ''; ?>" data-bhp-formats
      data-bhp-format-initial="<?php echo esc_attr($initial); ?>"
      data-bhp-kindle-url="<?php echo esc_url($data['kindle']['url']); ?>"
      data-bhp-collection-url="<?php echo esc_url($data['collection']['url']); ?>">
+
+  <?php
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * ⭐⭐ 1.19.349 (`CYCLE179-LD-349`) — THE SPEC LINE MOVED TO THE TOP OF THE
+   *     CARD. It was between the CTA and the shipping note; it is now the
+   *     first thing in the card.
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * ⭐ THE ORDER IS THE COMMERCE LANE'S, `WHATS-INSIDE-COPY.md` §6, and it is
+   *    the order the design lane drew in Concept A (the visual of record,
+   *    founder seal 679):
+   *
+   *        1 title (H1)            <- outside this card
+   *        2 age line              <- outside, bhp_woocommerce_product_value_prop
+   *        3 hook, one sentence    <- outside, same function
+   *        4 SPEC STRIP            <- THIS LINE, and it is why it moved
+   *        5 format picker
+   *        6 price, ONCE
+   *        7 CTA
+   *        8 trust line            <- shipping note + the full guarantee
+   *
+   * ⭐ WHY IT BELONGS ABOVE THE PICKER AND NOT BELOW THE BUTTON. It answers
+   *    "what IS this object" (paperback, illustrated, 12 short chapters, ages
+   *    6-9), which is the question a parent asks BEFORE choosing a format and
+   *    long before pressing a button. Under the CTA it was answering a
+   *    question that had already been acted on.
+   *
+   * ⛔ NOTHING ABOUT THE ELEMENT CHANGED — same tag, same class, same
+   *    `data-bhp-format-spec` hook, same server-rendered value from
+   *    `$bhp_initial_conf`. `book-formats.js` finds it with
+   *    `root.querySelector('[data-bhp-format-spec]')`, which is
+   *    position-independent, so the format swap still rewrites it.
+   *
+   * ⛔ MOBILE IS DELIBERATELY UNMOVED. `product-template.css`'s
+   *    `@media (max-width: 600px)` block gives this node an explicit
+   *    `order: 5`, which puts it AFTER the CTA on a phone — the position the
+   *    1.19.275 fold work chose and the 1.19.348 fold work re-measured. A DOM
+   *    move cannot reach past an explicit `order`, so the phone layout is
+   *    byte-for-byte the one that was measured. That is intentional: the
+   *    founder's above-the-fold rule (seal 672) outranks a tidy reading order
+   *    on a 375px screen.
+   *
+   * ⛔ THE PROTECTED ORDERING STILL HOLDS. `21-PROTECTED-ELEMENTS-MANIFEST.md`
+   *    §3.3 requires price, format selector and ADD TO CART to sit ahead of
+   *    the long-form body. All three moved DOWN by one node inside the card
+   *    and are still ahead of everything after it.
+   *
+   * A1: server-rendered for the initial format so first paint is already
+   * correct and this line can never cause a layout shift. CYCLE143-CX-2: read
+   * from `$bhp_initial_conf` rather than re-deriving the key, so the spec
+   * line, the CTA, the price and the JSON below all come from one array.
+   */
+  ?>
+  <p class="bhp-formats__spec" data-bhp-format-spec><?php echo esc_html($bhp_initial_conf['formatSpec']); ?></p>
 
   <?php
   /*
@@ -852,13 +957,6 @@ if (null === $bhp_initial_conf) {
     <?php endif; ?>
   </div>
 
-  <?php /* A1: server-rendered for the initial format so first paint is already
-           correct and this line can never cause a layout shift.
-           CYCLE143-CX-2: now read from $bhp_initial_conf rather than re-deriving
-           the key from $bhp_format_specs, so the spec line, the CTA, the price
-           and the JSON below all come from one array. */ ?>
-  <p class="bhp-formats__spec" data-bhp-format-spec><?php echo esc_html($bhp_initial_conf['formatSpec']); ?></p>
-
   <?php /* CYCLE143-CX-2: the shipping note is server-rendered for the same
            reason as the CTA above — it was the last empty element in the
            component, and a blank shipping line on first paint is exactly the
@@ -872,7 +970,7 @@ if (null === $bhp_initial_conf) {
    *     GUARANTEE REACHES THE PRODUCT PAGE.
    * ═══════════════════════════════════════════════════════════════════════
    *
-   * ⭐ THE FINDING (`commerce-cx` / Pippin, `CYCLE164-CX` #4): the guarantee
+   * ⭐ THE FINDING (`commerce-cx`, `CYCLE164-CX` #4): the guarantee
    *    is above the fold on `/complete-collection/` and ABSENT from every
    *    product page. VERIFIED LIVE on staging 2026-08-18 before the change —
    *    `.bhp-landing-guarantee` returned 0 nodes on the Mariana product page

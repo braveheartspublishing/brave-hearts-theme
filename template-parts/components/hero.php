@@ -44,7 +44,7 @@
  * ⭐ 1.19.241 (2026-08-18) — CYCLE164-LD-HOMEPAGE-WARMTH. THREE SLOTS ADDED.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * The Homepage Warmth Board (Legolas, `FD-391`, 2026-08-17) puts a founder
+ * The Homepage Warmth Board (`design-creative`, `FD-391`, 2026-08-17) puts a founder
  * chip above the eyebrow, a drawn underline under one word of the H1, and two
  * invitations under the subcopy. All three are HOMEPAGE-ONLY.
  *

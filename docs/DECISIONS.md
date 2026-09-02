@@ -88,6 +88,51 @@ difference against whatever Bookvault's real fulfillment cost turns out to
 be. This is why Bookvault's live-rate method must never be customer-facing
 (see the shipping fix decision above).
 
+> ### 2026-09-02 - Correction: the product prices and the shipping model in the decision immediately above are STALE
+>
+> **Supersedes:** the price and shipping figures recorded in the paragraph directly above this note.
+> **Status:** correction of record. The live storefront is the price of record.
+> **Verified:** live product pages, 2026-09-02.
+> **The superseded text is preserved above rather than rewritten**, so the movement is visible and is
+> not re-derived by a future session.
+>
+> **What was wrong.** That paragraph records a paperback price of `$12.99`, a hardcover price of
+> `$18.99`, and `$3.99 flat` shipping. **None of the three matches the storefront.** The figures appear
+> to date from a pre-launch plan and were never corrected after the prices were set.
+>
+> **Prices of record, as published on the live storefront, 2026-09-02:**
+>
+> | Product | Price |
+> |---|---|
+> | Chapter book, paperback | `$11.99` |
+> | Chapter book, hardcover | `$17.99` |
+> | Complete Collection (paperback) | `$31.99` |
+> | Coloring book | `$12.99` |
+> | Book + coloring bundle | `$22.99` |
+> | Hardcover + coloring bundle | `$28.99` |
+>
+> **Shipping of record.** Shipping is **tiered by the number of books in the order**, not flat. The
+> tiers are `$1.99`, `$2.99`, `$3.99` and `$4.99`, and shipping is **free at three or more books**. The
+> `$3.99 flat` figure recorded above is superseded. ⚠ **The `$3.99` is still correct as the ZONE
+> CONFIGURATION**, one zone, one `flat_rate` method, which the bundle plugin then adjusts per cart. The
+> two facts are different and conflating them is the documented failure here. See
+> `.claude/rules/woocommerce.md` for the full tier table and its own dated correction.
+>
+> ⚠ **Note for anyone changing shipping copy.** The tier a customer sees depends on the contents of the
+> cart, so a single hard-coded shipping sentence cannot be correct on every product page. **There is an
+> open defect against exactly this on the coloring-book product page.** Do not copy a shipping figure
+> from one template into another; read the tier logic.
+>
+> **Related records.** The full evidence, both sides of each superseded figure, and the open defect are
+> held in the private Business OS registers. **Pointers only, by path**, per the public/private
+> separation rule:
+> - `Business OS\04-DECISIONS-REQUIRED-REGISTER.md` - decision `G-154`
+> - `Business OS\20-CONFLICT-REGISTER.md` - `CYCLE179-CX-3`, and §73.1
+> - `Business OS\17-CURRENT-OPERATING-STATE.md` - PART 50, PART 51
+>
+> **Applies to:** documentation only. **No price, product, coupon or shipping setting is changed by
+> this entry.**
+
 ## Kirkus credibility component: one reusable partial + centralized data function, not per-template copies
 Followed the theme's existing `bhp_render_amazon_affiliate_section()` /
 `woocommerce_single_product_summary` pattern exactly (same hook,
@@ -345,3 +390,81 @@ frozen "no coupon for Organization or Retailer" policy.
 reconciled across **both** WooCommerce environments **and** every Mailchimp
 email body. A repo document is never sufficient evidence that a code does
 or does not exist. See `RELEASES/C1_C6_COUPON_ROTATION.md`.
+
+## A displayed visit deadline is the earlier of the stated cutoff and the gate close
+
+*Recorded 2026-09-02. Implemented in `1.19.351`. See
+`RELEASES/PRODUCTION_RELEASE_1_19_350_354.md`.*
+
+Two different dates govern a school visit and they are not the same thing.
+The **order gate** is `bhp_school_visit_last_order_date()`, which is the
+visit date **minus 2** and is the last date the site will actually accept
+an order. The **stated cutoff** is a `cutoff` field on the registry row:
+the date parents were told, on a flyer or a QR handout.
+
+Before this decision, different surfaces computed a deadline
+independently, and a surface could print a date **later** than either the
+date parents were told or the date the site would still take an order. The
+gap between the two is a grace window that was never advertised and must
+never be printed.
+
+**Decision:** one function, `bhp_visit_deadline_display()` in
+`inc/visit-band.php`, returns the **earlier** of the stated cutoff and the
+online close. It returns the registry's `cutoff` when that falls on or
+before the online close, and the online close otherwise. **Every visit
+surface reads it and nothing else computes a deadline**: the shop band
+open and closed, and `/author-visits/` open and closed rows. Asserted
+across 600 synthetic rows, 0 violations.
+
+**Two boundaries this decision does not cross, stated because they are
+easy to blur:**
+
+- **The gate is unchanged and is still `visit − 2`.**
+  `bhp_school_visit_last_order_date()` and
+  `bhp_school_visit_is_open_on()` are untouched. This governs a
+  **display**, never entitlement. A parent's ability to order is decided
+  where it always was.
+- **No registry row is edited by this.** The resolver reads; it does not
+  write, and it does not default a missing field into existence. The visit
+  data is the owner's.
+
+A standing test gate locks the rule in, including the case that motivated
+it: the never-advertised grace window cannot be printed under any row.
+
+## One catalog card, on every surface that lists a product
+
+*Recorded 2026-09-02. Implemented in `1.19.350`. See
+`RELEASES/PRODUCTION_RELEASE_1_19_350_354.md`.*
+
+Card rendering was gated on `is_shop()`. That gave `/shop/` a real product
+card and gave **every other catalog surface** a 1110px tile with one price
+and a navigation link styled as a button: six product-category archives,
+twelve product-tag archives, and WooCommerce product search. Twenty-one
+surfaces, two different answers to the same question, and the difference
+was invisible to anyone who only ever checked `/shop/`.
+
+**Decision:** the card is not a shop feature. It is what a product looks
+like when it is listed anywhere. **One predicate,
+`bhp_catalog_grid_context()`, and one CSS scope, `body.bhp-catalog-grid`,
+govern every catalog surface**, and any new listing surface joins by
+satisfying the predicate rather than by having its own branch added.
+
+Consequences that follow from the rule rather than from taste, recorded so
+they are not re-litigated as bugs:
+
+- **Asset enqueues key off the predicate, not off `is_shop()`.**
+  `inc/book-formats.php` was widened for exactly this reason: the archives
+  were rendering the card **without its own stylesheet**.
+- **The WooCommerce result count and sort select are removed from the
+  DOM** on catalog grids. The count was stating a wrong number on real
+  pages: four results above six cards on `/shop/`, two above four on
+  search. A wrong count is worse than no count.
+- **Reading order is set by a `pre_get_posts` filter, in theme code.** No
+  `menu_order` is written. Ordering is a presentation decision and must
+  not become product data.
+- **Proof blocks and bundle cards live below the grid, not inside a
+  card.** Their wording is untouched by this decision.
+- **A product archive that renders no card is noindexed**, and
+  `/product-category/hardcover-books/` 301s to `/shop/`. Hardcovers stay
+  hidden from the grid and stay purchasable; that is deliberate and is not
+  a stock defect.

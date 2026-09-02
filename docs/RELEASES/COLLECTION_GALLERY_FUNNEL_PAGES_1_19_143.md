@@ -199,7 +199,7 @@ Every subset resolves to exactly the requested items, in the requested order, wi
 
 SOP-06 step A8 requires **"zero `staging2` occurrences in code"** in the deploy ZIP. **OBSERVED: there are 5, and there always have been.** They are: two explanatory comments, `BHP_Analytics_Config::STAGING_HOST` (the staging-*detection* constant the whole analytics gate depends on), the sanitizer's staging-hostname denylist entry, and an internal-link regex. **All five are load-bearing correctness features, none renders, and `class-bhp-analytics-config.php` is byte-identical to production 1.19.121.**
 
-Reading A8 literally would block every deploy this project can ever make. **The check that carries the intent is "zero `staging2` occurrences *introduced*, and none in rendered output."** ⛔ **Recorded, not resolved** — SOP wording is Business Ops' to own and Andrew's to approve. Routed to Gandalf.
+Reading A8 literally would block every deploy this project can ever make. **The check that carries the intent is "zero `staging2` occurrences *introduced*, and none in rendered output."** ⛔ **Recorded, not resolved** — SOP wording is Business Ops' to own and Andrew's to approve. Routed to `chief-of-staff`.
 
 ### 8.2 `CYCLE141-LD-9` — the staging deploy capability is not available to this role
 

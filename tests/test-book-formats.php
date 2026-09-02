@@ -241,10 +241,52 @@ foreach ($registry as $key => $book) {
         "markup {$pb}: the CTA does NOT read ADD HARDCOVER TO CART",
         strpos($html, 'ADD HARDCOVER TO CART</a>') === false
     );
+    /*
+     * ⭐ CYCLE178-LD-346 (2026-09-02) — THE TWO CTA-HREF ASSERTIONS ARE NOW
+     *    ATTRIBUTE-ORDER AGNOSTIC. THIS IS A TEST FIX, NOT A CODE FIX.
+     *
+     * Both assertions below used to anchor on `data-bhp-format-cta\s+href=`,
+     * i.e. they required `href` to be the VERY NEXT attribute. 1.19.281
+     * (carrier item 188, the cart side panel) inserts three attributes
+     * between them on every add-to-cart CTA:
+     *
+     *   data-bhp-format-cta data-bhp-cart-add data-product-id="…"
+     *   data-variation-id="…" href="…"
+     *
+     * ⛔ THE SECOND ASSERTION WAS THE DANGEROUS ONE, AND IT IS WHY THIS IS
+     *    NOT A COSMETIC REPAIR. It is a NEGATIVE match, so once the pattern
+     *    could no longer match anything it PASSED VACUOUSLY — a green line
+     *    that proved nothing about whether the paperback CTA had started
+     *    pointing at the hardcover product. A false pass is worse than the
+     *    false failure beside it.
+     *
+     * The repair: pull the CTA anchor's own opening tag out of the markup
+     * once, read its `href` from inside that tag, and assert against the
+     * decoded URL. Attribute order no longer matters, and `$cta_href` is
+     * null when the anchor is absent, which every assertion below tests for
+     * explicitly so none of them can pass by failing to find anything.
+     */
+    $cta_href = null;
+    if (preg_match('/<a\b[^>]*\bdata-bhp-format-cta\b[^>]*>/', $html, $cta_tag_m)
+        && preg_match('/\shref="([^"]*)"/', $cta_tag_m[0], $cta_href_m)) {
+        $cta_href = html_entity_decode($cta_href_m[1], ENT_QUOTES);
+    }
+
     bhp_test_assert(
         $failures,
-        "markup {$pb}: the CTA href is no longer the dead '#' placeholder",
-        (bool) preg_match('/data-bhp-format-cta\s+href="(?!#")[^"]+"/', $html)
+        "markup {$pb}: the CTA anchor carrying data-bhp-format-cta is present with an href",
+        null !== $cta_href
+    );
+
+    // Still a REAL add-to-cart destination, not the dead '#' placeholder the
+    // original assertion was written to catch.
+    bhp_test_assert(
+        $failures,
+        "markup {$pb}: the CTA href is a real add-to-cart URL, not the dead '#' placeholder",
+        null !== $cta_href
+            && '' !== $cta_href
+            && '#' !== $cta_href
+            && strpos($cta_href, 'add-to-cart=') !== false
     );
 
     // And it points at THIS title's paperback, not some other product.
@@ -262,7 +304,7 @@ foreach ($registry as $key => $book) {
     bhp_test_assert(
         $failures,
         "markup {$pb}: the CTA target does not carry hardcover product {$hc_id}",
-        !preg_match('/data-bhp-format-cta\s+href="[^"]*add-to-cart=' . $hc_id . '\b/', $html)
+        null !== $cta_href && !preg_match('/[?&]add-to-cart=' . $hc_id . '\b/', $cta_href)
     );
 
     // Spec line and shipping note follow the same selection.

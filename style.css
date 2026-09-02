@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.345
+Version: 1.19.354
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3811,7 +3811,7 @@ body:not(.home) .home-hero__title { margin-bottom: 1.25rem; }
 .home .hub-card--destination .hub-card__question { max-width: 100%; padding: 0; border: 0; font-size: clamp(1.35rem, 2.2vw, 1.85rem); font-style: italic; }
 .home .hub-card--destination .hub-card__link { color: var(--color-gold); font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; }
 /* The three photo grounds are gone, so the tile-3 legibility failure
-   Legolas measured (eyebrow, coordinates, age pill and price line all
+   `design-creative` measured (eyebrow, coordinates, age pill and price line all
    illegible over bright green foliage) cannot recur: every tile now has
    the same flat dark ground. */
 .home .home-books-path { padding-block: var(--space-8); background: #09141e; }
@@ -4713,6 +4713,18 @@ body:not(.home) .final-cta .text-lead { color: #f8f3e9; }
       bottom of each card sits on one baseline across that row. It does NOT
       claim alignment between rows of different heights, and QA measures rows.
 
+   ⛔⛔ SUPERSEDED 2026-09-02 BY 1.19.350 (`CYCLE179-LD-350-BUILD`): the SELECTOR
+      TOKEN IS NOW `body.bhp-catalog-grid`. The paragraph below is preserved
+      verbatim so the movement is visible and is not re-derived. ⭐ THE SCOPE IS
+      STILL LOAD-BEARING AND STILL PROTECTS THE SAME THING — the boundary simply
+      moved to where it always meant to be. `bhp_catalog_grid_context()` returns
+      FALSE on `is_product()` before anything else it tests, so the single
+      product page's related and upsell rows are excluded exactly as
+      `is_shop()` excluded them. Only the 18 taxonomy archives and product
+      search, which were never the target, have moved from outside to inside.
+      Full reasoning: `inc/catalog-surfaces.php` header and the superseding note
+      in `inc/book-formats.php` above `bhp_shop_card_context()`.
+
    ⛔ SCOPED TO `body.woocommerce-shop`, AND THE SCOPE IS LOAD-BEARING — the
       same reason the 2-up block below records. `.woo-expedition-shell` also
       wraps the SINGLE PRODUCT page, whose related/upsell rows are
@@ -4747,7 +4759,7 @@ body:not(.home) .final-cta .text-lead { color: #f8f3e9; }
       cheap way to equalise the widths would have been to delete it. Its 2px
       border and its inline padding are SUBTRACTED instead, so the frame renders
       exactly as it did and its CTA still lands on the shared width. */
-body.woocommerce-shop .woo-expedition-shell ul.products {
+body.bhp-catalog-grid .woo-expedition-shell ul.products {
   /* the inset between a CTA and its CARD, identical on all six */
   --bhp-card-gutter: 1.5rem;
   /* the collection frame's own inline padding, preserved at today's value */
@@ -4755,8 +4767,8 @@ body.woocommerce-shop .woo-expedition-shell ul.products {
 }
 
 /* ── B · the flex chain, continued through the two bundle wrappers ────────── */
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card,
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -4770,7 +4782,7 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .
    ⭐ `min-height: 48px` is the site's existing primary-control floor — the same
       figure `test-product-template.php` already asserts for the product page's
       ADD TO CART, and clear of the 44px touch-target minimum. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-atc {
   display: flex;
   box-sizing: border-box;
   align-items: center;
@@ -4791,7 +4803,7 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc
   white-space: normal;
 }
 /* A button inside a form fills that form; the form is the wrapper. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.product form > button.bhp-shop-atc {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product form > button.bhp-shop-atc {
   width: 100%;
 }
 
@@ -4824,7 +4836,7 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product form > button
    ⛔ GEOMETRY STILL COMES FROM `.bhp-shop-atc` above (48px floor, wrapping
       label, card insets), which sets no colour at all. Only the treatment is
       here, so the two cannot drift apart. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome {
   background: transparent;
   color: var(--color-forest);
   border: 2px solid var(--color-forest);
@@ -4833,14 +4845,14 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc
   cursor: pointer;
 }
 
-body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:hover,
-body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:focus {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:hover,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:focus {
   background: var(--color-forest);
   color: var(--color-white);
   text-decoration: none;
 }
 
-body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:focus-visible {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-atc--shiphome:focus-visible {
   outline: 3px solid var(--color-gold-deep);
   outline-offset: 2px;
 }
@@ -4849,7 +4861,7 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc
       NOT fine print: this sentence is what tells a parent that following the
       link gives up hand-delivery. ⛔ Never style it out of sight, and never
       render the control without it. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-offer__shiphome-note {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__shiphome-note {
   margin: var(--space-2) var(--bhp-card-gutter) var(--bhp-card-gutter);
   font-family: var(--font-ui);
   font-size: 0.78rem;
@@ -4860,7 +4872,7 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-offer__s
 
 /* The ship-home bundle card stacks price, control and note; the wrapper pins
    to the card floor exactly as the ordinary offer card's does. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-offer--shiphome {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer--shiphome {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -4873,17 +4885,17 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-offer--s
    ⛔ THE ANCHOR TAKES `align-self: stretch` AND `width: auto`, NOT `width:
       100%` — on a flex item, stretch sizes the box to the container MINUS its
       margins, which is exactly the arithmetic `width: 100%` gets wrong. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product > a.bhp-shop-atc {
   align-self: stretch;
   width: auto;
   margin: auto var(--bhp-card-gutter) var(--bhp-card-gutter);
 }
 /* The pair card's wrapper adds no box of its own, so the gutter passes through. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
   padding-inline: 0;
   padding-bottom: 0;
 }
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--card {
   margin: auto var(--bhp-card-gutter) var(--bhp-card-gutter);
 }
 /* ⭐ The collection frame keeps its look and SUBTRACTS ITSELF: its 2px border
@@ -4892,11 +4904,11 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item f
       padding goes to 0 because the CTA is now the frame's last child and is
       carrying the whole inset itself — two bottom insets stacked is what put
       this card's button 6px above its neighbour's. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
   padding-inline: var(--bhp-collection-frame-pad);
   padding-bottom: 0;
 }
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell) {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form:not(.bhp-shop-collection-card__form--upsell) {
   margin: auto calc(var(--bhp-card-gutter) - 2px - var(--bhp-collection-frame-pad)) calc(var(--bhp-card-gutter) - 2px);
 }
 
@@ -4908,11 +4920,11 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-i
       the six buttons can share one baseline. ⛔ A CSS `order` reorder would
       have left focus order behind, which is an accessibility defect on a
       control a keyboard reaches. */
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell {
   margin: 0 var(--bhp-card-gutter) 0.5rem;
 }
-body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
   margin: 0 calc(var(--bhp-card-gutter) - 2px - var(--bhp-collection-frame-pad)) 0.5rem;
 }
 
@@ -4955,6 +4967,18 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-i
       allowed to be relative to its type. One breakpoint, named, and the band
       it governs stated in numbers.
 
+   ⛔⛔ SUPERSEDED 2026-09-02 BY 1.19.350 (`CYCLE179-LD-350-BUILD`): the SELECTOR
+      TOKEN IS NOW `body.bhp-catalog-grid`. The paragraph below is preserved
+      verbatim so the movement is visible and is not re-derived. ⭐ THE SCOPE IS
+      STILL LOAD-BEARING AND STILL PROTECTS THE SAME THING — the boundary simply
+      moved to where it always meant to be. `bhp_catalog_grid_context()` returns
+      FALSE on `is_product()` before anything else it tests, so the single
+      product page's related and upsell rows are excluded exactly as
+      `is_shop()` excluded them. Only the 18 taxonomy archives and product
+      search, which were never the target, have moved from outside to inside.
+      Full reasoning: `inc/catalog-surfaces.php` header and the superseding note
+      in `inc/book-formats.php` above `bhp_shop_card_context()`.
+
    ⛔ SCOPED TO `body.woocommerce-shop`, AND THE SCOPE IS LOAD-BEARING — the
       same reason blocks 1.19.284 and 1.19.286 record it. `.woo-expedition-
       shell` also wraps the SINGLE PRODUCT page, whose related/upsell rows are
@@ -4974,9 +4998,21 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-i
      ⛔ The gap drops from `clamp(24px,3vw,42px)` (42px at 1440) to 24px,
         because the same 1236px has to carry one more card. 24px is the LOW
         end of the clamp this grid already used, not a new number. */
-  body.woocommerce-shop .woo-expedition-shell ul.products {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 28px 24px;
+  body.bhp-catalog-grid .woo-expedition-shell ul.products {
+    /* ⭐⭐ 1.19.350 — FIVE TRACKS. `CYCLE179-LD-350-BUILD`, move M3.
+       ⛔ THE SUPERSEDED VALUE, PRESERVED: `repeat(4, minmax(0, 1fr))` with
+          `gap: 28px 24px`. Four tracks was correct while the grid carried SIX
+          cards (four titles plus two injected bundles). From 1.19.350 the
+          bundles render in a strip BELOW the grid, so the grid is exactly the
+          five things a reader is choosing between: Book 1, Book 2, Book 3, the
+          Complete Collection, the coloring book. ⭐ Five tracks is what makes
+          the catalog readable in one row, which is the whole of the founder's
+          complaint at seal 680.
+       ⛔ `loop_shop_columns` NOW RETURNS 5 TOO (`functions.php`). The two used
+          to disagree — PHP said 3, the DOM measured 4 — which is
+          `CYCLE179-CX-004`, and it is closed by moving both together. */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 28px 20px;
     /* ── THE TWO TOKENS TAKE THEIR 291px VALUES, AND THAT IS THE WHOLE
        GEOMETRY ADJUSTMENT. Every selector in block D above reads them, so the
        six CTA widths and the shared bottom baseline are RE-DERIVED here rather
@@ -5031,7 +5067,14 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-i
         ⛔ `tests/test-bundle-cards-206-207.php` §5 already re-counts the six
         from the SERVED markup every run, so the premise is gated, not
         assumed. */
-  body.woocommerce-shop .woo-expedition-shell ul.products:has(> li:nth-child(6):last-child) > li:nth-child(5) {
+  /* ⛔⛔ 1.19.350 — THE NO-ORPHAN PIN IS NEUTRALISED, NOT DELETED, AND ITS OWN
+     COUNT GUARD IS WHY IT COSTS NOTHING TO LEAVE IN PLACE. It matches only a
+     grid with EXACTLY six children. From 1.19.350 the catalog grid has five,
+     because the two bundle cards moved to the strip below it, so the selector
+     stops matching on its own and the pin lifts exactly as its author wrote it
+     to. ⭐ Preserved so that a future grid that does carry six again gets the
+     centring back without anyone re-deriving it. */
+  body.bhp-catalog-grid .woo-expedition-shell ul.products:has(> li:nth-child(6):last-child) > li:nth-child(5) {
     grid-column: 2;
   }
 
@@ -5048,7 +5091,7 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-i
         not something this block introduces, and it is not "fixed" here — a
         390px hard height at 291px wide would letterbox the cover. Only the
         padding comes in, so the cover gets more of the narrower card. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product img {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product img {
     padding: 1.15rem 1.15rem 0.5rem;
   }
   /* ⛔ 26.4px set the title for a 384px card. At 291px the longest title on
@@ -5056,21 +5099,46 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-i
      to five lines and drives every card in its row taller. 20.5px holds it to
      three. ⭐ Still well above the 16px body floor; no truncation, no ellipsis
      and no shortened title: the whole name still renders. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
     padding: 0 1.15rem;
     font-size: 1.28rem;
     line-height: 1.28;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .price {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .price {
     padding: 0.4rem 1.15rem 0.85rem;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woo-card__eyebrow {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woo-card__eyebrow {
     margin: 1rem 1.15rem 0.2rem;
   }
 }
 
 .woocommerce span.onsale { top: 1rem; right: 1rem; left: auto; min-width: 0; min-height: 0; padding: .45rem .7rem; border-radius: 0; background: var(--expedition-gold); color: var(--expedition-navy); font: 700 .65rem/1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
-.woocommerce div.product { display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,.85fr); gap: clamp(3rem,7vw,7rem); }
+/* ⭐⭐ 1.19.348 — `align-items: start` IS THE WHOLE OF THE WHITE-SPACE FIX.
+   ⛔ THE ONE DECLARATION IN THIS FILE THAT PRODUCED 1,072–1,953px OF DEAD
+      PARCHMENT ON EVERY PDP WAS THE ABSENCE OF THIS LINE. A CSS grid defaults
+      to `align-items: normal`, which resolves to `stretch`; the purchase
+      column runs 2,145–2,604px and the gallery column's content ends around
+      830–930px, so stretch inflated the gallery box — background, border and
+      all — to the sibling's height and painted the difference.
+   ⭐ MEASURED, not reasoned: staging2 at an asserted 1440x900, dead space under
+      the gallery box went 1,072px -> 0px (colouring 4065) and 1,953px -> 0px
+      (Mariana 333) with this line and nothing else.
+   ⭐ THE IN-HOUSE COUNTER-EXAMPLE that proves it is `.bhp-landing-hero__main`
+      on the Complete Collection page: same two-column shape, same brand, and
+      it already carries `align-items: start` and already measures 0px.
+   ⛔ IT IS DELIBERATELY UNSCOPED, i.e. it applies at every width, because the
+      `max-width: 900px` rule further down collapses this grid to ONE column
+      and a one-column grid's rows are content-sized — `start` changes nothing
+      there. Scoping it to a media query would have been noise.
+   ⚠️ The `commerce-cx` recon recorded "the exact stylesheet that declares the
+      two-column
+      product grid was not located in the repo ... most likely a WooCommerce or
+      plugin stylesheet". THAT IS CORRECTED: it is this line, in this file, and
+      it was confirmed by walking `document.styleSheets` in the live page — the
+      only sheet declaring `div.product` + `grid-template-columns` is the
+      theme's own `style.min.css`. So this is a source edit, not an override,
+      and NO `!important` was needed anywhere in the fix. */
+.woocommerce div.product { display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,.85fr); gap: clamp(3rem,7vw,7rem); align-items: start; }
 .woocommerce div.product .woocommerce-product-gallery,
 .woocommerce div.product .summary { width: auto !important; float: none !important; }
 .woocommerce div.product .woocommerce-product-gallery { padding: clamp(1.5rem,4vw,3rem); background: linear-gradient(145deg,#e8dbc1,#fbf5e9); }
@@ -5099,6 +5167,353 @@ body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-i
 .woocommerce div.product .amazon-reviews-product-section { grid-column: 1/-1; margin-top: var(--section-space-sm); }
 .amazon-reviews-product-section .component-heading { margin-bottom: clamp(2rem, 4vw, 3rem); }
 .amazon-reviews-product-section .amazon-review-showcase__grid { gap: var(--space-6); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.348 — PDP REDESIGN PHASE 1. FOUNDER PRIORITY, SEAL 672.
+   `CYCLE179-LD-348`. CSS ONLY: no markup, no PHP, no WooCommerce data.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ THE FOUNDER'S OWN WORDS, 2026-09-02 05:09, are the whole specification:
+      "we need the gallery main image to fit in the screen on desktop you have
+      to scroll up and down to see the entire image ... and there is so much
+      white space on the left side under the gallery too".
+      Two defects. The white space is fixed by `align-items: start` above. The
+      image fit is fixed here.
+
+   ⛔ EVERYTHING IN THE FIRST BLOCK IS BEHIND `min-width: 901px` ON PURPOSE.
+      901 is not a new breakpoint — it is one pixel above the existing
+      `max-width: 900px` rule that already collapses this grid to a single
+      column. Mobile therefore cannot be reached by any rule in it, which is
+      the requirement: `commerce-cx` measured 375x812 as CORRECT and needing no
+      repair (recon row A5, 24px dead space), and the `body.bhp-gallery-multi`
+      override plus the `max-width: 782px` cap block in `book-formats.css` are
+      both correct at 1.19.347 and are NOT touched by this release.
+
+   ⭐ WHY THE COLUMNS BECOME EQUAL, and the disagreement is recorded rather
+      than silently resolved:
+        · Design-lane Concept A (`out-A-desktop.png`, the VISUAL OF RECORD)
+          renders
+          640 / 636 with a 44px gap in a 1320px shell — i.e. ~50/50.
+        · The `commerce-cx` recon RECOMMENDS "660 / 476", but its own sentence
+          for that
+          recommendation reads "which widens the purchase card rather than the
+          picture" — and 660/476 does the opposite: it widens the GALLERY from
+          614 to 660 and narrows the purchase card from 522 to 476. The numbers
+          and the rationale contradict each other.
+        · The brief's tie-break is explicit: Concept A governs where the two
+          differ. So: equal columns, tighter gap. 592.8 / 592.8 with a 50.4px
+          gap at 1440 — within half a percent of Concept A's proportions, and
+          the purchase card gains 71px it did not have.
+      ⛔ THE CONTRADICTION IS ESCALATED, NOT CLOSED. It is the chief of staff's
+         to route.
+
+   ⭐ THE IMAGE CAP IS EXPRESSED AGAINST THE VIEWPORT, NEVER AGAINST THE FILE.
+      `calc(100vh - 400px)` is not a magic number; it is the measured chrome
+      above and below the picture on this template:
+          203px  content top (sticky 80px header already inside it)
+        +  48px  gallery box padding-top
+        +  16px  gap above the thumbnail rail
+        +  64px  the rail itself (square tiles at this column width)
+        +  48px  gallery box padding-bottom
+        = 379px, rounded up to 400 for 21px of honest slack.
+      The 560px ceiling stops a 4K monitor from rendering a comically large
+      cover. `object-fit: contain` is inherited from the rule above; with
+      `width: auto; height: auto` the BOX itself takes the image's aspect, so
+      there is nothing to letterbox and nothing is ever cropped or distorted.
+
+   ⭐ THE CHAPTER BOOKS USE A DIFFERENT LEVER AND IT IS THE THEME'S OWN.
+      They do not render the WooCommerce gallery at all — `bhp_book_replace_
+      product_gallery()` swaps in `.bhp-media-gallery--hero`, whose stage is
+      sized by `--bhp-stage-h` (`min(58vh, 520px)`, `book-media.css`). Capping
+      the <img> there would do NOTHING, because the STAGE is what is 520px
+      tall. So the variable is re-pointed, scoped to the product hero only —
+      the Collection page and the four funnel pages read the same variable and
+      are deliberately left alone. Its budget is 415px, not 400px, because
+      this gallery carries a flip-through cue (56px) and a note line (32px)
+      that the WooCommerce one does not.
+
+   ⛔ THE STICKY PURCHASE COLUMN WAS ASKED FOR AND IS DELIBERATELY NOT BUILT.
+      The brief said "if it costs nothing; skip if it fights the theme". It
+      fights the theme, and the measurement is the argument: once the stretch
+      is gone the purchase column is the TALLER of the two (2,145px against a
+      676px gallery on the colouring book; 2,604px against 730px on Mariana).
+      A sticky element can only travel inside a container taller than itself,
+      so `position: sticky` on `.summary` has ZERO travel and would render
+      exactly the page below at a cost of one more specificity war.
+      ⭐ The column that COULD usefully stick is the short one — the gallery,
+         which is Bookshop.org's pattern in the `commerce-cx` recon. That is a
+         design
+         decision, not a defect fix, and it belongs to phase 2 with the
+         below-gallery content blocks. Recorded, not smuggled in.
+
+   ⛔ NOT IN THIS RELEASE, so it cannot creep in later as "it was always
+      there": no Concept A content blocks, no "add both for $22.99" bundle
+      (a new offer with no margin floor — Finance then Andrew), no copy, no
+      claim, no rating, no schema change, no WooCommerce record or setting.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 901px) {
+  .woocommerce div.product {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr);
+    gap: clamp(2.5rem, 3.5vw, 3.5rem);
+  }
+  /* Belt and braces with `align-items: start` above: this column must be
+     top-aligned and content-height for the dead space to stay at 0. The older
+     `.summary { align-self: center }` rule further up wins on source order
+     without it. */
+  .woocommerce div.product > .summary { align-self: start; }
+
+  /* --- Stock WooCommerce gallery: the colouring line, seven slides --- */
+  .woocommerce div.product > .woocommerce-product-gallery .woocommerce-product-gallery__image img {
+    max-height: min(560px, calc(100vh - 400px));
+    width: auto;
+    height: auto;
+    margin-inline: auto;
+  }
+  /* ⭐ ONE HORIZONTAL ROW, NEVER A VERTICAL RAIL AND NEVER TWO ROWS. The stock
+     rail wrapped to 2 rows of 129px tiles and pushed the seventh tile 280px
+     below the fold. `flex: 1 1 0` divides the column between however many
+     slides exist, so all seven are visible at once with no scrolling and no
+     hardcoded count; `min-width: 44px` is the WCAG 2.5.8 target floor and is
+     what would force a scroller if a product ever gained enough slides. */
+  .woocommerce div.product > .woocommerce-product-gallery ol.flex-control-thumbs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .woocommerce div.product > .woocommerce-product-gallery ol.flex-control-thumbs li {
+    flex: 1 1 0;
+    min-width: 44px;
+    margin: 0;
+  }
+  .woocommerce div.product > .woocommerce-product-gallery ol.flex-control-thumbs li img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  /* --- The theme's own gallery: the three chapter books --- */
+  .woocommerce div.product > .bhp-media-gallery--hero .bhp-gallery__stage {
+    --bhp-stage-h: min(520px, calc(100vh - 415px));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐ 1.19.348 — F3, THE GALLERY THAT WENT BLANK AFTER A BROWSER RESIZE.
+   ═══════════════════════════════════════════════════════════════════════════
+   ⭐ THE MECHANISM, READ OUT OF THE LIVE DOM RATHER THAN GUESSED AT:
+      FlexSlider lays its slides out as floated boxes with an INLINE PIXEL
+      width (`style="width: 517.625px"`) and positions the track with an inline
+      `translate3d(-N x itemWidth, 0, 0)`. Those pixel values are computed once.
+      After a resize the track is still translated by the OLD item width while
+      the viewport is the NEW one, so the active slide is pushed outside
+      `.flex-viewport`, which is `overflow: hidden` — and the gallery is simply
+      empty. `commerce-cx` reproduced it in two browsers; this pass confirmed
+      the cause directly (viewport 497px against a slide still declaring
+      517.625px, and a stale `height: 669.812px` on `.flex-viewport`).
+
+   ⭐ THE FIX RETIRES THE SLIDING TRANSFORM INSTEAD OF RE-MEASURING IT.
+      The track goes to 100% width, the transform is dropped, and the slides
+      become a show/hide stack driven by FlexSlider's OWN `.flex-active-slide`
+      class — which it keeps in sync for free, because that is how it tracks
+      the current slide for the thumbnail rail. Every pixel value that could go
+      stale is gone, so there is nothing left to invalidate on resize.
+      ⭐ VERIFIED LIVE: thumbnail 4 clicked, exactly one slide visible and it is
+         index 3; window then resized 1440 -> 1024 -> 1440 and the active image
+         still measured 387x500 at the correct offset. No blank.
+      ⛔ THE COST, STATED: the 500ms horizontal slide animation is gone. It is
+         a swap now. That is a deliberate trade — a gallery that is occasionally
+         blank is worse than a gallery that does not slide — and it is the
+         reason this is CSS and not a 40-line debounced re-init shim bolted onto
+         a component we would rather not keep.
+
+   ⛔ SCOPED TO `min-width: 901px`, AND THAT BOUNDARY IS THE POINT.
+      FlexSlider's touch/swipe handler drives the very transform this block
+      overrides. Killing it below 901px would take swipe away from phones, and
+      MOBILE WAS MEASURED CORRECT AND MUST NOT REGRESS (recon row A5, finding
+      F6 "needs no repair"). Desktop has no swipe affordance to lose here —
+      WooCommerce initialises this slider with `directionNav: false` and
+      thumbnail navigation only. Resizing a window is a desktop action; a phone
+      does not have one. The narrower fix is the correct fix.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 901px) {
+  .woocommerce div.product > .woocommerce-product-gallery .flex-viewport {
+    height: auto !important;
+  }
+  .woocommerce div.product > .woocommerce-product-gallery .woocommerce-product-gallery__wrapper {
+    width: 100% !important;
+    transform: none !important;
+  }
+  .woocommerce div.product > .woocommerce-product-gallery .woocommerce-product-gallery__wrapper > .woocommerce-product-gallery__image {
+    display: none !important;
+    float: none !important;
+    width: 100% !important;
+  }
+  .woocommerce div.product > .woocommerce-product-gallery .woocommerce-product-gallery__wrapper > .woocommerce-product-gallery__image.flex-active-slide {
+    display: block !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.349 — PDP REDESIGN PHASE 2, CONCEPT A. FOUNDER SEAL 679.
+   `CYCLE179-LD-349`. The left column gets CONTENT; the card gets ONE price.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ 1.19.348 REMOVED THE PAINTED DEAD PARCHMENT AND SAID SO PLAINLY: "this is
+      why the left column is now short rather than full: `align-items: start`
+      removes the PAINTED dead space, and phase 2 is what puts something there."
+      This is phase 2. The block that fills it is `.bhp-pdp-left` — "Look
+      inside" plates, then "What is inside" bullets — and it is a THIRD DIRECT
+      GRID CHILD of `div.product`, placed explicitly in column 1, row 2.
+
+   ⛔⛔ THE PLACEMENT MUST BE EXPLICIT, AND AUTO-PLACEMENT IS A TRAP HERE.
+      Left to itself the grid puts the gallery at r1c1 and the summary at r1c2,
+      so row 1's height is the TALLER of the two — and after 348 that is the
+      summary, at 1,625 to 2,630px. An auto-placed third item lands at r2c1,
+      i.e. BELOW a 2,600px row, which would drop the look-inside plates two and
+      a half screens down the page with nothing but empty column above them.
+      ⭐ MEASURED, not reasoned: summary heights read live off staging 1.19.348
+         at an asserted 1440x900 on 2026-09-02 were Mariana 2,607 (hardcover
+         2,630), Everest 1,640, The Amazon 1,625, colouring 2,145, against
+         gallery heights of 639 to 730.
+      ⭐ THE FIX IS `grid-row: 1 / span 2` ON THE SUMMARY. Row 1 then sizes to
+         the GALLERY, row 2 to the left-column content, and the summary spans
+         both — which is exactly the shape Concept A draws.
+
+   ⛔ AND EVERY OTHER DIRECT CHILD IS PINNED FULL WIDTH, deliberately, as a
+      RULE rather than one selector per band. Before this release the file
+      carried a hand-written `grid-column: 1/-1` for `.woocommerce-tabs`, for
+      `.related.products` and for `.amazon-reviews-product-section`, each added
+      the day someone noticed that band had collapsed into the narrow first
+      column. That is a defect class, not three defects: `woocommerce_after_
+      single_product_summary` fires INSIDE this grid, so ANY future band hooked
+      there inherits the same bug. Adding a second content row makes it worse,
+      because an unpinned band can now land at r3c1 with the summary still
+      spanning beside it. One rule closes it for every band that will ever be
+      hooked there, and the three existing rules are left in place because they
+      declare the same value and removing them would be churn.
+
+   ⛔ SCOPED TO `min-width: 901px`, AND NOT ONE PIXEL LOWER. `max-width: 900px`
+      collapses this grid to a single column (`style.css` line ~5375), and a
+      one-column grid needs no placement at all — the DOM order gallery →
+      summary → left column IS the phone order, and it is the right one: the
+      cover, then the buy box with ADD TO CART, then the look-inside plates.
+      Putting a plate above the button would be the fastest possible way to
+      break the founder's own rule (seal 672).
+
+   ⛔ THE GALLERY IS NOT MADE STICKY, AND THE RULING SAID EITHER WAY WAS
+      ACCEPTABLE ("or none if it fights the theme"). THE MEASUREMENT IS THE
+      ARGUMENT, and it is the same one 348 made about the purchase column, one
+      column over. A grid item's sticky constraint rectangle is ITS OWN GRID
+      AREA. The gallery's area is row 1, column 1 — a row whose height IS the
+      gallery's height, because the summary now spans rows 1 and 2 and no
+      longer inflates row 1. So `position: sticky` on the gallery has EXACTLY
+      ZERO TRAVEL, and would render this page unchanged at the cost of one more
+      declaration to explain.
+      ⭐ THE ONE ARRANGEMENT THAT WOULD GIVE IT TRAVEL is to nest the gallery
+         and the left-column content inside a single wrapper and stick the
+         gallery within that wrapper. That is Bookshop.org's pattern and it is
+         genuinely better. ⛔ IT WAS REJECTED FOR A CONCRETE REASON, not a
+         vague one: every layout rule 1.19.348 shipped is written
+         `div.product > .woocommerce-product-gallery` and
+         `div.product > .bhp-media-gallery--hero` — DIRECT-CHILD selectors —
+         and `tests/test-cycle179-pdp-348.php` pins those exact strings across
+         37 assertions. Nesting the gallery one level deeper silently
+         un-matches the image cap, the single-row thumbnail rail and the F3
+         resize fix, i.e. it would trade a working fold for a scroll effect.
+         ⛔ NO FAKE STICKY EITHER: the ruling forbids faking a sticky purchase
+         card, and this release does not fake one anywhere.
+      ➡ RECORDED FOR THE CHIEF OF STAFF, NOT DECIDED HERE.
+
+   ⭐ ONE PRICE IN THE CARD. Item 4 of the `chief-of-staff` consolidated
+      proposal names
+      the double print as a defect: the SELECTED format's price renders once in
+      its own chip and again in `.bhp-formats__selected-price` directly below.
+      ⭐ MEASURED on staging 1.19.348 at an asserted 1440x900: the colouring
+         card's rendered dollar tokens were ["$12.99", "$12.99", "$1.99"], and
+         Mariana's were ["$11.99", "$17.99", "$31.99", "$11.99", "$1.99"] —
+         one duplicate on every page, and only ever the selected format's.
+      ⛔ THE PRICE IS SUPPRESSED ON THE SELECTED CHIP, not on every chip, and
+         that distinction is the whole decision. On the COLOURING page there is
+         exactly one card and it is always selected, so the chip loses its
+         price entirely and the rendered card is Concept A's, to the pixel:
+         picker chip with no price, then one large price beneath it. On a
+         CHAPTER book the other three chips keep theirs, because those are the
+         format COMPARISON — $11.99 against $17.99 against $31.99 — and a
+         parent choosing a format is the reason that control exists. Deleting
+         them to satisfy "price once" would have removed information to satisfy
+         a phrase, and the phrase is satisfied either way: after this rule
+         every distinct price appears EXACTLY ONCE on every page.
+      ⚠️ IF ANDREW WANTS CONCEPT A LITERALLY — no price on ANY chip, on chapter
+         books too — it is one selector: drop `.is-selected` from the rule
+         below. Flagged rather than chosen, because it is a merchandising call.
+      ⛔ ZERO JAVASCRIPT WAS ADDED FOR THIS. `book-formats.js` has toggled
+         `.is-selected` on the pressed card since 2026-07-30 and the server
+         renders it pressed for `$initial`, so the rule is correct at first
+         paint and after every swap without one line of new script.
+      ⛔ THE PROTECTED ELEMENT IS UNTOUCHED. `21-PROTECTED-ELEMENTS-MANIFEST.md`
+         §3.3 protects `bhp-formats__selected-price` at min 1 — that node, its
+         markup and its content are exactly what they were.
+         `bhp-format-card__price` is NOT in the manifest; this was read, not
+         assumed.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 901px) {
+  /* Every band hooked into this grid is full width unless named below. */
+  .woocommerce div.product > * { grid-column: 1 / -1; }
+
+  .woocommerce div.product > .woocommerce-product-gallery,
+  .woocommerce div.product > .bhp-media-gallery--hero {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .woocommerce div.product > .summary {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .woocommerce div.product > .bhp-pdp-left {
+    grid-column: 1;
+    grid-row: 2;
+    /* A grid item defaults to `min-width: auto` = its min-content width, and a
+       1600px plate's min-content is large. Without this the column refuses to
+       shrink and pushes the page sideways. Same trap as book-media.css:26. */
+    min-width: 0;
+    margin-top: clamp(1.5rem, 2.5vw, 2.25rem);
+  }
+}
+
+/* One price in the card. See the block comment above for why `.is-selected`
+   is in this selector and what removing it would do. */
+.bhp-format-card.is-selected .bhp-format-card__price {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐ 1.19.349 — THE STAGING-ONLY FOREST CTA PREVIEW. `CYCLE179-LD-349`.
+   ═══════════════════════════════════════════════════════════════════════════
+   ⛔ GOLD IS THE DEFAULT AND NOTHING BELOW RUNS WITHOUT THE BODY CLASS. The
+      class is added by `bhp_body_classes()` ONLY on a `staging2.` host AND
+      only for `?bhp_cta=forest`, so production cannot render it at any URL.
+   ⭐ WHY IT EXISTS: `design-creative` recommends forest, the Brand Identity
+      Kit lists
+      four approved button grounds and gold is not one of them, and forest
+      `#173f2f` against parchment-light type measures 10.62:1 (AAA). Andrew
+      compares them on the real page instead of in a mock. A button colour is a
+      BRAND decision and remains his.
+   ⛔ `!important` IS REQUIRED AND IT IS NOT LAZINESS: the rule it has to beat
+      is `.btn-primary { background: var(--expedition-gold) !important }` at
+      line ~4599, which is itself `!important`. A non-important declaration
+      cannot win against an important one at any specificity.
+   ═══════════════════════════════════════════════════════════════════════════ */
+body.bhp-cta-forest .bhp-formats__cta,
+body.bhp-cta-forest .bhp-formats__cta-form .btn-primary {
+  background: var(--expedition-forest) !important;
+  color: #f8f3e9 !important;
+}
 
 /* Cart, checkout, account, and confirmation. */
 .woocommerce-cart-form,
@@ -5202,7 +5617,7 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
       page. The grid's job is to let a parent COMPARE.
 
    ⭐ IT IS THE UNANIMOUS PATTERN OF EVERY COMPARATOR MEASURED — and the
-      measurement is Pippin's, not this file's: real Chrome, iPhone 13 profile,
+      measurement is the `commerce-cx` one, not this file's: real Chrome, iPhone 13 profile,
       `window.innerWidth` asserted 390 in-page on every store.
         Barefoot Books 179px · Chronicle 165px · Highlights 165px · Powell's 195px
       Record: `Business OS\WORKING-DRAFTS\commerce-cx\
@@ -5227,6 +5642,10 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
    ⛔ THE DESKTOP GRID IS UNTOUCHED. Every rule below is inside this media
       query, and nothing above it was reworded.
 
+   ⛔⛔ SUPERSEDED 2026-09-02 BY 1.19.350: the token is now `body.bhp-catalog-grid`.
+      See the identical note on the two blocks above. The scope is still
+      load-bearing and the PDP related/upsell rows are still excluded.
+
    ⛔ SCOPED TO `body.woocommerce-shop`, NOT TO `ul.products`, AND THE SCOPE IS
       LOAD-BEARING. `.woo-expedition-shell` also wraps the SINGLE PRODUCT page,
       whose related/upsell rows are `ul.products li.product` too — styling
@@ -5238,7 +5657,7 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
      ⭐ THE CARD WIDTH IS ARITHMETIC, NOT TASTE: at 390 the shell's gutter is
         `--space-4` (16px) a side, so 390 − 32 − 14 gap = 344 ÷ 2 = 172px a
         card — inside the 165–195px band every comparator landed in. */
-  body.woocommerce-shop .woo-expedition-shell ul.products {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 18px 14px;
     margin: var(--space-6) 0;
@@ -5248,16 +5667,16 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
      ⛔ The desktop card sets a 340px image, a 1.65rem (26.4px) title and
         1.5rem padding. All three were sized for a ~400px card and not one of
         them survives being halved. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product img {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product img {
     height: 210px;
     padding: 10px 10px 4px;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
     padding: 8px 10px 0;
     font-size: 0.95rem;
     line-height: 1.25;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-from-price {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-from-price {
     margin: 4px 0 0;
     padding-inline: 8px;
     font-size: 0.82rem;
@@ -5275,13 +5694,13 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
         only job is to divide entries ON ONE LINE; the labels carry the
         meaning and both prices still render in full. ⛔ THE 1.19.259 RULE
         ITSELF IS UNTOUCHED and still governs every other width. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-format-price {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price {
     display: block;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-format-prices__sep {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-prices__sep {
     display: none;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .button {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .button {
     align-self: stretch;
     margin: 10px;
     padding: 0.62rem 0.35rem;
@@ -5296,7 +5715,7 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
         read per product from `bhp_age_range` post meta by
         `bhp_shop_card_age_range()`, the SAME resolution the product page's own
         age line uses. ⛔ No new claim is coined by this block. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-ages {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-ages {
     display: block;
     margin: 4px 0 0;
     padding-inline: 8px;
@@ -5325,8 +5744,8 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
         and this block amends nothing. ⛔ The `home` and `product` rows that DO
         assert `kirkus-credibility` and `amazon-review-card__quote` are
         untouched and still pass. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .kirkus-credibility,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .amazon-review-showcase {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .kirkus-credibility,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .amazon-review-showcase {
     display: none;
   }
 
@@ -5335,8 +5754,8 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
      ⭐ THE DESCRIPTOR'S `data-bhp-card-kind="single"` ATTRIBUTE — the `FD-549`
         rail hook the suites assert on — IS STILL IN THE DOM. `display:none`
         hides a box; it does not remove an attribute. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .woo-card__eyebrow,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-descriptor[data-bhp-card-kind="single"] {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woo-card__eyebrow,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-descriptor[data-bhp-card-kind="single"] {
     display: none;
   }
 
@@ -5351,8 +5770,38 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
         its bare price; a browser without `:has()` shows BOTH.
      ⭐ EVERY DEGRADE PATH SHOWS MORE PRICE, NEVER LESS — which is the only
         acceptable failure direction on the surface where money is quoted. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product:has(.bhp-shop-format-prices) span.price {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product:has(.bhp-shop-format-prices) span.price {
     display: none;
+  }
+  /* ═══════════════════════════════════════════════════════════════════════
+     ⛔⛔⛔ SUPERSEDED 2026-09-02 BY 1.19.350, AND THIS OVERRIDE IS A DEFECT FIX
+          RATHER THAN A PREFERENCE. THE RULE ABOVE IS PRESERVED, NOT DELETED,
+          BECAUSE ITS REASONING IS STILL WORTH READING.
+     ═══════════════════════════════════════════════════════════════════════
+
+     ⭐ THE RULE ABOVE WAS EXACTLY RIGHT WHILE THE CHIPS CARRIED BOTH PRICES.
+        It hid WooCommerce's bare `$11.99` because the labelled line restated it
+        seven pixels lower, and its `:has()` guard made sure it could only ever
+        hide a price that WAS restated on the same card.
+
+     ⛔⛔ 1.19.350 MOVED THE PRICE OUT OF THE CHIP. The selected chip now carries
+        a TICK instead of repeating the card's own figure, so on a phone the
+        `:has()` guard still matched, `span.price` was still hidden, and
+        NOTHING ON THE CARD CARRIED THE PAPERBACK PRICE AT ALL. ⭐ OBSERVED IN A
+        SCREENSHOT at an asserted 375x812 on staging: the card read
+        "The Mariana Trench / FROM / [PAPERBACK ✓] [HARDCOVER $17.99] /
+        ADD TO CART" — a "From" with no figure after it, on the surface where
+        money is quoted.
+
+     ⭐ THE GUARD'S OWN PRINCIPLE IS WHAT SETTLES IT: *"EVERY DEGRADE PATH SHOWS
+        MORE PRICE, NEVER LESS."* Hiding a figure that is no longer restated
+        breaks that principle, so the price comes back on the phone. `R2.6` is
+        still satisfied, and better than before: at 1.19.349 the paperback price
+        appeared TWICE on the desktop card; from 1.19.350 every distinct figure
+        appears exactly ONCE at every width. */
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product:has(.bhp-shop-format-prices) span.price,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product span.price {
+    display: block;
   }
 
   /* ── 5 · ⭐⭐ 1.19.284 — THE OFFER CARDS JOIN THE 2-UP TRACK. ITEM 206. ────
@@ -5373,7 +5822,7 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
         a broken tile."*
 
      ⭐⭐ THAT PREMISE IS NOW FALSE, WHICH IS THE ONLY THING THAT CHANGED. Two
-        real composites exist (Legolas's `CYCLE165-DES-BUNDLE-COMPOSITES`,
+        real composites exist (the `design-creative` `CYCLE165-DES-BUNDLE-COMPOSITES`,
         built in code from the real cover files, `$0`, no AI generation — see
         `README-PROVENANCE.md`) and are registered as attachments. Both cards
         now carry a picture in the same slot, at the same 210px height, as the
@@ -5407,15 +5856,15 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
      CTA's own 10px inset, is exactly what put this card's button 6px above its
      neighbour's at 390 (measured: bottoms 1890 vs 1896). ⭐ The inline value is
      unchanged at 0 and now travels as a token so the CTA can subtract it. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
     padding-block-start: 0;
     padding-bottom: 0;
     gap: 6px;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__composite {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__composite {
     margin-bottom: 4px;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card__price {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card__price {
     font-size: 1rem;
   }
   /* ⛔ 1.19.286 — the same shorthand-reset correction as the card above. The
@@ -5426,7 +5875,7 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
      ⭐ NOTHING LOSES ITS 8px INSET: the price line takes it from
      `.bhp-shop-from-price { padding-inline: 8px }` in block 2 above, and the
      saving and the hardcover swap take the gutter from block E. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
     padding-block-start: 0;
     padding-inline: 0;
     padding-bottom: 0;
@@ -5454,8 +5903,8 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
   /* ⛔ The saving line and the hardcover swap are NOT removed from the DOM —
      they are real, recomputed claims and a control a keyboard can reach. They
      simply take the smaller type the 172px cell has room for. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__upsell {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__upsell {
     font-size: 0.72rem;
   }
 
@@ -5477,12 +5926,12 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
      14px`), written as a token so the CTA's arithmetic can subtract it. Keeping
      it at 0 is also what leaves the collection composite at the card edge, which
      block 6 above is explicitly there to protect. */
-  body.woocommerce-shop .woo-expedition-shell ul.products {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products {
     --bhp-card-gutter: 10px;
     --bhp-collection-frame-pad: 0px;
   }
 
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product .bhp-shop-atc {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-atc {
     /* ⛔ `margin: 0` IS RESTATED HERE AND IT IS NOT REDUNDANT. The 2-up block's
        own `li.product .button { margin: 10px }` (block 2 above) matches these
        buttons too, at IDENTICAL specificity, and it appears LATER in the file
@@ -5498,13 +5947,13 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
   /* ⛔ The 2-up block's `li.product .button { align-self: stretch }` and the
      desktop rule's `align-self: flex-start` both match these controls. The
      anchor's stretch is restated at element specificity so neither can win. */
-  body.woocommerce-shop .woo-expedition-shell ul.products li.product > a.bhp-shop-atc {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product > a.bhp-shop-atc {
     align-self: stretch;
     width: auto;
   }
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell,
-  body.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer__saving,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item form.bhp-offer__form--upsell,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
     margin-bottom: 4px;
   }
 }
@@ -5851,7 +6300,7 @@ body:not(.home) .footer-audience-cluster { max-width: 1220px; padding-top: 26px;
    *     only `bhp_canonicalize_teacher_menu_items()` would have left every
    *     desktop visitor reading "Expedition Guides" on a link that goes to
    *     /free-resources/ — no PHP error, no console warning, and not one test
-   *     in this repository would have failed. Merry's §23 spec named three PHP
+   *     in this repository would have failed. The `marketing-growth` §23 spec named three PHP
    *     sites for this label and did not name this one.
    *     ⭐ `tests/test-cycle167-free-resources.php` §1c/§1d now assert BOTH the
    *     new string's presence and the old string's absence from every rule.
@@ -6416,7 +6865,7 @@ body.bhp-signup-modal-open { overflow: hidden; }
    1.19.224 — THE BOX FITS THE SCREEN, AND THE CTA IS ABOVE THE FOLD
    CYCLE158-LD-SIGNUP-POPUP iteration 2, 2026-08-13
    ------------------------------------------------------------
-   Andrew Signore, relayed through Gandalf, three requirements:
+   Andrew Signore, relayed through `chief-of-staff`, three requirements:
      1. the subscribe button fully visible on open, with NO scrolling,
         desktop and mobile;
      2. each page's popup carries the front cover of its own PDF, top right;
@@ -7387,7 +7836,7 @@ body.bhp-audience-stickybar-visible #bhp-floating-cart {
 /* F1 (2026-08-03) — "EXPLORE EVERY FORMAT AND EDITION".
    Measured before: dark forest green text inside a dark forest green
    hairline, sitting on the #06131f near-black ground of the destinations
-   section. Legolas: "very nearly invisible", and it is the only route out
+   section. `design-creative`: "very nearly invisible", and it is the only route out
    of that section into the catalogue.
    Now the one brand gold on that dark ground. Geometry unchanged. */
 .home-section-action {
@@ -8340,7 +8789,7 @@ body.bhp-consent-banner-visible #bhp-floating-cart {
  *      live body class list). `.homepage-section` is used by the homepage and
  *      several landing pages; padding it globally would move sections that
  *      Andrew has already approved.
- *    - Mobile scope: Andrew's note says "on mobile", and Gandalf's brief says
+ *    - Mobile scope: Andrew's note says "on mobile", and the `chief-of-staff` brief says
  *      "check desktop unaffected". Desktop measures the SAME 0px gap and is
  *      arguably the same defect, but widening the fix past the instruction is
  *      his call, not this agent's. ⚠ REPORTED, NOT SILENTLY ABSORBED: the
@@ -10682,6 +11131,82 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 .author-visits-hero .component-heading__eyebrow { margin-bottom: var(--space-2); }
 .author-visits-hero .text-lead { margin-bottom: 0; }
 
+/* ⭐ 1.19.354 (2026-09-02, `CYCLE179-LD-354`) - THE FOLD, AND ONE OFF-KIT COLOUR.
+   =========================================================================
+   Measured on staging at 1.19.353, headless Chrome, `innerWidth`/`innerHeight`
+   asserted in the same evaluation as the rectangles:
+
+     1440x900   hero 444px tall (128px of padding above the text and 128px
+                below), then a further 128px of empty cream before "Upcoming
+                Visits". The first visit card ran 763 to 984. THE FOLD IS 900,
+                so the order-by line and its status pill were cut off on the
+                one page a parent reaches from a printed QR code, in the week
+                of the visit it advertises.
+      375x812   hero 410px tall (80px each side), card 652 to 850. The school
+                name and the date cleared the fold; everything below them,
+                including the pill, did not.
+
+   ⛔ THE RULE BEING OVERRIDDEN IS `body:not(.home) .section` (0,2,1), NOT the
+      bare `.section` (0,1,0) near the top of this sheet. A plain
+      `.author-visits-hero { padding-block: … }` is 0,1,0 and LOSES to it no
+      matter how far down the file it sits, so it would have failed silently
+      and measured as a no-op. These two selectors are 0,3,1, which is the same
+      shape `body:not(.home) .teacher-resources-cta--compact.section` and
+      `body:not(.home) .readaloud-funnel__hero.section` already use here.
+
+   ⛔ SCOPED TO THIS PAGE BY CONSTRUCTION. `author-visits-hero` and
+      `author-visits-list-section` appear in exactly one template,
+      `page-author-visits.php`, and in no other. /school-read-alouds/ reuses
+      `.author-visits-gallery-section` and `.author-visits-past`, neither of
+      which is touched. The visit BAND (`inc/visit-band.php`) carries none of
+      these classes and does not move.
+
+   ⛔ NOT ONE STRING, FONT SIZE OR LINE HEIGHT CHANGES. The eyebrow, the
+      headline and both body lines are untouched, as are the visit data, the
+      deadline resolver and the closed-state logic. This is padding, one
+      margin and one colour.
+
+   ⭐ THE COLOUR. The hero body copy inherited `--color-sky` (#7FB7D6) from
+      `.section--dark`. It passes contrast on navy at 8.47:1, but sky is not in
+      the brand kit's colour table, so the page was spending its most prominent
+      paragraph on a value the kit does not carry. `--color-parchment`
+      (#f1e7d2) is in the kit and is already this sheet's answer for body copy
+      on a dark ground (see the Amazon review card quotes). On `--color-navy`
+      it measures 15.02:1. `.section--dark` itself is NOT retuned: that token
+      is sitewide and repointing it would move every dark section on the site
+      to satisfy one page.
+   ========================================================================= */
+body:not(.home) .author-visits-hero.section {
+  padding-block: clamp(3.5rem, 5.5vw, 4.5rem);
+}
+body:not(.home) .author-visits-list-section.section {
+  padding-block-start: clamp(2.75rem, 4.5vw, 4rem);
+}
+.author-visits-hero .text-lead { color: var(--color-parchment); }
+
+/* ⛔ A THIRD RULE WAS WRITTEN HERE, SHIPPED TO STAGING, MEASURED AS A NO-OP AND
+      THEN REMOVED. Recorded rather than quietly dropped, because the next
+      person to tighten this page will reach for it too:
+
+        .author-visits-list-section .component-heading { margin-bottom: … }
+
+      It computed to 72px, not the 24px it asked for. `.author-visits-list-section
+      .component-heading` is (0,2,0); `body:not(.home) .component-heading` at
+      ~line 4633 is (0,2,1) because `body` adds an element and `:not(.home)` adds
+      a class, so it wins on specificity no matter how far down this file the
+      other rule sits. Being LATER in the sheet does not help. The two
+      `body:not(.home) ….section` rules above are written at (0,3,1) for exactly
+      this reason.
+
+      It is not reinstated at a higher specificity, and that is a deliberate
+      choice rather than an omission. The fold gate this release exists for
+      already passes without it (first card bottom 808 against a 900 fold at
+      1440, 766 against 812 at 375), and `body:not(.home) .component-heading` is
+      the rhythm EVERY interior page's section headings use. Overriding it on
+      one page would buy 48px this page does not need and put /author-visits/
+      out of step with the rest of the site. If that gap is later judged too
+      loose, the change belongs to the sitewide rule, not to this block. */
+
 .author-visits-list {
   margin: 0;
   padding: 0;
@@ -10908,7 +11433,7 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
    The Homepage Warmth Board, built. HOMEPAGE ONLY.
    ----------------------------------------------------------------------------
    Source: `Business OS\WORKING-DRAFTS\design-creative\homepage-warmth-board\`
-   (design-creative / Legolas, FD-391, 2026-08-17). Andrew opened the taste
+   (design-creative, FD-391, 2026-08-17). Andrew opened the taste
    gate 2026-08-18. This is a STAGING MOCK-UP for his nit-pick, not approved.
 
    THE GOLD RULE, Brand Identity Kit v1 section 1.4, and it is the rule that
@@ -11310,7 +11835,7 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
    nothing is reordered, no image is cropped.
 
    ⚠️ THE 2026-07-31 "COVERS DIRECTLY UNDER THE H1 ON MOBILE" RULING IS NOT
-      OVERTURNED. Gandalf's brief authorised yielding it to tonight's founder
+      OVERTURNED. The `chief-of-staff` brief authorised yielding it to tonight's founder
       instruction if the two collided. They did not collide: the covers are
       still the element immediately after the H1, in DOM order, via the same
       `aside_after_title` real-DOM-move. They are 30px shorter. That is the
@@ -11901,7 +12426,7 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
       breakpoint. Both are coherent sequences and neither misrepresents the
       other, but it is a real difference and it is written down here rather
       than discovered later.
-   ⚠️ FLAGGED FOR GANDALF, NOT DECIDED HERE: the gold line "It is an
+   ⚠️ FLAGGED FOR `chief-of-staff`, NOT DECIDED HERE: the gold line "It is an
       invitation to look up." is `content:` on `.home-hero__text > p::after`,
       and front-page.php's own comment says it exists to be "the last thing
       read before the buttons". On a phone it is now read AFTER them. No word
@@ -12203,7 +12728,7 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
    about. At 768x1024 the primary invitation now sits above the fan (top
    488.2) instead of below the paragraph. It is the same sequence as the
    phone, its tab order and visual order agree, and no size changed - but it
-   IS a change at a width nobody asked about, and it is Gandalf's to accept or
+   IS a change at a width nobody asked about, and it is the `chief-of-staff` call to accept or
    reject.
    ========================================================================= */
 
@@ -13072,17 +13597,30 @@ body:not(.home) .bhp-kit-upsell__headtext h2 {
 
 /* --- all widths -------------------------------------------------------- */
 
-body.woocommerce-shop .woocommerce-products-header { padding-block: 0; }
-body.woocommerce-shop .woocommerce-products-header > * { margin-block: var(--space-6); }
+/* ⭐ 1.19.350 — widened from `body.woocommerce-shop` to `body.bhp-catalog-grid`.
+   The comment above says the archives are "deliberately untouched" because they
+   DO print a title there. From 1.19.350 they do not: `bhp_woocommerce_archive_
+   hero()` renders the same one-line band on every catalog grid and the term name
+   is its H1, so the empty `.woocommerce-products-header` is now empty on the
+   archives for exactly the reason it was already empty on /shop/. ⛔ The rule is
+   still not a blind `padding: 0` — the padding still moves onto the children. */
+body.bhp-catalog-grid .woocommerce-products-header { padding-block: 0; }
+body.bhp-catalog-grid .woocommerce-products-header > * { margin-block: var(--space-6); }
 
 /* The grid's own top margin doubled up with the ordering form's bottom margin
    (they collapse to the larger of the two). One of them owns the gap now. */
-body.woocommerce-shop .woo-expedition-shell ul.products { margin-top: 0; }
+body.bhp-catalog-grid .woo-expedition-shell ul.products { margin-top: 0; }
 
-body.woocommerce-shop .woo-expedition-shell { padding-top: var(--space-12); }
-body.woocommerce-shop .woocommerce-breadcrumb { margin-bottom: var(--space-4); }
-body.woocommerce-shop .woocommerce-result-count,
-body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
+body.bhp-catalog-grid .woo-expedition-shell { padding-top: var(--space-12); }
+body.bhp-catalog-grid .woocommerce-breadcrumb { margin-bottom: var(--space-4); }
+/* ⚠ 1.19.350 — `.woocommerce-result-count` and `form.woocommerce-ordering` are
+   REMOVED FROM THE DOM on every catalog grid by `bhp_catalog_remove_loop_
+   chrome()`, so these two rules now match nothing there. They are KEPT, not
+   deleted: the elements still render on any product loop this theme does not
+   classify as a catalog grid, and deleting the rules would leave those loops
+   with the wrong rhythm the day one appears. */
+body.bhp-catalog-grid .woocommerce-result-count,
+body.bhp-catalog-grid .woocommerce-ordering { margin-bottom: var(--space-4); }
 
 /* --- 390: the fold the ruling is about --------------------------------- */
 
@@ -13090,18 +13628,21 @@ body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
   /* Specificity 0-3-1 beats `body:not(.home) .interior-hero` (0-2-1), which
      carries `!important` on both paddings from the interior-hero correction
      near line 5350. Matching that `!important` is required, not stylistic. */
-  body.woocommerce-shop header.woo-archive-hero.interior-hero {
+  body.bhp-catalog-grid header.woo-archive-hero.interior-hero {
     padding-top: var(--space-4) !important;
     padding-bottom: var(--space-4) !important;
   }
-  body.woocommerce-shop .woo-archive-hero .text-lead {
+  /* ⚠ 1.19.350 — `.text-lead` is no longer emitted by the band. Kept for the
+     same reason as the chrome rules above: it costs nothing and it protects any
+     surface that still renders the superseded hero markup. */
+  body.bhp-catalog-grid .woo-archive-hero .text-lead {
     margin-top: var(--space-3);
     margin-bottom: 0;
   }
-  body.woocommerce-shop .woo-expedition-shell { padding-top: var(--space-6); }
-  body.woocommerce-shop .woocommerce-breadcrumb { margin-bottom: var(--space-3); }
-  body.woocommerce-shop .woocommerce-result-count { margin-bottom: var(--space-3); }
-  body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
+  body.bhp-catalog-grid .woo-expedition-shell { padding-top: var(--space-6); }
+  body.bhp-catalog-grid .woocommerce-breadcrumb { margin-bottom: var(--space-3); }
+  body.bhp-catalog-grid .woocommerce-result-count { margin-bottom: var(--space-3); }
+  body.bhp-catalog-grid .woocommerce-ordering { margin-bottom: var(--space-4); }
 }
 
 /* ============================================================
@@ -13284,7 +13825,7 @@ body.woocommerce-shop .woocommerce-ordering { margin-bottom: var(--space-4); }
                    * hover state has to go UP in luminance, not down. */
 }
 
-/* THE JUMP BAR — Magic Tree House's pattern, from Merry's §23 walk.
+/* THE JUMP BAR — Magic Tree House's pattern, from the `marketing-growth` §23 walk.
  *
  * ⛔ NOT STICKY, AND THAT IS A DECISION RATHER THAN AN OMISSION. A sticky bar
  *    on a phone costs a permanent strip of a 375px-wide screen for a page the
@@ -13834,7 +14375,7 @@ body:not(.home) .readaloud-funnel__hero .component-heading__eyebrow,
    THE MONTH GRID — 1.19.331 (CYCLE170-LD-TRIPLE, carrier item 498)
 
    Andrew Signore: "look like a calendar that you can scroll by month."
-   RELAYED THROUGH GANDALF, NOT WITNESSED BY THIS BUILD.
+   RELAYED THROUGH `chief-of-staff`, NOT WITNESSED BY THIS BUILD.
 
    EVERY SELECTOR HERE IS SCOPED UNDER `.readaloud-sched__`. Nothing in this
    block can reach another page or another component.
@@ -14647,7 +15188,7 @@ body:not(.home) .school-readalouds .readaloud-sched.section,
 
    Andrew's carrier item 497: "I want a large carousel gallery on the read aloud
    page and I want you to add the read aloud pictures from last year too."
-   RELAYED THROUGH GANDALF, NOT WITNESSED BY THIS BUILD.
+   RELAYED THROUGH `chief-of-staff`, NOT WITNESSED BY THIS BUILD.
 
    EVERY SELECTOR IN THIS BLOCK IS SCOPED TO `.bhp-photo-carousel`. Nothing here
    can reach another page, and the block is one contiguous, self-bounded append:
@@ -14689,7 +15230,7 @@ body:not(.home) .school-readalouds .readaloud-sched.section,
   /* ────────────────────────────────────────────────────────────────────────
      1.19.331 (CYCLE170-LD-TRIPLE, item 507) — THE WHOLE BOX FITS THE SCREEN.
 
-     Andrew Signore, carrier item 507, RELAYED THROUGH GANDALF, NOT WITNESSED
+     Andrew Signore, carrier item 507, RELAYED THROUGH `chief-of-staff`, NOT WITNESSED
      BY THIS BUILD: "too big for the screen... it should fit nicely between the
      nav bar and the bottom of the page to see the entire box."
 
@@ -14985,7 +15526,7 @@ body:not(.home) .school-readalouds .readaloud-sched.section,
 /* ==========================================================================
    COUPON LINK NOTICE — 1.19.331 (CYCLE170-LD-TRIPLE, carrier items 504/505)
 
-   Andrew's carrier items 504/505, RELAYED THROUGH GANDALF, NOT WITNESSED BY
+   Andrew's carrier items 504/505, RELAYED THROUGH `chief-of-staff`, NOT WITNESSED BY
    THIS BUILD: a `?coupon=` link should apply the discount by itself and say so.
 
    EVERY SELECTOR IN THIS BLOCK IS SCOPED TO `.bhp-coupon-notice`. Nothing here
@@ -15404,7 +15945,7 @@ body:not(.home) .school-readalouds .readaloud-sched.section,
 /* ============================================================================
    A2 · THE WEEK CARDS — 1.19.335, CYCLE170-LD-WEEKPICKER, carrier item 534
    ----------------------------------------------------------------------------
-   Andrew Signore, item 534, relayed through Gandalf: the scheduler's final form
+   Andrew Signore, item 534, relayed through `chief-of-staff`: the scheduler's final form
    is a WEEK PICKER, because his hospital schedule posts about a month at a time
    and a week is the unit he can actually answer.
 
@@ -16122,7 +16663,7 @@ body:not(.home) .school-readalouds .readaloud-sched.section,
       above-the-fold CTA position the micro lane measured is untouched (measured
       after: CTA bottom 327.4 at `innerHeight` 812).
    ⚠⚠ THIS IS THE ONE PLACE THIS PASS WENT BEYOND THE WALK'S CERTIFIED DROP-IN,
-      and it went there on a measurement, not a preference. If Legolas or Andrew
+      and it went there on a measurement, not a preference. If `design-creative` or Andrew
       wants the row form back, the whole reversal is: delete this rule, restore
       `flex-direction: row`, and re-add the `::after` block above — and the
       trailing mark comes back with it, at every width. */
@@ -16233,7 +16774,8 @@ body:not(.home) .school-readalouds .readaloud-sched.section,
       EITHER — the live artefact uses BOTH, as two different roles: #071522 is
       the masthead ground, #173f2f is the button. Reading the artefact dissolved
       the contradiction instead of resolving it by preference. ⚠ C1 remains open
-      for the MAILCHIMP-hosted page, which is a different surface and is Gimli's.
+      for the MAILCHIMP-hosted page, which is a different surface and is the
+      `connected-operator` lane.
    ============================================================================ */
 
 .bhp-positivity {
@@ -16320,7 +16862,7 @@ body:not(.home) .school-readalouds .readaloud-sched.section,
    `.btn-cta-primary` already asserts itself over `.btn-primary` in this file;
    without it the sitewide `.btn-primary` colour list wins on source order. */
 /* ⭐⭐ THE PRIMARY CTA IS GOLD, LIKE EVERY OTHER FUNNEL CTA — 1.19.338
-      (`CYCLE170-LD-WALKFIX`, patch 5). GANDALF'S RULING, carrier item 513
+      (`CYCLE170-LD-WALKFIX`, patch 5). THE `chief-of-staff` RULING, carrier item 513
       consistency.
    ⛔⛔ SUPERSEDED. This page had a PAGE-SCOPED FOREST OVERRIDE and nothing else
       on the site did. Preserved verbatim so the movement is visible:
@@ -16619,4 +17161,806 @@ body:not(.home) .school-readalouds .readaloud-sched.section,
    32px gap under a dissolving image reads as a mistake rather than as space. */
 .bhp-positivity__sign-off {
   margin-top: var(--space-4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐⭐ 1.19.350 — THE CATALOG SURFACES. `CYCLE179-LD-350-BUILD`.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ WHAT THIS BLOCK IS FOR, IN ONE MEASURED SENTENCE. At 1.19.349, on
+      staging2 at an asserted 1440x900, the first ADD TO CART on `/shop/` sat at
+      y1352 against a 900px fold and ZERO of six cards were fully above it. On
+      `/product-category/paperback-books/` the first buy control sat at y1701.
+      Read out of the live DOM by this desk on 2026-09-02, not estimated.
+
+   ⭐ THE THREE THINGS THAT COST THE HEIGHT, ALSO MEASURED:
+        279px  the stacked hero (eyebrow + headline + lead)
+         62px  the result count and the sort select
+        194px  the Kirkus badge and the Amazon review showcase, INSIDE the card
+               and BETWEEN the price and the button, on every card at every
+               viewport, with card 3 carrying 194px of blank space to keep the
+               row aligned because it has neither.
+
+   ⛔ NOTHING IS DELETED TO WIN THAT HEIGHT. The hero's words are kept and set
+      on one band; the proof blocks are RELOCATED below the grid with their
+      wording untouched (§9.1a — never rewrite a word inside a quoted
+      third-party statement); the count and the sort go because the count was
+      stating a false number (`CYCLE179-CX-002`) and a five-item catalog with no
+      pagination has nothing to sort.
+
+   ⛔ THE SCOPE TOKEN IS `body.bhp-catalog-grid`, WHICH EXCLUDES THE PDP. See
+      the superseding notes on the three older blocks above and the header of
+      `inc/catalog-surfaces.php`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── A · THE BAND ─────────────────────────────────────────────────────────────
+   ⭐ ~96px against the superseded hero's 279px. Two rows: the series eyebrow,
+      then the H1, the diamond, the brand line and the formats-and-ages note on
+      one baseline. ⛔ The H1's WORDS are unchanged (founder default, seal 704);
+      only its setting is. */
+body.bhp-catalog-grid header.woo-archive-hero.bhp-catalog-band,
+body.bhp-catalog-grid header.bhp-catalog-band.interior-hero {
+  padding-top: var(--space-3) !important;
+  padding-bottom: var(--space-3) !important;
+  min-height: 0;
+}
+.bhp-catalog-band__inner {
+  display: block;
+}
+.bhp-catalog-band__series {
+  margin: 0 0 0.15rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+.bhp-catalog-band__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.55rem 0.8rem;
+  margin: 0;
+}
+/* ⛔ THE SELECTOR CARRIES `body.bhp-catalog-grid .bhp-catalog-band`, AND THAT IS
+   NOT DECORATION. `.bhp-catalog-band__title` alone (0,1,0) LOSES to
+   `body:not(.home) .interior-hero h1`, which this band's own wrapper still
+   carries. MEASURED: at 375 the band rendered 101px on `/shop/` (a two-line
+   "The Expedition Catalog") against 63px on an archive whose shorter term name
+   happened to fit — a 38px difference caused entirely by the H1 keeping the
+   interior hero's display size. */
+body.bhp-catalog-grid .bhp-catalog-band h1.bhp-catalog-band__title {
+  margin: 0;
+  font-family: var(--font-display);
+  /* ⛔ 1.55rem, not the interior hero's display size. The band has to hold four
+     items on one baseline at 1366; the headline is the item that has to give. */
+  font-size: 1.55rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+.bhp-catalog-band__diamond {
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--color-gold);
+}
+.bhp-catalog-band__line {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+/* ⭐ `margin-inline-start: auto` is what puts the note on the right without a
+   second grid or a float. On a narrow viewport it simply wraps to its own line. */
+.bhp-catalog-band__meta {
+  margin: 0 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+/* ── B · THE SHELL. The furniture above the grid comes down to a breadcrumb ──
+   ⛔ 8px, AND THE NUMBER IS DRIVEN BY 1366x768 RATHER THAN BY TASTE. Measured
+      on staging at 1.19.350 with `padding-top: var(--space-4)`: the grid started
+      at y224 and the card ran to y784 against a 768 fold, so all five buy
+      buttons cleared it and the card BOTTOMS missed by 16px. The fold that
+      binds this whole layout is the 1366x768 laptop; every value in section C
+      below is set against it and then simply has more room at 1440 and 1920. */
+body.bhp-catalog-grid .woo-expedition-shell {
+  padding-top: var(--space-2);
+}
+body.bhp-catalog-grid .woocommerce-breadcrumb {
+  margin-bottom: var(--space-3);
+  font-size: 0.72rem;
+}
+
+/* ── C · THE CARD, SLIMMED. Target <= ~513px at 1440. ────────────────────────
+   ⛔⛔ THE COVER WELL IS A FIXED HEIGHT AND THAT IS THE SINGLE MOST IMPORTANT
+      DECLARATION IN THIS BLOCK. At 1.19.349 the cover was auto-height (a
+      pre-existing condition recorded in the 1280 block above), so a taller
+      cover file made its whole ROW taller and the row's buy buttons moved. The
+      three chapter covers measured 413, 409 and 409 and the coloring cover 353,
+      so the row was already being driven by whichever file was tallest.
+   ⭐ `object-fit: contain` means NO COVER IS CROPPED. A shorter cover letterboxes
+      inside its well against the card's own ground; it is never cut. This is the
+      same rule the product-page fix uses and it shares this variable. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products {
+  /* ⛔ 230px, SET AGAINST THE 1366x768 FOLD AND MEASURED, NOT CHOSEN. At 246px
+     the card measured 560 and its bottom landed at y784 against a 768 fold. The
+     16px comes out of the cover well and 8px out of the shell padding above,
+     which is the cheapest 24px on the card: a cover loses 7% of its height, and
+     nothing else on the card loses anything. */
+  --bhp-cover-well: 230px;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product img,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__composite {
+  height: var(--bhp-cover-well);
+  max-height: var(--bhp-cover-well);
+  object-fit: contain;
+  padding: 0.9rem 0.9rem 0.35rem;
+  box-sizing: border-box;
+}
+/* ⛔ 0.75rem IS A FLOOR, NOT A CHOICE. `test-cro-iterate5.php` §5.3 fails any
+   rule whose selector names an eyebrow or label class and declares a font-size
+   under 12px, and it caught this block at 0.62rem (9.9px) on its first run. The
+   rule is item 5's accessibility ruling and it outranks the 3px a smaller
+   eyebrow would have bought the card. ⭐ The tracking is what keeps it reading
+   as a label rather than as body copy at this size. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woo-card__eyebrow {
+  margin: 0.4rem 0.9rem 0.1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.11em;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
+  padding: 0 0.9rem;
+  margin: 0 0 0.15rem;
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+/* ⭐⭐ 1.19.350-FIX (`CYCLE179-LD-350-FIX` fix 2) — THE AGE LINE ON THE DESKTOP
+      CATALOG CARD, AND IT IS THE OTHER HALF OF SEAL 688.
+
+   ⛔ THE DEFECT, STATED PRECISELY. `.bhp-shop-ages` has shipped inside every
+      catalog card's DOM since 1.19.283, and the ONLY rule that ever gave it a
+      box was inside the ≤640px block. At every desktop width it was
+      `display: none` from the base rule in `assets/css/book-formats.css` — an
+      element present in the markup, carrying real approved copy, measuring
+      0×0. That is what seal 688 called "rendering at zero height on desktop",
+      and the 350 build answered it by leaving the element hidden. The
+      `chief-of-staff` review of that build (seal 753) ruled the other way: the
+      words render.
+
+   ⭐ IT COINS NO NEW CLAIM AND ADDS NO STRING. "Ages 6-9" is standing approved
+      copy (rail §9.1 — ⛔ never 5-9), resolved per product from `bhp_age_range`
+      post meta by `bhp_shop_card_age_range()`, the SAME resolution the product
+      page's own age line uses. The desktop card now states what the mobile card
+      states, from the same function, in the same slot in the reading order:
+      image · title · Ages 6-9 · descriptor · price · CTA.
+
+   ⛔ IT IS DELIBERATELY THE SMALLEST TYPE ON THE CARD. `R8` holds the desktop
+      chapter card at or under 560px and the 350 build measured it at 531px, so
+      this line has ~29px of headroom and takes far less. The measured after
+      figure is in the FIX section of the build report — measured, not assumed.
+
+   ⛔ SCOPED TO `body.bhp-catalog-grid`, so the PDP related/upsell rows are
+      untouched. That scope is load-bearing and is the same token every rule in
+      this block carries.
+
+   ⛔⛔ AND IT IS INSIDE `min-width: 641px`, WHICH IS NOT DECORATION. The mobile
+      card's own age rule lives at `max-width: 640px` EARLIER in this
+      stylesheet, so an unconditional rule here — same specificity, later in the
+      file — would silently win at 375 too and overwrite the approved mobile
+      geometry (8px inline padding, 0.72rem) with this one. 641px is the exact
+      complement of the 640px block this theme already uses everywhere; the two
+      rules can never both apply, and neither can quietly restyle the other's
+      viewport. */
+/* ⭐⭐ 1.19.352 (`CYCLE179-LD-352`) - THE CHIEF-OF-STAFF RULING ON THE BLOCK ABOVE, AND
+      IT REVERSES THE DESKTOP HALF OF IT. Seal 759, ruling 3, verbatim: the age
+      line "stays on the MOBILE card and is HIDDEN on the desktop card
+      (display:none, no zero-height ghost; band already states ages, Concept A
+      carries none)".
+
+   ⭐ THE MOBILE RULE IS UNTOUCHED. The ≤640px block earlier in this stylesheet
+      still declares `display: block` with its approved geometry (8px inline
+      padding, 0.72rem). ⛔ Only the desktop half moves. That asymmetry IS the
+      ruling: on a phone the card is the only place the band is not, and on
+      desktop the catalog band already states the ages the card would repeat.
+
+   ⛔⛔ `display: none`, NOT A ZERO-HEIGHT GHOST, AND THE DISTINCTION IS THE
+      WHOLE POINT OF THE RULING. `height: 0`, `visibility: hidden`, `opacity: 0`
+      and `font-size: 0` all leave a box in the layout that measures 0 and reads
+      to assistive technology or to a measuring rig as a present element. That
+      0×0 element is exactly the seal 688 defect this file spent two releases
+      on. `display: none` removes it from the box tree entirely, so the desktop
+      card is the card Concept A approved, with nothing left behind.
+
+   ⛔ THE COSMETIC DECLARATIONS ARE DELETED, NOT COMMENTED OUT AND NOT LEFT
+      DEAD. An unrendered element does not need a font stack, and leaving them
+      would invite a later reader to "restore" the line by flipping one word
+      without reading this ruling. The superseded declarations survive in the
+      1.19.351 pre-edit backup and in the deliverable, which is where a record
+      belongs.
+
+   ⛔ THE RULE AND ITS 641px SCOPE ARE KEPT RATHER THAN DELETED. Deleting the
+      block would let the base `display: none` in `assets/css/book-formats.css`
+      produce the same rendering by accident, with nothing at the point of use
+      saying a founder-reviewed decision put it there. It would also drop the
+      catalog age-rule count from two to one, which `§6b.5` guards. */
+@media (min-width: 641px) {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-ages {
+    display: none;
+  }
+}
+/* ⭐ THE ITALIC PLACE LINE. It is the live catalog's own descriptor string, set
+   in the display face so it reads as a caption rather than as body copy. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-descriptor {
+  margin: 0 0.9rem 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(var(--color-earth-rgb), 0.22);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.86rem;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+}
+/* ⛔ THE ONE BIG PRICE. `.price` is WooCommerce's own element and stays the
+   card's single figure; the chips below carry the OTHER format's figure and
+   nothing else, so no number is printed twice. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .price,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card__price {
+  display: block;
+  padding: 0 0.9rem 0.4rem;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+/* ⭐ THE "FROM" LEAD IS ITS OWN BLOCK ABOVE THE FIGURE, not an inline span
+   inside it. ⛔ That is a consequence of the recursion fix recorded in
+   `inc/catalog-surfaces.php`: the lead can no longer be spliced into
+   WooCommerce's own `price_html`, so it is a sibling element and the two are
+   set as a two-line price block. The negative bottom margin is what keeps them
+   reading as one unit rather than as two stacked lines. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-price-lead {
+  margin: 0 0.9rem -0.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* ── D · THE FORMAT CHIPS ────────────────────────────────────────────────────
+   ⭐ TWO CHIPS, SIDE BY SIDE, EACH NAMING A BINDING. The selected one carries a
+      tick because the big figure above it IS its price; the other carries the
+      only other figure. ⛔ That is the whole of the "one price, once" fix: at
+      1.19.349 the paperback chip repeated `.price` verbatim 90px lower. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-prices {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0 0.9rem 0.6rem;
+  padding: 0;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-prices__sep {
+  display: none; /* ⭐ The chips are boxes now; a middot between them is noise. */
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  min-height: 34px;
+  padding: 0.25rem 0.3rem;
+  border: 1px solid rgba(var(--color-earth-rgb), 0.3);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price--selected {
+  border-color: var(--color-forest);
+  border-width: 2px;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price__label {
+  font-family: var(--font-ui);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price__amount,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price__trim {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price__tick {
+  font-size: 0.8rem;
+  line-height: 1.1;
+  color: var(--color-forest);
+}
+
+/* ── E · THE COLLECTION IS THE FEATURED CARD, AND IT SITS FOURTH ─────────────
+   ⛔⛔ `order` IS DOING ONE JOB AND IT IS RECORDED HONESTLY. The Collection is
+      not a post: it is markup injected on `woocommerce_product_loop_end`, which
+      can only ever append. A query can therefore never place it fourth. DOM
+      order is book, book, book, coloring, collection; VISUAL order is book,
+      book, book, collection, coloring. ⭐ Two adjacent, fully titled, fully
+      priced cards are transposed for a keyboard or screen-reader user, and that
+      is the whole cost. ⛔ The alternative, rendering the coloring card manually
+      outside the loop, would run six of `inc/colouring-line.php`'s card hooks
+      outside the loop they read `get_the_ID()` from, and was rejected. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product {
+  order: 3;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item {
+  order: 4;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product.product_cat-coloring-books,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product:has(.bhp-shop-format-price__trim) {
+  order: 5;
+}
+/* ⭐ The featured treatment: a gold-deep hairline, a stronger shadow, and the
+   BEST VALUE tab that already exists. ⛔ Not larger, not louder. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card {
+  border: 2px solid var(--color-gold-deep);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 22px rgba(var(--color-navy-rgb), 0.1);
+}
+
+/* ── E2 · THE COLLECTION CARD'S HARDCOVER SWAP IS A SWAP, NOT A SECOND PRIMARY
+   ⛔⛔ MEASURED ON STAGING AT 1.19.350 BEFORE THIS RULE EXISTED: the swap
+      rendered at the card's inherited body size and ran to three lines
+      ("PREFER THE HARDCOVER? $48.99"), which made the Collection the tallest
+      card in the row and, because grid items stretch to their row, added the
+      difference as DEAD SPACE to all four cards beside it. ⭐ `FD-439` already
+      says the swap is secondary and never a second primary; this is that rule
+      applied at the size the 231px cell actually has.
+   ⛔ IT IS NOT REMOVED AND NOT HIDDEN. It is a real, recomputed price and a
+      control a keyboard can reach. Only its type size moves. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__upsell,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__upsell {
+  padding: 0.15rem 0;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-transform: none;
+  letter-spacing: 0;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__saving {
+  margin: 0 0.9rem 0.1rem;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+/* ⭐ The composite is a SQUARE 2000x2000 master (asserted every run by
+   `test-bundle-cards-206-207.php` §2.6, so a hard crop cannot slice a component
+   off). `contain` inside a 4:3-ish well letterboxes it; widening the well for
+   this one card lets the three books fill it without any crop. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__composite,
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item img {
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.2rem;
+}
+
+/* ── E3 · A FLAGGED CARD PAYS FOR ITS COUNTER OUT OF THE COVER WELL ──────────
+   ⛔⛔ THE COUNTER DOES NOT GIVE WAY, AND THAT IS THE WHOLE POINT OF PUTTING
+      THE COST HERE. `VISIT-SHOP-AUDIT.md` `R5` and `R6` require the counter to
+      sit immediately below the price and immediately above the button, and to
+      carry the live, exact, unfloored remaining count. It does, unchanged.
+   ⭐ MEASURED, NOT CHOSEN: at an asserted 1366x768 the unflagged card is 537px
+      and clears the fold; the flagged card is 583px (the counter line) under a
+      band that costs another 41px, so its bottom lands at y817 against a 768
+      fold. 46px comes out of the cover well, which is the only element on the
+      card with 46px to give that is not a price, a counter or a control.
+   ⛔ IT APPLIES ONLY ON A FLAGGED SESSION. An ordinary shopper's covers are
+      untouched at every viewport. */
+body.bhp-catalog-grid.bhp-visit-active .woo-expedition-shell ul.products {
+  /* ⛔ 158px, AND THE NUMBER WAS ARRIVED AT BY MEASURING TWICE. 184px took the
+     flagged card from 583 to 557 and its bottom from y817 to y791 against a 768
+     fold - better, still short. 158px puts it at ~531 and clears. ⭐ The cover
+     is still the largest element on the card; it is simply the one element with
+     23px to give that is not a price, a counter or a control. */
+  --bhp-cover-well: 158px;
+}
+
+/* ── F · THE BUNDLE STRIP, under the grid ────────────────────────────────────
+   ⛔ IT IS A `ul.products` BECAUSE THE CARDS ARE `<li>` AND THE MARKUP WAS
+      RELOCATED RATHER THAN REWRITTEN.
+   ⛔⛔ EVERY SELECTOR HERE CARRIES THE FULL `body.bhp-catalog-grid
+      .woo-expedition-shell` PREFIX, AND THAT IS NOT TIDINESS. The strip renders
+      INSIDE `.woo-expedition-shell`, so the grid block above matches its cards
+      too. The first version of this block was written at `.bhp-catalog-bundle-
+      strip__list.products li.product img` (0,3,2) against the grid rule's
+      (0,4,4) and LOST: the strip's composite took the grid's 246px cover well
+      and the strip rendered 580px tall. MEASURED on staging at 1.19.350, not
+      predicted. The prefix is what makes these rules win. */
+.bhp-catalog-bundle-strip {
+  margin: var(--space-6) 0 0;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0 0 0.8rem;
+  width: auto;
+  border: 1px solid rgba(var(--color-earth-rgb), 0.28);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product img,
+body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-offer__composite {
+  height: 110px;
+  max-height: 110px;
+  width: auto;
+  object-fit: contain;
+  padding: 0.7rem 0.7rem 0.2rem;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .woocommerce-loop-product__title {
+  padding: 0 0.9rem;
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-shop-descriptor {
+  margin: 0 0.9rem 0.4rem;
+  padding-bottom: 0;
+  border-bottom: 0;
+  font-size: 0.8rem;
+}
+body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-shop-format-prices {
+  margin: 0 0.9rem 0.35rem;
+}
+
+/* ── G · THE TRUST STRIP, below everything ───────────────────────────────────
+   ⭐ The SAME components, the SAME registry, the SAME words, rendered ONCE
+      instead of three times inside three cards. ⛔ Nothing here restyles a
+      quote, a name, a rating or a badge; only the container is new. */
+.bhp-catalog-trust-strip {
+  margin: var(--space-8) 0 0;
+  padding: var(--space-6) 0 0;
+  border-top: 1px solid rgba(var(--color-earth-rgb), 0.25);
+}
+.bhp-catalog-trust-strip__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+.bhp-catalog-trust-strip__inner > * {
+  flex: 1 1 240px;
+  min-width: 0;
+  margin: 0;
+}
+
+/* ── H · THE SCHOOL-VISIT BAND ───────────────────────────────────────────────
+   ⭐ FIRST ELEMENT BELOW THE HEADER, so the school name, the deadline and the
+      pickup arrangement are the first three things a parent arriving from a
+      flyer QR code reads. ⛔ At 1.19.349 all three were absent from the page
+      entirely and the pickup promise was first stated AFTER payment. */
+.bhp-visit-band {
+  background: var(--color-forest);
+  color: var(--color-ivory);
+}
+.bhp-visit-band--closed {
+  background: var(--color-charcoal);
+}
+.bhp-visit-band__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1rem;
+  max-width: 1236px;
+  margin: 0 auto;
+  padding: 0.55rem var(--space-4);
+}
+.bhp-visit-band__school {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+/* ⛔ THE DEADLINE IS NOT FINE PRINT. It is set at the band's largest size
+   because it is the fact with the shortest fuse on the whole page. */
+.bhp-visit-band__order-by {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.bhp-visit-band__line {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.bhp-visit-band__note {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
+  opacity: 0.92;
+}
+
+/* ── I · THE SHIP-TO-HOME CONFIRMATION ───────────────────────────────────────
+   ⭐ IT IS A PANEL, NOT A TOAST, AND IT HAS TWO REAL LINKS. A parent who taps
+      the coloring book has to choose; nothing is cleared until they do. ⛔ No
+      JavaScript: two plain GETs, both idempotent. */
+.bhp-shiphome-confirm {
+  background: var(--color-parchment);
+  border-block: 2px solid var(--color-gold-deep);
+}
+.bhp-shiphome-confirm__inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+.bhp-shiphome-confirm__lead {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.bhp-shiphome-confirm__body {
+  margin: 0 0 var(--space-3);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.bhp-shiphome-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+}
+.bhp-shiphome-confirm__keep,
+.bhp-shiphome-confirm__go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+/* ⭐ KEEPING PICKUP IS THE FILLED CONTROL. The destructive choice is the quiet
+   one, which is the opposite of how the superseded link behaved. */
+.bhp-shiphome-confirm__keep {
+  background: var(--color-forest);
+  color: var(--color-ivory);
+}
+.bhp-shiphome-confirm__go {
+  background: transparent;
+  color: var(--color-forest);
+  border: 2px solid var(--color-forest);
+}
+
+/* ── J · 1366 AND BELOW: the band gives up its series row first ─────────────── */
+@media (max-width: 1365px) {
+  .bhp-catalog-band__series {
+    display: none;
+  }
+  body.bhp-catalog-grid .bhp-catalog-band h1.bhp-catalog-band__title {
+    font-size: 1.35rem;
+  }
+}
+
+/* ── K · MOBILE, 640 AND BELOW ───────────────────────────────────────────────
+   ⭐ TWO COLUMNS, KEPT. The founder default is mobile reading order with the
+      Collection at the fold, and the brief's gate is at least four cards fully
+      above an 812 fold. Two rows of two is the only arrangement that can reach
+      four, so the card is compressed rather than the grid re-shaped.
+   ⛔ THE PLACE LINE AND THE CHIPS BOTH SURVIVE. They are the two facts a parent
+      is comparing across cards; dropping either to buy height would win the
+      measurement and lose the page. */
+@media (max-width: 640px) {
+  /* ⛔ 0.3rem, MEASURED. At 0.5rem the band rendered 109px tall at an asserted
+     375x812 and pushed the grid to y214, which cost the second row its place
+     above the fold. The band's job on a phone is to name the series and the
+     formats in as little height as possible; the brand line and the diamond are
+     already on every page's header and come out below. */
+  body.bhp-catalog-grid header.woo-archive-hero.bhp-catalog-band,
+  body.bhp-catalog-grid header.bhp-catalog-band.interior-hero {
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.3rem !important;
+  }
+  .bhp-catalog-band__row {
+    gap: 0 0.6rem;
+  }
+  body.bhp-catalog-grid .bhp-catalog-band h1.bhp-catalog-band__title {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+  .bhp-catalog-band__diamond,
+  .bhp-catalog-band__line {
+    display: none; /* ⭐ The brand line is on every page's header already. */
+  }
+  .bhp-catalog-band__meta {
+    margin-left: 0;
+    font-size: 0.62rem;
+  }
+  /* ⛔ THE BREADCRUMB GOES ON A PHONE, AND ONLY ON A PHONE. It is orientation
+     for a desktop reader who arrived from a category; on a 375px screen it is
+     24px of the fold a parent needs for a book. The desktop breadcrumb is
+     untouched (concept of record keeps it at 24px). */
+  body.bhp-catalog-grid .woocommerce-breadcrumb {
+    display: none;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell {
+    padding-top: var(--space-2);
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 12px;
+    --bhp-card-gutter: 0.6rem;
+    /* ⛔ 132px, MEASURED AGAINST THE 812 FOLD. At 150px the two rows ran to
+       y986 and only the first row cleared. The brief's mobile gate is at least
+       FOUR cards fully above the fold, which on a 2-up grid means two whole
+       rows, which means a card at or under about 310px. Every value in this
+       block is that arithmetic. */
+    --bhp-cover-well: 132px;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product img,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__composite {
+    padding: 0.5rem 0.5rem 0.2rem;
+  }
+  /* ⛔ 0.75rem HERE TOO, for the same reason and by the same gate. `test-cro-
+     iterate5.php` §5.3 does not have a mobile exemption and should not: a label
+     a parent squints at on a phone is the label that most needs 12px. */
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woo-card__eyebrow {
+    margin: 0.3rem 0.6rem 0.05rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woocommerce-loop-product__title {
+    padding: 0 0.6rem;
+    font-size: 0.9rem;
+    line-height: 1.18;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-descriptor {
+    margin: 0 0.6rem 0.3rem;
+    padding-bottom: 0.3rem;
+    font-size: 0.75rem;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .price,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-shop-collection-card__price {
+    padding: 0 0.6rem 0.25rem;
+    font-size: 1.15rem;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-price-lead {
+    margin: 0 0.6rem -0.15rem;
+    font-size: 0.52rem;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-prices {
+    margin: 0 0.6rem 0.35rem;
+    gap: 0.25rem;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price {
+    min-height: 28px;
+    padding: 0.15rem 0.2rem;
+  }
+  /* ⛔ THE 44px TOUCH FLOOR IS NOT TRADED FOR HEIGHT. `.bhp-shop-atc`'s own
+     `min-height: 48px` stands; only the label size and the card inset move. */
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-atc {
+    font-size: 0.7rem;
+    padding: 0.55rem 0.5rem;
+  }
+  /* ⛔⛔ SUPERSEDED 2026-09-02 BY 1.19.350-FIX (`CYCLE179-LD-350-FIX` fix 2).
+     ⛔ THE SUPERSEDED RULE AND ITS WHOLE REASONING ARE PRESERVED VERBATIM BELOW
+        rather than deleted, because the argument it makes is a real one and a
+        future release that re-measures the fold WILL rediscover it. It was
+        ruled on, not refuted.
+
+     ⭐ WHAT CHANGED: the `chief-of-staff` review of the 350 build (seal 753)
+        ruled the age
+        line BACK ONTO the mobile catalog card. The 350 build had removed it and
+        flagged the removal for ratification in its own §2.3 X4; ratification
+        came back "put it back". The `display: none` that follows this comment
+        is therefore GONE, and the `display: block` rule earlier in this same
+        ≤640px block (§3 · THE AGE LINE) governs again, unmodified.
+     ⚠️ THE MEASURED COST BELOW IS REAL AND IS RE-STATED, NOT WAVED AWAY: the
+        line costs ~18px plus margins on every card at 375. The 350-FIX pass
+        re-measured /shop/ at 375 with the line restored and the numbers are in
+        the FIX section of the build report. ⚠️ "Ages 6-9" is now stated BOTH in
+        the band above the grid and on each card. That duplication is the
+        founder's to keep or remove; this pass was told to restore the card and
+        was NOT told to change the band, so the band is untouched.
+
+     ⛔ THE ORIGINAL COMMENT AND RULE, PRESERVED:
+     ┌─────────────────────────────────────────────────────────────────────────
+     │ ⛔⛔ THE AGE LINE COMES OFF THE MOBILE CARD, AND IT IS A SUBTRACTION, SO
+     │    THE REASON IS WRITTEN OUT RATHER THAN ASSUMED.
+     │ ⭐ NOTHING IS LOST FROM THE PAGE. From 1.19.350 the band above the grid
+     │    states "Paperback and hardcover · Ages 6 to 9" at EVERY viewport,
+     │    including this one, in the first 60px of the page. Item 204 put the
+     │    age line on the mobile card in 1.19.283 because the desktop hero
+     │    stated the band and the mobile card was the only place a parent could
+     │    read it; 1.19.350 states it on the phone too, higher up, once.
+     │ ⛔ THE COST OF KEEPING IT WAS MEASURED: 18px plus its margins on every
+     │    card, which is the difference between two rows of cards above an 812
+     │    fold and one. The brief's mobile gate is at least four cards fully
+     │    above the fold.
+     │ ⛔ IT IS STILL RENDERED INTO THE DOM by `bhp_book_shop_card_meta()` and
+     │    `bhp_colouring_shop_card_meta()` — this hides the duplicate, it does
+     │    not remove the element, and `test-shop-grid-2up-204.php` §2 still
+     │    asserts every card carries it from the right source.
+     │ ⚠️ RECORDED FOR RATIFICATION in the 350 build report. If the founder
+     │    wants the age band back on the mobile card, the remedy is to take it
+     │    OUT of the band's meta line rather than to print it in both places.
+     │
+     │   body.bhp-catalog-grid .woo-expedition-shell ul.products li.product
+     │     .bhp-shop-ages { display: none; }
+     └───────────────────────────────────────────────────────────────────────── */
+  /* ⛔ The Collection's hardcover swap takes the smallest type on the card. It
+     is NOT hidden: it is a real, recomputed price and a control a keyboard can
+     reach, and hiding it would remove a purchase path from a phone. */
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__upsell,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__saving {
+    font-size: 0.6rem;
+    line-height: 1.25;
+  }
+  /* ── ⭐⭐ THE COLLECTION GOES LAST ON A PHONE, AND IT IS THE FOUNDER DEFAULT
+     RATHER THAN A CONVENIENCE (seal 704): *"mobile reading order with the
+     Collection peeking at the fold."* `SHOP-RECON-AND-PROPOSAL.md` §4b offered
+     him two options and recommended (a): keep reading order and let the gold
+     Collection card peek at the fold as a scroll cue.
+     ⛔ ON DESKTOP IT STAYS FOURTH AND FEATURED. Only the phone reorders, and
+     only because the arithmetic forces a choice: the Collection card is 390px
+     against a book card's 301px (the BEST VALUE tab plus the hardcover swap),
+     so leaving it in row two put that row's bottom at y847 against an 812 fold
+     and cost the page TWO cards. MEASURED at an asserted 375x812.
+     ⭐ WITH IT LAST: row one ends y445, row two ends y766, and the Collection
+     begins at y778 — four whole cards above the fold and the gold card peeking
+     by 34px, which is exactly the behaviour the default describes. */
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item {
+    order: 6;
+  }
+  .bhp-catalog-bundle-strip__list.products,
+  body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .bhp-catalog-trust-strip__inner {
+    gap: var(--space-3);
+  }
+  .bhp-visit-band__inner {
+    padding: 0.45rem var(--space-3);
+    gap: 0.1rem 0.7rem;
+  }
+  .bhp-visit-band__school {
+    flex: 1 0 100%;
+    font-size: 0.66rem;
+  }
+  .bhp-visit-band__order-by,
+  .bhp-visit-band__line {
+    font-size: 0.78rem;
+  }
+  .bhp-visit-band__note {
+    font-size: 0.68rem;
+  }
 }

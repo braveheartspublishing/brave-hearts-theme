@@ -317,7 +317,7 @@ $cart_mixed_three_ship = new BHP_Test_Stub_Cart(
  * ⭐ 1.8.23 — THE EDGE CASE THIS BUILD DECIDED, AND ITS COUNTERFACTUAL TWIN.
  *
  * This cart is Everest PB + Amazon PB + Mariana HC: three books, three
- * DISTINCT ADVENTURES, two formats. Gandalf's direction for this build was
+ * DISTINCT ADVENTURES, two formats. The `chief-of-staff` direction for this build was
  * that mixed 3-distinct-book carts ship free as part of the same bundle
  * family, and under Option B that is what the customer has: the complete
  * collection, in one shipment.

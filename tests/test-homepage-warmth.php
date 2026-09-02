@@ -11,7 +11,7 @@
  * WHAT THIS FILE IS FOR
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * Source: the Homepage Warmth Board (`design-creative` / Legolas, `FD-391`,
+ * Source: the Homepage Warmth Board (`design-creative`, `FD-391`,
  * 2026-08-17). Andrew Signore opened its taste gate 2026-08-18 (RELAYED
  * through the Chief of Staff, NOT witnessed first-hand): "Its really good -
  * needs a few tweaks but I really like the redesign lets mock it up on

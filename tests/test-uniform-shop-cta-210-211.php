@@ -10,7 +10,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * ⭐ ANDREW SIGNORE, carrier items 210 and 211, 2026-08-21. ⚠️ RELAYED through
- *    `chief-of-staff` (Gandalf 9) in the build brief — ⛔ NOT witnessed
+ *    `chief-of-staff` (brief item 9) in the build brief — ⛔ NOT witnessed
  *    first-hand by the agent that wrote this file. Recorded as relayed, per
  *    Standing Rules §9.2 rule 2.
  *

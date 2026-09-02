@@ -16,7 +16,8 @@
  * **42351**, slug `positivity-news`, DRAFT and unpublished as of 2026-08-30
  * (`WORKING-DRAFTS\connected-operator\CYCLE170-GIM-LANDING-FILL\RESULT-42351-2026-08-30.md`).
  * ⛔ THAT PAGE IS NOT THIS PAGE AND NEITHER SUPERSEDES THE OTHER. It is
- *    Gimli's, it lives on `mailchi.mp`, and publishing it is Andrew's click.
+ *    the `connected-operator` surface, it lives on `mailchi.mp`, and publishing
+ *    it is Andrew's click.
  *    This file builds the theme-native surface at
  *    `https://braveheartspublishing.com/positivity-news/`.
  *
@@ -48,7 +49,7 @@
  * Every visible string is copied CHARACTER-EXACT from
  * `WORKING-DRAFTS\connected-operator\CYCLE170-GIM-TRIPLE\LANDING-PAGE-COPY-DECK.md`,
  * whose own header records it as *"sourced only from carrier item 489 verbatim;
- * nothing invented"*. ⭐ It has a SECOND, INDEPENDENT WITNESS: Gimli loaded the
+ * nothing invented"*. ⭐ It has a SECOND, INDEPENDENT WITNESS: `connected-operator` loaded the
  * same strings into Mailchimp page 42351 and read them back out of the rendered
  * preview, character for character (`RESULT-42351-2026-08-30.md` §1). Unlike the
  * item-523 visit copy, this text is two-source verified.

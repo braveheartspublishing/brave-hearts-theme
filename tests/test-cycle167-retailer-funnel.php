@@ -33,7 +33,7 @@
  * ⭐ WHERE THE TERM VALUES IN §2 COME FROM — and why a test may assert them
  * ---------------------------------------------------------------------------
  * `Business OS\WORKING-DRAFTS\connected-operator\
- *  CYCLE167-GIM-INGRAM-READ-2-2026-08-27.md` §2 — Gimli read each title's own
+ *  CYCLE167-GIM-INGRAM-READ-2-2026-08-27.md` §2 — `connected-operator` read each title's own
  * distribution page inside the authenticated IngramSpark account 9885354 on
  * 2026-08-27. ⚠️ RELAYED to this file, not witnessed by it.
  * ⛔ THIS SUITE DOES NOT VERIFY INGRAM. It cannot. It verifies that the code
@@ -140,7 +140,7 @@ bhp_rtl_ok( '0.8  the template comment strip produced usable prose', strlen( $tp
 bhp_rtl_head( '1. THE TEMPLATE HARDCODES NO ISBN' );
 // ══════════════════════════════════════════════════════════════════════════
 /*
- * ⭐ Merry §4.3: "The table is generated from bhp_bundle_catalog() at render
+ * ⭐ `marketing-growth` §4.3: "The table is generated from bhp_bundle_catalog() at render
  *    time. No ISBN is ever hardcoded into a template." Asserted, not trusted.
  */
 preg_match_all( '/97[89][0-9]{10}/', $tpl_prose, $tpl_isbn_hits );
@@ -181,7 +181,7 @@ bhp_rtl_ok( '2.0  exactly SIX rows render', 6 === count( $rows ), count( $rows )
  * ⛔ THE EXPECTED SET IS WRITTEN OUT LONGHAND ON PURPOSE. A test that derived
  *    it from the same registry the code reads would assert nothing at all —
  *    it would agree with any value, including a wrong one. These five rows
- *    are transcribed from Gimli's live read and are the INDEPENDENT side of
+ *    are transcribed from the `connected-operator` live read and are the INDEPENDENT side of
  *    the comparison.
  */
 $expected = array(
@@ -365,7 +365,7 @@ bhp_rtl_ok( '5.90  no em dash anywhere in the template body', false === strpos( 
  * ⛔ A naive literal ban on "minimum order" or "BISAC" would fail on the two
  *    sentences that make this page HONEST — the approved FAQ "Is there a
  *    minimum order quantity?" (whose answer is that there is no published
- *    minimum) and Merry's on-request line "Trim size, page count and BISAC
+ *    minimum) and the `marketing-growth` on-request line "Trim size, page count and BISAC
  *    codes for each edition are available on request". ⭐ Both SAY THE
  *    COMPANY DOES NOT PUBLISH THESE, which is the opposite of the failure the
  *    rule guards against. Banning the word would have pushed the next engineer
@@ -606,7 +606,7 @@ bhp_rtl_head( '10. ⭐ THE NEW COPY IS THE FOUNDER\'S, AND THE INGRAM ROUTE IS R
  *      bhp_rtl_ok( '10.1  the ordering block names ipage',
  *          false !== strpos( $tpl_prose, 'Search the ISBN in ipage' ) );
  *
- * ⛔ Merry's D1 — "ipage is named in the copy but is NOT a link" — is fixed by
+ * ⛔ The `marketing-growth` D1 — "ipage is named in the copy but is NOT a link" — is fixed by
  *    wrapping the word in an anchor, which necessarily splits the translatable
  *    string in two. The SENTENCE a visitor reads is byte-identical; only the
  *    markup between two of its words changed. Both halves are asserted, plus
@@ -614,7 +614,7 @@ bhp_rtl_head( '10. ⭐ THE NEW COPY IS THE FOUNDER\'S, AND THE INGRAM ROUTE IS R
  */
 bhp_rtl_ok( '10.1a the ordering block still says "Search the ISBN in"',
 	false !== strpos( $tpl_prose, 'Search the ISBN in ' ) );
-bhp_rtl_ok( '10.1b and the word ipage is now a real anchor, not bare prose (Merry D1)',
+bhp_rtl_ok( '10.1b and the word ipage is now a real anchor, not bare prose (marketing-growth D1)',
 	false !== strpos( $tpl_prose, 'retailer-ipage-link' )
 	&& false !== strpos( $tpl_prose, "esc_html_e('ipage'" ) );
 bhp_rtl_ok( '10.2  ⛔ and does NOT claim the record is findable there ("and it is there" is unverified)',
@@ -679,7 +679,7 @@ bhp_rtl_head( '13. ⭐⭐ 1.19.314 — ORDERING ROUTE, SELL SHEET, IMPRINT, FOOT
  *    the other, and a passing suite here is NOT a rendered-page claim.
  */
 
-// -- 13.1  THE IPAGE ORDERING LINK (Merry D1, founder items 360/366) --------
+// -- 13.1  THE IPAGE ORDERING LINK (marketing-growth D1, founder items 360/366) --
 bhp_rtl_ok( '13.1a the ipage URL literal appears exactly ONCE in the template',
 	1 === substr_count( $tpl_prose, "'https://ipage.ingramcontent.com'" ),
 	substr_count( $tpl_prose, "'https://ipage.ingramcontent.com'" ) );
@@ -715,7 +715,7 @@ bhp_rtl_ok( '13.1h the wholesale-inquiry route survives its demotion (it is stil
 	false !== strpos( $tpl_prose, '#contact' )
 	&& false !== strpos( $tpl_prose, 'Start a Wholesale Inquiry' ) );
 
-// -- 13.2  THE SELL SHEET, UNGATED (Merry D2 / Fix 2) -----------------------
+// -- 13.2  THE SELL SHEET, UNGATED (marketing-growth D2 / Fix 2) ------------
 $bhp_rtl_pdf = get_template_directory() . '/assets/downloads/bhp-retailer-sell-sheet.pdf';
 bhp_rtl_ok( '13.2a the sell-sheet PDF actually ships inside the theme',
 	file_exists( $bhp_rtl_pdf ), $bhp_rtl_pdf );
@@ -746,7 +746,7 @@ bhp_rtl_ok( '13.3c ⛔ the legal entity name is NOT passed through a translation
 	false === strpos( $tpl_prose, "__( 'Brave Hearts Publishing LLC'" )
 	&& false === strpos( $tpl_prose, "esc_html_e( 'Brave Hearts Publishing LLC'" ) );
 
-// -- 13.4  THE PAGE IS NO LONGER ORPHANED (Merry D3) ------------------------
+// -- 13.4  THE PAGE IS NO LONGER ORPHANED (marketing-growth D3) -------------
 $bhp_rtl_footer = (string) file_get_contents( get_template_directory() . '/footer.php' );
 bhp_rtl_ok( '13.4a the sitewide footer links the retailer page',
 	false !== strpos( $bhp_rtl_footer, '/retailers-wholesale-guide/' ) );

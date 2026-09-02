@@ -385,7 +385,7 @@ bhp_pto_ok(
  *    converting it would not make it time-only — it would delete the surface
  *    and leave a duplicate timed popup in the same funnel with the same offer.
  *    It also renders only where the parent popup does not (product pages,
- *    /shop/, /books/), so timing it would reverse `commerce-cx` / Pippin's
+ *    /shop/, /books/), so timing it would reverse the `commerce-cx`
  *    CYCLE164-CX #3 finding, which Andrew has NOT overturned.
  *    ⭐ ROUTED to the Chief of Staff as a decision for Andrew; NOT resolved
  *    here. An agent does not resolve a contradiction that belongs to the owner.

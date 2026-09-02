@@ -4,7 +4,7 @@
  * `CYCLE170-LD-WEEKPICKER`, carrier item 534. Andrew Signore: *"I'm an ICU
  * nurse, and my hospital schedule posts about a month at a time. So pick the
  * week that works for your class, and I'll confirm the exact day and time as
- * soon as my schedule comes out."* ⛔ RELAYED THROUGH GANDALF, NOT WITNESSED BY
+ * soon as my schedule comes out."* ⛔ RELAYED THROUGH `chief-of-staff`, NOT WITNESSED BY
  * THIS FILE'S AUTHOR.
  *
  * ---------------------------------------------------------------------------

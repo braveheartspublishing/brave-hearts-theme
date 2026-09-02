@@ -17,7 +17,7 @@
  * the Complete Collection page already do.
  *
  * Specification: Business OS `WORKING-DRAFTS\commerce-cx\
- * OVERNIGHT-2026-08-03-INTEGRATION-SPEC.md` (Pippin / `commerce-cx`,
+ * OVERNIGHT-2026-08-03-INTEGRATION-SPEC.md` (`commerce-cx`,
  * 2026-08-02). Placements, subsets, headings and "do not disturb" lists are
  * that document's, not this file's.
  *
@@ -534,7 +534,7 @@ function bhp_cx_collection_gallery_map() {
          *   the one audience that reads the printed words in the photograph,
          *   which is why it was pulled from here in the first place. The
          *   queued authentic Mariana reshoot (`docs/ROADMAP.md`) is the fix.
-         *   Escalated to Andrew through Gandalf; restoring the exception is a
+         *   Escalated to Andrew through `chief-of-staff`; restoring the exception is a
          *   one-line change back to a literal list.
          *
          * ⭐ The single-slide consequence noted above is also gone: this page

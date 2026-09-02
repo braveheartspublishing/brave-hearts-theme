@@ -6,7 +6,7 @@
  *
  * WHAT THIS IS
  * ------------
- * Move 2 of three on the Homepage Warmth Board (`design-creative` / Legolas,
+ * Move 2 of three on the Homepage Warmth Board (`design-creative`,
  * `FD-391`, 2026-08-17): the sample-pages moment promoted out of a commerce
  * card and given a cream section of its own, which also breaks the current
  * run of dark bands below the hero.
@@ -29,14 +29,14 @@
  *    empty cream band with two buttons in it.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⚠️⚠️ EVERY SENTENCE BELOW IS NEW CUSTOMER-FACING COPY, WRITTEN BY LEGOLAS
+ * ⚠️⚠️ EVERY SENTENCE BELOW IS NEW CUSTOMER-FACING COPY, WRITTEN BY `design-creative`
  *      ON THE BOARD ANDREW APPROVED THE LOOK OF. NONE OF IT IS APPROVED AS
  *      COPY YET, AND THE BOARD SAYS SO ITSELF: "Nothing in this column is
  *      approved copy yet." ALL SIX STRINGS ARE LISTED IN THE BUILD REPORT
  *      FOR HIS EYE. NONE ADDS A CLAIM — every one is tone only.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ THE EM DASHES ARE GONE, AND THAT IS THE ONLY EDIT MADE TO LEGOLAS'S
+ * ⭐ THE EM DASHES ARE GONE, AND THAT IS THE ONLY EDIT MADE TO THE `design-creative`
  *    WORDS. Standing rule §9.1's rail is "no em dashes" in Andrew's copy, and
  *    `front-page.php` already carries the Wave F em-dash purge precedent
  *    (2026-08-03). Four board lines are restructured with a full stop, a
@@ -90,7 +90,7 @@ if (!function_exists('bhp_book_media_attachment_id')) {
  *    they are still in the registry and still render in the Look Inside
  *    carousel and on /complete-collection/. Raised in the build report.
  *
- * ⭐ SOURCE: real photographs Andrew supplied 2026-08-18, processed by Legolas
+ * ⭐ SOURCE: real photographs Andrew supplied 2026-08-18, processed by `design-creative`
  *    under CYCLE164-DES-FIRST-PAGE-PHOTOS (colour conversion, deskew, exposure
  *    lift, unsharp mask, metadata stripped — no AI, no retouching of printed
  *    content, no hand removal). Uploaded to the STAGING media library only,
@@ -138,7 +138,7 @@ if (!function_exists('bhp_book_media_attachment_id')) {
  *    one-line slug change.
  *
  * ⭐ THE NEW ATTACHMENT: staging 3385, slug `mariana-trench-page-1-full`,
- *    imported 2026-08-19 from the same Legolas-processed master that produced
+ *    imported 2026-08-19 from the same `design-creative`-processed master that produced
  *    the square crop (`CYCLE164-DES-FIRST-PAGE-PHOTOS`; colour conversion,
  *    deskew, exposure lift, unsharp mask, metadata stripped — no AI, no
  *    retouching of printed content, no hand removal). Source md5 verified
