@@ -931,6 +931,124 @@ function bhp_school_visit_clear_session() {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.80 — WHAT AN EXPLICIT `?bhp_visit=` SLUG DOES TO THE SESSION.
+ *      `CYCLE179-LD-10`, closed by `CYCLE179-LD-355`. A PURE FUNCTION.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT IT CLOSES, OBSERVED LIVE ON STAGING 1.19.353 AT AN ASSERTED
+ *    1440 AND RECORDED AS `CYCLE179-LD-10`, not inferred from this file: with
+ *    Liberty's session still held, `?bhp_visit=dallas-harris-2026-09-03`
+ *    rendered the band correctly as **Dallas Harris, closed** while the
+ *    per-card counters still read *"Only 8 / 5 / 9 left for the school visit"*,
+ *    which are LIBERTY's shelf counts, and `bhp-visit-active` was still on the
+ *    body. One page, two schools, and the numbers belonged to the school whose
+ *    name was not on it.
+ *
+ * ⛔ WHY THE THEME COULD NOT FIX IT. Theme 1.19.353 made the URL outrank the
+ *    session for the BAND, which is display. The counters are this plugin's and
+ *    they render off the SESSION, via `bhp_visit_shelf_counter_for_request()`
+ *    to `bhp_school_visit_paperback_only()` to `bhp_school_visit_request_record()`
+ *    to `bhp_school_visit_active()`. Making them agree means clearing a
+ *    session, which is an ENTITLEMENT change and is this file's.
+ *
+ * ⚠️⚠️ THE DECISION THIS SUPERSEDES, AND IT IS SUPERSEDED RATHER THAN
+ *     FORGOTTEN. `bhp_school_visit_capture_intent()` below has carried, since
+ *     1.8.56, a `commerce-cx` finding of 2026-08-19: *"`?bhp_visit=<bogus>`
+ *     does not clear an existing flag; making it clear one would mean a
+ *     truncated or mistyped URL silently strips hand delivery from a parent who
+ *     is entitled to it."* ⭐ THAT TEXT IS LEFT STANDING IN PLACE and is not
+ *     edited, because the reasoning is still correct and still governs the case
+ *     it was written about.
+ *
+ * ⭐⭐ ANDREW SIGNORE'S WORD, 2026-09-02, seal 800, carried by the
+ *     `chief-of-staff` brief `CYCLE179-LD-355`. ⚠️ RELAYED, NOT WITNESSED
+ *     FIRST-HAND by the agent that wrote this (Standing Rules 9.2 rule 2):
+ *
+ *         "Go ahead and finish all the fixes"
+ *
+ *     with the brief's own statement of the fix: an explicit `?bhp_visit=` that
+ *     differs from the stored session visit must clear or replace the session
+ *     so the band AND the per-card counters agree on the URL's school, and an
+ *     unresolved slug must show that school's closed state with no counters.
+ *
+ * ⛔⛔ THE SUPERSESSION IS NARROW, AND THE NARROWNESS IS THE WHOLE POINT. It
+ *     reaches ONLY a slug that NAMES A REGISTERED VISIT. A slug absent from
+ *     `bhp_school_visit_records()` names no school, so the brief's sentence
+ *     ("that school's closed state") has no referent for it, and the 2026-08-19
+ *     reasoning is untouched by anything Andrew said. A truncated or mistyped
+ *     URL is therefore STILL a no-op, exactly as it has been since 1.8.56.
+ *     Where two restrictions meet, the stricter one applies.
+ *
+ * ⛔ IT READS NOTHING AND WRITES NOTHING. No superglobal, no session, no
+ *    option, no registry, no clock, no cart. Every input is a parameter, which
+ *    is what makes the four cases in the brief ordinary function calls in a
+ *    suite: there is no WooCommerce session under WP-CLI, and standing one up
+ *    would mean writing a session or a registry row, which is a DATA change
+ *    this desk does not make. The same split, for the same reason, as
+ *    `bhp_visit_band_decide()` in the theme.
+ *
+ * @since 1.8.80
+ * @param string      $slug          The sanitised slug in the URL, or ''.
+ * @param bool        $is_registered Whether `$slug` names a row in the registry
+ *                                   at all, open or closed.
+ * @param bool        $resolves      Whether `bhp_school_visit_resolve()` returns
+ *                                   a record for it, i.e. ordering is open.
+ * @param string|null $session_slug  The slug the session currently holds, or ''.
+ * @return string 'set' | 'clear' | 'ignore'.
+ */
+function bhp_school_visit_capture_decide( $slug, $is_registered, $resolves, $session_slug ) {
+	$slug         = (string) $slug;
+	$session_slug = (string) $session_slug;
+
+	if ( '' === $slug ) {
+		return 'ignore';
+	}
+
+	// ⭐ The explicit clear token, checked before anything reads the registry,
+	//    mirroring the order the caller has used since 1.8.59.
+	if ( defined( 'BHP_SCHOOL_VISIT_CLEAR_TOKEN' ) && BHP_SCHOOL_VISIT_CLEAR_TOKEN === $slug ) {
+		return 'clear';
+	}
+
+	// ⭐ A slug that resolves REPLACES the session. Unchanged from 1.8.56, and
+	//    it is what already made the open-to-open hop correct.
+	if ( $resolves ) {
+		return 'set';
+	}
+
+	/*
+	 * ⭐⭐ 1.8.80, AND THIS IS THE ONLY NEW BRANCH IN THIS FUNCTION.
+	 *
+	 * A REGISTERED but CLOSED visit, named explicitly, on a browser holding a
+	 * DIFFERENT school's session. The band already names the URL's school; this
+	 * takes the other school's counters, hand-delivery and paperback-only gate
+	 * off the same page so the two cannot disagree.
+	 *
+	 * ⛔ `$session_slug !== $slug` IS LOAD-BEARING, not defensive padding. When
+	 *    the session holds THE SAME closed slug there is nothing to reconcile,
+	 *    and `bhp_school_visit_active()`'s guard 2 clears it on this very
+	 *    request anyway. Clearing here as well would be a second mechanism for
+	 *    one question, which is the defect class `bundle-shortcode.php` already
+	 *    records under "THE CARD LIST AND THE PAYLOAD ARE NOW THE SAME LIST".
+	 *
+	 * ⛔ AN EMPTY SESSION FALLS THROUGH TO 'ignore'. There is no entitlement to
+	 *    remove, and returning 'clear' would write two null session keys and
+	 *    bump the shipping rate-cache version on every crawler that touches an
+	 *    expired flyer URL.
+	 */
+	if ( $is_registered && '' !== $session_slug && $session_slug !== $slug ) {
+		return 'clear';
+	}
+
+	/*
+	 * ⛔ EVERYTHING ELSE IS A NO-OP, AND THAT INCLUDES THE UNREGISTERED SLUG
+	 *    THE 2026-08-19 DECISION IS ABOUT. See the narrowness note above.
+	 */
+	return 'ignore';
+}
+
+/**
  * Turn `?bhp_visit=<slug>` into a session flag.
  *
  * ⛔ IT SETS NOTHING unless the slug resolves to a live, non-expired visit,
@@ -968,6 +1086,16 @@ function bhp_school_visit_capture_intent() {
 	 * ⭐ IT IS SAFE FOR ANYONE TO HIT. On a session with no flag it does
 	 *    nothing at all, and it can only ever REMOVE an entitlement — there is
 	 *    no value of this parameter that grants one without a live visit.
+	 *
+	 * ⚠️ 1.8.80 — THIS EARLY RETURN IS KEPT, AND KEEPING IT IS DELIBERATE.
+	 *    `bhp_school_visit_capture_decide()` also returns 'clear' for the token,
+	 *    so this block could have been folded into it. ⛔ IT MUST NOT BE: the
+	 *    decision function is reached only AFTER the two registry reads below,
+	 *    and routing `clear` through them is precisely what the sentence four
+	 *    lines up forbids. The invariant is "`clear` never reaches
+	 *    `resolve()`", and an early return is the only thing that enforces it.
+	 *    The duplicated branch in the decision function is the belt to this
+	 *    file's braces, and the suite asserts both.
 	 */
 	if ( BHP_SCHOOL_VISIT_CLEAR_TOKEN === $slug ) {
 		bhp_school_visit_clear_session();
@@ -981,8 +1109,40 @@ function bhp_school_visit_capture_intent() {
 	 *    one would mean a truncated or mistyped URL silently strips hand
 	 *    delivery from a parent who is entitled to it. The clear path above is
 	 *    an explicit word, not an accident anyone can have.
+	 *
+	 * ⚠️⚠️ 1.8.80 — THE PARAGRAPH IMMEDIATELY ABOVE IS PRESERVED VERBATIM AND
+	 *     STILL GOVERNS THE CASE IT WAS WRITTEN ABOUT, BUT IT NO LONGER
+	 *     DESCRIBES EVERY CASE. Under Andrew Signore's word of 2026-09-02 (seal
+	 *     800, RELAYED through the `chief-of-staff` brief `CYCLE179-LD-355`, not
+	 *     witnessed first-hand), a slug that NAMES A REGISTERED VISIT but has
+	 *     CLOSED now clears a DIFFERENT school's session, so the band and the
+	 *     per-card counters cannot name two schools on one page
+	 *     (`CYCLE179-LD-10`).
+	 *
+	 * ⭐ A SLUG THAT IS NOT IN THE REGISTRY AT ALL IS STILL A NO-OP. The
+	 *    truncated-URL protection the 2026-08-19 decision exists for is intact.
+	 *    The full reasoning, and the exact scope of the supersession, are on
+	 *    `bhp_school_visit_capture_decide()` above and are not restated here.
+	 *
+	 * ⛔ THE REGISTRY READ BELOW IS A DISPLAY-CLASS READ AND GRANTS NOTHING.
+	 *    `bhp_school_visit_resolve()` returning null is the entitlement gate and
+	 *    is NOT softened: the only thing a registered-but-closed slug can do
+	 *    here is REMOVE a flag, never create one. There is no value of this
+	 *    parameter that grants an entitlement without a live visit.
 	 */
-	if ( ! bhp_school_visit_resolve( $slug ) ) {
+	$bhp_records       = bhp_school_visit_records();
+	$bhp_is_registered = isset( $bhp_records[ $slug ] ) && ! empty( $bhp_records[ $slug ]['school'] );
+	$bhp_resolves      = (bool) bhp_school_visit_resolve( $slug );
+	$bhp_session_slug  = (string) WC()->session->get( BHP_SCHOOL_VISIT_SESSION_KEY );
+
+	$bhp_action = bhp_school_visit_capture_decide( $slug, $bhp_is_registered, $bhp_resolves, $bhp_session_slug );
+
+	if ( 'clear' === $bhp_action ) {
+		bhp_school_visit_clear_session();
+		return;
+	}
+
+	if ( 'set' !== $bhp_action ) {
 		return;
 	}
 

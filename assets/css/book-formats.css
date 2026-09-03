@@ -73,6 +73,40 @@
 	letter-spacing: 0.06em;
 }
 
+/* ⭐ 1.19.355 (`CYCLE179-LD-355`, brief item 2) — 10px BETWEEN THE SPEC LINE
+   AND THIS LABEL. `design-creative`'s aesthetic review, on all six chapter
+   PDPs: *"the spec line and 'CHOOSE YOUR FORMAT' label sit tight enough that
+   descenders nearly touch."*
+
+   MEASURED ON STAGING 1.19.354, headless Chrome, `window.innerWidth` asserted
+   1440, before any change:
+
+       .bhp-formats__spec      398 .. 421   margin-bottom 0px
+       .bhp-formats__heading   421 .. 442   margin-top    0px
+       gap                     0px
+
+   The same 0px was measured on the colouring PDP (526 .. 526). 10px is the
+   middle of the 8-12px the brief asks for and is the value this component
+   already uses for the heading's own `margin-bottom`, so the label ends up
+   evenly inset between the sentence above it and the cards below it rather
+   than carrying a new number.
+
+   ⛔ IT IS SCOPED TO THE WIDTHS WHERE THE LABEL IS VISIBLE, and that is not
+      fussiness. Below 783px the `@media (max-width: 782px)` block further down
+      this file makes this element screen-reader-only with `margin: -1px`, which
+      is (0,1,0). `.bhp-formats .bhp-formats__heading` is (0,2,0) and would BEAT
+      it, so declaring the margin unconditionally would reach into the clip
+      rule's own geometry on every phone. The two media queries cannot both
+      match, so scoping removes the contest instead of winning it.
+
+   ⭐ NOTHING ELSE MOVES. No font, no colour, no card, no price and no CTA. The
+      block below the label shifts down by exactly 10px at >=783px. */
+@media (min-width: 783px) {
+	.bhp-formats .bhp-formats__heading {
+		margin-top: 10px;
+	}
+}
+
 /* ⭐ 1.19.240 (2026-08-18, CYCLE164-LD-PAPERBACK-DEFAULT) — the one-line
    reason there is no HARDCOVER card on a school-visit session.
 

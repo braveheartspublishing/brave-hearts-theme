@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: ff10e6bd41c4394db8f627eac2bd28b5
+    source-md5: e7ae0aa9e45a56dd7e374a713ae271ed
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.354
+Version: 1.19.356
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3568,6 +3568,9 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.product > a.bhp-shop-
   width: auto;
   margin: auto var(--bhp-card-gutter) var(--bhp-card-gutter);
 }
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product > a.woocommerce-loop-product__link > .bhp-bundle-stock-counter {
+  margin-top: auto;
+}
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
   padding-inline: 0;
   padding-bottom: 0;
@@ -3738,6 +3741,35 @@ body.bhp-cta-forest .bhp-formats__cta-form .btn-primary {
 #payment { border-radius: 0 !important; background: var(--expedition-parchment) !important; }
 .woocommerce-account .woocommerce-MyAccount-navigation ul { margin: 0; padding: 0; list-style: none; }
 .woocommerce-account .woocommerce-MyAccount-navigation li a { display: block; padding: .75rem 0; border-bottom: 1px solid var(--expedition-border); }
+.woocommerce-account .woocommerce-form-login button.woocommerce-form-login__submit,
+.woocommerce-account .woocommerce-form-register button.woocommerce-form-register__submit,
+.woocommerce-account .woocommerce-ResetPassword button.woocommerce-Button,
+.woocommerce-account .woocommerce-EditAccountForm button.woocommerce-Button {
+  border: 1px solid var(--expedition-forest);
+  border-radius: var(--radius-md);
+  background: var(--expedition-forest);
+  color: var(--color-white);
+}
+.woocommerce-account .woocommerce-form-login button.woocommerce-form-login__submit:hover,
+.woocommerce-account .woocommerce-form-login button.woocommerce-form-login__submit:focus-visible,
+.woocommerce-account .woocommerce-form-register button.woocommerce-form-register__submit:hover,
+.woocommerce-account .woocommerce-form-register button.woocommerce-form-register__submit:focus-visible,
+.woocommerce-account .woocommerce-ResetPassword button.woocommerce-Button:hover,
+.woocommerce-account .woocommerce-ResetPassword button.woocommerce-Button:focus-visible,
+.woocommerce-account .woocommerce-EditAccountForm button.woocommerce-Button:hover,
+.woocommerce-account .woocommerce-EditAccountForm button.woocommerce-Button:focus-visible {
+  background: var(--expedition-navy);
+  border-color: var(--expedition-navy);
+  color: var(--color-white);
+}
+.woocommerce-account .woocommerce-form-login input[type="checkbox"],
+.woocommerce-account .woocommerce-form input[type="checkbox"] {
+  accent-color: var(--expedition-forest);
+  width: 16px;
+  height: 16px;
+  margin-right: .4rem;
+  vertical-align: -2px;
+}
 .order-expedition-next { margin-top: 3rem; padding: clamp(2rem,5vw,4rem); background: var(--expedition-navy); color: #f8f3e9; }
 .order-expedition-next h2 { color: #f8f3e9; }
 body:not(.home) .site-footer { padding: 84px clamp(24px,4vw,54px) 40px; background: #12271d; color: rgba(214,203,180,.85); }
@@ -8975,6 +9007,7 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-i
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__upsell,
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__upsell {
   padding: 0.15rem 0;
+  color: var(--color-text);
   font-family: var(--font-ui);
   font-size: 0.68rem;
   font-weight: 600;
@@ -9260,5 +9293,41 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-i
   }
   .bhp-visit-band__note {
     font-size: 0.68rem;
+  }
+body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 14px;
+    align-items: start;
+  }
+body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > * {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > ul.products,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-catalog-bundle-strip,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-catalog-bundle-strip > ul.products {
+    display: contents !important;
+  }
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell li.product {
+    grid-column: auto;
+  }
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-catalog-trust-strip,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-shop-amazon,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .woocommerce-pagination {
+    order: 9;
+  }
+body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.product.bhp-shop-offer-item {
+    order: 7;
+  }
+body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-catalog-bundle-strip,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > ul.products {
+    margin: 0;
+  }
+body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__upsell {
+    margin-top: 0;
+  }
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
+    margin-bottom: 0;
   }
 }

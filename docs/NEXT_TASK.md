@@ -1,6 +1,39 @@
 # Next Task
 
 
+> ## ⭐⭐ NEWEST, 2026-09-02 · Production is theme `1.19.356` / bundle plugin `1.8.81`. **Everything below this block predates the `1.19.355` and `1.19.356` releases.**
+>
+> **Nothing here is scheduled.** These are the candidates a next session would pick from, in the order that
+> most reduces risk. Each one needs the owner's go-ahead before it becomes work.
+>
+> 1. **`LD-21`, the ragged bottom edge** (`KNOWN_ISSUES.md`). It is the only item on this list the owner can
+>    settle by looking at a live phone, it is on the purchase surface he asked to have fixed, and whichever
+>    way it goes it is a small CSS change. **Cheapest decision, highest visibility.**
+> 2. **`LD-19`, the redirecting shortcode page.** Two corrections shipped in `1.8.81` are invisible today
+>    because the page they render on redirects. The questions are whether the shortcode stays maintained and
+>    whether the staging 302 should become a production 301, as its own code comment says. **Both are
+>    decisions, and until they are made, work on those two surfaces cannot be verified by looking at a
+>    page.**
+> 3. **`LD-18`, the customer-facing em dash** in a plugin `aria-label` a screen reader speaks. One string.
+>    It should be taken as part of the wider em-dash sweep rather than alone, so the sweep is what needs
+>    scheduling.
+> 4. **`F-08` and `F-09`**, the mobile visit surface and clear-flag consistency. Open since before the
+>    `1.19.350` series and still unscoped. **`F-08` must be re-attempted with a real mobile user-agent
+>    string**, or on a real phone; viewport emulation does not change the user agent and every
+>    non-reproduction so far used the wrong instrument. Re-verify both against live `1.19.356` before
+>    specifying anything: the visit band has changed five times since the findings were written.
+> 5. **`LD-20`, the `display: contents` trade.** Only becomes work if zero tolerance is wanted for the
+>    older-engine list-grouping loss; the alternative is a markup change plus a desktop-restoring rule.
+> 6. **`LD-14` and `LD-17`**, an audit test to restate and a slug dependency to make robust. Both small,
+>    neither urgent.
+> 7. **The parked cosmetic list** described in `CURRENT_TASK.md`. Re-check it against the live pages first.
+> 8. **The `--url` test-harness dependency** in `KNOWN_ISSUES.md`. Until it is settled, two suite runs are
+>    only comparable if both used `--url`. **A related, cheaper item sits beside it:** the two build lanes in
+>    this series counted the same tree's failures differently, so if an absolute failure count is ever needed
+>    for a decision, one method should be fixed and recorded.
+>
+> ⚠️ **Verify production's version with `wp theme list --status=active` before starting any of these.** The
+> numbers in this block are recorded from the deploying lane, not read from production here.
 > ## ⭐⭐ NEWEST, 2026-09-02 · Production is theme `1.19.354` / bundle plugin `1.8.79`. **Everything below this block predates the `1.19.350` to `1.19.354` series.**
 >
 > **Nothing here is scheduled.** These are the candidates a next session would pick from, in the order that

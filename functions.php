@@ -5000,6 +5000,16 @@ require_once get_template_directory() . '/inc/visit-band.php';
  * TODAY, and on what terms. Read by `page-audience-retailers.php` alone.
  */
 require_once get_template_directory() . '/inc/retailer-trade-terms.php';
+
+/*
+ * 1.19.355, `CYCLE179-LD-355` — the plain page hero's two rules: one <h1> per
+ * page, and no decorative coordinate above a utility or legal page's title.
+ * ⛔ Two pure functions and a filter. It registers NO hook of its own and is
+ *    called only from `page.php`, deliberately: a `the_content` filter would
+ *    reach feeds, the REST API and every other template, and this theme already
+ *    records why one of those was removed and must not return.
+ */
+require_once get_template_directory() . '/inc/page-hero.php';
 // 1.19.261 — the blog post template (CYCLE165-LD-DIRECTION1-STEP2-BLOG), step 2
 // of the same board build. Loaded AFTER header-offer.php because its whole
 // placement rule is "below whatever step 1 put above the fold", and after

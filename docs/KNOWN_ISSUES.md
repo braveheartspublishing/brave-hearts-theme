@@ -1,6 +1,97 @@
 # Known Issues — Open Items Only
 
 
+> ## ⭐⭐ ADDED 2026-09-02 · Open at the end of the `1.19.355` and `1.19.356` releases (production is theme `1.19.356` / bundle plugin `1.8.81`)
+>
+> Release record: `RELEASES/PRODUCTION_RELEASE_1_19_355_356.md`. **Nothing below is resolved here; each is
+> recorded with what is actually established and what is not.** The `1.19.350` to `1.19.354` block below
+> this one is not superseded: `F-08`, `F-09` and the `--url` caveat it records are still open and are
+> carried forward, and `LD-10` and `LD-12` in it are closed by this series.
+>
+> ### `F-08` · School-visit surface on mobile · **STILL OPEN, and its stated condition has still never been tested.**
+>
+> Unchanged by this series and not in scope for either release. The whole point of the entry below remains
+> true: every non-reproduction so far ran with a **desktop user-agent string**, because viewport emulation
+> does not change the user agent, and `F-08`'s stated condition is the mobile one. **A real phone outranks
+> every instrument named here.** Note that `1.19.356` deliberately changed the mobile shop grid, so any
+> future attempt should be made against `1.19.356` and not against the older findings.
+>
+> ### `F-09` · `?bhp_visit=clear` consistency across `/shop/` and `/book-bundles/` · **STILL OPEN, unaddressed by this series.**
+>
+> Unchanged and not in scope. ⚠️ **It should be re-verified before it is specified.** `1.19.355` changed how
+> an explicit slug interacts with a stored session, and the explicit clear token's early return was
+> deliberately kept ahead of the new logic and is gated by a suite assertion. The original `F-09` finding
+> predates that change.
+>
+> ### `LD-11` · **OPEN.** Minted by the `1.19.354` lane and untouched by this series.
+>
+> ### `LD-14` · An audit's numeric shop-card test was already failing before this series · **OPEN as a question, not a defect.**
+>
+> The test is `counterY - priceY < 40`. It **already failed at 115px on `1.19.354`**, because an earlier
+> release inserted two elements between those two points. `1.19.355` moves that number further while
+> restoring the other half of the same audit item, that the counter sits immediately above the button,
+> which had been 96px out. **This series did not break a passing test; it made a deliberate trade on a
+> failing one.** Whether the audit item is restated is not an engineering call.
+>
+> ### `LD-17` · One utility page is identified by slug, not by an option · **OPEN as a brittleness.**
+>
+> The set of pages that suppress the decorative "FIELD NOTE" coordinate is read from WordPress and
+> WooCommerce options. **`/shipping-policy/` is the only member with no option behind it**, so it is
+> resolved by slug. **Renaming that slug silently restores its kicker**, with no error anywhere. A filter
+> exists as the intended escape hatch and the single brittle line is commented in place rather than hidden.
+>
+> ### `LD-18` · A pre-existing em dash in a customer-facing `aria-label` · **OPEN. NOT FIXED.**
+>
+> In the bundle plugin's Complete Collection landing page, inside a label a screen reader speaks. **It was
+> found by a test assertion that was itself checking too widely, and it predates the release that found
+> it.** It was deliberately not fixed: the wider em-dash sweep is the owner's to schedule, and rewriting a
+> customer-facing string outside a brief is exactly the unscoped edit the brief forbade. **Recorded rather
+> than silently corrected.**
+>
+> ### `LD-19` · Two surfaces corrected in `1.8.81` are not customer-reachable today · **OPEN, and it needs a decision, not a fix.**
+>
+> Two of the three surfaces moved onto the render-time saving render only through a shortcode that lives on
+> a page which **redirects to `/complete-collection/`**. Confirmed live, and confirmed deliberate in code,
+> where the comment records that the staging 302 is meant to be a **301** on production. **The correction is
+> right and cannot be seen by a customer.** It was verified by rendering the shortcode directly rather than
+> by claiming a page check that could not be made. Two questions follow and neither is engineering's:
+> **is the shortcode meant to stay maintained, and should the redirect be a 301 on production?**
+>
+> ### `LD-20` · `display: contents` is now used on a purchase surface at 640px and below · **OPEN as an accepted trade.**
+>
+> It is how two separate lists are flattened so their cards can pair. On any engine since Chrome 89,
+> Firefox 87 or Safari 15.4 the list **semantics** survive. On an older engine the "list of N items"
+> grouping is lost. **No control is lost in either case** - every link, button and form stays in the
+> accessibility tree and stays operable - and the desktop grid, where the lists are real boxes, is
+> untouched. If zero tolerance is wanted, the alternative is a markup change plus a desktop-restoring rule,
+> which is a larger change to a layout already accepted.
+>
+> ### `LD-21` · Paired cards no longer end at the same height · **OPEN as a visual judgement.**
+>
+> `align-items: start` is what removes the dead band above ADD TO CART; it costs a ragged bottom edge when
+> the two paired cards differ in content, measured at 7px at 390 on `/shop/` and 66px on a school-visit URL.
+> Leaving the default stretch would have reopened a 66px gap between the price and the button on the visit
+> surface, which is the defect the release existed to remove. **The trade is stated in the stylesheet and
+> here, and it is a judgement the owner can now make on a live page.**
+>
+> ### A test-harness dependency that changes verdicts · **STILL OPEN.**
+>
+> Carried forward unchanged. Every run in both releases used `--url`. ⚠️ **A second, related item was found
+> in this series:** the two build lanes counted the same tree's failing assertion lines differently, 52
+> versus 34, from the same raw output, each with its own method, and both said so on the record. **Neither
+> is disputed and no count is picked here.** Both lanes independently found zero new failures, which is what
+> the releases rest on. **If an absolute failure count is ever needed for a decision, re-derive it once,
+> with one method, and record the method beside it.**
+>
+> ### One symptom in this series was never reproduced by any instrument
+>
+> The near-white "Prefer the hardcover?" line was **observed in the owner's own screenshot of production on
+> his phone** and **could not be reproduced in headless Chrome**, which computed black at every width
+> tested, including with a dark colour scheme emulated. **The fix does not depend on reproducing it:** the
+> defect was the **absence** of an author colour, read directly from the stylesheet, and declaring one
+> removes the user agent's discretion on every device. A regression guard prevents the control silently
+> returning to a system colour. **No real iOS device was available to either lane.** Recorded so that a
+> future reader does not treat the non-reproduction as evidence there was nothing wrong.
 > ## ⭐⭐ ADDED 2026-09-02 · Open at the end of the `1.19.350` to `1.19.354` series (production is theme `1.19.354` / bundle plugin `1.8.79`)
 >
 > Six open items, none of them fixed by that series. Release record:

@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.354
+Version: 1.19.356
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4627,6 +4627,19 @@ a:focus-visible { outline: 3px solid var(--expedition-focus); outline-offset: 3p
 .woocommerce-info { border-left: 4px solid var(--expedition-gold); }
 .woocommerce-error { border-left: 4px solid var(--expedition-error); }
 
+/* ⛔⛔ READ BEFORE WRITING A RULE THAT AIMS AT ANYTHING BELOW. `CYCLE179-LD-12`.
+   ⭐ EVERY `body:not(.home) <class>` SELECTOR IN THIS BLOCK IS (0,2,1): the
+      `:not()` contributes its argument's class, plus the target class, plus the
+      `body` type. A one-class selector is (0,1,0) and a two-class selector is
+      (0,2,0), so BOTH LOSE, whatever the stylesheet order.
+   ⛔ THE COST IS NOT A WRONG COLOUR, IT IS A SILENT NO-OP. 1.19.354 shipped
+      `.author-visits-list-section .component-heading` (0,2,0) to staging, and it
+      was only caught by MEASURING the deployed page: it computed 72px, not the
+      24px it asked for. The rule looked correct in the source the whole time.
+   ⭐ THE REMEDY: give your selector three or more classes, or include the page's
+      own outer scope class, and MEASURE THE DEPLOYED PAGE rather than reading
+      the source. repo `docs\DECISIONS.md` records the same trap for
+      `body:not(.home) h1/h2/h3`. */
 /* Core custom pages inherit the journal pacing without changing their content. */
 body:not(.home) .section { padding-block: var(--section-space); }
 body:not(.home) .section--muted { background: var(--expedition-parchment); }
@@ -4889,6 +4902,61 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.product > a.bhp-shop-
   align-self: stretch;
   width: auto;
   margin: auto var(--bhp-card-gutter) var(--bhp-card-gutter);
+}
+
+/* ── D3 · 1.19.355 — THE COUNTER TRAVELS WITH THE BUTTON. `CYCLE179-LD-355`,
+      brief item 3, from the 2026-09-02 viewing log: *"Cards 1-3 carry ~90 px of
+      empty space between the 'Only N left' counter and ADD TO CART."*
+
+   ⛔ THE CAUSE, MEASURED ON STAGING 1.19.354 AND NOT INFERRED. Headless Chrome,
+      `window.innerWidth` asserted 1440, `/shop/?bhp_visit=liberty-2026-09-04`:
+
+        card                       height  counter ends  button starts  gap
+        The Mariana Trench          531        600           696          96
+        Mount Everest               531        600           696          96
+        The Amazon                  531        600           696          96
+        Coloring Book               531         --           615          --
+
+      Every card in the row is stretched to 531px by the tallest one, which is
+      the colouring card because it carries a SHIP TO YOUR HOME control plus the
+      hand-delivery note BELOW that control. Block D above then pins each
+      button to its card floor with `margin-top: auto`. The counter, being the
+      last node inside `.woocommerce-loop-product__link`, stays where the text
+      above it ends. The 96px is the difference between the two.
+
+   ⛔ TWO THINGS WERE REJECTED BEFORE THIS ONE, AND BOTH ARE RECORDED SO THEY
+      ARE NOT RE-TRIED:
+        · UNPINNING THE BUTTON. Verified in the live DOM by overriding the
+          link to `flex: 0 0 auto`: the link shrank from 463px to 368px and the
+          BUTTON DID NOT MOVE, because the pin is block D's `margin-top: auto`
+          on the button itself, not the link's growth. Removing that pin would
+          unalign all five buttons in the row to fix a gap on three of them.
+        · SHORTENING THE COLOURING NOTE. That note is the sentence that tells a
+          parent following the link gives up hand-delivery. This file already
+          says of it: *"Never style it out of sight, and never render the
+          control without it."*
+
+   ⭐ SO THE COUNTER MOVES INSTEAD. `margin-top: auto` on the last flex item
+      inside the growing link absorbs the free space ABOVE it, which puts the
+      counter hard against the button, where `VISIT-SHOP-AUDIT.md` `R5` asks
+      for it ("immediately above the button") and where it currently is not.
+
+   ⚠️ AND IT SPENDS THE OTHER HALF OF `R5`, WHICH IS STATED RATHER THAN GLOSSED.
+      `R5`'s numeric test is `counterY - priceY < 40`. ON 1.19.354 THAT TEST
+      ALREADY FAILS AT 115px, because the 1.19.350 redesign inserted
+      `.bhp-shop-descriptor` (27px) and `.bhp-shop-format-prices` (38px) between
+      the price and the counter. This rule does not break a passing test; it
+      moves a failing number further. The trade is deliberate: scarcity sitting
+      against the control it qualifies is worth more to a parent than proximity
+      to a price two rows up. Registered as `CYCLE179-LD-14` and NOT resolved
+      here.
+
+   ⛔ IT CHANGES NO NUMBER, NO LABEL, NO COLOUR AND NO PLACEMENT RULE IN THE
+      PLUGIN. `bhp_visit_shelf_render_counter()` is untouched, `R6` is untouched,
+      and on an unflagged session this selector matches nothing at all because
+      no counter is emitted. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product > a.woocommerce-loop-product__link > .bhp-bundle-stock-counter {
+  margin-top: auto;
 }
 /* The pair card's wrapper adds no box of its own, so the gutter passes through. */
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-offer-item .bhp-offer {
@@ -5538,6 +5606,79 @@ body.bhp-cta-forest .bhp-formats__cta-form .btn-primary {
 #payment { border-radius: 0 !important; background: var(--expedition-parchment) !important; }
 .woocommerce-account .woocommerce-MyAccount-navigation ul { margin: 0; padding: 0; list-style: none; }
 .woocommerce-account .woocommerce-MyAccount-navigation li a { display: block; padding: .75rem 0; border-bottom: 1px solid var(--expedition-border); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.355 — THE ACCOUNT FORMS GET THE PALETTE. `CYCLE179-LD-355`, brief
+       item 5, from `design-creative`'s `D7`: *"stock unstyled WooCommerce login
+       form inside an otherwise carefully typeset brand page."*
+   ══════════════════════════════════════════════════════════════════════════
+
+   ⛔ MEASURED ON STAGING 1.19.354 BEFORE ANY CHANGE, headless Chrome,
+      `window.innerWidth` asserted 1440 and 375, `getComputedStyle` on the real
+      controls, NOT read from the review:
+
+        LOG IN button   background rgb(233,230,237)   colour rgb(81,81,81)
+        username input  border rgba(111,83,38,0.22)   background rgb(255,253,248)
+        remember box    accent-color auto             appearance auto
+
+   ⭐ SO EXACTLY TWO OF THE THREE ARE ACTUALLY WRONG, AND ONLY THOSE TWO ARE
+      TOUCHED. The grey is WooCommerce's own `button.button` default
+      (`#e9e6ed` / `#515151`), which reaches this control because the site's
+      gold primary is `.woocommerce a.button.alt` and a login submit carries no
+      `.alt`. ⛔ THE INPUT BORDER IS ALREADY THE PALETTE HAIRLINE
+      `rgba(111,83,38,.22)` — the review's "default grey input borders" is not
+      what the browser reports on 1.19.354 — so NO INPUT RULE IS WRITTEN HERE.
+      A rule that restates a value the page already computes is a rule that
+      later looks like it is doing something.
+
+   ⭐ FOREST, NOT GOLD, AND THE CHOICE IS DELIBERATE. `BRAND-TOKENS-USED.md`
+      allows either. Gold on navy is this site's PURCHASE primary; putting it on
+      a login submit would give an account chore the same visual rank as ADD TO
+      CART on the pages a customer meets both. Forest is the site's own
+      secondary action (`.btn-secondary` above uses exactly this pair).
+
+   ⛔ SCOPED TO `.woocommerce-account` ON PURPOSE. It cannot reach the cart, the
+      checkout, a product page or a Blocks control, and deleting this block
+      restores the stock WooCommerce appearance exactly.
+   ⛔ NO `!important`. The base sizing rule these controls already match sets no
+      background, so there is nothing here to out-weigh; the WooCommerce default
+      is a plain `.woocommerce button.button` (0,2,0) and every selector below
+      carries three classes or more. */
+.woocommerce-account .woocommerce-form-login button.woocommerce-form-login__submit,
+.woocommerce-account .woocommerce-form-register button.woocommerce-form-register__submit,
+.woocommerce-account .woocommerce-ResetPassword button.woocommerce-Button,
+.woocommerce-account .woocommerce-EditAccountForm button.woocommerce-Button {
+  border: 1px solid var(--expedition-forest);
+  border-radius: var(--radius-md);
+  background: var(--expedition-forest);
+  color: var(--color-white);
+}
+.woocommerce-account .woocommerce-form-login button.woocommerce-form-login__submit:hover,
+.woocommerce-account .woocommerce-form-login button.woocommerce-form-login__submit:focus-visible,
+.woocommerce-account .woocommerce-form-register button.woocommerce-form-register__submit:hover,
+.woocommerce-account .woocommerce-form-register button.woocommerce-form-register__submit:focus-visible,
+.woocommerce-account .woocommerce-ResetPassword button.woocommerce-Button:hover,
+.woocommerce-account .woocommerce-ResetPassword button.woocommerce-Button:focus-visible,
+.woocommerce-account .woocommerce-EditAccountForm button.woocommerce-Button:hover,
+.woocommerce-account .woocommerce-EditAccountForm button.woocommerce-Button:focus-visible {
+  background: var(--expedition-navy);
+  border-color: var(--expedition-navy);
+  color: var(--color-white);
+}
+/* ⭐ `accent-color` brands the NATIVE control rather than replacing it. A
+      hand-built checkbox loses the platform's own focus ring, its high-contrast
+      rendering and its keyboard semantics, which is a poor trade for a tick on
+      a login form. The 44px touch floor the purchase path uses is not applied
+      here: this is a browser-drawn control inside its own <label>, and the
+      label is the tap target. */
+.woocommerce-account .woocommerce-form-login input[type="checkbox"],
+.woocommerce-account .woocommerce-form input[type="checkbox"] {
+  accent-color: var(--expedition-forest);
+  width: 16px;
+  height: 16px;
+  margin-right: .4rem;
+  vertical-align: -2px;
+}
 .order-expedition-next { margin-top: 3rem; padding: clamp(2rem,5vw,4rem); background: var(--expedition-navy); color: #f8f3e9; }
 .order-expedition-next h2 { color: #f8f3e9; }
 
@@ -17528,9 +17669,44 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-i
       applied at the size the 231px cell actually has.
    ⛔ IT IS NOT REMOVED AND NOT HIDDEN. It is a real, recomputed price and a
       control a keyboard can reach. Only its type size moves. */
+/* ⭐⭐ 1.19.356 (`CYCLE179-LD-356` item 2) — `color` IS DECLARED HERE, AND ITS
+   ABSENCE WAS THE DEFECT. Founder direction seal 811 reported "Prefer the
+   hardcover? $48.99" rendering NEAR-WHITE ON CREAM on his iPhone, and his
+   screenshot
+   (`ANDREW-REVIEW\2026-09-02\pdp-redesign\FOUNDER-MOBILE-FEEDBACK\
+     2026-09-02-1648-shop-mobile-collection-bundle-stacked.png`)
+   shows it: the line is barely legible inside the card.
+
+   ⛔⛔ THE ROOT CAUSE IS NOT A WRONG COLOUR. IT IS NO COLOUR AT ALL. Before
+      this declaration, NOTHING in the stylesheet set `color` on
+      `.bhp-offer__upsell` at any width. The base rule at
+      `.bhp-offer__upsell` sets `font: inherit`, and the `font` shorthand does
+      NOT carry `color` — so the control fell through to the USER AGENT's own
+      `buttontext` system colour. A user agent is free to resolve that to
+      anything, and on the founder's device it resolved near-white.
+
+   ⚠️ STATED HONESTLY RATHER THAN GLOSSED: this is NOT reproducible in the
+      instrument used to verify it. Headless Chrome at an asserted 375, 390 and
+      1440 resolves the same control to `rgb(0, 0, 0)` at 19.83:1 on the card's
+      cream. So the near-white is DEVICE-SPECIFIC and was observed only in the
+      founder's own screenshot. ⭐ THAT IS EXACTLY WHY AN AUTHOR COLOUR IS THE
+      FIX: it removes the user agent's discretion entirely, on every device,
+      instead of chasing one device's resolution of a system keyword.
+
+   ⭐ THE VALUE IS THE BODY TEXT TOKEN, `--color-text` (`--color-charcoal`,
+      `#342f28`) — the same ink `li.product` already computes, so the swap
+      reads as card copy rather than as a new colour. Measured against the
+      card's own cream `#fff8e7`: 12.53:1, well past the 4.5:1 the brief asks
+      for.
+
+   ⛔ NOT MEDIA-SCOPED, DELIBERATELY. The missing declaration was missing at
+      every width, so a phone-only patch would leave the same UA dependency on
+      desktop and tablet. The only rendered movement on desktop is UA black to
+      the token, measured before and after. */
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__upsell,
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__upsell {
   padding: 0.15rem 0;
+  color: var(--color-text);
   font-family: var(--font-ui);
   font-size: 0.68rem;
   font-weight: 600;
@@ -17962,5 +18138,182 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip
   }
   .bhp-visit-band__note {
     font-size: 0.68rem;
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     ⭐⭐⭐ 1.19.356 — `CYCLE179-LD-356` ITEMS 1 AND 3. THE COLLECTION CARD AND
+     THE BUNDLE CARD SHARE ONE ROW ON A PHONE.
+     ═════════════════════════════════════════════════════════════════════════
+
+     ⭐ FOUNDER DIRECTION, VERBATIM (seal 811, with his own iPhone screenshot of
+        PRODUCTION `/shop/` at 16:48): *"These should be next to each other ,
+        not stacked"*.
+
+     ⛔ WHAT WAS ACTUALLY WRONG, MEASURED BEFORE ANYTHING WAS WRITTEN, headless
+        Chrome with `innerWidth` asserted in the same evaluation as every
+        rectangle (`356-STAGING\before\measurements.json`):
+
+          375x812 and 390x844, `/shop/`
+            row 1  y145   book  book
+            row 2  y481   book  book
+            row 3  y825   COLLECTION alone, 173px wide, right cell empty
+            row 4  y1239  BUNDLE alone, 173px wide, right cell empty
+
+        Two lone half-width cards in two separate rows. That is his screenshot.
+
+     ⛔⛔ THEY ARE IN TWO DIFFERENT LISTS, AND THAT IS THE WHOLE PROBLEM. The
+        Collection card is the last `<li>` of `ul.products`; the bundle card is
+        the only `<li>` of `ul.bhp-catalog-bundle-strip__list`, inside
+        `<section class="bhp-catalog-bundle-strip">`, rendered separately by
+        `bhp_offer_catalog_bundle_strip()` on `woocommerce_after_shop_loop`. No
+        grid can pair two boxes that are not items of the same container, so the
+        two lists are FLATTENED into their shared parent at this width and the
+        parent becomes the grid.
+
+     ⭐ WHY NOT MARKUP. Moving the bundle `<li>` into `ul.products` server-side
+        would pair them on a phone AND WRECK THE DESKTOP the founder already
+        accepted at seal 764: measured at 1440, the strip card is 608px wide in
+        a 2-track strip, against a 231px grid track. It would become a 231px
+        card. Rendering the card TWICE, once per container, was rejected outright
+        for the reason 1.19.286 already records: two live add-to-cart controls on
+        a page meant to have one.
+
+     ⭐ WHY `.woocommerce-shop` IS IN THE SELECTOR AND IS LOAD-BEARING. The
+        bundle strip renders on `is_shop()` ONLY — `bhp_offer_catalog_bundle_
+        strip()` returns early otherwise, and that gate is deliberate ("a bundle
+        strip belongs under the full catalog, not under a two-product category
+        term"). VERIFIED LIVE on `/product-category/paperback-books/` at 375 and
+        390: four cards, two clean 2-up rows, NO Collection card, NO strip, and
+        `document.body` does NOT carry `woocommerce-shop`. That archive is
+        already correct and this block must not reach it. It cannot.
+
+     ⛔ THE COST, STATED RATHER THAN HIDDEN: `display: contents` removes the two
+        `<ul>` boxes from the layout tree at this width. On any browser released
+        since Chrome 89 / Firefox 87 / Safari 15.4 the list SEMANTICS survive;
+        on an older engine the "list of N items" grouping is lost. ⭐ NO CONTROL
+        IS LOST IN EITHER CASE — every link, button and form stays in the
+        accessibility tree and stays operable, and the desktop grid, where the
+        lists are real boxes, is untouched. The alternative considered and
+        rejected was pulling the strip up by a negative margin equal to the
+        Collection card's height, which is only correct until a price or a line
+        of copy changes length, and then fails silently.
+
+     ⛔ DESKTOP IS UNREACHABLE FROM HERE. Every declaration is inside this
+        `max-width: 640px` query. At 1440 the strip stays a separate full-width
+        row with its 608px card, which is seal 764's accepted layout. */
+  /* ⛔⛔ `align-items: start` IS ITEM 3, AND IT IS HERE BECAUSE THE FIRST BUILD
+     OF THIS RELEASE PROVED IT NECESSARY RATHER THAN BECAUSE IT LOOKED RIGHT.
+     ⭐ The brief said "the row-height alignment that serves desktop is not
+        needed at 2-up mobile". This pass initially kept the default `stretch`,
+        reasoning that it is what lets two neighbouring ADD TO CART buttons
+        share a baseline. MEASURED AFTER DEPLOY, at an asserted 390 on
+        `/shop/?bhp_visit=liberty-2026-09-04`, that reasoning was wrong in the
+        direction that matters: the Collection card is 348px tall there and the
+        bundle card 414px, so stretching the Collection to its neighbour's
+        height and then letting its CTA's own `margin-top: auto` fall to the
+        bottom opened **66px of genuine dead space between the price and ADD TO
+        CART, where 6px had been** — the exact defect item 3 exists to remove,
+        newly created by item 1.
+     ⭐ WITH `start`, EACH CARD IS ITS OWN CONTENT HEIGHT and no card can be
+        stretched into a gap by its neighbour. The four book cards are
+        unaffected: their pairs measure identical heights (323/323 and 332/332
+        at 390), so nothing moves for them.
+     ⛔ THE COST, STATED: two cards of genuinely different heights now end at
+        different heights, so the Collection's and the bundle's buttons no
+        longer share a baseline. That is a visible raggedness and it is the
+        deliberate trade — a ragged bottom edge is a layout choice, 66px of
+        emptiness above a buy button is the thing he reported. */
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 14px;
+    align-items: start;
+  }
+  /* Everything that is not a card keeps the full width it has today, and keeps
+     document order. `order: 1` puts them ahead of the cards' 3 to 7; the two
+     trailing sections take 9 below. */
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > * {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+  /* ⛔⛔ `!important` HERE IS ANSWERING AN `!important`, NOT WINNING AN ARGUMENT,
+     AND IT WAS ADDED AFTER THE FIRST BUILD OF THIS RELEASE SHIPPED BROKEN.
+     ⭐ WHAT ACTUALLY HAPPENED, FOUND IN THE SERVED CSSOM ON STAGING RATHER THAN
+        BY READING THE SOURCE: `.woocommerce ul.products` carries
+        `display: grid !important`. An `!important` declaration beats ANY
+        specificity, so the two `<ul>` elements did NOT flatten, while the strip
+        `<section>` — which is not a `ul.products` and met no `!important` — DID.
+        The result was the worst of both: the five grid cards stayed inside their
+        own list, and the bundle card's still-`grid` list became a stray
+        auto-placed item in the shell grid, 80px wide, at the TOP of the page,
+        above the four books. Measured at an asserted 390: bundle `li` at
+        x16 y145 w80 h567, books pushed to y766.
+     ⛔ IT IS SCOPED AS TIGHTLY AS THE RULE IT OVERRIDES IS BROAD: three
+        selectors, one breakpoint, one page. Nothing else in this file gains an
+        `!important` from it. */
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > ul.products,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-catalog-bundle-strip,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-catalog-bundle-strip > ul.products {
+    display: contents !important;
+  }
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell li.product {
+    grid-column: auto;
+  }
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-catalog-trust-strip,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-shop-amazon,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .woocommerce-pagination {
+    order: 9;
+  }
+  /* ⛔ THIS ONE IS SPECIFICITY ARITHMETIC, NOT TASTE, AND WITHOUT IT THE BUNDLE
+     CARD JUMPS TO THE FRONT OF THE GRID. Once the strip's own `<ul>` is
+     flattened, the bundle `<li>` is still a descendant of a `ul.products`, so
+     the existing reading-order rule
+     `body.bhp-catalog-grid .woo-expedition-shell ul.products li.product
+      { order: 3 }` (0,4,3) matches it and would place it among the four books.
+     The Collection already takes `order: 6` from its own rule at the same
+     (0,4,3). This selector is (0,6,3) so it beats both, and 7 puts the bundle
+     immediately after the Collection — which is exactly the pair the founder
+     asked to see side by side. */
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.product.bhp-shop-offer-item {
+    order: 7;
+  }
+  /* ⭐ The strip carried its own 24px top margin as a separate section. Inside
+     the grid the row gap already provides the separation, so the margin would
+     double it. */
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > .bhp-catalog-bundle-strip,
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell > ul.products {
+    margin: 0;
+  }
+
+  /* ── ITEM 3 · THE BAND BETWEEN $31.99 AND ADD TO CART ─────────────────────
+     ⛔⛔ WHAT IT IS, MEASURED, BEFORE ASSUMING: 74px at both 375 and 390 —
+        16px of margin, then the 48px hardcover control, then 10px. It is NOT
+        reserved row space and it is NOT an alignment artefact; 48px of it is a
+        REAL, TAPPABLE, KEYBOARD-REACHABLE PURCHASE CONTROL that reads as empty
+        only because it had no author colour (item 2 above).
+
+     ⛔ SO THE 48px DOES NOT MOVE, AND THAT REFUSAL IS DELIBERATE. It is the
+        touch-target floor this file already states for this breakpoint ("48px
+        SURVIVES THE SHRINK, DELIBERATELY ... shrinking the type is a legitimate
+        response to 172px, shrinking the target is not"), and `FD-439` keeps the
+        hardcover swap as a real secondary control rather than something to
+        style away. Removing the band outright would remove a purchase path from
+        a phone. ⭐ WHAT IS REMOVED IS THE SLACK AROUND IT: the base rule's
+        `margin: 0.6rem 0 0` (9.6px) and the upsell form's 4px, neither of which
+        the 2-up cell has room for. 74px to 60px, with 48px of the remainder now
+        legible.
+
+     ⭐ AND THE NEW ONE THAT PAIRING WOULD HAVE CREATED IS PRE-EMPTED. Once the
+        two cards share a row they stretch to the taller of the two (390px vs
+        383px at 390 wide), and the shorter card's `margin-top: auto` on its CTA
+        turns that difference into dead space ABOVE the button. Keeping stretch
+        is still right, because it is what makes the two ADD TO CART buttons
+        share a baseline; the 7px lands under the shorter card's button instead
+        of above it. Both numbers are measured after, in the release report. */
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item .bhp-offer__upsell {
+    margin-top: 0;
+  }
+  body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
+    margin-bottom: 0;
   }
 }

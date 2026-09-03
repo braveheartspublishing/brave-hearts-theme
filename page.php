@@ -63,7 +63,26 @@ while (have_posts()): the_post();
             <p class="component-heading__eyebrow"><?php esc_html_e('Brave Hearts Field Journal', 'brave-hearts'); ?></p>
        The keep/remove test is stated once, in full, in `page-about.php`. */ ?>
     <h1><?php the_title(); ?></h1>
+    <?php
+    /*
+     * ⭐ 1.19.355 (`CYCLE179-LD-355`, brief item 4) — `D8`: the decorative
+     *    coordinate is suppressed on utility and legal pages.
+     *
+     * ⛔ SUPERSEDED LINE, PRESERVED SO THE MOVEMENT IS VISIBLE AND IS NOT
+     *    RE-DERIVED:
+     *
+     *        <span class="interior-hero__coordinate" aria-hidden="true">FIELD NOTE · BHP</span>
+     *
+     * ⭐ THE WORDS ARE UNCHANGED and the element is unchanged. Only the
+     *    question of WHICH pages print it has moved, and the answer lives in
+     *    `bhp_page_hero_shows_coordinate()` in `inc/page-hero.php` where the
+     *    option lookups and the one slug fallback are documented. Every other
+     *    page using this template prints it exactly as it did in 1.19.354.
+     */
+    if (!function_exists('bhp_page_hero_shows_coordinate') || bhp_page_hero_shows_coordinate(get_the_ID())) :
+    ?>
     <span class="interior-hero__coordinate" aria-hidden="true">FIELD NOTE · BHP</span>
+    <?php endif; ?>
   </div>
 </header>
 <?php else: ?>
@@ -88,7 +107,47 @@ while (have_posts()): the_post();
 <?php endif; ?>
 <div class="page-content page-<?php echo esc_attr($slug); ?>">
   <article id="post-<?php the_ID(); ?>" <?php post_class('entry-content flow editorial-surface'); ?>>
-    <?php the_content(); ?>
+    <?php
+    /*
+     * ⭐⭐ 1.19.355 (`CYCLE179-LD-355`, brief item 4) — `D1`: ONE <h1> PER PAGE.
+     *
+     * ⛔ SUPERSEDED LINE, PRESERVED SO THE MOVEMENT IS VISIBLE AND IS NOT
+     *    RE-DERIVED: this template's only content statement was a bare
+     *    `the_content()` call, inside its own PHP tags, on one line.
+     *    (The literal is described rather than quoted because a PHP close tag
+     *    inside a comment is exactly the kind of thing a later editor moves
+     *    into a `//` comment, where it WOULD end PHP mode mid-template.)
+     *
+     * ⭐ WHAT THIS IS: `the_content()`'s own two steps, written out, with one
+     *    call between them. `the_content()` is `apply_filters('the_content',
+     *    get_the_content())` followed by the `]]>` guard, and both are
+     *    reproduced verbatim below so that filtering, shortcodes, blocks,
+     *    oEmbeds and `wpautop` all run exactly as before. VERIFIED BY READING
+     *    WordPress core's `wp-includes/post-template.php`, not assumed.
+     *
+     * ⛔ WHY NOT A `the_content` FILTER, AND IT IS THE REASON THIS REPOSITORY
+     *    ALREADY RECORDS. `CLAUDE.md` and `docs/DECISIONS.md` both say the
+     *    removed Teachers-page `the_content` filter must not be reintroduced. A
+     *    global filter would also run for the REST API, feeds, search excerpts
+     *    and every other template, where the hero this deduplicates against
+     *    does not exist. This runs on this template and nowhere else.
+     *
+     * ⛔ IT REMOVES A HEADING FROM THE OUTPUT, NEVER FROM THE DATABASE. The
+     *    stored article is untouched; the brief lists content edits as out of
+     *    scope and Andrew's.
+     *
+     * MEASURED BEFORE, on staging 1.19.354 at an asserted 1440: `/read-alouds/`
+     * `h1_count = 2`, the second at y518 repeating the hero's word for word.
+     */
+    $bhp_page_html = apply_filters('the_content', get_the_content(null, false, get_post()));
+    $bhp_page_html = str_replace(']]>', ']]&gt;', $bhp_page_html);
+
+    if (function_exists('bhp_page_drop_duplicate_h1')) {
+        $bhp_page_html = bhp_page_drop_duplicate_h1($bhp_page_html, get_the_title());
+    }
+
+    echo $bhp_page_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already through the_content filters, exactly as the_content() emits it.
+    ?>
   </article>
 </div>
 

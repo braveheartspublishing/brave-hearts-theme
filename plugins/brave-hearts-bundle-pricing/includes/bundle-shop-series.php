@@ -61,7 +61,36 @@ function bhp_bundle_render_shop_series_format_section( $format, $format_label ) 
 				<h3>Choose Any Two</h3>
 				<p class="bhp-shop-series__price">
 					$<?php echo esc_html( number_format( $rules[2]['discount'] > 0 ? ( 2 * $price - $rules[2]['discount'] ) : ( 2 * $price ), 2 ) ); ?>
- - <?php echo esc_html( $rules[2]['save'] ); ?>
+					<?php
+					/*
+					 * ⭐ 1.8.81 (`CYCLE179-LD-356` item 4, closing
+					 *    `CYCLE179-LD-16`) — RENDER-TIME, NOT BUILD-TIME.
+					 *    This printed `$rules[2]['save']`, the literal in
+					 *    `bhp_bundle_rules()`. 1.8.80 already made the two
+					 *    shortcode boxes compute the same claim from the LIVE
+					 *    product prices and go silent when a price no longer
+					 *    matches the one the cart applies the discount under;
+					 *    these three surfaces were left on the literal and
+					 *    could therefore promise a saving the checkout would
+					 *    decline.
+					 * ⛔ THE AMOUNT IS NOT CHANGED BY THIS EDIT. Founder
+					 *    ruling seal 820 settles that the two-paperback saving
+					 *    IS $1.99, and `bhp_bundle_saving_label()` returns
+					 *    exactly that from today's live prices. Only the SOURCE
+					 *    of the number moves.
+					 * ⛔ IT FAILS CLOSED, AND THE SEPARATOR GOES WITH IT. An
+					 *    empty label must not leave a dangling " - " next to
+					 *    the price.
+					 */
+					$bhp_series_save_2 = function_exists( 'bhp_bundle_saving_label' )
+						? bhp_bundle_saving_label( $format, 2 )
+						: '';
+					if ( '' !== $bhp_series_save_2 ) :
+						?>
+ - <?php echo esc_html( $bhp_series_save_2 ); ?>
+						<?php
+					endif;
+					?>
 				</p>
 				<?php
 				bhp_bundle_render_any2_section(
@@ -76,7 +105,17 @@ function bhp_bundle_render_shop_series_format_section( $format, $format_label ) 
 				<h3>Get the Complete Collection</h3>
 				<p class="bhp-shop-series__price">
 					$<?php echo esc_html( number_format( ( 3 * $price ) - $rules[3]['discount'], 2 ) ); ?>
- - <?php echo esc_html( $rules[3]['save'] ); ?>
+					<?php
+					// 1.8.81 - the tier-3 half of the same correction. See the note above.
+					$bhp_series_save_3 = function_exists( 'bhp_bundle_saving_label' )
+						? bhp_bundle_saving_label( $format, 3 )
+						: '';
+					if ( '' !== $bhp_series_save_3 ) :
+						?>
+ - <?php echo esc_html( $bhp_series_save_3 ); ?>
+						<?php
+					endif;
+					?>
 				</p>
 				<?php
 				bhp_bundle_render_complete_section(

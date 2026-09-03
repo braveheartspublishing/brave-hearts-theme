@@ -492,7 +492,24 @@ function bhp_bundle_render_any2_section( $format, $action, $button_label ) {
 	}
 	?>
 	<div class="bhp-bundle-card bhp-bundle-any2">
-		<h3><?php echo esc_html( $rule['heading'] ); ?> - <?php echo esc_html( $rule['save'] ); ?></h3>
+		<?php
+		/*
+		 * ⭐ 1.8.80 (`CYCLE179-LD-355`, brief item 7) — THE SAVING IS COMPUTED
+		 *    FROM LIVE PRICES AT RENDER.
+		 *
+		 * ⛔ SUPERSEDED LINE, PRESERVED SO THE MOVEMENT IS VISIBLE AND IS NOT
+		 *    RE-DERIVED: this heading was `$rule['heading']`, a literal " - ",
+		 *    and `$rule['save']`, which was the build-time string 'Save $1.99'.
+		 *
+		 * ⭐ The full reasoning, the two different figures the word "saving"
+		 *    produces, and the fail-closed rule live on
+		 *    `bhp_bundle_saving_label()` in `bundle-data.php` and are not
+		 *    restated here. ⛔ ON TODAY'S LIVE PRICES THIS PRINTS EXACTLY WHAT
+		 *    THE LITERAL PRINTED. What changes is that it stops printing it the
+		 *    moment the cart would stop honouring it.
+		 */
+		?>
+		<h3><?php echo esc_html( bhp_bundle_box_heading( $format, 2 ) ); ?></h3>
 		<form method="post" class="bhp-bundle-form">
 			<?php bhp_bundle_nonce_input(); /* F14: id-less nonce -- see bundle-landing-page.php */ ?>
 			<input type="hidden" name="bhp_bundle_action" value="<?php echo esc_attr( $action ); ?>" />
@@ -583,7 +600,8 @@ function bhp_bundle_render_complete_section( $format, $action, $button_label ) {
 	?>
 	<div class="bhp-bundle-card bhp-bundle-complete">
 		<span class="bhp-bundle-badge">Best Value - Get the Complete Collection</span>
-		<h3><?php echo esc_html( $rule['heading'] ); ?> - <?php echo esc_html( $rule['save'] ); ?></h3>
+		<?php /* 1.8.80: computed saving. See the note on the any-2 card above. */ ?>
+		<h3><?php echo esc_html( bhp_bundle_box_heading( $format, 3 ) ); ?></h3>
 		<ul class="bhp-bundle-title-list">
 			<?php foreach ( $catalog[ $format ] as $info ) : ?>
 				<li><?php echo esc_html( $info['label'] ); ?></li>

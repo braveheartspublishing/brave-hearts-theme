@@ -2,6 +2,175 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## 2026-09-02 - PRODUCTION IS NOW THEME `1.19.356` / BUNDLE PLUGIN `1.8.81` (releases 1.19.355 and 1.19.356)
+
+> ⭐ **This block supersedes, on the version numbers only, the entry immediately below it, which recorded
+> production as theme `1.19.354` / plugin `1.8.79`.** That entry is correct for the moment it describes and
+> is deliberately NOT rewritten. Read this one first.
+
+**Production, 2026-09-02: theme `1.19.356`, bundle plugin `brave-hearts-bundle-pricing` `1.8.81`.**
+Two theme releases and two plugin releases were built and staging-verified on 2026-09-02. **Theme
+`1.19.356` and plugin `1.8.81` were deployed to production on 2026-09-02, under the founder's explicit
+approval.** Theme `1.19.355` and plugin `1.8.80` never shipped to production on their own: they are the
+tree `1.19.356` and `1.8.81` were built on top of, so their contents reached production **inside** the
+later artefacts. They are recorded below individually because each is a distinct staging release with its
+own tests and its own rollback artefact.
+
+**Release contents, tests, rollback artefact names and open issues:
+`docs/RELEASES/PRODUCTION_RELEASE_1_19_355_356.md`.**
+
+⚠️ **The version numbers in this block are recorded by the documentation lane from the deploying lane's
+result.** Verify with `wp theme list --status=active` and
+`wp plugin get brave-hearts-bundle-pricing --field=version` over SSH before quoting them.
+
+---
+
+### `1.19.356` - built and staging-verified 2026-09-02 - the mobile catalog pair - **DEPLOYED TO PRODUCTION 2026-09-02**
+
+#### The shop grid on a phone
+
+- The Complete Collection card and the "book + coloring book" bundle card now sit **side by side in one
+  row at 640px and below**, on `/shop/` and on a school-visit URL. Before, each sat alone in its own row
+  with an empty cell beside it. Verified on staging in a real browser at an asserted 375x812 and 390x844:
+  lone cards 2 to 0 on all four mobile captures. At 390 the pair is x16 and x202, both 172px wide, both at
+  y873.
+- The two cards live in two different lists, so at that width the lists are flattened into their shared
+  container and the container becomes the grid. **No markup moved and no control is rendered twice.** A
+  markup move was rejected on a measurement: at 1440 the strip card is 608px wide against a 231px grid
+  track, so moving the item server-side would have replaced the accepted desktop card with a narrow one.
+- Scoped to the shop page by the `.woocommerce-shop` body class, which category archives do not carry.
+  `/product-category/paperback-books/` and `/complete-collection/` were measured **byte-identical** before
+  and after at 375, 390 and 1440.
+- **Desktop is unchanged, proved by measurement rather than by intent:** at 1440x900 the Collection item is
+  `856,193,231,537` and the bundle item `102,771,608,370` before and after, on both shop surfaces.
+- BEST VALUE is kept on the Collection card at the narrower width.
+
+#### The Complete Collection card
+
+- **"Prefer the hardcover? $48.99" now takes the body text token.** It previously had **no author colour at
+  any width** and fell through to the user agent's own button colour, which a user agent may resolve to
+  anything. Measured contrast against the card's cream after the change: **12.53:1**, against a 4.5:1 gate.
+  The identical control on the bundle card carries the same class and is fixed by the same rule (13.26:1).
+- The space between the price and ADD TO CART is **60px, was 74px**. The 48px touch target inside it is
+  **unchanged**: it is a real, tappable, keyboard-reachable purchase control, not empty space. Shrinking or
+  hiding it would remove a purchase path from a phone, and two suite assertions gate both refusals.
+- Cards no longer stretch to their neighbour's height at this width. Pairing the cards under the default
+  stretch had opened a 66px gap above ADD TO CART on a school-visit URL where 6px had been; `align-items:
+  start` returned it to 6px. **The trade is that two paired cards no longer end at the same height when
+  their content differs.**
+
+#### Tests
+
+- New: `tests/test-cycle179-catalog-356.php`, 42 assertions, 42 passed / 0 failed / 0 skipped.
+- Full suite, **127 suites, `--url=` on every run: zero new failure lines against `1.19.355`, diffed line
+  by line rather than counted.** No new FAIL line appeared and none went away. The nine non-zero exits are
+  the identical nine suites on both trees.
+
+---
+
+### Bundle plugin `1.8.81` - built 2026-09-02 - **DEPLOYED TO PRODUCTION 2026-09-02**
+
+- The **three remaining surfaces** that printed a build-time saving now compute it from live product prices
+  at render, matching the two shortcode boxes changed in `1.8.80`: `includes/bundle-shop-series.php` tiers
+  2 and 3, and the fine print in `includes/bundle-landing-page.php`.
+- **The stated amounts are unchanged.** Two paperbacks still read `Save $1.99`; three still read
+  `Save $3.98`. This release moved only where a number comes from, never what it is.
+- Each label goes silent, **and its separator goes with it**, when a live price no longer matches the price
+  the cart applies the discount under. Proved on staging with a runtime-only price filter inside a single
+  process: nothing was written to any product, variation, price, meta or option, and prices were re-read
+  unchanged afterwards.
+- The fine print was rebuilt as joined parts because it hard-coded a trailing separator, so any empty last
+  part left the line ending in a dangling dot. That was already reachable before this release. **No wording
+  changed.**
+
+---
+
+### `1.19.355` - built and staging-verified 2026-09-02 - the cosmetic release, and the URL's school owns the session - **NOT deployed to production on its own; its contents reached production inside `1.19.356` on 2026-09-02**
+
+#### The school-visit session follows the URL
+
+- An explicit `?bhp_visit=<slug>` naming a **registered but closed** visit now clears a different school's
+  session, so the band and the per-card shelf counters can no longer name two schools on one page.
+  Verified on staging at 1440x900 and 375x812 in one browser context: counters 3 to 0 and the
+  `bhp-visit-active` body class true to false on the closed school's URL, and no band at all on a
+  subsequent plain `/shop/`, which is the proof the session was genuinely cleared rather than hidden.
+- **A slug ABSENT from the registry is still a no-op.** The truncated-URL protection recorded in 2026-08-19
+  is intact and was verified live: `?bhp_visit=liberty-2026-09-0` still renders the band and three
+  counters. The supersession reaches only a slug that names a registered visit.
+- **This is a customer-visible behaviour change and is written out in the release record.** A parent
+  flagged for one school who opens a different school's closed visit link loses the first flag, and it does
+  not return on its own. Reopening their own school's link restores it and restarts the 14-day window.
+- The TTL, the visit-close guard, the deadline resolver, the paperback-only gate and the `?bhp_shiphome=`
+  confirmation path are unchanged, each asserted by the new suite.
+
+#### Product pages
+
+- 10px between the spec line and the CHOOSE YOUR FORMAT label, was 0px. Scoped to 783px and above, where
+  the label is visible; below that the label is screen-reader-only and the rule would have beaten the clip.
+- The colouring product page's **single-format chip row is no longer rendered**, rather than hidden: a
+  control in the DOM is reachable by keyboard and by a screen reader whatever CSS says. Its spec line,
+  label and price now share one alignment.
+- ADD TO CART remains above the fold on both product templates at 1440x900 and 375x812. The colouring
+  page's CTA moved **up**, because removing the orphan row returned more height than the 10px spent.
+
+#### Shop, on a school-visit session
+
+- The stock counter now sits against ADD TO CART instead of 96px above it at 1440, 73px at 375. **No button
+  moved.** Two alternatives were tested in the live DOM and rejected first: unpinning the button moved
+  nothing, and shortening the colouring note would have cut the sentence that tells a parent following the
+  link gives up hand delivery.
+
+#### Plain pages
+
+- The content card's H1 is suppressed when it repeats the hero title. `/read-alouds/` and the four SEO hubs
+  go from two H1s to one. **Rendered output only; no stored content was edited**, and this is not a
+  `the_content` filter, which `DECISIONS.md` records must not return.
+- The decorative "FIELD NOTE" coordinate no longer renders on WooCommerce and legal pages: account, cart,
+  checkout, shop, privacy, terms, refunds and shipping policy. Ordinary pages are unchanged. The set is
+  read from WordPress and WooCommerce options rather than hardcoded IDs, with one exception noted in
+  `KNOWN_ISSUES.md` as `LD-17`.
+
+#### My account
+
+- The login, register, reset and edit-account submit buttons take the brand forest fill; checkboxes take
+  the brand accent colour. **Input borders were already on-palette and were not touched** - the review that
+  reported grey borders is not what the browser reports. Gold on navy was rejected because it is the
+  purchase primary and would give a login chore the rank of ADD TO CART.
+
+#### Adventure kit thank-you
+
+- "Applied automatically at checkout. No code to enter." The em dash is gone.
+
+#### Tests
+
+- New: `tests/test-cycle179-visit-capture-355.php` (32 assertions) and `tests/test-cycle179-cosmetic-355.php`
+  (57 assertions), both 0 failed / 0 skipped.
+- Full suite, 126 suites, `--url=` on every run: **zero new failures** against the `1.19.354` baseline,
+  which that lane measured itself on the deployed tree rather than inheriting from a document.
+
+#### Notes
+
+- A four-line specificity note was added above the `body:not(.home)` block in `style.css` recording that
+  those selectors are (0,2,1) and that a two-class rule written against them is a silent no-op. That closes
+  `LD-12`, which had already cost two rules in one pass.
+
+---
+
+### Bundle plugin `1.8.80` - built 2026-09-02 - **STAGING ONLY. NEVER DEPLOYED TO PRODUCTION. SUPERSEDED BY `1.8.81`.**
+
+Recorded because it is a distinct staging release with its own tests and its own rollback artefact, and
+because `1.8.81` is built on top of it. **Its contents reached production inside `1.8.81` on
+2026-09-02. Do not deploy the `1.8.80` artefact to any environment; it is superseded.**
+
+- New `bhp_school_visit_capture_decide()`, a pure function that reads no superglobal, session, option,
+  registry or clock. It is the plugin half of the school-visit session rule described under `1.19.355`.
+- New `bhp_bundle_saving_label()` and `bhp_bundle_box_heading()`. The "Save $X" badge on both shortcode
+  boxes is computed from live product prices at render and is suppressed entirely when a live price no
+  longer matches the price the cart applies the discount under. **The stated amount did not change.**
+- `bhp_bundle_rules()` was not modified. Every number in it is still the literal approved amount.
+- **Why this mattered before it was fixed:** the cart already refuses the discount when a live line price
+  drifts from the expected price, so a single price edit in the store, with no deploy at all, was enough to
+  make four surfaces promise a saving the checkout would decline. The badge now goes silent instead.
 ## 2026-09-02 - PRODUCTION IS NOW THEME `1.19.354` / BUNDLE PLUGIN `1.8.79` (releases 1.19.350 through 1.19.354)
 
 > ⭐ **This block supersedes, on the version number only, the entry immediately below it, which recorded

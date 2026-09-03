@@ -694,8 +694,19 @@ $bhp_rail_single = !empty($data['rail_single']);
   <p class="bhp-formats__paperback-only" data-bhp-paperback-only><?php echo esc_html($bhp_pb_only_note); ?></p>
   <?php endif; ?>
 
-  <div class="bhp-formats__grid" role="group" aria-labelledby="<?php echo esc_attr($uid); ?>-label">
-
+  <?php
+  /*
+   * ⭐⭐ 1.19.355 (`CYCLE179-LD-355`, brief item 2) — THE CARD LIST IS BUILT
+   *     BEFORE THE GRID IS OPENED, SO THE GRID CAN DECLINE TO EXIST.
+   *
+   * ⛔ THE ONLY THING THAT MOVED IS THE `<div>`. Every line of the computation
+   *    below is byte-identical to 1.19.354 and was already pure computation
+   *    that emitted nothing; it simply used to run INSIDE an element that had
+   *    already been printed, which made the count unavailable at the moment it
+   *    was needed. Nothing was reordered inside it, nothing was added to it and
+   *    nothing was removed from it.
+   */
+  ?>
     <?php
     /*
      * 2D (2026-08-03) — the two physical cards are emitted in
@@ -782,6 +793,69 @@ $bhp_rail_single = !empty($data['rail_single']);
             return isset($bhp_format_payload[$bhp_fmt]);
         }
     ));
+
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.355 (`CYCLE179-LD-355`, brief item 2) — A ONE-CARD RAIL IS NOT
+     *     RENDERED AT ALL. `D10` from the 2026-09-02 aesthetic review.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔ THE DEFECT, MEASURED ON STAGING 1.19.354 AT AN ASSERTED 1440, NOT
+     *    INFERRED. On the colouring PDP the grid held exactly ONE card,
+     *    "PAPERBACK", 141px wide and anchored at x745 inside a 593px column
+     *    whose spec line, label and price were all CENTRED. Three alignments
+     *    inside 150px, and the one card carried no information the label
+     *    "PAPERBACK · 8.5 × 11" directly above it and the "$12.99" directly
+     *    below it did not already carry.
+     *
+     * ⭐ SUPPRESSING THE ROW FIXES BOTH HALVES OF `D10` WITH ONE CHANGE. The
+     *    orphan control goes, and with it the only element on that card that
+     *    was not centred, so the block has one alignment spine by construction
+     *    rather than by a second rule that has to be kept in step with the
+     *    first.
+     *
+     * ⛔ IT IS REMOVED FROM THE DOM, NOT HIDDEN, and that is the 1.19.240
+     *    lesson restated: *"A control that exists in the DOM is reachable by
+     *    keyboard, by a screen reader and by anything that ignores CSS."* A
+     *    `display:none` chip would still be a tab stop with `aria-pressed`.
+     *
+     * ⛔ IT IS PHP AND NOT `:has(:only-child)` FOR THE REASON THIS REPOSITORY
+     *    ALREADY RECORDS on `bhp_visit_band_body_class()`: a `:has()` rule
+     *    degrades to the wrong geometry on a browser without it, and this is a
+     *    purchase surface.
+     *
+     * ⛔ NOTHING IS LOST WHEN THE ROW GOES. The price is server-rendered
+     *    immediately below in `.bhp-formats__selected-price`, the CTA is
+     *    server-rendered below that, and the label above already names the
+     *    edition. `book-formats.js` reads `[data-bhp-format]` and returns
+     *    early on an empty list (`if (!cards.length) { return; }`), so no
+     *    script depends on the row existing. VERIFIED BY READING
+     *    `assets/js/book-formats.js`, not assumed.
+     *
+     * ⚠️ THE LABEL KEEPS ITS `id`. `<p class="bhp-formats__heading"
+     *    id="<uid>-label">` is the accessible name of the group that is no
+     *    longer emitted, so the `id` now has no referrer. That is a harmless
+     *    orphan id and it is left in place deliberately: it is the same node,
+     *    with the same words, and removing the id would make the chapter and
+     *    colouring templates differ in a second way for no gain.
+     *
+     * ⛔ CONTROL PATH, AND IT IS EXACT. A chapter PDP renders paperback +
+     *    hardcover + KINDLE + COMPLETE COLLECTION, which is four; a
+     *    school-visit session on a chapter PDP renders paperback + KINDLE +
+     *    COMPLETE COLLECTION, which is three. Neither can reach one, so every
+     *    chapter page emits byte-identical markup to 1.19.354. The count is of
+     *    the cards this template is ABOUT to print, from the same three
+     *    conditions that print them, so it cannot disagree with what is
+     *    printed.
+     */
+    $bhp_card_total = count($bhp_card_order)
+        + ($data['kindle']['url'] ? 1 : 0)
+        + ($bhp_rail_collection ? 1 : 0);
+
+    if ($bhp_card_total > 1):
+    ?>
+  <div class="bhp-formats__grid" role="group" aria-labelledby="<?php echo esc_attr($uid); ?>-label">
+    <?php
     foreach ($bhp_card_order as $bhp_fmt):
         $bhp_on = ($bhp_fmt === $initial);
     ?>
@@ -824,6 +898,7 @@ $bhp_rail_single = !empty($data['rail_single']);
     </button>
     <?php endif; ?>
   </div>
+  <?php endif; /* 1.19.355: $bhp_card_total > 1 -- a one-card rail is not rendered. */ ?>
 
   <?php
   /*

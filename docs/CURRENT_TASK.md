@@ -1,6 +1,40 @@
 # Current Task
 
 
+> ## ⭐⭐ NEWEST, 2026-09-02 · **NO ENGINEERING TASK IS ACTIVE.** Production is theme `1.19.356` / bundle plugin `1.8.81`.
+>
+> The `1.19.355` and `1.19.356` series is closed. Theme `1.19.356` and plugin `1.8.81` are deployed to
+> production as of 2026-09-02, the release record is written, and this file, `PROJECT_STATE.md`,
+> `START_HERE.md`, `NEXT_TASK.md`, `AI_CONTEXT_INDEX.md`, `KNOWN_ISSUES.md`, `DECISIONS.md` and
+> `CHANGELOG.md` are in sync with it. **Everything below this block is a task record from an earlier state
+> and is history, not the current task.**
+>
+> ### What is parked, not active
+>
+> **The cosmetic list for other pages**, still parked and still not built. It was written up during the
+> `1.19.354` pass and needs the owner's go-ahead before any of it becomes work. **Re-check it against the
+> live pages before starting it**, because seven releases have now shipped since it was written and two of
+> them changed the surfaces it describes.
+>
+> ### What is genuinely open and would need a decision before it becomes work
+>
+> - **`LD-18`** in `KNOWN_ISSUES.md`. A pre-existing em dash in a customer-facing `aria-label` that a screen
+>   reader speaks. It belongs to the wider em-dash sweep, which is the owner's to schedule.
+> - **`LD-19`**. Two surfaces corrected in `1.8.81` render only through a shortcode on a page that
+>   redirects. **Whether that shortcode stays maintained, and whether the staging 302 should be a production
+>   301 as its own code comment says, are both decisions, not engineering.**
+> - **`LD-20`** and **`LD-21`**, the two trades `1.19.356` made deliberately: `display: contents` on a
+>   purchase surface at narrow widths, and paired cards no longer ending at the same height. **`LD-21` is a
+>   visual judgement the owner can now make on a live page.**
+> - **`LD-14`**, whether an audit's numeric test for the shop card should be restated now that the release
+>   moved a number that was already failing.
+> - **`LD-17`**, the one utility page resolved by slug rather than by an option.
+> - **`F-08`** and **`F-09`**, both still open, neither scoped to a release yet, and `F-08`'s stated
+>   condition still never exercised by any instrument.
+> - **`LD-11`**, untouched by this series.
+>
+> ⚠️ **The version numbers above are recorded from the deploying lane, not read from production by this
+> block.** Verify before relying on them.
 > ## ⭐⭐ NEWEST, 2026-09-02 · **NO ENGINEERING TASK IS ACTIVE.** Production is theme `1.19.354` / bundle plugin `1.8.79`.
 >
 > The `1.19.350` through `1.19.354` series is closed. `1.19.353` and `1.19.354` are deployed to production

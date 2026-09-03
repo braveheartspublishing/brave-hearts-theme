@@ -2245,18 +2245,64 @@ function bhp_bundle_render_landing_final_cta() {
 							<?php endforeach; ?>
 						</ul>
 					<?php endif; ?>
+					<?php
+					/*
+					 * 1.8.81 (CYCLE179-LD-356 item 4, closing CYCLE179-LD-16) - THE LAST
+					 * SURFACE STILL PRINTING THE BUILD-TIME SAVE LITERAL.
+					 *
+					 * The saving now comes from bhp_bundle_saving_label(), which reads the
+					 * LIVE product prices at render and returns the empty string unless
+					 * every one still matches the price the cart applies the discount
+					 * under. 1.8.80 gave the two shortcode boxes this behaviour; these
+					 * fine-print lines were left on the build-time literal and could
+					 * therefore promise a saving the checkout would decline after a single
+					 * price edit, with no deploy.
+					 *
+					 * THE AMOUNT IS NOT CHANGED BY THIS EDIT. Founder ruling seal 820
+					 * settles that the two-paperback saving IS $1.99, and the function
+					 * returns exactly that from today's live prices. Only the SOURCE of the
+					 * number moves.
+					 *
+					 * THE SEPARATORS ARE NOW JOINED RATHER THAN APPENDED, AND THAT IS HALF
+					 * THE REASON THIS IS A REWRITE RATHER THAN A ONE-LINE SUBSTITUTION. The
+					 * previous markup hard-coded a trailing separator after the price and
+					 * after the shipping clause, so ANY empty last part left the line ending
+					 * in a dangling dot. That was already reachable before this release
+					 * (free shipping plus an empty save) and a render-time saving makes it
+					 * reachable more often. Building the parts and imploding them means a
+					 * part that is not stated leaves no punctuation behind it.
+					 *
+					 * NO WORDING CHANGES. Each part is the same string the same helper
+					 * produced before, in the same order, with the same separator between.
+					 */
+					$bhp_final_sep   = html_entity_decode( '&middot;', ENT_QUOTES, 'UTF-8' );
+					$bhp_final_parts = array( $copy['material_tag'], '$' . number_format( $price, 2 ) );
+
+					// 1.8.23: same figure, centralised wording. 1.8.37: it prints here ONLY
+					// when it is not already a bullet above, so the page never states
+					// shipping twice.
+					if ( ! bhp_bundle_shipping_is_free( $rule['shipping'] ) ) {
+						$bhp_final_parts[] = bhp_bundle_shipping_display( $rule['shipping'] );
+					}
+
+					$bhp_final_save = function_exists( 'bhp_bundle_saving_label' )
+						? bhp_bundle_saving_label( $format, 3 )
+						: '';
+					if ( '' !== $bhp_final_save ) {
+						$bhp_final_parts[] = $bhp_final_save;
+					}
+
+					$bhp_final_parts = array_values(
+						array_filter(
+							$bhp_final_parts,
+							static function ( $bhp_part ) {
+								return '' !== trim( (string) $bhp_part );
+							}
+						)
+					);
+					?>
 					<p class="bhp-landing-final__fine-print">
-						<?php echo esc_html( $copy['material_tag'] ); ?> &middot;
-						$<?php echo esc_html( number_format( $price, 2 ) ); ?> &middot;
-						<?php
-						// 1.8.23: same figure, centralised wording. 1.8.37: it
-						// prints here ONLY when it is not already a bullet
-						// above, so the page never states shipping twice.
-						?>
-						<?php if ( ! bhp_bundle_shipping_is_free( $rule['shipping'] ) ) : ?>
-							<?php echo esc_html( bhp_bundle_shipping_display( $rule['shipping'] ) ); ?> &middot;
-						<?php endif; ?>
-						<?php echo esc_html( $rule['save'] ); ?>
+						<?php echo esc_html( implode( ' ' . $bhp_final_sep . ' ', $bhp_final_parts ) ); ?>
 					</p>
 				</div>
 			<?php endforeach; ?>

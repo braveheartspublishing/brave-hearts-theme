@@ -1,5 +1,40 @@
 # Project State — Brave Hearts Publishing (Executive Summary)
 
+> ## ⭐⭐ NEWEST, 2026-09-02 · **PRODUCTION IS THEME `1.19.356` / BUNDLE PLUGIN `1.8.81`.** Every version number below this block is SUPERSEDED.
+>
+> **Theme `1.19.356` and bundle plugin `1.8.81` were deployed to production on 2026-09-02, with the
+> owner's explicit approval.**
+>
+> `1.19.355` and plugin `1.8.80` were built and staging-verified on 2026-09-02 and **did not ship on their
+> own**; `1.19.356` is built on top of the `1.19.355` tree and `1.8.81` on top of `1.8.80`, so their
+> contents reached production inside the later artefacts. **Production moved two theme releases and two
+> plugin releases at once.** The `1.8.80` artefact is superseded and must not be deployed anywhere.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-02** | **`1.19.356`** | **`1.8.81`** |
+>
+> **Release record:** `RELEASES/PRODUCTION_RELEASE_1_19_355_356.md`.
+> **Per-release detail:** `CHANGELOG.md`, the 2026-09-02 entry headed "PRODUCTION IS NOW THEME
+> `1.19.356`".
+> **Open issues at the end of this series:** `KNOWN_ISSUES.md` (F-08, F-09, LD-11, LD-14, LD-17,
+> LD-18, LD-19, LD-20, LD-21 and the `--url` test caveat).
+> **Three rules recorded from this series:** `DECISIONS.md` (an explicit visit slug decides the session; the
+> mobile catalog pair is made by flattening containers, not by moving markup; the bundle saving is computed
+> at render and fails closed).
+>
+> ⭐ **One customer-visible behaviour changed in this series and it is not a layout change.** A parent
+> flagged for one school who opens a different school's **closed** visit link now loses the first flag, and
+> it does not return on its own; reopening their own link restores it and restarts the 14-day window. An
+> unknown or truncated slug still does nothing. Full wording for anyone answering a customer:
+> `RELEASES/PRODUCTION_RELEASE_1_19_355_356.md` section 5.
+>
+> ⚠️ **Provenance, stated rather than implied.** This block was written by the documentation lane from the
+> build lanes' own records. **The version numbers above are recorded from the deploying lane, not read from
+> production by this block.** Before relying on them for anything consequential, re-run the definitive
+> instrument: `wp theme list --status=active` and
+> `wp plugin get brave-hearts-bundle-pricing --field=version` over SSH, read-only. Every correction block in
+> this file's history exists because a version number was trusted past its verification.
 > ## ⭐⭐ NEWEST, 2026-09-02 · **PRODUCTION IS THEME `1.19.354` / BUNDLE PLUGIN `1.8.79`.** Every version number below this block is SUPERSEDED.
 >
 > **`1.19.353` and then `1.19.354` were deployed to production on 2026-09-02, each with the owner's

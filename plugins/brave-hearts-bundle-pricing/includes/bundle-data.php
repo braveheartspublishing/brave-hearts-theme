@@ -301,6 +301,160 @@ function bhp_bundle_rules( $format ) {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.80 — THE "SAVE $X" BADGE IS COMPUTED AT RENDER, FROM LIVE PRICES.
+ *      `CYCLE179-LD-355`, brief item 7.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT, AND IT IS A CLAIM DEFECT RATHER THAN A LAYOUT ONE. The badge
+ *    strings in `bhp_bundle_rules()` above are literals baked at build time,
+ *    and they are printed on four customer-facing surfaces BEFORE ANY CART
+ *    EXISTS. The cart, meanwhile, refuses the fixed-dollar discount entirely
+ *    when a live line price no longer matches the approved individual price:
+ *    `bhp_bundle_prices_match_expected()` in `bundle-cart.php` returns false
+ *    and `bhp_bundle_apply_discount_fees()` does `continue`, logging *"Bundle
+ *    discount skipped ... a cart item price does not match the expected"*.
+ *
+ * ⛔ SO ONE PRICE EDIT IN WOOCOMMERCE IS ENOUGH TO MAKE EVERY ONE OF THOSE FOUR
+ *    SURFACES PROMISE A SAVING THE CHECKOUT WILL NOT GIVE. No code change and
+ *    no deploy is required to trigger it. That is the same shape as the defect
+ *    `bhp_bundle_apply_discount_fees()`'s own `has_unrelated` guard was written
+ *    to pre-empt: a page promising something the cart then declines.
+ *
+ * ⭐⭐ THE RULE, IN ONE SENTENCE: print the saving only when the live prices
+ *     still satisfy the condition the cart will apply the discount under, and
+ *     otherwise print no saving at all.
+ *
+ * ⛔ IT FAILS CLOSED, AND SILENCE IS THE CORRECT FAILURE. A missing badge costs
+ *    a line of persuasion. A badge the checkout contradicts costs trust and is
+ *    an FTC-class claim. The same reasoning is already recorded on
+ *    `bhp_bundle_landing_price_facts()` for the strikethrough anchor.
+ *
+ * ⛔ IT INVENTS NO NUMBER AND CHANGES NO APPROVED ONE. The amount it prints is
+ *    the table's own `discount` for that tier, which is exactly what
+ *    `bhp_bundle_apply_discount_fees()` subtracts. `bhp_bundle_rules()` is NOT
+ *    modified: its comment says every number in it is the literal approved
+ *    amount, and that stays true. This function decides whether that amount may
+ *    be STATED today, not what it is.
+ *
+ * ⚠️ WHAT THE SAVING IS, STATED PRECISELY, BECAUSE THE WORD IS AMBIGUOUS AND
+ *    THE AMBIGUITY HAS ALREADY PRODUCED TWO DIFFERENT FIGURES IN CIRCULATION:
+ *
+ *      · AGAINST THE SAME BOOKS BOUGHT SEPARATELY IN ONE CART, the saving is
+ *        the tier's `discount` exactly. VERIFIED LIVE 2026-09-02 by WP-CLI on
+ *        staging: all three paperbacks read 11.99, all three hardcovers 17.99,
+ *        so any-2 paperback is 23.98 - 1.99 = 21.99. THAT IS WHAT THIS PRINTS.
+ *      · AGAINST TWO SEPARATE SINGLE-BOOK ORDERS the shipping tier also moves,
+ *        from 2 x 1.99 to 2.99, a further 0.99. ⛔ THIS FUNCTION DOES NOT ADD
+ *        IT, because the badge sits beside a subtotal claim and folding a
+ *        shipping delta into a "Save $X" on a product box would be the
+ *        derived-claim trap: two true facts assembled into a third statement
+ *        nobody approved.
+ *
+ * @since 1.8.80
+ * @param string $format 'paperback'|'hardcover'.
+ * @param int    $tier   2 or 3.
+ * @return string 'Save $X.XX', or '' when no saving may honestly be stated.
+ */
+function bhp_bundle_saving_label( $format, $tier ) {
+	$rules = bhp_bundle_rules( $format );
+	$tier  = (int) $tier;
+
+	if ( ! isset( $rules[ $tier ]['discount'] ) ) {
+		return '';
+	}
+
+	$discount = (float) $rules[ $tier ]['discount'];
+	if ( $discount <= 0 ) {
+		return '';
+	}
+
+	$catalog = bhp_bundle_catalog();
+	if ( ! isset( $catalog[ $format ] ) || ! function_exists( 'wc_get_product' ) ) {
+		return ''; // No live prices readable: state nothing.
+	}
+
+	$expected = (float) bhp_bundle_expected_price( $format );
+	$found    = 0;
+
+	foreach ( $catalog[ $format ] as $info ) {
+		$product = wc_get_product( (int) $info['product_id'] );
+		if ( ! $product ) {
+			return ''; // A title that cannot be read is a title that cannot be promised.
+		}
+
+		$price = (float) $product->get_price();
+
+		/*
+		 * ⭐ THE SAME TOLERANCE `bhp_bundle_shipping_display()` uses, and for
+		 *    the same reason: these figures pass through float arithmetic
+		 *    before they are compared, and a strict `===` would start failing
+		 *    on a rounding artefact rather than on a real price change.
+		 */
+		if ( $price <= 0 || abs( $price - $expected ) >= 0.005 ) {
+			return '';
+		}
+
+		$found++;
+	}
+
+	/*
+	 * ⛔ A TIER NEEDS ITS OWN NUMBER OF QUALIFYING TITLES TO BE READABLE. Tier 2
+	 *    is "any two of these", so two live titles is the floor; tier 3 is the
+	 *    complete set and needs all three. Reading fewer than that and printing
+	 *    the badge anyway would be asserting a set that is not there.
+	 */
+	if ( $found < $tier ) {
+		return '';
+	}
+
+	$label = 'Save $' . number_format( $discount, 2 );
+
+	/**
+	 * The saving a bundle box may state today.
+	 *
+	 * ⛔ A SEAM FOR TESTS AND FOR A FOUNDER RULING, not a configuration point.
+	 *    It changes what is PRINTED and nothing else: it opens no gate, changes
+	 *    no price, applies no discount and moves no shipping amount.
+	 *
+	 * @since 1.8.80
+	 * @param string $label    'Save $X.XX', or ''.
+	 * @param string $format   'paperback'|'hardcover'.
+	 * @param int    $tier     2 or 3.
+	 * @param float  $discount The approved fixed-dollar discount for that tier.
+	 */
+	return (string) apply_filters( 'bhp_bundle_saving_label', $label, $format, $tier, $discount );
+}
+
+/**
+ * The heading a bundle box prints, with its saving appended only when there is
+ * one to state.
+ *
+ * ⭐ ONE FUNCTION, SO A SUPPRESSED BADGE CANNOT LEAVE A DANGLING SEPARATOR.
+ *    Every call site printed `heading . ' - ' . save` inline, so returning ''
+ *    from the function above would have left four headings ending in " - ".
+ *    That is the `bhp_bundle_shipping_display()` lesson applied to a second
+ *    string: the surface that owns the separator owns the empty case too.
+ *
+ * @since 1.8.80
+ * @param string $format 'paperback'|'hardcover'.
+ * @param int    $tier   2 or 3.
+ * @return string Customer-facing text, already plain (callers escape).
+ */
+function bhp_bundle_box_heading( $format, $tier ) {
+	$rules   = bhp_bundle_rules( $format );
+	$tier    = (int) $tier;
+	$heading = isset( $rules[ $tier ]['heading'] ) ? (string) $rules[ $tier ]['heading'] : '';
+	$saving  = bhp_bundle_saving_label( $format, $tier );
+
+	if ( '' === $heading || '' === $saving ) {
+		return $heading;
+	}
+
+	return $heading . ' - ' . $saving;
+}
+
+/**
  * How a shipping amount is WRITTEN to a customer.
  *
  * ⭐ ONE FUNCTION, SO "FREE" CANNOT BE SPELLED TWO WAYS. Before 1.8.23 every

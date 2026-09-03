@@ -1,5 +1,29 @@
 # Start Here
 
+> ## ⭐⭐ READ THIS FIRST, 2026-09-02 · **PRODUCTION IS THEME `1.19.356` / BUNDLE PLUGIN `1.8.81`.** Every version number below this block is SUPERSEDED.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-02** | **`1.19.356`** | **`1.8.81`** |
+>
+> Theme `1.19.356` and bundle plugin `1.8.81` were deployed to production on 2026-09-02 with the
+> owner's explicit approval. `1.19.355` and plugin `1.8.80` were built and staging-verified on 2026-09-02
+> and did not ship on their own; their contents reached production inside the later artefacts, so
+> production moved two theme releases and two plugin releases at once. **The `1.8.80` artefact is superseded
+> and must not be deployed anywhere.**
+>
+> **Where to read what:** release record `RELEASES/PRODUCTION_RELEASE_1_19_355_356.md` · per-release detail
+> `CHANGELOG.md` (2026-09-02 entry) · open issues `KNOWN_ISSUES.md` · rules from this series
+> `DECISIONS.md`.
+>
+> ⭐ **One customer-visible behaviour changed.** A parent flagged for one school who opens a different
+> school's **closed** visit link loses the first flag; it does not return on its own, and reopening their
+> own link restores it. An unknown or truncated slug still does nothing. Read
+> `RELEASES/PRODUCTION_RELEASE_1_19_355_356.md` section 5 before answering a customer about it.
+>
+> ⚠️ **The version numbers above are recorded from the deploying lane, not read from production by this
+> block.** Verify with `wp theme list --status=active` over SSH before relying on them. **Staging and
+> production parity is not asserted here and should be checked, not assumed.**
 > ## ⭐⭐ READ THIS FIRST, 2026-09-02 · **PRODUCTION IS THEME `1.19.354` / BUNDLE PLUGIN `1.8.79`.** Every version number below this block is SUPERSEDED.
 >
 > | | Theme | Bundle plugin |

@@ -468,3 +468,102 @@ they are not re-litigated as bugs:
   `/product-category/hardcover-books/` 301s to `/shop/`. Hardcovers stay
   hidden from the grid and stay purchasable; that is deliberate and is not
   a stock defect.
+
+## An explicit visit slug in the URL decides the session, over a stored one (2026-09-02, theme 1.19.355 / plugin 1.8.80)
+A school-visit flag stored in a visitor's session used to outrank an explicit
+`?bhp_visit=<slug>` in the URL. A parent flagged for one school who opened a
+different school's link could see the second school's name in the band while
+the per-card shelf counters still counted the first school's shelf: **two
+schools named on one page.**
+
+**The rule now: an explicit `?bhp_visit=<slug>` that names a REGISTERED visit
+decides the session, whatever the session holds.** If that visit is closed, the
+existing flag is cleared rather than left to contradict the band.
+
+**The supersession is deliberately narrow, and the earlier reasoning it touches
+is preserved verbatim in the plugin source rather than deleted.** A decision of
+2026-08-19 held that an unresolvable slug must not clear an existing flag,
+*because a truncated or mistyped URL would then strip hand delivery from an
+entitled parent*. **That still governs every slug that is not in the registry.**
+A slug absent from the registry names no school, so it remains a complete
+no-op, and that was verified live on a truncated URL. Where two restrictions
+meet, the stricter one applies.
+
+**The customer consequence is real and is stated rather than glossed:** a parent
+who opens another school's closed link loses their own flag and it does not
+return on its own. **Recovery is one visit to their own link**, which re-arms
+the 14-day window. Full wording for anyone answering a customer is in
+`RELEASES/PRODUCTION_RELEASE_1_19_355_356.md` section 5.
+
+**Implementation constraint that must not be relaxed:** the decision lives in
+`bhp_school_visit_capture_decide()`, a **pure** function that reads no
+superglobal, session, option, registry or clock, and the plugin writes nothing
+to the visit registry option anywhere in that file. Both properties are gated by
+suite assertions, because the value of the rule is that it can be reasoned about
+and tested without a live session.
+
+## The mobile catalog pair is made by flattening containers, not by moving markup (2026-09-02, theme 1.19.356)
+At 640px and below, the Complete Collection card and the "book + coloring book"
+bundle card sit side by side. They live in **two different lists**: the
+Collection card is the last item of the product list, and the bundle card is the
+only item of a separate list inside a separate section rendered after the loop.
+**No grid can pair two boxes that are not items of the same container**, so at
+that width both lists are flattened into their shared ancestor and the ancestor
+becomes the grid.
+
+**Three alternatives were rejected on evidence, and the reasons are recorded so
+they are not re-tried:**
+
+- **Moving the item into the product list server-side.** Measured: at 1440 the
+  strip card is 608px wide in a two-track strip, against a 231px grid track. The
+  move would pair the cards on a phone and **replace the accepted 608px desktop
+  card with a 231px one.**
+- **Rendering the card twice, once per container.** Rejected outright for the
+  reason an earlier release already records: two live add-to-cart controls on a
+  page meant to have one.
+- **A negative-margin pull-up.** It requires knowing the Collection card's
+  height, which changes with copy and price. Correct today, wrong after the next
+  copy edit, with no error anywhere.
+
+**Two constraints hold this in place.** The selector requires the shop body
+class, which category archives and product search do not carry, so the change is
+unreachable from the 18 taxonomy archives that were already correct. And the
+flattening needs an `!important` because the product list's own
+`display: grid !important` beats any specificity: **the first build of this
+release shipped without it and was broken on staging**, flattening one container
+and not the other and leaving an 80px stray card above the books. It was found
+by reading the served stylesheet on the deployed site, not by reading the
+source.
+
+**The accepted costs are `LD-20` and `LD-21` in `KNOWN_ISSUES.md`:** the list
+grouping is lost on engines older than Chrome 89 / Firefox 87 / Safari 15.4,
+with no control lost in any engine; and paired cards no longer end at the same
+height, which is the price of removing the dead band above ADD TO CART.
+
+## The bundle saving is computed at render from live prices, and goes silent when they drift (2026-09-02, plugin 1.8.80 and 1.8.81)
+Every "Save $X" badge and saving line used to print a **build-time literal**.
+The cart, separately, refuses the bundle discount when a live line price drifts
+from the price the discount is defined against. **So a single price edit in the
+store, with no deploy at all, was enough to make five surfaces promise a saving
+the checkout would decline.**
+
+**The rule now: the badge is computed at render from the live product prices,
+and it returns an empty string unless every price still matches the price the
+cart will apply the discount under.** It fails **closed**: the label goes silent
+**and its separator goes with it**, so nothing is left dangling. That was proved
+on staging with a runtime-only price filter that wrote nothing to any product,
+variation, price, meta or option.
+
+**This changed where a number comes from, never what it is.** The approved
+amounts are untouched, the rules table that holds them was not modified and is
+gated by a suite assertion, and the owner separately ruled that the existing
+two-paperback figure is correct. **Nothing here is authority to state a
+different saving.** A shipping-inclusive saving, if it is ever wanted, is a
+different sentence and a copy decision, not a different number in this one.
+
+**Two consequences worth knowing before touching this again:** the fine print
+had to be rebuilt as joined parts, because it hard-coded a trailing separator
+after each clause and any empty part left the line ending in a dangling dot,
+which was already reachable before this change; and two of the five surfaces
+render only through a shortcode on a page that redirects, so their correction is
+right and invisible today, which is `LD-19`.

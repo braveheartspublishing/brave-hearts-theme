@@ -444,7 +444,28 @@ $bhp_akty_cover = function_exists('bhp_get_lead_magnet_cover')
         <span class="bhp-kit-upsell__effective-now"><?php echo esc_html($bhp_akty_eff); ?></span>
         <span class="bhp-kit-upsell__effective-label"><?php esc_html_e('with your welcome discount', 'brave-hearts'); ?></span>
       </span>
-      <span class="bhp-kit-upsell__effective-note" aria-hidden="true"><?php esc_html_e('Applied automatically at checkout — no code to enter.', 'brave-hearts'); ?></span>
+      <?php
+      /*
+       * ⭐ 1.19.355 (`CYCLE179-LD-355`, brief item 6) — THE EM DASH IS GONE.
+       *
+       * ⛔ SUPERSEDED STRING, PRESERVED SO THE MOVEMENT IS VISIBLE AND IS NOT
+       *    RE-DERIVED:
+       *
+       *        'Applied automatically at checkout <em dash> no code to enter.'
+       *
+       * ⭐ RULE 608a: no em dash in Andrew's copy. `design-creative`'s aesthetic
+       *    review found this string as one of eleven surfaces carrying one
+       *    (`D5`). ⛔ ONLY THIS ONE IS CHANGED HERE. The other ten are the
+       *    em-dash sweep of older copy, which this brief lists as OUT OF SCOPE
+       *    and Andrew's.
+       *
+       * ⛔ THE WORDS ARE OTHERWISE UNTOUCHED and the sentence is split at the
+       *    same place the dash split it, so nothing is added, removed or
+       *    reordered. The screen-reader sentence above already used a comma and
+       *    a clause and is not edited at all.
+       */
+      ?>
+      <span class="bhp-kit-upsell__effective-note" aria-hidden="true"><?php esc_html_e('Applied automatically at checkout. No code to enter.', 'brave-hearts'); ?></span>
     </p>
     <?php endif; ?>
     <?php if ($bhp_akty_coupon) : ?>
