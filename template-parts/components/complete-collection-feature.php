@@ -151,6 +151,24 @@ $bhp_cc = wp_parse_args($args ?? [], [
     // Heading id, unique per page (two ids would be a duplicate-id defect if
     // both bands ever rendered on one document).
     'title_id' => 'home-collection-feature-title',
+    /*
+     * ⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THE SECOND PARAMETER, and
+     *    it exists for the same reason `cta` does: to keep this file ONE file.
+     *
+     * `true` renders the existing 30-Day Guarantee sentence beneath the CTA.
+     *
+     * ⛔ IT DEFAULTS TO `false`, WHICH IS WHY /books/ IS BYTE-IDENTICAL AFTER
+     *    THIS RELEASE. The brief names the HOMEPAGE collection block and caps
+     *    the work at two items. This band is SHARED — `front-page.php` and
+     *    `page-books.php` both render it — so an ungated addition would have
+     *    silently changed a second surface the brief did not name. A default
+     *    of false makes the homepage the only caller that opts in, and makes
+     *    extending it to /books/ a one-word change whenever Andrew wants it.
+     *
+     * ⛔ THIS IS A FLAG, NOT A FORK. The file's own header explains why a copy
+     *    of this band would re-create the exact defect it was written to fix.
+     */
+    'guarantee' => false,
 ]);
 
 $bhp_cc_price_cues_on = function_exists('bhp_home_price_cues_enabled')
@@ -681,6 +699,64 @@ $bhp_cc_classes = trim('homepage-section home-sales-paths section ' . $bhp_cc['s
       <?php else : ?>
         <a class="btn btn-primary home-collection-feature__cta" href="<?php echo esc_url($bhp_cc_collection_url); ?>"><?php esc_html_e('GET THE COMPLETE COLLECTION', 'brave-hearts'); ?></a>
       <?php endif; ?>
+
+      <?php
+      /*
+       * ═══════════════════════════════════════════════════════════════════
+       * ⭐⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THE 30-DAY GUARANTEE
+       *     REACHES THE HOMEPAGE COLLECTION BAND.
+       * ═══════════════════════════════════════════════════════════════════
+       *
+       * ⭐ THE FINDING THE BRIEF ACTS ON: the guarantee is on every product
+       *    page (theme 1.19.241) and on /complete-collection/, and was ABSENT
+       *    from the homepage band that carries the highest-value offer on the
+       *    site. VERIFIED LIVE on staging 1.19.358 before the change, not
+       *    inferred: `.home-collection-feature .bhp-landing-guarantee`
+       *    returned 0 nodes at an asserted innerWidth of 1440 AND of 375,
+       *    while the same selector returned 1 inside `.bhp-product-guarantee`
+       *    on the Mariana paperback PDP.
+       *
+       * ⛔⛔ THE COPY IS NOT RETYPED, AND THAT IS THE WHOLE IMPLEMENTATION.
+       *     This calls the bundle plugin's OWN
+       *     `bhp_bundle_render_landing_guarantee()`, so the label, the
+       *     sentence, the entity references and the policy URL are the SAME
+       *     BYTES the product pages and the Collection page already render —
+       *     not a copy that can drift, and not a paraphrase. Approved copy is
+       *     locked (`BHP-AGENT-STANDING-RULES.md` §9); reproducing it by hand
+       *     here would be a rewrite waiting to happen. It also means the
+       *     wording keeps Andrew's first-person voice ("tell me ... I'll
+       *     refund you") with no second decision needed, and carries no em
+       *     dash (plugin 1.8.58 R-13 replaced the only one with a full stop).
+       *     This is the identical mechanism 1.19.241 used for the PDP.
+       *
+       * ⛔ function_exists() IS THE GATE, NOT DECORATION. The function lives
+       *    in the bundle-pricing PLUGIN and this is the THEME. With the plugin
+       *    deactivated the homepage must lose a reassurance line, never take a
+       *    fatal error.
+       *
+       * ⛔ IT CANNOT MOVE THE CTA. The node is a sibling AFTER both CTA
+       *    branches and after the "Or read about the collection first" link,
+       *    so by document order nothing above it can shift. Measured before
+       *    and after at 1440 and at 375; see the 359 QA evidence.
+       *
+       * ⛔ IT RENDERS IN BOTH CTA BRANCHES, deliberately. Placing it inside
+       *    the `checkout` branch would drop the guarantee on any environment
+       *    where the bundle plugin's CTA contract is unavailable — which is
+       *    precisely the environment where a visitor is being sent to another
+       *    page and needs the reassurance most.
+       *
+       * ⛔ THE TYPE STYLES ARE THE BAND'S EXISTING ONES. The wrapper takes the
+       *    band's own `home-collection-feature__guarantee` class, whose only
+       *    rules set spacing and inherit the band's own colour and family;
+       *    `.bhp-landing-guarantee` and its three children keep the classes
+       *    they already ship with, so nothing in this band is restyled.
+       */
+      if ($bhp_cc['guarantee'] && function_exists('bhp_bundle_render_landing_guarantee')) {
+          echo '<div class="home-collection-feature__guarantee">';
+          bhp_bundle_render_landing_guarantee();
+          echo '</div>';
+      }
+      ?>
     </div>
   </div>
 </section>

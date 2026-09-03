@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: e7ae0aa9e45a56dd7e374a713ae271ed
+    source-md5: a0e8cff5c86d21aecab43b95e2f65078
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.356
+Version: 1.19.359
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -5537,6 +5537,38 @@ color: var(--color-ink);
   color: var(--color-text-muted);
   text-decoration: underline;
 }
+.home-collection-feature__guarantee {
+  margin-top: var(--space-3);
+}
+.home-collection-feature__guarantee .bhp-landing-guarantee {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--trust-min, 0.875rem);
+  line-height: 1.45;
+  color: #706456;
+  text-align: center;
+  text-wrap: pretty;
+}
+.home-collection-feature__guarantee .bhp-landing-guarantee__label {
+  font-weight: 800;
+  color: var(--color-forest, #173f2f);
+  letter-spacing: 0.01em;
+}
+.home-collection-feature__guarantee .bhp-landing-guarantee__link {
+  color: var(--color-forest, #173f2f);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+.home-collection-feature__guarantee .bhp-landing-guarantee__link:hover,
+.home-collection-feature__guarantee .bhp-landing-guarantee__link:focus-visible {
+  color: #235340;
+}
+.home-collection-feature__guarantee .bhp-landing-guarantee__link:focus-visible {
+  outline: 2px solid #235340;
+  outline-offset: 2px;
+}
 .home-collection-feature__format-label {
   display: block;
   margin-bottom: var(--space-2);
@@ -6212,6 +6244,7 @@ body:not(.home) .author-visits-list-section.section {
 .author-visits-card__sep { padding: 0 .35em; }
 .author-visits-card__note { margin: 0 0 var(--space-4); line-height: 1.55; }
 .author-visits-card__note--closed { color: var(--color-text-muted); }
+.author-visits-card__note--after { color: var(--color-text); }
 .author-visits-card__cta { margin: 0; }
 .author-visits-card__cta .btn { width: 100%; }
 .author-visits-card__btn--closed {
@@ -6281,6 +6314,8 @@ body:not(.home) .author-visits-list-section.section {
   font-weight: 700;
   letter-spacing: var(--tracking-ui);
 }
+.author-visits-past__order { margin: var(--space-3) 0 0; }
+.author-visits-past__order .btn { width: 100%; }
 .author-visits-gallery {
   margin: 0;
   padding: 0;
@@ -9095,6 +9130,12 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip
 }
 .bhp-visit-band--closed {
   background: var(--color-charcoal);
+}
+.bhp-visit-band--after {
+  background: var(--color-jungle);
+}
+.bhp-visit-band--after .bhp-visit-band__school {
+  color: var(--color-gold);
 }
 .bhp-visit-band__inner {
   display: flex;

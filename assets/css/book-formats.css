@@ -943,3 +943,61 @@
 	outline: 2px solid #235340;
 	outline-offset: 2px;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THE ONE QUIET AMAZON LINE
+
+   The single Amazon mention a product page now carries, rendered as the
+   last child of the format block in `format-cards.php`. It replaces a
+   KINDLE chip inside the CHOOSE YOUR FORMAT rail and a three-element
+   "Also Available on Amazon" block further down the page.
+
+   ⛔ QUIET IS THE SPEC, NOT A PREFERENCE. It takes the SAME register the
+      30-Day Guarantee above it takes -- `--trust-min`, #706456, centred,
+      UI face -- so the buy box has exactly one loud control in it and the
+      off-ramp does not compete with the button.
+
+   ⛔ THE COLOUR IS THE ALREADY-MEASURED ONE. #706456 was carried to this
+      value in 1.19.266 precisely because #7A6E60 measured 4.49:1 on the
+      product ground -- AA by 0.01 on the wrong side. #706456 measures
+      5.21:1 on #f8f3e9, 5.03:1 on #f6efe0, 4.69:1 on #f1e7d2 and 5.76:1 on
+      #ffffff, which are the four grounds this sentence can render on.
+      Reusing it rather than picking a new muted tone means no new contrast
+      question is opened by this release.
+
+   ⛔ IT MUST NOT MOVE ANYTHING ABOVE IT. `margin-top` is small,
+      `margin-bottom` is 0, and the node is the LAST child of the format
+      block, so the price, the CTA, the spec line, the shipping note and the
+      guarantee all keep their positions exactly. On the mobile template the
+      format block is a grid whose children are re-ordered by `order:`, so
+      this node is also given the last `order` slot in
+      `product-template.css`; without that it would inherit `order: 0` and
+      sort ABOVE every named child, which is the failure mode that stylesheet
+      already records for promoted grid children.
+   ══════════════════════════════════════════════════════════════════════ */
+.bhp-formats__amazon {
+	margin: 0.55rem 0 0;
+	font-family: var(--font-ui, inherit);
+	font-size: var(--trust-min, 0.875rem);
+	line-height: 1.45;
+	color: #706456;
+	text-align: center;
+	text-wrap: pretty;
+}
+
+.bhp-formats__amazon-link {
+	color: #706456;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.bhp-formats__amazon-link:hover,
+.bhp-formats__amazon-link:focus-visible {
+	color: var(--color-forest, #173f2f);
+}
+
+.bhp-formats__amazon-link:focus-visible {
+	outline: 2px solid #235340;
+	outline-offset: 2px;
+}

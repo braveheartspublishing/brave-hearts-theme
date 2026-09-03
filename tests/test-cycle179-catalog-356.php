@@ -141,26 +141,70 @@ echo "\n=== CYCLE179-LD-356 - the mobile catalog pair ===\n\n";
  * §1 · THE VERSIONS
  * ═══════════════════════════════════════════════════════════════════════════ */
 
+/*
+ * ⚠️⚠️ WIDENED 2026-09-03 BY `CYCLE179-LD-357`, AND ONLY BECAUSE A RUN PROVED
+ *     THESE FIVE ASSERTIONS STALE. On theme 1.19.357 they produced FIVE FAILURE
+ *     LINES while every behavioural assertion in this suite still passed, which
+ *     is the signature of a version PIN rather than a regression.
+ *
+ * ⛔ THE SUPERSEDED ASSERTIONS, PRESERVED VERBATIM SO THE MOVEMENT IS VISIBLE
+ *    AND IS NOT RE-DERIVED:
+ *
+ *        c356_assert( false !== strpos( $c356_css, 'Version: 1.19.356' ), '1.2 style.css declares 1.19.356' );
+ *        c356_assert( '1.19.356' === wp_get_theme()->get( 'Version' ), '1.3 the ACTIVE theme reports 1.19.356' );
+ *        c356_assert( false !== strpos( $c356_boot, 'Version: 1.8.81' ), '1.4 the plugin header declares 1.8.81' );
+ *        c356_assert( false !== strpos( $c356_boot, "BHP_BUNDLE_PRICING_VERSION', '1.8.81'" ), '1.5 the plugin CONSTANT declares 1.8.81' );
+ *        c356_assert( '1.8.81' === BHP_BUNDLE_PRICING_VERSION, '1.6 the LOADED plugin constant is 1.8.81' );
+ *
+ * ⭐ WHY THIS IS A CORRECTION AND NOT A WEAKENING. What §1 is FOR is stated on
+ *    it: that the version moved at all, and that the plugin's two copies of its
+ *    own version have not DRIFTED APART, because a header that says one number
+ *    over a constant that says another breaks cache-busting on exactly the
+ *    surfaces this release changed. ⛔ Both of those claims survive intact. An
+ *    equality against one frozen release additionally asserted "no later
+ *    release exists", which was never the intended claim and which every future
+ *    release must falsify.
+ *
+ * ⭐ THE HOUSE PATTERN IS ALREADY IN THIS SERIES: `test-cycle179-visit-band-
+ *    f10.php` §0.5 reads *"the running theme is 1.19.353 or later"* and prints
+ *    what it actually read. This matches it, and it prints the live value too,
+ *    so a reader is never left guessing which version the run saw.
+ *
+ * ⛔ NO OTHER ASSERTION IN THIS SUITE WAS TOUCHED by `CYCLE179-LD-357`.
+ */
 c356_assert( '' !== $c356_css, '1.1 style.css is readable' );
-c356_assert( false !== strpos( $c356_css, 'Version: 1.19.356' ), '1.2 style.css declares 1.19.356' );
-c356_assert( '1.19.356' === wp_get_theme()->get( 'Version' ), '1.3 the ACTIVE theme reports 1.19.356' );
+
+$c356_live_theme = (string) wp_get_theme()->get( 'Version' );
+c356_assert(
+	false !== strpos( $c356_css, 'Version: ' . $c356_live_theme ),
+	'1.2 style.css declares the running theme version (reads: ' . $c356_live_theme . ')'
+);
+c356_assert(
+	version_compare( $c356_live_theme, '1.19.356', '>=' ),
+	'1.3 the ACTIVE theme reports 1.19.356 or later (reads: ' . $c356_live_theme . ')'
+);
 
 /*
  * ⛔ THE PLUGIN CARRIES ITS VERSION TWICE and the two have drifted before. Both
  *    are asserted, because a header that says 1.8.81 over a constant that says
  *    1.8.80 breaks cache-busting on exactly the surfaces this release changed.
  */
-if ( '' === $c356_boot ) {
-	c356_skip( '1.4 the plugin header declares 1.8.81', 'the plugin bootstrap could not be read' );
-	c356_skip( '1.5 the plugin CONSTANT declares 1.8.81', 'the plugin bootstrap could not be read' );
+$c356_live_plugin = defined( 'BHP_BUNDLE_PRICING_VERSION' ) ? (string) BHP_BUNDLE_PRICING_VERSION : '';
+
+if ( '' === $c356_boot || '' === $c356_live_plugin ) {
+	c356_skip( '1.4 the plugin header matches the LOADED constant', 'the plugin bootstrap or constant could not be read' );
+	c356_skip( '1.5 the plugin CONSTANT matches the LOADED constant', 'the plugin bootstrap or constant could not be read' );
 } else {
-	c356_assert( false !== strpos( $c356_boot, 'Version: 1.8.81' ), '1.4 the plugin header declares 1.8.81' );
-	c356_assert( false !== strpos( $c356_boot, "BHP_BUNDLE_PRICING_VERSION', '1.8.81'" ), '1.5 the plugin CONSTANT declares 1.8.81' );
+	// ⛔ THE DRIFT CHECK, WHICH IS WHAT 1.4 AND 1.5 WERE ALWAYS FOR: the header,
+	//    the constant in the file, and the constant WordPress actually loaded
+	//    must all be one number. Pinning that number to 1.8.81 was incidental.
+	c356_assert( false !== strpos( $c356_boot, 'Version: ' . $c356_live_plugin ), '1.4 the plugin header matches the LOADED constant (reads: ' . $c356_live_plugin . ')' );
+	c356_assert( false !== strpos( $c356_boot, "BHP_BUNDLE_PRICING_VERSION', '" . $c356_live_plugin . "'" ), '1.5 the plugin CONSTANT in the file matches the LOADED constant' );
 }
-if ( defined( 'BHP_BUNDLE_PRICING_VERSION' ) ) {
-	c356_assert( '1.8.81' === BHP_BUNDLE_PRICING_VERSION, '1.6 the LOADED plugin constant is 1.8.81' );
+if ( '' !== $c356_live_plugin ) {
+	c356_assert( version_compare( $c356_live_plugin, '1.8.81', '>=' ), '1.6 the LOADED plugin constant is 1.8.81 or later (reads: ' . $c356_live_plugin . ')' );
 } else {
-	c356_skip( '1.6 the LOADED plugin constant is 1.8.81', 'BHP_BUNDLE_PRICING_VERSION is not defined in this context' );
+	c356_skip( '1.6 the LOADED plugin constant is 1.8.81 or later', 'BHP_BUNDLE_PRICING_VERSION is not defined in this context' );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

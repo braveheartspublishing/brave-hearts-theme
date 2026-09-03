@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 54b6a2ed0fa000d486666527b06fb7d9
+    source-md5: ac1dce296e657a05a59096d93ada81ff
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -450,6 +450,29 @@ color: #706456;
 	color: #235340;
 }
 .bhp-product-guarantee .bhp-landing-guarantee__link:focus-visible {
+	outline: 2px solid #235340;
+	outline-offset: 2px;
+}
+.bhp-formats__amazon {
+	margin: 0.55rem 0 0;
+	font-family: var(--font-ui, inherit);
+	font-size: var(--trust-min, 0.875rem);
+	line-height: 1.45;
+	color: #706456;
+	text-align: center;
+	text-wrap: pretty;
+}
+.bhp-formats__amazon-link {
+	color: #706456;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.bhp-formats__amazon-link:hover,
+.bhp-formats__amazon-link:focus-visible {
+	color: var(--color-forest, #173f2f);
+}
+.bhp-formats__amazon-link:focus-visible {
 	outline: 2px solid #235340;
 	outline-offset: 2px;
 }

@@ -330,8 +330,34 @@ if ( '' !== $f10_src ) {
 		false !== strpos( $f10_src, "'state' => 'closed', 'record' => \$named" ),
 		'3.5 ⭐⭐ a registered slug that does NOT resolve yields the CLOSED band, from the registry record'
 	);
+	/*
+	 * ⚠️⚠️ UPDATED BY `CYCLE179-LD-357`, AND ONLY BECAUSE A RUN PROVED IT STALE.
+	 *     This assertion FAILED on theme 1.19.357 while every
+	 *     behavioural assertion in §2 above still passed, which is exactly the
+	 *     signature of a source needle that has gone stale rather than a
+	 *     regression: the F-10 RULE is intact and the LINE it was pinned to
+	 *     moved.
+	 *
+	 * ⛔ THE SUPERSEDED NEEDLE, PRESERVED VERBATIM SO THE MOVEMENT IS VISIBLE
+	 *    AND IS NOT RE-DERIVED:
+	 *
+	 *        '$out = bhp_visit_band_decide($slug, $named, $live, $session);'
+	 *
+	 *    Theme 1.19.357 adds a third band state (AFTER-VISIT) and passes two
+	 *    further arguments, so the call now reads
+	 *    `bhp_visit_band_decide($slug, $named, $live, $session, $after, $session_after)`.
+	 *
+	 * ⭐ THE CLAIM THIS ASSERTION MAKES IS UNCHANGED and is deliberately not
+	 *    weakened: the gatherer must still DEFER to the pure rule rather than
+	 *    deciding anything itself, so that §2 exercises the code that ships. It
+	 *    is now pinned to the call and its first four arguments IN ORDER, which
+	 *    is the part the claim is actually about, instead of to the exact
+	 *    argument count. ⛔ It is NOT loosened to a bare function name: that
+	 *    would still pass if the four inputs were reordered, and the ORDER is
+	 *    the F-10 fix.
+	 */
 	f10_assert(
-		false !== strpos( $f10_src, '$out = bhp_visit_band_decide($slug, $named, $live, $session);' ),
+		false !== strpos( $f10_src, '$out = bhp_visit_band_decide($slug, $named, $live, $session' ),
 		'3.5b ⭐ the gatherer defers to the pure rule, so §2 tests the code that actually ships'
 	);
 

@@ -400,11 +400,47 @@ $html = bhp_test_with_product_context((int) $registry['mariana_trench']['pb_prod
     bhp_book_render_format_selector();
     return ob_get_clean();
 });
+/*
+ * ⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THIS ASSERTION WENT VACUOUS AND
+ *    IS REPLACED RATHER THAN DELETED.
+ *
+ * The SUPERSEDED assertion, preserved verbatim:
+ *
+ *   bhp_test_assert(
+ *       $failures,
+ *       'the COMPLETE COLLECTION card is still rendered and still last of the four',
+ *       strpos($html, 'bhp-format-card--collection') !== false
+ *       && strpos($html, 'bhp-format-card--collection') > strpos($html, 'data-bhp-format="kindle"')
+ *   );
+ *
+ * ⛔ WHY IT HAD TO CHANGE, AND WHY LEAVING IT WOULD HAVE BEEN WORSE THAN A
+ *    FAILURE. 1.19.359 removes the KINDLE card, so
+ *    `strpos($html, 'data-bhp-format="kindle"')` now returns `false`. In PHP 8
+ *    a positive int compared with `false` is compared AS BOOLEAN, so
+ *    `12345 > false` is `true` — the assertion would have kept PASSING while
+ *    testing nothing at all. A silently vacuous assertion is the worst
+ *    outcome available here: it reports green on a rail it can no longer see.
+ *
+ * ⭐ THE REPLACEMENT ASSERTS THE SAME INTENT AGAINST THE NEW RAIL, plus the
+ *    removal itself, so the ordering claim is anchored on a marker that
+ *    actually exists.
+ */
 bhp_test_assert(
     $failures,
-    'the COMPLETE COLLECTION card is still rendered and still last of the four',
+    'the COMPLETE COLLECTION card is still rendered',
     strpos($html, 'bhp-format-card--collection') !== false
-    && strpos($html, 'bhp-format-card--collection') > strpos($html, 'data-bhp-format="kindle"')
+);
+bhp_test_assert(
+    $failures,
+    'the KINDLE card is GONE from the rail (1.19.359)',
+    strpos($html, 'data-bhp-format="kindle"') === false
+);
+bhp_test_assert(
+    $failures,
+    'the COMPLETE COLLECTION card is still LAST in the rail, measured against a marker that exists',
+    strpos($html, 'bhp-format-card--collection') !== false
+    && strpos($html, 'bhp-format-card--collection') > strpos($html, 'data-bhp-format="paperback"')
+    && strpos($html, 'bhp-format-card--collection') > strpos($html, 'data-bhp-format="hardcover"')
 );
 bhp_test_assert(
     $failures,

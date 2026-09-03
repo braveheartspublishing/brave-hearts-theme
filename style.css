@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.356
+Version: 1.19.359
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -9243,6 +9243,74 @@ body.bhp-consent-banner-visible #bhp-floating-cart {
   text-decoration: underline;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THE 30-DAY GUARANTEE
+       BENEATH THE HOMEPAGE BAND'S CTA.
+
+   The MARKUP is the bundle plugin's own `bhp_bundle_render_landing_guarantee()`
+   -- the same bytes the product pages and /complete-collection/ render. Only
+   the presentation is written here, and only because the plugin's own
+   `bundle-landing.css` is enqueued ON THE LANDING PAGE ONLY, so
+   `.bhp-landing-guarantee` arrives on the homepage with no styles at all.
+   This is the identical situation `book-formats.css` already handles for the
+   product page under `.bhp-product-guarantee`, and these rules are that
+   treatment carried across, scoped to this band so nothing else can inherit
+   them.
+
+   ⛔ CONTRAST IS COMPUTED FOR THIS BAND'S OWN GROUND, NOT BORROWED. The band
+      sits on `--color-cream` #f7f2e7, not the product page's #f8f3e9:
+        · body  #706456 on #f7f2e7  =  5.16:1   (AA, and AA Large)
+        · label / link #173f2f on #f7f2e7 = 10.52:1
+      Both clear 4.5:1 with room.
+
+   ⛔ IT MUST NOT MOVE THE CTA. `margin-bottom` is 0 and the node is the last
+      child of the band, after both CTA branches and after the "Or read about
+      the collection first" link, so nothing above it can shift. Measured
+      before and after at 1440 and at 375.
+
+   ⛔ NO SIZE, FAMILY OR COLOUR TOKEN IS INVENTED. `--font-ui`, `--trust-min`
+      and `--color-forest` are the band's and the site's existing tokens, and
+      the two literals are the ones 1.19.266 already measured for this
+      sentence elsewhere on the site.
+   ══════════════════════════════════════════════════════════════════════ */
+.home-collection-feature__guarantee {
+  margin-top: var(--space-3);
+}
+
+.home-collection-feature__guarantee .bhp-landing-guarantee {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--trust-min, 0.875rem);
+  line-height: 1.45;
+  color: #706456;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.home-collection-feature__guarantee .bhp-landing-guarantee__label {
+  font-weight: 800;
+  color: var(--color-forest, #173f2f);
+  letter-spacing: 0.01em;
+}
+
+.home-collection-feature__guarantee .bhp-landing-guarantee__link {
+  color: var(--color-forest, #173f2f);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.home-collection-feature__guarantee .bhp-landing-guarantee__link:hover,
+.home-collection-feature__guarantee .bhp-landing-guarantee__link:focus-visible {
+  color: #235340;
+}
+
+.home-collection-feature__guarantee .bhp-landing-guarantee__link:focus-visible {
+  outline: 2px solid #235340;
+  outline-offset: 2px;
+}
+
 /* ── CYCLE144-LD-51 · THE BAND'S FORMAT TOGGLE (theme 1.19.177) ────────
    Both bands now BUY (Andrew, 2026-08-05), so the visitor must be able to
    say which format they are buying before the CTA adds it. Two buttons,
@@ -11385,6 +11453,12 @@ body:not(.home) .author-visits-list-section.section {
 /* The bottom margin is NOT zeroed any more -- from 1.19.239 a greyed button
    follows this note instead of the note being the last thing in the card. */
 .author-visits-card__note--closed { color: var(--color-text-muted); }
+/* ⭐ 1.19.357 — the after-visit note is NOT muted. The closed note is greyed
+   because the thing it describes is over; this one sits above a live button and
+   has to read as current. It takes the card's ordinary body colour, stated
+   explicitly rather than inherited so that a future change to the closed rule
+   cannot drag it along. */
+.author-visits-card__note--after { color: var(--color-text); }
 
 .author-visits-card__cta { margin: 0; }
 /* Full-width tap target on a phone; shrink-to-fit once there is room. */
@@ -11501,6 +11575,17 @@ body:not(.home) .author-visits-list-section.section {
   font-weight: 700;
   letter-spacing: var(--tracking-ui);
 }
+
+/* ⭐⭐ 1.19.357 (`CYCLE179-LD-357`) — THE SHIPPING LINK ON A PAST ROW, PRESENT
+   ONLY WHILE `bhp_school_visit_after_days()` has not run out.
+   ⛔ IT IS `btn-secondary`, NOT `btn-primary`, AND THAT IS THE POINT. The trust
+      column is a record of what happened, not a sales column; a primary button
+      here would out-shout the upcoming visit that still takes hand-delivery
+      orders, which is the more valuable action on this page. The link is
+      unmissable and it is not the loudest thing on the screen.
+   ⭐ THE TOP MARGIN EXISTS BECAUSE THE RECAP LINK ABOVE IT ZEROES ITS OWN. */
+.author-visits-past__order { margin: var(--space-3) 0 0; }
+.author-visits-past__order .btn { width: 100%; }
 
 /* ---- The gallery ---- */
 .author-visits-gallery {
@@ -17839,6 +17924,27 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip
 }
 .bhp-visit-band--closed {
   background: var(--color-charcoal);
+}
+/* ⭐⭐ 1.19.357 (`CYCLE179-LD-357`) — THE AFTER-VISIT BAND.
+   ⭐ IT IS `--color-jungle`, DELIBERATELY IN THE SAME FAMILY AS THE OPEN BAND'S
+      forest AND DELIBERATELY NOT THE CLOSED BAND'S charcoal. The three states
+      say three different things and the colour is the first of them a parent
+      reads: open is the live offer, charcoal is the shut door, and this one is
+      the offer standing back up. Reading as "closed but with a link" would be
+      the worst of the three, so it does not.
+   ⛔ NO NEW TOKEN IS MINTED AND NO HEX IS TYPED. It reuses a token the design
+      system already carries, so a palette change reaches it like everything
+      else.
+   ⛔ CONTRAST IS THE SAME PROBLEM THE OPEN BAND ALREADY SOLVED: ivory text on a
+      dark ground, measured on staging rather than asserted here. */
+.bhp-visit-band--after {
+  background: var(--color-jungle);
+}
+/* ⛔ THE SCHOOL EYEBROW KEEPS THE GOLD IT HAS ON THE OTHER TWO BANDS. Stated as
+   a rule rather than left to inheritance so a future variant cannot quietly
+   drop it. */
+.bhp-visit-band--after .bhp-visit-band__school {
+  color: var(--color-gold);
 }
 .bhp-visit-band__inner {
   display: flex;

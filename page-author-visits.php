@@ -159,6 +159,55 @@ $bhp_visit_photos = function_exists( 'bhp_author_visits_gallery_photos' ) ? bhp_
                 <a class="btn btn-primary" href="<?php echo esc_url( $bhp_row['url'] ); ?>"><?php esc_html_e( 'Order signed books for this visit', 'brave-hearts' ); ?></a>
               </p>
 
+            <?php elseif ( ! empty( $bhp_row['after'] ) && '' !== $bhp_row['url'] ) : ?>
+
+              <?php
+              /*
+               * ⭐⭐⭐ AFTER-VISIT — 1.19.357 (`CYCLE179-LD-357`). THE READ-ALOUD HAS
+               *     HAPPENED AND THE FUNNEL IS OPEN AGAIN, FOR SHIPPING ONLY.
+               *
+               * Andrew Signore, RELAYED through the `chief-of-staff` brief and NOT
+               * witnessed first-hand by this agent (Standing Rules 9.2 rule 2), seal 868:
+               * *"we need to reopen the link to schools after but only for shipping
+               * instead of hand delivery ... it should open back up for parents to move
+               * through that funnel."*
+               *
+               * ⛔ THE "Order by" LINE IS GONE FROM THIS BRANCH ON PURPOSE. That deadline
+               *    is the HAND-DELIVERY deadline; it has passed, and repeating it beside a
+               *    live ordering link would tell a parent the thing they are looking at is
+               *    already over. ⛔ AND NO NEW DEADLINE REPLACES IT. There is no urgency
+               *    here that is real, and the after-visit window is an internal setting
+               *    rather than a promise made to anybody, so it is not advertised.
+               *
+               * ⛔ THE BUTTON SAYS "shipped", NEVER "signed". The open-state button above
+               *    says *"Order signed books for this visit"* because Andrew signs those
+               *    books in person on the day. These are printed and posted and nobody
+               *    signs them. The label is read from `bhp_visit_band_after_link_label()`
+               *    so that the shop band and this card cannot come to say different
+               *    things, which is the same discipline `bhp_visit_deadline_display()`
+               *    imposed on the two deadline sentences at 1.19.350-FIX.
+               *
+               * ⛔ NOTHING HERE CLAIMS THE VISIT WENT WELL. "Read-aloud done" is a
+               *    statement of fact about the calendar. No reaction, no count, no
+               *    outcome, and nothing a parent, a teacher or a child is said to have
+               *    said. Standing Rules 3.
+               */
+              ?>
+              <p class="author-visits-card__note author-visits-card__note--after">
+                <?php esc_html_e( 'Read-aloud done. Books can still be ordered and shipped to your home.', 'brave-hearts' ); ?>
+              </p>
+              <p class="author-visits-card__cta">
+                <a class="btn btn-primary" href="<?php echo esc_url( $bhp_row['url'] ); ?>">
+                  <?php
+                  echo esc_html(
+                    function_exists( 'bhp_visit_band_after_link_label' )
+                      ? bhp_visit_band_after_link_label()
+                      : __( 'Order books shipped to your home', 'brave-hearts' )
+                  );
+                  ?>
+                </a>
+              </p>
+
             <?php else : ?>
 
               <?php
@@ -244,6 +293,37 @@ $bhp_visit_photos = function_exists( 'bhp_author_visits_gallery_photos' ) ? bhp_
        * ⭐ NO BUTTON, NO ORDERING AFFORDANCE, NO `?bhp_visit=` LINK. A past visit
        *    can never be ordered for, so the row carries no control that could
        *    imply otherwise. The only link is to the recap, and only if one exists.
+       *
+       * ⚠️⚠️ 1.19.357 (`CYCLE179-LD-357`) — THE PARAGRAPH IMMEDIATELY ABOVE IS
+       *     PRESERVED VERBATIM AND IS NO LONGER TRUE FOR A BOUNDED WINDOW. It is
+       *     corrected here rather than deleted, because a reader arriving from the
+       *     1.19.319 release notes needs to know the rule moved and which way.
+       *
+       * ⭐ WHAT CHANGED, AND ONLY THIS: for the
+       *    `bhp_school_visit_after_days()` days that follow a read-aloud, the row
+       *    carries ONE link, to the same `?bhp_visit=` shop URL, labelled for
+       *    shipping. Andrew Signore, RELAYED, seal 868: *"it should open back up
+       *    for parents to move through that funnel."* The full reasoning for why
+       *    it is this column and not only the upcoming one is on
+       *    `bhp_author_visits_build_past_rows()` and is not restated here.
+       *
+       * ⛔ WHAT DID NOT CHANGE: once the window passes, `$bhp_past['url']` is ''
+       *    and this row is again exactly the trust record it has been since
+       *    1.19.319.
+       *
+       * ⚠️⚠️ 1.19.358 (2026-09-03, `CYCLE179-LD-358`) — THE TWO SENTENCES ABOVE
+       *     ARE PRESERVED VERBATIM AND NO LONGER DESCRIBE THE DEFAULT. ⛔ THERE
+       *     IS NO WINDOW TO PASS: Andrew ruled the after-visit state stays open
+       *     INDEFINITELY (seal 870, RELAYED, NOT witnessed first-hand by this
+       *     agent). Under the shipped default a past row keeps its shipping link
+       *     for good, and `bhp_school_visit_after_days()` no longer names a
+       *     number of days. Both sentences remain exactly right for a BOUNDED
+       *     window, which the `bhp_school_visit_after_days` filter can still set.
+       *     ⭐ NOT ONE LINE OF MARKUP OR COPY IN THIS COLUMN MOVED FOR 1.19.358.
+       *
+       * ⛔ EVERY OTHER WORD IN THIS COLUMN IS STILL EITHER REGISTRY
+       *    DATA OR FOUNDER-ATTESTED NOTE TEXT, and the never-invent rule above
+       *    binds this branch exactly as it binds the rest.
        */
       ?>
       <div class="author-visits-col author-visits-col--past">
@@ -269,6 +349,39 @@ $bhp_visit_photos = function_exists( 'bhp_author_visits_gallery_photos' ) ? bhp_
                   </a>
                 </p>
               <?php endif; ?>
+
+              <?php
+              /*
+               * ⭐ 1.19.357 — THE SHIPPING LINK, AND ONLY WHILE THE WINDOW IS OPEN.
+               *
+               * ⚠️ 1.19.358: THE HEADING ABOVE IS PRESERVED AND ITS SECOND CLAUSE IS
+               *    NOW VACUOUS BY DEFAULT. The window has no end (seal 870, RELAYED),
+               *    so "while the window is open" means "always, from the visit date".
+               *    The two guards below are UNCHANGED and still both required.
+               *
+               * ⛔ IT IS GUARDED ON THE URL ITSELF, not on the `after` flag, so a row
+               *    that somehow carried the flag without a URL renders nothing rather
+               *    than an empty `href`. `bhp_author_visits_build_past_rows()` already
+               *    returns '' for every row outside the window, so this is the second of
+               *    two independent guards on the same fact.
+               * ⛔ THE SCREEN-READER SPAN NAMES THE SCHOOL, because a page carrying
+               *    several of these would otherwise announce several identical links.
+               */
+              ?>
+              <?php if ( ! empty( $bhp_past['url'] ) ) : ?>
+                <p class="author-visits-past__order">
+                  <a class="btn btn-secondary" href="<?php echo esc_url( $bhp_past['url'] ); ?>">
+                    <?php
+                    echo esc_html(
+                      function_exists( 'bhp_visit_band_after_link_label' )
+                        ? bhp_visit_band_after_link_label()
+                        : __( 'Order books shipped to your home', 'brave-hearts' )
+                    );
+                    ?>
+                    <span class="screen-reader-text"><?php echo esc_html( $bhp_past['school'] ); ?></span>
+                  </a>
+                </p>
+              <?php endif; ?>
             </li>
           <?php endforeach; ?>
         </ul>
@@ -285,9 +398,31 @@ $bhp_visit_photos = function_exists( 'bhp_author_visits_gallery_photos' ) ? bhp_
    *    nothing to order when the upcoming list is empty. It sits below both
    *    columns rather than inside the left one so it reads as instructions for
    *    the page, not as a footnote to the upcoming list.
+   *
+   * ⚠️⚠️ 1.19.358 (2026-09-03, `CYCLE179-LD-358`) — THE CONDITION ABOVE IS
+   *    SUPERSEDED AND IS PRESERVED VERBATIM SO THE MOVEMENT IS VISIBLE. The
+   *    superseded line was:
+   *
+   *        <?php if ( ! empty( $bhp_visit_rows ) ) : ?>
+   *
+   * ⛔ WHY IT MOVED. `CYCLE179-LD-23`, raised by this lane at 1.19.357 and
+   *    OBSERVED on the live page rather than inferred: these three steps and a
+   *    "Read-aloud done" card could sit on ONE SCREEN. Step 2 tells a parent to
+   *    choose free author hand-delivery at checkout and step 3 says the books
+   *    are handed to their child at the school. Once the read-aloud has
+   *    happened that option is gone and the order ships, so the steps would be
+   *    instructions for something the site refuses.
+   *
+   * ⭐ THE NEW CONDITION IS "AT LEAST ONE VISIT IS CURRENTLY OPEN", which is
+   *    strictly narrower than the old one and never wider. Every page that
+   *    rendered the block before and still has an open visit renders it
+   *    byte-identically.
+   *
+   * ⛔ NOT ONE WORD OF THE COPY BELOW IS TOUCHED. This is a display gate over
+   *    approved strings. Copy is Andrew's gate.
    */
   ?>
-  <?php if ( ! empty( $bhp_visit_rows ) ) : ?>
+  <?php if ( bhp_author_visits_has_open_row( $bhp_visit_rows ) ) : ?>
       <div class="author-visits-how">
         <h2 class="author-visits-how__title"><?php esc_html_e( 'How It Works', 'brave-hearts' ); ?></h2>
         <ol class="author-visits-how__steps">

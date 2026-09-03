@@ -407,6 +407,12 @@
 	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__spec     { grid-row: 4; grid-column: 1 / -1; }
 	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__note     { grid-row: 5; grid-column: 1 / -1; }
 	body.single-product.woocommerce div.product .bhp-formats--single .bhp-product-guarantee { grid-row: 6; grid-column: 1 / -1; }
+	/* 1.19.359: the one quiet Amazon line, explicit for the same reason every
+	   row above it is explicit. On the colouring PDP -- the only page that
+	   renders a one-card rail today -- the line does not render at all,
+	   because that title carries no approved Amazon link. The rule is written
+	   anyway so the rail stays fully explicit if one is ever approved. */
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__amazon    { order: 9; grid-row: 7; grid-column: 1 / -1; }
 
 	/* ---- 3e. 1.19.349 — THE TOP-OF-PAGE CHROME, MEASURED AND TRIMMED ----
 	 *
@@ -466,6 +472,25 @@
 	}
 
 	body.single-product.woocommerce div.product .bhp-product-guarantee { order: 8; }
+
+	/*
+	 * ⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THE ONE QUIET AMAZON LINE
+	 *    TAKES THE LAST SLOT, and it needs an explicit one.
+	 *
+	 * ⛔ WITHOUT THIS RULE THE LINE WOULD RENDER AT THE TOP OF THE BUY BOX.
+	 *    This stylesheet's own note at the head of section 3 records why:
+	 *    promoted grid children inherit `order: 0`, which sorts BEFORE every
+	 *    named child. `order: 0` on this node would put an outbound link to
+	 *    another retailer above the format chips, the price and the button --
+	 *    the exact opposite of the change. It is written out rather than left
+	 *    to document order for the same reason every row of the one-card rail
+	 *    below is written out: a half-explicit order is where the next
+	 *    auto-placement surprise comes from.
+	 *
+	 * ⛔ 9 IS AFTER THE GUARANTEE'S 8, matching document order in
+	 *    `format-cards.php`, so the two viewports agree about what is last.
+	 */
+	body.single-product.woocommerce div.product .bhp-formats__amazon { order: 9; }
 
 	/* ---- 3b. Buy box, tightened so the button clears the fold --------- */
 

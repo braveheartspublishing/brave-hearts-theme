@@ -848,8 +848,30 @@ $bhp_rail_single = !empty($data['rail_single']);
      *    conditions that print them, so it cannot disagree with what is
      *    printed.
      */
+    /*
+     * ⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THE KINDLE TERM LEAVES THIS
+     *    SUM BECAUSE THE KINDLE CARD LEAVES THE RAIL. See the removal note at
+     *    the card itself, immediately below the loop.
+     *
+     * SUPERSEDED, preserved verbatim so the movement is visible rather than
+     * re-derived:
+     *
+     *     $bhp_card_total = count($bhp_card_order)
+     *         + ($data['kindle']['url'] ? 1 : 0)
+     *         + ($bhp_rail_collection ? 1 : 0);
+     *
+     * ⛔ NO PAGE FALLS TO ONE CARD BECAUSE OF THIS, and that is checked rather
+     *    than assumed, because 1.19.355's gate below hides a one-card rail:
+     *      · chapter PDP        2 physical + collection = 3   (was 4)
+     *      · chapter PDP during a school-visit session
+     *                           1 physical + collection = 2   (was 3)
+     *      · colouring PDP      1 physical, no collection = 1  (was 1 —
+     *        its Kindle url is empty by design, so it never had the card and
+     *        this line never added anything there)
+     *    Two is still greater than one, so the grid still renders everywhere it
+     *    rendered in 1.19.358.
+     */
     $bhp_card_total = count($bhp_card_order)
-        + ($data['kindle']['url'] ? 1 : 0)
         + ($bhp_rail_collection ? 1 : 0);
 
     if ($bhp_card_total > 1):
@@ -865,13 +887,52 @@ $bhp_rail_single = !empty($data['rail_single']);
     </button>
     <?php endforeach; ?>
 
-    <?php if ($data['kindle']['url']): ?>
-    <button type="button" class="bhp-format-card<?php echo 'kindle' === $initial ? ' is-selected' : ''; ?>" data-bhp-format="kindle" aria-pressed="<?php echo 'kindle' === $initial ? 'true' : 'false'; ?>">
-      <span class="bhp-format-card__name"><?php esc_html_e('KINDLE', 'brave-hearts'); ?></span>
-      <?php /* No price: Amazon controls it and none is stored anywhere. */ ?>
-      <span class="bhp-format-card__price bhp-format-card__price--external"><?php esc_html_e('VIEW ON AMAZON', 'brave-hearts'); ?></span>
-    </button>
-    <?php endif; ?>
+    <?php
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THE KINDLE CHIP IS GONE
+     *     FROM THE CHOOSE YOUR FORMAT RAIL.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * The SUPERSEDED markup, preserved verbatim rather than deleted, because a
+     * future reader needs to see that the chip existed and was removed on
+     * purpose:
+     *
+     *   <?php if ($data['kindle']['url']): ?>
+     *   <button type="button" class="bhp-format-card<?php echo 'kindle' === $initial ? ' is-selected' : ''; ?>" data-bhp-format="kindle" aria-pressed="<?php echo 'kindle' === $initial ? 'true' : 'false'; ?>">
+     *     <span class="bhp-format-card__name">KINDLE</span>
+     *     <span class="bhp-format-card__price bhp-format-card__price--external">VIEW ON AMAZON</span>
+     *   </button>
+     *   <?php endif; ?>
+     *
+     * ⭐ WHY: the rail is headed CHOOSE YOUR FORMAT and every other chip in it
+     *    is a control that changes what the button beside it will add to the
+     *    cart. The Kindle chip was the one chip that could not do that: it
+     *    swapped the primary CTA into an outbound link and sent the visitor to
+     *    another retailer from inside the buy box. Kindle is not removed from
+     *    the site; it moves to the ONE quiet line below the buy box, added by
+     *    this same release further down this file.
+     *
+     * ⛔ THE FORMAT IS NOT REMOVED FROM THE PAYLOAD. `$bhp_format_payload`
+     *    still carries its `kindle` entry, deliberately:
+     *      · `bhp_book_incoming_format()` still accepts `?bhp_format=kindle`
+     *        as a whitelisted value, and `$bhp_initial_conf` reads the payload
+     *        by that key. Dropping the entry would send such a URL down the
+     *        null-conf fallback path instead of resolving normally.
+     *      · `book-formats.js` acts on `[data-bhp-format]` CARDS, not on
+     *        payload keys, and returns early on an empty card list. With no
+     *        Kindle card there is nothing to select, so the entry is inert.
+     *      · `tests/test-book-formats.php` asserts the payload carries all four
+     *        formats. That assertion is about the DATA CONTRACT, not about the
+     *        rail, and it is still true, so it is left standing untouched.
+     *    Removing data that nothing renders is a second change, and this brief
+     *    is capped at two.
+     *
+     * ⛔ `.bhp-format-card__price--external` KEEPS ITS CSS RULES, inert, for
+     *    the same reason `bhp-landing-guarantee__sep` kept its: a revert is
+     *    then a one-file change.
+     */
+    ?>
 
     <?php
     /*
@@ -1093,6 +1154,93 @@ $bhp_rail_single = !empty($data['rail_single']);
       echo '</div>';
   }
   ?>
+
+  <?php
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * ⭐⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — ONE QUIET AMAZON LINE,
+   *     AND IT IS THE ONLY ONE ON THE PAGE.
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * ⭐ THE BRIEF: reduce every "Buy on Amazon" occurrence on a product page to
+   *    ONE quiet text line below the format row and the price/CTA block. This
+   *    is that line. The second half of the same change retires the
+   *    "Also Available on Amazon" block that used to render far down the page
+   *    (`bhp_woocommerce_product_amazon_section()` in `functions.php`), so
+   *    what was FOUR Amazon buy mentions on a chapter PDP is now one.
+   *
+   *    MEASURED on staging 1.19.358 before the change, at an asserted
+   *    innerWidth of 1440, on the Mariana paperback PDP:
+   *      y=500   SPAN.bhp-format-card__price--external   "VIEW ON AMAZON"
+   *      y=7299  H3.amazon-affiliate-block__heading      "Also Available on Amazon"
+   *      y=7335  P.amazon-affiliate-block__text          "Buy on Amazon for familiar..."
+   *      y=7395  A.amazon-affiliate-block__button        "Buy on Amazon"
+   *    The four `A.amazon-review-card__link` "Read on Amazon" links at y=4450
+   *    are NOT in that count and are NOT touched: they are the attribution
+   *    links on REAL customer reviews, not a place to buy, and rewriting or
+   *    removing them would touch evidence this company never edits.
+   *
+   * ⛔ THE URL IS NOT A NEW ONE, AND THAT IS THE POINT. `$data['kindle']['url']`
+   *    is built in `inc/book-formats.php` from `bhp_get_amazon_affiliate_url()`
+   *    — the same approved, book-level `amzn.to` target the removed chip used
+   *    and the same one the removed block used. So the Kindle edition stays
+   *    reachable through this line, no second link table exists, and a title
+   *    with no approved link (the colouring book, whose Kindle url is empty by
+   *    design) renders no line at all rather than a placeholder or a search.
+   *
+   * ⛔ IT CANNOT MOVE THE CTA. The node is the LAST child of the format block
+   *    in document order, after the price, the CTA, the spec line, the
+   *    shipping note and the guarantee, and on mobile it is given the last
+   *    `order` slot in `product-template.css`. Nothing above it can shift.
+   *    Measured before and after at 1440 and at 375; see the 359 QA evidence.
+   *
+   * ⚠ POSITION IS A JUDGEMENT AND IS FLAGGED RATHER THAN HIDDEN. The brief
+   *   says "below the format row and price/CTA block", which the slot BEFORE
+   *   the guarantee also satisfies. It is placed AFTER the guarantee so the
+   *   buy box reads price -> button -> shipping -> guarantee with nothing
+   *   inserted between them, and the one off-ramp sits below the whole box.
+   *   Moving it one node up is a single-block move in this file and no CSS
+   *   change beyond one `order` value. Andrew's call, not this desk's.
+   *
+   * ⛔ NO SEPARATE DISCLOSURE LINE IS ADDED, AND THE PAGE IS NOT LEFT WITHOUT
+   *    ONE. The retired block carried `bhp_get_amazon_disclosure_text()`.
+   *    VERIFIED BY READING `footer.php` line 129, not assumed: the identical
+   *    sentence, "As an Amazon Associate, Brave Hearts Publishing earns from
+   *    qualifying purchases.", is already rendered sitewide in the footer of
+   *    every page including this one, and it is confirmed present on the
+   *    rendered product page in the 359 capture. A second copy would be a
+   *    second line, and the brief asks for one.
+   *
+   * ⛔ `rel="sponsored nofollow"` AND `target="_blank"` are carried over from
+   *    the removed control unchanged, as are the outbound-click analytics
+   *    attributes, so the `amazon_outbound_click` series does not break at
+   *    this release. `data-bhp-source` keeps the removed block's own value,
+   *    `product_page`, so the series is continuous rather than restarted.
+   *
+   * ⛔ THE VISIBLE LABEL IS THE WHOLE ACCESSIBLE NAME. `CYCLE144-LD-220` was a
+   *    real WCAG 2.5.3 failure on the removed button, caused by an
+   *    `aria-label` that interpolated the title into the middle of the visible
+   *    phrase. This control carries NO `aria-label` at all, so the two cannot
+   *    disagree. There is exactly one such link on the page, so nothing needs
+   *    a title to tell it from another.
+   *
+   * ⛔ NO EM DASH. NO "we", "us" or "our". Founder voice, and the sentence
+   *    makes no claim about price, delivery or availability that would need a
+   *    source.
+   */
+  $bhp_amazon_line_url = isset($data['kindle']['url']) ? (string) $data['kindle']['url'] : '';
+  if ('' !== $bhp_amazon_line_url) :
+  ?>
+  <p class="bhp-formats__amazon">
+    <a class="bhp-formats__amazon-link"
+       href="<?php echo esc_url($bhp_amazon_line_url); ?>"
+       target="_blank"
+       rel="noopener nofollow sponsored"
+       data-bhp-event="amazon_outbound_click"
+       data-bhp-book="<?php echo esc_attr(isset($data['key']) ? (string) $data['key'] : ''); ?>"
+       data-bhp-source="product_page"><?php esc_html_e('Prefer Amazon? The books are there too.', 'brave-hearts'); ?></a>
+  </p>
+  <?php endif; ?>
 
   <?php /* Per-format data for the selector. Prices are rendered server-side
            above; these payloads carry only IDs, URLs and already-escaped

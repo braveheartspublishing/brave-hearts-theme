@@ -5829,7 +5829,41 @@ function bhp_woocommerce_product_amazon_section() {
         'format'  => $format,
     ]);
 }
-add_action('woocommerce_after_single_product_summary', 'bhp_woocommerce_product_amazon_section', 30);
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — THIS BLOCK NO LONGER RENDERS
+ *     ON A PRODUCT PAGE. THE HOOK IS UNREGISTERED; THE FUNCTION IS KEPT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * The SUPERSEDED registration, preserved verbatim rather than deleted:
+ *
+ *     add_action('woocommerce_after_single_product_summary', 'bhp_woocommerce_product_amazon_section', 30);
+ *
+ * ⭐ THE BRIEF: a product page carries ONE Amazon mention, not four. That one
+ *    mention is now the quiet line inside the buy box, added by this same
+ *    release in `template-parts/commerce/format-cards.php`. This block was
+ *    three of the other four (heading, sentence, button), measured on staging
+ *    1.19.358 at y=7299 / 7335 / 7395 at an asserted innerWidth of 1440.
+ *
+ * ⛔ THE FUNCTION ABOVE IS NOT DELETED AND ITS BEHAVIOUR IS UNCHANGED. Removing
+ *    the registration is the smallest reversible edit that produces the
+ *    briefed result: re-adding one line restores the block exactly.
+ *
+ * ⛔ `bhp_render_amazon_affiliate_section()` ITSELF IS UNTOUCHED AND ITS OTHER
+ *    TWO CALLERS STILL RENDER, because neither is a product page and neither is
+ *    in this brief:
+ *      · `template-parts/books/adventure-book-card.php` (the /books/ cards)
+ *      · `inc/class-bhp-campaign-landing.php` (the `amazon_alt` block)
+ *
+ * ⛔ THE AMAZON REVIEW SHOWCASE, THE KIRKUS BLOCK AND THE TRUST ROW ARE NOT
+ *    TOUCHED. The showcase's "Read on Amazon" links are attribution on REAL
+ *    customer reviews, not a place to buy; they are outside the count this
+ *    change reduces and outside this brief.
+ *
+ * ⛔ THE SITEWIDE AMAZON ASSOCIATES DISCLOSURE IS NOT LOST WITH THIS BLOCK.
+ *    VERIFIED BY READING `footer.php` line 129, not assumed: the same sentence
+ *    renders in the footer of every page, this one included.
+ */
 
 /**
  * Phase 1D: Adventure Kit lead-magnet cross-sell, added at the very end

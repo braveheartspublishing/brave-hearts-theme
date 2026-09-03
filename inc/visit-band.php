@@ -111,19 +111,71 @@ function bhp_visit_band_request_slug() {
  * @param array|null $live    The resolver's answer for `$slug`: the row while
  *                            ordering is open, null once it has closed.
  * @param array|null $session The session's live visit, or null.
+ * @param array|null $after   1.19.357: the AFTER-VISIT record for `$slug`, or
+ *                            null. Optional and defaulting to null, so every
+ *                            1.19.353 call site and every existing assertion
+ *                            keeps its answer byte for byte.
+ * @param array|null $session_after 1.19.357: the session's after-visit record,
+ *                            or null. Optional for the same reason.
  * @return array{state:string, record:array|null}
  */
-function bhp_visit_band_decide($slug, $named, $live, $session) {
+function bhp_visit_band_decide($slug, $named, $live, $session, $after = null, $session_after = null) {
     // ⭐ THE URL WINS, and only when it actually names a registered visit.
     if ('' !== (string) $slug && is_array($named) && !empty($named['school'])) {
-        return (is_array($live) && !empty($live['school']))
-            ? ['state' => 'open',   'record' => $live]
-            : ['state' => 'closed', 'record' => $named];
+        if (is_array($live) && !empty($live['school'])) {
+            return ['state' => 'open', 'record' => $live];
+        }
+
+        /*
+         * ⭐⭐⭐ 1.19.357 (`CYCLE179-LD-357`) — THE THIRD STATE, AND ITS POSITION
+         *     BETWEEN `open` AND `closed` IS THE WHOLE OF ITS SAFETY.
+         *
+         * ⛔ IT CANNOT PRE-EMPT `open`. The entitlement branch above has already
+         *    returned by the time this line is reached, so a visit that is still
+         *    taking hand-delivery orders cannot be described as one whose
+         *    read-aloud has happened, even if a future edit made the plugin's two
+         *    window predicates overlap.
+         *
+         * ⭐ AND IT DOES NOT SWALLOW `closed`. The plugin's after-window opens at
+         *    00:00 on the VISIT date while ordering closes at 00:00 on `visit - 1`,
+         *    so exactly one day — `visit - 1` — falls through to the closed band
+         *    below. That day the books are already packed for hand delivery and
+         *    the read-aloud has not happened, so neither of the other two
+         *    sentences would be a true thing to print.
+         *
+         * ⛔ IT GRANTS NOTHING, exactly as the closed branch grants nothing. The
+         *    record comes from `bhp_school_visit_resolve_after()`, which the
+         *    plugin keeps deliberately outside the entitlement chain: no session
+         *    entitlement is created here, no shipping method appears, no counter
+         *    renders and no format gate opens. It is a sentence and a link.
+         */
+        if (is_array($after) && !empty($after['school'])) {
+            return ['state' => 'after', 'record' => $after];
+        }
+
+        return ['state' => 'closed', 'record' => $named];
     }
 
     // The session, unchanged from 1.19.352.
     if (is_array($session) && !empty($session['school'])) {
         return ['state' => 'open', 'record' => $session];
+    }
+
+    /*
+     * ⭐ 1.19.357 — THE AFTER-VISIT SESSION, READ LAST. It is what keeps the
+     *    thank-you band on the page for a parent who arrived through the
+     *    school's link and then browsed on to a category archive or a product,
+     *    where the URL no longer carries the slug. It is the exact counterpart
+     *    of the entitlement session above and it is read in the same position,
+     *    after the URL has had its say.
+     *
+     * ⛔ IT IS BELOW THE ENTITLEMENT SESSION AND THAT ORDER IS DELIBERATE, even
+     *    though the plugin makes the two flags mutually exclusive on arrival.
+     *    If a session ever held both, the one that can grant something is the
+     *    one whose sentence has to be on the page.
+     */
+    if (is_array($session_after) && !empty($session_after['school'])) {
+        return ['state' => 'after', 'record' => $session_after];
     }
 
     return ['state' => 'none', 'record' => null];
@@ -232,6 +284,7 @@ function bhp_visit_band_state() {
     $slug  = bhp_visit_band_request_slug();
     $named = null;
     $live  = null;
+    $after = null;
 
     if ('' !== $slug && function_exists('bhp_school_visit_records')) {
         $records = bhp_school_visit_records();
@@ -240,6 +293,19 @@ function bhp_visit_band_state() {
             $named = $records[$slug];
             $live  = function_exists('bhp_school_visit_resolve')
                 ? bhp_school_visit_resolve($slug)
+                : null;
+            /*
+             * ⭐ 1.19.357 — the after-visit window, asked of the PLUGIN rather
+             *    than re-derived here. Two places computing the same window is
+             *    precisely how `/author-visits/` and the shop band came to state
+             *    two different deadlines for one visit at 1.19.350, and that
+             *    lesson is not re-learned. `function_exists()` guarded like every
+             *    other plugin call in this file: on a site running theme 1.19.357
+             *    against bundle plugin 1.8.81 or older the third state simply
+             *    never occurs and the band behaves exactly as it did at 1.19.356.
+             */
+            $after = function_exists('bhp_school_visit_resolve_after')
+                ? bhp_school_visit_resolve_after($slug)
                 : null;
         }
     }
@@ -256,7 +322,17 @@ function bhp_visit_band_state() {
         ? bhp_school_visit_active()
         : null;
 
-    $out = bhp_visit_band_decide($slug, $named, $live, $session);
+    /*
+     * ⭐ 1.19.357 — the after-visit session, read under the SAME condition as
+     *    the entitlement session above: only when the URL named no registered
+     *    visit. It cannot cause a session read that 1.19.356 would not already
+     *    have made on the same request.
+     */
+    $session_after = (null === $named && function_exists('bhp_school_visit_after_active'))
+        ? bhp_school_visit_after_active()
+        : null;
+
+    $out = bhp_visit_band_decide($slug, $named, $live, $session, $after, $session_after);
 
     /**
      * The visit band's state for this request.
@@ -441,6 +517,102 @@ function bhp_visit_band_order_by_line(array $record) {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.19.357 — THE AFTER-VISIT SENTENCE. ONE FUNCTION, ONE PLACE.
+ *      `CYCLE179-LD-357`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠️⚠️ THESE WORDS ARE **PENDING ANDREW'S APPROVAL** AND THAT IS RECORDED HERE
+ *     RATHER THAN ONLY IN THE BUILD REPORT. The `chief-of-staff` brief supplies them as
+ *     a build-with-these draft: *"Thank you for having me at <school> today.
+ *     Books can still be ordered here and shipped to your home."* with "today"
+ *     on the visit date and "on <date>" afterwards. They are gathered in ONE
+ *     function precisely so that changing them is a one-line edit and never a
+ *     hunt through markup.
+ *
+ * ⛔ IT PROMISES ONLY WHAT THE ORDER CAN KEEP. Ordinary shipping, ordinary
+ *    formats, ordinary timing. ⛔ No coupon, no discount, no urgency, no
+ *    deadline, no counter, no "last chance", no outcome claim, no reaction
+ *    attributed to anyone. ⛔ No "we" (Standing Rules 9.1). ⛔ No em dash
+ *    (rule 608a).
+ *
+ * ⛔ IT NAMES NO SCHOOL OF ITS OWN. The school is the record's, and the record
+ *    is the registry's. Nothing here can print a school name the plugin would
+ *    not print.
+ *
+ * ⭐ "TODAY" IS ONLY EVER PRINTED ON THE DAY. `bhp_school_visit_today()` is the
+ *    plugin's one movable clock, the same one the deadline sentence uses, so a
+ *    suite can stand on either side of the boundary without waiting for a
+ *    Thursday. ⛔ WITH NO CLOCK AND NO USABLE DATE THE SENTENCE FAILS TO THE
+ *    DATELESS FORM rather than to a wrong one: it drops the time reference
+ *    entirely and still states the offer, because "Thank you for having me at
+ *    X today" on the wrong day is a false statement while "Thank you for having
+ *    me at X" is simply a shorter true one.
+ *
+ * @since 1.19.357
+ * @param array $record Visit record: needs `school`, optionally `date`.
+ * @return string The full sentence, ready to escape.
+ */
+function bhp_visit_band_after_line(array $record) {
+    $school = isset($record['school']) ? (string) $record['school'] : '';
+    if ('' === $school) {
+        return '';
+    }
+
+    $offer = __('Books can still be ordered here and shipped to your home.', 'brave-hearts');
+
+    $date  = isset($record['date']) ? (string) $record['date'] : '';
+    $today = function_exists('bhp_school_visit_today') ? (string) bhp_school_visit_today() : '';
+
+    if ('' !== $date && '' !== $today && $date === $today) {
+        return sprintf(
+            /* translators: 1: school name, 2: the sentence offering shipped books. */
+            __('Thank you for having me at %1$s today. %2$s', 'brave-hearts'),
+            $school,
+            $offer
+        );
+    }
+
+    $ts    = ('' !== $date) ? strtotime($date . ' 12:00:00') : false;
+    $human = $ts ? wp_date('l, F j', $ts) : '';
+
+    if ('' !== $human) {
+        return sprintf(
+            /* translators: 1: school name, 2: a date, e.g. Thursday, September 3. 3: the sentence offering shipped books. */
+            __('Thank you for having me at %1$s on %2$s. %3$s', 'brave-hearts'),
+            $school,
+            $human,
+            $offer
+        );
+    }
+
+    // ⛔ FAILS TO THE DATELESS FORM. No usable date, no date claim.
+    return sprintf(
+        /* translators: 1: school name, 2: the sentence offering shipped books. */
+        __('Thank you for having me at %1$s. %2$s', 'brave-hearts'),
+        $school,
+        $offer
+    );
+}
+
+/**
+ * ⭐ 1.19.357 — the label the after-visit link carries, in one place.
+ *
+ * ⛔ IT SAYS "SHIPPED" AND NOT "SIGNED". The pre-visit button says *"Order
+ *    signed books for this visit"* because Andrew signs those books in person
+ *    on the day. An after-visit order goes to the print partner and is posted,
+ *    so nobody signs it, and a label that promised otherwise would be a promise
+ *    the order cannot keep. That is the single most important word in this
+ *    file's copy and it is stated here so it cannot be "improved" back.
+ *
+ * @since 1.19.357
+ * @return string
+ */
+function bhp_visit_band_after_link_label() {
+    return __('Order books shipped to your home', 'brave-hearts');
+}
+
+/**
  * ⭐⭐ THE BAND. First element below the header, above the catalog band.
  *
  * ⛔ `R11` BY CONSTRUCTION: on an unflagged session `bhp_visit_band_state()`
@@ -469,6 +641,49 @@ function bhp_visit_band_render() {
     }
 
     $school = (string) $record['school'];
+
+    if ('after' === $state['state']) {
+        /*
+         * ⭐⭐⭐ 1.19.357 (`CYCLE179-LD-357`) — THE AFTER-VISIT BAND.
+         *
+         * Andrew Signore, RELAYED through the `chief-of-staff` brief and NOT
+         * witnessed first-hand by this agent (Standing Rules 9.2 rule 2), seal
+         * 868: *"we need to reopen the link to schools after but only for
+         * shipping instead of hand delivery and they should not have an
+         * inventory on them after the date of the read aloud."*
+         *
+         * ⭐ WHAT IS ON THIS BAND: the school, a thank you, and the fact that
+         *    books can still be ordered and posted. ⛔ WHAT IS NOT, AND MUST
+         *    NEVER BE: a deadline, a counter, a remaining-stock number, a
+         *    hand-delivery promise, a coupon, a discount, an "only N left", a
+         *    reaction from anybody, or any claim about how the read-aloud went.
+         *
+         * ⛔ THE ABSENCE OF THE COUNTERS ON THIS PAGE IS NOT THIS MARKUP'S
+         *    DOING AND MUST NOT BE ASSUMED TO BE. The counters are the plugin's
+         *    and they render off the ENTITLEMENT session, which
+         *    `bhp_school_visit_resolve()` has already refused for this visit.
+         *    This band renders in a request where that chain is dead. The
+         *    suite asserts the absence against the served HTML rather than
+         *    trusting either half of that sentence.
+         *
+         * ⭐ NO `bhp-visit-active` BODY CLASS EITHER, and for the same reason:
+         *    `bhp_visit_band_body_class()` asks `bhp_school_visit_active()`,
+         *    which is null here. The card keeps its unflagged geometry because
+         *    it carries no counter line to pay for.
+         */
+        $line = bhp_visit_band_after_line($record);
+        ?>
+        <aside class="bhp-visit-band bhp-visit-band--after" role="status">
+          <div class="bhp-visit-band__inner">
+            <p class="bhp-visit-band__school"><?php echo esc_html($school); ?></p>
+            <?php if ('' !== $line): ?>
+              <p class="bhp-visit-band__line"><?php echo esc_html($line); ?></p>
+            <?php endif; ?>
+          </div>
+        </aside>
+        <?php
+        return;
+    }
 
     if ('closed' === $state['state']) {
         /*

@@ -1,5 +1,5 @@
 /*! Built from product-template.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 3312c63b4db8ce813db4c2b4a7b71e2b
+    source-md5: 8251088ff55fa5157ef38cc0df3dce86
     Comments stripped for transfer size; the source file is canonical. */
 @media (max-width: 600px) {
 body.single-product.woocommerce div.product {
@@ -113,6 +113,7 @@ body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__c
 	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__spec     { grid-row: 4; grid-column: 1 / -1; }
 	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__note     { grid-row: 5; grid-column: 1 / -1; }
 	body.single-product.woocommerce div.product .bhp-formats--single .bhp-product-guarantee { grid-row: 6; grid-column: 1 / -1; }
+body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__amazon    { order: 9; grid-row: 7; grid-column: 1 / -1; }
 body.single-product.woocommerce .woo-expedition-shell {
 		padding-top: 20px;
 	}
@@ -127,6 +128,7 @@ body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="ki
 		margin-top: 10px;
 	}
 body.single-product.woocommerce div.product .bhp-product-guarantee { order: 8; }
+body.single-product.woocommerce div.product .bhp-formats__amazon { order: 9; }
 body.single-product.woocommerce div.product .bhp-formats__heading {
 		margin: 0 0 0.55rem;
 		font-size: 0.72rem;

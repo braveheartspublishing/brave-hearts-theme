@@ -903,8 +903,20 @@ get_template_part('template-parts/components/hero', null, [
  *    "Or read about the collection first" link directly beneath the CTA
  *    for a visitor who wants to read before buying (the B7 pattern).
  */
+/*
+ * ⭐ 1.19.359 (2026-09-03, `CYCLE179-LD-359`) — `guarantee => true` is the ONLY
+ *    thing added to this call. It renders the existing 30-Day Guarantee
+ *    sentence beneath the band's CTA, through the bundle plugin's own
+ *    renderer, so the bytes match the product pages and /complete-collection/.
+ *    See the note beside the render in the component itself.
+ *
+ * ⛔ `page-books.php` DELIBERATELY DOES NOT PASS IT. The flag defaults to
+ *    false, so /books/ renders the band exactly as it did in 1.19.358. The
+ *    brief names the homepage and caps the work at two items.
+ */
 get_template_part('template-parts/components/complete-collection-feature', null, [
-    'cta' => 'checkout',
+    'cta'       => 'checkout',
+    'guarantee' => true,
 ]);
 ?>
 

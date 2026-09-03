@@ -392,6 +392,151 @@ if ( ! defined( 'BHP_SCHOOL_PICKUP_ITEM_META_DATE' ) ) {
 }
 
 /* =========================================================================
+ * ⭐⭐⭐ 1.8.82 — THE AFTER-VISIT PHASE. `CYCLE179-LD-357`.
+ * ====================================================================== */
+
+/**
+ * ⭐⭐⭐ THE THIRD STATE, AND WHY IT IS A SECOND, PARALLEL FLAG RATHER THAN A
+ *     WIDENING OF THE ONE THAT ALREADY EXISTS.
+ *
+ * Andrew Signore, verbatim, RELAYED through the `chief-of-staff` brief
+ * `CYCLE179-LD-357` (founder direction seal 868) and NOT witnessed first-hand
+ * by this agent:
+ *
+ *   *"we need to reopen the link to schools after but only for shipping instead
+ *   of hand delivery and they should not have an inventory on them after the
+ *   date of the read aloud. So if we had a read aloud today 9/3 - it should open
+ *   back up for parents to move through that funnel, not see the inventory and
+ *   be able to purchase books only via shipping"*
+ *
+ * ⛔⛔ THE ONE DESIGN DECISION THAT MATTERS, AND IT IS A SAFETY ARGUMENT RATHER
+ *     THAN AN AESTHETIC ONE. The obvious implementation is to let
+ *     `bhp_school_visit_resolve()` keep returning a record after the visit and
+ *     to add a phase field to it. ⛔ THAT WOULD BE WRONG AND IT WOULD BE
+ *     DANGEROUS. `resolve()` is the ENTITLEMENT GATE. Everything downstream of
+ *     it — hand delivery, the shelf counters, the "Only N left" line, the
+ *     paperback-only restriction, the backorder behaviour, the withheld
+ *     deferred-payment gateways, the Bookvault webhook block — reaches it
+ *     through exactly one chain:
+ *
+ *       bhp_school_visit_active()  ->  bhp_school_visit_request_record()
+ *                                  ->  bhp_school_visit_use_delivery_framing()
+ *                                  ->  bhp_school_visit_paperback_only()
+ *
+ *     Widening `resolve()` would hand the after-visit parent EVERY ONE of those
+ *     at once, and the founder instruction is that they get NONE of them. Each
+ *     would then have to be individually switched off, and the failure mode of
+ *     forgetting one is a parent being offered hand delivery for a visit that
+ *     already happened, or an order that never reaches the printer.
+ *
+ * ⭐⭐ SO NOTHING IN THAT CHAIN IS TOUCHED. `bhp_school_visit_resolve()`,
+ *     `bhp_school_visit_is_open_on()`, `bhp_school_visit_last_order_date()` and
+ *     `bhp_school_visit_active()` behave in 1.8.82 exactly as they behaved in
+ *     1.8.81, byte for byte. The after-visit phase is a SEPARATE session key
+ *     that NOTHING in the entitlement chain reads. It carries a slug for
+ *     ATTRIBUTION and it lets the band print a sentence. It cannot grant
+ *     anything, because nothing that grants anything asks it.
+ *
+ * ⛔ WHICH MEANS THE ABSENCE OF THE COUNTERS, THE HAND-DELIVERY OPTION AND THE
+ *    PAPERBACK-ONLY GATE IN THIS PHASE IS NOT A FEATURE THIS RELEASE BUILT. It
+ *    is the behaviour the site has ALREADY had on every post-close request
+ *    since 1.8.56, unchanged and unreachable from here. This release adds the
+ *    band, the link and the attribution; it removes nothing, because there was
+ *    nothing left to remove.
+ *
+ * ⭐ THE BOUNDARY, STATED EXACTLY. The phase is live for every site-local date
+ *    `D` where `visit <= D <= visit + BHP_SCHOOL_VISIT_AFTER_DAYS`, inclusive at
+ *    both ends. The site timezone is `America/Boise` (read live on staging
+ *    2026-09-03, not assumed), so it opens at 00:00 Boise time on the morning of
+ *    the read-aloud and the whole comparison runs through
+ *    `bhp_school_visit_today()`, the one movable clock, so a suite can stand on
+ *    either side of either boundary without waiting for a Thursday and WITHOUT
+ *    WRITING THE REGISTRY.
+ *
+ * ⚠️⚠️ 1.8.83 (2026-09-03, `CYCLE179-LD-358`) — THE SENTENCE ABOVE IS
+ *    SUPERSEDED IN ITS UPPER HALF ONLY, AND IS PRESERVED VERBATIM SO THE
+ *    MOVEMENT IS VISIBLE RATHER THAN RE-DERIVED. ⛔ THERE IS NO UPPER BOUND
+ *    ANY MORE. The phase is live for every site-local date `D` where
+ *    `visit <= D`, with NO END. Andrew Signore ruled it, RELAYED through the
+ *    `chief-of-staff` and NOT witnessed first-hand by this agent (Standing
+ *    Rules 9.2 rule 2), seal 870: the after-visit state stays open
+ *    INDEFINITELY. ⭐ THE OPENING BOUND IS BYTE-UNCHANGED: `visit <= D` still
+ *    opens at 00:00 site time on the morning of the read-aloud, still runs
+ *    through `bhp_school_visit_today()`, and `visit - 1` is still the closed
+ *    band described below.
+ *
+ * ⚠️ THE ONE DAY THAT IS NOT IN ANY OF THE THREE STATES IS `visit - 1`, AND
+ *    THAT IS DELIBERATE. Ordering closes at 00:00 on `visit - 1` (1.8.56) and
+ *    the read-aloud is the next morning, so `visit - 1` remains the CLOSED
+ *    state the 1.19.351 band already prints. The brief says so in as many
+ *    words: *"between cutoff and the visit date the existing closed state
+ *    stays"*.
+ *
+ * ⛔ 1.8.83: AND `visit - 1` IS NOW THE **ONLY** DAY IN NEITHER STATE, for
+ *    ever. Before 1.8.83 there were two kinds of gap day: `visit - 1`, and
+ *    every day past the window's end. The second kind no longer exists,
+ *    because the window has no end.
+ */
+/**
+ * ⭐⭐ 1.8.83 — THE AFTER-VISIT WINDOW LENGTH. `0` MEANS NO LIMIT, AND THAT IS
+ *    THE DEFAULT.
+ *
+ * ⛔ THE SEMANTICS, STATED ONCE, HERE, BECAUSE EVERYTHING ELSE READS THEM:
+ *      `0`  (and any value below 1)  = UNLIMITED. There is no end date at all.
+ *      `>= 1`                        = that many whole days after the visit,
+ *                                      inclusive at both ends.
+ *
+ * ⭐ THE CONSTANT AND THE FILTER SURVIVE 1.8.83 ONLY BECAUSE THEY CAN EXPRESS
+ *    "UNLIMITED" CLEANLY. The brief's test was exactly that, and `0` passes it:
+ *    it is a value the constant could already hold, it needs no second constant
+ *    and no sentinel string, and it reads correctly in the one place a reader
+ *    looks. Had "unlimited" needed a special case in every caller, the right
+ *    answer would have been to delete both and hard-code the open-ended rule.
+ *
+ * ⚠️⚠️ SUPERSEDED, PRESERVED VERBATIM: `define( 'BHP_SCHOOL_VISIT_AFTER_DAYS',
+ *    30 );`. 1.8.82 shipped a 30-day window because the founder had not ruled
+ *    on the number. He has now, and the number is "no number".
+ */
+if ( ! defined( 'BHP_SCHOOL_VISIT_AFTER_DAYS' ) ) {
+	define( 'BHP_SCHOOL_VISIT_AFTER_DAYS', 0 );
+}
+/**
+ * ⭐ The after-visit session key. A SECOND key, deliberately not the first.
+ *
+ * ⛔ IT IS NEVER READ BY `bhp_school_visit_active()`, by
+ *    `bhp_school_visit_request_record()`, or by anything downstream of them.
+ *    `tests/test-cycle179-after-visit-357.php` greps for exactly that and fails
+ *    on a match, so the separation is asserted rather than merely intended.
+ */
+if ( ! defined( 'BHP_SCHOOL_VISIT_AFTER_SESSION_KEY' ) ) {
+	define( 'BHP_SCHOOL_VISIT_AFTER_SESSION_KEY', 'bhp_school_visit_after' );
+}
+/** The moment the after-visit flag was set. Same shape, same TTL, second key. */
+if ( ! defined( 'BHP_SCHOOL_VISIT_AFTER_SET_AT_SESSION_KEY' ) ) {
+	define( 'BHP_SCHOOL_VISIT_AFTER_SET_AT_SESSION_KEY', 'bhp_school_visit_after_set_at' );
+}
+/**
+ * ⭐ THE PHASE MARKER ON THE ORDER, and it is the reason attribution survives.
+ *
+ * Andrew's brief asks for *"the bhp_visit slug on the order plus a post-visit
+ * marker"*. An after-visit order is an ORDINARY shipped order in every other
+ * respect: it is not hand delivery, it is NOT excluded from the print partner,
+ * and it must never carry `BHP_SCHOOL_PICKUP_META_FLAG`, which is what the
+ * Bookvault webhook block keys on. This field is how the school is credited
+ * without any of that.
+ */
+if ( ! defined( 'BHP_SCHOOL_VISIT_META_PHASE' ) ) {
+	define( 'BHP_SCHOOL_VISIT_META_PHASE', '_bhp_school_visit_phase' );
+}
+/** The two values `BHP_SCHOOL_VISIT_META_PHASE` may hold. Nothing else. */
+if ( ! defined( 'BHP_SCHOOL_VISIT_PHASE_PICKUP' ) ) {
+	define( 'BHP_SCHOOL_VISIT_PHASE_PICKUP', 'pickup' );
+}
+if ( ! defined( 'BHP_SCHOOL_VISIT_PHASE_AFTER' ) ) {
+	define( 'BHP_SCHOOL_VISIT_PHASE_AFTER', 'after' );
+}
+
+/* =========================================================================
  * THE REGISTRY
  * ====================================================================== */
 
@@ -554,6 +699,207 @@ function bhp_school_visit_is_open_on( $visit_date, $today ) {
 		return true;
 	}
 	return $today <= $last;
+}
+
+/**
+ * ⭐ 1.8.82 — how many days the AFTER-VISIT phase lasts. `CYCLE179-LD-357`.
+ *
+ * ⚠️⚠️ 1.8.83 (2026-09-03, `CYCLE179-LD-358`) — THE ANSWER IS NOW `null`, AND
+ *    `null` MEANS UNLIMITED. Andrew Signore ruled the after-visit state stays
+ *    open INDEFINITELY (seal 870, RELAYED through the `chief-of-staff` and NOT
+ *    witnessed first-hand by this agent, Standing Rules 9.2 rule 2).
+ *
+ * ⭐⭐ THE RETURN TYPE CHANGED AND THAT IS THE WHOLE OF THE CHANGE:
+ *      `null`  = NO LIMIT. There is no end date. THIS IS THE DEFAULT.
+ *      `int`   = that many whole days, >= 1, inclusive at both ends.
+ *    No caller may treat `null` as `0` days, and PHP would if it were compared
+ *    loosely, so every read of this value in this file is `null === $x`.
+ *
+ * ⛔⛔ THE FAILURE DIRECTION IS DELIBERATELY INVERTED FROM 1.8.82, and this is
+ *    the one thing worth reading twice. 1.8.82 discarded a bad filter value
+ *    back to 30 days, reasoning that "a broken hook cannot leave a school's
+ *    band on the shop page forever." FOREVER IS NOW THE RULING, so the same
+ *    reasoning points the other way: a broken hook must not be able to CLOSE a
+ *    window the founder ordered left open. A filtered value that is not a
+ *    positive integer is still DISCARDED; what it falls back to is the
+ *    unfiltered default, which is now unlimited.
+ *
+ * ⚠️ SUPERSEDED, PRESERVED VERBATIM SO THE MOVEMENT IS NOT RE-DERIVED. The
+ *    1.8.82 body read:
+ *
+ *        $days = defined( 'BHP_SCHOOL_VISIT_AFTER_DAYS' ) ? (int) BHP_SCHOOL_VISIT_AFTER_DAYS : 30;
+ *        if ( $days < 1 ) { $days = 30; }
+ *        ...
+ *        return ( is_int( $filtered ) && $filtered >= 1 ) ? $filtered : $days;
+ *
+ *    and its docblock said *"THIRTY, AND IT IS A CONSTANT PLUS A FILTER BECAUSE
+ *    THE FOUNDER HAS NOT RULED ON THE NUMBER YET."* He has now.
+ *
+ * @since 1.8.82
+ * @since 1.8.83 Returns `null` for unlimited; unlimited is the default.
+ * @return int|null Whole days >= 1, or `null` for no limit.
+ */
+function bhp_school_visit_after_days() {
+	$days = defined( 'BHP_SCHOOL_VISIT_AFTER_DAYS' ) ? (int) BHP_SCHOOL_VISIT_AFTER_DAYS : 0;
+	// ⛔ 0 and any negative both mean UNLIMITED. A negative is still nonsense,
+	//    but the harmless reading of nonsense is now "leave it open", which is
+	//    what the founder ruled, so it resolves the same way rather than
+	//    inventing a third behaviour.
+	$default = ( $days >= 1 ) ? $days : null;
+
+	if ( ! function_exists( 'apply_filters' ) ) {
+		return $default;
+	}
+
+	/**
+	 * How many days the after-visit ship-to-home phase lasts.
+	 *
+	 * ⛔ A RULING SEAM, not a configuration point. It changes how long a band
+	 *    prints and how long a link keeps its school context. It grants no
+	 *    entitlement, opens no gate, renders no counter, changes no shipping
+	 *    method and touches no price.
+	 *
+	 * ⭐ 1.8.83: RETURN `null` OR `0` FOR UNLIMITED, which is what it is handed
+	 *    and what it gets back if it returns anything unusable.
+	 *
+	 * @since 1.8.82
+	 * @param int|null $days Whole days after the visit date, inclusive, or
+	 *                       `null` for no limit.
+	 */
+	$filtered = apply_filters( 'bhp_school_visit_after_days', $default );
+
+	if ( null === $filtered ) {
+		return null;
+	}
+	if ( is_int( $filtered ) ) {
+		return ( $filtered >= 1 ) ? $filtered : null;
+	}
+
+	// Anything else is nonsense and is DISCARDED back to the unfiltered
+	// default, exactly as in 1.8.82. Only the default itself moved.
+	return $default;
+}
+
+/**
+ * ⭐ 1.8.82 — the LAST day the after-visit phase covers, inclusive.
+ *
+ * ⚠️⚠️ 1.8.83 — IT CAN NOW RETURN `null`, AND `null` IS NOT `''`. The two are
+ *    OPPOSITE answers and no caller may collapse them:
+ *
+ *      `null`   THERE IS NO END DAY. The window is unlimited. The phase is ON
+ *               for every day from the visit onward.
+ *      `''`     THE VISIT DATE IS UNUSABLE. Fail CLOSED. The phase is OFF.
+ *      `Y-m-d`  The last day inside a bounded window.
+ *
+ * ⛔ THE FAIL-CLOSED PROMISE FROM 1.8.82 IS UNCHANGED AND STILL BINDING: an
+ *    unusable visit date yields '' from `bhp_school_visit_shift_days()` and
+ *    every caller treats the phase as OFF. What 1.8.83 adds is a THIRD answer
+ *    for a case that could not arise before, not a loosening of that one.
+ *
+ * ⚠️ SUPERSEDED, PRESERVED VERBATIM: the 1.8.82 body was a single line,
+ *    `return bhp_school_visit_shift_days( $visit_date, bhp_school_visit_after_days() );`,
+ *    and its docblock promised *"@return string `Y-m-d`, or ''"*. Passing the
+ *    new `null` straight through to `bhp_school_visit_shift_days()` would have
+ *    been read as a 0-day shift and silently closed the window ON THE VISIT
+ *    DATE, which is the exact defect this branch exists to prevent.
+ *
+ * @since 1.8.82
+ * @since 1.8.83 Returns `null` when the window is unlimited.
+ * @param string $visit_date Registry `date`.
+ * @return string|null `Y-m-d`, '' when the date is unusable, or `null` when
+ *                     there is no end at all.
+ */
+function bhp_school_visit_after_end_date( $visit_date ) {
+	$days = bhp_school_visit_after_days();
+	if ( null === $days ) {
+		return null;
+	}
+	return bhp_school_visit_shift_days( $visit_date, $days );
+}
+
+/**
+ * ⭐⭐ 1.8.82 — is this day inside the AFTER-VISIT phase for this visit?
+ *
+ * ⭐ THE BOUNDARY IS INCLUSIVE AT BOTH ENDS AND THE OPENING END IS THE POINT.
+ *    `$today >= $visit_date` means the phase begins at 00:00 site time on the
+ *    morning of the read-aloud itself, which is what the founder instruction
+ *    asks for in as many words: *"if we had a read aloud today 9/3 - it should
+ *    open back up"*. The read-aloud happens during that day; the parents who
+ *    were in the room are the ones the link is for; so the day the link opens
+ *    is the day of the visit, not the day after it.
+ *
+ * ⛔ IT IS NOT THE COMPLEMENT OF `bhp_school_visit_is_open_on()` AND MUST NOT
+ *    BE READ AS ONE. Ordering closes at 00:00 on `visit - 1`, so the two
+ *    predicates leave EXACTLY ONE DAY — `visit - 1` — where neither is true.
+ *    That day is the CLOSED band, and it is deliberate: the books are already
+ *    packed for hand delivery and the read-aloud has not happened yet, so
+ *    neither sentence would be honest.
+ *
+ * ⛔ FAILS CLOSED IN BOTH DIRECTIONS. An unusable visit date returns false. An
+ *    empty `$today` also returns FALSE, and that is the opposite of what
+ *    `bhp_school_visit_is_open_on()` does with an empty `$today` on purpose:
+ *    there, no clock means "do not close a window on somebody"; here, no clock
+ *    means "do not assert that a read-aloud has already happened". The
+ *    conservative direction is different because the claim is different.
+ *
+ * ⚠️⚠️ 1.8.83 (2026-09-03, `CYCLE179-LD-358`) — THE UPPER BOUND IS GONE.
+ *    Andrew Signore ruled the after-visit state stays open INDEFINITELY (seal
+ *    870, RELAYED and NOT witnessed first-hand by this agent, Standing Rules
+ *    9.2 rule 2), and seal 874 adds that the state machine is GENERIC and
+ *    AUTOMATIC for every registry visit now and in future: open hand-delivery,
+ *    then the closed window, then ship-only from the visit date, with no
+ *    expiry and NO MANUAL SWITCH. ⭐ THAT LAST CLAUSE IS ALREADY SATISFIED BY
+ *    CONSTRUCTION AND IS WHY THIS FUNCTION DID NOT NEED RESHAPING: it decides
+ *    from `$visit_date` and `$today` alone. There is no per-school flag to
+ *    read, no registry column to set and nothing for anyone to remember to
+ *    switch on. Every row registered from now on gets this behaviour the day
+ *    it is entered.
+ *
+ * ⛔ WHAT DID NOT CHANGE, AND IS ASSERTED RATHER THAN ASSUMED: the OPENING
+ *    bound, both fail-closed branches, and the fact that this is NOT the
+ *    complement of `bhp_school_visit_is_open_on()`. `visit - 1` is still in
+ *    neither state. It is now the ONLY day in neither state.
+ *
+ * @since 1.8.82
+ * @since 1.8.83 No upper bound by default; `bhp_school_visit_after_days()`
+ *               returning `null` means the phase never ends.
+ * @param string $visit_date Registry `date`.
+ * @param string $today      `Y-m-d` in the site's timezone.
+ * @return bool
+ */
+function bhp_school_visit_is_after_on( $visit_date, $today ) {
+	if ( ! bhp_school_visit_is_ymd( (string) $visit_date ) ) {
+		return false;
+	}
+	$today = (string) $today;
+	if ( '' === $today ) {
+		return false;
+	}
+	// `Y-m-d` strings compare correctly as strings, the same property
+	// `bhp_school_visit_is_open_on()` already relies on.
+	//
+	// ⭐ THE OPENING BOUND IS TESTED FIRST AND ALONE, and moving it above the
+	//    end-date lookup is deliberate: it is the half of the rule that did
+	//    NOT change, so it is the half that must not depend on the half that
+	//    did. A day before the visit is not "after" under any window length,
+	//    unlimited included.
+	if ( $today < (string) $visit_date ) {
+		return false;
+	}
+
+	$end = bhp_school_visit_after_end_date( $visit_date );
+	if ( null === $end ) {
+		// ⭐ NO END EXISTS. This is the 1.8.83 default and the founder's
+		//    ruling: from the morning of the read-aloud, onward, with no
+		//    expiry. ⛔ `null === $end` and NOT `empty( $end )`, because ''
+		//    means the opposite thing three lines below.
+		return true;
+	}
+	if ( '' === $end ) {
+		// ⛔ UNUSABLE VISIT DATE. Fail CLOSED, unchanged from 1.8.82.
+		return false;
+	}
+	return $today <= $end;
 }
 
 /**
@@ -749,6 +1095,43 @@ function bhp_school_visit_resolve( $slug ) {
 	return $record;
 }
 
+/**
+ * ⭐⭐ 1.8.82 — resolve one slug to a visit whose read-aloud HAS HAPPENED and is
+ *     still inside the after-visit window, or null. `CYCLE179-LD-357`.
+ *
+ * ⛔⛔ THIS IS NOT AN ENTITLEMENT RESOLVER AND MUST NEVER BECOME ONE. It is the
+ *     exact counterpart of `bhp_school_visit_resolve()` for the OTHER side of
+ *     the calendar, and the two are mutually exclusive by construction: one
+ *     answers `today <= visit - 2`, the other `visit <= today <= visit + N`.
+ *     Nothing that grants hand delivery, renders a counter, restricts a format
+ *     or withholds a payment gateway calls this function. Its record is used to
+ *     print a school name and a sentence, and to credit an order.
+ *
+ * ⭐ EVERY FACT IS RE-READ FROM THE OPTION AT CALL TIME, exactly as
+ *    `bhp_school_visit_resolve()` does, so a withdrawn or corrected row takes
+ *    effect on the very next request.
+ *
+ * @since 1.8.82
+ * @param string $slug Visit slug.
+ * @return array{slug:string,school:string,date:string,cutoff:string,time:string,hide_stock:bool}|null
+ */
+function bhp_school_visit_resolve_after( $slug ) {
+	$slug = sanitize_key( (string) $slug );
+	if ( '' === $slug ) {
+		return null;
+	}
+	$records = bhp_school_visit_records();
+	if ( ! isset( $records[ $slug ] ) ) {
+		return null;
+	}
+	$record = $records[ $slug ];
+
+	if ( ! bhp_school_visit_is_after_on( $record['date'], bhp_school_visit_today() ) ) {
+		return null;
+	}
+	return $record;
+}
+
 /* =========================================================================
  * THE SESSION FLAG
  * ====================================================================== */
@@ -931,6 +1314,144 @@ function bhp_school_visit_clear_session() {
 }
 
 /**
+ * ⭐ 1.8.82 — clear the AFTER-VISIT flag. `CYCLE179-LD-357`.
+ *
+ * ⛔ IT IS A SEPARATE FUNCTION FROM `bhp_school_visit_clear_session()` AND THE
+ *    SEPARATION IS LOAD-BEARING. The entitlement flag and the attribution flag
+ *    have different lifetimes and are cleared on different events: arriving on
+ *    a live visit link must take the after-visit sentence off the page, and
+ *    arriving on an after-visit link must take the entitlement off, and a
+ *    single "clear everything" helper would make each of those the other's
+ *    accident. `?bhp_visit=clear` clears BOTH, and it is the only thing that
+ *    does.
+ *
+ * ⛔ IT DOES NOT TOUCH THE SHIPPING RATE CACHE, and that is not an omission.
+ *    The after-visit flag never affected a rate, so there is no stale rate list
+ *    for it to have caused. Bumping the transient version here would make every
+ *    crawler that touches an old flyer URL pay for a shipping recalculation.
+ *
+ * @since 1.8.82
+ * @return void
+ */
+function bhp_school_visit_clear_after_session() {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return;
+	}
+	WC()->session->set( BHP_SCHOOL_VISIT_AFTER_SESSION_KEY, null );
+	WC()->session->set( BHP_SCHOOL_VISIT_AFTER_SET_AT_SESSION_KEY, null );
+}
+
+/**
+ * ⭐ 1.8.82 — the moment the after-visit flag was set, as a UNIX timestamp.
+ *
+ * The exact counterpart of `bhp_school_visit_set_at_stamp()`, reading the
+ * second key. An unusable or absent value returns 0, which
+ * `bhp_school_visit_ttl_expired()` already treats as expired.
+ *
+ * @since 1.8.82
+ * @return int
+ */
+function bhp_school_visit_after_set_at_stamp() {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return 0;
+	}
+	$raw = WC()->session->get( BHP_SCHOOL_VISIT_AFTER_SET_AT_SESSION_KEY );
+	return is_numeric( $raw ) ? (int) $raw : 0;
+}
+
+/**
+ * ⭐⭐ 1.8.82 — the AFTER-VISIT visit this session is credited to, re-validated
+ *     live, or null. `CYCLE179-LD-357`.
+ *
+ * ⛔⛔ THE NAME IS DELIBERATELY NOT `bhp_school_visit_after()`. It is the
+ *     attribution counterpart of `bhp_school_visit_active()`, and the word
+ *     "active" is reserved for the function that answers the ENTITLEMENT
+ *     question, so that a future reader skimming a call site cannot mistake one
+ *     for the other. Nothing downstream of `bhp_school_visit_active()` calls
+ *     this, and `tests/test-cycle179-after-visit-357.php` asserts that by grep.
+ *
+ * ⭐ THE SAME TWO GUARDS AS `bhp_school_visit_active()`, IN THE SAME ORDER, AND
+ *    FOR THE SAME REASONS. The hard TTL is checked first and asks the registry
+ *    nothing, so nothing in the registry can defeat it; the window is then
+ *    re-read live, so a corrected row takes effect on the next request rather
+ *    than at the end of somebody's session. Either guard firing CLEARS the flag
+ *    so an expired session self-heals in one request.
+ *
+ * ⛔ THE WORST THING EITHER GUARD CAN DO TO A SHOPPER IS TAKE A SENTENCE OFF A
+ *    PAGE. No cart, no order, no product, no price, no stock, no shipping
+ *    method and no payment method is reachable from here.
+ *
+ * @since 1.8.82
+ * @return array{slug:string,school:string,date:string,cutoff:string,time:string,hide_stock:bool}|null
+ */
+function bhp_school_visit_after_active() {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return null;
+	}
+	$slug = WC()->session->get( BHP_SCHOOL_VISIT_AFTER_SESSION_KEY );
+	if ( ! $slug ) {
+		return null;
+	}
+
+	// GUARD 1 — the hard TTL. Deliberately asks the registry nothing.
+	if ( bhp_school_visit_ttl_expired( bhp_school_visit_after_set_at_stamp(), bhp_school_visit_now() ) ) {
+		bhp_school_visit_clear_after_session();
+		return null;
+	}
+
+	// GUARD 2 — the visit's own after-window, re-read live on every request.
+	$record = bhp_school_visit_resolve_after( $slug );
+	if ( ! $record ) {
+		bhp_school_visit_clear_after_session();
+		return null;
+	}
+	return $record;
+}
+
+/**
+ * ⭐ 1.8.82 — the after-visit record for THIS request, standing the session up
+ *    if a cookie says there is one. The counterpart of
+ *    `bhp_school_visit_request_record()`, and it takes the same care: it never
+ *    CREATES a session, and a visitor with no WooCommerce session cookie gets
+ *    null without anything being touched.
+ *
+ * @since 1.8.82
+ * @return array|null
+ */
+function bhp_school_visit_after_request_record() {
+	static $busy = false;
+
+	if ( $busy ) {
+		return null;
+	}
+	if ( ! function_exists( 'WC' ) ) {
+		return null;
+	}
+
+	$busy = true;
+	try {
+		if ( ! WC()->session ) {
+			if ( ! bhp_school_visit_has_session_cookie() ) {
+				return null; // No cookie → no flag. Nothing is created, nothing is touched.
+			}
+			if ( is_callable( array( WC(), 'initialize_session' ) ) ) {
+				WC()->initialize_session();
+			}
+			if ( ! WC()->session ) {
+				return null;
+			}
+		}
+
+		return bhp_school_visit_after_active();
+	} catch ( Throwable $e ) {
+		// A resolver that throws must never take checkout down with it.
+		return null;
+	} finally {
+		$busy = false;
+	}
+}
+
+/**
  * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐⭐ 1.8.80 — WHAT AN EXPLICIT `?bhp_visit=` SLUG DOES TO THE SESSION.
  *      `CYCLE179-LD-10`, closed by `CYCLE179-LD-355`. A PURE FUNCTION.
@@ -995,9 +1516,14 @@ function bhp_school_visit_clear_session() {
  * @param bool        $resolves      Whether `bhp_school_visit_resolve()` returns
  *                                   a record for it, i.e. ordering is open.
  * @param string|null $session_slug  The slug the session currently holds, or ''.
- * @return string 'set' | 'clear' | 'ignore'.
+ * @param bool        $in_after      1.8.82: whether `$slug` is inside its
+ *                                   AFTER-VISIT window. Optional, defaults to
+ *                                   false, so every 1.8.80 and 1.8.81 call site
+ *                                   and every existing assertion keeps its
+ *                                   answer byte for byte.
+ * @return string 'set' | 'after' | 'clear' | 'ignore'.
  */
-function bhp_school_visit_capture_decide( $slug, $is_registered, $resolves, $session_slug ) {
+function bhp_school_visit_capture_decide( $slug, $is_registered, $resolves, $session_slug, $in_after = false ) {
 	$slug         = (string) $slug;
 	$session_slug = (string) $session_slug;
 
@@ -1015,6 +1541,35 @@ function bhp_school_visit_capture_decide( $slug, $is_registered, $resolves, $ses
 	//    it is what already made the open-to-open hop correct.
 	if ( $resolves ) {
 		return 'set';
+	}
+
+	/*
+	 * ⭐⭐⭐ 1.8.82 (`CYCLE179-LD-357`) — THE AFTER-VISIT BRANCH, AND ITS
+	 *     POSITION IN THIS FUNCTION IS THE WHOLE OF ITS SAFETY.
+	 *
+	 * ⛔ IT SITS BELOW `$resolves` AND CAN NEVER PRE-EMPT IT. A visit cannot be
+	 *    open and after at the same time — `bhp_school_visit_is_open_on()`
+	 *    answers `today <= visit - 2` and `bhp_school_visit_is_after_on()`
+	 *    answers `visit <= today <= visit + N` — but the ordering means that
+	 *    even if a future edit made those two overlap, the ENTITLEMENT branch
+	 *    would still win and the after branch could never take hand delivery
+	 *    away from a parent who is entitled to it.
+	 *
+	 * ⛔ IT REQUIRES `$is_registered`. A slug that is not in the registry names
+	 *    no visit, so it cannot open an after-visit phase any more than it can
+	 *    open an entitlement, and the truncated-URL protection the 2026-08-19
+	 *    `commerce-cx` finding exists for is untouched.
+	 *
+	 * ⭐ THE CALLER DOES TWO THINGS ON THIS ANSWER, AND BOTH ARE REQUIRED. It
+	 *    CLEARS the entitlement session first and only then sets the
+	 *    attribution flag. Clearing first is what stops one page naming two
+	 *    schools: a browser holding one school's live session that opens a
+	 *    DIFFERENT school's post-visit link would otherwise keep the first
+	 *    school's counters and hand-delivery option under the second school's
+	 *    band, which is exactly the `CYCLE179-LD-10` defect 1.8.80 closed.
+	 */
+	if ( $is_registered && $in_after ) {
+		return 'after';
 	}
 
 	/*
@@ -1099,6 +1654,14 @@ function bhp_school_visit_capture_intent() {
 	 */
 	if ( BHP_SCHOOL_VISIT_CLEAR_TOKEN === $slug ) {
 		bhp_school_visit_clear_session();
+		/*
+		 * ⭐ 1.8.82 — `clear` CLEARS BOTH FLAGS, and it is the only thing that
+		 *    does. It is the documented way back to the ordinary storefront, so
+		 *    leaving the after-visit sentence on the page after somebody asked
+		 *    for the ordinary storefront would make the one honest escape hatch
+		 *    a partial one.
+		 */
+		bhp_school_visit_clear_after_session();
 		return;
 	}
 
@@ -1133,9 +1696,42 @@ function bhp_school_visit_capture_intent() {
 	$bhp_records       = bhp_school_visit_records();
 	$bhp_is_registered = isset( $bhp_records[ $slug ] ) && ! empty( $bhp_records[ $slug ]['school'] );
 	$bhp_resolves      = (bool) bhp_school_visit_resolve( $slug );
+	$bhp_in_after      = (bool) bhp_school_visit_resolve_after( $slug );
 	$bhp_session_slug  = (string) WC()->session->get( BHP_SCHOOL_VISIT_SESSION_KEY );
 
-	$bhp_action = bhp_school_visit_capture_decide( $slug, $bhp_is_registered, $bhp_resolves, $bhp_session_slug );
+	$bhp_action = bhp_school_visit_capture_decide( $slug, $bhp_is_registered, $bhp_resolves, $bhp_session_slug, $bhp_in_after );
+
+	/*
+	 * ⭐⭐ 1.8.82 (`CYCLE179-LD-357`) — THE AFTER-VISIT ARRIVAL, AND THE ORDER
+	 *     OF THESE TWO CALLS IS LOAD-BEARING.
+	 *
+	 * ⛔ THE ENTITLEMENT IS REMOVED FIRST. A browser that still holds ANY live
+	 *    visit session — this school's or another's — must not carry counters,
+	 *    hand delivery or a paperback-only gate under a band that says the
+	 *    read-aloud already happened. That is `CYCLE179-LD-10` seen from the
+	 *    other side of the calendar and it gets the same answer.
+	 * ⭐ CLEARING IS SAFE AND IS NOT A LOSS. This branch is only reached when
+	 *    the URL's own slug does NOT resolve, so nothing here can strip an
+	 *    entitlement the URL was granting. A parent whose session belonged to a
+	 *    still-open DIFFERENT visit gets it back by opening that visit's own
+	 *    link again, which is the same recovery the 1.8.80 clear branch already
+	 *    relies on.
+	 * ⛔ ONLY THEN is the attribution flag written, so the two can never both be
+	 *    live for one request.
+	 */
+	if ( 'after' === $bhp_action ) {
+		bhp_school_visit_clear_session();
+
+		WC()->session->set( BHP_SCHOOL_VISIT_AFTER_SESSION_KEY, $slug );
+		// The TTL is re-armed on every arrival through the link, exactly as the
+		// entitlement flag's is, so a parent holding the school's email always
+		// has a full fresh window inside the after-visit phase.
+		WC()->session->set( BHP_SCHOOL_VISIT_AFTER_SET_AT_SESSION_KEY, bhp_school_visit_now() );
+		if ( is_callable( array( WC()->session, 'set_customer_session_cookie' ) ) ) {
+			WC()->session->set_customer_session_cookie( true );
+		}
+		return;
+	}
 
 	if ( 'clear' === $bhp_action ) {
 		bhp_school_visit_clear_session();
@@ -1145,6 +1741,16 @@ function bhp_school_visit_capture_intent() {
 	if ( 'set' !== $bhp_action ) {
 		return;
 	}
+
+	/*
+	 * ⭐ 1.8.82 — ARRIVING ON A LIVE VISIT LINK TAKES ANY AFTER-VISIT SENTENCE
+	 *    OFF THE PAGE. Without this, a parent with two children at two schools
+	 *    who opened school A's post-visit link and then school B's live link
+	 *    would get B's hand-delivery entitlement under A's thank-you band. The
+	 *    entitlement flag and the attribution flag are mutually exclusive in
+	 *    both directions, and this is the second direction.
+	 */
+	bhp_school_visit_clear_after_session();
 
 	WC()->session->set( BHP_SCHOOL_VISIT_SESSION_KEY, $slug );
 	/*
@@ -1814,6 +2420,19 @@ function bhp_school_pickup_mark_order( $order ) {
 	$order->update_meta_data( BHP_SCHOOL_PICKUP_META_SLUG, $slug );
 	$order->update_meta_data( BHP_SCHOOL_PICKUP_META_SCHOOL, $school );
 	$order->update_meta_data( BHP_SCHOOL_PICKUP_META_DATE, $date );
+	/*
+	 * ⭐ 1.8.82 (`CYCLE179-LD-357`) — THE PHASE IS NOW STATED RATHER THAN
+	 *    INFERRED. It is one additive meta write and it changes no behaviour:
+	 *    every existing consumer of a hand-delivery order still keys on
+	 *    `BHP_SCHOOL_PICKUP_META_FLAG` and none of them reads this field.
+	 * ⛔ WHY IT IS WRITTEN ON THIS PATH TOO, RATHER THAN ONLY ON THE NEW ONE.
+	 *    A field that is present on some visit orders and absent on others is
+	 *    read by a human as "unknown", and the whole point of the marker is that
+	 *    an order credited to a school says WHICH SIDE of the read-aloud it came
+	 *    from. Writing it on one path only would have made the reports that read
+	 *    it wrong in the quiet direction.
+	 */
+	$order->update_meta_data( BHP_SCHOOL_VISIT_META_PHASE, BHP_SCHOOL_VISIT_PHASE_PICKUP );
 
 	/*
 	 * The note is Andrew's packing list and it is deliberately blunt. It says
@@ -1872,6 +2491,92 @@ function bhp_school_pickup_mark_order( $order ) {
 }
 add_action( 'woocommerce_store_api_checkout_order_processed', 'bhp_school_pickup_mark_order', 5 );
 add_action( 'woocommerce_checkout_order_processed', 'bhp_school_pickup_mark_order', 5 );
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.82 — CREDIT AN AFTER-VISIT ORDER TO ITS SCHOOL. `CYCLE179-LD-357`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Andrew's brief asks that the after-visit phase *"keeps the school context and
+ * attribution (the bhp_visit slug on the order plus a post-visit marker such as
+ * `_bhp_school_visit_phase = after`)"*.
+ *
+ * ⛔⛔ THE MOST IMPORTANT LINE IN THIS FUNCTION IS THE ONE THAT IS NOT HERE. It
+ *     DOES NOT WRITE `BHP_SCHOOL_PICKUP_META_FLAG`. That flag is what
+ *     `bhp_school_pickup_order_is_pickup()` answers on, and that answer is what
+ *     `bhp_school_pickup_block_bookvault_webhook()` uses to STOP an order ever
+ *     reaching the print partner. An after-visit order is an ordinary shipped
+ *     order that MUST be printed and posted. Writing that flag here would have
+ *     silently stranded every one of these orders, and the customer-visible
+ *     symptom would have been a parent who paid and never received a book.
+ *
+ * ⛔ IT RUNS ONLY ON A NON-PICKUP ORDER, and the guard is an explicit early
+ *    return rather than an assumption about which hook fired first. Both
+ *    functions are on both checkout hooks at priority 5; `mark_order` is
+ *    registered first, so on a hand-delivery order it has already set the flag
+ *    by the time this runs and this returns immediately. The order-is-pickup
+ *    test is ALSO run, so the guard holds even if the registration order ever
+ *    changes.
+ *
+ * ⛔ IT WRITES NO SHIPPING, NO PRICE, NO STOCK AND NO PRODUCT. Four meta values
+ *    and one order note. The order's totals, its shipping method, its
+ *    fulfilment route and its emails are exactly what they would have been for
+ *    any other shopper.
+ *
+ * ⭐ THE NOTE SAYS "SHIP" IN WORDS, and that is deliberate for the same reason
+ *    the hand-delivery note says "DO NOT SHIP" in words: the person reading it
+ *    is reading a list of orders, not this file, and the two kinds of visit
+ *    order now sit side by side in that list.
+ *
+ * @since 1.8.82
+ * @param WC_Order|int $order Order or id (classic passes the id first).
+ * @return void
+ */
+function bhp_school_visit_mark_after_order( $order ) {
+	if ( is_numeric( $order ) ) {
+		$order = wc_get_order( (int) $order );
+	}
+	if ( ! $order instanceof WC_Order ) {
+		return;
+	}
+
+	// ⛔ A hand-delivery order is never an after-visit order. Two guards, on
+	//    purpose: the flag, and the shipping method the flag is derived from.
+	if ( 'yes' === $order->get_meta( BHP_SCHOOL_PICKUP_META_FLAG ) ) {
+		return;
+	}
+	if ( bhp_school_pickup_order_is_pickup( $order ) ) {
+		return;
+	}
+	// Already credited; both hooks can fire in one request.
+	if ( '' !== (string) $order->get_meta( BHP_SCHOOL_VISIT_META_PHASE ) ) {
+		return;
+	}
+
+	$record = bhp_school_visit_after_request_record();
+	if ( ! is_array( $record ) || empty( $record['school'] ) ) {
+		return; // ⛔ No after-visit flag on this session. An ordinary order, untouched.
+	}
+
+	$order->update_meta_data( BHP_SCHOOL_VISIT_META_PHASE, BHP_SCHOOL_VISIT_PHASE_AFTER );
+	$order->update_meta_data( BHP_SCHOOL_PICKUP_META_SLUG, (string) $record['slug'] );
+	$order->update_meta_data( BHP_SCHOOL_PICKUP_META_SCHOOL, (string) $record['school'] );
+	$order->update_meta_data( BHP_SCHOOL_PICKUP_META_DATE, (string) $record['date'] );
+
+	$order->add_order_note(
+		sprintf(
+			/* translators: 1: school name, 2: the read-aloud date, 3: visit slug */
+			__( 'SHIP AS NORMAL. Ordered after the read-aloud at %1$s on %2$s (visit: %3$s). This order is shipped and is NOT excluded from the Bookvault print/fulfilment push.', 'brave-hearts' ),
+			(string) $record['school'],
+			(string) $record['date'],
+			'' !== (string) $record['slug'] ? (string) $record['slug'] : __( 'slug unresolved', 'brave-hearts' )
+		)
+	);
+
+	$order->save();
+}
+add_action( 'woocommerce_store_api_checkout_order_processed', 'bhp_school_visit_mark_after_order', 6 );
+add_action( 'woocommerce_checkout_order_processed', 'bhp_school_visit_mark_after_order', 6 );
 
 /* =========================================================================
  * ⛔⛔ THE DUPLICATE-PRINT PROTECTION

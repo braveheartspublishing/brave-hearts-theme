@@ -318,6 +318,27 @@ function bhp_author_visits_build_rows( $records, $today ) {
 			$deadline = $cutoff;
 		}
 
+		/*
+		 * ⭐⭐⭐ 1.19.357 (`CYCLE179-LD-357`) — THE AFTER-VISIT FLAG ON THE ROW.
+		 *
+		 * ⛔ THE PLUGIN OWNS THE ANSWER, exactly as it owns `$open` above. This
+		 *    page does not re-derive the window, for the same reason it stopped
+		 *    re-deriving the deadline at 1.19.350-FIX: two places computing one
+		 *    window is how two surfaces come to disagree.
+		 *
+		 * ⛔ THERE IS NO LOCAL FALLBACK HERE, AND THAT IS DELIBERATE RATHER THAN
+		 *    AN OVERSIGHT. `$open` has one because a deactivated plugin must
+		 *    still render a page instead of a fatal, and the conservative answer
+		 *    to "is ordering open" is computable from the date alone. The
+		 *    conservative answer to "has the read-aloud happened and is the shop
+		 *    link still live" is NO, and returning false is exactly what an
+		 *    absent function yields. A site without the plugin therefore renders
+		 *    precisely the page it rendered at 1.19.356.
+		 */
+		$after = ( ! $open && function_exists( 'bhp_school_visit_is_after_on' ) )
+			? (bool) bhp_school_visit_is_after_on( $date, $today )
+			: false;
+
 		$rows[] = array(
 			'slug'         => $slug,
 			'school'       => $school,
@@ -327,6 +348,7 @@ function bhp_author_visits_build_rows( $records, $today ) {
 			'cutoff'       => $cutoff,
 			'deadline'     => $deadline,
 			'open'         => $open,
+			'after'        => $after,
 			// ⛔ A CLOSED ROW CARRIES NO URL AT ALL. The string is empty, so a
 			//    template CANNOT render a link to an entitlement the site would
 			//    refuse — not a hidden one, not a greyed one that is still an
@@ -336,7 +358,22 @@ function bhp_author_visits_build_rows( $records, $today ) {
 			//    non-focusable, `aria-disabled` control for the closed state. It is
 			//    a greyed button because Andrew wants the read-aloud to stay on the
 			//    page as a trust record; it is not a link because there is no URL.
-			'url'          => $open ? bhp_author_visits_shop_url( $slug ) : '',
+			//
+			// ⚠️⚠️ 1.19.357 (`CYCLE179-LD-357`) — THE PARAGRAPH ABOVE IS PRESERVED
+			//    VERBATIM AND STILL GOVERNS THE CLOSED ROW, BUT IT NO LONGER
+			//    DESCRIBES EVERY ROW WITHOUT A URL. An AFTER-VISIT row now carries
+			//    one, on Andrew's word of 2026-09-03 (seal 868, RELAYED): *"it
+			//    should open back up for parents to move through that funnel."*
+			// ⛔ AND IT IS NOT A CONTRADICTION OF THE RULE, WHICH IS ABOUT
+			//    ENTITLEMENTS RATHER THAN ABOUT LINKS. The closed row has no URL
+			//    because the site would REFUSE what the link offers. The
+			//    after-visit row has one because the site ACCEPTS what its link
+			//    offers: an ordinary shipped order, at the ordinary price, in any
+			//    format, with no hand delivery and no counter attached to it. The
+			//    URL is the same `?bhp_visit=` link; what changed is what the site
+			//    does with it, and that is the plugin's `bhp_school_visit_resolve_
+			//    after()`, not this line.
+			'url'          => ( $open || $after ) ? bhp_author_visits_shop_url( $slug ) : '',
 		);
 	}
 
@@ -525,7 +562,7 @@ function bhp_author_visits_photo_url( $file ) {
  * @param array  $records Records shaped like `bhp_school_visit_records()`.
  * @param string $today   `Y-m-d` in the site's timezone.
  * @param array  $notes   Notes map from `bhp_author_visits_notes()`.
- * @return array<int,array{slug:string,school:string,date:string,date_display:string,note:string,recap_url:string,photos:array}>
+ * @return array<int,array{slug:string,school:string,date:string,date_display:string,note:string,recap_url:string,photos:array,after:bool,url:string}>
  */
 function bhp_author_visits_build_past_rows( $records, $today, $notes = array() ) {
 	if ( ! is_array( $records ) ) {
@@ -562,6 +599,60 @@ function bhp_author_visits_build_past_rows( $records, $today, $notes = array() )
 
 		$note = isset( $notes[ $slug ] ) ? $notes[ $slug ] : array();
 
+		/*
+		 * ⭐⭐⭐ 1.19.357 (`CYCLE179-LD-357`) — A PAST ROW CAN NOW BE INSIDE THE
+		 *     AFTER-VISIT WINDOW, AND WHILE IT IS, IT CARRIES THE SHOP LINK.
+		 *
+		 * ⚠️⚠️ THIS SUPERSEDES A RULE STATED IN `page-author-visits.php` AND THE
+		 *     SUPERSESSION IS DELIBERATE, NARROW AND TIME-BOUND. That file's
+		 *     trust-column comment reads *"NO BUTTON, NO ORDERING AFFORDANCE, NO
+		 *     `?bhp_visit=` LINK. A past visit can never be ordered for."* ⛔ That
+		 *     sentence was TRUE when it was written and is now false for a bounded
+		 *     window, on Andrew's word of 2026-09-03 (seal 868, RELAYED through
+		 *     the `chief-of-staff` brief, not witnessed first-hand): *"it should
+		 *     open back up for parents to move through that funnel."* The comment
+		 *     is corrected in place there rather than deleted.
+		 *
+		 * ⭐ WHY THE PAST COLUMN AND NOT ONLY THE UPCOMING ONE, AND IT IS
+		 *    ARITHMETIC RATHER THAN PREFERENCE. The two columns partition on the
+		 *    VISIT DATE: a visit is upcoming while `date >= today` and past from
+		 *    the next morning. The after-visit window runs from the visit date for
+		 *    `bhp_school_visit_after_days()` days. So a school sits in the
+		 *    UPCOMING column for exactly ONE day of that window and in the PAST
+		 *    column for all the rest of it. Building this into the upcoming card
+		 *    alone would have opened the funnel for one day and then closed it
+		 *    again, which is not what was asked for.
+		 *
+		 * ⛔ IT EXPIRES ON ITS OWN. Once the window passes, `$after` is false, the
+		 *    URL is empty, and the row is the pure trust record it was before this
+		 *    release, with its note, its recap link and its photographs intact.
+		 *
+		 * ⚠️⚠️ 1.19.358 / bundle plugin 1.8.83 (2026-09-03, `CYCLE179-LD-358`) —
+		 *     THE PARAGRAPH IMMEDIATELY ABOVE IS PRESERVED VERBATIM AND NO LONGER
+		 *     DESCRIBES THE DEFAULT. ⛔ THERE IS NO WINDOW TO PASS. Andrew Signore
+		 *     ruled the after-visit state stays open INDEFINITELY (seal 870,
+		 *     RELAYED through the `chief-of-staff` and NOT witnessed first-hand by
+		 *     this agent, Standing Rules 9.2 rule 2), so under the shipped default
+		 *     `$after` never returns to false and a past row keeps its shipping
+		 *     link for good. ⭐ THE CODE ON THIS LINE IS UNCHANGED: it still asks
+		 *     the plugin, which is the only place the rule lives, so the whole of
+		 *     this behaviour moved by editing `bhp_school_visit_after_days()` and
+		 *     nothing here. The paragraph is still exactly right for a BOUNDED
+		 *     window, which the `bhp_school_visit_after_days` filter can still set.
+		 * ⚠️ THE ARITHMETIC PARAGRAPH ABOVE IT ALSO MOVES, IN ONE DIRECTION ONLY:
+		 *     a school still sits in the UPCOMING column for exactly one day of the
+		 *     phase, and now in the PAST column for every day after that without
+		 *     end. The reason the link had to live in this column is unchanged and
+		 *     is stronger, not weaker.
+		 *
+		 * ⛔ NOTHING ELSE ABOUT A PAST ROW CHANGES. The note, the recap URL and
+		 *    the photo set are read exactly as they were at 1.19.356, and a row
+		 *    with no after-window is byte-identical to what it was.
+		 */
+		$after = function_exists( 'bhp_school_visit_is_after_on' )
+			? (bool) bhp_school_visit_is_after_on( $date, $today )
+			: false;
+
 		$rows[] = array(
 			'slug'         => $slug,
 			'school'       => $school,
@@ -570,6 +661,8 @@ function bhp_author_visits_build_past_rows( $records, $today, $notes = array() )
 			'note'         => isset( $note['note'] ) ? (string) $note['note'] : '',
 			'recap_url'    => isset( $note['recap_url'] ) ? (string) $note['recap_url'] : '',
 			'photos'       => isset( $note['photos'] ) && is_array( $note['photos'] ) ? $note['photos'] : array(),
+			'after'        => $after,
+			'url'          => $after ? bhp_author_visits_shop_url( $slug ) : '',
 		);
 	}
 
@@ -690,4 +783,50 @@ function bhp_author_visits_rows() {
 		bhp_author_visits_build_rows( $records, bhp_author_visits_today() ),
 		$records
 	);
+}
+
+/**
+ * ⭐⭐ 1.19.358 (2026-09-03, `CYCLE179-LD-358`) — IS ANY VISIT CURRENTLY IN THE
+ *    HAND-DELIVERY PHASE? PURE.
+ *
+ * ⛔ THE DEFECT IT CLOSES IS `CYCLE179-LD-23`, RAISED BY THIS LANE AT 1.19.357
+ *    AND CONFIRMED ON THE LIVE PAGE RATHER THAN INFERRED: `/author-visits/`
+ *    could show a "Read-aloud done" card and the hand-delivery "How It Works"
+ *    steps ON ONE SCREEN. Those three steps tell a parent to choose free
+ *    author hand-delivery at checkout and that the books are handed to their
+ *    child at the school. After the read-aloud that option is gone and the
+ *    order ships, so the steps describe something the site would refuse.
+ *
+ * ⭐ THE GATE IS `open`, NOT "there is a row". A row can be in the upcoming
+ *    list and NOT open in two distinct ways, and both must suppress the steps:
+ *    the CLOSED day (`visit - 1`, ordering shut, books already packed) and the
+ *    AFTER-VISIT state (`visit <= today`, ship-only, unlimited since 1.8.83).
+ *    `open` is the only flag that means "hand delivery can still be chosen",
+ *    and it is the plugin's answer via `bhp_school_visit_is_open_on()`, not a
+ *    second derivation of the same window.
+ *
+ * ⛔ IT IS A DISPLAY GATE AND NOTHING ELSE. No string in the block changes, no
+ *    string is added, and no entitlement, price, shipping method, counter or
+ *    registry value is touched by it. Copy is Andrew's gate; this decides only
+ *    whether existing, approved copy is on the page.
+ *
+ * ⭐ PURE, AND THE ROWS COME IN AS AN ARGUMENT, for the same reason
+ *    `bhp_author_visits_build_rows()` is pure: both states are then a plain
+ *    assertion in the suite instead of something that can only be observed by
+ *    waiting for a Thursday or by writing the registry.
+ *
+ * @since 1.19.358
+ * @param array $rows Rows shaped like `bhp_author_visits_build_rows()`.
+ * @return bool True when at least one row is in the hand-delivery phase.
+ */
+function bhp_author_visits_has_open_row( $rows ) {
+	if ( ! is_array( $rows ) ) {
+		return false;
+	}
+	foreach ( $rows as $row ) {
+		if ( is_array( $row ) && ! empty( $row['open'] ) ) {
+			return true;
+		}
+	}
+	return false;
 }
