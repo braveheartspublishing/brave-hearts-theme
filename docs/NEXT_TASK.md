@@ -1,6 +1,41 @@
 # Next Task
 
 
+> ## ⭐⭐ NEWEST, 2026-09-03 · Production is theme `1.19.358` / bundle plugin `1.8.83`. **Everything below this block predates the `1.19.357` and `1.19.358` releases.**
+>
+> **Nothing here is scheduled.** These are the candidates a next session would pick from, in the order that
+> most reduces risk. Each one needs the owner's go-ahead before it becomes work.
+>
+> 1. **`LD-22`, the internal identifier in the public source** (`KNOWN_ISSUES.md`). **This repository is
+>    public**, the identifier was inherited rather than introduced, and a plugin suite assertion has been
+>    failing on it across several releases. It is the only item on this list where the cost of waiting
+>    grows on its own. **It is scoped work, not a decision**, but it touches comments another release
+>    preserved deliberately, so the removal should be specified rather than improvised.
+> 2. **`LD-27`, the permanent reopening.** Every past read-aloud is now orderable for ever. It is what was
+>    ruled; the only question is whether any school should be narrowed. **Until it is confirmed, further
+>    work on the after-visit phase has no settled target.**
+> 3. **`LD-28`, the uncapped past column.** One ordering button per visit, for ever, on a page reached from
+>    printed codes. Cheap to bound now, awkward to bound after a year of visits. Design and the owner
+>    decide the rule; engineering can implement whichever it is.
+> 4. **`LD-24`, the 14-day context against an endless link.** Deliberate, and probably right. Worth one
+>    sentence of confirmation rather than a change.
+> 5. **`LD-26`, the inverted fail-safe.** Same: confirm, do not change, unless the answer is that a broken
+>    hook should be able to close a window.
+> 6. **`F-08` and `F-09`**, the mobile visit surface and clear-token consistency. Open since before the
+>    `1.19.350` series and still unscoped. **`F-08` must be re-attempted with a real mobile user-agent
+>    string**, or on a real phone; viewport emulation does not change the user agent and every
+>    non-reproduction so far used the wrong instrument. Re-verify both against live `1.19.358` first: the
+>    visit surface has changed again twice in this series.
+> 7. **`LD-25`, the band's surface coverage.** Only becomes work if the band is wanted on a product page or
+>    the collection landing page; it has never rendered there in any state.
+> 8. **The items carried from the previous series** - `LD-18` and the wider sweep it belongs to, `LD-19`,
+>    `LD-20`, `LD-21`, `LD-14`, `LD-17`, `LD-11`, and the parked cosmetic list. Unchanged in priority.
+> 9. **The `--url` test-harness dependency**, and beside it the counting-method divergence: two lanes in
+>    this series reported 102 and 49 FAIL lines for adjacent trees using their own methods. **If an
+>    absolute failure count is ever needed for a decision, one method should be fixed and recorded.**
+>
+> ⚠️ **Verify production's version with `wp theme list --status=active` before starting any of these.** The
+> numbers in this block are recorded from the deploying lane, not read from production here.
 > ## ⭐⭐ NEWEST, 2026-09-02 · Production is theme `1.19.356` / bundle plugin `1.8.81`. **Everything below this block predates the `1.19.355` and `1.19.356` releases.**
 >
 > **Nothing here is scheduled.** These are the candidates a next session would pick from, in the order that

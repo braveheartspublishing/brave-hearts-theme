@@ -1,5 +1,30 @@
 # Start Here
 
+> ## ⭐⭐ READ THIS FIRST, 2026-09-03 · **PRODUCTION IS THEME `1.19.358` / BUNDLE PLUGIN `1.8.83`.** Every version number below this block is SUPERSEDED.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-03** | **`1.19.358`** | **`1.8.83`** |
+>
+> Theme `1.19.358` and bundle plugin `1.8.83` were deployed to production on 2026-09-03 with the
+> owner's explicit approval. `1.19.357` and plugin `1.8.82` were built and staging-verified on 2026-09-03
+> and did not ship on their own; their contents reached production inside the later artefacts, so
+> production moved two theme releases and two plugin releases at once. **The `1.19.357` and `1.8.82`
+> artefacts are superseded and must not be deployed anywhere.**
+>
+> **Where to read what:** release record `RELEASES/PRODUCTION_RELEASE_1_19_357_358.md` · per-release detail
+> `CHANGELOG.md` (2026-09-03 entry) · open issues `KNOWN_ISSUES.md` · rules from this series
+> `DECISIONS.md`.
+>
+> ⭐ **The customer-visible change.** A school-visit link reopens in a **ship-only** state from the morning
+> of the read-aloud and **never expires**. It names the school and offers ordinary shipping to the home;
+> hand delivery is not offered and the shelf counters are gone. **It is generic and automatic for every
+> registry visit, past and future**, so every past read-aloud is permanently orderable. Read
+> `RELEASES/PRODUCTION_RELEASE_1_19_357_358.md` section 5 before answering a customer about it.
+>
+> ⚠️ **The version numbers and the deploy date above are recorded from the deploying lane, not read from
+> production by this block.** Verify with `wp theme list --status=active` over SSH before relying on them.
+> **Staging and production parity is not asserted here and should be checked, not assumed.**
 > ## ⭐⭐ READ THIS FIRST, 2026-09-02 · **PRODUCTION IS THEME `1.19.356` / BUNDLE PLUGIN `1.8.81`.** Every version number below this block is SUPERSEDED.
 >
 > | | Theme | Bundle plugin |

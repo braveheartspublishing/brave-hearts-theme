@@ -567,3 +567,96 @@ after each clause and any empty part left the line ending in a dangling dot,
 which was already reachable before this change; and two of the five surfaces
 render only through a shortcode on a page that redirects, so their correction is
 right and invisible today, which is `LD-19`.
+
+## The after-visit ship-to-home state is generic, automatic and has no end date (2026-09-03, theme 1.19.357 and plugin 1.8.82, made unlimited in plugin 1.8.83)
+A school-visit link used to have two states: open while ordering was open, and
+closed from the day before the visit onward, for ever. A parent who came back
+after the read-aloud found an ordinary storefront with no school context at all,
+which is the moment they are most likely to want the book.
+
+**The rule: from 00:00 site time on the morning of the read-aloud, that school's
+link reopens in a ship-only state, and it does not expire.** The band names the
+school and says the books can still be ordered and shipped to the home. Hand
+delivery is not offered, the shelf counters are gone, both formats are orderable
+and shipping is ordinary. The button says **shipped**, never **signed**, because
+books ordered before the visit are signed in person on the day and an
+after-visit order is printed and posted.
+
+**Three properties of this rule are the decision, and none of them is an
+implementation detail.**
+
+**It is generic.** It is a property of the registry row, derived from the visit
+date, and it applies to every school equally. There is no per-school flag, no
+allow-list and no exception.
+
+**It is automatic.** Every visit enters this state on its own date with nobody
+doing anything, and a visit added next year will enter it next year. There is no
+switch to throw and no step that can be forgotten. Two schools whose read-alouds
+had already happened entered it the moment the release went live.
+
+**It is indefinite.** The first implementation carried a 30-day window; the rule
+as ruled has no end. `BHP_SCHOOL_VISIT_AFTER_DAYS` ships as `0`, and `0` means no
+limit. The constant and its filter were kept rather than deleted **only because
+they can express "unlimited" cleanly** - `0` or `null` means no limit, any
+integer of 1 or more means a bounded window in whole days - and they are a
+**ruling seam, not a configuration point**. They change how long a band prints
+and how long a link keeps its school context. They grant no entitlement, open no
+gate, render no counter, change no shipping method and touch no price.
+
+**The implementation decision that keeps this safe, recorded because reversing it
+would be a customer-visible failure.** The after-visit phase is a **second,
+parallel session flag that the entitlement chain cannot see.** The obvious
+implementation - letting the entitlement resolver keep returning a record after
+the visit and adding a phase field - was rejected. That resolver is the single
+gate behind hand delivery, the shelf counters, the paperback-only restriction,
+the backorder behaviour and the withheld deferred-payment gateways, and widening
+it would have handed an after-visit parent every one of them at once, each then
+needing to be switched off individually. The failure mode of forgetting one is a
+parent offered hand delivery for a visit that already happened. **So the absence
+of those things in this phase is not a feature this release built** - it is what
+the site has done on every post-close request since plugin 1.8.56.
+
+**And the marker on an after-visit order must never be the hand-delivery flag.**
+That flag is what excludes an order from the print partner. An after-visit order
+is an ordinary shipped order that must be printed and posted, and carrying that
+flag would silently strand every one of them, with the customer-visible symptom
+being a parent who paid and never received a book. A dedicated assertion and two
+independent early returns guard it.
+
+**Two consequences that follow from the rule rather than from the code, both
+recorded rather than resolved:** every past read-aloud is now permanently
+orderable, including the ones that had already happened when this shipped
+(`LD-27`); and `/author-visits/`'s past column will accumulate one ordering
+button per visit for ever, with no cap, on a page reached from printed codes
+(`LD-28`).
+
+## The after-window fail-safe falls open, not closed (2026-09-03, plugin 1.8.83)
+When the after-visit window was 30 days, a filter hook returning a value that was
+not a positive integer was discarded and the code fell back to 30, on the stated
+reasoning that **a broken hook must not be able to leave a school's band on the
+shop page for ever.**
+
+**An unlimited window is now the ruling, so the same reasoning points the other
+way: a broken hook must not be able to close a window that was ordered left
+open.** The discard is unchanged and the value is still never trusted; only what
+it falls back to moved, and it now falls back to unlimited.
+
+**The failure mode therefore moved from "a band closes too early" to "a band
+never closes", deliberately.** That is the direction that cannot silently revoke
+a ruling, and the alternative would let a bad hook do exactly that. It is
+asserted by the suite rather than left to a comment.
+
+**Two supporting rules make this safe to read and to change later.** The
+days-lookup returns `int|null`, and `null` is not `0` days: every read of it
+tests for `null` explicitly rather than using an emptiness test, because an
+emptiness test is true for both and the two mean opposite things one function
+later. And the end-date lookup has **three** return values rather than two -
+`null` means there is no end at all, `''` means the visit date is unusable and
+the predicate fails closed, and a date means a bounded window. **No caller may
+collapse `null` and `''`.** Passing the new `null` straight through to the
+date-shift helper would have been read as a zero-day shift and would have closed
+the window on the visit date itself, which is the exact defect the explicit
+branch exists to prevent.
+
+Recorded as `LD-26` in `KNOWN_ISSUES.md` as well, because a change in failure
+direction is worth confirming even when it follows necessarily from the ruling.

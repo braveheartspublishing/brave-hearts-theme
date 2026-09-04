@@ -1,6 +1,116 @@
 # Known Issues — Open Items Only
 
 
+> ## ⭐⭐ ADDED 2026-09-03 · Open at the end of the `1.19.357` and `1.19.358` releases (production is theme `1.19.358` / bundle plugin `1.8.83`)
+>
+> Release record: `RELEASES/PRODUCTION_RELEASE_1_19_357_358.md`. **Nothing below is resolved here; each is
+> recorded with what is actually established and what is not.** The block below this one is not
+> superseded: every item in it that is still open is still open and is carried forward.
+>
+> ### `LD-22` · An internal identifier that should not be in the public source · **OPEN. NOT FIXED. The item most worth scheduling.**
+>
+> A string that identifies internal operational data is present in the published source of this
+> repository, in several places, **inherited from releases earlier than this series. Neither `1.19.357`
+> nor `1.19.358` wrote any of it, and neither removed it.** A plugin suite assertion written to catch
+> exactly this already fails on it, and **failed identically on the same-day baseline of the release
+> before it**, so the failure is a standing signal rather than a regression.
+>
+> It was deliberately not fixed inside either release: the places it sits in are comments an earlier
+> release preserved on purpose, and rewriting another release's preserved comments is the unscoped edit
+> both briefs forbade. That is the same call `LD-18` got. **This repository is public, which is the whole
+> reason this entry is first.** Removing it is scoped work rather than a decision, but it should be
+> specified rather than improvised, because the comments around it are load-bearing.
+>
+> ### `LD-24` · A parent's remembered school context lasts 14 days; the link itself now has no end · **OPEN as a trade.**
+>
+> The after-visit attribution flag reuses the session lifetime the school-visit system already had, which
+> is 14 days per click. `1.19.357` recorded this when the after-visit window was 30 days, so the two
+> numbers differed by 16 days. **Under plugin `1.8.83` the window has no end, so the divergence is now
+> unbounded rather than a fortnight.**
+>
+> In practice: the **link** and the **band** last indefinitely, while a browser's remembered school
+> context lasts 14 days and is re-set whenever the parent follows the link again, and the link is in their
+> email. **This is very likely fine and is possibly the correct design** - one lifetime mechanism rather
+> than two - and it is recorded because the two numbers now diverge without bound, not because it is known
+> to be wrong.
+>
+> ### `LD-26` · The after-window fail-safe direction is now inverted · **OPEN as a confirmation, not a defect.**
+>
+> Until plugin `1.8.82`, a filter hook returning a nonsense value fell back to a 30-day window, on the
+> reasoning that a broken hook must not be able to leave a school's band on the shop page for ever. **An
+> unlimited window is now the ruling, so the same reasoning points the other way:** a broken hook must not
+> be able to **close** a window that was ordered left open. The discard behaviour is unchanged; only what
+> it falls back to moved.
+>
+> The failure mode therefore moved from "a band closes too early" to "a band never closes". **It follows
+> necessarily from the ruling** and is asserted by the suite. **Registered because it is a genuine change
+> in failure behaviour that no brief named, not because it is wrong.**
+>
+> ### `LD-27` · Every past read-aloud now reopens permanently · **OPEN, and it is a decision, not a defect.**
+>
+> `1.19.357` named the 30-day reopening of an earlier read-aloud as a consequence that had not been asked
+> about, and noted the date it would end. **Under the ruling shipped in plugin `1.8.83` it does not end.**
+> Every school in the registry now carries a permanent ship-only ordering funnel from its own visit date,
+> and so will every future one, automatically, with no manual switch.
+>
+> **That is exactly what the ruling asks for.** It is recorded so it is a decision that has been seen
+> rather than one that is discovered later, and so that narrowing it for any particular school is
+> recognised as the owner's call rather than an engineering fix.
+>
+> ### `LD-28` · The `/author-visits/` past column grows one ordering button per visit, with no cap · **OPEN as a scaling question.**
+>
+> There is no pagination, no cap and no "recent visits only" rule anywhere on that page. Today the past
+> column carries one ordering link; measured with the site's clock a year forward, it carries three. **It
+> is not a defect today and the lane that found it did not invent one to fix.** It is a scaling and design
+> question about a page reached from printed codes on classroom doors, and it belongs to design and to the
+> owner rather than to engineering.
+>
+> ### `LD-25` · The visit band renders on the shop page and category archives, but not on a product page or the collection landing page · **OPEN as a scope question.**
+>
+> The band renders only where the catalog-grid context is true. **This is unchanged since `1.19.350` and
+> is true of the open and closed states as well as the new after-visit state**, so nothing in this series
+> introduced it. It is named because a brief described "every catalog surface carrying the flag", and a
+> reader should not have to discover the boundary of that phrase from a screenshot.
+>
+> ### `F-08` and `F-09` · **BOTH STILL OPEN, and carried forward unchanged.**
+>
+> Neither was in scope for either release in this series. **`F-08`'s stated condition has still never been
+> tested:** every non-reproduction so far ran with a desktop user-agent string, because viewport emulation
+> does not change the user agent, and `F-08`'s condition is the mobile one. **A real phone outranks every
+> instrument named here.** `F-09` should be re-verified before it is specified: `1.19.357` changed how the
+> clear token behaves, because it now has two session flags to clear rather than one, and both directions
+> are gated by suite assertions. The original `F-09` finding predates that.
+>
+> ### The `--url` test-harness dependency · **STILL OPEN**, and a second counting item beside it
+>
+> Carried forward unchanged. Every run in both releases used `--url`. ⚠️ **The counting-method divergence
+> recorded in the previous series recurred here:** the `1.19.357` lane counted 102 FAIL lines for its
+> tree and the `1.19.358` lane counted 49 for the adjacent tree, each with its own method, and both said
+> so on the record. **Neither is disputed and no count is picked here.** Each lane independently found
+> zero new failures against its own same-day baseline, which is what the releases rest on. **If an
+> absolute failure count is ever needed for a decision, re-derive it once, with one method, and record the
+> method beside it.**
+>
+> ### One suite could not run its flagged half, on both sides of the `1.19.357` comparison
+>
+> Its own guard refused, correctly: no registry visit was open that day, so a flagged session could not be
+> simulated and the flagged assertions would have passed while testing the unflagged path. **That is a
+> calendar condition, not a regression, and it is proved rather than argued because the suite failed
+> identically on the same-day baseline.** The cost is real and is stated as a cost: **121 assertions in
+> that suite went unexercised in both runs.** Recorded so a future reader does not treat the missing
+> coverage as coverage.
+>
+> ### Closed by this series
+>
+> **`LD-23`** - the hand-delivery "How It Works" steps could render on `/author-visits/` beside a
+> "Read-aloud done" card, telling a parent to choose a delivery option that no longer exists for them.
+> **Closed by `1.19.358`**, as a display gate over untouched copy, and measured true before and false
+> after at an asserted 1440 and an asserted 375.
+>
+> **`LD-10` is not reopened by this series and is not carried forward as open.** It was closed by
+> `1.19.355`, it is recorded closed in `RELEASES/PRODUCTION_RELEASE_1_19_355_356.md` section 5, and both
+> build lanes in this series re-asserted its fix directly - including on the hop where the second session
+> flag was added, which is the case that could have broken it.
 > ## ⭐⭐ ADDED 2026-09-02 · Open at the end of the `1.19.355` and `1.19.356` releases (production is theme `1.19.356` / bundle plugin `1.8.81`)
 >
 > Release record: `RELEASES/PRODUCTION_RELEASE_1_19_355_356.md`. **Nothing below is resolved here; each is

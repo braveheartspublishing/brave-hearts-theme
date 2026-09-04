@@ -606,9 +606,19 @@ bhp_hw_assert(
 	'§2.4 the booth photograph is UNCROPPED and its approved alt text is untouched',
 	$failures
 );
+/*
+ * §2.5 SUPERSEDED 2026-09-03 (theme 1.19.359, CYCLE179-LD-29). The original assertion
+ * required that NO guarantee claim appear on the homepage:
+ *   false === stripos( $home, '30-Day Guarantee' ) && false === stripos( $home, '30 Day Guarantee' )
+ * The owner approved carrying the store's real 30-day refund policy (the same sentence
+ * already live on every product page and the Collection page) onto the homepage
+ * collection block on 2026-09-03. The "forbidden-claim" list in
+ * inc/class-bhp-conversion-scoring.php is a proxy heuristic for article copy; a stated
+ * refund policy is not an unverifiable claim. The assertion is inverted, not deleted.
+ */
 bhp_hw_assert(
-	false === stripos( $home, '30-Day Guarantee' ) && false === stripos( $home, '30 Day Guarantee' ),
-	'§2.5 no guarantee claim was added to this page (it is not live homepage copy, and "guarantee" is on the theme\'s own forbidden-claim list)',
+	false !== stripos( $home, '30-Day Guarantee' ),
+	'§2.5 the store\'s 30-day refund policy renders on the homepage collection block (owner-approved 2026-09-03; supersedes the pre-1.19.359 "no guarantee claim" assertion preserved above)',
 	$failures
 );
 

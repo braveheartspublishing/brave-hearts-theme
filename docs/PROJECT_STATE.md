@@ -1,5 +1,45 @@
 # Project State — Brave Hearts Publishing (Executive Summary)
+> ⭐ **SUPERSEDING NOTE 2026-09-03 (evening):** production is now theme **1.19.359** / plugin **1.8.83**. 1.19.359 added two owner-approved conversion changes (Amazon demoted to one line on product pages; the refund policy sentence on the homepage collection block). Everything below about 1.19.357/1.19.358 remains true of those releases.
 
+
+
+> ## ⭐⭐ NEWEST, 2026-09-03 · **PRODUCTION IS THEME `1.19.358` / BUNDLE PLUGIN `1.8.83`.** Every version number below this block is SUPERSEDED.
+>
+> **Theme `1.19.358` and bundle plugin `1.8.83` were deployed to production on 2026-09-03, with the
+> owner's explicit approval.**
+>
+> `1.19.357` and plugin `1.8.82` were built and staging-verified on 2026-09-03 and **did not ship on their
+> own**; `1.19.358` is built on top of the `1.19.357` tree and `1.8.83` on top of `1.8.82`, so their
+> contents reached production inside the later artefacts. **Production moved two theme releases and two
+> plugin releases at once.** The `1.19.357` and `1.8.82` artefacts are superseded and must not be deployed
+> anywhere.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-03** | **`1.19.358`** | **`1.8.83`** |
+>
+> **Release record:** `RELEASES/PRODUCTION_RELEASE_1_19_357_358.md`.
+> **Per-release detail:** `CHANGELOG.md`, the 2026-09-03 entry headed "PRODUCTION IS NOW THEME
+> `1.19.358`".
+> **Open issues at the end of this series:** `KNOWN_ISSUES.md` (LD-22, LD-24, LD-25, LD-26, LD-27, LD-28,
+> plus F-08, F-09 and every item carried from the previous series).
+> **Two rules recorded from this series:** `DECISIONS.md` (the after-visit ship-to-home state is generic,
+> automatic and has no end date; the after-window fail-safe now falls open rather than closed).
+>
+> ⭐ **The customer-visible change in this series, stated plainly.** A school-visit link now reopens in a
+> **ship-only** state from 00:00 site time on the morning of the read-aloud, and **it does not expire**.
+> The band names the school and offers ordinary shipping to the home. Hand delivery is not offered, the
+> shelf counters are gone, both formats are orderable, and the button says shipped rather than signed.
+> **This is generic and automatic: every registry visit, past and future, enters this state on its own
+> date with no manual step.** Every past read-aloud is therefore permanently orderable. Full wording for
+> anyone answering a customer: `RELEASES/PRODUCTION_RELEASE_1_19_357_358.md` section 5.
+>
+> ⚠️ **Provenance, stated rather than implied.** This block was written by the documentation lane from the
+> build lanes' own records. **The version numbers and the deploy date above are recorded from the
+> deploying lane, not read from production by this block.** Before relying on them for anything
+> consequential, re-run the definitive instrument: `wp theme list --status=active` and
+> `wp plugin get brave-hearts-bundle-pricing --field=version` over SSH, read-only. Every correction block
+> in this file's history exists because a version number was trusted past its verification.
 > ## ⭐⭐ NEWEST, 2026-09-02 · **PRODUCTION IS THEME `1.19.356` / BUNDLE PLUGIN `1.8.81`.** Every version number below this block is SUPERSEDED.
 >
 > **Theme `1.19.356` and bundle plugin `1.8.81` were deployed to production on 2026-09-02, with the

@@ -1,7 +1,192 @@
 # Changelog — Brave Hearts Publishing
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
+## 2026-09-03 - PRODUCTION IS NOW THEME `1.19.359` / BUNDLE PLUGIN `1.8.83` (supersedes the 1.19.357/1.19.358 entry below on the version number only)
 
+**Theme 1.19.359, deployed to production 2026-09-03 evening, owner-approved.** Two capped changes, nothing else:
+- Product pages: the Kindle / "View on Amazon" chip was removed from the CHOOSE YOUR FORMAT row and every "Buy on Amazon" mention on a product page was reduced to one quiet line below the buy box: "Prefer Amazon? The books are there too." (customer review links that point at Amazon were left untouched). The Add-to-cart position did not move at 1440 or 375.
+- Homepage: the store's 30-day refund policy sentence (already on every product page and the Collection page) now renders beneath the collection block's call to action.
+- Test note: `tests/test-homepage-warmth.php` section 2.5 previously asserted that no guarantee wording appeared on the homepage; it is inverted (superseded assertion preserved in a comment) because the owner approved the policy sentence on the homepage. The deployed 1.19.359 artefact carries the pre-amendment test file; the repository carries the amended one; tests run on staging only.
+- Known, not changed: the Collection page still shows its own "View on Amazon" format chip (its format row is a separate template); tracked for a later release.
+- Rollback: `PROD-theme-1.19.358-pre-359.tar.gz` on the server. Plugin unchanged at 1.8.83.
+
+
+## 2026-09-03 - PRODUCTION IS NOW THEME `1.19.358` / BUNDLE PLUGIN `1.8.83` (releases 1.19.357 and 1.19.358)
+
+> ⭐ **This block supersedes, on the version numbers only, the entry immediately below it, which recorded
+> production as theme `1.19.356` / plugin `1.8.81`.** That entry is correct for the moment it describes and
+> is deliberately NOT rewritten. Read this one first.
+
+**Production, 2026-09-03: theme `1.19.358`, bundle plugin `brave-hearts-bundle-pricing` `1.8.83`.**
+Two theme releases and two plugin releases were built and staging-verified on 2026-09-03. `1.19.358` is
+built on top of the `1.19.357` working tree and `1.8.83` on top of `1.8.82`, so **one theme artefact and
+one plugin artefact carry both releases each**, and the contents of `1.19.357` and `1.8.82` reached
+production inside the later artefacts rather than shipping on their own. They are recorded below
+individually because each is a distinct staging release with its own tests and its own rollback artefact.
+
+**Release contents, tests, rollback artefact names and open issues:
+`docs/RELEASES/PRODUCTION_RELEASE_1_19_357_358.md`.**
+
+⚠️ **The version numbers and the deploy date in this block are recorded by the documentation lane from the
+deploying lane's result, not read from production by this block.** Verify with
+`wp theme list --status=active` and `wp plugin get brave-hearts-bundle-pricing --field=version` over SSH
+before quoting them.
+
+---
+
+### `1.19.358` - built and staging-verified 2026-09-03 - the hand-delivery steps are shown only while a visit is open - **DEPLOYED TO PRODUCTION 2026-09-03**
+
+#### `/author-visits/` no longer prints instructions nobody can follow
+
+- The "How It Works" hand-delivery steps on `/author-visits/` now render **only when at least one
+  registry visit is currently in the hand-delivery phase.** When no visit is open, the block is not
+  rendered at all.
+- This closes a defect that was live and observable: the page could show a "Read-aloud done, books ship
+  to your home" card and, on the same screen, a numbered step telling a parent to choose the free author
+  hand-delivery option at checkout. **Observed true at `1.19.357` and observed false at `1.19.358`**, in a
+  real browser at an asserted 1440 and an asserted 375, with the step count going from 3 to 0.
+- **It is a display gate, not a copy change. Not one word of the three steps was touched**, and the suite
+  pins all three as exact literals so a single changed character fails.
+- The gate reads the plugin's own "ordering is still open" answer rather than re-deriving the window, and
+  it reads **open**, not "a row exists". A row can be listed and not open in two ways - the closed day
+  before a visit, when the books are already packed, and the after-visit ship-only state - and both must
+  suppress the steps. The new condition is **strictly narrower than the old one and never wider**, which
+  is asserted as a property rather than claimed in prose.
+- The predicate lives in `inc/author-visits.php`, not in the template, because that template's own header
+  says every decision belongs in `inc/author-visits.php`. That also made both states testable as plain
+  assertions instead of something only observable by rendering a page on the right day.
+
+#### Confirmed rather than changed
+
+- A visited school moves from Upcoming Visits to Past Read-Alouds **the day after the visit**, not on the
+  day itself. That was already the behaviour, it is a single date comparison on the visit date, and it was
+  already covered by an assertion. **No code changed for it.**
+
+### Bundle plugin `1.8.83` - built 2026-09-03 - **DEPLOYED TO PRODUCTION 2026-09-03**
+
+#### The after-visit ship-only phase no longer expires
+
+- The after-visit state now runs from the visit date **onward, with no end**. It was 30 days. This is the
+  owner's ruling, and it is generic and automatic: it applies to every registry visit, past and future,
+  from that visit's own date, with no per-school switch and no manual step.
+- `BHP_SCHOOL_VISIT_AFTER_DAYS` ships as `0`, and **`0` means no limit**. The constant and the
+  `bhp_school_visit_after_days` filter were kept because they express "unlimited" cleanly: `0` or `null`
+  means no limit, any integer of 1 or more means a bounded window in whole days.
+- `bhp_school_visit_after_days()` now returns `int|null`. `bhp_school_visit_after_end_date()` now returns
+  `null` when there is no end at all, which is a **different answer** from `''`, which still means the
+  visit date is unusable and the predicate fails closed. **No caller may collapse those two**, and a suite
+  assertion prevents an `empty()` test being introduced that would.
+- The opening bound is tested first and alone: a day before the visit is not "after" under any window
+  length, unlimited included. That half of the rule did not change and no longer depends on the half that
+  did.
+- **The failure direction is inverted from `1.8.82`, deliberately.** A filter returning nonsense is still
+  discarded, but it now falls back to unlimited rather than to 30 days, so a broken hook cannot silently
+  close a window that was ruled to stay open. Recorded as `LD-26` in `KNOWN_ISSUES.md`, because it is a
+  real change in failure behaviour, not because it is wrong.
+- **The entitlement chain is untouched.** `bhp_school_visit_resolve()`, `bhp_school_visit_is_open_on()`
+  and `bhp_school_visit_active()` still carry no after-visit symbol at all, asserted by extracting each
+  function body from the shipped source. **Removing an expiry did not widen an entitlement gate.** The
+  ordering cutoff still closes at 00:00 on the day before a visit.
+- Four docblock paragraphs that described a window passing are now untrue under the shipped default. Each
+  was preserved verbatim with a dated supersession note beneath it, because each is still exactly right
+  for a bounded window, which the filter can still set.
+
+---
+
+### `1.19.357` - built and staging-verified 2026-09-03 - the after-visit phase - **NOT deployed to production on its own; its contents reached production inside `1.19.358` on 2026-09-03**
+
+#### A third visit state
+
+- A school-visit link now has **three** states instead of two. **OPEN** while ordering is open, up to two
+  days before the visit. **CLOSED** on the single day before the visit. And from **00:00 site time on the
+  morning of the read-aloud**, a new **AFTER-VISIT** state. As shipped in `1.19.358` and plugin `1.8.83`
+  that third state has no end date.
+- **The day before a visit deliberately keeps the closed band.** The books are already packed for hand
+  delivery and the read-aloud has not happened, so neither of the other two sentences would be true. It is
+  the only day in none of the three states.
+- The site timezone was read live rather than assumed, and every comparison runs through the one movable
+  clock the plugin already had.
+
+#### What a parent sees after the read-aloud
+
+- The flagged shop URL and every catalog archive carrying the flag show a green band naming the school and
+  saying the books can still be ordered and shipped to the home. The wording says "today" on the day
+  itself and carries the date afterwards. Measured contrast **14.24:1** against a 4.5:1 gate.
+- **No shelf counters, no "Only N left", no hand-delivery option, no paperback-only restriction, both
+  formats orderable, ordinary shipping.** Verified live at an asserted 1440 and 375 by counting the served
+  HTML: zero, zero, zero, zero, hardcover chips present, and a real cart resolving to
+  "Contiguous US Shipping $1.99".
+- The free Adventure Activity Book offer is **unchanged**.
+- The school context follows the parent to checkout: the order carries the visit slug, the school, the
+  visit date and a new phase marker set to `after`. A hand-delivery order now records `pickup` in the same
+  field.
+
+#### `/author-visits/`
+
+- The visited school's card reads "Read-aloud done" and carries a live ordering button, in place of the
+  greyed closed control.
+- A past read-aloud carries the same button, and under `1.8.83` it keeps it with no manual step. **The
+  past read-aloud story card, its recap link and its photographs are untouched.**
+- **The button says shipped, never signed.** An after-visit order is printed and posted, and nobody signs
+  it. A permanent assertion guards that single word.
+
+### Bundle plugin `1.8.82` - built 2026-09-03 - **NOT deployed to production on its own; its contents reached production inside `1.8.83` on 2026-09-03**
+
+#### The plugin half of the after-visit phase, and the thing deliberately not done
+
+- The after-visit predicate, its resolver, its session flag, the clear token handling for both directions
+  and the order marker.
+- **`bhp_school_visit_resolve()` was not widened, wrapped, filtered or softened.** It is the entitlement
+  gate, and hand delivery, the shelf counters, the paperback-only restriction, the backorder behaviour and
+  the withheld deferred-payment gateways all reach it through one chain. The after-visit phase is a
+  **second, parallel session flag that nothing in that chain reads**, so it cannot grant anything. **The
+  absence of the counters and the hand-delivery option in this phase is therefore not new behaviour:** it
+  is what the site has done on every post-close request since plugin `1.8.56`.
+- The alternative was to let the entitlement resolver keep returning a record after the visit and add a
+  phase field. That would have handed an after-visit parent every one of those entitlements at once, each
+  then needing to be switched off individually, with the failure mode of forgetting one being a parent
+  offered hand delivery for a visit that already happened.
+- **The after-visit order marker never writes the hand-delivery flag.** That flag is what excludes an
+  order from the print partner, and an after-visit order must be printed and posted. A dedicated assertion
+  and two independent early returns guard it, because the customer-visible symptom of getting it wrong is
+  a parent who paid and never received a book.
+- Arriving on a live visit link clears any after-visit flag, and the explicit clear token clears both.
+
+---
+
+### Tests across the two releases
+
+- **`1.19.357`:** a new suite of 105 assertions across the three states, both boundary dates, the
+  entitlement separation and the copy. **Zero new failures** against a **same-day** `1.19.356` baseline:
+  staging was rolled back to `1.19.356` / `1.8.81`, the full set of 163 suites was run on the same server
+  against the same registry, and staging was returned. 102 FAIL lines and 13 non-zero exits on each side,
+  the identical sets.
+- **`1.19.358`:** a new suite of 72 assertions covering both changes, both gate states, the null-versus-
+  empty-string split and the guardrails; **72 passed, 0 failed, 0 skipped**. The `1.19.357` suite was
+  extended for the removed bound and read **120 passed, 0 failed** against 105 before, so 15 assertions
+  were added and none was lost. **Zero new failures** against a same-day `1.19.357` baseline taken
+  immediately before the install: 49 FAIL lines and 13 non-zero exits on each, the identical list.
+- **Every run in both releases carried `--url=`.** The standing caveat is unchanged: a suite's verdict can
+  depend on it, so runs that omitted it are not comparable line for line.
+- **A pre-existing failing set is carried forward and is not claimed as fixed.** Both lanes list it and
+  neither release changed it in kind. It includes assertions that hard-pin an old version string, whose
+  text moves with every release.
+- ⚠️ **One suite refused to run its flagged half on both sides of the `1.19.357` comparison**, by its own
+  guard, because no registry visit was open that day and simulating a flagged session would have passed
+  while testing the unflagged path. **That is a calendar condition, proved identical on the same-day
+  baseline, not a regression** - and it means 121 assertions in that suite went unexercised in both runs.
+
+### Open at the end of this series
+
+Full detail in `KNOWN_ISSUES.md`. `LD-22` an internal identifier that should not be in the public source,
+inherited and not written by either release · `LD-24` the attribution session lifetime against a window
+that now has no end · `LD-26` the inverted fail-safe direction · `LD-27` every past read-aloud now reopens
+permanently · `LD-28` the past column grows one ordering button per visit with no cap · `LD-25` the band
+renders on the shop page and category archives but not on a product page or the collection landing page ·
+`F-08` and `F-09` still open and still unscoped.
+
+**Closed by this series:** `LD-23`, the hand-delivery steps appearing beside a "Read-aloud done" card,
+closed by `1.19.358` and measured before and after.
 ## 2026-09-02 - PRODUCTION IS NOW THEME `1.19.356` / BUNDLE PLUGIN `1.8.81` (releases 1.19.355 and 1.19.356)
 
 > ⭐ **This block supersedes, on the version numbers only, the entry immediately below it, which recorded

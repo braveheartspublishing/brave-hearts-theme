@@ -1,5 +1,20 @@
 # AI Context Index
 
+> ## ⭐⭐ NEWEST, 2026-09-03 - **PRODUCTION IS THEME `1.19.358` / BUNDLE PLUGIN `1.8.83`.** The block immediately below, which records `1.19.356` / `1.8.81`, is **SUPERSEDED ON BOTH VERSION NUMBERS** and is preserved rather than rewritten.
+>
+> Two theme releases and two plugin releases were built and staging-verified on 2026-09-03. **Theme
+> `1.19.358` and bundle plugin `1.8.83` were deployed to production on 2026-09-03**, with the owner's
+> explicit approval. `1.19.357` and plugin `1.8.82` did not ship on their own; their contents reached
+> production inside the later artefacts. **Those two artefacts are superseded and must not be deployed.**
+>
+> **Canonical for this series:** `RELEASES/PRODUCTION_RELEASE_1_19_357_358.md` (release record, contents,
+> tests, rollback artefact names, the customer-visible behaviour change, known issues) and the
+> 2026-09-03 `CHANGELOG.md` entry headed "PRODUCTION IS NOW THEME `1.19.358`" (per-release detail).
+> Open issues: `KNOWN_ISSUES.md`. Rules recorded from this series: `DECISIONS.md`.
+>
+> ⚠️ **Recorded from the deploying lane, not read from production by this block.** Verify with
+> `wp theme list --status=active` and `wp plugin get brave-hearts-bundle-pricing --field=version` over SSH
+> before quoting these numbers.
 > ## ⭐⭐ NEWEST, 2026-09-02 - **PRODUCTION IS THEME `1.19.356` / BUNDLE PLUGIN `1.8.81`.** The block immediately below, which records `1.19.354` / `1.8.79`, is **SUPERSEDED ON BOTH VERSION NUMBERS** and is preserved rather than rewritten.
 >
 > Two theme releases and two plugin releases were built and staging-verified on 2026-09-02. **Theme

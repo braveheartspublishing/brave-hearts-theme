@@ -1,6 +1,45 @@
 # Current Task
 
 
+> ## ⭐⭐ NEWEST, 2026-09-03 · **NO ENGINEERING TASK IS ACTIVE.** Production is theme `1.19.358` / bundle plugin `1.8.83`.
+>
+> The `1.19.357` and `1.19.358` series is closed. Theme `1.19.358` and plugin `1.8.83` are deployed to
+> production as of 2026-09-03, the release record is written, and this file, `PROJECT_STATE.md`,
+> `START_HERE.md`, `NEXT_TASK.md`, `AI_CONTEXT_INDEX.md`, `KNOWN_ISSUES.md`, `DECISIONS.md` and
+> `CHANGELOG.md` are in sync with it. **Everything below this block is a task record from an earlier state
+> and is history, not the current task.**
+>
+> ### What is genuinely open and would need a decision before it becomes work
+>
+> - **`LD-22`** in `KNOWN_ISSUES.md`. An internal identifier that should not be in the public source,
+>   inherited from earlier releases and removed by neither release in this series. **This repository is
+>   public, so this is the open item most worth scheduling**, and removing it is a scoped piece of work
+>   rather than a decision.
+> - **`LD-27`**. Every past read-aloud now reopens permanently, with no expiry and no manual switch. That
+>   is what the ruling asks for; **whether it should be narrowed for any particular school is the owner's,
+>   not engineering's.**
+> - **`LD-28`**. The `/author-visits/` past column will accumulate one ordering button per visit, for
+>   ever, with no pagination and no cap. A scaling and design question about a page reached from printed
+>   codes.
+> - **`LD-26`**. The after-window fail-safe now falls open rather than closed. It follows from the ruling;
+>   confirming it is intended costs one sentence.
+> - **`LD-24`**. A parent's remembered school context lasts 14 days per click while the link itself now
+>   has no end. Probably correct as one lifetime mechanism rather than two, recorded because the numbers
+>   now diverge without bound.
+> - **`LD-25`**. The visit band renders on the shop page and category archives but not on a product page
+>   or the collection landing page. A scope question, unchanged since `1.19.350`.
+> - **Everything carried from the previous series and still open:** `LD-11`, `LD-14`, `LD-17`, `LD-18`,
+>   `LD-19`, `LD-20`, `LD-21`, `F-08`, `F-09`, the `--url` test-harness dependency, and the parked
+>   cosmetic list described below. **Re-check the parked list against the live pages before starting it**,
+>   because more releases have shipped since it was written.
+>
+> ### Closed by this series
+>
+> **`LD-23`**, the hand-delivery steps rendering beside a "Read-aloud done" card, closed by `1.19.358` and
+> measured true before and false after at both viewports.
+>
+> ⚠️ **The version numbers and the deploy date above are recorded from the deploying lane, not read from
+> production by this block.** Verify before relying on them.
 > ## ⭐⭐ NEWEST, 2026-09-02 · **NO ENGINEERING TASK IS ACTIVE.** Production is theme `1.19.356` / bundle plugin `1.8.81`.
 >
 > The `1.19.355` and `1.19.356` series is closed. Theme `1.19.356` and plugin `1.8.81` are deployed to
