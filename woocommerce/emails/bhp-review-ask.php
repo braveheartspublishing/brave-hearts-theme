@@ -60,13 +60,67 @@ if ( '' !== $bhp_first_name ) {
  *    the middle of a paragraph run.
  */
 ?>
+<?php
+/*
+ * ⚠ CONDITIONAL FROM 1.19.362, AND THE CONDITION IS THE POINT. The approved
+ *   visit touch-1 set has NO bolded question and NO "Find the one you read:"
+ *   line, because Merry's template has neither. ⛔ Rendering these blocks
+ *   unconditionally would print an empty <strong> band above the link, which
+ *   reads as a broken email. Inventing a question to fill the slot would be
+ *   writing copy into an email whose copy is locked (Standing Rules §9).
+ *
+ * ⭐ THE SUPERSEDED 21-DAY SET RENDERS BYTE-FOR-BYTE AS IT DID, because its
+ *    `question`, `body_middle` and `links_lead` are all non-empty.
+ */
+?>
+<?php if ( '' !== trim( (string) $copy['question'] ) ) : ?>
 <p style="margin:22px 0;"><strong style="font-size:18px;"><?php echo esc_html( $copy['question'] ); ?></strong></p>
+<?php endif; ?>
 
 <?php foreach ( $copy['body_middle'] as $bhp_paragraph ) : ?>
 <p><?php echo esc_html( $bhp_paragraph ); ?></p>
 <?php endforeach; ?>
 
+<?php
+/*
+ * ⭐⭐ 1.19.364 · THE STAR ROW. Seal 977. Five links, one destination, no
+ *     default selection, nothing steered toward five.
+ *
+ * ⛔ TABLE-BASED AND INLINE-STYLED because this is email, not a web page:
+ *    Outlook's Word renderer ignores flex, grid and most block layout, and a
+ *    <div> row collapses to five stacked lines with no alignment.
+ *
+ * ⛔⛔ EVERY CELL CARRIES ITS VISIBLE TEXT LABEL, NOT A GRAPHIC ALONE, and
+ *     the glyph is a real character (★) rather than a shipped image, so there
+ *     is nothing to block, nothing to download and nothing to break. Merry's V2
+ *     §5: *"A row of five broken-image icons with no labels is a dead end for
+ *     the reader and a wasted send."* ⚠ If anyone later swaps the glyph for an
+ *     <img>, the alt text must equal the label and the visible label must stay.
+ *
+ * ⚠ THE GLYPH IS DECORATIVE AND IS HIDDEN FROM ASSISTIVE TECHNOLOGY
+ *   (aria-hidden), because the label beside it already says "4 stars: really
+ *   good". Without that a screen reader announces the stars twice.
+ */
+$bhp_stars = function_exists( 'bhp_review_ask_star_row' ) ? bhp_review_ask_star_row( $order ) : array();
+?>
+<?php if ( ! empty( $bhp_stars ) ) : ?>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:22px 0;border-collapse:collapse;">
+	<tr>
+<?php foreach ( $bhp_stars as $bhp_star ) : ?>
+		<td align="center" valign="top" style="padding:0 4px;width:20%;">
+			<a href="<?php echo esc_url( $bhp_star['url'] ); ?>" target="_blank" rel="noopener" style="display:block;padding:10px 2px;color:#173f2f;text-decoration:none;font-weight:400;">
+				<span aria-hidden="true" style="display:block;font-size:22px;line-height:1.2;color:#173f2f;"><?php echo esc_html( str_repeat( "â", (int) $bhp_star['rating'] ) ); ?></span>
+				<span style="display:block;font-size:13px;line-height:1.4;margin-top:6px;text-decoration:underline;"><?php echo esc_html( $bhp_star['label'] ); ?></span>
+			</a>
+		</td>
+<?php endforeach; ?>
+	</tr>
+</table>
+<?php endif; ?>
+
+<?php if ( '' !== trim( (string) $copy['links_lead'] ) ) : ?>
 <p style="margin:22px 0 6px;"><strong><?php echo esc_html( $copy['links_lead'] ); ?></strong></p>
+<?php endif; ?>
 
 <p style="margin:0 0 22px;line-height:1.9;">
 <?php
@@ -113,6 +167,21 @@ echo implode( '<br>', $bhp_signoff_lines ); // phpcs:ignore WordPress.Security.E
 
 <?php if ( ! empty( $copy['signoff_tagline'] ) ) : ?>
 <p style="margin:4px 0 0;font-style:italic;"><?php echo esc_html( $copy['signoff_tagline'] ); ?></p>
+<?php endif; ?>
+
+<?php
+/*
+ * ⭐ 1.19.362 — THE P.S., AND IT SITS BELOW THE SIGN-OFF BECAUSE THAT IS WHAT
+ *    A P.S. IS. Merry's approved template ends on one, and a postscript moved
+ *    above the name stops being a postscript and becomes another paragraph.
+ *
+ * ⚠ IT RENDERS ONLY WHEN THE COPY SET CARRIES ONE. The superseded 21-day set
+ *   has no `postscript` key at all, so `isset()` guards it rather than
+ *   `empty()` alone.
+ */
+?>
+<?php if ( ! empty( $copy['postscript'] ) ) : ?>
+<p style="margin:16px 0 0;"><?php echo esc_html( $copy['postscript'] ); ?></p>
 <?php endif; ?>
 
 <?php

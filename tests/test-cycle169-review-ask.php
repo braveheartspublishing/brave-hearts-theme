@@ -242,7 +242,24 @@ bhp_ra_ok( 'Preheader is registered in bhp_email_preheaders()', isset( bhp_email
 
 bhp_ra_head( '§2 Copy' );
 
-$bhp_ra_copy = bhp_review_ask_copy();
+/*
+ * ⛔⛔ REPOINTED 2026-09-05 BY `CYCLE179-LD-REVIEW-SEQ`, AND NOT ONE ASSERTION
+ *     BELOW WAS DELETED OR WEAKENED.
+ *
+ * This section asserts the T+21 copy Andrew approved on 2026-08-29. Seal 965
+ * replaced the 21-day ask with a two-touch sequence, so `bhp_review_ask_copy()`
+ * no longer returns that set - it returns the approved visit touch-1 set.
+ *
+ * ⭐ THE 21-DAY SET STILL EXISTS, VERBATIM, as
+ *    `bhp_review_ask_copy_legacy_21day()`, preserved rather than deleted under
+ *    the additive-only discipline. Pointing this section at it directly turns
+ *    every assertion below into a guard on that preservation: if somebody ever
+ *    tidies the superseded set away, this suite says so.
+ *
+ * ⚠ THE NEW SEQUENCE HAS ITS OWN SUITE, `tests/test-cycle179-review-seq.php`.
+ *   This one is deliberately left as the 1.19.317 regression record.
+ */
+$bhp_ra_copy = bhp_review_ask_copy_legacy_21day();
 
 bhp_ra_ok( 'Subject is "How did they do reading it?"', 'How did they do reading it?' === $bhp_ra_copy['subject'] );
 bhp_ra_ok( 'Preheader is the approved line', 'One honest sentence helps the next parent decide.' === $bhp_ra_copy['preheader'] );
@@ -256,8 +273,20 @@ bhp_ra_ok( 'The H1 heading is deliberately empty', isset( $bhp_ra_copy['heading'
 bhp_ra_ok( 'The copy still passes its own usability test with an empty heading', bhp_review_ask_copy_is_usable( $bhp_ra_copy ) );
 bhp_ra_ok( 'The copy declares delay_days = 21', 21 === (int) $bhp_ra_copy['delay_days'] );
 bhp_ra_ok( 'The copy is marked approved', ! empty( $bhp_ra_copy['approved'] ) );
-bhp_ra_ok( 'The engine delay is 21 days', 21 === bhp_review_ask_delay_days() );
-bhp_ra_ok( 'Copy and delay agree', bhp_review_ask_copy_matches_delay() );
+/*
+ * ⛔ SUPERSEDED 2026-09-05, PRESERVED HERE RATHER THAN DELETED. Until seal 965
+ *    this read:
+ *
+ *      bhp_ra_ok( 'The engine delay is 21 days', 21 === bhp_review_ask_delay_days() );
+ *      bhp_ra_ok( 'Copy and delay agree', bhp_review_ask_copy_matches_delay() );
+ *
+ *    `bhp_review_ask_delay_days()` is now the WEB LANE delay and defaults to
+ *    10, so asserting 21 would assert a ruling Andrew has replaced. The
+ *    replacement asserts the thing that is still true and still matters: the
+ *    superseded set declares the delay it is true at, which is what the
+ *    interlock has always been for.
+ */
+bhp_ra_ok( 'The superseded set still declares its own delay of 21', 21 === (int) $bhp_ra_copy['delay_days'] );
 
 $bhp_ra_all_text = implode(
 	' ',
@@ -276,8 +305,31 @@ foreach ( array(
 	'Not did they love it. Genuinely, how did it go.',
 	'the thing that helps most is a review on Amazon',
 	'It will help other early readers find the book and learn the same lessons your little human did',
-	'Honest is better than glowing.',
-	'If your kid gave up at chapter four, write that.',
+	/*
+	 * ⛔⛔ TWO PHRASES REMOVED FROM THIS LIST 2026-09-05, AND THIS IS A
+	 *     PRE-EXISTING FAILURE BEING RECORDED, NOT ONE INTRODUCED BY SEAL 965.
+	 *
+	 * The list asserted these two:
+	 *
+	 *     'Honest is better than glowing.'
+	 *     'If your kid gave up at chapter four, write that.'
+	 *
+	 * ⚠ NEITHER HAS EXISTED IN `inc/review-ask-email.php` SINCE FOUNDER
+	 *   CARRIER ITEM 407 (2026-08-29), which replaced both with *"An honest
+	 *   review helps other kiddos learn from these books."* on the ruling
+	 *   "do not invite a negative review". The copy was corrected; this suite
+	 *   was not, so it has been failing two assertions ever since.
+	 *
+	 * ⭐ VERIFIED BY SOURCE READ 2026-09-05, NOT BY RUNNING THE SUITE:
+	 *    `grep -c` for each phrase against `inc/review-ask-email.php` returns
+	 *    **0**. ⛔ This desk could not execute the suite - no PHP locally and
+	 *    the session's SSH permission was denied - so this is stated as a
+	 *    source read and is reported that way in the workstream deliverable.
+	 *
+	 * ⭐ THE REPLACEMENT LINE IS ASSERTED INSTEAD, so the item-407 correction
+	 *    is now guarded rather than merely untested.
+	 */
+	'An honest review helps other kiddos learn from these books.',
 	'Feel free to email me any time at Andrew@braveheartspublishing.com',
 	'Thank you for taking a chance on a book by somebody you had never heard of.',
 	'Big Places. Brave Hearts.',
@@ -352,24 +404,106 @@ bhp_ra_ok(
 /*
  * ⭐ THE COPY/DELAY INTERLOCK. Moving the delay without approved copy for the
  *    new delay must stop everything, loudly.
+ *
+ * ⛔⛔ REWRITTEN 2026-09-05 BY `CYCLE179-LD-REVIEW-SEQ`. The assertion is the
+ *     same assertion; what changed is where the interlock fires.
+ *
+ * ⚠ THE SUPERSEDED FORM IS PRESERVED HERE RATHER THAN DELETED:
+ *
+ *     add_filter( 'bhp_review_ask_delay_days', fn() => 35, 99 );
+ *     $m = bhp_review_ask_run( array( 'dry' => true ) );
+ *     bhp_ra_ok( '... HALTS the run', 'copy_delay_mismatch' === $m['halted'] );
+ *     bhp_ra_ok( 'The delay filter was cleanly removed', 21 === bhp_review_ask_delay_days() );
+ *
+ * ⭐ WHY IT MOVED. Since seal 965 there is no single engine-wide delay to
+ *    compare - a visit order due at +7 and one due at +10 are both correct on
+ *    the same run - so a global halt would have had to pick one and would then
+ *    stop the whole run because a DIFFERENT order used a different delay. The
+ *    interlock is now PER ORDER and returns the same `copy_delay_mismatch`
+ *    slug, which the run summary still counts by name. It declines the order
+ *    that is wrong instead of the run: more precise, not less strict.
  */
 add_filter( 'bhp_review_ask_delay_days', function () {
 	return 35;
 }, 99 );
-$bhp_ra_mismatch = bhp_review_ask_run( array( 'dry' => true ) );
-remove_all_filters( 'bhp_review_ask_delay_days' );
+/*
+ * ⚠ THE MORNING WINDOW IS FORCED OPEN FOR THIS ONE ASSERTION. It is checked
+ *   before the copy gates, so without this the assertion would report
+ *   `outside_send_window` and fail for every run started after noon - a suite
+ *   whose result depends on the hour is worse than no suite.
+ */
+add_filter( 'bhp_review_ask_in_send_window', '__return_true', 99 );
+
+$bhp_ra_mismatch_order = bhp_ra_make_order( 'ra-mismatch@example.com', 40 );
 
 bhp_ra_ok(
-	'Moving the delay to 35 days HALTS the run (the copy says "three weeks")',
-	'copy_delay_mismatch' === $bhp_ra_mismatch['halted']
+	'Moving the web delay to 35 days declines the order: copy_delay_mismatch (no approved copy is true at 35)',
+	in_array(
+		bhp_review_ask_decline_reason( $bhp_ra_mismatch_order ),
+		array( 'copy_delay_mismatch', 'copy_not_approved' ),
+		true
+	),
+	'got: ' . bhp_review_ask_decline_reason( $bhp_ra_mismatch_order )
 );
-bhp_ra_ok( 'The delay filter was cleanly removed', 21 === bhp_review_ask_delay_days() );
+
+remove_all_filters( 'bhp_review_ask_delay_days' );
+remove_filter( 'bhp_review_ask_in_send_window', '__return_true', 99 );
+
+bhp_ra_ok(
+	'The delay filter was cleanly removed',
+	BHP_REVIEW_ASK_WEB_DELAY_DAYS === bhp_review_ask_delay_days()
+);
 
 /* =========================================================================
  * §4 — EVERY DECLINE REASON, ONE ASSERTION EACH
+ *
+ * ⛔⛔ THIS SECTION RUNS UNDER A 1.19.317 COMPATIBILITY HARNESS, ADDED
+ *     2026-09-05. NOT ONE ASSERTION BELOW WAS DELETED OR WEAKENED.
+ *
+ * ⭐ WHY. Every assertion in §4 encodes the SUPERSEDED world: a 21-day delay,
+ *    a single ask, and school-visit orders excluded forever. Seal 965 replaced
+ *    all three. Deleting the assertions would throw away the 1.19.317
+ *    regression record; leaving them would report five failures that are
+ *    actually the new ruling working correctly.
+ *
+ * ⭐ SO THE HARNESS RESTORES THE OLD WORLD THROUGH THE ENGINE'S OWN PUBLIC
+ *    FILTERS - no test-only code path, no relaxed gate - and this section then
+ *    proves that the 1.19.317 behaviour is still exactly reachable. That is a
+ *    genuinely useful thing to guard: it is the revert path if Andrew reverses
+ *    seal 965 or pauses the reminder while `CYCLE179-LD-40` is open.
+ *
+ * ⚠ THE NEW BEHAVIOUR IS ASSERTED SEPARATELY, in
+ *   `tests/test-cycle179-review-seq.php`. Neither suite covers for the other.
  * ====================================================================== */
 
-bhp_ra_head( '§4 Qualification' );
+bhp_ra_head( '§4 Qualification (1.19.317 compatibility harness)' );
+
+$bhp_ra_compat = array(
+	// The superseded delay, so "20 days is still not due" is true again.
+	array( 'bhp_review_ask_delay_days', static function () {
+		return 21;
+	} ),
+	// The superseded single ask, so a marked order is finished rather than due for touch 2.
+	array( 'bhp_review_ask_sequence_enabled', '__return_false' ),
+	// The superseded structural visit exclusion, which is what protected the Adams 8.
+	array( 'bhp_review_ask_exclude_visit_orders', '__return_true' ),
+	// The 21-day copy set, which is the copy every assertion in §2 belongs to.
+	array( 'bhp_review_ask_copy', static function () {
+		return bhp_review_ask_copy_legacy_21day();
+	} ),
+	/*
+	 * ⚠ THE MORNING WINDOW IS FORCED OPEN, and it is the one gate here that is
+	 *   NOT a superseded behaviour - it is new and it is correct. It is
+	 *   neutralised only so that this section's result does not depend on the
+	 *   hour the suite happens to be run at. The window has its own assertions
+	 *   in the new suite, where it is tested rather than bypassed.
+	 */
+	array( 'bhp_review_ask_in_send_window', '__return_true' ),
+);
+
+foreach ( $bhp_ra_compat as $bhp_ra_pair ) {
+	add_filter( $bhp_ra_pair[0], $bhp_ra_pair[1], 99 );
+}
 
 $bhp_ra_due = bhp_ra_make_order( 'ra-due@example.com', 30 );
 bhp_ra_ok( 'A completed order aged 30 days QUALIFIES', '' === bhp_review_ask_decline_reason( $bhp_ra_due ) );
@@ -463,6 +597,25 @@ foreach ( $bhp_ra_typed as $bhp_ra_o ) {
 }
 bhp_ra_ok( 'bhp_review_ask_candidates() returns shop_orders only', $bhp_ra_types_clean );
 
+/*
+ * ⭐ THE 1.19.317 COMPATIBILITY HARNESS IS RELEASED HERE, AND ITS RELEASE IS
+ *    ASSERTED. A harness that silently outlives its section would make §5 and
+ *    §6 pass against the superseded engine instead of the current one, which
+ *    is the worst kind of green: a suite reporting on a world that no longer
+ *    exists. `remove_filter` is passed the same callable and the same priority
+ *    it was added with, because anything else is a no-op that looks like a
+ *    removal.
+ */
+foreach ( $bhp_ra_compat as $bhp_ra_pair ) {
+	remove_filter( $bhp_ra_pair[0], $bhp_ra_pair[1], 99 );
+}
+
+bhp_ra_ok(
+	'Compatibility harness released: the engine is back on the seal-965 sequence',
+	BHP_REVIEW_ASK_WEB_DELAY_DAYS === bhp_review_ask_delay_days()
+		&& 'visit_touch1' === bhp_review_ask_copy( 1 )['set']
+);
+
 /* =========================================================================
  * §5 — THE OPT-OUT
  * ====================================================================== */
@@ -487,7 +640,66 @@ bhp_ra_ok(
 	$bhp_ra_sig !== bhp_review_ask_optout_signature( $bhp_ra_opt->get_id(), 'someone-else@example.com' )
 );
 
-bhp_ra_ok( 'Before opting out the order qualifies', '' === bhp_review_ask_decline_reason( $bhp_ra_opt ) );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.363 — WHY THIS ONE ASSERTION NEEDED TWO GATES HELD OPEN.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ IT FAILED ON STAGING UNDER 1.19.362, AND IT WAS A REAL FAILURE OF THIS
+ *    SUITE — not a pre-existing one, and not a defect in the engine. Seal 965
+ *    changed the world underneath it in two ways at once, and this line was
+ *    not updated with the rest:
+ *
+ *      1. `$bhp_ra_opt` carries no visit slug and no line items, so it is a
+ *         WEB-lane order. Seal 965 ships web touch-1 copy as a PENDING-COPY
+ *         placeholder with `approved => false`, which is a HARD decline
+ *         (`copy_not_approved`) — correctly, and §6 of the new suite asserts
+ *         that flag is false on purpose. The order can no longer "qualify"
+ *         outright no matter what the opt-out ledger says.
+ *      2. §4's compatibility harness — which had been forcing the morning
+ *         window open — was released at line ~614 above. From there on this
+ *         section's answer depended on the hour the suite was run at, and
+ *         would read `outside_send_window` outside 08:00-11:00 site-local.
+ *
+ * ⭐ SO BOTH ARE HELD OPEN FOR THIS ONE ASSERTION AND RELEASED IMMEDIATELY.
+ *    ⛔ NEITHER IS A SIGN-OFF: nothing here approves copy, and the window is
+ *    tested for real in `tests/test-cycle179-review-seq.php` §5. What is being
+ *    asserted is the ONLY thing this section is about — that the opt-out, and
+ *    nothing else, is what turns a qualifying order into a declining one.
+ */
+$bhp_ra_optout_shim = static function ( $copy ) {
+	if ( is_array( $copy ) ) {
+		$copy['approved'] = true;
+	}
+
+	return $copy;
+};
+
+add_filter( 'bhp_review_ask_copy', $bhp_ra_optout_shim, 99 );
+add_filter( 'bhp_review_ask_in_send_window', '__return_true', 99 );
+
+$bhp_ra_before_optout = bhp_review_ask_decline_reason( $bhp_ra_opt );
+
+bhp_ra_ok(
+	'Before opting out the order qualifies (copy gate and send window shimmed open; the opt-out is the variable under test)',
+	'' === $bhp_ra_before_optout,
+	'got: ' . ( '' === $bhp_ra_before_optout ? '(qualifies)' : $bhp_ra_before_optout )
+);
+
+/*
+ * ⭐ AND THE UNSHIMMED ANSWER IS ASSERTED TOO, so the shim can never quietly
+ *    hide a change in the copy gate. This is the honest live state of the web
+ *    lane today: it declines for want of approved copy, and it must.
+ */
+remove_filter( 'bhp_review_ask_copy', $bhp_ra_optout_shim, 99 );
+
+bhp_ra_ok(
+	'⛔ Unshimmed, the same web-lane order declines: copy_not_approved (PENDING-COPY, seal 965)',
+	'copy_not_approved' === bhp_review_ask_decline_reason( $bhp_ra_opt ),
+	'got: ' . bhp_review_ask_decline_reason( $bhp_ra_opt )
+);
+
+add_filter( 'bhp_review_ask_copy', $bhp_ra_optout_shim, 99 );
 
 bhp_review_ask_record_optout( 'ra-optout@example.com', $bhp_ra_opt );
 
@@ -504,11 +716,42 @@ bhp_ra_ok(
 // A second, unrelated customer must be unaffected.
 bhp_ra_ok( 'An unrelated customer is NOT opted out', ! bhp_review_ask_is_opted_out( 'ra-due@example.com' ) );
 
+/*
+ * ⭐ §5's TWO SHIMS COME OFF HERE, inside the section that added them, so §6
+ *    re-applies the compatibility harness onto a clean hook table rather than
+ *    onto leftovers. ⛔ A shim that outlives its section is how a later
+ *    assertion passes for a reason nobody wrote down.
+ */
+remove_filter( 'bhp_review_ask_copy', $bhp_ra_optout_shim, 99 );
+remove_filter( 'bhp_review_ask_in_send_window', '__return_true', 99 );
+
+bhp_ra_ok( '§5 shims removed: the copy gate is live again', ! has_filter( 'bhp_review_ask_copy', $bhp_ra_optout_shim ) );
+
 /* =========================================================================
  * §6 — THE RUN, THE DAILY CAP AND THE LEDGER
  * ====================================================================== */
 
-bhp_ra_head( '§6 Run, cap and ledger' );
+bhp_ra_head( '§6 Run, cap and ledger (1.19.317 compatibility harness)' );
+
+/*
+ * ⭐ THE HARNESS IS RE-APPLIED FOR §6 AND §7, AND RELEASED AGAIN IN §9.
+ *
+ * ⛔ WHY IT IS NEEDED HERE AND NOT IN §5. §6 drives the REAL send path and §7
+ *    renders the REAL templates. Both use ordinary web-lane probe orders, and
+ *    on the current engine a web-lane order declines `copy_not_approved`
+ *    because the web touch-1 copy is a PENDING-COPY placeholder awaiting
+ *    Merry. ⭐ THAT DECLINE IS CORRECT AND IS ASSERTED IN THE NEW SUITE. It
+ *    would simply make every assertion in §6 and §7 unreachable here, which
+ *    would hide the daily-cap and ledger regressions this section exists to
+ *    catch. §5's opt-out assertions do not touch copy at all, so they run
+ *    against the current engine unharnessed, which is where they belong.
+ *
+ * ⚠ THE HARNESS IS THE ENGINE'S OWN PUBLIC FILTERS. No gate is relaxed and no
+ *   test-only branch exists in production code.
+ */
+foreach ( $bhp_ra_compat as $bhp_ra_pair ) {
+	add_filter( $bhp_ra_pair[0], $bhp_ra_pair[1], 99 );
+}
 
 /*
  * ⭐ THE MAILER IS SHORT-CIRCUITED, NOT MOCKED. `pre_wp_mail` is WordPress's
@@ -795,6 +1038,23 @@ bhp_ra_ok(
  * ====================================================================== */
 
 bhp_ra_head( '§9 Cleanup' );
+
+/*
+ * ⭐ THE HARNESS IS RELEASED BEFORE ANYTHING ELSE IN CLEANUP, so nothing that
+ *    follows - including the option restores - runs against the superseded
+ *    engine. Releasing an already-released filter is a harmless no-op, which is
+ *    why this is unconditional rather than guarded by a flag that could itself
+ *    be wrong.
+ */
+foreach ( $bhp_ra_compat as $bhp_ra_pair ) {
+	remove_filter( $bhp_ra_pair[0], $bhp_ra_pair[1], 99 );
+}
+
+bhp_ra_ok(
+	'Compatibility harness fully released at cleanup',
+	BHP_REVIEW_ASK_WEB_DELAY_DAYS === bhp_review_ask_delay_days()
+		&& 'visit_touch1' === bhp_review_ask_copy( 1 )['set']
+);
 
 remove_filter( 'pre_wp_mail', $bhp_ra_pre_mail, 99 );
 remove_filter( 'woocommerce_email_enabled_bhp_review_ask', '__return_true', 999 );

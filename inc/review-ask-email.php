@@ -5,6 +5,95 @@
  * ============================================================================
  *
  * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 2026-09-05 · SEAL 965 · THE SINGLE 21-DAY ASK IS REPLACED BY A
+ *       TWO-TOUCH SEQUENCE. Workstream `CYCLE179-LD-REVIEW-SEQ`, theme
+ *       1.19.362.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ 1.19.363 (`CYCLE179-LD-REVIEW-SEQ-R2`) — TWO CHANGES, BOTH IN THIS FILE,
+ *    NEITHER TOUCHING THE LANES, THE DAY MATH, THE COPY OR ANY GATE:
+ *
+ *      1. `bhp_review_ask_run()`'s disabled-halt no longer stops a DRY run, so
+ *         `wp bhp review-ask dry --as-of=<date>` previews the schedule BEFORE
+ *         the master switch is thrown. Measured on staging 1.19.362: it
+ *         answered "Nothing done" for every date, which made enabling the
+ *         engine the only way to see what it would do. ⛔ The dry path still
+ *         cannot send, and `bhp_review_ask_send()` now re-asserts the master
+ *         switch itself as the last gate before a real parent.
+ *      2. `--as-of` is accepted on `dry` (refused on a live run) and as an
+ *         alias for `--dates` on `plan`.
+ *
+ *    ⛔ NOTHING BELOW THIS NOTE CHANGED IN 1.19.363. The §1/§4 failures Gandalf
+ *       measured on staging were a defect in the SUITE'S FIXTURE, not in this
+ *       engine: it hooked `bhp_school_visit_records`, which no code applies.
+ *       See `tests/test-cycle179-review-seq.php` §0.
+ *
+ * ⛔ THE RULING BEING REPLACED IS PRESERVED HERE, NOT DELETED. Standing Rules
+ *    additive-only discipline. Founder ruling **D-3, carrier item 392,
+ *    2026-08-29**, which this file was built to and which every "21" below
+ *    still refers to:
+ *
+ *      ⛔ SUPERSEDED 2026-09-05 — "ONE email. There is no reminder, no
+ *         sequence and no second ask", sent at **T+21 days from order
+ *         completion**, with school-visit orders excluded forever.
+ *
+ * ⭐ THE REPLACEMENT. Andrew Signore, seal 965, 2026-09-05, verbatim
+ *    (⛔ RELAYED through the Chief of Staff; NOT witnessed first-hand by the
+ *    desk that wrote this, and recorded that way deliberately, Standing Rules
+ *    §9.2 rule 2):
+ *
+ *      "I agree with the changes and to remove the 21 day review ask and do
+ *       the frequency you recommend above"
+ *
+ *    Which resolves to, and every one of these is implemented below:
+ *
+ *      TOUCH 1, VISIT LANE (order carries `_bhp_school_visit_slug`):
+ *        anchored on the VISIT DATE from the `bhp_school_visits` registry,
+ *        + 7 days when the order holds ONE chapter book,
+ *        + 10 days when it holds TWO OR MORE.
+ *        Chapter books are the three Adventures of Charlotte and Henry
+ *        titles in any format. ⛔ The Adventure Activity Book DOES NOT COUNT.
+ *
+ *      TOUCH 1, WEB LANE (no slug):
+ *        order completion + 10 days.
+ *        ⚠⚠ THE 10 IS **GANDALF'S INFERENCE, NOT ANDREW'S WORD**. It is a
+ *        filterable constant, it is labelled `PENDING ANDREW` at its
+ *        definition and in the CLI `status` output, and the web copy set it
+ *        pairs with is NOT approved, so the engine cannot send this lane at
+ *        all until both land. See `BHP_REVIEW_ASK_WEB_DELAY_DAYS`.
+ *
+ *      TOUCH 2 (both lanes):
+ *        ONE reminder, 7 days after touch 1 actually went out, and ONLY when
+ *        no site review exists from that buyer's address on any of the three
+ *        chapter-book products. Then never again for that order.
+ *
+ *      SEND WINDOW: morning, site-local. See
+ *      `bhp_review_ask_in_send_window()`.
+ *
+ * ⛔⛔ THE SCHOOL-VISIT EXCLUSION IS REVERSED BY THIS RULING, AND THAT IS THE
+ *     SINGLE MOST DANGEROUS LINE IN THIS CHANGE. Hazard 1 in the DOUBLE-ASK
+ *     section below closed the Adams double-ask by excluding every visit order
+ *     forever. Seal 965 makes visit orders the PRIMARY lane. The old
+ *     behaviour is preserved as a filterable switch
+ *     (`bhp_review_ask_exclude_visit_orders`, default now FALSE) rather than
+ *     ripped out, and `bhp_review_ask_is_visit_order()` is unchanged and still
+ *     used — it now SELECTS the lane instead of declining the order.
+ *     ⚠ THE VISIT COMPLETED EMAIL STILL CARRIES ITS OWN AMAZON REVIEW ASK
+ *       (`inc/visit-completed-email.php`, Adams set, paragraph four). A visit
+ *       buyer can therefore now receive that ask AND touch 1 AND touch 2.
+ *       ⛔ THIS IS NOT RESOLVED HERE. It is recorded as `CYCLE179-LD-40` and
+ *       routed to Andrew. It is not this desk's contradiction to settle.
+ *
+ * ⚠ PRODUCTION ACTIVATION IS BLOCKED ON A DNS FIX THAT IS NOT IN THIS
+ *   REPOSITORY. Site mail (`wp_mail` through SiteGround) currently FAILS DKIM
+ *   at Gmail — `dkim=permerror (no key for signature) header.s=default` — and
+ *   therefore fails DMARC on every message, surviving only because the domain
+ *   policy is `p=none`. Read: `Business OS\ANDREW-REVIEW\2026-09-05\
+ *   SITE-MAIL-AUTH-READ.md` (Gimli, 2026-09-05, Gmail RAW headers).
+ *   ⛔ Do not switch `bhp_review_ask_enabled` on in production before that
+ *      record is published at `default._domainkey.braveheartspublishing.com`.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐⭐ WHY THE STORE SENDS THIS AND NOT MAILCHIMP
  * ═══════════════════════════════════════════════════════════════════════════
  *
@@ -209,9 +298,119 @@ if ( ! defined( 'BHP_REVIEW_ASK_DEFAULT_DAILY_CAP' ) ) {
 	define( 'BHP_REVIEW_ASK_DEFAULT_DAILY_CAP', 5 );
 }
 
-/** Days between a customer's ask and the next one they may receive. */
+/**
+ * Days between a customer's ask and the next one they may receive.
+ *
+ * ⛔⛔ IT GATES TOUCH 1 ONLY, AND THAT IS A CORRECTION, NOT A LOOPHOLE. Touch 1
+ *     writes the customer stamp. If this gate also ran on touch 2, the stamp
+ *     touch 1 just wrote would decline touch 2 seven days later, EVERY TIME,
+ *     and the sequence Andrew approved would silently be a single ask again.
+ *     ⭐ Touch 2 is bounded by its own, tighter rule instead: one reminder per
+ *     ORDER, ever, suppressed the moment a site review appears. See
+ *     `bhp_review_ask_decline_reason()`.
+ */
 if ( ! defined( 'BHP_REVIEW_ASK_CUSTOMER_COOLDOWN_DAYS' ) ) {
 	define( 'BHP_REVIEW_ASK_CUSTOMER_COOLDOWN_DAYS', 90 );
+}
+
+/* -------------------------------------------------------------------------
+ * ⭐ SEAL 965 · THE TWO-TOUCH SEQUENCE. See this file's header.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Order meta: the datetime touch 1 ACTUALLY went out, as `Y-m-d H:i:s`.
+ *
+ * ⭐⭐ WHY THIS EXISTS RATHER THAN PARSING `BHP_REVIEW_ASK_SENT_META`. That
+ *     key's own docblock states the rule this file has always kept: *"The
+ *     engine never parses the value to decide."* It legitimately holds
+ *     `external-<date>` for an ask sent by hand, which is not a parseable
+ *     datetime. ⛔ Touch 2 needs a REAL DATE to count seven days from, so it
+ *     gets its own explicit field and the old rule stays intact.
+ *
+ * ⚠ ABSENT MEANS "touch 1 happened but nobody recorded when". Touch 2 then
+ *   DECLINES rather than guessing a date. Fail closed; see
+ *   `bhp_review_ask_touch1_sent_timestamp()`.
+ */
+if ( ! defined( 'BHP_REVIEW_ASK_TOUCH1_AT_META' ) ) {
+	define( 'BHP_REVIEW_ASK_TOUCH1_AT_META', '_bhp_review_ask_touch1_at' );
+}
+
+/** Order meta: touch 2 has been dealt with. Any non-empty value suppresses. */
+if ( ! defined( 'BHP_REVIEW_ASK_TOUCH2_SENT_META' ) ) {
+	define( 'BHP_REVIEW_ASK_TOUCH2_SENT_META', '_bhp_review_ask_touch2_sent' );
+}
+
+/** Visit lane, touch 1: days after the VISIT DATE when the order holds ONE chapter book. */
+if ( ! defined( 'BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK' ) ) {
+	define( 'BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK', 7 );
+}
+
+/** Visit lane, touch 1: days after the VISIT DATE when the order holds TWO OR MORE. */
+if ( ! defined( 'BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK' ) ) {
+	define( 'BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK', 10 );
+}
+
+/**
+ * Web lane, touch 1: days after ORDER COMPLETION.
+ *
+ * ⚠⚠ **PENDING ANDREW. THIS NUMBER IS AN INFERENCE, NOT A RULING.** Seal 965
+ *    settled the visit lane in Andrew's own words and said nothing about
+ *    shipped web orders. The 10 is the Chief of Staff's recommendation carried
+ *    in the build brief. It is a constant and a filter so that his answer is a
+ *    one-line change, and the CLI prints `PENDING ANDREW` beside it so nobody
+ *    reads it off a status screen as settled.
+ *
+ * ⛔ IT CANNOT FIRE ANYWAY UNTIL COPY LANDS. The web touch-1 copy set is
+ *    `approved => false` placeholder text, and an unapproved set is a hard
+ *    decline in `bhp_review_ask_decline_reason()`. The timing question and the
+ *    copy question therefore cannot be answered by accident.
+ */
+if ( ! defined( 'BHP_REVIEW_ASK_WEB_DELAY_DAYS' ) ) {
+	define( 'BHP_REVIEW_ASK_WEB_DELAY_DAYS', 10 );
+}
+
+/**
+ * Both lanes: days after touch 1 went out before the single reminder.
+ *
+ * ⭐⭐ 4, NOT 7, SINCE 1.19.364 — ANDREW, SEAL 977, VERBATIM: *"If no reviews
+ *     we ask 4 days later"*. Merry's `CYCLE179-MKT-REVIEW-SEQ-V2.md` §3 records
+ *     the same number and marks it as the change from V1.
+ *
+ * ⛔ SUPERSEDED VALUE, PRESERVED RATHER THAN DELETED: **7**, seal 965,
+ *    2026-09-05, shipped in 1.19.362 and 1.19.363. Replaced the same day by
+ *    seal 977.
+ *
+ * ⚠ THE COPY INTERLOCK MOVES WITH IT. `bhp_review_ask_copy_touch2()` declares
+ *   this same constant in its `delay_days`, and
+ *   `bhp_review_ask_copy_matches_delay()` halts the order if the two ever
+ *   disagree — so changing this number alone cannot silently make a sentence
+ *   about timing untrue.
+ */
+if ( ! defined( 'BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS' ) ) {
+	define( 'BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS', 4 );
+}
+
+/**
+ * The morning send window, site-local, as `[first hour, first hour AFTER]`.
+ *
+ * ⭐ 08:00 to 11:59 inclusive. Seal 965's brief says "morning local time" and
+ *    this is the narrowest honest reading of it. ⛔ The runner is scheduled
+ *    DAILY, not hourly, so this gate does not by itself guarantee a morning
+ *    send — it guarantees the engine REFUSES to send outside the window, which
+ *    is the half that can be enforced in code. Whoever schedules the daily
+ *    action must land it inside the window; the CLI `status` prints whether
+ *    the window is open right now so that is checkable rather than assumed.
+ */
+if ( ! defined( 'BHP_REVIEW_ASK_WINDOW_START_HOUR' ) ) {
+	define( 'BHP_REVIEW_ASK_WINDOW_START_HOUR', 8 );
+}
+if ( ! defined( 'BHP_REVIEW_ASK_WINDOW_END_HOUR' ) ) {
+	define( 'BHP_REVIEW_ASK_WINDOW_END_HOUR', 12 );
+}
+
+/** The fallback used wherever a child's first name is wanted and none is known. */
+if ( ! defined( 'BHP_REVIEW_ASK_CHILD_FALLBACK' ) ) {
+	define( 'BHP_REVIEW_ASK_CHILD_FALLBACK', 'your reader' );
 }
 
 /** The daily cron/Action Scheduler hook. */
@@ -247,12 +446,530 @@ function bhp_review_ask_delay_days() {
 	/**
 	 * Filter the post-completion delay, in days.
 	 *
+	 * ⛔ SUPERSEDED DEFAULT, PRESERVED IN THIS COMMENT RATHER THAN DELETED:
+	 *    **21** — founder ruling D-3, carrier item 392, 2026-08-29. Replaced
+	 *    2026-09-05 by seal 965. See this file's header.
+	 *
+	 * ⚠ SCOPE NARROWED 2026-09-05. This is now the **WEB LANE, TOUCH 1** delay
+	 *   and nothing else. The visit lane runs off the visit date with its own
+	 *   one-book / multi-book split, and touch 2 runs off when touch 1 actually
+	 *   went out. The filter name is kept so an existing override keeps working
+	 *   on the lane it was almost certainly written for.
+	 *
 	 * @since 1.19.317
-	 * @param int $days Default 21 (founder ruling, carrier item 392, D-3).
+	 * @param int $days Default `BHP_REVIEW_ASK_WEB_DELAY_DAYS` (10, PENDING ANDREW).
 	 */
-	$days = (int) apply_filters( 'bhp_review_ask_delay_days', 21 );
+	$days = (int) apply_filters( 'bhp_review_ask_delay_days', BHP_REVIEW_ASK_WEB_DELAY_DAYS );
 
-	return $days > 0 ? $days : 21;
+	return $days > 0 ? $days : BHP_REVIEW_ASK_WEB_DELAY_DAYS;
+}
+
+/* =========================================================================
+ * ⭐ SEAL 965 · LANES, BOOK COUNTING AND THE DAY MATH
+ *
+ * Every function in this block is PURE or a plain read. Nothing here sends,
+ * schedules or writes. That is deliberate: it is the half of the feature that
+ * can be asserted in a test suite without a mailer, a clock or a real order.
+ * ====================================================================== */
+
+/**
+ * Which chapter-book titles are on this order, in the order they were bought.
+ *
+ * ⭐⭐ WHAT COUNTS AS A CHAPTER BOOK IS NOT RE-DECIDED HERE. It is asked of
+ *     `bhp_book_lookup_product()` (`inc/book-formats.php`), the same reverse
+ *     lookup the product pages use, which knows the paperback AND hardcover id
+ *     of each of the three Adventures of Charlotte and Henry titles and
+ *     nothing else. ⛔ THE ADVENTURE ACTIVITY BOOK IS THEREFORE EXCLUDED
+ *     STRUCTURALLY, not by a name match — it is simply not in that registry.
+ *     A name match would break the first time the activity book is retitled,
+ *     and it would count a fourth chapter book the day one is published.
+ *
+ * ⚠ A VARIATION IS RESOLVED TO ITS PARENT. Mariana's paperback is a variable
+ *   product (parent 333, variation 334) and `WC_Order_Item_Product::
+ *   get_product_id()` already returns the parent, but the variation id is
+ *   checked as a fallback for any line written by an importer that set only
+ *   the variation.
+ *
+ * ⭐ DE-DUPLICATED BY TITLE, NOT BY LINE. Two copies of Mount Everest is ONE
+ *    chapter book for the timing rule. The rule Andrew approved is about how
+ *    many DIFFERENT books a child has to get through before being asked, and a
+ *    parent who bought two of the same book for two children has not been
+ *    handed a longer reading job.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string[] Adventure keys, first-seen order, no duplicates.
+ */
+function bhp_review_ask_chapter_book_keys( $order ) {
+	if ( ! $order instanceof WC_Order || ! function_exists( 'bhp_book_lookup_product' ) ) {
+		return array();
+	}
+
+	$keys = array();
+
+	foreach ( $order->get_items() as $item ) {
+		if ( ! is_object( $item ) || ! method_exists( $item, 'get_product_id' ) ) {
+			continue;
+		}
+
+		$candidates = array( (int) $item->get_product_id() );
+
+		if ( method_exists( $item, 'get_variation_id' ) && (int) $item->get_variation_id() ) {
+			$candidates[] = (int) $item->get_variation_id();
+		}
+
+		foreach ( $candidates as $product_id ) {
+			if ( ! $product_id ) {
+				continue;
+			}
+
+			$found = bhp_book_lookup_product( $product_id );
+
+			if ( is_array( $found ) && ! empty( $found['key'] ) && ! in_array( $found['key'], $keys, true ) ) {
+				$keys[] = (string) $found['key'];
+				break;
+			}
+		}
+	}
+
+	return $keys;
+}
+
+/**
+ * How many DIFFERENT chapter books are on this order.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return int
+ */
+function bhp_review_ask_chapter_book_count( $order ) {
+	return count( bhp_review_ask_chapter_book_keys( $order ) );
+}
+
+/**
+ * Which lane this order runs in.
+ *
+ * ⛔ THE TEST IS THE VISIT SLUG, NOT THE SHIPPING METHOD. A parent who ordered
+ *    through the visit link and had it posted is still a visit buyer; the copy
+ *    that names their school is the right copy for them.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string 'visit' or 'web'.
+ */
+function bhp_review_ask_lane( $order ) {
+	return bhp_review_ask_is_visit_order( $order ) ? 'visit' : 'web';
+}
+
+/**
+ * The visit date for this order, from the registry, as `Y-m-d`.
+ *
+ * ⛔⛔ THE DATE IS READ FROM THE `bhp_school_visits` REGISTRY AND IS NEVER
+ *     DERIVED FROM THE SLUG STRING. Live slugs look like `adams-2026-08-28`
+ *     and it is tempting to `substr` the date out of them. ⚠ That is a trap:
+ *     the slug is a human-chosen key, the plugin does not guarantee its shape,
+ *     and a visit rescheduled after its slug was minted would email every
+ *     parent on the wrong day with total confidence. The registry is the
+ *     record; the slug is a key into it.
+ *
+ * ⚠ '' MEANS "this order names a visit the registry does not know about". The
+ *   caller must then fall back to the completion anchor, which can only send
+ *   LATER, never earlier. See `bhp_review_ask_touch1_anchor()`.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string `Y-m-d`, or ''.
+ */
+function bhp_review_ask_visit_date( $order ) {
+	$slug = bhp_review_ask_is_visit_order( $order ) ? bhp_visit_email_order_slug( $order ) : '';
+
+	if ( '' === $slug || ! function_exists( 'bhp_school_visit_records' ) ) {
+		return '';
+	}
+
+	$records = bhp_school_visit_records();
+
+	if ( ! is_array( $records ) || ! isset( $records[ $slug ] ) || ! is_array( $records[ $slug ] ) ) {
+		return '';
+	}
+
+	$date = isset( $records[ $slug ]['date'] ) ? trim( (string) $records[ $slug ]['date'] ) : '';
+
+	return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ? $date : '';
+}
+
+/**
+ * How many days after this order's anchor touch 1 is due.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return int Days.
+ */
+function bhp_review_ask_touch1_delay_days( $order ) {
+	if ( 'visit' === bhp_review_ask_lane( $order ) && '' !== bhp_review_ask_visit_date( $order ) ) {
+		$days = bhp_review_ask_chapter_book_count( $order ) >= 2
+			? BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK
+			: BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK;
+	} else {
+		/*
+		 * ⚠ A VISIT ORDER WHOSE VISIT THE REGISTRY DOES NOT KNOW FALLS IN HERE
+		 *   TOO, deliberately. It gets the web delay measured from completion,
+		 *   which is later than the visit-date rule would have produced, never
+		 *   earlier. An unknown date must delay an email, not fire one.
+		 */
+		$days = bhp_review_ask_delay_days();
+	}
+
+	/**
+	 * Filter the touch-1 delay in days for one order.
+	 *
+	 * @since 1.19.362
+	 * @param int      $days  Resolved delay.
+	 * @param WC_Order $order Order.
+	 */
+	$days = (int) apply_filters( 'bhp_review_ask_touch1_delay_days', $days, $order );
+
+	return $days > 0 ? $days : 1;
+}
+
+/**
+ * The timestamp touch 1's clock starts from.
+ *
+ * ⭐ VISIT LANE: the visit DATE at local midnight, so "visit + 7" lands on the
+ *    calendar day a human would name, in the site's timezone, regardless of
+ *    what hour Andrew happened to flip the orders to completed. The eight
+ *    Adams orders all completed at one instant in a batch; anchoring those on
+ *    completion would have made the send date an artefact of his afternoon.
+ *
+ * ⭐ WEB LANE: unchanged. `bhp_review_ask_anchor_timestamp()`, i.e. completion
+ *    with its documented fallback chain.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return int Unix timestamp, or 0.
+ */
+function bhp_review_ask_touch1_anchor( $order ) {
+	$visit_date = bhp_review_ask_visit_date( $order );
+
+	if ( '' !== $visit_date ) {
+		$stamp = bhp_review_ask_local_midnight( $visit_date );
+
+		if ( $stamp ) {
+			return $stamp;
+		}
+	}
+
+	return bhp_review_ask_anchor_timestamp( $order );
+}
+
+/**
+ * Local midnight for a `Y-m-d`, as a real UTC timestamp.
+ *
+ * ⛔ `strtotime( "$ymd 00:00:00" )` IS NOT USED, AND THAT IS THE POINT. It
+ *    resolves against PHP's process timezone, which WordPress sets to UTC on
+ *    most hosts, so on a site running America/Denver it would land the anchor
+ *    six or seven hours early and could fire a send a calendar day sooner than
+ *    the rule says. `wp_timezone()` is the site's own zone and is what every
+ *    date-boundary decision in this theme uses.
+ *
+ * @param string $ymd `Y-m-d`.
+ * @return int Timestamp, or 0 when unparseable.
+ */
+function bhp_review_ask_local_midnight( $ymd ) {
+	$ymd = trim( (string) $ymd );
+
+	if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $ymd ) ) {
+		return 0;
+	}
+
+	try {
+		$zone = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+		$date = new DateTimeImmutable( $ymd . ' 00:00:00', $zone );
+	} catch ( Exception $e ) {
+		return 0;
+	}
+
+	return (int) $date->getTimestamp();
+}
+
+/**
+ * When touch 1 becomes due for this order.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return int Unix timestamp, or 0 when no anchor resolves.
+ */
+function bhp_review_ask_touch1_due_timestamp( $order ) {
+	$anchor = bhp_review_ask_touch1_anchor( $order );
+
+	if ( ! $anchor ) {
+		return 0;
+	}
+
+	return $anchor + ( bhp_review_ask_touch1_delay_days( $order ) * DAY_IN_SECONDS );
+}
+
+/**
+ * When touch 1 actually went out for this order.
+ *
+ * Resolution order:
+ *   1. `BHP_REVIEW_ASK_TOUCH1_AT_META` — the explicit field, written by the
+ *      engine on send and by the migration for a hand-sent ask.
+ *   2. `BHP_REVIEW_ASK_SENT_META`, but ONLY when it holds a real datetime.
+ *      Orders marked by the 1.19.317 engine carry one; orders seeded
+ *      `external-<date>` do not, and are not parsed. See the note on
+ *      `BHP_REVIEW_ASK_TOUCH1_AT_META`.
+ *
+ * ⛔ 0 MEANS "not known", AND TOUCH 2 THEN DECLINES. A reminder scheduled off a
+ *    guessed date is a reminder that arrives at the wrong time to a real
+ *    person, which is worse than no reminder.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return int Unix timestamp, or 0.
+ */
+function bhp_review_ask_touch1_sent_timestamp( $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return 0;
+	}
+
+	foreach ( array( BHP_REVIEW_ASK_TOUCH1_AT_META, BHP_REVIEW_ASK_SENT_META ) as $key ) {
+		$raw = trim( (string) $order->get_meta( $key ) );
+
+		if ( '' === $raw || ! preg_match( '/^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/', $raw ) ) {
+			continue;
+		}
+
+		/*
+		 * ⚠ The stored value is site-local (`current_time( 'mysql' )`), so it
+		 *   is read back in the site's zone. Reading it as UTC would shift
+		 *   every reminder by the site's offset.
+		 */
+		$stamp = bhp_review_ask_local_datetime( $raw );
+
+		if ( $stamp ) {
+			return $stamp;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * A site-local `Y-m-d` or `Y-m-d H:i:s` as a real UTC timestamp.
+ *
+ * @param string $value Datetime string.
+ * @return int Timestamp, or 0.
+ */
+function bhp_review_ask_local_datetime( $value ) {
+	$value = trim( str_replace( 'T', ' ', (string) $value ) );
+
+	if ( '' === $value ) {
+		return 0;
+	}
+
+	if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+		return bhp_review_ask_local_midnight( $value );
+	}
+
+	try {
+		$zone = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+		$date = new DateTimeImmutable( $value, $zone );
+	} catch ( Exception $e ) {
+		return 0;
+	}
+
+	return (int) $date->getTimestamp();
+}
+
+/**
+ * When touch 2 becomes due for this order.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return int Unix timestamp, or 0 when touch 1's date is unknown.
+ */
+function bhp_review_ask_touch2_due_timestamp( $order ) {
+	$sent = bhp_review_ask_touch1_sent_timestamp( $order );
+
+	if ( ! $sent ) {
+		return 0;
+	}
+
+	/**
+	 * Filter the gap between touch 1 and the single reminder, in days.
+	 *
+	 * @since 1.19.362
+	 * @since 1.19.364 Default changed from 7 to 4 (seal 977).
+	 * @param int      $days  Default `BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS` (4).
+	 * @param WC_Order $order Order.
+	 */
+	$days = (int) apply_filters( 'bhp_review_ask_touch2_delay_days', BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS, $order );
+	$days = $days > 0 ? $days : BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS;
+
+	return $sent + ( $days * DAY_IN_SECONDS );
+}
+
+/**
+ * Which touch, if any, this order is next in line for.
+ *
+ * ⚠ IT ANSWERS "WHICH", NOT "WHETHER". Due-ness, opt-outs, cooldowns, the send
+ *   window and every other gate live in `bhp_review_ask_decline_reason()`. This
+ *   function only reads the two sent markers, so the decline reasons stay in
+ *   one place and cannot disagree with each other.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return int 1, 2, or 0 when the sequence is finished for this order.
+ */
+function bhp_review_ask_next_touch( $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return 0;
+	}
+
+	if ( '' === trim( (string) $order->get_meta( BHP_REVIEW_ASK_SENT_META ) ) ) {
+		return 1;
+	}
+
+	/**
+	 * Filter whether the seal-965 two-touch sequence is active.
+	 *
+	 * ⭐⭐ THE ONE LEVER THAT REVERTS THE WHOLE RULING. Returning false makes
+	 *     this engine a single-ask engine again: an order whose touch 1 is
+	 *     marked is finished, exactly as it was at 1.19.317. It exists for two
+	 *     reasons, both real:
+	 *
+	 *       1. ⛔ IF ANDREW REVERSES SEAL 965, or pauses the reminder while
+	 *          `CYCLE179-LD-40` (the visit-email double-ask) is open, the
+	 *          answer is one filter rather than a rushed edit to a live engine.
+	 *       2. ⭐ IT IS HOW `tests/test-cycle169-review-ask.php` STILL MEANS
+	 *          SOMETHING. That suite is the 1.19.317 regression record; with
+	 *          this filter it exercises the superseded behaviour honestly
+	 *          instead of having its assertions deleted.
+	 *
+	 * @since 1.19.362
+	 * @param bool     $enabled Whether touch 2 may ever be considered.
+	 * @param WC_Order $order   Order.
+	 */
+	if ( ! (bool) apply_filters( 'bhp_review_ask_sequence_enabled', true, $order ) ) {
+		return 0;
+	}
+
+	if ( '' === trim( (string) $order->get_meta( BHP_REVIEW_ASK_TOUCH2_SENT_META ) ) ) {
+		return 2;
+	}
+
+	return 0;
+}
+
+/**
+ * Has this buyer already left a site review on any chapter book?
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ AN UNAPPROVED REVIEW COUNTS. THAT IS THE WHOLE POINT OF THIS FUNCTION.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * `inc/reviews.php` holds EVERY product review for moderation in code
+ * (`bhp_review_force_moderation()`, hard-wired to 0 regardless of the site
+ * option). So a parent who did exactly what touch 1 asked has a review sitting
+ * at `comment_approved = 0` until Andrew gets to it. ⛔ Counting only approved
+ * reviews would send that parent a reminder to do the thing they already did,
+ * because Andrew had not opened wp-admin yet. That is the single most
+ * embarrassing failure this sequence can have and it is closed here.
+ *
+ * ⛔ `spam` AND `trash` DO NOT COUNT, and that asymmetry is deliberate: a
+ *    spam-flagged comment is not evidence the buyer wrote anything.
+ *
+ * ⚠ THE MATCH IS ON EMAIL ADDRESS, WHICH IS THE ONLY JOIN AVAILABLE. Most
+ *   buyers are guests with no user account. A parent who reviews from a
+ *   different address than they ordered with is not detected, and will receive
+ *   the reminder. Stated rather than hidden; there is no fix that does not
+ *   involve asking them to log in.
+ *
+ * ⚠ REVIEWS LIVE ON THE CANONICAL (PAPERBACK) PRODUCT ONLY, per
+ *   `inc/reviews.php` §1 — one review store per title, not per SKU. So the
+ *   three ids below are the whole search space, and a hardcover buyer's review
+ *   is still found because it was stored against the paperback.
+ *
+ * @param string $email Billing email.
+ * @return bool
+ */
+function bhp_review_ask_has_site_review( $email ) {
+	$email = strtolower( trim( (string) $email ) );
+
+	if ( '' === $email || ! is_email( $email ) || ! function_exists( 'bhp_review_route_slugs' ) ) {
+		return false;
+	}
+
+	$product_ids = array();
+
+	foreach ( array_keys( bhp_review_route_slugs() ) as $key ) {
+		$id = function_exists( 'bhp_review_target_id' ) ? (int) bhp_review_target_id( $key ) : 0;
+
+		if ( $id ) {
+			$product_ids[] = $id;
+		}
+	}
+
+	if ( empty( $product_ids ) ) {
+		return false;
+	}
+
+	$found = get_comments(
+		array(
+			'author_email' => $email,
+			'post__in'     => $product_ids,
+			'type'         => 'review',
+			'status'       => 'all',
+			'number'       => 1,
+			'count'        => true,
+			'fields'       => 'ids',
+		)
+	);
+
+	if ( (int) $found > 0 ) {
+		return true;
+	}
+
+	/*
+	 * ⚠ A SECOND PASS WITHOUT THE TYPE FILTER, AND IT IS NOT BELT AND BRACES.
+	 *   `WC_Comments::update_comment_type()` stamps `comment_type = review` on
+	 *   `wp_insert_comment`, but a review submitted before that hook ran, or
+	 *   imported, can sit as a bare `comment` on a product. Missing one would
+	 *   send a reminder to somebody who already wrote a review, which is the
+	 *   failure this function exists to prevent, so the cheaper false negative
+	 *   is traded away.
+	 */
+	$found = get_comments(
+		array(
+			'author_email' => $email,
+			'post__in'     => $product_ids,
+			'status'       => 'all',
+			'number'       => 1,
+			'count'        => true,
+			'fields'       => 'ids',
+		)
+	);
+
+	return (int) $found > 0;
+}
+
+/**
+ * Is the site-local clock inside the morning send window?
+ *
+ * @param int $now Optional "now", for the suite.
+ * @return bool
+ */
+function bhp_review_ask_in_send_window( $now = 0 ) {
+	$now = $now ? (int) $now : time();
+
+	$hour = (int) wp_date( 'G', $now );
+
+	$start = (int) apply_filters( 'bhp_review_ask_window_start_hour', BHP_REVIEW_ASK_WINDOW_START_HOUR );
+	$end   = (int) apply_filters( 'bhp_review_ask_window_end_hour', BHP_REVIEW_ASK_WINDOW_END_HOUR );
+
+	/**
+	 * Filter whether the engine may send at this moment.
+	 *
+	 * ⭐ THE SUITE AND THE DRY RUN BOTH DISABLE THE WINDOW THROUGH THIS FILTER
+	 *    rather than by moving the clock, so a QA run at four in the afternoon
+	 *    still exercises every other gate.
+	 *
+	 * @since 1.19.362
+	 * @param bool $open Whether the window is open.
+	 * @param int  $now  Timestamp being tested.
+	 */
+	return (bool) apply_filters( 'bhp_review_ask_in_send_window', ( $hour >= $start && $hour < $end ), $now );
 }
 
 /**
@@ -372,8 +1089,23 @@ function bhp_review_ask_is_enabled() {
  *
  * @return array
  */
-function bhp_review_ask_copy() {
+function bhp_review_ask_copy_legacy_21day() {
 	$copy = array(
+		/*
+		 * ⛔⛔ SUPERSEDED 2026-09-05 BY SEAL 965 AND UNREACHABLE BY DEFAULT.
+		 *     PRESERVED VERBATIM, NOT DELETED.
+		 *
+		 * Every string below is still founder-approved copy and is still
+		 * TRUE AT 21 DAYS. It is kept whole because (a) the additive-only
+		 * discipline forbids deleting a superseded ruling's artefacts, and
+		 * (b) if Andrew reverses seal 965 the 21-day ask is one filter away
+		 * rather than a retyping job against a file that no longer has it.
+		 *
+		 * ⛔ NOTHING SELECTS THIS SET. `bhp_review_ask_copy()` never returns
+		 *    it. The only route back is the `bhp_review_ask_copy` filter.
+		 */
+		'set'             => 'legacy_21day',
+		'touch'           => 1,
 		'delay_days'      => 21,
 		'approved'        => true,
 
@@ -488,22 +1220,361 @@ function bhp_review_ask_copy() {
 		'optout_note'     => __( 'This does not affect your order emails or your receipts.', 'brave-hearts' ),
 	);
 
+	return $copy;
+}
+
+/* -------------------------------------------------------------------------
+ * ⭐ SEAL 965 · THE THREE LIVE COPY SETS
+ *
+ * One approved, two placeholders. The placeholders are `approved => false`,
+ * which is a hard decline in `bhp_review_ask_decline_reason()`, so no
+ * PENDING-COPY string can reach a customer under any configuration.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * VISIT LANE, TOUCH 1. ⭐ APPROVED.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ MERRY'S APPROVED PRIMARY TEMPLATE, RENDERED WORD FOR WORD.
+ *     SOURCE, READ AT SOURCE RATHER THAN ACCEPTED FROM A BRIEF:
+ *     `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-ASKS.md`
+ *     §1 "THE PRIMARY TEMPLATE (single book)", 2026-09-05.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ THE SHORTER MULTI-BOOK VARIANT (that file's §2) IS **NOT** IMPLEMENTED,
+ *   AND THAT IS A DELIBERATE OMISSION REPORTED RATHER THAN QUIETLY MADE. §2 is
+ *   written for a HAND-SENT note and turns on facts this engine cannot know:
+ *   *"the book the parent named at the table"*, and *"which I did not expect
+ *   and have not stopped grinning about"*, which is a sentiment about a
+ *   specific morning. The primary template carries no such fact, so it is true
+ *   for a two-book order as well, and the multi-book difference Andrew ruled on
+ *   is expressed where he put it — in the TIMING (+10 rather than +7) — not in
+ *   a second set of words nobody has approved for automated sending.
+ *
+ * ⭐ MERGE SLOTS, resolved per order by `bhp_review_ask_merge()`:
+ *      {ParentFirstName} {ChildFirstName} {SchoolName} {BookTitle} {ReviewLink}
+ *
+ * ⛔ NO EM DASH. ⛔ NO "we", "us" or "our". ⛔ No price, coupon, shipping
+ *    figure, review count, rating, reaction or outcome claim. The suite
+ *    asserts all of it.
+ *
+ * @return array
+ */
+function bhp_review_ask_copy_visit_touch1() {
+	return array(
+		'set'             => 'visit_touch1',
+
+		// ⭐ 1.19.364 · seal 977: this set renders the five-star row.
+		'stars'           => true,
+		'touch'           => 1,
+		'lane'            => 'visit',
+
+		/*
+		 * ⭐ AN ARRAY, NOT A SCALAR, AND THIS IS THE ADAPTED INTERLOCK. The
+		 *    1.19.317 guard compared one number to one number because there was
+		 *    one delay. This lane has two legitimate delays, 7 and 10, chosen
+		 *    per order by the book count. The copy therefore declares BOTH, and
+		 *    `bhp_review_ask_copy_matches_delay()` asserts the delay this order
+		 *    will actually use is one the copy is true at. ⛔ The guard is
+		 *    adapted, not bypassed: a delay outside this list still halts.
+		 *
+		 * ⚠ WHY 7 AND 10 ARE BOTH TRUE FOR THESE WORDS: the only time claim in
+		 *   the body is *"at {SchoolName} last week"*, and the only other one
+		 *   is the conditional *"If {ChildFirstName} has had a few nights with
+		 *   it by now"*, which is a question, not an assertion. Both hold at
+		 *   seven days and at ten. Compare the superseded 21-day set, whose
+		 *   *"turned up about three weeks ago"* is an assertion true at exactly
+		 *   one delay, which is why that guard existed in the first place.
+		 */
+		'delay_days'      => array(
+			BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK,
+			BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK,
+		),
+
+		'approved'        => true,
+
+		'subject'         => __( 'A small favor about the book', 'brave-hearts' ),
+
+		/*
+		 * ⚠ ENGINEERING COPY, MARKED AS SUCH. Merry's template is a Gmail note
+		 *   and has no preheader, because Gmail composes one from the first
+		 *   line. A WooCommerce email renders a preheader slot, and leaving it
+		 *   empty shows the reader the raw start of the HTML in the inbox
+		 *   preview. This restates the subject rather than adding a new claim.
+		 */
+		'preheader'       => __( 'A small favor about the book', 'brave-hearts' ),
+
+		/*
+		 * ⛔ EMPTY H1, for the reason set out at length on the superseded set
+		 *    above: the approved copy has no heading, and filling it repeats a
+		 *    sentence the reader already met in the subject line.
+		 */
+		'heading'         => '',
+
+		'body_before'     => array(
+			__( 'Thank you for picking up {BookTitle} at {SchoolName} last week. Signing it for {ChildFirstName} was the best part of my morning.', 'brave-hearts' ),
+			__( 'If {ChildFirstName} has had a few nights with it by now, would you write a short review? Two or three honest sentences is plenty, and honest is the useful part. It takes about a minute here:', 'brave-hearts' ),
+		),
+
+		/*
+		 * ⛔ NO BOLDED QUESTION IN THIS SET, AND NONE IS INVENTED. The 21-day
+		 *    set had one because Andrew wrote one. Merry's template does not,
+		 *    and manufacturing a bold line to fill a template slot would be
+		 *    writing copy into an email whose copy is locked (Standing Rules
+		 *    §9). The templates render this block only when it is non-empty.
+		 */
+		'question'        => '',
+		'body_middle'     => array(),
+
+		'links_lead'      => '',
+
+		/*
+		 * ⭐ ONE LINK, THE SITE REVIEW PAGE FOR THE FIRST CHAPTER BOOK ON THE
+		 *    ORDER. Not three. Merry's §2 records the reasoning and it applies
+		 *    here too: *"three asks in one note reads as a chore and gets none
+		 *    of them done."* The label and the URL are both resolved per order.
+		 *
+		 * ⛔ THE SITE PAGE, NOT AMAZON. `{ReviewLink}` resolves through
+		 *    `bhp_review_page_url()` (`inc/reviews.php`), which is the same
+		 *    registry that builds the live `/review/<slug>/` pages, so the link
+		 *    cannot drift from the route. ⚠ The bare `/review/` path is a live
+		 *    404 and is never constructed here.
+		 */
+		'links'           => array(
+			array(
+				'label' => '{BookTitle}',
+				'url'   => '{ReviewLink}',
+			),
+		),
+
+		/*
+		 * ⭐⭐ 1.19.364 · ONE DESTINATION. ANDREW, SEAL 977, VERBATIM:
+		 *     *"I want one destination not 2"*.
+		 *
+		 * ⛔ REMOVED SENTENCE, PRESERVED HERE RATHER THAN DELETED (approved
+		 *    2026-09-05, superseded the same day by seal 977):
+		 *
+		 *      "If you would rather leave it on Amazon instead, that helps
+		 *       too, and that link is the QR on the bookmark that came with
+		 *       the book."
+		 *
+		 * ⚠ IT IS NOT ONLY A PREFERENCE. Merry's V2 §7 decoded the V6 bookmark
+		 *   QR first-hand on 2026-09-05: it resolves to
+		 *   `amazon.com/review/create-review`, so the removed sentence pointed
+		 *   at the second destination in the same breath as describing it.
+		 *
+		 * ⭐ THE SECOND SENTENCE SURVIVES, minus the "Either way," that only
+		 *   made sense when there were two ways.
+		 */
+		'body_after'      => array(
+			__( 'Thank you for reading with your little human.', 'brave-hearts' ),
+		),
+
+		'signoff'         => array(
+			__( 'Andrew', 'brave-hearts' ),
+		),
+
+		'signoff_tagline' => '',
+
+		/*
+		 * ⚠ D-6 AGAIN, AND IT IS A PROMISE IN HIS NAME. *"I answer every one."*
+		 *   Merry's template carries it as a P.S.; ship it only if he will
+		 *   actually do it, on an email the store sends without him.
+		 */
+		'postscript'      => __( 'P.S. If {ChildFirstName} has a question about the book, hit reply. I answer every one.', 'brave-hearts' ),
+
+		'optout_lead'     => __( 'If you would rather not get a message like this again,', 'brave-hearts' ),
+		'optout_link'     => __( 'unsubscribe from review emails', 'brave-hearts' ),
+		'optout_note'     => __( 'This does not affect your order emails or your receipts.', 'brave-hearts' ),
+	);
+}
+
+/**
+ * WEB LANE, TOUCH 1. ⛔ PENDING-COPY. NOT APPROVED. CANNOT SEND.
+ *
+ * ⚠ Merry is writing the real strings into
+ *   `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-SEQ.md`.
+ *   That file did not exist when this was written (checked 2026-09-05 10:36
+ *   MDT; the directory held only `CYCLE179-MKT-REVIEW-ASKS.md`). When it
+ *   lands, swap these strings for hers VERBATIM, set `approved => true`, and
+ *   set `delay_days` to whatever delay her words are true at.
+ *
+ * ⛔ THE PLACEHOLDER TEXT IS DELIBERATELY NOT WRITABLE AS EMAIL. It reads as a
+ *    build marker so that a screenshot of a preview is unmistakable, and
+ *    `approved => false` means it is declined before rendering anyway.
+ *
+ * @return array
+ */
+function bhp_review_ask_copy_web_touch1() {
+	return array(
+		'set'             => 'web_touch1',
+
+		// ⭐ 1.19.364 · seal 977: this set renders the five-star row.
+		'stars'           => true,
+		'touch'           => 1,
+		'lane'            => 'web',
+		'delay_days'      => array( BHP_REVIEW_ASK_WEB_DELAY_DAYS ),
+		'approved'        => false,
+
+		'subject'         => 'PENDING-COPY web touch 1 subject',
+		'preheader'       => 'PENDING-COPY web touch 1 preheader',
+		'heading'         => '',
+		'body_before'     => array( 'PENDING-COPY web touch 1 body. Merge slots available: {ParentFirstName} {BookTitle} {ReviewLink}.' ),
+		'question'        => '',
+		'body_middle'     => array(),
+		'links_lead'      => '',
+		'links'           => array(
+			array(
+				'label' => '{BookTitle}',
+				'url'   => '{ReviewLink}',
+			),
+		),
+		'body_after'      => array( 'PENDING-COPY web touch 1 close.' ),
+		'signoff'         => array( 'Andrew' ),
+		'signoff_tagline' => '',
+		'postscript'      => '',
+		'optout_lead'     => __( 'If you would rather not get a message like this again,', 'brave-hearts' ),
+		'optout_link'     => __( 'unsubscribe from review emails', 'brave-hearts' ),
+		'optout_note'     => __( 'This does not affect your order emails or your receipts.', 'brave-hearts' ),
+	);
+}
+
+/**
+ * TOUCH 2, BOTH LANES. ⛔ PENDING-COPY. NOT APPROVED. CANNOT SEND.
+ *
+ * ⚠ Same swap procedure as the web set above. Merry's file is expected to
+ *   carry a named-child and a generic version; the `{ChildFirstName}` slot
+ *   already resolves to `your reader` when no name is known, so ONE set with
+ *   the slot in it satisfies both unless her copy differs by more than the
+ *   name, in which case add a second set and select on
+ *   `bhp_review_ask_child_first_name_is_known()`.
+ *
+ * @return array
+ */
+function bhp_review_ask_copy_touch2() {
+	return array(
+		'set'             => 'touch2',
+
+		// ⭐ 1.19.364 · seal 977: this set renders the five-star row.
+		'stars'           => true,
+		'touch'           => 2,
+		'lane'            => 'any',
+		'delay_days'      => array( BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS ),
+		'approved'        => false,
+
+		'subject'         => 'PENDING-COPY touch 2 subject',
+		'preheader'       => 'PENDING-COPY touch 2 preheader',
+		'heading'         => '',
+		'body_before'     => array( 'PENDING-COPY touch 2 body. Merge slots available: {ParentFirstName} {ChildFirstName} {SchoolName} {BookTitle} {ReviewLink}.' ),
+		'question'        => '',
+		'body_middle'     => array(),
+		'links_lead'      => '',
+		'links'           => array(
+			array(
+				'label' => '{BookTitle}',
+				'url'   => '{ReviewLink}',
+			),
+		),
+		'body_after'      => array( 'PENDING-COPY touch 2 close.' ),
+		'signoff'         => array( 'Andrew' ),
+		'signoff_tagline' => '',
+		'postscript'      => '',
+		'optout_lead'     => __( 'If you would rather not get a message like this again,', 'brave-hearts' ),
+		'optout_link'     => __( 'unsubscribe from review emails', 'brave-hearts' ),
+		'optout_note'     => __( 'This does not affect your order emails or your receipts.', 'brave-hearts' ),
+	);
+}
+
+/**
+ * The copy set for one touch on one order, with every merge slot resolved.
+ *
+ * ⭐ THE SIGNATURE IS BACKWARD-COMPATIBLE ON PURPOSE. Both parameters default,
+ *    so every 1.19.317 call site (`WC_Email_BHP_Review_Ask::
+ *    get_default_subject()`, `get_default_heading()`, the CLI) keeps working
+ *    without an edit and gets the visit touch-1 set.
+ *
+ * @param int                 $touch 1 or 2.
+ * @param WC_Order|null|mixed $order Order, for lane selection and merges.
+ * @return array
+ */
+function bhp_review_ask_copy( $touch = 1, $order = null ) {
+	return bhp_review_ask_merge_copy( bhp_review_ask_copy_raw( $touch, $order ), $order );
+}
+
+/**
+ * The copy set for one touch on one order, WITH ITS MERGE SLOTS STILL IN IT.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.364 — THIS FUNCTION EXISTS BECAUSE THE MERGE GATE WAS STRUCTURALLY
+ *     DEAD, AND THE SUITE CAUGHT IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT, MEASURED NOT REASONED ABOUT. `tests/test-cycle179-review-seq.php`
+ *    §7 asserts that a visit order holding NO chapter book declines
+ *    `unresolved_merge_slot`. On staging at 1.19.363 it returned `''` — the
+ *    order QUALIFIED. The cause: `bhp_review_ask_copy()` ended with
+ *    `return bhp_review_ask_merge_copy( $copy, $order );`, so by the time
+ *    `bhp_review_ask_decline_reason()` handed that array to
+ *    `bhp_review_ask_merge_is_complete()`, every `{BookTitle}` had ALREADY been
+ *    replaced — with the empty string, for this order. The gate then ran
+ *    `strpos( $blob, '{BookTitle}' )`, found nothing, `continue`d, and returned
+ *    true for every order that has ever been checked.
+ *
+ * ⛔⛔ THE GATE HAS THEREFORE NEVER FIRED IN PRODUCTION OR ON STAGING. It is not
+ *     that it fired late or fired wrongly: an email reading *"Thank you for
+ *     picking up  at ."* was one qualifying order away the entire time. The
+ *     only thing that has kept it off a real parent is that the engine's master
+ *     switch is off and the web/touch-2 copy is unapproved.
+ *
+ * ⭐ THE FIX IS THE SEPARATION, NOT A PATCH TO THE GATE. Substitution and
+ *    inspection are now two calls: the gates read the RAW set, the renderer
+ *    reads the merged one. A gate that inspects post-substitution text can
+ *    never see a slot, so no future gate can be written wrong the same way.
+ *
+ * ⚠ `approved` (bool) and `delay_days` (array of ints) are untouched by
+ *   merging, so the two gates that read them behaved correctly before and
+ *   behave identically now. Only `merge_is_complete()` was affected.
+ *
+ * @since 1.19.364
+ * @param int                 $touch 1 or 2.
+ * @param WC_Order|null|mixed $order Order, for lane selection.
+ * @return array Unmerged copy set.
+ */
+function bhp_review_ask_copy_raw( $touch = 1, $order = null ) {
+	$touch = ( 2 === (int) $touch ) ? 2 : 1;
+
+	if ( 2 === $touch ) {
+		$copy = bhp_review_ask_copy_touch2();
+	} elseif ( $order instanceof WC_Order && 'web' === bhp_review_ask_lane( $order ) ) {
+		$copy = bhp_review_ask_copy_web_touch1();
+	} else {
+		$copy = bhp_review_ask_copy_visit_touch1();
+	}
+
 	/**
 	 * Filter the review-ask copy set.
 	 *
-	 * ⭐ THE SEAM FOR A DIFFERENT DELAY. Copy approved for a delay other than
-	 *    21 days arrives here carrying its own `delay_days`, and the run gate
-	 *    then agrees rather than halting. That is the only supported way to
-	 *    move the delay.
+	 * ⭐ THE SEAM FOR NEW OR CORRECTED COPY. A set arrives carrying its own
+	 *    `delay_days` and its own `approved` flag, and the gates then agree
+	 *    rather than declining. That is the only supported way to change what
+	 *    this email says or when it is true.
 	 *
 	 * ⛔ A FILTER THAT RETURNS SOMETHING UNUSABLE IS DISCARDED, not trusted.
 	 *
 	 * @since 1.19.317
-	 * @param array $copy The approved copy set.
+	 * @since 1.19.362 `$touch` and `$order` added.
+	 * @param array         $copy  The copy set.
+	 * @param int           $touch 1 or 2.
+	 * @param WC_Order|null $order Order, when one is in hand.
 	 */
-	$filtered = apply_filters( 'bhp_review_ask_copy', $copy );
+	$filtered = apply_filters( 'bhp_review_ask_copy', $copy, $touch, $order );
 
-	return bhp_review_ask_copy_is_usable( $filtered ) ? $filtered : $copy;
+	if ( bhp_review_ask_copy_is_usable( $filtered ) ) {
+		$copy = $filtered;
+	}
+
+	// ⛔ RAW. The caller merges. See this function's docblock for why.
+	return $copy;
 }
 
 /**
@@ -517,27 +1588,40 @@ function bhp_review_ask_copy_is_usable( $copy ) {
 		return false;
 	}
 
-	foreach ( array( 'subject', 'preheader', 'question', 'links_lead' ) as $key ) {
+	foreach ( array( 'subject', 'preheader' ) as $key ) {
 		if ( empty( $copy[ $key ] ) || ! is_string( $copy[ $key ] ) ) {
 			return false;
 		}
 	}
 
 	/*
-	 * ⚠ `heading` IS CHECKED FOR PRESENCE AND TYPE, NOT FOR EMPTINESS. An empty
-	 *   H1 is the intended state here — see the note on `heading` in
-	 *   `bhp_review_ask_copy()`. Leaving it in the `empty()` loop above would
-	 *   make the approved copy fail its own usability test and silently fall
-	 *   back to itself.
+	 * ⚠ RELAXED 2026-09-05, AND ONLY FOR EMPTINESS. `question` and `links_lead`
+	 *   moved out of the `empty()` loop above and joined `heading`, which was
+	 *   already here for exactly this reason: the visit touch-1 set Andrew
+	 *   approved has no bolded question and no "Find the one you read:" line,
+	 *   because Merry's template has neither. ⛔ Leaving them in the loop would
+	 *   make the approved copy fail its own usability test and fall back to a
+	 *   set nobody selected. They are still required to be PRESENT and to be
+	 *   STRINGS, so a typo'd key is still caught.
 	 */
-	if ( ! isset( $copy['heading'] ) || ! is_string( $copy['heading'] ) ) {
-		return false;
+	foreach ( array( 'heading', 'question', 'links_lead' ) as $key ) {
+		if ( ! isset( $copy[ $key ] ) || ! is_string( $copy[ $key ] ) ) {
+			return false;
+		}
 	}
 
-	foreach ( array( 'body_before', 'body_middle', 'body_after', 'signoff', 'links' ) as $key ) {
+	foreach ( array( 'body_before', 'body_after', 'signoff', 'links' ) as $key ) {
 		if ( empty( $copy[ $key ] ) || ! is_array( $copy[ $key ] ) ) {
 			return false;
 		}
+	}
+
+	/*
+	 * ⚠ `body_middle` MOVED TO PRESENT-AND-ARRAY 2026-09-05, same reasoning as
+	 *   `question` above: the approved visit set has no middle block.
+	 */
+	if ( ! isset( $copy['body_middle'] ) || ! is_array( $copy['body_middle'] ) ) {
+		return false;
 	}
 
 	foreach ( $copy['links'] as $link ) {
@@ -546,20 +1630,473 @@ function bhp_review_ask_copy_is_usable( $copy ) {
 		}
 	}
 
+	/*
+	 * ⚠ `delay_days` MAY NOW BE AN ARRAY. See the note on the visit set: one
+	 *   lane legitimately has two delays. A scalar is still accepted so the
+	 *   superseded 21-day set and any existing filter keep validating.
+	 */
+	if ( ! isset( $copy['delay_days'] ) ) {
+		return false;
+	}
+
+	if ( is_array( $copy['delay_days'] ) ) {
+		if ( empty( $copy['delay_days'] ) ) {
+			return false;
+		}
+
+		foreach ( $copy['delay_days'] as $day ) {
+			if ( ! is_numeric( $day ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	return ! empty( $copy['delay_days'] ) && is_numeric( $copy['delay_days'] );
 }
 
 /**
- * Does the approved copy describe the delay the engine is actually using?
+ * Is the delay this order will actually use one the copy is TRUE at?
  *
- * See `bhp_review_ask_delay_days()` for why a mismatch halts the run.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ THE 1.19.317 INTERLOCK, ADAPTED RATHER THAN BYPASSED.
+ * ═══════════════════════════════════════════════════════════════════════════
  *
+ * The original compared one number to one number, because there was one delay
+ * and one sentence — *"Your book turned up about three weeks ago"* — that was
+ * true at exactly 21 days and a lie at any other. That reasoning is unchanged
+ * and is still the reason this function exists. What changed is the shape of
+ * the world it is checking:
+ *
+ *   - the delay is now PER ORDER (7 or 10 on the visit lane, 10 on the web
+ *     lane), so the question became "is THIS order's delay in the set this
+ *     copy is true at" rather than "does the one number equal the other";
+ *   - touch 2's delay is measured from touch 1, not from an anchor, so it is
+ *     checked against `BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS`.
+ *
+ * ⛔ IT STILL FAILS LOUD AND CLOSED. A delay outside the copy's declared set
+ *    is `copy_delay_mismatch`, the order is declined by name, and the run
+ *    summary counts it. It does not quietly send a false sentence and it does
+ *    not quietly send nothing.
+ *
+ * @param int                 $touch 1 or 2.
+ * @param WC_Order|null|mixed $order Order.
  * @return bool
  */
-function bhp_review_ask_copy_matches_delay() {
-	$copy = bhp_review_ask_copy();
+function bhp_review_ask_copy_matches_delay( $touch = 1, $order = null ) {
+	$touch = ( 2 === (int) $touch ) ? 2 : 1;
+	$copy  = bhp_review_ask_copy( $touch, $order );
 
-	return (int) $copy['delay_days'] === bhp_review_ask_delay_days();
+	if ( ! isset( $copy['delay_days'] ) ) {
+		return false;
+	}
+
+	$declared = is_array( $copy['delay_days'] ) ? $copy['delay_days'] : array( $copy['delay_days'] );
+	$declared = array_map( 'intval', $declared );
+
+	if ( 2 === $touch ) {
+		$effective = (int) apply_filters( 'bhp_review_ask_touch2_delay_days', BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS, $order );
+	} elseif ( $order instanceof WC_Order ) {
+		$effective = bhp_review_ask_touch1_delay_days( $order );
+	} else {
+		/*
+		 * ⚠ NO ORDER IN HAND — the CLI `status` screen and the admin email
+		 *   preview both call in like this. Both lane delays are accepted so a
+		 *   status screen does not report a mismatch that no real order has.
+		 */
+		return true;
+	}
+
+	return in_array( $effective, $declared, true );
+}
+
+/* -------------------------------------------------------------------------
+ * ⭐ SEAL 965 · MERGE SLOTS
+ *
+ * ⛔ EVERY SLOT RESOLVES TO SOMETHING TRUE OR TO A NEUTRAL FALLBACK. Not one
+ *    of them may render as an empty string, because a customer reading "Thank
+ *    you for picking up  at " is worse than any fallback wording, and not one
+ *    of them may guess. A name that is not on the order is not invented.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * The child's first name for this order, or the neutral fallback.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⚠⚠ NO CHILD-NAME ORDER META KEY HAS BEEN VERIFIED TO EXIST. STATED PLAINLY
+ *    RATHER THAN IMPLIED BY A HOPEFUL `get_meta()` CALL.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * The school-visit checkout flow is owned by the BUNDLE PLUGIN, which is not
+ * in this repository, and this build could not reach either environment to
+ * read a real order's meta (the session's SSH permission was denied; recorded
+ * in the workstream report). The keys tried below are therefore CANDIDATES,
+ * not confirmed fields, and the function is written so that finding none of
+ * them is the ordinary case rather than an error.
+ *
+ * ⭐ THE FALLBACK IS THE BRIEF'S OWN WORD, `your reader`, and it is what
+ *    Gimli's 16 hand-built drafts already used for the two orders with two
+ *    children on them (`Business OS\ANDREW-REVIEW\2026-09-05\REVIEW-ASKS\
+ *    SUMMARY.md`). So the automated note and the hand-sent note say the same
+ *    thing in the same situation.
+ *
+ * ⛔ NO NAME IS EVER DERIVED FROM THE BILLING NAME. The billing name is the
+ *    PARENT. Addressing a parent's own first name to their child is a mistake
+ *    a reader notices immediately and never forgets.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string
+ */
+function bhp_review_ask_child_first_name( $order ) {
+	$name = '';
+
+	if ( $order instanceof WC_Order ) {
+		/**
+		 * Filter the order meta keys searched for a child's first name.
+		 *
+		 * ⚠ UNVERIFIED CANDIDATES. Replace with the real key once somebody has
+		 *   read a live visit order over SSH. Until then the fallback runs and
+		 *   the email is still correct, just less personal.
+		 *
+		 * @since 1.19.362
+		 * @param string[] $keys Meta keys, in priority order.
+		 */
+		$keys = (array) apply_filters(
+			'bhp_review_ask_child_name_meta_keys',
+			array(
+				'_bhp_school_visit_child_first_name',
+				'_bhp_school_visit_child_name',
+				'_bhp_child_first_name',
+				'_bhp_child_name',
+			)
+		);
+
+		foreach ( $keys as $key ) {
+			$raw = trim( (string) $order->get_meta( (string) $key ) );
+
+			if ( '' === $raw ) {
+				continue;
+			}
+
+			/*
+			 * ⭐ FIRST TOKEN ONLY, and only when it looks like a name. A field
+			 *   holding "Ava and Noah" (the two-children case Gimli hit twice
+			 *   in sixteen orders) would otherwise render "Ava and Noah has had
+			 *   a few nights with it". ⛔ Two children is exactly the case the
+			 *   fallback exists for, so it is detected and handed back.
+			 */
+			if ( preg_match( '/\b(and|&|\+|,)\b/i', $raw ) || false !== strpos( $raw, ',' ) ) {
+				break;
+			}
+
+			$parts = preg_split( '/\s+/', $raw );
+			$first = isset( $parts[0] ) ? trim( (string) $parts[0] ) : '';
+
+			if ( '' !== $first && preg_match( "/^[\p{L}][\p{L}'\-]*$/u", $first ) ) {
+				$name = $first;
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Filter the child first name used in review-ask copy.
+	 *
+	 * @since 1.19.362
+	 * @param string        $name  Resolved name, or '' when none is known.
+	 * @param WC_Order|null $order Order.
+	 */
+	$name = trim( (string) apply_filters( 'bhp_review_ask_child_first_name', $name, $order ) );
+
+	return '' !== $name ? $name : BHP_REVIEW_ASK_CHILD_FALLBACK;
+}
+
+/**
+ * Is a real child first name known for this order?
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return bool
+ */
+function bhp_review_ask_child_first_name_is_known( $order ) {
+	return BHP_REVIEW_ASK_CHILD_FALLBACK !== bhp_review_ask_child_first_name( $order );
+}
+
+/**
+ * The school name for a visit order, from the registry.
+ *
+ * ⛔ THE REGISTRY'S OWN `school` VALUE, NEVER THE SLUG PRETTIFIED. Merry's
+ *    merge table is explicit: *"The school's own name, never 'your school'"* —
+ *    and `adams-2026-08-28` title-cased is "Adams 2026 08 28", not a school.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string School name, or '' when unknown.
+ */
+function bhp_review_ask_school_name( $order ) {
+	$slug = bhp_review_ask_is_visit_order( $order ) ? bhp_visit_email_order_slug( $order ) : '';
+
+	if ( '' === $slug || ! function_exists( 'bhp_school_visit_records' ) ) {
+		return '';
+	}
+
+	$records = bhp_school_visit_records();
+
+	if ( ! is_array( $records ) || empty( $records[ $slug ]['school'] ) ) {
+		return '';
+	}
+
+	return trim( wp_strip_all_tags( (string) $records[ $slug ]['school'] ) );
+}
+
+/**
+ * The first chapter book on this order, as an adventure key.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string Key, or '' when the order holds no chapter book.
+ */
+function bhp_review_ask_first_chapter_book_key( $order ) {
+	$keys = bhp_review_ask_chapter_book_keys( $order );
+
+	return isset( $keys[0] ) ? (string) $keys[0] : '';
+}
+
+/**
+ * The display title of the first chapter book on this order.
+ *
+ * ⭐ THE SHORT TITLE, via `bhp_review_book_title()` — "The Mariana Trench",
+ *    not "Adventures of Charlotte and Henry: The Mariana Trench", which is what
+ *    Merry's merge table specifies and what a parent calls the book.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string
+ */
+function bhp_review_ask_book_title( $order ) {
+	$key = bhp_review_ask_first_chapter_book_key( $order );
+
+	if ( '' === $key || ! function_exists( 'bhp_review_book_title' ) ) {
+		return '';
+	}
+
+	return (string) bhp_review_book_title( $key );
+}
+
+/**
+ * The site review page URL for the first chapter book on this order.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string Absolute URL, or ''.
+ */
+function bhp_review_ask_review_link( $order ) {
+	$key = bhp_review_ask_first_chapter_book_key( $order );
+
+	if ( '' === $key || ! function_exists( 'bhp_review_page_url' ) ) {
+		return '';
+	}
+
+	return (string) bhp_review_page_url( $key );
+}
+
+/**
+ * Resolve every merge slot for one order.
+ *
+ * @param WC_Order|null|mixed $order Order.
+ * @return array<string,string> Slot token => replacement.
+ */
+function bhp_review_ask_merge_values( $order ) {
+	$parent = '';
+
+	if ( $order instanceof WC_Order ) {
+		$parent = trim( (string) $order->get_billing_first_name() );
+	}
+
+	$values = array(
+		/*
+		 * ⚠ `there` IS THE FALLBACK, NOT AN EMPTY STRING, so the greeting reads
+		 *   "Hi there," exactly as the 1.19.317 template already does for a
+		 *   buyer with no first name. Store-synced buyers frequently have none.
+		 */
+		'{ParentFirstName}' => '' !== $parent ? $parent : __( 'there', 'brave-hearts' ),
+		'{ChildFirstName}'  => bhp_review_ask_child_first_name( $order ),
+		'{SchoolName}'      => bhp_review_ask_school_name( $order ),
+		'{BookTitle}'       => bhp_review_ask_book_title( $order ),
+		'{ReviewLink}'      => bhp_review_ask_review_link( $order ),
+	);
+
+	/**
+	 * Filter the resolved merge values for one order.
+	 *
+	 * @since 1.19.362
+	 * @param array<string,string> $values Slot => replacement.
+	 * @param WC_Order|null        $order  Order.
+	 */
+	return (array) apply_filters( 'bhp_review_ask_merge_values', $values, $order );
+}
+
+/**
+ * Are all the slots this copy uses resolvable for this order?
+ *
+ * ⛔⛔ THIS IS A SEND GATE, NOT A FORMATTING NICETY. `{SchoolName}` is empty
+ *     for an order whose visit the registry has forgotten, `{BookTitle}` and
+ *     `{ReviewLink}` are empty for an order that somehow holds no chapter
+ *     book, and an email that renders *"Thank you for picking up  at ."* has
+ *     gone to a real parent and cannot be recalled. The order is declined
+ *     `unresolved_merge_slot` instead and the run summary names it.
+ *
+ * ⚠ `{ChildFirstName}` and `{ParentFirstName}` are NOT checked, because both
+ *   have designed fallbacks and neither can be empty.
+ *
+ * @param array               $copy  Copy set.
+ * @param WC_Order|null|mixed $order Order.
+ * @return bool
+ */
+function bhp_review_ask_merge_is_complete( $copy, $order ) {
+	$blob = wp_json_encode( $copy );
+
+	if ( ! is_string( $blob ) ) {
+		return false;
+	}
+
+	$values = bhp_review_ask_merge_values( $order );
+
+	foreach ( array( '{SchoolName}', '{BookTitle}', '{ReviewLink}' ) as $slot ) {
+		if ( false === strpos( $blob, $slot ) ) {
+			continue;
+		}
+
+		if ( ! isset( $values[ $slot ] ) || '' === trim( (string) $values[ $slot ] ) ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/* =========================================================================
+ * ⭐⭐ 1.19.364 · THE STAR ROW — FIVE LINKS, ONE DESTINATION
+ *
+ * ANDREW, SEAL 977: *"Is there anyway to put the 5 stars in the email and all
+ * they have to do is click 5 stars and it goes direct to the website?"*
+ *
+ * ⛔⛔ ALL FIVE ARE ALWAYS BUILT, AND NOTHING HERE STEERS TOWARD FIVE. Merry's
+ *     V2 §5 rule 1, and it is not a styling preference: *"A star row that
+ *     visually steers toward five is a solicitation for a five-star review, and
+ *     it is exactly the thing that makes a review programme indefensible."*
+ *     ⚠ Whoever touches the templates: no row may be bolded, coloured,
+ *     enlarged, reordered or given a bigger tap target than its four
+ *     neighbours, and there is no default selection without the parameter.
+ *
+ * ⛔ NO COUNT, NO AVERAGE, NO "JOIN N OTHER PARENTS". None exists to quote and
+ *    inventing one is the never-invent rule.
+ *
+ * ⭐ DESCENDING, 5 TO 1, matching the site form's own order. Convention, not
+ *    emphasis — the page the reader lands on lists them the same way.
+ * ====================================================================== */
+
+/**
+ * The five star links for this order's first chapter book.
+ *
+ * ⛔ AN EMPTY ARRAY IS A SEND-STOPPER, NOT A DEGRADED EMAIL. It means no
+ *    per-title review URL resolved, and `bhp_review_ask_decline_reason()`
+ *    returns `unresolved_merge_slot`. Merry's V2 §2 merge table says the same
+ *    in words: *"If no per-title review URL resolves, do not send."*
+ *
+ * ⚠ THE TOKEN IS MINTED PER ORDER AND IS THE SAME ON ALL FIVE LINKS. It
+ *   pre-fills a name and an email box and carries no privilege whatsoever —
+ *   see `bhp_review_prefill_verify()` in `inc/reviews.php`. When it cannot be
+ *   minted (no WordPress salt, no billing email) the links are built WITHOUT
+ *   it and still work; the reader just types their own name, as they do today.
+ *
+ * @since 1.19.364
+ * @param WC_Order|mixed $order Order.
+ * @return array<int,array> Rows of rating, label, url — 5 first.
+ */
+function bhp_review_ask_star_row( $order ) {
+	if ( ! function_exists( 'bhp_review_star_labels' ) || ! function_exists( 'bhp_review_star_url' ) ) {
+		return array();
+	}
+
+	$key = bhp_review_ask_first_chapter_book_key( $order );
+
+	if ( '' === $key ) {
+		return array();
+	}
+
+	$token = '';
+
+	if ( $order instanceof WC_Order && function_exists( 'bhp_review_prefill_token' ) ) {
+		$token = (string) bhp_review_prefill_token(
+			(int) $order->get_id(),
+			(string) $order->get_billing_email(),
+			$key
+		);
+	}
+
+	$rows = array();
+
+	foreach ( bhp_review_star_labels() as $rating => $label ) {
+		$url = bhp_review_star_url( $key, (int) $rating, $token );
+
+		/*
+		 * ⛔ ONE UNRESOLVABLE STAR VOIDS THE WHOLE ROW. A row of four is a
+		 *    steered row, which is the one thing rule 1 above forbids.
+		 */
+		if ( '' === $url ) {
+			return array();
+		}
+
+		$rows[] = array(
+			'rating' => (int) $rating,
+			'label'  => (string) $label,
+			'url'    => $url,
+		);
+	}
+
+	return $rows;
+}
+
+/**
+ * Does this copy set render a star row?
+ *
+ * @since 1.19.364
+ * @param array $copy Copy set.
+ * @return bool
+ */
+function bhp_review_ask_copy_has_stars( $copy ) {
+	return is_array( $copy ) && ! empty( $copy['stars'] );
+}
+
+/**
+ * Walk a copy set and substitute every merge slot.
+ *
+ * ⚠ STRINGS ONLY, RECURSIVELY, AND NON-STRINGS ARE LEFT ALONE — `delay_days`
+ *   is an array of ints and `approved` is a bool.
+ *
+ * @param array               $copy  Copy set.
+ * @param WC_Order|null|mixed $order Order.
+ * @return array
+ */
+function bhp_review_ask_merge_copy( $copy, $order ) {
+	if ( ! is_array( $copy ) ) {
+		return $copy;
+	}
+
+	$values = bhp_review_ask_merge_values( $order );
+	$search = array_keys( $values );
+	$repl   = array_values( $values );
+
+	$walk = function ( $value ) use ( &$walk, $search, $repl ) {
+		if ( is_string( $value ) ) {
+			return str_replace( $search, $repl, $value );
+		}
+
+		if ( is_array( $value ) ) {
+			return array_map( $walk, $value );
+		}
+
+		return $value;
+	};
+
+	return array_map( $walk, $copy );
 }
 
 /* =========================================================================
@@ -1056,16 +2593,77 @@ function bhp_review_ask_decline_reason( $order, $now = 0 ) {
 		return 'refunded';
 	}
 
-	if ( $order->get_meta( BHP_REVIEW_ASK_SENT_META ) ) {
+	/*
+	 * ⭐ SEAL 965. WHICH TOUCH IS THIS ORDER NEXT IN LINE FOR? `0` means both
+	 *    have been dealt with and the sequence is finished for this order,
+	 *    which is the replacement for the old flat `already_sent`. The old
+	 *    slug is deliberately kept for the touch-2-done case so the run
+	 *    summary, the KPI report and the suite all keep reading the same word
+	 *    for "this order is finished".
+	 */
+	$touch = bhp_review_ask_next_touch( $order );
+
+	if ( 0 === $touch ) {
 		return 'already_sent';
 	}
 
-	if ( bhp_review_ask_is_visit_order( $order ) ) {
+	/*
+	 * ⛔⛔ SUPERSEDED 2026-09-05 BY SEAL 965, PRESERVED AS A SWITCH RATHER THAN
+	 *     DELETED. Until today this read:
+	 *
+	 *       if ( bhp_review_ask_is_visit_order( $order ) ) {
+	 *           return 'school_visit_already_asked';
+	 *       }
+	 *
+	 *     It closed the Adams double-ask structurally (this file's header,
+	 *     hazard 1). Seal 965 makes the visit order the PRIMARY lane, so the
+	 *     exclusion now defaults OFF. ⚠ It is left reachable because the
+	 *     visit completed-order email still carries its own Amazon review ask
+	 *     and `CYCLE179-LD-40` is open on whether that is one ask too many. If
+	 *     Andrew rules that it is, this filter is the one-line answer and no
+	 *     code has to be rewritten under time pressure.
+	 */
+	if ( 'visit' === bhp_review_ask_lane( $order )
+		&& (bool) apply_filters( 'bhp_review_ask_exclude_visit_orders', false, $order ) ) {
 		return 'school_visit_already_asked';
 	}
 
-	if ( ! bhp_review_ask_is_due( $order, $now ) ) {
-		return 'not_due';
+	$now_ts = $now ? (int) $now : time();
+
+	if ( 1 === $touch ) {
+		$due = bhp_review_ask_touch1_due_timestamp( $order );
+
+		if ( ! $due ) {
+			return 'no_anchor';
+		}
+
+		if ( $now_ts < $due ) {
+			return 'not_due';
+		}
+	} else {
+		$due = bhp_review_ask_touch2_due_timestamp( $order );
+
+		/*
+		 * ⛔ FAIL CLOSED. Touch 1 is recorded as done but nothing recorded
+		 *    WHEN, so there is no honest date to count seven days from. See
+		 *    `bhp_review_ask_touch1_sent_timestamp()`.
+		 */
+		if ( ! $due ) {
+			return 'touch1_date_unknown';
+		}
+
+		if ( $now_ts < $due ) {
+			return 'not_due';
+		}
+	}
+
+	/*
+	 * ⛔ THE MORNING WINDOW. Checked AFTER due-ness so a dry run at any hour
+	 *    still reports "would send today" for everything that is genuinely due
+	 *    and names the window as the only thing holding it.
+	 */
+	if ( ! bhp_review_ask_in_send_window( $now_ts ) ) {
+		return 'outside_send_window';
 	}
 
 	$email = strtolower( trim( (string) $order->get_billing_email() ) );
@@ -1082,13 +2680,74 @@ function bhp_review_ask_decline_reason( $order, $now = 0 ) {
 		return 'opted_out';
 	}
 
-	$last = bhp_review_ask_customer_last( $email );
-	if ( $last ) {
-		$now      = $now ? (int) $now : time();
-		$cooldown = (int) apply_filters( 'bhp_review_ask_customer_cooldown_days', BHP_REVIEW_ASK_CUSTOMER_COOLDOWN_DAYS );
-		if ( ( $now - $last ) < ( $cooldown * DAY_IN_SECONDS ) ) {
-			return 'customer_cooldown';
+	/*
+	 * ⛔ THE 90-DAY CUSTOMER COOLDOWN GATES TOUCH 1 ONLY. Touch 1 writes the
+	 *    customer stamp, so running this on touch 2 would have the stamp touch
+	 *    1 wrote seven days ago decline touch 2 every single time, silently
+	 *    turning Andrew's approved sequence back into one ask. The reasoning is
+	 *    recorded at `BHP_REVIEW_ASK_CUSTOMER_COOLDOWN_DAYS`.
+	 */
+	if ( 1 === $touch ) {
+		$last = bhp_review_ask_customer_last( $email );
+		if ( $last ) {
+			$cooldown = (int) apply_filters( 'bhp_review_ask_customer_cooldown_days', BHP_REVIEW_ASK_CUSTOMER_COOLDOWN_DAYS );
+			if ( ( $now_ts - $last ) < ( $cooldown * DAY_IN_SECONDS ) ) {
+				return 'customer_cooldown';
+			}
 		}
+	}
+
+	/*
+	 * ⭐⭐ THE REMINDER'S OWN SUPPRESSION, AND IT IS THE POINT OF TOUCH 2 BEING
+	 *     CONDITIONAL AT ALL. Seal 965: the reminder goes only to somebody who
+	 *     has NOT reviewed. Unapproved reviews count — see
+	 *     `bhp_review_ask_has_site_review()` for why that is the load-bearing
+	 *     half.
+	 */
+	if ( 2 === $touch && bhp_review_ask_has_site_review( $email ) ) {
+		return 'already_reviewed';
+	}
+
+	/*
+	 * ⛔⛔ NO APPROVED COPY, NO SEND. The web touch-1 set and the touch-2 set
+	 *     ship as PENDING-COPY placeholders with `approved => false`, and this
+	 *     is what guarantees placeholder text can never reach a customer even
+	 *     if somebody switches the engine on early. It is a per-order gate
+	 *     rather than a global halt so that the visit touch-1 lane, whose copy
+	 *     IS approved, keeps running while the other two wait for Merry.
+	 */
+	/*
+	 * ⛔⛔ RAW, NOT MERGED, SINCE 1.19.364. `bhp_review_ask_copy()` returns the
+	 *     set with every slot already substituted, and
+	 *     `bhp_review_ask_merge_is_complete()` below inspects the set for
+	 *     UNRESOLVED SLOTS. Handing it the merged array made that gate a no-op
+	 *     for every order ever checked. See `bhp_review_ask_copy_raw()`.
+	 */
+	$copy = bhp_review_ask_copy_raw( $touch, $order );
+
+	if ( empty( $copy['approved'] ) ) {
+		return 'copy_not_approved';
+	}
+
+	if ( ! bhp_review_ask_copy_matches_delay( $touch, $order ) ) {
+		return 'copy_delay_mismatch';
+	}
+
+	if ( ! bhp_review_ask_merge_is_complete( $copy, $order ) ) {
+		return 'unresolved_merge_slot';
+	}
+
+	/*
+	 * ⛔ 1.19.364 · A COPY SET THAT PROMISES FIVE STARS MUST BE ABLE TO BUILD
+	 *    FIVE. `bhp_review_ask_star_row()` returns an empty array when no
+	 *    per-title review URL resolves, and an email whose only call to action
+	 *    is a row that did not render is a wasted send to a real parent.
+	 *    Merry's V2 §2 merge table: *"If no per-title review URL resolves, do
+	 *    not send."* Same slug as the other unresolved slot, deliberately, so
+	 *    the run summary counts one kind of failure by one name.
+	 */
+	if ( bhp_review_ask_copy_has_stars( $copy ) && array() === bhp_review_ask_star_row( $order ) ) {
+		return 'unresolved_merge_slot';
 	}
 
 	// ⛔ THE HARD COMPLIANCE GATE. No address, no send. See
@@ -1222,7 +2881,7 @@ function bhp_review_ask_candidates( $limit = 50 ) {
  * @param WC_Order $order Order the ask went out on.
  * @return void
  */
-function bhp_review_ask_log_send( $order ) {
+function bhp_review_ask_log_send( $order, $touch = 0 ) {
 	if ( ! $order instanceof WC_Order ) {
 		return;
 	}
@@ -1254,6 +2913,10 @@ function bhp_review_ask_log_send( $order ) {
 		'order_id'     => (int) $order->get_id(),
 		'order_number' => (string) $order->get_order_number(),
 		'customer_key' => bhp_review_ask_customer_key( $order->get_billing_email() ),
+		// ⭐ WHICH TOUCH, so a KPI read can separate first asks from reminders
+		// without re-deriving it from two meta fields per order.
+		'touch'        => (int) $touch,
+		'lane'         => bhp_review_ask_lane( $order ),
 		'sent_at'      => current_time( 'mysql' ),
 		'sent_at_gmt'  => gmdate( 'c' ),
 	);
@@ -1429,23 +3092,95 @@ function bhp_review_ask_run( $args = array() ) {
 		'sent_today' => bhp_review_ask_sent_today(),
 	);
 
-	if ( ! bhp_review_ask_is_enabled() ) {
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.19.363 — THE MASTER SWITCH STOPS A SEND. IT NO LONGER STOPS A DRY
+	 *     RUN, AND THAT IS THE WHOLE POINT OF A DRY RUN.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⚠ THE DEFECT THIS REPLACES, PRESERVED RATHER THAN DELETED. Until now this
+	 *   read `if ( ! bhp_review_ask_is_enabled() ) { halted = 'disabled';
+	 *   return; }` for EVERY caller, dry included. The effect on staging,
+	 *   measured 2026-09-05: `wp bhp review-ask dry` answered
+	 *   "engine is disabled ... Nothing done" for every `--as-of` date, so the
+	 *   ONLY way to find out what the engine would do was to enable it. ⛔ That
+	 *   is exactly backwards. The preview has to be readable BEFORE the switch
+	 *   is thrown, or the switch gets thrown to read the preview — against real
+	 *   parents, with copy that has not been approved.
+	 *
+	 * ⛔⛔ IT STILL CANNOT SEND, AND NOT BECAUSE OF A PROMISE IN A COMMENT.
+	 *     THREE INDEPENDENT STRUCTURAL REASONS, any one of which is sufficient:
+	 *       1. `$args['dry']` `continue`s the loop before `bhp_review_ask_send()`
+	 *          is reached, so the mailer is never constructed.
+	 *       2. `bhp_review_ask_send()` itself refuses when the engine is
+	 *          disabled (added 1.19.363, immediately below its own docblock),
+	 *          so even a caller that reached it directly gets nothing.
+	 *       3. The cron entry point is `bhp_review_ask_cron_run()`, which is
+	 *          gated on the master switch separately and never passes `dry`.
+	 *     ⭐ And nothing on this path writes: no marker, no cooldown stamp, no
+	 *     ledger row. `$summary['sent']` on a dry run counts WOULD-sends and is
+	 *     labelled as such on every line it prints.
+	 *
+	 * ⭐ THE DISABLED STATE IS REPORTED, NOT HIDDEN. `halted` stays `disabled`
+	 *    so no reader of a summary can mistake a dry run for a live one, and
+	 *    the log line says so in words.
+	 */
+	$summary['enabled'] = bhp_review_ask_is_enabled();
+
+	if ( ! $summary['enabled'] ) {
 		$summary['halted'] = 'disabled';
-		$say( 'Review-ask engine is disabled (option bhp_review_ask_enabled != yes). Nothing done.' );
-		return $summary;
+
+		if ( ! $args['dry'] ) {
+			$say( 'Review-ask engine is disabled (option bhp_review_ask_enabled != yes). Nothing done.' );
+			return $summary;
+		}
+
+		$say( 'NOTE: the engine is DISABLED (option bhp_review_ask_enabled != yes).' );
+		$say( 'This is a DRY RUN, so the preview below is produced anyway. Nothing is sent and nothing is written.' );
+		$say( 'Every "would send" line below would NOT go out today; enabling the engine is a separate, deliberate act.' );
 	}
 
-	// ⛔ THE COPY/DELAY INTERLOCK. See `bhp_review_ask_delay_days()`.
-	if ( ! bhp_review_ask_copy_matches_delay() ) {
-		$summary['halted'] = 'copy_delay_mismatch';
-		$say( 'HALTED: the approved copy says "about three weeks ago" and the effective delay is ' . bhp_review_ask_delay_days() . ' days. Nothing sent.' );
-		return $summary;
-	}
+	/*
+	 * ⛔ THE COPY/DELAY INTERLOCK MOVED FROM HERE TO PER-ORDER, 2026-09-05.
+	 *
+	 * ⚠ THE SUPERSEDED GLOBAL HALT IS PRESERVED IN THIS COMMENT rather than
+	 *   deleted, because a reader who knows the 1.19.317 engine will look for
+	 *   it here and needs to know where it went:
+	 *
+	 *     if ( ! bhp_review_ask_copy_matches_delay() ) {
+	 *         $summary['halted'] = 'copy_delay_mismatch';
+	 *         ...
+	 *         return $summary;
+	 *     }
+	 *
+	 * ⭐ WHY IT COULD NOT STAY GLOBAL. There is no longer ONE delay to compare:
+	 *    a visit order due at +7 and a visit order due at +10 are both correct
+	 *    on the same run, and the web lane has a third. A global check would
+	 *    have to pick one and would then halt the entire run because a
+	 *    DIFFERENT order used a different delay. ⛔ The interlock is not
+	 *    weakened by moving: `bhp_review_ask_decline_reason()` runs it against
+	 *    every single order and returns the same `copy_delay_mismatch` slug,
+	 *    which the summary still counts by name. It is now more precise, not
+	 *    less strict — it declines the order that is wrong instead of the run.
+	 */
+	$summary['window_open'] = bhp_review_ask_in_send_window( (int) $args['now'] );
 
 	if ( '' === bhp_review_ask_postal_address() ) {
 		$summary['halted'] = 'no_postal_address';
 		$say( 'HALTED: no postal address resolves, so a CAN-SPAM footer cannot be rendered. Nothing sent.' );
-		return $summary;
+
+		/*
+		 * ⭐ 1.19.363 — SAME REASONING AS THE MASTER SWITCH ABOVE. A dry run
+		 *    that stops here tells an operator only that the address is
+		 *    missing, which they can already see in `status`. Continuing shows
+		 *    the schedule AND still names the blocker: the per-order
+		 *    `no_postal_address` decline in `bhp_review_ask_decline_reason()`
+		 *    fires for every order, so the preview reads "0 would send,
+		 *    declined no_postal_address: N" and the halt is unmissable.
+		 */
+		if ( ! $args['dry'] ) {
+			return $summary;
+		}
 	}
 
 	$cap       = bhp_review_ask_daily_cap();
@@ -1461,23 +3196,151 @@ function bhp_review_ask_run( $args = array() ) {
 		return $summary;
 	}
 
-	foreach ( bhp_review_ask_candidates( (int) $args['scan'] ) as $order ) {
+	$bhp_candidates = bhp_review_ask_candidates( (int) $args['scan'] );
+
+	/*
+	 * ════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.19.364 — "examined: 0" MUST NEVER AGAIN BE THE WHOLE ANSWER.
+	 * ════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ THE OBSERVED PROBLEM, 2026-09-05 ON STAGING: `wp bhp review-ask dry`
+	 *    and the same command at `--as-of=2026-09-10` and `--as-of=2026-09-13`
+	 *    all reported **examined 0**, which is indistinguishable from
+	 *    "everything was skipped" and told the operator nothing about which of
+	 *    the two very different causes was in play:
+	 *
+	 *      (a) THE POOL IS EMPTY. `bhp_review_ask_candidates()` asks for
+	 *          `status => completed`, `type => shop_order`. If staging's copy of
+	 *          the database holds no COMPLETED shop orders — because the sync
+	 *          predates them, because they were pruned, or because they are all
+	 *          in some other status — the loop body never runs even once and no
+	 *          decline reason is ever produced, because a decline reason is a
+	 *          property of an order and there are no orders.
+	 *
+	 *      (b) THE POOL IS FULL AND EVERY ORDER DECLINED. That case already
+	 *          reported itself properly through `$summary['declined']`.
+	 *
+	 *    ⚠ (a) and (b) printed the SAME "examined 0" line only in case (a);
+	 *    the distinction was invisible because nothing counted the pool
+	 *    separately from the loop. It is counted here now.
+	 *
+	 * ⭐ SO THE POOL IS DESCRIBED BEFORE IT IS WALKED, by status, using a
+	 *    COUNT-ONLY query (`return => ids`, `limit => -1`) that loads no order
+	 *    objects. This is the line that answers Gandalf's question directly:
+	 *    if `total shop orders (any status)` is 0, staging simply does not have
+	 *    the sixteen visit orders; if it is non-zero but `completed` is 0, they
+	 *    are present in another status and the candidate query is correctly
+	 *    skipping them.
+	 *
+	 * ⛔ NO EMAIL ADDRESS, NAME OR ORDER TOTAL IS PRINTED BY ANY LINE BELOW.
+	 *    Order ids only — same rule the KPI ledger follows.
+	 */
+	$summary['pool'] = array();
+
+	if ( function_exists( 'wc_get_orders' ) ) {
+		foreach ( array( 'any', 'completed', 'processing', 'on-hold', 'pending', 'cancelled', 'refunded', 'failed' ) as $bhp_status ) {
+			$bhp_ids = wc_get_orders(
+				array(
+					'type'   => 'shop_order',
+					'status' => 'any' === $bhp_status ? array_keys( wc_get_order_statuses() ) : array( $bhp_status ),
+					'limit'  => -1,
+					'return' => 'ids',
+				)
+			);
+
+			$summary['pool'][ $bhp_status ] = is_array( $bhp_ids ) ? count( $bhp_ids ) : 0;
+		}
+	} else {
+		$say( 'POOL: wc_get_orders() is not available. WooCommerce is not loaded, so there is no pool to describe.' );
+	}
+
+	$summary['pool']['scanned'] = count( $bhp_candidates );
+
+	$say( 'POOL: shop orders in any status: ' . ( isset( $summary['pool']['any'] ) ? $summary['pool']['any'] : 'unknown' )
+		. ' | completed: ' . ( isset( $summary['pool']['completed'] ) ? $summary['pool']['completed'] : 'unknown' )
+		. ' | this run scans: ' . count( $bhp_candidates ) . ' (scan limit ' . (int) $args['scan'] . ')' );
+
+	if ( empty( $bhp_candidates ) ) {
+		/*
+		 * ⭐ THE EMPTY-POOL EXPLANATION IS SPELLED OUT RATHER THAN LEFT TO BE
+		 *    INFERRED FROM A ZERO, because a zero was exactly what was
+		 *    uninformative on staging.
+		 */
+		$say( 'EXAMINED 0, AND THE REASON IS THE POOL, NOT THE GATES.' );
+		$say( '  The candidate query is: type=shop_order, status=completed, limit=' . (int) $args['scan'] . '.' );
+
+		if ( isset( $summary['pool']['any'] ) && 0 === (int) $summary['pool']['any'] ) {
+			$say( '  This database holds NO shop orders in ANY status. Nothing was skipped; there was nothing to skip.' );
+			$say( '  On staging that means the orders are not in this copy of the database.' );
+		} elseif ( isset( $summary['pool']['completed'] ) && 0 === (int) $summary['pool']['completed'] ) {
+			$say( '  Shop orders EXIST but none is in status "completed", so the candidate query correctly returns none.' );
+			$say( '  Counts by status are in the POOL line above. The engine anchors on date_completed and cannot' );
+			$say( '  schedule an order that has never completed.' );
+		} else {
+			$say( '  Orders exist and some are completed, but the query returned none. Suspect HPOS (this store runs it),' );
+			$say( '  an order-type filter, or a wc_get_orders filter added by a plugin.' );
+		}
+	}
+
+	foreach ( $bhp_candidates as $order ) {
 		$summary['examined']++;
 
 		$reason = bhp_review_ask_decline_reason( $order, (int) $args['now'] );
 
 		if ( '' !== $reason ) {
 			$summary['declined'][ $reason ] = isset( $summary['declined'][ $reason ] ) ? $summary['declined'][ $reason ] + 1 : 1;
+
+			/*
+			 * ⭐ 1.19.364 · EVERY SKIPPED ORDER NAMES ITS OWN REASON ON A DRY
+			 *    RUN, with the facts needed to argue with it: which lane, how
+			 *    many chapter books, which touch it was next in line for, and
+			 *    the date that touch becomes due. The aggregate `declined`
+			 *    counts stay exactly as they were — this adds detail, it does
+			 *    not replace the summary. ⚠ Dry only: a live run walks the same
+			 *    orders every morning and would fill the log with the same
+			 *    lines forever.
+			 */
+			if ( $args['dry'] ) {
+				$bhp_touch = bhp_review_ask_next_touch( $order );
+				$bhp_due   = ( 2 === $bhp_touch )
+					? bhp_review_ask_touch2_due_timestamp( $order )
+					: bhp_review_ask_touch1_due_timestamp( $order );
+
+				$summary['orders'][] = array(
+					'order_id' => (int) $order->get_id(),
+					'touch'    => $bhp_touch,
+					'lane'     => bhp_review_ask_lane( $order ),
+					'books'    => bhp_review_ask_chapter_book_count( $order ),
+					'due'      => $bhp_due ? gmdate( 'Y-m-d', $bhp_due ) : 'unknown',
+					'result'   => 'skipped',
+					'reason'   => $reason,
+				);
+
+				$say( 'DRY: SKIP order ' . $order->get_id()
+					. ' | ' . bhp_review_ask_lane( $order ) . ' lane'
+					. ' | ' . bhp_review_ask_chapter_book_count( $order ) . ' chapter book(s)'
+					. ' | next touch ' . ( $bhp_touch ? $bhp_touch : 'none, finished' )
+					. ' | due ' . ( $bhp_due ? gmdate( 'Y-m-d', $bhp_due ) : 'unknown' )
+					. ' | REASON: ' . $reason );
+			}
+
 			continue;
 		}
+
+		$touch = bhp_review_ask_next_touch( $order );
 
 		if ( $args['dry'] ) {
 			$summary['orders'][] = array(
 				'order_id' => (int) $order->get_id(),
+				'touch'    => $touch,
+				'lane'     => bhp_review_ask_lane( $order ),
+				'books'    => bhp_review_ask_chapter_book_count( $order ),
 				'result'   => 'would_send',
 			);
 			$summary['sent']++;
-			$say( 'DRY: would send for order ' . $order->get_id() );
+			$say( 'DRY: would send TOUCH ' . $touch . ' for order ' . $order->get_id()
+				. ' (' . bhp_review_ask_lane( $order ) . ' lane, '
+				. bhp_review_ask_chapter_book_count( $order ) . ' chapter book(s))' );
 
 			if ( $summary['sent'] >= $remaining ) {
 				break;
@@ -1489,6 +3352,8 @@ function bhp_review_ask_run( $args = array() ) {
 
 		$summary['orders'][] = array(
 			'order_id' => (int) $order->get_id(),
+			'touch'    => $touch,
+			'lane'     => bhp_review_ask_lane( $order ),
 			'result'   => $sent ? 'sent' : 'mailer_declined',
 		);
 
@@ -1522,6 +3387,21 @@ function bhp_review_ask_run( $args = array() ) {
  * @return bool True when the mailer accepted the message.
  */
 function bhp_review_ask_send( $order ) {
+	/*
+	 * ⛔⛔ 1.19.363 — THE MASTER SWITCH, RE-ASSERTED AT THE SEND ITSELF.
+	 *
+	 * ⭐ WHY IT IS HERE AND NOT ONLY IN `bhp_review_ask_run()`. That function's
+	 *    disabled-halt became dry-run-tolerant in 1.19.363 so the schedule can
+	 *    be previewed before the switch is thrown. The dry path structurally
+	 *    cannot reach this function, but "structurally cannot" is an argument,
+	 *    and this file's own rule is that a send path never trusts its caller.
+	 *    ⭐ So the switch is now enforced at the only place that actually hands
+	 *    a message to the mailer. THIS IS THE LAST GATE BEFORE A REAL PARENT.
+	 */
+	if ( ! bhp_review_ask_is_enabled() ) {
+		return false;
+	}
+
 	if ( ! bhp_review_ask_should_send( $order ) ) {
 		return false;
 	}
@@ -1550,7 +3430,12 @@ function bhp_review_ask_send( $order ) {
 		return false;
 	}
 
-	$sent = $email->trigger( (int) $order->get_id(), $order );
+	/*
+	 * ⭐ THE TOUCH IS RESOLVED HERE AND HANDED DOWN, rather than re-derived
+	 *    inside the email class. Two places asking "which touch is this" is how
+	 *    a subject line for touch 1 ends up on a body for touch 2.
+	 */
+	$sent = $email->trigger( (int) $order->get_id(), $order, bhp_review_ask_next_touch( $order ) );
 
 	return (bool) $sent;
 }
@@ -1565,18 +3450,45 @@ function bhp_review_ask_send( $order ) {
  * @param WC_Order $order Order.
  * @return void
  */
-function bhp_review_ask_mark_sent( $order ) {
+function bhp_review_ask_mark_sent( $order, $touch = 0 ) {
 	if ( ! $order instanceof WC_Order ) {
 		return;
 	}
 
-	$order->update_meta_data( BHP_REVIEW_ASK_SENT_META, current_time( 'mysql' ) );
+	/*
+	 * ⚠ THE TOUCH IS READ BEFORE ANYTHING IS WRITTEN. `bhp_review_ask_next_touch()`
+	 *   answers from the markers, so writing first and asking after would
+	 *   always report touch 2. Callers that know the touch pass it in.
+	 */
+	$touch = (int) $touch;
+	$touch = ( 1 === $touch || 2 === $touch ) ? $touch : bhp_review_ask_next_touch( $order );
 
-	bhp_review_ask_record_customer( $order->get_billing_email(), $order );
+	$now = current_time( 'mysql' );
+
+	if ( 2 === $touch ) {
+		$order->update_meta_data( BHP_REVIEW_ASK_TOUCH2_SENT_META, $now );
+	} else {
+		$order->update_meta_data( BHP_REVIEW_ASK_SENT_META, $now );
+
+		/*
+		 * ⭐ THE EXPLICIT TOUCH-1 DATE, WRITTEN AT THE SAME INSTANT AS THE
+		 *    MARKER. Touch 2 counts seven days from this field and declines
+		 *    when it is missing, so it must never be written separately or
+		 *    later. See `BHP_REVIEW_ASK_TOUCH1_AT_META`.
+		 */
+		$order->update_meta_data( BHP_REVIEW_ASK_TOUCH1_AT_META, $now );
+
+		/*
+		 * ⛔ THE CUSTOMER COOLDOWN STAMP IS WRITTEN ON TOUCH 1 ONLY. Writing it
+		 *    again on touch 2 would push a genuinely new order's first ask out
+		 *    by an extra week for no reason Andrew asked for.
+		 */
+		bhp_review_ask_record_customer( $order->get_billing_email(), $order );
+	}
 
 	$order->save();
 
-	bhp_review_ask_log_send( $order );
+	bhp_review_ask_log_send( $order, $touch );
 }
 
 /* =========================================================================
@@ -1814,7 +3726,7 @@ add_action( 'init', 'bhp_review_ask_handle_optout', 5 );
  * @param array $args Positional args.
  * @return void
  */
-function bhp_review_ask_cli( $args ) {
+function bhp_review_ask_cli( $args, $assoc_args = array() ) {
 	$sub = isset( $args[0] ) ? $args[0] : 'status';
 
 	$say = static function ( $line ) {
@@ -1823,32 +3735,344 @@ function bhp_review_ask_cli( $args ) {
 
 	if ( 'status' === $sub ) {
 		$stats = bhp_review_ask_stats();
-		$say( 'enabled:        ' . ( bhp_review_ask_is_enabled() ? 'yes' : 'NO' ) );
-		$say( 'delay days:     ' . bhp_review_ask_delay_days() );
-		$say( 'copy matches:   ' . ( bhp_review_ask_copy_matches_delay() ? 'yes' : 'NO' ) );
-		$say( 'daily cap:      ' . bhp_review_ask_daily_cap() );
-		$say( 'postal address: ' . ( bhp_review_ask_postal_address() ? bhp_review_ask_postal_address() : 'MISSING - sending is blocked' ) );
-		$say( 'excluded:       ' . count( bhp_review_ask_excluded_emails() ) );
-		$say( 'sent total:     ' . $stats['total'] );
-		$say( 'sent today:     ' . $stats['today'] );
-		$say( 'pending now:    ' . $stats['pending'] );
-		$say( 'opt-outs:       ' . $stats['optouts'] );
+		$say( 'enabled:            ' . ( bhp_review_ask_is_enabled() ? 'yes' : 'NO' ) );
+		$say( 'visit delay 1 book: ' . BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK . ' days after the visit date' );
+		$say( 'visit delay 2+:     ' . BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK . ' days after the visit date' );
+		$say( 'web delay:          ' . bhp_review_ask_delay_days() . ' days after completion   ** PENDING ANDREW **' );
+		$say( 'touch 2 delay:      ' . BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS . ' days after touch 1' );
+		$say( 'send window:        ' . BHP_REVIEW_ASK_WINDOW_START_HOUR . ':00 to ' . BHP_REVIEW_ASK_WINDOW_END_HOUR . ':00 site-local; open right now: ' . ( bhp_review_ask_in_send_window() ? 'yes' : 'NO' ) );
+		$say( 'copy visit touch 1: ' . ( ! empty( bhp_review_ask_copy_visit_touch1()['approved'] ) ? 'APPROVED' : 'not approved - cannot send' ) );
+		$say( 'copy web touch 1:   ' . ( ! empty( bhp_review_ask_copy_web_touch1()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
+		$say( 'copy touch 2:       ' . ( ! empty( bhp_review_ask_copy_touch2()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
+		$say( 'daily cap:          ' . bhp_review_ask_daily_cap() );
+		$say( 'postal address:     ' . ( bhp_review_ask_postal_address() ? bhp_review_ask_postal_address() : 'MISSING - sending is blocked' ) );
+		$say( 'excluded:           ' . count( bhp_review_ask_excluded_emails() ) );
+		$say( 'sent total:         ' . $stats['total'] );
+		$say( 'sent today:         ' . $stats['today'] );
+		$say( 'pending now:        ' . $stats['pending'] );
+		$say( 'opt-outs:           ' . $stats['optouts'] );
 		return;
+	}
+
+	if ( 'plan' === $sub ) {
+		bhp_review_ask_cli_plan( $assoc_args, $say );
+		return;
+	}
+
+	if ( 'migrate' === $sub ) {
+		bhp_review_ask_cli_migrate( $assoc_args, $say );
+		return;
+	}
+
+	$dry = ( 'dry' === $sub );
+
+	/*
+	 * ⭐ 1.19.363 — `--as-of=<Y-m-d[ HH:MM:SS]>` MOVES THE CLOCK, DRY ONLY.
+	 *
+	 * ⛔ IT IS REFUSED ON A LIVE RUN, DELIBERATELY. A moved clock on a real run
+	 *    would send today the mail that belongs to a future date, to real
+	 *    people, and would then stamp the cooldown with a date that never
+	 *    happened. There is no legitimate use for it outside a preview, so it
+	 *    is not merely discouraged — the command stops.
+	 *
+	 * ⚠ A BARE DATE IS EVALUATED AT 09:00 SITE-LOCAL, matching
+	 *   `bhp_review_ask_cli_plan()`, because the daily runner is meant to land
+	 *   inside the morning window and midnight would report every order as
+	 *   `outside_send_window`.
+	 */
+	$now = 0;
+
+	if ( isset( $assoc_args['as-of'] ) ) {
+		$as_of = trim( (string) $assoc_args['as-of'] );
+
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $as_of ) ) {
+			$as_of .= ' 09:00:00';
+		}
+
+		$now = bhp_review_ask_local_datetime( $as_of );
+
+		if ( ! $now ) {
+			WP_CLI::error( 'Unparseable --as-of value. Use Y-m-d or "Y-m-d H:i:s".' );
+			return;
+		}
+
+		if ( ! $dry ) {
+			WP_CLI::error( '--as-of is accepted on `dry` only. Moving the clock on a live run would send a future date\'s mail today.' );
+			return;
+		}
+
+		$say( 'CLOCK MOVED for this preview only: ' . gmdate( 'Y-m-d H:i:s', $now ) . ' UTC.' );
 	}
 
 	$summary = bhp_review_ask_run(
 		array(
-			'dry'    => ( 'dry' === $sub ),
+			'dry'    => $dry,
+			'now'    => $now,
 			'logger' => $say,
 		)
 	);
 
 	$say( '' );
-	$say( 'examined: ' . $summary['examined'] . '  sent: ' . $summary['sent'] . '  halted: ' . ( $summary['halted'] ? $summary['halted'] : '-' ) );
+	$say( 'examined: ' . $summary['examined']
+		. ( $dry ? '  would send: ' : '  sent: ' ) . $summary['sent']
+		. '  halted: ' . ( $summary['halted'] ? $summary['halted'] : '-' ) );
 
 	foreach ( $summary['declined'] as $reason => $count ) {
 		$say( '  declined ' . $reason . ': ' . $count );
 	}
+
+	if ( $dry && empty( $summary['enabled'] ) ) {
+		$say( '' );
+		$say( '** The engine is DISABLED. Nothing above was sent, and nothing will send until the switch is thrown. **' );
+	}
+}
+
+/**
+ * `wp bhp review-ask plan [--dates=<Y-m-d,...>] [--scan=<n>]`
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ WHAT WOULD SEND, ON EACH OF SEVERAL DAYS, WITHOUT SENDING ANYTHING.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ IT SENDS NOTHING AND WRITES NOTHING. It never calls `bhp_review_ask_run()`
+ *    and never touches the mailer, the markers, the ledger or the registries.
+ *    It walks the candidate list and asks `bhp_review_ask_decline_reason()`
+ *    with a moved clock, which is the same function the real run uses, so what
+ *    it reports is what the run would do rather than a parallel re-derivation.
+ *
+ * ⚠ THE SEND WINDOW IS FORCED OPEN FOR THE PLAN, and only for the plan. A plan
+ *   run at four in the afternoon must still show what the eight-o'clock run
+ *   would send; otherwise every row would read `outside_send_window` and the
+ *   plan would be useless at exactly the hour a human is likely to run it. The
+ *   filter is removed again before the function returns.
+ *
+ * ⚠ IT PROJECTS ONLY WHAT PRESENT STATE IMPLIES. A touch 2 shown for a future
+ *   date assumes touch 1 goes out as planned; a review arriving in between
+ *   would suppress it, and the plan cannot know that in advance. Stated on the
+ *   output so nobody quotes a projection as a schedule.
+ *
+ * @param array    $assoc_args Associative args.
+ * @param callable $say        Line logger.
+ * @return void
+ */
+function bhp_review_ask_cli_plan( $assoc_args, $say ) {
+	/*
+	 * ⭐ 1.19.363 — `--as-of` IS ACCEPTED AS AN ALIAS FOR `--dates`. Both spellings
+	 *    reached this desk from a real operator on the same afternoon, and a
+	 *    preview command that silently previews TODAY when you asked it for a
+	 *    date is worse than one that errors.
+	 */
+	$dates_arg = '';
+
+	if ( isset( $assoc_args['dates'] ) ) {
+		$dates_arg = (string) $assoc_args['dates'];
+	} elseif ( isset( $assoc_args['as-of'] ) ) {
+		$dates_arg = (string) $assoc_args['as-of'];
+	}
+
+	$dates = '' !== $dates_arg ? explode( ',', $dates_arg ) : array( current_time( 'Y-m-d' ) );
+	$scan  = isset( $assoc_args['scan'] ) ? (int) $assoc_args['scan'] : 200;
+
+	/*
+	 * ⭐ AND THE PLAN SAYS WHETHER THE ENGINE IS ON. It has never been gated on
+	 *    the master switch (correctly — it sends nothing), but a plan read
+	 *    without that line looks exactly like a schedule that is about to
+	 *    happen.
+	 */
+	$plan_enabled = bhp_review_ask_is_enabled();
+
+	$force_window = static function () {
+		return true;
+	};
+
+	add_filter( 'bhp_review_ask_in_send_window', $force_window, 999 );
+
+	$say( 'REVIEW-ASK PLAN. Nothing is sent and nothing is written.' );
+	$say( 'engine: ' . ( $plan_enabled ? 'ENABLED - these sends would really happen' : 'DISABLED - nothing below will send until the switch is thrown' ) );
+	$say( 'The send window is forced open so the plan is not an artefact of the hour it was run.' );
+	$say( 'A projected touch 2 assumes its touch 1 went out and no review arrived in between.' );
+	$say( '' );
+
+	foreach ( $dates as $date ) {
+		$date = trim( (string) $date );
+
+		/*
+		 * ⭐ 09:00 SITE-LOCAL, not midnight. The daily runner is meant to land
+		 *    inside the morning window, and an order due at local midnight on
+		 *    the same date is due at nine as well, so this is the honest
+		 *    instant to evaluate a calendar day at.
+		 */
+		$now = bhp_review_ask_local_datetime( $date . ' 09:00:00' );
+
+		if ( ! $now ) {
+			$say( 'SKIPPED unparseable date: ' . $date );
+			continue;
+		}
+
+		$say( '=== ' . $date . ' 09:00 site-local ===' );
+
+		$would    = 0;
+		$declined = array();
+
+		foreach ( bhp_review_ask_candidates( $scan ) as $order ) {
+			$reason = bhp_review_ask_decline_reason( $order, $now );
+
+			if ( '' !== $reason ) {
+				$declined[ $reason ] = isset( $declined[ $reason ] ) ? $declined[ $reason ] + 1 : 1;
+				continue;
+			}
+
+			$would++;
+
+			$say( sprintf(
+				'  WOULD SEND  order %-6s  touch %d  %-5s lane  %d chapter book(s)  visit %s',
+				$order->get_id(),
+				bhp_review_ask_next_touch( $order ),
+				bhp_review_ask_lane( $order ),
+				bhp_review_ask_chapter_book_count( $order ),
+				bhp_review_ask_visit_date( $order ) ? bhp_review_ask_visit_date( $order ) : '-'
+			) );
+		}
+
+		$cap = bhp_review_ask_daily_cap();
+
+		$say( '  ---' );
+		$say( '  would send: ' . $would . '   daily cap: ' . $cap . ( $would > $cap ? '   ** CAPPED: ' . ( $would - $cap ) . ' would slip to the next day **' : '' ) );
+
+		foreach ( $declined as $reason => $count ) {
+			$say( '  declined ' . $reason . ': ' . $count );
+		}
+
+		$say( '' );
+	}
+
+	remove_filter( 'bhp_review_ask_in_send_window', $force_window, 999 );
+}
+
+/**
+ * `wp bhp review-ask migrate --orders=<id:Y-m-d,...> [--confirmed-sent] [--apply]`
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ IT DEFAULTS TO A DRY RUN AND IT DEFAULTS TO NOT BELIEVING YOU.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ WHY THIS COMMAND EXISTS. Sixteen orders were prepared for a hand-sent
+ *    review ask outside this engine. Without a marker the engine would ask
+ *    them again, which is the double-ask this whole feature is built to avoid.
+ *
+ * ⚠⚠ **AND WHY IT WILL NOT MARK THEM AS SENT BY DEFAULT. VERIFIED, NOT
+ *    ASSUMED:** `Business OS\ANDREW-REVIEW\2026-09-05\REVIEW-ASKS\SUMMARY.md`
+ *    (Gimli, 2026-09-05) records the live state of those sixteen as
+ *    *"16 drafts created in Gmail. NOTHING SENT. Nothing scheduled."*, with
+ *    Andrew pressing send himself, one note at a time. ⛔ A DRAFT IS NOT A
+ *    SEND (Standing Rules §9.2 rule 1). Writing "touch 1 sent on 2026-09-10"
+ *    against an order whose note is still sitting in Drafts would:
+ *      1. record a live-state claim nobody has verified, and
+ *      2. schedule a reminder for 2026-09-17 chasing a first ask that may
+ *         never have gone out, which is the worst possible email to send.
+ *
+ * ⭐ SO THE TWO MODES ARE SEPARATED:
+ *
+ *    DEFAULT (no `--confirmed-sent`): writes `external-pending-<date>` to the
+ *    sent marker and writes NO touch-1 date. Effect: touch 1 is suppressed
+ *    forever, and touch 2 declines `touch1_date_unknown` because there is no
+ *    date to count from. ⭐ Both asks are held. This is the "exclude them
+ *    entirely" outcome, reached by the engine's ordinary rules rather than by
+ *    a special case, and it is reversible by re-running with the flag.
+ *
+ *    `--confirmed-sent`: writes `external-<date>` AND the touch-1 date, so the
+ *    reminder lands seven days after the date given. ⛔ Use this ONLY for
+ *    orders somebody has confirmed IN GMAIL'S SENT FOLDER, per order, with the
+ *    real send date. The flag exists so that confirmation is a deliberate act
+ *    with a name on it.
+ *
+ * ⛔ `--apply` IS REQUIRED TO WRITE ANYTHING. Without it this prints the
+ *    manifest and exits.
+ *
+ * ⛔ IT WRITES ONLY THESE TWO ORDER META KEYS. No product, price, coupon,
+ *    stock, shipping, tax, payment, checkout record or WooCommerce setting is
+ *    touched, and no order status, total or line item is changed.
+ *
+ * @param array    $assoc_args Associative args.
+ * @param callable $say        Line logger.
+ * @return void
+ */
+function bhp_review_ask_cli_migrate( $assoc_args, $say ) {
+	$spec      = isset( $assoc_args['orders'] ) ? (string) $assoc_args['orders'] : '';
+	$confirmed = ! empty( $assoc_args['confirmed-sent'] );
+	$apply     = ! empty( $assoc_args['apply'] );
+
+	if ( '' === trim( $spec ) ) {
+		$say( 'Nothing to do. Pass --orders=612:2026-09-10,615:2026-09-10,...' );
+		return;
+	}
+
+	$say( $apply ? 'MIGRATE - APPLYING.' : 'MIGRATE - DRY RUN. Nothing is written. Add --apply to write.' );
+	$say( $confirmed
+		? 'MODE: --confirmed-sent. Touch 1 will be recorded AS SENT on the date given, and a reminder will be scheduled 7 days later.'
+		: 'MODE: default. Touch 1 will be SUPPRESSED and NO date recorded, so touch 2 also declines. Use --confirmed-sent only for orders confirmed in Gmail Sent.' );
+	$say( '' );
+
+	foreach ( explode( ',', $spec ) as $row ) {
+		$row   = trim( $row );
+		$parts = explode( ':', $row );
+
+		$order_id = isset( $parts[0] ) ? absint( $parts[0] ) : 0;
+		$date     = isset( $parts[1] ) ? trim( $parts[1] ) : '';
+
+		if ( ! $order_id || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+			$say( 'SKIP  unparseable row: ' . $row );
+			continue;
+		}
+
+		$order = wc_get_order( $order_id );
+
+		if ( ! $order instanceof WC_Order ) {
+			$say( 'SKIP  order ' . $order_id . ' not found' );
+			continue;
+		}
+
+		$existing = trim( (string) $order->get_meta( BHP_REVIEW_ASK_SENT_META ) );
+
+		if ( '' !== $existing ) {
+			$say( 'SKIP  order ' . $order_id . ' already marked: ' . $existing );
+			continue;
+		}
+
+		$marker = ( $confirmed ? 'external-' : 'external-pending-' ) . $date;
+
+		$say( sprintf(
+			'%s order %-6s  marker %-28s  touch1_at %s  -> reminder %s',
+			$apply ? 'WRITE' : 'WOULD',
+			$order_id,
+			$marker,
+			$confirmed ? $date . ' 09:00:00' : '(none)',
+			$confirmed ? gmdate( 'Y-m-d', strtotime( $date . ' +' . BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS . ' days' ) ) : 'none - touch 2 declines touch1_date_unknown'
+		) );
+
+		if ( ! $apply ) {
+			continue;
+		}
+
+		$order->update_meta_data( BHP_REVIEW_ASK_SENT_META, $marker );
+
+		if ( $confirmed ) {
+			/*
+			 * ⭐ 09:00 SITE-LOCAL, matching the morning window. A hand-sent
+			 *    note has no recorded minute, and midnight would make the
+			 *    reminder due at midnight seven days later, which the send
+			 *    window would then hold until the following morning anyway.
+			 *    Recording nine keeps the arithmetic and the observed
+			 *    behaviour the same.
+			 */
+			$order->update_meta_data( BHP_REVIEW_ASK_TOUCH1_AT_META, $date . ' 09:00:00' );
+		}
+
+		$order->save();
+	}
+
+	$say( '' );
+	$say( 'Done. No WooCommerce setting, product, price, coupon, stock, shipping, tax or checkout record was read or written.' );
 }
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {

@@ -146,8 +146,11 @@ function bhp_readaloud_approved_passages() {
 		 * PASSAGE 4 · WHY I CAN TAKE THEM THERE · carriers 416 and 418, approved
 		 * at item 420 with its first sentence dropped, and again at item 512.
 		 * VERBATIM. No substitution. Names nobody.
+		 * 1.19.361 (2026-09-04, carrier item 938): the closing read-aloud
+		 * sentence was DROPPED on Andrew's own instruction; the four attested
+		 * specifics and the tools sentence are unchanged.
 		 */
-		'founder-4' => 'I spent over 80 days in Nepal, walked in from Jiri toward Base Camp, and summited Island Peak, just over 20,000 feet, without supplemental oxygen. On the climb I used the same tools I write into the books: the breathing, the I can do hard things mantra, one step at a time. At the read aloud, the kids asked if I was tired. I told them yes. And that your mind and good food can propel you anywhere you want to go.',
+		'founder-4' => 'I spent over 80 days in Nepal, walked in from Jiri toward Base Camp, and summited Island Peak, just over 20,000 feet, without supplemental oxygen. On the climb I used the same tools I write into the books: the breathing, the I can do hard things mantra, one step at a time.',
 	);
 }
 

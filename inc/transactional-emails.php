@@ -466,6 +466,37 @@ function bhp_email_mark_rendering( $email_heading, $email = null ) {
 		 *    dangerous case rather than a browser request.
 		 */
 		$GLOBALS['bhp_rendering_email_visit_slug'] = bhp_visit_email_slug( $email );
+
+		/*
+		 * ⭐ 1.19.362 — THE REVIEW ASK'S PREHEADER IS CAPTURED HERE FOR EXACTLY
+		 *    THE REASON THE VISIT SLUG IS, and this fixes a real defect the
+		 *    seal-965 sequence introduced.
+		 *
+		 * ⛔ THE MAP BELOW CANNOT ANSWER THIS ANY MORE. It is keyed by email
+		 *    ID, and since seal 965 one ID renders TWO different emails - touch
+		 *    1 and the touch-2 reminder - with different preheaders. A map
+		 *    lookup by ID would have put touch 1's preview text in the inbox
+		 *    beside touch 2's subject line, which is the kind of mismatch a
+		 *    reader notices and nobody tests for.
+		 *
+		 * ⭐ `$email->touch` and `$email->object` are both still set at header
+		 *    time, so the question is answered while the answer exists and is
+		 *    carried forward, exactly as the slug is.
+		 *
+		 * ⛔ ALWAYS SET, INCLUDING TO '', for the stale-global reason above.
+		 */
+		$GLOBALS['bhp_rendering_email_preheader'] = '';
+
+		if ( defined( 'BHP_REVIEW_ASK_EMAIL_ID' ) && BHP_REVIEW_ASK_EMAIL_ID === $email->id
+			&& function_exists( 'bhp_review_ask_copy' ) ) {
+			$bhp_ra_touch = isset( $email->touch ) ? (int) $email->touch : 1;
+			$bhp_ra_order = ( isset( $email->object ) && $email->object instanceof WC_Order ) ? $email->object : null;
+			$bhp_ra_copy  = bhp_review_ask_copy( $bhp_ra_touch, $bhp_ra_order );
+
+			if ( ! empty( $bhp_ra_copy['preheader'] ) ) {
+				$GLOBALS['bhp_rendering_email_preheader'] = (string) $bhp_ra_copy['preheader'];
+			}
+		}
 	}
 }
 add_action( 'woocommerce_email_header', 'bhp_email_mark_rendering', 1, 2 );
@@ -499,7 +530,26 @@ function bhp_email_inject_preheader( $content ) {
 		: '';
 	unset( $GLOBALS['bhp_rendering_email_visit_slug'] );
 
+	$captured_preheader = isset( $GLOBALS['bhp_rendering_email_preheader'] )
+		? (string) $GLOBALS['bhp_rendering_email_preheader']
+		: '';
+	unset( $GLOBALS['bhp_rendering_email_preheader'] );
+
 	$preheaders = bhp_email_preheaders();
+
+	/*
+	 * ⭐ 1.19.362 — A PREHEADER CAPTURED FROM THE LIVE EMAIL OBJECT OUTRANKS
+	 *    THE MAP, and the same "applied after the lookup, not by mutating the
+	 *    map" discipline as the visit override below is kept deliberately, so
+	 *    the map stays a plain readable list and each fork stays visible.
+	 *
+	 * ⛔ ONLY THE REVIEW ASK EVER SETS IT (see `bhp_email_mark_rendering()`),
+	 *    because it is the only email id in this store that renders two
+	 *    different messages.
+	 */
+	if ( '' !== $captured_preheader ) {
+		$preheaders[ $id ] = $captured_preheader;
+	}
 
 	/*
 	 * ⭐ THE SCHOOL-VISIT PREHEADER REPLACES E2's, AND ONLY E2's. The map above

@@ -68,6 +68,58 @@ $v_comment = (string) bhp_review_value_for($context, 'comment', '');
 $v_author  = (string) bhp_review_value_for($context, 'author', '');
 $v_email   = (string) bhp_review_value_for($context, 'email', '');
 
+/*
+ * ⭐⭐ 1.19.364 (2026-09-05, seal 977) — THE EMAIL'S STAR ROW LANDS HERE.
+ *
+ * ⛔⛔ A FAILED SUBMISSION ALWAYS OUTRANKS THE URL, AND THAT ORDERING IS THE
+ *     WHOLE CARE OF THIS BLOCK. If a reader picked 3 stars, typed a paragraph,
+ *     hit Submit and tripped a validation error, the page comes back with
+ *     `?rating=5` STILL IN THE ADDRESS BAR from the email link they arrived
+ *     on. Letting the parameter win would silently change their 3 to a 5
+ *     underneath their own words — which would be this store publishing a
+ *     rating its customer did not choose. `$errors` non-empty means the
+ *     submission state above is authoritative and nothing here may touch it.
+ *
+ * ⚠ `bhp_review_requested_rating()` returns 0 for anything that is not an
+ *   integer 1..5, so a junk parameter leaves the form in its normal state with
+ *   no star selected and no message. See `inc/reviews.php`.
+ */
+$rating_from_url = function_exists('bhp_review_requested_rating') ? bhp_review_requested_rating() : 0;
+
+if (empty($errors) && 0 === $v_rating && $rating_from_url > 0) {
+    $v_rating = $rating_from_url;
+}
+
+/*
+ * ⭐ THE SIGNED PRE-FILL, AND IT IS ONLY EVER A PRE-FILL. Two text boxes get
+ *    values; nothing is authenticated, nothing skips moderation, nothing is
+ *    marked verified. `bhp_review_prefill()` returns two empty strings for a
+ *    missing, forged, expired or wrong-book token, so the no-token page is the
+ *    normal page. ⛔ A failed submission outranks this too: the reader's own
+ *    last keystrokes are always worth more than a token's copy of them.
+ */
+$prefill = function_exists('bhp_review_prefill') ? bhp_review_prefill($key) : ['author' => '', 'email' => ''];
+
+if (empty($errors)) {
+    if ('' === $v_author && '' !== $prefill['author']) {
+        $v_author = $prefill['author'];
+    }
+    if ('' === $v_email && '' !== $prefill['email']) {
+        $v_email = $prefill['email'];
+    }
+}
+
+/*
+ * ⭐ FOCUS THE TEXT BOX, NOT THE PAGE TOP, WHEN A STAR ARRIVED PRE-SELECTED.
+ *    Seal 977: *"all they have to do is click 5 stars"* — the star is already
+ *    answered, so the only thing left is the sentence.
+ *
+ * ⛔ ONLY WHEN THE PARAMETER GENUINELY PRE-SELECTED SOMETHING. Autofocusing a
+ *    textarea on an ordinary product-page visit yanks a mobile keyboard up and
+ *    scrolls the reader past the book they came to read about.
+ */
+$autofocus_comment = (empty($errors) && $rating_from_url > 0);
+
 /** Does a named field have an outstanding error from the last submission? */
 $field_error = static function ($field) use ($errors, $err_field, $messages) {
     foreach ($errors as $code) {
@@ -111,13 +163,23 @@ $return_url = 'standalone' === $context
  * "4 stars — really good", "3 stars — it was okay", "2 stars — not for us",
  * "1 star — did not work for us".
  */
-$star_labels = [
-    5 => __('5 stars: loved it', 'brave-hearts'),
-    4 => __('4 stars: really good', 'brave-hearts'),
-    3 => __('3 stars: it was okay', 'brave-hearts'),
-    2 => __('2 stars: not for us', 'brave-hearts'),
-    1 => __('1 star: did not work for us', 'brave-hearts'),
-];
+/*
+ * ⭐ 1.19.364 — MOVED TO `bhp_review_star_labels()` IN `inc/reviews.php`, NOT
+ *    EDITED. The five strings are byte-identical to the 1.19.262 array that
+ *    stood here; they moved because the review-ask EMAIL now renders the same
+ *    five labels beside its five star links, and two declarations of the same
+ *    five sentences would eventually drift. The commentary above is the record
+ *    of why they read as they do and stays here with the form.
+ */
+$star_labels = function_exists('bhp_review_star_labels')
+    ? bhp_review_star_labels()
+    : [
+        5 => __('5 stars: loved it', 'brave-hearts'),
+        4 => __('4 stars: really good', 'brave-hearts'),
+        3 => __('3 stars: it was okay', 'brave-hearts'),
+        2 => __('2 stars: not for us', 'brave-hearts'),
+        1 => __('1 star: did not work for us', 'brave-hearts'),
+    ];
 ?>
 <form
     class="bhp-review-form bhp-review-form--<?php echo esc_attr($context); ?>"
@@ -249,6 +311,10 @@ $star_labels = [
             aria-describedby="<?php echo esc_attr($uid . '-comment-error'); ?>"
             <?php echo $e_comment ? 'aria-invalid="true"' : ''; ?>
             data-bhp-review-textarea="<?php echo esc_attr($context); ?>"
+            <?php /* ⭐ 1.19.364 · only when a ?rating= arrived from the email's
+                     star row. See $autofocus_comment above for why this is
+                     conditional rather than always on. */ ?>
+            <?php echo $autofocus_comment ? 'autofocus' : ''; ?>
             placeholder="<?php esc_attr_e('What did your reader think?', 'brave-hearts'); ?>"
         ><?php echo esc_textarea($v_comment); ?></textarea>
         <span class="bhp-review-form__error" id="<?php echo esc_attr($uid . '-comment-error'); ?>" <?php echo $e_comment ? '' : 'hidden'; ?>>

@@ -786,7 +786,36 @@ bhp_sra_assert(
 	in_array( 'adams-elementary-read-aloud-group.jpg', array_column( $bhp_set, 'file' ), true ),
 	'⭐ the KEPT photograph adams-elementary-read-aloud-group.jpg is still in the gallery set'
 );
-bhp_sra_assert( 3 === count( $bhp_set ), 'the gallery is 3 photographs — one kept, two replaced' );
+/*
+ * ⚠️⚠️ AMENDED 1.19.360 (2026-09-04, `CYCLE179-LD-GALLERY-DALLAS`). THE
+ *     SUPERSEDED LINE IS PRESERVED IMMEDIATELY BELOW RATHER THAN DELETED.
+ *
+ *         bhp_sra_assert( 3 === count( $bhp_set ), 'the gallery is 3 photographs' );
+ *
+ * ⛔ IT WAS AN EQUALITY ON A GROWING SET, and the runbook already records this
+ *    exact failure class for the `.min.css` count: a fixed number goes stale the
+ *    next time something is legitimately ADDED, and then gets "corrected"
+ *    downward by whoever trusts it. Andrew added a second school's read-aloud
+ *    photographs (Dallas Harris Elementary, 2026-09-03) to the visit-notes
+ *    OPTION, so the registry now yields more than three rows on any environment
+ *    that carries them and exactly three on one that does not.
+ *
+ * ⭐ WHAT THE ASSERTION EXISTS FOR IS UNCHANGED AND IS STILL ASSERTED: the
+ *    three Adams rows Andrew approved are all present. That is now checked by
+ *    NAME, which is strictly stronger than checking the count was three, and it
+ *    cannot go stale when a later visit adds photographs.
+ */
+foreach ( array(
+	'adams-elementary-read-aloud-group.jpg',
+	'adams-elementary-read-aloud-reading.jpg',
+	'adams-elementary-read-aloud-class.jpg',
+) as $bhp_adams_file ) {
+	bhp_sra_assert(
+		in_array( $bhp_adams_file, array_column( $bhp_set, 'file' ), true ),
+		"⭐ the founder-approved Adams photograph {$bhp_adams_file} is still in the gallery set"
+	);
+}
+bhp_sra_assert( count( $bhp_set ) >= 3, 'the gallery carries at least the three Adams photographs (' . count( $bhp_set ) . ' rows)' );
 
 /* ── 11e · Every photograph in the set is captioned by the registry join, so
       all three read "Adams Elementary, August 28, 2026" without a caption
@@ -1055,7 +1084,18 @@ $bhp_reg  = bhp_author_visits_gallery_photos();
 $bhp_arch = bhp_readaloud_archive_photos();
 $bhp_car  = bhp_readaloud_carousel_photos();
 
-bhp_sra_assert( count( $bhp_reg ) === 3, '⛔ the registry still yields exactly THREE Adams photographs — the founder-approved set is unchanged' );
+/*
+ * ⚠️⚠️ AMENDED 1.19.360 (2026-09-04, `CYCLE179-LD-GALLERY-DALLAS`), for the
+ *     same reason as §11d above and with the superseded line preserved:
+ *
+ *         bhp_sra_assert( count( $bhp_reg ) === 3, 'exactly THREE Adams photographs' );
+ *
+ * ⛔ THE FOUNDER-APPROVED ADAMS SET IS STILL UNCHANGED, and that is what is
+ *    asserted — by name, in §11d, and by the byte-exact alt-text pass-through
+ *    lower down in this same section. What is no longer asserted is that the
+ *    registry can never grow, which was never the property anyone wanted.
+ */
+bhp_sra_assert( count( $bhp_reg ) >= 3, 'the registry yields at least the three Adams photographs (' . count( $bhp_reg ) . ' rows)' );
 bhp_sra_assert( count( $bhp_car ) === count( $bhp_reg ) + count( $bhp_arch ), 'the carousel is exactly the registry rows plus the archive rows, with nothing added or dropped' );
 bhp_sra_assert( count( $bhp_car ) > 1, '⛔ more than one photograph — a one-slide carousel would render its controls hidden and the founder asked for a carousel' );
 

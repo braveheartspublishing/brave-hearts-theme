@@ -67,14 +67,46 @@ class WC_Email_BHP_Review_Ask extends WC_Email {
 	public $optout_url = '';
 
 	/**
+	 * Which touch of the seal-965 sequence is being rendered: 1 or 2.
+	 *
+	 * ⭐ HELD ON THE OBJECT, SET BY `trigger()` FROM THE RUNNER'S ANSWER, and
+	 *    never re-derived here. The runner reads the order's two sent markers
+	 *    to decide which touch is due; if this class asked the same question
+	 *    again after the marker was written it would get a different answer,
+	 *    which is how a touch-1 subject line ends up on a touch-2 body.
+	 *
+	 * ⚠ DEFAULT 1, so an admin preview or a direct call with no touch renders
+	 *   the approved touch-1 set rather than a PENDING-COPY placeholder.
+	 *
+	 * @var int
+	 */
+	public $touch = 1;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->id             = defined( 'BHP_REVIEW_ASK_EMAIL_ID' ) ? BHP_REVIEW_ASK_EMAIL_ID : 'bhp_review_ask';
 		$this->customer_email = true;
 
-		$this->title       = __( 'Review ask (T+21 days)', 'brave-hearts' );
-		$this->description = __( 'Sent once to every buyer 21 days after their order is completed, asking how the child got on with the book and pointing at the three Amazon review pages. It carries a postal address and a working unsubscribe link. It is sent only by the daily review-ask runner, never by an order status change, and it sends at most once per order and once per customer per 90 days.', 'brave-hearts' );
+		/*
+		 * ⛔ SUPERSEDED 2026-09-05 BY SEAL 965, PRESERVED HERE RATHER THAN
+		 *    DELETED, because this exact string is what an operator sees in
+		 *    WooCommerce -> Settings -> Emails and is how they find this row:
+		 *
+		 *      title:       'Review ask (T+21 days)'
+		 *      description: 'Sent once to every buyer 21 days after their
+		 *                    order is completed, asking how the child got on
+		 *                    with the book and pointing at the three Amazon
+		 *                    review pages. ... it sends at most once per order
+		 *                    and once per customer per 90 days.'
+		 *
+		 * ⚠ AN ADMIN WHO TYPED A CUSTOM SUBJECT OR HEADING INTO THAT ROW KEEPS
+		 *   IT. `WC_Email` stores those under the email ID, which has not
+		 *   changed, so renaming the row's title does not orphan the settings.
+		 */
+		$this->title       = __( 'Review ask (two-touch sequence)', 'brave-hearts' );
+		$this->description = __( 'The first ask goes out seven days after a school visit for a one-book order, ten days for two or more, and ten days after completion for a web order. One reminder follows seven days later, and only when no site review has arrived from that buyer. It carries a postal address and a working unsubscribe link, it is sent only by the daily review-ask runner and never by an order status change, and a first ask is capped at one per customer per 90 days.', 'brave-hearts' );
 
 		$this->template_html  = 'emails/bhp-review-ask.php';
 		$this->template_plain = 'emails/plain/bhp-review-ask.php';
@@ -109,7 +141,7 @@ class WC_Email_BHP_Review_Ask extends WC_Email {
 	 * @return string
 	 */
 	public function get_default_subject() {
-		$copy = bhp_review_ask_copy();
+		$copy = bhp_review_ask_copy( $this->touch, $this->object instanceof WC_Order ? $this->object : null );
 
 		return $copy['subject'];
 	}
@@ -120,7 +152,7 @@ class WC_Email_BHP_Review_Ask extends WC_Email {
 	 * @return string
 	 */
 	public function get_default_heading() {
-		$copy = bhp_review_ask_copy();
+		$copy = bhp_review_ask_copy( $this->touch, $this->object instanceof WC_Order ? $this->object : null );
 
 		return $copy['heading'];
 	}
@@ -172,7 +204,7 @@ class WC_Email_BHP_Review_Ask extends WC_Email {
 	 * @param WC_Order|bool $order    Order object, when one is passed.
 	 * @return bool True when the mailer accepted the message.
 	 */
-	public function trigger( $order_id, $order = false ) {
+	public function trigger( $order_id, $order = false, $touch = 0 ) {
 		$this->setup_locale();
 
 		$sent = false;
@@ -182,6 +214,15 @@ class WC_Email_BHP_Review_Ask extends WC_Email {
 		}
 
 		if ( $order instanceof WC_Order && bhp_review_ask_should_send( $order ) ) {
+			/*
+			 * ⭐ THE TOUCH IS READ BEFORE THE SEND, because
+			 *    `bhp_review_ask_mark_sent()` writes the marker that would
+			 *    change the answer. A caller that already knows it passes it in.
+			 */
+			$touch = (int) $touch;
+			$touch = ( 1 === $touch || 2 === $touch ) ? $touch : bhp_review_ask_next_touch( $order );
+
+			$this->touch      = $touch;
 			$this->object     = $order;
 			$this->recipient  = $order->get_billing_email();
 			$this->optout_url = bhp_review_ask_optout_url( $order );
@@ -204,7 +245,7 @@ class WC_Email_BHP_Review_Ask extends WC_Email {
 				);
 
 				if ( $sent ) {
-					bhp_review_ask_mark_sent( $order );
+					bhp_review_ask_mark_sent( $order, $this->touch );
 				}
 			}
 		}
@@ -253,7 +294,7 @@ class WC_Email_BHP_Review_Ask extends WC_Email {
 			array(
 				'order'          => $this->object,
 				'email_heading'  => $this->get_heading(),
-				'copy'           => bhp_review_ask_copy(),
+				'copy'           => bhp_review_ask_copy( $this->touch, $this->object instanceof WC_Order ? $this->object : null ),
 				'optout_url'     => $this->optout_url,
 				'postal_address' => bhp_review_ask_postal_address(),
 				'sent_to_admin'  => false,
@@ -276,7 +317,7 @@ class WC_Email_BHP_Review_Ask extends WC_Email {
 			array(
 				'order'          => $this->object,
 				'email_heading'  => $this->get_heading(),
-				'copy'           => bhp_review_ask_copy(),
+				'copy'           => bhp_review_ask_copy( $this->touch, $this->object instanceof WC_Order ? $this->object : null ),
 				'optout_url'     => $this->optout_url,
 				'postal_address' => bhp_review_ask_postal_address(),
 				'sent_to_admin'  => false,

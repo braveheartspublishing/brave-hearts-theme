@@ -975,3 +975,341 @@ function bhp_review_enqueue_assets() {
         true
     );
 }
+
+/* ============================================================
+ * ⭐⭐ 1.19.364 (2026-09-05, CYCLE179-LD-REVIEW-SEQ round 3) — THE STAR ROW,
+ *     ITS QUERY PARAMETER, AND THE SIGNED PRE-FILL TOKEN.
+ *
+ * ANDREW, SEAL 977, VERBATIM: *"Is there anyway to put the 5 stars in the
+ * email and all they have to do is click 5 stars and it goes direct to the
+ * website?"* and *"I want one destination not 2"*.
+ *
+ * ⛔ THE BUILD DEPENDENCY MERRY RECORDED AS CONFLICT `CYCLE179-MKT-37` IS WHAT
+ *    THIS BLOCK CLOSES. Her V2 §5 states it plainly and correctly: until today
+ *    `bhp_review_value_for()` read ONLY failed-submission state and never a
+ *    query parameter, so all five star links would have landed on the review
+ *    page with nothing selected and the email's promise would have been false.
+ *    Her instruction — *"ship the query-parameter read first, verify a
+ *    pre-selected star in a real browser on staging, then send"* — is the order
+ *    this was built in, and the browser half is Gandalf's to run.
+ *
+ * ⚠ TWO SEPARATE MECHANISMS, DELIBERATELY, WITH DIFFERENT TRUST LEVELS:
+ *
+ *      `?rating=N`   UNSIGNED, and it does not need to be signed. The worst a
+ *                    forged value can do is pre-select a radio button the
+ *                    reader can change with one tap before they submit. It is
+ *                    sanitised to an integer 1..5 and ANYTHING ELSE IS
+ *                    DISCARDED SILENTLY — no notice, no error, no log.
+ *
+ *      `?bhp_pf=...` SIGNED AND EXPIRING, because it carries an email address.
+ *                    HMAC-SHA256 over order id + email + product key + expiry,
+ *                    keyed on the site's own auth salt.
+ *
+ * ⛔⛔ THE TOKEN IS TRUSTED FOR PRE-FILL AND FOR ABSOLUTELY NOTHING ELSE. It
+ *     does not authenticate, does not authorise, does not skip moderation, does
+ *     not mark a review "verified", does not look up anything but the billing
+ *     first name, does not touch a customer record and does not change one byte
+ *     of what `bhp_review_intercept_submission()` validates. A visitor who
+ *     forges one gets two text boxes filled in with values they typed
+ *     themselves. ⚠ Whoever extends this: the moment a token is read anywhere
+ *     outside `bhp_review_prefill()`, that sentence stops being true.
+ *
+ * ⭐ AND THE PAGE MUST BEHAVE NORMALLY WITH NEITHER. No parameter, no token,
+ *    no change: no star selected, empty fields, exactly the 1.19.262 form.
+ * ============================================================ */
+
+/**
+ * The five rating labels, in the site form's own descending order.
+ *
+ * ⭐⭐ ONE DEFINITION, TWO READERS, AND THAT IS THE POINT. The review form and
+ *     the review-ask email now render the SAME five strings from here. Merry's
+ *     V2 section 5: *"The labels are lifted verbatim from the live site form so
+ *     the email and the page say the same words, which is what makes a
+ *     one-click pre-selection honest rather than a surprise."* If they were
+ *     declared twice they would eventually differ, and the email would then
+ *     promise a choice the page does not offer.
+ *
+ * ⚠ THE STRINGS ARE UNCHANGED FROM 1.19.262. This function MOVED them; it did
+ *   not edit them. The no-em-dash decision and its superseded wording are
+ *   recorded at the old site in `template-parts/reviews/review-form.php`.
+ *
+ * @since 1.19.364
+ * @return array<int,string> 5..1 => label.
+ */
+function bhp_review_star_labels() {
+    return [
+        5 => __('5 stars: loved it', 'brave-hearts'),
+        4 => __('4 stars: really good', 'brave-hearts'),
+        3 => __('3 stars: it was okay', 'brave-hearts'),
+        2 => __('2 stars: not for us', 'brave-hearts'),
+        1 => __('1 star: did not work for us', 'brave-hearts'),
+    ];
+}
+
+/** The query parameter carrying the pre-selected rating. */
+if (!defined('BHP_REVIEW_RATING_PARAM')) {
+    define('BHP_REVIEW_RATING_PARAM', 'rating');
+}
+
+/** The query parameter carrying the signed pre-fill token. */
+if (!defined('BHP_REVIEW_PREFILL_PARAM')) {
+    define('BHP_REVIEW_PREFILL_PARAM', 'bhp_pf');
+}
+
+/**
+ * How long a pre-fill token stays valid, in seconds. 30 days.
+ *
+ * ⭐ WHY 30 AND NOT LONGER. The reminder lands 4 days after touch 1 (seal 977),
+ *    so the whole sequence is over inside a fortnight. 30 days covers a reader
+ *    who comes back late and still expires the address inside a month, which is
+ *    the point of an expiry existing at all.
+ */
+if (!defined('BHP_REVIEW_PREFILL_TTL')) {
+    define('BHP_REVIEW_PREFILL_TTL', 30 * DAY_IN_SECONDS);
+}
+
+/**
+ * The rating this request asks the form to pre-select, or 0.
+ *
+ * ⛔ 0 IS RETURNED FOR EVERYTHING THAT IS NOT AN INTEGER 1..5, INCLUDING
+ *    `?rating=5.0`, `?rating=+5`, `?rating[]=5`, `?rating=five` and
+ *    `?rating=<script>`. `ctype_digit()` on the raw string is what makes that
+ *    true — a bare `(int)` cast would turn "5 stars" into 5 with no way to tell
+ *    the two apart, and `absint()` would happily accept "5abc". The value is
+ *    never echoed; it is compared to 1..5 and used to set a `checked`
+ *    attribute, and nothing else.
+ *
+ * @since 1.19.364
+ * @return int 1..5, or 0.
+ */
+function bhp_review_requested_rating() {
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only pre-selection of a radio; see docblock.
+    if (!isset($_GET[BHP_REVIEW_RATING_PARAM]) || !is_scalar($_GET[BHP_REVIEW_RATING_PARAM])) {
+        return 0;
+    }
+    $raw = trim((string) wp_unslash($_GET[BHP_REVIEW_RATING_PARAM]));
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+    if ('' === $raw || !ctype_digit($raw)) {
+        return 0;
+    }
+
+    $rating = (int) $raw;
+
+    return ($rating >= 1 && $rating <= 5) ? $rating : 0;
+}
+
+/**
+ * The secret this token family is signed with.
+ *
+ * ⛔ NO KEY IS INVENTED, STORED OR PRINTED. `wp_salt('auth')` is WordPress's
+ *    own per-site secret, already in `wp-config.php`, never in the repository
+ *    and never in a log line. ⚠ Rotating the salts invalidates every
+ *    outstanding token, which is correct behaviour: the reader simply gets an
+ *    empty name and email box.
+ *
+ * @return string
+ */
+function bhp_review_prefill_secret() {
+    return function_exists('wp_salt') ? (string) wp_salt('auth') : '';
+}
+
+/**
+ * Mint a signed, expiring pre-fill token.
+ *
+ * Payload, joined with "|" and NOT encrypted — it is signed, not hidden, and
+ * the reader is the person whose address it is:
+ *
+ *     <version> | <order id> | <email> | <product key> | <expires>
+ *
+ * ⚠ `$expires` is an absolute UTC timestamp rather than a duration, so a token
+ *   cannot be extended by replaying it later.
+ *
+ * @since 1.19.364
+ * @param int    $order_id    Order the ask went out on.
+ * @param string $email       Billing email.
+ * @param string $product_key Adventure key the star row points at.
+ * @param int    $expires     Optional absolute expiry; defaults to now + TTL.
+ * @return string Token, or '' when it cannot be signed.
+ */
+function bhp_review_prefill_token($order_id, $email, $product_key, $expires = 0) {
+    $secret = bhp_review_prefill_secret();
+    if ('' === $secret) {
+        return '';
+    }
+
+    $order_id = (int) $order_id;
+    $email    = strtolower(trim((string) $email));
+    $key      = sanitize_key($product_key);
+    $expires  = (int) $expires > 0 ? (int) $expires : (time() + BHP_REVIEW_PREFILL_TTL);
+
+    if ($order_id <= 0 || '' === $email || !is_email($email) || '' === $key) {
+        return '';
+    }
+
+    $payload = implode('|', ['1', $order_id, $email, $key, $expires]);
+    $sig     = hash_hmac('sha256', $payload, $secret);
+
+    // URL-safe base64: the token travels in a query string inside an email.
+    $encoded = rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+
+    return $encoded . '.' . $sig;
+}
+
+/**
+ * Verify a pre-fill token and return its payload.
+ *
+ * ⛔ EVERY FAILURE RETURNS `false` AND NOTHING ELSE HAPPENS — no notice to the
+ *    visitor, no admin notice, no log row, no rate-limit record. A forged or
+ *    stale token is indistinguishable to the reader from having no token, which
+ *    is exactly right: the page just renders empty fields.
+ *
+ * ⭐ `hash_equals()`, NOT `===`. String comparison on a signature leaks timing.
+ *
+ * @since 1.19.364
+ * @param string $token Raw token from the query string.
+ * @param int    $now   Optional "now", for the suite.
+ * @return array|false Payload with order_id, email, key, expires; or false.
+ */
+function bhp_review_prefill_verify($token, $now = 0) {
+    $secret = bhp_review_prefill_secret();
+    if ('' === $secret) {
+        return false;
+    }
+
+    $token = trim((string) $token);
+    if ('' === $token || 1 !== substr_count($token, '.')) {
+        return false;
+    }
+
+    list($encoded, $sig) = explode('.', $token, 2);
+
+    if ('' === $encoded || '' === $sig || !ctype_xdigit($sig)) {
+        return false;
+    }
+
+    $pad     = strlen($encoded) % 4;
+    $b64     = strtr($encoded, '-_', '+/') . ($pad ? str_repeat('=', 4 - $pad) : '');
+    $payload = base64_decode($b64, true);
+
+    if (!is_string($payload) || '' === $payload) {
+        return false;
+    }
+
+    if (!hash_equals(hash_hmac('sha256', $payload, $secret), $sig)) {
+        return false;
+    }
+
+    $parts = explode('|', $payload);
+    if (5 !== count($parts) || '1' !== $parts[0]) {
+        return false;
+    }
+
+    $expires = (int) $parts[4];
+    $now     = (int) $now > 0 ? (int) $now : time();
+
+    /*
+     * ⛔ EXPIRY IS CHECKED AFTER THE SIGNATURE, NEVER BEFORE. An unsigned
+     *    payload's expiry field is not evidence of anything.
+     */
+    if ($expires <= $now) {
+        return false;
+    }
+
+    $email = strtolower(trim($parts[2]));
+    if ('' === $email || !is_email($email)) {
+        return false;
+    }
+
+    return [
+        'order_id' => (int) $parts[1],
+        'email'    => $email,
+        'key'      => sanitize_key($parts[3]),
+        'expires'  => $expires,
+    ];
+}
+
+/**
+ * The name and email this request may pre-fill into the form.
+ *
+ * ⛔⛔ THE TOKEN'S KEY MUST MATCH THE PAGE'S BOOK. A token minted for The
+ *     Mariana Trench does not pre-fill the Mount Everest form. This is not a
+ *     security property — the token carries no privilege — it stops a stale
+ *     link from filling in a form on a page it was not written for.
+ *
+ * ⚠ THE NAME IS NOT IN THE TOKEN AND IS NOT INVENTED. Only the email is
+ *   signed. The name is looked up from the order the token names, through
+ *   WooCommerce, and is left empty when WooCommerce is not loaded or the order
+ *   is gone. ⛔ Nothing here reads, writes or exposes any other order field.
+ *
+ * @since 1.19.364
+ * @param string $key Adventure key of the page being rendered.
+ * @param int    $now Optional "now", for the suite.
+ * @return array author and email, both possibly ''.
+ */
+function bhp_review_prefill($key, $now = 0) {
+    $empty = ['author' => '', 'email' => ''];
+
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only pre-fill; see block docblock.
+    if (!isset($_GET[BHP_REVIEW_PREFILL_PARAM]) || !is_scalar($_GET[BHP_REVIEW_PREFILL_PARAM])) {
+        return $empty;
+    }
+    $token = (string) wp_unslash($_GET[BHP_REVIEW_PREFILL_PARAM]);
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+    $data = bhp_review_prefill_verify($token, $now);
+
+    if (!$data || sanitize_key($key) !== $data['key']) {
+        return $empty;
+    }
+
+    $author = '';
+
+    if (function_exists('wc_get_order') && $data['order_id'] > 0) {
+        $order = wc_get_order($data['order_id']);
+
+        if ($order instanceof WC_Order) {
+            $author = trim((string) $order->get_billing_first_name());
+        }
+    }
+
+    return [
+        'author' => $author,
+        'email'  => $data['email'],
+    ];
+}
+
+/**
+ * The URL one star in the email points at.
+ *
+ * ⛔ THE BARE `/review/` PATH IS A LIVE 404 AND IS NEVER CONSTRUCTED. An
+ *    unknown key returns '' and the caller must then decline the send — see
+ *    `bhp_review_ask_star_row()`.
+ *
+ * @since 1.19.364
+ * @param string $key    Adventure key.
+ * @param int    $rating 1..5.
+ * @param string $token  Optional signed pre-fill token.
+ * @return string Absolute URL, or ''.
+ */
+function bhp_review_star_url($key, $rating, $token = '') {
+    $base = bhp_review_page_url($key);
+
+    if ('' === $base) {
+        return '';
+    }
+
+    $rating = (int) $rating;
+
+    if ($rating < 1 || $rating > 5) {
+        return '';
+    }
+
+    $args = [BHP_REVIEW_RATING_PARAM => $rating];
+
+    if ('' !== trim((string) $token)) {
+        $args[BHP_REVIEW_PREFILL_PARAM] = trim((string) $token);
+    }
+
+    return add_query_arg($args, $base);
+}

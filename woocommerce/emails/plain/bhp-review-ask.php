@@ -51,13 +51,40 @@ foreach ( $copy['body_before'] as $bhp_paragraph ) {
 	echo esc_html( $bhp_paragraph ) . "\n\n";
 }
 
-echo esc_html( $copy['question'] ) . "\n\n";
+/*
+ * ⚠ CONDITIONAL FROM 1.19.362, MIRRORING THE HTML TWIN LINE FOR LINE. The
+ *   approved visit touch-1 set has no bolded question and no links lead. An
+ *   unconditional echo would open two blank lines in the middle of a
+ *   plain-text email, which is how a reader decides a message is broken.
+ */
+if ( '' !== trim( (string) $copy['question'] ) ) {
+	echo esc_html( $copy['question'] ) . "\n\n";
+}
 
 foreach ( $copy['body_middle'] as $bhp_paragraph ) {
 	echo esc_html( $bhp_paragraph ) . "\n\n";
 }
 
-echo esc_html( $copy['links_lead'] ) . "\n\n";
+/*
+ * ⭐ 1.19.364 · THE PLAIN-TEXT STAR ROW. Five text links, one per line, same
+ *    order and the same five labels as the HTML twin and as the site form.
+ *    Merry's V2 §5 fallback block, followed exactly. ⛔ No glyphs here: a star
+ *    character in a plain part renders as a box in some clients and adds
+ *    nothing a screen reader wants.
+ */
+$bhp_stars = function_exists( 'bhp_review_ask_star_row' ) ? bhp_review_ask_star_row( $order ) : array();
+
+foreach ( $bhp_stars as $bhp_star ) {
+	echo esc_html( $bhp_star['label'] ) . "
+";
+	echo esc_url_raw( $bhp_star['url'] ) . "
+
+";
+}
+
+if ( '' !== trim( (string) $copy['links_lead'] ) ) {
+	echo esc_html( $copy['links_lead'] ) . "\n\n";
+}
 
 /*
  * ⭐ ONE LINE PER TITLE, LABEL THEN URL. A plain-text reader has no anchor
@@ -79,6 +106,11 @@ foreach ( $copy['signoff'] as $bhp_signoff_line ) {
 
 if ( ! empty( $copy['signoff_tagline'] ) ) {
 	echo esc_html( $copy['signoff_tagline'] ) . "\n";
+}
+
+// ⭐ 1.19.362 — the P.S., below the sign-off, same as the HTML twin.
+if ( ! empty( $copy['postscript'] ) ) {
+	echo "\n" . esc_html( $copy['postscript'] ) . "\n";
 }
 
 echo "\n----------------------------------------\n\n";

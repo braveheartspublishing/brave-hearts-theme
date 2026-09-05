@@ -330,7 +330,14 @@ bhp_vce_assert( $default_footer === $standard_lines, 'a null email keeps BOTH fo
 echo "\n=== 9. BODY RESOLUTION AT THE TEMPLATE BOUNDARY ===\n";
 
 bhp_vce_assert( array() === bhp_visit_email_body( $plain_email ), 'ordinary order => empty body array => standard template path', $failures );
-bhp_vce_assert( 5 === count( bhp_visit_email_body( $visit_email ) ), 'visit order => five paragraphs', $failures );
+/*
+ * ⛔ FOUR, NOT FIVE, SINCE 1.19.364. The Amazon/QR review paragraph was
+ *    removed from the approved `adams-2026-08-28` set under Andrew's seal 977
+ *    (*"I want one destination not 2"*); the removed sentence is preserved
+ *    verbatim in a comment at its old position in `inc/visit-completed-email.php`.
+ *    ⚠ If this ever reads 5 again, the day-0 email has regained a review ask.
+ */
+bhp_vce_assert( 4 === count( bhp_visit_email_body( $visit_email ) ), 'visit order => four paragraphs (Amazon ask removed, seal 977)', $failures );
 bhp_vce_assert( array() === bhp_visit_email_body( null ), 'null email => empty body array', $failures );
 bhp_vce_assert( '' === bhp_visit_email_string( $plain_email, 'subject' ), 'ordinary order => no visit subject', $failures );
 bhp_vce_assert( '' === bhp_visit_email_string( $visit_email, 'nope' ), 'an unknown field yields empty string, not a notice', $failures );
