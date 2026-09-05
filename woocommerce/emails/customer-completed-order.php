@@ -108,6 +108,35 @@ $bhp_visit_hero = ( ! empty( $bhp_visit_body ) && function_exists( 'bhp_review_a
 <?php endif; ?>
 
 <?php echo $email_improvements_enabled ? '<div class="email-introduction">' : ''; ?>
+<?php
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ SEAL 1010 · EXACTLY ONE GREETING. Andrew Signore, 2026-09-05, verbatim
+ *     (⛔ RELAYED through Gandalf, not heard first-hand): *"There is a double
+ *     'Hi Aragorn, Hi Aragorn' -- needs to be fixed"*.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHAT WAS ACTUALLY WRONG, OBSERVED NOT GUESSED. The rendered 1.19.370
+ *    day-0 message (`REVIEW-SEQ-STAGING\rs370-day0.html`, lines 53-55, read at
+ *    this desk 2026-09-05) opened `div.email-introduction` with THIS
+ *    template's own `Hi %s,` paragraph and then immediately printed the
+ *    approved copy's own first line, which is also `Hi {ParentFirstName},`.
+ *    Two greetings, one after the other, because two authors each supplied
+ *    one.
+ *
+ * ⭐ WHICH ONE SURVIVES, AND WHY. The COPY's line stands: it is Andrew's
+ *    approved wording in `CYCLE179-MKT-REVIEW-SEQ-V2.md` §1 and it is the one
+ *    that merges `{ParentFirstName}` through the sequence's own resolver. This
+ *    template's greeting is engineering furniture and yields.
+ *
+ * ⛔ THE STANDARD (NON-VISIT) COMPLETED-ORDER EMAIL IS UNTOUCHED. It has no
+ *    copy set, so `$bhp_visit_body` is empty, so the `else` branch below still
+ *    prints exactly the greeting it printed in 1.19.314 and every build since.
+ *    ⚠ Whitespace inside this block is load-bearing for that byte equality —
+ *    see the note further down about PHP eating exactly one newline.
+ */
+?>
+<?php if ( empty( $bhp_visit_body ) ) : ?>
 <p>
 <?php
 if ( ! empty( $order->get_billing_first_name() ) ) {
@@ -118,6 +147,7 @@ if ( ! empty( $order->get_billing_first_name() ) ) {
 }
 ?>
 </p>
+<?php endif; ?>
 <?php if ( ! empty( $bhp_visit_body ) ) : ?>
 	<?php foreach ( $bhp_visit_body as $bhp_visit_paragraph ) : ?>
 		<p><?php echo esc_html( $bhp_visit_paragraph ); ?></p>
@@ -173,14 +203,52 @@ do_action( 'woocommerce_email_customer_details', $order, $sent_to_admin, $plain_
 
 <p style="margin-top:22px;"><?php esc_html_e( 'Thanks for taking a chance on us.', 'brave-hearts' ); ?></p>
 
-<?php else : ?>
-<hr style="border:none;border-top:1px solid #e5e0d3;margin:28px 0;">
 <?php endif; ?>
+<?php
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.372 · THE VISIT EMAIL ENDS WITH TOUCH 1'S SIGNATURE BLOCK.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through Gandalf, not heard
+ *    first-hand): day 0 must end with the SAME block as touch 1 — Andrew
+ *    Signore / Author | Brave Hearts Publishing / Big Places. Brave Hearts. /
+ *    the social line from `bhp_social_links` — and not the WooCommerce
+ *    `<em>Big Places. Brave Hearts.</em>` sign-off it had been ending on.
+ *
+ * ⛔ THE MARKUP IS NOT COPIED HERE. `bhp_review_ask_signature_html()` renders
+ *    it, including its own `<hr>`, and `woocommerce/emails/bhp-review-ask.php`
+ *    calls the same function. One block, one place to change it, no drift.
+ *
+ * ⛔⛔ THE STANDARD COMPLETED-ORDER EMAIL KEEPS ITS OLD SIGN-OFF EXACTLY.
+ *     `$bhp_visit_body` is empty for every ordinary order, so the first branch
+ *     below emits the same three lines, in the same order, with the same
+ *     leading tabs and the same `<em>`, that 1.19.314 emitted. ⛔ THE `<hr>`
+ *     THAT USED TO SIT IN THE `else` OF THE BLOCK ABOVE IS GONE FROM THE VISIT
+ *     PATH ON PURPOSE: the signature block brings its own rule, and two rules
+ *     stacked 28px apart is what "the same as touch 1" is not.
+ *
+ * ⚠ WHITESPACE IS LOAD-BEARING HERE. PHP eats exactly one newline after each
+ *   `?>`, which is why these tags are tight against each other.
+ */
+?>
+<?php if ( empty( $bhp_visit_body ) ) : ?>
 <p style="margin:0;">
 	<?php esc_html_e( 'Andrew', 'brave-hearts' ); ?><br>
 	<?php esc_html_e( 'Brave Hearts Publishing', 'brave-hearts' ); ?><br>
 	<em><?php esc_html_e( 'Big Places. Brave Hearts.', 'brave-hearts' ); ?></em>
 </p>
+<?php else : ?>
+<?php
+/*
+ * ⚠ A `//` COMMENT WOULD SWALLOW THE `?>` ON THE SAME LINE — PHP ends a
+ *   one-line comment at a closing tag — so the phpcs annotation is a block
+ *   comment and the tag sits on its own line.
+ */
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every dynamic part is escaped inside bhp_review_ask_signature_html().
+echo function_exists( 'bhp_review_ask_signature_html' ) ? bhp_review_ask_signature_html() : '';
+?>
+<?php endif; ?>
 
 <?php
 

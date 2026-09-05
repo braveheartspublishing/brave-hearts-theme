@@ -275,10 +275,74 @@ add_filter(
 	3
 );
 
+/**
+ * Whether the school-visit email should render no H1 band at all.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.372 · WHY THE DAY-0 HEADING IS SUPPRESSED RATHER THAN MOVED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through Gandalf, not heard
+ *    first-hand): day 0's heading *"must sit in the same position as touch 1"*.
+ *
+ * ⛔ THE BRIEF'S PREMISE WAS WRONG ON ONE POINT AND THE CORRECTION IS RECORDED
+ *    HERE RATHER THAN SILENTLY ABSORBED. The brief said the H1 string is empty
+ *    everywhere. It is empty on touch 1, touch 2 and web touch 1 — but NOT on
+ *    day 0, which renders *"The signed books went home today"*. Observed in
+ *    `REVIEW-SEQ-STAGING\rs370-day0.html` line 30 against
+ *    `rs370-touch1.html` line 30, both read at this desk 2026-09-05.
+ *
+ * ⭐ SO WHAT "THE SAME POSITION AS TOUCH 1" ACTUALLY RESOLVES TO. Touch 1
+ *    renders NO VISIBLE HEADING. Matching it means day 0 renders none either,
+ *    which is what this filter does. ⛔ NOTHING IS LOST: the same sentence is
+ *    the subject line and the preheader, so it still introduces the email in
+ *    the inbox — it simply stops being repeated as a banner above a hero
+ *    photograph that already opens the message.
+ *
+ * ⛔ WHY NOT JUST SET `heading` TO '' IN THE COPY SET. Because
+ *    `bhp_visit_email_copy_is_usable()` REQUIRES A NON-EMPTY HEADING, and an
+ *    empty string there would silently discard the entire approved day-0 set
+ *    and fall the order back to the ordinary completed-order email. The copy
+ *    set keeps its string; the suppression happens at render.
+ *
+ * ⚠ IT IS FILTERABLE AND REVERSIBLE IN ONE LINE. Return false from
+ *   `bhp_visit_email_suppress_heading` and the banner comes back.
+ *
+ * @since 1.19.372
+ * @param WC_Email|mixed $email Email object.
+ * @return bool
+ */
+function bhp_visit_email_suppress_heading( $email ) {
+	if ( ! function_exists( 'bhp_visit_email_body' ) ) {
+		return false;
+	}
+
+	$suppress = ! empty( bhp_visit_email_body( $email ) );
+
+	/**
+	 * Filter whether the school-visit email suppresses its H1 band.
+	 *
+	 * @since 1.19.372
+	 * @param bool           $suppress True to render no heading.
+	 * @param WC_Email|mixed $email    Email object.
+	 */
+	return (bool) apply_filters( 'bhp_visit_email_suppress_heading', $suppress, $email );
+}
+
 /** E2's H1, with the school-visit fork. Same single-callback rule as the subject. */
 add_filter(
 	'woocommerce_email_heading_customer_completed_order',
 	function ( $heading, $order = null, $email = null ) {
+		/*
+		 * ⭐ 1.19.372 · THE VISIT EMAIL RENDERS NO H1. See
+		 *    `bhp_visit_email_suppress_heading()` for the whole reasoning; the
+		 *    empty string is then removed as a band, not emitted as padding,
+		 *    by `bhp_email_strip_empty_heading()`.
+		 */
+		if ( bhp_visit_email_suppress_heading( $email ) ) {
+			return '';
+		}
+
 		$visit = bhp_visit_email_string( $email, 'heading' );
 
 		if ( '' !== $visit ) {
@@ -826,6 +890,65 @@ function bhp_email_brand_styles( $css ) {
 		font-size: 26px !important;
 	}
 }
+
+/*
+ * ⭐⭐ 1.19.372 · THE ORDER AND DOWNLOADS TABLES AT 375px.
+ *
+ * ⛔ WHAT WAS OBSERVED, IN A RENDER, NOT REASONED ABOUT. Legolas rendered the
+ *    1.19.370 day-0 email at 375 CSS px (`render-370-day0-375.png`, read at
+ *    this desk 2026-09-05). Two failures, both caused by the same thing —
+ *    RIGHT-ALIGNED CELLS IN COLUMNS TOO NARROW TO HOLD THEM:
+ *      1. the Downloads table ladders each file link over three lines, ragged
+ *         against the right edge;
+ *      2. the hand-delivery description in the totals block — a 40-word
+ *         paragraph — is right-aligned in a column roughly 200px wide and
+ *         reads as a column of fragments.
+ *
+ * ⭐ THE DOWNLOADS TABLE IS NOT HIDDEN, AND THE BRIEF ALLOWED HIDING IT. It
+ *    carries two real, useful things: the Adventure Activity Book PDF and the
+ *    printable Vocabulary Card Activity, each a live download link. Read out
+ *    of the render itself, not assumed. Hiding it would remove the only copy
+ *    of those links from the message.
+ *
+ * ⛔ AND THE COLUMN HEADINGS ARE NOT HIDDEN EITHER. The usual email trick is
+ *    `thead { display: none }` plus a full block stack, but "Never" with no
+ *    "Expires" above it is a word with no meaning, and this build has no way
+ *    to re-label a stacked cell that survives Gmail. Left-aligning and letting
+ *    the text wrap fixes the reading without deleting the labels.
+ *
+ * ⚠ SCOPE, STATED PLAINLY: `.email-order-details` is the class WooCommerce
+ *   puts on the downloads table, the line-items table AND the totals table,
+ *   and it is the same class in EVERY transactional email in this store. This
+ *   block therefore changes the ≤480px rendering of all of them. That is
+ *   deliberate and follows the round-10 ruling on the charset — the shared
+ *   mechanism stays global rather than being forked per email. ⛔ It is
+ *   presentation only: no cell, no value and no order of columns changes, and
+ *   in Outlook desktop, which ignores `@media`, nothing changes at all.
+ *
+ * ⚠ NOT VERIFIED: no render was produced from this build. The failure was
+ *   observed; the fix is stated as designed behaviour until Gandalf re-renders.
+ */
+@media only screen and (max-width: 480px) {
+	#body_content_inner table.email-order-details th,
+	#body_content_inner table.email-order-details td {
+		padding: 8px 4px !important;
+		font-size: 14px !important;
+		line-height: 1.45 !important;
+		word-break: break-word !important;
+	}
+
+	#body_content_inner table.email-order-details th.text-align-right,
+	#body_content_inner table.email-order-details td.text-align-right,
+	#body_content_inner table.email-order-details tfoot th,
+	#body_content_inner table.email-order-details tfoot td {
+		text-align: left !important;
+	}
+
+	#body_content_inner table.email-order-details img {
+		max-width: 40px !important;
+		height: auto !important;
+	}
+}
 ';
 
 	/*
@@ -847,6 +970,108 @@ function bhp_email_brand_styles( $css ) {
 	return $css;
 }
 add_filter( 'woocommerce_email_styles', 'bhp_email_brand_styles', 20 );
+
+/* -------------------------------------------------------------------------
+ * ⭐⭐ 1.19.372 · THE EMPTY H1 BAND, REMOVED RATHER THAN PADDED
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Drop the header band when the email has no heading to put in it.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ WHAT WAS ACTUALLY THERE, OBSERVED NOT ASSUMED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ In `rs370-touch1.html`, `rs-touch1.html`, `rs-touch2.html` and
+ *    `rs-web1.html` (all read at this desk 2026-09-05, line 30 of each) the
+ *    review-ask emails render
+ *    `<td id="header_wrapper" style="padding: 20px 32px 0; ..."><h1 ...></h1></td>`
+ *    — an H1 with NO TEXT IN IT. From 1.19.372 the day-0 visit email joins
+ *    them, by `bhp_visit_email_suppress_heading()`.
+ *
+ * ⭐ THE EMPTY `<h1>` ITSELF IS ZERO PIXELS TALL — `margin: 0`, no content,
+ *    no line box. ⛔ SO REMOVING THE ELEMENT ALONE WOULD HAVE CHANGED NOTHING
+ *    VISIBLE AND THE BRIEF WOULD HAVE BEEN "DONE" WITHOUT BEING DONE. What is
+ *    actually visible is the wrapper cell's 20px of top padding above a hero
+ *    photograph that already opens the message. Both are removed here.
+ *
+ * ⛔ WHY THIS IS A FILTER ON THE ASSEMBLED MESSAGE AND NOT A TEMPLATE
+ *    OVERRIDE. Overriding `emails/email-header.php` is prohibited in this
+ *    theme — the rule is stated in `woocommerce/emails/bhp-review-ask.php` and
+ *    is the reason the heroes render inside the body rather than above the H1.
+ *    `woocommerce_mail_content` runs on the finished, inlined HTML of every
+ *    WooCommerce email and needs no override.
+ *
+ * ⛔ IT CANNOT AFFECT AN EMAIL THAT HAS A HEADING. The pattern requires the
+ *    H1 to contain nothing but whitespace. Every ordinary transactional email
+ *    in this store has a heading, so for those this filter matches nothing and
+ *    returns the string it was handed, byte for byte.
+ *
+ * ⚠ NOT RUN: there is no PHP on this machine. The regexes are reasoned about
+ *   and were written against four rendered documents that are on disk; they
+ *   were NOT executed. Gandalf's staging run is the first execution.
+ *
+ * @since 1.19.372
+ * @param string $content Assembled, style-inlined email HTML.
+ * @return string
+ */
+function bhp_email_strip_empty_heading( $content ) {
+	if ( ! is_string( $content ) || '' === $content ) {
+		return $content;
+	}
+
+	// ⛔ Cheap guard first: no header wrapper, nothing to do.
+	if ( false === strpos( $content, 'id="header_wrapper"' ) ) {
+		return $content;
+	}
+
+	/*
+	 * ⛔ THE H1 MUST BE EMPTY TO MATCH. `[^>]*` cannot cross the closing angle
+	 *    bracket of the opening tag, and `\s*` between the tags means only
+	 *    whitespace may sit inside. An H1 with a single character in it does
+	 *    not match and the whole function becomes a no-op for that email.
+	 */
+	$stripped = preg_replace( '#<h1\b[^>]*>\s*</h1>#i', '', $content, 1, $count );
+
+	if ( null === $stripped || ! $count ) {
+		return $content;
+	}
+
+	/*
+	 * ⭐ AND THEN THE PADDING, WHICH IS THE PART THAT IS ACTUALLY VISIBLE.
+	 *    Only the `padding` declaration inside the `header_wrapper` cell's own
+	 *    style attribute is rewritten; the rest of the attribute, and every
+	 *    other element in the document, is untouched.
+	 */
+	$padded = preg_replace(
+		'#(<td\b[^>]*\bid="header_wrapper"[^>]*\bstyle=")([^"]*)(")#i',
+		'${1}padding: 0;${3}',
+		$stripped,
+		1,
+		$padding_count
+	);
+
+	/*
+	 * ⚠ ATTRIBUTE ORDER IS NOT GUARANTEED. Every rendered document on disk has
+	 *   `id` before `style`, but Emogrifier is free to emit them the other way
+	 *   round, so the reverse order is tried too. If NEITHER matches the H1 is
+	 *   still gone and the only cost is 20px of cream — a smaller failure than
+	 *   a regex that guesses.
+	 */
+	if ( null !== $padded && $padding_count ) {
+		return $padded;
+	}
+
+	$padded = preg_replace(
+		'#(<td\b[^>]*\bstyle=")([^"]*)("[^>]*\bid="header_wrapper")#i',
+		'${1}padding: 0;${3}',
+		$stripped,
+		1
+	);
+
+	return ( null === $padded ) ? $stripped : $padded;
+}
+add_filter( 'woocommerce_mail_content', 'bhp_email_strip_empty_heading', 20 );
 
 /* -------------------------------------------------------------------------
  * ⭐⭐ 1.19.370 · THE CHARSET ON EVERY WOOCOMMERCE EMAIL

@@ -2509,9 +2509,9 @@ if ( $bhp_rs_email instanceof WC_Email_BHP_Review_Ask ) {
 	 *    gets the intended resting state and loses only the hover.
 	 */
 	bhp_rs_ok(
-		'⭐ The resting grey #c9c2b3 is inline on every star link',
-		5 === substr_count( $bhp_rs_html, '#c9c2b3' ),
-		'got: ' . substr_count( $bhp_rs_html, '#c9c2b3' )
+		'⭐⭐ 1.19.372 seals 1016a/1016b: the resting PALE GOLD #dfc793 is inline on every star link',
+		5 === substr_count( $bhp_rs_html, '#dfc793' ),
+		'got: ' . substr_count( $bhp_rs_html, '#dfc793' )
 	);
 
 	/*
@@ -2707,7 +2707,7 @@ if ( $bhp_rs_email instanceof WC_Email_BHP_Review_Ask ) {
 	/* ---- 13.8 the hover CSS reaches the stylesheet ---- */
 
 	bhp_rs_ok(
-		'⭐ bhp_review_ask_star_css() emits a :hover rule and the gold',
+		'⭐ bhp_review_ask_star_css() emits a :hover rule and the bold gold',
 		function_exists( 'bhp_review_ask_star_css' )
 			&& false !== strpos( bhp_review_ask_star_css(), ':hover' )
 			&& false !== strpos( bhp_review_ask_star_css(), '#c4a15c' )
@@ -2759,8 +2759,8 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 	$bhp_rs_h_d0 = bhp_review_ask_hero( $bhp_rs_visit_hero, 'day0' );
 
 	bhp_rs_ok(
-		'⭐⭐ The dallas-harris slug maps to frame 02 on touch 1',
-		! empty( $bhp_rs_h_t1['url'] ) && false !== strpos( $bhp_rs_h_t1['url'], 'hero-dallas-harris-2026-09-03-02.jpg' ),
+		'⭐⭐ SEAL 1015: the dallas-harris slug maps to frame 04 on touch 1, not the rejected 02',
+		! empty( $bhp_rs_h_t1['url'] ) && false !== strpos( $bhp_rs_h_t1['url'], 'hero-dallas-harris-2026-09-03-04.jpg' ),
 		'got: ' . ( isset( $bhp_rs_h_t1['url'] ) ? $bhp_rs_h_t1['url'] : '(empty)' )
 	);
 
@@ -2776,14 +2776,35 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 	);
 
 	/*
-	 * ⛔⛔ FRAME 05 IS NOT SHIPPED AND MUST NOT BE. It shows a second adult
-	 *     whose consent is not on record and a legible visitor badge.
-	 *     `CYCLE179-DES-29(b)`.
+	 * ⛔⛔ 1.19.372 · THIS ASSERTION WAS REWRITTEN AND THE OLD FORM WAS WRONG BY
+	 *     1.19.372, SO READ THIS BEFORE "FIXING" IT BACK.
+	 *
+	 *     Until 1.19.371 it asserted that NO file ending `-05.jpg` was in the
+	 *     theme, because output numbering matched gallery numbering. It no
+	 *     longer does: `CYCLE179-DES-REVIEW-EMAIL.md` §A3 numbers the new crops
+	 *     independently of their sources, and `hero-dallas-harris-2026-09-03-05.jpg`
+	 *     is cropped from GALLERY FRAME 03, with no child in the frame at all.
+	 *
+	 *     ⛔ THE THING THAT IS STILL FORBIDDEN IS GALLERY FRAME 05 —
+	 *        `read-aloud-dallas-harris-2026-09-03-05.jpg`, the one with a second
+	 *        adult whose consent is not on record and a legible visitor badge.
+	 *        `CYCLE179-DES-29(b)` is still open and that file is still barred.
 	 */
 	bhp_rs_ok(
-		'⛔⛔ Frame 05 of the Dallas Harris set is NOT in the theme',
-		! file_exists( get_template_directory() . '/assets/images/email/hero-dallas-harris-2026-09-03-05.jpg' )
-			&& ! file_exists( get_template_directory() . '/assets/images/email/read-aloud-dallas-harris-2026-09-03-05.jpg' )
+		'⛔⛔ GALLERY frame 05 (second adult, visitor badge, CYCLE179-DES-29(b)) is NOT in the theme',
+		! file_exists( get_template_directory() . '/assets/images/email/read-aloud-dallas-harris-2026-09-03-05.jpg' )
+	);
+
+	/*
+	 * ⚠ `CYCLE179-DES-31` IS OPEN: hero crop 05 puts Andrew's own "About the
+	 *   Author" slide on display. Shipping the file is not using it, so the
+	 *   test asserts it is on disk AND that nothing maps to it by default.
+	 */
+	$bhp_rs_h_map = (array) apply_filters( 'bhp_review_ask_hero_map', array() );
+
+	bhp_rs_ok(
+		'⚠ CYCLE179-DES-31: hero crop 05 ships but is NOT mapped to any touch by default',
+		false === strpos( wp_json_encode( $bhp_rs_h_map ), 'hero-dallas-harris-2026-09-03-05.jpg' )
 	);
 
 	/*
@@ -2801,10 +2822,33 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 	bhp_rs_ok( '⛔ A hero file that is not on disk resolves to nothing', array() === $bhp_rs_missing );
 
 	/* And the three shipped files are actually present. */
-	foreach ( array( 'hero-dallas-harris-2026-09-03-01.jpg', 'hero-dallas-harris-2026-09-03-02.jpg', 'hero-read-aloud-general.jpg' ) as $bhp_rs_hf ) {
+	$bhp_rs_shipped_heroes = array(
+		'hero-dallas-harris-2026-09-03-01.jpg',
+		'hero-dallas-harris-2026-09-03-02.jpg',
+		/* ⭐ 1.19.372 · seal 1015 - the three new crops and their caption-free twins. */
+		'hero-dallas-harris-2026-09-03-03.jpg',
+		'hero-dallas-harris-2026-09-03-03-plain.jpg',
+		'hero-dallas-harris-2026-09-03-04.jpg',
+		'hero-dallas-harris-2026-09-03-04-plain.jpg',
+		'hero-dallas-harris-2026-09-03-05.jpg',
+		'hero-dallas-harris-2026-09-03-05-plain.jpg',
+		'hero-read-aloud-general.jpg',
+	);
+
+	foreach ( $bhp_rs_shipped_heroes as $bhp_rs_hf ) {
 		bhp_rs_ok(
 			'⭐ Shipped in the theme: ' . $bhp_rs_hf,
 			file_exists( get_template_directory() . '/assets/images/email/' . $bhp_rs_hf )
+		);
+
+		/*
+		 * ⛔ A HERO WITH NO ALT TEXT IS A PICTURE THAT SAYS NOTHING TO A SCREEN
+		 *    READER, and the baked caption is pixels, so the alt is the only
+		 *    place that sentence exists.
+		 */
+		bhp_rs_ok(
+			'⭐ ... and carries alt text: ' . $bhp_rs_hf,
+			'' !== bhp_review_ask_hero_alt( $bhp_rs_hf )
 		);
 	}
 }
@@ -3078,6 +3122,311 @@ if ( isset( $bhp_rs_html ) && is_string( $bhp_rs_html ) && '' !== $bhp_rs_html )
  *
  * ⛔ NOTHING IS LEFT BEHIND. Force-delete, same call, same assertions.
  * ====================================================================== */
+
+/* =========================================================================
+ * §15 — ROUND 11: ONE GREETING, ONE SIGNATURE, NO EMPTY HEADING BAND
+ * ====================================================================== */
+
+bhp_rs_head( '§15 Round 11: seal 1010, the shared signature, the H1 band, the pale gold' );
+
+/* ---- 15.1 the star colours, seals 1016a and 1016b ---- */
+
+if ( function_exists( 'bhp_review_ask_star_colours' ) ) {
+	$bhp_rs_sc = bhp_review_ask_star_colours();
+
+	bhp_rs_ok(
+		'⭐⭐ SEAL 1016b: the star row RESTS in pale gold #dfc793',
+		isset( $bhp_rs_sc['rest'] ) && '#dfc793' === $bhp_rs_sc['rest'],
+		'got: ' . ( isset( $bhp_rs_sc['rest'] ) ? $bhp_rs_sc['rest'] : '(unset)' )
+	);
+
+	bhp_rs_ok(
+		'⭐⭐ ... and FILLS to bold gold #c4a15c',
+		isset( $bhp_rs_sc['hover'] ) && '#c4a15c' === $bhp_rs_sc['hover'],
+		'got: ' . ( isset( $bhp_rs_sc['hover'] ) ? $bhp_rs_sc['hover'] : '(unset)' )
+	);
+
+	bhp_rs_ok(
+		'⛔ The superseded warm grey #c9c2b3 is gone from the star colours',
+		'#c9c2b3' !== $bhp_rs_sc['rest'] && '#c9c2b3' !== $bhp_rs_sc['hover']
+	);
+}
+
+/*
+ * ⛔⛔ THE RULE THAT ACTUALLY MAKES THE HOVER LAND. Emogrifier inlines the
+ *     resting colour onto the anchor, and an inline declaration beats a normal
+ *     stylesheet one — so a hover rule that targets only `a` is dead on
+ *     arrival. The glyph's own `span[aria-hidden]` carries no inline colour,
+ *     and an `!important` author declaration outranks a normal inline one.
+ *     ⛔ IF THIS ASSERTION IS EVER "SIMPLIFIED" AWAY THE HOVER SILENTLY DIES.
+ */
+if ( function_exists( 'bhp_review_ask_star_css' ) ) {
+	$bhp_rs_css = bhp_review_ask_star_css();
+
+	bhp_rs_ok(
+		'⭐⭐ The hover rule targets span[aria-hidden] so the inlined anchor colour cannot win',
+		false !== strpos( $bhp_rs_css, 'a:hover span[aria-hidden]' )
+	);
+
+	bhp_rs_ok(
+		'⭐⭐ ... and carries !important, which outranks an inline declaration',
+		false !== strpos( $bhp_rs_css, '!important' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The cumulative fill-left rule survives, span form included',
+		false !== strpos( $bhp_rs_css, '.bhp-star:has(~ .bhp-star:hover) a span[aria-hidden]' )
+	);
+
+	bhp_rs_ok(
+		'⛔ The resting colour in the sheet is the pale gold, not the old grey',
+		false !== strpos( $bhp_rs_css, '#dfc793' ) && false === strpos( $bhp_rs_css, '#c9c2b3' )
+	);
+}
+
+/* ---- 15.2 the shared signature block ---- */
+
+bhp_rs_ok(
+	'⭐ bhp_review_ask_signature_html() exists, so both templates can share one block',
+	function_exists( 'bhp_review_ask_signature_html' )
+);
+
+bhp_rs_ok(
+	'⭐ bhp_review_ask_signature_text() exists for the plain alternative',
+	function_exists( 'bhp_review_ask_signature_text' )
+);
+
+if ( function_exists( 'bhp_review_ask_signature_html' ) ) {
+	$bhp_rs_sig_html = bhp_review_ask_signature_html();
+
+	bhp_rs_ok(
+		'⭐ The block carries the name, the role and the brand line',
+		false !== strpos( $bhp_rs_sig_html, 'Andrew Signore' )
+			&& false !== strpos( $bhp_rs_sig_html, 'Author | Brave Hearts Publishing' )
+			&& false !== strpos( $bhp_rs_sig_html, 'Big Places. Brave Hearts.' )
+	);
+
+	bhp_rs_ok(
+		'⭐ ... and brings its own rule, so no caller has to add one',
+		false !== strpos( $bhp_rs_sig_html, '<hr' )
+	);
+
+	/*
+	 * ⛔ NO FABRICATED PROFILE URL. With `bhp_social_links` unset the social
+	 *    line must not appear at all. A plausible-looking Facebook URL is a
+	 *    fabricated fact, and this assertion is the guard against one being
+	 *    quietly added later.
+	 */
+	if ( ! get_option( 'bhp_social_links', array() ) ) {
+		bhp_rs_ok(
+			'⛔ With bhp_social_links unset, NO social line and no invented URL',
+			false === stripos( $bhp_rs_sig_html, 'facebook' )
+				&& false === stripos( $bhp_rs_sig_html, 'instagram' )
+		);
+	}
+
+	/* And the same block, through the filter, does render real URLs. */
+	$bhp_rs_social_cb = static function () {
+		return array(
+			array(
+				'label' => 'Facebook',
+				'url'   => 'https://example.com/bhp-facebook-probe',
+			),
+			array(
+				'label' => 'Instagram',
+				'url'   => 'not-a-url',
+			),
+		);
+	};
+
+	add_filter( 'bhp_review_ask_social_links', $bhp_rs_social_cb, 99 );
+	$bhp_rs_sig_social = bhp_review_ask_signature_html();
+	$bhp_rs_sig_stext  = bhp_review_ask_signature_text();
+	remove_filter( 'bhp_review_ask_social_links', $bhp_rs_social_cb, 99 );
+
+	bhp_rs_ok(
+		'⭐ A real http(s) URL renders as a link in the signature',
+		false !== strpos( $bhp_rs_sig_social, 'https://example.com/bhp-facebook-probe' )
+	);
+
+	bhp_rs_ok(
+		'⛔ A non-http value is DROPPED rather than rendered as a dead link',
+		false === strpos( $bhp_rs_sig_social, 'not-a-url' )
+			&& false === strpos( $bhp_rs_sig_stext, 'not-a-url' )
+	);
+}
+
+/* ---- 15.3 the day-0 email: one greeting, one signature, no heading band ---- */
+
+$bhp_rs_d0_email = null;
+
+if ( function_exists( 'WC' ) && WC()->mailer() ) {
+	foreach ( (array) WC()->mailer()->get_emails() as $bhp_rs_e2 ) {
+		if ( $bhp_rs_e2 instanceof WC_Email && 'customer_completed_order' === $bhp_rs_e2->id ) {
+			$bhp_rs_d0_email = $bhp_rs_e2;
+			break;
+		}
+	}
+}
+
+if ( $bhp_rs_d0_email instanceof WC_Email && isset( $bhp_rs_visit_hero ) && $bhp_rs_visit_hero instanceof WC_Order ) {
+	$bhp_rs_d0_email->object    = $bhp_rs_visit_hero;
+	$bhp_rs_d0_email->recipient = $bhp_rs_visit_hero->get_billing_email();
+
+	$bhp_rs_d0_body  = (array) bhp_visit_email_body( $bhp_rs_d0_email );
+	$bhp_rs_d0_html  = (string) $bhp_rs_d0_email->get_content_html();
+	$bhp_rs_d0_plain = (string) $bhp_rs_d0_email->get_content_plain();
+
+	bhp_rs_ok(
+		'⭐ The fixture really is on the visit fork (a non-empty approved body)',
+		! empty( $bhp_rs_d0_body ),
+		'paragraphs: ' . count( $bhp_rs_d0_body )
+	);
+
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ SEAL 1010. Andrew Signore, 2026-09-05 (⛔ RELAYED through Gandalf):
+	 *     *"There is a double 'Hi Aragorn, Hi Aragorn' -- needs to be fixed"*.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ THE COUNT IS THE TEST. "Contains a greeting" would have PASSED on the
+	 *    broken 1.19.370 build, which is exactly why it is counted and not
+	 *    merely looked for.
+	 */
+	$bhp_rs_d0_text = trim( wp_strip_all_tags( $bhp_rs_d0_html ) );
+	$bhp_rs_greet   = '/\bHi (?:[A-Z][A-Za-z\x27\-]*|there)\s*,/u';
+
+	bhp_rs_ok(
+		'⭐⭐ SEAL 1010: EXACTLY ONE "Hi " greeting in the rendered day-0 HTML',
+		1 === preg_match_all( $bhp_rs_greet, $bhp_rs_d0_text ),
+		'got: ' . preg_match_all( $bhp_rs_greet, $bhp_rs_d0_text )
+	);
+
+	bhp_rs_ok(
+		'⭐⭐ SEAL 1010: EXACTLY ONE "Hi " greeting in the plain-text day-0 alternative',
+		1 === preg_match_all( $bhp_rs_greet, $bhp_rs_d0_plain ),
+		'got: ' . preg_match_all( $bhp_rs_greet, $bhp_rs_d0_plain )
+	);
+
+	/* ---- the signature block, the same one touch 1 uses ---- */
+
+	bhp_rs_ok(
+		'⭐⭐ Day 0 ends with touch 1 signature block: name, role and brand line',
+		false !== strpos( $bhp_rs_d0_html, 'Andrew Signore' )
+			&& false !== strpos( $bhp_rs_d0_html, 'Author | Brave Hearts Publishing' )
+			&& false !== strpos( $bhp_rs_d0_html, 'Big Places. Brave Hearts.' )
+	);
+
+	bhp_rs_ok(
+		'⛔ ... and NOT the WooCommerce <em>Big Places. Brave Hearts.</em> sign-off',
+		false === strpos( $bhp_rs_d0_html, '<em>Big Places. Brave Hearts.</em>' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The plain day-0 alternative carries the same three signature lines',
+		false !== strpos( $bhp_rs_d0_plain, 'Andrew Signore' )
+			&& false !== strpos( $bhp_rs_d0_plain, 'Author | Brave Hearts Publishing' )
+			&& false !== strpos( $bhp_rs_d0_plain, 'Big Places. Brave Hearts.' )
+	);
+
+	/* ---- the heading band ---- */
+
+	bhp_rs_ok(
+		'⭐⭐ Day 0 renders NO H1 band at all - the same position as touch 1',
+		! preg_match( '#<h1\b#i', $bhp_rs_d0_html ),
+		'h1 found: ' . ( preg_match( '#<h1\b[^>]*>.{0,120}#is', $bhp_rs_d0_html, $bhp_rs_h1m ) ? $bhp_rs_h1m[0] : '(none)' )
+	);
+
+	/*
+	 * ⭐ THE SUBJECT STILL CARRIES THE SENTENCE. Suppressing the H1 removes a
+	 *    repetition, not the information.
+	 */
+	bhp_rs_ok(
+		'⭐ The day-0 subject line still says "The signed books went home today"',
+		false !== strpos( (string) $bhp_rs_d0_email->get_subject(), 'The signed books went home today' )
+	);
+
+	/* ---- and the hero is frame 01, unchanged by seal 1015 ---- */
+
+	bhp_rs_ok(
+		'⭐ Day 0 still renders hero frame 01 (seal 1015 changed touch 1 only)',
+		false !== strpos( $bhp_rs_d0_html, 'hero-dallas-harris-2026-09-03-01.jpg' )
+	);
+
+	$bhp_rs_d0_email->object = null;
+} else {
+	/*
+	 * ⛔ AN UNRUN ASSERTION MUST NEVER READ AS A PASS. A skip here is counted
+	 *    as a failure on purpose, so the suite cannot report green on a build
+	 *    where the day-0 render never happened.
+	 */
+	echo "SKIP->FAIL: the completed-order email object or the visit fixture was unavailable, so the day-0 render assertions did NOT run.\n";
+	$GLOBALS['bhp_rs_fail']++;
+}
+
+/* ---- 15.4 the empty-heading stripper, tested directly ---- */
+
+if ( function_exists( 'bhp_email_strip_empty_heading' ) ) {
+	$bhp_rs_band_empty = '<td id="header_wrapper" style="padding: 20px 32px 0; display: block;"><h1 style="margin: 0;"></h1></td>';
+	$bhp_rs_band_full  = '<td id="header_wrapper" style="padding: 20px 32px 0; display: block;"><h1 style="margin: 0;">Your order is confirmed</h1></td>';
+
+	$bhp_rs_band_out = bhp_email_strip_empty_heading( $bhp_rs_band_empty );
+
+	bhp_rs_ok(
+		'⭐⭐ An EMPTY h1 is removed and the wrapper padding goes to 0',
+		false === strpos( $bhp_rs_band_out, '<h1' ) && false !== strpos( $bhp_rs_band_out, 'padding: 0;' ),
+		'got: ' . $bhp_rs_band_out
+	);
+
+	/*
+	 * ⛔⛔ THE ONE THAT MATTERS MOST. This filter runs on EVERY WooCommerce
+	 *     email in the store. An email that HAS a heading must come back byte
+	 *     for byte identical, or the filter is a store-wide regression wearing
+	 *     a review-sequence badge.
+	 */
+	bhp_rs_ok(
+		'⛔⛔ An email WITH a heading comes back byte-for-byte unchanged',
+		$bhp_rs_band_full === bhp_email_strip_empty_heading( $bhp_rs_band_full )
+	);
+
+	bhp_rs_ok(
+		'⛔ A document with no header wrapper is returned untouched',
+		'<p>nothing to do here</p>' === bhp_email_strip_empty_heading( '<p>nothing to do here</p>' )
+	);
+
+	bhp_rs_ok(
+		'⛔ The filter is actually registered on woocommerce_mail_content',
+		false !== has_filter( 'woocommerce_mail_content', 'bhp_email_strip_empty_heading' )
+	);
+}
+
+/* ---- 15.5 the 375px table reflow ---- */
+
+if ( function_exists( 'bhp_email_brand_styles' ) ) {
+	$bhp_rs_styles = (string) bhp_email_brand_styles( '' );
+
+	bhp_rs_ok(
+		'⭐ A 480px media block exists for the order and downloads tables',
+		false !== strpos( $bhp_rs_styles, 'max-width: 480px' )
+			&& false !== strpos( $bhp_rs_styles, 'table.email-order-details' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The right-aligned cells left-align on a phone, which is what fixes the laddering',
+		false !== strpos( $bhp_rs_styles, 'td.text-align-right' )
+			&& false !== strpos( $bhp_rs_styles, 'text-align: left !important' )
+	);
+
+	/*
+	 * ⛔ THE DOWNLOADS TABLE IS NOT HIDDEN. It carries the only copy of the
+	 *    Activity Book PDF and the Vocabulary Card links in the message.
+	 */
+	bhp_rs_ok(
+		'⛔ Nothing in the email stylesheet hides an order-details table',
+		false === strpos( $bhp_rs_styles, 'email-order-details { display: none' )
+			&& false === strpos( $bhp_rs_styles, 'email-order-details{display:none' )
+	);
+}
 
 bhp_rs_head( '§12 Deferred fixture teardown' );
 

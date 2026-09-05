@@ -2799,17 +2799,31 @@ function bhp_review_ask_star_glyph() {
  * The two star colours: the resting grey and the hover gold.
  *
  * ⭐ FOUNDER WORDS, SEAL 1003, VERBATIM: *"moving the mouse over them should
- *    turn them gold"*. That requires a resting state that is NOT gold, so the
- *    row rests in `#c9c2b3` — the warm grey that sits on `#fffaf0` without
- *    reading as a disabled control.
+ *    turn them gold"*. That requires a resting state that is NOT the hover
+ *    state.
+ *
+ * ⭐⭐ 1.19.372 · SEALS 1016a AND 1016b SUPERSEDE THE GREY. Andrew Signore,
+ *     2026-09-05, verbatim (⛔ RELAYED through Gandalf, not heard first-hand):
+ *     seal 1016a *"Wait, do B"* and seal 1016b *"pale gold to bold gold"*. The
+ *     row therefore rests in PALE GOLD `#dfc793` and fills to BOLD GOLD
+ *     `#c4a15c`, which is still a real change of state under the mouse — it is
+ *     a change of weight rather than a change of hue.
+ *
+ * ⛔ SUPERSEDED VALUE, PRESERVED SO IT IS NOT RE-ADDED BY ANYONE READING THE
+ *    OLD SEAL: the resting colour was `#c9c2b3`, the warm grey, from 1.19.370
+ *    to 1.19.371 inclusive.
  *
  * ⚠ CONTRAST, MEASURED NOT ASSUMED, AND IT IS WHY THE CAPTION IS MANDATORY.
- *   `#c9c2b3` on `#fffaf0` is roughly 1.7:1 and `#c4a15c` roughly 2.2:1
- *   (Legolas §4). ⛔ BOTH FAIL TEXT CONTRAST AND NEITHER IS ALLOWED TO CARRY
- *   INFORMATION ALONE. Every star is a link with an `aria-label`, and the
- *   caption line beneath the row states in full body-contrast text what the
- *   row is for. The star is decoration over an accessible control, which is
- *   the same ruling Legolas §4 point 1 made for the gold.
+ *   Legolas §4 measured `#c4a15c` on `#fffaf0` at roughly 2.2:1. `#dfc793` on
+ *   the same ground is LIGHTER STILL and therefore lower. ⛔ NEITHER VALUE IS
+ *   ALLOWED TO CARRY INFORMATION ALONE, and the pale resting state does not
+ *   change that rule — it makes it more important, not less. ⚠ THE `#dfc793`
+ *   RATIO WAS NOT RE-MEASURED IN THIS BUILD; it is stated as lower than 2.2:1
+ *   by inspection of the hex, not by a computed figure. Every star is a link
+ *   with an `aria-label`, and the caption line beneath the row states in full
+ *   body-contrast text what the row is for. The star is decoration over an
+ *   accessible control, which is the same ruling Legolas §4 point 1 made for
+ *   the gold.
  *
  * @since 1.19.370
  * @return array{rest:string,hover:string}
@@ -2824,13 +2838,13 @@ function bhp_review_ask_star_colours() {
 	$colours = (array) apply_filters(
 		'bhp_review_ask_star_colours',
 		array(
-			'rest'  => '#c9c2b3',
+			'rest'  => '#dfc793',
 			'hover' => '#c4a15c',
 		)
 	);
 
 	return array(
-		'rest'  => isset( $colours['rest'] ) ? (string) $colours['rest'] : '#c9c2b3',
+		'rest'  => isset( $colours['rest'] ) ? (string) $colours['rest'] : '#dfc793',
 		'hover' => isset( $colours['hover'] ) ? (string) $colours['hover'] : '#c4a15c',
 	);
 }
@@ -2868,6 +2882,22 @@ function bhp_review_ask_star_colours() {
  *   opened and no seed send was made. Stated as designed behaviour, not as an
  *   observation.
  *
+ * ⭐⭐ 1.19.372 · WHY THE HOVER RULES NOW TARGET `span[aria-hidden]` AND WHY
+ *     THEY CARRY `!important`. OBSERVED, not reasoned about: in the delivered
+ *     1.19.370 HTML (`REVIEW-SEQ-STAGING\rs370-touch1.html`, read at this desk
+ *     2026-09-05) Emogrifier had INLINED the resting colour onto the anchor —
+ *     `<a ... style="...; color: #c9c2b3; ...">` — and the glyph lives in a
+ *     `<span aria-hidden="true">` inside it. ⛔ A `<style>` rule of
+ *     `a:hover { color: ... }` LOSES to that inline declaration, so the row
+ *     would have rested and hovered in the same colour and the whole seal-1003
+ *     behaviour would have been silently dead. The span carries no inline
+ *     colour of its own, and an `!important` author declaration outranks a
+ *     normal inline one, so `a:hover span[aria-hidden] { color: ... !important }`
+ *     is the pair of facts that makes the hover actually land. This is
+ *     Legolas's prescription in `CYCLE179-DES-REVIEW-EMAIL.md`, adopted as
+ *     written. ⚠ STILL NOT VERIFIED IN ANY MAIL CLIENT: no client was opened
+ *     and no send was made in this build.
+ *
  * @since 1.19.370
  * @return string CSS, no `<style>` wrapper.
  */
@@ -2891,8 +2921,18 @@ function bhp_review_ask_star_css() {
 	text-decoration: none;
 }
 
+.bhp-star a:hover span[aria-hidden],
+.bhp-star a:active span[aria-hidden],
+.bhp-star:hover a span[aria-hidden] {
+	color: ' . $hover . ' !important;
+}
+
 .bhp-star:has(~ .bhp-star:hover) a {
 	color: ' . $hover . ';
+}
+
+.bhp-star:has(~ .bhp-star:hover) a span[aria-hidden] {
+	color: ' . $hover . ' !important;
 }
 ';
 }
@@ -2914,9 +2954,33 @@ function bhp_review_ask_star_css() {
  * ⛔ TOUCH 2 HAS NO HERO. Legolas §7: it is the short last note, and *"a
  *    photograph would make it look like a bigger ask than it is."*
  *
- * ⚠ FRAME 05 OF THE DALLAS HARRIS SET IS NOT SHIPPED AND MUST NOT BE. It
- *   shows a second adult whose consent is not on record, and a visitor badge
- *   is legible. `CYCLE179-DES-29(b)`.
+ * ⛔⛔ READ THIS BEFORE TOUCHING ANY FILE WITH `05` IN THE NAME. TWO DIFFERENT
+ *     IMAGES ARE NUMBERED 05 AND ONLY ONE OF THEM IS ALLOWED TO EXIST HERE.
+ *
+ *   ⛔ `read-aloud-dallas-harris-2026-09-03-05.jpg` — GALLERY frame 05, the
+ *      original in `ANDREW-REVIEW\2026-09-04\gallery-dallas\web\`. It shows a
+ *      second adult whose consent is not on record and a legible visitor
+ *      badge. `CYCLE179-DES-29(b)`. ⛔ IT IS NOT SHIPPED, IT IS NOT CROPPED,
+ *      AND IT MUST NOT BE USED ON ANY CUSTOMER-FACING SURFACE UNTIL CONSENT IS
+ *      ON RECORD. That decision is still open.
+ *
+ *   ⭐ `hero-dallas-harris-2026-09-03-05.jpg` — a DIFFERENT image. Legolas's
+ *      output numbering is deliberately independent of the gallery numbering
+ *      (`CYCLE179-DES-REVIEW-EMAIL.md` §A3): this one is cropped from gallery
+ *      frame 03 and no child is in the frame at all. It is shipped, and it is
+ *      NOT mapped by default.
+ *
+ * ⚠ ONE OPEN FLAG ON THAT FILE, `CYCLE179-DES-31`: it makes Andrew's own
+ *   "About the Author" slide the largest element in the frame. Legolas read
+ *   the slide at full resolution and found none of the four flagged
+ *   specifics, but it is Andrew's own copy on display in a customer-facing
+ *   image. ⛔ SHIPPING THE FILE IS NOT USING IT. Mapping 05 into `touch1` or
+ *   `day0` needs Andrew's word first.
+ *
+ * ⚠ `CYCLE179-DES-32` IS ALSO OPEN and is not resolved here: the consent list
+ *   Andrew gave named gallery frames 01, 03, 04, 05, and the currently
+ *   shipping `hero-dallas-harris-2026-09-03-01.jpg` is cropped from gallery
+ *   frame 02, which that list does not name. Recorded, not decided.
  *
  * @since 1.19.370
  * @param WC_Order|mixed $order   Order.
@@ -2943,8 +3007,27 @@ function bhp_review_ask_hero( $order, $context = 'touch1' ) {
 	$map = (array) apply_filters(
 		'bhp_review_ask_hero_map',
 		array(
+			/*
+			 * ⭐⭐ 1.19.372 · SEAL 1015. Andrew Signore, 2026-09-05, verbatim
+			 *     (⛔ RELAYED through Gandalf, not heard first-hand): *"I dont
+			 *     like that picture though, use another one"*. The rejected
+			 *     picture is frame 02. Touch 1 now defaults to frame 04 —
+			 *     Legolas's own first choice for a review ask
+			 *     (`CYCLE179-DES-REVIEW-EMAIL.md` §A3): the room from behind
+			 *     with the cover of The Amazon legible on the screen, so the
+			 *     book being asked about is visible.
+			 *
+			 * ⭐ THE FINAL PICK IS ONE LINE. Frames 03, 04 and 05 are all on
+			 *    disk with their caption-free `-plain` twins, so Andrew
+			 *    changing his mind is one value in this array (or one filter
+			 *    callback), not a new build.
+			 *
+			 * ⛔ DAY 0 IS UNCHANGED AND STAYS ON FRAME 01. Seal 1015 was about
+			 *    the review-ask picture; nothing was said about the day-0 one
+			 *    and nothing is assumed.
+			 */
 			'dallas-harris-2026-09-03' => array(
-				'touch1' => 'hero-dallas-harris-2026-09-03-02.jpg',
+				'touch1' => 'hero-dallas-harris-2026-09-03-04.jpg',
 				'day0'   => 'hero-dallas-harris-2026-09-03-01.jpg',
 			),
 			'general'                  => array(
@@ -3008,6 +3091,36 @@ function bhp_review_ask_hero_alt( $file ) {
 
 		case 'hero-dallas-harris-2026-09-03-02.jpg':
 			return __( 'Andrew Signore reads aloud from a Charlotte and Henry paperback, with the open pages shown on a screen beside him. Caption: Read-aloud at Dallas Harris Elementary, September 3, 2026.', 'brave-hearts' );
+
+		/*
+		 * ⭐ 1.19.372 · THE THREE NEW CROPS, SEAL 1015. Scene descriptions are
+		 *    `CYCLE179-DES-REVIEW-EMAIL.md` §A3's own words for each frame; the
+		 *    caption sentence is the baked caption, which is pixels and is
+		 *    unchanged from the first pass. ⛔ Still no child named, no count
+		 *    claimed, no reaction described.
+		 *
+		 * ⚠ THE `-plain` TWINS ARE ON DISK AND CARRY NO BAKED CAPTION, so their
+		 *   alt text deliberately omits the "Caption:" sentence. They are not
+		 *   mapped by default; they exist so a caption-free hero is a one-line
+		 *   change rather than a new design pass.
+		 */
+		case 'hero-dallas-harris-2026-09-03-03.jpg':
+			return __( 'Andrew Signore stands with a hand on the wall and a microphone in his hand, the class seated in profile below him. Caption: Read-aloud at Dallas Harris Elementary, September 3, 2026.', 'brave-hearts' );
+
+		case 'hero-dallas-harris-2026-09-03-03-plain.jpg':
+			return __( 'Andrew Signore stands with a hand on the wall and a microphone in his hand, the class seated in profile below him.', 'brave-hearts' );
+
+		case 'hero-dallas-harris-2026-09-03-04.jpg':
+			return __( 'A room of first and second graders seen from behind, facing Andrew Signore and a screen showing the cover of The Amazon. Caption: Read-aloud at Dallas Harris Elementary, September 3, 2026.', 'brave-hearts' );
+
+		case 'hero-dallas-harris-2026-09-03-04-plain.jpg':
+			return __( 'A room of first and second graders seen from behind, facing Andrew Signore and a screen showing the cover of The Amazon.', 'brave-hearts' );
+
+		case 'hero-dallas-harris-2026-09-03-05.jpg':
+			return __( 'Andrew Signore speaking beside the presentation screen at a school read-aloud. Caption: Read-aloud at Dallas Harris Elementary, September 3, 2026.', 'brave-hearts' );
+
+		case 'hero-dallas-harris-2026-09-03-05-plain.jpg':
+			return __( 'Andrew Signore speaking beside the presentation screen at a school read-aloud.', 'brave-hearts' );
 
 		case 'hero-read-aloud-general.jpg':
 			return __( 'A school cafeteria full of first and second graders seated at long tables, facing Andrew Signore at the front of the room. Caption: A morning read-aloud with first and second graders.', 'brave-hearts' );
@@ -3087,6 +3200,110 @@ function bhp_review_ask_signature() {
 		'brand'  => __( 'Big Places. Brave Hearts.', 'brave-hearts' ),
 		'social' => $clean,
 	);
+}
+
+/**
+ * The signature block as HTML, rule included.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.372 · WHY THIS FUNCTION EXISTS AT ALL: ONE BLOCK, TWO EMAILS.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through Gandalf, not heard
+ *    first-hand): day 0 must end with the SAME signature block as touch 1 —
+ *    Andrew Signore / Author | Brave Hearts Publishing / Big Places. Brave
+ *    Hearts. / the social line — and not WooCommerce's plain `<em>Big Places.
+ *    Brave Hearts.</em>` sign-off.
+ *
+ * ⛔ THE MARKUP WAS DUPLICATED RATHER THAN SHARED AND THAT IS EXACTLY HOW TWO
+ *    "IDENTICAL" BLOCKS DRIFT APART. It lived inline in
+ *    `woocommerce/emails/bhp-review-ask.php` only. Copying it into a second
+ *    template would have created the drift on day one, so it is lifted here
+ *    and BOTH templates call this. There is now one place to change it.
+ *
+ * ⚠ THE `<hr>` IS PART OF THE BLOCK, not part of the caller, so the two
+ *   emails cannot disagree about the rule above the signature either.
+ *
+ * ⚠ INLINE STYLES, NOT CLASSES, because this string is emitted into the body
+ *   and Emogrifier is not guaranteed to reach a class that appears in no
+ *   stylesheet. Values are copied unchanged from the 1.19.370/371 review-ask
+ *   template; nothing was restyled in this move.
+ *
+ * @since 1.19.372
+ * @return string HTML, or '' when there is no signature to render.
+ */
+function bhp_review_ask_signature_html() {
+	$signature = function_exists( 'bhp_review_ask_signature' ) ? bhp_review_ask_signature() : array();
+
+	if ( empty( $signature ) || empty( $signature['name'] ) ) {
+		return '';
+	}
+
+	$html = '<hr style="border:none;border-top:1px solid #e5e0d3;margin:28px 0 18px;">' . "\n";
+
+	$html .= '<p style="margin:0 0 4px;font-family:\'EB Garamond\',Georgia,\'Times New Roman\',serif;font-size:18px;line-height:1.3;color:#342f28;">'
+		. esc_html( $signature['name'] ) . '</p>' . "\n";
+
+	$html .= '<p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#6b6b60;">'
+		. esc_html( $signature['role'] ) . '</p>' . "\n";
+
+	$html .= '<p style="margin:0;font-family:\'EB Garamond\',Georgia,\'Times New Roman\',serif;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#a8863f;">'
+		. esc_html( $signature['brand'] ) . '</p>' . "\n";
+
+	/*
+	 * ⛔ THE SOCIAL LINE RENDERS ONLY IF REAL URLs ARE SUPPLIED.
+	 *    `bhp_review_ask_signature()` drops any entry without an `http(s)` URL,
+	 *    so an unset `bhp_social_links` option produces no line at all rather
+	 *    than a dead "Facebook · Instagram". No URL is guessed anywhere.
+	 */
+	if ( ! empty( $signature['social'] ) ) {
+		$parts = array();
+
+		foreach ( $signature['social'] as $social ) {
+			$parts[] = '<a href="' . esc_url( $social['url'] ) . '" target="_blank" rel="noopener" style="color:#173f2f;text-decoration:underline;">'
+				. esc_html( $social['label'] )
+				. '</a>';
+		}
+
+		$html .= '<p style="margin:10px 0 0;font-size:13px;">'
+			. implode( ' <span style="color:#6b6b60;">&middot;</span> ', $parts )
+			. '</p>' . "\n";
+	}
+
+	return $html;
+}
+
+/**
+ * The same signature block for the plain-text part.
+ *
+ * ⚠ THE PLAIN PART IS NOT A SECOND-CLASS RENDERING. A recipient whose client
+ *   shows the text alternative gets the same name, the same role, the same
+ *   brand line and the same URLs — the labels are dropped in favour of the
+ *   bare URLs because a label with no href is not a link in plain text.
+ *
+ * @since 1.19.372
+ * @return string Text ending in a newline, or '' when there is nothing.
+ */
+function bhp_review_ask_signature_text() {
+	$signature = function_exists( 'bhp_review_ask_signature' ) ? bhp_review_ask_signature() : array();
+
+	if ( empty( $signature ) || empty( $signature['name'] ) ) {
+		return '';
+	}
+
+	$text = $signature['name'] . "\n" . $signature['role'] . "\n" . $signature['brand'] . "\n";
+
+	if ( ! empty( $signature['social'] ) ) {
+		$parts = array();
+
+		foreach ( $signature['social'] as $social ) {
+			$parts[] = $social['label'] . ': ' . $social['url'];
+		}
+
+		$text .= implode( "\n", $parts ) . "\n";
+	}
+
+	return $text;
 }
 
 /**

@@ -21,17 +21,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n";
-echo esc_html( wp_strip_all_tags( $email_heading ) );
-echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
-
-if ( ! empty( $order->get_billing_first_name() ) ) {
-	/* translators: %s: Customer first name */
-	echo sprintf( esc_html__( 'Hi %s,', 'brave-hearts' ), esc_html( $order->get_billing_first_name() ) ) . "\n\n";
-} else {
-	echo esc_html__( 'Hi,', 'brave-hearts' ) . "\n\n";
-}
-
 /*
  * ⭐⭐ THE SCHOOL-VISIT FORK, IDENTICAL IN SHAPE TO THE HTML TWIN.
  *
@@ -40,8 +29,44 @@ if ( ! empty( $order->get_billing_first_name() ) ) {
  *    reason the copy lives in an array rather than in two templates: a promise
  *    that exists in the HTML version and not in the plain one is a defect, and
  *    this shape makes the two physically unable to drift.
+ *
+ * ⚠ 1.19.372 · THIS LOOKUP MOVED ABOVE THE BANNER AND THE GREETING. It used to
+ *   sit below both, which was fine while neither depended on it; seal 1010 and
+ *   the heading suppression both do.
  */
 $bhp_visit_body = function_exists( 'bhp_visit_email_body' ) ? bhp_visit_email_body( $email ) : array();
+
+/*
+ * ⚠ 1.19.372 · AN EMPTY HEADING PRINTS NO BANNER AT ALL, rather than two rows
+ *   of `=-=-` with a blank line trapped between them. The visit email
+ *   suppresses its H1 (see `bhp_visit_email_suppress_heading()`), and the
+ *   plain part has to agree with the HTML part or the two disagree about what
+ *   the email is.
+ */
+$bhp_plain_heading = trim( wp_strip_all_tags( (string) $email_heading ) );
+
+if ( '' !== $bhp_plain_heading ) {
+	echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n";
+	echo esc_html( $bhp_plain_heading );
+	echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
+}
+
+/*
+ * ⭐⭐ SEAL 1010 · EXACTLY ONE GREETING, THE SAME RULING AS THE HTML TWIN.
+ *     Andrew Signore, 2026-09-05 (⛔ RELAYED through Gandalf): *"There is a
+ *     double 'Hi Aragorn, Hi Aragorn' -- needs to be fixed"*. The approved
+ *     copy's own `Hi {ParentFirstName},` is the first line of
+ *     `$bhp_visit_body`, so this template's greeting stands down whenever
+ *     there is a visit body and is unchanged for every ordinary order.
+ */
+if ( empty( $bhp_visit_body ) ) {
+	if ( ! empty( $order->get_billing_first_name() ) ) {
+		/* translators: %s: Customer first name */
+		echo sprintf( esc_html__( 'Hi %s,', 'brave-hearts' ), esc_html( $order->get_billing_first_name() ) ) . "\n\n";
+	} else {
+		echo esc_html__( 'Hi,', 'brave-hearts' ) . "\n\n";
+	}
+}
 
 if ( ! empty( $bhp_visit_body ) ) {
 	foreach ( $bhp_visit_body as $bhp_visit_paragraph ) {
@@ -86,9 +111,21 @@ if ( empty( $bhp_visit_body ) ) {
 	echo esc_html__( 'Thanks for taking a chance on us.', 'brave-hearts' ) . "\n\n";
 }
 
-echo esc_html__( 'Andrew', 'brave-hearts' ) . "\n";
-echo esc_html__( 'Brave Hearts Publishing', 'brave-hearts' ) . "\n";
-echo esc_html__( 'Big Places. Brave Hearts.', 'brave-hearts' ) . "\n\n";
+/*
+ * ⭐ 1.19.372 · THE VISIT EMAIL ENDS WITH TOUCH 1'S SIGNATURE, IN PLAIN TEXT
+ *    TOO. Same block, same source function as the HTML twin and as
+ *    `woocommerce/emails/bhp-review-ask.php`: name, role, brand line and the
+ *    real social URLs when `bhp_social_links` supplies them.
+ *
+ * ⛔ THE ORDINARY COMPLETED-ORDER EMAIL KEEPS ITS THREE LINES UNCHANGED.
+ */
+if ( empty( $bhp_visit_body ) || ! function_exists( 'bhp_review_ask_signature_text' ) ) {
+	echo esc_html__( 'Andrew', 'brave-hearts' ) . "\n";
+	echo esc_html__( 'Brave Hearts Publishing', 'brave-hearts' ) . "\n";
+	echo esc_html__( 'Big Places. Brave Hearts.', 'brave-hearts' ) . "\n\n";
+} else {
+	echo esc_html( bhp_review_ask_signature_text() ) . "\n";
+}
 
 echo "----------------------------------------\n\n";
 

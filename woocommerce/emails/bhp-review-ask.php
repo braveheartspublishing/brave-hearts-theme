@@ -390,30 +390,14 @@ echo implode( '<br>', $bhp_signoff_lines ); // phpcs:ignore WordPress.Security.E
  *   information that appears nowhere else — it is the company's own series
  *   line, not a claim.
  */
-$bhp_signature = function_exists( 'bhp_review_ask_signature' ) ? bhp_review_ask_signature() : array();
+/*
+ * ⭐ 1.19.372 · THE BLOCK MOVED TO `bhp_review_ask_signature_html()`. It is
+ *    byte-for-byte the same markup, values unchanged; it lives in
+ *    `inc/review-ask-email.php` now because the day-0 visit email renders the
+ *    identical block and two copies of "identical" markup drift.
+ */
+echo function_exists( 'bhp_review_ask_signature_html' ) ? bhp_review_ask_signature_html() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every dynamic part escaped inside the function.
 ?>
-<?php if ( ! empty( $bhp_signature ) ) : ?>
-<hr style="border:none;border-top:1px solid #e5e0d3;margin:28px 0 18px;">
-
-<p style="margin:0 0 4px;font-family:'EB Garamond',Georgia,'Times New Roman',serif;font-size:18px;line-height:1.3;color:#342f28;"><?php echo esc_html( $bhp_signature['name'] ); ?></p>
-<p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#6b6b60;"><?php echo esc_html( $bhp_signature['role'] ); ?></p>
-<p style="margin:0;font-family:'EB Garamond',Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#a8863f;"><?php echo esc_html( $bhp_signature['brand'] ); ?></p>
-<?php if ( ! empty( $bhp_signature['social'] ) ) : ?>
-<p style="margin:10px 0 0;font-size:13px;">
-<?php
-$bhp_social_parts = array();
-
-foreach ( $bhp_signature['social'] as $bhp_social ) {
-	$bhp_social_parts[] = '<a href="' . esc_url( $bhp_social['url'] ) . '" target="_blank" rel="noopener" style="color:#173f2f;text-decoration:underline;">'
-		. esc_html( $bhp_social['label'] )
-		. '</a>';
-}
-
-echo implode( ' <span style="color:#6b6b60;">&middot;</span> ', $bhp_social_parts ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each part escaped above.
-?>
-</p>
-<?php endif; ?>
-<?php endif; ?>
 
 <?php
 /*
