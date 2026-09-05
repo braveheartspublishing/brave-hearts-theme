@@ -312,3 +312,138 @@ built (Andrew's explicit instruction). To add a new review:
 9. Only after Andrew's explicit approval, deploy to production the same
    way as any other theme change (full-ZIP `wp theme install --force`,
    staging-verified first).
+
+## Review-ask engine — staging QA and the production go-live gates (1.19.369)
+
+**The engine sends nothing until `bhp_review_ask_enabled` is `yes`. That option
+flip is Andrew's, and it is the only irreversible step in this list** — an email
+that has gone to a parent cannot be recalled. Everything above it is reversible.
+
+`<slug>` below is `brave-hearts-theme-deploy-explorer-expedition-guides`.
+`<doc_root>` is the environment's WordPress root.
+
+### A. Staging QA, in order (nothing here can email a customer)
+
+```
+# 1. install the candidate
+wp theme install /path/to/brave-hearts-theme-1.19.369-review-seq.zip --force
+wp theme list --status=active                 # must show <slug> at 1.19.369
+wp sg purge
+
+# 2. fatal check
+wp eval 'echo "ok";' --user=1
+
+# 3. the three suites
+wp eval-file wp-content/themes/<slug>/tests/test-cycle179-review-seq.php --user=1
+wp eval-file wp-content/themes/<slug>/tests/test-cycle169-review-ask.php --user=1
+wp eval-file wp-content/themes/<slug>/tests/test-visit-completed-email.php --user=1
+
+# 4. the schedule, read-only, on each of the four launch dates
+wp bhp review-ask dry --as-of=2026-09-10
+wp bhp review-ask dry --as-of=2026-09-11
+wp bhp review-ask dry --as-of=2026-09-13
+wp bhp review-ask dry --as-of=2026-09-14
+wp bhp review-ask status
+
+# 5. one rendered email per set, into a mailbox somebody will actually open
+wp bhp review-ask test-send --to=<address> --set=day0   --order=<visit order id>
+wp bhp review-ask test-send --to=<address> --set=touch1 --order=<visit order id>
+wp bhp review-ask test-send --to=<address> --set=touch2 --order=<visit order id>
+wp bhp review-ask test-send --to=<address> --set=web1   --order=<web order id>
+```
+
+`test-send` refuses to run anywhere but staging (the check is on `home_url()`,
+not on `--url`), refuses without one valid `--to`, and refuses an unapproved set.
+
+### B. What Gandalf must verify on staging BEFORE the option is discussed
+
+1. **The star row is a row.** Open the touch-1 test-send on a phone and on
+   desktop: five gold stars, one line, left to right, no wrapping at 375px.
+2. **With images blocked**, the same email shows five underlined links reading
+   "1 star" … "5 stars", plus the caption and "Or open the review page".
+3. **Star 1 goes to `?rating=1` and star 5 to `?rating=5`** — click both and
+   read the query string on the landing page.
+4. **The caption names the book** ("Tap a star to rate The Amazon."), not
+   "Tap a star to rate ." — an empty title there means the merge gate should
+   have declined the order and did not.
+5. **Names.** Test-send touch 1 for order 612 (two children) and read the
+   opening sentence: it must say "<A> and <B> **have** had", never "has had".
+6. **Day 0 names the school** from `_bhp_school_visit_school` and carries no
+   Adams fact (no grade band, no headcount, no coloring page, no book read
+   aloud) and no blank paragraph where `{VisitLine}` would be.
+7. **The dry runs produce the four dates**: touch 1 on 09-10 (Dallas one-book),
+   09-11 (Liberty one-book), 09-13 (Dallas multi), 09-14 (Liberty multi), and
+   touch 2 four days after each. **No order may be declined `daily_cap_lane`**
+   on any of those days.
+8. **`wp bhp review-ask status` reports the engine DISABLED** at the end of QA.
+
+### C. Production go-live, exact commands in order
+
+**Steps 1 to 3 change no behaviour: the engine is off, so installing the theme
+ships inert code.** Step 4 is the live one.
+
+```
+# 0. ROLLBACK ARTEFACT FIRST. Do not skip.
+cd <doc_root>/wp-content/themes
+tar -czf ~/PROD-theme-PRE-1.19.369-$(date +%Y%m%d-%H%M).tar.gz <slug>
+wp option get bhp_review_ask_enabled                 # record the answer verbatim
+wp option get bhp_review_ask_stats  > ~/PRE-369-review-ask-stats.json
+wp option get bhp_review_ask_log    > ~/PRE-369-review-ask-log.json
+
+# 1. install and confirm it replaced the LIVE theme rather than adding one
+wp theme install /path/to/brave-hearts-theme-1.19.369-review-seq.zip --force
+wp theme list --status=active                        # <slug>, 1.19.369
+wp eval 'echo "ok";' --user=1
+wp sg purge
+
+# 2. confirm the engine is still OFF after the install
+wp bhp review-ask status                             # must read disabled
+
+# 3. READ-ONLY dry runs on production, for the two Dallas dates
+wp bhp review-ask dry --as-of=2026-09-10
+wp bhp review-ask dry --as-of=2026-09-13
+#    Read the "would send" lines. They name order ids only.
+#    STOP HERE and get Andrew's word before step 4.
+
+# 4. ⛔ ANDREW'S GATE — the only irreversible command in this runbook
+wp option update bhp_review_ask_enabled yes
+wp bhp review-ask status                             # must now read enabled
+
+# 5. the scheduler must actually be scheduled
+wp cron event list --fields=hook,next_run_relative | grep bhp_review_ask_daily
+#    If Action Scheduler owns it instead:
+wp action-scheduler list --hook=bhp_review_ask_daily --status=pending
+#    If neither shows an entry, the daily runner is not scheduled and nothing
+#    will send. Re-run bootstrap by loading any admin page, then re-check.
+
+# 6. first live morning, watch rather than assume
+wp bhp review-ask status
+wp bhp review-ask plan --dates=2026-09-10,2026-09-11,2026-09-13,2026-09-14
+```
+
+### D. Rollback
+
+```
+# fastest, and it stops all sending in one command
+wp option update bhp_review_ask_enabled no
+wp bhp review-ask status                             # must read disabled
+
+# full code rollback
+cd <doc_root>/wp-content/themes
+rm -rf <slug>
+tar -xzf ~/PROD-theme-PRE-1.19.369-<stamp>.tar.gz
+wp theme list --status=active
+wp sg purge
+```
+
+**⛔ Rolling the code back does NOT unsend an email.** The option flip in D is
+the real stop; the tarball only restores the previous behaviour for future runs.
+
+### E. What this runbook deliberately does not do
+
+- It does not run `wp bhp review-ask migrate`. Seal 994 made the sixteen visit
+  orders ordinary engine orders, and the command now refuses all sixteen by id.
+  Marking any of them would suppress touch 1 forever.
+- It does not touch any WooCommerce product, price, coupon, stock, shipping,
+  tax, payment or checkout setting. The engine reads orders and writes two
+  order meta keys plus its own options; nothing else.

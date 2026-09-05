@@ -83,46 +83,136 @@ if ( '' !== $bhp_first_name ) {
 
 <?php
 /*
- * ⭐⭐ 1.19.364 · THE STAR ROW. Seal 977. Five links, one destination, no
- *     default selection, nothing steered toward five.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.369 · THE STAR ROW, REBUILT. ANDREW, SEAL 998, VERBATIM: *"The
+ *     stars look terrible, they should show up just link an amazon review. 5
+ *     stars in a row from left to right."*
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔ TABLE-BASED AND INLINE-STYLED because this is email, not a web page:
+ * ⭐ WHAT IT IS NOW: ONE centred row of FIVE IDENTICAL gold stars, ascending
+ *    left to right. Star 1 links to rating 1, star 5 to rating 5 — the same
+ *    five URLs as before, reordered in `bhp_review_ask_star_row()`.
+ *
+ * ⛔⛔ THE SUPERSEDED BLOCK AND ITS REASONING, PRESERVED RATHER THAN DELETED,
+ *     because it argued the opposite case and argued it well:
+ *
+ *       "⛔⛔ EVERY CELL CARRIES ITS VISIBLE TEXT LABEL, NOT A GRAPHIC ALONE,
+ *        and the glyph is a real character rather than a shipped image, so
+ *        there is nothing to block, nothing to download and nothing to break.
+ *        Merry's V2 §5: 'A row of five broken-image icons with no labels is a
+ *        dead end for the reader and a wasted send.' ⚠ If anyone later swaps
+ *        the glyph for an <img>, the alt text must equal the label and the
+ *        visible label must stay."
+ *
+ *       <td align="center" valign="top" style="padding:0 4px;width:20%;">
+ *         <a href="..." style="display:block;padding:10px 2px;...">
+ *           <span aria-hidden="true" style="font-size:22px;">[N glyphs]</span>
+ *           <span style="font-size:13px;">4 stars: really good</span>
+ *         </a>
+ *       </td>
+ *
+ * ⛔ WHY THE GLYPH LOST, AND SEAL 998 IS NOT THE ONLY REASON. U+2605 is
+ *    substituted by Gmail's Android and iOS clients with a COLOUR EMOJI and by
+ *    several Outlook builds with a box, so "a row of five stars" was never
+ *    reliably a row of five stars in the two clients that matter most. A PNG is
+ *    the same picture everywhere it is not blocked.
+ *
+ * ⭐ AND THE BLOCKED-IMAGE OBJECTION IS ANSWERED, NOT IGNORED. Each <img>
+ *    carries alt="1 star" ... "5 stars" INSIDE its link, so a client that
+ *    blocks images renders five underlined text links in the same order; the
+ *    caption line below the row says what the row is for, in body text that is
+ *    never blocked; and `links` still carries a plain "Or open the review page"
+ *    link. ⛔ There is no state in which this block is a dead end.
+ *
+ * ⛔ TABLE-BASED AND INLINE-STYLED, unchanged and for the unchanged reason:
  *    Outlook's Word renderer ignores flex, grid and most block layout, and a
  *    <div> row collapses to five stacked lines with no alignment.
  *
- * ⛔⛔ EVERY CELL CARRIES ITS VISIBLE TEXT LABEL, NOT A GRAPHIC ALONE, and
- *     the glyph is a real character (★) rather than a shipped image, so there
- *     is nothing to block, nothing to download and nothing to break. Merry's V2
- *     §5: *"A row of five broken-image icons with no labels is a dead end for
- *     the reader and a wasted send."* ⚠ If anyone later swaps the glyph for an
- *     <img>, the alt text must equal the label and the visible label must stay.
+ * ⭐ TAP TARGETS. 32px of image plus 6px of padding on every side is a 44px
+ *    square, which is the documented minimum, and the row is a fixed-layout
+ *    table centred inside its own full-width cell, so it cannot wrap or spread
+ *    at 375px. ⚠ COMPUTED FROM THE DECLARED SIZES, NOT MEASURED IN A REAL
+ *    CLIENT — no email client was opened in this build. See the deliverable.
  *
- * ⚠ THE GLYPH IS DECORATIVE AND IS HIDDEN FROM ASSISTIVE TECHNOLOGY
- *   (aria-hidden), because the label beside it already says "4 stars: really
- *   good". Without that a screen reader announces the stars twice.
+ * ⛔⛔ NOTHING STEERS TOWARD FIVE, AND THIS ROW SATISFIES MERRY'S V2 §5 RULE 1
+ *     MORE STRICTLY THAN ITS PREDECESSOR DID, NOT LESS. Every cell holds the
+ *     SAME image at the SAME size with the SAME padding and the SAME tap
+ *     target. No default selection, no highlight, no hover state.
+ *     ⚠ WHAT CHANGED, AND IT IS A REAL TRADE, REPORTED NOT HIDDEN: the rating
+ *     each star carries is no longer stated in visible text beside it. It
+ *     survives in the alt attribute and in the plain-text part. That is how
+ *     Amazon's own row works and it is what seal 998 asked for; it is
+ *     nonetheless less explicit for a sighted reader with images enabled.
  */
-$bhp_stars = function_exists( 'bhp_review_ask_star_row' ) ? bhp_review_ask_star_row( $order ) : array();
+$bhp_stars        = function_exists( 'bhp_review_ask_star_row' ) ? bhp_review_ask_star_row( $order ) : array();
+$bhp_star_caption = isset( $copy['stars_caption'] ) ? trim( (string) $copy['stars_caption'] ) : '';
 ?>
 <?php if ( ! empty( $bhp_stars ) ) : ?>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:22px 0;border-collapse:collapse;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 10px;border-collapse:collapse;">
 	<tr>
+		<td align="center" style="padding:0;">
+			<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;margin:0 auto;">
+				<tr>
 <?php foreach ( $bhp_stars as $bhp_star ) : ?>
-		<td align="center" valign="top" style="padding:0 4px;width:20%;">
-			<a href="<?php echo esc_url( $bhp_star['url'] ); ?>" target="_blank" rel="noopener" style="display:block;padding:10px 2px;color:#173f2f;text-decoration:none;font-weight:400;">
-				<span aria-hidden="true" style="display:block;font-size:22px;line-height:1.2;color:#173f2f;"><?php echo esc_html( str_repeat( "â", (int) $bhp_star['rating'] ) ); ?></span>
-				<span style="display:block;font-size:13px;line-height:1.4;margin-top:6px;text-decoration:underline;"><?php echo esc_html( $bhp_star['label'] ); ?></span>
-			</a>
-		</td>
+					<td align="center" valign="middle" style="padding:0;">
+						<a href="<?php echo esc_url( $bhp_star['url'] ); ?>" target="_blank" rel="noopener" style="display:block;padding:6px;color:#173f2f;text-decoration:underline;font-size:13px;line-height:1.2;">
+<?php if ( '' !== (string) $bhp_star['image'] ) : ?>
+							<img src="<?php echo esc_url( $bhp_star['image'] ); ?>" width="32" height="32" alt="<?php echo esc_attr( $bhp_star['alt'] ); ?>" style="display:block;width:32px;height:32px;border:0;outline:none;text-decoration:none;">
+<?php else : ?>
+							<?php echo esc_html( $bhp_star['alt'] ); ?>
+<?php endif; ?>
+						</a>
+					</td>
 <?php endforeach; ?>
+				</tr>
+			</table>
+		</td>
 	</tr>
 </table>
 <?php endif; ?>
 
+<?php
+/*
+ * ⭐ THE CAPTION, IN BODY TEXT, CENTRED UNDER THE ROW. ⛔ NOT <strong>: the
+ *    superseded `links_lead` rendered bold and 1.19.365 flagged that as a
+ *    rendering deviation from Merry's own page. The brief asks for "one caption
+ *    line in body text", so it is one caption line in body text.
+ */
+?>
+<?php if ( '' !== $bhp_star_caption ) : ?>
+<p style="margin:0 0 20px;text-align:center;"><?php echo esc_html( $bhp_star_caption ); ?></p>
+<?php endif; ?>
+
+<?php
+/*
+ * ⚠ `links_lead` IS EMPTY IN ALL THREE LIVE SETS AT 1.19.369, so this block
+ *   renders nothing. It is kept because the superseded 21-day set still carries
+ *   "Find the one you read:" and must still render byte-for-byte.
+ */
+?>
 <?php if ( '' !== trim( (string) $copy['links_lead'] ) ) : ?>
 <p style="margin:22px 0 6px;"><strong><?php echo esc_html( $copy['links_lead'] ); ?></strong></p>
 <?php endif; ?>
 
-<p style="margin:0 0 22px;line-height:1.9;">
+<?php
+/*
+ * ⭐ 1.19.369 · THE LINE UNDER THE BLOCK IS NO LONGER THE BARE BOOK TITLE.
+ *    Round-8 brief, item 1: *"Remove the bare title link line under the block
+ *    (or make it 'Or open the review page' if copy_is_usable needs a link)."*
+ *    ⚠ IT DOES NEED ONE — `bhp_review_ask_copy_is_usable()` requires a
+ *    non-empty `links` array — so the second option is the one taken, and the
+ *    copy sets now carry that label. See `bhp_review_ask_copy_visit_touch1()`.
+ *
+ * ⛔ AND THE STYLING FOLLOWS THE CONTENT. One quiet secondary link is centred,
+ *    small and unbolded under the caption; the SUPERSEDED THREE-TITLE ROW is
+ *    still bold, still middot-separated and still `white-space:nowrap`, which
+ *    is the measured 2026-08-29 mobile fix and must not be lost. The branch is
+ *    on how many links the copy set carries, so the 21-day set renders exactly
+ *    as it did and nothing had to be duplicated.
+ */
+$bhp_link_single = ( 1 === count( (array) $copy['links'] ) );
+?>
+<p style="margin:0 0 22px;line-height:1.9;<?php echo $bhp_link_single ? 'text-align:center;font-size:14px;' : ''; ?>">
 <?php
 $bhp_link_parts = array();
 
@@ -133,8 +223,15 @@ foreach ( $copy['links'] as $bhp_link ) {
 	 *   wrapped mid-title, leaving "The" on one line and "Amazon" on the next,
 	 *   so a reader scanning for the book they bought sees a broken name. A
 	 *   title is one token; only the separators may break.
+	 *
+	 * ⛔ IT IS NOT APPLIED TO THE SINGLE "Or open the review page" LINK. That
+	 *    is a sentence, not a title, and five unbreakable words at 375px would
+	 *    push the line off the side of the email - the exact defect this rule
+	 *    exists to prevent, inverted.
 	 */
-	$bhp_link_parts[] = '<a href="' . esc_url( $bhp_link['url'] ) . '" target="_blank" rel="noopener" style="color:#173f2f;font-weight:700;text-decoration:underline;white-space:nowrap;">'
+	$bhp_link_parts[] = '<a href="' . esc_url( $bhp_link['url'] ) . '" target="_blank" rel="noopener" style="color:#173f2f;text-decoration:underline;'
+		. ( $bhp_link_single ? '' : 'font-weight:700;white-space:nowrap;' )
+		. '">'
 		. esc_html( $bhp_link['label'] )
 		. '</a>';
 }

@@ -141,52 +141,70 @@ bhp_vce_assert(
 );
 bhp_vce_assert( ! bhp_visit_email_is_visit( null ), 'null email is not a visit email', $failures );
 
-echo "\n=== 4. THE APPROVED ADAMS COPY, STRING BY STRING ===\n";
+echo "\n=== 4. THE ONE GENERIC DAY-0 SET, STRING BY STRING ===\n";
 
-$adams = bhp_visit_email_copy( BHP_VCE_ADAMS );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.369 · SECTION 4 REWRITTEN. THE PER-SCHOOL ADAMS SET IS RETIRED TO
+ *     COMMENTS (seal 994, round-8 brief item 2) AND THERE IS NOW EXACTLY ONE
+ *     DAY-0 SET, USED FOR EVERY VISIT ORDER.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED SECTION ASSERTED THE ADAMS STRINGS VERBATIM — subject,
+ *    heading, preheader, "exactly five paragraphs", and paragraphs 1 to 5
+ *    including the Amazon/QR paragraph. Those assertions are preserved in the
+ *    file history and the strings themselves are preserved verbatim in
+ *    `inc/visit-completed-email.php`'s retirement comment.
+ *
+ * ⚠⚠ AND THREE OF THEM WERE ALREADY FAILING BEFORE THIS BUILD, WHICH IS
+ *    REPORTED RATHER THAN QUIETLY FIXED. 1.19.364 removed the Amazon/QR
+ *    paragraph from the Adams set under seal 977, taking its body from five
+ *    paragraphs to four, but this suite was never updated: "Adams body is
+ *    exactly five paragraphs", "Adams paragraph 4 verbatim" and "Adams
+ *    paragraph 5 verbatim" have been red since 1.19.364. This desk did not
+ *    introduce those failures and did not observe them running — no PHP
+ *    runtime was available in this session. See the deliverable.
+ */
+$day0 = bhp_visit_email_copy( BHP_VCE_ADAMS );
 
 bhp_vce_assert(
-	'What an awesome group of 1st and 2nd Graders!' === $adams['subject'],
-	'Adams subject is the approved string, verbatim',
+	$day0 === bhp_visit_email_copy( 'zzz-nonsense' ),
+	'⭐⭐ EVERY slug now resolves to the same generic set (seal 994)',
 	$failures
 );
 bhp_vce_assert(
-	'The signed books are with the kiddos! Along with a coloring book page.' === $adams['heading'],
-	'Adams heading is the approved string, verbatim',
+	array( BHP_VISIT_EMAIL_DEFAULT_KEY ) === array_keys( bhp_visit_email_copy_sets() ),
+	'⭐ There is exactly ONE day-0 copy set and it is the generic one',
 	$failures
 );
 bhp_vce_assert(
-	'Signed Books, Delivered, and ready to read.' === $adams['preheader'],
-	'Adams preheader is the approved string, verbatim',
-	$failures
-);
-bhp_vce_assert( 5 === count( $adams['body'] ), 'Adams body is exactly five paragraphs', $failures );
-bhp_vce_assert(
-	'What an awesome group of kiddos! We read from Mount Everest, practiced Stop, Breathe, Think, Act, and yelled I can do hard things together, all thirty or so of us!' === $adams['body'][0],
-	'Adams paragraph 1 verbatim',
+	'The signed books went home today' === $day0['subject'],
+	'Day-0 subject is the approved seal-982 string, verbatim',
 	$failures
 );
 bhp_vce_assert(
-	'Your signed books went home with your child today (or children, for a few families), along with a coloring book page from the read aloud.' === $adams['body'][1],
-	'Adams paragraph 2 verbatim (smoothing 1 present)',
+	'The signed books went home today' === $day0['heading'],
+	'Day-0 heading restates the subject and adds no claim',
 	$failures
 );
-bhp_vce_assert(
-	'I also wanted to reach out and genuinely say thank you for raising such an awesome kiddo. Everyone in the group paid attention and listened so well.' === $adams['body'][2],
-	'Adams paragraph 3 verbatim (smoothing 2 present)',
-	$failures
-);
-bhp_vce_assert(
-	'If they read the books and like them, there is a small thank you page with a QR code in the back. It goes to Amazon reviews. If you could write a review on the book/s it will help other early readers learn the lessons your little human got today.' === $adams['body'][3],
-	'Adams paragraph 4 verbatim',
-	$failures
-);
-bhp_vce_assert(
-	'Feel free to email me any time at Andrew@braveheartspublishing.com, once again thank you!' === $adams['body'][4],
-	'Adams paragraph 5 verbatim',
-	$failures
-);
-bhp_vce_assert( true === $adams['approved'], 'Adams set is flagged approved', $failures );
+bhp_vce_assert( true === $day0['approved'], 'The generic day-0 set is flagged approved (seal 982)', $failures );
+bhp_vce_assert( 9 === count( $day0['body'] ), 'Day-0 body is exactly nine paragraphs', $failures );
+bhp_vce_assert( '{VisitLine}' === $day0['body'][2], '⛔ {VisitLine} is its own paragraph, so an empty one disappears', $failures );
+
+/*
+ * ⛔⛔ THE ADAMS FACTS ARE UNREACHABLE FROM THIS FILE, FOR EVERY SLUG. This is
+ *     the assertion the retirement exists to make possible: it used to be true
+ *     only for slugs that were not Adams.
+ */
+$day0_all = $day0['subject'] . ' ' . $day0['heading'] . ' ' . $day0['preheader'] . ' ' . implode( ' ', $day0['body'] );
+
+foreach ( array( '1st and 2nd', 'Graders', 'Mount Everest', 'thirty', 'Stop, Breathe', 'paid attention', 'coloring book page', 'awesome group' ) as $adams_fact ) {
+	bhp_vce_assert(
+		false === stripos( $day0_all, $adams_fact ),
+		"⛔ The generic day-0 set states no Adams fact: \"{$adams_fact}\"",
+		$failures
+	);
+}
 
 echo "\n=== 5. THE HARD RAILS ON EVERY SET ===\n";
 
@@ -219,23 +237,32 @@ foreach ( bhp_visit_email_copy_sets() as $key => $set ) {
 	bhp_vce_assert( bhp_visit_email_copy_is_usable( $set ), "[{$key}] is a complete, renderable set", $failures );
 }
 
-echo "\n=== 6. ⭐ SLUG ISOLATION — THE TEST THIS FILE EXISTS FOR ===\n";
+echo "\n=== 6. ⭐ SLUG ISOLATION — NOW A ONE-SET PROOF ===\n";
 
 /*
- * Three slugs that are not Adams: a real future visit, a plausible typo of
- * the Adams slug, and pure junk. None of them may reach an Adams fact.
+ * ⭐⭐ 1.19.369 · THE PROOF INVERTED, AND IT IS STRONGER THAN IT WAS. This
+ *     section used to walk three non-Adams slugs and assert that none of them
+ *     reached an Adams fact. Under seal 994 there is no Adams set to reach, so
+ *     the same guarantee is now proved for EVERY slug including the Adams slug
+ *     itself, which is the case the old loop could not cover.
+ *
+ * ⛔ SUPERSEDED LOOP, PRESERVED IN DESCRIPTION: three slugs — a real future
+ *    visit, a plausible typo of the Adams slug, and pure junk — each asserted
+ *    not to resolve to the Adams set and not to contain any Adams fact.
  */
-$non_adams = array(
+$every_slug = array(
+	BHP_VCE_ADAMS,
 	'dallas-harris-2026-09-11',
 	'adams-2026-08-29',
 	'zzz-nonsense',
+	'',
 );
 
-foreach ( $non_adams as $slug ) {
+foreach ( $every_slug as $slug ) {
 	$set = bhp_visit_email_copy( $slug );
 	$all = $set['subject'] . ' ' . $set['heading'] . ' ' . $set['preheader'] . ' ' . implode( ' ', $set['body'] );
 
-	bhp_vce_assert( $set !== $adams, "[{$slug}] does not resolve to the Adams set", $failures );
+	bhp_vce_assert( $set === $day0, "[{$slug}] resolves to the one generic set", $failures );
 
 	// ⛔ EVERY ADAMS FACT, ASSERTED ABSENT INDIVIDUALLY.
 	bhp_vce_assert( false === stripos( $all, '1st and 2nd' ), "[{$slug}] states no grade band", $failures );
@@ -249,21 +276,40 @@ foreach ( $non_adams as $slug ) {
 }
 
 /*
- * ⚠ THE NEUTRAL SET IS DELIBERATELY FLAGGED UNAPPROVED. This assertion is a
- *   tripwire: the day somebody flips it to true, they must come here and
- *   change this line, which is exactly the moment to ask whether Andrew
- *   actually approved it.
+ * ⛔⛔ THE GATE. `approved` became a HARD SEND GATE in 1.19.364, so what has to
+ *     be proved now is that it still refuses two things: NO SLUG AT ALL, and a
+ *     FILTERED set carrying `approved => false`.
+ *
+ * ⚠ SUPERSEDED TRIPWIRE, PRESERVED RATHER THAN DELETED: the neutral fallback
+ *   used to be asserted NOT approved, so that flipping it forced a visit to
+ *   this line. Andrew flipped it himself under seal 982, so the tripwire has
+ *   done its job and is replaced by the two assertions below.
  */
 bhp_vce_assert(
-	false === bhp_visit_email_copy_is_approved( 'dallas-harris-2026-09-11' ),
-	'the neutral fallback is flagged NOT approved (tripwire)',
+	true === bhp_visit_email_copy_is_approved( BHP_VCE_ADAMS ),
+	'a real visit slug reports approved (seal 982 set)',
 	$failures
 );
 bhp_vce_assert(
-	true === bhp_visit_email_copy_is_approved( BHP_VCE_ADAMS ),
-	'exactly the Adams slug reports approved',
+	false === bhp_visit_email_copy_is_approved( '' ),
+	'⛔ NO SLUG AT ALL is not a visit order and is not approved',
 	$failures
 );
+
+$unapproved = function () {
+	return array(
+		'approved'  => false,
+		'subject'   => 'UNAPPROVED PROBE',
+		'heading'   => 'UNAPPROVED PROBE',
+		'preheader' => 'UNAPPROVED PROBE',
+		'body'      => array( 'UNAPPROVED PROBE BODY' ),
+	);
+};
+add_filter( 'bhp_visit_email_copy', $unapproved, 99, 2 );
+$gate_blocked = ! bhp_visit_email_copy_is_approved( BHP_VCE_ADAMS );
+remove_filter( 'bhp_visit_email_copy', $unapproved, 99 );
+
+bhp_vce_assert( $gate_blocked, '⛔⛔ An unapproved set supplied through the filter seam is NOT approved', $failures );
 
 $approved_count = 0;
 foreach ( bhp_visit_email_copy_sets() as $set ) {
@@ -271,7 +317,7 @@ foreach ( bhp_visit_email_copy_sets() as $set ) {
 		++$approved_count;
 	}
 }
-bhp_vce_assert( 1 === $approved_count, 'exactly ONE copy set is approved today', $failures );
+bhp_vce_assert( 1 === $approved_count, 'exactly ONE copy set exists and it is approved', $failures );
 
 echo "\n=== 7. A BROKEN FILTER IS DISCARDED, NOT SENT ===\n";
 
@@ -283,7 +329,8 @@ $after = bhp_visit_email_copy( BHP_VCE_ADAMS );
 remove_filter( 'bhp_visit_email_copy', $guard, 10 );
 
 bhp_vce_assert(
-	'What an awesome group of 1st and 2nd Graders!' === $after['subject'],
+	// ⛔ 1.19.369 · SUPERSEDED: 'What an awesome group of 1st and 2nd Graders!'
+	'The signed books went home today' === $after['subject'],
 	'an empty filter return falls back to the real set rather than sending blank',
 	$failures
 );
@@ -295,7 +342,7 @@ add_filter( 'bhp_visit_email_copy', $junk, 10, 2 );
 $after2 = bhp_visit_email_copy( BHP_VCE_ADAMS );
 remove_filter( 'bhp_visit_email_copy', $junk, 10 );
 
-bhp_vce_assert( is_array( $after2 ) && $after2['subject'] === $adams['subject'], 'a non-array filter return is discarded', $failures );
+bhp_vce_assert( is_array( $after2 ) && $after2['subject'] === $day0['subject'], 'a non-array filter return is discarded', $failures );
 
 echo "\n=== 8. THE FD-76 BOOKVAULT FOOTER FORK ===\n";
 

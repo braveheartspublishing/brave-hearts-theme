@@ -66,20 +66,45 @@ foreach ( $copy['body_middle'] as $bhp_paragraph ) {
 }
 
 /*
- * ⭐ 1.19.364 · THE PLAIN-TEXT STAR ROW. Five text links, one per line, same
- *    order and the same five labels as the HTML twin and as the site form.
- *    Merry's V2 §5 fallback block, followed exactly. ⛔ No glyphs here: a star
- *    character in a plain part renders as a box in some clients and adds
- *    nothing a screen reader wants.
+ * ⭐⭐ 1.19.369 · THE PLAIN-TEXT STAR ROW. Round-8 brief, item 1: *"Plain-text
+ *     fallback: five lines '1 star: <url>' ... '5 stars: <url>'."* Ascending,
+ *     matching the HTML twin's left-to-right order exactly.
+ *
+ * ⛔ SUPERSEDED SHAPE, PRESERVED RATHER THAN DELETED. Until 1.19.368 this
+ *    printed the SITE FORM's descriptive label on one line and the URL on the
+ *    next, descending 5 to 1:
+ *
+ *      5 stars: loved it
+ *      https://...?rating=5
+ *
+ *    ⚠ Two reasons it moved, and only one of them is the brief. First, the
+ *    order now disagrees with the HTML part unless it is reversed, and a
+ *    plain-text twin that lists the same five links in the opposite direction
+ *    is the drift this file's header exists to prevent. Second, "loved it" and
+ *    "not for us" are the PAGE's words for the reader once they arrive; in the
+ *    email they read as five competing invitations rather than one rating
+ *    control.
+ *
+ * ⛔ NO GLYPHS HERE, UNCHANGED AND FOR THE UNCHANGED REASON: a star character
+ *    in a plain part renders as a box in some clients and adds nothing a screen
+ *    reader wants. The alt text is the label, which is what the brief names.
  */
 $bhp_stars = function_exists( 'bhp_review_ask_star_row' ) ? bhp_review_ask_star_row( $order ) : array();
 
 foreach ( $bhp_stars as $bhp_star ) {
-	echo esc_html( $bhp_star['label'] ) . "
-";
-	echo esc_url_raw( $bhp_star['url'] ) . "
+	echo esc_html( $bhp_star['alt'] ) . ": " . esc_url_raw( $bhp_star['url'] ) . "\n";
+}
 
-";
+if ( ! empty( $bhp_stars ) ) {
+	echo "\n";
+}
+
+/*
+ * ⭐ THE CAPTION, UNDER THE FIVE LINES, exactly as in the HTML twin. It is the
+ *    only line in either part that says what the row is for.
+ */
+if ( ! empty( $copy['stars_caption'] ) ) {
+	echo esc_html( $copy['stars_caption'] ) . "\n\n";
 }
 
 if ( '' !== trim( (string) $copy['links_lead'] ) ) {

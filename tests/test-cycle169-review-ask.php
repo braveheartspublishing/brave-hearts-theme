@@ -913,6 +913,25 @@ for ( $bhp_ra_n = 1; $bhp_ra_n <= 6; $bhp_ra_n++ ) {
 }
 bhp_ra_ok( 'Exactly 6 orders are now due', 6 === bhp_review_ask_pending_count() );
 
+/*
+ * ⭐⭐ 1.19.369 · THE CAP DEFAULT MOVED FROM 5 TO 10 AND BECAME PER LANE, SO
+ *     THIS SECTION PINS THE CAP TO 5 THROUGH THE FILTER INSTEAD OF RELYING ON
+ *     THE DEFAULT VALUE.
+ *
+ * ⛔ WHY, AND IT IS NOT TEST-FITTING. What this section has always proved is
+ *    the MECHANISM: the runner stops at the cap, and a second run on the same
+ *    day sends nothing because the count comes from the ledger rather than from
+ *    a per-run counter. That mechanism is value-independent, and a suite that
+ *    hard-codes 5 breaks every time a founder ruling moves the number - which
+ *    is exactly what happened here. The VALUE is asserted separately below.
+ */
+$GLOBALS['bhp_ra_cap5'] = function () {
+	return 5;
+};
+add_filter( 'bhp_review_ask_daily_cap', $GLOBALS['bhp_ra_cap5'], 99 );
+
+bhp_ra_ok( 'The suite pinned the cap to 5 for this section', 5 === bhp_review_ask_daily_cap( 'web' ) );
+
 $bhp_ra_before_total = bhp_review_ask_stats();
 
 $bhp_ra_run1 = bhp_review_ask_run( array( 'logger' => null ) );
@@ -925,10 +944,55 @@ bhp_ra_ok(
 );
 
 $bhp_ra_run2 = bhp_review_ask_run( array( 'logger' => null ) );
+
+/*
+ * ⛔ 1.19.369 · THE SECOND RUN STILL SENDS NOTHING, AND THE REASON IS NOW
+ *    NAMED PER LANE. SUPERSEDED ASSERTION, PRESERVED RATHER THAN DELETED:
+ *
+ *      0 === (int) $bhp_ra_run2['sent'] && 'daily_cap_reached' === $bhp_ra_run2['halted']
+ *
+ *    ⚠ `halted => daily_cap_reached` now means EVERY lane is exhausted. These
+ *    six probe orders are all WEB lane, so the visit lane still has budget and
+ *    the run is not halted - each web order declines `daily_cap_lane` by name
+ *    instead. That is the intended behaviour: a full web lane must not stop the
+ *    visit lane's morning. The all-lanes halt is asserted immediately after.
+ */
 bhp_ra_ok(
 	'⭐⭐ A SECOND run on the same day sends nothing (this is what makes a double-scheduled runner safe)',
-	0 === (int) $bhp_ra_run2['sent'] && 'daily_cap_reached' === $bhp_ra_run2['halted'],
+	0 === (int) $bhp_ra_run2['sent'],
 	'sent=' . $bhp_ra_run2['sent'] . ' halted=' . $bhp_ra_run2['halted']
+);
+bhp_ra_ok(
+	'⭐ ... and every skipped order names `daily_cap_lane` rather than vanishing',
+	isset( $bhp_ra_run2['declined']['daily_cap_lane'] ) && (int) $bhp_ra_run2['declined']['daily_cap_lane'] >= 1,
+	'declined=' . wp_json_encode( $bhp_ra_run2['declined'] )
+);
+
+/*
+ * ⭐ AND WHEN EVERY LANE IS EXHAUSTED THE RUN HALTS BY NAME, exactly as it
+ *    did before. Proved by pinning the cap to zero rather than by sending more
+ *    email.
+ */
+$GLOBALS['bhp_ra_cap0'] = function () {
+	return 0;
+};
+add_filter( 'bhp_review_ask_daily_cap', $GLOBALS['bhp_ra_cap0'], 100 );
+
+$bhp_ra_run3 = bhp_review_ask_run( array( 'logger' => null ) );
+
+bhp_ra_ok(
+	'⛔ With every lane exhausted the run halts `daily_cap_reached` and sends nothing',
+	0 === (int) $bhp_ra_run3['sent'] && 'daily_cap_reached' === $bhp_ra_run3['halted'],
+	'sent=' . $bhp_ra_run3['sent'] . ' halted=' . $bhp_ra_run3['halted']
+);
+
+remove_filter( 'bhp_review_ask_daily_cap', $GLOBALS['bhp_ra_cap0'], 100 );
+remove_filter( 'bhp_review_ask_daily_cap', $GLOBALS['bhp_ra_cap5'], 99 );
+
+bhp_ra_ok(
+	'⭐⭐ The suite removed its cap filters and the SHIPPED default is 10 per lane',
+	10 === bhp_review_ask_daily_cap( 'visit' ) && 10 === bhp_review_ask_daily_cap( 'web' ) && 10 === BHP_REVIEW_ASK_DEFAULT_DAILY_CAP,
+	'visit=' . bhp_review_ask_daily_cap( 'visit' ) . ' web=' . bhp_review_ask_daily_cap( 'web' )
 );
 
 bhp_ra_ok( 'wp_mail was reached exactly 5 times', 5 === $bhp_ra_mail_calls, 'calls=' . $bhp_ra_mail_calls );

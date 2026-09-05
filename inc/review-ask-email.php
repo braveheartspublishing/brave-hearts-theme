@@ -293,9 +293,38 @@ if ( ! defined( 'BHP_REVIEW_ASK_EXCLUDE_OPTION' ) ) {
 	define( 'BHP_REVIEW_ASK_EXCLUDE_OPTION', 'bhp_review_ask_excluded_emails' );
 }
 
-/** The daily send cap. See `bhp_review_ask_daily_cap()` for why it exists. */
+/**
+ * The daily send cap, PER LANE. See `bhp_review_ask_daily_cap()`.
+ *
+ * ⭐⭐ 1.19.369 · RAISED FROM 5 TO 10 **AND** MADE PER LANE. BOTH, not one of
+ *     the two, and the round-8 brief asked for a statement of which: it is
+ *     both, for two different reasons.
+ *
+ *   THE 10 answers the brief's own requirement — *"daily cap 5 must not delay
+ *   any of them"*. The sixteen migrated visit orders land on four touch-1
+ *   dates (09-10, 09-11, 09-13, 09-14) with touch 2 four days after each, so
+ *   2026-09-14 carries TWO groups at once (Dallas one-book touch 2 and Liberty
+ *   multi touch 1). ⚠ THIS DESK HAS NOT READ THE PER-SCHOOL SPLIT OF THE
+ *   SIXTEEN off either environment in this session, so 10 is sized for the
+ *   worst plausible split of 16 across those dates, not measured against the
+ *   real one. It is a filter; if a real date needs more, raise it for that day.
+ *
+ *   PER LANE answers the failure the 10 alone does not. On the morning the
+ *   master switch is thrown, every past WEB order that completed more than 14
+ *   days ago qualifies at once, and a single shared cap would let that backlog
+ *   consume the day's budget before the visit orders — the ones with a
+ *   promised date — were reached. Separate budgets make that structurally
+ *   impossible rather than merely unlikely.
+ *
+ * ⛔ SUPERSEDED VALUE, PRESERVED RATHER THAN DELETED: **5**, shared across
+ *    both lanes, 1.19.317 to 1.19.368.
+ *
+ * ⚠ THE DELIVERABILITY REASONING BEHIND HAVING A CAP AT ALL IS UNCHANGED and
+ *   is still in `bhp_review_ask_daily_cap()`. Ten per lane is a ceiling of 20
+ *   in a day this store has never come close to needing; it is not "no cap".
+ */
 if ( ! defined( 'BHP_REVIEW_ASK_DEFAULT_DAILY_CAP' ) ) {
-	define( 'BHP_REVIEW_ASK_DEFAULT_DAILY_CAP', 5 );
+	define( 'BHP_REVIEW_ASK_DEFAULT_DAILY_CAP', 10 );
 }
 
 /**
@@ -353,20 +382,30 @@ if ( ! defined( 'BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK' ) ) {
 /**
  * Web lane, touch 1: days after ORDER COMPLETION.
  *
- * ⚠⚠ **PENDING ANDREW. THIS NUMBER IS AN INFERENCE, NOT A RULING.** Seal 965
- *    settled the visit lane in Andrew's own words and said nothing about
- *    shipped web orders. The 10 is the Chief of Staff's recommendation carried
- *    in the build brief. It is a constant and a filter so that his answer is a
- *    one-line change, and the CLI prints `PENDING ANDREW` beside it so nobody
- *    reads it off a status screen as settled.
+ * ⭐⭐ 14, SET 2026-09-05 BY THE ROUND-8 BRIEF. ANDREW, SEAL 994: *"Do what
+ *     the research suggests."* The brief carries the research conclusion as
+ *     **14 days after completion** for the shipped web lane, and item 4 states
+ *     it as the instruction: *"delay 14 days after completion (research, seal
+ *     994); the opening phrase becomes 'for a couple of weeks now'"*.
  *
- * ⛔ IT CANNOT FIRE ANYWAY UNTIL COPY LANDS. The web touch-1 copy set is
- *    `approved => false` placeholder text, and an unapproved set is a hard
- *    decline in `bhp_review_ask_decline_reason()`. The timing question and the
- *    copy question therefore cannot be answered by accident.
+ * ⛔ SUPERSEDED VALUES, PRESERVED RATHER THAN DELETED:
+ *      **21** — founder ruling D-3, carrier item 392, 2026-08-29. Superseded
+ *               2026-09-05 by seal 965.
+ *      **10** — the Chief of Staff's recommendation carried in the seal-965
+ *               build brief, shipped 1.19.362 to 1.19.368, and flagged in this
+ *               same docblock as *"PENDING ANDREW. THIS NUMBER IS AN
+ *               INFERENCE, NOT A RULING"* and as conflict CYCLE179-MKT-34.
+ *               ⭐ THAT CONFLICT IS NOW CLOSED by seal 994 via this brief.
+ *
+ * ⚠ THE COPY MOVED WITH THE NUMBER, WHICH IS THE ONLY REASON THIS EDIT IS
+ *   SAFE. `bhp_review_ask_copy_web_touch1()` declares this same constant in
+ *   its `delay_days` and its opening sentence now reads *"for a couple of
+ *   weeks now"*, which is true at 14 and was NOT true at 10. ⛔ Changing this
+ *   number without moving that sentence is exactly what
+ *   `bhp_review_ask_copy_matches_delay()` exists to halt.
  */
 if ( ! defined( 'BHP_REVIEW_ASK_WEB_DELAY_DAYS' ) ) {
-	define( 'BHP_REVIEW_ASK_WEB_DELAY_DAYS', 10 );
+	define( 'BHP_REVIEW_ASK_WEB_DELAY_DAYS', 14 );
 }
 
 /**
@@ -994,16 +1033,78 @@ function bhp_review_ask_in_send_window( $now = 0 ) {
  *
  * @return int
  */
-function bhp_review_ask_daily_cap() {
+function bhp_review_ask_daily_cap( $lane = '' ) {
+	$lane = in_array( (string) $lane, array( 'visit', 'web' ), true ) ? (string) $lane : '';
+
 	/**
-	 * Filter the maximum review asks sent per calendar day.
+	 * Filter the maximum review asks sent per calendar day, per lane.
 	 *
 	 * @since 1.19.317
-	 * @param int $cap Default 5.
+	 * @since 1.19.369 `$lane` added. '' means "the shared default".
+	 * @param int    $cap  Default 10.
+	 * @param string $lane 'visit', 'web' or ''.
 	 */
-	$cap = (int) apply_filters( 'bhp_review_ask_daily_cap', BHP_REVIEW_ASK_DEFAULT_DAILY_CAP );
+	$cap = (int) apply_filters( 'bhp_review_ask_daily_cap', BHP_REVIEW_ASK_DEFAULT_DAILY_CAP, $lane );
 
-	return $cap > 0 ? $cap : BHP_REVIEW_ASK_DEFAULT_DAILY_CAP;
+	/*
+	 * ⛔⛔ 1.19.369 · ZERO NOW MEANS ZERO. SUPERSEDED LINE, PRESERVED RATHER
+	 *     THAN DELETED: `return $cap > 0 ? $cap : BHP_REVIEW_ASK_DEFAULT_DAILY_CAP;`
+	 *
+	 * ⭐ WHY IT CHANGED. Under the old line a filter returning 0 was silently
+	 *    replaced by the DEFAULT, so there was no way to stop one lane without
+	 *    stopping the engine — and, worse, an operator who filtered the cap to
+	 *    0 believing they had paused the web lane would have got five sends.
+	 *    A cap of 0 is now an honest per-lane pause.
+	 *
+	 * ⚠ IT FAILS IN THE SAFE DIRECTION. The change can only make the engine
+	 *   send FEWER emails than before, never more, and a negative is clamped to
+	 *   0 rather than treated as unlimited.
+	 */
+	return max( 0, $cap );
+}
+
+/**
+ * How many sends have gone out today ON ONE LANE, from the ledger.
+ *
+ * ⭐⭐ 1.19.369 · COUNTED FROM THE SEND LOG, WHICH HAS RECORDED `lane` ON EVERY
+ *     ROW SINCE 1.19.317. Nothing had to be back-filled and no new option row
+ *     was created: the data was already there, unread.
+ *
+ * ⚠ THE LOG IS CAPPED AT 500 ROWS. At ten per lane per day that is fifty days
+ *   of history, so a same-day count can never fall off the end. ⛔ If the cap
+ *   is ever raised past 250 per lane per day, this stops being true and the
+ *   count must move to the stats option.
+ *
+ * @since 1.19.369
+ * @param string $lane 'visit' or 'web'.
+ * @return int
+ */
+function bhp_review_ask_sent_today_in_lane( $lane ) {
+	$lane  = (string) $lane;
+	$today = current_time( 'Y-m-d' );
+	$count = 0;
+
+	foreach ( bhp_review_ask_log() as $row ) {
+		if ( ! is_array( $row ) || empty( $row['sent_at'] ) ) {
+			continue;
+		}
+
+		if ( 0 !== strpos( (string) $row['sent_at'], $today ) ) {
+			continue;
+		}
+
+		/*
+		 * ⚠ A ROW WITH NO `lane` IS COUNTED AGAINST BOTH LANES, deliberately.
+		 *   It is a pre-1.19.317 row or a row written by something else, and
+		 *   the safe reading of an unknown send is "it happened", not "it did
+		 *   not". Over-counting delays an email; under-counting sends one.
+		 */
+		if ( ! isset( $row['lane'] ) || $lane === (string) $row['lane'] ) {
+			$count++;
+		}
+	}
+
+	return $count;
 }
 
 /**
@@ -1289,8 +1390,21 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 	 *    exactly that reason. This is the branch the docblock on
 	 *    `bhp_review_ask_copy_touch2()` anticipated in 1.19.362.
 	 */
+	/*
+	 * ⭐⭐ 1.19.369 · VERB AGREEMENT. Seal 994, *"Always use names when we
+	 *     can"*, means an order naming two children now renders both names,
+	 *     and *"Ava and Noah has had"* is a broken sentence. The verb is
+	 *     chosen from the same count that produced the phrase.
+	 *
+	 * ⚠ THIS IS NOT NEW COPY. It is Merry's own approved sentence with its
+	 *   verb made to agree with its own subject; no word is added and none is
+	 *   removed. The singular branch is byte-identical to 1.19.365.
+	 */
+	$has_had = bhp_review_ask_child_verb( $order, __( 'has had', 'brave-hearts' ), __( 'have had', 'brave-hearts' ) );
+
 	$opener = $named
-		? sprintf( __( '{ChildFirstName} has had {BookTitle} %s.', 'brave-hearts' ), $when )
+		/* translators: 1: has had / have had, 2: time phrase */
+		? sprintf( __( '{ChildFirstName} %1$s {BookTitle} %2$s.', 'brave-hearts' ), $has_had, $when )
 		: sprintf( __( 'Your reader has had {BookTitle} %s.', 'brave-hearts' ), $when );
 
 	return array(
@@ -1417,24 +1531,54 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		 *    <strong>, so these words are bolder in the email than on the page.
 		 *    That is a RENDERING deviation, reported not hidden. The words are
 		 *    Merry's, unchanged.
+		 *
+		 * ⛔⛔ SUPERSEDED 2026-09-05 BY THE ROUND-8 BRIEF (seal 998 verdict),
+		 *     PRESERVED VERBATIM RATHER THAN DELETED:
+		 *
+		 *       'links_lead' => 'Tap the stars that fit, then two or three
+		 *                        honest sentences on the next page.'
+		 *
+		 *     The brief replaces it with the `stars_caption` line below, in
+		 *     BODY TEXT rather than bold, because the bolded lead was the
+		 *     rendering deviation this very comment flagged. `links_lead` is
+		 *     now empty, which both templates already render conditionally
+		 *     (1.19.362), so nothing prints an empty <strong>.
 		 */
-		'links_lead'      => __( 'Tap the stars that fit, then two or three honest sentences on the next page.', 'brave-hearts' ),
+		'links_lead'      => '',
+
+		/*
+		 * ⭐⭐ 1.19.369 · THE CAPTION UNDER THE ROW. Round 8 brief, item 1,
+		 *     supplied verbatim: *"Tap a star to rate {BookTitle}. Then two or
+		 *     three honest sentences on the next page."*
+		 *
+		 * ⛔ IT IS NOT AN INVENTED SENTENCE AND IT IS NOT MERRY'S EITHER: it
+		 *    arrived in the brief as the exact string to ship, which is the
+		 *    same route every other locked string in this file took. It says
+		 *    what the row is for, which the row can no longer say for itself
+		 *    now that the five text labels are gone.
+		 */
+		'stars_caption'   => __( 'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
 
 		/*
 		 * ⭐ ONE LINK, THE SAME DESTINATION THE FIVE STARS POINT AT.
 		 *
-		 * ⚠ V2 §2's body shows only [STAR ROW] and no separate link line. The
-		 *   link is kept for two reasons, both reported rather than assumed:
-		 *   (a) `bhp_review_ask_copy_is_usable()` requires a non-empty `links`
-		 *   array, and relaxing a send gate to match a layout preference is the
-		 *   wrong trade; (b) the star row is a five-cell table, and a client
-		 *   that flattens tables would otherwise leave the reader no way
-		 *   through. It is the SAME page as all five stars, so *"one
-		 *   destination"* holds.
+		 * ⛔⛔ 1.19.369 · THE LABEL IS NO LONGER THE BARE TITLE. Round 8 brief:
+		 *     *"Remove the bare title link line under the block (or make it
+		 *     'Or open the review page' if copy_is_usable needs a link)."*
+		 *     ⚠ IT DOES NEED ONE — `bhp_review_ask_copy_is_usable()` requires a
+		 *     non-empty `links` array with a label and a url on every entry,
+		 *     and relaxing a send gate to match a layout preference is the
+		 *     wrong trade. So the line stays and reads as what it is.
+		 *
+		 * ⭐ AND IT EARNS ITS PLACE TWICE OVER NOW THE STARS ARE IMAGES: a
+		 *    reader whose client blocks images sees five alt-text links and
+		 *    this one plain link, which is a working email either way.
+		 *
+		 * ⛔ SUPERSEDED, PRESERVED: 'label' => '{BookTitle}'.
 		 */
 		'links'           => array(
 			array(
-				'label' => '{BookTitle}',
+				'label' => __( 'Or open the review page', 'brave-hearts' ),
 				'url'   => '{ReviewLink}',
 			),
 		),
@@ -1469,9 +1613,16 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		 * ⚠ D-6 AGAIN, AND IT IS A PROMISE IN HIS NAME. *"I answer every one."*
 		 *   Merry's template carries it as a P.S.; ship it only if he will
 		 *   actually do it, on an email the store sends without him.
+		 *
+		 * ⭐ 1.19.369 · VERB AGREEMENT, same rule as the opener. Two children
+		 *    *"have a question"*; one *"has a question"*. No word added.
 		 */
 		'postscript'      => $named
-			? __( 'P.S. If {ChildFirstName} has a question about the book, hit reply. I answer every one.', 'brave-hearts' )
+			/* translators: %s: has / have */
+			? sprintf(
+				__( 'P.S. If {ChildFirstName} %s a question about the book, hit reply. I answer every one.', 'brave-hearts' ),
+				bhp_review_ask_child_verb( $order, __( 'has', 'brave-hearts' ), __( 'have', 'brave-hearts' ) )
+			)
 			: __( 'P.S. If your reader has a question about the book, hit reply. I answer every one.', 'brave-hearts' ),
 
 		'optout_lead'     => __( 'If you would rather not get a message like this again,', 'brave-hearts' ),
@@ -1518,10 +1669,16 @@ function bhp_review_ask_copy_web_touch1() {
 		'lane'            => 'web',
 
 		/*
-		 * ⚠ ONE DELAY, AND THE BODY IS TRUE AT IT. *"for a week or so now"* is
-		 *   loose enough to hold at 10 days and would still hold at 7 if Andrew
-		 *   settles CYCLE179-MKT-34 the other way, so the copy does not have to
-		 *   move when the number does. The interlock still checks it.
+		 * ⚠ ONE DELAY, AND THE BODY IS TRUE AT IT. At 1.19.369 that delay is
+		 *   **14** and the body says *"for a couple of weeks now"*.
+		 *
+		 * ⛔ SUPERSEDED NOTE, PRESERVED VERBATIM: *"for a week or so now is
+		 *    loose enough to hold at 10 days and would still hold at 7 if
+		 *    Andrew settles CYCLE179-MKT-34 the other way, so the copy does not
+		 *    have to move when the number does."* ⚠ THAT REASONING EXPIRED THE
+		 *    MOMENT THE NUMBER BECAME 14: *"a week or so"* is not true a
+		 *    fortnight after the book arrived, so the sentence moved with the
+		 *    constant. The interlock still checks the pair.
 		 */
 		'delay_days'      => array( BHP_REVIEW_ASK_WEB_DELAY_DAYS ),
 
@@ -1543,19 +1700,38 @@ function bhp_review_ask_copy_web_touch1() {
 		 * ⭐ V2 §4 BODY, VERBATIM. The greeting is rendered by the templates.
 		 */
 		'body_before'     => array(
-			__( 'Your reader has had {BookTitle} for a week or so now. It went out in the mail, so I never got to see who opened it.', 'brave-hearts' ),
+			/*
+			 * ⛔ 1.19.369 · ONE PHRASE CHANGED, AND ONLY BECAUSE THE NUMBER
+			 *    DID. Round 8 brief, item 4: *"the opening phrase becomes 'for
+			 *    a couple of weeks now'"*. SUPERSEDED, PRESERVED VERBATIM:
+			 *
+			 *      "Your reader has had {BookTitle} for a week or so now. It
+			 *       went out in the mail, so I never got to see who opened it."
+			 *
+			 *    Every other word of Merry's V2 §4 sentence is untouched.
+			 */
+			__( 'Your reader has had {BookTitle} for a couple of weeks now. It went out in the mail, so I never got to see who opened it.', 'brave-hearts' ),
 			__( 'Would you rate it? It takes about ten seconds, and if you have another minute after that, two or three honest sentences would help the next parent decide. Honest is the useful part.', 'brave-hearts' ),
 		),
 
 		'question'        => '',
 		'body_middle'     => array(),
 
-		// ⭐ V2's post-star-row line. ⚠ Renders bold; see the visit set's note.
-		'links_lead'      => __( 'Tap the stars that fit, then two or three honest sentences on the next page.', 'brave-hearts' ),
+		/*
+		 * ⛔ 1.19.369 · EMPTIED. SUPERSEDED, PRESERVED VERBATIM:
+		 *      'links_lead' => 'Tap the stars that fit, then two or three
+		 *                       honest sentences on the next page.'
+		 *    Replaced by `stars_caption`, in body text. See the visit set.
+		 */
+		'links_lead'      => '',
 
+		// ⭐ 1.19.369 · the caption under the row. Round 8 brief, item 1.
+		'stars_caption'   => __( 'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
+
+		// ⛔ 1.19.369 · SUPERSEDED LABEL, PRESERVED: '{BookTitle}'.
 		'links'           => array(
 			array(
-				'label' => '{BookTitle}',
+				'label' => __( 'Or open the review page', 'brave-hearts' ),
 				'url'   => '{ReviewLink}',
 			),
 		),
@@ -1610,6 +1786,25 @@ function bhp_review_ask_copy_web_touch1() {
  *    thanks. V2 §3: *"That is the difference between no pressure and polite
  *    pressure."* It is in `body_after`, which renders above the signoff.
  *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⚠⚠ 1.19.369 · ITEM 3 OF THE ROUND-8 BRIEF ASKS FOR VERB AGREEMENT *"in
+ *    touch 1 AND touch 2"*. IT IS DONE IN TOUCH 1 AND IS A NO-OP HERE, AND
+ *    THAT IS REPORTED RATHER THAN QUIETLY SKIPPED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THIS SET NAMES NO CHILD. There is no `{ChildFirstName}` anywhere in
+ *    Merry's V2 §3 body, on purpose — §4 says that is the reason ONE set can
+ *    serve both lanes (*"it names no school and no child, so there is nothing
+ *    to differ about"*). With no subject there is no verb to make agree.
+ *
+ * ⛔ AND NO NAME WAS ADDED TO FIND ONE. Writing *"If {ChildFirstName} liked
+ *    it"* into this set would be inventing customer-facing copy in an email
+ *    whose copy is locked (Standing Rules §9). ⭐ The machinery is in place —
+ *    `bhp_review_ask_child_verb()` and the `{ChildFirstName}` slot resolve
+ *    correctly for a two-child order the moment approved touch-2 copy carries
+ *    one. That is a copy decision for Andrew, and it is in the deliverable as
+ *    an open item, not a silent omission.
+ *
  * @return array
  */
 function bhp_review_ask_copy_touch2() {
@@ -1650,12 +1845,20 @@ function bhp_review_ask_copy_touch2() {
 		'question'        => '',
 		'body_middle'     => array(),
 
-		// ⭐ V2's post-star-row line. ⚠ Renders bold; see the visit set's note.
-		'links_lead'      => __( 'Tap the stars that fit, then two or three honest sentences on the next page.', 'brave-hearts' ),
+		/*
+		 * ⛔ 1.19.369 · EMPTIED. SUPERSEDED, PRESERVED VERBATIM:
+		 *      'links_lead' => 'Tap the stars that fit, then two or three
+		 *                       honest sentences on the next page.'
+		 */
+		'links_lead'      => '',
 
+		// ⭐ 1.19.369 · the caption under the row. Round 8 brief, item 1.
+		'stars_caption'   => __( 'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
+
+		// ⛔ 1.19.369 · SUPERSEDED LABEL, PRESERVED: '{BookTitle}'.
 		'links'           => array(
 			array(
-				'label' => '{BookTitle}',
+				'label' => __( 'Or open the review page', 'brave-hearts' ),
 				'url'   => '{ReviewLink}',
 			),
 		),
@@ -1922,40 +2125,56 @@ function bhp_review_ask_copy_matches_delay( $touch = 1, $order = null ) {
  * The child's first name for this order, or the neutral fallback.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⚠⚠ NO CHILD-NAME ORDER META KEY HAS BEEN VERIFIED TO EXIST. STATED PLAINLY
- *    RATHER THAN IMPLIED BY A HOPEFUL `get_meta()` CALL.
+ * ⭐⭐ 1.19.369 · THE KEY IS NO LONGER A GUESS, AND TWO CHILDREN ARE NO LONGER
+ *     THROWN AWAY. ANDREW, SEAL 994: *"Always use names when we can."*
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * The school-visit checkout flow is owned by the BUNDLE PLUGIN, which is not
- * in this repository, and this build could not reach either environment to
- * read a real order's meta (the session's SSH permission was denied; recorded
- * in the workstream report). The keys tried below are therefore CANDIDATES,
- * not confirmed fields, and the function is written so that finding none of
- * them is the ordinary case rather than an error.
+ * ⛔ SUPERSEDED WARNING, PRESERVED VERBATIM RATHER THAN DELETED, because a
+ *    reader who knows 1.19.362 will look for it:
  *
- * ⭐ THE FALLBACK IS THE BRIEF'S OWN WORD, `your reader`, and it is what
- *    Gimli's 16 hand-built drafts already used for the two orders with two
- *    children on them (`Business OS\ANDREW-REVIEW\2026-09-05\REVIEW-ASKS\
- *    SUMMARY.md`). So the automated note and the hand-sent note say the same
- *    thing in the same situation.
+ *      "⚠⚠ NO CHILD-NAME ORDER META KEY HAS BEEN VERIFIED TO EXIST. STATED
+ *       PLAINLY RATHER THAN IMPLIED BY A HOPEFUL get_meta() CALL. ... The
+ *       keys tried below are therefore CANDIDATES, not confirmed fields."
+ *
+ * ⭐ IT IS CONFIRMED NOW. `_bhp_school_visit_child_name` is declared by the
+ *    bundle plugin as `BHP_SCHOOL_VISIT_META_CHILD`
+ *    (`plugins/brave-hearts-bundle-pricing/includes/school-visit-fields.php`
+ *    line 159) and was read on PRODUCTION ORDER 612, where it holds two
+ *    children as a COMMA-SEPARATED string ("A, B"). That observation is
+ *    carried into this build from the round-8 brief; ⚠ THIS DESK DID NOT
+ *    RE-READ ORDER 612 ITSELF IN THIS SESSION and says so.
+ *
+ * ⛔ SUPERSEDED BEHAVIOUR, ALSO PRESERVED: 1.19.362 detected a comma or an
+ *    "and" and BROKE OUT, handing back `your reader`. That was the right
+ *    call while the field was unverified and the copy had one verb form. It
+ *    is the wrong call now: it silently discarded exactly the two orders in
+ *    sixteen that name two children, which is the opposite of seal 994.
+ *
+ * ⭐ THE LIST IS BUILT, NOT THE FIRST TOKEN. One child renders "A", two "A and
+ *    B", three "A, B and C". ⛔ NO OXFORD COMMA, matching every other list in
+ *    this store's email copy ("real places, wildlife, science").
+ *
+ * ⚠ THE FALLBACK STILL EXISTS AND IS STILL `your reader`, but it now fires
+ *   ONLY when the meta is empty or holds nothing name-shaped. A parent whose
+ *   order carries no child name reads exactly what they read before.
  *
  * ⛔ NO NAME IS EVER DERIVED FROM THE BILLING NAME. The billing name is the
  *    PARENT. Addressing a parent's own first name to their child is a mistake
  *    a reader notices immediately and never forgets.
  *
+ * @since 1.19.369
  * @param WC_Order|mixed $order Order.
- * @return string
+ * @return string[] First names, in the order the field lists them. May be empty.
  */
-function bhp_review_ask_child_first_name( $order ) {
-	$name = '';
+function bhp_review_ask_child_names( $order ) {
+	$names = array();
 
 	if ( $order instanceof WC_Order ) {
 		/**
 		 * Filter the order meta keys searched for a child's first name.
 		 *
-		 * ⚠ UNVERIFIED CANDIDATES. Replace with the real key once somebody has
-		 *   read a live visit order over SSH. Until then the fallback runs and
-		 *   the email is still correct, just less personal.
+		 * ⭐ THE FIRST TWO ARE THE BUNDLE PLUGIN'S OWN. The rest are legacy
+		 *    candidates from 1.19.362 and cost nothing to keep.
 		 *
 		 * @since 1.19.362
 		 * @param string[] $keys Meta keys, in priority order.
@@ -1964,7 +2183,7 @@ function bhp_review_ask_child_first_name( $order ) {
 			'bhp_review_ask_child_name_meta_keys',
 			array(
 				'_bhp_school_visit_child_first_name',
-				'_bhp_school_visit_child_name',
+				defined( 'BHP_SCHOOL_VISIT_META_CHILD' ) ? BHP_SCHOOL_VISIT_META_CHILD : '_bhp_school_visit_child_name',
 				'_bhp_child_first_name',
 				'_bhp_child_name',
 			)
@@ -1978,36 +2197,97 @@ function bhp_review_ask_child_first_name( $order ) {
 			}
 
 			/*
-			 * ⭐ FIRST TOKEN ONLY, and only when it looks like a name. A field
-			 *   holding "Ava and Noah" (the two-children case Gimli hit twice
-			 *   in sixteen orders) would otherwise render "Ava and Noah has had
-			 *   a few nights with it". ⛔ Two children is exactly the case the
-			 *   fallback exists for, so it is detected and handed back.
+			 * ⭐ SPLIT ON COMMA, "and", "&" AND "+". Order 612 uses a comma;
+			 *    a parent typing the box by hand may well use any of them.
 			 */
-			if ( preg_match( '/\b(and|&|\+|,)\b/i', $raw ) || false !== strpos( $raw, ',' ) ) {
-				break;
+			$parts = preg_split( '/\s*(?:,|;|\+|&|\band\b)\s*/i', $raw );
+			$parts = is_array( $parts ) ? $parts : array();
+
+			foreach ( $parts as $part ) {
+				$tokens = preg_split( '/\s+/', trim( (string) $part ) );
+				$first  = isset( $tokens[0] ) ? trim( (string) $tokens[0] ) : '';
+
+				/*
+				 * ⛔ FIRST TOKEN OF EACH ENTRY, and only when it is
+				 *    name-shaped. "Ava Smith" is Ava; "N/A", "2" and "" are
+				 *    nothing at all.
+				 */
+				if ( '' !== $first && preg_match( "/^[\p{L}][\p{L}'\-]*$/u", $first ) && ! in_array( $first, $names, true ) ) {
+					$names[] = $first;
+				}
 			}
 
-			$parts = preg_split( '/\s+/', $raw );
-			$first = isset( $parts[0] ) ? trim( (string) $parts[0] ) : '';
-
-			if ( '' !== $first && preg_match( "/^[\p{L}][\p{L}'\-]*$/u", $first ) ) {
-				$name = $first;
+			if ( ! empty( $names ) ) {
 				break;
 			}
 		}
 	}
 
 	/**
-	 * Filter the child first name used in review-ask copy.
+	 * Filter the child first names used in review-ask copy.
 	 *
-	 * @since 1.19.362
-	 * @param string        $name  Resolved name, or '' when none is known.
+	 * @since 1.19.369
+	 * @param string[]      $names Resolved names, possibly empty.
 	 * @param WC_Order|null $order Order.
 	 */
-	$name = trim( (string) apply_filters( 'bhp_review_ask_child_first_name', $name, $order ) );
+	$names = (array) apply_filters( 'bhp_review_ask_child_names', $names, $order );
 
-	return '' !== $name ? $name : BHP_REVIEW_ASK_CHILD_FALLBACK;
+	return array_values( array_filter( array_map( 'strval', $names ), 'strlen' ) );
+}
+
+/**
+ * How many children this order names.
+ *
+ * @since 1.19.369
+ * @param WC_Order|mixed $order Order.
+ * @return int
+ */
+function bhp_review_ask_child_count( $order ) {
+	return count( bhp_review_ask_child_names( $order ) );
+}
+
+/**
+ * The child name (or names) as one readable phrase, or the neutral fallback.
+ *
+ * ⭐ "A" · "A and B" · "A, B and C". ⛔ No Oxford comma.
+ *
+ * @param WC_Order|mixed $order Order.
+ * @return string
+ */
+function bhp_review_ask_child_first_name( $order ) {
+	$names = bhp_review_ask_child_names( $order );
+
+	if ( empty( $names ) ) {
+		/**
+		 * Filter the child first name used in review-ask copy.
+		 *
+		 * ⚠ KEPT FOR BACK COMPATIBILITY. It still receives '' when nothing is
+		 *   known, exactly as in 1.19.362, so an existing override keeps
+		 *   working. A filter that wants to supply two names should use
+		 *   `bhp_review_ask_child_names` instead.
+		 *
+		 * @since 1.19.362
+		 * @param string        $name  Resolved name, or '' when none is known.
+		 * @param WC_Order|null $order Order.
+		 */
+		$name = trim( (string) apply_filters( 'bhp_review_ask_child_first_name', '', $order ) );
+
+		return '' !== $name ? $name : BHP_REVIEW_ASK_CHILD_FALLBACK;
+	}
+
+	if ( 1 === count( $names ) ) {
+		$phrase = $names[0];
+	} else {
+		$copy = $names;
+		$last = array_pop( $copy );
+		/* translators: 1: comma separated list of names, 2: last name */
+		$phrase = sprintf( __( '%1$s and %2$s', 'brave-hearts' ), implode( ', ', $copy ), $last );
+	}
+
+	/** This filter is documented above. */
+	$phrase = trim( (string) apply_filters( 'bhp_review_ask_child_first_name', $phrase, $order ) );
+
+	return '' !== $phrase ? $phrase : BHP_REVIEW_ASK_CHILD_FALLBACK;
 }
 
 /**
@@ -2021,6 +2301,29 @@ function bhp_review_ask_child_first_name_is_known( $order ) {
 }
 
 /**
+ * Pick the verb form that agrees with this order's child name phrase.
+ *
+ * ⛔⛔ THIS IS WHY THE NAMES CANNOT SIMPLY BE CONCATENATED INTO THE OLD
+ *     SENTENCE. *"Ava and Noah has had The Amazon for about a week now"* is
+ *     not a personalised email, it is a broken one, and a parent reading their
+ *     own two children's names in a sentence that does not parse notices
+ *     immediately. Every string that carries `{ChildFirstName}` next to a verb
+ *     composes that verb through this function.
+ *
+ * ⚠ THE FALLBACK PHRASE `your reader` IS SINGULAR, so no-name orders take the
+ *   singular branch, which is what they took before this function existed.
+ *
+ * @since 1.19.369
+ * @param WC_Order|mixed $order    Order.
+ * @param string         $singular Form for one child (or the fallback).
+ * @param string         $plural   Form for two or more.
+ * @return string
+ */
+function bhp_review_ask_child_verb( $order, $singular, $plural ) {
+	return ( bhp_review_ask_child_count( $order ) >= 2 ) ? (string) $plural : (string) $singular;
+}
+
+/**
  * The school name for a visit order, from the registry.
  *
  * ⛔ THE REGISTRY'S OWN `school` VALUE, NEVER THE SLUG PRETTIFIED. Merry's
@@ -2031,7 +2334,33 @@ function bhp_review_ask_child_first_name_is_known( $order ) {
  * @return string School name, or '' when unknown.
  */
 function bhp_review_ask_school_name( $order ) {
-	$slug = bhp_review_ask_is_visit_order( $order ) ? bhp_visit_email_order_slug( $order ) : '';
+	if ( ! bhp_review_ask_is_visit_order( $order ) ) {
+		return '';
+	}
+
+	/*
+	 * ⭐⭐ 1.19.369 · THE ORDER'S OWN META FIRST. Round 8 brief, item 2:
+	 *     *"{SchoolName} from `_bhp_school_visit_school`"*. The bundle plugin
+	 *     writes it at checkout (`BHP_SCHOOL_PICKUP_META_SCHOOL`,
+	 *     `school-visit-pickup.php` line 367), which makes it a fact ABOUT THE
+	 *     ORDER rather than a fact about a registry row that may since have
+	 *     been renamed, re-keyed or removed. ⛔ A registry the site forgets is
+	 *     the one failure mode that turns *"the reason I drove out to {School}"*
+	 *     into *"the reason I drove out to ."*.
+	 *
+	 * ⚠ THE REGISTRY IS STILL THE FALLBACK, not the other way round, and an
+	 *   order written before the meta existed still resolves through it.
+	 */
+	if ( $order instanceof WC_Order ) {
+		$meta_key = defined( 'BHP_SCHOOL_PICKUP_META_SCHOOL' ) ? BHP_SCHOOL_PICKUP_META_SCHOOL : '_bhp_school_visit_school';
+		$school   = trim( wp_strip_all_tags( (string) $order->get_meta( $meta_key ) ) );
+
+		if ( '' !== $school ) {
+			return $school;
+		}
+	}
+
+	$slug = bhp_visit_email_order_slug( $order );
 
 	if ( '' === $slug || ! function_exists( 'bhp_school_visit_records' ) ) {
 		return '';
@@ -2186,9 +2515,86 @@ function bhp_review_ask_merge_is_complete( $copy, $order ) {
  * ⛔ NO COUNT, NO AVERAGE, NO "JOIN N OTHER PARENTS". None exists to quote and
  *    inventing one is the never-invent rule.
  *
- * ⭐ DESCENDING, 5 TO 1, matching the site form's own order. Convention, not
- *    emphasis — the page the reader lands on lists them the same way.
+ * ⛔⛔ SUPERSEDED 2026-09-05 BY ANDREW, SEAL 998, PRESERVED RATHER THAN
+ *     DELETED: *"⭐ DESCENDING, 5 TO 1, matching the site form's own order.
+ *     Convention, not emphasis — the page the reader lands on lists them the
+ *     same way."* The row is now ASCENDING, 1 TO 5, LEFT TO RIGHT, because
+ *     seal 998 says so in words: *"The stars look terrible, they should show
+ *     up just link an amazon review. 5 stars in a row from left to right."*
+ *
+ * ⚠ THE SITE FORM IS UNCHANGED. `bhp_review_star_labels()` still returns
+ *   5..1 and `template-parts/reviews/review-form.php` still renders that
+ *   order with its five text labels. Only the EMAIL row was reordered, and
+ *   only the EMAIL dropped the labels. Round 8 brief, item 1, verbatim:
+ *   *"Remove the five text labels from the email; keep the site form's labels
+ *   as they are."*
+ *
+ * ⭐ AND THE ROW IS NOW FIVE IDENTICAL STARS, NOT FIVE DIFFERENT PILES OF
+ *    GLYPHS. Rule 1 above is satisfied MORE strictly than before, not less:
+ *    every cell now carries the same image, the same padding and the same tap
+ *    target, so there is nothing left that could steer toward five. ⚠ What is
+ *    LOST is that the rating is no longer stated in visible text next to each
+ *    star; it survives in the `alt` attribute ("1 star" ... "5 stars") and in
+ *    the plain-text part, which is how Amazon's own row works. Reported, not
+ *    hidden — see the deliverable.
  * ====================================================================== */
+
+/**
+ * Absolute URL of the gold star used in the email row.
+ *
+ * ⛔⛔ AN IMAGE, NOT A UNICODE GLYPH, AND THIS REVERSES A 1.19.364 DECISION.
+ *     The superseded reasoning is preserved in the HTML template. Seal 998
+ *     is the ruling; the mechanism is that U+2605 is rendered by Gmail's
+ *     Android and iOS clients as a colour EMOJI and by several Outlook
+ *     builds as a box, so a "row of five stars" was never reliably a row of
+ *     five stars. A PNG is the same picture everywhere it is not blocked,
+ *     and where it IS blocked the `alt` text is the fallback.
+ *
+ * ⭐ SHIPPED IN THE THEME, at 2x (64px) and rendered at 32px, so it is crisp
+ *    on a retina phone. ⛔ NOT a CDN, not a data: URI (Gmail strips those in
+ *    <img src>), not an attachment.
+ *
+ * @since 1.19.369
+ * @return string Absolute URL, or '' when the file is missing.
+ */
+function bhp_review_ask_star_image_url() {
+	$rel = '/assets/images/email/review-star-gold@2x.png';
+
+	if ( ! file_exists( get_template_directory() . $rel ) ) {
+		return '';
+	}
+
+	/**
+	 * Filter the star image used in the review-ask email.
+	 *
+	 * @since 1.19.369
+	 * @param string $url Absolute URL.
+	 */
+	return (string) apply_filters( 'bhp_review_ask_star_image_url', get_template_directory_uri() . $rel );
+}
+
+/**
+ * The short alt text for one star.
+ *
+ * ⛔ "1 star" / "N stars", NOT the site form's descriptive label. The alt of
+ *    a link IS its accessible name, and "5 stars: loved it" as five separate
+ *    accessible names turns a rating row into five sales pitches. The brief
+ *    names these five strings exactly.
+ *
+ * @since 1.19.369
+ * @param int $rating 1..5.
+ * @return string
+ */
+function bhp_review_ask_star_alt( $rating ) {
+	$rating = (int) $rating;
+
+	if ( 1 === $rating ) {
+		return __( '1 star', 'brave-hearts' );
+	}
+
+	/* translators: %d: star rating, 2 to 5 */
+	return sprintf( __( '%d stars', 'brave-hearts' ), $rating );
+}
 
 /**
  * The five star links for this order's first chapter book.
@@ -2205,8 +2611,9 @@ function bhp_review_ask_merge_is_complete( $copy, $order ) {
  *   it and still work; the reader just types their own name, as they do today.
  *
  * @since 1.19.364
+ * @since 1.19.369 Ascending 1..5, plus `alt` and `image`.
  * @param WC_Order|mixed $order Order.
- * @return array<int,array> Rows of rating, label, url — 5 first.
+ * @return array<int,array> Rows of rating, label, alt, url, image — 1 first.
  */
 function bhp_review_ask_star_row( $order ) {
 	if ( ! function_exists( 'bhp_review_star_labels' ) || ! function_exists( 'bhp_review_star_url' ) ) {
@@ -2229,9 +2636,20 @@ function bhp_review_ask_star_row( $order ) {
 		);
 	}
 
-	$rows = array();
+	$rows  = array();
+	$image = bhp_review_ask_star_image_url();
 
-	foreach ( bhp_review_star_labels() as $rating => $label ) {
+	/*
+	 * ⭐ 1.19.369 · ASCENDING, LEFT TO RIGHT. `bhp_review_star_labels()` is
+	 *    the one declaration of the five ratings and their site-form labels
+	 *    and it is NOT edited (the page still reads 5 first); the row is
+	 *    reversed HERE, where the email is built. Seal 998.
+	 */
+	$labels = bhp_review_star_labels();
+
+	ksort( $labels, SORT_NUMERIC );
+
+	foreach ( $labels as $rating => $label ) {
 		$url = bhp_review_star_url( $key, (int) $rating, $token );
 
 		/*
@@ -2244,8 +2662,14 @@ function bhp_review_ask_star_row( $order ) {
 
 		$rows[] = array(
 			'rating' => (int) $rating,
+			// ⚠ KEPT, AND STILL THE SITE FORM'S OWN WORDING. Nothing in the
+			//   email renders it any more; the plain-text part uses `alt`.
+			//   It is carried so a future consumer (an admin preview, a
+			//   ledger row) can still say which label the page will show.
 			'label'  => (string) $label,
+			'alt'    => bhp_review_ask_star_alt( (int) $rating ),
 			'url'    => $url,
+			'image'  => $image,
 		);
 	}
 
@@ -3381,16 +3805,40 @@ function bhp_review_ask_run( $args = array() ) {
 		}
 	}
 
-	$cap       = bhp_review_ask_daily_cap();
-	$remaining = $cap - bhp_review_ask_sent_today();
+	/*
+	 * ⭐⭐ 1.19.369 · THE CAP IS PER LANE. Each lane gets its own budget for
+	 *     the day, so a web-lane backlog on switch-on cannot consume the
+	 *     budget the sixteen visit orders need. See the constant's docblock.
+	 *
+	 * ⚠ `--limit` STILL CAPS THE WHOLE RUN, not each lane. It is an operator
+	 *   safety valve ("send at most three this morning") and it would be
+	 *   surprising if it doubled.
+	 */
+	$bhp_lane_cap  = array(
+		'visit' => bhp_review_ask_daily_cap( 'visit' ),
+		'web'   => bhp_review_ask_daily_cap( 'web' ),
+	);
+	$bhp_lane_left = array(
+		'visit' => $bhp_lane_cap['visit'] - bhp_review_ask_sent_today_in_lane( 'visit' ),
+		'web'   => $bhp_lane_cap['web'] - bhp_review_ask_sent_today_in_lane( 'web' ),
+	);
+
+	$summary['lane_cap']       = $bhp_lane_cap;
+	$summary['lane_remaining'] = $bhp_lane_left;
+
+	$cap       = max( $bhp_lane_cap );
+	$remaining = max( 0, (int) $bhp_lane_left['visit'] ) + max( 0, (int) $bhp_lane_left['web'] );
 
 	if ( $args['limit'] > 0 ) {
 		$remaining = min( $remaining, (int) $args['limit'] );
 	}
 
+	$say( 'CAP: per lane, visit ' . $bhp_lane_cap['visit'] . ' (' . max( 0, $bhp_lane_left['visit'] ) . ' left today)'
+		. ' | web ' . $bhp_lane_cap['web'] . ' (' . max( 0, $bhp_lane_left['web'] ) . ' left today)' );
+
 	if ( $remaining <= 0 ) {
 		$summary['halted'] = 'daily_cap_reached';
-		$say( 'Daily cap of ' . $cap . ' already reached. Nothing sent.' );
+		$say( 'Daily cap of ' . $cap . ' per lane already reached on every lane. Nothing sent.' );
 		return $summary;
 	}
 
@@ -3527,6 +3975,27 @@ function bhp_review_ask_run( $args = array() ) {
 
 		$touch = bhp_review_ask_next_touch( $order );
 
+		/*
+		 * ⛔ 1.19.369 · THIS ORDER'S OWN LANE BUDGET. An exhausted lane skips
+		 *    the order by name rather than ending the run, so the OTHER lane
+		 *    still gets its morning. The reason is counted in the summary like
+		 *    any other decline.
+		 */
+		$bhp_lane = bhp_review_ask_lane( $order );
+
+		if ( isset( $bhp_lane_left[ $bhp_lane ] ) && $bhp_lane_left[ $bhp_lane ] <= 0 ) {
+			$summary['declined']['daily_cap_lane'] = isset( $summary['declined']['daily_cap_lane'] )
+				? $summary['declined']['daily_cap_lane'] + 1
+				: 1;
+
+			if ( $args['dry'] ) {
+				$say( 'DRY: SKIP order ' . $order->get_id() . ' | ' . $bhp_lane
+					. ' lane | REASON: daily_cap_lane (' . $bhp_lane_cap[ $bhp_lane ] . ' already used today)' );
+			}
+
+			continue;
+		}
+
 		if ( $args['dry'] ) {
 			$summary['orders'][] = array(
 				'order_id' => (int) $order->get_id(),
@@ -3536,8 +4005,9 @@ function bhp_review_ask_run( $args = array() ) {
 				'result'   => 'would_send',
 			);
 			$summary['sent']++;
+			$bhp_lane_left[ $bhp_lane ]--;
 			$say( 'DRY: would send TOUCH ' . $touch . ' for order ' . $order->get_id()
-				. ' (' . bhp_review_ask_lane( $order ) . ' lane, '
+				. ' (' . $bhp_lane . ' lane, '
 				. bhp_review_ask_chapter_book_count( $order ) . ' chapter book(s))' );
 
 			if ( $summary['sent'] >= $remaining ) {
@@ -3557,10 +4027,11 @@ function bhp_review_ask_run( $args = array() ) {
 
 		if ( $sent ) {
 			$summary['sent']++;
+			$bhp_lane_left[ $bhp_lane ]--;
 			$say( 'Sent review ask for order ' . $order->get_id() );
 
 			if ( $summary['sent'] >= $remaining ) {
-				$say( 'Daily cap reached for today.' );
+				$say( 'Daily cap reached for today on every lane.' );
 				break;
 			}
 		} else {
@@ -3936,14 +4407,17 @@ function bhp_review_ask_cli( $args, $assoc_args = array() ) {
 		$say( 'enabled:            ' . ( bhp_review_ask_is_enabled() ? 'yes' : 'NO' ) );
 		$say( 'visit delay 1 book: ' . BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK . ' days after the visit date' );
 		$say( 'visit delay 2+:     ' . BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK . ' days after the visit date' );
-		$say( 'web delay:          ' . bhp_review_ask_delay_days() . ' days after completion   ** PENDING ANDREW **' );
+		// ⛔ 1.19.369 · SUPERSEDED SUFFIX, PRESERVED: '   ** PENDING ANDREW **'.
+		//    Seal 994 settled the web delay at 14; conflict CYCLE179-MKT-34 is closed.
+		$say( 'web delay:          ' . bhp_review_ask_delay_days() . ' days after completion   (seal 994)' );
 		$say( 'touch 2 delay:      ' . BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS . ' days after touch 1' );
 		$say( 'send window:        ' . BHP_REVIEW_ASK_WINDOW_START_HOUR . ':00 to ' . BHP_REVIEW_ASK_WINDOW_END_HOUR . ':00 site-local; open right now: ' . ( bhp_review_ask_in_send_window() ? 'yes' : 'NO' ) );
 		$say( 'copy visit touch 1: ' . ( ! empty( bhp_review_ask_copy_visit_touch1()['approved'] ) ? 'APPROVED' : 'not approved - cannot send' ) );
 		$say( 'copy web touch 1:   ' . ( ! empty( bhp_review_ask_copy_web_touch1()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
 		$say( 'copy touch 2:       ' . ( ! empty( bhp_review_ask_copy_touch2()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
 		$say( 'copy day 0:         ' . ( function_exists( 'bhp_visit_email_copy_is_approved' ) && bhp_visit_email_copy_is_approved( BHP_VISIT_EMAIL_DEFAULT_KEY ) ? 'APPROVED (_default)' : '_default not approved' ) );
-		$say( 'daily cap:          ' . bhp_review_ask_daily_cap() );
+		// ⭐ 1.19.369 · PER LANE. Reported as two numbers because it is two budgets.
+		$say( 'daily cap:          ' . bhp_review_ask_daily_cap( 'visit' ) . ' visit lane (' . bhp_review_ask_sent_today_in_lane( 'visit' ) . ' used today) | ' . bhp_review_ask_daily_cap( 'web' ) . ' web lane (' . bhp_review_ask_sent_today_in_lane( 'web' ) . ' used today)' );
 		$say( 'postal address:     ' . ( bhp_review_ask_postal_address() ? bhp_review_ask_postal_address() : 'MISSING - sending is blocked' ) );
 		$say( 'excluded:           ' . count( bhp_review_ask_excluded_emails() ) );
 		$say( 'sent total:         ' . $stats['total'] );
@@ -4481,13 +4955,81 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
  * @param callable $say        Line logger.
  * @return void
  */
+
+/**
+ * The sixteen orders `migrate` must never mark. Seal 994.
+ *
+ * @since 1.19.369
+ * @return int[]
+ */
+function bhp_review_ask_migration_retired_orders() {
+	/**
+	 * Filter the orders the migration command refuses to touch.
+	 *
+	 * ⭐ THE SIXTEEN, EXACTLY AS THE ROUND-8 BRIEF LISTS THEM. They are the
+	 *    Dallas and Liberty visit orders that carried hand-built Gmail drafts.
+	 *    ⚠ THE LIST IS TRANSCRIBED FROM THE BRIEF; this desk did not re-read
+	 *    it off either environment in this session.
+	 *
+	 * @since 1.19.369
+	 * @param int[] $ids Order ids.
+	 */
+	return array_map(
+		'absint',
+		(array) apply_filters(
+			'bhp_review_ask_migration_retired_orders',
+			array( 612, 615, 620, 621, 624, 628, 634, 654, 716, 717, 730, 732, 737, 741, 770, 772 )
+		)
+	);
+}
+
+/**
+ * The retired migration command. See its docblock above.
+ *
+ * @param array    $assoc_args Associative args.
+ * @param callable $say        Line logger.
+ * @return void
+ */
 function bhp_review_ask_cli_migrate( $assoc_args, $say ) {
 	$spec      = isset( $assoc_args['orders'] ) ? (string) $assoc_args['orders'] : '';
 	$confirmed = ! empty( $assoc_args['confirmed-sent'] );
 	$apply     = ! empty( $assoc_args['apply'] );
 
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⛔⛔ 1.19.369 · THIS WHOLE COMMAND IS RETIRED FOR THE SIXTEEN. ANDREW,
+	 *     SEAL 994, VERBATIM: *"if we get this review engine started - Ill
+	 *     just delete the drafts and they should now be automated."*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ WHAT THAT RULING CHANGES. The command was written when the sixteen
+	 *    orders had hand-built Gmail drafts standing behind them and the only
+	 *    question was how to stop the engine double-asking. Andrew has now said
+	 *    he will DELETE those drafts, which makes the sixteen ORDINARY VISIT
+	 *    ORDERS with nothing to reconcile: the engine schedules them off the
+	 *    visit date like every other visit order, on 09-10, 09-11, 09-13 and
+	 *    09-14, with touch 2 four days after each.
+	 *
+	 * ⛔⛔ AND RUNNING THIS COMMAND ON THEM NOW WOULD BE THE DEFECT, NOT THE
+	 *     FIX. `external-pending-<date>` writes the SENT marker, which
+	 *     suppresses touch 1 forever and makes touch 2 decline
+	 *     `touch1_date_unknown`. One `--apply` against the list Gandalf was
+	 *     given in an earlier round would silently cancel the entire launch the
+	 *     go-live checklist is built around, and nothing downstream would say
+	 *     so — the run summary would simply report sixteen orders already
+	 *     marked. So the sixteen are refused BY ID, here, at the top.
+	 *
+	 * ⚠ THE COMMAND ITSELF IS KEPT, UNUSED AND DOCUMENTED, rather than deleted.
+	 *   It is the only tool that exists for the next genuinely hand-sent ask,
+	 *   and deleting a working reconciliation tool because today's list does
+	 *   not need it is how a future desk ends up writing meta by hand.
+	 */
+	$retired = bhp_review_ask_migration_retired_orders();
+
 	if ( '' === trim( $spec ) ) {
-		$say( 'Nothing to do. Pass --orders=612:2026-09-10,615:2026-09-10,...' );
+		$say( 'RETIRED PATH. Seal 994 made the sixteen visit orders ordinary engine orders; the hand drafts are being deleted.' );
+		$say( 'Nothing to do. This command now refuses orders ' . implode( ', ', $retired ) . '.' );
+		$say( 'For a genuinely hand-sent ask on some OTHER order: --orders=<id>:<YYYY-MM-DD>' );
 		return;
 	}
 
@@ -4506,6 +5048,16 @@ function bhp_review_ask_cli_migrate( $assoc_args, $say ) {
 
 		if ( ! $order_id || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
 			$say( 'SKIP  unparseable row: ' . $row );
+			continue;
+		}
+
+		/*
+		 * ⛔ THE HARD REFUSAL. See the docblock above and seal 994. It fires
+		 *    on a DRY RUN too, so nobody can read a dry manifest that promises
+		 *    a write this command will not perform.
+		 */
+		if ( in_array( $order_id, $retired, true ) ) {
+			$say( 'REFUSED order ' . $order_id . ' - seal 994 made it an ORDINARY visit order. Marking it would suppress touch 1 forever.' );
 			continue;
 		}
 

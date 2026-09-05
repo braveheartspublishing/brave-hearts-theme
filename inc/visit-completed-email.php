@@ -218,60 +218,62 @@ function bhp_visit_email_copy_sets() {
 	return array(
 
 		/*
-		 * ⭐⭐⭐ ADAMS ELEMENTARY, 2026-08-28. ANDREW'S OWN WORDS, APPROVED
-		 *      VERBATIM. Carrier item 377 ruling 1. The two accepted
-		 *      smoothings he signed off are "(or children, for a few
-		 *      families)" in paragraph two and "listened so well" in
-		 *      paragraph three.
+		 * =====================================================================
+		 * ⛔⛔ 1.19.369 · THE PER-SCHOOL SETS ARE RETIRED. THE ADAMS SET IS
+		 *     PRESERVED HERE AS A COMMENT AND IS NO LONGER AN ARRAY ENTRY, SO
+		 *     NOTHING CAN SELECT IT.
+		 * =====================================================================
 		 *
-		 * ⛔ "1st and 2nd Graders", "Mount Everest" and "all thirty or so of
-		 *    us" are ADAMS FACTS. They are true here and nowhere else, which
-		 *    is the entire reason this array is keyed by slug.
+		 * ANDREW, ROUND-8 BRIEF, ITEM 2: the engine and `wp bhp review-ask
+		 * test-send --set=day0` must use the approved GENERIC day-0 set for ANY
+		 * visit order, *"never the old per-school sets, which stay in comments as
+		 * superseded"*. This is that instruction, applied literally.
+		 *
+		 * ⭐ WHY IT IS SAFE AS WELL AS ORDERED. The Adams strings are ANDREW'S
+		 *    OWN WORDS about ONE morning: "1st and 2nd Graders", "Mount Everest",
+		 *    "all thirty or so of us", "listened so well". They were approved
+		 *    verbatim (carrier item 377 ruling 1) and they are TRUE OF ADAMS AND
+		 *    NOWHERE ELSE. Keying a live array by slug meant every future visit
+		 *    inherited the risk that a mis-keyed order met a claim about a room
+		 *    its child was never in. The generic set names no grade, no headcount,
+		 *    no book read aloud, no coloring page and no child's behaviour, and
+		 *    puts every school-specific fact in exactly one slot Andrew fills in
+		 *    himself: {VisitLine}.
+		 *
+		 * ⚠ WHAT IS LOST, STATED PLAINLY: a future Adams parent re-reading an
+		 *   old thread will not find these words again from this file, and the
+		 *   already-sent Adams emails are unaffected either way. Nothing is
+		 *   recalled, resent or rewritten by this change.
+		 *
+		 * ⛔ THE SUPERSEDED SET, VERBATIM, KEY `adams-2026-08-28`,
+		 *    approved => true, approved 2026-08-28, retired 2026-09-05:
+		 *
+		 *      subject:   "What an awesome group of 1st and 2nd Graders!"
+		 *      heading:   "The signed books are with the kiddos! Along with a
+		 *                  coloring book page."
+		 *      preheader: "Signed Books, Delivered, and ready to read."
+		 *      body:
+		 *        1. "What an awesome group of kiddos! We read from Mount Everest,
+		 *            practiced Stop, Breathe, Think, Act, and yelled I can do hard
+		 *            things together, all thirty or so of us!"
+		 *        2. "Your signed books went home with your child today (or
+		 *            children, for a few families), along with a coloring book
+		 *            page from the read aloud."
+		 *        3. "I also wanted to reach out and genuinely say thank you for
+		 *            raising such an awesome kiddo. Everyone in the group paid
+		 *            attention and listened so well."
+		 *        4. "Feel free to email me any time at
+		 *            Andrew@braveheartspublishing.com, once again thank you!"
+		 *
+		 * ⛔ AND THE PARAGRAPH 1.19.364 HAD ALREADY REMOVED FROM THAT SET UNDER
+		 *    SEAL 977, PRESERVED A SECOND TIME SO IT IS NOT RESTORED FROM AN OLD
+		 *    DRAFT:
+		 *
+		 *      "If they read the books and like them, there is a small thank you
+		 *       page with a QR code in the back. It goes to Amazon reviews. If you
+		 *       could write a review on the book/s it will help other early
+		 *       readers learn the lessons your little human got today."
 		 */
-		'adams-2026-08-28' => array(
-			'approved'  => true,
-			'subject'   => __( 'What an awesome group of 1st and 2nd Graders!', 'brave-hearts' ),
-			'heading'   => __( 'The signed books are with the kiddos! Along with a coloring book page.', 'brave-hearts' ),
-			'preheader' => __( 'Signed Books, Delivered, and ready to read.', 'brave-hearts' ),
-			'body'      => array(
-				__( 'What an awesome group of kiddos! We read from Mount Everest, practiced Stop, Breathe, Think, Act, and yelled I can do hard things together, all thirty or so of us!', 'brave-hearts' ),
-				__( 'Your signed books went home with your child today (or children, for a few families), along with a coloring book page from the read aloud.', 'brave-hearts' ),
-				__( 'I also wanted to reach out and genuinely say thank you for raising such an awesome kiddo. Everyone in the group paid attention and listened so well.', 'brave-hearts' ),
-				/*
-				 * ⛔⛔ 1.19.364 · THE REVIEW / AMAZON PARAGRAPH IS REMOVED FROM THIS
-				 *     APPROVED SET. ANDREW, SEAL 977, 2026-09-05, TWO RULINGS IN ONE
-				 *     SITTING: *"I want one destination not 2"* and *"I think the
-				 *     thank you email should be the day 0 email, the visit day email
-				 *     should be a warm ..."* — day 0 now asks for nothing at all.
-				 *
-				 * ⚠ THIS IS AN EDIT TO LOCKED PROSE (Standing Rules §9) AND IT IS
-				 *   MADE ONLY BECAUSE THE OWNER HIMSELF RULED THE SENTENCE OUT. It is
-				 *   a DELETION, not a rewording: not one surviving word of Andrew's
-				 *   own writing was touched, and nothing was written in its place.
-				 *
-				 * ⛔ THE REMOVED SENTENCE, PRESERVED VERBATIM RATHER THAN DELETED
-				 *    (approved 2026-08-28, superseded 2026-09-05 by seal 977):
-				 *
-				 *      "If they read the books and like them, there is a small thank
-				 *       you page with a QR code in the back. It goes to Amazon
-				 *       reviews. If you could write a review on the book/s it will
-				 *       help other early readers learn the lessons your little human
-				 *       got today."
-				 *
-				 * ⭐ AND IT IS NOT ONLY A PREFERENCE. Merry decoded the V6 bookmark QR
-				 *    first-hand on 2026-09-05 (`CYCLE179-MKT-REVIEW-SEQ-V2.md` §7): it
-				 *    resolves to `amazon.com/review/create-review`, so this paragraph
-				 *    named the exact second destination Andrew has just removed.
-				 *
-				 * ⭐ THE ASK IS NOT LOST, IT MOVED. The review request is now touch 1
-				 *    of the seal-965/977 sequence in `inc/review-ask-email.php`, seven
-				 *    days later, pointing at the SITE review page. `CYCLE179-LD-40`
-				 *    ("is the visit email's own ask one ask too many?") is closed by
-				 *    this removal.
-				 */
-				__( 'Feel free to email me any time at Andrew@braveheartspublishing.com, once again thank you!', 'brave-hearts' ),
-			),
-		),
 
 		/*
 		 * ═══════════════════════════════════════════════════════════════════
@@ -437,9 +439,25 @@ function bhp_visit_email_copy( $slug ) {
 	$sets = bhp_visit_email_copy_sets();
 	$slug = is_string( $slug ) ? trim( $slug ) : '';
 
-	$set = ( '' !== $slug && isset( $sets[ $slug ] ) && is_array( $sets[ $slug ] ) )
-		? $sets[ $slug ]
-		: $sets[ BHP_VISIT_EMAIL_DEFAULT_KEY ];
+	/*
+	 * ⭐⭐ 1.19.369 · ONE SET FOR EVERY VISIT, AND THE LOOKUP IS GONE. Round-8
+	 *     brief item 2. `bhp_visit_email_copy_sets()` now carries exactly one
+	 *     entry, so the slug no longer selects anything — it is still accepted,
+	 *     still passed to the filter, and still the thing `{SchoolName}` and
+	 *     `{VisitLine}` are resolved against.
+	 *
+	 * ⛔ SUPERSEDED LOOKUP, PRESERVED RATHER THAN DELETED:
+	 *
+	 *      $set = ( '' !== $slug && isset( $sets[ $slug ] ) && is_array( $sets[ $slug ] ) )
+	 *          ? $sets[ $slug ]
+	 *          : $sets[ BHP_VISIT_EMAIL_DEFAULT_KEY ];
+	 *
+	 * ⚠ IT IS WRITTEN THIS WAY RATHER THAN DELETED so that adding a second
+	 *   entry to that array does NOT silently reinstate per-school routing.
+	 *   Whoever wants a school-specific email again has to come back here and
+	 *   re-argue seal 994's *"Do what the research suggests"* on purpose.
+	 */
+	$set = $sets[ BHP_VISIT_EMAIL_DEFAULT_KEY ];
 
 	/**
 	 * Filter the school-visit completed-order copy set.
@@ -501,7 +519,6 @@ function bhp_visit_email_copy_is_usable( $set ) {
  * @return bool
  */
 function bhp_visit_email_copy_is_approved( $slug ) {
-	$sets = bhp_visit_email_copy_sets();
 	$slug = is_string( $slug ) ? trim( $slug ) : '';
 	$set  = bhp_visit_email_copy( $slug );
 
@@ -528,9 +545,41 @@ function bhp_visit_email_copy_is_approved( $slug ) {
 	 *    default set, and that set's own `approved` flag then governs, exactly
 	 *    as it did before.
 	 */
-	if ( '' !== $slug
-		&& ! isset( $sets[ $slug ] )
-		&& $set === $sets[ BHP_VISIT_EMAIL_DEFAULT_KEY ] ) {
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.19.369 · THE 1.19.366 GUARD IS NARROWED, AND IT IS NARROWED BY A
+	 *     DESIGN CHANGE, NOT BY A REGRESSION. READ THIS BEFORE RESTORING IT.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ THE SUPERSEDED GUARD, PRESERVED VERBATIM:
+	 *
+	 *      if ( '' !== $slug
+	 *          && ! isset( $sets[ $slug ] )
+	 *          && $set === $sets[ BHP_VISIT_EMAIL_DEFAULT_KEY ] ) {
+	 *          return false;
+	 *      }
+	 *
+	 * ⭐ WHAT IT WAS FOR, and the reasoning is still correct: while the sets
+	 *    array was keyed by slug, an unknown slug was SUBSTITUTED FOR rather
+	 *    than answered, so reporting the substitute's approval as the answer
+	 *    was a lie. `test-cycle179-review-seq` §9.8 caught it.
+	 *
+	 * ⛔ WHY IT CANNOT SURVIVE UNCHANGED. Under seal 994 there is exactly ONE
+	 *    day-0 set and it is the set for EVERY visit slug by decision. Every
+	 *    real slug is therefore "not in `$sets`", and the old guard would
+	 *    return false for all of them — which `bhp_visit_email_may_render()`
+	 *    turns into a hard stop, silently disabling the day-0 email for every
+	 *    parent. ⚠ That is a worse failure than the one the guard prevented.
+	 *
+	 * ⭐ WHAT REPLACES IT, KEEPING THE HONESTY AND DROPPING THE SUBSTITUTION.
+	 *    There is no substitution left to catch, so the two things that ARE
+	 *    still checkable are checked:
+	 *      1. NO SLUG AT ALL is not a visit order and gets no day-0 overlay.
+	 *      2. A `bhp_visit_email_copy` FILTER that swapped the set out is
+	 *         answered on ITS OWN `approved` flag, which is the case the seam
+	 *         exists for — so an unapproved filtered set still renders nothing.
+	 */
+	if ( '' === $slug ) {
 		return false;
 	}
 
@@ -579,6 +628,26 @@ function bhp_visit_email_merge_values( $order ) {
 	if ( $order instanceof WC_Order ) {
 		$parent = trim( (string) $order->get_billing_first_name() );
 
+		/*
+		 * ⭐⭐ 1.19.369 · {SchoolName} COMES OFF THE ORDER FIRST. Round-8 brief
+		 *     item 2: *"{SchoolName} from `_bhp_school_visit_school`"*. The
+		 *     bundle plugin writes that meta at checkout
+		 *     (`BHP_SCHOOL_PICKUP_META_SCHOOL`), which makes it a fact about
+		 *     THIS ORDER rather than a fact about a registry row that may since
+		 *     have been renamed, re-keyed or removed.
+		 *
+		 * ⛔ AND A MISSING SCHOOL IS STILL A HARD STOP, not a blank. See
+		 *    `bhp_visit_email_merge_is_complete()`: an email reading *"the
+		 *    reason I drove out to ."* must never reach a parent.
+		 */
+		if ( defined( 'BHP_SCHOOL_PICKUP_META_SCHOOL' ) ) {
+			$school = trim( (string) $order->get_meta( BHP_SCHOOL_PICKUP_META_SCHOOL ) );
+		}
+
+		if ( '' === $school ) {
+			$school = trim( (string) $order->get_meta( '_bhp_school_visit_school' ) );
+		}
+
 		$slug = bhp_visit_email_order_slug( $order );
 
 		if ( '' !== $slug && function_exists( 'bhp_school_visit_records' ) ) {
@@ -586,9 +655,20 @@ function bhp_visit_email_merge_values( $order ) {
 
 			if ( is_array( $records ) && isset( $records[ $slug ] ) && is_array( $records[ $slug ] ) ) {
 				$record = $records[ $slug ];
-				$school = isset( $record['school'] ) ? trim( (string) $record['school'] ) : '';
 
-				// ⛔ Andrew's own line for THIS visit, or nothing at all.
+				// ⚠ THE REGISTRY IS THE FALLBACK NOW, not the source of record.
+				if ( '' === $school ) {
+					$school = isset( $record['school'] ) ? trim( (string) $record['school'] ) : '';
+				}
+
+				/*
+				 * ⛔⛔ {VisitLine} IS STILL REGISTRY-ONLY AND STILL NEVER
+				 *     AUTO-FILLED. Round-8 brief item 2: *"{VisitLine} from the
+				 *     registry entry if present else omitted (never blank
+				 *     line)"* — which is exactly what this already did, and the
+				 *     body reader drops the paragraph entirely when it is ''.
+				 *     Andrew's own line for THIS visit, or nothing at all.
+				 */
 				$visit = isset( $record['visit_line'] ) ? trim( (string) $record['visit_line'] ) : '';
 			}
 		}

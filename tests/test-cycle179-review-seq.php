@@ -859,7 +859,7 @@ $bhp_rs_v2_touch2 = bhp_review_ask_copy_touch2();
 
 bhp_rs_ok(
 	'⭐ Web touch 1 opens with V2 §4 verbatim',
-	'Your reader has had {BookTitle} for a week or so now. It went out in the mail, so I never got to see who opened it.' === $bhp_rs_v2_web['body_before'][0]
+	'Your reader has had {BookTitle} for a couple of weeks now. It went out in the mail, so I never got to see who opened it.' === $bhp_rs_v2_web['body_before'][0]
 );
 bhp_rs_ok(
 	'⭐ Web touch 1 second paragraph is V2 §4 verbatim',
@@ -970,9 +970,20 @@ foreach (
 		'touch 2'       => $bhp_rs_v2_touch2,
 	) as $bhp_rs_label => $bhp_rs_set
 ) {
+	/*
+	 * ⛔ 1.19.369 · THE INSTRUCTION MOVED FROM `links_lead` TO `stars_caption`
+	 *    AND ITS WORDS CHANGED. Round-8 brief, item 1. SUPERSEDED ASSERTION,
+	 *    PRESERVED: 'Tap the stars that fit, then two or three honest sentences
+	 *    on the next page.' === $bhp_rs_set['links_lead'].
+	 */
 	bhp_rs_ok(
-		'⭐ ' . $bhp_rs_label . ' carries the star-row instruction verbatim',
-		'Tap the stars that fit, then two or three honest sentences on the next page.' === $bhp_rs_set['links_lead']
+		'⭐ ' . $bhp_rs_label . ' carries the round-8 star caption verbatim',
+		'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.' === $bhp_rs_set['stars_caption'],
+		'got: ' . ( isset( $bhp_rs_set['stars_caption'] ) ? $bhp_rs_set['stars_caption'] : '(absent)' )
+	);
+	bhp_rs_ok(
+		'⛔ ' . $bhp_rs_label . ' no longer bolds a lead line above the link',
+		'' === $bhp_rs_set['links_lead']
 	);
 	bhp_rs_ok(
 		'⛔ ' . $bhp_rs_label . ' still passes bhp_review_ask_copy_is_usable()',
@@ -1119,7 +1130,18 @@ $bhp_rs_named = bhp_rs_make_order( 'rs-named@example.com', 9, array_merge( $bhp_
 bhp_rs_ok( 'A single child first name is used', 'Rowan' === bhp_review_ask_child_first_name( $bhp_rs_named ) );
 
 $bhp_rs_two = bhp_rs_make_order( 'rs-two@example.com', 9, array_merge( $bhp_rs_visit_meta, array( '_bhp_school_visit_child_first_name' => 'Rowan and Wren' ) ), array( $bhp_rs_pb[0] ) );
-bhp_rs_ok( '⭐ Two children on one order fall back to "your reader" rather than reading as one name', 'your reader' === bhp_review_ask_child_first_name( $bhp_rs_two ), 'got: ' . bhp_review_ask_child_first_name( $bhp_rs_two ) );
+/*
+ * ⭐⭐ 1.19.369 · SEAL 994: *"Always use names when we can."* ⛔ SUPERSEDED
+ *     ASSERTION, PRESERVED RATHER THAN DELETED: '⭐ Two children on one order
+ *     fall back to "your reader" rather than reading as one name',
+ *     'your reader' === bhp_review_ask_child_first_name( $bhp_rs_two ).
+ */
+bhp_rs_ok(
+	'⭐⭐ Two children are BOTH named, joined with "and"',
+	'Rowan and Wren' === bhp_review_ask_child_first_name( $bhp_rs_two ),
+	'got: ' . bhp_review_ask_child_first_name( $bhp_rs_two )
+);
+bhp_rs_ok( '... and two children is reported as KNOWN, not as the fallback', bhp_review_ask_child_first_name_is_known( $bhp_rs_two ) );
 
 /*
  * ⛔ AN UNRESOLVABLE SLOT IS A DECLINE, NOT A BLANK IN A REAL EMAIL. An order
@@ -1162,13 +1184,13 @@ bhp_rs_ok(
  *    substitution cannot mask a reworded sentence.
  */
 $bhp_rs_raw      = bhp_review_ask_copy_visit_touch1();
-$bhp_rs_raw_text = implode( ' ', array_merge( $bhp_rs_raw['body_before'], $bhp_rs_raw['body_after'], array( $bhp_rs_raw['subject'], $bhp_rs_raw['links_lead'], $bhp_rs_raw['postscript'] ) ) );
+$bhp_rs_raw_text = implode( ' ', array_merge( $bhp_rs_raw['body_before'], $bhp_rs_raw['body_after'], array( $bhp_rs_raw['subject'], $bhp_rs_raw['links_lead'], $bhp_rs_raw['stars_caption'], $bhp_rs_raw['postscript'] ) ) );
 
 foreach ( array(
 	'A small favor about the book',
 	'Your reader has had {BookTitle}',
 	'Would you rate it? It takes about ten seconds, and if you have another minute after that, two or three honest sentences would help the next parent decide. Honest is the useful part.',
-	'Tap the stars that fit, then two or three honest sentences on the next page.',
+	'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.',
 	'Thank you for reading together.',
 	'I answer every one.',
 ) as $bhp_rs_phrase ) {
@@ -1312,7 +1334,25 @@ bhp_rs_ok(
 $bhp_rs_row = bhp_review_ask_star_row( $bhp_rs_v1 );
 
 bhp_rs_ok( '⭐ The star row for a one-book visit order has five rows', 5 === count( $bhp_rs_row ), 'got: ' . count( $bhp_rs_row ) );
-bhp_rs_ok( '⭐ It starts at 5 and ends at 1', 5 === $bhp_rs_row[0]['rating'] && 1 === $bhp_rs_row[4]['rating'] );
+/*
+ * ⭐⭐ 1.19.369 · ASCENDING, LEFT TO RIGHT. ANDREW, SEAL 998: *"5 stars in a
+ *     row from left to right."* ⛔ SUPERSEDED ASSERTION, PRESERVED RATHER THAN
+ *     DELETED: '⭐ It starts at 5 and ends at 1', 5 === $bhp_rs_row[0]['rating']
+ *     && 1 === $bhp_rs_row[4]['rating'].
+ */
+bhp_rs_ok(
+	'⭐⭐ It starts at 1 and ends at 5, left to right',
+	1 === $bhp_rs_row[0]['rating'] && 5 === $bhp_rs_row[4]['rating'],
+	'got: ' . implode( ',', wp_list_pluck( $bhp_rs_row, 'rating' ) )
+);
+bhp_rs_ok(
+	'⭐ Every intermediate star is in order, 1 2 3 4 5',
+	array( 1, 2, 3, 4, 5 ) === array_map( 'intval', wp_list_pluck( $bhp_rs_row, 'rating' ) )
+);
+bhp_rs_ok(
+	'⛔ The SITE FORM is untouched and still reads 5 down to 1',
+	array( 5, 4, 3, 2, 1 ) === array_keys( bhp_review_star_labels() )
+);
 
 $bhp_rs_book_key = bhp_review_ask_first_chapter_book_key( $bhp_rs_v1 );
 $bhp_rs_book_url = bhp_review_page_url( $bhp_rs_book_key );
@@ -1547,17 +1587,86 @@ if ( function_exists( 'bhp_visit_email_copy_sets' ) ) {
 		'⭐⭐ The rewritten _default day-0 set is APPROVED (seal 982) and may render',
 		bhp_visit_email_copy_is_approved( BHP_VISIT_EMAIL_DEFAULT_KEY )
 	);
+	/*
+	 * =====================================================================
+	 * ⭐⭐ 1.19.369 · SEAL 994 REPLACED PER-SCHOOL ROUTING WITH ONE GENERIC
+	 *     SET FOR EVERY VISIT, SO THE "UNKNOWN SLUG" ASSERTIONS ARE REWRITTEN
+	 *     RATHER THAN DELETED. READ THIS BEFORE RESTORING THEM.
+	 * =====================================================================
+	 *
+	 * ⛔ SUPERSEDED ASSERTIONS, PRESERVED VERBATIM:
+	 *
+	 *      '⛔⛔ THE DAY-0 GATE STILL FIRES: an unknown/unapproved set key is
+	 *       not approved',  ! bhp_visit_email_copy_is_approved( 'no-such-set-ever-2026' )
+	 *
+	 *      '⭐ The approved Adams day-0 set is still approved',
+	 *       bhp_visit_email_copy_is_approved( 'adams-2026-08-28' )
+	 *
+	 *      '⛔⛔ An UNAPPROVED day-0 set still renders NOTHING rather than
+	 *       placeholder text',
+	 *       ! bhp_visit_email_may_render( 'no-such-set-ever-2026', $bhp_rs_v1 )
+	 *
+	 * ⚠ WHY THEY CANNOT STAND. There is exactly ONE day-0 set now and it is
+	 *   the set for EVERY visit slug by decision, so "a slug the theme does not
+	 *   carry" describes every real slug including `adams-2026-08-28`. Asserting
+	 *   that such a slug is unapproved would now be asserting that the day-0
+	 *   email must never send to anyone.
+	 *
+	 * ⭐ WHAT REPLACES THEM PROVES THE SAME TWO THINGS THAT ARE STILL TRUE:
+	 *   the gate fires on NO SLUG AT ALL, and it fires on a FILTERED set that
+	 *   carries `approved => false`. The second is the case the seam exists for
+	 *   and is the one that could actually reach a parent.
+	 */
 	bhp_rs_ok(
-		'⛔⛔ THE DAY-0 GATE STILL FIRES: an unknown/unapproved set key is not approved',
-		! bhp_visit_email_copy_is_approved( 'no-such-set-ever-2026' )
-	);
-	bhp_rs_ok(
-		'⭐ The approved Adams day-0 set is still approved',
+		'⭐⭐ SEAL 994: every visit slug resolves to the ONE generic approved set',
 		bhp_visit_email_copy_is_approved( 'adams-2026-08-28' )
+			&& bhp_visit_email_copy_is_approved( 'no-such-set-ever-2026' )
+			&& bhp_visit_email_copy( 'adams-2026-08-28' ) === bhp_visit_email_copy( 'no-such-set-ever-2026' )
 	);
+	bhp_rs_ok(
+		'⛔ The per-school Adams set is GONE from the sets array (retired to comments)',
+		! isset( bhp_visit_email_copy_sets()['adams-2026-08-28'] )
+			&& array( BHP_VISIT_EMAIL_DEFAULT_KEY ) === array_keys( bhp_visit_email_copy_sets() ),
+		'keys: ' . implode( ',', array_keys( bhp_visit_email_copy_sets() ) )
+	);
+	bhp_rs_ok(
+		'⛔ The Adams-only facts cannot reach any parent from this file',
+		false === stripos( (string) wp_json_encode( bhp_visit_email_copy_sets() ), '1st and 2nd Graders' )
+			&& false === stripos( (string) wp_json_encode( bhp_visit_email_copy_sets() ), 'thirty or so' )
+	);
+	bhp_rs_ok(
+		'⛔⛔ THE DAY-0 GATE STILL FIRES: no slug at all renders nothing',
+		! bhp_visit_email_may_render( '', $bhp_rs_v1 ) && ! bhp_visit_email_copy_is_approved( '' )
+	);
+
+	/*
+	 * ⛔⛔ AND AN UNAPPROVED SET SUPPLIED THROUGH THE FILTER SEAM STILL
+	 *     RENDERS NOTHING. This is the path that could actually put unapproved
+	 *     prose in front of a parent, and it is closed.
+	 */
+	$bhp_rs_unapproved = function () {
+		return array(
+			'approved'  => false,
+			'subject'   => 'UNAPPROVED PROBE SUBJECT',
+			'heading'   => 'UNAPPROVED PROBE HEADING',
+			'preheader' => 'UNAPPROVED PROBE PREHEADER',
+			'body'      => array( 'UNAPPROVED PROBE BODY' ),
+		);
+	};
+
+	add_filter( 'bhp_visit_email_copy', $bhp_rs_unapproved, 99 );
+
 	bhp_rs_ok(
 		'⛔⛔ An UNAPPROVED day-0 set still renders NOTHING rather than placeholder text',
-		! bhp_visit_email_may_render( 'no-such-set-ever-2026', $bhp_rs_v1 )
+		! bhp_visit_email_copy_is_approved( 'adams-2026-08-28' )
+			&& ! bhp_visit_email_may_render( 'adams-2026-08-28', $bhp_rs_v1 )
+	);
+
+	remove_filter( 'bhp_visit_email_copy', $bhp_rs_unapproved, 99 );
+
+	bhp_rs_ok(
+		'The suite removed its unapproved-copy filter',
+		bhp_visit_email_copy_is_approved( BHP_VISIT_EMAIL_DEFAULT_KEY )
 	);
 } else {
 	bhp_rs_ok( 'SKIPPED: inc/visit-completed-email.php is not loaded', true );
@@ -1611,7 +1720,7 @@ bhp_rs_ok( 'The four registry options were restored to their pre-run values', tr
  *     ⭐ The fix is to assert the state a buyer is actually in. Nobody arrives
  *        here from a review-ask email logged in as the shop administrator, so
  *        the current user is dropped to 0 for the render and restored
- *        immediately afterwards — §11's teardown below needs its capabilities.
+ *        immediately afterwards — §12's teardown below needs its capabilities.
  * ====================================================================== */
 
 bhp_rs_head( '§10 The review page copy rail' );
@@ -1639,7 +1748,7 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
 		'the ! is_user_logged_in() block did not render, so the privacy pin below cannot mean anything'
 	);
 	bhp_rs_ok(
-		'⛔ ...and the admin user was restored for the §11 teardown',
+		'⛔ ...and the admin user was restored for the §12 teardown',
 		get_current_user_id() === $bhp_rs_prev_user,
 		'expected user ' . $bhp_rs_prev_user . ', got ' . get_current_user_id()
 	);
@@ -1880,7 +1989,306 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
 }
 
 /* =========================================================================
- * §11 — DEFERRED FIXTURE TEARDOWN
+ * ⭐⭐ §11 — ROUND 8. SEAL 998 (the star row) AND SEAL 994 (names, day 0,
+ *     the web delay, the retired migration).
+ *
+ * ⛔ IT RUNS BEFORE THE TEARDOWN because every assertion below needs a live
+ *    probe order, exactly as §9 and §10 do.
+ * ====================================================================== */
+
+bhp_rs_head( '§11 Round 8: stars, names, day 0, delays, cap' );
+
+/* ---- 11.1 the star row is an image row, ascending, with short alts ---- */
+
+$bhp_rs_r8_row = bhp_review_ask_star_row( $bhp_rs_v1 );
+
+bhp_rs_ok( '⭐ The row still has exactly five stars', 5 === count( $bhp_rs_r8_row ) );
+bhp_rs_ok(
+	'⭐⭐ Ascending 1..5, left to right (seal 998)',
+	array( 1, 2, 3, 4, 5 ) === array_map( 'intval', wp_list_pluck( $bhp_rs_r8_row, 'rating' ) ),
+	'got: ' . implode( ',', wp_list_pluck( $bhp_rs_r8_row, 'rating' ) )
+);
+
+$bhp_rs_r8_alts = wp_list_pluck( $bhp_rs_r8_row, 'alt' );
+
+bhp_rs_ok(
+	'⭐ The alts are "1 star" then "2 stars" .. "5 stars", verbatim',
+	array( '1 star', '2 stars', '3 stars', '4 stars', '5 stars' ) === $bhp_rs_r8_alts,
+	'got: ' . implode( ' | ', $bhp_rs_r8_alts )
+);
+bhp_rs_ok(
+	'⛔ No alt carries the site form\'s descriptive label',
+	false === strpos( implode( ' ', $bhp_rs_r8_alts ), 'loved it' )
+		&& false === strpos( implode( ' ', $bhp_rs_r8_alts ), 'not for us' )
+);
+
+/*
+ * ⛔⛔ THE IMAGE MUST BE SHIPPED, ABSOLUTE AND A PNG. A data: URI is stripped
+ *     by Gmail, a relative path resolves against the reader's mail client, and
+ *     a missing file silently degrades the whole row to text.
+ */
+bhp_rs_ok(
+	'⭐⭐ The star image resolves to an absolute http(s) URL',
+	'' !== bhp_review_ask_star_image_url()
+		&& 0 === strpos( bhp_review_ask_star_image_url(), 'http' ),
+	'got: ' . bhp_review_ask_star_image_url()
+);
+bhp_rs_ok(
+	'⭐ It is a PNG shipped inside this theme',
+	false !== strpos( bhp_review_ask_star_image_url(), '/assets/images/email/review-star-gold@2x.png' )
+);
+bhp_rs_ok(
+	'⛔ The file actually exists on disk (a missing file is a silent downgrade)',
+	file_exists( get_template_directory() . '/assets/images/email/review-star-gold@2x.png' )
+);
+bhp_rs_ok(
+	'⛔ It is 2x: 64px square, so it renders crisply at 32px',
+	array( 64, 64 ) === array_slice( (array) getimagesize( get_template_directory() . '/assets/images/email/review-star-gold@2x.png' ), 0, 2 )
+);
+
+/*
+ * ⭐ EVERY STAR CARRIES THE SAME IMAGE. This is the "nothing steers toward
+ *    five" rule expressed as an assertion rather than as a comment.
+ */
+bhp_rs_ok(
+	'⭐⭐ All five cells carry the IDENTICAL image (nothing is emphasised)',
+	1 === count( array_unique( wp_list_pluck( $bhp_rs_r8_row, 'image' ) ) )
+);
+
+/* ---- 11.2 the caption replaced the bolded lead, on all three sets ---- */
+
+foreach (
+	array(
+		'visit touch 1' => bhp_review_ask_copy_visit_touch1( $bhp_rs_v1 ),
+		'web touch 1'   => bhp_review_ask_copy_web_touch1(),
+		'touch 2'       => bhp_review_ask_copy_touch2(),
+	) as $bhp_rs_r8_name => $bhp_rs_r8_set
+) {
+	bhp_rs_ok(
+		'⭐ ' . $bhp_rs_r8_name . ' carries the round-8 caption, unmerged',
+		'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.' === $bhp_rs_r8_set['stars_caption']
+	);
+	bhp_rs_ok( '⛔ ' . $bhp_rs_r8_name . ' has an empty links_lead', '' === $bhp_rs_r8_set['links_lead'] );
+	bhp_rs_ok(
+		'⛔ ' . $bhp_rs_r8_name . ' no longer links the bare book title',
+		'{BookTitle}' !== $bhp_rs_r8_set['links'][0]['label']
+			&& 'Or open the review page' === $bhp_rs_r8_set['links'][0]['label'],
+		'got: ' . $bhp_rs_r8_set['links'][0]['label']
+	);
+	bhp_rs_ok(
+		'⛔ ' . $bhp_rs_r8_name . ' still passes bhp_review_ask_copy_is_usable() after the change',
+		bhp_review_ask_copy_is_usable( $bhp_rs_r8_set )
+	);
+}
+
+/*
+ * ⛔ AND THE CAPTION'S {BookTitle} ACTUALLY RESOLVES ON A REAL ORDER. A caption
+ *    reading "Tap a star to rate ." is the exact defect the merge gate exists
+ *    for, and the gate only checks slots it can see.
+ */
+$bhp_rs_r8_merged = bhp_review_ask_copy( 1, $bhp_rs_v1 );
+
+bhp_rs_ok(
+	'⭐⭐ The caption merges to a real title on a real order',
+	false === strpos( $bhp_rs_r8_merged['stars_caption'], '{' )
+		&& false !== strpos( $bhp_rs_r8_merged['stars_caption'], bhp_review_ask_book_title( $bhp_rs_v1 ) ),
+	'got: ' . $bhp_rs_r8_merged['stars_caption']
+);
+
+/* ---- 11.3 names always, with verb agreement ---- */
+
+$bhp_rs_r8_two = bhp_rs_make_order(
+	'rs-r8-two@example.com',
+	9,
+	array_merge( $bhp_rs_visit_meta, array( '_bhp_school_visit_child_name' => 'Ada, Bo' ) ),
+	array( $bhp_rs_pb[0] )
+);
+$bhp_rs_r8_three = bhp_rs_make_order(
+	'rs-r8-three@example.com',
+	9,
+	array_merge( $bhp_rs_visit_meta, array( '_bhp_school_visit_child_name' => 'Ada, Bo, Cy' ) ),
+	array( $bhp_rs_pb[0] )
+);
+$bhp_rs_r8_one = bhp_rs_make_order(
+	'rs-r8-one@example.com',
+	9,
+	array_merge( $bhp_rs_visit_meta, array( '_bhp_school_visit_child_name' => 'Ada Smith' ) ),
+	array( $bhp_rs_pb[0] )
+);
+
+bhp_rs_ok( '⭐ One child renders "Ada"', 'Ada' === bhp_review_ask_child_first_name( $bhp_rs_r8_one ), 'got: ' . bhp_review_ask_child_first_name( $bhp_rs_r8_one ) );
+bhp_rs_ok( '⭐⭐ Two children render "Ada and Bo" (production order 612 shape)', 'Ada and Bo' === bhp_review_ask_child_first_name( $bhp_rs_r8_two ), 'got: ' . bhp_review_ask_child_first_name( $bhp_rs_r8_two ) );
+bhp_rs_ok( '⭐ Three children render "Ada, Bo and Cy", with no Oxford comma', 'Ada, Bo and Cy' === bhp_review_ask_child_first_name( $bhp_rs_r8_three ), 'got: ' . bhp_review_ask_child_first_name( $bhp_rs_r8_three ) );
+bhp_rs_ok( '⭐ The surname is dropped, the first name is not', 1 === bhp_review_ask_child_count( $bhp_rs_r8_one ) );
+bhp_rs_ok( '⛔ An order with no child meta still falls back to "your reader"', 'your reader' === bhp_review_ask_child_first_name( $bhp_rs_v1 ) );
+
+/*
+ * ⛔⛔ THE VERB. "Ada and Bo has had" is a broken email, and a parent reading
+ *     their own two children's names in a sentence that does not parse notices
+ *     immediately.
+ */
+$bhp_rs_r8_c1 = bhp_review_ask_copy_visit_touch1( $bhp_rs_r8_one );
+$bhp_rs_r8_c2 = bhp_review_ask_copy_visit_touch1( $bhp_rs_r8_two );
+
+bhp_rs_ok( '⭐ One child: "{ChildFirstName} has had"', false !== strpos( $bhp_rs_r8_c1['body_before'][0], '{ChildFirstName} has had' ), 'got: ' . $bhp_rs_r8_c1['body_before'][0] );
+bhp_rs_ok( '⭐⭐ Two children: "{ChildFirstName} have had"', false !== strpos( $bhp_rs_r8_c2['body_before'][0], '{ChildFirstName} have had' ), 'got: ' . $bhp_rs_r8_c2['body_before'][0] );
+bhp_rs_ok( '⭐ One child P.S.: "has a question"', false !== strpos( $bhp_rs_r8_c1['postscript'], 'has a question' ) );
+bhp_rs_ok( '⭐⭐ Two children P.S.: "have a question"', false !== strpos( $bhp_rs_r8_c2['postscript'], 'have a question' ), 'got: ' . $bhp_rs_r8_c2['postscript'] );
+
+$bhp_rs_r8_m2 = bhp_review_ask_copy( 1, $bhp_rs_r8_two );
+
+bhp_rs_ok(
+	'⭐⭐ Merged, a two-child order reads "Ada and Bo have had ..."',
+	false !== strpos( $bhp_rs_r8_m2['body_before'][0], 'Ada and Bo have had' ),
+	'got: ' . $bhp_rs_r8_m2['body_before'][0]
+);
+bhp_rs_ok(
+	'⛔ And no merge slot survives into that sentence',
+	false === strpos( $bhp_rs_r8_m2['body_before'][0], '{' )
+);
+
+/*
+ * ⚠ TOUCH 2 CARRIES NO CHILD NAME AT ALL, AND THAT IS ASSERTED RATHER THAN
+ *   ASSUMED. Item 3 of the round-8 brief asks for verb agreement in touch 2 as
+ *   well; there is no subject in Merry's approved V2 §3 body to agree with, and
+ *   no name was invented to create one. This assertion is the record of that.
+ */
+bhp_rs_ok(
+	'⚠ Touch 2 names no child (so its "verb agreement" is a no-op, by design)',
+	false === strpos( (string) wp_json_encode( bhp_review_ask_copy_touch2() ), 'ChildFirstName' )
+);
+
+/* ---- 11.4 the web lane is 14 days, and the copy moved with it ---- */
+
+bhp_rs_ok( '⭐⭐ The web delay is 14 days (seal 994)', 14 === BHP_REVIEW_ASK_WEB_DELAY_DAYS && 14 === bhp_review_ask_delay_days() );
+bhp_rs_ok(
+	'⭐ Web touch 1 says "for a couple of weeks now"',
+	false !== strpos( bhp_review_ask_copy_web_touch1()['body_before'][0], 'for a couple of weeks now' )
+);
+bhp_rs_ok(
+	'⛔ ... and no longer says "for a week or so now", which is false at 14 days',
+	false === strpos( bhp_review_ask_copy_web_touch1()['body_before'][0], 'for a week or so now' )
+);
+bhp_rs_ok(
+	'⛔⛔ The copy/delay interlock agrees: the web set declares 14',
+	array( 14 ) === array_map( 'intval', bhp_review_ask_copy_web_touch1()['delay_days'] )
+);
+bhp_rs_ok(
+	'⭐ The VISIT lane is untouched: still 7 one-book and 10 multi-book',
+	7 === BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK && 10 === BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK
+);
+bhp_rs_ok( '⭐ Touch 2 is still 4 days after touch 1', 4 === BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS );
+
+/* ---- 11.5 the cap is 10 and it is per lane ---- */
+
+bhp_rs_ok( '⭐⭐ The default cap is 10', 10 === BHP_REVIEW_ASK_DEFAULT_DAILY_CAP );
+bhp_rs_ok( '⭐ Both lanes get their own budget of 10', 10 === bhp_review_ask_daily_cap( 'visit' ) && 10 === bhp_review_ask_daily_cap( 'web' ) );
+/*
+ * ⚠ ASSERTED AS "COUNTS SOMETHING SANE", NOT AS ZERO. The ledger is a live
+ *   option on whatever environment this runs on, and a suite that demands a
+ *   zero there is asserting a fact about the site's morning rather than about
+ *   the code. What must be true is that the visit and web lanes are counted
+ *   SEPARATELY and that neither exceeds the all-lane total.
+ */
+$bhp_rs_r8_visit_today = bhp_review_ask_sent_today_in_lane( 'visit' );
+$bhp_rs_r8_web_today   = bhp_review_ask_sent_today_in_lane( 'web' );
+
+bhp_rs_ok( '⭐ A per-lane count function exists and returns an integer', is_int( $bhp_rs_r8_visit_today ) && is_int( $bhp_rs_r8_web_today ) );
+bhp_rs_ok(
+	'⭐ Neither lane count exceeds the all-lane count for today',
+	$bhp_rs_r8_visit_today <= bhp_review_ask_sent_today() && $bhp_rs_r8_web_today <= bhp_review_ask_sent_today(),
+	'visit=' . $bhp_rs_r8_visit_today . ' web=' . $bhp_rs_r8_web_today . ' all=' . bhp_review_ask_sent_today()
+);
+
+$bhp_rs_r8_capfilter = function ( $cap, $lane ) {
+	return ( 'web' === $lane ) ? 0 : $cap;
+};
+add_filter( 'bhp_review_ask_daily_cap', $bhp_rs_r8_capfilter, 99, 2 );
+
+bhp_rs_ok(
+	'⭐⭐ A lane can be paused to zero without touching the other (0 now means 0)',
+	0 === bhp_review_ask_daily_cap( 'web' ) && 10 === bhp_review_ask_daily_cap( 'visit' ),
+	'web=' . bhp_review_ask_daily_cap( 'web' ) . ' visit=' . bhp_review_ask_daily_cap( 'visit' )
+);
+
+remove_filter( 'bhp_review_ask_daily_cap', $bhp_rs_r8_capfilter, 99 );
+
+bhp_rs_ok( 'The suite removed its cap filter', 10 === bhp_review_ask_daily_cap( 'web' ) );
+
+/*
+ * ⭐⭐ AND THE CAP MUST NOT DELAY THE SIXTEEN. The four touch-1 dates carry at
+ *    most two groups on any one day (2026-09-14 carries Dallas one-book touch 2
+ *    AND Liberty multi touch 1), so the sixteen can only exceed a lane budget
+ *    of 10 if more than ten of them land together. ⚠ ASSERTED AS ARITHMETIC ON
+ *    THE COUNT, not against the real per-school split, which this desk did not
+ *    read off either environment.
+ */
+bhp_rs_ok(
+	'⭐ A visit-lane budget of 10 covers the whole sixteen-order migration in one day if it ever landed together',
+	bhp_review_ask_daily_cap( 'visit' ) >= 10
+);
+
+/* ---- 11.6 the migration path is retired ---- */
+
+bhp_rs_ok( '⭐ The retired-order list exists', function_exists( 'bhp_review_ask_migration_retired_orders' ) );
+
+$bhp_rs_r8_retired = bhp_review_ask_migration_retired_orders();
+
+bhp_rs_ok( '⭐⭐ It names exactly the sixteen orders from the brief', 16 === count( $bhp_rs_r8_retired ), 'got: ' . count( $bhp_rs_r8_retired ) );
+bhp_rs_ok(
+	'⭐ Including 612, the order whose child meta was read on production',
+	in_array( 612, $bhp_rs_r8_retired, true ) && in_array( 772, $bhp_rs_r8_retired, true )
+);
+
+/*
+ * ⛔⛔ AND THE COMMAND REFUSES THEM. This is the assertion that stops one
+ *     `--apply` cancelling the entire launch: `external-pending-` on any of the
+ *     sixteen would suppress touch 1 forever and make touch 2 decline
+ *     `touch1_date_unknown`.
+ */
+$bhp_rs_r8_lines = array();
+$bhp_rs_r8_say   = function ( $line ) use ( &$bhp_rs_r8_lines ) {
+	$bhp_rs_r8_lines[] = (string) $line;
+};
+
+bhp_review_ask_cli_migrate( array( 'orders' => '612:2026-09-10' ), $bhp_rs_r8_say );
+
+$bhp_rs_r8_out = implode( "\n", $bhp_rs_r8_lines );
+
+bhp_rs_ok(
+	'⛔⛔ A dry migrate of order 612 REFUSES rather than promising a write',
+	false !== strpos( $bhp_rs_r8_out, 'REFUSED order 612' ),
+	'got: ' . $bhp_rs_r8_out
+);
+bhp_rs_ok(
+	'⛔ And it wrote nothing: order 612 is not marked by this suite',
+	false === strpos( $bhp_rs_r8_out, 'WRITE order 612' )
+);
+
+/* ---- 11.7 the school name comes off the order, not only the registry ---- */
+
+$bhp_rs_r8_school = bhp_rs_make_order(
+	'rs-r8-school@example.com',
+	9,
+	array(
+		'_bhp_school_visit_slug'   => 'no-such-visit-ever',
+		'_bhp_school_visit_school' => 'Probe Elementary',
+	),
+	array( $bhp_rs_pb[0] )
+);
+
+bhp_rs_ok(
+	'⭐⭐ {SchoolName} resolves from _bhp_school_visit_school even when the registry has forgotten the visit',
+	'Probe Elementary' === bhp_review_ask_school_name( $bhp_rs_r8_school ),
+	'got: ' . bhp_review_ask_school_name( $bhp_rs_r8_school )
+);
+bhp_rs_ok(
+	'⛔ An ordinary web order still has no school name',
+	'' === bhp_review_ask_school_name( $bhp_rs_w1 )
+);
+
+/* =========================================================================
+ * §12 — DEFERRED FIXTURE TEARDOWN
  *
  * ⭐ MOVED HERE FROM §8 IN 1.19.366. §9 and §10 both need a LIVE probe order:
  *    §9.7 looks the name box up through `wc_get_order()`, and §10 resolves the
@@ -1890,7 +2298,7 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
  * ⛔ NOTHING IS LEFT BEHIND. Force-delete, same call, same assertions.
  * ====================================================================== */
 
-bhp_rs_head( '§11 Deferred fixture teardown' );
+bhp_rs_head( '§12 Deferred fixture teardown' );
 
 $bhp_rs_deleted = 0;
 foreach ( $GLOBALS['bhp_rs_orders'] as $bhp_rs_id ) {
