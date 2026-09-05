@@ -95,6 +95,29 @@ function bhp_rs_ok( $label, $cond, $detail = '' ) {
 }
 
 /**
+ * A check that could not be run, reported as neither pass nor fail.
+ *
+ * ⛔⛔ 1.19.377 · R16. THE REASON THIS EXISTS IS A HONESTY REQUIREMENT, NOT A
+ *     CONVENIENCE. The rendered-HTML assertions can only run once a render of
+ *     THIS build exists. Making them pass when the file is absent would put a
+ *     check that never executed inside a green count, which is the same
+ *     failure class as a fabricated verification. A skip is printed, counted
+ *     separately, and echoed in the summary line so it cannot be missed.
+ *
+ * @param string $label  What was skipped.
+ * @param string $reason Why.
+ * @return void
+ */
+function bhp_rs_skip( $label, $reason = '' ) {
+	if ( ! isset( $GLOBALS['bhp_rs_skip'] ) ) {
+		$GLOBALS['bhp_rs_skip'] = 0;
+	}
+
+	$GLOBALS['bhp_rs_skip']++;
+	echo "SKIP  {$label}" . ( '' !== $reason ? "  -- {$reason}" : '' ) . "\n";
+}
+
+/**
  * A section heading.
  *
  * @param string $title Heading.
@@ -4341,11 +4364,23 @@ bhp_rs_ok(
  *     not as a prefix: "Hand delivery:" and nothing after it is the whole of
  *     the seal-1042 (a) fix.
  */
+$bhp_rs_r16_method = 'Author hand-delivery at the Dallas Harris Elementary visit (September 3)';
+
+/*
+ * ⛔⛔ THE FIXTURE NOW CARRIES `meta`, AND THAT IS THE WHOLE POINT OF R16.
+ *     `WC_Order::get_order_item_totals()` puts the shipping METHOD NAME on the
+ *     row's `meta` key, and WooCommerce 10.8.0's
+ *     `templates/emails/email-order-details.php` prints the `<th>` as
+ *     label + ' ' + meta once email improvements are on. The R15 fixture had
+ *     no `meta`, so it PASSED while the render still printed the name twice.
+ *     A fixture that cannot reproduce the defect cannot prove the fix.
+ */
 $bhp_rs_r15_rows = bhp_visit_email_shorten_pickup_row(
 	array(
 		'shipping' => array(
-			'label' => 'Hand delivery: Author hand-delivery at the Dallas Harris Elementary visit (September 3)',
-			'value' => 'Collection from <strong>Author hand-delivery at the Dallas Harris Elementary visit (September 3)</strong>:<br>Andrew brings the signed books to Dallas Harris Elementary on Thursday, September 3.',
+			'label' => 'Hand delivery: ' . $bhp_rs_r16_method,
+			'value' => 'Collection from <strong>' . $bhp_rs_r16_method . '</strong>:<br>Andrew brings the signed books to Dallas Harris Elementary on Thursday, September 3.',
+			'meta'  => $bhp_rs_r16_method,
 		),
 	),
 	null
@@ -4356,13 +4391,91 @@ bhp_rs_ok(
 	'got: ' . $bhp_rs_r15_rows['shipping']['label']
 );
 bhp_rs_ok(
+	'⭐⭐ R16 · the shipping row\'s `meta` is cleared, so the <th> cannot print the method',
+	isset( $bhp_rs_r15_rows['shipping']['meta'] ) && '' === $bhp_rs_r15_rows['shipping']['meta'],
+	'meta: ' . var_export( isset( $bhp_rs_r15_rows['shipping']['meta'] ) ? $bhp_rs_r15_rows['shipping']['meta'] : null, true )
+);
+bhp_rs_ok(
 	'⭐ the method name is printed ONCE across the row (value only)',
 	1 === substr_count(
-		$bhp_rs_r15_rows['shipping']['label'] . ' ' . $bhp_rs_r15_rows['shipping']['value'],
-		'Author hand-delivery at the Dallas Harris Elementary visit (September 3)'
+		$bhp_rs_r15_rows['shipping']['label'] . ' ' . (string) $bhp_rs_r15_rows['shipping']['meta'] . ' ' . $bhp_rs_r15_rows['shipping']['value'],
+		$bhp_rs_r16_method
 	),
-	'label: ' . $bhp_rs_r15_rows['shipping']['label'] . ' | value: ' . $bhp_rs_r15_rows['shipping']['value']
+	'label: ' . $bhp_rs_r15_rows['shipping']['label'] . ' | meta: ' . (string) $bhp_rs_r15_rows['shipping']['meta'] . ' | value: ' . $bhp_rs_r15_rows['shipping']['value']
 );
+
+/*
+ * ⛔⛔ R16 · THE ASSERTION ON THE RENDERED `<th>`, AS GANDALF ASKED FOR IT.
+ *
+ * ⚠ THIS IS A MODEL OF THE TEMPLATE, NOT THE TEMPLATE. WooCommerce is not
+ *   loadable at this desk, so `bhp_rs_r16_render_totals_th()` reproduces the
+ *   ONE line of `email-order-details.php` that matters. It is not a guess: the
+ *   shape is read straight out of `rs376-day0.html` lines 150-153, where the
+ *   TAX row renders as "Idaho Sales Tax: " — label, one space, nothing — and
+ *   the SHIPPING row renders as label, one space, the method name. Label plus
+ *   space unconditionally, then meta when non-empty, is the only rule that
+ *   produces both. The REAL render is asserted below this, when one exists.
+ */
+function bhp_rs_r16_render_totals_th( $row, $email_improvements_enabled = true ) {
+	$out = ( isset( $row['label'] ) ? (string) $row['label'] : '' ) . ' ';
+
+	if ( $email_improvements_enabled && ! empty( $row['meta'] ) ) {
+		$out .= (string) $row['meta'];
+	}
+
+	return $out;
+}
+
+bhp_rs_ok(
+	'⭐⭐ R16 · the rendered <th>, trimmed, is exactly "Hand delivery:"',
+	'Hand delivery:' === trim( bhp_rs_r16_render_totals_th( $bhp_rs_r15_rows['shipping'] ) ),
+	'got: ' . var_export( bhp_rs_r16_render_totals_th( $bhp_rs_r15_rows['shipping'] ), true )
+);
+bhp_rs_ok(
+	'⭐⭐ R16 · the method string occurs ONCE in the rendered <th> + <td> together',
+	1 === substr_count(
+		bhp_rs_r16_render_totals_th( $bhp_rs_r15_rows['shipping'] ) . ' ' . $bhp_rs_r15_rows['shipping']['value'],
+		$bhp_rs_r16_method
+	)
+);
+
+/*
+ * ⛔ THE SAME TWO CHECKS AGAINST THE REAL STAGING RENDER, WHEN THERE IS ONE.
+ *    There is no 1.19.377 render yet — this build has not been deployed — so
+ *    this SKIPS rather than passing. ⛔ IT MUST NEVER BE ALLOWED TO PASS
+ *    VACUOUSLY: a skip is printed and counted as neither pass nor fail, so
+ *    "607/0" never silently includes a check that did not run.
+ *
+ * ⚠ The path is the review folder this cycle has been rendering into. Override
+ *   it with the BHP_RS_RENDER_DIR environment variable.
+ */
+$bhp_rs_r16_render_dir  = getenv( 'BHP_RS_RENDER_DIR' );
+$bhp_rs_r16_render_dir  = $bhp_rs_r16_render_dir ? $bhp_rs_r16_render_dir : 'C:\\BHP\\Business OS\\ANDREW-REVIEW\\2026-09-05\\REVIEW-SEQ-STAGING';
+$bhp_rs_r16_render_file = rtrim( $bhp_rs_r16_render_dir, '\\/' ) . DIRECTORY_SEPARATOR . 'rs377-day0.html';
+
+if ( is_readable( $bhp_rs_r16_render_file ) ) {
+	$bhp_rs_r16_html = (string) file_get_contents( $bhp_rs_r16_render_file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+	/* The shipping row's own <th>, isolated by the class WooCommerce puts on the <tr>. */
+	$bhp_rs_r16_th = '';
+
+	if ( preg_match( '#<tr class="order-totals order-totals-shipping">.*?<th[^>]*>(.*?)</th>#s', $bhp_rs_r16_html, $bhp_rs_r16_m ) ) {
+		$bhp_rs_r16_th = trim( html_entity_decode( wp_strip_all_tags( $bhp_rs_r16_m[1] ), ENT_QUOTES, 'UTF-8' ) );
+	}
+
+	bhp_rs_ok(
+		'⭐⭐ R16 · RENDERED rs377-day0.html: the shipping <th> text is exactly "Hand delivery:"',
+		'Hand delivery:' === $bhp_rs_r16_th,
+		'got: ' . var_export( $bhp_rs_r16_th, true )
+	);
+	bhp_rs_ok(
+		'⭐⭐ R16 · RENDERED rs377-day0.html: the method string occurs exactly once in the file',
+		1 === substr_count( $bhp_rs_r16_html, $bhp_rs_r16_method ),
+		'count: ' . substr_count( $bhp_rs_r16_html, $bhp_rs_r16_method )
+	);
+} else {
+	bhp_rs_skip( 'R16 · RENDERED rs377-day0.html <th> checks', 'no 1.19.377 render at ' . $bhp_rs_r16_render_file );
+}
 
 /*
  * ⛔ A LABEL WITH NO COLON IS TRIMMED TOO. This is the shape the two renders
@@ -4393,14 +4506,48 @@ bhp_rs_ok(
  *     product-name cell; the number columns must carry `nowrap`.
  */
 $bhp_rs_r15_css = apply_filters( 'woocommerce_email_styles', '', null );
+
+/*
+ * ⛔⛔ 1.19.377 · R16 · WHY THE R15 ASSERTION REPORTED "count: 2" AND THE
+ *     STYLESHEET WAS NEVER WRONG.
+ *
+ * ⭐ THE DUPLICATE IS NOT A DUPLICATE. `substr_count()` was counting the
+ *    literal characters `word-break: break-word` ANYWHERE in the emitted
+ *    string — and the ≤480px block in `inc/transactional-emails.php` carries a
+ *    CSS comment that names the property in prose:
+ *
+ *      /* ⛔⛔ 1.19.376 · SEAL 1042. `word-break: break-word` WAS ON EVERY
+ *         CELL IN 1.19.374 AND IT BROKE THE HEADINGS. …
+ *
+ *    One DECLARATION, one MENTION, count 2. Read at this desk in
+ *    `inc/transactional-emails.php` around line 940 and around line 961.
+ *
+ * ⛔ THE COMMENT IS KEPT. It is the record of why the property is scoped the
+ *    way it is, and deleting documentation to make a string-counting assertion
+ *    go green is the wrong repair. The ASSERTION is what was wrong: it claimed
+ *    to count declarations and counted substrings.
+ *
+ * ⭐ THE FIX IS A COMMENT-STRIPPED COPY, USED FOR EVERY STRUCTURAL ASSERTION
+ *    BELOW, not just this one. The selector checks had the same hole — the
+ *    comments mention `tr.order_item td.text-align-left` and
+ *    `thead th.text-align-right` by name, so those assertions would have
+ *    passed on prose alone even if the rules had been deleted.
+ */
+$bhp_rs_r16_css_rules = preg_replace( '#/\*.*?\*/#s', '', $bhp_rs_r15_css );
 bhp_rs_ok(
-	'⛔ word-break: break-word is declared exactly once in the whole stylesheet',
-	1 === substr_count( $bhp_rs_r15_css, 'word-break: break-word' ),
-	'count: ' . substr_count( $bhp_rs_r15_css, 'word-break: break-word' )
+	'⛔ word-break: break-word is DECLARED exactly once (comments stripped)',
+	1 === substr_count( $bhp_rs_r16_css_rules, 'word-break: break-word' ),
+	'declarations: ' . substr_count( $bhp_rs_r16_css_rules, 'word-break: break-word' )
+	. ' | raw substring hits incl. comments: ' . substr_count( $bhp_rs_r15_css, 'word-break: break-word' )
+);
+bhp_rs_ok(
+	'⭐⭐ R16 · the comment stripper actually removed something (the guard is live)',
+	strlen( $bhp_rs_r16_css_rules ) < strlen( $bhp_rs_r15_css ),
+	'stripped: ' . ( strlen( $bhp_rs_r15_css ) - strlen( $bhp_rs_r16_css_rules ) ) . ' bytes'
 );
 bhp_rs_ok(
 	'⭐ word-break is scoped to tr.order_item td.text-align-left',
-	false !== strpos( $bhp_rs_r15_css, 'tr.order_item td.text-align-left' )
+	false !== strpos( $bhp_rs_r16_css_rules, 'tr.order_item td.text-align-left' )
 );
 foreach ( array(
 	'thead th.text-align-right',
@@ -4409,12 +4556,12 @@ foreach ( array(
 ) as $bhp_rs_r15_sel ) {
 	bhp_rs_ok(
 		'⭐ nowrap column floor covers ' . $bhp_rs_r15_sel,
-		false !== strpos( $bhp_rs_r15_css, $bhp_rs_r15_sel )
+		false !== strpos( $bhp_rs_r16_css_rules, $bhp_rs_r15_sel )
 	);
 }
 bhp_rs_ok(
 	'⛔ white-space: nowrap is present in the stylesheet',
-	false !== strpos( $bhp_rs_r15_css, 'white-space: nowrap !important' )
+	false !== strpos( $bhp_rs_r16_css_rules, 'white-space: nowrap !important' )
 );
 
 bhp_rs_head( '§12 Deferred fixture teardown' );
@@ -4460,7 +4607,13 @@ bhp_rs_ok(
 );
 
 echo "\n========================================\n";
-echo "PASS: {$GLOBALS['bhp_rs_pass']}   FAIL: {$GLOBALS['bhp_rs_fail']}\n";
+$bhp_rs_skipped = isset( $GLOBALS['bhp_rs_skip'] ) ? (int) $GLOBALS['bhp_rs_skip'] : 0;
+echo "PASS: {$GLOBALS['bhp_rs_pass']}   FAIL: {$GLOBALS['bhp_rs_fail']}   SKIP: {$bhp_rs_skipped}\n";
+
+if ( $bhp_rs_skipped > 0 ) {
+	echo "⚠ {$bhp_rs_skipped} check(s) DID NOT RUN. A green PASS count does not cover them.\n";
+}
+
 echo "========================================\n";
 
 if ( $GLOBALS['bhp_rs_fail'] > 0 ) {

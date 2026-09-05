@@ -1098,6 +1098,53 @@ function bhp_visit_email_shorten_pickup_row( $total_rows, $order = null ) {
 	$total_rows['shipping']['value'] = '<div style="text-align:left;">' . esc_html( trim( $short ) ) . '</div>';
 
 	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.19.377 · SEAL 1042 (a) · THE ACTUAL ROOT CAUSE. `meta` IS THE ROW
+	 *     KEY THAT WAS PRINTING THE METHOD NAME A SECOND TIME.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ 1.19.374 AND 1.19.376 BOTH REWROTE `label` AND BOTH FAILED, and the
+	 *    reason is that `label` was never the problem. WooCommerce 10.8.0
+	 *    `templates/emails/email-order-details.php` (lines 157-163) prints the
+	 *    totals `<th>` as the label, then a space, then — when the email
+	 *    improvements flag is on — `$total['meta']`. Core populates `meta` on
+	 *    the shipping row with the shipping METHOD NAME. No label priority can
+	 *    win that, because the two strings are printed from two different keys.
+	 *
+	 * ⭐ THE EVIDENCE IS IN THE RENDER, NOT IN THE SOURCE, and it is the TAX
+	 *    ROW that proves it. `rs376-day0.html` lines 150-153, read byte-for-byte
+	 *    at this desk 2026-09-05:
+	 *
+	 *      shipping <th>:  "Hand delivery: Author hand-delivery at the Dallas
+	 *                       Harris Elementary visit (September 3)"
+	 *      tax <th>:       "Idaho Sales Tax: "   ← label, space, NOTHING
+	 *
+	 *    The tax row has no `meta`, and it renders label + a trailing space and
+	 *    stops. So the 1.19.376 label write DID reach the render — the `<th>`
+	 *    really does begin "Hand delivery: " — and the trailing text after it
+	 *    is a SECOND key being printed. Clearing `meta` is the whole fix.
+	 *
+	 * ⛔ IT IS SET, NOT UNSET. `email-order-details.php` guards with
+	 *    `! empty( $total['meta'] )`, so `''` is enough and an `unset()` would
+	 *    only risk an undefined-index notice in some other consumer of these
+	 *    rows. Nothing else in this store reads `meta` on the shipping row.
+	 *
+	 * ⛔ ORDINARY ORDERS ARE UNREACHED. This line sits below the "Hand
+	 *    delivery" guard and inside a callback that is attached for the length
+	 *    of one `do_action()` on the visit fork only. A web receipt keeps its
+	 *    shipping method name in the `<th>` exactly as it does today.
+	 *
+	 * ⚠ NOT VERIFIED FIRST-HAND: the WooCommerce 10.8.0 template source has
+	 *   NOT been read at this desk — there is no WooCommerce checkout here and
+	 *   the line numbers above are Gandalf's read, not mine. What IS first-hand
+	 *   is the render evidence above, which is consistent with it and with
+	 *   nothing else I could construct. If `meta` turns out not to be the key,
+	 *   the tax row says the appended string is still a second key on the row,
+	 *   and the same one-line treatment applies to whichever key it is.
+	 */
+	$total_rows['shipping']['meta'] = '';
+
+	/*
 	 * ⛔ THE `<th>` IS TRIMMED BACK TO THE PHRASE ITSELF. It arrives as
 	 *    "Hand delivery: Author hand-delivery at the ... visit (September 3)",
 	 *    which prints the pickup name a second time. Cutting at the first
