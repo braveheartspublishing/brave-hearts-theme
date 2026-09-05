@@ -858,6 +858,27 @@ function bhp_email_plain_footer( $email = null ) {
  * @return string
  */
 function bhp_email_brand_styles( $css ) {
+	/*
+	 * ⛔⛔ 1.19.379 · READ THIS BEFORE TYPING ONE CHARACTER INTO THE BLOCK
+	 *     BELOW. EVERYTHING FROM THE NEXT LINE TO THE CLOSING `';` IS ONE
+	 *     SINGLE-QUOTED PHP STRING, ~200 LINES LONG. A SINGLE APOSTROPHE
+	 *     ANYWHERE INSIDE IT ENDS THE STRING AND THE FILE STOPS PARSING.
+	 *
+	 * ⛔ THAT IS EXACTLY WHAT SHIPPED AS 1.19.378 AND TOOK STAGING TO
+	 *    HTTP 500. Three prose apostrophes had been typed into the CSS
+	 *    comments of this block - "BLOCK'S", "column's", "row's". The first
+	 *    of them, on what was then line 947, closed the string; the word
+	 *    that followed it became a bare identifier and PHP reported
+	 *    `syntax error, unexpected identifier "S"`. The CSS was never the
+	 *    problem; the quoting was.
+	 *
+	 * ⭐ THE RULE, AND IT IS NOT NEGOTIABLE: NO APOSTROPHE IN THIS BLOCK.
+	 *    Write "the floor of each column", not "each column's floor".
+	 *    Backslash-escaping would also parse, but escapes in a 200-line
+	 *    prose block are one more thing to get wrong at 16:00 on a ship
+	 *    day, so the block is kept apostrophe-free instead. Double quotes
+	 *    and backticks are safe and are used freely below.
+	 */
 	$css .= '
 #template_header h1,
 #body_content_inner h1,
@@ -944,7 +965,7 @@ function bhp_email_brand_styles( $css ) {
 	 *    the viewport. `Quantity` and `Price` are pushed off-canvas to the
 	 *    right and the product title is clipped at the right edge.
 	 *
-	 * ⭐ THE OVERFLOW WAS CAUSED BY THIS BLOCK'S OWN 1.19.376 `nowrap` RULE,
+	 * ⭐ THE OVERFLOW WAS CAUSED BY THE 1.19.376 `nowrap` RULE IN THIS BLOCK,
 	 *    not by the width of the table. Read out of `rs376-day0.html`
 	 *    (the shipping totals row): the amount cell of that row does not hold a
 	 *    price at all - it holds the 70-character sentence *"Author
@@ -1013,7 +1034,7 @@ function bhp_email_brand_styles( $css ) {
 	 * ⚠ PREDICTED COLUMN WIDTHS AT A 375px VIEWPORT, arithmetic stated so it
 	 *   can be checked against the next render rather than believed. Container:
 	 *   375 - 2x10px (`#body_content_inner_cell` padding at the ≤600 breakpoint)
-	 *   = 355px. Auto table layout, so each column's floor is its widest
+	 *   = 355px. Auto table layout, so the floor of each column is its widest
 	 *   unbreakable run + 8px of padding: product 82px (40px image + 24px
 	 *   margin, then `break-word` allows a single character), Quantity 66px
 	 *   ("Quantity" at 14px bold ~58px), Price 54px ("$11.99" nowrap ~46px).
@@ -1036,7 +1057,7 @@ function bhp_email_brand_styles( $css ) {
 	 * ⚠ STILL WRONG, NOT MINE TO FIX IN THIS ROUND: the shipping totals row
 	 *   prints the hand-delivery sentence TWICE - once in the `<th>` label
 	 *   position and once as the "amount". Seal 1042 removed the duplicate from
-	 *   the `<th>`; the `<td>` copy is the row's `value` and changing it is a
+	 *   the `<th>`; the `<td>` copy is the `value` of the row and changing it is a
 	 *   content change to the totals row, outside this brief.
 	 */
 	#body_content_inner table.email-order-details tr.order_item td.text-align-right {
