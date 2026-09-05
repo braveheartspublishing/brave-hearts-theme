@@ -2605,15 +2605,46 @@ if ( $bhp_rs_email instanceof WC_Email_BHP_Review_Ask ) {
 	);
 
 	/*
-	 * ⛔⛔ AND NO SOCIAL LINK IS INVENTED. No Facebook or Instagram URL exists
-	 *     anywhere in this repository, so the line must render EMPTY until real
-	 *     URLs are supplied. This assertion is the guard against a future
-	 *     "helpful" guess.
+	 * ⛔⛔ AND NO SOCIAL LINK IS INVENTED — REWRITTEN 1.19.371 BECAUSE THE OLD
+	 *     FORM HAD BECOME A TRAP. It asserted `stripos( $bhp_rs_html,
+	 *     'facebook.com' ) === false` against the ambient render. That was the
+	 *     right assertion on 2026-09-05 at 13:0x, when NO Facebook URL existed
+	 *     anywhere. It stopped being the right assertion the moment
+	 *     `bhp_social_links` was set on staging with two REAL URLs: the render
+	 *     then legitimately contains `facebook.com` and the suite would have
+	 *     gone red for the software working exactly as designed.
+	 *
+	 * ⭐ THE INVARIANT THAT ACTUALLY MATTERS is *"nothing is emitted when
+	 *    nothing is supplied"*, so it is asserted against a render with the
+	 *    links explicitly emptied through the public filter, which is true
+	 *    whatever the option happens to hold.
 	 */
+	$bhp_rs_social_none = static function () {
+		return array();
+	};
+
+	add_filter( 'bhp_review_ask_social_links', $bhp_rs_social_none, 99 );
+	$bhp_rs_html_nosocial = (string) $bhp_rs_email->get_content_html();
+	$bhp_rs_sig_none      = bhp_review_ask_signature();
+	remove_filter( 'bhp_review_ask_social_links', $bhp_rs_social_none, 99 );
+
 	bhp_rs_ok(
-		'⛔⛔ NO fabricated Facebook or Instagram URL is emitted',
-		false === stripos( $bhp_rs_html, 'facebook.com' ) && false === stripos( $bhp_rs_html, 'instagram.com' )
+		'⛔⛔ With no social links supplied, NO fabricated Facebook or Instagram URL is emitted',
+		false === stripos( $bhp_rs_html_nosocial, 'facebook.com' )
+			&& false === stripos( $bhp_rs_html_nosocial, 'instagram.com' )
+			&& array() === $bhp_rs_sig_none['social']
 	);
+
+	/*
+	 * ⚠ AND THE LIVE OPTION IS REPORTED RATHER THAN ASSERTED EITHER WAY. On
+	 *   staging `bhp_social_links` is set; on production it is not set yet (it
+	 *   is a go-live step in docs/RUNBOOK.md). Asserting a value here would
+	 *   make the suite environment-dependent, which is what the rewrite above
+	 *   exists to stop. So it prints what it found and moves on.
+	 */
+	$bhp_rs_social_live = get_option( 'bhp_social_links', array() );
+	echo 'INFO: bhp_social_links holds ' . ( is_array( $bhp_rs_social_live ) ? count( $bhp_rs_social_live ) : 0 ) . " entries in this environment.
+";
 
 	/*
 	 * ⭐ AND THE LINE APPEARS THE MOMENT REAL URLs EXIST. Proved by supplying
@@ -2776,6 +2807,265 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 			file_exists( get_template_directory() . '/assets/images/email/' . $bhp_rs_hf )
 		);
 	}
+}
+
+/* =========================================================================
+ * §14 — ROUND 10: THE CHARSET AS IT REACHES THE MAILER
+ * ====================================================================== */
+
+bhp_rs_head( '§14 Round 10: charset on the wire, and the plain sign-off is gone' );
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ WHY THIS SECTION EXISTS. 1.19.370 added `bhp_email_force_charset()` on
+ *     `woocommerce_email_headers` and FluentSMTP's log STILL recorded
+ *     `text/html` with no charset for both test sends (log ids 6 and 7,
+ *     reported by Gandalf 2026-09-05 — ⚠ RELAYED, not observed at this desk).
+ *     A filter that is registered is not the same fact as a charset that
+ *     survives to the mailer, and only the second one matters.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* ---- 14.1 the header string WooCommerce hands to wp_mail() ---- */
+
+/*
+ * ⚠ GUARDED ON §13'S EMAIL OBJECT. `$bhp_rs_email` is resolved out of the
+ *   live WooCommerce mailer in §13 and is null if the class is not registered.
+ *   ⛔ An unguarded `->get_headers()` would fatal the whole suite on an
+ *   environment where the review-ask email is not loaded, taking every other
+ *   section down with it.
+ */
+if ( $bhp_rs_email instanceof WC_Email ) {
+	$bhp_rs_wc_headers = (string) $bhp_rs_email->get_headers();
+
+	bhp_rs_ok(
+		'⭐⭐ WC_Email::get_headers() states the charset (the 1.19.370 filter is live)',
+		(bool) preg_match( '/content-type\s*:[^\r\n]*charset\s*=\s*"?utf-8/i', $bhp_rs_wc_headers ),
+		'headers: ' . str_replace( array( "\r", "\n" ), ' | ', $bhp_rs_wc_headers )
+	);
+
+	bhp_rs_ok(
+		'⛔ ... and no charset was appended twice',
+		substr_count( strtolower( $bhp_rs_wc_headers ), 'charset=' ) <= 1,
+		'charset= appears ' . substr_count( strtolower( $bhp_rs_wc_headers ), 'charset=' ) . ' time(s)'
+	);
+} else {
+	echo "SKIP: no WC_Email_BHP_Review_Ask instance was resolvable, so 14.1 did not run.\n";
+}
+
+/* ---- 14.2 the shared call-site header ---- */
+
+bhp_rs_ok(
+	'⭐ bhp_email_html_content_type_header() exists',
+	function_exists( 'bhp_email_html_content_type_header' )
+);
+
+if ( function_exists( 'bhp_email_html_content_type_header' ) ) {
+	bhp_rs_ok(
+		'⭐ ... and it states text/html with a charset',
+		(bool) preg_match( '#^Content-Type:\s*text/html;\s*charset=\S+$#i', bhp_email_html_content_type_header() ),
+		'got: ' . bhp_email_html_content_type_header()
+	);
+}
+
+/* ---- 14.3 the headers AS THEY REACH wp_mail() ---- */
+
+/*
+ * ⛔⛔ THE LIVE CALL IS GATED ON `wp_mail()` STILL BEING WORDPRESS'S OWN.
+ *     `wp_mail()` is pluggable and FluentSMTP is entitled to replace it. If it
+ *     has, `pre_wp_mail` is not guaranteed to be honoured — and a test that
+ *     assumes it is would SEND A REAL EMAIL to prove a header. ⚠ So the
+ *     defining file is checked first with Reflection, the probe is skipped if
+ *     it is not `pluggable.php`, and the skip is PRINTED rather than passing
+ *     silently. That skip line is itself the most useful diagnostic in this
+ *     file: a replaced `wp_mail()` re-parses the header string, which is the
+ *     leading explanation for the FluentSMTP log entries.
+ */
+$bhp_rs_mail_file = '';
+
+if ( function_exists( 'wp_mail' ) && class_exists( 'ReflectionFunction' ) ) {
+	try {
+		$bhp_rs_ref       = new ReflectionFunction( 'wp_mail' );
+		$bhp_rs_mail_file = (string) $bhp_rs_ref->getFileName();
+	} catch ( Exception $e ) {
+		$bhp_rs_mail_file = '';
+	}
+}
+
+echo 'INFO: wp_mail() is defined in ' . ( '' !== $bhp_rs_mail_file ? $bhp_rs_mail_file : 'an unknown file' ) . "\n";
+
+$bhp_rs_is_core_mail = ( '' !== $bhp_rs_mail_file && false !== stripos( $bhp_rs_mail_file, 'pluggable.php' ) );
+
+if ( $bhp_rs_is_core_mail ) {
+	$GLOBALS['bhp_rs_mail_seen'] = array();
+
+	$bhp_rs_capture = static function ( $atts ) {
+		$GLOBALS['bhp_rs_mail_seen'][] = $atts;
+		return $atts;
+	};
+
+	/* ⛔ THE HARD STOP: nothing leaves this process. */
+	$bhp_rs_block = static function () {
+		return true;
+	};
+
+	add_filter( 'wp_mail', $bhp_rs_capture, 1 );
+	add_filter( 'pre_wp_mail', $bhp_rs_block, 1 );
+
+	wp_mail(
+		'charset-probe@example.test',
+		'BHP charset probe (never delivered)',
+		'<p>★</p>',
+		array(
+			function_exists( 'bhp_email_html_content_type_header' )
+				? bhp_email_html_content_type_header()
+				: 'Content-Type: text/html; charset=UTF-8',
+		)
+	);
+
+	remove_filter( 'pre_wp_mail', $bhp_rs_block, 1 );
+	remove_filter( 'wp_mail', $bhp_rs_capture, 1 );
+
+	$bhp_rs_seen = $GLOBALS['bhp_rs_mail_seen'];
+
+	bhp_rs_ok(
+		'⭐⭐ The wp_mail filter fired, so the headers were inspectable at the boundary',
+		1 === count( $bhp_rs_seen ),
+		'captured: ' . count( $bhp_rs_seen )
+	);
+
+	if ( $bhp_rs_seen ) {
+		$bhp_rs_hdrs = isset( $bhp_rs_seen[0]['headers'] ) ? $bhp_rs_seen[0]['headers'] : array();
+		$bhp_rs_flat = is_array( $bhp_rs_hdrs ) ? implode( ' | ', $bhp_rs_hdrs ) : (string) $bhp_rs_hdrs;
+
+		bhp_rs_ok(
+			'⭐⭐ THE CHARSET IS PRESENT IN THE HEADERS AS THEY REACH wp_mail()',
+			(bool) preg_match( '/content-type\s*:[^|\r\n]*charset\s*=\s*"?utf-8/i', $bhp_rs_flat ),
+			'headers at wp_mail: ' . $bhp_rs_flat
+		);
+	}
+
+	unset( $GLOBALS['bhp_rs_mail_seen'] );
+} else {
+	echo "SKIP: wp_mail() is not WordPress's own, so no probe send was attempted (a blocked send could not be guaranteed).\n";
+	echo "      ⚠ THIS IS THE FINDING, NOT A GAP. See the block comment above.\n";
+}
+
+/* ---- 14.4 the mailer-level charset handler ---- */
+
+bhp_rs_ok(
+	'⭐⭐ bhp_email_phpmailer_charset() is hooked on phpmailer_init',
+	function_exists( 'bhp_email_phpmailer_charset' )
+		&& false !== has_action( 'phpmailer_init', 'bhp_email_phpmailer_charset' )
+);
+
+if ( function_exists( 'bhp_email_phpmailer_charset' ) ) {
+	/*
+	 * ⚠ A STAND-IN OBJECT, NOT A REAL PHPMailer. The handler reads and writes
+	 *   two public properties and nothing else, so those two properties ARE the
+	 *   contract under test. Constructing a real mailer would test PHPMailer.
+	 */
+	$bhp_rs_mailer           = new stdClass();
+	$bhp_rs_mailer->CharSet  = 'iso-8859-1'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+	$bhp_rs_mailer->Encoding = '8bit';       // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+
+	bhp_email_phpmailer_charset( $bhp_rs_mailer );
+
+	bhp_rs_ok(
+		'⭐⭐ It sets CharSet to UTF-8, overriding a wrong one',
+		'UTF-8' === strtoupper( (string) $bhp_rs_mailer->CharSet ),
+		'got: ' . $bhp_rs_mailer->CharSet
+	);
+
+	bhp_rs_ok(
+		'⭐ It replaces the 8bit default with quoted-printable',
+		'quoted-printable' === strtolower( (string) $bhp_rs_mailer->Encoding ),
+		'got: ' . $bhp_rs_mailer->Encoding
+	);
+
+	/* ⛔ AND IT DOES NOT OVERRIDE A DELIBERATE CHOICE. */
+	$bhp_rs_mailer2           = new stdClass();
+	$bhp_rs_mailer2->CharSet  = '';       // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+	$bhp_rs_mailer2->Encoding = 'base64'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+
+	bhp_email_phpmailer_charset( $bhp_rs_mailer2 );
+
+	bhp_rs_ok(
+		'⛔ An encoding somebody else chose on purpose (base64) is left alone',
+		'base64' === strtolower( (string) $bhp_rs_mailer2->Encoding ),
+		'got: ' . $bhp_rs_mailer2->Encoding
+	);
+
+	/* ⛔ AND THE OFF SWITCH IS REAL. */
+	$bhp_rs_off = static function () {
+		return false;
+	};
+
+	add_filter( 'bhp_email_phpmailer_charset_enabled', $bhp_rs_off, 99 );
+
+	$bhp_rs_mailer3           = new stdClass();
+	$bhp_rs_mailer3->CharSet  = 'iso-8859-1'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+	$bhp_rs_mailer3->Encoding = '8bit';       // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+
+	bhp_email_phpmailer_charset( $bhp_rs_mailer3 );
+	remove_filter( 'bhp_email_phpmailer_charset_enabled', $bhp_rs_off, 99 );
+
+	bhp_rs_ok(
+		'⛔ bhp_email_phpmailer_charset_enabled=false is honoured',
+		'iso-8859-1' === strtolower( (string) $bhp_rs_mailer3->CharSet )
+	);
+}
+
+/* ---- 14.5 seal 1007: the plain sign-off is gone from all three sets ---- */
+
+/*
+ * ⭐ Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through Gandalf, not
+ *    heard first-hand): *"I like the nice signature and big place brave hearts
+ *    - drop the plain one"*.
+ */
+foreach ( array(
+	'visit touch 1' => bhp_review_ask_copy_visit_touch1( null ),
+	'web touch 1'   => bhp_review_ask_copy_web_touch1(),
+	'touch 2'       => bhp_review_ask_copy_touch2(),
+) as $bhp_rs_label => $bhp_rs_set ) {
+	bhp_rs_ok(
+		'⭐⭐ SEAL 1007: the ' . $bhp_rs_label . ' set carries NO plain sign-off line',
+		isset( $bhp_rs_set['signoff'] ) && is_array( $bhp_rs_set['signoff'] ) && array() === $bhp_rs_set['signoff'],
+		'got: ' . wp_json_encode( isset( $bhp_rs_set['signoff'] ) ? $bhp_rs_set['signoff'] : null )
+	);
+
+	/*
+	 * ⛔⛔ AND THE SET IS STILL USABLE. This is the assertion that matters
+	 *     most: `bhp_review_ask_copy_is_usable()` used to REQUIRE a non-empty
+	 *     signoff, so emptying it without relaxing that check would have made
+	 *     every approved set fail its own gate and the engine fall back to a
+	 *     set nobody selected — silently.
+	 */
+	bhp_rs_ok(
+		'⛔⛔ ... and the ' . $bhp_rs_label . ' set is STILL usable with an empty signoff',
+		bhp_review_ask_copy_is_usable( $bhp_rs_set )
+	);
+}
+
+/*
+ * ⭐ AND THE RENDERED EMAIL NO LONGER CARRIES A BARE NAME ABOVE THE SIGNATURE.
+ *    Asserted on the rendered HTML rather than on the copy array, because the
+ *    template is what a parent sees. ⚠ Same guard as 14.1: `$bhp_rs_html` is
+ *    §13's render and only exists if §13's email object did.
+ */
+if ( isset( $bhp_rs_html ) && is_string( $bhp_rs_html ) && '' !== $bhp_rs_html ) {
+	bhp_rs_ok(
+		'⭐⭐ The rendered touch 1 no longer prints a standalone "Andrew" paragraph',
+		false === strpos( $bhp_rs_html, '>Andrew<' ),
+		'the signature block still carries "Andrew Signore" (asserted in §13.6)'
+	);
+
+	bhp_rs_ok(
+		'⛔ ... while the signature block is untouched',
+		false !== strpos( $bhp_rs_html, 'Andrew Signore' )
+	);
+} else {
+	echo "SKIP: §13 produced no rendered HTML, so the rendered sign-off assertions did not run.\n";
 }
 
 /* =========================================================================

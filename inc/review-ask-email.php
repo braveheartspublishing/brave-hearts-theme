@@ -1603,9 +1603,25 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 			? array( __( 'Thank you for reading with {ChildFirstName}.', 'brave-hearts' ) )
 			: array( __( 'Thank you for reading together.', 'brave-hearts' ) ),
 
-		'signoff'         => array(
-			__( 'Andrew', 'brave-hearts' ),
-		),
+		/*
+		 * ⭐ SEAL 1007 - THE PLAIN SIGN-OFF IS GONE, THE SIGNATURE BLOCK CARRIES
+		 *    THE NAME. Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
+		 *    Gandalf, not heard first-hand): *"I like the nice signature and
+		 *    big place brave hearts - drop the plain one"*.
+		 *
+		 * ⛔ SUPERSEDED LINE, PRESERVED SO IT IS NOT RE-DERIVED BY ACCIDENT:
+		 *        'signoff' => array( __( 'Andrew', 'brave-hearts' ) ),
+		 *    It rendered a bare "Andrew" immediately above a rule and then
+		 *    `bhp_review_ask_signature()`'s "Andrew Signore / Author | Brave
+		 *    Hearts Publishing / Big Places. Brave Hearts." - the duplication
+		 *    that `CYCLE179-DES-29(a)` flagged as an open decision. Seal 1007
+		 *    settles it in favour of the block. ⛔ THE EYEBROW STAYS OMITTED.
+		 *
+		 * ⚠ EMPTY, NOT REMOVED. `bhp_review_ask_copy_is_usable()` requires the
+		 *   key to be PRESENT and an ARRAY, so a typo'd key is still caught;
+		 *   only the emptiness requirement was lifted (see that function).
+		 */
+		'signoff'         => array(),
 
 		'signoff_tagline' => '',
 
@@ -1740,7 +1756,25 @@ function bhp_review_ask_copy_web_touch1() {
 			__( 'Thank you for taking a chance on a book by somebody you had never heard of.', 'brave-hearts' ),
 		),
 
-		'signoff'         => array( __( 'Andrew', 'brave-hearts' ) ),
+		/*
+		 * ⭐ SEAL 1007 - THE PLAIN SIGN-OFF IS GONE, THE SIGNATURE BLOCK CARRIES
+		 *    THE NAME. Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
+		 *    Gandalf, not heard first-hand): *"I like the nice signature and
+		 *    big place brave hearts - drop the plain one"*.
+		 *
+		 * ⛔ SUPERSEDED LINE, PRESERVED SO IT IS NOT RE-DERIVED BY ACCIDENT:
+		 *        'signoff' => array( __( 'Andrew', 'brave-hearts' ) ),
+		 *    It rendered a bare "Andrew" immediately above a rule and then
+		 *    `bhp_review_ask_signature()`'s "Andrew Signore / Author | Brave
+		 *    Hearts Publishing / Big Places. Brave Hearts." - the duplication
+		 *    that `CYCLE179-DES-29(a)` flagged as an open decision. Seal 1007
+		 *    settles it in favour of the block. ⛔ THE EYEBROW STAYS OMITTED.
+		 *
+		 * ⚠ EMPTY, NOT REMOVED. `bhp_review_ask_copy_is_usable()` requires the
+		 *   key to be PRESENT and an ARRAY, so a typo'd key is still caught;
+		 *   only the emptiness requirement was lifted (see that function).
+		 */
+		'signoff'         => array(),
 		'signoff_tagline' => '',
 
 		/*
@@ -1867,7 +1901,25 @@ function bhp_review_ask_copy_touch2() {
 			__( 'If it is not for you, that is completely fine. This is the last note I will send about it.', 'brave-hearts' ),
 		),
 
-		'signoff'         => array( __( 'Andrew', 'brave-hearts' ) ),
+		/*
+		 * ⭐ SEAL 1007 - THE PLAIN SIGN-OFF IS GONE, THE SIGNATURE BLOCK CARRIES
+		 *    THE NAME. Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
+		 *    Gandalf, not heard first-hand): *"I like the nice signature and
+		 *    big place brave hearts - drop the plain one"*.
+		 *
+		 * ⛔ SUPERSEDED LINE, PRESERVED SO IT IS NOT RE-DERIVED BY ACCIDENT:
+		 *        'signoff' => array( __( 'Andrew', 'brave-hearts' ) ),
+		 *    It rendered a bare "Andrew" immediately above a rule and then
+		 *    `bhp_review_ask_signature()`'s "Andrew Signore / Author | Brave
+		 *    Hearts Publishing / Big Places. Brave Hearts." - the duplication
+		 *    that `CYCLE179-DES-29(a)` flagged as an open decision. Seal 1007
+		 *    settles it in favour of the block. ⛔ THE EYEBROW STAYS OMITTED.
+		 *
+		 * ⚠ EMPTY, NOT REMOVED. `bhp_review_ask_copy_is_usable()` requires the
+		 *   key to be PRESENT and an ARRAY, so a typo'd key is still caught;
+		 *   only the emptiness requirement was lifted (see that function).
+		 */
+		'signoff'         => array(),
 		'signoff_tagline' => '',
 		'postscript'      => '',
 
@@ -2011,10 +2063,25 @@ function bhp_review_ask_copy_is_usable( $copy ) {
 		}
 	}
 
-	foreach ( array( 'body_before', 'body_after', 'signoff', 'links' ) as $key ) {
+	foreach ( array( 'body_before', 'body_after', 'links' ) as $key ) {
 		if ( empty( $copy[ $key ] ) || ! is_array( $copy[ $key ] ) ) {
 			return false;
 		}
+	}
+
+	/*
+	 * ⚠ `signoff` MOVED TO PRESENT-AND-ARRAY 2026-09-05 UNDER SEAL 1007, same
+	 *   reasoning as `question` above and no further. All three sets in the
+	 *   sequence now carry an EMPTY signoff because the founder dropped the
+	 *   plain sign-off line in favour of `bhp_review_ask_signature()`. ⛔ Left
+	 *   in the emptiness loop, the approved copy would fail its own usability
+	 *   test and the engine would silently fall back to a set nobody selected
+	 *   - the exact failure mode the 2026-09-05 relaxation above was written
+	 *   for. It is still required to be PRESENT and an ARRAY, so a typo'd or
+	 *   deleted key is still caught.
+	 */
+	if ( ! isset( $copy['signoff'] ) || ! is_array( $copy['signoff'] ) ) {
+		return false;
 	}
 
 	/*
@@ -5091,8 +5158,18 @@ function bhp_review_ask_cli_test_send_deliver( $to, $subject, $html, $from_name,
 		}
 	}
 
+	/*
+	 * ⭐ 1.19.371 · THE CHARSET COMES FROM ONE PLACE NOW. It was already stated
+	 *    inline here; `bhp_email_html_content_type_header()` makes it the same
+	 *    string the rest of the email path uses and gives a test something to
+	 *    assert against. ⛔ The literal is kept as a fallback so a partial
+	 *    deploy that ships this file without `inc/transactional-emails.php`
+	 *    still states a charset rather than fataling.
+	 */
 	$headers = array(
-		'Content-Type: text/html; charset=UTF-8',
+		function_exists( 'bhp_email_html_content_type_header' )
+			? bhp_email_html_content_type_header()
+			: 'Content-Type: text/html; charset=UTF-8',
 		'From: ' . $from_name . ' <' . $from_email . '>',
 
 		/*

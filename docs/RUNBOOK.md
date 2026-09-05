@@ -313,7 +313,7 @@ built (Andrew's explicit instruction). To add a new review:
    way as any other theme change (full-ZIP `wp theme install --force`,
    staging-verified first).
 
-## Review-ask engine — staging QA and the production go-live gates (1.19.370)
+## Review-ask engine — staging QA and the production go-live gates (1.19.371)
 
 **The engine sends nothing until `bhp_review_ask_enabled` is `yes`. That option
 flip is Andrew's, and it is the only irreversible step in this list** — an email
@@ -326,8 +326,8 @@ that has gone to a parent cannot be recalled. Everything above it is reversible.
 
 ```
 # 1. install the candidate
-wp theme install /path/to/brave-hearts-theme-1.19.370-review-seq.zip --force
-wp theme list --status=active                 # must show <slug> at 1.19.370
+wp theme install /path/to/brave-hearts-theme-1.19.371-review-seq.zip --force
+wp theme list --status=active                 # must show <slug> at 1.19.371
 wp sg purge
 
 # 2. fatal check
@@ -363,7 +363,7 @@ not on `--url`), refuses without one valid `--to`, and refuses an unapproved set
    `text/html; charset=UTF-8`. **If the charset is missing, stop** — the stars
    will arrive as `âââââ` and nothing else on this list can be judged.
    Then confirm in the delivered message that the five stars are stars and not
-   mojibake. *(1.19.370. The defect was observed on the 1.19.369 send.)*
+   mojibake. *(1.19.371. The defect was observed on the 1.19.369 send.)*
 1. **The star row is a row.** Open the touch-1 test-send on a phone and on
    desktop: five stars, one line, left to right, no wrapping at 375px.
    **They rest GREY (`#c9c2b3`), not gold** — that is the designed resting
@@ -410,19 +410,32 @@ ships inert code.** Step 4 is the live one.
 ```
 # 0. ROLLBACK ARTEFACT FIRST. Do not skip.
 cd <doc_root>/wp-content/themes
-tar -czf ~/PROD-theme-PRE-1.19.370-$(date +%Y%m%d-%H%M).tar.gz <slug>
+tar -czf ~/PROD-theme-PRE-1.19.371-$(date +%Y%m%d-%H%M).tar.gz <slug>
 wp option get bhp_review_ask_enabled                 # record the answer verbatim
 wp option get bhp_review_ask_stats  > ~/PRE-369-review-ask-stats.json
 wp option get bhp_review_ask_log    > ~/PRE-369-review-ask-log.json
 
 # 1. install and confirm it replaced the LIVE theme rather than adding one
-wp theme install /path/to/brave-hearts-theme-1.19.370-review-seq.zip --force
-wp theme list --status=active                        # <slug>, 1.19.370
+wp theme install /path/to/brave-hearts-theme-1.19.371-review-seq.zip --force
+wp theme list --status=active                        # <slug>, 1.19.371
 wp eval 'echo "ok";' --user=1
 wp sg purge
 
 # 2. confirm the engine is still OFF after the install
 wp bhp review-ask status                             # must read disabled
+
+# 2b. THE SIGNATURE BLOCK'S SOCIAL LINE. Production has no bhp_social_links
+#     option yet, so the signature block ends on the brand line and NO social
+#     link is emitted. These are the two real URLs, already set on staging.
+#     ⛔ Nothing here is invented: supply exactly these, or leave the option
+#     unset and accept a signature with no social line. Do this BEFORE step 4.
+wp option get bhp_social_links                       # record the answer verbatim (likely: option not set)
+wp option update bhp_social_links '[{"label":"Facebook","url":"https://www.facebook.com/braveheartspublishing"},{"label":"Instagram","url":"https://www.instagram.com/charlotteandhenrybooks"}]' --format=json
+wp option get bhp_social_links --format=json         # read it back; two entries
+wp sg purge
+#     ⚠ VERIFY IT REACHES THE EMAIL, not just the option table:
+wp eval 'print_r( bhp_review_ask_signature() );' --user=1
+#     Expect name, role, brand and a `social` array of exactly two entries.
 
 # 3. READ-ONLY dry runs on production, for the two Dallas dates
 wp bhp review-ask dry --as-of=2026-09-10
@@ -453,10 +466,13 @@ wp bhp review-ask plan --dates=2026-09-10,2026-09-11,2026-09-13,2026-09-14
 wp option update bhp_review_ask_enabled no
 wp bhp review-ask status                             # must read disabled
 
+# the social line alone, if that is the only thing to undo
+wp option delete bhp_social_links                    # signature block ends on the brand line again
+
 # full code rollback
 cd <doc_root>/wp-content/themes
 rm -rf <slug>
-tar -xzf ~/PROD-theme-PRE-1.19.370-<stamp>.tar.gz
+tar -xzf ~/PROD-theme-PRE-1.19.371-<stamp>.tar.gz
 wp theme list --status=active
 wp sg purge
 ```

@@ -188,8 +188,26 @@ bhp_vce_assert(
 	$failures
 );
 bhp_vce_assert( true === $day0['approved'], 'The generic day-0 set is flagged approved (seal 982)', $failures );
-bhp_vce_assert( 9 === count( $day0['body'] ), 'Day-0 body is exactly nine paragraphs', $failures );
+/*
+ * ⭐ EIGHT SINCE 1.19.371, NOT NINE — SEAL 1007. Andrew Signore, 2026-09-05,
+ *    verbatim (⛔ RELAYED through Gandalf, not heard first-hand): *"I like the
+ *    nice signature and big place brave hearts - drop the plain one"*. The
+ *    ninth paragraph was a bare `Andrew` and it is gone; the name is carried by
+ *    the signature block. ⚠ If this ever reads 9 again, the plain sign-off has
+ *    come back and the founder's edit has been undone.
+ */
+bhp_vce_assert( 8 === count( $day0['body'] ), 'Day-0 body is exactly eight paragraphs (seal 1007 dropped the plain sign-off)', $failures );
 bhp_vce_assert( '{VisitLine}' === $day0['body'][2], '⛔ {VisitLine} is its own paragraph, so an empty one disappears', $failures );
+bhp_vce_assert(
+	'Email me any time at Andrew@braveheartspublishing.com.' === $day0['body'][7],
+	'⭐ The day-0 body now ENDS on the reply route, not on a bare name',
+	$failures
+);
+bhp_vce_assert(
+	! in_array( 'Andrew', $day0['body'], true ),
+	'⛔ SEAL 1007: no paragraph in the day-0 body is the standalone word "Andrew"',
+	$failures
+);
 
 /*
  * ⛔⛔ THE ADAMS FACTS ARE UNREACHABLE FROM THIS FILE, FOR EVERY SLUG. This is
@@ -378,13 +396,97 @@ echo "\n=== 9. BODY RESOLUTION AT THE TEMPLATE BOUNDARY ===\n";
 
 bhp_vce_assert( array() === bhp_visit_email_body( $plain_email ), 'ordinary order => empty body array => standard template path', $failures );
 /*
- * ⛔ FOUR, NOT FIVE, SINCE 1.19.364. The Amazon/QR review paragraph was
- *    removed from the approved `adams-2026-08-28` set under Andrew's seal 977
- *    (*"I want one destination not 2"*); the removed sentence is preserved
- *    verbatim in a comment at its old position in `inc/visit-completed-email.php`.
- *    ⚠ If this ever reads 5 again, the day-0 email has regained a review ask.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.371 · THIS ASSERTION WAS STALE AND WRONG IN TWO SEPARATE WAYS, AND
+ *     BOTH ARE FIXED HERE RATHER THAN THE NUMBER BEING NUDGED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ SUPERSEDED, PRESERVED VERBATIM:
+ *        bhp_vce_assert( 4 === count( bhp_visit_email_body( $visit_email ) ),
+ *            'visit order => four paragraphs (Amazon ask removed, seal 977)', $failures );
+ *    with the docblock *"FOUR, NOT FIVE, SINCE 1.19.364"*.
+ *
+ * ⚠ WRONG #1 — IT NAMED THE RETIRED SET. `4` was the paragraph count of the
+ *   per-school `adams-2026-08-28` copy. Seal 994 retired that set at 1.19.369
+ *   and every slug now resolves to the ONE generic day-0 set, whose body is a
+ *   different length entirely. The number stopped describing anything real.
+ *
+ * ⚠ WRONG #2 — `$visit_email` CANNOT RENDER A BODY AT ALL, so the old
+ *   assertion could not have been green whatever the number was. Its order is
+ *   `bhp_vce_order( BHP_VCE_ADAMS )`: a slug and nothing else. No line items
+ *   means `{BookTitle(s)}` does not resolve, and
+ *   `bhp_visit_email_merge_is_complete()` is a HARD STOP on that slot — *"If no
+ *   title resolves, do not send"*. The correct answer for that order is an
+ *   EMPTY body, and that is now asserted as the gate it is.
+ *
+ * ⭐ THE REAL BODY IS THEN ASSERTED AGAINST A RESOLVABLE ORDER, still entirely
+ *    in memory: the school comes off `_bhp_school_visit_school` (order meta,
+ *    which `bhp_visit_email_merge_values()` reads FIRST) and the title off one
+ *    line item whose product id is taken from `bhp_book_registry()` at runtime
+ *    rather than hard-coded. ⛔ Nothing is saved, no product is created, no
+ *    WooCommerce record is touched.
  */
-bhp_vce_assert( 4 === count( bhp_visit_email_body( $visit_email ) ), 'visit order => four paragraphs (Amazon ask removed, seal 977)', $failures );
+bhp_vce_assert(
+	array() === bhp_visit_email_body( $visit_email ),
+	'⛔ a visit order with no resolvable {BookTitle(s)} renders NO body (hard stop, not a blank)',
+	$failures
+);
+
+$bhp_vce_registry = function_exists( 'bhp_book_registry' ) ? bhp_book_registry() : array();
+$bhp_vce_first    = is_array( $bhp_vce_registry ) && $bhp_vce_registry ? reset( $bhp_vce_registry ) : array();
+$bhp_vce_pid      = isset( $bhp_vce_first['pb_product'] ) ? (int) $bhp_vce_first['pb_product'] : 0;
+
+if ( $bhp_vce_pid && class_exists( 'WC_Order_Item_Product' ) ) {
+	$bhp_vce_full = bhp_vce_order( BHP_VCE_ADAMS );
+	$bhp_vce_full->add_meta_data( '_bhp_school_visit_school', 'Dallas Harris Elementary', true );
+
+	$bhp_vce_item = new WC_Order_Item_Product();
+	$bhp_vce_item->set_product_id( $bhp_vce_pid );
+	$bhp_vce_full->add_item( $bhp_vce_item );
+
+	$bhp_vce_rendered = bhp_visit_email_body( new BHP_VCE_Email( 'customer_completed_order', $bhp_vce_full ) );
+
+	/*
+	 * ⚠ SEVEN, NOT EIGHT. The set is eight paragraphs (see §4); `{VisitLine}`
+	 *   is its own paragraph and this order has no registry visit line, so the
+	 *   body reader drops it and the email closes up around it. ⛔ If this ever
+	 *   reads 8 with no visit line written, an empty paragraph is reaching a
+	 *   parent.
+	 */
+	bhp_vce_assert(
+		7 === count( $bhp_vce_rendered ),
+		'⭐ resolvable visit order => seven rendered paragraphs (eight in the set, {VisitLine} dropped)',
+		$failures
+	);
+	bhp_vce_assert(
+		'Hi there,' === $bhp_vce_rendered[0],
+		'the body opens on the greeting, with {ParentFirstName} falling back to "there"',
+		$failures
+	);
+	bhp_vce_assert(
+		'Email me any time at Andrew@braveheartspublishing.com.' === $bhp_vce_rendered[6],
+		'⭐ SEAL 1007: the rendered body ENDS on the reply route, not on a bare name',
+		$failures
+	);
+	bhp_vce_assert(
+		! in_array( 'Andrew', $bhp_vce_rendered, true ),
+		'⛔ SEAL 1007: no rendered paragraph is the standalone word "Andrew"',
+		$failures
+	);
+	bhp_vce_assert(
+		false === strpos( implode( ' ', $bhp_vce_rendered ), '{' ),
+		'⛔ every merge slot resolved; no raw {Slot} reaches a parent',
+		$failures
+	);
+} else {
+	/*
+	 * ⛔ REPORTED, NOT SILENTLY SKIPPED. A skipped assertion that prints
+	 *    nothing is indistinguishable from a passing one.
+	 */
+	echo "SKIP: no product id in bhp_book_registry(), so the rendered-body assertions did not run.
+";
+	$failures[] = 'rendered-body assertions could not run (no registry product id)';
+}
 bhp_vce_assert( array() === bhp_visit_email_body( null ), 'null email => empty body array', $failures );
 bhp_vce_assert( '' === bhp_visit_email_string( $plain_email, 'subject' ), 'ordinary order => no visit subject', $failures );
 bhp_vce_assert( '' === bhp_visit_email_string( $visit_email, 'nope' ), 'an unknown field yields empty string, not a notice', $failures );

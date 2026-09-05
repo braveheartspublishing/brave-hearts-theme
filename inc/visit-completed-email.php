@@ -409,7 +409,22 @@ function bhp_visit_email_copy_sets() {
 				__( 'The places are real. So are the animals, the weather and the science. None of it is homework and all of it is true.', 'brave-hearts' ),
 				__( 'Here is the part that matters more than the book itself. Read the first chapter together tonight, out loud, and then stop and hand it over. A signed book that sits on a shelf is a nice object. A signed book that gets opened on the first night is the reason I drove out to {SchoolName}.', 'brave-hearts' ),
 				__( 'Email me any time at Andrew@braveheartspublishing.com.', 'brave-hearts' ),
-				__( 'Andrew', 'brave-hearts' ),
+				/*
+				 * ⭐ SEAL 1007 - THE PLAIN SIGN-OFF IS GONE FROM THE DAY-0 SET TOO.
+				 *    Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
+				 *    Gandalf, not heard first-hand): *"I like the nice signature
+				 *    and big place brave hearts - drop the plain one"*. The
+				 *    signature block below the rule carries the name.
+				 *
+				 * ⛔ SUPERSEDED LINE, PRESERVED VERBATIM SO IT IS NOT RE-ADDED:
+				 *        __( 'Andrew', 'brave-hearts' ),
+				 *    It was the last paragraph of the body and rendered a bare
+				 *    "Andrew" directly above the same name in the signature.
+				 *
+				 * ⚠ THE BODY IS NOW SEVEN PARAGRAPHS, NOT EIGHT. The count is
+				 *   asserted in tests/test-visit-completed-email.php; change one
+				 *   and the other fails on purpose.
+				 */
 			),
 		),
 	);

@@ -919,3 +919,109 @@ function bhp_email_force_charset( $headers ) {
 	return implode( "\r\n", $out );
 }
 add_filter( 'woocommerce_email_headers', 'bhp_email_force_charset', 20 );
+
+/* -------------------------------------------------------------------------
+ * ⭐⭐ 1.19.371 · THE CHARSET ON THE MAILER OBJECT, NOT ONLY IN THE HEADER
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Force UTF-8 (and a transfer encoding that survives a 7-bit hop) on the
+ * PHPMailer instance itself, for every message this site sends.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.370 DID NOT FINISH THE JOB, AND THE LOG SAYS SO.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHAT WAS SEEN AFTER 1.19.370. FluentSMTP's delivery log STILL recorded
+ *    the content type as `text/html` with no charset for both staging test
+ *    sends (log ids 6 and 7, reported by Gandalf 2026-09-05). ⚠ RELAYED, not
+ *    observed at this desk — this build has no PHP runtime and sent nothing.
+ *
+ * ⭐ WHY THE HEADER FILTER ALONE CAN LOSE. `bhp_email_force_charset()` puts
+ *    the parameter into the header STRING that is handed to `wp_mail()`.
+ *    FluentSMTP replaces `wp_mail()` wholesale: it PARSES that string into its
+ *    own structures and then re-emits headers from the PHPMailer object and
+ *    its own settings. Anything it does not carry across the parse is lost.
+ *    `$phpmailer->CharSet` is not a header to be parsed — it is the property
+ *    PHPMailer and every mailer built on it uses to BUILD the `Content-Type`
+ *    line, so setting it is the belt to the header filter's braces. ⛔ Both
+ *    are kept. Neither is trusted alone.
+ *
+ * ⚠ ENCODING, AND WHY IT IS NOT LEFT AT THE DEFAULT. PHPMailer defaults to
+ *   `8bit`. Raw 8-bit bytes are only safe if every hop advertises 8BITMIME; a
+ *   relay that does not may strip the high bit or re-encode, which is a second
+ *   independent way to turn `★` (`E2 98 85`) into mojibake. `quoted-printable`
+ *   encodes those bytes as `=E2=98=85` — 7-bit clean end to end, and unlike
+ *   base64 the ASCII body stays human-readable in a raw source view, which is
+ *   exactly what Gimli is reading right now.
+ *
+ * ⛔ IT ONLY REPLACES THE DEFAULT. If some other plugin has deliberately set
+ *    an encoding other than `8bit` (or the empty string), that choice is left
+ *    alone. This function never downgrades a considered decision.
+ *
+ * ⛔ SCOPE, STATED PLAINLY. This is not limited to the review ask and the
+ *    visit email. It cannot cleanly be: by `phpmailer_init` the message is a
+ *    mailer object with no reliable back-reference to the `WC_Email` that
+ *    built it, and sniffing the subject to decide a charset would be a worse
+ *    engineering decision than applying the site's own charset to the site's
+ *    own mail. The site charset is UTF-8; every email it sends should say so.
+ *    ⚠ `bhp_email_phpmailer_charset_enabled` is the one-line off switch if
+ *    that judgement is ever wrong.
+ *
+ * @since 1.19.371
+ * @param PHPMailer\PHPMailer\PHPMailer|mixed $phpmailer Mailer instance.
+ * @return void
+ */
+function bhp_email_phpmailer_charset( $phpmailer ) {
+	if ( ! is_object( $phpmailer ) ) {
+		return;
+	}
+
+	/**
+	 * Filter whether the mailer-level charset is forced.
+	 *
+	 * @since 1.19.371
+	 * @param bool  $enabled   Default true.
+	 * @param mixed $phpmailer Mailer instance.
+	 */
+	if ( ! apply_filters( 'bhp_email_phpmailer_charset_enabled', true, $phpmailer ) ) {
+		return;
+	}
+
+	$charset = get_bloginfo( 'charset' );
+	$charset = ( is_string( $charset ) && '' !== trim( $charset ) ) ? trim( $charset ) : 'UTF-8';
+
+	$phpmailer->CharSet = $charset; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+
+	/*
+	 * ⚠ ONLY THE DEFAULT IS REPLACED. See the docblock. `isset()` is not used
+	 *   because the property always exists on a PHPMailer instance; the test
+	 *   is on its VALUE.
+	 */
+	$current = isset( $phpmailer->Encoding ) ? strtolower( trim( (string) $phpmailer->Encoding ) ) : ''; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+
+	if ( '' === $current || '8bit' === $current ) {
+		$phpmailer->Encoding = 'quoted-printable'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.NotSnakeCase
+	}
+}
+add_action( 'phpmailer_init', 'bhp_email_phpmailer_charset', 99 );
+
+/**
+ * The `Content-Type` header line every BHP-originated `wp_mail()` call passes.
+ *
+ * ⭐ ONE STRING, ONE PLACE. The review-ask CLI test send already stated the
+ *    charset inline; this makes that statement a shared, testable fact rather
+ *    than a literal that a future editor can drop from one call site without
+ *    anything noticing. ⛔ It is a helper, not a filter — nothing is changed
+ *    for callers that do not use it.
+ *
+ * @since 1.19.371
+ * @return string e.g. `Content-Type: text/html; charset=UTF-8`
+ */
+function bhp_email_html_content_type_header() {
+	$charset = get_bloginfo( 'charset' );
+	$charset = ( is_string( $charset ) && '' !== trim( $charset ) ) ? trim( $charset ) : 'UTF-8';
+
+	return 'Content-Type: text/html; charset=' . $charset;
+}
+
