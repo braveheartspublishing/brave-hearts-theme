@@ -369,7 +369,25 @@ function bhp_visit_email_copy_sets() {
 		 *    what the book will do to a child.
 		 */
 		'_default'         => array(
-			'approved'  => false,
+			/*
+			 * ⭐⭐ 1.19.365 · APPROVED BY ANDREW, SEAL 982, RELAYED THROUGH
+			 *     GANDALF VERBATIM: *"agreed, conitnue to build it out"*, given
+			 *     on 2026-09-05 and naming day 0, touch 1, touch 2 and the web
+			 *     variant of touch 1. It attaches to
+			 *     `Business OS\WORKING-DRAFTS\marketing-growth\
+			 *     CYCLE179-MKT-REVIEW-SEQ-V2.md` §1 AS IT STOOD AT md5
+			 *     `1ecd9c75acfc755df0e121b47ca73842`, verified identical on both
+			 *     mounts on 2026-09-05. The body below is that §1 verbatim and
+			 *     was diffed against it in this build, not eyeballed.
+			 *
+			 * ⛔ THIS BOOL IS A HARD SEND GATE (1.19.364), so flipping it is the
+			 *    whole of the approval and it was his to flip. It does NOT enable
+			 *    anything else: `{VisitLine}` is still never auto-filled, an
+			 *    unresolvable slot still renders nothing and routes the order to
+			 *    WooCommerce's ordinary completed-order email, and the school-
+			 *    specific `adams-2026-08-28` set is untouched.
+			 */
+			'approved'  => true,
 			'subject'   => __( 'The signed books went home today', 'brave-hearts' ),
 			/*
 			 * ⚠ ENGINEERING COPY, MARKED AS SUCH, AND IT RESTATES THE SUBJECT

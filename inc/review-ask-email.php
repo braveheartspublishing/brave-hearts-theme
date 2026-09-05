@@ -1260,9 +1260,41 @@ function bhp_review_ask_copy_legacy_21day() {
  *
  * @return array
  */
-function bhp_review_ask_copy_visit_touch1() {
+function bhp_review_ask_copy_visit_touch1( $order = null ) {
+	$named = bhp_review_ask_child_first_name_is_known( $order );
+
+	/*
+	 * ⚠ THE TIME PHRASE IS THE ONLY THING THE BOOK COUNT CHANGES, AND IT
+	 *   CHANGES BECAUSE MERRY FLAGGED IT RATHER THAN BECAUSE IT LOOKED NICER.
+	 *   V2 "Numbers used": *"about a week now" is ACTUAL for the 7-day send.
+	 *   ⚠ For a two-or-more-book order sending at +10 days, swap to "for a
+	 *   week and a half now". Flagged so it is not shipped wrong."* This set
+	 *   declares BOTH delays, so the sentence has to be true at both, and one
+	 *   fixed sentence cannot be. It is composed per order instead.
+	 */
+	$when = ( bhp_review_ask_chapter_book_count( $order ) >= 2 )
+		? __( 'for a week and a half now', 'brave-hearts' )
+		: __( 'for about a week now', 'brave-hearts' );
+
+	/*
+	 * ⭐ THE GENERIC SWAP IS NOT STYLING. V2 §2, "Generic swap, for any order
+	 *    with no child first name on record": *"This is not optional styling.
+	 *    See conflict CYCLE179-MKT-32: {ChildFirstName} is not a WooCommerce
+	 *    order field, so on most orders this version is the one that sends."*
+	 *
+	 * ⛔ AND IT IS ALSO A RENDERING NECESSITY. `{ChildFirstName}` falls back to
+	 *    the lower-case `your reader`, so the named opener would render
+	 *    *"your reader has had ..."* with a lower-case letter opening the
+	 *    email. Merry supplies a differently-capitalised generic line for
+	 *    exactly that reason. This is the branch the docblock on
+	 *    `bhp_review_ask_copy_touch2()` anticipated in 1.19.362.
+	 */
+	$opener = $named
+		? sprintf( __( '{ChildFirstName} has had {BookTitle} %s.', 'brave-hearts' ), $when )
+		: sprintf( __( 'Your reader has had {BookTitle} %s.', 'brave-hearts' ), $when );
+
 	return array(
-		'set'             => 'visit_touch1',
+		'set'             => $named ? 'visit_touch1' : 'visit_touch1_generic',
 
 		// ⭐ 1.19.364 · seal 977: this set renders the five-star row.
 		'stars'           => true,
@@ -1278,67 +1310,99 @@ function bhp_review_ask_copy_visit_touch1() {
 		 *    will actually use is one the copy is true at. ⛔ The guard is
 		 *    adapted, not bypassed: a delay outside this list still halts.
 		 *
-		 * ⚠ WHY 7 AND 10 ARE BOTH TRUE FOR THESE WORDS: the only time claim in
-		 *   the body is *"at {SchoolName} last week"*, and the only other one
-		 *   is the conditional *"If {ChildFirstName} has had a few nights with
-		 *   it by now"*, which is a question, not an assertion. Both hold at
-		 *   seven days and at ten. Compare the superseded 21-day set, whose
-		 *   *"turned up about three weeks ago"* is an assertion true at exactly
-		 *   one delay, which is why that guard existed in the first place.
+		 * ⚠ WHY 7 AND 10 ARE BOTH TRUE FOR THESE WORDS, and it is no longer
+		 *   free. The only time claim in this body is `$when`, composed from
+		 *   the same book count that chooses the delay: at 7 it reads *"for
+		 *   about a week now"*, at 10 *"for a week and a half now"*.
+		 *   ⛔ IF ANYONE LATER HARD-CODES ONE OF THOSE TWO STRINGS, THIS ARRAY
+		 *   MUST DROP TO THE SINGLE DELAY IT IS THEN TRUE AT.
 		 */
 		'delay_days'      => array(
 			BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK,
 			BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK,
 		),
 
+		/*
+		 * ⭐⭐ 1.19.365 · APPROVED BY ANDREW, SEAL 982, RELAYED THROUGH GANDALF
+		 *     VERBATIM: *"agreed, conitnue to build it out"*, given 2026-09-05
+		 *     after seal 981 removed one sentence from touch 1 (recorded
+		 *     below). The approval names day 0, touch 1, touch 2 and the web
+		 *     variant of touch 1, and it attaches to
+		 *     `Business OS\WORKING-DRAFTS\marketing-growth\
+		 *     CYCLE179-MKT-REVIEW-SEQ-V2.md` AS IT STOOD AT md5
+		 *     `1ecd9c75acfc755df0e121b47ca73842`, checked on both mounts today.
+		 *
+		 * ⛔ THE MASTER SWITCH IS STILL OFF. `bhp_review_ask_is_enabled()` reads
+		 *    the `bhp_review_ask_enabled` option and it is unset. Approved copy
+		 *    is not an activated engine, and this bool activates nothing.
+		 */
 		'approved'        => true,
 
 		'subject'         => __( 'A small favor about the book', 'brave-hearts' ),
 
 		/*
-		 * ⚠ ENGINEERING COPY, MARKED AS SUCH. Merry's template is a Gmail note
-		 *   and has no preheader, because Gmail composes one from the first
-		 *   line. A WooCommerce email renders a preheader slot, and leaving it
-		 *   empty shows the reader the raw start of the HTML in the inbox
-		 *   preview. This restates the subject rather than adding a new claim.
+		 * ⚠ ENGINEERING COPY, MARKED AS SUCH. Merry's template is a plain note
+		 *   with no preheader. A WooCommerce email renders a preheader slot,
+		 *   and leaving it empty shows the reader the raw start of the HTML in
+		 *   the inbox preview. This restates the subject rather than adding a
+		 *   new claim.
 		 */
 		'preheader'       => __( 'A small favor about the book', 'brave-hearts' ),
 
 		/*
-		 * ⛔ EMPTY H1, for the reason set out at length on the superseded set
-		 *    above: the approved copy has no heading, and filling it repeats a
-		 *    sentence the reader already met in the subject line.
+		 * ⛔ EMPTY H1. The approved copy has no heading, and filling one repeats
+		 *    a sentence the reader already met in the subject line.
 		 */
 		'heading'         => '',
 
+		/*
+		 * ⭐ V2 §2 BODY, TRANSCRIBED WORD FOR WORD. The greeting is NOT here:
+		 *    both templates render *"Hi {first name},"* / *"Hi there,"*
+		 *    themselves, which is the conditional Merry's merge table asks for.
+		 */
 		'body_before'     => array(
-			__( 'Thank you for picking up {BookTitle} at {SchoolName} last week. Signing it for {ChildFirstName} was the best part of my morning.', 'brave-hearts' ),
-			__( 'If {ChildFirstName} has had a few nights with it by now, would you write a short review? Two or three honest sentences is plenty, and honest is the useful part. It takes about a minute here:', 'brave-hearts' ),
+			$opener,
+			__( 'Would you rate it? It takes about ten seconds, and if you have another minute after that, two or three honest sentences would help the next parent decide. Honest is the useful part.', 'brave-hearts' ),
 		),
 
 		/*
-		 * ⛔ NO BOLDED QUESTION IN THIS SET, AND NONE IS INVENTED. The 21-day
-		 *    set had one because Andrew wrote one. Merry's template does not,
-		 *    and manufacturing a bold line to fill a template slot would be
-		 *    writing copy into an email whose copy is locked (Standing Rules
-		 *    §9). The templates render this block only when it is non-empty.
+		 * ⛔⛔ REMOVED BY ANDREW, SEAL 981, 2026-09-05, PRESERVED HERE RATHER
+		 *     THAN DELETED so nobody restores it from an older draft. Relayed
+		 *     verbatim: *"Removed the "A three star review.." part - lets not
+		 *     plant a seed for them to give us less stars than we deserve."*
+		 *     The sentence was:
+		 *
+		 *       "A three-star review that says why is worth more to me than a
+		 *        five-star one that does not."
+		 *
+		 * ⚠ IT WAS NEVER IN THIS FILE. It lived in Merry's draft only; this
+		 *   engine's touch-1 set carried the superseded ASKS §1 prose until
+		 *   1.19.365. Recorded so the absence is a decision on the record and
+		 *   not an accident of which draft a future editor happens to open.
 		 */
 		'question'        => '',
 		'body_middle'     => array(),
 
-		'links_lead'      => '',
+		/*
+		 * ⭐ THE LINE THAT FOLLOWS THE STAR ROW IN V2, PUT IN THE ONLY SLOT THAT
+		 *    SITS BETWEEN THE ROW AND THE LINK. ⚠ `links_lead` renders inside
+		 *    <strong>, so these words are bolder in the email than on the page.
+		 *    That is a RENDERING deviation, reported not hidden. The words are
+		 *    Merry's, unchanged.
+		 */
+		'links_lead'      => __( 'Tap the stars that fit, then two or three honest sentences on the next page.', 'brave-hearts' ),
 
 		/*
-		 * ⭐ ONE LINK, THE SITE REVIEW PAGE FOR THE FIRST CHAPTER BOOK ON THE
-		 *    ORDER. Not three. Merry's §2 records the reasoning and it applies
-		 *    here too: *"three asks in one note reads as a chore and gets none
-		 *    of them done."* The label and the URL are both resolved per order.
+		 * ⭐ ONE LINK, THE SAME DESTINATION THE FIVE STARS POINT AT.
 		 *
-		 * ⛔ THE SITE PAGE, NOT AMAZON. `{ReviewLink}` resolves through
-		 *    `bhp_review_page_url()` (`inc/reviews.php`), which is the same
-		 *    registry that builds the live `/review/<slug>/` pages, so the link
-		 *    cannot drift from the route. ⚠ The bare `/review/` path is a live
-		 *    404 and is never constructed here.
+		 * ⚠ V2 §2's body shows only [STAR ROW] and no separate link line. The
+		 *   link is kept for two reasons, both reported rather than assumed:
+		 *   (a) `bhp_review_ask_copy_is_usable()` requires a non-empty `links`
+		 *   array, and relaxing a send gate to match a layout preference is the
+		 *   wrong trade; (b) the star row is a five-cell table, and a client
+		 *   that flattens tables would otherwise leave the reader no way
+		 *   through. It is the SAME page as all five stars, so *"one
+		 *   destination"* holds.
 		 */
 		'links'           => array(
 			array(
@@ -1362,13 +1426,10 @@ function bhp_review_ask_copy_visit_touch1() {
 		 *   QR first-hand on 2026-09-05: it resolves to
 		 *   `amazon.com/review/create-review`, so the removed sentence pointed
 		 *   at the second destination in the same breath as describing it.
-		 *
-		 * ⭐ THE SECOND SENTENCE SURVIVES, minus the "Either way," that only
-		 *   made sense when there were two ways.
 		 */
-		'body_after'      => array(
-			__( 'Thank you for reading with your little human.', 'brave-hearts' ),
-		),
+		'body_after'      => $named
+			? array( __( 'Thank you for reading with {ChildFirstName}.', 'brave-hearts' ) )
+			: array( __( 'Thank you for reading together.', 'brave-hearts' ) ),
 
 		'signoff'         => array(
 			__( 'Andrew', 'brave-hearts' ),
@@ -1381,7 +1442,9 @@ function bhp_review_ask_copy_visit_touch1() {
 		 *   Merry's template carries it as a P.S.; ship it only if he will
 		 *   actually do it, on an email the store sends without him.
 		 */
-		'postscript'      => __( 'P.S. If {ChildFirstName} has a question about the book, hit reply. I answer every one.', 'brave-hearts' ),
+		'postscript'      => $named
+			? __( 'P.S. If {ChildFirstName} has a question about the book, hit reply. I answer every one.', 'brave-hearts' )
+			: __( 'P.S. If your reader has a question about the book, hit reply. I answer every one.', 'brave-hearts' ),
 
 		'optout_lead'     => __( 'If you would rather not get a message like this again,', 'brave-hearts' ),
 		'optout_link'     => __( 'unsubscribe from review emails', 'brave-hearts' ),
@@ -1390,18 +1453,30 @@ function bhp_review_ask_copy_visit_touch1() {
 }
 
 /**
- * WEB LANE, TOUCH 1. ⛔ PENDING-COPY. NOT APPROVED. CANNOT SEND.
+ * WEB LANE, TOUCH 1. ⭐ APPROVED 2026-09-05, SEAL 982.
  *
- * ⚠ Merry is writing the real strings into
- *   `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-SEQ.md`.
- *   That file did not exist when this was written (checked 2026-09-05 10:36
- *   MDT; the directory held only `CYCLE179-MKT-REVIEW-ASKS.md`). When it
- *   lands, swap these strings for hers VERBATIM, set `approved => true`, and
- *   set `delay_days` to whatever delay her words are true at.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ MERRY'S V2 §4 PROSE, TRANSCRIBED WORD FOR WORD FROM
+ *     `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-SEQ-V2.md`
+ *     (md5 `1ecd9c75acfc755df0e121b47ca73842`, read on both mounts 2026-09-05),
+ *     approved by Andrew, seal 982, relayed verbatim through Gandalf:
+ *     *"agreed, conitnue to build it out"*.
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔ THE PLACEHOLDER TEXT IS DELIBERATELY NOT WRITABLE AS EMAIL. It reads as a
- *    build marker so that a screenshot of a preview is unmistakable, and
- *    `approved => false` means it is declined before rendering anyway.
+ * ⛔ NO SCHOOL, NO SIGNING LINE, NO VISIT, NO CHILD NAME, and that is the whole
+ *    point of a separate set. V2 §4: *"There was no table and no signature, and
+ *    implying otherwise would fabricate an author experience."* Nothing in this
+ *    body may ever be merged from the visit registry.
+ *
+ * ⭐ `Thank you for taking a chance on a book by somebody you had never heard
+ *    of.` IS NOT NEW COPY. V2 §4 says so explicitly: it was already the
+ *    engine's approved `body_after` and carries its existing approval.
+ *
+ * ⚠ THE 10-DAY DELAY IS STILL AN INFERENCE, NOT A SEAL. Conflict
+ *   CYCLE179-MKT-34, carried forward UNRESOLVED and still PENDING ANDREW.
+ *   Seal 977 spoke to visit timings; *"the 7 day review ask for the website"*
+ *   has two honest readings and neither Merry nor this desk may settle it.
+ *   ⛔ `BHP_REVIEW_ASK_WEB_DELAY_DAYS` was NOT edited in this build.
  *
  * @return array
  */
@@ -1413,26 +1488,64 @@ function bhp_review_ask_copy_web_touch1() {
 		'stars'           => true,
 		'touch'           => 1,
 		'lane'            => 'web',
-		'delay_days'      => array( BHP_REVIEW_ASK_WEB_DELAY_DAYS ),
-		'approved'        => false,
 
-		'subject'         => 'PENDING-COPY web touch 1 subject',
-		'preheader'       => 'PENDING-COPY web touch 1 preheader',
+		/*
+		 * ⚠ ONE DELAY, AND THE BODY IS TRUE AT IT. *"for a week or so now"* is
+		 *   loose enough to hold at 10 days and would still hold at 7 if Andrew
+		 *   settles CYCLE179-MKT-34 the other way, so the copy does not have to
+		 *   move when the number does. The interlock still checks it.
+		 */
+		'delay_days'      => array( BHP_REVIEW_ASK_WEB_DELAY_DAYS ),
+
+		/*
+		 * ⭐⭐ 1.19.365 · SEAL 982. See the same note on the visit set above.
+		 * ⛔ The master switch remains off; approved copy is not an active
+		 *    engine.
+		 */
+		'approved'        => true,
+
+		'subject'         => __( 'A small favor about the book', 'brave-hearts' ),
+
+		// ⚠ ENGINEERING COPY: restates the subject, adds no claim.
+		'preheader'       => __( 'A small favor about the book', 'brave-hearts' ),
+
 		'heading'         => '',
-		'body_before'     => array( 'PENDING-COPY web touch 1 body. Merge slots available: {ParentFirstName} {BookTitle} {ReviewLink}.' ),
+
+		/*
+		 * ⭐ V2 §4 BODY, VERBATIM. The greeting is rendered by the templates.
+		 */
+		'body_before'     => array(
+			__( 'Your reader has had {BookTitle} for a week or so now. It went out in the mail, so I never got to see who opened it.', 'brave-hearts' ),
+			__( 'Would you rate it? It takes about ten seconds, and if you have another minute after that, two or three honest sentences would help the next parent decide. Honest is the useful part.', 'brave-hearts' ),
+		),
+
 		'question'        => '',
 		'body_middle'     => array(),
-		'links_lead'      => '',
+
+		// ⭐ V2's post-star-row line. ⚠ Renders bold; see the visit set's note.
+		'links_lead'      => __( 'Tap the stars that fit, then two or three honest sentences on the next page.', 'brave-hearts' ),
+
 		'links'           => array(
 			array(
 				'label' => '{BookTitle}',
 				'url'   => '{ReviewLink}',
 			),
 		),
-		'body_after'      => array( 'PENDING-COPY web touch 1 close.' ),
-		'signoff'         => array( 'Andrew' ),
+
+		'body_after'      => array(
+			__( 'Thank you for taking a chance on a book by somebody you had never heard of.', 'brave-hearts' ),
+		),
+
+		'signoff'         => array( __( 'Andrew', 'brave-hearts' ) ),
 		'signoff_tagline' => '',
+
+		/*
+		 * ⛔ NO POSTSCRIPT ON THE WEB SET. V2 §4 carries none, and the visit
+		 *    set's *"I answer every one"* P.S. is a promise in Andrew's name
+		 *    (D-6). It is not copied into a set Merry did not put it in.
+		 */
 		'postscript'      => '',
+
 		'optout_lead'     => __( 'If you would rather not get a message like this again,', 'brave-hearts' ),
 		'optout_link'     => __( 'unsubscribe from review emails', 'brave-hearts' ),
 		'optout_note'     => __( 'This does not affect your order emails or your receipts.', 'brave-hearts' ),
@@ -1440,14 +1553,34 @@ function bhp_review_ask_copy_web_touch1() {
 }
 
 /**
- * TOUCH 2, BOTH LANES. ⛔ PENDING-COPY. NOT APPROVED. CANNOT SEND.
+ * TOUCH 2, BOTH LANES. ⭐ APPROVED 2026-09-05, SEAL 982.
  *
- * ⚠ Same swap procedure as the web set above. Merry's file is expected to
- *   carry a named-child and a generic version; the `{ChildFirstName}` slot
- *   already resolves to `your reader` when no name is known, so ONE set with
- *   the slot in it satisfies both unless her copy differs by more than the
- *   name, in which case add a second set and select on
- *   `bhp_review_ask_child_first_name_is_known()`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ MERRY'S V2 §3 PROSE, TRANSCRIBED WORD FOR WORD. Same source file and
+ *     same md5 as the web set above. V2 §4 closes with *"Touch 2 for web
+ *     orders is the section 3 body unchanged"*, which is why ONE set serves
+ *     both lanes: it names no school and no child, so there is nothing to
+ *     differ about.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ TWO SENTENCES IN THIS SET ARE LOAD-BEARING AND MERRY MARKED THEM SO.
+ *
+ *   1. *"I know how a week can get away from me"* is ANDREW'S OWN SENTENCE and
+ *      MUST NOT BE REWORDED. Seal 977: *"the seven days later should be I know
+ *      how a week can get away from me (not you) - I dont want to make it seem
+ *      like their fault"*. The `me` is the whole point. It carries no `you`, no
+ *      `your`, no `busy`, no `I know you meant to`. ⛔ IF IT EVER NEEDS TO
+ *      SHORTEN, IT GETS DELETED, NOT REWRITTEN.
+ *
+ *   2. *"This is the last note I will send about it"* MUST NOT BE CUT. It is
+ *      what makes the sequence finite, and it is what makes the copy TRUE,
+ *      ⛔ because the engine must then actually stop. There is no touch 3, and
+ *      `bhp_review_ask_next_touch()` must never grow one while this line ships.
+ *
+ * ⭐ *"If it is not for you, that is completely fine"* comes BEFORE the
+ *    sign-off, and the ordering is deliberate: the exit is offered before the
+ *    thanks. V2 §3: *"That is the difference between no pressure and polite
+ *    pressure."* It is in `body_after`, which renders above the signoff.
  *
  * @return array
  */
@@ -1459,26 +1592,54 @@ function bhp_review_ask_copy_touch2() {
 		'stars'           => true,
 		'touch'           => 2,
 		'lane'            => 'any',
-		'delay_days'      => array( BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS ),
-		'approved'        => false,
 
-		'subject'         => 'PENDING-COPY touch 2 subject',
-		'preheader'       => 'PENDING-COPY touch 2 preheader',
+		/*
+		 * ⚠ +4 DAYS FROM TOUCH 1, not from the anchor. Seal 977: *"If no
+		 *   reviews we ask 4 days later"*. The body makes NO time claim at all
+		 *   (*"a week"* in the opening line is about Andrew's own week, not the
+		 *   reader's elapsed time since the book arrived), so the interlock has
+		 *   nothing to contradict here.
+		 */
+		'delay_days'      => array( BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS ),
+
+		/*
+		 * ⭐⭐ 1.19.365 · SEAL 982. See the note on the visit set above.
+		 * ⛔ The master switch remains off.
+		 */
+		'approved'        => true,
+
+		'subject'         => __( 'Last note about the book', 'brave-hearts' ),
+
+		// ⚠ ENGINEERING COPY: restates the subject, adds no claim.
+		'preheader'       => __( 'Last note about the book', 'brave-hearts' ),
+
 		'heading'         => '',
-		'body_before'     => array( 'PENDING-COPY touch 2 body. Merge slots available: {ParentFirstName} {ChildFirstName} {SchoolName} {BookTitle} {ReviewLink}.' ),
+
+		'body_before'     => array(
+			__( 'I know how a week can get away from me, so I made this as short as I could.', 'brave-hearts' ),
+		),
+
 		'question'        => '',
 		'body_middle'     => array(),
-		'links_lead'      => '',
+
+		// ⭐ V2's post-star-row line. ⚠ Renders bold; see the visit set's note.
+		'links_lead'      => __( 'Tap the stars that fit, then two or three honest sentences on the next page.', 'brave-hearts' ),
+
 		'links'           => array(
 			array(
 				'label' => '{BookTitle}',
 				'url'   => '{ReviewLink}',
 			),
 		),
-		'body_after'      => array( 'PENDING-COPY touch 2 close.' ),
-		'signoff'         => array( 'Andrew' ),
+
+		'body_after'      => array(
+			__( 'If it is not for you, that is completely fine. This is the last note I will send about it.', 'brave-hearts' ),
+		),
+
+		'signoff'         => array( __( 'Andrew', 'brave-hearts' ) ),
 		'signoff_tagline' => '',
 		'postscript'      => '',
+
 		'optout_lead'     => __( 'If you would rather not get a message like this again,', 'brave-hearts' ),
 		'optout_link'     => __( 'unsubscribe from review emails', 'brave-hearts' ),
 		'optout_note'     => __( 'This does not affect your order emails or your receipts.', 'brave-hearts' ),
@@ -1548,7 +1709,16 @@ function bhp_review_ask_copy_raw( $touch = 1, $order = null ) {
 	} elseif ( $order instanceof WC_Order && 'web' === bhp_review_ask_lane( $order ) ) {
 		$copy = bhp_review_ask_copy_web_touch1();
 	} else {
-		$copy = bhp_review_ask_copy_visit_touch1();
+		/*
+		 * ⭐ 1.19.365 · THE ORDER IS PASSED NOW, and it is not cosmetic.
+		 *    The visit set chooses the NAMED or the GENERIC wording on
+		 *    `bhp_review_ask_child_first_name_is_known()` and composes its
+		 *    one time phrase from the chapter-book count. ⚠ With no order
+		 *    in hand (the CLI preview, `get_default_subject()`) it falls to
+		 *    the GENERIC one-book wording, which is the safe default:
+		 *    CYCLE179-MKT-32 says that is what most real orders get anyway.
+		 */
+		$copy = bhp_review_ask_copy_visit_touch1( $order );
 	}
 
 	/**
@@ -3717,7 +3887,7 @@ add_action( 'init', 'bhp_review_ask_handle_optout', 5 );
  * ====================================================================== */
 
 /**
- * `wp bhp review-ask <status|run|dry>`.
+ * `wp bhp review-ask <status|run|dry|plan|migrate|test-send>`.
  *
  * ⭐ THE OPERATOR SURFACE. A daily emailer that can only be observed by waiting
  *    a day is a daily emailer nobody can verify. `dry` answers "who would get
@@ -3744,6 +3914,7 @@ function bhp_review_ask_cli( $args, $assoc_args = array() ) {
 		$say( 'copy visit touch 1: ' . ( ! empty( bhp_review_ask_copy_visit_touch1()['approved'] ) ? 'APPROVED' : 'not approved - cannot send' ) );
 		$say( 'copy web touch 1:   ' . ( ! empty( bhp_review_ask_copy_web_touch1()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
 		$say( 'copy touch 2:       ' . ( ! empty( bhp_review_ask_copy_touch2()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
+		$say( 'copy day 0:         ' . ( function_exists( 'bhp_visit_email_copy_is_approved' ) && bhp_visit_email_copy_is_approved( BHP_VISIT_EMAIL_DEFAULT_KEY ) ? 'APPROVED (_default)' : '_default not approved' ) );
 		$say( 'daily cap:          ' . bhp_review_ask_daily_cap() );
 		$say( 'postal address:     ' . ( bhp_review_ask_postal_address() ? bhp_review_ask_postal_address() : 'MISSING - sending is blocked' ) );
 		$say( 'excluded:           ' . count( bhp_review_ask_excluded_emails() ) );
@@ -3756,6 +3927,11 @@ function bhp_review_ask_cli( $args, $assoc_args = array() ) {
 
 	if ( 'plan' === $sub ) {
 		bhp_review_ask_cli_plan( $assoc_args, $say );
+		return;
+	}
+
+	if ( 'test-send' === $sub ) {
+		bhp_review_ask_cli_test_send( $assoc_args, $say );
 		return;
 	}
 
@@ -3825,6 +4001,283 @@ function bhp_review_ask_cli( $args, $assoc_args = array() ) {
 		$say( '' );
 		$say( '** The engine is DISABLED. Nothing above was sent, and nothing will send until the switch is thrown. **' );
 	}
+}
+
+/**
+ * `wp bhp review-ask test-send --to=<address> --set=<day0|touch1|touch2|web1> --order=<id> [--dump=<path>]`
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.365 · THE VISUAL-CHECK SEAM. Andrew and Gandalf need to LOOK at
+ *     these four emails in a real inbox before anything is activated, and
+ *     until now the only way to make one appear was to enable the engine and
+ *     wait for a cron. That trade is unacceptable, so this renders ONE real
+ *     order through the REAL templates and puts it in ONE named inbox.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ WHAT IT DOES NOT TOUCH, AND THIS IS THE WHOLE REASON IT IS SAFE:
+ *
+ *   - it does NOT call `bhp_review_ask_log_send()`, `bhp_review_ask_mark_sent()`
+ *     or `bhp_review_ask_record_customer()`, so no sent marker, no ledger row,
+ *     no daily counter and no 90-day customer cooldown is written. A test send
+ *     today cannot make a real order ineligible tomorrow;
+ *   - it does NOT consult and does NOT change `bhp_review_ask_enabled`. The
+ *     master switch stays exactly as found, and this command works with it OFF
+ *     because a preview that needs the engine on is not a preview;
+ *   - it does NOT read or write the opt-out store, and it never mails the
+ *     order's own billing address. ⛔ `--to` is the ONLY recipient, and it is
+ *     required. There is no default, no fallback to the order and no bcc;
+ *   - it does NOT bypass the copy gate. An `approved => false` set is REFUSED,
+ *     not previewed, because the whole point of the gate is that unapproved
+ *     strings do not reach an inbox, and Gandalf's inbox is an inbox.
+ *
+ * ⛔⛔ IT REFUSES TO RUN ANYWHERE BUT STAGING, AND THE CHECK IS ON `home_url()`
+ *     RATHER THAN ON `--url`, deliberately. `--url` is what the operator TYPED;
+ *     `home_url()` is which site WordPress actually loaded. Checking the typed
+ *     value would let a typo, a missing `--url` (which falls back to the
+ *     primary site) or a multisite mapping put a test email in a real
+ *     customer's mailbox from the production database. ⚠ The command therefore
+ *     effectively requires `--url=https://staging2.braveheartspublishing.com`
+ *     to be present and correct, but it verifies the CONSEQUENCE, not the
+ *     argument.
+ *
+ * ⚠ SUBJECTS ARE PREFIXED `[STAGING TEST]`. A screenshot of an unprefixed
+ *   review ask, forwarded on, is indistinguishable from a live send.
+ *
+ * @since 1.19.365
+ * @param array    $assoc_args Named args.
+ * @param callable $say        Logger.
+ * @return void
+ */
+function bhp_review_ask_cli_test_send( $assoc_args, $say ) {
+	/*
+	 * ⛔ GATE 1 — STAGING ONLY. Fail closed and fail loud, before anything
+	 *    else is read, so a wrong-site invocation never even resolves an order.
+	 */
+	$host = wp_parse_url( home_url(), PHP_URL_HOST );
+	$host = is_string( $host ) ? strtolower( $host ) : '';
+
+	$staging_host = class_exists( 'BHP_Analytics_Config' ) && defined( 'BHP_Analytics_Config::STAGING_HOST' )
+		? strtolower( (string) BHP_Analytics_Config::STAGING_HOST )
+		: 'staging2.braveheartspublishing.com';
+
+	if ( $host !== $staging_host ) {
+		WP_CLI::error(
+			'REFUSED. `test-send` runs on staging only. WordPress loaded "' . $host . '"; this command requires "' . $staging_host
+			. '". Pass --url=https://' . $staging_host . ' and run it again. ⛔ The check is on home_url(), not on --url, so this cannot be argued past.'
+		);
+	}
+
+	/*
+	 * ⛔ GATE 2 — AN EXPLICIT, SINGLE, VALID RECIPIENT. No default. No fallback
+	 *    to the order's billing email, which is a real customer.
+	 */
+	$to = isset( $assoc_args['to'] ) ? trim( (string) $assoc_args['to'] ) : '';
+
+	if ( '' === $to || ! is_email( $to ) ) {
+		WP_CLI::error( 'REFUSED. --to=<address> is required and must be one valid address. There is no default recipient.' );
+	}
+
+	if ( false !== strpos( $to, ',' ) || false !== strpos( $to, ';' ) ) {
+		WP_CLI::error( 'REFUSED. --to takes ONE address. Run the command again for the second person.' );
+	}
+
+	// ⛔ GATE 3 — a known set name.
+	$set = isset( $assoc_args['set'] ) ? strtolower( trim( (string) $assoc_args['set'] ) ) : '';
+
+	if ( ! in_array( $set, array( 'day0', 'touch1', 'touch2', 'web1' ), true ) ) {
+		WP_CLI::error( 'REFUSED. --set must be one of: day0, touch1, touch2, web1.' );
+	}
+
+	// ⛔ GATE 4 — a real order.
+	$order_id = isset( $assoc_args['order'] ) ? absint( $assoc_args['order'] ) : 0;
+	$order    = $order_id ? wc_get_order( $order_id ) : false;
+
+	if ( ! $order instanceof WC_Order ) {
+		WP_CLI::error( 'REFUSED. --order=<id> must be a real WooCommerce order on THIS database. Order ' . $order_id . ' did not load.' );
+	}
+
+	$say( 'site:      ' . $host . '   (staging, verified from home_url())' );
+	$say( 'order:     #' . $order->get_id() . ' | ' . bhp_review_ask_lane( $order ) . ' lane | '
+		. bhp_review_ask_chapter_book_count( $order ) . ' chapter book(s)' );
+	$say( 'set:       ' . $set );
+	$say( 'to:        ' . $to );
+	$say( '' );
+
+	/*
+	 * ⭐ DAY 0 IS A DIFFERENT EMAIL ENTIRELY. It is WooCommerce's own
+	 *    `customer_completed_order`, overlaid by `inc/visit-completed-email.php`
+	 *    on a visit order. So it is rendered through WooCommerce's object, not
+	 *    through the review-ask class, or the preview would prove nothing about
+	 *    what a parent actually receives.
+	 */
+	if ( 'day0' === $set ) {
+		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
+			WP_CLI::error( 'WooCommerce mailer unavailable.' );
+		}
+
+		$emails = WC()->mailer()->get_emails();
+
+		if ( ! isset( $emails['WC_Email_Customer_Completed_Order'] ) ) {
+			WP_CLI::error( 'WC_Email_Customer_Completed_Order is not registered.' );
+		}
+
+		$email            = $emails['WC_Email_Customer_Completed_Order'];
+		$email->object    = $order;
+		$email->recipient = $to;
+
+		if ( property_exists( $email, 'placeholders' ) && is_array( $email->placeholders ) ) {
+			$email->placeholders['{order_date}']   = wc_format_datetime( $order->get_date_created() );
+			$email->placeholders['{order_number}'] = $order->get_order_number();
+		}
+
+		$slug = function_exists( 'bhp_visit_email_slug' ) ? bhp_visit_email_slug( $email ) : '';
+
+		$say( 'day-0 copy set: ' . ( '' !== $slug ? $slug : '(none - this order is not a visit order)' ) );
+
+		if ( '' === $slug ) {
+			WP_CLI::error( 'REFUSED. Order ' . $order->get_id() . ' resolves to no visit copy set, so the day-0 overlay would not fire for it. Pick a visit order.' );
+		}
+
+		if ( function_exists( 'bhp_visit_email_copy_is_approved' ) && ! bhp_visit_email_copy_is_approved( $slug ) ) {
+			WP_CLI::error( 'REFUSED. The day-0 set "' . $slug . '" is approved => false. Unapproved copy is not previewed into an inbox.' );
+		}
+
+		$subject = '[STAGING TEST] ' . wp_strip_all_tags( $email->get_subject() );
+		$html    = $email->style_inline( $email->get_content() );
+
+		bhp_review_ask_cli_test_send_deliver( $to, $subject, $html, $email->get_from_name(), $email->get_from_address(), $assoc_args, $say );
+		return;
+	}
+
+	/*
+	 * ⭐ THE THREE REVIEW-ASK SETS. `prepare_preview()` is the existing QA seam
+	 *    (1.19.362): it sets the object and the opt-out URL and writes NOTHING.
+	 */
+	if ( ! class_exists( 'WC_Email_BHP_Review_Ask' ) ) {
+		require_once get_template_directory() . '/inc/class-wc-email-bhp-review-ask.php';
+	}
+
+	if ( ! class_exists( 'WC_Email_BHP_Review_Ask' ) ) {
+		WP_CLI::error( 'WC_Email_BHP_Review_Ask did not load.' );
+	}
+
+	$email = new WC_Email_BHP_Review_Ask();
+
+	if ( ! $email->prepare_preview( $order ) ) {
+		WP_CLI::error( 'prepare_preview() refused order ' . $order->get_id() . '.' );
+	}
+
+	$email->touch = ( 'touch2' === $set ) ? 2 : 1;
+
+	/*
+	 * ⚠ WHICH TOUCH-1 SET RENDERS IS DECIDED BY THE ORDER'S LANE, not by the
+	 *   flag, because that is how it will be decided on a real send. ⛔ ASKING
+	 *   FOR `web1` ON A VISIT ORDER IS REFUSED RATHER THAN QUIETLY GIVEN THE
+	 *   VISIT SET — a preview that silently shows you a different email than
+	 *   the one you asked for is worse than no preview.
+	 */
+	$lane = bhp_review_ask_lane( $order );
+
+	if ( 'web1' === $set && 'web' !== $lane ) {
+		WP_CLI::error( 'REFUSED. Order ' . $order->get_id() . ' is on the "' . $lane . '" lane, so it renders the VISIT touch-1 set, not the web one. Pass a web order, or use --set=touch1.' );
+	}
+
+	if ( 'touch1' === $set && 'visit' !== $lane ) {
+		WP_CLI::error( 'REFUSED. Order ' . $order->get_id() . ' is on the "' . $lane . '" lane, so --set=touch1 would render the WEB set. Pass a visit order, or use --set=web1.' );
+	}
+
+	// ⛔ THE COPY GATE APPLIES TO A PREVIEW TOO.
+	$copy = bhp_review_ask_copy_raw( $email->touch, $order );
+
+	$say( 'copy set:  ' . ( isset( $copy['set'] ) ? $copy['set'] : '(unnamed)' )
+		. ' | approved: ' . ( ! empty( $copy['approved'] ) ? 'YES' : 'NO' )
+		. ' | stars: ' . ( bhp_review_ask_copy_has_stars( $copy ) ? 'yes' : 'no' ) );
+
+	if ( empty( $copy['approved'] ) ) {
+		WP_CLI::error( 'REFUSED. That copy set is approved => false. Unapproved strings are not previewed into an inbox.' );
+	}
+
+	/*
+	 * ⚠ THE MERGE GATE IS REPORTED, NOT ENFORCED, AND THAT IS DELIBERATE FOR A
+	 *   PREVIEW. An order with an unresolvable slot is exactly the case a human
+	 *   should be shown, so the command SAYS the send would be declined and
+	 *   renders it anyway. ⛔ It is a hard decline on the real runner and that
+	 *   is untouched.
+	 */
+	if ( ! bhp_review_ask_merge_is_complete( $copy, $order ) ) {
+		$say( '⚠ WARNING: a REAL send of this order would be declined `unresolved_merge_slot`. Rendering it anyway so you can see what is missing.' );
+	}
+
+	if ( bhp_review_ask_copy_has_stars( $copy ) && ! bhp_review_ask_star_row( $order ) ) {
+		$say( '⚠ WARNING: the star row is EMPTY for this order (no per-title review URL resolved). A real send would be declined.' );
+	}
+
+	$subject = '[STAGING TEST] ' . wp_strip_all_tags( $email->get_subject() );
+	$html    = $email->style_inline( $email->get_content() );
+
+	bhp_review_ask_cli_test_send_deliver( $to, $subject, $html, $email->get_from_name(), $email->get_from_address(), $assoc_args, $say );
+}
+
+/**
+ * Put one rendered email in one inbox, and write nothing anywhere else.
+ *
+ * ⛔ `wp_mail()` DIRECTLY, NOT `WC_Email::send()`. `send()` runs the
+ *    `woocommerce_mail_*` chain and, more importantly, invites a future editor
+ *    to add ledger writes beside it. This function has exactly one side effect
+ *    outside the SMTP transaction: none.
+ *
+ * @since 1.19.365
+ * @param string   $to         Recipient.
+ * @param string   $subject    Subject, already prefixed.
+ * @param string   $html       Rendered, inlined HTML.
+ * @param string   $from_name  From name.
+ * @param string   $from_email From address.
+ * @param array    $assoc_args Named args (`--dump`).
+ * @param callable $say        Logger.
+ * @return void
+ */
+function bhp_review_ask_cli_test_send_deliver( $to, $subject, $html, $from_name, $from_email, $assoc_args, $say ) {
+	/*
+	 * ⭐ `--dump=<path>` WRITES THE HTML TO A FILE INSTEAD OF NOTHING EXTRA. A
+	 *    file can be opened in a browser and diffed; an inbox cannot.
+	 */
+	if ( ! empty( $assoc_args['dump'] ) ) {
+		$path = (string) $assoc_args['dump'];
+
+		if ( false !== file_put_contents( $path, $html ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			$say( 'dumped:    ' . $path . ' (' . strlen( $html ) . ' bytes)' );
+		} else {
+			$say( '⚠ could not write --dump path: ' . $path );
+		}
+	}
+
+	$headers = array(
+		'Content-Type: text/html; charset=UTF-8',
+		'From: ' . $from_name . ' <' . $from_email . '>',
+
+		/*
+		 * ⛔ NOT A BULK MESSAGE AND IT SAYS SO. This header keeps a one-off QA
+		 *    render out of any recipient-side automation that treats review
+		 *    asks as marketing, and it is one more thing a reader can look at
+		 *    to tell a test from the real thing.
+		 */
+		'X-BHP-Test-Send: 1',
+		'Auto-Submitted: auto-generated',
+	);
+
+	$sent = wp_mail( $to, $subject, $html, $headers );
+
+	$say( '' );
+
+	if ( $sent ) {
+		$say( 'SENT to ' . $to . ' | subject: ' . $subject );
+	} else {
+		$say( 'wp_mail() returned FALSE. Nothing was delivered. Check the SMTP plugin and the staging mail log.' );
+	}
+
+	$say( '' );
+	$say( '⛔ LEDGER UNTOUCHED: no sent marker, no log row, no daily counter, no customer cooldown, no opt-out record.' );
+	$say( '⛔ MASTER SWITCH UNCHANGED: ' . ( bhp_review_ask_is_enabled() ? 'ENABLED' : 'still disabled' ) . '.' );
 }
 
 /**

@@ -764,37 +764,279 @@ bhp_rs_ok(
 add_filter( 'bhp_review_ask_in_send_window', '__return_true', 99 );
 
 /* =========================================================================
- * §6 — PENDING-COPY CAN NEVER BE SENT
+ * §6 — THE COPY GATE, NOW THAT ALL FOUR SETS ARE APPROVED
+ *
+ * ⭐⭐ 1.19.365 · THIS SECTION WAS INVERTED BY ANDREW'S SEAL 982, AND THE
+ *     INVERSION IS THE POINT. Until this build the section proved "PENDING-COPY
+ *     can never be sent" by observing two sets that were unapproved. Those sets
+ *     now carry Merry's V2 §3 and §4 prose and Andrew has approved them, so
+ *     the old assertions would now be asserting the WRONG WORLD.
+ *
+ * ⛔⛔ THE GATE IS THEREFORE PROVED THE OTHER WAY ROUND, WHICH IS STRONGER:
+ *     the section forces a set unapproved through the engine's own public
+ *     filter and asserts the decline still fires. A gate observed to fire on
+ *     demand is proved; a gate that merely happened to be closed was only ever
+ *     being described.
  * ====================================================================== */
 
-bhp_rs_head( '§6 Unapproved copy cannot send' );
+bhp_rs_head( '§6 The copy gate, with all four sets approved (seal 982)' );
 
-bhp_rs_ok( '⭐ The visit touch-1 set is APPROVED', ! empty( bhp_review_ask_copy_visit_touch1()['approved'] ) );
-bhp_rs_ok( '⛔ The web touch-1 set is NOT approved (PENDING-COPY, awaiting Merry)', empty( bhp_review_ask_copy_web_touch1()['approved'] ) );
-bhp_rs_ok( '⛔ The touch-2 set is NOT approved (PENDING-COPY, awaiting Merry)', empty( bhp_review_ask_copy_touch2()['approved'] ) );
+bhp_rs_ok( '⭐ The visit touch-1 set is APPROVED (seal 982)', ! empty( bhp_review_ask_copy_visit_touch1()['approved'] ) );
+bhp_rs_ok( '⭐ The web touch-1 set is APPROVED (seal 982)', ! empty( bhp_review_ask_copy_web_touch1()['approved'] ) );
+bhp_rs_ok( '⭐ The touch-2 set is APPROVED (seal 982)', ! empty( bhp_review_ask_copy_touch2()['approved'] ) );
+
+/*
+ * ⛔⛔ THE GATE ITSELF, PROVED BY FORCING IT SHUT. `$bhp_rs_unapprove_shim` is
+ *     the mirror of the approve shim in §0 and touches nothing but the bool.
+ */
+$bhp_rs_unapprove_shim = static function ( $copy ) {
+	if ( is_array( $copy ) ) {
+		$copy['approved'] = false;
+	}
+
+	return $copy;
+};
+
+add_filter( 'bhp_review_ask_copy', $bhp_rs_unapprove_shim, 99 );
 
 bhp_rs_ok(
-	'⭐⭐ A due WEB order declines copy_not_approved and cannot receive placeholder text',
+	'⭐⭐ THE GATE STILL FIRES: a due WEB order whose copy is forced unapproved declines copy_not_approved',
 	'copy_not_approved' === bhp_review_ask_decline_reason( $bhp_rs_w1 ),
 	'got: ' . bhp_review_ask_decline_reason( $bhp_rs_w1 )
 );
 
-/*
- * ⚠ TOUCH 2 IS ASSERTED THE SAME WAY, BUT ONLY ONCE ITS COPY IS UNAPPROVED.
- *   §2 and §4 above show touch 2 reaching '' (qualifying) because the copy
- *   gate is evaluated against the set the filter returns, and those sections
- *   run with the shipped sets. ⛔ THAT IS A REAL CONTRADICTION IF BOTH ARE
- *   TRUE, so it is asserted here rather than left implicit: the touch-2 set
- *   must be unapproved AND a due touch-2 order must decline on it.
- *
- * ⭐ IF THIS ASSERTION FAILS WHILE §2's PASSES, the copy gate is not reaching
- *    touch 2 and placeholder text is one switch-on away from a customer.
- */
 bhp_rs_ok(
-	'⭐⭐ A due TOUCH-2 order also declines copy_not_approved while the set is a placeholder',
+	'⭐⭐ THE GATE STILL FIRES: a due TOUCH-2 order whose copy is forced unapproved declines copy_not_approved',
 	'copy_not_approved' === bhp_review_ask_decline_reason( $bhp_rs_t2, bhp_review_ask_touch2_due_timestamp( $bhp_rs_t2 ) + DAY_IN_SECONDS ),
 	'got: ' . bhp_review_ask_decline_reason( $bhp_rs_t2, bhp_review_ask_touch2_due_timestamp( $bhp_rs_t2 ) + DAY_IN_SECONDS )
 );
+
+remove_filter( 'bhp_review_ask_copy', $bhp_rs_unapprove_shim, 99 );
+
+bhp_rs_ok(
+	'⭐ The shim was removed: the web set reports APPROVED again',
+	! empty( bhp_review_ask_copy_web_touch1()['approved'] )
+);
+
+/*
+ * ⛔⛔ APPROVED COPY IS NOT AN ACTIVATED ENGINE, AND THAT IS THE ASSERTION
+ *     ANDREW SHOULD BE ABLE TO POINT AT. Seal 982 approved words. It did not
+ *     throw the master switch, and nothing in 1.19.365 throws it.
+ */
+bhp_rs_ok(
+	'⛔⛔ The master switch is STILL OFF even though every set is now approved',
+	'yes' !== get_option( 'bhp_review_ask_enabled', 'no' )
+);
+
+/*
+ * ⛔ NO PENDING-COPY PLACEHOLDER SURVIVES ANYWHERE. If a future edit restores
+ *    one, it must not be able to hide behind an `approved => true`.
+ */
+$bhp_rs_all_sets = wp_json_encode(
+	array(
+		bhp_review_ask_copy_visit_touch1(),
+		bhp_review_ask_copy_web_touch1(),
+		bhp_review_ask_copy_touch2(),
+	)
+);
+
+bhp_rs_ok(
+	'⛔ No "PENDING-COPY" string survives in any shipped set',
+	false === strpos( (string) $bhp_rs_all_sets, 'PENDING-COPY' )
+);
+
+/* =========================================================================
+ * §6B — MERRY'S V2 PROSE, ASSERTED WORD FOR WORD
+ *
+ * ⛔ ASSERTED AGAINST THE **UNMERGED** SETS, so a slot that fails to resolve
+ *    cannot make a sentence look right by disappearing.
+ * ====================================================================== */
+
+bhp_rs_head( '§6B Seal 982 copy, verbatim' );
+
+$bhp_rs_v2_web    = bhp_review_ask_copy_web_touch1();
+$bhp_rs_v2_touch2 = bhp_review_ask_copy_touch2();
+
+bhp_rs_ok(
+	'⭐ Web touch 1 opens with V2 §4 verbatim',
+	'Your reader has had {BookTitle} for a week or so now. It went out in the mail, so I never got to see who opened it.' === $bhp_rs_v2_web['body_before'][0]
+);
+bhp_rs_ok(
+	'⭐ Web touch 1 second paragraph is V2 §4 verbatim',
+	'Would you rate it? It takes about ten seconds, and if you have another minute after that, two or three honest sentences would help the next parent decide. Honest is the useful part.' === $bhp_rs_v2_web['body_before'][1]
+);
+bhp_rs_ok(
+	'⭐ Web touch 1 closes on the line that already carried its own approval',
+	'Thank you for taking a chance on a book by somebody you had never heard of.' === $bhp_rs_v2_web['body_after'][0]
+);
+bhp_rs_ok(
+	'⛔ Web touch 1 names no school and no child (V2 §4: there was no table and no signature)',
+	false === strpos( (string) wp_json_encode( $bhp_rs_v2_web ), '{SchoolName}' )
+		&& false === strpos( (string) wp_json_encode( $bhp_rs_v2_web ), '{ChildFirstName}' )
+);
+
+bhp_rs_ok(
+	'⭐⭐ Touch 2 carries ANDREW\'S OWN SENTENCE, unreworded (seal 977)',
+	'I know how a week can get away from me, so I made this as short as I could.' === $bhp_rs_v2_touch2['body_before'][0]
+);
+bhp_rs_ok(
+	'⛔⛔ Touch 2 puts NO blame on the reader: no "you", "your" or "busy" in its body',
+	! preg_match( '/\b(you|your|busy)\b/i', (string) $bhp_rs_v2_touch2['body_before'][0] )
+);
+bhp_rs_ok(
+	'⭐⭐ Touch 2 promises finality, and the exit comes BEFORE the thanks',
+	'If it is not for you, that is completely fine. This is the last note I will send about it.' === $bhp_rs_v2_touch2['body_after'][0]
+);
+bhp_rs_ok(
+	'⛔⛔ THERE IS NO TOUCH 3, which is what makes that promise true',
+	3 !== (int) bhp_review_ask_next_touch( $bhp_rs_t2 )
+);
+bhp_rs_ok(
+	'⭐ Touch 2 subject is V2 §3 verbatim and under 40 characters',
+	'Last note about the book' === $bhp_rs_v2_touch2['subject'] && strlen( $bhp_rs_v2_touch2['subject'] ) < 40
+);
+
+/*
+ * ⛔⛔ SEAL 981. The removed sentence must not exist anywhere in the theme, in
+ *     any set, in any comment that could be copy-pasted back into one.
+ */
+bhp_rs_ok(
+	'⛔⛔ SEAL 981: the three-star sentence appears in NO shipped copy set',
+	false === strpos( (string) $bhp_rs_all_sets, 'A three-star review' )
+		&& false === strpos( (string) $bhp_rs_all_sets, 'three-star review that says why' )
+);
+
+/*
+ * ⭐ THE NAMED / GENERIC SWAP (V2 §2, conflict CYCLE179-MKT-32). With no order
+ *    in hand the set must fall to the GENERIC wording, because that is what
+ *    most real orders will get.
+ */
+$bhp_rs_generic = bhp_review_ask_copy_visit_touch1();
+
+bhp_rs_ok(
+	'⭐ With no order, visit touch 1 uses the GENERIC opener (capital "Your reader")',
+	0 === strpos( (string) $bhp_rs_generic['body_before'][0], 'Your reader has had {BookTitle}' )
+);
+bhp_rs_ok(
+	'⭐ The generic close is V2 §2 verbatim',
+	'Thank you for reading together.' === $bhp_rs_generic['body_after'][0]
+);
+bhp_rs_ok(
+	'⭐ The generic P.S. is V2 §2 verbatim',
+	'P.S. If your reader has a question about the book, hit reply. I answer every one.' === $bhp_rs_generic['postscript']
+);
+bhp_rs_ok(
+	'⛔ The generic set carries NO {ChildFirstName} slot at all (never send with an empty slot)',
+	false === strpos( (string) wp_json_encode( $bhp_rs_generic ), '{ChildFirstName}' )
+);
+
+/*
+ * ⭐⭐ THE TIME PHRASE MOVES WITH THE DELAY, AND THIS IS THE ONE MERRY FLAGGED.
+ *     A one-book order sends at +7 and must say "about a week"; a two-book
+ *     order sends at +10 and must say "a week and a half". ⛔ If these two ever
+ *     read the same, the copy is false on one of the two lanes.
+ */
+$bhp_rs_one_book   = bhp_review_ask_copy_visit_touch1( $bhp_rs_v1 );
+$bhp_rs_multi_book = bhp_review_ask_copy_visit_touch1( $bhp_rs_v2 );
+
+bhp_rs_ok(
+	'⭐⭐ A ONE-book visit order says "for about a week now" (true at +7)',
+	false !== strpos( (string) $bhp_rs_one_book['body_before'][0], 'for about a week now' ),
+	$bhp_rs_one_book['body_before'][0]
+);
+bhp_rs_ok(
+	'⭐⭐ A TWO-book visit order says "for a week and a half now" (true at +10)',
+	false !== strpos( (string) $bhp_rs_multi_book['body_before'][0], 'for a week and a half now' ),
+	$bhp_rs_multi_book['body_before'][0]
+);
+bhp_rs_ok(
+	'⛔ The two openers are NOT the same string',
+	$bhp_rs_one_book['body_before'][0] !== $bhp_rs_multi_book['body_before'][0]
+);
+bhp_rs_ok(
+	'⭐ Both visit delays are still declared, so the interlock passes at 7 and at 10',
+	in_array( BHP_REVIEW_ASK_VISIT_DELAY_ONE_BOOK, (array) $bhp_rs_one_book['delay_days'], true )
+		&& in_array( BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK, (array) $bhp_rs_one_book['delay_days'], true )
+);
+
+/*
+ * ⭐ THE POST-STAR-ROW LINE IS PRESENT ON ALL THREE SETS, verbatim, and it is
+ *    the same sentence in each because Merry wrote it once.
+ */
+foreach (
+	array(
+		'visit touch 1' => $bhp_rs_generic,
+		'web touch 1'   => $bhp_rs_v2_web,
+		'touch 2'       => $bhp_rs_v2_touch2,
+	) as $bhp_rs_label => $bhp_rs_set
+) {
+	bhp_rs_ok(
+		'⭐ ' . $bhp_rs_label . ' carries the star-row instruction verbatim',
+		'Tap the stars that fit, then two or three honest sentences on the next page.' === $bhp_rs_set['links_lead']
+	);
+	bhp_rs_ok(
+		'⛔ ' . $bhp_rs_label . ' still passes bhp_review_ask_copy_is_usable()',
+		bhp_review_ask_copy_is_usable( $bhp_rs_set )
+	);
+	bhp_rs_ok(
+		'⛔ ' . $bhp_rs_label . ' names Amazon nowhere',
+		false === stripos( (string) wp_json_encode( $bhp_rs_set ), 'amazon' )
+	);
+	bhp_rs_ok(
+		'⛔ ' . $bhp_rs_label . ' has no em dash and no en dash',
+		false === strpos( (string) wp_json_encode( $bhp_rs_set ), "\xe2\x80\x94" )
+			&& false === strpos( (string) wp_json_encode( $bhp_rs_set ), "\xe2\x80\x93" )
+	);
+	bhp_rs_ok(
+		'⛔ ' . $bhp_rs_label . ' subject is under 40 characters',
+		strlen( (string) $bhp_rs_set['subject'] ) < 40
+	);
+}
+
+/* =========================================================================
+ * §6C — `test-send` IS WIRED, AND ITS SAFETY RAILS EXIST
+ *
+ * ⚠ WHAT THIS SECTION CAN AND CANNOT PROVE. It proves the two functions exist
+ *   and that the command is dispatched. ⛔ IT DOES NOT SEND ANYTHING and it
+ *   cannot prove the staging refusal fires, because proving that would mean
+ *   running the command on a non-staging host, which is the exact thing the
+ *   refusal exists to prevent. That check is verified by a human running it
+ *   once with the wrong --url and reading the refusal.
+ * ====================================================================== */
+
+bhp_rs_head( '§6C test-send wiring' );
+
+bhp_rs_ok( '⭐ bhp_review_ask_cli_test_send() exists', function_exists( 'bhp_review_ask_cli_test_send' ) );
+bhp_rs_ok( '⭐ bhp_review_ask_cli_test_send_deliver() exists', function_exists( 'bhp_review_ask_cli_test_send_deliver' ) );
+
+$bhp_rs_engine_src = file_get_contents( get_template_directory() . '/inc/review-ask-email.php' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+bhp_rs_ok(
+	'⭐ `test-send` is dispatched by the CLI router',
+	false !== strpos( (string) $bhp_rs_engine_src, "if ( 'test-send' === \$sub ) {" )
+);
+bhp_rs_ok(
+	'⛔⛔ test-send checks home_url(), NOT the typed --url',
+	false !== strpos( (string) $bhp_rs_engine_src, "wp_parse_url( home_url(), PHP_URL_HOST )" )
+);
+/*
+ * ⛔⛔ THE LEDGER ASSERTION: the test-send function body, isolated from
+ *     the rest of the file, must contain none of the recording calls.
+ */
+$bhp_rs_ts_start = strpos( (string) $bhp_rs_engine_src, 'function bhp_review_ask_cli_test_send( $assoc_args, $say ) {' );
+$bhp_rs_ts_end   = strpos( (string) $bhp_rs_engine_src, 'function bhp_review_ask_cli_plan(' );
+$bhp_rs_ts_body  = ( false !== $bhp_rs_ts_start && false !== $bhp_rs_ts_end && $bhp_rs_ts_end > $bhp_rs_ts_start )
+	? substr( (string) $bhp_rs_engine_src, $bhp_rs_ts_start, $bhp_rs_ts_end - $bhp_rs_ts_start )
+	: '';
+
+bhp_rs_ok( '⭐ The test-send function body was isolated for inspection', '' !== $bhp_rs_ts_body );
+
+foreach ( array( 'bhp_review_ask_log_send', 'bhp_review_ask_mark_sent', 'bhp_review_ask_record_customer', 'bhp_review_ask_record_optout', 'update_option' ) as $bhp_rs_forbidden ) {
+	bhp_rs_ok(
+		'⛔⛔ test-send never calls ' . $bhp_rs_forbidden . '()',
+		false === strpos( $bhp_rs_ts_body, $bhp_rs_forbidden . '(' )
+	);
+}
 
 /* =========================================================================
  * §7 — THE COPY RAILS AND THE MERGE SLOTS
@@ -1211,17 +1453,28 @@ if ( function_exists( 'bhp_visit_email_copy_sets' ) ) {
 		);
 	}
 
+	/*
+	 * ⭐⭐ 1.19.365 · INVERTED BY SEAL 982. Until this build the _default
+	 *     day-0 set was Merry's V2 §1 prose awaiting Andrew, and this
+	 *     asserted it could not send. He approved it, so the assertion now
+	 *     reads the other way. ⛔ The GATE is still proved, immediately
+	 *     below, by asking an unapproved key the same question.
+	 */
 	bhp_rs_ok(
-		'⛔⛔ The rewritten _default day-0 set is NOT approved and therefore cannot send',
-		! bhp_visit_email_copy_is_approved( BHP_VISIT_EMAIL_DEFAULT_KEY )
+		'⭐⭐ The rewritten _default day-0 set is APPROVED (seal 982) and may render',
+		bhp_visit_email_copy_is_approved( BHP_VISIT_EMAIL_DEFAULT_KEY )
+	);
+	bhp_rs_ok(
+		'⛔⛔ THE DAY-0 GATE STILL FIRES: an unknown/unapproved set key is not approved',
+		! bhp_visit_email_copy_is_approved( 'no-such-set-ever-2026' )
 	);
 	bhp_rs_ok(
 		'⭐ The approved Adams day-0 set is still approved',
 		bhp_visit_email_copy_is_approved( 'adams-2026-08-28' )
 	);
 	bhp_rs_ok(
-		'⛔⛔ An unapproved day-0 set renders NOTHING rather than placeholder text',
-		! bhp_visit_email_may_render( BHP_VISIT_EMAIL_DEFAULT_KEY, $bhp_rs_v1 )
+		'⛔⛔ An UNAPPROVED day-0 set still renders NOTHING rather than placeholder text',
+		! bhp_visit_email_may_render( 'no-such-set-ever-2026', $bhp_rs_v1 )
 	);
 } else {
 	bhp_rs_ok( 'SKIPPED: inc/visit-completed-email.php is not loaded', true );
