@@ -25,7 +25,56 @@ defined( 'ABSPATH' ) || exit;
 /*
  * @hooked WC_Emails::email_header() Output the email header
  */
-do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
+do_action( 'woocommerce_email_header', $email_heading, $email );
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.370 · THE HERO BAND. Andrew, seal 1000, asked for *"adding a
+ *     picture with gradient - making it pretty and trustworthy"* and answered
+ *     *"yes design it, make it similar to our mailchimp emails"*.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ IT RENDERS BELOW THE H1, NOT ABOVE IT, AND THAT IS A DELIBERATE DEVIATION
+ *   FROM `CYCLE179-DES-REVIEW-EMAIL.md` §6, WHICH PUTS IT ABOVE. Legolas's
+ *   order would require overriding `emails/email-header.php`, and
+ *   `inc/transactional-emails.php` carries a standing prohibition on exactly
+ *   that: *"the `email_improvements` feature flag is enabled on this store and
+ *   rewrites both; an override pins the theme to one branch of core and
+ *   diverges silently on the next update."* ⛔ A layout preference does not
+ *   outrank a rule written to stop a silent break on a core update. Recorded
+ *   for Gandalf rather than absorbed.
+ *
+ * ⚠ AND IT IS MOOT ON EVERY EMAIL THIS BUILD ACTUALLY SENDS: the H1 is empty
+ *   in all three live copy sets, so the hero IS the first thing under the logo
+ *   band. It matters only if an admin types a heading into wp-admin.
+ *
+ * ⛔ NO `<div>` WRAPPER AND NO CSS GRADIENT. The gradient is baked into the
+ *    JPEG because Outlook renders neither. The caption is baked for the same
+ *    reason plus one more: it survives image scaling and dark-mode inversion,
+ *    where live overlaid text does not.
+ *
+ * ⭐ TOUCH 2 GETS NOTHING HERE — `bhp_review_ask_hero()` returns an empty
+ *    array for it — so the short last note opens straight on the letter.
+ */
+$bhp_hero = function_exists( 'bhp_review_ask_hero' )
+	? bhp_review_ask_hero(
+		isset( $order ) ? $order : null,
+		/*
+		 * ⭐ THE COPY SET'S OWN IDENTITY DECIDES, NOT `$this->touch`. The
+		 *    template is not given the touch number, and `set` is the one key
+		 *    1.19.366 established as the set's identity for exactly this kind
+		 *    of consumer question.
+		 */
+		( isset( $copy['set'] ) && 'touch2' === (string) $copy['set'] ) ? 'touch2' : 'touch1'
+	)
+	: array();
+?>
+
+<?php if ( ! empty( $bhp_hero ) ) : ?>
+<p style="margin:0 0 22px;">
+	<img src="<?php echo esc_url( $bhp_hero['url'] ); ?>" width="<?php echo esc_attr( (string) $bhp_hero['width'] ); ?>" alt="<?php echo esc_attr( $bhp_hero['alt'] ); ?>" style="display:block;width:100%;max-width:<?php echo esc_attr( (string) $bhp_hero['width'] ); ?>px;height:auto;border:0;outline:none;text-decoration:none;border-radius:6px;">
+</p>
+<?php endif; ?>
 
 <p>
 <?php
@@ -111,18 +160,35 @@ if ( '' !== $bhp_first_name ) {
  *         </a>
  *       </td>
  *
- * ⛔ WHY THE GLYPH LOST, AND SEAL 998 IS NOT THE ONLY REASON. U+2605 is
- *    substituted by Gmail's Android and iOS clients with a COLOUR EMOJI and by
- *    several Outlook builds with a box, so "a row of five stars" was never
- *    reliably a row of five stars in the two clients that matter most. A PNG is
- *    the same picture everywhere it is not blocked.
+ * ⛔ WHY THE GLYPH LOST IN 1.19.369, PRESERVED BECAUSE IT IS STILL TRUE.
+ *    U+2605 is substituted by Gmail's Android and iOS clients with a COLOUR
+ *    EMOJI and by several Outlook builds with a box, so "a row of five stars"
+ *    was never reliably a row of five stars in the two clients that matter
+ *    most. A PNG is the same picture everywhere it is not blocked.
  *
- * ⭐ AND THE BLOCKED-IMAGE OBJECTION IS ANSWERED, NOT IGNORED. Each <img>
- *    carries alt="1 star" ... "5 stars" INSIDE its link, so a client that
- *    blocks images renders five underlined text links in the same order; the
- *    caption line below the row says what the row is for, in body text that is
- *    never blocked; and `links` still carries a plain "Or open the review page"
- *    link. ⛔ There is no state in which this block is a dead end.
+ * ⭐ AND THE BLOCKED-IMAGE OBJECTION WAS ANSWERED, NOT IGNORED. Each <img>
+ *    carried alt="1 star" ... "5 stars" INSIDE its link, so a client that
+ *    blocks images was expected to render five underlined text links.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.370 · THAT EXPECTATION WAS WRONG, AND IT WAS DISPROVED BY A RENDER.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * `design-creative` rendered the image row with images unavailable
+ * (`CYCLE179-DES-REVIEW-EMAIL.md` §9) and got *"a row of empty grey boxes where
+ * the stars should be, which is worse than the forest stars it replaces."* An
+ * <img> inside an <a> with no visible sibling text does NOT reliably fall back
+ * to its alt as a clickable line; Outlook desktop, which blocks images by
+ * default, draws the placeholder box instead. ⛔ THE ROW WAS A DEAD END ON THE
+ * SINGLE CLIENT MOST LIKELY TO RECEIVE IT.
+ *
+ * ➡ THE MARK IS THEREFORE A CHARACTER AGAIN, at 32px, resting grey and gold on
+ *   hover per seal 1003. A character cannot be blocked. The emoji and box
+ *   substitutions above are real and are accepted: a colour star is still a
+ *   star, a box still carries the link, the `aria-label` and the caption below
+ *   it, and `links` still carries a plain "Or open the review page" link. ⛔ An
+ *   empty grey box with no text is the only one of those four outcomes that is
+ *   a dead end, and it is the one this build removes.
  *
  * ⛔ TABLE-BASED AND INLINE-STYLED, unchanged and for the unchanged reason:
  *    Outlook's Word renderer ignores flex, grid and most block layout, and a
@@ -144,23 +210,43 @@ if ( '' !== $bhp_first_name ) {
  *     Amazon's own row works and it is what seal 998 asked for; it is
  *     nonetheless less explicit for a sighted reader with images enabled.
  */
-$bhp_stars        = function_exists( 'bhp_review_ask_star_row' ) ? bhp_review_ask_star_row( $order ) : array();
-$bhp_star_caption = isset( $copy['stars_caption'] ) ? trim( (string) $copy['stars_caption'] ) : '';
+$bhp_stars         = function_exists( 'bhp_review_ask_star_row' ) ? bhp_review_ask_star_row( $order ) : array();
+$bhp_star_caption  = isset( $copy['stars_caption'] ) ? trim( (string) $copy['stars_caption'] ) : '';
+$bhp_star_glyph    = function_exists( 'bhp_review_ask_star_glyph' ) ? bhp_review_ask_star_glyph() : '';
+$bhp_star_colours  = function_exists( 'bhp_review_ask_star_colours' ) ? bhp_review_ask_star_colours() : array( 'rest' => '#c9c2b3' );
 ?>
-<?php if ( ! empty( $bhp_stars ) ) : ?>
+<?php if ( ! empty( $bhp_stars ) && '' !== $bhp_star_glyph ) : ?>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 10px;border-collapse:collapse;">
 	<tr>
 		<td align="center" style="padding:0;">
 			<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;table-layout:fixed;margin:0 auto;">
 				<tr>
 <?php foreach ( $bhp_stars as $bhp_star ) : ?>
-					<td align="center" valign="middle" style="padding:0;">
-						<a href="<?php echo esc_url( $bhp_star['url'] ); ?>" target="_blank" rel="noopener" style="display:block;padding:6px;color:#173f2f;text-decoration:underline;font-size:13px;line-height:1.2;">
-<?php if ( '' !== (string) $bhp_star['image'] ) : ?>
-							<img src="<?php echo esc_url( $bhp_star['image'] ); ?>" width="32" height="32" alt="<?php echo esc_attr( $bhp_star['alt'] ); ?>" style="display:block;width:32px;height:32px;border:0;outline:none;text-decoration:none;">
-<?php else : ?>
-							<?php echo esc_html( $bhp_star['alt'] ); ?>
-<?php endif; ?>
+					<td class="bhp-star" align="center" valign="middle" style="padding:0;">
+						<?php
+						/*
+						 * ⭐ THE TAP TARGET IS ARITHMETIC, NOT AN ESTIMATE: a
+						 *    32px glyph box (`font-size:32px; line-height:32px`)
+						 *    plus 6px of padding on all four sides is a 44px
+						 *    square, which is the documented minimum. ⚠ COMPUTED
+						 *    FROM THE DECLARED SIZES; no client was opened.
+						 *
+						 * ⭐ `aria-label` CARRIES THE RATING AND THE GLYPH IS
+						 *    `aria-hidden`, so a screen reader announces the
+						 *    link once as "3 stars" rather than reading "black
+						 *    star" aloud. `title` repeats it for the clients
+						 *    that strip `aria-*` but keep tooltips.
+						 *
+						 * ⛔ THE INLINE `color` IS THE RESTING GREY, AND IT IS
+						 *    INLINE ON PURPOSE: every webmail that strips
+						 *    `<style>` still gets the intended resting state,
+						 *    and loses only the hover. The `<style>` rules in
+						 *    `bhp_review_ask_star_css()` restate it so the
+						 *    `:hover` rule has something to win against.
+						 */
+						?>
+						<a href="<?php echo esc_url( $bhp_star['url'] ); ?>" target="_blank" rel="noopener" aria-label="<?php echo esc_attr( $bhp_star['alt'] ); ?>" title="<?php echo esc_attr( $bhp_star['alt'] ); ?>" style="display:block;padding:6px;color:<?php echo esc_attr( $bhp_star_colours['rest'] ); ?>;text-decoration:none;font-size:32px;line-height:32px;">
+							<span aria-hidden="true"><?php echo esc_html( $bhp_star_glyph ); ?></span>
 						</a>
 					</td>
 <?php endforeach; ?>
@@ -279,6 +365,54 @@ echo implode( '<br>', $bhp_signoff_lines ); // phpcs:ignore WordPress.Security.E
 ?>
 <?php if ( ! empty( $copy['postscript'] ) ) : ?>
 <p style="margin:16px 0 0;"><?php echo esc_html( $copy['postscript'] ); ?></p>
+<?php endif; ?>
+
+<?php
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.370 · THE SIGNATURE BLOCK, BELOW A RULE, AS TEMPLATE FURNITURE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ RECORDED AS AN OPEN DECISION, NOT PRESENTED AS SETTLED: `CYCLE179-DES-29(a)`.
+ *   The approved copy signs off `Andrew` and ends at the P.S. This block adds a
+ *   fuller name, a role line and the series line, so the name appears twice.
+ *   ⛔ It sits BELOW A RULE and AFTER the P.S. precisely so the letter still
+ *   ends where the approved copy ends. Whether it belongs at all is Andrew's
+ *   call.
+ *
+ * ⛔ THE SOCIAL LINE RENDERS ONLY IF REAL URLs ARE SUPPLIED. See
+ *    `bhp_review_ask_signature()`: no Facebook or Instagram URL exists anywhere
+ *    in this repository, and one will not be guessed.
+ *
+ * ⚠ THE BRAND LINE IS `#a8863f`, NOT `#c4a15c`. Legolas §4 measured brand gold
+ *   on the cream card at roughly 2.2:1 and the darker gold at roughly 3.3:1.
+ *   Both are short of 4.5:1, so the line is set at 14px and carries no
+ *   information that appears nowhere else — it is the company's own series
+ *   line, not a claim.
+ */
+$bhp_signature = function_exists( 'bhp_review_ask_signature' ) ? bhp_review_ask_signature() : array();
+?>
+<?php if ( ! empty( $bhp_signature ) ) : ?>
+<hr style="border:none;border-top:1px solid #e5e0d3;margin:28px 0 18px;">
+
+<p style="margin:0 0 4px;font-family:'EB Garamond',Georgia,'Times New Roman',serif;font-size:18px;line-height:1.3;color:#342f28;"><?php echo esc_html( $bhp_signature['name'] ); ?></p>
+<p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#6b6b60;"><?php echo esc_html( $bhp_signature['role'] ); ?></p>
+<p style="margin:0;font-family:'EB Garamond',Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#a8863f;"><?php echo esc_html( $bhp_signature['brand'] ); ?></p>
+<?php if ( ! empty( $bhp_signature['social'] ) ) : ?>
+<p style="margin:10px 0 0;font-size:13px;">
+<?php
+$bhp_social_parts = array();
+
+foreach ( $bhp_signature['social'] as $bhp_social ) {
+	$bhp_social_parts[] = '<a href="' . esc_url( $bhp_social['url'] ) . '" target="_blank" rel="noopener" style="color:#173f2f;text-decoration:underline;">'
+		. esc_html( $bhp_social['label'] )
+		. '</a>';
+}
+
+echo implode( ' <span style="color:#6b6b60;">&middot;</span> ', $bhp_social_parts ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each part escaped above.
+?>
+</p>
+<?php endif; ?>
 <?php endif; ?>
 
 <?php

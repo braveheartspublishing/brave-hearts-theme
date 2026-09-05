@@ -313,7 +313,7 @@ built (Andrew's explicit instruction). To add a new review:
    way as any other theme change (full-ZIP `wp theme install --force`,
    staging-verified first).
 
-## Review-ask engine — staging QA and the production go-live gates (1.19.369)
+## Review-ask engine — staging QA and the production go-live gates (1.19.370)
 
 **The engine sends nothing until `bhp_review_ask_enabled` is `yes`. That option
 flip is Andrew's, and it is the only irreversible step in this list** — an email
@@ -326,8 +326,8 @@ that has gone to a parent cannot be recalled. Everything above it is reversible.
 
 ```
 # 1. install the candidate
-wp theme install /path/to/brave-hearts-theme-1.19.369-review-seq.zip --force
-wp theme list --status=active                 # must show <slug> at 1.19.369
+wp theme install /path/to/brave-hearts-theme-1.19.370-review-seq.zip --force
+wp theme list --status=active                 # must show <slug> at 1.19.370
 wp sg purge
 
 # 2. fatal check
@@ -357,10 +357,35 @@ not on `--url`), refuses without one valid `--to`, and refuses an unapproved set
 
 ### B. What Gandalf must verify on staging BEFORE the option is discussed
 
+0. **⭐⭐ THE CHARSET, AND CHECK IT FIRST BECAUSE IT INVALIDATES EVERY OTHER
+   VISUAL CHECK BELOW IT.** In FluentSMTP → Email Logs, open the touch-1
+   test-send and read the raw `Content-Type` header. It must read
+   `text/html; charset=UTF-8`. **If the charset is missing, stop** — the stars
+   will arrive as `âââââ` and nothing else on this list can be judged.
+   Then confirm in the delivered message that the five stars are stars and not
+   mojibake. *(1.19.370. The defect was observed on the 1.19.369 send.)*
 1. **The star row is a row.** Open the touch-1 test-send on a phone and on
-   desktop: five gold stars, one line, left to right, no wrapping at 375px.
-2. **With images blocked**, the same email shows five underlined links reading
-   "1 star" … "5 stars", plus the caption and "Or open the review page".
+   desktop: five stars, one line, left to right, no wrapping at 375px.
+   **They rest GREY (`#c9c2b3`), not gold** — that is the designed resting
+   state, not a bug.
+1b. **Hover, on a desktop client that runs CSS** (Apple Mail, or the browser
+   preview): moving the mouse across the row turns stars gold from the left up
+   to the one under the pointer. **In a client that ignores `<style>` the row
+   simply stays grey and every link still works** — that is an accepted
+   outcome, not a failure. ⚠ Not verified in any mail client by the build.
+1c. **The hero photograph.** Touch 1 and day 0 carry one 536px photograph with
+   its caption baked in; **touch 2 carries none.** A visit order whose slug is
+   not in the map, and every web order, must show the general read-aloud frame
+   — **never a frame captioned for a school the reader did not attend.**
+1d. **The signature block** below the rule reads `Andrew Signore` /
+   `Author | Brave Hearts Publishing` / `Big Places. Brave Hearts.` **There is
+   no Facebook or Instagram line, and that is deliberate: no real URL for
+   either exists in the repository and none was invented.** See the open item
+   in the deliverable.
+2. **With images blocked**, the same email still shows five stars (they are
+   characters now, not images), the caption and "Or open the review page".
+   **The hero becomes its alt text** — read it and confirm it describes the
+   photograph and its caption.
 3. **Star 1 goes to `?rating=1` and star 5 to `?rating=5`** — click both and
    read the query string on the landing page.
 4. **The caption names the book** ("Tap a star to rate The Amazon."), not
@@ -385,14 +410,14 @@ ships inert code.** Step 4 is the live one.
 ```
 # 0. ROLLBACK ARTEFACT FIRST. Do not skip.
 cd <doc_root>/wp-content/themes
-tar -czf ~/PROD-theme-PRE-1.19.369-$(date +%Y%m%d-%H%M).tar.gz <slug>
+tar -czf ~/PROD-theme-PRE-1.19.370-$(date +%Y%m%d-%H%M).tar.gz <slug>
 wp option get bhp_review_ask_enabled                 # record the answer verbatim
 wp option get bhp_review_ask_stats  > ~/PRE-369-review-ask-stats.json
 wp option get bhp_review_ask_log    > ~/PRE-369-review-ask-log.json
 
 # 1. install and confirm it replaced the LIVE theme rather than adding one
-wp theme install /path/to/brave-hearts-theme-1.19.369-review-seq.zip --force
-wp theme list --status=active                        # <slug>, 1.19.369
+wp theme install /path/to/brave-hearts-theme-1.19.370-review-seq.zip --force
+wp theme list --status=active                        # <slug>, 1.19.370
 wp eval 'echo "ok";' --user=1
 wp sg purge
 
@@ -431,7 +456,7 @@ wp bhp review-ask status                             # must read disabled
 # full code rollback
 cd <doc_root>/wp-content/themes
 rm -rf <slug>
-tar -xzf ~/PROD-theme-PRE-1.19.369-<stamp>.tar.gz
+tar -xzf ~/PROD-theme-PRE-1.19.370-<stamp>.tar.gz
 wp theme list --status=active
 wp sg purge
 ```

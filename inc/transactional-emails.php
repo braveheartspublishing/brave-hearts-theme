@@ -803,6 +803,16 @@ function bhp_email_brand_styles( $css ) {
 	letter-spacing: normal;
 }
 
+/*
+ * ⭐ 1.19.370 · H1 AT 30px, NOT 32px. `CYCLE179-DES-REVIEW-EMAIL.md` §5: at
+ *    32px the approved H1 line wrapped awkwardly against the 536px hero above
+ *    it. ⚠ Legolas measured that against a rendered preview; it is not
+ *    re-measured here.
+ */
+#template_header h1 {
+	font-size: 30px;
+}
+
 #body_content_inner {
 	font-size: 16px;
 	line-height: 1.6;
@@ -818,6 +828,94 @@ function bhp_email_brand_styles( $css ) {
 }
 ';
 
+	/*
+	 * ⭐ 1.19.370 · THE REVIEW-ASK STAR ROW'S HOVER RULES. Appended here, and
+	 *    not in a second `woocommerce_email_styles` callback, because
+	 *    WooCommerce assembles ONE stylesheet and a second callback would only
+	 *    be a second place to look. The selectors are namespaced `.bhp-star`
+	 *    and match nothing in any other email in this store.
+	 *
+	 * ⛔ THE RULES ARE UNCONDITIONAL RATHER THAN SCOPED TO ONE EMAIL ID,
+	 *    because `woocommerce_email_styles` receives no `$email` in every
+	 *    WooCommerce build this store has run on, and a scoping test that
+	 *    silently never fires is worse than a few unused bytes.
+	 */
+	if ( function_exists( 'bhp_review_ask_star_css' ) ) {
+		$css .= bhp_review_ask_star_css();
+	}
+
 	return $css;
 }
 add_filter( 'woocommerce_email_styles', 'bhp_email_brand_styles', 20 );
+
+/* -------------------------------------------------------------------------
+ * ⭐⭐ 1.19.370 · THE CHARSET ON EVERY WOOCOMMERCE EMAIL
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Add `charset=UTF-8` to the `Content-Type` header of every WooCommerce email.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ THIS IS A FIX FOR AN OBSERVED DEFECT, NOT A PRECAUTION.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHAT WAS SEEN. FluentSMTP's own delivery log recorded the outgoing
+ *    `Content-Type` as `text/html` with NO charset parameter, and the U+2605
+ *    stars in the delivered 1.19.369 review ask arrived as `âââââ` —
+ *    the exact signature of UTF-8 bytes decoded as CP1252 (U+2605 is
+ *    `E2 98 85`, which is `â`, `˜`, `…` in Windows-1252). ⚠ Reported by
+ *    Gandalf from the staging send; NOT re-observed in this build, which has
+ *    no PHP runtime and sent nothing.
+ *
+ * ⛔ WHY WORDPRESS DID NOT ALREADY HANDLE IT. `wp_mail()` reads the charset
+ *    out of the `Content-Type` header and otherwise falls back to
+ *    `get_bloginfo( 'charset' )` — but FluentSMTP REPLACES `wp_mail()`
+ *    wholesale. A header that states its charset explicitly does not depend on
+ *    any mailer's fallback being the one we want.
+ *
+ * ⭐ WHY THIS ONE FILTER COVERS EVERYTHING THE BRIEF NAMES. `WC_Email::
+ *    get_headers()` runs `apply_filters( 'woocommerce_email_headers', $header,
+ *    $this->id, $this->object, $this )` for EVERY WooCommerce email. The
+ *    review ask is a `WC_Email`; so is the visit day-0 email, which is
+ *    `customer_completed_order` with the school-visit body fork. One filter,
+ *    both emails, plus every receipt this store already sends — the mojibake
+ *    defect was never specific to the star row.
+ *
+ * ⛔ IT ONLY ADDS. If a `charset` is already stated it is left exactly as it
+ *    is, and the media type itself is never rewritten: an email configured as
+ *    `multipart/alternative` or `text/plain` keeps that type and simply gains
+ *    the parameter. Rewriting a media type from a header filter is how a
+ *    plain-text email starts arriving as HTML source.
+ *
+ * @since 1.19.370
+ * @param string $headers Existing headers, CRLF separated.
+ * @return string
+ */
+function bhp_email_force_charset( $headers ) {
+	if ( ! is_string( $headers ) || '' === $headers ) {
+		return $headers;
+	}
+
+	$charset = get_bloginfo( 'charset' );
+	$charset = ( is_string( $charset ) && '' !== trim( $charset ) ) ? trim( $charset ) : 'UTF-8';
+
+	/*
+	 * ⚠ LINE BY LINE, CASE-INSENSITIVELY, AND ONLY THE `Content-Type` LINE.
+	 *   A naive `str_replace( 'text/html', ... )` would also rewrite the media
+	 *   type mentioned inside a `List-Unsubscribe` URL or any future header
+	 *   that happens to contain the string.
+	 */
+	$lines = preg_split( "/\r\n|\r|\n/", $headers );
+	$out   = array();
+
+	foreach ( (array) $lines as $line ) {
+		if ( preg_match( '/^\s*content-type\s*:/i', (string) $line ) && ! preg_match( '/charset\s*=/i', (string) $line ) ) {
+			$line = rtrim( (string) $line, "; \t" ) . '; charset=' . $charset;
+		}
+
+		$out[] = $line;
+	}
+
+	return implode( "\r\n", $out );
+}
+add_filter( 'woocommerce_email_headers', 'bhp_email_force_charset', 20 );

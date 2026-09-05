@@ -2687,6 +2687,341 @@ function bhp_review_ask_copy_has_stars( $copy ) {
 	return is_array( $copy ) && ! empty( $copy['stars'] );
 }
 
+/* =========================================================================
+ * ⭐⭐ 1.19.370 · THE STAR MARK, THE HERO BAND AND THE SIGNATURE FURNITURE
+ *
+ * ⛔⛔ ROUND 8's PNG STAR IS SUPERSEDED, AND IT IS SUPERSEDED ON AN
+ *     OBSERVATION, NOT ON AN ARGUMENT. `design-creative`
+ *     (`CYCLE179-DES-REVIEW-EMAIL.md` §9) rendered the image row with images
+ *     unavailable and got *"a row of empty grey boxes where the stars should
+ *     be"*. Outlook desktop blocks images by default, so on the single client
+ *     most likely to receive this email the row was a dead end. A character
+ *     cannot be blocked.
+ *
+ * ⚠ THE COUNTER-ARGUMENT FROM 1.19.369 IS STILL TRUE AND IS NOT BEING
+ *   PRETENDED AWAY: U+2605 is substituted by a colour emoji on some mobile
+ *   Gmail builds and by a box on some Outlook builds. Neither failure is a
+ *   dead end — a colour star is still a star, and a box still carries the
+ *   link, the aria-label and the caption beneath. An empty grey box with no
+ *   text IS a dead end. That is the whole trade, stated so the next desk does
+ *   not re-open it blind.
+ *
+ * ⭐ THE PNGs ARE NOT DELETED. `bhp_review_ask_star_image_url()` still
+ *    resolves and `assets/images/email/review-star-gold@2x.png` still ships;
+ *    Legolas's spec wants a designed star for the site's review page and for
+ *    social images, where a PNG is the only option. The EMAIL simply stops
+ *    referencing it.
+ * ====================================================================== */
+
+/**
+ * The star mark rendered in the email row.
+ *
+ * ⛔ U+2605 BLACK STAR, NOT U+2606 (white star) AND NOT AN EMOJI SEQUENCE.
+ *    U+2606 is an outline and reads as "unrated" at 32px; an emoji sequence
+ *    (U+2B50, or U+2605 plus VS16) forces the colour emoji substitution this
+ *    build is trying to avoid where it can be avoided.
+ *
+ * @since 1.19.370
+ * @return string One character.
+ */
+function bhp_review_ask_star_glyph() {
+	return "\xE2\x98\x85"; // U+2605, written as bytes so no editor can "helpfully" normalise it.
+}
+
+/**
+ * The two star colours: the resting grey and the hover gold.
+ *
+ * ⭐ FOUNDER WORDS, SEAL 1003, VERBATIM: *"moving the mouse over them should
+ *    turn them gold"*. That requires a resting state that is NOT gold, so the
+ *    row rests in `#c9c2b3` — the warm grey that sits on `#fffaf0` without
+ *    reading as a disabled control.
+ *
+ * ⚠ CONTRAST, MEASURED NOT ASSUMED, AND IT IS WHY THE CAPTION IS MANDATORY.
+ *   `#c9c2b3` on `#fffaf0` is roughly 1.7:1 and `#c4a15c` roughly 2.2:1
+ *   (Legolas §4). ⛔ BOTH FAIL TEXT CONTRAST AND NEITHER IS ALLOWED TO CARRY
+ *   INFORMATION ALONE. Every star is a link with an `aria-label`, and the
+ *   caption line beneath the row states in full body-contrast text what the
+ *   row is for. The star is decoration over an accessible control, which is
+ *   the same ruling Legolas §4 point 1 made for the gold.
+ *
+ * @since 1.19.370
+ * @return array{rest:string,hover:string}
+ */
+function bhp_review_ask_star_colours() {
+	/**
+	 * Filter the star row's resting and hover colours.
+	 *
+	 * @since 1.19.370
+	 * @param array $colours Keys `rest` and `hover`, hex strings.
+	 */
+	$colours = (array) apply_filters(
+		'bhp_review_ask_star_colours',
+		array(
+			'rest'  => '#c9c2b3',
+			'hover' => '#c4a15c',
+		)
+	);
+
+	return array(
+		'rest'  => isset( $colours['rest'] ) ? (string) $colours['rest'] : '#c9c2b3',
+		'hover' => isset( $colours['hover'] ) ? (string) $colours['hover'] : '#c4a15c',
+	);
+}
+
+/**
+ * The `<style>` rules that make the row light up under the mouse.
+ *
+ * ⛔⛔ THIS CANNOT BE AN INLINE STYLE AND THAT IS THE WHOLE REASON IT EXISTS.
+ *     `:hover` has no inline form. WooCommerce runs the assembled message
+ *     through Emogrifier, which inlines what it can and PRESERVES what it
+ *     cannot — pseudo-classes and `@media` blocks — in a `<style>` element in
+ *     the head. That is the same mechanism `bhp_email_brand_styles()` already
+ *     relies on for its `@media` rule, so this is a proven path in this store,
+ *     not a new one.
+ *
+ * ⭐ THE CUMULATIVE FILL, AND WHY IT IS BUILT THE WAY IT IS. Andrew asked for
+ *    stars that "turn gold" on hover; the useful behaviour is that hovering
+ *    star 3 fills 1, 2 and 3, the way a rating control behaves everywhere
+ *    else. CSS has no previous-sibling combinator, so the usual email trick is
+ *    to reverse the DOM and set `direction: rtl`. ⛔ THAT TRICK IS REFUSED
+ *    HERE: seal 998 is specifically about the row reading 1 to 5 left to
+ *    right, and staking that on Outlook's Word renderer honouring `dir="rtl"`
+ *    on a table would risk the one thing the founder actually asked for.
+ *
+ *    ➡ Instead the DOM stays ascending and `:has()` does the work:
+ *      `.bhp-star:has(~ .bhp-star:hover)` matches every star that is followed
+ *      by the hovered one, i.e. 1..N-1, and `.bhp-star a:hover` covers N.
+ *
+ * ⚠ WHERE `:has()` IS NOT SUPPORTED THE READER STILL GETS THE HOVERED STAR IN
+ *   GOLD, which is the brief's stated minimum ("and at minimum star N"). ⛔ AND
+ *   WHERE `:hover` ITSELF DOES NOT EXIST — every webmail that strips `<style>`,
+ *   every mobile client, Outlook desktop — the row rests in grey and NOTHING IS
+ *   LOST, because the hover is decoration on top of five links that already
+ *   work. ⚠ NOT VERIFIED IN ANY MAIL CLIENT IN THIS BUILD: no client was
+ *   opened and no seed send was made. Stated as designed behaviour, not as an
+ *   observation.
+ *
+ * @since 1.19.370
+ * @return string CSS, no `<style>` wrapper.
+ */
+function bhp_review_ask_star_css() {
+	$colours = bhp_review_ask_star_colours();
+	$rest    = $colours['rest'];
+	$hover   = $colours['hover'];
+
+	return '
+.bhp-star a,
+.bhp-star a:link,
+.bhp-star a:visited {
+	color: ' . $rest . ';
+	text-decoration: none;
+}
+
+.bhp-star a:hover,
+.bhp-star a:active,
+.bhp-star:hover a {
+	color: ' . $hover . ';
+	text-decoration: none;
+}
+
+.bhp-star:has(~ .bhp-star:hover) a {
+	color: ' . $hover . ';
+}
+';
+}
+
+/**
+ * The hero photograph for one order, or an empty array when there is none.
+ *
+ * ⭐ THE MAPPING IS AN ARRAY KEYED BY VISIT SLUG, AND IT IS FILTERABLE, so the
+ *    next school visit is one filter callback rather than a deploy. Legolas's
+ *    spec §7 assigns the two Dallas Harris frames: frame 02 shows the printed
+ *    book being read and suits the review ask, frame 01 shows the whole room
+ *    and suits the day-0 thank-you.
+ *
+ * ⛔ ANY OTHER SLUG, AND EVERY WEB ORDER, GETS THE GENERAL FRAME. A photograph
+ *    captioned "Dallas Harris Elementary" sent to a family that was never at
+ *    Dallas Harris is a false statement in a picture, which is the same
+ *    failure class as a false statement in a sentence.
+ *
+ * ⛔ TOUCH 2 HAS NO HERO. Legolas §7: it is the short last note, and *"a
+ *    photograph would make it look like a bigger ask than it is."*
+ *
+ * ⚠ FRAME 05 OF THE DALLAS HARRIS SET IS NOT SHIPPED AND MUST NOT BE. It
+ *   shows a second adult whose consent is not on record, and a visitor badge
+ *   is legible. `CYCLE179-DES-29(b)`.
+ *
+ * @since 1.19.370
+ * @param WC_Order|mixed $order   Order.
+ * @param string         $context 'touch1', 'touch2' or 'day0'.
+ * @return array{url:string,alt:string,width:int}|array{} Empty when no hero.
+ */
+function bhp_review_ask_hero( $order, $context = 'touch1' ) {
+	$context = (string) $context;
+
+	if ( 'touch2' === $context ) {
+		return array();
+	}
+
+	/**
+	 * Filter the per-visit hero mapping.
+	 *
+	 * Keys are `_bhp_school_visit_slug` values, plus the reserved key
+	 * `general`. Each value is an array of `touch1` and `day0` file basenames
+	 * inside `assets/images/email/`.
+	 *
+	 * @since 1.19.370
+	 * @param array $map Slug => array( 'touch1' => file, 'day0' => file ).
+	 */
+	$map = (array) apply_filters(
+		'bhp_review_ask_hero_map',
+		array(
+			'dallas-harris-2026-09-03' => array(
+				'touch1' => 'hero-dallas-harris-2026-09-03-02.jpg',
+				'day0'   => 'hero-dallas-harris-2026-09-03-01.jpg',
+			),
+			'general'                  => array(
+				'touch1' => 'hero-read-aloud-general.jpg',
+				'day0'   => 'hero-read-aloud-general.jpg',
+			),
+		)
+	);
+
+	$slug = '';
+
+	if ( $order instanceof WC_Order && function_exists( 'bhp_visit_email_order_slug' ) ) {
+		$slug = (string) bhp_visit_email_order_slug( $order );
+	}
+
+	$entry = ( '' !== $slug && isset( $map[ $slug ] ) ) ? (array) $map[ $slug ] : (array) ( isset( $map['general'] ) ? $map['general'] : array() );
+	$file  = isset( $entry[ $context ] ) ? (string) $entry[ $context ] : '';
+
+	if ( '' === $file ) {
+		return array();
+	}
+
+	/*
+	 * ⛔ THE FILE IS CHECKED ON DISK, NOT ASSUMED. A missing hero must render
+	 *    NOTHING rather than a broken-image icon at the top of the email, and
+	 *    a filter callback naming a file that was never deployed is exactly
+	 *    how that happens.
+	 */
+	$rel = '/assets/images/email/' . basename( $file );
+
+	if ( ! file_exists( get_template_directory() . $rel ) ) {
+		return array();
+	}
+
+	return array(
+		'url'   => get_template_directory_uri() . $rel,
+		'alt'   => bhp_review_ask_hero_alt( basename( $file ) ),
+		'width' => 536,
+	);
+}
+
+/**
+ * The alt text for one hero file.
+ *
+ * ⭐ THE ALT CARRIES THE BAKED CAPTION AS WELL AS THE SCENE, because the
+ *    caption is pixels: a screen reader gets nothing from it otherwise.
+ *    Strings are Legolas's spec §8 verbatim.
+ *
+ * ⛔ NO CHILD IS NAMED, NO NUMBER OF CHILDREN IS CLAIMED, AND NO REACTION IS
+ *    DESCRIBED. "A room of first and second graders" is what the photograph
+ *    shows. "Children loving the book" would be a fabricated reaction.
+ *
+ * @since 1.19.370
+ * @param string $file Basename.
+ * @return string
+ */
+function bhp_review_ask_hero_alt( $file ) {
+	switch ( (string) $file ) {
+		case 'hero-dallas-harris-2026-09-03-01.jpg':
+			return __( 'Andrew Signore speaks to a room of first and second graders seated at cafeteria tables, with the cover of The Amazon on a screen behind him. Caption: Read-aloud at Dallas Harris Elementary, September 3, 2026.', 'brave-hearts' );
+
+		case 'hero-dallas-harris-2026-09-03-02.jpg':
+			return __( 'Andrew Signore reads aloud from a Charlotte and Henry paperback, with the open pages shown on a screen beside him. Caption: Read-aloud at Dallas Harris Elementary, September 3, 2026.', 'brave-hearts' );
+
+		case 'hero-read-aloud-general.jpg':
+			return __( 'A school cafeteria full of first and second graders seated at long tables, facing Andrew Signore at the front of the room. Caption: A morning read-aloud with first and second graders.', 'brave-hearts' );
+	}
+
+	return '';
+}
+
+/**
+ * The signature furniture beneath the letter.
+ *
+ * ⚠ THIS IS TEMPLATE FURNITURE, NOT COPY, AND IT IS RECORDED AS AN OPEN
+ *   DECISION. `CYCLE179-DES-29(a)`: the approved copy signs off `Andrew` and
+ *   ends at the P.S.; the E1 Mailchimp look Andrew asked to match carries a
+ *   fuller block. It renders BELOW A RULE, after the P.S., so the letter still
+ *   ends where the approved copy ends and the name appears twice — once as the
+ *   sign-off, once as furniture. ⛔ That duplication is a judgement call and it
+ *   is Andrew's. It is built because the round-9 brief asks for it; it is
+ *   flagged here so it is not mistaken for a settled question.
+ *
+ * ⛔⛔ THE SOCIAL LINE DEFAULTS TO EMPTY AND THAT IS DELIBERATE. Legolas's spec
+ *     names "Facebook · Instagram", but NO Facebook or Instagram URL exists
+ *     anywhere in this repository — grepped 2026-09-05 across `inc/`,
+ *     `functions.php`, `woocommerce/`, `template-parts/` and the content
+ *     engine, and the only `facebook.com` hits are the Meta pixel endpoint and
+ *     Meta's privacy policy. ⛔ A PLAUSIBLE-LOOKING PROFILE URL IS A FABRICATED
+ *     FACT AND WILL NOT BE INVENTED HERE. Supply the two real URLs through the
+ *     option or the filter and the line appears; until then it renders
+ *     nothing and the block ends on the brand line.
+ *
+ * @since 1.19.370
+ * @return array{name:string,role:string,brand:string,social:array<int,array{label:string,url:string}>}
+ */
+function bhp_review_ask_signature() {
+	$social = get_option( 'bhp_social_links', array() );
+	$social = is_array( $social ) ? $social : array();
+
+	/**
+	 * Filter the signature block's social links.
+	 *
+	 * Each entry is `array( 'label' => 'Facebook', 'url' => 'https://...' )`.
+	 * ⛔ An entry with an empty or non-http URL is dropped rather than
+	 *    rendered as a dead link.
+	 *
+	 * @since 1.19.370
+	 * @param array $social Social links.
+	 */
+	$social = (array) apply_filters( 'bhp_review_ask_social_links', $social );
+	$clean  = array();
+
+	foreach ( $social as $entry ) {
+		if ( ! is_array( $entry ) ) {
+			continue;
+		}
+
+		$label = isset( $entry['label'] ) ? trim( (string) $entry['label'] ) : '';
+		$url   = isset( $entry['url'] ) ? trim( (string) $entry['url'] ) : '';
+
+		if ( '' === $label || '' === $url || ! preg_match( '#^https?://#i', $url ) ) {
+			continue;
+		}
+
+		$clean[] = array(
+			'label' => $label,
+			'url'   => $url,
+		);
+	}
+
+	return array(
+		'name'   => __( 'Andrew Signore', 'brave-hearts' ),
+		'role'   => __( 'Author | Brave Hearts Publishing', 'brave-hearts' ),
+		/*
+		 * ⭐ THE SERIES LINE, AND IT IS NOT NEW COPY. "Big Places. Brave
+		 *    Hearts." is the company's own brand line, recorded in
+		 *    `C:\BHP\CLAUDE.md`.
+		 */
+		'brand'  => __( 'Big Places. Brave Hearts.', 'brave-hearts' ),
+		'social' => $clean,
+	);
+}
+
 /**
  * Walk a copy set and substitute every merge slot.
  *

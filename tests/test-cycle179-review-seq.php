@@ -363,7 +363,26 @@ $bhp_rs_v3 = bhp_rs_make_order( 'rs-v3@example.com', 9, $bhp_rs_visit_meta, arra
  *    conflict by editing a constant. The web delay is untouched at 10 and the
  *    conflict goes to Andrew.
  */
-$bhp_rs_w1 = bhp_rs_make_order( 'rs-w1@example.com', 12, array(), array( $bhp_rs_pb[0] ) );
+/*
+ * ⛔⛔ 1.19.370 · AGED FROM 12 DAYS TO 16, AND THE FIXTURE WAS THE BUG, NOT THE
+ *     ENGINE. 1.19.369 raised `BHP_REVIEW_ASK_WEB_DELAY_DAYS` from 10 to 14 on
+ *     Andrew's ruling; this fixture stayed at 12, so it silently stopped being
+ *     due and §6's copy-gate assertion returned `not_due` instead of
+ *     `copy_not_approved`. ⭐ THE FAILURE WAS THEREFORE HONEST AND THE ENGINE
+ *     WAS RIGHT — it is only a test that was measuring the wrong world.
+ *
+ * ⚠ 16, NOT 14, AND THE MARGIN IS DELIBERATE. At exactly 14 the order becomes
+ *   due at local midnight of the fourteenth day, so a suite run in the small
+ *   hours could land either side of the boundary and this file would fail
+ *   intermittently for a reason that has nothing to do with what it tests. Two
+ *   days of slack removes the clock from the question entirely.
+ *
+ * ⛔ THE COMMENT ABOVE ABOUT THE DELAY BEING "UNTOUCHED AT 10" IS SUPERSEDED
+ *    AND IS PRESERVED RATHER THAN DELETED: it records that CYCLE179-MKT-34 was
+ *    an open conflict this desk refused to settle by editing a constant, which
+ *    is still the correct account of how it was handled. Andrew settled it.
+ */
+$bhp_rs_w1 = bhp_rs_make_order( 'rs-w1@example.com', 16, array(), array( $bhp_rs_pb[0] ) );
 
 bhp_rs_ok( 'A visit order is in the visit lane', 'visit' === bhp_review_ask_lane( $bhp_rs_v1 ) );
 bhp_rs_ok( 'An order with no slug is in the web lane', 'web' === bhp_review_ask_lane( $bhp_rs_w1 ) );
@@ -1482,11 +1501,45 @@ bhp_rs_ok( '⛔ A token cannot be minted for order 0', '' === bhp_review_prefill
 
 /* ---- 9.6 the star URLs carry the token, and it validates from the URL ---- */
 
-$bhp_rs_qs = array();
-$bhp_rs_url = $bhp_rs_row[3]['url']; // the 2-star link, chosen so it is not the 5.
+/*
+ * ⛔⛔ 1.19.370 · THIS READ `$bhp_rs_row[3]` AND IT WAS AN INDEX LEFT BEHIND BY
+ *     A REORDER. Under the descending row (5,4,3,2,1) offset 3 was the 2-star
+ *     link. 1.19.369 made the row ASCENDING for seal 998, so offset 3 became
+ *     the 4-star link and an assertion named "The 2-star link carries rating=2"
+ *     started failing while describing a defect that did not exist.
+ *
+ * ⭐ THE FIX IS NOT `$bhp_rs_row[1]`. An offset is the wrong way to ask this
+ *    question at all: it re-breaks the next time anyone touches the order. The
+ *    row is SEARCHED FOR THE RATING, so the assertion is true under any order
+ *    and the ORDER ITSELF is asserted separately, on purpose, below.
+ */
+$bhp_rs_qs   = array();
+$bhp_rs_url  = '';
+$bhp_rs_seen = array();
+
+foreach ( $bhp_rs_row as $bhp_rs_cell ) {
+	$bhp_rs_seen[] = (int) $bhp_rs_cell['rating'];
+
+	if ( 2 === (int) $bhp_rs_cell['rating'] ) {
+		$bhp_rs_url = (string) $bhp_rs_cell['url'];
+	}
+}
+
+bhp_rs_ok(
+	'⭐⭐ The row runs 1,2,3,4,5 left to right (seal 998)',
+	array( 1, 2, 3, 4, 5 ) === $bhp_rs_seen,
+	'got: ' . implode( ',', $bhp_rs_seen )
+);
+
+bhp_rs_ok( '⭐ A 2-star cell exists in the row', '' !== $bhp_rs_url );
+
 parse_str( (string) wp_parse_url( $bhp_rs_url, PHP_URL_QUERY ), $bhp_rs_qs );
 
-bhp_rs_ok( '⭐ The 2-star link carries rating=2', isset( $bhp_rs_qs['rating'] ) && '2' === (string) $bhp_rs_qs['rating'] );
+bhp_rs_ok(
+	'⭐ The 2-star link carries rating=2',
+	isset( $bhp_rs_qs['rating'] ) && '2' === (string) $bhp_rs_qs['rating'],
+	'got: ' . ( isset( $bhp_rs_qs['rating'] ) ? (string) $bhp_rs_qs['rating'] : '(none)' )
+);
 bhp_rs_ok( '⭐ It carries a pre-fill token', ! empty( $bhp_rs_qs['bhp_pf'] ) );
 bhp_rs_ok(
 	'⭐⭐ ... and that token validates and names THIS order',
@@ -2286,6 +2339,444 @@ bhp_rs_ok(
 	'⛔ An ordinary web order still has no school name',
 	'' === bhp_review_ask_school_name( $bhp_rs_w1 )
 );
+
+/* =========================================================================
+ * §13 — ROUND 9: CHARSET, THE UNICODE STAR ROW, THE HERO BAND AND THE SHELL
+ *
+ * ⭐ EVERY ASSERTION IN THIS SECTION IS MADE AGAINST A REAL RENDER OF THE REAL
+ *    TEMPLATE THROUGH THE REAL `WC_Email` OBJECT, not against the copy arrays
+ *    and not against the source of the template. A template that "should"
+ *    emit a charset is not a charset.
+ *
+ * ⛔ NOTHING IS SENT. `prepare_preview()` is the QA seam documented on
+ *    `WC_Email_BHP_Review_Ask`: it fills the object for a render and writes no
+ *    sent marker, no ledger row and no mail.
+ * ====================================================================== */
+
+bhp_rs_head( '§13 Round 9: charset, Unicode stars, hero band, shell' );
+
+/* ---- 13.1 the charset on the Content-Type header ---- */
+
+/*
+ * ⛔⛔ THE DEFECT THIS PROVES CLOSED. FluentSMTP logged the outgoing
+ *     `Content-Type` as bare `text/html`, and the delivered U+2605 stars
+ *     arrived as `âââââ` — UTF-8 bytes decoded as CP1252.
+ */
+bhp_rs_ok(
+	'⭐ bhp_email_force_charset() exists',
+	function_exists( 'bhp_email_force_charset' )
+);
+
+if ( function_exists( 'bhp_email_force_charset' ) ) {
+	$bhp_rs_h_in  = "Content-Type: text/html\r\n";
+	$bhp_rs_h_out = bhp_email_force_charset( $bhp_rs_h_in );
+
+	bhp_rs_ok(
+		'⭐⭐ A bare text/html header gains charset=UTF-8',
+		false !== stripos( $bhp_rs_h_out, 'Content-Type: text/html; charset=UTF-8' ),
+		'got: ' . trim( $bhp_rs_h_out )
+	);
+
+	/*
+	 * ⛔ IT ONLY ADDS. An existing charset is never rewritten, and the media
+	 *    type is never changed — rewriting a media type from a header filter
+	 *    is how a plain-text email starts arriving as HTML source.
+	 */
+	bhp_rs_ok(
+		'⛔ An existing charset is left alone',
+		"Content-Type: text/html; charset=iso-8859-1\r\n" === bhp_email_force_charset( "Content-Type: text/html; charset=iso-8859-1\r\n" )
+	);
+
+	bhp_rs_ok(
+		'⛔ The media type is never rewritten (multipart stays multipart)',
+		false !== stripos( bhp_email_force_charset( "Content-Type: multipart/alternative\r\n" ), 'multipart/alternative; charset=' )
+	);
+
+	bhp_rs_ok(
+		'⛔ A List-Unsubscribe line is not touched',
+		false !== strpos( bhp_email_force_charset( "List-Unsubscribe: <https://x.test/?t=text/html>\r\n" ), 'https://x.test/?t=text/html>' )
+	);
+
+	bhp_rs_ok(
+		'⛔ The filter is registered on woocommerce_email_headers',
+		false !== has_filter( 'woocommerce_email_headers', 'bhp_email_force_charset' )
+	);
+}
+
+/*
+ * ⭐⭐ AND THE HEADER IS READ OFF THE LIVE EMAIL OBJECT, WHICH IS THE ONLY
+ *     VERSION OF THIS ASSERTION THAT PROVES ANYTHING. `get_headers()` on the
+ *     class runs `parent::get_headers()`, which is where the filter fires.
+ */
+$bhp_rs_mailer = function_exists( 'WC' ) ? WC()->mailer() : null;
+$bhp_rs_email  = null;
+
+if ( $bhp_rs_mailer ) {
+	foreach ( (array) $bhp_rs_mailer->get_emails() as $bhp_rs_e ) {
+		if ( $bhp_rs_e instanceof WC_Email_BHP_Review_Ask ) {
+			$bhp_rs_email = $bhp_rs_e;
+			break;
+		}
+	}
+}
+
+bhp_rs_ok( '⭐ The review-ask email object resolves from the mailer', $bhp_rs_email instanceof WC_Email_BHP_Review_Ask );
+
+if ( $bhp_rs_email instanceof WC_Email_BHP_Review_Ask ) {
+	$bhp_rs_email->touch = 1;
+	$bhp_rs_email->prepare_preview( $bhp_rs_v1 );
+
+	$bhp_rs_hdrs = (string) $bhp_rs_email->get_headers();
+
+	bhp_rs_ok(
+		'⭐⭐ THE LIVE EMAIL\'S HEADERS CARRY charset=UTF-8',
+		(bool) preg_match( '/content-type\s*:[^\r\n]*charset\s*=\s*"?UTF-8/i', $bhp_rs_hdrs ),
+		'got: ' . str_replace( array( "\r", "\n" ), array( '', ' | ' ), $bhp_rs_hdrs )
+	);
+
+	/* ---- 13.2 the rendered HTML ---- */
+
+	$bhp_rs_html  = (string) $bhp_rs_email->get_content_html();
+	$bhp_rs_plain = (string) $bhp_rs_email->get_content_plain();
+
+	/*
+	 * ⛔ THE PLAIN ALTERNATIVE MUST BE VALID UTF-8. `mb_check_encoding` is the
+	 *    real question; a byte sequence that is not valid UTF-8 is exactly what
+	 *    a mail transport re-encodes into mojibake.
+	 */
+	bhp_rs_ok(
+		'⭐⭐ The plain-text alternative is valid UTF-8',
+		! function_exists( 'mb_check_encoding' ) || mb_check_encoding( $bhp_rs_plain, 'UTF-8' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The HTML body is valid UTF-8',
+		! function_exists( 'mb_check_encoding' ) || mb_check_encoding( $bhp_rs_html, 'UTF-8' )
+	);
+
+	/* ---- 13.3 the Unicode star row ---- */
+
+	bhp_rs_ok(
+		'⭐⭐ The rendered row carries five U+2605 glyphs',
+		5 === substr_count( $bhp_rs_html, "\xE2\x98\x85" ),
+		'got: ' . substr_count( $bhp_rs_html, "\xE2\x98\x85" )
+	);
+
+	/*
+	 * ⛔⛔ ROUND 8's PNG IS GONE FROM THE EMAIL. Legolas rendered that row with
+	 *     images blocked and got five empty grey boxes.
+	 */
+	bhp_rs_ok(
+		'⛔⛔ No star PNG is referenced in the rendered email any more',
+		false === strpos( $bhp_rs_html, 'review-star-gold' )
+	);
+
+	bhp_rs_ok(
+		'⭐ Each star cell carries the bhp-star class',
+		5 === substr_count( $bhp_rs_html, 'bhp-star' ) || substr_count( $bhp_rs_html, 'bhp-star' ) >= 5,
+		'got: ' . substr_count( $bhp_rs_html, 'bhp-star' )
+	);
+
+	/*
+	 * ⭐ THE ARIA LABELS, ALL FIVE, IN ASCENDING ORDER. The order is proved by
+	 *    comparing the positions of the five labels in the emitted string, not
+	 *    by trusting the loop that wrote them.
+	 */
+	$bhp_rs_positions = array();
+
+	foreach ( array( '1 star', '2 stars', '3 stars', '4 stars', '5 stars' ) as $bhp_rs_label ) {
+		$bhp_rs_positions[ $bhp_rs_label ] = strpos( $bhp_rs_html, 'aria-label="' . $bhp_rs_label . '"' );
+	}
+
+	bhp_rs_ok(
+		'⭐ All five aria-labels are present, "1 star" through "5 stars"',
+		! in_array( false, $bhp_rs_positions, true )
+	);
+
+	bhp_rs_ok(
+		'⭐⭐ THE LABELS APPEAR IN ASCENDING ORDER IN THE EMITTED HTML (seal 998)',
+		! in_array( false, $bhp_rs_positions, true )
+			&& array_values( $bhp_rs_positions ) === array_values( array_filter( $bhp_rs_positions, 'is_int' ) )
+			&& $bhp_rs_positions['1 star'] < $bhp_rs_positions['2 stars']
+			&& $bhp_rs_positions['2 stars'] < $bhp_rs_positions['3 stars']
+			&& $bhp_rs_positions['3 stars'] < $bhp_rs_positions['4 stars']
+			&& $bhp_rs_positions['4 stars'] < $bhp_rs_positions['5 stars'],
+		'positions: ' . wp_json_encode( $bhp_rs_positions )
+	);
+
+	/*
+	 * ⭐ THE RESTING GREY IS INLINE, so a webmail that strips <style> still
+	 *    gets the intended resting state and loses only the hover.
+	 */
+	bhp_rs_ok(
+		'⭐ The resting grey #c9c2b3 is inline on every star link',
+		5 === substr_count( $bhp_rs_html, '#c9c2b3' ),
+		'got: ' . substr_count( $bhp_rs_html, '#c9c2b3' )
+	);
+
+	/*
+	 * ⛔⛔ 32px AND A 44px TAP TARGET, ASSERTED ON THE EMITTED STYLE STRING.
+	 *     ⚠ THIS IS ARITHMETIC ON DECLARED SIZES, NOT A MEASUREMENT IN A MAIL
+	 *     CLIENT. No client was opened in this build.
+	 */
+	bhp_rs_ok(
+		'⭐ Stars render at 32px with 6px padding (a 44px tap target)',
+		false !== strpos( $bhp_rs_html, 'font-size:32px;line-height:32px' ) && false !== strpos( $bhp_rs_html, 'padding:6px;' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The caption line still renders under the row',
+		false !== strpos( $bhp_rs_html, 'Tap a star to rate' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The "Or open the review page" link is still there',
+		false !== stripos( $bhp_rs_html, 'Or open the review page' )
+	);
+
+	/* ---- 13.4 the plain-text five lines ---- */
+
+	$bhp_rs_plain_lines = 0;
+
+	foreach ( array( '1 star:', '2 stars:', '3 stars:', '4 stars:', '5 stars:' ) as $bhp_rs_pl ) {
+		if ( false !== strpos( $bhp_rs_plain, $bhp_rs_pl ) ) {
+			$bhp_rs_plain_lines++;
+		}
+	}
+
+	bhp_rs_ok( '⭐ The plain twin carries five rating lines', 5 === $bhp_rs_plain_lines, 'got: ' . $bhp_rs_plain_lines );
+
+	/* ---- 13.5 the hero band ---- */
+
+	bhp_rs_ok(
+		'⭐⭐ Touch 1 renders a hero image from the theme',
+		false !== strpos( $bhp_rs_html, '/assets/images/email/hero-' ),
+		'no hero in the rendered touch 1'
+	);
+
+	/*
+	 * ⛔ A VISIT ORDER WITH NO MAPPED SLUG GETS THE GENERAL FRAME, NOT THE
+	 *    DALLAS HARRIS ONE. A photograph captioned for a school the family
+	 *    never attended is a false statement in a picture.
+	 */
+	bhp_rs_ok(
+		'⛔ An unmapped visit slug falls back to the general hero',
+		false !== strpos( $bhp_rs_html, 'hero-read-aloud-general.jpg' ),
+		'the fixture slug is not in the map, so this must be the general frame'
+	);
+
+	bhp_rs_ok(
+		'⭐ The hero carries descriptive alt text including its baked caption',
+		false !== strpos( $bhp_rs_html, 'Caption: A morning read-aloud' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The hero is width-capped at 536px inside the card',
+		false !== strpos( $bhp_rs_html, 'max-width:536px' ) || false !== strpos( $bhp_rs_html, 'max-width: 536px' )
+	);
+
+	/*
+	 * ⛔⛔ TOUCH 2 HAS NO HERO. Legolas §7: the short last note must not look
+	 *     like a bigger ask than it is.
+	 */
+	$bhp_rs_email->touch = 2;
+	$bhp_rs_html2        = (string) $bhp_rs_email->get_content_html();
+
+	bhp_rs_ok(
+		'⛔⛔ TOUCH 2 RENDERS NO HERO IMAGE',
+		false === strpos( $bhp_rs_html2, '/assets/images/email/hero-' )
+	);
+
+	bhp_rs_ok(
+		'⭐ ... but touch 2 still renders its five stars',
+		5 === substr_count( $bhp_rs_html2, "\xE2\x98\x85" ),
+		'got: ' . substr_count( $bhp_rs_html2, "\xE2\x98\x85" )
+	);
+
+	$bhp_rs_email->touch = 1;
+
+	/* ---- 13.6 the shell and the signature block ---- */
+
+	bhp_rs_ok(
+		'⭐ The signature block renders the name, the role and the brand line',
+		false !== strpos( $bhp_rs_html, 'Andrew Signore' )
+			&& false !== strpos( $bhp_rs_html, 'Author | Brave Hearts Publishing' )
+			&& false !== strpos( $bhp_rs_html, 'Big Places. Brave Hearts.' )
+	);
+
+	/*
+	 * ⛔⛔ AND NO SOCIAL LINK IS INVENTED. No Facebook or Instagram URL exists
+	 *     anywhere in this repository, so the line must render EMPTY until real
+	 *     URLs are supplied. This assertion is the guard against a future
+	 *     "helpful" guess.
+	 */
+	bhp_rs_ok(
+		'⛔⛔ NO fabricated Facebook or Instagram URL is emitted',
+		false === stripos( $bhp_rs_html, 'facebook.com' ) && false === stripos( $bhp_rs_html, 'instagram.com' )
+	);
+
+	/*
+	 * ⭐ AND THE LINE APPEARS THE MOMENT REAL URLs EXIST. Proved by supplying
+	 *    two through the public filter rather than by reading the code.
+	 */
+	$bhp_rs_social_shim = static function () {
+		return array(
+			array(
+				'label' => 'Facebook',
+				'url'   => 'https://example.test/fb',
+			),
+			array(
+				'label' => 'Instagram',
+				'url'   => 'https://example.test/ig',
+			),
+			array(
+				'label' => 'Dead',
+				'url'   => '',
+			),
+		);
+	};
+
+	add_filter( 'bhp_review_ask_social_links', $bhp_rs_social_shim, 99 );
+	$bhp_rs_sig = bhp_review_ask_signature();
+	remove_filter( 'bhp_review_ask_social_links', $bhp_rs_social_shim, 99 );
+
+	bhp_rs_ok( '⭐ Two supplied social links are accepted', 2 === count( $bhp_rs_sig['social'] ), 'got: ' . count( $bhp_rs_sig['social'] ) );
+	bhp_rs_ok( '⛔ An entry with an empty URL is dropped, not rendered dead', 'Dead' !== $bhp_rs_sig['social'][ count( $bhp_rs_sig['social'] ) - 1 ]['label'] );
+
+	bhp_rs_ok(
+		'⭐ The opt-out link and the postal address still render',
+		false !== strpos( $bhp_rs_html, 'bhp_review_optout' ) || false !== strpos( $bhp_rs_html, $bhp_rs_email->optout_url )
+	);
+
+	/* ---- 13.7 the byte budget ---- */
+
+	/*
+	 * ⛔⛔ 60 KB, MEASURED ON THE FULL RENDERED MESSAGE, NOT ON THE BODY
+	 *     FRAGMENT. `get_content()` is what the mailer is handed: doctype,
+	 *     inlined CSS, header, body, footer. ⭐ THE REASON IT MATTERS IS GMAIL:
+	 *     it clips a message above roughly 102 KB, and the clipped tail is
+	 *     exactly where the unsubscribe link and the postal address live.
+	 */
+	$bhp_rs_full  = (string) $bhp_rs_email->get_content();
+	$bhp_rs_bytes = strlen( $bhp_rs_full );
+
+	bhp_rs_ok(
+		'⭐⭐ A rendered touch 1 is under 60 KB (' . number_format( $bhp_rs_bytes ) . ' bytes)',
+		$bhp_rs_bytes > 0 && $bhp_rs_bytes < 61440,
+		'got: ' . $bhp_rs_bytes . ' bytes'
+	);
+
+	/*
+	 * ⚠ A ZERO-BYTE RENDER WOULD PASS A NAIVE "under 60 KB" CHECK, so the
+	 *   floor is asserted too. An email that renders to nothing is not a small
+	 *   email.
+	 */
+	bhp_rs_ok( '⛔ ... and it is not empty', $bhp_rs_bytes > 3000, 'got: ' . $bhp_rs_bytes . ' bytes' );
+
+	/* ---- 13.8 the hover CSS reaches the stylesheet ---- */
+
+	bhp_rs_ok(
+		'⭐ bhp_review_ask_star_css() emits a :hover rule and the gold',
+		function_exists( 'bhp_review_ask_star_css' )
+			&& false !== strpos( bhp_review_ask_star_css(), ':hover' )
+			&& false !== strpos( bhp_review_ask_star_css(), '#c4a15c' )
+	);
+
+	/*
+	 * ⭐⭐ AND IT IS IN THE ASSEMBLED EMAIL STYLESHEET, not merely in a function
+	 *     nobody calls. This is the assertion that proves the wiring.
+	 */
+	$bhp_rs_css = (string) apply_filters( 'woocommerce_email_styles', '', $bhp_rs_email );
+
+	bhp_rs_ok(
+		'⭐⭐ The star hover rules are present in the assembled email CSS',
+		false !== strpos( $bhp_rs_css, '.bhp-star' ) && false !== strpos( $bhp_rs_css, ':hover' ),
+		'assembled CSS length: ' . strlen( $bhp_rs_css )
+	);
+
+	bhp_rs_ok(
+		'⭐ The cumulative :has() fill rule is present',
+		false !== strpos( $bhp_rs_css, ':has(~ .bhp-star:hover)' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The H1 is set to 30px per the design spec',
+		false !== strpos( $bhp_rs_css, 'font-size: 30px' )
+	);
+}
+
+/* ---- 13.9 the hero mapping, without a render ---- */
+
+bhp_rs_ok( '⭐ bhp_review_ask_hero() exists', function_exists( 'bhp_review_ask_hero' ) );
+
+if ( function_exists( 'bhp_review_ask_hero' ) ) {
+	bhp_rs_ok( '⛔⛔ Touch 2 never resolves a hero, for any order', array() === bhp_review_ask_hero( $bhp_rs_v1, 'touch2' ) );
+
+	/*
+	 * ⭐ THE MAPPED SLUG RESOLVES THE TWO DALLAS HARRIS FRAMES THE SPEC
+	 *    ASSIGNS: frame 02 (the book being read) for touch 1, frame 01 (the
+	 *    whole room) for day 0.
+	 */
+	$bhp_rs_visit_hero = bhp_rs_make_order(
+		'rs-hero@example.com',
+		9,
+		array( '_bhp_school_visit_slug' => 'dallas-harris-2026-09-03' ),
+		array( $bhp_rs_pb[0] )
+	);
+
+	$bhp_rs_h_t1 = bhp_review_ask_hero( $bhp_rs_visit_hero, 'touch1' );
+	$bhp_rs_h_d0 = bhp_review_ask_hero( $bhp_rs_visit_hero, 'day0' );
+
+	bhp_rs_ok(
+		'⭐⭐ The dallas-harris slug maps to frame 02 on touch 1',
+		! empty( $bhp_rs_h_t1['url'] ) && false !== strpos( $bhp_rs_h_t1['url'], 'hero-dallas-harris-2026-09-03-02.jpg' ),
+		'got: ' . ( isset( $bhp_rs_h_t1['url'] ) ? $bhp_rs_h_t1['url'] : '(empty)' )
+	);
+
+	bhp_rs_ok(
+		'⭐⭐ ... and to frame 01 on day 0',
+		! empty( $bhp_rs_h_d0['url'] ) && false !== strpos( $bhp_rs_h_d0['url'], 'hero-dallas-harris-2026-09-03-01.jpg' ),
+		'got: ' . ( isset( $bhp_rs_h_d0['url'] ) ? $bhp_rs_h_d0['url'] : '(empty)' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The mapped hero carries its own alt text, naming the school and the date',
+		! empty( $bhp_rs_h_t1['alt'] ) && false !== strpos( $bhp_rs_h_t1['alt'], 'Dallas Harris Elementary, September 3, 2026' )
+	);
+
+	/*
+	 * ⛔⛔ FRAME 05 IS NOT SHIPPED AND MUST NOT BE. It shows a second adult
+	 *     whose consent is not on record and a legible visitor badge.
+	 *     `CYCLE179-DES-29(b)`.
+	 */
+	bhp_rs_ok(
+		'⛔⛔ Frame 05 of the Dallas Harris set is NOT in the theme',
+		! file_exists( get_template_directory() . '/assets/images/email/hero-dallas-harris-2026-09-03-05.jpg' )
+			&& ! file_exists( get_template_directory() . '/assets/images/email/read-aloud-dallas-harris-2026-09-03-05.jpg' )
+	);
+
+	/*
+	 * ⛔ A FILTER NAMING A FILE THAT WAS NEVER DEPLOYED RENDERS NOTHING, not a
+	 *    broken-image icon at the top of the email.
+	 */
+	$bhp_rs_bad_map = static function () {
+		return array( 'general' => array( 'touch1' => 'hero-does-not-exist.jpg' ) );
+	};
+
+	add_filter( 'bhp_review_ask_hero_map', $bhp_rs_bad_map, 99 );
+	$bhp_rs_missing = bhp_review_ask_hero( $bhp_rs_w1, 'touch1' );
+	remove_filter( 'bhp_review_ask_hero_map', $bhp_rs_bad_map, 99 );
+
+	bhp_rs_ok( '⛔ A hero file that is not on disk resolves to nothing', array() === $bhp_rs_missing );
+
+	/* And the three shipped files are actually present. */
+	foreach ( array( 'hero-dallas-harris-2026-09-03-01.jpg', 'hero-dallas-harris-2026-09-03-02.jpg', 'hero-read-aloud-general.jpg' ) as $bhp_rs_hf ) {
+		bhp_rs_ok(
+			'⭐ Shipped in the theme: ' . $bhp_rs_hf,
+			file_exists( get_template_directory() . '/assets/images/email/' . $bhp_rs_hf )
+		);
+	}
+}
 
 /* =========================================================================
  * §12 — DEFERRED FIXTURE TEARDOWN

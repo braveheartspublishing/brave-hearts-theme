@@ -138,6 +138,29 @@ if ( ! empty( $copy['postscript'] ) ) {
 	echo "\n" . esc_html( $copy['postscript'] ) . "\n";
 }
 
+/*
+ * ⭐ 1.19.370 · THE SIGNATURE FURNITURE, MIRRORING THE HTML TWIN LINE FOR
+ *    LINE, for the reason this file's header gives: anything present in one
+ *    part and absent from the other is drift. The `----` rule below stands in
+ *    for the HTML `<hr>`.
+ *
+ * ⛔ THE SOCIAL LINE IS ABSENT HERE FOR THE SAME REASON IT IS ABSENT THERE —
+ *    no real URL exists to print — and it renders identically the moment one
+ *    is supplied.
+ */
+$bhp_ra_sig = function_exists( 'bhp_review_ask_signature' ) ? bhp_review_ask_signature() : array();
+
+if ( ! empty( $bhp_ra_sig ) ) {
+	echo "\n----------------------------------------\n\n";
+	echo esc_html( $bhp_ra_sig['name'] ) . "\n";
+	echo esc_html( $bhp_ra_sig['role'] ) . "\n";
+	echo esc_html( $bhp_ra_sig['brand'] ) . "\n";
+
+	foreach ( $bhp_ra_sig['social'] as $bhp_ra_social ) {
+		echo esc_html( $bhp_ra_social['label'] ) . ': ' . esc_url_raw( $bhp_ra_social['url'] ) . "\n";
+	}
+}
+
 echo "\n----------------------------------------\n\n";
 
 /*

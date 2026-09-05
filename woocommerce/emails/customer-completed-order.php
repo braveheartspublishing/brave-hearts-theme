@@ -80,7 +80,32 @@ do_action( 'woocommerce_email_header', $email_heading, $email );
  *   summary table stays, after the body."
  */
 $bhp_visit_body = function_exists( 'bhp_visit_email_body' ) ? bhp_visit_email_body( $email ) : array();
+
+/*
+ * ⭐ 1.19.370 · THE DAY-0 HERO, AND IT IS GATED ON THE VISIT FORK, NOT ON THE
+ *    EMAIL ID. `$bhp_visit_body` is non-empty ONLY for an order carrying
+ *    `_bhp_school_visit_slug`. ⛔ AN ORDINARY WEB RECEIPT GETS NO PHOTOGRAPH:
+ *    a picture of a school read-aloud at the top of a shipping confirmation
+ *    for a family that was never at a school visit says something untrue.
+ *
+ * ⭐ THE FRAME IS THE WIDE-ROOM ONE (`...-01.jpg` for Dallas Harris), per
+ *    `CYCLE179-DES-REVIEW-EMAIL.md` §7: the room frame suits the thank-you,
+ *    the reading frame suits the later review ask.
+ *
+ * ⚠ BELOW THE H1 RATHER THAN ABOVE IT, for the reason given in
+ *   `woocommerce/emails/bhp-review-ask.php`: overriding
+ *   `emails/email-header.php` is prohibited in this theme.
+ */
+$bhp_visit_hero = ( ! empty( $bhp_visit_body ) && function_exists( 'bhp_review_ask_hero' ) )
+	? bhp_review_ask_hero( $order, 'day0' )
+	: array();
 ?>
+
+<?php if ( ! empty( $bhp_visit_hero ) ) : ?>
+<p style="margin:0 0 22px;">
+	<img src="<?php echo esc_url( $bhp_visit_hero['url'] ); ?>" width="<?php echo esc_attr( (string) $bhp_visit_hero['width'] ); ?>" alt="<?php echo esc_attr( $bhp_visit_hero['alt'] ); ?>" style="display:block;width:100%;max-width:<?php echo esc_attr( (string) $bhp_visit_hero['width'] ); ?>px;height:auto;border:0;outline:none;text-decoration:none;border-radius:6px;">
+</p>
+<?php endif; ?>
 
 <?php echo $email_improvements_enabled ? '<div class="email-introduction">' : ''; ?>
 <p>
