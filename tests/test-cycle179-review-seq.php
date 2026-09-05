@@ -1694,6 +1694,72 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
 	);
 
 	/*
+	 * ⛔⛔ 1.19.368 — THE SAME RULE, ON THE PART OF THE RAW RENDER THE CHECK
+	 *     ABOVE IS STRUCTURALLY BLIND TO. CYCLE179-LD-53: the assertion above
+	 *     passed all through 1.19.367 while `bhp_review_error_messages()`
+	 *     ['author'] read *"Please add your name, so we know who the review is
+	 *     from."* — a standalone "we" shown to reviewers by
+	 *     `assets/js/reviews.js`. `wp_strip_all_tags()` deletes `<script>`
+	 *     blocks CONTENT AND ALL, so the only "we" left on the page was
+	 *     invisible to the only test looking for it. Exactly the 1.19.366
+	 *     em-dash blind spot, one release later, in the same block.
+	 *
+	 * ⚠ WHY NOT JUST `preg_match('/\bwe\b/i', $bhp_rs_page)` ON THE RAW HTML,
+	 *   which is the obvious reading of "assert the raw render": because `\b`
+	 *   treats a hyphen as a word boundary, so any class, data attribute, query
+	 *   arg or inline third-party script carrying a `-we-` or `_we_` token
+	 *   fails it — on markup nobody reads as copy. That is a flaky test, not a
+	 *   stronger one. The raw render is instead read HERE, with tags removed
+	 *   but SCRIPT CONTENT KEPT: the JSON messages block is pulled out of
+	 *   `$bhp_rs_page` verbatim and scanned. Attributes cannot reach it; the
+	 *   strings that actually caught fire twice cannot escape it.
+	 */
+	$bhp_rs_json_blocks = [];
+	if ( preg_match_all( '#<script[^>]*bhp-review-form__messages[^>]*>(.*?)</script>#is', (string) $bhp_rs_page, $bhp_rs_json_m ) ) {
+		$bhp_rs_json_blocks = $bhp_rs_json_m[1];
+	}
+
+	/*
+	 * ⛔ THIS ONE MUST BE ABLE TO FAIL. If the block stops rendering — renamed
+	 *    class, template refactor, JS rewritten to fetch the strings instead —
+	 *    the scan below would pass on an empty corpus and report a clean page
+	 *    it never read. Same failure class as the §10 logged-out pin above.
+	 */
+	bhp_rs_ok(
+		'⛔ The JSON messages block really is in the raw render (so the scan below can mean something)',
+		! empty( $bhp_rs_json_blocks ),
+		'no <script class="bhp-review-form__messages"> found in the render; the copy scan below would be vacuous'
+	);
+
+	$bhp_rs_json_text = html_entity_decode( implode( "\n", $bhp_rs_json_blocks ), ENT_QUOTES, 'UTF-8' );
+	bhp_rs_ok(
+		'⛔⛔ No standalone "we" in the JSON error-message block of the RAW render (CYCLE179-LD-53)',
+		0 === preg_match( '/\bwe\b/i', $bhp_rs_json_text ),
+		'a validation message shown to the reviewer still speaks as "we"'
+	);
+	bhp_rs_ok(
+		'⛔ ...and no em or en dash in that block either, read off the raw render rather than the array',
+		false === strpos( $bhp_rs_json_text, "\xe2\x80\x94" )
+			&& false === strpos( $bhp_rs_json_text, "\xe2\x80\x93" ),
+		'a dash reached the JSON messages block'
+	);
+
+	/*
+	 * ⭐ AND THE REPLACEMENT IS PINNED VERBATIM, so a later edit that removes
+	 *    the "we" by deleting the reason instead of rewording it fails here.
+	 *    The superseded sentence is pinned by absence beside it.
+	 */
+	bhp_rs_ok(
+		'⭐ The author-name message is the approved 1.19.368 wording, verbatim',
+		false !== strpos( $bhp_rs_json_text, 'Please add your name, so the review has a name on it.' ),
+		'the approved author-name wording is not in the rendered JSON block'
+	);
+	bhp_rs_ok(
+		'⛔ The superseded "so we know who the review is from" wording is gone from the render',
+		false === strpos( $bhp_rs_json_text, 'so we know who the review is from' )
+	);
+
+	/*
 	 * ⭐ AND THE TWO REPLACEMENT SENTENCES ARE PINNED VERBATIM, so a later
 	 *    edit that removes the em dash by deleting the promise instead of
 	 *    rewording it fails here.
@@ -1736,13 +1802,14 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
 	 *         line is unreachable on staging at all. It carried an em dash from
 	 *         1.19.162 until 1.19.367 for exactly that reason.
 	 *
-	 * ⚠ RAISED, NOT RESOLVED — CYCLE179-LD-53. The "we" assertion above runs on
-	 *   `wp_strip_all_tags()` output, so it CANNOT see the JSON messages block.
-	 *   `bhp_review_error_messages()['author']` reads *"so we know who the
-	 *   review is from"* — a standalone "we" that Standing Rules 9.1 forbids
-	 *   and that is shown to reviewers by `assets/js/reviews.js`. It is outside
-	 *   the R6 brief (em/en dashes only) and was NOT edited. Named here so its
-	 *   absence is a decision on the record, not an oversight.
+	 * ⭐ CLOSED IN 1.19.368 — CYCLE179-LD-53. This slot previously read "RAISED,
+	 *   NOT RESOLVED": `bhp_review_error_messages()['author']` said *"so we know
+	 *   who the review is from"*, a standalone "we" that Standing Rules 9.1
+	 *   forbids, shown to reviewers by `assets/js/reviews.js`, and invisible to
+	 *   the stripped-text "we" assertion for the `wp_strip_all_tags()` reason
+	 *   above. The string was reworded and the blind spot was closed at BOTH
+	 *   ends: a JSON-block scan of the raw render (above) and a direct scan of
+	 *   the array itself (below).
 	 */
 	$bhp_rs_src_files = [
 		get_stylesheet_directory() . '/template-parts/reviews/review-section.php',
@@ -1778,15 +1845,36 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
 	);
 
 	$bhp_rs_msg_dash = false;
+	$bhp_rs_msg_we   = [];
 	if ( function_exists( 'bhp_review_error_messages' ) ) {
-		foreach ( bhp_review_error_messages() as $bhp_rs_msg ) {
+		foreach ( bhp_review_error_messages() as $bhp_rs_msg_key => $bhp_rs_msg ) {
 			if ( false !== strpos( (string) $bhp_rs_msg, "\xe2\x80\x94" ) || false !== strpos( (string) $bhp_rs_msg, "\xe2\x80\x93" ) ) {
 				$bhp_rs_msg_dash = true;
+			}
+			if ( preg_match( '/\bwe\b/i', (string) $bhp_rs_msg ) ) {
+				$bhp_rs_msg_we[] = $bhp_rs_msg_key;
 			}
 		}
 		bhp_rs_ok(
 			'⛔⛔ No em or en dash in any bhp_review_error_messages() string (they are printed as JSON on every page load)',
 			false === $bhp_rs_msg_dash
+		);
+		/*
+		 * ⛔⛔ 1.19.368 — THE SAME ARRAY, THE SAME REASON, FOR "we". The render
+		 *     scan above is the stronger evidence because it proves what
+		 *     reached the page; this one names the offending KEY when it goes
+		 *     red, which the render scan cannot. Both are kept: one for proof,
+		 *     one for diagnosis.
+		 *
+		 * ⚠ "us" is deliberately NOT asserted anywhere in §10 — two of Andrew's
+		 *   five approved star labels end *"not for us"* / *"did not work for
+		 *   us"*. That is the reader's voice, not the store's, and §9.1 pins
+		 *   all five verbatim.
+		 */
+		bhp_rs_ok(
+			'⛔⛔ No standalone "we" in any bhp_review_error_messages() string (Standing Rules 9.1)',
+			empty( $bhp_rs_msg_we ),
+			'these message keys still speak as "we": ' . implode( ', ', $bhp_rs_msg_we )
 		);
 	}
 }

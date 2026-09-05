@@ -193,7 +193,7 @@ function bhp_review_reject_honeypot($commentdata) {
     }
     if (!empty($_POST['bhp_review_hp'])) {
         wp_die(
-            esc_html__('Sorry, we could not accept that submission. Please try again.', 'brave-hearts'),
+            esc_html__('Sorry, that submission could not be accepted. Please try again.', 'brave-hearts'),
             esc_html__('Review not submitted', 'brave-hearts'),
             ['response' => 403, 'back_link' => true]
         );
@@ -312,16 +312,22 @@ function bhp_review_rating_required_for($post_id) {
  *    Both carried an em dash. The promise in each is unchanged; only the dash
  *    became a sentence break.
  *
- * ⚠ RAISED, NOT RESOLVED — CYCLE179-LD-53: 'author' reads *"so we know who the
- *   review is from"*, a standalone "we" that Standing Rules 9.1 forbids. It is
- *   OUTSIDE the R6 brief (em/en dashes only) so it was NOT edited. §10's "we"
- *   assertion cannot see it for the same `wp_strip_all_tags()` reason above.
+ * ⛔ SUPERSEDED WORDING, PRESERVED (1.19.368, CYCLE179-LD-53 — CLOSED):
+ *      'author' => "Please add your name, so we know who the review is from."
+ *    That carried a standalone "we", which Standing Rules 9.1 forbids: the
+ *    store does not speak as a person. It survived 1.19.367 because §10's "we"
+ *    assertion ran on `wp_strip_all_tags()` output, which — per the note above
+ *    — deletes the `<script>` block these strings are printed into, so the
+ *    only "we" left on the page was invisible to the only test looking for it.
+ *    The promise is unchanged; the sentence now names the review, not a "we".
+ *    §10 gained a JSON-block assertion and a direct scan of this array in the
+ *    same release, so the blind spot is closed at the test end too.
  */
 function bhp_review_error_messages() {
     return [
         'rating'        => __('Please choose a star rating.', 'brave-hearts'),
         'comment'       => __('Please write a sentence or two about how the book went for your reader.', 'brave-hearts'),
-        'author'        => __('Please add your name, so we know who the review is from.', 'brave-hearts'),
+        'author'        => __('Please add your name, so the review has a name on it.', 'brave-hearts'),
         'email'         => __('Please add your email address. It is never published and never added to a mailing list.', 'brave-hearts'),
         'email_invalid' => __('That email address does not look right. Please check it.', 'brave-hearts'),
         'duplicate'     => __('It looks as though that exact review has already been sent. Only one copy is needed.', 'brave-hearts'),
@@ -455,7 +461,7 @@ function bhp_review_intercept_submission() {
     //    runs BEFORE the graceful handler is installed, on purpose.
     if (!empty($_POST['bhp_review_hp'])) {
         wp_die(
-            esc_html__('Sorry, we could not accept that submission. Please try again.', 'brave-hearts'),
+            esc_html__('Sorry, that submission could not be accepted. Please try again.', 'brave-hearts'),
             esc_html__('Review not submitted', 'brave-hearts'),
             ['response' => 403, 'back_link' => true]
         );
