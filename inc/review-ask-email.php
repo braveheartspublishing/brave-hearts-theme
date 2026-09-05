@@ -1384,7 +1384,12 @@ function bhp_review_ask_copy_legacy_21day() {
  *   a second set of words nobody has approved for automated sending.
  *
  * ⭐ MERGE SLOTS, resolved per order by `bhp_review_ask_merge()`:
- *      {ParentFirstName} {ChildFirstName} {SchoolName} {BookTitle} {ReviewLink}
+ *      {ParentFirstName} {ChildFirstName} {SchoolName} {BookTitle}
+ *      {FirstBookTitle} {ReviewLink}
+ *
+ * ⭐ 1.19.375 · `{BookTitle}` IS EVERY CHAPTER BOOK ON THE ORDER, joined
+ *    "A and B" / "A, B and C" (seal 1032). `{FirstBookTitle}` is the one book
+ *    the star row rates. They are the same string on a one-book order.
  *
  * ⛔ NO EM DASH. ⛔ NO "we", "us" or "our". ⛔ No price, coupon, shipping
  *    figure, review count, rating, reaction or outcome claim. The suite
@@ -1587,8 +1592,17 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		 *    same route every other locked string in this file took. It says
 		 *    what the row is for, which the row can no longer say for itself
 		 *    now that the five text labels are gone.
+		 *
+		 * ⭐⭐ 1.19.375 · ONE SLOT NAME CHANGED AND NO WORD DID. `{BookTitle}`
+		 *     became `{FirstBookTitle}` because seal 1032 repointed
+		 *     `{BookTitle}` at the whole order, and this caption is an
+		 *     INSTRUCTION about a row that has exactly one destination. On a
+		 *     one-book order — most of them — the rendered caption is
+		 *     byte-identical to 1.19.374; on a three-book order it now says
+		 *     which of the three the stars are for, instead of listing three
+		 *     books the row cannot rate.
 		 */
-		'stars_caption'   => __( 'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
+		'stars_caption'   => __( 'Tap a star to rate {FirstBookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
 
 		/*
 		 * ⭐ ONE LINK, THE SAME DESTINATION THE FIVE STARS POINT AT.
@@ -1704,9 +1718,60 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
  *   has two honest readings and neither Merry nor this desk may settle it.
  *   ⛔ `BHP_REVIEW_ASK_WEB_DELAY_DAYS` was NOT edited in this build.
  *
+ * ⭐⭐ 1.19.375 · IT TAKES THE ORDER NOW, for the same reason the visit set has
+ *     since 1.19.365: seal 1032 makes `{BookTitle}` plural on a multi-book
+ *     order, and V2 §4's own second clause refers back to it with a singular
+ *     pronoun. ⚠ THE PARAMETER DEFAULTS, so every existing call site — the
+ *     CLI preview, `get_default_subject()`, the round-8 suite — keeps working
+ *     unedited and gets the singular wording, which is byte-identical to
+ *     1.19.374.
+ *
+ * @since 1.19.375 `$order` added.
+ * @param WC_Order|null|mixed $order Order, for book-count agreement.
  * @return array
  */
-function bhp_review_ask_copy_web_touch1() {
+function bhp_review_ask_copy_web_touch1( $order = null ) {
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⛔⛔ THE ONE SENTENCE SEAL 1032 BREAKS, AND HOW IT IS REPAIRED.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * V2 §4, as it shipped at 1.19.374:
+	 *
+	 *   "Your reader has had {BookTitle} for a couple of weeks now. It went
+	 *    out in the mail, so I never got to see who opened it."
+	 *
+	 * With `{BookTitle}` now resolving to *"The Mariana Trench and Mount
+	 * Everest"*, the second clause reads *"It went out in the mail, so I never
+	 * got to see who opened it"* about two books. That is not a stylistic
+	 * quibble: it is a sentence that does not parse, sent to a parent who is
+	 * looking at the two books it is failing to describe.
+	 *
+	 * ⭐ THE REPAIR IS AGREEMENT ONLY. `it` -> `they`, `it` -> `them`. No word
+	 *    is added, none is removed, none is reordered, and the clause keeps
+	 *    Merry's rhythm and Merry's meaning exactly. The SINGULAR BRANCH IS
+	 *    BYTE-IDENTICAL to 1.19.374 and is still pinned as V2 §4 verbatim by
+	 *    the suite.
+	 *
+	 * ⛔⛔ FLAGGED FOR GANDALF AND MERRY RATHER THAN SLIPPED THROUGH: the brief
+	 *     said *"adjust only articles/verbs, never the approved wording"*, and
+	 *     `it`/`them` are PRONOUNS, not articles or verbs. This desk judged
+	 *     that shipping the ungrammatical plural was the worse of the two
+	 *     errors and made the smallest possible change, but the call belongs
+	 *     to whoever owns the copy. ⚠ It is one array literal to revert.
+	 *
+	 * ⛔ `Would you rate it?` IN THE NEXT PARAGRAPH IS DELIBERATELY UNTOUCHED,
+	 *    and that is a decision, not an oversight. Its `it` is the thing the
+	 *    star row rates, which seal 977 fixed at ONE book and 1.19.375 names
+	 *    in the caption immediately below it. Changing it to *"rate them"*
+	 *    would promise a five-star row that can rate three books, which the
+	 *    row cannot do. ⚠ RAISED AS AN OPEN COPY QUESTION in the deliverable.
+	 */
+	$mailed = bhp_review_ask_book_verb(
+		$order,
+		__( 'It went out in the mail, so I never got to see who opened it.', 'brave-hearts' ),
+		__( 'They went out in the mail, so I never got to see who opened them.', 'brave-hearts' )
+	);
 	return array(
 		'set'             => 'web_touch1',
 
@@ -1756,8 +1821,16 @@ function bhp_review_ask_copy_web_touch1() {
 			 *       went out in the mail, so I never got to see who opened it."
 			 *
 			 *    Every other word of Merry's V2 §4 sentence is untouched.
+			 *
+			 * ⭐ 1.19.375 · the second clause is composed for agreement, above.
+			 *    ⚠ "Your reader has had" needs NO verb change: its subject is
+			 *    the reader, who stays singular however many books arrived.
 			 */
-			__( 'Your reader has had {BookTitle} for a couple of weeks now. It went out in the mail, so I never got to see who opened it.', 'brave-hearts' ),
+			sprintf(
+				/* translators: %s: the mailed-out clause, singular or plural. */
+				__( 'Your reader has had {BookTitle} for a couple of weeks now. %s', 'brave-hearts' ),
+				$mailed
+			),
 			__( 'Would you rate it? It takes about ten seconds, and if you have another minute after that, two or three honest sentences would help the next parent decide. Honest is the useful part.', 'brave-hearts' ),
 		),
 
@@ -1773,7 +1846,7 @@ function bhp_review_ask_copy_web_touch1() {
 		'links_lead'      => '',
 
 		// ⭐ 1.19.369 · the caption under the row. Round 8 brief, item 1.
-		'stars_caption'   => __( 'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
+		'stars_caption'   => __( 'Tap a star to rate {FirstBookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
 
 		// ⛔ 1.19.369 · SUPERSEDED LABEL, PRESERVED: '{BookTitle}'.
 		'links'           => array(
@@ -1918,7 +1991,7 @@ function bhp_review_ask_copy_touch2() {
 		'links_lead'      => '',
 
 		// ⭐ 1.19.369 · the caption under the row. Round 8 brief, item 1.
-		'stars_caption'   => __( 'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
+		'stars_caption'   => __( 'Tap a star to rate {FirstBookTitle}. Then two or three honest sentences on the next page.', 'brave-hearts' ),
 
 		// ⛔ 1.19.369 · SUPERSEDED LABEL, PRESERVED: '{BookTitle}'.
 		'links'           => array(
@@ -2021,7 +2094,8 @@ function bhp_review_ask_copy_raw( $touch = 1, $order = null ) {
 	if ( 2 === $touch ) {
 		$copy = bhp_review_ask_copy_touch2();
 	} elseif ( $order instanceof WC_Order && 'web' === bhp_review_ask_lane( $order ) ) {
-		$copy = bhp_review_ask_copy_web_touch1();
+		// ⭐ 1.19.375 · the order is passed now, for book-count agreement.
+		$copy = bhp_review_ask_copy_web_touch1( $order );
 	} else {
 		/*
 		 * ⭐ 1.19.365 · THE ORDER IS PASSED NOW, and it is not cosmetic.
@@ -2486,11 +2560,22 @@ function bhp_review_ask_first_chapter_book_key( $order ) {
 }
 
 /**
- * The display title of the first chapter book on this order.
+ * The display title of the FIRST chapter book on this order.
  *
  * ⭐ THE SHORT TITLE, via `bhp_review_book_title()` — "The Mariana Trench",
  *    not "Adventures of Charlotte and Henry: The Mariana Trench", which is what
  *    Merry's merge table specifies and what a parent calls the book.
+ *
+ * ⛔⛔ 1.19.375 · THIS FUNCTION NO LONGER BACKS `{BookTitle}`. Seal 1032 moved
+ *     that slot to the FULL LIST (`bhp_review_ask_book_title_list()` below).
+ *     This one now backs the NEW `{FirstBookTitle}` slot, and it keeps its
+ *     name because it also backs `bhp_review_ask_review_link()` — the star
+ *     row points at ONE review page (seal 977, *"I want one destination not
+ *     2"*), and that page is this book's.
+ *
+ * ⚠ ITS RETURN VALUE IS BYTE-IDENTICAL TO 1.19.374 for every order. Only the
+ *   slot it is wired to changed. The 1.19.369 assertion that it resolves to
+ *   the short title is therefore still valid and still in the suite.
  *
  * @param WC_Order|mixed $order Order.
  * @return string
@@ -2503,6 +2588,98 @@ function bhp_review_ask_book_title( $order ) {
 	}
 
 	return (string) bhp_review_book_title( $key );
+}
+
+/**
+ * Every chapter book on this order, as one natural English list.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.375 · SEAL 1032. ANDREW SIGNORE, 2026-09-05, VERBATIM (⛔ RELAYED
+ *     through Gandalf, not heard first-hand): *"I also assume the 'mariana
+ *     trench' is just a holder for 1 book and will be the book that was
+ *     purchased in its place on production and if its multiple books all the
+ *     books listed in the paragraph"*.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHAT WAS WRONG BEFORE. `{BookTitle}` resolved to the first chapter book
+ *    ONLY. A parent who bought all three read *"Your reader has had The
+ *    Mariana Trench for a week and a half now"* — a sentence that is not
+ *    false so much as incomplete in a way the parent can see, because the
+ *    other two books are sitting on the same table. The two-book delay
+ *    (+10 days, `BHP_REVIEW_ASK_VISIT_DELAY_MULTI_BOOK`) already knew the
+ *    order held more than one book; the sentence did not.
+ *
+ * ⭐ THIS IS NOT A NEW JOIN. It is the DAY-0 join, extracted verbatim from
+ *    `bhp_visit_email_merge_values()` where it has shipped since 1.19.364,
+ *    and that function now calls this one. Merry's slot table specified it
+ *    there: *"One title verbatim, or a natural list for two or more: The
+ *    Mariana Trench and Mount Everest"*. Two lanes, one implementation, so
+ *    they cannot drift apart the way two copies of a join always do.
+ *
+ * ⚠ ONE BOOK RETURNS EXACTLY WHAT `bhp_review_ask_book_title()` RETURNS, so
+ *   the single-book order — which CYCLE179-MKT-32 says is most of them —
+ *   renders byte-identically to 1.19.374.
+ *
+ * ⛔ SERIAL COMMA DELIBERATELY ABSENT: "A, B and C", not "A, B, and C". That
+ *   is the day-0 behaviour Andrew has already read and approved on the
+ *   staging test-sends; it is not restyled here on an engineer's preference.
+ *
+ * @since 1.19.375
+ * @param WC_Order|mixed $order Order.
+ * @return string The list, or '' when the order holds no chapter book.
+ */
+function bhp_review_ask_book_title_list( $order ) {
+	if ( ! function_exists( 'bhp_review_book_title' ) ) {
+		return '';
+	}
+
+	$names = array();
+
+	foreach ( (array) bhp_review_ask_chapter_book_keys( $order ) as $key ) {
+		$title = trim( (string) bhp_review_book_title( $key ) );
+
+		if ( '' !== $title ) {
+			$names[] = $title;
+		}
+	}
+
+	if ( 1 === count( $names ) ) {
+		return $names[0];
+	}
+
+	if ( count( $names ) > 1 ) {
+		$last = array_pop( $names );
+
+		/* translators: 1: all titles but the last, comma-joined. 2: the last title. */
+		return sprintf( __( '%1$s and %2$s', 'brave-hearts' ), implode( ', ', $names ), $last );
+	}
+
+	return '';
+}
+
+/**
+ * How the sentence must agree when it names this order's books.
+ *
+ * ⛔⛔ *"The Mariana Trench and Mount Everest ... It went out in the mail"* is
+ *     a broken sentence, and it is broken in front of a parent who is looking
+ *     at two books. Seal 1032 makes the subject of several approved sentences
+ *     plural for the first time, so every string that puts a verb or a pronoun
+ *     next to `{BookTitle}` composes it through this function — exactly the
+ *     way `bhp_review_ask_child_verb()` has done for child names since
+ *     1.19.369.
+ *
+ * ⭐ THIS ADDS NO WORD AND REMOVES NONE. The singular branch of every call
+ *    site is byte-identical to 1.19.374; only the plural branch is new, and
+ *    it is the same approved sentence with its agreement corrected.
+ *
+ * @since 1.19.375
+ * @param WC_Order|mixed $order    Order.
+ * @param string         $singular Form for one chapter book (or none).
+ * @param string         $plural   Form for two or more.
+ * @return string
+ */
+function bhp_review_ask_book_verb( $order, $singular, $plural ) {
+	return ( bhp_review_ask_chapter_book_count( $order ) >= 2 ) ? (string) $plural : (string) $singular;
 }
 
 /**
@@ -2543,7 +2720,31 @@ function bhp_review_ask_merge_values( $order ) {
 		'{ParentFirstName}' => '' !== $parent ? $parent : __( 'there', 'brave-hearts' ),
 		'{ChildFirstName}'  => bhp_review_ask_child_first_name( $order ),
 		'{SchoolName}'      => bhp_review_ask_school_name( $order ),
-		'{BookTitle}'       => bhp_review_ask_book_title( $order ),
+
+		/*
+		 * ⭐⭐ 1.19.375 · SEAL 1032. `{BookTitle}` IS THE WHOLE ORDER NOW, not
+		 *     the first book on it. See `bhp_review_ask_book_title_list()`.
+		 */
+		'{BookTitle}'       => bhp_review_ask_book_title_list( $order ),
+
+		/*
+		 * ⭐⭐ 1.19.375 · THE NEW SLOT, AND IT IS NOT A CONVENIENCE. The star
+		 *     row has ONE destination (seal 977) and a review page exists per
+		 *     title, so the row and its caption can only ever be about one
+		 *     book. Giving that its own slot is what lets `{BookTitle}` become
+		 *     the list WITHOUT the caption silently becoming *"Tap a star to
+		 *     rate The Mariana Trench and Mount Everest"* — an instruction the
+		 *     row cannot carry out.
+		 *
+		 * ⛔ NAMING/ORDER HAZARD, CHECKED NOT ASSUMED. `str_replace()` in
+		 *    `bhp_review_ask_merge_copy()` runs both keys in one pass, and
+		 *    neither is a substring of the other: "{BookTitle}" requires a
+		 *    literal `{` before `BookTitle}`, and in "{FirstBookTitle}" that
+		 *    character is `t`. So the substitution is order-independent, and
+		 *    so is the `strpos()` in the gate below.
+		 */
+		'{FirstBookTitle}'  => bhp_review_ask_book_title( $order ),
+
 		'{ReviewLink}'      => bhp_review_ask_review_link( $order ),
 	);
 
@@ -2583,7 +2784,15 @@ function bhp_review_ask_merge_is_complete( $copy, $order ) {
 
 	$values = bhp_review_ask_merge_values( $order );
 
-	foreach ( array( '{SchoolName}', '{BookTitle}', '{ReviewLink}' ) as $slot ) {
+	/*
+	 * ⭐⭐ 1.19.375 · `{FirstBookTitle}` IS ON THE GATE LIST, and leaving it off
+	 *     would have been the 1.19.363 defect all over again in a new spelling:
+	 *     the caption is the ONLY string carrying it, so an order that somehow
+	 *     resolved no first title would have rendered *"Tap a star to rate ."*
+	 *     and the gate would have waved it through, because it was only ever
+	 *     looking for `{BookTitle}`.
+	 */
+	foreach ( array( '{SchoolName}', '{BookTitle}', '{FirstBookTitle}', '{ReviewLink}' ) as $slot ) {
 		if ( false === strpos( $blob, $slot ) ) {
 			continue;
 		}

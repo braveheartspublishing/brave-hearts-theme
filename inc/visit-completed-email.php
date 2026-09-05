@@ -404,6 +404,29 @@ function bhp_visit_email_copy_sets() {
 				__( 'Hi {ParentFirstName},', 'brave-hearts' ),
 				__( 'Thank you. The signed book went home in a backpack today from {SchoolName}.', 'brave-hearts' ),
 				'{VisitLine}',
+				/*
+				 * ⛔⛔ OPEN DEFECT, FOUND 2026-09-05 AT 1.19.375 AND DELIBERATELY
+				 *     NOT FIXED HERE. On a two- or three-book visit order this
+				 *     renders:
+				 *
+				 *       "I want to tell you why The Mariana Trench and Mount
+				 *        Everest IS built the way IT IS, because IT IS built
+				 *        for one particular kid."
+				 *
+				 *     Three disagreements in one sentence, in front of a parent
+				 *     holding both books. ⚠ IT IS NOT NEW: this has shipped
+				 *     since 1.19.364, because `{BookTitle(s)}` has ALWAYS been
+				 *     the joined list in this lane. Seal 1032 did not cause it;
+				 *     rendering the round-14 fixtures is what exposed it.
+				 *
+				 * ⛔ WHY IT IS LEFT ALONE. Repairing it needs `is`->`are`,
+				 *    `it is`->`they are` and `it`->`they` — three changes to
+				 *    APPROVED FOUNDER COPY in a lane the round-14 brief did not
+				 *    name. Standing Rules §9 puts that with Andrew and Merry,
+				 *    not with this desk. Reported as an open item, not absorbed.
+				 *    ⭐ The machinery is ready: `bhp_review_ask_book_verb()`
+				 *    exists and this sentence is one `sprintf()` away.
+				 */
 				__( 'I want to tell you why {BookTitle(s)} is built the way it is, because it is built for one particular kid.', 'brave-hearts' ),
 				__( 'Between picture books and thick chapter books there is a gap, and these books are written for the reader standing in it. There is a lot of white space, so a page never looks like a wall. The chapters are short, so the finish line is always close enough to see. The prose is written to be read out loud, and that is how I would read it to you if you were sitting here.', 'brave-hearts' ),
 				__( 'The places are real. So are the animals, the weather and the science. None of it is homework and all of it is true.', 'brave-hearts' ),
@@ -693,23 +716,28 @@ function bhp_visit_email_merge_values( $order ) {
 		 *    *"One title verbatim, or a natural list for two or more: The
 		 *    Mariana Trench and Mount Everest"*.
 		 */
-		if ( function_exists( 'bhp_review_ask_chapter_book_keys' ) && function_exists( 'bhp_review_book_title' ) ) {
-			$names = array();
-
-			foreach ( (array) bhp_review_ask_chapter_book_keys( $order ) as $key ) {
-				$title = trim( (string) bhp_review_book_title( $key ) );
-
-				if ( '' !== $title ) {
-					$names[] = $title;
-				}
-			}
-
-			if ( 1 === count( $names ) ) {
-				$titles = $names[0];
-			} elseif ( count( $names ) > 1 ) {
-				$last   = array_pop( $names );
-				$titles = implode( ', ', $names ) . ' and ' . $last;
-			}
+		/*
+		 * ⭐⭐ 1.19.375 · EXTRACTED, NOT REWRITTEN. This join was the ONLY
+		 *     implementation of Merry's list rule until seal 1032 required the
+		 *     review-ask lane to produce the same list. Rather than write a
+		 *     second one — two copies of a join drift, and the day-0 email and
+		 *     the +7 email listing the same order's books differently is the
+		 *     exact failure a parent would notice — the body moved to
+		 *     `bhp_review_ask_book_title_list()` and this call site now reads
+		 *     it. ⚠ THE OUTPUT IS BYTE-IDENTICAL: the extracted function is
+		 *     the same loop, the same `implode( ', ' )`, the same trailing
+		 *     " and ", including the absent serial comma.
+		 *
+		 * ⛔ THE function_exists GUARD IS UNCHANGED IN KIND. It previously
+		 *    guarded the two functions this file borrows from
+		 *    `inc/review-ask-email.php` (loaded AFTER this file, so the guard
+		 *    is about call-time availability, not load order); it now guards
+		 *    the one function that wraps them. A missing helper still yields
+		 *    '' and `bhp_visit_email_merge_is_complete()` still HARD STOPS the
+		 *    send rather than mailing a blank.
+		 */
+		if ( function_exists( 'bhp_review_ask_book_title_list' ) ) {
+			$titles = bhp_review_ask_book_title_list( $order );
 		}
 	}
 

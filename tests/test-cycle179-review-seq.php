@@ -997,7 +997,7 @@ foreach (
 	 */
 	bhp_rs_ok(
 		'⭐ ' . $bhp_rs_label . ' carries the round-8 star caption verbatim',
-		'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.' === $bhp_rs_set['stars_caption'],
+		'Tap a star to rate {FirstBookTitle}. Then two or three honest sentences on the next page.' === $bhp_rs_set['stars_caption'],
 		'got: ' . ( isset( $bhp_rs_set['stars_caption'] ) ? $bhp_rs_set['stars_caption'] : '(absent)' )
 	);
 	bhp_rs_ok(
@@ -1100,7 +1100,14 @@ bhp_rs_ok( 'Touch 2 selects the touch-2 set', 'touch2' === bhp_review_ask_copy( 
 
 $bhp_rs_text = wp_json_encode( $bhp_rs_copy );
 
-bhp_rs_ok( '⛔ No merge slot survives into the rendered copy', false === strpos( $bhp_rs_text, '{' . 'ChildFirstName}' ) && false === strpos( $bhp_rs_text, '{' . 'SchoolName}' ) && false === strpos( $bhp_rs_text, '{' . 'BookTitle}' ) && false === strpos( $bhp_rs_text, '{' . 'ReviewLink}' ) );
+/*
+ * ⛔⛔ 1.19.375 · `{FirstBookTitle}` ADDED, AND ITS ABSENCE HERE WOULD HAVE BEEN
+ *     A REAL HOLE, not a tidiness matter. `strpos( $blob, '{BookTitle}' )`
+ *     cannot see a surviving `{FirstBookTitle}` — the character before
+ *     `BookTitle}` inside it is `t`, not `{` — so this sweep would have gone on
+ *     passing while the caption shipped a raw token to a parent.
+ */
+bhp_rs_ok( '⛔ No merge slot survives into the rendered copy', false === strpos( $bhp_rs_text, '{' . 'ChildFirstName}' ) && false === strpos( $bhp_rs_text, '{' . 'SchoolName}' ) && false === strpos( $bhp_rs_text, '{' . 'BookTitle}' ) && false === strpos( $bhp_rs_text, '{' . 'FirstBookTitle}' ) && false === strpos( $bhp_rs_text, '{' . 'ReviewLink}' ) );
 
 bhp_rs_ok( '⛔ No em dash anywhere in the approved copy', false === strpos( $bhp_rs_text, "\xe2\x80\x94" ) );
 bhp_rs_ok( '⛔ No en dash anywhere in the approved copy', false === strpos( $bhp_rs_text, "\xe2\x80\x93" ) );
@@ -1209,7 +1216,7 @@ foreach ( array(
 	'A small favor about the book',
 	'Your reader has had {BookTitle}',
 	'Would you rate it? It takes about ten seconds, and if you have another minute after that, two or three honest sentences would help the next parent decide. Honest is the useful part.',
-	'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.',
+	'Tap a star to rate {FirstBookTitle}. Then two or three honest sentences on the next page.',
 	'Thank you for reading together.',
 	'I answer every one.',
 ) as $bhp_rs_phrase ) {
@@ -2119,7 +2126,7 @@ foreach (
 ) {
 	bhp_rs_ok(
 		'⭐ ' . $bhp_rs_r8_name . ' carries the round-8 caption, unmerged',
-		'Tap a star to rate {BookTitle}. Then two or three honest sentences on the next page.' === $bhp_rs_r8_set['stars_caption']
+		'Tap a star to rate {FirstBookTitle}. Then two or three honest sentences on the next page.' === $bhp_rs_r8_set['stars_caption']
 	);
 	bhp_rs_ok( '⛔ ' . $bhp_rs_r8_name . ' has an empty links_lead', '' === $bhp_rs_r8_set['links_lead'] );
 	bhp_rs_ok(
@@ -3882,6 +3889,371 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 		}
 	}
 }
+
+/* =========================================================================
+ * §17 — ROUND 14: SEAL 1032. {BookTitle} IS THE WHOLE ORDER.
+ * =========================================================================
+ *
+ * ⭐⭐ ANDREW SIGNORE, 2026-09-05, VERBATIM (⛔ RELAYED through Gandalf, not
+ *     heard first-hand): *"I also assume the 'mariana trench' is just a holder
+ *     for 1 book and will be the book that was purchased in its place on
+ *     production and if its multiple books all the books listed in the
+ *     paragraph"*.
+ *
+ * ⛔ WHY THE FIXTURES ARE 1, 2 AND 3 AND NOT JUST "ONE AND MANY". The join has
+ *    three distinct shapes — "A", "A and B", "A, B and C" — and the two-book
+ *    case is the ONLY one that exercises `implode()` on a single-element
+ *    remainder. A suite that tests one and three books passes while the comma
+ *    logic is wrong for exactly the order size a school-visit family most
+ *    often buys.
+ *
+ * ⛔ TITLES ARE READ FROM THE REGISTRY, NEVER TYPED IN. A pinned string here
+ *    would assert this suite's memory of the catalogue rather than the
+ *    catalogue, and would pass while the email said something else.
+ * ====================================================================== */
+
+bhp_rs_head( '§17 Round 14: seal 1032, every book in the paragraph' );
+
+$bhp_rs_r14_t1 = bhp_review_book_title( 'mariana_trench' );
+$bhp_rs_r14_t2 = bhp_review_book_title( 'mount_everest' );
+$bhp_rs_r14_t3 = bhp_review_book_title( 'amazon_rainforest' );
+
+bhp_rs_ok(
+	'⛔ Precondition: three distinct, non-empty registry titles for the fixtures',
+	'' !== $bhp_rs_r14_t1 && '' !== $bhp_rs_r14_t2 && '' !== $bhp_rs_r14_t3
+		&& 3 === count( array_unique( array( $bhp_rs_r14_t1, $bhp_rs_r14_t2, $bhp_rs_r14_t3 ) ) ),
+	'got: ' . $bhp_rs_r14_t1 . ' / ' . $bhp_rs_r14_t2 . ' / ' . $bhp_rs_r14_t3
+);
+
+/* ---- 17.1 the fixtures: one, two and three books, in both lanes ---- */
+
+$bhp_rs_r14_visit = array(
+	1 => bhp_rs_make_order( 'rs-r14-v1@example.com', 9, $bhp_rs_visit_meta, array( $bhp_rs_pb[0] ) ),
+	2 => bhp_rs_make_order( 'rs-r14-v2@example.com', 12, $bhp_rs_visit_meta, array( $bhp_rs_pb[0], $bhp_rs_pb[1] ) ),
+	3 => bhp_rs_make_order( 'rs-r14-v3@example.com', 12, $bhp_rs_visit_meta, array( $bhp_rs_pb[0], $bhp_rs_pb[1], $bhp_rs_pb[2] ) ),
+);
+
+$bhp_rs_r14_web = array(
+	1 => bhp_rs_make_order( 'rs-r14-w1@example.com', 16, array(), array( $bhp_rs_pb[0] ) ),
+	2 => bhp_rs_make_order( 'rs-r14-w2@example.com', 16, array(), array( $bhp_rs_pb[0], $bhp_rs_pb[1] ) ),
+	3 => bhp_rs_make_order( 'rs-r14-w3@example.com', 16, array(), array( $bhp_rs_pb[0], $bhp_rs_pb[1], $bhp_rs_pb[2] ) ),
+);
+
+$bhp_rs_r14_expect = array(
+	1 => $bhp_rs_r14_t1,
+	2 => $bhp_rs_r14_t1 . ' and ' . $bhp_rs_r14_t2,
+	3 => $bhp_rs_r14_t1 . ', ' . $bhp_rs_r14_t2 . ' and ' . $bhp_rs_r14_t3,
+);
+
+/*
+ * ⛔ THE FIXTURES ARE ASSERTED TO BE WHAT THEY CLAIM before anything is
+ *    concluded from them. An order whose line items silently failed to attach
+ *    would make every list assertion below pass vacuously on one book.
+ */
+foreach ( array( 'visit' => $bhp_rs_r14_visit, 'web' => $bhp_rs_r14_web ) as $bhp_rs_r14_lane => $bhp_rs_r14_set ) {
+	foreach ( $bhp_rs_r14_set as $bhp_rs_r14_n => $bhp_rs_r14_o ) {
+		bhp_rs_ok(
+			'⛔ fixture ' . $bhp_rs_r14_lane . '/' . $bhp_rs_r14_n . ' really holds ' . $bhp_rs_r14_n . ' chapter book(s)',
+			$bhp_rs_r14_n === bhp_review_ask_chapter_book_count( $bhp_rs_r14_o ),
+			'got: ' . bhp_review_ask_chapter_book_count( $bhp_rs_r14_o )
+		);
+		bhp_rs_ok(
+			'⛔ fixture ' . $bhp_rs_r14_lane . '/' . $bhp_rs_r14_n . ' selects the ' . $bhp_rs_r14_lane . ' lane',
+			$bhp_rs_r14_lane === bhp_review_ask_lane( $bhp_rs_r14_o ),
+			'got: ' . bhp_review_ask_lane( $bhp_rs_r14_o )
+		);
+	}
+}
+
+/* ---- 17.2 the join itself, all three shapes ---- */
+
+foreach ( $bhp_rs_r14_expect as $bhp_rs_r14_n => $bhp_rs_r14_want ) {
+	bhp_rs_ok(
+		'⭐ bhp_review_ask_book_title_list() joins ' . $bhp_rs_r14_n . ' book(s) naturally',
+		$bhp_rs_r14_want === bhp_review_ask_book_title_list( $bhp_rs_r14_visit[ $bhp_rs_r14_n ] ),
+		'want: ' . $bhp_rs_r14_want . ' | got: ' . bhp_review_ask_book_title_list( $bhp_rs_r14_visit[ $bhp_rs_r14_n ] )
+	);
+}
+
+bhp_rs_ok(
+	'⛔ A three-book list carries NO serial comma before "and" (day-0 behaviour, unchanged)',
+	false === strpos( bhp_review_ask_book_title_list( $bhp_rs_r14_visit[3] ), ', and ' )
+);
+
+/*
+ * ⭐⭐ THE ONE-BOOK ORDER RENDERS BYTE-IDENTICALLY TO 1.19.374, and this is the
+ *     assertion that says so. CYCLE179-MKT-32 says most real orders are this
+ *     shape; a seal-1032 regression that only shows up on a multi-book order
+ *     would still be a regression on every order if these two ever diverge.
+ */
+bhp_rs_ok(
+	'⭐⭐ On a ONE-book order the list and the first title are the same string',
+	bhp_review_ask_book_title_list( $bhp_rs_r14_visit[1] ) === bhp_review_ask_book_title( $bhp_rs_r14_visit[1] )
+);
+
+bhp_rs_ok(
+	'⛔ An order with NO chapter book joins to the empty string (the hard-stop input)',
+	'' === bhp_review_ask_book_title_list( $bhp_rs_nobook ),
+	'got: ' . bhp_review_ask_book_title_list( $bhp_rs_nobook )
+);
+
+/*
+ * ⛔⛔ AND THE DAY-0 LANE PRODUCES THE IDENTICAL LIST. This is the whole reason
+ *     the join was extracted rather than copied: the day-0 email and the +7
+ *     ask describe the SAME order, days apart, to the SAME parent. Two
+ *     implementations would eventually list the same books differently, and
+ *     the parent is the one who would notice.
+ */
+if ( function_exists( 'bhp_visit_email_merge_values' ) ) {
+	foreach ( $bhp_rs_r14_expect as $bhp_rs_r14_n => $bhp_rs_r14_want ) {
+		$bhp_rs_r14_d0 = bhp_visit_email_merge_values( $bhp_rs_r14_visit[ $bhp_rs_r14_n ] );
+
+		bhp_rs_ok(
+			'⭐⭐ day 0 and the review ask list ' . $bhp_rs_r14_n . ' book(s) identically',
+			isset( $bhp_rs_r14_d0['{BookTitle(s)}'] ) && $bhp_rs_r14_want === $bhp_rs_r14_d0['{BookTitle(s)}'],
+			'got: ' . ( isset( $bhp_rs_r14_d0['{BookTitle(s)}'] ) ? $bhp_rs_r14_d0['{BookTitle(s)}'] : '(unset)' )
+		);
+	}
+}
+
+/* ---- 17.3 the merge map: two slots, and they are not the same slot ---- */
+
+$bhp_rs_r14_vals = bhp_review_ask_merge_values( $bhp_rs_r14_visit[3] );
+
+bhp_rs_ok(
+	'⭐ {BookTitle} resolves to ALL THREE books',
+	isset( $bhp_rs_r14_vals['{BookTitle}'] ) && $bhp_rs_r14_expect[3] === $bhp_rs_r14_vals['{BookTitle}'],
+	'got: ' . ( isset( $bhp_rs_r14_vals['{BookTitle}'] ) ? $bhp_rs_r14_vals['{BookTitle}'] : '(unset)' )
+);
+bhp_rs_ok(
+	'⭐ {FirstBookTitle} resolves to the FIRST book only',
+	isset( $bhp_rs_r14_vals['{FirstBookTitle}'] ) && $bhp_rs_r14_t1 === $bhp_rs_r14_vals['{FirstBookTitle}'],
+	'got: ' . ( isset( $bhp_rs_r14_vals['{FirstBookTitle}'] ) ? $bhp_rs_r14_vals['{FirstBookTitle}'] : '(unset)' )
+);
+bhp_rs_ok(
+	'⛔ The two slots are DIFFERENT on a multi-book order (a shared value would hide the whole change)',
+	$bhp_rs_r14_vals['{BookTitle}'] !== $bhp_rs_r14_vals['{FirstBookTitle}']
+);
+
+/*
+ * ⛔⛔ THE SUBSTRING HAZARD, ASSERTED RATHER THAN REASONED ABOUT. `{BookTitle}`
+ *     and `{FirstBookTitle}` are replaced in ONE `str_replace()` pass. If the
+ *     shorter token could match inside the longer one, a caption would merge
+ *     to *"Tap a star to rate {FirstThe Mariana Trench"*. It cannot — the
+ *     character before `BookTitle}` inside `{FirstBookTitle}` is `t`, not `{`
+ *     — and this is the test that keeps it that way if either name is ever
+ *     edited.
+ */
+$bhp_rs_r14_probe = bhp_review_ask_merge_copy(
+	array( 'subject' => '[{BookTitle}][{FirstBookTitle}]' ),
+	$bhp_rs_r14_visit[3]
+);
+bhp_rs_ok(
+	'⛔⛔ Neither book slot corrupts the other in one str_replace() pass',
+	'[' . $bhp_rs_r14_expect[3] . '][' . $bhp_rs_r14_t1 . ']' === $bhp_rs_r14_probe['subject'],
+	'got: ' . $bhp_rs_r14_probe['subject']
+);
+
+/*
+ * ⛔⛔ AND {FirstBookTitle} IS ON THE SEND GATE. The caption is the only string
+ *     that carries it, so a gate that does not know the slot exists would let
+ *     *"Tap a star to rate ."* reach a parent — the exact 1.19.363 defect in a
+ *     new spelling. Asserted with a synthetic set carrying ONLY that slot, so
+ *     it cannot pass on the back of {BookTitle} or {ReviewLink}.
+ */
+bhp_rs_ok(
+	'⛔⛔ The merge gate DECLINES a set whose only slot is {FirstBookTitle} on a bookless order',
+	false === bhp_review_ask_merge_is_complete( array( 'stars_caption' => 'x {FirstBookTitle} y' ), $bhp_rs_nobook )
+);
+bhp_rs_ok(
+	'⭐ ... and PASSES the same set on a real order',
+	true === bhp_review_ask_merge_is_complete( array( 'stars_caption' => 'x {FirstBookTitle} y' ), $bhp_rs_r14_visit[3] )
+);
+
+/* ---- 17.4 the rendered body, both lanes, all three counts ---- */
+
+foreach ( array( 'visit' => $bhp_rs_r14_visit, 'web' => $bhp_rs_r14_web ) as $bhp_rs_r14_lane => $bhp_rs_r14_set ) {
+	foreach ( $bhp_rs_r14_set as $bhp_rs_r14_n => $bhp_rs_r14_o ) {
+
+		$bhp_rs_r14_c    = bhp_review_ask_copy( 1, $bhp_rs_r14_o );
+		$bhp_rs_r14_body = (string) $bhp_rs_r14_c['body_before'][0];
+		$bhp_rs_r14_tag  = $bhp_rs_r14_lane . '/' . $bhp_rs_r14_n . '-book';
+
+		/*
+		 * ⭐ THE PARAGRAPH NAMES EVERY BOOK ON THE ORDER. This is seal 1032
+		 *    stated as an assertion: not "a book", not "the first book".
+		 */
+		bhp_rs_ok(
+			'⭐⭐ ' . $bhp_rs_r14_tag . ': the body paragraph carries the WHOLE list',
+			false !== strpos( $bhp_rs_r14_body, $bhp_rs_r14_expect[ $bhp_rs_r14_n ] ),
+			'want list: ' . $bhp_rs_r14_expect[ $bhp_rs_r14_n ] . ' | body: ' . $bhp_rs_r14_body
+		);
+
+		foreach ( array_slice( array( $bhp_rs_r14_t1, $bhp_rs_r14_t2, $bhp_rs_r14_t3 ), 0, $bhp_rs_r14_n ) as $bhp_rs_r14_title ) {
+			bhp_rs_ok(
+				'⭐ ' . $bhp_rs_r14_tag . ': the body names "' . $bhp_rs_r14_title . '"',
+				false !== strpos( $bhp_rs_r14_body, $bhp_rs_r14_title )
+			);
+		}
+
+		/*
+		 * ⛔ AND IT NAMES NOTHING THE PARENT DID NOT BUY. A join that reached
+		 *    past the order's own items would be a fabricated purchase claim,
+		 *    which is the one failure class this company treats as absolute.
+		 */
+		if ( $bhp_rs_r14_n < 3 ) {
+			bhp_rs_ok(
+				'⛔⛔ ' . $bhp_rs_r14_tag . ': the body names NO book that is not on the order',
+				false === strpos( $bhp_rs_r14_body, $bhp_rs_r14_t3 ),
+				'body: ' . $bhp_rs_r14_body
+			);
+		}
+
+		/*
+		 * ⭐⭐ THE CAPTION IS THE FIRST BOOK, AND ONLY THE FIRST BOOK. The star
+		 *     row has one destination (seal 977) and a review page exists per
+		 *     title, so a caption listing three books would be an instruction
+		 *     the row cannot carry out.
+		 */
+		$bhp_rs_r14_cap = (string) $bhp_rs_r14_c['stars_caption'];
+
+		bhp_rs_ok(
+			'⭐⭐ ' . $bhp_rs_r14_tag . ': the caption rates the FIRST book',
+			false !== strpos( $bhp_rs_r14_cap, 'Tap a star to rate ' . $bhp_rs_r14_t1 . '.' ),
+			'got: ' . $bhp_rs_r14_cap
+		);
+
+		if ( $bhp_rs_r14_n > 1 ) {
+			bhp_rs_ok(
+				'⛔⛔ ' . $bhp_rs_r14_tag . ': the caption does NOT list the other books',
+				false === strpos( $bhp_rs_r14_cap, $bhp_rs_r14_t2 )
+					&& false === strpos( $bhp_rs_r14_cap, ' and ' ),
+				'got: ' . $bhp_rs_r14_cap
+			);
+		}
+
+		/*
+		 * ⭐ THE LINK UNDER THE ROW GOES TO THE SAME ONE PAGE THE CAPTION NAMES.
+		 *    Caption and destination disagreeing is worse than either being
+		 *    wrong alone, so they are asserted against each other.
+		 */
+		bhp_rs_ok(
+			'⭐ ' . $bhp_rs_r14_tag . ': the review link is the FIRST book\'s page',
+			$bhp_rs_r14_c['links'][0]['url'] === bhp_review_ask_review_link( $bhp_rs_r14_o )
+				&& $bhp_rs_r14_c['links'][0]['url'] === bhp_review_page_url( bhp_review_ask_first_chapter_book_key( $bhp_rs_r14_o ) ),
+			'got: ' . $bhp_rs_r14_c['links'][0]['url']
+		);
+
+		/*
+		 * ⛔ NO SLOT SURVIVES — INCLUDING THE NEW ONE. `strpos( $blob,
+		 *    '{BookTitle}' )` cannot see a surviving `{FirstBookTitle}`, so the
+		 *    older sweep would have passed while the caption shipped a raw
+		 *    token. It is named explicitly here.
+		 */
+		$bhp_rs_r14_blob = (string) wp_json_encode( $bhp_rs_r14_c );
+
+		bhp_rs_ok(
+			'⛔ ' . $bhp_rs_r14_tag . ': no merge slot survives, {FirstBookTitle} included',
+			false === strpos( $bhp_rs_r14_blob, '{' . 'BookTitle}' )
+				&& false === strpos( $bhp_rs_r14_blob, '{' . 'FirstBookTitle}' )
+				&& false === strpos( $bhp_rs_r14_blob, '{' . 'ReviewLink}' )
+				&& false === strpos( $bhp_rs_r14_blob, '{' . 'SchoolName}' )
+				&& false === strpos( $bhp_rs_r14_blob, '{' . 'ChildFirstName}' )
+		);
+
+		// ⛔ The house rails still hold on the newly-composed sentences.
+		bhp_rs_ok( '⛔ ' . $bhp_rs_r14_tag . ': no em dash', false === strpos( $bhp_rs_r14_blob, "\xe2\x80\x94" ) );
+		bhp_rs_ok(
+			'⛔ ' . $bhp_rs_r14_tag . ': no standalone "we", "us" or "our"',
+			0 === preg_match( '/\b(we|us|our|ours)\b/i', wp_strip_all_tags( implode( ' ', $bhp_rs_r14_c['body_before'] ) . ' ' . implode( ' ', $bhp_rs_r14_c['body_after'] ) ) )
+		);
+	}
+}
+
+/* ---- 17.5 the web lane's pronoun agreement ---- */
+
+/*
+ * ⛔⛔ THE SENTENCE SEAL 1032 BROKE. V2 §4's second clause refers back to the
+ *     book with a singular pronoun, and a two-book order turned it into *"The
+ *     Mariana Trench and Mount Everest ... It went out in the mail, so I never
+ *     got to see who opened it."* — a sentence that does not parse, in front
+ *     of a parent looking at the two books it is failing to describe.
+ *
+ * ⚠ FLAGGED, NOT SLIPPED THROUGH: `it`/`them` are PRONOUNS, and the round-14
+ *   brief permitted articles and verbs. The singular branch below is asserted
+ *   BYTE-IDENTICAL to V2 §4 so the repair cannot creep into the wording a
+ *   one-book parent reads, and reverting is one array literal.
+ */
+$bhp_rs_r14_w1 = bhp_review_ask_copy( 1, $bhp_rs_r14_web[1] );
+$bhp_rs_r14_w2 = bhp_review_ask_copy( 1, $bhp_rs_r14_web[2] );
+
+bhp_rs_ok(
+	'⭐⭐ Web touch 1, ONE book: V2 §4 verbatim, unchanged from 1.19.374',
+	'Your reader has had ' . $bhp_rs_r14_t1 . ' for a couple of weeks now. It went out in the mail, so I never got to see who opened it.' === $bhp_rs_r14_w1['body_before'][0],
+	'got: ' . $bhp_rs_r14_w1['body_before'][0]
+);
+bhp_rs_ok(
+	'⭐⭐ Web touch 1, TWO books: the same sentence, agreeing with its own subject',
+	'Your reader has had ' . $bhp_rs_r14_expect[2] . ' for a couple of weeks now. They went out in the mail, so I never got to see who opened them.' === $bhp_rs_r14_w2['body_before'][0],
+	'got: ' . $bhp_rs_r14_w2['body_before'][0]
+);
+bhp_rs_ok(
+	'⛔ The plural branch never says "It went out" about two books',
+	false === strpos( $bhp_rs_r14_w2['body_before'][0], 'It went out' )
+);
+
+/*
+ * ⛔ THE NO-ORDER CALL STILL WORKS AND STILL TAKES THE SINGULAR. The CLI
+ *    preview and `get_default_subject()` call this set with no order at all;
+ *    the new parameter defaults for exactly that reason.
+ */
+bhp_rs_ok(
+	'⛔ bhp_review_ask_copy_web_touch1() with NO order is unchanged from 1.19.374',
+	'Your reader has had {BookTitle} for a couple of weeks now. It went out in the mail, so I never got to see who opened it.' === bhp_review_ask_copy_web_touch1()['body_before'][0],
+	'got: ' . bhp_review_ask_copy_web_touch1()['body_before'][0]
+);
+
+/* ---- 17.6 the visit lane needs no verb change, and that is asserted ---- */
+
+/*
+ * ⚠ *"Your reader has had The Mariana Trench and Mount Everest for a week and
+ *   a half now"* is CORRECT AS IT STANDS: the subject of `has had` is the
+ *   reader, who does not become plural when a second book arrives. No word was
+ *   touched in the visit set, and this assertion is what says so out loud
+ *   rather than leaving the absence of a change looking like an omission.
+ */
+$bhp_rs_r14_v2raw = bhp_review_ask_copy_visit_touch1( $bhp_rs_r14_visit[2] );
+
+bhp_rs_ok(
+	'⭐ Visit touch 1, TWO books: the approved sentence is untouched, slot and all',
+	'Your reader has had {BookTitle} for a week and a half now.' === $bhp_rs_r14_v2raw['body_before'][0],
+	'got: ' . $bhp_rs_r14_v2raw['body_before'][0]
+);
+
+/*
+ * ⛔ TOUCH 2 NAMES NO BOOK IN ITS BODY, AND NONE WAS ADDED. The round-14 brief
+ *    named touch 2 alongside touch 1, but Merry's V2 §3 body carries no
+ *    `{BookTitle}` at all — writing one in to satisfy the brief would be
+ *    minting customer-facing copy in a locked email (Standing Rules §9). The
+ *    ONLY seal-1032 change to touch 2 is its caption's slot name. Asserted
+ *    both ways so the absence is on the record as a decision.
+ */
+$bhp_rs_r14_t2raw = bhp_review_ask_copy_touch2();
+
+bhp_rs_ok(
+	'⛔ Touch 2 body still names no book (no copy was minted to satisfy the brief)',
+	false === strpos( implode( ' ', $bhp_rs_r14_t2raw['body_before'] ) . ' ' . implode( ' ', $bhp_rs_r14_t2raw['body_after'] ), '{BookTitle}' )
+);
+bhp_rs_ok(
+	'⭐ Touch 2 caption carries the new slot',
+	'Tap a star to rate {FirstBookTitle}. Then two or three honest sentences on the next page.' === $bhp_rs_r14_t2raw['stars_caption'],
+	'got: ' . $bhp_rs_r14_t2raw['stars_caption']
+);
+bhp_rs_ok(
+	'⭐ Touch 2 on a THREE-book order still rates exactly one book',
+	false !== strpos( bhp_review_ask_copy( 2, $bhp_rs_r14_visit[3] )['stars_caption'], 'Tap a star to rate ' . $bhp_rs_r14_t1 . '.' ),
+	'got: ' . bhp_review_ask_copy( 2, $bhp_rs_r14_visit[3] )['stars_caption']
+);
 
 bhp_rs_head( '§12 Deferred fixture teardown' );
 
