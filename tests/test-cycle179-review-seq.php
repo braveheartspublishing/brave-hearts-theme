@@ -2559,15 +2559,42 @@ if ( $bhp_rs_email instanceof WC_Email_BHP_Review_Ask ) {
 	 *    DALLAS HARRIS ONE. A photograph captioned for a school the family
 	 *    never attended is a false statement in a picture.
 	 */
+	/*
+	 * ⭐⭐ 1.19.374 · THIS ASSERTS THE CONSTANT, NOT A LITERAL FILENAME, and
+	 *     that is the same defect class as the one seal 1027 exposed. Through
+	 *     1.19.373 it read `strpos( $bhp_rs_html, 'hero-read-aloud-general.jpg' )`,
+	 *     so the moment Andrew picked the other candidate this assertion
+	 *     failed while describing nothing that was actually wrong. ⛔ The
+	 *     thing worth guarding is *an unmapped slug gets the GENERAL hero*,
+	 *     whichever file that currently is.
+	 */
 	bhp_rs_ok(
 		'⛔ An unmapped visit slug falls back to the general hero',
-		false !== strpos( $bhp_rs_html, 'hero-read-aloud-general.jpg' ),
+		defined( 'BHP_EMAIL_GENERAL_HERO' ) && false !== strpos( $bhp_rs_html, BHP_EMAIL_GENERAL_HERO ),
 		'the fixture slug is not in the map, so this must be the general frame'
 	);
 
+	/*
+	 * ⛔ THE ALT TEXT IN THE RENDER IS THE ALT TEXT THE RESOLVER DECLARES.
+	 *    Asserted by comparison rather than by a hard-coded sentence, for the
+	 *    same reason as above. ⚠ The two general candidates carry DIFFERENT
+	 *    caption sentences (the Dallas file's is prefixed "Caption:", the Adams
+	 *    one's is not) because those strings are Legolas's transcriptions of
+	 *    what is baked into each photograph, and neither is rewritten here.
+	 */
+	$bhp_rs_gen_alt = ( function_exists( 'bhp_review_ask_hero_alt' ) && defined( 'BHP_EMAIL_GENERAL_HERO' ) )
+		? (string) bhp_review_ask_hero_alt( BHP_EMAIL_GENERAL_HERO )
+		: '';
+
 	bhp_rs_ok(
-		'⭐ The hero carries descriptive alt text including its baked caption',
-		false !== strpos( $bhp_rs_html, 'Caption: A morning read-aloud' )
+		'⭐ The hero carries the descriptive alt text its resolver declares',
+		'' !== $bhp_rs_gen_alt && false !== strpos( $bhp_rs_html, esc_attr( $bhp_rs_gen_alt ) ),
+		'alt expected: ' . $bhp_rs_gen_alt
+	);
+
+	bhp_rs_ok(
+		'⭐ ... and that alt names the read-aloud it shows',
+		false !== strpos( $bhp_rs_gen_alt, 'A morning read-aloud with first and second graders' )
 	);
 
 	bhp_rs_ok(
@@ -2800,7 +2827,19 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 	 *   Author" slide on display. Shipping the file is not using it, so the
 	 *   test asserts it is on disk AND that nothing maps to it by default.
 	 */
-	$bhp_rs_h_map = (array) apply_filters( 'bhp_review_ask_hero_map', array() );
+	/*
+	 * ⭐ 1.19.374 · READ THROUGH THE FUNCTION. This line used to call
+	 *    `apply_filters( 'bhp_review_ask_hero_map', array() )`, which with no
+	 *    callback registered returns the empty array it was handed — so the
+	 *    guard below passed against nothing at all. Same defect as the 484
+	 *    failure, same fix.
+	 */
+	$bhp_rs_h_map = function_exists( 'bhp_review_ask_hero_map' ) ? (array) bhp_review_ask_hero_map() : array();
+
+	bhp_rs_ok(
+		'⭐ ... and the map actually has rows to guard',
+		isset( $bhp_rs_h_map['general'] ) && isset( $bhp_rs_h_map['dallas-harris-2026-09-03'] )
+	);
 
 	bhp_rs_ok(
 		'⚠ CYCLE179-DES-31: hero crop 05 ships but is NOT mapped to any touch by default',
@@ -3651,28 +3690,59 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 		);
 	}
 
-	/* ---- 16.5 the general hero is a choice, and its default has NOT moved ---- */
+	/* ---- 16.5 the general hero is the Adams library, seal 1027 ---- */
+
+	/*
+	 * ⭐⭐ 1.19.374 · THE MAP IS NOW READ FROM ITS OWN FUNCTION, AND THAT IS THE
+	 *     WHOLE FIX FOR THE 1.19.373 FAILURE.
+	 *
+	 * ⛔ WHAT FAILED, VERBATIM: *"The general row is driven by the constant,
+	 *    not by a second literal"*. ⛔ THE ASSERTION WAS RIGHT AND THE MAP WAS
+	 *    RIGHT. The map literal lived inside `bhp_review_ask_hero()`, so from
+	 *    outside that function the only handle was
+	 *    `apply_filters( 'bhp_review_ask_hero_map', array() )` — which, with no
+	 *    callback registered, returns its own default, and the default was the
+	 *    empty array passed in. The suite was reading `array()` and asserting
+	 *    against it.
+	 *
+	 * ⭐ THE ROOT FIX WAS IN THE SOURCE, NOT HERE: 1.19.374 lifts the table and
+	 *    the `define()` into `bhp_review_ask_hero_map()`, which the resolver
+	 *    now calls. This reads the SAME array the resolver reads, so a second
+	 *    literal drifting in behind the assertion is no longer possible.
+	 *
+	 * ⛔ THE FUNCTION IS CALLED, NOT THE BARE FILTER. Calling
+	 *    `apply_filters()` again here would re-introduce exactly the defect
+	 *    this round fixed.
+	 */
+	bhp_rs_ok(
+		'⭐⭐ 1.19.374 · bhp_review_ask_hero_map() exists and is callable',
+		function_exists( 'bhp_review_ask_hero_map' )
+	);
+
+	$bhp_rs_r12_map = function_exists( 'bhp_review_ask_hero_map' ) ? (array) bhp_review_ask_hero_map() : array();
 
 	bhp_rs_ok(
-		'⭐⭐ BHP_EMAIL_GENERAL_HERO is defined once the hero resolver has run',
+		'⭐⭐ BHP_EMAIL_GENERAL_HERO is defined once the hero map has been built',
 		defined( 'BHP_EMAIL_GENERAL_HERO' )
 	);
 
 	/*
-	 * ⛔⛔ THE DEFAULT IS PENDING ANDREW AND MUST NOT HAVE MOVED. This
-	 *     assertion is the record of a decision NOT taken: two candidates are
-	 *     shipped, neither has been chosen, and the build kept the one
-	 *     1.19.370 shipped.
+	 * ⭐⭐ FOUNDER SEAL 1027, 2026-09-05. Andrew Signore, verbatim (⛔ RELAYED
+	 *     through Gandalf, not heard first-hand): *"Faces toward the camera"*.
+	 *
+	 * ⛔ SUPERSEDED, PRESERVED RATHER THAN DELETED. Through 1.19.373 this
+	 *    assertion read *"... and it still defaults to
+	 *    hero-read-aloud-general.jpg (Andrew has not picked)"* and it was the
+	 *    record of a decision NOT taken. He has now taken it, so the assertion
+	 *    flips to guard the answer instead of the absence of one.
 	 */
 	if ( defined( 'BHP_EMAIL_GENERAL_HERO' ) ) {
 		bhp_rs_ok(
-			'⛔⛔ ... and it still defaults to hero-read-aloud-general.jpg (Andrew has not picked)',
-			'hero-read-aloud-general.jpg' === BHP_EMAIL_GENERAL_HERO,
+			'⭐⭐ SEAL 1027: the general hero defaults to hero-read-aloud-general-adams.jpg',
+			'hero-read-aloud-general-adams.jpg' === BHP_EMAIL_GENERAL_HERO,
 			'got: ' . BHP_EMAIL_GENERAL_HERO
 		);
 	}
-
-	$bhp_rs_r12_map = (array) apply_filters( 'bhp_review_ask_hero_map', array() );
 
 	bhp_rs_ok(
 		'⭐ The general row is driven by the constant, not by a second literal',
@@ -3680,6 +3750,78 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 			&& defined( 'BHP_EMAIL_GENERAL_HERO' )
 			&& BHP_EMAIL_GENERAL_HERO === $bhp_rs_r12_map['general']['touch1']
 			&& BHP_EMAIL_GENERAL_HERO === $bhp_rs_r12_map['general']['day0']
+	);
+
+	/*
+	 * ⛔ THE FILE THE SEAL PICKED IS ON DISK. `bhp_review_ask_hero()` returns
+	 *    an EMPTY ARRAY for a hero it cannot find, so a default naming a file
+	 *    that was never deployed would silently render no photograph at all
+	 *    rather than fail loudly. That failure mode is the reason this is
+	 *    asserted separately from the constant.
+	 */
+	bhp_rs_ok(
+		'⛔ ... and that file is actually deployed in assets/images/email/',
+		defined( 'BHP_EMAIL_GENERAL_HERO' )
+			&& file_exists( get_template_directory() . '/assets/images/email/' . BHP_EMAIL_GENERAL_HERO )
+	);
+
+	/*
+	 * ⛔ THE ALT TEXT IS LEGOLAS'S, TRANSCRIBED. It is asserted here rather
+	 *    than trusted because the picture that fronts every unmapped visit and
+	 *    the whole web lane now depends on it, and an empty alt on a 536px
+	 *    photograph is a blank space to a screen reader.
+	 */
+	$bhp_rs_r13_gen_alt = function_exists( 'bhp_review_ask_hero_alt' ) && defined( 'BHP_EMAIL_GENERAL_HERO' )
+		? (string) bhp_review_ask_hero_alt( BHP_EMAIL_GENERAL_HERO )
+		: '';
+
+	bhp_rs_ok(
+		'⭐ SEAL 1027 alt text, verbatim from Legolas',
+		'Andrew Signore sits at the front of a school library speaking to first and second graders seated on the floor among the bookshelves. A morning read-aloud with first and second graders.' === $bhp_rs_r13_gen_alt,
+		'got: ' . $bhp_rs_r13_gen_alt
+	);
+
+	/*
+	 * ⛔ THE NEVER-INVENT RULE IS NOT SUSPENDED BECAUSE A SENTENCE IS ALT TEXT.
+	 *    No reaction is claimed about any child in the frame.
+	 */
+	bhp_rs_ok(
+		'⛔ ... and it claims no reaction',
+		false === strpos( strtolower( $bhp_rs_r13_gen_alt ), 'loved' )
+			&& false === strpos( strtolower( $bhp_rs_r13_gen_alt ), 'enjoy' )
+			&& false === strpos( strtolower( $bhp_rs_r13_gen_alt ), 'excited' )
+			&& false === strpos( strtolower( $bhp_rs_r13_gen_alt ), 'delight' )
+	);
+
+	/*
+	 * ⭐ THE DALLAS ROOM IS STILL SHIPPED AND STILL HAS ITS ALT TEXT. Seal 1027
+	 *    changed which one is the DEFAULT; it did not retire the other, and a
+	 *    `wp-config.php` define or one filter callback puts it back.
+	 */
+	bhp_rs_ok(
+		'⭐ The other general candidate is still shipped and still described',
+		file_exists( get_template_directory() . '/assets/images/email/hero-read-aloud-general.jpg' )
+			&& '' !== ( function_exists( 'bhp_review_ask_hero_alt' ) ? bhp_review_ask_hero_alt( 'hero-read-aloud-general.jpg' ) : '' )
+	);
+
+	/*
+	 * ⛔ THE MAPPED VISITS ARE UNAFFECTED BY SEAL 1027. Dallas Harris and Adams
+	 *    each name their own files; if a general-hero change ever moved one of
+	 *    those rows, a family that was at Dallas Harris would get a photograph
+	 *    of a different school.
+	 */
+	bhp_rs_ok(
+		'⛔ Seal 1027 did not move the Dallas Harris rows',
+		isset( $bhp_rs_r12_map['dallas-harris-2026-09-03'] )
+			&& 'hero-dallas-harris-2026-09-03-04.jpg' === $bhp_rs_r12_map['dallas-harris-2026-09-03']['touch1']
+			&& 'hero-dallas-harris-2026-09-03-01.jpg' === $bhp_rs_r12_map['dallas-harris-2026-09-03']['day0']
+	);
+
+	bhp_rs_ok(
+		'⛔ ... and did not move the Adams rows',
+		isset( $bhp_rs_r12_map['adams-2026-08-28'] )
+			&& 'hero-adams-2026-08-28-02.jpg' === $bhp_rs_r12_map['adams-2026-08-28']['touch1']
+			&& 'hero-adams-2026-08-28-01.jpg' === $bhp_rs_r12_map['adams-2026-08-28']['day0']
 	);
 
 	/*

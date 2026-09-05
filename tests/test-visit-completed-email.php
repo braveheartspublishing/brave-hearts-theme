@@ -514,6 +514,205 @@ bhp_vce_assert(
 	$failures
 );
 
+/* ═══════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.374 · SEAL 1025 · THE HAND-DELIVERY ROW IN THE DAY-0 SUMMARY
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE ROW IS BUILT AS A PLAIN ARRAY HERE RATHER THAN BY RENDERING AN
+ *    EMAIL. `WC_Order::get_order_item_totals()` needs a SAVED order with
+ *    saved shipping line items, and this suite writes nothing to the
+ *    database, by design (see the header). The function under test takes the
+ *    rows array and returns a rows array, so it is tested at exactly that
+ *    boundary, with the shipping value copied byte-for-byte out of the real
+ *    1.19.373 staging render `REVIEW-SEQ-STAGING\rs373-day0.html` line 152.
+ *
+ * ⚠ STATED PLAINLY: this proves the transform. It does NOT prove the
+ *   rendered email, because nothing here renders one. The rendered proof is
+ *   Gandalf's re-render on staging.
+ */
+
+$bhp_vce_pickup_value = 'Collection from <strong>Author hand-delivery at the Dallas Harris Elementary visit (September 3)</strong>:<br>Andrew brings the signed books to Dallas Harris Elementary on Thursday, September 3. Nothing is posted to your home, and there is no shipping charge. Visit time: 10:10 AM.';
+
+bhp_vce_assert(
+	function_exists( 'bhp_visit_email_shorten_pickup_row' ) && function_exists( 'bhp_visit_email_pickup_short_label' ),
+	'⭐⭐ the day-0 shipping-row shortener and its label helper are loaded',
+	$failures
+);
+
+$bhp_vce_short = function_exists( 'bhp_visit_email_pickup_short_label' )
+	? bhp_visit_email_pickup_short_label( $bhp_vce_pickup_value )
+	: '';
+
+/*
+ * ⛔ THE STRING IS THE APPROVED PICKUP LABEL AND NOTHING ELSE. It is
+ *    `bhp_school_pickup_label()`'s own output, which the bundle plugin marks
+ *    APPROVED COPY, CARRIED FORWARD BYTE-IDENTICAL. ⛔ No new customer-facing
+ *    sentence is minted anywhere in this change, and this assertion is what
+ *    keeps it that way.
+ */
+bhp_vce_assert(
+	'Author hand-delivery at the Dallas Harris Elementary visit (September 3)' === $bhp_vce_short,
+	'⭐⭐ the shortened label is the APPROVED pickup label, verbatim (got: ' . $bhp_vce_short . ')',
+	$failures
+);
+
+bhp_vce_assert(
+	false === strpos( $bhp_vce_short, 'Andrew brings the signed' )
+		&& false === strpos( $bhp_vce_short, 'Visit time' )
+		&& false === strpos( $bhp_vce_short, 'Collection from' ),
+	'⭐ the forty-word checkout explanation and the "Collection from" prefix are gone',
+	$failures
+);
+
+$bhp_vce_rows_pickup = array(
+	'cart_subtotal' => array(
+		'label' => 'Subtotal:',
+		'value' => '$11.99',
+	),
+	'shipping'      => array(
+		'label' => 'Hand delivery: Author hand-delivery at the Dallas Harris Elementary visit (September 3)',
+		'value' => $bhp_vce_pickup_value,
+	),
+	'order_total'   => array(
+		'label' => 'Total:',
+		'value' => '$12.71',
+	),
+);
+
+$bhp_vce_out = function_exists( 'bhp_visit_email_shorten_pickup_row' )
+	? bhp_visit_email_shorten_pickup_row( $bhp_vce_rows_pickup, null )
+	: $bhp_vce_rows_pickup;
+
+bhp_vce_assert(
+	isset( $bhp_vce_out['shipping']['value'] )
+		&& false !== strpos( $bhp_vce_out['shipping']['value'], 'text-align:left' ),
+	'⭐⭐ the value cell is left-aligned by a wrapper the totals filter can actually reach',
+	$failures
+);
+
+bhp_vce_assert(
+	isset( $bhp_vce_out['shipping']['value'] )
+		&& false !== strpos( $bhp_vce_out['shipping']['value'], 'Author hand-delivery at the Dallas Harris Elementary visit (September 3)' )
+		&& false === strpos( $bhp_vce_out['shipping']['value'], 'Andrew brings the signed' ),
+	'⭐ the rendered value is the short label and carries no second paragraph',
+	$failures
+);
+
+/*
+ * ⛔ THE `<th>` STOPS DUPLICATING THE PICKUP NAME. It arrives as
+ *    "Hand delivery: Author hand-delivery at the ... (September 3)" and is cut
+ *    back to the plugin's own shared phrase.
+ */
+bhp_vce_assert(
+	isset( $bhp_vce_out['shipping']['label'] ) && 'Hand delivery:' === $bhp_vce_out['shipping']['label'],
+	'⭐ the row label is trimmed to "Hand delivery:" (got: ' . ( isset( $bhp_vce_out['shipping']['label'] ) ? $bhp_vce_out['shipping']['label'] : '(unset)' ) . ')',
+	$failures
+);
+
+/*
+ * ⛔⛔ NOTHING ELSE IN THE TABLE MOVES. No price, no tax, no total, no row
+ *     order. If this ever fails, the change has stopped being cosmetic.
+ */
+bhp_vce_assert(
+	$bhp_vce_out['cart_subtotal'] === $bhp_vce_rows_pickup['cart_subtotal']
+		&& $bhp_vce_out['order_total'] === $bhp_vce_rows_pickup['order_total']
+		&& array_keys( $bhp_vce_out ) === array_keys( $bhp_vce_rows_pickup ),
+	'⛔ no other row, value or ordering is touched',
+	$failures
+);
+
+/*
+ * ⛔⛔ THE ORDINARY ORDER EMAIL IS THE ONE THAT MUST NOT CHANGE. Even if this
+ *     callback were somehow attached to a posted order, the "Shipping:" label
+ *     makes it a no-op. The template scoping is the first guard; this is the
+ *     second, and two guards is deliberate.
+ */
+$bhp_vce_rows_shipped = array(
+	'cart_subtotal' => array(
+		'label' => 'Subtotal:',
+		'value' => '$27.98',
+	),
+	'shipping'      => array(
+		'label' => 'Shipping:',
+		'value' => 'Flat rate',
+	),
+	'order_total'   => array(
+		'label' => 'Total:',
+		'value' => '$31.97',
+	),
+);
+
+bhp_vce_assert(
+	function_exists( 'bhp_visit_email_shorten_pickup_row' )
+		&& bhp_visit_email_shorten_pickup_row( $bhp_vce_rows_shipped, null ) === $bhp_vce_rows_shipped,
+	'⛔⛔ a posted, charged order ("Shipping:") passes through byte-identical',
+	$failures
+);
+
+/*
+ * ⛔ AND SO DOES ANYTHING THAT IS NOT A TOTALS ARRAY AT ALL. A filter that
+ *    fatals on unexpected input takes the whole email with it.
+ */
+bhp_vce_assert(
+	function_exists( 'bhp_visit_email_shorten_pickup_row' )
+		&& array() === bhp_visit_email_shorten_pickup_row( array(), null )
+		&& 'nope' === bhp_visit_email_shorten_pickup_row( 'nope', null ),
+	'⛔ empty and non-array input are returned unchanged rather than fataling',
+	$failures
+);
+
+/*
+ * ⛔ A PICKUP ROW WITH NOTHING USABLE IN IT IS LEFT ALONE. Nothing is ever
+ *    invented to fill an empty short label.
+ */
+$bhp_vce_rows_blank = array(
+	'shipping' => array(
+		'label' => 'Hand delivery:',
+		'value' => '',
+	),
+);
+
+bhp_vce_assert(
+	function_exists( 'bhp_visit_email_shorten_pickup_row' )
+		&& bhp_visit_email_shorten_pickup_row( $bhp_vce_rows_blank, null ) === $bhp_vce_rows_blank,
+	'⛔ an empty pickup value is left exactly as WooCommerce built it',
+	$failures
+);
+
+/*
+ * ⭐ THE ONE-LINE SEAM IS REAL. If Andrew prefers the brief's first-choice
+ *    literal, "Hand delivered at the school visit", it is this filter and no
+ *    build at all. Asserted so the seam cannot rot unnoticed.
+ */
+$bhp_vce_seam = static function () {
+	return 'Hand delivered at the school visit';
+};
+
+add_filter( 'bhp_visit_email_pickup_short_label', $bhp_vce_seam, 99 );
+$bhp_vce_seamed = function_exists( 'bhp_visit_email_shorten_pickup_row' )
+	? bhp_visit_email_shorten_pickup_row( $bhp_vce_rows_pickup, null )
+	: array();
+remove_filter( 'bhp_visit_email_pickup_short_label', $bhp_vce_seam, 99 );
+
+bhp_vce_assert(
+	isset( $bhp_vce_seamed['shipping']['value'] )
+		&& false !== strpos( $bhp_vce_seamed['shipping']['value'], 'Hand delivered at the school visit' ),
+	'⭐ bhp_visit_email_pickup_short_label swaps the label without a build',
+	$failures
+);
+
+/*
+ * ⛔⛔ THE PLUGIN IS BYTE-UNTOUCHED BY THIS ROUND. The approved label still
+ *     lives there and is still produced there. If this assertion ever fails,
+ *     the copy has been moved into the theme and the approval trail is broken.
+ */
+bhp_vce_assert(
+	function_exists( 'bhp_school_pickup_label' ),
+	'⛔ the approved pickup label is still produced by the bundle plugin, not by the theme',
+	$failures
+);
+
+
 echo "\n========================================\n";
 if ( empty( $failures ) ) {
 	echo "ALL ASSERTIONS PASSED\n";

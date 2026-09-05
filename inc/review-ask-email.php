@@ -2969,58 +2969,37 @@ function bhp_review_ask_star_css() {
 }
 
 /**
- * The hero photograph for one order, or an empty array when there is none.
+ * The hero mapping table, and the general-hero constant that feeds it.
  *
- * ⭐ THE MAPPING IS AN ARRAY KEYED BY VISIT SLUG, AND IT IS FILTERABLE, so the
- *    next school visit is one filter callback rather than a deploy. Legolas's
- *    spec §7 assigns the two Dallas Harris frames: frame 02 shows the printed
- *    book being read and suits the review ask, frame 01 shows the whole room
- *    and suits the day-0 thank-you.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.374 · WHY THIS IS ITS OWN FUNCTION NOW, AND IT IS A REAL DEFECT FIX
+ * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔ ANY OTHER SLUG, AND EVERY WEB ORDER, GETS THE GENERAL FRAME. A photograph
- *    captioned "Dallas Harris Elementary" sent to a family that was never at
- *    Dallas Harris is a false statement in a picture, which is the same
- *    failure class as a false statement in a sentence.
+ * ⛔ THE 1.19.373 STAGING FAILURE, VERBATIM: *"The general row is driven by
+ *    the constant, not by a second literal"* FAILED. ⛔ IT WAS NOT A WRONG
+ *    ASSERTION AND THE MAP WAS NOT WRONG EITHER. The map literal lived INSIDE
+ *    `bhp_review_ask_hero()`, so the only way to see it was to call that
+ *    resolver and let it pick one row. The suite asked the only question it
+ *    could ask from outside — `apply_filters( 'bhp_review_ask_hero_map',
+ *    array() )` — and got back `array()`, because a filter with no callbacks
+ *    returns its default and the default was an empty array. ⭐ THE TABLE WAS
+ *    UNREADABLE, NOT INCORRECT, and an unreadable table cannot be guarded.
  *
- * ⛔ TOUCH 2 HAS NO HERO. Legolas §7: it is the short last note, and *"a
- *    photograph would make it look like a bigger ask than it is."*
+ * ⭐ THE ROOT FIX IS THE TABLE MOVING OUT, NOT THE ASSERTION MOVING ON. The
+ *    map and the constant now live here, one callable returns them, and both
+ *    the resolver and the suite read the SAME array. A second literal cannot
+ *    drift in behind the assertion any more, because there is now exactly one
+ *    place a hero filename can be written.
  *
- * ⛔⛔ READ THIS BEFORE TOUCHING ANY FILE WITH `05` IN THE NAME. TWO DIFFERENT
- *     IMAGES ARE NUMBERED 05 AND ONLY ONE OF THEM IS ALLOWED TO EXIST HERE.
+ * ⚠ THE FILTER NAME, ITS SIGNATURE AND ITS DEFAULT ROWS ARE UNCHANGED. Any
+ *   `bhp_review_ask_hero_map` callback written against 1.19.370-373 keeps
+ *   working byte-identically; this moved where the default array is built,
+ *   not what it contains or when the filter fires.
  *
- *   ⛔ `read-aloud-dallas-harris-2026-09-03-05.jpg` — GALLERY frame 05, the
- *      original in `ANDREW-REVIEW\2026-09-04\gallery-dallas\web\`. It shows a
- *      second adult whose consent is not on record and a legible visitor
- *      badge. `CYCLE179-DES-29(b)`. ⛔ IT IS NOT SHIPPED, IT IS NOT CROPPED,
- *      AND IT MUST NOT BE USED ON ANY CUSTOMER-FACING SURFACE UNTIL CONSENT IS
- *      ON RECORD. That decision is still open.
- *
- *   ⭐ `hero-dallas-harris-2026-09-03-05.jpg` — a DIFFERENT image. Legolas's
- *      output numbering is deliberately independent of the gallery numbering
- *      (`CYCLE179-DES-REVIEW-EMAIL.md` §A3): this one is cropped from gallery
- *      frame 03 and no child is in the frame at all. It is shipped, and it is
- *      NOT mapped by default.
- *
- * ⚠ ONE OPEN FLAG ON THAT FILE, `CYCLE179-DES-31`: it makes Andrew's own
- *   "About the Author" slide the largest element in the frame. Legolas read
- *   the slide at full resolution and found none of the four flagged
- *   specifics, but it is Andrew's own copy on display in a customer-facing
- *   image. ⛔ SHIPPING THE FILE IS NOT USING IT. Mapping 05 into `touch1` or
- *   `day0` needs Andrew's word first.
- *
- * ⚠ `CYCLE179-DES-32` IS ALSO OPEN and is not resolved here: the consent list
- *   Andrew gave named gallery frames 01, 03, 04, 05, and the currently
- *   shipping `hero-dallas-harris-2026-09-03-01.jpg` is cropped from gallery
- *   frame 02, which that list does not name. Recorded, not decided.
- *
- * @since 1.19.370
- * @param WC_Order|mixed $order   Order.
- * @param string         $context 'touch1', 'touch2' or 'day0'.
- * @return array{url:string,alt:string,width:int}|array{} Empty when no hero.
+ * @since 1.19.374
+ * @return array Slug => array( 'touch1' => file, 'day0' => file ).
  */
-function bhp_review_ask_hero( $order, $context = 'touch1' ) {
-	$context = (string) $context;
-
+function bhp_review_ask_hero_map() {
 	/*
 	 * ⛔ THE CONSTANT IS DEFINED HERE RATHER THAN AT FILE SCOPE so that a
 	 *    `define()` in `wp-config.php` still wins: `defined()` is checked
@@ -3028,37 +3007,34 @@ function bhp_review_ask_hero( $order, $context = 'touch1' ) {
 	 */
 	if ( ! defined( 'BHP_EMAIL_GENERAL_HERO' ) ) {
 		/*
-		 * ⭐⭐ THE ONE LINE ANDREW'S ANSWER CHANGES.
+		 * ⭐⭐ FOUNDER SEAL 1027, 2026-09-05. Andrew Signore, verbatim
+		 *     (⛔ RELAYED through Gandalf, not heard first-hand):
+		 *     *"Faces toward the camera"*.
 		 *
-		 * ⛔ ALLOWED VALUES, BOTH SHIPPED, BOTH WITH ALT TEXT ON RECORD:
-		 *      'hero-read-aloud-general.jpg'        — the Dallas room. DEFAULT.
-		 *      'hero-read-aloud-general-adams.jpg'  — the Adams library.
+		 * ⭐ THAT PICKS THE ADAMS LIBRARY FRAME. Two candidates were shipped
+		 *    in 1.19.373 and neither was chosen then; the default deliberately
+		 *    did not move, and 1.19.373's suite asserted that it had not. This
+		 *    is the answer arriving, and it is the ONE line it changes.
+		 *
+		 * ⛔ SUPERSEDED, PRESERVED RATHER THAN DELETED. Through 1.19.373 this
+		 *    read `define( 'BHP_EMAIL_GENERAL_HERO', 'hero-read-aloud-general.jpg' );`
+		 *    — the Dallas cafeteria room, shipped by 1.19.370 — under the
+		 *    round-12 instruction *"default to hero-read-aloud-general.jpg
+		 *    until Andrew picks"*. He has picked.
+		 *
+		 * ⛔ ALLOWED VALUES, ALL SHIPPED, ALL WITH ALT TEXT ON RECORD:
+		 *      'hero-read-aloud-general-adams.jpg'  — the Adams library. DEFAULT.
+		 *      'hero-read-aloud-general.jpg'        — the Dallas room.
 		 *    (and either one's `-plain`, caption-free twin.)
 		 *
-		 * ⚠ PENDING SEAL. Round 12's brief considered defaulting to the Adams
-		 *   scene and explicitly decided against it: *"default to
-		 *   hero-read-aloud-general.jpg until Andrew picks"*. The default is
-		 *   therefore UNCHANGED from 1.19.370 and this is a no-op until he
-		 *   answers.
+		 * ⚠ THIS IS THE PICTURE THAT FRONTS EVERY UNMAPPED VISIT AND THE WHOLE
+		 *   WEB LANE. A visit with its own mapped row (Dallas Harris, Adams)
+		 *   is unaffected: those rows name their own files below.
 		 */
-		define( 'BHP_EMAIL_GENERAL_HERO', 'hero-read-aloud-general.jpg' );
+		define( 'BHP_EMAIL_GENERAL_HERO', 'hero-read-aloud-general-adams.jpg' );
 	}
 
-	if ( 'touch2' === $context ) {
-		return array();
-	}
-
-	/**
-	 * Filter the per-visit hero mapping.
-	 *
-	 * Keys are `_bhp_school_visit_slug` values, plus the reserved key
-	 * `general`. Each value is an array of `touch1` and `day0` file basenames
-	 * inside `assets/images/email/`.
-	 *
-	 * @since 1.19.370
-	 * @param array $map Slug => array( 'touch1' => file, 'day0' => file ).
-	 */
-	$map = (array) apply_filters(
+	return (array) apply_filters(
 		'bhp_review_ask_hero_map',
 		array(
 			/*
@@ -3116,19 +3092,22 @@ function bhp_review_ask_hero( $order, $context = 'touch1' ) {
 			),
 
 			/*
-			 * ⭐⭐ 1.19.373 · THE GENERAL HERO IS NOW A CHOICE, NOT A LITERAL.
+			 * ⭐⭐ 1.19.374 · THE GENERAL HERO IS THE ADAMS LIBRARY. SEAL 1027.
 			 *
-			 * ⛔ TWO CANDIDATES ARE SHIPPED AND ANDREW HAS PICKED NEITHER:
-			 *    `hero-read-aloud-general.jpg` (the Dallas room) and
-			 *    `hero-read-aloud-general-adams.jpg` (the Adams library).
-			 *    ⛔ THE DEFAULT DELIBERATELY DOES NOT MOVE — it is still the
-			 *    Dallas room, exactly as 1.19.370 shipped it. Switching the
-			 *    picture that fronts every unmapped visit and every web-lane
-			 *    ask is a founder decision, and it is PENDING, not made here.
+			 * ⭐ Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
+			 *    Gandalf, not heard first-hand): *"Faces toward the camera"*.
+			 *    Both candidates stay shipped; the DEFAULT is now
+			 *    `hero-read-aloud-general-adams.jpg`.
 			 *
-			 * ⭐ FLIPPING IT IS ONE CONSTANT: `BHP_EMAIL_GENERAL_HERO`, defined
-			 *    just above this function. No other line in the theme names a
-			 *    general hero file.
+			 * ⛔ SUPERSEDED, PRESERVED RATHER THAN DELETED. Through 1.19.373
+			 *    this comment read *"TWO CANDIDATES ARE SHIPPED AND ANDREW HAS
+			 *    PICKED NEITHER ... THE DEFAULT DELIBERATELY DOES NOT MOVE"*.
+			 *    That was true until seal 1027 and it is no longer true.
+			 *
+			 * ⭐ THESE TWO LINES ARE NOT LITERALS AND MUST NEVER BECOME ONE.
+			 *    They read `BHP_EMAIL_GENERAL_HERO`, defined at the top of this
+			 *    function. No other line in the theme names a general hero
+			 *    file, and the suite asserts that by reading THIS array.
 			 */
 			'general'                  => array(
 				'touch1' => BHP_EMAIL_GENERAL_HERO,
@@ -3136,6 +3115,84 @@ function bhp_review_ask_hero( $order, $context = 'touch1' ) {
 			),
 		)
 	);
+}
+
+/**
+ * The hero photograph for one order, or an empty array when there is none.
+ *
+ * ⭐ THE MAPPING IS AN ARRAY KEYED BY VISIT SLUG, AND IT IS FILTERABLE, so the
+ *    next school visit is one filter callback rather than a deploy. Legolas's
+ *    spec §7 assigns the two Dallas Harris frames: frame 02 shows the printed
+ *    book being read and suits the review ask, frame 01 shows the whole room
+ *    and suits the day-0 thank-you.
+ *
+ * ⛔ ANY OTHER SLUG, AND EVERY WEB ORDER, GETS THE GENERAL FRAME. A photograph
+ *    captioned "Dallas Harris Elementary" sent to a family that was never at
+ *    Dallas Harris is a false statement in a picture, which is the same
+ *    failure class as a false statement in a sentence.
+ *
+ * ⛔ TOUCH 2 HAS NO HERO. Legolas §7: it is the short last note, and *"a
+ *    photograph would make it look like a bigger ask than it is."*
+ *
+ * ⛔⛔ READ THIS BEFORE TOUCHING ANY FILE WITH `05` IN THE NAME. TWO DIFFERENT
+ *     IMAGES ARE NUMBERED 05 AND ONLY ONE OF THEM IS ALLOWED TO EXIST HERE.
+ *
+ *   ⛔ `read-aloud-dallas-harris-2026-09-03-05.jpg` — GALLERY frame 05, the
+ *      original in `ANDREW-REVIEW\2026-09-04\gallery-dallas\web\`. It shows a
+ *      second adult whose consent is not on record and a legible visitor
+ *      badge. `CYCLE179-DES-29(b)`. ⛔ IT IS NOT SHIPPED, IT IS NOT CROPPED,
+ *      AND IT MUST NOT BE USED ON ANY CUSTOMER-FACING SURFACE UNTIL CONSENT IS
+ *      ON RECORD. That decision is still open.
+ *
+ *   ⭐ `hero-dallas-harris-2026-09-03-05.jpg` — a DIFFERENT image. Legolas's
+ *      output numbering is deliberately independent of the gallery numbering
+ *      (`CYCLE179-DES-REVIEW-EMAIL.md` §A3): this one is cropped from gallery
+ *      frame 03 and no child is in the frame at all. It is shipped, and it is
+ *      NOT mapped by default.
+ *
+ * ⚠ ONE OPEN FLAG ON THAT FILE, `CYCLE179-DES-31`: it makes Andrew's own
+ *   "About the Author" slide the largest element in the frame. Legolas read
+ *   the slide at full resolution and found none of the four flagged
+ *   specifics, but it is Andrew's own copy on display in a customer-facing
+ *   image. ⛔ SHIPPING THE FILE IS NOT USING IT. Mapping 05 into `touch1` or
+ *   `day0` needs Andrew's word first.
+ *
+ * ⚠ `CYCLE179-DES-32` IS ALSO OPEN and is not resolved here: the consent list
+ *   Andrew gave named gallery frames 01, 03, 04, 05, and the currently
+ *   shipping `hero-dallas-harris-2026-09-03-01.jpg` is cropped from gallery
+ *   frame 02, which that list does not name. Recorded, not decided.
+ *
+ * @since 1.19.370
+ * @param WC_Order|mixed $order   Order.
+ * @param string         $context 'touch1', 'touch2' or 'day0'.
+ * @return array{url:string,alt:string,width:int}|array{} Empty when no hero.
+ */
+function bhp_review_ask_hero( $order, $context = 'touch1' ) {
+
+	/*
+	 * ⭐ 1.19.374 · THE MAP AND THE CONSTANT MOVED OUT, to
+	 *    `bhp_review_ask_hero_map()` directly above. ⛔ THE DEFINE IS NOT
+	 *    DROPPED: that function defines it before it builds the table, and
+	 *    this resolver calls it on every invocation, so
+	 *    `BHP_EMAIL_GENERAL_HERO` is defined at exactly the same moment it
+	 *    always was. Nothing about load order changed.
+	 */
+
+	if ( 'touch2' === $context ) {
+		return array();
+	}
+
+	/**
+	 * Filter the per-visit hero mapping.
+	 *
+	 * Keys are `_bhp_school_visit_slug` values, plus the reserved key
+	 * `general`. Each value is an array of `touch1` and `day0` file basenames
+	 * inside `assets/images/email/`.
+	 *
+	 * @since 1.19.370
+	 * @param array $map Slug => array( 'touch1' => file, 'day0' => file ).
+	 */
+	$map = bhp_review_ask_hero_map();
 
 	$slug = '';
 
@@ -3254,8 +3311,18 @@ function bhp_review_ask_hero_alt( $file ) {
 			return __( 'Andrew Signore sits reading aloud from an open book beneath a banner of paper pennants spelling A NEW CHAPTER BEGINS.', 'brave-hearts' );
 
 		/*
-		 * ⭐ THE SECOND GENERAL CANDIDATE. Shipped so the choice is real;
-		 *    ⛔ NOT the default — see `BHP_EMAIL_GENERAL_HERO`.
+		 * ⭐⭐ 1.19.374 · THIS IS THE DEFAULT GENERAL HERO. SEAL 1027,
+		 *     *"Faces toward the camera"*.
+		 *
+		 * ⛔ SUPERSEDED, PRESERVED: through 1.19.373 this read *"THE SECOND
+		 *    GENERAL CANDIDATE. Shipped so the choice is real; NOT the
+		 *    default"*. It is now the default. The Dallas-room string below it
+		 *    is kept in full, because that file is still shipped and is still
+		 *    one constant away.
+		 *
+		 * ⛔ THE STRING ITSELF IS UNCHANGED and is Legolas's, transcribed word
+		 *    for word in 1.19.373. No child is named, no count is claimed and no
+		 *    reaction is described.
 		 */
 		case 'hero-read-aloud-general-adams.jpg':
 			return __( 'Andrew Signore sits at the front of a school library speaking to first and second graders seated on the floor among the bookshelves. A morning read-aloud with first and second graders.', 'brave-hearts' );

@@ -879,3 +879,180 @@ function bhp_visit_email_body( $email ) {
 
 	return $out;
 }
+
+/* -------------------------------------------------------------------------
+ * ⭐⭐ 1.19.374 · SEAL 1025 · THE HAND-DELIVERY ROW IN THE DAY-0 ORDER SUMMARY
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Shorten and left-align the hand-delivery shipping row, day-0 email only.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔ WHAT WAS OBSERVED, IN A RENDER, NOT REASONED ABOUT
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * `REVIEW-SEQ-STAGING\rs373-day0.html` line 152, read byte-for-byte at this
+ * desk 2026-09-05. The totals table's shipping cell holds, right-aligned, in a
+ * column roughly 200px wide:
+ *
+ *   Collection from <strong>Author hand-delivery at the Dallas Harris
+ *   Elementary visit (September 3)</strong>:<br>Andrew brings the signed books
+ *   to Dallas Harris Elementary on Thursday, September 3. Nothing is posted to
+ *   your home, and there is no shipping charge. Visit time: 10:10 AM.
+ *
+ * That is forty-odd words ragged over four lines against the right edge, and
+ * the row's own `<th>` already says *"Hand delivery: Author hand-delivery at
+ * the Dallas Harris Elementary visit (September 3)"*. ⛔ THE PICKUP NAME IS
+ * PRINTED TWICE AND THE SENTENCE UNDERNEATH IS THE CHECKOUT'S EXPLANATION,
+ * which the day-0 email's own approved body has already given in full
+ * paragraphs above the table. Legolas's render note, founder seal 1025.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ WHAT THIS DELIBERATELY DOES NOT DO, AND WHY. READ BEFORE CHANGING IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ IT MINTS NO NEW CUSTOMER-FACING COPY. The round-13 brief offered the
+ *    literal *"Hand delivered at the school visit"* OR *"the shortest truthful
+ *    label the shipping method exposes"*. The second was taken. The string
+ *    this renders is `bhp_school_pickup_label()`'s own output, marked in
+ *    `plugins\brave-hearts-bundle-pricing\includes\school-visit-pickup.php`
+ *    as *"APPROVED COPY, CARRIED FORWARD BYTE-IDENTICAL FROM 1.8.49. A label a
+ *    parent reads while paying is not something a mechanism change gets to
+ *    reword on its own initiative."* Standing Rules §9: approved copy is
+ *    locked; propose changes, do not make them. ⭐ The alternative literal is
+ *    one filter callback away if Andrew prefers it. See the filter below.
+ *
+ * ⛔ IT TOUCHES NO PLUGIN FILE AND NO WOOCOMMERCE SETTING. No shipping method,
+ *    zone, rate, title or pickup location is created or edited. This is a
+ *    render-time override of one table cell in one email.
+ *
+ * ⛔ IT CANNOT REACH AN ORDINARY ORDER EMAIL. The callback is added
+ *    immediately before `woocommerce_email_order_details` in
+ *    `woocommerce/emails/customer-completed-order.php` and removed
+ *    immediately after, and only on the visit fork (`$bhp_visit_body`
+ *    non-empty). A web receipt never has it attached, and its shipping row is
+ *    byte-identical to 1.19.373.
+ *
+ * ⛔ IT REWRITES NOTHING BUT THE HAND-DELIVERY ROW. The guard is the row's own
+ *    label starting with the plugin's shared phrase "Hand delivery". A posted,
+ *    charged order says "Shipping:" and falls straight through untouched,
+ *    which also means that if the bundle plugin is inactive, this is a no-op.
+ *
+ * ⛔ NO PRICE, NO TAX, NO TOTAL AND NO ROW ORDER IS TOUCHED. Only the shipping
+ *    row's `value`, and only its presentation.
+ *
+ * ⚠ NOT VERIFIED: no render was produced from this build and there is no PHP
+ *   on this machine. The failure was observed in the 1.19.373 render; the fix
+ *   is stated as designed behaviour until Gandalf re-renders on staging.
+ *
+ * @since 1.19.374
+ * @param array    $total_rows Rows from `WC_Order::get_order_item_totals()`.
+ * @param mixed    $order      Order.
+ * @return array
+ */
+function bhp_visit_email_shorten_pickup_row( $total_rows, $order = null ) {
+	if ( ! is_array( $total_rows ) || ! isset( $total_rows['shipping'] ) || ! is_array( $total_rows['shipping'] ) ) {
+		return $total_rows;
+	}
+
+	$row   = $total_rows['shipping'];
+	$label = isset( $row['label'] ) ? (string) $row['label'] : '';
+	$value = isset( $row['value'] ) ? (string) $row['value'] : '';
+
+	/*
+	 * ⛔ THE GUARD. `bhp_school_pickup_order_totals_label()` in the bundle
+	 *    plugin rewrites this row's label to "Hand delivery:" for a pickup
+	 *    order and leaves "Shipping:" alone for every other order. Testing the
+	 *    label rather than the order means a posted order can never be
+	 *    relabelled by this function even if it somehow reached it.
+	 */
+	if ( 0 !== stripos( $label, 'Hand delivery' ) ) {
+		return $total_rows;
+	}
+
+	$short = bhp_visit_email_pickup_short_label( $value );
+
+	if ( '' === $short ) {
+		return $total_rows;
+	}
+
+	/**
+	 * Filter the shortened hand-delivery label used in the day-0 order summary.
+	 *
+	 * ⭐ THIS IS THE ONE-LINE SEAM. Returning
+	 *    `'Hand delivered at the school visit'` here gives the round-13
+	 *    brief's first-choice literal without a build. It is not the default
+	 *    because it would be new customer-facing copy and that is Andrew's.
+	 *
+	 * @since 1.19.374
+	 * @param string $short The approved pickup label, tags stripped.
+	 * @param mixed  $order Order.
+	 */
+	$short = (string) apply_filters( 'bhp_visit_email_pickup_short_label', $short, $order );
+
+	if ( '' === trim( $short ) ) {
+		return $total_rows;
+	}
+
+	/*
+	 * ⛔ THE LEFT-ALIGN IS A WRAPPER, NOT A CLASS CHANGE. WooCommerce's
+	 *    `emails/email-order-details.php` hard-codes `class="td
+	 *    text-align-right"` with an inline `text-align: right` on this cell,
+	 *    and a filter on the totals rows cannot reach either. A block-level
+	 *    element carrying its own `text-align:left` inside the cell can, and
+	 *    survives Emogrifier and `wp_kses_post()` intact.
+	 *
+	 * ⚠ Outlook desktop honours the inline style on the div, so this
+	 *   left-aligns there too. Nothing here depends on `@media`.
+	 */
+	$total_rows['shipping']['value'] = '<div style="text-align:left;">' . esc_html( trim( $short ) ) . '</div>';
+
+	/*
+	 * ⛔ THE `<th>` IS TRIMMED BACK TO THE PHRASE ITSELF. It arrives as
+	 *    "Hand delivery: Author hand-delivery at the ... visit (September 3)",
+	 *    which prints the pickup name a second time. Cutting at the first
+	 *    colon leaves the plugin's own label and duplicates nothing.
+	 */
+	$colon = strpos( $label, ':' );
+
+	if ( false !== $colon ) {
+		$total_rows['shipping']['label'] = substr( $label, 0, $colon + 1 );
+	}
+
+	return $total_rows;
+}
+
+/**
+ * The shortest truthful label inside a rendered pickup shipping value.
+ *
+ * ⭐ WooCommerce Blocks renders a local-pickup shipping value as
+ *    `Collection from <strong>NAME</strong>:<br>DETAILS`. NAME is
+ *    `bhp_school_pickup_label()`'s approved string; DETAILS is the checkout
+ *    explanation. This returns NAME.
+ *
+ * ⛔ TWO FALLBACKS, BOTH CONSERVATIVE. With no `<strong>`, everything after
+ *    the first `<br>` is dropped and the remainder is stripped of tags. With
+ *    nothing usable left, an empty string is returned and the caller leaves
+ *    the row exactly as WooCommerce built it. ⛔ NOTHING IS EVER INVENTED to
+ *    fill an empty result.
+ *
+ * @since 1.19.374
+ * @param string $value Rendered shipping value.
+ * @return string Plain text, or '' when nothing usable was found.
+ */
+function bhp_visit_email_pickup_short_label( $value ) {
+	$value = (string) $value;
+
+	if ( '' === trim( $value ) ) {
+		return '';
+	}
+
+	if ( preg_match( '#<strong[^>]*>(.*?)</strong>#is', $value, $m ) ) {
+		return trim( wp_strip_all_tags( $m[1] ) );
+	}
+
+	$first = preg_split( '#<br\s*/?>#i', $value );
+	$first = ( is_array( $first ) && isset( $first[0] ) ) ? $first[0] : $value;
+
+	return trim( wp_strip_all_tags( $first ) );
+}

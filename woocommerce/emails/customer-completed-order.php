@@ -185,12 +185,43 @@ if ( ! empty( $order->get_billing_first_name() ) ) {
 <?php
 
 /*
+ * ⭐⭐ 1.19.374 · SEAL 1025 · THE HAND-DELIVERY ROW, SHORTENED FOR DAY 0 ONLY.
+ *
+ * ⛔ THE SCOPING IS THE POINT AND IT IS DELIBERATELY MECHANICAL: the callback
+ *    is attached on the line before the action and detached on the line after
+ *    it, and only when `$bhp_visit_body` is non-empty. An ordinary web receipt
+ *    never has it attached at any moment, so its order summary is
+ *    byte-identical to 1.19.373. Nothing is left hooked after this template
+ *    returns, so a second email rendered in the same request is unaffected.
+ *
+ * ⛔ `$plain_text` IS NOT EXCLUDED AND THAT IS ON PURPOSE. The plain-text
+ *    email builds its totals from the same rows; a forty-word right-aligned
+ *    paragraph is a forty-word paragraph there too, and the shortened value's
+ *    wrapper div is stripped by WooCommerce's own plain-text conversion.
+ *
+ * ⚠ FALLBACK: if `inc/visit-completed-email.php` is not loaded, this block is
+ *   skipped entirely and the action fires exactly as it did before 1.19.374.
+ *
+ * Full rationale, including why no new copy was minted, is on
+ * `bhp_visit_email_shorten_pickup_row()`.
+ */
+$bhp_visit_shorten_row = ( ! empty( $bhp_visit_body ) && function_exists( 'bhp_visit_email_shorten_pickup_row' ) );
+
+if ( $bhp_visit_shorten_row ) {
+	add_filter( 'woocommerce_get_order_item_totals', 'bhp_visit_email_shorten_pickup_row', 99, 2 );
+}
+
+/*
  * @hooked WC_Emails::order_details() Shows the order details table.
  * @hooked WC_Structured_Data::generate_order_data() Generates structured data.
  * @hooked WC_Structured_Data::output_structured_data() Outputs structured data.
  * @since 2.5.0
  */
 do_action( 'woocommerce_email_order_details', $order, $sent_to_admin, $plain_text, $email );
+
+if ( $bhp_visit_shorten_row ) {
+	remove_filter( 'woocommerce_get_order_item_totals', 'bhp_visit_email_shorten_pickup_row', 99 );
+}
 
 /*
  * @hooked WC_Emails::order_meta() Shows order meta data.

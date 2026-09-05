@@ -349,10 +349,108 @@ foreach ( array(
 	'An honest review helps other kiddos learn from these books.',
 	'Feel free to email me any time at Andrew@braveheartspublishing.com',
 	'Thank you for taking a chance on a book by somebody you had never heard of.',
-	'Big Places. Brave Hearts.',
+	/*
+	 * ⛔⛔ ONE PHRASE REMOVED FROM THIS LIST 2026-09-05 (1.19.374), AND THE
+	 *     REPLACEMENT ASSERTION IS BELOW. The list asserted:
+	 *
+	 *         'Big Places. Brave Hearts.'
+	 *
+	 * ⚠ IT WAS BEING LOOKED FOR IN `$bhp_ra_all_text`, whose last two members
+	 *   are this set's `signoff` lines and its `signoff_tagline`. ⛔ SEAL 1007
+	 *   (1.19.371, applied to this legacy set in 1.19.373) EMPTIED BOTH: the
+	 *   plain sign-off and the plain tagline were removed from the copy sets so
+	 *   the letter ends on its own approved last line and the brand line is
+	 *   rendered ONCE, as the signature block's furniture, rather than twice.
+	 *   The pin was therefore asserting the presence of exactly the thing the
+	 *   founder decision removed, and it has been failing since 1.19.373.
+	 *
+	 * ⭐ THE PHRASE IS NOT GONE FROM THE EMAIL AND MUST NOT BE. It moved from
+	 *    the copy layer to the template layer. Asserting it in the copy is now
+	 *    wrong; asserting it in the SIGNATURE BLOCK is right, and that is what
+	 *    the block below does — all three lines of it, in order.
+	 *
+	 * ⛔ THE ASSERTION IS NOT DELETED, IT IS RELOCATED. Dropping it outright
+	 *    would leave the brand line guarded by nothing at all.
+	 */
 ) as $bhp_ra_phrase ) {
 	bhp_ra_ok( 'Approved phrase present: "' . substr( $bhp_ra_phrase, 0, 44 ) . '"', false !== strpos( $bhp_ra_all_text, $bhp_ra_phrase ) );
 }
+
+/* ---------------------------------------------------------------------------
+ * ⭐⭐ 1.19.374 · THE BRAND LINE, ASSERTED WHERE SEAL 1007 PUT IT
+ * ------------------------------------------------------------------------ */
+
+/*
+ * ⛔ SEAL 1007 DID NOT DELETE THE SIGN-OFF, IT MOVED IT. Andrew Signore /
+ *    Author | Brave Hearts Publishing / Big Places. Brave Hearts. is now
+ *    template furniture rendered by `bhp_review_ask_signature()` and
+ *    `bhp_review_ask_signature_html()`, shared by the review ask and the
+ *    visit day-0 email so the two cannot drift apart.
+ *
+ * ⚠ `CYCLE179-DES-29(a)` IS STILL OPEN and is NOT resolved by this test: the
+ *   approved copy signs off "Andrew" and ends at the P.S., while this block
+ *   carries a fuller signature below a rule, so the name appears twice. That
+ *   is a judgement call and it is Andrew's. This asserts what is built; it
+ *   does not declare the question settled.
+ */
+bhp_ra_ok(
+	'⭐⭐ The signature block exists as a function',
+	function_exists( 'bhp_review_ask_signature' )
+);
+
+$bhp_ra_sig = function_exists( 'bhp_review_ask_signature' ) ? (array) bhp_review_ask_signature() : array();
+
+bhp_ra_ok(
+	'⭐ Signature line 1 is the name: "Andrew Signore"',
+	isset( $bhp_ra_sig['name'] ) && 'Andrew Signore' === $bhp_ra_sig['name'],
+	'got: ' . ( isset( $bhp_ra_sig['name'] ) ? $bhp_ra_sig['name'] : '(unset)' )
+);
+
+bhp_ra_ok(
+	'⭐ Signature line 2 is the role: "Author | Brave Hearts Publishing"',
+	isset( $bhp_ra_sig['role'] ) && 'Author | Brave Hearts Publishing' === $bhp_ra_sig['role'],
+	'got: ' . ( isset( $bhp_ra_sig['role'] ) ? $bhp_ra_sig['role'] : '(unset)' )
+);
+
+bhp_ra_ok(
+	'⭐⭐ Signature line 3 is the brand line: "Big Places. Brave Hearts."',
+	isset( $bhp_ra_sig['brand'] ) && 'Big Places. Brave Hearts.' === $bhp_ra_sig['brand'],
+	'got: ' . ( isset( $bhp_ra_sig['brand'] ) ? $bhp_ra_sig['brand'] : '(unset)' )
+);
+
+/*
+ * ⛔ AND IT REACHES THE RENDERED BLOCK, not only the array. A correct array
+ *    behind a template that never prints it is the failure this suite exists
+ *    to catch.
+ */
+$bhp_ra_sig_html = function_exists( 'bhp_review_ask_signature_html' ) ? (string) bhp_review_ask_signature_html() : '';
+
+bhp_ra_ok(
+	'⭐⭐ All three lines render in the signature HTML, in order',
+	'' !== $bhp_ra_sig_html
+		&& false !== strpos( $bhp_ra_sig_html, 'Andrew Signore' )
+		&& false !== strpos( $bhp_ra_sig_html, 'Author | Brave Hearts Publishing' )
+		&& false !== strpos( $bhp_ra_sig_html, 'Big Places. Brave Hearts.' )
+		&& strpos( $bhp_ra_sig_html, 'Andrew Signore' ) < strpos( $bhp_ra_sig_html, 'Author | Brave Hearts Publishing' )
+		&& strpos( $bhp_ra_sig_html, 'Author | Brave Hearts Publishing' ) < strpos( $bhp_ra_sig_html, 'Big Places. Brave Hearts.' )
+);
+
+/*
+ * ⛔⛔ AND SEAL 1007 HOLDS: THE LEGACY SET NO LONGER CARRIES A PLAIN TAGLINE.
+ *     This is the other half of the correction, and without it a future edit
+ *     could re-add the tagline to the copy and print the brand line twice
+ *     without any test noticing.
+ */
+bhp_ra_ok(
+	'⛔ Seal 1007: the superseded 21-day set carries no plain-text tagline',
+	'' === trim( (string) $bhp_ra_copy['signoff_tagline'] ),
+	'got: ' . (string) $bhp_ra_copy['signoff_tagline']
+);
+
+bhp_ra_ok(
+	'⛔ ... and no plain-text sign-off lines either',
+	array() === array_filter( array_map( 'trim', (array) $bhp_ra_copy['signoff'] ), 'strlen' )
+);
 
 bhp_ra_ok( 'Exactly three review links', 3 === count( $bhp_ra_copy['links'] ) );
 
