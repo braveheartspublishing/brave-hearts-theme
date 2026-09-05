@@ -289,17 +289,44 @@ function bhp_review_rating_required_for($post_id) {
     return function_exists('wc_review_ratings_required') ? (bool) wc_review_ratings_required() : true;
 }
 
-/** The customer-facing wording for every failure mode. One place. */
+/**
+ * The customer-facing wording for every failure mode. One place.
+ *
+ * ⛔⛔ 1.19.367 (CYCLE179-LD-52 R6) — THESE STRINGS ARE ON THE PAGE ON EVERY
+ *     LOAD, NOT ONLY ON A FAILED SUBMIT. `template-parts/reviews/review-form.php`
+ *     prints this whole array as JSON into
+ *     `<script type="application/json" class="bhp-review-form__messages">` so
+ *     `assets/js/reviews.js` can show them client-side. That is why two em
+ *     dashes here failed the §10 rendered-page copy rail in
+ *     `tests/test-cycle179-review-seq.php` while a tag-stripped curl of the
+ *     public page showed none: `wp_strip_all_tags()` deletes `<script>` blocks
+ *     CONTENT AND ALL, so the stripped text never contained them. Anything
+ *     added to this array is customer-facing copy and obeys Standing Rules 608.
+ *
+ * ⛔ SUPERSEDED WORDING, PRESERVED so it is not restored from an older build:
+ *      'email_invalid' => "That email address does not look right [em dash]
+ *                          please check it."
+ *      'generic'       => "Your review could not be sent. Nothing you typed
+ *                          has been lost [em dash] please check the form below
+ *                          and try again."
+ *    Both carried an em dash. The promise in each is unchanged; only the dash
+ *    became a sentence break.
+ *
+ * ⚠ RAISED, NOT RESOLVED — CYCLE179-LD-53: 'author' reads *"so we know who the
+ *   review is from"*, a standalone "we" that Standing Rules 9.1 forbids. It is
+ *   OUTSIDE the R6 brief (em/en dashes only) so it was NOT edited. §10's "we"
+ *   assertion cannot see it for the same `wp_strip_all_tags()` reason above.
+ */
 function bhp_review_error_messages() {
     return [
         'rating'        => __('Please choose a star rating.', 'brave-hearts'),
         'comment'       => __('Please write a sentence or two about how the book went for your reader.', 'brave-hearts'),
         'author'        => __('Please add your name, so we know who the review is from.', 'brave-hearts'),
         'email'         => __('Please add your email address. It is never published and never added to a mailing list.', 'brave-hearts'),
-        'email_invalid' => __('That email address does not look right — please check it.', 'brave-hearts'),
+        'email_invalid' => __('That email address does not look right. Please check it.', 'brave-hearts'),
         'duplicate'     => __('It looks as though that exact review has already been sent. Only one copy is needed.', 'brave-hearts'),
         'flood'         => __('That arrived very soon after your last one. Please wait a moment and send it again.', 'brave-hearts'),
-        'generic'       => __('Your review could not be sent. Nothing you typed has been lost — please check the form below and try again.', 'brave-hearts'),
+        'generic'       => __('Your review could not be sent. Nothing you typed has been lost. Please check the form below and try again.', 'brave-hearts'),
     ];
 }
 

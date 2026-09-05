@@ -75,7 +75,13 @@ get_header();
         <?php if ($submitted) : ?>
 
             <div id="bhp-review-thanks" class="bhp-review-thanks bhp-review-thanks--page" role="status" tabindex="-1">
-                <h2 class="bhp-review-thanks__heading"><?php esc_html_e('Thank you — your review has been sent.', 'brave-hearts'); ?></h2>
+                <?php /* ⛔ 1.19.367 (CYCLE179-LD-52 R6) · SUPERSEDED STRING,
+                         PRESERVED: "Thank you [em dash] your review has been
+                         sent." The em dash became a full stop. Standing
+                         Rules 608. This is the string §10 of
+                         tests/test-cycle179-review-seq.php named as
+                         CYCLE179-LD-51 "RAISED, NOT RESOLVED" in 1.19.366. */ ?>
+                <h2 class="bhp-review-thanks__heading"><?php esc_html_e('Thank you. Your review has been sent.', 'brave-hearts'); ?></h2>
                 <p><?php esc_html_e('It is held until it has been read, so it will not appear on the site straight away. Nothing is edited: reviews are published as written, or not published.', 'brave-hearts'); ?></p>
                 <p class="bhp-review-page__back">
                     <a href="<?php echo esc_url(get_permalink($target)); ?>">

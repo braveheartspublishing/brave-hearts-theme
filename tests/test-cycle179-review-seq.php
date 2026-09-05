@@ -1587,14 +1587,31 @@ bhp_rs_ok( 'The four registry options were restored to their pre-run values', tr
  *      copy and the store does not get to rewrite them, so this section reads
  *      the FORM — which is the whole of the page's own voice — and not the
  *      section.
- *   2. THE POST-SUBMIT "THANKS" BRANCH in
- *      `template-parts/reviews/standalone-review-page.php`, which still reads
- *      *"Thank you [em dash] your review has been sent."* That string is
- *      OUTSIDE the round-5 brief ("no other copy touched"), so it was NOT
- *      edited and is NOT asserted. ⛔ RAISED, NOT RESOLVED: CYCLE179-LD-51.
- *      It is named here so its absence from these assertions is a decision on
- *      the record and not an oversight that makes this section look greener
- *      than it is.
+ *   2. THE POST-SUBMIT "THANKS" BRANCH. ⭐ RESOLVED IN 1.19.367 — CYCLE179-LD-51
+ *      is closed. Both copies of *"Thank you [em dash] your review has been
+ *      sent."* (`template-parts/reviews/review-section.php` and
+ *      `template-parts/reviews/standalone-review-page.php`) now read *"Thank
+ *      you. Your review has been sent."* That branch only renders after a real
+ *      POST, so it cannot be reached by rendering the form here; it is
+ *      asserted at SOURCE level at the end of this section instead, and the
+ *      section says so rather than letting a source pin masquerade as a
+ *      render pin.
+ *
+ * ⛔⛔ 1.19.367 — WHY THIS SECTION RENDERS LOGGED OUT, AND WHY IT DID NOT BEFORE.
+ *     THE ROOT CAUSE OF THE 1.19.366 PRIVACY-LINE FAILURE. This suite is run
+ *     `--user=1` (see the header). `template-parts/reviews/review-form.php`
+ *     wraps the name field, the email field AND the privacy sentence in
+ *     `if ( ! is_user_logged_in() )`. So under `--user=1` the privacy line was
+ *     never rendered at all, and the verbatim pin below was failing on a
+ *     sentence that is present and correct for every real reader — a curl of
+ *     the public page shows it verbatim. The moderation line sits OUTSIDE that
+ *     guard, which is exactly why it passed while its twin failed. It was not
+ *     entity encoding, not whitespace collapsing and not the wrong element.
+ *
+ *     ⭐ The fix is to assert the state a buyer is actually in. Nobody arrives
+ *        here from a review-ask email logged in as the shop administrator, so
+ *        the current user is dropped to 0 for the render and restored
+ *        immediately afterwards — §11's teardown below needs its capabilities.
  * ====================================================================== */
 
 bhp_rs_head( '§10 The review page copy rail' );
@@ -1603,7 +1620,29 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
 	bhp_rs_ok( 'SKIPPED: bhp_review_render_form() is not loaded', true );
 } else {
 	$bhp_rs_page_key = bhp_review_ask_first_chapter_book_key( $bhp_rs_v1 );
-	$bhp_rs_page     = bhp_review_render_form( $bhp_rs_page_key, 'standalone' );
+
+	$bhp_rs_prev_user = get_current_user_id();
+	wp_set_current_user( 0 );
+	$bhp_rs_page = bhp_review_render_form( $bhp_rs_page_key, 'standalone' );
+	wp_set_current_user( $bhp_rs_prev_user );
+
+	/*
+	 * ⛔ THIS ASSERTION MUST BE ABLE TO FAIL. It reads the render for the email
+	 *    input that only exists inside the `! is_user_logged_in()` guard, so it
+	 *    goes red the moment somebody runs this section logged in again — which
+	 *    is the exact 1.19.366 failure. A check on the user id alone would be a
+	 *    tautology dressed up as evidence.
+	 */
+	bhp_rs_ok(
+		'⛔ The render really was logged out: the guarded email field is present',
+		false !== strpos( (string) $bhp_rs_page, 'name="email"' ),
+		'the ! is_user_logged_in() block did not render, so the privacy pin below cannot mean anything'
+	);
+	bhp_rs_ok(
+		'⛔ ...and the admin user was restored for the §11 teardown',
+		get_current_user_id() === $bhp_rs_prev_user,
+		'expected user ' . $bhp_rs_prev_user . ', got ' . get_current_user_id()
+	);
 
 	bhp_rs_ok(
 		'⭐ The review page the engine sends every buyer to actually rendered',
@@ -1615,6 +1654,19 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
 	 * ⛔ ASSERTED ON THE RENDERED HTML, NOT ON THE TEMPLATE SOURCE. A pin
 	 *    against the file would pass on a string that never reaches a reader
 	 *    and fail on a comment that does not.
+	 *
+	 * ⛔⛔ 1.19.367 — WHAT THIS ACTUALLY CAUGHT IN 1.19.366, recorded because a
+	 *     tag-stripped curl of the same public page reported ZERO em dashes and
+	 *     the disagreement looked like a broken test. It was not. The form
+	 *     prints `bhp_review_error_messages()` as JSON into
+	 *     `<script type="application/json" class="bhp-review-form__messages">`
+	 *     for `assets/js/reviews.js`, and two of those strings carried em
+	 *     dashes (`email_invalid`, `generic` — `inc/reviews.php`). This
+	 *     assertion reads the RAW render and saw them; `wp_strip_all_tags()`
+	 *     deletes `<script>` blocks content and all, so the stripped text did
+	 *     not. ⭐ The raw check is the correct one: those strings are shown to
+	 *     the reviewer by JS, so they are customer-facing copy under Standing
+	 *     Rules 608. Both were reworded in 1.19.367.
 	 */
 	bhp_rs_ok(
 		'⛔⛔ No em dash anywhere in the rendered review page',
@@ -1669,6 +1721,72 @@ if ( ! function_exists( 'bhp_review_render_form' ) ) {
 		bhp_rs_ok(
 			'⛔⛔ "Every review is read before it appears" is TRUE: the moderation hold is wired',
 			has_filter( 'pre_comment_approved', 'bhp_review_force_moderation' ) !== false
+		);
+	}
+
+	/*
+	 * ⭐ 1.19.367 — THE TWO BRANCHES A RENDER CANNOT REACH, asserted at SOURCE
+	 *    level and labelled as such so nobody reads them as render evidence.
+	 *
+	 *      a) The post-submit "thanks" heading (CYCLE179-LD-51) needs a real
+	 *         POST and a `$submitted` flag.
+	 *      b) The rating summary in `review-section.php` renders only when
+	 *         $count > 0 && $average > 0. Staging holds every review for
+	 *         moderation by construction, so the approved count is 0 and that
+	 *         line is unreachable on staging at all. It carried an em dash from
+	 *         1.19.162 until 1.19.367 for exactly that reason.
+	 *
+	 * ⚠ RAISED, NOT RESOLVED — CYCLE179-LD-53. The "we" assertion above runs on
+	 *   `wp_strip_all_tags()` output, so it CANNOT see the JSON messages block.
+	 *   `bhp_review_error_messages()['author']` reads *"so we know who the
+	 *   review is from"* — a standalone "we" that Standing Rules 9.1 forbids
+	 *   and that is shown to reviewers by `assets/js/reviews.js`. It is outside
+	 *   the R6 brief (em/en dashes only) and was NOT edited. Named here so its
+	 *   absence is a decision on the record, not an oversight.
+	 */
+	$bhp_rs_src_files = [
+		get_stylesheet_directory() . '/template-parts/reviews/review-section.php',
+		get_stylesheet_directory() . '/template-parts/reviews/standalone-review-page.php',
+	];
+	foreach ( $bhp_rs_src_files as $bhp_rs_src_file ) {
+		$bhp_rs_src = file_exists( $bhp_rs_src_file ) ? (string) file_get_contents( $bhp_rs_src_file ) : '';
+		bhp_rs_ok(
+			'⭐ SOURCE PIN (not a render): ' . basename( $bhp_rs_src_file ) . ' says "Thank you. Your review has been sent."',
+			false !== strpos( $bhp_rs_src, 'Thank you. Your review has been sent.' ),
+			'file unreadable or the approved 1.19.367 thanks wording is absent'
+		);
+		/*
+		 * ⛔ NOT a blanket em-dash scan of the file: both files are thick with
+		 *    docblocks that legitimately use em dashes, and comments are not
+		 *    copy. The superseded STRINGS are pinned by absence instead, which
+		 *    is what actually catches a restore from an older build.
+		 */
+		bhp_rs_ok(
+			'⛔ SOURCE PIN (not a render): the superseded thanks string is gone from ' . basename( $bhp_rs_src_file ),
+			false === strpos( $bhp_rs_src, "esc_html_e('Thank you \xe2\x80\x94" ),
+			'the em-dash thanks heading was restored in ' . basename( $bhp_rs_src_file )
+		);
+	}
+
+	$bhp_rs_section_src = get_stylesheet_directory() . '/template-parts/reviews/review-section.php';
+	$bhp_rs_section     = file_exists( $bhp_rs_section_src ) ? (string) file_get_contents( $bhp_rs_section_src ) : '';
+	bhp_rs_ok(
+		'⛔ SOURCE PIN (not a render): the rating summary line carries no em dash',
+		false === strpos( $bhp_rs_section, "out of 5 \xe2\x80\x94 from" )
+			&& false !== strpos( $bhp_rs_section, 'out of 5, from %2$s reader review' ),
+		'the $count > 0 rating summary is unreachable on staging, so only a source pin can hold it'
+	);
+
+	$bhp_rs_msg_dash = false;
+	if ( function_exists( 'bhp_review_error_messages' ) ) {
+		foreach ( bhp_review_error_messages() as $bhp_rs_msg ) {
+			if ( false !== strpos( (string) $bhp_rs_msg, "\xe2\x80\x94" ) || false !== strpos( (string) $bhp_rs_msg, "\xe2\x80\x93" ) ) {
+				$bhp_rs_msg_dash = true;
+			}
+		}
+		bhp_rs_ok(
+			'⛔⛔ No em or en dash in any bhp_review_error_messages() string (they are printed as JSON on every page load)',
+			false === $bhp_rs_msg_dash
 		);
 	}
 }

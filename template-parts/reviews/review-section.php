@@ -59,9 +59,19 @@ $show_verified_label = 'yes' === get_option('woocommerce_review_rating_verificat
                     <?php echo bhp_review_stars_html($average); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in bhp_review_stars_html(). ?>
                     <span class="bhp-review-section__average">
                         <?php
+                        /*
+                         * ⛔ 1.19.367 (CYCLE179-LD-52 R6) — SUPERSEDED WORDING,
+                         *    PRESERVED: "%1$s out of 5 [em dash] from %2$s
+                         *    reader review" / "...reader reviews". The em dash
+                         *    became a comma; the sentence is otherwise
+                         *    identical. This line renders ONLY when
+                         *    $count > 0 && $average > 0, which is why a curl of
+                         *    the review page on staging (no approved reviews)
+                         *    never showed it. Standing Rules 608.
+                         */
                         echo esc_html(sprintf(
                             /* translators: 1: average rating to one decimal place, 2: number of reviews. */
-                            _n('%1$s out of 5 — from %2$s reader review', '%1$s out of 5 — from %2$s reader reviews', $count, 'brave-hearts'),
+                            _n('%1$s out of 5, from %2$s reader review', '%1$s out of 5, from %2$s reader reviews', $count, 'brave-hearts'),
                             number_format_i18n($average, 1),
                             number_format_i18n($count)
                         ));
@@ -83,7 +93,12 @@ $show_verified_label = 'yes' === get_option('woocommerce_review_rating_verificat
 
         <?php if ($submitted) : ?>
             <div id="bhp-review-thanks" class="bhp-review-thanks" role="status" tabindex="-1">
-                <h3 class="bhp-review-thanks__heading"><?php esc_html_e('Thank you — your review has been sent.', 'brave-hearts'); ?></h3>
+                <?php /* ⛔ 1.19.367 (CYCLE179-LD-52 R6) · SUPERSEDED STRING,
+                         PRESERVED: "Thank you [em dash] your review has been
+                         sent." The em dash became a full stop. Standing
+                         Rules 608. Raised as CYCLE179-LD-51 in 1.19.366 and
+                         deliberately left unfixed there; fixed here. */ ?>
+                <h3 class="bhp-review-thanks__heading"><?php esc_html_e('Thank you. Your review has been sent.', 'brave-hearts'); ?></h3>
                 <p><?php esc_html_e('It is held until it has been read, so it will not appear on this page straight away. Nothing is edited: reviews are published as written, or not published.', 'brave-hearts'); ?></p>
             </div>
         <?php endif; ?>
