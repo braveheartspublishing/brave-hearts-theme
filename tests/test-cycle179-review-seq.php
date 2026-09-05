@@ -4255,6 +4255,168 @@ bhp_rs_ok(
 	'got: ' . bhp_review_ask_copy( 2, $bhp_rs_r14_visit[3] )['stars_caption']
 );
 
+bhp_rs_head( '§18 ROUND 15: SEAL 1042 receipt table + the day-0 plural sentence' );
+
+/*
+ * ⛔⛔ §18.1 THE PLURAL GRAMMAR. This closes the open defect the round-14
+ *     deliverable reported and did not fix. The fixtures are the round-14
+ *     visit orders, already asserted above to hold 1, 2 and 3 chapter books.
+ *
+ * ⚠ THE PLURAL BRANCH IS A GRAMMAR-ONLY ADJUSTMENT TO APPROVED FOUNDER COPY
+ *   AND IS AWAITING ANDREW'S CONFIRMATION. These assertions prove the build
+ *   does what the brief asked; they do not stand in for his approval.
+ */
+$bhp_rs_r15_one  = 'I want to tell you why %s is built the way it is, because it is built for one particular kid.';
+$bhp_rs_r15_many = 'I want to tell you why %s are built the way they are, because they are built for one particular kid.';
+
+foreach ( array( 1, 2, 3 ) as $bhp_rs_r15_n ) {
+	$bhp_rs_r15_o    = $bhp_rs_r14_visit[ $bhp_rs_r15_n ];
+	$bhp_rs_r15_vals = bhp_visit_email_merge_values( $bhp_rs_r15_o );
+	$bhp_rs_r15_got  = isset( $bhp_rs_r15_vals['{WhyBuiltLine}'] ) ? $bhp_rs_r15_vals['{WhyBuiltLine}'] : '(unset)';
+	$bhp_rs_r15_want = sprintf(
+		( 1 === $bhp_rs_r15_n ) ? $bhp_rs_r15_one : $bhp_rs_r15_many,
+		$bhp_rs_r14_expect[ $bhp_rs_r15_n ]
+	);
+
+	bhp_rs_ok(
+		( 1 === $bhp_rs_r15_n ? '⭐⭐ ONE book: the sentence is the 1.19.375 string, byte for byte' : '⭐ ' . $bhp_rs_r15_n . ' books: the sentence agrees in number' ),
+		$bhp_rs_r15_want === $bhp_rs_r15_got,
+		'want: ' . $bhp_rs_r15_want . ' | got: ' . $bhp_rs_r15_got
+	);
+}
+
+/*
+ * ⛔ NO SINGULAR VERB OR PRONOUN SURVIVES ON A MULTI-BOOK ORDER. The three
+ *    disagreements the round-14 render exposed were "is built", "the way it
+ *    is" and "because it is" — each is asserted absent on its own, because a
+ *    single whole-string comparison passing tells you nothing about WHICH of
+ *    the three a future edit broke.
+ */
+foreach ( array( 2, 3 ) as $bhp_rs_r15_n ) {
+	$bhp_rs_r15_got = bhp_visit_email_merge_values( $bhp_rs_r14_visit[ $bhp_rs_r15_n ] )['{WhyBuiltLine}'];
+	foreach ( array( ' is built the way', 'the way it is', 'because it is built' ) as $bhp_rs_r15_bad ) {
+		bhp_rs_ok(
+			'⛔ ' . $bhp_rs_r15_n . ' books: "' . $bhp_rs_r15_bad . '" is gone',
+			false === strpos( $bhp_rs_r15_got, $bhp_rs_r15_bad ),
+			'got: ' . $bhp_rs_r15_got
+		);
+	}
+}
+
+/*
+ * ⛔ THE SLOT IS ACTUALLY IN THE BODY, and the merged paragraph really is the
+ *    sentence. A slot that resolves correctly but never reaches the email is
+ *    the failure this assertion exists to catch.
+ */
+$bhp_rs_r15_set  = bhp_visit_email_copy( BHP_VISIT_EMAIL_DEFAULT_KEY );
+$bhp_rs_r15_body = ( is_array( $bhp_rs_r15_set ) && isset( $bhp_rs_r15_set['body'] ) ) ? (array) $bhp_rs_r15_set['body'] : array();
+bhp_rs_ok(
+	'⛔ the day-0 body still carries the {WhyBuiltLine} slot',
+	in_array( '{WhyBuiltLine}', $bhp_rs_r15_body, true )
+);
+$bhp_rs_r15_merged = array();
+foreach ( $bhp_rs_r15_body as $bhp_rs_r15_par ) {
+	$bhp_rs_r15_merged[] = bhp_visit_email_merge( $bhp_rs_r15_par, $bhp_rs_r14_visit[2] );
+}
+bhp_rs_ok(
+	'⭐ the merged TWO-book body contains the plural sentence and no unresolved slot',
+	in_array( sprintf( $bhp_rs_r15_many, $bhp_rs_r14_expect[2] ), $bhp_rs_r15_merged, true )
+		&& false === strpos( implode( ' ', $bhp_rs_r15_merged ), '{' ),
+	'body: ' . implode( ' || ', $bhp_rs_r15_merged )
+);
+
+/*
+ * ⛔ THE HARD STOP THAT MOVING THE TOKEN COULD HAVE SILENTLY REMOVED.
+ *    `{BookTitle(s)}` no longer appears in the day-0 body, so the empty-title
+ *    refusal now rides on `{WhyBuiltLine}`. A web order resolves no school and
+ *    no title; it must still be judged incomplete.
+ */
+bhp_rs_ok(
+	'⛔ an order with no resolvable title still fails bhp_visit_email_merge_is_complete()',
+	false === bhp_visit_email_merge_is_complete( $bhp_rs_r15_set, $bhp_rs_r14_web[1] )
+);
+
+/*
+ * ⛔⛔ §18.2 THE RECEIPT TABLE. The label is asserted as the exact string,
+ *     not as a prefix: "Hand delivery:" and nothing after it is the whole of
+ *     the seal-1042 (a) fix.
+ */
+$bhp_rs_r15_rows = bhp_visit_email_shorten_pickup_row(
+	array(
+		'shipping' => array(
+			'label' => 'Hand delivery: Author hand-delivery at the Dallas Harris Elementary visit (September 3)',
+			'value' => 'Collection from <strong>Author hand-delivery at the Dallas Harris Elementary visit (September 3)</strong>:<br>Andrew brings the signed books to Dallas Harris Elementary on Thursday, September 3.',
+		),
+	),
+	null
+);
+bhp_rs_ok(
+	'⭐ the shipping <th> is exactly "Hand delivery:" even when the name was appended to it',
+	'Hand delivery:' === $bhp_rs_r15_rows['shipping']['label'],
+	'got: ' . $bhp_rs_r15_rows['shipping']['label']
+);
+bhp_rs_ok(
+	'⭐ the method name is printed ONCE across the row (value only)',
+	1 === substr_count(
+		$bhp_rs_r15_rows['shipping']['label'] . ' ' . $bhp_rs_r15_rows['shipping']['value'],
+		'Author hand-delivery at the Dallas Harris Elementary visit (September 3)'
+	),
+	'label: ' . $bhp_rs_r15_rows['shipping']['label'] . ' | value: ' . $bhp_rs_r15_rows['shipping']['value']
+);
+
+/*
+ * ⛔ A LABEL WITH NO COLON IS TRIMMED TOO. This is the shape the two renders
+ *    imply an appending callback produces, and the 1.19.374 substr() could not
+ *    handle it.
+ */
+bhp_rs_ok(
+	'⛔ a colon-less "Hand delivery ..." label is still trimmed',
+	'Hand delivery:' === bhp_visit_email_shorten_pickup_row(
+		array( 'shipping' => array( 'label' => 'Hand delivery Author hand-delivery at the X visit', 'value' => '<strong>Author hand-delivery at the X visit</strong>' ) ),
+		null
+	)['shipping']['label']
+);
+
+/*
+ * ⛔ AN ORDINARY POSTED ORDER IS STILL RETURNED BY IDENTITY. The web receipt
+ *    must be byte-identical to 1.19.375.
+ */
+$bhp_rs_r15_posted = array( 'shipping' => array( 'label' => 'Shipping:', 'value' => 'Contiguous US Shipping' ) );
+bhp_rs_ok(
+	'⛔ a posted order row is untouched',
+	$bhp_rs_r15_posted === bhp_visit_email_shorten_pickup_row( $bhp_rs_r15_posted, null )
+);
+
+/*
+ * ⛔⛔ §18.3 THE ≤480px CSS, ASSERTED ON THE STRING THE EMAILER ACTUALLY
+ *     EMITS. `word-break: break-word` must appear ONCE and only on the
+ *     product-name cell; the number columns must carry `nowrap`.
+ */
+$bhp_rs_r15_css = apply_filters( 'woocommerce_email_styles', '', null );
+bhp_rs_ok(
+	'⛔ word-break: break-word is declared exactly once in the whole stylesheet',
+	1 === substr_count( $bhp_rs_r15_css, 'word-break: break-word' ),
+	'count: ' . substr_count( $bhp_rs_r15_css, 'word-break: break-word' )
+);
+bhp_rs_ok(
+	'⭐ word-break is scoped to tr.order_item td.text-align-left',
+	false !== strpos( $bhp_rs_r15_css, 'tr.order_item td.text-align-left' )
+);
+foreach ( array(
+	'thead th.text-align-right',
+	'tr.order_item td.text-align-right',
+	'tr.order-totals td.text-align-right',
+) as $bhp_rs_r15_sel ) {
+	bhp_rs_ok(
+		'⭐ nowrap column floor covers ' . $bhp_rs_r15_sel,
+		false !== strpos( $bhp_rs_r15_css, $bhp_rs_r15_sel )
+	);
+}
+bhp_rs_ok(
+	'⛔ white-space: nowrap is present in the stylesheet',
+	false !== strpos( $bhp_rs_r15_css, 'white-space: nowrap !important' )
+);
+
 bhp_rs_head( '§12 Deferred fixture teardown' );
 
 $bhp_rs_deleted = 0;

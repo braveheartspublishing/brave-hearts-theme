@@ -405,29 +405,42 @@ function bhp_visit_email_copy_sets() {
 				__( 'Thank you. The signed book went home in a backpack today from {SchoolName}.', 'brave-hearts' ),
 				'{VisitLine}',
 				/*
-				 * ⛔⛔ OPEN DEFECT, FOUND 2026-09-05 AT 1.19.375 AND DELIBERATELY
-				 *     NOT FIXED HERE. On a two- or three-book visit order this
-				 *     renders:
+				 * ⭐⭐ 1.19.376 · THE SENTENCE THAT NAMES THE BOOKS IS NOW A SLOT,
+				 *     AND THIS IS THE ROUND-14 OPEN DEFECT BEING CLOSED.
+				 *
+				 *     At 1.19.375 a two- or three-book visit order rendered:
 				 *
 				 *       "I want to tell you why The Mariana Trench and Mount
-				 *        Everest IS built the way IT IS, because IT IS built
-				 *        for one particular kid."
+				 *        Everest IS built the way IT IS, because IT IS built for
+				 *        one particular kid."
 				 *
 				 *     Three disagreements in one sentence, in front of a parent
-				 *     holding both books. ⚠ IT IS NOT NEW: this has shipped
-				 *     since 1.19.364, because `{BookTitle(s)}` has ALWAYS been
-				 *     the joined list in this lane. Seal 1032 did not cause it;
-				 *     rendering the round-14 fixtures is what exposed it.
+				 *     holding both books. ⚠ IT WAS NOT NEW: it has shipped since
+				 *     1.19.364, because `{BookTitle(s)}` has ALWAYS been the joined
+				 *     list in this lane. Seal 1032 did not cause it; rendering the
+				 *     round-14 fixtures is what exposed it.
 				 *
-				 * ⛔ WHY IT IS LEFT ALONE. Repairing it needs `is`->`are`,
-				 *    `it is`->`they are` and `it`->`they` — three changes to
-				 *    APPROVED FOUNDER COPY in a lane the round-14 brief did not
-				 *    name. Standing Rules §9 puts that with Andrew and Merry,
-				 *    not with this desk. Reported as an open item, not absorbed.
-				 *    ⭐ The machinery is ready: `bhp_review_ask_book_verb()`
-				 *    exists and this sentence is one `sprintf()` away.
+				 * ⛔ THE SINGULAR SENTENCE IS UNCHANGED, BYTE FOR BYTE. Both forms
+				 *    live in `bhp_visit_email_merge_values()` and are selected by
+				 *    `bhp_review_ask_book_verb()`, the same helper the review-ask
+				 *    lane has used since 1.19.375. On a one-book order this
+				 *    paragraph is identical to 1.19.375's output.
+				 *
+				 * ⚠ GRAMMAR-ONLY ADJUSTMENT, AWAITING ANDREW'S CONFIRMATION. The
+				 *   plural branch changes `is`->`are`, `it is`->`they are` and
+				 *   `it`->`they` in APPROVED FOUNDER COPY. Standing Rules §9 puts
+				 *   approved copy with Andrew and Merry; this is built and reported
+				 *   as a grammar correction for his confirmation, not slipped in as
+				 *   an engineering detail. ⛔ Reverting it is one line: return the
+				 *   singular from the helper call below.
+				 *
+				 * ⛔ THE EMPTY-TITLE HARD STOP SURVIVES THE MOVE. `{BookTitle(s)}`
+				 *    no longer appears in this body, so
+				 *    `bhp_visit_email_merge_is_complete()` now also requires
+				 *    `{WhyBuiltLine}`, which resolves to '' when no title resolves.
+				 *    An order with no book still refuses to send.
 				 */
-				__( 'I want to tell you why {BookTitle(s)} is built the way it is, because it is built for one particular kid.', 'brave-hearts' ),
+				'{WhyBuiltLine}',
 				__( 'Between picture books and thick chapter books there is a gap, and these books are written for the reader standing in it. There is a lot of white space, so a page never looks like a wall. The chapters are short, so the finish line is always close enough to see. The prose is written to be read out loud, and that is how I would read it to you if you were sitting here.', 'brave-hearts' ),
 				__( 'The places are real. So are the animals, the weather and the science. None of it is homework and all of it is true.', 'brave-hearts' ),
 				__( 'Here is the part that matters more than the book itself. Read the first chapter together tonight, out loud, and then stop and hand it over. A signed book that sits on a shelf is a nice object. A signed book that gets opened on the first night is the reason I drove out to {SchoolName}.', 'brave-hearts' ),
@@ -741,10 +754,53 @@ function bhp_visit_email_merge_values( $order ) {
 		}
 	}
 
+	/*
+	 * ⭐⭐ 1.19.376 · THE ONE SENTENCE IN THIS EMAIL THAT PUTS A VERB AND TWO
+	 *     PRONOUNS NEXT TO THE BOOK LIST. Both forms are here, whole and
+	 *     greppable, exactly the way `bhp_review_ask_book_verb()` takes them
+	 *     everywhere else in this cycle.
+	 *
+	 * ⛔ THE SINGULAR IS THE 1.19.375 STRING, BYTE FOR BYTE, INCLUDING ITS
+	 *    FULL STOP. Diff it against the 1.19.375 body array before changing a
+	 *    character of it: it is approved founder copy.
+	 *
+	 * ⚠ THE PLURAL IS A GRAMMAR-ONLY ADJUSTMENT AWAITING ANDREW'S
+	 *   CONFIRMATION — `is`->`are`, `it is`->`they are`, `it`->`they`. No
+	 *   word is added and none is removed.
+	 */
+	$why_one  = __( 'I want to tell you why {BookTitle(s)} is built the way it is, because it is built for one particular kid.', 'brave-hearts' );
+	$why_many = __( 'I want to tell you why {BookTitle(s)} are built the way they are, because they are built for one particular kid.', 'brave-hearts' );
+
+	/*
+	 * ⛔ THE SINGULAR IS THE FALLBACK, NOT THE PLURAL. If
+	 *    `inc/review-ask-email.php` has not loaded, this renders exactly what
+	 *    1.19.375 rendered rather than guessing at a count it cannot read.
+	 */
+	$why = function_exists( 'bhp_review_ask_book_verb' )
+		? (string) bhp_review_ask_book_verb( $order, $why_one, $why_many )
+		: $why_one;
+
+	/*
+	 * ⛔ THE TITLE IS SUBSTITUTED HERE, NOT LEFT TO THE OUTER `str_replace()`.
+	 *    `{WhyBuiltLine}` CONTAINS `{BookTitle(s)}`, and `str_replace()` walks
+	 *    its arrays in order — a later slot cannot fill a token that an
+	 *    earlier substitution introduced. Resolving it here makes the order of
+	 *    the array below irrelevant.
+	 *
+	 * ⛔ AND AN ORDER WITH NO RESOLVABLE TITLE YIELDS '', which
+	 *    `bhp_visit_email_merge_is_complete()` reads as a HARD STOP. That is
+	 *    the same protection `{BookTitle(s)}` gave this body before 1.19.376
+	 *    moved the token out of it.
+	 */
+	$why = ( '' === trim( (string) $titles ) )
+		? ''
+		: str_replace( '{BookTitle(s)}', $titles, $why );
+
 	return array(
 		'{ParentFirstName}' => '' !== $parent ? $parent : __( 'there', 'brave-hearts' ),
 		'{SchoolName}'      => $school,
 		'{BookTitle(s)}'    => $titles,
+		'{WhyBuiltLine}'    => $why,
 		'{VisitLine}'       => $visit,
 	);
 }
@@ -773,7 +829,13 @@ function bhp_visit_email_merge_is_complete( $set, $order ) {
 
 	$values = bhp_visit_email_merge_values( $order );
 
-	foreach ( array( '{SchoolName}', '{BookTitle(s)}' ) as $slot ) {
+	/*
+	 * ⛔ 1.19.376 ADDS `{WhyBuiltLine}` TO THIS LIST AND THE ADDITION IS THE
+	 *    WHOLE OF THE SAFETY. That slot replaced a body paragraph that used to
+	 *    carry `{BookTitle(s)}` literally; without this line a title-less order
+	 *    would stop failing the check and would send.
+	 */
+	foreach ( array( '{SchoolName}', '{BookTitle(s)}', '{WhyBuiltLine}' ) as $slot ) {
 		if ( false === strpos( $blob, $slot ) ) {
 			continue;
 		}
@@ -1040,6 +1102,26 @@ function bhp_visit_email_shorten_pickup_row( $total_rows, $order = null ) {
 	 *    "Hand delivery: Author hand-delivery at the ... visit (September 3)",
 	 *    which prints the pickup name a second time. Cutting at the first
 	 *    colon leaves the plugin's own label and duplicates nothing.
+	 */
+	/*
+	 * ⭐ 1.19.376. THE PHRASE IS READ FROM THE PLUGIN THAT OWNS IT rather than
+	 *    carved out of the incoming label, so a label that arrives WITHOUT a
+	 *    colon — "Hand delivery Author hand-delivery at ..." — is trimmed too.
+	 *    `bhp_school_pickup_totals_label()` is documented in
+	 *    `school-visit-pickup.php` as the single source of these words for all
+	 *    four surfaces, and the order surface appends the colon itself. ⛔ NO
+	 *    NEW COPY: this renders the same two words 1.19.374 rendered.
+	 */
+	if ( function_exists( 'bhp_school_pickup_totals_label' ) ) {
+		$total_rows['shipping']['label'] = bhp_school_pickup_totals_label() . ':';
+
+		return $total_rows;
+	}
+
+	/*
+	 * ⛔ THE FALLBACK IS 1.19.374 BYTE-FOR-BYTE, for the case where the bundle
+	 *    plugin is not loaded. Cutting at the first colon leaves the label the
+	 *    plugin would have written and duplicates nothing.
 	 */
 	$colon = strpos( $label, ':' );
 

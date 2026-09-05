@@ -208,7 +208,35 @@ if ( ! empty( $order->get_billing_first_name() ) ) {
 $bhp_visit_shorten_row = ( ! empty( $bhp_visit_body ) && function_exists( 'bhp_visit_email_shorten_pickup_row' ) );
 
 if ( $bhp_visit_shorten_row ) {
-	add_filter( 'woocommerce_get_order_item_totals', 'bhp_visit_email_shorten_pickup_row', 99, 2 );
+	/*
+	 * ⛔⛔ 1.19.376 · WHY THIS IS `PHP_INT_MAX` AND NOT 99, AND THE EVIDENCE IS
+	 *     TWO RENDERS, NOT AN OPINION.
+	 *
+	 *     `rs373-day0.html` line 151 and `rs374-day0.html` line 151 carry a
+	 *     BYTE-IDENTICAL shipping `<th>`:
+	 *
+	 *       "Hand delivery: Author hand-delivery at the Dallas Harris
+	 *        Elementary visit (September 3)"
+	 *
+	 *     — while the `<td>` between those two renders DID change to the short
+	 *     label this callback writes. So at priority 99 the callback ran, its
+	 *     VALUE survived to the render and its LABEL did not.
+	 *
+	 * ⭐ THE ONLY ORDERING THAT EXPLAINS BOTH FACTS: something registered
+	 *    LATER than 99 appends the pickup location name to whatever label is
+	 *    present. The bundle plugin sets the label to exactly "Hand delivery:"
+	 *    at priority 20 (`bhp_school_pickup_order_totals_label()`), and 373 —
+	 *    which had no theme callback at all — still rendered the appended
+	 *    form. A callback that trims the label therefore has to be the LAST
+	 *    one to touch the rows, and `PHP_INT_MAX` is how that is spelled.
+	 *
+	 * ⚠ NOT VERIFIED: there is no PHP on this machine, so the appending
+	 *   callback has not been named or read. The priority move is derived from
+	 *   the two renders above; if the appending happens in a TEMPLATE rather
+	 *   than a filter, no priority can win and the `<th>` will still be long.
+	 *   That is the one thing Gandalf should look at first on the 376 render.
+	 */
+	add_filter( 'woocommerce_get_order_item_totals', 'bhp_visit_email_shorten_pickup_row', PHP_INT_MAX, 2 );
 }
 
 /*
@@ -220,7 +248,7 @@ if ( $bhp_visit_shorten_row ) {
 do_action( 'woocommerce_email_order_details', $order, $sent_to_admin, $plain_text, $email );
 
 if ( $bhp_visit_shorten_row ) {
-	remove_filter( 'woocommerce_get_order_item_totals', 'bhp_visit_email_shorten_pickup_row', 99 );
+	remove_filter( 'woocommerce_get_order_item_totals', 'bhp_visit_email_shorten_pickup_row', PHP_INT_MAX );
 }
 
 /*

@@ -934,7 +934,57 @@ function bhp_email_brand_styles( $css ) {
 		padding: 8px 4px !important;
 		font-size: 14px !important;
 		line-height: 1.45 !important;
+	}
+
+	/*
+	 * ⛔⛔ 1.19.376 · SEAL 1042. `word-break: break-word` WAS ON EVERY CELL IN
+	 *     1.19.374 AND IT BROKE THE HEADINGS. Read out of
+	 *     `REVIEW-SEQ-STAGING\render-374-day0-375.png` at this desk: the
+	 *     `Quantity` and `Price` column headings and the `$11.99` amount are
+	 *     each split mid-word across two lines, because `break-word` lets a
+	 *     narrow column break INSIDE a word rather than widen the column.
+	 *
+	 * ⭐ THE PROPERTY IS KEPT WHERE IT WAS ACTUALLY NEEDED and nowhere else.
+	 *    The only cell in these tables that can hold an unbreakable run is the
+	 *    product-name cell — *"Adventures of Charlotte and Henry: The Mariana
+	 *    Trench (Paperback) - Perfect Bound"* — and that cell is
+	 *    `tr.order_item td.text-align-left` in the WooCommerce
+	 *    `email-order-details.php`. Nothing else gets it.
+	 *
+	 * ⛔ THE DOWNLOADS TABLE IS DELIBERATELY EXCLUDED. Its link TEXT ("The
+	 *    Adventure Activity Book (PDF)") wraps at its spaces; the long
+	 *    `?download_file=…` string is an `href`, which never renders. The
+	 *    1.19.374 note credited the downloads fix to `break-word`; reading the
+	 *    render shows the fix was the LEFT-ALIGN below, not the break.
+	 */
+	#body_content_inner table.email-order-details tr.order_item td.text-align-left {
 		word-break: break-word !important;
+	}
+
+	/*
+	 * ⛔ THE NUMBER COLUMNS NEVER SPLIT. `white-space: nowrap` on the quantity
+	 *    and price cells — headings included, because the heading is the
+	 *    widest thing in each of those two columns — is what gives those
+	 *    columns their width floor. A table column cannot be narrower than the
+	 *    widest unbreakable run inside it, so `×1`, `$11.99` and the words
+	 *    `Quantity` and `Price` set the floor and the product column takes the
+	 *    rest.
+	 *
+	 * ⚠ `thead th.text-align-right` also matches the downloads table
+	 *   `Download` heading. That is one word with no space in it, so `nowrap`
+	 *   changes nothing there. Stated because it was checked, not assumed.
+	 *
+	 * ⛔ EVERY SELECTOR HERE MATCHES A REAL ELEMENT IN THE RENDER, and that is
+	 *    a hard requirement, not a style preference: Emogrifier PRUNES media
+	 *    rules whose selectors match nothing in the document. The 1.19.374
+	 *    `tfoot th, tfoot td` pair is missing from `rs374-day0.html` line 7 for
+	 *    exactly that reason: the WooCommerce totals block has no `<tfoot>`. It
+	 *    is kept below only because it costs nothing and other emails may.
+	 */
+	#body_content_inner table.email-order-details thead th.text-align-right,
+	#body_content_inner table.email-order-details tr.order_item td.text-align-right,
+	#body_content_inner table.email-order-details tr.order-totals td.text-align-right {
+		white-space: nowrap !important;
 	}
 
 	#body_content_inner table.email-order-details th.text-align-right,

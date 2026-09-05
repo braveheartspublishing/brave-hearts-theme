@@ -1,4 +1,6 @@
 # Project State — Brave Hearts Publishing (Executive Summary)
+> **SUPERSEDING NOTE 2026-09-04 (midday):** production is now theme **1.19.361** / plugin **1.8.83**. 1.19.361 added the five Dallas Harris Elementary photographs to the read-aloud carousel (11 slides, via the `bhp_school_visit_notes` option plus theme assets) and shortened the approved founder passage on `/school-read-alouds/` on the owner's instruction. Details in `CHANGELOG.md`. The note below stands for everything else.
+>
 > ⭐ **SUPERSEDING NOTE 2026-09-03 (evening):** production is now theme **1.19.359** / plugin **1.8.83**. 1.19.359 added two owner-approved conversion changes (Amazon demoted to one line on product pages; the refund policy sentence on the homepage collection block). Everything below about 1.19.357/1.19.358 remains true of those releases.
 
 
