@@ -4441,8 +4441,12 @@ bhp_rs_ok(
 
 /*
  * ⛔ THE SAME TWO CHECKS AGAINST THE REAL STAGING RENDER, WHEN THERE IS ONE.
- *    There is no 1.19.377 render yet — this build has not been deployed — so
- *    this SKIPS rather than passing. ⛔ IT MUST NEVER BE ALLOWED TO PASS
+ *    1.19.378 · R17: THE RENDER NOW EXISTS. `rs377-day0.html` was written to
+ *    the review folder 2026-09-05 15:57 by Gandalf's staging deploy and read
+ *    first-hand at this desk: its shipping <th> is exactly "Hand delivery:"
+ *    and the method string occurs once. These two assertions therefore RUN
+ *    now instead of skipping. The skip branch is KEPT for the case where the
+ *    suite runs on a machine without the folder. ⛔ IT MUST NEVER BE ALLOWED TO PASS
  *    VACUOUSLY: a skip is printed and counted as neither pass nor fail, so
  *    "607/0" never silently includes a check that did not run.
  *
@@ -4549,19 +4553,74 @@ bhp_rs_ok(
 	'⭐ word-break is scoped to tr.order_item td.text-align-left',
 	false !== strpos( $bhp_rs_r16_css_rules, 'tr.order_item td.text-align-left' )
 );
+/*
+ * ⛔⛔ 1.19.378 · R17 · SEAL 1049. THE R16 ASSERTION ASSERTED THE BUG.
+ *
+ * ⭐ IT CHECKED THE WRONG THING TWICE OVER. `strpos()` over the WHOLE
+ *    stylesheet cannot tell which RULE a selector sits in, and all three
+ *    selectors it looked for also appear in the `text-align: left` rule two
+ *    lines further down. So the loop would have gone green with the `nowrap`
+ *    rule deleted outright - and, worse, it demanded `nowrap` on
+ *    `tr.order-totals td.text-align-right`, the cell that holds the 70-
+ *    character hand-delivery sentence. That demand is what overflowed the
+ *    375px render (Legolas, seal 1049).
+ *
+ * ⭐ THE REPLACEMENT PARSES THE RULE. The selector list is captured from
+ *    immediately before the `white-space: nowrap` declaration, so the two
+ *    selectors that must NOT carry it can be asserted absent without the
+ *    `text-align: left` rule below giving a false hit.
+ */
+$bhp_rs_r17_nowrap = '';
+if ( preg_match( '#([^{}]*)\{\s*white-space:\s*nowrap\s*!important;\s*\}#', $bhp_rs_r16_css_rules, $bhp_rs_r17_m ) ) {
+	$bhp_rs_r17_nowrap = $bhp_rs_r17_m[1];
+}
+bhp_rs_ok(
+	'⛔ a white-space: nowrap rule still exists, and its selector list was parsed',
+	'' !== trim( $bhp_rs_r17_nowrap ),
+	'parsed: ' . trim( $bhp_rs_r17_nowrap )
+);
+bhp_rs_ok(
+	'⭐ nowrap covers the item VALUE cells',
+	false !== strpos( $bhp_rs_r17_nowrap, 'tr.order_item td.text-align-right' ),
+	'parsed: ' . trim( $bhp_rs_r17_nowrap )
+);
 foreach ( array(
 	'thead th.text-align-right',
-	'tr.order_item td.text-align-right',
 	'tr.order-totals td.text-align-right',
-) as $bhp_rs_r15_sel ) {
+) as $bhp_rs_r17_sel ) {
 	bhp_rs_ok(
-		'⭐ nowrap column floor covers ' . $bhp_rs_r15_sel,
-		false !== strpos( $bhp_rs_r16_css_rules, $bhp_rs_r15_sel )
+		'⛔⛔ nowrap is NOT on ' . $bhp_rs_r17_sel . ' (this is what overflowed 375px)',
+		false === strpos( $bhp_rs_r17_nowrap, $bhp_rs_r17_sel ),
+		'parsed: ' . trim( $bhp_rs_r17_nowrap )
 	);
 }
 bhp_rs_ok(
 	'⛔ white-space: nowrap is present in the stylesheet',
 	false !== strpos( $bhp_rs_r16_css_rules, 'white-space: nowrap !important' )
+);
+
+/*
+ * ⚠ THE TABLE IS PINNED TO ITS CONTAINER. Asserted on the rule, not on the
+ *   substring: `width: 100%` appears in a dozen inline styles elsewhere.
+ */
+bhp_rs_ok(
+	'⭐ the ≤480px block pins table.email-order-details to width: 100%',
+	1 === preg_match(
+		'#\#body_content_inner table\.email-order-details \{\s*width:\s*100%\s*!important;#',
+		$bhp_rs_r16_css_rules
+	)
+);
+
+/*
+ * ⛔ table-layout: fixed IS DELIBERATELY ABSENT. It was asked for in the R17
+ *    brief and NOT applied: the same class is on the totals table, where fixed
+ *    layout would crush the hand-delivery cell into a ~118px ribbon. Asserted
+ *    so that if a later round adds it, this test fails loudly and the reasoning
+ *    on the rule in inc/transactional-emails.php gets re-read first.
+ */
+bhp_rs_ok(
+	'⛔ table-layout: fixed is NOT declared on the shared order-details class',
+	false === strpos( $bhp_rs_r16_css_rules, 'table-layout' )
 );
 
 bhp_rs_head( '§12 Deferred fixture teardown' );

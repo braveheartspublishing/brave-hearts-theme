@@ -937,6 +937,35 @@ function bhp_email_brand_styles( $css ) {
 	}
 
 	/*
+	 * ⭐⭐ 1.19.378 · SEAL 1049. THE TABLE IS PINNED TO ITS CONTAINER.
+	 *
+	 * ⛔ WHAT WAS OBSERVED (Legolas, render of 1.19.376 at 375 CSS px, seal
+	 *    1049, read to this desk by Gandalf): the day-0 order table OVERFLOWS
+	 *    the viewport. `Quantity` and `Price` are pushed off-canvas to the
+	 *    right and the product title is clipped at the right edge.
+	 *
+	 * ⭐ THE OVERFLOW WAS CAUSED BY THIS BLOCK'S OWN 1.19.376 `nowrap` RULE,
+	 *    not by the width of the table. Read out of `rs376-day0.html`
+	 *    (the shipping totals row): the amount cell of that row does not hold a
+	 *    price at all - it holds the 70-character sentence *"Author
+	 *    hand-delivery at the Dallas Harris Elementary visit (September 3)"* in
+	 *    a `<div>`. `tr.order-totals td.text-align-right { white-space: nowrap }`
+	 *    made that sentence ONE UNBREAKABLE ~470px RUN. A table can never be
+	 *    narrower than its widest unbreakable run, so the totals table forced
+	 *    the whole message body past 375px and carried the items table with it.
+	 *    That is why the HEADINGS went off-canvas even though the headings
+	 *    themselves are short.
+	 *
+	 * ⚠ `width: 100%` IS ALREADY ON THE TABLE INLINE, from WooCommerce. It is
+	 *   restated here with `!important` and paired with `max-width` so the
+	 *   declaration cannot be lost, and so the intent is visible in one place.
+	 */
+	#body_content_inner table.email-order-details {
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+
+	/*
 	 * ⛔⛔ 1.19.376 · SEAL 1042. `word-break: break-word` WAS ON EVERY CELL IN
 	 *     1.19.374 AND IT BROKE THE HEADINGS. Read out of
 	 *     `REVIEW-SEQ-STAGING\render-374-day0-375.png` at this desk: the
@@ -962,28 +991,55 @@ function bhp_email_brand_styles( $css ) {
 	}
 
 	/*
-	 * ⛔ THE NUMBER COLUMNS NEVER SPLIT. `white-space: nowrap` on the quantity
-	 *    and price cells — headings included, because the heading is the
-	 *    widest thing in each of those two columns — is what gives those
-	 *    columns their width floor. A table column cannot be narrower than the
-	 *    widest unbreakable run inside it, so `×1`, `$11.99` and the words
-	 *    `Quantity` and `Price` set the floor and the product column takes the
-	 *    rest.
+	 * ⛔⛔ 1.19.378 · `nowrap` IS NOW ON THE ITEM VALUE CELLS AND NOTHING
+	 *     ELSE. 1.19.376 put it on three selectors. Two of them were wrong:
 	 *
-	 * ⚠ `thead th.text-align-right` also matches the downloads table
-	 *   `Download` heading. That is one word with no space in it, so `nowrap`
-	 *   changes nothing there. Stated because it was checked, not assumed.
+	 *     1. `tr.order-totals td.text-align-right` - the cell that holds the
+	 *        hand-delivery sentence, not a price. This is what overflowed.
+	 *     2. `thead th.text-align-right` - the `Quantity` and `Price` headings.
+	 *        They are single words with no space in them, so `nowrap` never had
+	 *        anything to prevent; all it did was stop a narrow column from ever
+	 *        being allowed to give the word its own line. Removing it costs
+	 *        nothing and cannot split a word: `word-break` is NOT inherited by
+	 *        these `<th>`s, and the default `overflow-wrap: normal` never breaks
+	 *        inside a word. The 1.19.374 mid-word heading split came from
+	 *        `word-break: break-word` being on every cell, and that property is
+	 *        still scoped to the product-name cell above.
 	 *
-	 * ⛔ EVERY SELECTOR HERE MATCHES A REAL ELEMENT IN THE RENDER, and that is
-	 *    a hard requirement, not a style preference: Emogrifier PRUNES media
-	 *    rules whose selectors match nothing in the document. The 1.19.374
-	 *    `tfoot th, tfoot td` pair is missing from `rs374-day0.html` line 7 for
-	 *    exactly that reason: the WooCommerce totals block has no `<tfoot>`. It
-	 *    is kept below only because it costs nothing and other emails may.
+	 * ⭐ WHAT SURVIVES: the item quantity and price VALUES - `×1` and
+	 *    `$11.99` - which are what a reader scans down the column, and which
+	 *    are short enough that holding them on one line costs ~46px of column.
+	 *
+	 * ⚠ PREDICTED COLUMN WIDTHS AT A 375px VIEWPORT, arithmetic stated so it
+	 *   can be checked against the next render rather than believed. Container:
+	 *   375 - 2x10px (`#body_content_inner_cell` padding at the ≤600 breakpoint)
+	 *   = 355px. Auto table layout, so each column's floor is its widest
+	 *   unbreakable run + 8px of padding: product 82px (40px image + 24px
+	 *   margin, then `break-word` allows a single character), Quantity 66px
+	 *   ("Quantity" at 14px bold ~58px), Price 54px ("$11.99" nowrap ~46px).
+	 *   Floors total 202px, well inside 355px, and all 153px of slack goes to
+	 *   the only column with more content to show. EXPECTED: product ~235px,
+	 *   Quantity ~66px, Price ~54px. The title then wraps inside ~163px over
+	 *   about four lines, and its longest word, "Adventures" (~72px), fits -
+	 *   so no mid-word break either.
+	 *
+	 * ⛔ NOT DONE, AND DELIBERATELY: `table-layout: fixed` was asked for and is
+	 *    NOT here. `.email-order-details` is the same class on the items table,
+	 *    the downloads table AND the totals table. Fixed layout would divide the
+	 *    totals table into three equal ~118px columns and ladder that same
+	 *    hand-delivery sentence down a 118px ribbon - the exact failure 1.19.372
+	 *    was written to fix. With the two bad `nowrap` selectors gone the sum of
+	 *    the floors is 202px against 355px of container, so auto layout cannot
+	 *    overflow, and it gives the totals row the width it needs. Reported to
+	 *    Gandalf as a deviation, not as a silent choice.
+	 *
+	 * ⚠ STILL WRONG, NOT MINE TO FIX IN THIS ROUND: the shipping totals row
+	 *   prints the hand-delivery sentence TWICE - once in the `<th>` label
+	 *   position and once as the "amount". Seal 1042 removed the duplicate from
+	 *   the `<th>`; the `<td>` copy is the row's `value` and changing it is a
+	 *   content change to the totals row, outside this brief.
 	 */
-	#body_content_inner table.email-order-details thead th.text-align-right,
-	#body_content_inner table.email-order-details tr.order_item td.text-align-right,
-	#body_content_inner table.email-order-details tr.order-totals td.text-align-right {
+	#body_content_inner table.email-order-details tr.order_item td.text-align-right {
 		white-space: nowrap !important;
 	}
 
