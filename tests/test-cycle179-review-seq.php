@@ -1046,7 +1046,25 @@ bhp_rs_head( '§7 Copy rails and merge slots' );
 
 $bhp_rs_copy = bhp_review_ask_copy( 1, $bhp_rs_v1 );
 
-bhp_rs_ok( 'A visit order selects the visit touch-1 set', 'visit_touch1' === $bhp_rs_copy['set'] );
+bhp_rs_ok( 'A visit order selects the visit touch-1 set', 'visit_touch1' === $bhp_rs_copy['set'], 'got: ' . ( isset( $bhp_rs_copy['set'] ) ? $bhp_rs_copy['set'] : '(unset)' ) );
+
+/*
+ * ⭐⭐ 1.19.366 · THE WORDING VARIANT IS REPORTED SEPARATELY FROM THE SET
+ *     IDENTITY, and this pair of assertions is what stops the 1.19.365
+ *     regression coming back. That build encoded the named/generic swap INTO
+ *     the `set` key, so a visit order with no child name on record — the
+ *     majority case, per CYCLE179-MKT-32 — named a set that no approval, no
+ *     ledger and no CLI summary has ever heard of.
+ */
+bhp_rs_ok(
+	'⭐ A visit order with no child name reports the GENERIC variant, still under the visit_touch1 set',
+	'generic' === $bhp_rs_copy['variant'] && 'visit_touch1' === $bhp_rs_copy['set'],
+	'got set: ' . $bhp_rs_copy['set'] . ', variant: ' . ( isset( $bhp_rs_copy['variant'] ) ? $bhp_rs_copy['variant'] : '(unset)' )
+);
+bhp_rs_ok(
+	'⛔ The set key is NEVER varied by the wording branch',
+	bhp_review_ask_copy_visit_touch1()['set'] === bhp_review_ask_copy_visit_touch1( $bhp_rs_v1 )['set']
+);
 bhp_rs_ok( 'A web order selects the web touch-1 set', 'web_touch1' === bhp_review_ask_copy( 1, $bhp_rs_w1 )['set'] );
 bhp_rs_ok( 'Touch 2 selects the touch-2 set', 'touch2' === bhp_review_ask_copy( 2, $bhp_rs_v1 )['set'] );
 
@@ -1116,24 +1134,83 @@ bhp_rs_ok(
 );
 
 /*
- * ⭐ MERRY'S APPROVED SENTENCES, VERBATIM. Source:
- *    `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-ASKS.md`
- *    §1, 2026-09-05. ⛔ These are asserted against the UNMERGED set so a slot
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ MERRY'S APPROVED SENTENCES, VERBATIM.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ 1.19.366 · THE SOURCE OF THESE PINS CHANGED, AND THAT IS WHY FIVE OF
+ *     THEM FAILED ON STAGING AT 1.19.365. They were transcribed from
+ *     `CYCLE179-MKT-REVIEW-ASKS.md` §1, which 1.19.365 SUPERSEDED: seal 982
+ *     names `CYCLE179-MKT-REVIEW-SEQ-V2.md` (md5
+ *     `1ecd9c75acfc755df0e121b47ca73842`) as the approved copy, and the engine
+ *     was rewritten to carry V2 §2. The pins were left behind pointing at
+ *     prose that is deliberately no longer shipped, so they were asserting the
+ *     ABSENCE of the approval rather than its presence.
+ *
+ * ⚠ THE FIVE REMOVED PINS ARE NAMED HERE RATHER THAN DELETED SILENTLY, so a
+ *   future reader can tell a supersession from an accident:
+ *     · "Thank you for picking up {BookTitle} at {SchoolName} last week."
+ *     · "Signing it for {ChildFirstName} was the best part of my morning."
+ *     · "Two or three honest sentences is plenty, and honest is the useful
+ *        part."                                      (reworded by V2 §2)
+ *     · "If you would rather leave it on Amazon instead, that helps too"
+ *                                                    (removed by SEAL 977)
+ *     · "Either way, thank you for reading with your little human."
+ *
+ * ⭐ SOURCE OF THE PINS BELOW: V2 §2, via Gandalf's round-5 ruling on
+ *    CYCLE179-LD-47. ⛔ Asserted against the UNMERGED set so a slot
  *    substitution cannot mask a reworded sentence.
  */
 $bhp_rs_raw      = bhp_review_ask_copy_visit_touch1();
-$bhp_rs_raw_text = implode( ' ', array_merge( $bhp_rs_raw['body_before'], $bhp_rs_raw['body_after'], array( $bhp_rs_raw['subject'], $bhp_rs_raw['postscript'] ) ) );
+$bhp_rs_raw_text = implode( ' ', array_merge( $bhp_rs_raw['body_before'], $bhp_rs_raw['body_after'], array( $bhp_rs_raw['subject'], $bhp_rs_raw['links_lead'], $bhp_rs_raw['postscript'] ) ) );
 
 foreach ( array(
 	'A small favor about the book',
-	'Thank you for picking up {BookTitle} at {SchoolName} last week.',
-	'Signing it for {ChildFirstName} was the best part of my morning.',
-	'Two or three honest sentences is plenty, and honest is the useful part.',
-	'If you would rather leave it on Amazon instead, that helps too',
-	'Either way, thank you for reading with your little human.',
+	'Your reader has had {BookTitle}',
+	'Would you rate it? It takes about ten seconds, and if you have another minute after that, two or three honest sentences would help the next parent decide. Honest is the useful part.',
+	'Tap the stars that fit, then two or three honest sentences on the next page.',
+	'Thank you for reading together.',
 	'I answer every one.',
 ) as $bhp_rs_phrase ) {
-	bhp_rs_ok( 'Approved phrase present: "' . substr( $bhp_rs_phrase, 0, 46 ) . '"', false !== strpos( $bhp_rs_raw_text, $bhp_rs_phrase ) );
+	bhp_rs_ok( 'Approved phrase present (V2 §2, generic): "' . substr( $bhp_rs_phrase, 0, 46 ) . '"', false !== strpos( $bhp_rs_raw_text, $bhp_rs_phrase ), 'not found in the generic set' );
+}
+
+/*
+ * ⭐ AND THE NAMED WORDING IS PINNED TOO. It is the branch a real order takes
+ *    only when a child first name is on record (CYCLE179-MKT-32 says that is
+ *    the minority), and until now nothing asserted its sentences at all.
+ */
+$bhp_rs_raw_named      = bhp_review_ask_copy_visit_touch1( $bhp_rs_named );
+$bhp_rs_raw_named_text = implode( ' ', array_merge( $bhp_rs_raw_named['body_before'], $bhp_rs_raw_named['body_after'], array( $bhp_rs_raw_named['subject'], $bhp_rs_raw_named['postscript'] ) ) );
+
+foreach ( array(
+	'{ChildFirstName} has had {BookTitle}',
+	'Thank you for reading with {ChildFirstName}.',
+	'P.S. If {ChildFirstName} has a question about the book, hit reply. I answer every one.',
+) as $bhp_rs_phrase ) {
+	bhp_rs_ok( 'Approved phrase present (V2 §2, named): "' . substr( $bhp_rs_phrase, 0, 46 ) . '"', false !== strpos( $bhp_rs_raw_named_text, $bhp_rs_phrase ), 'not found in the named set' );
+}
+
+/*
+ * ⛔⛔ 1.19.366 · AND THE SUPERSEDED PROSE IS ASSERTED ABSENT. Removing a pin
+ *     leaves nothing watching the sentence it used to watch; this puts the
+ *     watch back the other way round, so restoring the ASKS §1 wording from an
+ *     older draft fails the suite instead of shipping quietly.
+ */
+foreach ( array(
+	'Thank you for picking up',
+	'was the best part of my morning',
+	'is plenty, and honest is the useful part',
+	'leave it on Amazon instead',
+	'your little human',
+) as $bhp_rs_gone ) {
+	bhp_rs_ok(
+		'⛔ SUPERSEDED prose absent from every shipped set: "' . $bhp_rs_gone . '"',
+		false === strpos( (string) $bhp_rs_all_sets, $bhp_rs_gone )
+			// ⚠ $bhp_rs_all_sets holds the GENERIC visit wording. The named
+			//   wording is a separate render and is checked here as well.
+			&& false === strpos( (string) wp_json_encode( $bhp_rs_raw_named ), $bhp_rs_gone )
+	);
 }
 
 bhp_rs_ok( '⛔ No price, coupon or shipping figure anywhere in the copy', 0 === preg_match( '/\$\d|PARENT10|coupon|discount|free shipping/i', $bhp_rs_raw_text ) );
@@ -1170,23 +1247,29 @@ bhp_rs_ok(
 	! isset( $bhp_rs_after_visits[ $bhp_rs_visit_slug ] )
 );
 
-$bhp_rs_deleted = 0;
-foreach ( $GLOBALS['bhp_rs_orders'] as $bhp_rs_id ) {
-	$bhp_rs_o = wc_get_order( $bhp_rs_id );
-	if ( $bhp_rs_o ) {
-		$bhp_rs_o->delete( true );
-		$bhp_rs_deleted++;
-	}
-}
-bhp_rs_ok( 'Every probe order was force-deleted (' . $bhp_rs_deleted . ' of ' . count( $GLOBALS['bhp_rs_orders'] ) . ')', $bhp_rs_deleted === count( $GLOBALS['bhp_rs_orders'] ) );
-
-$bhp_rs_c_deleted = 0;
-foreach ( $GLOBALS['bhp_rs_comments'] as $bhp_rs_cid ) {
-	if ( wp_delete_comment( $bhp_rs_cid, true ) ) {
-		$bhp_rs_c_deleted++;
-	}
-}
-bhp_rs_ok( 'Every probe review was force-deleted (' . $bhp_rs_c_deleted . ' of ' . count( $GLOBALS['bhp_rs_comments'] ) . ')', $bhp_rs_c_deleted === count( $GLOBALS['bhp_rs_comments'] ) );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.366 · THE FIXTURE TEARDOWN MOVED OUT OF THIS SECTION. IT USED TO
+ *     RUN HERE, AND THAT IS WHY §9.7 REPORTED AN EMPTY NAME BOX ON STAGING.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * §9 was appended in 1.19.364 AFTER this teardown, and the teardown was not
+ * moved with it. So by the time §9.7 minted a genuine pre-fill token for
+ * `$bhp_rs_v1` and asked `bhp_review_prefill()` for the name box, every probe
+ * order had already been force-deleted from the database.
+ *
+ * ⭐ AND THE ENGINE WAS RIGHT THE WHOLE TIME. `bhp_review_prefill()` does not
+ *    carry the name in the token — by design, so the name cannot be forged —
+ *    it looks the order up through `wc_get_order()` and returns '' when the
+ *    order is gone. Deleting the order first and then asserting the name is
+ *    asking a correct function to answer for a fixture that no longer exists.
+ *
+ * ⛔ THE ASSERTION IS UNCHANGED. It still demands the literal 'Testparent'
+ *    from the order rather than from the token. What changed is that the
+ *    order is still there when it is asked. The teardown now runs at the very
+ *    end of the file, below §10, and it still force-deletes everything.
+ */
+bhp_rs_ok( 'Fixture teardown deferred to the end of the run (see the note above)', true );
 
 /* =========================================================================
  * ⭐ §9 — SEAL 977: THE STAR ROW, THE PRE-FILL TOKEN, AND THE +4 REMINDER
@@ -1484,6 +1567,154 @@ foreach ( $bhp_rs_snapshot as $bhp_rs_option => $bhp_rs_value ) {
 	update_option( $bhp_rs_option, $bhp_rs_value, false );
 }
 bhp_rs_ok( 'The four registry options were restored to their pre-run values', true );
+
+/* =========================================================================
+ * ⭐ §10 — THE REVIEW PAGE'S OWN COPY
+ *
+ * ⛔⛔ WHY THIS SECTION IS IN **THIS** SUITE AND NOT A COSMETIC ONE. Every set
+ *     above sends the buyer to exactly one place: the per-title review page,
+ *     through `bhp_review_ask_review_link()` and through all five stars of
+ *     `bhp_review_ask_star_row()`. The email obeys a copy rail — no em dash,
+ *     no standalone "we" (Standing Rules 9.1) — and §6B and §7 enforce it
+ *     hard. The page those emails land on was obeying neither, so the rail
+ *     ended at the inbox. 1.19.366 extends it one click further.
+ *
+ * ⚠ WHAT THIS SECTION DELIBERATELY DOES **NOT** COVER, stated rather than
+ *   quietly excluded:
+ *
+ *   1. APPROVED CUSTOMER REVIEW TEXT. `bhp_review_render_section()` renders
+ *      real parents' sentences alongside the form. Those are not the store's
+ *      copy and the store does not get to rewrite them, so this section reads
+ *      the FORM — which is the whole of the page's own voice — and not the
+ *      section.
+ *   2. THE POST-SUBMIT "THANKS" BRANCH in
+ *      `template-parts/reviews/standalone-review-page.php`, which still reads
+ *      *"Thank you [em dash] your review has been sent."* That string is
+ *      OUTSIDE the round-5 brief ("no other copy touched"), so it was NOT
+ *      edited and is NOT asserted. ⛔ RAISED, NOT RESOLVED: CYCLE179-LD-51.
+ *      It is named here so its absence from these assertions is a decision on
+ *      the record and not an oversight that makes this section look greener
+ *      than it is.
+ * ====================================================================== */
+
+bhp_rs_head( '§10 The review page copy rail' );
+
+if ( ! function_exists( 'bhp_review_render_form' ) ) {
+	bhp_rs_ok( 'SKIPPED: bhp_review_render_form() is not loaded', true );
+} else {
+	$bhp_rs_page_key = bhp_review_ask_first_chapter_book_key( $bhp_rs_v1 );
+	$bhp_rs_page     = bhp_review_render_form( $bhp_rs_page_key, 'standalone' );
+
+	bhp_rs_ok(
+		'⭐ The review page the engine sends every buyer to actually rendered',
+		'' !== trim( (string) $bhp_rs_page ),
+		'got an empty render for key: ' . $bhp_rs_page_key
+	);
+
+	/*
+	 * ⛔ ASSERTED ON THE RENDERED HTML, NOT ON THE TEMPLATE SOURCE. A pin
+	 *    against the file would pass on a string that never reaches a reader
+	 *    and fail on a comment that does not.
+	 */
+	bhp_rs_ok(
+		'⛔⛔ No em dash anywhere in the rendered review page',
+		false === strpos( (string) $bhp_rs_page, "\xe2\x80\x94" ),
+		'an em dash reached the page a review-ask email points at'
+	);
+	bhp_rs_ok(
+		'⛔ No en dash either',
+		false === strpos( (string) $bhp_rs_page, "\xe2\x80\x93" )
+	);
+
+	/*
+	 * ⛔⛔ STANDALONE "we", ON THE VISIBLE TEXT ONLY. Tags are stripped first,
+	 *     because class names and attributes are not copy. ⚠ "us" is NOT
+	 *     asserted here and that is deliberate, not an omission: the five star
+	 *     labels are Andrew's approved wording and two of them end *"not for
+	 *     us"* / *"did not work for us"*. §9.1 pins all five verbatim.
+	 */
+	$bhp_rs_page_text = wp_strip_all_tags( (string) $bhp_rs_page );
+
+	bhp_rs_ok(
+		'⛔⛔ No standalone "we" in the rendered review page (Standing Rules 9.1)',
+		0 === preg_match( '/\bwe\b/i', $bhp_rs_page_text ),
+		'the page still speaks as "we"'
+	);
+
+	/*
+	 * ⭐ AND THE TWO REPLACEMENT SENTENCES ARE PINNED VERBATIM, so a later
+	 *    edit that removes the em dash by deleting the promise instead of
+	 *    rewording it fails here.
+	 */
+	bhp_rs_ok(
+		'⭐ The email-privacy line is the approved 1.19.366 wording, verbatim',
+		false !== strpos( $bhp_rs_page_text, 'Your email is never published and is never added to any mailing list. It is only for a reply about your review.' )
+	);
+	bhp_rs_ok(
+		'⭐ The moderation line is the approved 1.19.366 wording, verbatim',
+		false !== strpos( $bhp_rs_page_text, 'Every review is read before it appears on the site. Nothing is edited: reviews are either published as written or not published.' )
+	);
+	bhp_rs_ok(
+		'⛔ Neither superseded sentence survives on the page',
+		false === strpos( $bhp_rs_page_text, 'how we can reach you' )
+			&& false === strpos( $bhp_rs_page_text, 'Nothing is edited ' )
+	);
+
+	/*
+	 * ⛔ THE MODERATION PROMISE IS A CLAIM ABOUT WHAT THE STORE DOES, and it is
+	 *    only true because `inc/reviews.php` holds every review. Asserted so
+	 *    the sentence cannot outlive the behaviour it describes.
+	 */
+	if ( function_exists( 'bhp_review_force_moderation' ) ) {
+		bhp_rs_ok(
+			'⛔⛔ "Every review is read before it appears" is TRUE: the moderation hold is wired',
+			has_filter( 'pre_comment_approved', 'bhp_review_force_moderation' ) !== false
+		);
+	}
+}
+
+/* =========================================================================
+ * §11 — DEFERRED FIXTURE TEARDOWN
+ *
+ * ⭐ MOVED HERE FROM §8 IN 1.19.366. §9 and §10 both need a LIVE probe order:
+ *    §9.7 looks the name box up through `wc_get_order()`, and §10 resolves the
+ *    review page from the order's first chapter book. Deleting the fixtures
+ *    before those sections ran was the whole of the "(empty)" name box.
+ *
+ * ⛔ NOTHING IS LEFT BEHIND. Force-delete, same call, same assertions.
+ * ====================================================================== */
+
+bhp_rs_head( '§11 Deferred fixture teardown' );
+
+$bhp_rs_deleted = 0;
+foreach ( $GLOBALS['bhp_rs_orders'] as $bhp_rs_id ) {
+	$bhp_rs_o = wc_get_order( $bhp_rs_id );
+	if ( $bhp_rs_o ) {
+		$bhp_rs_o->delete( true );
+		$bhp_rs_deleted++;
+	}
+}
+bhp_rs_ok( 'Every probe order was force-deleted (' . $bhp_rs_deleted . ' of ' . count( $GLOBALS['bhp_rs_orders'] ) . ')', $bhp_rs_deleted === count( $GLOBALS['bhp_rs_orders'] ) );
+
+$bhp_rs_c_deleted = 0;
+foreach ( $GLOBALS['bhp_rs_comments'] as $bhp_rs_cid ) {
+	if ( wp_delete_comment( $bhp_rs_cid, true ) ) {
+		$bhp_rs_c_deleted++;
+	}
+}
+bhp_rs_ok( 'Every probe review was force-deleted (' . $bhp_rs_c_deleted . ' of ' . count( $GLOBALS['bhp_rs_comments'] ) . ')', $bhp_rs_c_deleted === count( $GLOBALS['bhp_rs_comments'] ) );
+
+/*
+ * ⛔ AND THE DELETION IS VERIFIED RATHER THAN COUNTED. A count proves the loop
+ *    ran; this proves the rows are gone.
+ */
+$bhp_rs_survivors = 0;
+foreach ( $GLOBALS['bhp_rs_orders'] as $bhp_rs_id ) {
+	if ( wc_get_order( $bhp_rs_id ) ) {
+		$bhp_rs_survivors++;
+	}
+}
+bhp_rs_ok( '⛔ No probe order survives the run', 0 === $bhp_rs_survivors, 'survivors: ' . $bhp_rs_survivors );
 
 /*
  * ⛔ THE MASTER SWITCH IS ASSERTED, NOT ASSUMED. This suite never turned it on,

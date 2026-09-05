@@ -364,7 +364,14 @@ $star_labels = function_exists('bhp_review_star_labels')
                 </span>
             </p>
             <p class="bhp-review-form__privacy">
-                <?php esc_html_e('Your email is never published and is never added to any mailing list — it is only how we can reach you about your review.', 'brave-hearts'); ?>
+                <?php /* ⛔ 1.19.366 · SUPERSEDED STRING, PRESERVED RATHER THAN
+                         DELETED so nobody restores it from an older build:
+                           "Your email is never published and is never added to
+                            any mailing list [em dash] it is only how we can
+                            reach you about your review."
+                         It carried an em dash and a standalone "we", both of
+                         which the house copy rail forbids. */ ?>
+                <?php esc_html_e('Your email is never published and is never added to any mailing list. It is only for a reply about your review.', 'brave-hearts'); ?>
             </p>
         </div>
     <?php endif; ?>
@@ -388,6 +395,11 @@ $star_labels = function_exists('bhp_review_star_labels')
     </p>
 
     <p class="bhp-review-form__moderation">
-        <?php esc_html_e('Every review is read before it appears on the site. Nothing is edited — reviews are either published as written or not published.', 'brave-hearts'); ?>
+        <?php /* ⛔ 1.19.366 · SUPERSEDED STRING, PRESERVED RATHER THAN DELETED:
+                 "Every review is read before it appears on the site. Nothing
+                  is edited [em dash] reviews are either published as written
+                  or not published."
+                 The claim is unchanged; only the em dash became a colon. */ ?>
+        <?php esc_html_e('Every review is read before it appears on the site. Nothing is edited: reviews are either published as written or not published.', 'brave-hearts'); ?>
     </p>
 </form>

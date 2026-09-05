@@ -1294,7 +1294,35 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		: sprintf( __( 'Your reader has had {BookTitle} %s.', 'brave-hearts' ), $when );
 
 	return array(
-		'set'             => $named ? 'visit_touch1' : 'visit_touch1_generic',
+		/*
+		 * ⛔⛔ 1.19.366 · ROOT CAUSE, FIXED AT THE PRODUCER. This read
+		 *     `$named ? 'visit_touch1' : 'visit_touch1_generic'` in 1.19.365,
+		 *     and it was wrong in kind, not in spelling. `set` is the copy
+		 *     set's IDENTITY — the thing seal 982 approved, the thing the CLI
+		 *     run summary prints, the thing a future ledger row would key on.
+		 *     The named/generic swap is a WORDING VARIANT of that one approved
+		 *     set (V2 §2 supplies both wordings under one heading), not a
+		 *     second set. Emitting a second identity meant every consumer that
+		 *     asked "which set is this?" got a key nothing has ever approved,
+		 *     on the branch that CYCLE179-MKT-32 says MOST REAL ORDERS TAKE.
+		 *
+		 * ⚠ MEASURED, NOT REASONED ABOUT. On staging at 1.19.365 it failed
+		 *   three assertions across two suites — `test-cycle179-review-seq`
+		 *   §7 and `test-cycle169-review-ask` §4 and its cleanup — all of them
+		 *   asking a visit order or a no-order preview to name its set.
+		 *
+		 * ⭐ THE VARIANT IS STILL REPORTABLE, on its own key, below.
+		 */
+		'set'             => 'visit_touch1',
+
+		/*
+		 * ⭐ 1.19.366 · WHICH WORDING OF THE ONE APPROVED SET THIS IS. Reported
+		 *    so the CLI preview and any future ledger row can say which branch
+		 *    a given order took, WITHOUT that answer masquerading as a set
+		 *    identity. ⛔ Nothing gates on this value and nothing may start to:
+		 *    both wordings carry the same seal-982 approval.
+		 */
+		'variant'         => $named ? 'named' : 'generic',
 
 		// ⭐ 1.19.364 · seal 977: this set renders the five-star row.
 		'stars'           => true,
@@ -4190,6 +4218,9 @@ function bhp_review_ask_cli_test_send( $assoc_args, $say ) {
 	$copy = bhp_review_ask_copy_raw( $email->touch, $order );
 
 	$say( 'copy set:  ' . ( isset( $copy['set'] ) ? $copy['set'] : '(unnamed)' )
+		// ⭐ 1.19.366 · the named/generic wording, reported next to the set it
+		//    is a wording OF. See bhp_review_ask_copy_visit_touch1().
+		. ( isset( $copy['variant'] ) && '' !== (string) $copy['variant'] ? ' (' . $copy['variant'] . ')' : '' )
 		. ' | approved: ' . ( ! empty( $copy['approved'] ) ? 'YES' : 'NO' )
 		. ' | stars: ' . ( bhp_review_ask_copy_has_stars( $copy ) ? 'yes' : 'no' ) );
 

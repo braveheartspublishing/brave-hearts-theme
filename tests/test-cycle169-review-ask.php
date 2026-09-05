@@ -102,7 +102,7 @@ function bhp_ra_head( $title ) {
  * @param array  $meta        Extra order meta.
  * @return WC_Order
  */
-function bhp_ra_make_order( $email, $days_ago, $meta = array() ) {
+function bhp_ra_make_order( $email, $days_ago, $meta = array(), $book_ids = array() ) {
 	$order = wc_create_order();
 
 	$order->set_billing_email( $email );
@@ -111,6 +111,23 @@ function bhp_ra_make_order( $email, $days_ago, $meta = array() ) {
 
 	foreach ( $meta as $key => $value ) {
 		$order->update_meta_data( $key, $value );
+	}
+
+	/*
+	 * ⭐ 1.19.366 · LINE ITEMS, OPTIONAL AND DEFAULTING TO NONE. Every existing
+	 *    caller is unchanged. It exists because 1.19.364 made
+	 *    `bhp_review_ask_merge_is_complete()` a REAL gate for the first time:
+	 *    an order with no chapter book cannot resolve {BookTitle} or
+	 *    {ReviewLink}, so it declines `unresolved_merge_slot` before any gate
+	 *    behind it is reached. A section that means to test something else has
+	 *    to hand the engine an order that can actually render.
+	 */
+	foreach ( $book_ids as $book_id ) {
+		$product = function_exists( 'wc_get_product' ) ? wc_get_product( (int) $book_id ) : false;
+
+		if ( $product ) {
+			$order->add_product( $product, 1 );
+		}
 	}
 
 	$order->set_status( 'completed' );
@@ -613,7 +630,10 @@ foreach ( $bhp_ra_compat as $bhp_ra_pair ) {
 bhp_ra_ok(
 	'Compatibility harness released: the engine is back on the seal-965 sequence',
 	BHP_REVIEW_ASK_WEB_DELAY_DAYS === bhp_review_ask_delay_days()
-		&& 'visit_touch1' === bhp_review_ask_copy( 1 )['set']
+		&& 'visit_touch1' === bhp_review_ask_copy( 1 )['set'],
+	// 1.19.366: both halves are reported, because a compound assertion that
+	// fails without naming which half cost this suite a whole round.
+	'delay: ' . bhp_review_ask_delay_days() . ' (want ' . BHP_REVIEW_ASK_WEB_DELAY_DAYS . '), set: ' . bhp_review_ask_copy( 1 )['set'] . ' (want visit_touch1)'
 );
 
 /* =========================================================================
@@ -622,7 +642,43 @@ bhp_ra_ok(
 
 bhp_ra_head( '§5 Opt-out' );
 
-$bhp_ra_opt = bhp_ra_make_order( 'ra-optout@example.com', 30 );
+/*
+ * ⭐⭐ 1.19.366 · THIS ORDER NOW CARRIES A CHAPTER BOOK, AND THAT IS THE FIX
+ *     FOR TWO STAGING FAILURES, NOT A CONVENIENCE.
+ *
+ * ⛔ WHAT FAILED. At 1.19.365 both of this section's decline assertions came
+ *    back `unresolved_merge_slot`. The cause is not in this section at all:
+ *    1.19.364 repaired `bhp_review_ask_merge_is_complete()`, which had been
+ *    structurally dead since it was written, and a genuinely working merge
+ *    gate declines a bookless order at once. This fixture was built in an era
+ *    when that gate could not fire, so it never needed line items.
+ *
+ * ⭐ AN ORDER WITH NO BOOK ON IT CANNOT TEST THE OPT-OUT, because it never
+ *    reaches the opt-out. The variable under test in this section is the
+ *    opt-out ledger; every other gate must therefore be passable, which means
+ *    a real product the review link can resolve from.
+ *
+ * ⚠ THE MERGE GATE ITSELF IS NOT WEAKENED HERE and is not tested here. Its own
+ *   assertion — that a bookless order declines `unresolved_merge_slot` — lives
+ *   in `tests/test-cycle179-review-seq.php` §7 and is untouched.
+ */
+$bhp_ra_opt_books = array();
+
+if ( function_exists( 'bhp_book_registry' ) ) {
+	$bhp_ra_reg = bhp_book_registry();
+
+	if ( isset( $bhp_ra_reg['mariana_trench']['pb_product'] ) ) {
+		$bhp_ra_opt_books[] = (int) $bhp_ra_reg['mariana_trench']['pb_product'];
+	}
+}
+
+$bhp_ra_opt = bhp_ra_make_order( 'ra-optout@example.com', 30, array(), $bhp_ra_opt_books );
+
+bhp_ra_ok(
+	'⭐ The opt-out fixture carries a chapter book, so every gate in front of the opt-out can pass',
+	1 === (int) bhp_review_ask_chapter_book_count( $bhp_ra_opt ),
+	'got ' . (int) bhp_review_ask_chapter_book_count( $bhp_ra_opt ) . ' chapter book(s); the registry gave ' . count( $bhp_ra_opt_books ) . ' id(s)'
+);
 
 $bhp_ra_url = bhp_review_ask_optout_url( $bhp_ra_opt );
 bhp_ra_ok( 'An opt-out URL is produced', '' !== $bhp_ra_url );
@@ -687,16 +743,69 @@ bhp_ra_ok(
 );
 
 /*
+ * ═══════════════════════════════════════════════════════════════════════════
  * ⭐ AND THE UNSHIMMED ANSWER IS ASSERTED TOO, so the shim can never quietly
- *    hide a change in the copy gate. This is the honest live state of the web
- *    lane today: it declines for want of approved copy, and it must.
+ *    hide a change in the copy gate.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ 1.19.366 · THIS ASSERTION WAS INVERTED BY SEAL 982, AND THE INVERSION IS
+ *     THE POINT. It read `'copy_not_approved' === ...` and cited seal 965,
+ *     which shipped the web touch-1 set as a PENDING-COPY placeholder with
+ *     `approved => false`. On 2026-09-05 Andrew approved all four sets (seal
+ *     982), so the web lane's copy IS approved and `copy_not_approved` can no
+ *     longer fire for it. Keeping the old expectation would have asserted that
+ *     Andrew's approval had not happened.
+ *
+ * ⭐ THE TRUE CURRENT REASON IS THAT THERE IS NO REASON. Unshimmed, this order
+ *    qualifies — which makes the shim above a NO-OP, and that is a STRONGER
+ *    statement than the one it replaces, not a looser one: it says the two
+ *    answers are now identical, and it fails loudly the moment web touch 1 is
+ *    flipped back to unapproved, or any gate in front of the opt-out starts
+ *    declining again.
+ *
+ * ⚠ THE SEND WINDOW IS STILL HELD OPEN. Only the copy shim comes off here.
+ *   Without that, the answer would be `outside_send_window` for most of the
+ *   day and this assertion would depend on the clock.
+ *
+ * ⛔ NOTHING BELOW APPROVES COPY. The approval is read from the engine and
+ *    named, so a future reader can see which seal this line is standing on.
  */
 remove_filter( 'bhp_review_ask_copy', $bhp_ra_optout_shim, 99 );
 
+$bhp_ra_unshimmed = bhp_review_ask_decline_reason( $bhp_ra_opt );
+
 bhp_ra_ok(
-	'⛔ Unshimmed, the same web-lane order declines: copy_not_approved (PENDING-COPY, seal 965)',
-	'copy_not_approved' === bhp_review_ask_decline_reason( $bhp_ra_opt ),
-	'got: ' . bhp_review_ask_decline_reason( $bhp_ra_opt )
+	'⭐⭐ Unshimmed, the same web-lane order STILL qualifies: seal 982 approved the web touch-1 copy',
+	'' === $bhp_ra_unshimmed,
+	'got: ' . ( '' === $bhp_ra_unshimmed ? '(qualifies)' : $bhp_ra_unshimmed )
+);
+bhp_ra_ok(
+	'⛔ So the copy shim in this section is provably a no-op, and is not hiding a gate',
+	$bhp_ra_unshimmed === $bhp_ra_before_optout
+);
+bhp_ra_ok(
+	'⭐ Read from the engine, not assumed: the web touch-1 set reports approved => true (seal 982)',
+	! empty( bhp_review_ask_copy_raw( 1, $bhp_ra_opt )['approved'] )
+		&& 'web_touch1' === bhp_review_ask_copy_raw( 1, $bhp_ra_opt )['set'],
+	'got set: ' . bhp_review_ask_copy_raw( 1, $bhp_ra_opt )['set']
+);
+bhp_ra_ok(
+	'⛔⛔ AND THE COPY GATE ITSELF IS STILL A HARD DECLINE — proved on a set forced unapproved, so "approved" still means something',
+	'copy_not_approved' === ( static function () use ( $bhp_ra_opt ) {
+		$deny = static function ( $copy ) {
+			if ( is_array( $copy ) ) {
+				$copy['approved'] = false;
+			}
+
+			return $copy;
+		};
+
+		add_filter( 'bhp_review_ask_copy', $deny, 99 );
+		$why = bhp_review_ask_decline_reason( $bhp_ra_opt );
+		remove_filter( 'bhp_review_ask_copy', $deny, 99 );
+
+		return $why;
+	} )()
 );
 
 add_filter( 'bhp_review_ask_copy', $bhp_ra_optout_shim, 99 );
@@ -1053,7 +1162,10 @@ foreach ( $bhp_ra_compat as $bhp_ra_pair ) {
 bhp_ra_ok(
 	'Compatibility harness fully released at cleanup',
 	BHP_REVIEW_ASK_WEB_DELAY_DAYS === bhp_review_ask_delay_days()
-		&& 'visit_touch1' === bhp_review_ask_copy( 1 )['set']
+		&& 'visit_touch1' === bhp_review_ask_copy( 1 )['set'],
+	// 1.19.366: both halves are reported, because a compound assertion that
+	// fails without naming which half cost this suite a whole round.
+	'delay: ' . bhp_review_ask_delay_days() . ' (want ' . BHP_REVIEW_ASK_WEB_DELAY_DAYS . '), set: ' . bhp_review_ask_copy( 1 )['set'] . ' (want visit_touch1)'
 );
 
 remove_filter( 'pre_wp_mail', $bhp_ra_pre_mail, 99 );

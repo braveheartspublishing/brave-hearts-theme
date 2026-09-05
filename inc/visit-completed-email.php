@@ -501,7 +501,38 @@ function bhp_visit_email_copy_is_usable( $set ) {
  * @return bool
  */
 function bhp_visit_email_copy_is_approved( $slug ) {
-	$set = bhp_visit_email_copy( $slug );
+	$sets = bhp_visit_email_copy_sets();
+	$slug = is_string( $slug ) ? trim( $slug ) : '';
+	$set  = bhp_visit_email_copy( $slug );
+
+	/*
+	 * ⛔⛔ 1.19.366 · ROOT CAUSE. THIS FUNCTION USED TO ANSWER ABOUT WHATEVER
+	 *     `bhp_visit_email_copy()` FELL BACK TO, NOT ABOUT THE KEY IT WAS
+	 *     ASKED ABOUT. That resolver returns the `_default` set for any slug it
+	 *     does not carry — correct for RENDERING, because a real order must
+	 *     still get an email — but catastrophic for an APPROVAL question, which
+	 *     is about a named set and nothing else.
+	 *
+	 * ⚠ IT WAS INVISIBLE UNTIL SEAL 982, AND ONLY BY LUCK. While `_default`
+	 *   itself was unapproved, the fallback happened to return false for an
+	 *   unknown key and the gate looked like it worked. Seal 982 approved
+	 *   `_default`, and the same code then reported EVERY unknown slug on this
+	 *   site as approved copy. `test-cycle179-review-seq` §9.8 caught it on
+	 *   staging at 1.19.365 with the key `no-such-set-ever-2026`.
+	 *
+	 * ⭐ THE FIX NAMES THE FALLBACK RATHER THAN BANNING IT. An unknown slug
+	 *    that resolved to the default set was NOT answered; it was
+	 *    substituted for, so the honest answer is "no". ⛔ The filter seam
+	 *    survives: a `bhp_visit_email_copy` filter that supplies real strings
+	 *    for a slug this theme does not carry returns something OTHER than the
+	 *    default set, and that set's own `approved` flag then governs, exactly
+	 *    as it did before.
+	 */
+	if ( '' !== $slug
+		&& ! isset( $sets[ $slug ] )
+		&& $set === $sets[ BHP_VISIT_EMAIL_DEFAULT_KEY ] ) {
+		return false;
+	}
 
 	return ! empty( $set['approved'] );
 }
@@ -662,11 +693,19 @@ function bhp_visit_email_may_render( $slug, $order ) {
 		return false;
 	}
 
-	$set = bhp_visit_email_copy( $slug );
-
-	if ( empty( $set['approved'] ) ) {
+	/*
+	 * ⛔⛔ 1.19.366 · THE SAME DEFECT LIVED HERE, ON THE PATH THAT REACHES
+	 *     PARENTS. This read `$set['approved']` off the RESOLVED set, so an
+	 *     unknown slug inherited the `_default` set's approval the moment seal
+	 *     982 granted it. The approval question now goes through the one
+	 *     function that answers it honestly. ⚠ `bhp_visit_email_copy()` is
+	 *     still what supplies the STRINGS below; only the gate moved.
+	 */
+	if ( ! bhp_visit_email_copy_is_approved( $slug ) ) {
 		return false;
 	}
+
+	$set = bhp_visit_email_copy( $slug );
 
 	return bhp_visit_email_merge_is_complete( $set, $order );
 }
