@@ -3428,6 +3428,319 @@ if ( function_exists( 'bhp_email_brand_styles' ) ) {
 	);
 }
 
+
+/* =========================================================================
+ * §16 — ROUND 12
+ *
+ * ⛔⛔ THE ONE 1.19.372 FAILURE, AND WHY IT WAS NOT A REGEX BUG.
+ *     Gandalf's staging run reported 442/1, the single failure being
+ *     *"Day 0 renders NO H1 band at all -- h1 found: <h1></h1>"*. The
+ *     diagnosis (full version on `bhp_email_strip_empty_heading()`):
+ *     `woocommerce_mail_content` is applied inside `WC_Email::send()`, but
+ *     §15.3's assertion — and every rendered document in the staging
+ *     folder — reads `WC_Email::get_content_html()`, which never passes
+ *     through that filter. ⭐ The element is now removed at the template
+ *     stage, so §15.3's existing assertion is what proves the fix.
+ * ====================================================================== */
+
+bhp_rs_head( '§16 Round 12: the header band at the render stage, Adams heroes, seal 1007 on the legacy set' );
+
+/* ---- 16.1 the header wrapper, at the stage that actually renders ---- */
+
+bhp_rs_ok(
+	'⭐⭐ bhp_email_header_without_empty_band() exists',
+	function_exists( 'bhp_email_header_without_empty_band' )
+);
+
+bhp_rs_ok(
+	'⭐ bhp_email_zero_header_padding() exists',
+	function_exists( 'bhp_email_zero_header_padding' )
+);
+
+/*
+ * ⛔⛔ BOTH TEMPLATES MUST CALL IT. A helper nothing calls is the same defect
+ *     as the one this round is fixing, wearing a different hat.
+ */
+foreach ( array(
+	'woocommerce/emails/customer-completed-order.php',
+	'woocommerce/emails/bhp-review-ask.php',
+) as $bhp_rs_r12_tpl ) {
+	$bhp_rs_r12_src = file_exists( get_template_directory() . '/' . $bhp_rs_r12_tpl )
+		? (string) file_get_contents( get_template_directory() . '/' . $bhp_rs_r12_tpl ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		: '';
+
+	bhp_rs_ok(
+		'⭐⭐ ' . $bhp_rs_r12_tpl . ' renders its header through the wrapper',
+		false !== strpos( $bhp_rs_r12_src, 'bhp_email_header_without_empty_band( $email_heading, $email )' ),
+		'wrapper call not found in the template source'
+	);
+
+	/*
+	 * ⛔ AND THE FALLBACK IS STILL THERE. If the include is missing, the
+	 *    template must render as it did before 1.19.373, not fatal.
+	 */
+	bhp_rs_ok(
+		'⛔ ... and still falls back to the bare action if the include is absent',
+		false !== strpos( $bhp_rs_r12_src, "do_action( 'woocommerce_email_header', \$email_heading, \$email )" )
+	);
+}
+
+/* ---- 16.2 the stripper against the ACTUAL inlined markup ---- */
+
+if ( function_exists( 'bhp_email_strip_empty_heading' ) ) {
+
+	/*
+	 * ⭐⭐ THIS IS `rs372-day0.html`, LINE FOR LINE, NOT AN IDEALISED SAMPLE.
+	 *     Emogrifier single-quotes the H1's `style` because the value contains
+	 *     a double-quoted font stack. 1.19.372's patterns hard-coded
+	 *     `style="`, which is the second half of why that build could not have
+	 *     worked on an inlined document either.
+	 */
+	$bhp_rs_r12_real = '<td id="header_wrapper" style="padding: 20px 32px 0; display: block;">'
+		. "\n\t\t\t\t\t"
+		. '<h1 style=\'font-weight: 700; line-height: 120%; margin: 0; color: #342f28; background-color: inherit; text-align: left; font-family: "EB Garamond",Georgia,"Times New Roman",serif; letter-spacing: normal; font-size: 30px;\' bgcolor="inherit"></h1>'
+		. "\n\t\t\t\t</td>";
+
+	$bhp_rs_r12_out = bhp_email_strip_empty_heading( $bhp_rs_r12_real );
+
+	bhp_rs_ok(
+		'⭐⭐ The SINGLE-QUOTED inlined empty H1 from rs372-day0.html is removed',
+		false === strpos( $bhp_rs_r12_out, '<h1' ),
+		'got: ' . $bhp_rs_r12_out
+	);
+
+	bhp_rs_ok(
+		'⭐⭐ ... and the 20px band goes with it - the part that is actually visible',
+		false !== strpos( $bhp_rs_r12_out, 'padding: 0;' )
+			&& false === strpos( $bhp_rs_r12_out, 'padding: 20px 32px 0' ),
+		'got: ' . $bhp_rs_r12_out
+	);
+
+	bhp_rs_ok(
+		'⛔ ... and the cell keeps its id',
+		false !== strpos( $bhp_rs_r12_out, 'id="header_wrapper"' )
+	);
+
+	/*
+	 * ⭐⭐ THE TEMPLATE-STAGE SHAPE: no style attribute at all, because the
+	 *     padding is still in the stylesheet waiting to be inlined. The
+	 *     attribute has to be CREATED here, which 1.19.372 never did.
+	 */
+	$bhp_rs_r12_raw = '<td id="header_wrapper"><h1></h1></td>';
+	$bhp_rs_r12_rawout = bhp_email_strip_empty_heading( $bhp_rs_r12_raw );
+
+	bhp_rs_ok(
+		'⭐⭐ At the TEMPLATE stage (no style attribute yet) the padding is written in',
+		false === strpos( $bhp_rs_r12_rawout, '<h1' )
+			&& false !== strpos( $bhp_rs_r12_rawout, 'style="padding: 0;"' ),
+		'got: ' . $bhp_rs_r12_rawout
+	);
+
+	/*
+	 * ⛔⛔ THE 1.19.372 BUG ITSELF, PINNED. A document whose empty H1 is
+	 *     ALREADY GONE must still lose the padding. 1.19.372 returned early on
+	 *     `! $count` and left the band standing, which is exactly what would
+	 *     have happened once the template stage started removing the element.
+	 */
+	$bhp_rs_r12_noh1 = '<td id="header_wrapper" style="padding: 20px 32px 0; display: block;"><p>hero</p></td>';
+
+	bhp_rs_ok(
+		'⛔⛔ A wrapper with NO h1 left in it still loses its padding',
+		false !== strpos( bhp_email_strip_empty_heading( $bhp_rs_r12_noh1 ), 'padding: 0;' ),
+		'got: ' . bhp_email_strip_empty_heading( $bhp_rs_r12_noh1 )
+	);
+
+	/*
+	 * ⛔⛔ AND THE STORE-WIDE GUARD, RESTATED FOR THE NEW CODE PATH. Every
+	 *     ordinary transactional email has a heading. If any of them lost 20px
+	 *     of header padding this would be a store-wide regression wearing a
+	 *     review-sequence badge.
+	 */
+	$bhp_rs_r12_heading = '<td id="header_wrapper" style="padding: 20px 32px 0; display: block;"><h1 style=\'margin: 0;\'>Your order is complete</h1></td>';
+
+	bhp_rs_ok(
+		'⛔⛔ An email WITH a heading keeps its band, byte for byte, single quotes and all',
+		$bhp_rs_r12_heading === bhp_email_strip_empty_heading( $bhp_rs_r12_heading ),
+		'got: ' . bhp_email_strip_empty_heading( $bhp_rs_r12_heading )
+	);
+}
+
+/* ---- 16.3 seal 1007 reaches the legacy 21-day set ---- */
+
+if ( function_exists( 'bhp_review_ask_copy_legacy_21day' ) ) {
+	$bhp_rs_r12_legacy = bhp_review_ask_copy_legacy_21day();
+
+	bhp_rs_ok(
+		'⭐⭐ SEAL 1007: the legacy 21-day set carries NO plain sign-off line',
+		isset( $bhp_rs_r12_legacy['signoff'] )
+			&& is_array( $bhp_rs_r12_legacy['signoff'] )
+			&& array() === $bhp_rs_r12_legacy['signoff'],
+		'got: ' . wp_json_encode( isset( $bhp_rs_r12_legacy['signoff'] ) ? $bhp_rs_r12_legacy['signoff'] : null )
+	);
+
+	bhp_rs_ok(
+		'⭐⭐ SEAL 1007: ... and no plain tagline either - the signature block is the only sign-off',
+		isset( $bhp_rs_r12_legacy['signoff_tagline'] ) && '' === $bhp_rs_r12_legacy['signoff_tagline'],
+		'got: ' . wp_json_encode( isset( $bhp_rs_r12_legacy['signoff_tagline'] ) ? $bhp_rs_r12_legacy['signoff_tagline'] : null )
+	);
+
+	/*
+	 * ⛔ AND THE SET IS STILL USABLE. Emptying a key that a usability gate
+	 *    requires is how a copy set silently stops being sendable.
+	 */
+	if ( function_exists( 'bhp_review_ask_copy_is_usable' ) ) {
+		bhp_rs_ok(
+			'⛔ ... and the legacy set is still usable after being emptied',
+			true === (bool) bhp_review_ask_copy_is_usable( $bhp_rs_r12_legacy )
+		);
+	}
+
+	/*
+	 * ⛔⛔ IT IS STILL UNREACHABLE. Seal 965 took the 21-day ask out of
+	 *     service; round 12 edited it, it did not revive it.
+	 */
+	bhp_rs_ok(
+		'⛔⛔ The legacy 21-day set is STILL not selected by bhp_review_ask_copy()',
+		'legacy_21day' !== bhp_review_ask_copy( 1, $bhp_rs_w1 )['set']
+	);
+}
+
+/* ---- 16.4 the Adams heroes, seal 1020 ---- */
+
+if ( function_exists( 'bhp_review_ask_hero' ) ) {
+	$bhp_rs_r12_adams_order = bhp_rs_make_order(
+		'rs-adams@example.com',
+		9,
+		array( '_bhp_school_visit_slug' => 'adams-2026-08-28' )
+	);
+
+	$bhp_rs_r12_a_t1 = bhp_review_ask_hero( $bhp_rs_r12_adams_order, 'touch1' );
+	$bhp_rs_r12_a_d0 = bhp_review_ask_hero( $bhp_rs_r12_adams_order, 'day0' );
+
+	bhp_rs_ok(
+		'⭐⭐ SEAL 1020: an adams-2026-08-28 order resolves hero 02 for touch 1',
+		! empty( $bhp_rs_r12_a_t1['url'] ) && false !== strpos( $bhp_rs_r12_a_t1['url'], 'hero-adams-2026-08-28-02.jpg' ),
+		'got: ' . wp_json_encode( $bhp_rs_r12_a_t1 )
+	);
+
+	bhp_rs_ok(
+		'⭐⭐ SEAL 1020: ... and hero 01 for day 0',
+		! empty( $bhp_rs_r12_a_d0['url'] ) && false !== strpos( $bhp_rs_r12_a_d0['url'], 'hero-adams-2026-08-28-01.jpg' ),
+		'got: ' . wp_json_encode( $bhp_rs_r12_a_d0 )
+	);
+
+	bhp_rs_ok(
+		'⭐ ... and both carry alt text naming the school and the date',
+		! empty( $bhp_rs_r12_a_t1['alt'] ) && false !== strpos( $bhp_rs_r12_a_t1['alt'], 'Adams Elementary, August 28, 2026' )
+			&& ! empty( $bhp_rs_r12_a_d0['alt'] ) && false !== strpos( $bhp_rs_r12_a_d0['alt'], 'Adams Elementary, August 28, 2026' )
+	);
+
+	/*
+	 * ⛔ NO REACTION, NO OUTCOME, NO NAMED CHILD in either alt string. The
+	 *    never-invent list is not suspended because a sentence is alt text.
+	 */
+	foreach ( array( $bhp_rs_r12_a_t1, $bhp_rs_r12_a_d0 ) as $bhp_rs_r12_h ) {
+		$bhp_rs_r12_alt = isset( $bhp_rs_r12_h['alt'] ) ? strtolower( (string) $bhp_rs_r12_h['alt'] ) : '';
+
+		bhp_rs_ok(
+			'⛔ The Adams alt text claims no reaction: ' . substr( $bhp_rs_r12_alt, 0, 48 ),
+			false === strpos( $bhp_rs_r12_alt, 'loved' )
+				&& false === strpos( $bhp_rs_r12_alt, 'enjoy' )
+				&& false === strpos( $bhp_rs_r12_alt, 'excited' )
+				&& false === strpos( $bhp_rs_r12_alt, 'delight' )
+		);
+	}
+
+	/* ---- 16.5 the general hero is a choice, and its default has NOT moved ---- */
+
+	bhp_rs_ok(
+		'⭐⭐ BHP_EMAIL_GENERAL_HERO is defined once the hero resolver has run',
+		defined( 'BHP_EMAIL_GENERAL_HERO' )
+	);
+
+	/*
+	 * ⛔⛔ THE DEFAULT IS PENDING ANDREW AND MUST NOT HAVE MOVED. This
+	 *     assertion is the record of a decision NOT taken: two candidates are
+	 *     shipped, neither has been chosen, and the build kept the one
+	 *     1.19.370 shipped.
+	 */
+	if ( defined( 'BHP_EMAIL_GENERAL_HERO' ) ) {
+		bhp_rs_ok(
+			'⛔⛔ ... and it still defaults to hero-read-aloud-general.jpg (Andrew has not picked)',
+			'hero-read-aloud-general.jpg' === BHP_EMAIL_GENERAL_HERO,
+			'got: ' . BHP_EMAIL_GENERAL_HERO
+		);
+	}
+
+	$bhp_rs_r12_map = (array) apply_filters( 'bhp_review_ask_hero_map', array() );
+
+	bhp_rs_ok(
+		'⭐ The general row is driven by the constant, not by a second literal',
+		isset( $bhp_rs_r12_map['general']['touch1'] )
+			&& defined( 'BHP_EMAIL_GENERAL_HERO' )
+			&& BHP_EMAIL_GENERAL_HERO === $bhp_rs_r12_map['general']['touch1']
+			&& BHP_EMAIL_GENERAL_HERO === $bhp_rs_r12_map['general']['day0']
+	);
+
+	/*
+	 * ⛔⛔ THE GALLERY-FRAME GUARD, KEPT. Two different images are numbered 05
+	 *     and only one of them is allowed to exist in this theme.
+	 *     `read-aloud-dallas-harris-2026-09-03-05.jpg` shows a second adult
+	 *     whose consent is not on record and a legible visitor badge
+	 *     (`CYCLE179-DES-29(b)`); it must not be shipped or mapped.
+	 */
+	bhp_rs_ok(
+		'⛔⛔ The unconsented GALLERY frame 05 is not in the theme',
+		! file_exists( get_template_directory() . '/assets/images/email/read-aloud-dallas-harris-2026-09-03-05.jpg' )
+	);
+
+	bhp_rs_ok(
+		'⛔⛔ ... and is named by no mapping',
+		false === strpos( wp_json_encode( $bhp_rs_r12_map ), 'read-aloud-dallas-harris' )
+	);
+
+	/* ⚠ CYCLE179-DES-31 still open: hero crop 05 ships, maps to nothing. */
+	bhp_rs_ok(
+		'⚠ CYCLE179-DES-31: hero crop 05 still ships but is STILL not mapped',
+		file_exists( get_template_directory() . '/assets/images/email/hero-dallas-harris-2026-09-03-05.jpg' )
+			&& false === strpos( wp_json_encode( $bhp_rs_r12_map ), 'hero-dallas-harris-2026-09-03-05.jpg' )
+	);
+
+	/* ---- 16.6 the six new files are on disk and every one has alt text ---- */
+
+	foreach ( array(
+		'hero-adams-2026-08-28-01.jpg',
+		'hero-adams-2026-08-28-01-plain.jpg',
+		'hero-adams-2026-08-28-02.jpg',
+		'hero-adams-2026-08-28-02-plain.jpg',
+		'hero-read-aloud-general-adams.jpg',
+		'hero-read-aloud-general-adams-plain.jpg',
+	) as $bhp_rs_r12_f ) {
+		bhp_rs_ok(
+			'⭐ Shipped in the theme: ' . $bhp_rs_r12_f,
+			file_exists( get_template_directory() . '/assets/images/email/' . $bhp_rs_r12_f )
+		);
+
+		bhp_rs_ok(
+			'⭐ ... and carries alt text: ' . $bhp_rs_r12_f,
+			'' !== bhp_review_ask_hero_alt( $bhp_rs_r12_f )
+		);
+
+		/*
+		 * ⛔ A `-plain` FILE CARRIES NO BAKED CAPTION, so its alt must not
+		 *    describe one. Alt text that narrates pixels that are not there is
+		 *    a small fabrication with the same shape as a big one.
+		 */
+		if ( false !== strpos( $bhp_rs_r12_f, '-plain' ) ) {
+			bhp_rs_ok(
+				'⛔ ... and the caption-free twin does not describe a caption: ' . $bhp_rs_r12_f,
+				false === strpos( bhp_review_ask_hero_alt( $bhp_rs_r12_f ), 'August 28, 2026' )
+					&& false === strpos( bhp_review_ask_hero_alt( $bhp_rs_r12_f ), 'Caption:' )
+			);
+		}
+	}
+}
+
 bhp_rs_head( '§12 Deferred fixture teardown' );
 
 $bhp_rs_deleted = 0;

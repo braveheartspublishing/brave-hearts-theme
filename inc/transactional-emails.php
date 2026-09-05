@@ -972,47 +972,109 @@ function bhp_email_brand_styles( $css ) {
 add_filter( 'woocommerce_email_styles', 'bhp_email_brand_styles', 20 );
 
 /* -------------------------------------------------------------------------
- * ⭐⭐ 1.19.372 · THE EMPTY H1 BAND, REMOVED RATHER THAN PADDED
+ * ⭐⭐ 1.19.373 · THE EMPTY H1 BAND, REMOVED AT THE STAGE THAT RENDERS IT
  * ---------------------------------------------------------------------- */
 
 /**
  * Drop the header band when the email has no heading to put in it.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⭐⭐ WHAT WAS ACTUALLY THERE, OBSERVED NOT ASSUMED.
+ * ⛔⛔ 1.19.372 SHIPPED THIS AND IT DID NOT WORK. THE DIAGNOSIS, FIRST.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔ In `rs370-touch1.html`, `rs-touch1.html`, `rs-touch2.html` and
- *    `rs-web1.html` (all read at this desk 2026-09-05, line 30 of each) the
- *    review-ask emails render
- *    `<td id="header_wrapper" style="padding: 20px 32px 0; ..."><h1 ...></h1></td>`
- *    — an H1 with NO TEXT IN IT. From 1.19.372 the day-0 visit email joins
- *    them, by `bhp_visit_email_suppress_heading()`.
+ * ⛔ THE OBSERVED FAILURE. Gandalf's staging run of 1.19.372 reported one
+ *    failure out of 443: *"Day 0 renders NO H1 band at all — the same
+ *    position as touch 1 -- h1 found: <h1></h1>"*. The rendered document
+ *    `rs372-day0.html` (read byte-for-byte at this desk, 2026-09-05) still
+ *    carries, in full:
  *
- * ⭐ THE EMPTY `<h1>` ITSELF IS ZERO PIXELS TALL — `margin: 0`, no content,
- *    no line box. ⛔ SO REMOVING THE ELEMENT ALONE WOULD HAVE CHANGED NOTHING
- *    VISIBLE AND THE BRIEF WOULD HAVE BEEN "DONE" WITHOUT BEING DONE. What is
- *    actually visible is the wrapper cell's 20px of top padding above a hero
- *    photograph that already opens the message. Both are removed here.
+ *      <td id="header_wrapper" style="padding: 20px 32px 0; display: block;">
+ *          <h1 style='font-weight: 700; ... font-size: 30px;'
+ *              bgcolor="inherit"></h1>
+ *      </td>
  *
- * ⛔ WHY THIS IS A FILTER ON THE ASSEMBLED MESSAGE AND NOT A TEMPLATE
- *    OVERRIDE. Overriding `emails/email-header.php` is prohibited in this
- *    theme — the rule is stated in `woocommerce/emails/bhp-review-ask.php` and
- *    is the reason the heroes render inside the body rather than above the H1.
- *    `woocommerce_mail_content` runs on the finished, inlined HTML of every
- *    WooCommerce email and needs no override.
+ * ⭐ THE REGEXES WERE NEVER THE PROBLEM. `#<h1\b[^>]*>\s*</h1>#i` matches that
+ *    element; the wrapper's `id` does precede its `style`, and that `style` is
+ *    double-quoted. Both patterns would have fired. ⛔ THE FILTER NEVER RAN ON
+ *    THE STRING BEING INSPECTED.
  *
- * ⛔ IT CANNOT AFFECT AN EMAIL THAT HAS A HEADING. The pattern requires the
- *    H1 to contain nothing but whitespace. Every ordinary transactional email
- *    in this store has a heading, so for those this filter matches nothing and
- *    returns the string it was handed, byte for byte.
+ * ⛔⛔ WHY. `woocommerce_mail_content` is applied inside `WC_Email::send()`,
+ *     to `style_inline( $message )` — i.e. at the very last moment before
+ *     `wp_mail()`. But BOTH the failing assertion and every rendered document
+ *     in `REVIEW-SEQ-STAGING\` are taken from `WC_Email::get_content_html()` /
+ *     `get_content()`, which run EARLIER and never pass through that filter.
+ *     So 1.19.372 fixed the delivered message (probably — see NOT VERIFIED
+ *     below) and could not, even in principle, fix the render the test reads.
+ *     ⭐ A filter on the wrong stage is indistinguishable from a broken regex
+ *     until you ask WHICH STRING the failing assertion actually holds.
  *
- * ⚠ NOT RUN: there is no PHP on this machine. The regexes are reasoned about
- *   and were written against four rendered documents that are on disk; they
- *   were NOT executed. Gandalf's staging run is the first execution.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ THE FIX: REMOVE IT WHERE IT IS RENDERED, AND KEEP THE LATE FILTER TOO.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ `bhp_email_header_without_empty_band()` below buffers the output of
+ *    `do_action( 'woocommerce_email_header', ... )` inside the two templates
+ *    this theme already overrides, and passes it through this same function.
+ *    The element is therefore gone from `get_content_html()` — which is what
+ *    the suite reads, what the staging renders capture, and what the mailer is
+ *    ultimately handed.
+ *
+ * ⛔ THIS IS NOT AN OVERRIDE OF `emails/email-header.php`, WHICH THIS THEME
+ *    FORBIDS (the rule is stated in `woocommerce/emails/bhp-review-ask.php`).
+ *    The action still fires, every other listener on it still runs in order,
+ *    and only the assembled fragment is post-processed.
+ *
+ * ⭐ THE LATE `woocommerce_mail_content` REGISTRATION IS KEPT, deliberately
+ *    belt-and-braces: it covers any WooCommerce email that renders an empty
+ *    heading through a template this theme does NOT override.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ WHAT CHANGED INSIDE THE FUNCTION, AND WHY EACH CHANGE IS NEEDED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * (1) ⛔ THE PADDING NO LONGER DEPENDS ON HAVING JUST REMOVED AN H1. In
+ *     1.19.372 a zero `$count` returned early, so once the template stage had
+ *     already removed the element the late filter left the 20px band standing.
+ *     The rule is now the honest one: IF THIS DOCUMENT HAS A HEADER WRAPPER
+ *     AND NO `<h1>` ANYWHERE IN IT, the band has nothing to hold and its
+ *     padding goes to zero.
+ *
+ * (2) ⭐ THE WRAPPER TAG IS REWRITTEN BY CALLBACK, NOT BY THREE GUESSES AT
+ *     ATTRIBUTE ORDER. `rs372-day0.html` proves Emogrifier emits
+ *     `style='...'` with SINGLE quotes whenever the value contains a quoted
+ *     font stack (`font-family: "EB Garamond",...`). 1.19.372's patterns
+ *     hard-coded `style="`, so on the inlined document they would have missed
+ *     the H1's own attribute — and on any build where Emogrifier single-quotes
+ *     the wrapper too, they would have missed the padding as well. The
+ *     callback strips whatever `style` attribute is present, in either quote
+ *     style, and writes one back.
+ *
+ * (3) ⭐ AT THE TEMPLATE STAGE THERE IS NO `style` ATTRIBUTE AT ALL — the
+ *     padding lives in `#header_wrapper` in the email stylesheet. Inserting
+ *     `style="padding: 0;"` there is what survives inlining: Emogrifier merges
+ *     stylesheet declarations BEFORE the element's own, so the later, ours,
+ *     wins the cascade. The late filter then rewrites the merged attribute to
+ *     exactly `padding: 0;` anyway.
+ *
+ * ⛔ IT STILL CANNOT AFFECT AN EMAIL THAT HAS A HEADING. Both branches require
+ *    the document to contain no `<h1` once the empty-element pass is done, and
+ *    an H1 with a single character in it does not match that pass. Every
+ *    ordinary transactional email in this store has a heading, so for those
+ *    this function returns the string it was handed, byte for byte — and the
+ *    suite asserts exactly that, on a document that has one.
+ *
+ * ⚠ NOT VERIFIED: there is no PHP on this machine. Nothing below was executed
+ *   here. It is reasoned against four rendered documents that are on disk and
+ *   were read byte-for-byte; Gandalf's staging run is the first execution.
+ *   ⛔ In particular, whether 1.19.372's late filter DID clean the delivered
+ *   message is unknown — no delivered-message source was inspected, only
+ *   renders. This round makes that question moot rather than answering it.
  *
  * @since 1.19.372
- * @param string $content Assembled, style-inlined email HTML.
+ * @since 1.19.373 Applied at the template stage; padding decoupled from the
+ *                 element removal; quote-agnostic wrapper rewrite.
+ * @param string $content Email HTML — a header fragment, or a whole document,
+ *                        inlined or not.
  * @return string
  */
 function bhp_email_strip_empty_heading( $content ) {
@@ -1020,58 +1082,129 @@ function bhp_email_strip_empty_heading( $content ) {
 		return $content;
 	}
 
-	// ⛔ Cheap guard first: no header wrapper, nothing to do.
-	if ( false === strpos( $content, 'id="header_wrapper"' ) ) {
+	/*
+	 * ⛔ Cheap guard first. Nothing to remove and nothing to unpad.
+	 *
+	 * ⚠ `stripos` on the bare id VALUE, not on `id="header_wrapper"`: the
+	 *   quote character around an attribute value is not ours to predict.
+	 */
+	if ( false === stripos( $content, 'header_wrapper' ) && false === stripos( $content, '<h1' ) ) {
 		return $content;
 	}
+
+	$out = $content;
 
 	/*
 	 * ⛔ THE H1 MUST BE EMPTY TO MATCH. `[^>]*` cannot cross the closing angle
 	 *    bracket of the opening tag, and `\s*` between the tags means only
 	 *    whitespace may sit inside. An H1 with a single character in it does
-	 *    not match and the whole function becomes a no-op for that email.
+	 *    not match, and this function becomes a no-op for that email.
 	 */
-	$stripped = preg_replace( '#<h1\b[^>]*>\s*</h1>#i', '', $content, 1, $count );
+	$stripped = preg_replace( '#<h1\b[^>]*>\s*</h1>#i', '', $out, 1 );
 
-	if ( null === $stripped || ! $count ) {
-		return $content;
+	if ( null !== $stripped ) {
+		$out = $stripped;
 	}
 
 	/*
-	 * ⭐ AND THEN THE PADDING, WHICH IS THE PART THAT IS ACTUALLY VISIBLE.
-	 *    Only the `padding` declaration inside the `header_wrapper` cell's own
-	 *    style attribute is rewritten; the rest of the attribute, and every
-	 *    other element in the document, is untouched.
+	 * ⭐⭐ AND THEN THE PADDING, WHICH IS THE PART THAT IS ACTUALLY VISIBLE.
+	 *
+	 * ⛔ THE CONDITION IS THE DOCUMENT'S STATE, NOT WHAT WE JUST DID. If any
+	 *    `<h1` survives, this email has a real heading and the band is doing
+	 *    its job — leave it exactly as it is.
 	 */
-	$padded = preg_replace(
-		'#(<td\b[^>]*\bid="header_wrapper"[^>]*\bstyle=")([^"]*)(")#i',
-		'${1}padding: 0;${3}',
-		$stripped,
-		1,
-		$padding_count
-	);
-
-	/*
-	 * ⚠ ATTRIBUTE ORDER IS NOT GUARANTEED. Every rendered document on disk has
-	 *   `id` before `style`, but Emogrifier is free to emit them the other way
-	 *   round, so the reverse order is tried too. If NEITHER matches the H1 is
-	 *   still gone and the only cost is 20px of cream — a smaller failure than
-	 *   a regex that guesses.
-	 */
-	if ( null !== $padded && $padding_count ) {
-		return $padded;
+	if ( false !== stripos( $out, '<h1' ) || false === stripos( $out, 'header_wrapper' ) ) {
+		return ( $out === $content ) ? $content : $out;
 	}
 
-	$padded = preg_replace(
-		'#(<td\b[^>]*\bstyle=")([^"]*)("[^>]*\bid="header_wrapper")#i',
-		'${1}padding: 0;${3}',
-		$stripped,
+	/*
+	 * ⭐ ONE PATTERN, ANY ATTRIBUTE ORDER, EITHER QUOTE STYLE. The tag is
+	 *    matched whole and rebuilt in a callback; no assumption is made about
+	 *    where `style` sits relative to `id`, whether it exists at all, or
+	 *    which quote character wraps either value.
+	 */
+	$padded = preg_replace_callback(
+		'#<td\b[^>]*\bid\s*=\s*["\']header_wrapper["\'][^>]*>#i',
+		'bhp_email_zero_header_padding',
+		$out,
 		1
 	);
 
-	return ( null === $padded ) ? $stripped : $padded;
+	if ( null === $padded ) {
+		return $out;
+	}
+
+	return $padded;
 }
 add_filter( 'woocommerce_mail_content', 'bhp_email_strip_empty_heading', 20 );
+
+/**
+ * Rewrite one `#header_wrapper` opening tag so its padding is zero.
+ *
+ * ⛔ EVERY OTHER ATTRIBUTE IS PRESERVED. Only `style` is touched, and only on
+ *    the one cell whose id is `header_wrapper`.
+ *
+ * ⚠ THE WHOLE `style` ATTRIBUTE IS REPLACED RATHER THAN EDITED. At the
+ *   template stage it does not exist; after inlining it holds `padding` plus
+ *   `display: block`, and `display: block` on a `<td>` is WooCommerce's own
+ *   quirk, not a layout this theme depends on — the cell is the only child of
+ *   its row either way. Surgically rewriting one declaration inside an
+ *   attribute whose quoting is not guaranteed is the riskier of the two.
+ *
+ * @since 1.19.373
+ * @param array $m Match array; `$m[0]` is the whole opening tag.
+ * @return string
+ */
+function bhp_email_zero_header_padding( $m ) {
+	$tag = isset( $m[0] ) ? (string) $m[0] : '';
+
+	if ( '' === $tag ) {
+		return $tag;
+	}
+
+	/* Drop any existing style attribute, double- or single-quoted. */
+	$bare = preg_replace( '#\s+style\s*=\s*("[^"]*"|\'[^\']*\')#i', '', $tag );
+
+	if ( null === $bare ) {
+		$bare = $tag;
+	}
+
+	/* And write one back, immediately before the closing bracket. */
+	$rebuilt = preg_replace( '#\s*/?>$#', ' style="padding: 0;">', $bare, 1 );
+
+	return ( null === $rebuilt ) ? $tag : $rebuilt;
+}
+
+/**
+ * Render the WooCommerce email header with no empty heading band.
+ *
+ * ⭐ THE ONLY REASON THIS EXISTS is that `woocommerce_mail_content` is too
+ *    late to be seen by `WC_Email::get_content_html()` — see the long
+ *    explanation on `bhp_email_strip_empty_heading()`. The action still fires
+ *    exactly as it would have; its output is buffered and post-processed.
+ *
+ * ⛔ NOT AN ESCAPING DECISION. `$header` is WooCommerce's own template output,
+ *    already escaped by that template (`esc_html( $email_heading )` and the
+ *    rest). It is echoed unchanged apart from the removal.
+ *
+ * ⚠ IF ANY LISTENER ON `woocommerce_email_header` ECHOES SOMETHING THIS
+ *   FUNCTION MISREADS, the worst case is that the buffered fragment comes back
+ *   unmodified: every branch above returns the input when it does not match.
+ *
+ * @since 1.19.373
+ * @param string        $email_heading Heading text, '' on the suppressed forks.
+ * @param WC_Email|null $email         Email object.
+ * @return void
+ */
+function bhp_email_header_without_empty_band( $email_heading, $email = null ) {
+	ob_start();
+
+	do_action( 'woocommerce_email_header', $email_heading, $email );
+
+	$header = (string) ob_get_clean();
+
+	echo bhp_email_strip_empty_heading( $header ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WooCommerce template output, already escaped at source.
+}
 
 /* -------------------------------------------------------------------------
  * ⭐⭐ 1.19.370 · THE CHARSET ON EVERY WOOCOMMERCE EMAIL

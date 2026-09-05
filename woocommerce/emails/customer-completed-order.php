@@ -50,8 +50,32 @@ $email_improvements_enabled = class_exists( FeaturesUtil::class ) && FeaturesUti
 
 /*
  * @hooked WC_Emails::email_header() Output the email header
+ *
+ * ⭐⭐ 1.19.373 · THE HEADER GOES THROUGH A WRAPPER, NOT STRAIGHT TO OUTPUT.
+ *     On the school-visit fork `$email_heading` is '' (seal 1010,
+ *     `bhp_visit_email_suppress_heading()`), and WooCommerce's own
+ *     `emails/email-header.php` still emits `<h1></h1>` inside a cell with
+ *     20px of top padding — a cream band above a hero photograph.
+ *
+ * ⛔ 1.19.372 TRIED TO REMOVE THAT ON `woocommerce_mail_content` AND FAILED,
+ *    because that filter runs inside `WC_Email::send()`, AFTER
+ *    `get_content_html()` has already produced the document the suite and the
+ *    staging renders read. The wrapper buffers this action instead, so the
+ *    element is gone from the render itself. Full diagnosis in
+ *    `inc/transactional-emails.php` on `bhp_email_strip_empty_heading()`.
+ *
+ * ⛔ THE ACTION STILL FIRES, unchanged, with the same two arguments. Nothing
+ *    hooked to it is skipped or reordered.
+ *
+ * ⚠ THE FALLBACK IS THE ORIGINAL LINE. If `inc/transactional-emails.php` is
+ *   not loaded, this template renders exactly as it did before 1.19.373
+ *   rather than fataling.
  */
-do_action( 'woocommerce_email_header', $email_heading, $email );
+if ( function_exists( 'bhp_email_header_without_empty_band' ) ) {
+	bhp_email_header_without_empty_band( $email_heading, $email );
+} else {
+	do_action( 'woocommerce_email_header', $email_heading, $email );
+}
 
 /*
  * ⭐⭐ THE SCHOOL-VISIT FORK (theme 1.19.315, `CYCLE168-LD-VISIT-COMPLETED-EMAIL`).

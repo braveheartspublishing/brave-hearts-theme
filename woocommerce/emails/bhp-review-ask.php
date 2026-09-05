@@ -24,8 +24,25 @@ defined( 'ABSPATH' ) || exit;
 
 /*
  * @hooked WC_Emails::email_header() Output the email header
+ *
+ * ⭐⭐ 1.19.373 · SAME WRAPPER AS THE DAY-0 EMAIL, AND FOR THE SAME REASON.
+ *     Every review-ask set carries `'heading' => ''` deliberately (see
+ *     `bhp_review_ask_copy_legacy_21day()` for the full argument), so
+ *     WooCommerce's `emails/email-header.php` emits an empty `<h1>` inside a
+ *     padded cell. `rs372-touch1.html` shows it still there under 1.19.372.
+ *
+ * ⛔ THIS IS NOT AN OVERRIDE OF `emails/email-header.php` — which this theme
+ *    forbids, and which is why the hero renders inside the body rather than
+ *    above the heading. The action fires exactly as before; only its
+ *    assembled output is post-processed.
+ *
+ * ⚠ FALLBACK: the original line, if the include is not loaded.
  */
-do_action( 'woocommerce_email_header', $email_heading, $email );
+if ( function_exists( 'bhp_email_header_without_empty_band' ) ) {
+	bhp_email_header_without_empty_band( $email_heading, $email );
+} else {
+	do_action( 'woocommerce_email_header', $email_heading, $email );
+}
 
 /*
  * ═══════════════════════════════════════════════════════════════════════════

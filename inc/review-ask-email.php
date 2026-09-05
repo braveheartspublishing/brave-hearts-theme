@@ -1303,12 +1303,43 @@ function bhp_review_ask_copy_legacy_21day() {
 			__( 'Thank you for taking a chance on a book by somebody you had never heard of.', 'brave-hearts' ),
 		),
 
-		'signoff'         => array(
-			__( 'Andrew', 'brave-hearts' ),
-			__( 'Brave Hearts Publishing', 'brave-hearts' ),
-		),
+		/*
+		 * ⭐⭐ 1.19.373 · SEAL 1007 REACHES THIS SET TOO, BY RULING.
+		 *
+		 * ⛔ Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through Gandalf,
+		 *    not heard first-hand): *"I like the nice signature and big place
+		 *    brave hearts - drop the plain one"*. Applied to the three live
+		 *    sets in 1.19.371 and to the day-0 set in 1.19.372; round 11
+		 *    recorded this set as RULED BUT NOT DONE and round 12 closes it.
+		 *
+		 * ⛔ SUPERSEDED LINES, PRESERVED SO THEY ARE NOT RE-DERIVED BY
+		 *    ACCIDENT — the additive-only discipline that keeps this whole
+		 *    function on disk applies to its own edits:
+		 *
+		 *      'signoff'         => array(
+		 *          __( 'Andrew', 'brave-hearts' ),
+		 *          __( 'Brave Hearts Publishing', 'brave-hearts' ),
+		 *      ),
+		 *      'signoff_tagline' => __( 'Big Places. Brave Hearts.', 'brave-hearts' ),
+		 *
+		 * ⭐ THE WORDS ARE NOT LOST, THEY MOVED. `bhp_review_ask_signature()`
+		 *    renders "Andrew Signore / Author | Brave Hearts Publishing / Big
+		 *    Places. Brave Hearts." beneath every set, so the tagline and the
+		 *    company name still reach the reader — once, in the signature
+		 *    block, instead of twice.
+		 *
+		 * ⚠ THIS SET IS STILL UNREACHABLE BY DEFAULT (seal 965). Editing it
+		 *   changes nothing a customer sees today; it means that if Andrew
+		 *   ever reverses seal 965, the 21-day ask comes back already obeying
+		 *   the sign-off ruling rather than reintroducing the duplication that
+		 *   `CYCLE179-DES-29(a)` raised.
+		 *
+		 * ⚠ EMPTY, NOT REMOVED. `bhp_review_ask_copy_is_usable()` requires the
+		 *   key to be PRESENT and an ARRAY, so a typo'd key is still caught.
+		 */
+		'signoff'         => array(),
 
-		'signoff_tagline' => __( 'Big Places. Brave Hearts.', 'brave-hearts' ),
+		'signoff_tagline' => '',
 
 		/*
 		 * ⭐ THE OPT-OUT SENTENCE AND THE ADDRESS LABEL ARE ENGINEERING COPY,
@@ -2990,6 +3021,29 @@ function bhp_review_ask_star_css() {
 function bhp_review_ask_hero( $order, $context = 'touch1' ) {
 	$context = (string) $context;
 
+	/*
+	 * ⛔ THE CONSTANT IS DEFINED HERE RATHER THAN AT FILE SCOPE so that a
+	 *    `define()` in `wp-config.php` still wins: `defined()` is checked
+	 *    first, and this file loads long after the config does.
+	 */
+	if ( ! defined( 'BHP_EMAIL_GENERAL_HERO' ) ) {
+		/*
+		 * ⭐⭐ THE ONE LINE ANDREW'S ANSWER CHANGES.
+		 *
+		 * ⛔ ALLOWED VALUES, BOTH SHIPPED, BOTH WITH ALT TEXT ON RECORD:
+		 *      'hero-read-aloud-general.jpg'        — the Dallas room. DEFAULT.
+		 *      'hero-read-aloud-general-adams.jpg'  — the Adams library.
+		 *    (and either one's `-plain`, caption-free twin.)
+		 *
+		 * ⚠ PENDING SEAL. Round 12's brief considered defaulting to the Adams
+		 *   scene and explicitly decided against it: *"default to
+		 *   hero-read-aloud-general.jpg until Andrew picks"*. The default is
+		 *   therefore UNCHANGED from 1.19.370 and this is a no-op until he
+		 *   answers.
+		 */
+		define( 'BHP_EMAIL_GENERAL_HERO', 'hero-read-aloud-general.jpg' );
+	}
+
 	if ( 'touch2' === $context ) {
 		return array();
 	}
@@ -3030,9 +3084,55 @@ function bhp_review_ask_hero( $order, $context = 'touch1' ) {
 				'touch1' => 'hero-dallas-harris-2026-09-03-04.jpg',
 				'day0'   => 'hero-dallas-harris-2026-09-03-01.jpg',
 			),
+
+			/*
+			 * ⭐⭐ 1.19.373 · ADAMS ELEMENTARY, 2026-08-28. FOUNDER SEAL 1020.
+			 *
+			 * ⛔ WHY THESE TWO PHOTOGRAPHS ARE ALLOWED TO EXIST HERE AT ALL,
+			 *    stated rather than assumed: seal 1020 records them as
+			 *    CONSENTED AND ALREADY PUBLIC. That is the whole permission,
+			 *    and it is the founder's, not this lane's. ⚠ RELAYED through
+			 *    Gandalf, not heard first-hand.
+			 *
+			 * ⭐ 01 IS DAY 0, 02 IS TOUCH 1, which is the same shape as the
+			 *    Dallas Harris entry: the day-0 note goes out the evening of a
+			 *    visit and gets the wide room; the review ask, weeks later,
+			 *    gets the reading itself.
+			 *
+			 * ⛔ THE SLUG IS THE ORDER META VALUE, NOT A LABEL.
+			 *    `_bhp_school_visit_slug = "adams-2026-08-28"` is what selects
+			 *    this row — the same string
+			 *    `bhp_visit_email_copy_sets()` keys its superseded Adams copy
+			 *    set by. A visit whose orders do not carry that meta gets the
+			 *    general hero, not this one.
+			 *
+			 * ⚠ THE `-plain` TWINS ARE ON DISK AND ARE NOT MAPPED. They carry
+			 *   no baked caption, so switching to a caption-free hero is one
+			 *   value here (or one filter callback), not a new design pass.
+			 */
+			'adams-2026-08-28'         => array(
+				'touch1' => 'hero-adams-2026-08-28-02.jpg',
+				'day0'   => 'hero-adams-2026-08-28-01.jpg',
+			),
+
+			/*
+			 * ⭐⭐ 1.19.373 · THE GENERAL HERO IS NOW A CHOICE, NOT A LITERAL.
+			 *
+			 * ⛔ TWO CANDIDATES ARE SHIPPED AND ANDREW HAS PICKED NEITHER:
+			 *    `hero-read-aloud-general.jpg` (the Dallas room) and
+			 *    `hero-read-aloud-general-adams.jpg` (the Adams library).
+			 *    ⛔ THE DEFAULT DELIBERATELY DOES NOT MOVE — it is still the
+			 *    Dallas room, exactly as 1.19.370 shipped it. Switching the
+			 *    picture that fronts every unmapped visit and every web-lane
+			 *    ask is a founder decision, and it is PENDING, not made here.
+			 *
+			 * ⭐ FLIPPING IT IS ONE CONSTANT: `BHP_EMAIL_GENERAL_HERO`, defined
+			 *    just above this function. No other line in the theme names a
+			 *    general hero file.
+			 */
 			'general'                  => array(
-				'touch1' => 'hero-read-aloud-general.jpg',
-				'day0'   => 'hero-read-aloud-general.jpg',
+				'touch1' => BHP_EMAIL_GENERAL_HERO,
+				'day0'   => BHP_EMAIL_GENERAL_HERO,
 			),
 		)
 	);
@@ -3124,6 +3224,44 @@ function bhp_review_ask_hero_alt( $file ) {
 
 		case 'hero-read-aloud-general.jpg':
 			return __( 'A school cafeteria full of first and second graders seated at long tables, facing Andrew Signore at the front of the room. Caption: A morning read-aloud with first and second graders.', 'brave-hearts' );
+
+		/*
+		 * ⭐⭐ 1.19.373 · ADAMS ELEMENTARY, 2026-08-28. SEAL 1020.
+		 *
+		 * ⛔ THESE FOUR STRINGS ARE LEGOLAS'S, TRANSCRIBED FROM THE ROUND-12
+		 *    BRIEF WORD FOR WORD. Nothing was rewritten, tightened or made
+		 *    warmer. ⛔ The `-plain` twins carry the same scene sentence with
+		 *    the "Read-aloud at ..." caption sentence removed, because those
+		 *    files have no baked caption to describe — the same rule the
+		 *    Dallas `-plain` alts follow.
+		 *
+		 * ⛔ NO CHILD IS NAMED AND NO REACTION IS DESCRIBED. "About forty first
+		 *    and second graders" is a count of a photographed room, which is
+		 *    what the photograph shows; it is Legolas's own number from the
+		 *    frame and it is not a claim about attendance, enjoyment or
+		 *    outcome.
+		 */
+		case 'hero-adams-2026-08-28-01.jpg':
+			return __( 'Andrew Signore sits on a low bench in a school library reading from an open book, with about forty first and second graders seated on the floor facing him, seen from behind. Read-aloud at Adams Elementary, August 28, 2026.', 'brave-hearts' );
+
+		case 'hero-adams-2026-08-28-01-plain.jpg':
+			return __( 'Andrew Signore sits on a low bench in a school library reading from an open book, with about forty first and second graders seated on the floor facing him, seen from behind.', 'brave-hearts' );
+
+		case 'hero-adams-2026-08-28-02.jpg':
+			return __( 'Andrew Signore sits reading aloud from an open book beneath a banner of paper pennants spelling A NEW CHAPTER BEGINS. Read-aloud at Adams Elementary, August 28, 2026.', 'brave-hearts' );
+
+		case 'hero-adams-2026-08-28-02-plain.jpg':
+			return __( 'Andrew Signore sits reading aloud from an open book beneath a banner of paper pennants spelling A NEW CHAPTER BEGINS.', 'brave-hearts' );
+
+		/*
+		 * ⭐ THE SECOND GENERAL CANDIDATE. Shipped so the choice is real;
+		 *    ⛔ NOT the default — see `BHP_EMAIL_GENERAL_HERO`.
+		 */
+		case 'hero-read-aloud-general-adams.jpg':
+			return __( 'Andrew Signore sits at the front of a school library speaking to first and second graders seated on the floor among the bookshelves. A morning read-aloud with first and second graders.', 'brave-hearts' );
+
+		case 'hero-read-aloud-general-adams-plain.jpg':
+			return __( 'Andrew Signore sits at the front of a school library speaking to first and second graders seated on the floor among the bookshelves.', 'brave-hearts' );
 	}
 
 	return '';
