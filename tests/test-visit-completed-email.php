@@ -210,6 +210,47 @@ bhp_vce_assert(
 );
 
 /*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ SEAL 1064 — THE REPLACED SENTENCE, PINNED BOTH WAYS. 1.19.381.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ TWO ASSERTIONS, NOT ONE, AND THE SECOND IS THE IMPORTANT ONE. Pinning the
+ *    new sentence proves it shipped; pinning the ABSENCE of the old one proves
+ *    a later merge, revert or copy-paste from an archived set has not quietly
+ *    put back a claim the founder withdrew.
+ *
+ * ⚠ WHY HE WITHDREW IT, so nobody re-adds it as an improvement: the old
+ *   sentence said **all of it is true** of books containing a talking dog and
+ *   historical figures who did not really take Charlotte and Henry anywhere
+ *   (seal 1063). It is on the wrong side of this company's never-invent rule.
+ *
+ * ⛔ SOURCE: `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-SEQ-V2.md`
+ *    line 55, as amended 2026-09-05 by Gandalf under seal 1064. ⚠ THAT
+ *    AMENDMENT CHANGED THE FILE'S md5: the seal-982 pin recorded elsewhere in
+ *    this suite as `1ecd9c75acfc755df0e121b47ca73842` is the PRE-AMENDMENT
+ *    digest; the file now reads `0ecc659fbea46fb25ef9b01014c2ed13` (measured
+ *    2026-09-05 by this desk, not carried from a report).
+ */
+$bhp_vce_day0_new = 'The places are real. So are the animals, the weather and the science. The adventures are made up; the world they happen in is not.';
+$bhp_vce_day0_old = 'The places are real. So are the animals, the weather and the science. None of it is homework and all of it is true.';
+
+bhp_vce_assert(
+	in_array( $bhp_vce_day0_new, $day0['body'], true ),
+	'⭐⭐ SEAL 1064: the day-0 body carries the replacement sentence verbatim',
+	$failures
+);
+bhp_vce_assert(
+	! in_array( $bhp_vce_day0_old, $day0['body'], true ),
+	'⛔ SEAL 1064: the superseded "all of it is true" sentence is NOT in the day-0 body',
+	$failures
+);
+bhp_vce_assert(
+	false === strpos( implode( ' ', $day0['body'] ), 'all of it is true' ),
+	'⛔ SEAL 1064: no reworded survival of the withdrawn truth claim anywhere in the body',
+	$failures
+);
+
+/*
  * ⛔⛔ THE ADAMS FACTS ARE UNREACHABLE FROM THIS FILE, FOR EVERY SLUG. This is
  *     the assertion the retirement exists to make possible: it used to be true
  *     only for slugs that were not Adams.

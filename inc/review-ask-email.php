@@ -320,11 +320,44 @@ if ( ! defined( 'BHP_REVIEW_ASK_EXCLUDE_OPTION' ) ) {
  *    both lanes, 1.19.317 to 1.19.368.
  *
  * ⚠ THE DELIVERABILITY REASONING BEHIND HAVING A CAP AT ALL IS UNCHANGED and
- *   is still in `bhp_review_ask_daily_cap()`. Ten per lane is a ceiling of 20
- *   in a day this store has never come close to needing; it is not "no cap".
+ *   is still in `bhp_review_ask_daily_cap()`. It is not "no cap".
+ *
+ * ⭐⭐ 1.19.381 · THIS CONSTANT IS NOW THE WEB LANE AND THE SHARED FALLBACK.
+ *     The visit lane has its own, higher number in
+ *     `BHP_REVIEW_ASK_VISIT_DAILY_CAP` immediately below. The two lanes stopped
+ *     agreeing the moment seal 1066 admitted the Adams backlog, and one
+ *     constant serving both would have had to be raised for the WEB lane too,
+ *     which nothing asked for.
  */
 if ( ! defined( 'BHP_REVIEW_ASK_DEFAULT_DAILY_CAP' ) ) {
 	define( 'BHP_REVIEW_ASK_DEFAULT_DAILY_CAP', 10 );
+}
+
+/**
+ * The daily send cap for the VISIT lane specifically.
+ *
+ * ⭐⭐ 1.19.381 · 20, RAISED FROM 10, AND IT IS A DIRECT CONSEQUENCE OF SEAL
+ *     1066. With the floor at 2026-08-28 the first morning carries thirteen
+ *     visit-lane orders at once — the eight Adams orders (2026-08-28) plus the
+ *     five Dallas one-book orders whose visit + 7 lands the same day. At a cap
+ *     of 10 three of them would have been deferred to the next morning, which
+ *     is a filter quietly editing a founder ruling. 20 lets the whole first
+ *     morning through in one day and still leaves a real ceiling.
+ *
+ * ⛔ THE WEB LANE STAYS AT 10 and was not asked to move. The web lane has no
+ *    promised date behind it, and its backlog is exactly the thing the floor
+ *    and the cap were built to hold back.
+ *
+ * ⚠ IT IS A CEILING, NOT A TARGET. The store has never sent twenty review asks
+ *   in a day. If a real date ever needs more than this, raise it for that day
+ *   through the `bhp_review_ask_daily_cap` filter rather than editing here.
+ *
+ * ⛔ SUPERSEDED VALUE, PRESERVED RATHER THAN DELETED: **10**, shared with the
+ *    web lane through `BHP_REVIEW_ASK_DEFAULT_DAILY_CAP`, 1.19.369 to
+ *    1.19.380.
+ */
+if ( ! defined( 'BHP_REVIEW_ASK_VISIT_DAILY_CAP' ) ) {
+	define( 'BHP_REVIEW_ASK_VISIT_DAILY_CAP', 20 );
 }
 
 /**
@@ -419,6 +452,12 @@ if ( ! defined( 'BHP_REVIEW_ASK_TOUCH2_SENT_META' ) ) {
  *   one-book orders (621, 624, 628) to the following day, so the backlog was
  *   not merely noisy, it was displacing the intended sends.
  *
+ *   ⚠ THAT LAST SENTENCE IS HISTORY AS OF 1.19.381, NOT CURRENT BEHAVIOUR. The
+ *     visit lane cap is now 20, so the thirteen orders of that first morning
+ *     fit in one day and nothing is deferred. It is kept because it is the
+ *     evidence that produced both changes, and a reader who deletes it will
+ *     eventually re-lower the cap without knowing what it was sized against.
+ *
  * ⭐ THE RULE. An order whose touch-1 ANCHOR falls before this date is
  *    declined `before_floor` and never enters EITHER touch. The anchor is the
  *    one the lane already uses — the visit date for the visit lane, the
@@ -426,23 +465,41 @@ if ( ! defined( 'BHP_REVIEW_ASK_TOUCH2_SENT_META' ) ) {
  *    the schedule asks, and there is no second definition of "when did this
  *    order happen" to drift out of step.
  *
- * ⛔⛔ IT IS DELIBERATELY ONE CONSTANT AND NOTHING ELSE, because the choice
- *     between the two candidate floors is ANDREW'S and it is still open:
+ * ⭐⭐ SEAL 1066, 2026-09-05 · '2026-08-28', THE ADAMS VISIT DATE, FOR BOTH
+ *     LANES. Andrew Signore, asked to choose between the two candidate floors
+ *     below, answered *"Include them all"* and confirmed *"Yes"*. The eight
+ *     Adams orders are IN. ⛔ RELAYED through Gandalf, not heard first-hand by
+ *     this desk.
  *
- *       (A) '2026-09-03' — the Dallas Harris visit date, the DEFAULT shipped
- *           here. The sequence begins with the sixteen orders it was designed
- *           for. Adams (2026-08-28) is EXCLUDED, and those eight parents get
- *           no review ask from this engine at all.
- *       (B) '2026-08-28' — the Adams visit date. The eight Adams orders are
- *           INCLUDED and would all become due immediately on the first run,
- *           competing with Dallas for the lane cap of 10 on day one.
+ *     WHAT THAT ACTUALLY ADMITS, stated so the reader does not have to derive
+ *     it. On the first morning the switch is thrown, the eight Adams orders
+ *     (2026-08-28) and the five Dallas one-book orders (2026-09-03, touch 1 at
+ *     +7 = 2026-09-10) are due together — thirteen on one visit-lane day.
+ *     ⚠ THAT IS WHY THE VISIT LANE CAP IS 20 AND NOT 10 as of this same build;
+ *     at 10 the founder ruling would have been silently half-applied, with
+ *     three parents deferred to the next day by a filter rather than by a
+ *     decision. See `BHP_REVIEW_ASK_VISIT_DAILY_CAP`.
+ *
+ *     WHAT THE FLOOR STILL EXCLUDES, and this is the point of keeping it:
+ *       · the two July/August WEB orders (546 and 576) — both completed before
+ *         2026-08-28, both still declined `before_floor`;
+ *       · the four customers whose only touch-1 record was written by the
+ *         legacy 21-day engine on 2026-08-29 — they are excluded by the
+ *         SEPARATE legacy-stamp rule (`legacy_touch1`), not by this date, and
+ *         moving the floor does not reach them. Two rules, two reasons.
+ *
+ * ⛔ SUPERSEDED VALUES, PRESERVED RATHER THAN DELETED:
+ *      (A) '2026-09-03' — the Dallas Harris visit date. Shipped as the default
+ *          in 1.19.380 only, while the choice was open. It EXCLUDED the eight
+ *          Adams parents from the engine entirely, which is the outcome seal
+ *          1066 rejected.
  *
  *     Changing it is a one-line edit here, or a `define()` in `wp-config.php`
  *     that this block will not overwrite, or the filter below. ⚠ No other line
  *     of this engine needs to change either way.
  */
 if ( ! defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) ) {
-	define( 'BHP_REVIEW_ASK_FLOOR_DATE', '2026-09-03' );
+	define( 'BHP_REVIEW_ASK_FLOOR_DATE', '2026-08-28' );
 }
 
 /** Visit lane, touch 1: days after the VISIT DATE when the order holds ONE chapter book. */
@@ -1202,15 +1259,30 @@ function bhp_review_ask_in_send_window( $now = 0 ) {
 function bhp_review_ask_daily_cap( $lane = '' ) {
 	$lane = in_array( (string) $lane, array( 'visit', 'web' ), true ) ? (string) $lane : '';
 
+	/*
+	 * ⭐⭐ 1.19.381 · THE DEFAULT NOW DEPENDS ON THE LANE. Visit gets 20, web
+	 *     gets 10, and '' (the shared default, used by callers that are not
+	 *     asking about one lane) stays on the lower of the two ON PURPOSE:
+	 *     a caller that does not know which lane it is talking about must not
+	 *     be handed the more permissive number.
+	 *
+	 * ⚠ THE FILTER STILL SEES THE LANE AND STILL RUNS LAST, so an operator
+	 *   override behaves exactly as it did before this change.
+	 */
+	$default = ( 'visit' === $lane )
+		? BHP_REVIEW_ASK_VISIT_DAILY_CAP
+		: BHP_REVIEW_ASK_DEFAULT_DAILY_CAP;
+
 	/**
 	 * Filter the maximum review asks sent per calendar day, per lane.
 	 *
 	 * @since 1.19.317
 	 * @since 1.19.369 `$lane` added. '' means "the shared default".
-	 * @param int    $cap  Default 10.
+	 * @since 1.19.381 The default is per lane: 20 visit, 10 web, 10 for ''.
+	 * @param int    $cap  Default 20 on the visit lane, 10 otherwise.
 	 * @param string $lane 'visit', 'web' or ''.
 	 */
-	$cap = (int) apply_filters( 'bhp_review_ask_daily_cap', BHP_REVIEW_ASK_DEFAULT_DAILY_CAP, $lane );
+	$cap = (int) apply_filters( 'bhp_review_ask_daily_cap', $default, $lane );
 
 	/*
 	 * ⛔⛔ 1.19.369 · ZERO NOW MEANS ZERO. SUPERSEDED LINE, PRESERVED RATHER
@@ -5070,7 +5142,15 @@ function bhp_review_ask_run( $args = array() ) {
 
 	if ( $remaining <= 0 ) {
 		$summary['halted'] = 'daily_cap_reached';
-		$say( 'Daily cap of ' . $cap . ' per lane already reached on every lane. Nothing sent.' );
+		/*
+		 * ⛔ 1.19.381 · SUPERSEDED LINE, PRESERVED RATHER THAN DELETED:
+		 *      $say( 'Daily cap of ' . $cap . ' per lane already reached on every lane. Nothing sent.' );
+		 *    `$cap` is `max()` of the two lane caps, and since the lanes stopped
+		 *    agreeing (20 visit, 10 web) that sentence named a number that was
+		 *    only true of one of them. It now prints both.
+		 */
+		$say( 'Daily cap already reached on every lane (visit ' . $bhp_lane_cap['visit']
+			. ', web ' . $bhp_lane_cap['web'] . '). Nothing sent.' );
 		return $summary;
 	}
 
@@ -5657,7 +5737,17 @@ function bhp_review_ask_cli( $args, $assoc_args = array() ) {
 		$say( 'copy web touch 1:   ' . ( ! empty( bhp_review_ask_copy_web_touch1()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
 		$say( 'copy touch 2:       ' . ( ! empty( bhp_review_ask_copy_touch2()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
 		$say( 'copy day 0:         ' . ( function_exists( 'bhp_visit_email_copy_is_approved' ) && bhp_visit_email_copy_is_approved( BHP_VISIT_EMAIL_DEFAULT_KEY ) ? 'APPROVED (_default)' : '_default not approved' ) );
+		/*
+		 * ⭐⭐ 1.19.381 · THE FLOOR IS PART OF STATUS, not only of `plan`. An
+		 *     operator reading status is reading it to answer "what will this
+		 *     engine do", and the floor decides which customers exist at all.
+		 */
+		$status_floor = bhp_review_ask_floor_date();
+		$say( 'backlog floor:      ' . ( '' !== $status_floor
+			? $status_floor . ' - an order whose anchor falls BEFORE this is declined before_floor   (seal 1066)'
+			: 'NONE - every completed order in the scan is eligible, including the backlog' ) );
 		// ⭐ 1.19.369 · PER LANE. Reported as two numbers because it is two budgets.
+		// ⭐ 1.19.381 · AND THE TWO NUMBERS NOW DIFFER: 20 visit, 10 web.
 		$say( 'daily cap:          ' . bhp_review_ask_daily_cap( 'visit' ) . ' visit lane (' . bhp_review_ask_sent_today_in_lane( 'visit' ) . ' used today) | ' . bhp_review_ask_daily_cap( 'web' ) . ' web lane (' . bhp_review_ask_sent_today_in_lane( 'web' ) . ' used today)' );
 		$say( 'postal address:     ' . ( bhp_review_ask_postal_address() ? bhp_review_ask_postal_address() : 'MISSING - sending is blocked' ) );
 		$say( 'excluded:           ' . count( bhp_review_ask_excluded_emails() ) );
@@ -6132,8 +6222,14 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
 	$plan_floor = bhp_review_ask_floor_date();
 
 	$say( 'backlog floor: ' . ( '' !== $plan_floor
-		? $plan_floor . ' - an order whose anchor (visit date, or completion for the web lane) falls BEFORE this date is declined before_floor and enters neither touch'
+		? $plan_floor . ' - an order whose anchor (visit date, or completion for the web lane) falls BEFORE this date is declined before_floor and enters neither touch   (seal 1066: the Adams visit date, both lanes)'
 		: 'NONE - every completed order in the scan is eligible, including the backlog' ) );
+	/*
+	 * ⭐ 1.19.381 · AND THE CAPS, BEFORE ANY DATE IS EVALUATED. The floor and
+	 *    the caps are the two policies that decide the shape of the list
+	 *    below, and seal 1066 moved both in the same build.
+	 */
+	$say( 'daily cap: ' . bhp_review_ask_daily_cap( 'visit' ) . ' visit lane | ' . bhp_review_ask_daily_cap( 'web' ) . ' web lane   (the lanes hold separate budgets; --limit still caps the whole run)' );
 	$say( 'legacy touch-1 stamps: touch 2 requires a touch-1 record written by THIS sequence; a stamp from the legacy 21-day engine declines legacy_touch1' );
 	$say( '' );
 
@@ -6155,8 +6251,12 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
 
 		$say( '=== ' . $date . ' 09:00 site-local ===' );
 
-		$would    = 0;
-		$declined = array();
+		$would      = 0;
+		$would_lane = array(
+			'visit' => 0,
+			'web'   => 0,
+		);
+		$declined   = array();
 
 		foreach ( bhp_review_ask_candidates( $scan ) as $order ) {
 			$reason = bhp_review_ask_decline_reason( $order, $now );
@@ -6190,6 +6290,19 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
 
 			$would++;
 
+			/*
+			 * ⭐ 1.19.381 · COUNTED PER LANE AS WELL AS IN TOTAL, because the
+			 *    cap is per lane and a single total cannot say whether a day
+			 *    fits. Thirteen visit-lane sends fit under 20; thirteen web
+			 *    sends would not fit under 10, and before this the plan
+			 *    printed the same line for both.
+			 */
+			$bhp_plan_lane = bhp_review_ask_lane( $order );
+
+			if ( isset( $would_lane[ $bhp_plan_lane ] ) ) {
+				$would_lane[ $bhp_plan_lane ]++;
+			}
+
 			$say( sprintf(
 				'  WOULD SEND  order %-6s  touch %d  %-5s lane  %d chapter book(s)  visit %s',
 				$order->get_id(),
@@ -6200,10 +6313,33 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
 			) );
 		}
 
-		$cap = bhp_review_ask_daily_cap();
+		/*
+		 * ⭐⭐ 1.19.381 · THE CAP LINE IS PER LANE, and it is the line that
+		 *     answers the question seal 1066 raised: does the first morning
+		 *     fit? ⛔ THE SUPERSEDED LINE, PRESERVED RATHER THAN DELETED,
+		 *     compared one total against one number:
+		 *
+		 *       $cap = bhp_review_ask_daily_cap();
+		 *       $say( '  would send: ' . $would . '   daily cap: ' . $cap . ... );
+		 *
+		 *     With visit at 20 and web at 10 that line had no honest value to
+		 *     print, and `bhp_review_ask_daily_cap()` with no lane returns the
+		 *     LOWER of the two, so it would have reported a false overflow on
+		 *     any visit-heavy day.
+		 */
+		$cap_visit  = bhp_review_ask_daily_cap( 'visit' );
+		$cap_web    = bhp_review_ask_daily_cap( 'web' );
+		$over_visit = max( 0, $would_lane['visit'] - $cap_visit );
+		$over_web   = max( 0, $would_lane['web'] - $cap_web );
 
 		$say( '  ---' );
-		$say( '  would send: ' . $would . '   daily cap: ' . $cap . ( $would > $cap ? '   ** CAPPED: ' . ( $would - $cap ) . ' would slip to the next day **' : '' ) );
+		$say( '  would send: ' . $would
+			. '   (visit ' . $would_lane['visit'] . ' of cap ' . $cap_visit
+			. ' | web ' . $would_lane['web'] . ' of cap ' . $cap_web . ')'
+			. ( ( $over_visit + $over_web ) > 0
+				? '   ** CAPPED: ' . ( $over_visit + $over_web ) . ' would slip to the next day (visit '
+					. $over_visit . ', web ' . $over_web . ') **'
+				: '   ** the whole day fits under both caps **' ) );
 
 		foreach ( $declined as $reason => $count ) {
 			$say( '  declined ' . $reason . ': ' . $count );
@@ -6220,7 +6356,17 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
 		$summary_counts = $declined;
 		arsort( $summary_counts );
 
-		$summary_parts = array( 'would_send=' . $would );
+		/*
+		 * ⭐ 1.19.381 · THE QUOTABLE LINE CARRIES THE LANE SPLIT AND THE CAPS
+		 *    TOO. A register entry reading `would_send=13` is unreadable
+		 *    without knowing that all thirteen were visit-lane and the visit
+		 *    cap is 20.
+		 */
+		$summary_parts = array(
+			'would_send=' . $would,
+			'visit=' . $would_lane['visit'] . '/' . $cap_visit,
+			'web=' . $would_lane['web'] . '/' . $cap_web,
+		);
 
 		foreach ( $summary_counts as $reason => $count ) {
 			$summary_parts[] = $reason . '=' . $count;

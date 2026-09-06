@@ -442,7 +442,28 @@ function bhp_visit_email_copy_sets() {
 				 */
 				'{WhyBuiltLine}',
 				__( 'Between picture books and thick chapter books there is a gap, and these books are written for the reader standing in it. There is a lot of white space, so a page never looks like a wall. The chapters are short, so the finish line is always close enough to see. The prose is written to be read out loud, and that is how I would read it to you if you were sitting here.', 'brave-hearts' ),
-				__( 'The places are real. So are the animals, the weather and the science. None of it is homework and all of it is true.', 'brave-hearts' ),
+				/*
+				 * ⭐⭐ SEAL 1064 - THE FOUNDER REPLACED THIS SENTENCE, 2026-09-05.
+				 *     ⛔ RELAYED through Gandalf, not heard first-hand by this desk.
+				 *
+				 *     WHY. Seal 1063, Andrew Signore, verbatim: *"We made need to
+				 *     change one line ... Theres a talking dog and the historical
+				 *     figures didnt really take charlotte and henry to those
+				 *     places. Lets come up with something else"*. The old sentence
+				 *     claimed **all of it is true** of books that contain a talking
+				 *     dog, which is the one kind of claim this company does not
+				 *     make. Gandalf offered replacements; Andrew chose option 1
+				 *     (seal 1064, verbatim: *"1"*).
+				 *
+				 * ⛔ SUPERSEDED SENTENCE, PRESERVED VERBATIM SO IT IS NOT RE-ADDED:
+				 *      'The places are real. So are the animals, the weather and the science. None of it is homework and all of it is true.'
+				 *
+				 * ⚠ ONE SENTENCE CHANGED AND NOTHING ELSE. The paragraph count is
+				 *   unchanged at eight, the first two sentences are the founder's
+				 *   own words untouched, and no other paragraph in this set was
+				 *   edited in this build.
+				 */
+				__( 'The places are real. So are the animals, the weather and the science. The adventures are made up; the world they happen in is not.', 'brave-hearts' ),
 				__( 'Here is the part that matters more than the book itself. Read the first chapter together tonight, out loud, and then stop and hand it over. A signed book that sits on a shelf is a nice object. A signed book that gets opened on the first night is the reason I drove out to {SchoolName}.', 'brave-hearts' ),
 				__( 'Email me any time at Andrew@braveheartspublishing.com.', 'brave-hearts' ),
 				/*

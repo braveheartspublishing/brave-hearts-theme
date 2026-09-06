@@ -2289,10 +2289,36 @@ bhp_rs_ok(
 );
 bhp_rs_ok( '⭐ Touch 2 is still 4 days after touch 1', 4 === BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS );
 
-/* ---- 11.5 the cap is 10 and it is per lane ---- */
+/* ---- 11.5 the cap is per lane, and since 1.19.381 the lanes differ ---- */
 
-bhp_rs_ok( '⭐⭐ The default cap is 10', 10 === BHP_REVIEW_ASK_DEFAULT_DAILY_CAP );
-bhp_rs_ok( '⭐ Both lanes get their own budget of 10', 10 === bhp_review_ask_daily_cap( 'visit' ) && 10 === bhp_review_ask_daily_cap( 'web' ) );
+/*
+ * ⭐⭐ 1.19.381 · 20 VISIT, 10 WEB. This is the second half of seal 1066 and it
+ *     is not a tuning change: with the floor at 2026-08-28 the first morning
+ *     carries thirteen visit-lane orders (eight Adams + five Dallas one-book),
+ *     and a cap of 10 would have deferred three of them, half-applying a
+ *     founder ruling by filter.
+ *
+ * ⛔ SUPERSEDED ASSERTION, PRESERVED RATHER THAN DELETED:
+ *      '⭐ Both lanes get their own budget of 10'
+ *      10 === bhp_review_ask_daily_cap( 'visit' ) && 10 === bhp_review_ask_daily_cap( 'web' )
+ */
+bhp_rs_ok( '⭐⭐ The shared/web default cap is still 10', 10 === BHP_REVIEW_ASK_DEFAULT_DAILY_CAP );
+bhp_rs_ok( '⭐⭐ The visit-lane cap constant is 20 (seal 1066)', defined( 'BHP_REVIEW_ASK_VISIT_DAILY_CAP' ) && 20 === BHP_REVIEW_ASK_VISIT_DAILY_CAP );
+bhp_rs_ok(
+	'⭐⭐ The lanes hold DIFFERENT budgets: visit 20, web 10',
+	20 === bhp_review_ask_daily_cap( 'visit' ) && 10 === bhp_review_ask_daily_cap( 'web' ),
+	'visit=' . bhp_review_ask_daily_cap( 'visit' ) . ' web=' . bhp_review_ask_daily_cap( 'web' )
+);
+/*
+ * ⛔ AND THE LANE-LESS CALL RETURNS THE LOWER NUMBER, deliberately. A caller
+ *    that does not know which lane it is asking about must not be handed the
+ *    more permissive budget.
+ */
+bhp_rs_ok(
+	'⛔ bhp_review_ask_daily_cap() with no lane returns the CONSERVATIVE 10, not 20',
+	10 === bhp_review_ask_daily_cap(),
+	'got: ' . bhp_review_ask_daily_cap()
+);
 /*
  * ⚠ ASSERTED AS "COUNTS SOMETHING SANE", NOT AS ZERO. The ledger is a live
  *   option on whatever environment this runs on, and a suite that demands a
@@ -2317,13 +2343,13 @@ add_filter( 'bhp_review_ask_daily_cap', $bhp_rs_r8_capfilter, 99, 2 );
 
 bhp_rs_ok(
 	'⭐⭐ A lane can be paused to zero without touching the other (0 now means 0)',
-	0 === bhp_review_ask_daily_cap( 'web' ) && 10 === bhp_review_ask_daily_cap( 'visit' ),
+	0 === bhp_review_ask_daily_cap( 'web' ) && 20 === bhp_review_ask_daily_cap( 'visit' ),
 	'web=' . bhp_review_ask_daily_cap( 'web' ) . ' visit=' . bhp_review_ask_daily_cap( 'visit' )
 );
 
 remove_filter( 'bhp_review_ask_daily_cap', $bhp_rs_r8_capfilter, 99 );
 
-bhp_rs_ok( 'The suite removed its cap filter', 10 === bhp_review_ask_daily_cap( 'web' ) );
+bhp_rs_ok( 'The suite removed its cap filter', 10 === bhp_review_ask_daily_cap( 'web' ) && 20 === bhp_review_ask_daily_cap( 'visit' ) );
 
 /*
  * ⭐⭐ AND THE CAP MUST NOT DELAY THE SIXTEEN. The four touch-1 dates carry at
@@ -2336,6 +2362,21 @@ bhp_rs_ok( 'The suite removed its cap filter', 10 === bhp_review_ask_daily_cap( 
 bhp_rs_ok(
 	'⭐ A visit-lane budget of 10 covers the whole sixteen-order migration in one day if it ever landed together',
 	bhp_review_ask_daily_cap( 'visit' ) >= 10
+);
+
+/*
+ * ⭐⭐ 1.19.381 · AND THE FIRST MORNING UNDER SEAL 1066 FITS. Thirteen visit-lane
+ *     orders due together — eight Adams (2026-08-28, visit + 7 and visit + 10
+ *     both long past) plus five Dallas one-book (2026-09-03 + 7 = 2026-09-10).
+ *     ⚠ THE THIRTEEN IS TAKEN FROM THE 1.19.379 PRODUCTION DRY RUN carried in
+ *     the round-19/20 briefs; this desk has NOT re-read the per-school split
+ *     off either environment in this session. The assertion is on the cap
+ *     being big enough for that stated number, not on the number itself.
+ */
+bhp_rs_ok(
+	'⭐⭐ SEAL 1066: the visit cap covers the thirteen orders of the first morning in ONE day',
+	bhp_review_ask_daily_cap( 'visit' ) >= 13,
+	'visit cap=' . bhp_review_ask_daily_cap( 'visit' )
 );
 
 /* ---- 11.6 the migration path is retired ---- */
@@ -4686,10 +4727,36 @@ bhp_rs_ok( 'BHP_REVIEW_ASK_FLOOR_DATE is defined', defined( 'BHP_REVIEW_ASK_FLOO
  *   the value it found, which is exactly what a reader needs to know before
  *   trusting anything else in this section.
  */
+/*
+ * ⭐⭐ 1.19.381 · SEAL 1066 SETTLED THE FLOOR AT THE ADAMS VISIT DATE. Andrew
+ *     Signore, asked to choose between the two candidates: *"Include them
+ *     all"*, confirmed *"Yes"*. ⛔ RELAYED, not heard first-hand by this desk.
+ *
+ * ⛔ SUPERSEDED ASSERTION, PRESERVED RATHER THAN DELETED:
+ *      '⭐ The shipped default floor is 2026-09-03 (option A: the Dallas Harris visit date)'
+ *      ... && '2026-09-03' === BHP_REVIEW_ASK_FLOOR_DATE
+ *    2026-09-03 excluded the eight Adams parents from the engine entirely,
+ *    which is the outcome the founder rejected.
+ */
 bhp_rs_ok(
-	'⭐ The shipped default floor is 2026-09-03 (option A: the Dallas Harris visit date)',
-	defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) && '2026-09-03' === BHP_REVIEW_ASK_FLOOR_DATE,
+	'⭐⭐ SEAL 1066: the shipped default floor is 2026-08-28, the Adams visit date, for BOTH lanes',
+	defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) && '2026-08-28' === BHP_REVIEW_ASK_FLOOR_DATE,
 	'found: ' . ( defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) ? BHP_REVIEW_ASK_FLOOR_DATE : 'undefined' )
+);
+
+/*
+ * ⭐ AND WHAT THE FLOOR STILL EXCLUDES, asserted as arithmetic rather than
+ *    trusted as prose. The two July/August web orders (546, 576) completed
+ *    before this date and stay out; the four legacy-asked customers are held
+ *    out by the SEPARATE legacy-stamp rule, which this date does not reach.
+ */
+bhp_rs_ok(
+	'⭐ The floor still sits AFTER the July/August web orders 546 and 576 (they remain before_floor)',
+	bhp_review_ask_local_midnight( BHP_REVIEW_ASK_FLOOR_DATE ) > bhp_review_ask_local_midnight( '2026-08-01' )
+);
+bhp_rs_ok(
+	'⭐ The floor sits ON the Adams visit date, so an Adams order is NOT below it',
+	! ( bhp_review_ask_local_midnight( '2026-08-28' ) < bhp_review_ask_local_midnight( BHP_REVIEW_ASK_FLOOR_DATE ) )
 );
 
 bhp_rs_ok(
