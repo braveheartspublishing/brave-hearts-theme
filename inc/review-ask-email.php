@@ -572,12 +572,56 @@ if ( ! defined( 'BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS' ) ) {
  *    is the half that can be enforced in code. Whoever schedules the daily
  *    action must land it inside the window; the CLI `status` prints whether
  *    the window is open right now so that is checkable rather than assumed.
+ *
+ * ⭐ 1.19.384 · AND SINCE SEAL 1075 THE SCHEDULER DOES LAND IT INSIDE THE
+ *    WINDOW rather than leaving it to whoever threw the switch. See
+ *    `BHP_REVIEW_ASK_DAILY_RUN_TIME`.
  */
 if ( ! defined( 'BHP_REVIEW_ASK_WINDOW_START_HOUR' ) ) {
 	define( 'BHP_REVIEW_ASK_WINDOW_START_HOUR', 8 );
 }
 if ( ! defined( 'BHP_REVIEW_ASK_WINDOW_END_HOUR' ) ) {
 	define( 'BHP_REVIEW_ASK_WINDOW_END_HOUR', 12 );
+}
+
+/**
+ * The site-local wall-clock time the daily run is scheduled for, `HH:MM`.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.384 · SEAL 1075. THIS CONSTANT EXISTS BECAUSE THE ENGINE SHIPPED
+ *     WITHOUT ONE AND WENT SILENT FOR IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT IT CLOSES, verbatim from the go-live: the superseded
+ *    `bhp_review_ask_maybe_schedule()` scheduled the recurring action at
+ *    `time() + 10 * MINUTE_IN_SECONDS` with a `DAY_IN_SECONDS` interval. The
+ *    action therefore repeated FOREVER at whatever minute the switch happened
+ *    to be thrown. An engine enabled at 19:07 runs at 19:17 every day, and
+ *    19:17 is outside the 08:00-12:00 window that
+ *    `bhp_review_ask_in_send_window()` enforces, so every run declined
+ *    `outside_send_window` and no customer ever heard from it.
+ *
+ * ⚠ THIS IS ALSO THE READ ON WHY THE LEGACY ENGINE WENT SILENT AFTER
+ *   2026-08-29 — same bootstrap, same arithmetic. ⛔ STATED AS A READ OF THE
+ *   CODE PATH, not as a measurement: no scheduled-action row from that week was
+ *   examined by this desk.
+ *
+ * ⭐ 09:30 IS CHOSEN, NOT ARBITRARY. It sits an hour and a half inside the
+ *    window's start and two and a half hours before its end, so a late queue,
+ *    a slow `action_scheduler_run_queue` or a daylight-saving shift all have
+ *    room to be absorbed without the run falling out of the window. It is also
+ *    exactly where Gandalf's hand-repair put production (action 4863, 15:30
+ *    UTC = 09:30 America/Boise), so a 1.19.384 deploy finds that action already
+ *    correct and LEAVES IT ALONE rather than churning it.
+ *
+ * ⚠ CHANGE IT THROUGH THE FILTER `bhp_review_ask_daily_run_time`, not by
+ *   editing a scheduled action by hand. A hand-edited action is undone by the
+ *   next `init` if it does not match this value.
+ *
+ * @since 1.19.384
+ */
+if ( ! defined( 'BHP_REVIEW_ASK_DAILY_RUN_TIME' ) ) {
+	define( 'BHP_REVIEW_ASK_DAILY_RUN_TIME', '09:30' );
 }
 
 /** The fallback used wherever a child's first name is wanted and none is known. */
@@ -5504,10 +5548,25 @@ function bhp_review_ask_mark_sent( $order, $touch = 0 ) {
  * @return void
  */
 function bhp_review_ask_maybe_schedule() {
-	if ( function_exists( 'as_has_scheduled_action' ) && function_exists( 'as_schedule_recurring_action' ) ) {
-		if ( ! as_has_scheduled_action( BHP_REVIEW_ASK_CRON_HOOK ) ) {
+	$want   = bhp_review_ask_daily_run_time();
+	$target = bhp_review_ask_next_daily_run_timestamp();
+
+	if ( function_exists( 'as_schedule_recurring_action' ) && function_exists( 'as_unschedule_all_actions' ) ) {
+		$pending = bhp_review_ask_pending_actions();
+		$next    = bhp_review_ask_next_pending_timestamp( $pending );
+
+		if ( bhp_review_ask_schedule_needs_reset( count( $pending ), $next, $want ) ) {
+			/*
+			 * ⛔ UNSCHEDULE ALL, THEN SCHEDULE EXACTLY ONE. Not "add the right
+			 *    one and hope"; a second action for this hook is a second run
+			 *    of a customer emailer on the same day, and the daily cap is
+			 *    the only thing that would stand between that and a duplicate
+			 *    ask. The cap is a backstop, not a scheduler.
+			 */
+			as_unschedule_all_actions( BHP_REVIEW_ASK_CRON_HOOK );
+
 			as_schedule_recurring_action(
-				time() + ( 10 * MINUTE_IN_SECONDS ),
+				$target,
 				DAY_IN_SECONDS,
 				BHP_REVIEW_ASK_CRON_HOOK,
 				array(),
@@ -5525,9 +5584,240 @@ function bhp_review_ask_maybe_schedule() {
 		return;
 	}
 
-	if ( ! wp_next_scheduled( BHP_REVIEW_ASK_CRON_HOOK ) ) {
-		wp_schedule_event( time() + ( 10 * MINUTE_IN_SECONDS ), 'daily', BHP_REVIEW_ASK_CRON_HOOK );
+	/*
+	 * ⭐ THE WP-CRON FALLBACK LANDS AT THE SAME WALL-CLOCK TIME. A fallback
+	 *    that ran at a different hour would be a second, quieter version of
+	 *    exactly the defect this build closes.
+	 */
+	$legacy = wp_next_scheduled( BHP_REVIEW_ASK_CRON_HOOK );
+
+	if ( $legacy && wp_date( 'H:i', $legacy ) === $want ) {
+		return;
 	}
+
+	if ( $legacy ) {
+		wp_clear_scheduled_hook( BHP_REVIEW_ASK_CRON_HOOK );
+	}
+
+	wp_schedule_event( $target, 'daily', BHP_REVIEW_ASK_CRON_HOOK );
+}
+
+/**
+ * The site-local `HH:MM` the daily run belongs at.
+ *
+ * ⛔ THE FILTERED VALUE IS VALIDATED AND THEN WINDOW-CHECKED, and both guards
+ *    fail back to something inside the window rather than honouring a value
+ *    that would recreate seal 1075. A run time outside the send window is not
+ *    a configuration choice, it is an engine that declines every day.
+ *
+ * @since 1.19.384
+ * @return string `HH:MM`, zero padded.
+ */
+function bhp_review_ask_daily_run_time() {
+	$default = BHP_REVIEW_ASK_DAILY_RUN_TIME;
+
+	/**
+	 * Filter the site-local time of day the daily run is scheduled for.
+	 *
+	 * @since 1.19.384
+	 * @param string $time `HH:MM`, site-local.
+	 */
+	$raw = trim( (string) apply_filters( 'bhp_review_ask_daily_run_time', $default ) );
+
+	if ( ! preg_match( '/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/', $raw, $m ) ) {
+		$raw = $default;
+		preg_match( '/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/', $raw, $m );
+	}
+
+	$hour   = isset( $m[1] ) ? (int) $m[1] : 9;
+	$minute = isset( $m[2] ) ? (int) $m[2] : 30;
+
+	$start = (int) apply_filters( 'bhp_review_ask_window_start_hour', BHP_REVIEW_ASK_WINDOW_START_HOUR );
+	$end   = (int) apply_filters( 'bhp_review_ask_window_end_hour', BHP_REVIEW_ASK_WINDOW_END_HOUR );
+
+	if ( $end > $start && ( $hour < $start || $hour >= $end ) ) {
+		// ⚠ Half past the window's first hour, which is inside any window of
+		//   at least one hour. The 09:30 default is preserved when the window
+		//   is the shipped 08:00-12:00 and the filter simply agrees with it.
+		$hour   = $start;
+		$minute = 30;
+	}
+
+	return sprintf( '%02d:%02d', $hour, $minute );
+}
+
+/**
+ * The next occurrence of the daily run time, site-local, as a UTC timestamp.
+ *
+ * ⭐⭐ THE ARITHMETIC IS DONE IN THE SITE'S TIMEZONE OBJECT, NOT IN SECONDS.
+ *     `$now + 86400` is wrong twice a year: on the spring-forward day it lands
+ *     an hour late and on the fall-back day an hour early, and an hour either
+ *     side of 09:30 is still inside the window only because the window is four
+ *     hours wide. Advancing a `DateTimeImmutable` by `+1 day` and re-applying
+ *     `setTime()` re-resolves the wall clock against whatever offset that
+ *     calendar day actually has, so the run stays at 09:30 local through both.
+ *
+ * ⚠ STRICTLY IN THE FUTURE. A candidate equal to `$now` is pushed to tomorrow,
+ *   because Action Scheduler treats a past-or-now first run as immediately due
+ *   and the whole point of this function is that the first run lands in the
+ *   window rather than right now.
+ *
+ * @since 1.19.384
+ * @param int $now Optional "now" as a UTC timestamp, for the suite.
+ * @return int UTC timestamp.
+ */
+function bhp_review_ask_next_daily_run_timestamp( $now = 0 ) {
+	$now = $now ? (int) $now : time();
+
+	$parts  = explode( ':', bhp_review_ask_daily_run_time() );
+	$hour   = isset( $parts[0] ) ? (int) $parts[0] : 9;
+	$minute = isset( $parts[1] ) ? (int) $parts[1] : 30;
+
+	try {
+		$zone  = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+		$local = new DateTimeImmutable( '@' . $now );
+		$local = $local->setTimezone( $zone );
+	} catch ( Exception $e ) {
+		// ⛔ Reported rather than guessed at: with no usable timezone there is
+		//    no honest "next 09:30", so fall back to a day out.
+		return $now + DAY_IN_SECONDS;
+	}
+
+	$candidate = $local->setTime( $hour, $minute, 0 );
+
+	/*
+	 * ⚠ A LOOP, NOT A SINGLE `+1 day`. On a spring-forward day a wall-clock
+	 *   time inside the skipped hour does not exist and PHP resolves it
+	 *   forward; the guard keeps that from ever returning a past timestamp,
+	 *   and the bound keeps a pathological zone from spinning.
+	 */
+	$guard = 0;
+	while ( $candidate->getTimestamp() <= $now && $guard < 8 ) {
+		$candidate = $candidate->modify( '+1 day' )->setTime( $hour, $minute, 0 );
+		$guard++;
+	}
+
+	return (int) $candidate->getTimestamp();
+}
+
+/**
+ * Every PENDING Action Scheduler action for this feature's hook.
+ *
+ * ⛔ `as_get_scheduled_actions()`, NOT `wp action-scheduler action list`. The
+ *    CLI list prints NOTHING on this install (observed by Gandalf at go-live
+ *    on 2026-09-06), so an operator checking the schedule that way reads an
+ *    empty table and concludes nothing is scheduled. The library function is
+ *    the source of truth here and `status` uses it for the same reason.
+ *
+ * @since 1.19.384
+ * @return array Action objects keyed by action id, oldest first. Empty when
+ *               Action Scheduler is not loaded.
+ */
+function bhp_review_ask_pending_actions() {
+	if ( ! function_exists( 'as_get_scheduled_actions' ) ) {
+		return array();
+	}
+
+	$found = as_get_scheduled_actions(
+		array(
+			'hook'     => BHP_REVIEW_ASK_CRON_HOOK,
+			'status'   => 'pending',
+			'per_page' => 50,
+			'orderby'  => 'date',
+			'order'    => 'ASC',
+		),
+		OBJECT
+	);
+
+	return is_array( $found ) ? $found : array();
+}
+
+/**
+ * When one Action Scheduler action is next due, as a UTC timestamp.
+ *
+ * @since 1.19.384
+ * @param mixed $action An `ActionScheduler_Action`.
+ * @return int UTC timestamp, or 0 when it cannot be read.
+ */
+function bhp_review_ask_action_timestamp( $action ) {
+	if ( ! is_object( $action ) || ! method_exists( $action, 'get_schedule' ) ) {
+		return 0;
+	}
+
+	$schedule = $action->get_schedule();
+
+	if ( ! is_object( $schedule ) ) {
+		return 0;
+	}
+
+	$date = null;
+
+	if ( method_exists( $schedule, 'get_date' ) ) {
+		$date = $schedule->get_date();
+	}
+
+	if ( ! $date && method_exists( $schedule, 'get_next' ) ) {
+		try {
+			$date = $schedule->get_next( new DateTime( '@' . time() ) );
+		} catch ( Exception $e ) {
+			$date = null;
+		}
+	}
+
+	return ( $date instanceof DateTimeInterface ) ? (int) $date->getTimestamp() : 0;
+}
+
+/**
+ * The soonest pending action for this hook.
+ *
+ * @since 1.19.384
+ * @param array $pending Output of `bhp_review_ask_pending_actions()`.
+ * @return int UTC timestamp, or 0 when there is none.
+ */
+function bhp_review_ask_next_pending_timestamp( $pending ) {
+	$soonest = 0;
+
+	foreach ( (array) $pending as $action ) {
+		$stamp = bhp_review_ask_action_timestamp( $action );
+
+		if ( $stamp && ( ! $soonest || $stamp < $soonest ) ) {
+			$soonest = $stamp;
+		}
+	}
+
+	return $soonest;
+}
+
+/**
+ * Does the existing schedule need to be torn down and rebuilt?
+ *
+ * ⭐ PULLED OUT AS ITS OWN FUNCTION SO IT CAN BE ASSERTED WITHOUT DRIVING THE
+ *    SCHEDULER. The suite can test the decision on plain numbers; testing it
+ *    only end-to-end would mean creating real scheduled actions on staging to
+ *    prove a comparison.
+ *
+ * ⚠ THE TEST IS THE WALL CLOCK, NOT THE TIMESTAMP. A correct action is due on
+ *   some future DATE, so it can never equal "the next 09:30 from now". What
+ *   makes it correct is that it fires at 09:30 site-local. This is also what
+ *   makes the deploy quiet on production: Gandalf's hand-made action 4863 is
+ *   already at 09:30 local, so this returns false and it is left alone.
+ *
+ * @since 1.19.384
+ * @param int    $count   How many pending actions exist for the hook.
+ * @param int    $next_ts When the soonest is due, UTC.
+ * @param string $want    The wanted site-local `HH:MM`.
+ * @return bool
+ */
+function bhp_review_ask_schedule_needs_reset( $count, $next_ts, $want ) {
+	if ( 1 !== (int) $count ) {
+		return true;
+	}
+
+	if ( ! $next_ts ) {
+		return true;
+	}
+
+	return wp_date( 'H:i', (int) $next_ts ) !== (string) $want;
 }
 
 /**
@@ -5716,12 +6006,23 @@ add_action( 'init', 'bhp_review_ask_handle_optout', 5 );
  * @param array $args Positional args.
  * @return void
  */
-function bhp_review_ask_cli( $args, $assoc_args = array() ) {
+function bhp_review_ask_cli( $args, $assoc_args = array(), $say = null ) {
 	$sub = isset( $args[0] ) ? $args[0] : 'status';
 
-	$say = static function ( $line ) {
-		WP_CLI::log( $line );
-	};
+	/*
+	 * ⭐ 1.19.384 · AN INJECTABLE LOGGER, third argument, defaulted. WP-CLI
+	 *    always calls this with two arguments so the command is unchanged, but
+	 *    the suite can now assert the TEXT AN OPERATOR SEES rather than
+	 *    re-deriving it. `WP_CLI::log()` writes to STDOUT rather than through
+	 *    `echo`, so output buffering cannot capture it and there was otherwise
+	 *    no way to test a printed line without duplicating the format string —
+	 *    a test of a copy of the code is not a test of the code.
+	 */
+	if ( ! is_callable( $say ) ) {
+		$say = static function ( $line ) {
+			WP_CLI::log( $line );
+		};
+	}
 
 	if ( 'status' === $sub ) {
 		$stats = bhp_review_ask_stats();
@@ -5733,6 +6034,40 @@ function bhp_review_ask_cli( $args, $assoc_args = array() ) {
 		$say( 'web delay:          ' . bhp_review_ask_delay_days() . ' days after completion   (seal 994)' );
 		$say( 'touch 2 delay:      ' . BHP_REVIEW_ASK_TOUCH2_DELAY_DAYS . ' days after touch 1' );
 		$say( 'send window:        ' . BHP_REVIEW_ASK_WINDOW_START_HOUR . ':00 to ' . BHP_REVIEW_ASK_WINDOW_END_HOUR . ':00 site-local; open right now: ' . ( bhp_review_ask_in_send_window() ? 'yes' : 'NO' ) );
+		/*
+		 * ⭐⭐ 1.19.384 · SEAL 1075. THE SCHEDULE IS PART OF STATUS. The go-live
+		 *     defect was invisible to every line above it: the engine was
+		 *     enabled, the copy was approved, the cap was free, the window was
+		 *     correct — and the daily action was pinned to 19:17 forever, so
+		 *     nothing ever sent. An operator must be able to read WHEN the next
+		 *     run is and HOW MANY actions are queued for the hook, without
+		 *     leaving the command.
+		 *
+		 * ⛔ READ THROUGH `as_get_scheduled_actions()`. `wp action-scheduler
+		 *    action list` prints nothing on this install, so it is not a check.
+		 */
+		$sched_pending = bhp_review_ask_pending_actions();
+		$sched_count   = count( $sched_pending );
+		$sched_next    = bhp_review_ask_next_pending_timestamp( $sched_pending );
+		$sched_want    = bhp_review_ask_daily_run_time();
+
+		$say( 'daily run time:     ' . $sched_want . ' site-local, daily   (seal 1075; filter bhp_review_ask_daily_run_time)' );
+
+		if ( $sched_next ) {
+			$say( 'next scheduled run: ' . wp_date( 'Y-m-d H:i T', $sched_next ) . ' site time  ('
+				. gmdate( 'Y-m-d H:i', $sched_next ) . ' UTC)'
+				. ( wp_date( 'H:i', $sched_next ) === $sched_want ? '' : '   ** NOT AT ' . $sched_want . ' - the next init will reschedule it **' ) );
+		} elseif ( function_exists( 'as_get_scheduled_actions' ) ) {
+			$say( 'next scheduled run: NONE - no pending action for ' . BHP_REVIEW_ASK_CRON_HOOK
+				. ( bhp_review_ask_is_enabled() ? '   ** the engine is ON and nothing is scheduled **' : '   (expected while the engine is OFF)' ) );
+		} else {
+			$legacy_next = wp_next_scheduled( BHP_REVIEW_ASK_CRON_HOOK );
+			$say( 'next scheduled run: ' . ( $legacy_next ? wp_date( 'Y-m-d H:i T', $legacy_next ) . ' site time (WP-Cron fallback)' : 'NONE' )
+				. '   ** Action Scheduler is not loaded **' );
+		}
+
+		$say( 'pending actions:    ' . $sched_count . ' for hook ' . BHP_REVIEW_ASK_CRON_HOOK
+			. ( 1 === $sched_count ? '' : ( 0 === $sched_count ? '' : '   ** MORE THAN ONE - the next init will collapse them to one **' ) ) );
 		$say( 'copy visit touch 1: ' . ( ! empty( bhp_review_ask_copy_visit_touch1()['approved'] ) ? 'APPROVED' : 'not approved - cannot send' ) );
 		$say( 'copy web touch 1:   ' . ( ! empty( bhp_review_ask_copy_web_touch1()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );
 		$say( 'copy touch 2:       ' . ( ! empty( bhp_review_ask_copy_touch2()['approved'] ) ? 'APPROVED' : 'PENDING-COPY - cannot send' ) );

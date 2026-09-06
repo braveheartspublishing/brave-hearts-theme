@@ -5157,6 +5157,454 @@ bhp_rs_ok(
 	'' === bhp_review_ask_floor_date()
 );
 
+/* =========================================================================
+ * §20 — ROUND 23: SEAL 1075. THE DAILY ACTION LANDS INSIDE THE SEND WINDOW
+ *
+ * ⭐⭐ WHAT THIS SECTION IS FOR, AND IT IS NOT HYPOTHETICAL. At go-live on
+ *     2026-09-06 the engine was switched on and the recurring Action Scheduler
+ *     action was created at `time() + 10 minutes`, repeating daily. Thrown at
+ *     19:07, that is a 19:17 run every day for ever — outside the 08:00-12:00
+ *     window `bhp_review_ask_in_send_window()` enforces, so every run declines
+ *     `outside_send_window` and the store's review engine is silently dead
+ *     while every other line of `status` reads healthy.
+ *
+ * ⛔ THE ASSERTIONS BELOW DRIVE NO SCHEDULER AND CREATE NO ACTION. They test
+ *    the next-run arithmetic, the reset decision and the printed status lines
+ *    as functions. A section that had to create real scheduled actions to
+ *    prove a comparison would be leaving a live emailer's hook behind it on
+ *    every failed run, which is not a trade this suite makes.
+ *
+ * ⚠ THE TIMEZONE IS FORCED TO `America/Boise` FOR THE DST CASES. Asserting DST
+ *   against whatever the site happens to be set to would make this section
+ *   quietly stop testing DST the day somebody changes the option. The force is
+ *   removed and its removal is asserted at the end of the section.
+ * ====================================================================== */
+
+bhp_rs_head( '§20 Round 23: seal 1075, the daily run time and the next-run computation' );
+
+/** The suite's timezone override. Reads a global so one filter serves every case. */
+function bhp_rs_tz_probe( $value ) {
+	return isset( $GLOBALS['bhp_rs_tz_probe'] ) && '' !== $GLOBALS['bhp_rs_tz_probe']
+		? (string) $GLOBALS['bhp_rs_tz_probe']
+		: $value;
+}
+
+/** A run time the suite controls. */
+function bhp_rs_run_time_probe( $value ) {
+	return isset( $GLOBALS['bhp_rs_run_time_probe'] ) && '' !== $GLOBALS['bhp_rs_run_time_probe']
+		? (string) $GLOBALS['bhp_rs_run_time_probe']
+		: $value;
+}
+
+/* ---- 20.1 the constant ---- */
+
+bhp_rs_ok( 'BHP_REVIEW_ASK_DAILY_RUN_TIME is defined', defined( 'BHP_REVIEW_ASK_DAILY_RUN_TIME' ) );
+
+bhp_rs_ok(
+	'⭐ The shipped default run time is 09:30 site-local',
+	defined( 'BHP_REVIEW_ASK_DAILY_RUN_TIME' ) && '09:30' === BHP_REVIEW_ASK_DAILY_RUN_TIME,
+	'found: ' . ( defined( 'BHP_REVIEW_ASK_DAILY_RUN_TIME' ) ? BHP_REVIEW_ASK_DAILY_RUN_TIME : '(undefined)' )
+);
+
+/*
+ * ⭐⭐ THE ASSERTION THAT WOULD HAVE CAUGHT SEAL 1075. The run time and the
+ *     send window are two settings that MUST agree, and nothing but this line
+ *     makes them.
+ */
+$bhp_rs_rt_hour = (int) substr( bhp_review_ask_daily_run_time(), 0, 2 );
+
+bhp_rs_ok(
+	'⛔ The default run time falls INSIDE the send window',
+	$bhp_rs_rt_hour >= BHP_REVIEW_ASK_WINDOW_START_HOUR && $bhp_rs_rt_hour < BHP_REVIEW_ASK_WINDOW_END_HOUR,
+	'run hour ' . $bhp_rs_rt_hour . ' against window '
+		. BHP_REVIEW_ASK_WINDOW_START_HOUR . '-' . BHP_REVIEW_ASK_WINDOW_END_HOUR
+);
+
+bhp_rs_ok(
+	'The run time is a zero-padded HH:MM',
+	(bool) preg_match( '/^\d{2}:\d{2}$/', bhp_review_ask_daily_run_time() ),
+	'got: ' . bhp_review_ask_daily_run_time()
+);
+
+/* ---- 20.2 the filter, and what it is not allowed to do ---- */
+
+$GLOBALS['bhp_rs_run_time_probe'] = '';
+add_filter( 'bhp_review_ask_daily_run_time', 'bhp_rs_run_time_probe', 20 );
+
+$GLOBALS['bhp_rs_run_time_probe'] = '08:15';
+bhp_rs_ok(
+	'A valid in-window filtered time is honoured',
+	'08:15' === bhp_review_ask_daily_run_time(),
+	'got: ' . bhp_review_ask_daily_run_time()
+);
+
+$GLOBALS['bhp_rs_run_time_probe'] = '8:5';
+bhp_rs_ok(
+	'A malformed filtered time falls back to the default, not to 00:00',
+	'09:30' === bhp_review_ask_daily_run_time(),
+	'got: ' . bhp_review_ask_daily_run_time()
+);
+
+$GLOBALS['bhp_rs_run_time_probe'] = 'nonsense';
+bhp_rs_ok(
+	'Non-numeric junk falls back to the default',
+	'09:30' === bhp_review_ask_daily_run_time(),
+	'got: ' . bhp_review_ask_daily_run_time()
+);
+
+/*
+ * ⛔ THE GUARD THAT MATTERS. A filter is allowed to move the run inside the
+ *    window; it is NOT allowed to recreate seal 1075 by moving it out.
+ */
+$GLOBALS['bhp_rs_run_time_probe'] = '19:17';
+bhp_rs_ok(
+	'⛔ A filtered time OUTSIDE the send window is refused and clamped back inside it',
+	'08:30' === bhp_review_ask_daily_run_time(),
+	'got: ' . bhp_review_ask_daily_run_time() . ' (19:17 is the exact time the go-live defect pinned)'
+);
+
+$GLOBALS['bhp_rs_run_time_probe'] = '07:59';
+bhp_rs_ok(
+	'One minute before the window opens is also refused',
+	'08:30' === bhp_review_ask_daily_run_time(),
+	'got: ' . bhp_review_ask_daily_run_time()
+);
+
+$GLOBALS['bhp_rs_run_time_probe'] = '12:00';
+bhp_rs_ok(
+	'The window END hour is exclusive, so 12:00 is refused',
+	'08:30' === bhp_review_ask_daily_run_time(),
+	'got: ' . bhp_review_ask_daily_run_time()
+);
+
+$GLOBALS['bhp_rs_run_time_probe'] = '';
+
+/* ---- 20.3 the next-run computation across DST and the midnight edges ---- */
+
+$GLOBALS['bhp_rs_tz_probe'] = 'America/Boise';
+add_filter( 'pre_option_timezone_string', 'bhp_rs_tz_probe', 20 );
+
+$bhp_rs_tz_ok = ( function_exists( 'wp_timezone' ) && 'America/Boise' === wp_timezone()->getName() );
+
+bhp_rs_ok(
+	'The suite can force the site timezone to America/Boise for the DST cases',
+	$bhp_rs_tz_ok,
+	'wp_timezone() reports: ' . ( function_exists( 'wp_timezone' ) ? wp_timezone()->getName() : '(no wp_timezone)' )
+);
+
+if ( $bhp_rs_tz_ok ) {
+	/*
+	 * ⭐ EVERY EXPECTATION IS WRITTEN AS AN EXPLICIT UTC INSTANT, so the
+	 *    assertion does not depend on the same timezone arithmetic it is
+	 *    testing. America/Boise is MST (UTC-7) outside DST and MDT (UTC-6)
+	 *    inside it; 2026 DST runs 2026-03-08 to 2026-11-01.
+	 *
+	 * ⭐ 15:30 UTC IS ALSO THE INSTANT GANDALF'S HAND-REPAIRED PRODUCTION
+	 *    ACTION 4863 IS SET TO. If these rows are right, a 1.19.384 deploy
+	 *    agrees with that repair instead of churning it.
+	 */
+	$bhp_rs_dst_cases = array(
+		array(
+			'label' => '⭐ Spring forward: the evening before lands on 09:30 MDT, not 08:30',
+			'now'   => strtotime( '2026-03-08 03:00:00 UTC' ),
+			'want'  => strtotime( '2026-03-08 15:30:00 UTC' ),
+		),
+		array(
+			'label' => '⭐ The short DST day is 22.5 hours away, not 24',
+			'now'   => strtotime( '2026-03-07 17:00:00 UTC' ),
+			'want'  => strtotime( '2026-03-08 15:30:00 UTC' ),
+		),
+		array(
+			'label' => '⭐ Fall back: 09:30 MST on the morning the clocks go back',
+			'now'   => strtotime( '2026-10-31 17:00:00 UTC' ),
+			'want'  => strtotime( '2026-11-01 16:30:00 UTC' ),
+		),
+		array(
+			'label' => 'A plain summer day is the next 09:30 MDT',
+			'now'   => strtotime( '2026-06-15 17:00:00 UTC' ),
+			'want'  => strtotime( '2026-06-16 15:30:00 UTC' ),
+		),
+		array(
+			'label' => 'A plain winter day is the next 09:30 MST',
+			'now'   => strtotime( '2026-01-15 17:00:00 UTC' ),
+			'want'  => strtotime( '2026-01-16 16:30:00 UTC' ),
+		),
+		array(
+			'label' => '⭐ Midnight edge: one second past local midnight resolves to THAT morning',
+			'now'   => strtotime( '2026-06-15 06:00:01 UTC' ),
+			'want'  => strtotime( '2026-06-15 15:30:00 UTC' ),
+		),
+		array(
+			'label' => '⭐ Midnight edge: one second before local midnight resolves to the NEXT morning',
+			'now'   => strtotime( '2026-06-16 05:59:59 UTC' ),
+			'want'  => strtotime( '2026-06-16 15:30:00 UTC' ),
+		),
+		array(
+			'label' => 'One second before the run time is still today',
+			'now'   => strtotime( '2026-06-15 15:29:59 UTC' ),
+			'want'  => strtotime( '2026-06-15 15:30:00 UTC' ),
+		),
+		array(
+			'label' => '⛔ Exactly AT the run time rolls to tomorrow, never to now',
+			'now'   => strtotime( '2026-06-15 15:30:00 UTC' ),
+			'want'  => strtotime( '2026-06-16 15:30:00 UTC' ),
+		),
+		array(
+			'label' => 'One second after the run time rolls to tomorrow',
+			'now'   => strtotime( '2026-06-15 15:30:01 UTC' ),
+			'want'  => strtotime( '2026-06-16 15:30:00 UTC' ),
+		),
+	);
+
+	foreach ( $bhp_rs_dst_cases as $bhp_rs_c ) {
+		$bhp_rs_got = bhp_review_ask_next_daily_run_timestamp( $bhp_rs_c['now'] );
+
+		bhp_rs_ok(
+			$bhp_rs_c['label'],
+			$bhp_rs_got === $bhp_rs_c['want'],
+			'now ' . gmdate( 'Y-m-d H:i:s', $bhp_rs_c['now'] ) . ' UTC'
+				. ' -> got ' . gmdate( 'Y-m-d H:i:s', $bhp_rs_got ) . ' UTC'
+				. ' (' . wp_date( 'Y-m-d H:i T', $bhp_rs_got ) . ')'
+				. ', wanted ' . gmdate( 'Y-m-d H:i:s', $bhp_rs_c['want'] ) . ' UTC'
+		);
+	}
+
+	/*
+	 * ⭐⭐ THE INVARIANT, ASSERTED OVER A WHOLE YEAR RATHER THAN AT SAMPLES.
+	 *     Whatever the date and whatever the offset, the run is at 09:30 on the
+	 *     site's wall clock and is strictly in the future. That single property
+	 *     is the one whose absence WAS the defect.
+	 */
+	$bhp_rs_sweep_bad    = 0;
+	$bhp_rs_sweep_past   = 0;
+	$bhp_rs_sweep_far    = 0;
+	$bhp_rs_sweep_first  = '';
+	$bhp_rs_sweep_cursor = strtotime( '2026-01-01 13:07:00 UTC' );
+
+	for ( $bhp_rs_d = 0; $bhp_rs_d < 366; $bhp_rs_d++ ) {
+		$bhp_rs_probe_now = $bhp_rs_sweep_cursor + ( $bhp_rs_d * DAY_IN_SECONDS );
+		$bhp_rs_probe_got = bhp_review_ask_next_daily_run_timestamp( $bhp_rs_probe_now );
+
+		if ( '09:30' !== wp_date( 'H:i', $bhp_rs_probe_got ) ) {
+			$bhp_rs_sweep_bad++;
+
+			if ( '' === $bhp_rs_sweep_first ) {
+				$bhp_rs_sweep_first = gmdate( 'Y-m-d H:i', $bhp_rs_probe_now ) . ' UTC -> ' . wp_date( 'Y-m-d H:i T', $bhp_rs_probe_got );
+			}
+		}
+
+		if ( $bhp_rs_probe_got <= $bhp_rs_probe_now ) {
+			$bhp_rs_sweep_past++;
+		}
+
+		if ( ( $bhp_rs_probe_got - $bhp_rs_probe_now ) > ( DAY_IN_SECONDS + HOUR_IN_SECONDS ) ) {
+			$bhp_rs_sweep_far++;
+		}
+	}
+
+	bhp_rs_ok(
+		'⭐⭐ Across all 366 days of 2026 the next run is ALWAYS 09:30 on the site clock',
+		0 === $bhp_rs_sweep_bad,
+		$bhp_rs_sweep_bad . ' day(s) landed elsewhere; first: ' . $bhp_rs_sweep_first
+	);
+
+	bhp_rs_ok(
+		'⛔ ...and is never in the past, and never equal to now',
+		0 === $bhp_rs_sweep_past,
+		$bhp_rs_sweep_past . ' day(s) returned a past-or-now timestamp'
+	);
+
+	bhp_rs_ok(
+		'...and is never more than a day and an hour away',
+		0 === $bhp_rs_sweep_far,
+		$bhp_rs_sweep_far . ' day(s) were further out than 25 hours'
+	);
+} else {
+	bhp_rs_skip( 'The DST, midnight-edge and 366-day next-run assertions', 'the timezone could not be forced to America/Boise' );
+}
+
+$GLOBALS['bhp_rs_tz_probe'] = '';
+remove_filter( 'pre_option_timezone_string', 'bhp_rs_tz_probe', 20 );
+
+bhp_rs_ok(
+	'⛔ The suite hands the site timezone back exactly as it found it',
+	! has_filter( 'pre_option_timezone_string', 'bhp_rs_tz_probe' )
+);
+
+/* ---- 20.4 the dedupe decision ---- */
+
+/*
+ * ⭐ THE DECISION IS TESTED ON PLAIN NUMBERS, which is why it was pulled out of
+ *    `bhp_review_ask_maybe_schedule()` as its own function. The alternative was
+ *    creating real Action Scheduler rows for a customer emailer's hook on
+ *    staging in order to prove a string comparison.
+ *
+ * ⚠ The fixtures below are built from the SITE's own timezone, whatever it now
+ *   is, because that is the clock `wp_date()` reads and the clock the decision
+ *   is made against.
+ */
+$bhp_rs_at_run   = bhp_review_ask_next_daily_run_timestamp();
+$bhp_rs_at_wrong = $bhp_rs_at_run + ( 47 * MINUTE_IN_SECONDS );
+
+bhp_rs_ok(
+	'The fixture for "already correct" really is at the wanted time',
+	wp_date( 'H:i', $bhp_rs_at_run ) === bhp_review_ask_daily_run_time(),
+	'fixture reads ' . wp_date( 'H:i', $bhp_rs_at_run )
+);
+
+bhp_rs_ok(
+	'⭐ ONE action already at the wanted time is LEFT ALONE (this is production action 4863)',
+	false === bhp_review_ask_schedule_needs_reset( 1, $bhp_rs_at_run, bhp_review_ask_daily_run_time() )
+);
+
+bhp_rs_ok(
+	'⛔ ONE action at the WRONG time is rescheduled (this is the go-live defect)',
+	true === bhp_review_ask_schedule_needs_reset( 1, $bhp_rs_at_wrong, bhp_review_ask_daily_run_time() ),
+	'wrong-time fixture reads ' . wp_date( 'H:i', $bhp_rs_at_wrong )
+);
+
+bhp_rs_ok(
+	'⛔ TWO actions at the RIGHT time are still torn down and rebuilt as one',
+	true === bhp_review_ask_schedule_needs_reset( 2, $bhp_rs_at_run, bhp_review_ask_daily_run_time() )
+);
+
+bhp_rs_ok(
+	'Five actions are torn down and rebuilt as one',
+	true === bhp_review_ask_schedule_needs_reset( 5, $bhp_rs_at_run, bhp_review_ask_daily_run_time() )
+);
+
+bhp_rs_ok(
+	'No action at all schedules one',
+	true === bhp_review_ask_schedule_needs_reset( 0, 0, bhp_review_ask_daily_run_time() )
+);
+
+bhp_rs_ok(
+	'One action whose due date could not be read is rebuilt rather than trusted',
+	true === bhp_review_ask_schedule_needs_reset( 1, 0, bhp_review_ask_daily_run_time() )
+);
+
+/* ---- 20.5 the schedule readers ---- */
+
+bhp_rs_ok( 'bhp_review_ask_pending_actions() exists', function_exists( 'bhp_review_ask_pending_actions' ) );
+
+$bhp_rs_pending = bhp_review_ask_pending_actions();
+
+bhp_rs_ok(
+	'bhp_review_ask_pending_actions() returns an array',
+	is_array( $bhp_rs_pending ),
+	'got: ' . gettype( $bhp_rs_pending )
+);
+
+/*
+ * ⛔ THE ENGINE IS OFF ON STAGING AND `bhp_review_ask_bootstrap_schedule()`
+ *    unschedules on every init, so there must be nothing pending. A pending
+ *    action here means the master switch is on, which §12 also asserts.
+ */
+bhp_rs_ok(
+	'⛔ With the engine OFF there is no pending action for the hook',
+	0 === count( $bhp_rs_pending ),
+	'found ' . count( $bhp_rs_pending ) . ' pending action(s) for ' . BHP_REVIEW_ASK_CRON_HOOK
+);
+
+bhp_rs_ok(
+	'An empty pending list yields no "next" timestamp',
+	0 === bhp_review_ask_next_pending_timestamp( array() )
+);
+
+bhp_rs_ok(
+	'Junk in the pending list is read as unreadable, not as the zero hour',
+	0 === bhp_review_ask_action_timestamp( 'not an action' )
+		&& 0 === bhp_review_ask_action_timestamp( null )
+);
+
+/* ---- 20.6 the status lines an operator actually reads ---- */
+
+/*
+ * ⭐ `status` IS CALLED WITH THE SUITE'S OWN LOGGER through the third argument
+ *    added in 1.19.384, so what is asserted is the printed text rather than a
+ *    re-derivation of it. It sends nothing, writes nothing and changes no
+ *    option.
+ */
+$GLOBALS['bhp_rs_status_lines'] = array();
+
+$bhp_rs_status_say = static function ( $line ) {
+	$GLOBALS['bhp_rs_status_lines'][] = (string) $line;
+};
+
+if ( function_exists( 'bhp_review_ask_cli' ) ) {
+	bhp_review_ask_cli( array( 'status' ), array(), $bhp_rs_status_say );
+
+	$bhp_rs_status_text = implode( "\n", $GLOBALS['bhp_rs_status_lines'] );
+
+	bhp_rs_ok(
+		'status still prints its existing lines (the send window)',
+		false !== strpos( $bhp_rs_status_text, 'send window:' ),
+		'lines captured: ' . count( $GLOBALS['bhp_rs_status_lines'] )
+	);
+
+	bhp_rs_ok(
+		'⭐ status names the daily run time',
+		false !== strpos( $bhp_rs_status_text, 'daily run time:' )
+			&& false !== strpos( $bhp_rs_status_text, bhp_review_ask_daily_run_time() . ' site-local' ),
+		'looked for "daily run time:" and "' . bhp_review_ask_daily_run_time() . ' site-local"'
+	);
+
+	bhp_rs_ok(
+		'⭐ status prints the next scheduled run',
+		false !== strpos( $bhp_rs_status_text, 'next scheduled run:' )
+	);
+
+	bhp_rs_ok(
+		'⭐ status prints the pending action COUNT for the hook',
+		false !== strpos( $bhp_rs_status_text, 'pending actions:' )
+			&& false !== strpos( $bhp_rs_status_text, 'for hook ' . BHP_REVIEW_ASK_CRON_HOOK ),
+		'looked for "pending actions:" and "for hook ' . BHP_REVIEW_ASK_CRON_HOOK . '"'
+	);
+
+	bhp_rs_ok(
+		'The count printed matches what bhp_review_ask_pending_actions() returns',
+		false !== strpos( $bhp_rs_status_text, 'pending actions:    ' . count( bhp_review_ask_pending_actions() ) . ' for hook' ),
+		'status said: ' . implode( ' | ', preg_grep( '/pending actions/', $GLOBALS['bhp_rs_status_lines'] ) )
+	);
+
+	/*
+	 * ⚠ With the engine OFF the honest answer is NONE, and status must say so
+	 *   in a way that does not read like a fault. ⛔ Only asserted when Action
+	 *   Scheduler is actually loaded — otherwise status takes its documented
+	 *   WP-Cron branch and this would be testing the wrong sentence.
+	 */
+	if ( function_exists( 'as_get_scheduled_actions' ) ) {
+		bhp_rs_ok(
+			'⭐ With the engine OFF status reports NONE and says that is expected',
+			false !== strpos( $bhp_rs_status_text, 'next scheduled run: NONE' )
+				&& false !== strpos( $bhp_rs_status_text, 'expected while the engine is OFF' ),
+			'status said: ' . implode( ' | ', preg_grep( '/next scheduled run/', $GLOBALS['bhp_rs_status_lines'] ) )
+		);
+	} else {
+		bhp_rs_skip( 'The "NONE, expected while OFF" status assertion', 'Action Scheduler is not loaded in this context' );
+	}
+} else {
+	bhp_rs_skip( 'The status-line assertions', 'bhp_review_ask_cli() is not loaded' );
+}
+
+/*
+ * ⛔ THE SECTION LEAVES NO FILTER BEHIND IT.
+ */
+$GLOBALS['bhp_rs_run_time_probe'] = '';
+remove_filter( 'bhp_review_ask_daily_run_time', 'bhp_rs_run_time_probe', 20 );
+
+bhp_rs_ok(
+	'⛔ §20 removed both of its filters',
+	! has_filter( 'bhp_review_ask_daily_run_time', 'bhp_rs_run_time_probe' )
+		&& ! has_filter( 'pre_option_timezone_string', 'bhp_rs_tz_probe' )
+);
+
+bhp_rs_ok(
+	'⛔ ...and the run time is back to the shipped default',
+	'09:30' === bhp_review_ask_daily_run_time(),
+	'got: ' . bhp_review_ask_daily_run_time()
+);
+
 bhp_rs_head( '§12 Deferred fixture teardown' );
 
 $bhp_rs_deleted = 0;
