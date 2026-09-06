@@ -364,9 +364,85 @@ if ( ! defined( 'BHP_REVIEW_ASK_TOUCH1_AT_META' ) ) {
 	define( 'BHP_REVIEW_ASK_TOUCH1_AT_META', '_bhp_review_ask_touch1_at' );
 }
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THE LEDGER KEY THAT ONLY THIS SEQUENCE WRITES. 1.19.380, R19.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ THE HAZARD, OBSERVED ON PRODUCTION, NOT IMAGINED. Four orders (417, 493,
+ *   547, 548) carry a touch-1 stamp dated 2026-08-29 that was written by the
+ *   LEGACY 21-day single-ask engine, not by this sequence. Touch 2 reads a
+ *   touch-1 stamp and counts four days from it, so on its first run the new
+ *   engine would have sent those four customers a REMINDER about a first ask
+ *   that this sequence never sent and whose copy it does not know.
+ *
+ * ⭐ SO A STAMP IS NO LONGER ENOUGH. Touch 2 requires a touch-1 record written
+ *    by THIS engine: this key, written by `bhp_review_ask_mark_sent()` at the
+ *    same instant as the other touch-1 records. A stamp without it declines
+ *    `legacy_touch1`.
+ *
+ * ⛔ IT IS A NEW KEY RATHER THAN A VALUE INSIDE AN OLD ONE, deliberately. No
+ *    order in the store can already carry it, so "written by this sequence" is
+ *    a fact about the database rather than a guess about a string format. The
+ *    legacy engine could not have written it; the migration command does not
+ *    write it either, and that is correct — a hand-sent ask is not a send by
+ *    this sequence and must not schedule this sequence's reminder.
+ */
+if ( ! defined( 'BHP_REVIEW_ASK_TOUCH1_SEQ_META' ) ) {
+	define( 'BHP_REVIEW_ASK_TOUCH1_SEQ_META', '_bhp_review_ask_touch1_seq' );
+}
+
 /** Order meta: touch 2 has been dealt with. Any non-empty value suppresses. */
 if ( ! defined( 'BHP_REVIEW_ASK_TOUCH2_SENT_META' ) ) {
 	define( 'BHP_REVIEW_ASK_TOUCH2_SENT_META', '_bhp_review_ask_touch2_sent' );
+}
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THE BACKLOG FLOOR. 1.19.380, `CYCLE179-LD-100` R19.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ WHAT IT IS FOR, IN ONE SENTENCE: this engine was switched on in September
+ *    2026 against a store with a year of completed orders behind it, and its
+ *    first real run would have mailed people whose books arrived in July.
+ *
+ * ⚠ THE PRODUCTION DRY RUN FOR 2026-09-10 (1.19.379, engine OFF) SAID EXACTLY
+ *   THIS. Alongside the sixteen Dallas Harris / Liberty orders the sequence is
+ *   actually for, the first run would also have sent:
+ *
+ *     - touch 1 to eight Adams Elementary orders from the 2026-08-28 visit
+ *       (614, 622, 623, 625, 626, 629, 630, 633), whose visit + 7 and visit +
+ *       10 dates are long past, so they would all have fired on day one; and
+ *     - touch 1 to two web orders completed in July and August (546, 576).
+ *
+ *   The visit lane cap of 10 then DEFERRED three genuinely current Dallas
+ *   one-book orders (621, 624, 628) to the following day, so the backlog was
+ *   not merely noisy, it was displacing the intended sends.
+ *
+ * ⭐ THE RULE. An order whose touch-1 ANCHOR falls before this date is
+ *    declined `before_floor` and never enters EITHER touch. The anchor is the
+ *    one the lane already uses — the visit date for the visit lane, the
+ *    completion date for the web lane — so the floor asks the same question
+ *    the schedule asks, and there is no second definition of "when did this
+ *    order happen" to drift out of step.
+ *
+ * ⛔⛔ IT IS DELIBERATELY ONE CONSTANT AND NOTHING ELSE, because the choice
+ *     between the two candidate floors is ANDREW'S and it is still open:
+ *
+ *       (A) '2026-09-03' — the Dallas Harris visit date, the DEFAULT shipped
+ *           here. The sequence begins with the sixteen orders it was designed
+ *           for. Adams (2026-08-28) is EXCLUDED, and those eight parents get
+ *           no review ask from this engine at all.
+ *       (B) '2026-08-28' — the Adams visit date. The eight Adams orders are
+ *           INCLUDED and would all become due immediately on the first run,
+ *           competing with Dallas for the lane cap of 10 on day one.
+ *
+ *     Changing it is a one-line edit here, or a `define()` in `wp-config.php`
+ *     that this block will not overwrite, or the filter below. ⚠ No other line
+ *     of this engine needs to change either way.
+ */
+if ( ! defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) ) {
+	define( 'BHP_REVIEW_ASK_FLOOR_DATE', '2026-09-03' );
 }
 
 /** Visit lane, touch 1: days after the VISIT DATE when the order holds ONE chapter book. */
@@ -739,6 +815,96 @@ function bhp_review_ask_touch1_due_timestamp( $order ) {
 	}
 
 	return $anchor + ( bhp_review_ask_touch1_delay_days( $order ) * DAY_IN_SECONDS );
+}
+
+/**
+ * The backlog floor as a `Y-m-d`, filterable.
+ *
+ * ⚠ AN EMPTY STRING MEANS "NO FLOOR", and it is a legitimate answer: it is how
+ *   the floor is switched off for a suite fixture, or by Andrew, without the
+ *   constant having to hold a sentinel date like 1970-01-01 that a reader
+ *   would have to decode.
+ *
+ * @since 1.19.380
+ * @return string `Y-m-d`, or '' when no floor applies.
+ */
+function bhp_review_ask_floor_date() {
+	$date = defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) ? trim( (string) BHP_REVIEW_ASK_FLOOR_DATE ) : '';
+
+	/**
+	 * Filter the backlog floor date.
+	 *
+	 * @since 1.19.380
+	 * @param string $date `Y-m-d`, or '' for no floor.
+	 */
+	$date = trim( (string) apply_filters( 'bhp_review_ask_floor_date', $date ) );
+
+	return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ? $date : '';
+}
+
+/**
+ * The backlog floor as a timestamp at local midnight.
+ *
+ * @since 1.19.380
+ * @return int Timestamp, or 0 when no floor applies.
+ */
+function bhp_review_ask_floor_timestamp() {
+	$date = bhp_review_ask_floor_date();
+
+	return '' === $date ? 0 : bhp_review_ask_local_midnight( $date );
+}
+
+/**
+ * Is this order older than the backlog floor?
+ *
+ * ⭐ IT ASKS THE LANE'S OWN ANCHOR, which is the whole reason the floor is
+ *    trustworthy: `bhp_review_ask_touch1_anchor()` returns the VISIT DATE for
+ *    a visit order and the COMPLETION timestamp for a web order, and it is the
+ *    same function the schedule itself is built on. A separate date lookup
+ *    here could disagree with the schedule and would eventually be wrong about
+ *    a real customer.
+ *
+ * ⚠ NO ANCHOR MEANS NOT BELOW THE FLOOR. An order with no resolvable anchor is
+ *   already declined `no_anchor` by the touch-1 gate; reporting it as
+ *   `before_floor` instead would hide a data problem behind a policy decision.
+ *
+ * @since 1.19.380
+ * @param WC_Order|mixed $order Order.
+ * @return bool
+ */
+function bhp_review_ask_is_before_floor( $order ) {
+	$floor = bhp_review_ask_floor_timestamp();
+
+	if ( ! $floor ) {
+		return false;
+	}
+
+	$anchor = bhp_review_ask_touch1_anchor( $order );
+
+	if ( ! $anchor ) {
+		return false;
+	}
+
+	return $anchor < $floor;
+}
+
+/**
+ * Was this order's touch 1 written by THIS sequence?
+ *
+ * ⛔ SEE `BHP_REVIEW_ASK_TOUCH1_SEQ_META`. A touch-1 stamp from the legacy
+ *    21-day engine, or from the hand-send migration, is a stamp this sequence
+ *    did not write and must not build a reminder on.
+ *
+ * @since 1.19.380
+ * @param WC_Order|mixed $order Order.
+ * @return bool
+ */
+function bhp_review_ask_touch1_is_sequence( $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return false;
+	}
+
+	return '' !== trim( (string) $order->get_meta( BHP_REVIEW_ASK_TOUCH1_SEQ_META ) );
 }
 
 /**
@@ -4283,6 +4449,23 @@ function bhp_review_ask_decline_reason( $order, $now = 0 ) {
 		return 'school_visit_already_asked';
 	}
 
+	/*
+	 * ⛔⛔ THE BACKLOG FLOOR, AND IT GATES BOTH TOUCHES. 1.19.380, R19. See
+	 *     `BHP_REVIEW_ASK_FLOOR_DATE` for the production dry run this closes.
+	 *
+	 * ⭐ IT IS CHECKED BEFORE THE PER-TOUCH BRANCH ON PURPOSE. An order below
+	 *    the floor never enters touch 1 and therefore can never reach touch 2,
+	 *    but stating it once, above the branch, means a future edit to either
+	 *    branch cannot accidentally open a path around it.
+	 *
+	 * ⚠ IT SITS AFTER `already_sent` so an order this engine has genuinely
+	 *   finished still reports as finished rather than being relabelled by a
+	 *   floor that was introduced after its send.
+	 */
+	if ( bhp_review_ask_is_before_floor( $order ) ) {
+		return 'before_floor';
+	}
+
 	$now_ts = $now ? (int) $now : time();
 
 	if ( 1 === $touch ) {
@@ -4296,6 +4479,22 @@ function bhp_review_ask_decline_reason( $order, $now = 0 ) {
 			return 'not_due';
 		}
 	} else {
+		/*
+		 * ⛔⛔ A LEGACY TOUCH-1 STAMP DOES NOT EARN A REMINDER. 1.19.380, R19.
+		 *     Orders 417, 493, 547 and 548 on production carry a touch-1 stamp
+		 *     dated 2026-08-29 written by the legacy 21-day engine; their touch
+		 *     2 is due by the date math and would have gone out on the first
+		 *     run. See `BHP_REVIEW_ASK_TOUCH1_SEQ_META`.
+		 *
+		 * ⭐ IT IS THE FIRST CHECK IN THIS BRANCH so the run summary names the
+		 *    real reason. Second, it would have reported `not_due` or nothing
+		 *    at all, and the four orders would look like an ordinary schedule.
+		 */
+		if ( ! bhp_review_ask_touch1_is_sequence( $order )
+			&& (bool) apply_filters( 'bhp_review_ask_require_sequence_touch1', true, $order ) ) {
+			return 'legacy_touch1';
+		}
+
 		$due = bhp_review_ask_touch2_due_timestamp( $order );
 
 		/*
@@ -5181,6 +5380,15 @@ function bhp_review_ask_mark_sent( $order, $touch = 0 ) {
 		$order->update_meta_data( BHP_REVIEW_ASK_TOUCH1_AT_META, $now );
 
 		/*
+		 * ⭐ 1.19.380 · AND THE LEDGER KEY THAT SAYS WHO WROTE IT. Touch 2
+		 *    requires this key, so it must be written here, in the same block,
+		 *    at the same instant as the date it vouches for. The value is the
+		 *    same timestamp rather than a bare `1` so the record is readable in
+		 *    wp-admin without cross-referencing another field.
+		 */
+		$order->update_meta_data( BHP_REVIEW_ASK_TOUCH1_SEQ_META, $now );
+
+		/*
 		 * ⛔ THE CUSTOMER COOLDOWN STAMP IS WRITTEN ON TOUCH 1 ONLY. Writing it
 		 *    again on touch 2 would push a genuinely new order's first ask out
 		 *    by an extra week for no reason Andrew asked for.
@@ -5531,6 +5739,28 @@ function bhp_review_ask_cli( $args, $assoc_args = array() ) {
 	foreach ( $summary['declined'] as $reason => $count ) {
 		$say( '  declined ' . $reason . ': ' . $count );
 	}
+
+	/*
+	 * ⭐ 1.19.380 · THE SAME TWO LINES `plan` PRINTS. `dry` and `plan` are read
+	 *    by the same operator on the same afternoon, and a floor that is
+	 *    visible in one and invisible in the other is a floor somebody will
+	 *    eventually forget is on.
+	 */
+	$run_floor = bhp_review_ask_floor_date();
+
+	$say( '  backlog floor: ' . ( '' !== $run_floor ? $run_floor : 'NONE' )
+		. '   (anchor before it declines before_floor, both touches)' );
+
+	$run_parts = array( ( $dry ? 'would_send=' : 'sent=' ) . $summary['sent'] );
+
+	$run_counts = $summary['declined'];
+	arsort( $run_counts );
+
+	foreach ( $run_counts as $reason => $count ) {
+		$run_parts[] = $reason . '=' . $count;
+	}
+
+	$say( '  SUMMARY: ' . implode( '; ', $run_parts ) );
 
 	if ( $dry && empty( $summary['enabled'] ) ) {
 		$say( '' );
@@ -5892,6 +6122,19 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
 	$say( 'engine: ' . ( $plan_enabled ? 'ENABLED - these sends would really happen' : 'DISABLED - nothing below will send until the switch is thrown' ) );
 	$say( 'The send window is forced open so the plan is not an artefact of the hour it was run.' );
 	$say( 'A projected touch 2 assumes its touch 1 went out and no review arrived in between.' );
+
+	/*
+	 * ⭐⭐ 1.19.380 · THE FLOOR IS PRINTED BEFORE ANY DATE IS EVALUATED, because
+	 *     a plan that quietly drops eleven orders is indistinguishable from a
+	 *     plan run against a store that does not have them. The reader has to
+	 *     be able to see WHICH policy produced the list in front of them.
+	 */
+	$plan_floor = bhp_review_ask_floor_date();
+
+	$say( 'backlog floor: ' . ( '' !== $plan_floor
+		? $plan_floor . ' - an order whose anchor (visit date, or completion for the web lane) falls BEFORE this date is declined before_floor and enters neither touch'
+		: 'NONE - every completed order in the scan is eligible, including the backlog' ) );
+	$say( 'legacy touch-1 stamps: touch 2 requires a touch-1 record written by THIS sequence; a stamp from the legacy 21-day engine declines legacy_touch1' );
 	$say( '' );
 
 	foreach ( $dates as $date ) {
@@ -5920,6 +6163,28 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
 
 			if ( '' !== $reason ) {
 				$declined[ $reason ] = isset( $declined[ $reason ] ) ? $declined[ $reason ] + 1 : 1;
+
+				/*
+				 * ⭐ 1.19.380 · THE TWO NEW GATES NAME THEIR ORDERS, and only
+				 *    those two. A per-order line for every `not_due` order in a
+				 *    200-order scan would bury the plan; but an order the store
+				 *    is DELIBERATELY never going to ask has to be identifiable
+				 *    by number, because Andrew is deciding the floor date and
+				 *    that decision is about specific customers.
+				 */
+				if ( 'before_floor' === $reason || 'legacy_touch1' === $reason ) {
+					$say( sprintf(
+						'  DECLINED    order %-6s  %-13s  %-5s lane  anchor %s  visit %s',
+						$order->get_id(),
+						$reason,
+						bhp_review_ask_lane( $order ),
+						bhp_review_ask_touch1_anchor( $order )
+							? wp_date( 'Y-m-d', bhp_review_ask_touch1_anchor( $order ) )
+							: '-',
+						bhp_review_ask_visit_date( $order ) ? bhp_review_ask_visit_date( $order ) : '-'
+					) );
+				}
+
 				continue;
 			}
 
@@ -5943,6 +6208,25 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
 		foreach ( $declined as $reason => $count ) {
 			$say( '  declined ' . $reason . ': ' . $count );
 		}
+
+		/*
+		 * ⭐ 1.19.380 · ONE LINE THAT CARRIES THE WHOLE DAY. The block above
+		 *    reads well on a terminal and badly in a report pasted into a
+		 *    decision register, where a single line can be quoted. The counts
+		 *    are sorted largest first so the dominant reason is the first thing
+		 *    read, and `would_send` leads because it is the number the day is
+		 *    actually about.
+		 */
+		$summary_counts = $declined;
+		arsort( $summary_counts );
+
+		$summary_parts = array( 'would_send=' . $would );
+
+		foreach ( $summary_counts as $reason => $count ) {
+			$summary_parts[] = $reason . '=' . $count;
+		}
+
+		$say( '  SUMMARY ' . $date . ': ' . implode( '; ', $summary_parts ) );
 
 		$say( '' );
 	}

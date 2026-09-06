@@ -307,6 +307,33 @@ echo "OK: fixtures ready. Probe visit '{$bhp_rs_visit_slug}' dated {$bhp_rs_visi
 
 /*
  * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.380 · THE BACKLOG FLOOR IS SWITCHED OFF FOR §1 TO §18, AND THAT IS
+ *     NOT A TEST BEING BENT TO PASS.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ THE PROBE VISIT IS DATED NINE DAYS AGO AND THE WEB PROBE COMPLETED SIXTEEN
+ *   DAYS AGO, both of which are the point: those ages are what make the day
+ *   math testable at all. Both fall BELOW the shipped floor of 2026-09-03, so
+ *   with the floor live every one of those fixtures would decline
+ *   `before_floor` and roughly forty assertions about delays, touches,
+ *   cooldowns and copy would fail — reporting the FLOOR working, while telling
+ *   us nothing about the rules they were written to guard.
+ *
+ * ⭐ SO THE FLOOR IS TURNED OFF HERE, THROUGH ITS OWN PUBLIC FILTER, and it is
+ *    turned back on and asserted properly in §19 with fixtures built for it on
+ *    both sides of a fixed date. ⛔ The engine is not modified; the constant is
+ *    not touched; nothing here changes what production does.
+ */
+function bhp_rs_floor_off() {
+	return '';
+}
+
+add_filter( 'bhp_review_ask_floor_date', 'bhp_rs_floor_off', 5 );
+
+echo "OK: the 1.19.380 backlog floor is filtered OFF for §1-§18 (aged fixtures) and asserted live in §19.\n";
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐ THE "COPY APPROVED" SHIM, AND WHY IT HAS TO EXIST.
  * ═══════════════════════════════════════════════════════════════════════════
  *
@@ -4621,6 +4648,297 @@ bhp_rs_ok(
 bhp_rs_ok(
 	'⛔ table-layout: fixed is NOT declared on the shared order-details class',
 	false === strpos( $bhp_rs_r16_css_rules, 'table-layout' )
+);
+
+/* =========================================================================
+ * §19 — ROUND 19: THE BACKLOG FLOOR AND THE LEGACY TOUCH-1 STAMP (1.19.380)
+ *
+ * ⭐⭐ WHAT THESE ASSERTIONS ARE FOR. The 2026-09-10 production dry run at
+ *     1.19.379 (engine OFF) showed the first real run sending touch 1 to eight
+ *     Adams orders from 2026-08-28 and two web orders completed in July and
+ *     August, and touch 2 to four orders whose only touch-1 record was written
+ *     by the legacy 21-day engine on 2026-08-29. Every assertion below is one
+ *     of those two failures, reproduced on a fixture and then closed.
+ *
+ * ⛔ THE FLOOR IS DRIVEN THROUGH ITS PUBLIC FILTER AND THE DATES ARE RELATIVE.
+ *    Pinning the fixtures to the literal 2026-09-03 would make this section
+ *    quietly stop testing anything the moment the shipped default changes,
+ *    which is a decision Andrew has open right now.
+ * ====================================================================== */
+
+bhp_rs_head( '§19 Round 19: the backlog floor and the legacy touch-1 stamp' );
+
+/** The floor under the suite's control. Reads a global so one filter serves every case. */
+function bhp_rs_floor_probe() {
+	return isset( $GLOBALS['bhp_rs_floor_probe'] ) ? (string) $GLOBALS['bhp_rs_floor_probe'] : '';
+}
+
+$GLOBALS['bhp_rs_floor_probe'] = '';
+add_filter( 'bhp_review_ask_floor_date', 'bhp_rs_floor_probe', 20 );
+
+/* ---- 19.1 the constant, and the two candidate values ---- */
+
+bhp_rs_ok( 'BHP_REVIEW_ASK_FLOOR_DATE is defined', defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) );
+
+/*
+ * ⚠ THIS ASSERTION IS ALSO A DETECTOR FOR A wp-config OVERRIDE, and that is
+ *   deliberate. If staging carries its own `define()`, this fails and prints
+ *   the value it found, which is exactly what a reader needs to know before
+ *   trusting anything else in this section.
+ */
+bhp_rs_ok(
+	'⭐ The shipped default floor is 2026-09-03 (option A: the Dallas Harris visit date)',
+	defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) && '2026-09-03' === BHP_REVIEW_ASK_FLOOR_DATE,
+	'found: ' . ( defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) ? BHP_REVIEW_ASK_FLOOR_DATE : 'undefined' )
+);
+
+bhp_rs_ok(
+	'An empty floor means NO floor, and the resolver says so',
+	'' === bhp_review_ask_floor_date() && 0 === bhp_review_ask_floor_timestamp()
+);
+
+$GLOBALS['bhp_rs_floor_probe'] = '2026-09-03';
+
+bhp_rs_ok(
+	'The floor resolves through its filter and lands at local midnight',
+	'2026-09-03' === bhp_review_ask_floor_date()
+		&& bhp_review_ask_floor_timestamp() === bhp_review_ask_local_midnight( '2026-09-03' )
+);
+
+bhp_rs_ok(
+	'A malformed floor is treated as NO floor rather than as a date nobody can read',
+	( function () {
+		$GLOBALS['bhp_rs_floor_probe'] = 'September 3rd';
+		$out = bhp_review_ask_floor_date();
+		$GLOBALS['bhp_rs_floor_probe'] = '';
+		return '' === $out;
+	} )()
+);
+
+/* ---- 19.2 fixtures on both sides of the floor, both lanes ---- */
+
+$bhp_rs_f_visit = bhp_rs_make_order( 'rs-floor-v@example.com', 2, $bhp_rs_visit_meta, array( $bhp_rs_pb[0] ) );
+$bhp_rs_f_web   = bhp_rs_make_order( 'rs-floor-w@example.com', 20, array(), array( $bhp_rs_pb[0] ) );
+
+$bhp_rs_f_recent  = gmdate( 'Y-m-d', strtotime( '-5 days' ) );
+$bhp_rs_f_ancient = gmdate( 'Y-m-d', strtotime( '-30 days' ) );
+$bhp_rs_f_now     = bhp_review_ask_local_datetime( current_time( 'Y-m-d' ) . ' 09:00:00' );
+
+/*
+ * ⭐⭐ THE VISIT FIXTURE IS THE ADAMS CASE IN MINIATURE: it COMPLETED two days
+ *     ago, and its visit was nine days ago. If the floor read completion it
+ *     would clear a five-day floor comfortably. It must not, because the visit
+ *     lane schedules on the visit date and the floor has to ask the same
+ *     question the schedule asks.
+ */
+$GLOBALS['bhp_rs_floor_probe'] = $bhp_rs_f_recent;
+
+bhp_rs_ok(
+	'⭐⭐ VISIT LANE: a visit BEFORE the floor declines before_floor, even though the order completed after it',
+	'before_floor' === bhp_review_ask_decline_reason( $bhp_rs_f_visit, $bhp_rs_f_now ),
+	'got: ' . bhp_review_ask_decline_reason( $bhp_rs_f_visit, $bhp_rs_f_now )
+);
+
+bhp_rs_ok(
+	'⭐ WEB LANE: an order COMPLETED before the floor declines before_floor',
+	'before_floor' === bhp_review_ask_decline_reason( $bhp_rs_f_web, $bhp_rs_f_now ),
+	'got: ' . bhp_review_ask_decline_reason( $bhp_rs_f_web, $bhp_rs_f_now )
+);
+
+bhp_rs_ok(
+	'The helper agrees with the decline on both lanes',
+	bhp_review_ask_is_before_floor( $bhp_rs_f_visit ) && bhp_review_ask_is_before_floor( $bhp_rs_f_web )
+);
+
+$GLOBALS['bhp_rs_floor_probe'] = $bhp_rs_f_ancient;
+
+/*
+ * ⛔ THE SAME TWO ORDERS, THE SAME INSTANT, A DIFFERENT FLOOR. This is what
+ *    proves the floor is what changed the answer, rather than some other gate
+ *    happening to fire on the fixtures above.
+ */
+bhp_rs_ok(
+	'⭐ VISIT LANE: above the floor, the order qualifies again',
+	'' === bhp_review_ask_decline_reason( $bhp_rs_f_visit, $bhp_rs_f_now ),
+	'got: ' . bhp_review_ask_decline_reason( $bhp_rs_f_visit, $bhp_rs_f_now )
+);
+
+bhp_rs_ok(
+	'⭐ WEB LANE: above the floor, before_floor is no longer the reason',
+	'before_floor' !== bhp_review_ask_decline_reason( $bhp_rs_f_web, $bhp_rs_f_now ),
+	'reason now: ' . bhp_review_ask_decline_reason( $bhp_rs_f_web, $bhp_rs_f_now )
+);
+
+/*
+ * ⭐ THE BOUNDARY, ASSERTED ON BOTH SIDES, because "before" is a strict
+ *    comparison and an off-by-one day here excludes a visit Andrew meant to
+ *    include - or includes one he meant to exclude.
+ */
+$GLOBALS['bhp_rs_floor_probe'] = $bhp_rs_visit_date;
+
+bhp_rs_ok(
+	'⭐ A floor set to the visit date ITSELF does NOT exclude that visit',
+	false === bhp_review_ask_is_before_floor( $bhp_rs_f_visit )
+);
+
+$GLOBALS['bhp_rs_floor_probe'] = gmdate( 'Y-m-d', strtotime( $bhp_rs_visit_date . ' +1 day' ) );
+
+bhp_rs_ok(
+	'⭐ A floor one day later DOES exclude it',
+	true === bhp_review_ask_is_before_floor( $bhp_rs_f_visit )
+);
+
+/* ---- 19.3 the legacy touch-1 stamp ---- */
+
+$GLOBALS['bhp_rs_floor_probe'] = $bhp_rs_f_ancient;
+
+/*
+ * ⛔⛔ THE PRODUCTION CASE: orders 417, 493, 547 and 548 carry a touch-1 stamp
+ *     written by the legacy 21-day engine. The fixture below is that shape
+ *     exactly - both legacy markers written, and no ledger key.
+ */
+$bhp_rs_f_legacy_at = gmdate( 'Y-m-d H:i:s', strtotime( '-10 days' ) );
+
+$bhp_rs_f_legacy = bhp_rs_make_order(
+	'rs-legacy@example.com',
+	20,
+	array(
+		BHP_REVIEW_ASK_SENT_META     => $bhp_rs_f_legacy_at,
+		BHP_REVIEW_ASK_TOUCH1_AT_META => $bhp_rs_f_legacy_at,
+	),
+	array( $bhp_rs_pb[0] )
+);
+
+bhp_rs_ok( 'A legacy-stamped order is next in line for touch 2', 2 === bhp_review_ask_next_touch( $bhp_rs_f_legacy ) );
+
+bhp_rs_ok(
+	'Its touch 2 is DUE by the date math, which is why the guard has to exist',
+	bhp_review_ask_touch2_due_timestamp( $bhp_rs_f_legacy ) > 0
+		&& bhp_review_ask_touch2_due_timestamp( $bhp_rs_f_legacy ) < $bhp_rs_f_now
+);
+
+bhp_rs_ok(
+	'⭐ The ledger key is absent, so the touch-1 record is not this sequence',
+	false === bhp_review_ask_touch1_is_sequence( $bhp_rs_f_legacy )
+);
+
+bhp_rs_ok(
+	'⭐⭐ AND TOUCH 2 DECLINES legacy_touch1 RATHER THAN CHASING A SEND THIS ENGINE NEVER MADE',
+	'legacy_touch1' === bhp_review_ask_decline_reason( $bhp_rs_f_legacy, $bhp_rs_f_now ),
+	'got: ' . bhp_review_ask_decline_reason( $bhp_rs_f_legacy, $bhp_rs_f_now )
+);
+
+/*
+ * ⭐ AND THE SAME ORDER, ONCE THE LEDGER KEY IS PRESENT, IS ALLOWED. Without
+ *    this half the assertion above would also pass if touch 2 were broken
+ *    outright.
+ */
+$bhp_rs_f_legacy->update_meta_data( BHP_REVIEW_ASK_TOUCH1_SEQ_META, $bhp_rs_f_legacy_at );
+$bhp_rs_f_legacy->save();
+$bhp_rs_f_legacy = wc_get_order( $bhp_rs_f_legacy->get_id() );
+
+bhp_rs_ok(
+	'⭐ With the ledger key present, legacy_touch1 is no longer the reason',
+	'legacy_touch1' !== bhp_review_ask_decline_reason( $bhp_rs_f_legacy, $bhp_rs_f_now ),
+	'reason now: ' . bhp_review_ask_decline_reason( $bhp_rs_f_legacy, $bhp_rs_f_now )
+);
+
+/*
+ * ⛔ AND THE WRITE SIDE, BEHAVIOURALLY. `bhp_review_ask_mark_sent()` is called
+ *    for real on a probe order - it writes meta and the KPI ledger and sends
+ *    nothing, no transport is involved - and the three registries it touches
+ *    are snapshotted here and restored immediately after.
+ */
+$bhp_rs_f_mark_snapshot = array(
+	BHP_REVIEW_ASK_LOG_OPTION      => get_option( BHP_REVIEW_ASK_LOG_OPTION, array() ),
+	BHP_REVIEW_ASK_STATS_OPTION    => get_option( BHP_REVIEW_ASK_STATS_OPTION, array() ),
+	BHP_REVIEW_ASK_CUSTOMER_OPTION => get_option( BHP_REVIEW_ASK_CUSTOMER_OPTION, array() ),
+);
+
+$bhp_rs_f_fresh = bhp_rs_make_order( 'rs-marksent@example.com', 20, array(), array( $bhp_rs_pb[0] ) );
+
+bhp_review_ask_mark_sent( $bhp_rs_f_fresh, 1 );
+
+$bhp_rs_f_fresh = wc_get_order( $bhp_rs_f_fresh->get_id() );
+
+bhp_rs_ok(
+	'⭐⭐ A touch 1 written by THIS sequence carries the ledger key',
+	bhp_review_ask_touch1_is_sequence( $bhp_rs_f_fresh ),
+	'meta: ' . (string) $bhp_rs_f_fresh->get_meta( BHP_REVIEW_ASK_TOUCH1_SEQ_META )
+);
+
+bhp_rs_ok(
+	'⭐ So its own touch 2 is never declined legacy_touch1',
+	2 === bhp_review_ask_next_touch( $bhp_rs_f_fresh )
+		&& 'legacy_touch1' !== bhp_review_ask_decline_reason( $bhp_rs_f_fresh, $bhp_rs_f_now ),
+	'reason: ' . bhp_review_ask_decline_reason( $bhp_rs_f_fresh, $bhp_rs_f_now )
+);
+
+foreach ( $bhp_rs_f_mark_snapshot as $bhp_rs_f_key => $bhp_rs_f_value ) {
+	update_option( $bhp_rs_f_key, $bhp_rs_f_value, false );
+}
+
+bhp_rs_ok(
+	'The three registries mark_sent touched were restored',
+	get_option( BHP_REVIEW_ASK_LOG_OPTION, array() ) === $bhp_rs_f_mark_snapshot[ BHP_REVIEW_ASK_LOG_OPTION ]
+);
+
+/* ---- 19.4 the dry-run output names the floor and counts the reasons ---- */
+
+/*
+ * ⭐ THE PLAN COMMAND IS CALLED DIRECTLY WITH THE SUITE'S OWN LOGGER, so what
+ *    is asserted is the text an operator actually sees. It sends nothing and
+ *    writes nothing; `--scan` is kept small so this costs one small query.
+ */
+$GLOBALS['bhp_rs_plan_lines'] = array();
+
+$bhp_rs_plan_say = static function ( $line ) {
+	$GLOBALS['bhp_rs_plan_lines'][] = (string) $line;
+};
+
+$GLOBALS['bhp_rs_floor_probe'] = '2026-09-03';
+
+if ( function_exists( 'bhp_review_ask_cli_plan' ) ) {
+	bhp_review_ask_cli_plan(
+		array(
+			'dates' => current_time( 'Y-m-d' ),
+			'scan'  => 5,
+		),
+		$bhp_rs_plan_say
+	);
+
+	$bhp_rs_plan_text = implode( "\n", $GLOBALS['bhp_rs_plan_lines'] );
+
+	bhp_rs_ok(
+		'⭐ The plan prints the floor it is applying',
+		false !== strpos( $bhp_rs_plan_text, 'backlog floor: 2026-09-03' ),
+		'first lines: ' . substr( $bhp_rs_plan_text, 0, 200 )
+	);
+
+	bhp_rs_ok(
+		'The plan states the legacy-stamp rule as well',
+		false !== strpos( $bhp_rs_plan_text, 'legacy_touch1' )
+	);
+
+	bhp_rs_ok(
+		'⭐ The plan ends the day with one summary line of counts by reason',
+		(bool) preg_match( '/SUMMARY \d{4}-\d{2}-\d{2}: would_send=\d+/', $bhp_rs_plan_text ),
+		'no SUMMARY line matched'
+	);
+} else {
+	bhp_rs_skip( 'The plan output assertions', 'bhp_review_ask_cli_plan() is not loaded' );
+}
+
+/*
+ * ⛔ THE SUITE LEAVES THE FLOOR EXACTLY AS §0 SET IT. The probe filter is
+ *    removed and the §1-§18 override is left in place for the teardown.
+ */
+$GLOBALS['bhp_rs_floor_probe'] = '';
+remove_filter( 'bhp_review_ask_floor_date', 'bhp_rs_floor_probe', 20 );
+
+bhp_rs_ok(
+	'⛔ The suite leaves the floor filtered off exactly as §0 set it',
+	'' === bhp_review_ask_floor_date()
 );
 
 bhp_rs_head( '§12 Deferred fixture teardown' );
