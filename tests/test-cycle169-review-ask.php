@@ -1123,10 +1123,33 @@ bhp_ra_ok(
 remove_filter( 'bhp_review_ask_daily_cap', $GLOBALS['bhp_ra_cap0'], 100 );
 remove_filter( 'bhp_review_ask_daily_cap', $GLOBALS['bhp_ra_cap5'], 99 );
 
+/*
+ * ⭐⭐ 1.19.383 · THE PIN NOW READS 20 VISIT / 10 WEB, AND THE SUITE WAS THE
+ *     THING THAT WAS WRONG, NOT THE ENGINE. 1.19.381 (seal 1066) raised the
+ *     VISIT lane to `BHP_REVIEW_ASK_VISIT_DAILY_CAP` = 20 so the eight Adams
+ *     parents and the five Dallas one-book orders can go out on the same
+ *     morning without the cap silently splitting one visit across two days;
+ *     the web lane stayed at `BHP_REVIEW_ASK_DEFAULT_DAILY_CAP` = 10. This
+ *     assertion still said "10 per lane" and reported `visit=20 web=10` as a
+ *     failure — the ruled behaviour, named as a regression.
+ *
+ * ⛔ SUPERSEDED ASSERTION, PRESERVED RATHER THAN DELETED:
+ *      '⭐⭐ The suite removed its cap filters and the SHIPPED default is 10 per lane'
+ *      ... 10 === bhp_review_ask_daily_cap( 'visit' ) && 10 === ... ( 'web' ) && 10 === BHP_REVIEW_ASK_DEFAULT_DAILY_CAP
+ *
+ * ⭐ IT ASSERTS BOTH CONSTANTS AS WELL AS BOTH RESOLVED CAPS, so a future edit
+ *    that moves one and not the other is named here rather than discovered on
+ *    a morning when a real parent does not get an email.
+ */
 bhp_ra_ok(
-	'⭐⭐ The suite removed its cap filters and the SHIPPED default is 10 per lane',
-	10 === bhp_review_ask_daily_cap( 'visit' ) && 10 === bhp_review_ask_daily_cap( 'web' ) && 10 === BHP_REVIEW_ASK_DEFAULT_DAILY_CAP,
+	'⭐⭐ SEAL 1066: the suite removed its cap filters and the SHIPPED defaults are 20 visit / 10 web',
+	20 === bhp_review_ask_daily_cap( 'visit' )
+		&& 10 === bhp_review_ask_daily_cap( 'web' )
+		&& 10 === BHP_REVIEW_ASK_DEFAULT_DAILY_CAP
+		&& 20 === BHP_REVIEW_ASK_VISIT_DAILY_CAP,
 	'visit=' . bhp_review_ask_daily_cap( 'visit' ) . ' web=' . bhp_review_ask_daily_cap( 'web' )
+		. ' DEFAULT_DAILY_CAP=' . BHP_REVIEW_ASK_DEFAULT_DAILY_CAP
+		. ' VISIT_DAILY_CAP=' . BHP_REVIEW_ASK_VISIT_DAILY_CAP
 );
 
 bhp_ra_ok( 'wp_mail was reached exactly 5 times', 5 === $bhp_ra_mail_calls, 'calls=' . $bhp_ra_mail_calls );

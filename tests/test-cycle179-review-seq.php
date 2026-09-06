@@ -4826,12 +4826,34 @@ bhp_rs_ok(
 	'' === bhp_review_ask_floor_date() && 0 === bhp_review_ask_floor_timestamp()
 );
 
-$GLOBALS['bhp_rs_floor_probe'] = '2026-09-03';
+/*
+ * ⭐⭐ 1.19.383 · EVERY FILTERED FLOOR FROM HERE ON IS DERIVED FROM THE SHIPPED
+ *     CONSTANT, NOT TYPED AS A LITERAL. Two literal `2026-09-03`s used to sit
+ *     in this section. That date is the SUPERSEDED candidate seal 1066 threw
+ *     out, so the assertions kept passing while naming a floor the company no
+ *     longer ships — a test that reads as current and is not. Six days on is
+ *     an arbitrary "some other valid date", and it is arbitrary ON PURPOSE:
+ *     these two assertions are about the filter and the printed line, not
+ *     about which date the floor holds.
+ */
+$bhp_rs_floor_shipped = defined( 'BHP_REVIEW_ASK_FLOOR_DATE' ) ? (string) BHP_REVIEW_ASK_FLOOR_DATE : '';
+$bhp_rs_floor_other   = '' !== $bhp_rs_floor_shipped
+	? gmdate( 'Y-m-d', strtotime( $bhp_rs_floor_shipped . ' +6 days' ) )
+	: gmdate( 'Y-m-d' );
+
+bhp_rs_ok(
+	'⭐ The derived probe floor is a real, DIFFERENT date from the shipped constant',
+	(bool) preg_match( '/^\d{4}-\d{2}-\d{2}$/', $bhp_rs_floor_other )
+		&& $bhp_rs_floor_other !== $bhp_rs_floor_shipped,
+	'derived: ' . $bhp_rs_floor_other . ' vs shipped: ' . $bhp_rs_floor_shipped
+);
+
+$GLOBALS['bhp_rs_floor_probe'] = $bhp_rs_floor_other;
 
 bhp_rs_ok(
 	'The floor resolves through its filter and lands at local midnight',
-	'2026-09-03' === bhp_review_ask_floor_date()
-		&& bhp_review_ask_floor_timestamp() === bhp_review_ask_local_midnight( '2026-09-03' )
+	$bhp_rs_floor_other === bhp_review_ask_floor_date()
+		&& bhp_review_ask_floor_timestamp() === bhp_review_ask_local_midnight( $bhp_rs_floor_other )
 );
 
 bhp_rs_ok(
@@ -4846,8 +4868,62 @@ bhp_rs_ok(
 
 /* ---- 19.2 fixtures on both sides of the floor, both lanes ---- */
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.383 · THE PROBE VISIT REGISTRY IS RE-ARMED FOR THIS BLOCK, AND
+ *     THAT — NOT THE FLOOR DATE — IS WHY THE FOUR VISIT-LANE ASSERTIONS BELOW
+ *     WERE FAILING ON STAGING AT 1.19.382.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * §8 (line ~1386) removes `$bhp_rs_fake_visits` from `pre_option_bhp_school_visits`
+ * and then ASSERTS the removal. §19 runs after §8. So every order carrying
+ * `$bhp_rs_visit_meta` down here names a visit the registry no longer knows,
+ * `bhp_review_ask_visit_date()` returns '', and `bhp_review_ask_touch1_anchor()`
+ * falls back to COMPLETION with the 14-day WEB delay — exactly the documented
+ * fallback, working correctly, on a fixture that needed the visit lane.
+ *
+ * ⭐ THAT SINGLE CAUSE PRODUCES ALL FOUR OBSERVED FAILURES, which is why no
+ *    rule is being changed here:
+ *      - anchor = completion (-2 days), so a -5-day floor is not above it and
+ *        `before_floor` never fires             -> "got: not_due"       (x1)
+ *      - `bhp_review_ask_is_before_floor()` agrees, and is false        (x1)
+ *      - completion (-2 days) + WEB 14 days is not yet due, so even an
+ *        ANCIENT floor cannot make it qualify   -> "got: not_due"       (x1)
+ *      - a floor one day after the VISIT date is still older than the
+ *        completion anchor, so it excludes nothing                      (x1)
+ *    ⛔ The last of those is the one that rules out the "the shipped default
+ *       moved to 2026-08-28" reading: that assertion drives the floor through
+ *       the probe filter and never reads the constant at all.
+ *
+ * ⛔ IT IS RE-ARMED NARROWLY AND TAKEN BACK DOWN AT THE END OF 19.2, before
+ *    19.4 calls the plan command, so the plan still scans the registry an
+ *    operator would actually see. §8's assertion about the teardown already
+ *    ran and is not disturbed.
+ */
+add_filter( $bhp_rs_visit_hook, $bhp_rs_fake_visits, 99 );
+
 $bhp_rs_f_visit = bhp_rs_make_order( 'rs-floor-v@example.com', 2, $bhp_rs_visit_meta, array( $bhp_rs_pb[0] ) );
 $bhp_rs_f_web   = bhp_rs_make_order( 'rs-floor-w@example.com', 20, array(), array( $bhp_rs_pb[0] ) );
+
+/*
+ * ⭐ THE FIXTURE PROVES ITSELF AGAIN, exactly as §0 does, so an inert hook is
+ *    reported as an inert hook rather than as four floor regressions. This is
+ *    the assertion whose absence cost round 21.
+ */
+bhp_rs_ok(
+	'⭐⭐ 1.19.383: the probe visit is visible to the engine again, so the visit-lane floor fixtures mean something',
+	$bhp_rs_visit_date === bhp_review_ask_visit_date( $bhp_rs_f_visit ),
+	'visit date resolved to: "' . bhp_review_ask_visit_date( $bhp_rs_f_visit ) . '", expected "' . $bhp_rs_visit_date . '"'
+);
+
+/*
+ * ⭐ AND THE ANCHOR IS THE VISIT DATE, NOT COMPLETION, stated once here so the
+ *    four assertions below are about the FLOOR and nothing else.
+ */
+bhp_rs_ok(
+	'⭐ Its touch-1 anchor is the visit date at local midnight, not its completion two days ago',
+	bhp_review_ask_touch1_anchor( $bhp_rs_f_visit ) === bhp_review_ask_local_midnight( $bhp_rs_visit_date )
+);
 
 $bhp_rs_f_recent  = gmdate( 'Y-m-d', strtotime( '-5 days' ) );
 $bhp_rs_f_ancient = gmdate( 'Y-m-d', strtotime( '-30 days' ) );
@@ -4915,6 +4991,17 @@ $GLOBALS['bhp_rs_floor_probe'] = gmdate( 'Y-m-d', strtotime( $bhp_rs_visit_date 
 bhp_rs_ok(
 	'⭐ A floor one day later DOES exclude it',
 	true === bhp_review_ask_is_before_floor( $bhp_rs_f_visit )
+);
+
+/*
+ * ⛔ THE REGISTRY GOES BACK DOWN HERE. 19.3 and 19.4 are web-lane and
+ *    plan-output work and must see the registry the way §8 left it.
+ */
+remove_filter( $bhp_rs_visit_hook, $bhp_rs_fake_visits, 99 );
+
+bhp_rs_ok(
+	'⛔ 19.2 put the probe visit registry back down',
+	'' === bhp_review_ask_visit_date( $bhp_rs_f_visit )
 );
 
 /* ---- 19.3 the legacy touch-1 stamp ---- */
@@ -5025,7 +5112,7 @@ $bhp_rs_plan_say = static function ( $line ) {
 	$GLOBALS['bhp_rs_plan_lines'][] = (string) $line;
 };
 
-$GLOBALS['bhp_rs_floor_probe'] = '2026-09-03';
+$GLOBALS['bhp_rs_floor_probe'] = $bhp_rs_floor_other;
 
 if ( function_exists( 'bhp_review_ask_cli_plan' ) ) {
 	bhp_review_ask_cli_plan(
@@ -5040,8 +5127,8 @@ if ( function_exists( 'bhp_review_ask_cli_plan' ) ) {
 
 	bhp_rs_ok(
 		'⭐ The plan prints the floor it is applying',
-		false !== strpos( $bhp_rs_plan_text, 'backlog floor: 2026-09-03' ),
-		'first lines: ' . substr( $bhp_rs_plan_text, 0, 200 )
+		false !== strpos( $bhp_rs_plan_text, 'backlog floor: ' . $bhp_rs_floor_other ),
+		'looked for "backlog floor: ' . $bhp_rs_floor_other . '"; first lines: ' . substr( $bhp_rs_plan_text, 0, 200 )
 	);
 
 	bhp_rs_ok(
