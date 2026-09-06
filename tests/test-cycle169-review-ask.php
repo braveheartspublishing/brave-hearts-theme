@@ -173,6 +173,42 @@ echo "OK: ledger snapshot taken; §9 restores it.\n";
 // suite cannot leave a live engine behind it.
 add_filter( 'bhp_review_ask_enabled', '__return_true', 99 );
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.382 · THE 1.19.380 BACKLOG FLOOR IS FILTERED OFF FOR THIS SUITE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * This suite was written for the 1.19.317 engine and its fixtures are aged by
+ * construction: §4 needs an order 5 days old, one 20 days old, one 30 days old
+ * and one 35 days old to test `not_due`, the delay boundary and
+ * `copy_delay_mismatch`. Those are the only ages at which those assertions mean
+ * anything.
+ *
+ * ⛔ SEAL 1066 PUT THE SHIPPED FLOOR AT 2026-08-28. Every one of those fixtures
+ *    completes below it, so with the floor live they all decline `before_floor`
+ *    — and six assertions that name `not_due`, `no_billing_email`, `excluded`,
+ *    `copy_delay_mismatch` and "QUALIFIES" stopped testing the rule each one is
+ *    named after. A suite that passes because a NEWER gate fires first is not
+ *    guarding the older gate any more; it is only describing the newer one.
+ *
+ * ⭐ SO THE FLOOR IS TURNED OFF HERE, THROUGH ITS OWN PUBLIC FILTER — the same
+ *    move `test-cycle179-review-seq.php` §0 makes for the same reason. ⛔ The
+ *    floor itself is NOT weakened and is NOT untested: it is asserted live, on
+ *    both sides of a fixed date and in both lanes, in review-seq §19, which is
+ *    the suite that owns it. The engine is not modified, the constant is not
+ *    touched, and nothing here changes what production does.
+ *
+ * ⚠ THE FILTER RUNS AT PRIORITY 5 so any suite-local override can sit above it.
+ */
+add_filter(
+	'bhp_review_ask_floor_date',
+	function () {
+		return '';
+	},
+	5
+);
+echo "OK: the 1.19.380 backlog floor is filtered OFF for this suite (aged 1.19.317 fixtures); it is asserted live in test-cycle179-review-seq.php §19.\n";
+
 /* =========================================================================
  * §1 — WIRING
  * ====================================================================== */

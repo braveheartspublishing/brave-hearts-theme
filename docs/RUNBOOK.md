@@ -313,7 +313,7 @@ built (Andrew's explicit instruction). To add a new review:
    way as any other theme change (full-ZIP `wp theme install --force`,
    staging-verified first).
 
-## Review-ask engine — staging QA and the production go-live gates (1.19.371)
+## Review-ask engine — staging QA and the production go-live gates (1.19.382)
 
 **The engine sends nothing until `bhp_review_ask_enabled` is `yes`. That option
 flip is Andrew's, and it is the only irreversible step in this list** — an email
@@ -326,8 +326,8 @@ that has gone to a parent cannot be recalled. Everything above it is reversible.
 
 ```
 # 1. install the candidate
-wp theme install /path/to/brave-hearts-theme-1.19.371-review-seq.zip --force
-wp theme list --status=active                 # must show <slug> at 1.19.371
+wp theme install /path/to/brave-hearts-theme-1.19.382-review-seq.zip --force
+wp theme list --status=active                 # must show <slug> at 1.19.382
 wp sg purge
 
 # 2. fatal check
@@ -363,7 +363,7 @@ not on `--url`), refuses without one valid `--to`, and refuses an unapproved set
    `text/html; charset=UTF-8`. **If the charset is missing, stop** — the stars
    will arrive as `âââââ` and nothing else on this list can be judged.
    Then confirm in the delivered message that the five stars are stars and not
-   mojibake. *(1.19.371. The defect was observed on the 1.19.369 send.)*
+   mojibake. *(Shipped 1.19.371, carried forward unchanged through 1.19.382. The defect was observed on the 1.19.369 send.)*
 1. **The star row is a row.** Open the touch-1 test-send on a phone and on
    desktop: five stars, one line, left to right, no wrapping at 375px.
    **They rest GREY (`#c9c2b3`), not gold** — that is the designed resting
@@ -410,14 +410,14 @@ ships inert code.** Step 4 is the live one.
 ```
 # 0. ROLLBACK ARTEFACT FIRST. Do not skip.
 cd <doc_root>/wp-content/themes
-tar -czf ~/PROD-theme-PRE-1.19.371-$(date +%Y%m%d-%H%M).tar.gz <slug>
+tar -czf ~/PROD-theme-PRE-1.19.382-$(date +%Y%m%d-%H%M).tar.gz <slug>
 wp option get bhp_review_ask_enabled                 # record the answer verbatim
 wp option get bhp_review_ask_stats  > ~/PRE-369-review-ask-stats.json
 wp option get bhp_review_ask_log    > ~/PRE-369-review-ask-log.json
 
 # 1. install and confirm it replaced the LIVE theme rather than adding one
-wp theme install /path/to/brave-hearts-theme-1.19.371-review-seq.zip --force
-wp theme list --status=active                        # <slug>, 1.19.371
+wp theme install /path/to/brave-hearts-theme-1.19.382-review-seq.zip --force
+wp theme list --status=active                        # <slug>, 1.19.382
 wp eval 'echo "ok";' --user=1
 wp sg purge
 
@@ -472,7 +472,7 @@ wp option delete bhp_social_links                    # signature block ends on t
 # full code rollback
 cd <doc_root>/wp-content/themes
 rm -rf <slug>
-tar -xzf ~/PROD-theme-PRE-1.19.371-<stamp>.tar.gz
+tar -xzf ~/PROD-theme-PRE-1.19.382-<stamp>.tar.gz
 wp theme list --status=active
 wp sg purge
 ```

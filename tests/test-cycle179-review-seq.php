@@ -587,14 +587,33 @@ $bhp_rs_t2      = bhp_rs_make_order(
 	'rs-t2@example.com',
 	20,
 	array(
-		'_bhp_school_visit_slug'    => $bhp_rs_visit_slug,
-		'_bhp_review_ask_sent'      => $bhp_rs_t1_date . ' 09:00:00',
-		'_bhp_review_ask_touch1_at' => $bhp_rs_t1_date . ' 09:00:00',
+		'_bhp_school_visit_slug'     => $bhp_rs_visit_slug,
+		'_bhp_review_ask_sent'       => $bhp_rs_t1_date . ' 09:00:00',
+		'_bhp_review_ask_touch1_at'  => $bhp_rs_t1_date . ' 09:00:00',
+		/*
+		 * ⭐⭐ 1.19.382 · THE LEDGER KEY, WRITTEN BECAUSE `bhp_review_ask_mark_sent()`
+		 *     WRITES IT. R19 shipped the legacy-stamp rule: touch 2 requires a
+		 *     touch-1 record written by THIS sequence. A fixture that claims
+		 *     "this sequence sent touch 1" and then omits the key is not
+		 *     simulating this sequence, it is simulating the legacy engine —
+		 *     and every assertion below it would silently collapse onto
+		 *     `legacy_touch1` instead of testing the reason it names.
+		 *
+		 * ⛔ THE VALUE MATCHES THE DATE IT VOUCHES FOR, exactly as the engine
+		 *    writes it (both are `current_time( 'mysql' )` at the same instant).
+		 *    The rule is NOT weakened anywhere: it is asserted live, both ways,
+		 *    in §19 with fixtures built for it.
+		 */
+		'_bhp_review_ask_touch1_seq' => $bhp_rs_t1_date . ' 09:00:00',
 	),
 	array( $bhp_rs_pb[0] )
 );
 
 bhp_rs_ok( 'An order with touch 1 marked is next in line for touch 2', 2 === bhp_review_ask_next_touch( $bhp_rs_t2 ) );
+bhp_rs_ok(
+	'⭐ ... and its touch 1 is recorded as sent BY THIS SEQUENCE, so §2 tests §2 and not the R19 legacy rule',
+	bhp_review_ask_touch1_is_sequence( $bhp_rs_t2 )
+);
 /*
  * ⭐⭐ FOUR DAYS, NOT SEVEN, SINCE 1.19.364. ANDREW, SEAL 977, VERBATIM: *"If
  *     no reviews we ask 4 days later"*. Merry's `CYCLE179-MKT-REVIEW-SEQ-V2.md`
@@ -656,7 +675,24 @@ bhp_rs_ok( 'Touch 2 at +6 days declines not_due', 'not_due' === bhp_review_ask_d
 $bhp_rs_ext = bhp_rs_make_order(
 	'rs-ext@example.com',
 	30,
-	array( '_bhp_review_ask_sent' => 'external-pending-2026-09-10' ),
+	array(
+		'_bhp_review_ask_sent' => 'external-pending-2026-09-10',
+		/*
+		 * ⭐⭐ 1.19.382 · THE STAMP IS PRESENT AND THE DATE IS STILL UNKNOWN, AND
+		 *     THAT SEPARATION IS THE WHOLE POINT OF THIS FIXTURE. The migration
+		 *     writes the ledger key for the sixteen hand-prepared orders — this
+		 *     sequence owns them — but it writes the SAME unparseable
+		 *     `external-<date>` marker as the value, because nobody has yet
+		 *     confirmed the send in Gmail.
+		 *
+		 * ⛔ SO THE R19 LEGACY GATE PASSES (the key is non-empty) AND THE FAIL-
+		 *    CLOSED DATE GATE FIRES (nothing parses to a datetime). Without the
+		 *    key this order declined `legacy_touch1` and `touch1_date_unknown`
+		 *    went untested — the reason that actually protects a real parent
+		 *    from a reminder timed off a guess.
+		 */
+		'_bhp_review_ask_touch1_seq' => 'external-pending-2026-09-10',
+	),
 	array( $bhp_rs_pb[0] )
 );
 
@@ -673,6 +709,14 @@ $bhp_rs_done = bhp_rs_make_order(
 	array(
 		'_bhp_review_ask_sent'        => $bhp_rs_t1_date . ' 09:00:00',
 		'_bhp_review_ask_touch1_at'   => $bhp_rs_t1_date . ' 09:00:00',
+		/*
+		 * ⭐ 1.19.382 · Both touches were sent BY THIS SEQUENCE, so the ledger
+		 *    key belongs here too. `already_sent` is returned above the legacy
+		 *    check and so this fixture passed either way — but a fixture that
+		 *    describes a completed sequence must describe it completely, or the
+		 *    next person to move an assertion inherits a quiet trap.
+		 */
+		'_bhp_review_ask_touch1_seq'  => $bhp_rs_t1_date . ' 09:00:00',
 		'_bhp_review_ask_touch2_sent' => gmdate( 'Y-m-d H:i:s' ),
 	),
 	array( $bhp_rs_pb[0] )
@@ -696,9 +740,17 @@ $bhp_rs_t2r      = bhp_rs_make_order(
 	$bhp_rs_reviewer,
 	20,
 	array(
-		'_bhp_school_visit_slug'    => $bhp_rs_visit_slug,
-		'_bhp_review_ask_sent'      => $bhp_rs_t1_date . ' 09:00:00',
-		'_bhp_review_ask_touch1_at' => $bhp_rs_t1_date . ' 09:00:00',
+		'_bhp_school_visit_slug'     => $bhp_rs_visit_slug,
+		'_bhp_review_ask_sent'       => $bhp_rs_t1_date . ' 09:00:00',
+		'_bhp_review_ask_touch1_at'  => $bhp_rs_t1_date . ' 09:00:00',
+		/*
+		 * ⭐ 1.19.382 · The ledger key, so §3 reaches `already_reviewed`.
+		 *    Suppression-by-site-review is checked AFTER the R19 legacy gate;
+		 *    without the key this fixture declined `legacy_touch1` and the
+		 *    unapproved-review suppression — the assertion this whole section
+		 *    exists for — was never exercised at all.
+		 */
+		'_bhp_review_ask_touch1_seq' => $bhp_rs_t1_date . ' 09:00:00',
 	),
 	array( $bhp_rs_pb[0] )
 );
@@ -784,9 +836,19 @@ $bhp_rs_cool2 = bhp_rs_make_order(
 	$bhp_rs_cool_email,
 	20,
 	array(
-		'_bhp_school_visit_slug'    => $bhp_rs_visit_slug,
-		'_bhp_review_ask_sent'      => $bhp_rs_t1_date . ' 09:00:00',
-		'_bhp_review_ask_touch1_at' => $bhp_rs_t1_date . ' 09:00:00',
+		'_bhp_school_visit_slug'     => $bhp_rs_visit_slug,
+		'_bhp_review_ask_sent'       => $bhp_rs_t1_date . ' 09:00:00',
+		'_bhp_review_ask_touch1_at'  => $bhp_rs_t1_date . ' 09:00:00',
+		/*
+		 * ⭐⭐ 1.19.382 · The ledger key, and here it is load-bearing twice over.
+		 *     §4 is the section that protects Andrew's two-touch ruling from
+		 *     silently becoming one ask. Without the key the reminder declined
+		 *     `legacy_touch1`, which is ALSO "not customer_cooldown" — so the
+		 *     first assertion passed for the wrong reason and only the second
+		 *     ("qualifies outright") exposed it. A gate proved by a fixture
+		 *     that fails one step earlier is not proved.
+		 */
+		'_bhp_review_ask_touch1_seq' => $bhp_rs_t1_date . ' 09:00:00',
 	),
 	array( $bhp_rs_pb[0] )
 );
