@@ -1658,15 +1658,70 @@ function bhp_bundle_render_landing_pricing_panel( $format ) {
 		 * facilities in more than one country; nothing in reach establishes
 		 * where any given order is printed.
 		 *
-		 * The two surviving statements are both mechanically verifiable:
-		 * checkout is served over TLS, and Bookvault supplies tracking.
+		 * The ONE surviving statement is mechanically verifiable: checkout is
+		 * served over TLS.
+		 *
+		 * ⛔ 2026-09-06 (`CYCLE179-CX-PLUGIN-TRACKING`, plugin 1.8.84) — this
+		 *    sentence used to read "The two surviving statements are both
+		 *    mechanically verifiable: checkout is served over TLS, and
+		 *    Bookvault supplies tracking." THE SECOND HALF WAS FALSE. It is
+		 *    struck here as well as in the markup, because a comment that
+		 *    still asserts the removed claim is how the claim comes back.
+		 *    Reasoning in the block under the fine-print line below.
 		 *
 		 * To restore it, a Bookvault country-of-print record must exist and be
 		 * cited here. Tracked as CYCLE140-CX-10.
 		 */
 		?>
-		<p class="bhp-landing-panel__fine-print">Secure checkout &middot; Tracking provided</p>
+		<p class="bhp-landing-panel__fine-print">Secure checkout</p>
 		<?php
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⛔⭐ 1.8.84 (2026-09-06, `CYCLE179-CX-PLUGIN-TRACKING`) —
+		 *     "· TRACKING PROVIDED" IS REMOVED. THE STORE HAS NO TRACKING.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * The superseded markup, preserved verbatim so it is not re-derived:
+		 *
+		 *   <p class="bhp-landing-panel__fine-print">Secure checkout &middot; Tracking provided</p>
+		 *
+		 * ⛔ WHY. Owner, verbatim, 2026-09-06: "we dont have tracking by the
+		 *    way". This was the LAST live instance of the claim in code.
+		 *    Theme 1.19.387 (`CYCLE179-CX-TRACKING-CLAIM`) removed eight
+		 *    strings across six theme files the same day and deliberately
+		 *    left this one, because the plugin is a separate artefact with
+		 *    its own version and its own release. This is that release.
+		 *
+		 * ⛔ THE PLUGIN WAS CONTRADICTING ITSELF, AND THE STORE WAS
+		 *    CONTRADICTING ITS OWN RECEIPT.
+		 *      · `includes/dashboard/class-bhp-dashboard-page.php` already
+		 *        tells the admin that "no Bookvault tracking webhook or API
+		 *        integration exists yet". That line is INTERNAL, ACCURATE,
+		 *        and is deliberately KEPT.
+		 *      · The theme's completed-order email already tells the buyer
+		 *        the store does not receive a tracking number from its
+		 *        printer.
+		 *    Only this line — on the highest-value page in the store, inside
+		 *    the purchase card, at the moment of decision — said otherwise.
+		 *
+		 * ⭐ NOTHING REPLACED IT. Not "no tracking", not "shipping updates by
+		 *    email", not a delivery window. A Bookvault dispatch record
+		 *    sometimes carries a tracking number and sometimes does not, so
+		 *    the honest status is UNAVAILABLE — and an unavailable fact is
+		 *    not a sentence on a purchase card. "Secure checkout" survives
+		 *    alone because TLS is mechanically verifiable on request.
+		 *
+		 * ⛔ TO RESTORE IT, a Bookvault tracking integration must exist and be
+		 *    cited here — not a plausible-sounding rewrite of the same claim.
+		 *
+		 * ⛔ GATED BY tests/test-cycle179-cx-plugin-tracking.php, which fails
+		 *    if any customer-facing string this plugin can print contains
+		 *    "tracking" again. The analytics identifiers (bhp-list-tracking.js,
+		 *    bundle-analytics.php, initFormatSelectedTracking) and the CSS
+		 *    letter-spacing sense of the word are NOT customer-facing and are
+		 *    allowlisted by that suite.
+		 */
+
 		/*
 		 * ═══════════════════════════════════════════════════════════════════
 		 * ⛔⭐ 1.8.58 (2026-08-19, `CYCLE165-LD-COLLECTION-CONVERSION`) R-8 —

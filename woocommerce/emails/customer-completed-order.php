@@ -136,8 +136,8 @@ $bhp_visit_hero = ( ! empty( $bhp_visit_body ) && function_exists( 'bhp_review_a
 /*
  * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐ SEAL 1010 · EXACTLY ONE GREETING. Andrew Signore, 2026-09-05, verbatim
- *     (⛔ RELAYED through Gandalf, not heard first-hand): *"There is a double
- *     'Hi Aragorn, Hi Aragorn' -- needs to be fixed"*.
+ *     (⛔ RELAYED through `chief-of-staff`, not heard first-hand): *"There is a double
+ *     'Hi [name], Hi [name]' -- needs to be fixed"*.
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * ⛔ WHAT WAS ACTUALLY WRONG, OBSERVED NOT GUESSED. The rendered 1.19.370
@@ -234,7 +234,7 @@ if ( $bhp_visit_shorten_row ) {
 	 *   callback has not been named or read. The priority move is derived from
 	 *   the two renders above; if the appending happens in a TEMPLATE rather
 	 *   than a filter, no priority can win and the `<th>` will still be long.
-	 *   That is the one thing Gandalf should look at first on the 376 render.
+	 *   That is the one thing `chief-of-staff` should look at first on the 376 render.
 	 */
 	add_filter( 'woocommerce_get_order_item_totals', 'bhp_visit_email_shorten_pickup_row', PHP_INT_MAX, 2 );
 }
@@ -293,7 +293,7 @@ do_action( 'woocommerce_email_customer_details', $order, $sent_to_admin, $plain_
  * ⭐⭐ 1.19.372 · THE VISIT EMAIL ENDS WITH TOUCH 1'S SIGNATURE BLOCK.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through Gandalf, not heard
+ * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through `chief-of-staff`, not heard
  *    first-hand): day 0 must end with the SAME block as touch 1 — Andrew
  *    Signore / Author | Brave Hearts Publishing / Big Places. Brave Hearts. /
  *    the social line from `bhp_social_links` — and not the WooCommerce

@@ -1017,14 +1017,14 @@ function bhp_review_enqueue_assets() {
  * email and all they have to do is click 5 stars and it goes direct to the
  * website?"* and *"I want one destination not 2"*.
  *
- * ⛔ THE BUILD DEPENDENCY MERRY RECORDED AS CONFLICT `CYCLE179-MKT-37` IS WHAT
+ * ⛔ THE BUILD DEPENDENCY MARKETING-GROWTH RECORDED AS CONFLICT `CYCLE179-MKT-37` IS WHAT
  *    THIS BLOCK CLOSES. Her V2 §5 states it plainly and correctly: until today
  *    `bhp_review_value_for()` read ONLY failed-submission state and never a
  *    query parameter, so all five star links would have landed on the review
  *    page with nothing selected and the email's promise would have been false.
  *    Her instruction — *"ship the query-parameter read first, verify a
  *    pre-selected star in a real browser on staging, then send"* — is the order
- *    this was built in, and the browser half is Gandalf's to run.
+ *    this was built in, and the browser half is the `chief-of-staff` desk's to run.
  *
  * ⚠ TWO SEPARATE MECHANISMS, DELIBERATELY, WITH DIFFERENT TRUST LEVELS:
  *
@@ -1055,7 +1055,7 @@ function bhp_review_enqueue_assets() {
  * The five rating labels, in the site form's own descending order.
  *
  * ⭐⭐ ONE DEFINITION, TWO READERS, AND THAT IS THE POINT. The review form and
- *     the review-ask email now render the SAME five strings from here. Merry's
+ *     the review-ask email now render the SAME five strings from here. The `marketing-growth` desk's
  *     V2 section 5: *"The labels are lifted verbatim from the live site form so
  *     the email and the page say the same words, which is what makes a
  *     one-click pre-selection honest rather than a surprise."* If they were

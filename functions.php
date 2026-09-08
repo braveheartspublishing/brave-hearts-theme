@@ -162,6 +162,23 @@ require_once get_template_directory() . '/inc/class-bhp-meta-pixel.php';
 require_once get_template_directory() . '/inc/checkout-experience.php';
 require_once get_template_directory() . '/inc/consent-banner-compact.php';
 
+/*
+ * 1.19.397 (`CYCLE179-LD-BUILD-397`) — ONE CACHE-BUSTING RULE FOR EVERY
+ * ENQUEUED ASSET, applied through `style_loader_src` / `script_loader_src`
+ * rather than at the 105 enqueue call sites this file and `inc/` contain.
+ *
+ * ⛔ REQUIRED HERE, BEFORE THE ENQUEUE BLOCK BELOW, but that ordering is
+ *    documentation rather than a dependency: the file only registers two
+ *    filters, and `style_loader_src` is applied when the asset is PRINTED,
+ *    long after every `require_once` in this file has run.
+ *
+ * ⭐ It sits at priority 20 so it runs AFTER `bhp_minified_style_src()`
+ *    (priority 10, near the bottom of this file), which rewrites `foo.css` to
+ *    `foo.min.css`. Stamping first would stamp the source's mtime onto the
+ *    artefact's URL. See that file's header for why that matters.
+ */
+require_once get_template_directory() . '/inc/asset-version.php';
+
 // ============================================================
 // ENQUEUE STYLES & SCRIPTS
 // ============================================================
@@ -199,6 +216,23 @@ function bhp_enqueue_assets() {
      * That family list is still exactly right and is what was self-hosted.
      */
     wp_enqueue_script('bhp-nav', get_template_directory_uri() . '/assets/js/nav.js', [], $theme_version, true);
+
+    /*
+     * 1.19.390 (2026-09-07, CYCLE179-LD-BUILD-390): the sticky-header anchor
+     * offset, and the table scroll cue's exit.
+     *
+     * SITEWIDE, deliberately, and the reason is `#main`: the "skip to content"
+     * link is in `header.php` on every page, so the anchor-offset measurement
+     * is not a blog concern. The blog's wrapped tables ride along in the same
+     * file rather than paying for a second request.
+     *
+     * NOT gated on anything. style.css carries a static 93px fallback on
+     * `--bhp-anchor-offset`, so a page where this never executes still lands
+     * its anchors below the header — the script only sharpens 93 to the real
+     * measured height (80 at 1440, 125 with an admin bar). Footer-loaded
+     * (`true`), because nothing here paints.
+     */
+    wp_enqueue_script('bhp-anchor-offset', get_template_directory_uri() . '/assets/js/anchor-offset.js', [], $theme_version, true);
 
     // 2026-07-18: sitewide acquisition-form success-visibility + busy-state
     // enhancement. Every page can carry a signup form (footer/popups/lead
@@ -4854,6 +4888,14 @@ function bhp_get_valid_form_action($action) {
  *    Full rationale and the production log evidence: the file's own header.
  */
 require_once get_template_directory() . '/inc/conversion-token.php';
+/*
+ * ⭐ 1.19.392 (`CYCLE179-LD-KIT-MODAL-392`) — LOADED BEFORE `mailchimp.php`,
+ *    ON PURPOSE AND FOR THE SAME REASON `conversion-token.php` IS.
+ *    `bhp_process_signup()` calls `bhp_kit_modal_mint()` on its success
+ *    path. A signup is not the place to discover a load-order problem, so the
+ *    minting side is defined before the file that mints.
+ */
+require_once get_template_directory() . '/inc/kit-instant-modal.php';
 require_once get_template_directory() . '/inc/mailchimp.php';
 /*
  * ⭐ 1.19.296 (`CYCLE167-LD-CAPTURE-FIX-BUILD`) — FIX-2 (interim) of the
@@ -4906,6 +4948,24 @@ require_once get_template_directory() . '/inc/thankyou-indexing.php';
 // Presentation layer only — no product record is merged or altered.
 require_once get_template_directory() . '/inc/book-formats.php';
 require_once get_template_directory() . '/inc/book-media.php';
+/*
+ * 1.19.389 (`CYCLE179-LD-BUILD-389`). Both load AFTER book-formats.php and the
+ * order is load-bearing, not cosmetic: each one calls
+ * `bhp_book_lookup_product()` / `bhp_book_purchase_data()` at render time and
+ * neither re-derives "is this one of the six editions" a second way.
+ *
+ *   · compare-table.php          the "One book, or all three" table, rendered
+ *                                at woocommerce_single_product_summary 14,
+ *                                above the format cards at 15. Every figure in
+ *                                it is read live from WooCommerce and the
+ *                                bundle plugin; nothing is typed.
+ *   · express-checkout-bridge.php  fires the one hook the Stripe plugin needs
+ *                                in order to print its wallet container, which
+ *                                this theme's anchor-based purchase block has
+ *                                never fired. Renders at priority 16.
+ */
+require_once get_template_directory() . '/inc/compare-table.php';
+require_once get_template_directory() . '/inc/express-checkout-bridge.php';
 // Google Merchant Center feed attributes. Loaded AFTER book-formats.php because
 // it keys its allowlist on bhp_book_lookup_product() and must not re-derive
 // "is this one of the six editions" a second way. Read-time feed filter only —
@@ -4950,6 +5010,18 @@ require_once get_template_directory() . '/inc/mini-cart.php';
 // value of anything that makes it fire on production — an unknown host is
 // treated as production, which is the fail-safe direction.
 require_once get_template_directory() . '/inc/staging-mail-guard.php';
+// ⭐⭐ 1.19.386 — THE TEST-ADDRESS ORDER-MAIL GUARD, and it is a SECOND,
+// INDEPENDENT condition rather than more of the same. The guard above is keyed
+// to the HOST; this one is keyed to the ADDRESS, and it holds on every
+// environment. It exists because on 2026-09-06 six "Your payment did not go
+// through" emails reached Andrew as bounces: `customer_failed_order` and
+// `customer_cancelled_order` are newer WooCommerce ids that were never on the
+// staging guard's hand-maintained list, and a hand-maintained list of ids is a
+// thing that goes stale silently. This one enumerates no ids at all — it swaps
+// the transport via `woocommerce_mail_callback`, which every WooCommerce email
+// resolves through. ⛔ Loaded AFTER the staging guard purely for reading order;
+// the two are independent and neither depends on the other's decision.
+require_once get_template_directory() . '/inc/test-order-mail-guard.php';
 // ⭐ 1.19.277 — THE COLOURING LINE ON THE STOREFRONT, and the offer surface
 // FD-579 rules. Loaded AFTER book-formats.php because its shop-card hooks sit
 // beside that file's on the same WooCommerce loop actions and its offer cards
@@ -4963,6 +5035,27 @@ require_once get_template_directory() . '/inc/staging-mail-guard.php';
 //    colouring SKU resolves, every hook it registers returns without emitting a
 //    byte, and nothing that already renders is altered.
 require_once get_template_directory() . '/inc/colouring-line.php';
+/*
+ * ⭐⭐⭐ 1.19.399, `CYCLE179-LD-BUILD-399` — THE BOOK + COLORING BOOK PAIR PAGE.
+ *
+ * The `[bhp_bundle_pair_landing]` shortcode and the two helpers the shop grid's
+ * bundle-strip card asks before it becomes a link.
+ *
+ * ⛔ LOADED AFTER `colouring-line.php` ON PURPOSE, AND THE DEPENDENCY RUNS THE
+ *    OTHER WAY THAN IT LOOKS. `colouring-line.php` is the CALLER — its strip
+ *    card asks `bhp_pair_landing_page_exists()` — but it asks at RENDER, inside
+ *    a WooCommerce loop action, long after every `require_once` here has run.
+ *    So load order cannot cause a silent no-op; this position is for reading
+ *    order, so the destination is defined below the card that points at it.
+ *
+ * ⛔ IT FAILS CLOSED EVERYWHERE THE PAGE OR THE PLUGIN IS ABSENT. The shortcode
+ *    renders '' unless the bundle plugin's offer engine reports the paperback
+ *    pair offerable with a live price, and the strip card stays exactly the
+ *    unlinked card it was in 1.19.398 unless a published, non-password page
+ *    carrying the shortcode resolves on the environment being served.
+ *    ⛔ PRODUCTION HAS NO SUCH PAGE and this build creates none there.
+ */
+require_once get_template_directory() . '/inc/bundle-pair-landing.php';
 // 1.19.260 — the mobile-header offer (CYCLE165-LD-DIRECTION1-STEP1-HEADER).
 // Loaded AFTER collection-cta.php so the two header controls are read in the
 // order they render, and after book-formats.php/the bundle plugin so the live
@@ -5222,6 +5315,14 @@ require_once get_template_directory() . '/inc/transactional-emails.php';
 // being asked a second time).
 require_once get_template_directory() . '/inc/review-ask-email.php';
 
+// V-9 (seal 1304, theme 1.19.396). Post-purchase suppression for orders that
+// redeemed a reward coupon. MUST load AFTER review-ask-email.php: that file's
+// decline gate calls this file's predicate, and the CusRev filter registered
+// here is the only place the theme touches that plugin at all. See the head of
+// inc/postpurchase-suppression.php for why the coupon-code PREFIX, not the
+// coupon meta flag, is the load-bearing rail.
+require_once get_template_directory() . '/inc/postpurchase-suppression.php';
+
 // Bookvault dispatch tracker (2026-08-03): the scheduled checker that polls
 // Bookvault's v3 API and completes an order ONLY on an unambiguous dispatch
 // signal, which is what makes E2's "Your books have shipped" a true sentence
@@ -5330,6 +5431,23 @@ require_once get_template_directory() . '/inc/class-bhp-content-engine-cli.php';
 // `/search/` disallows. The MAIN post feed is untouched. See the file header
 // for why 301 and not 404, and for what was deliberately left alone.
 require_once get_template_directory() . '/inc/seo-hygiene.php';
+
+// ============================================================
+// VIDEO TESTIMONIAL SUBMISSION QUEUE (1.19.395,
+// CYCLE179-LD-BUILD-395-TESTIMONIAL, founder seals 1294 to 1301)
+// ============================================================
+// A parent or grandparent sends a short video of themselves with their reader;
+// it lands in a PRIVATE post type and nothing is published by this code.
+//
+// ⛔ THE ORDER OF THESE THREE LINES IS LOAD-BEARING AND IS NOT ALPHABETICAL.
+//    The form file registers `admin_post_{BHP_TESTIMONIAL_ACTION}` and the admin
+//    file registers `save_post_{BHP_TESTIMONIAL_CPT}` and two
+//    `manage_{CPT}_posts_*` filters AT FILE SCOPE, so both constants have to
+//    exist before those lines are reached. Core first, then the form, then the
+//    review screen. Reordering them silently unhooks the queue.
+require_once get_template_directory() . '/inc/video-testimonials.php';
+require_once get_template_directory() . '/inc/video-testimonial-form.php';
+require_once get_template_directory() . '/inc/video-testimonial-admin.php';
 
 // ============================================================
 // EXPLORER PASSPORT FOUNDATION
@@ -6167,13 +6285,22 @@ function bhp_woocommerce_product_teacher_shipping_section() {
          *
          * ⛔ The string is no longer inline HERE on purpose — inline is how
          *    it escaped the 2026-08-02 correction that fixed its neighbour.
+         *
+         * ⭐ CYCLE179-CX-TRACKING-CLAIM (2026-09-06): "tracking on every
+         *    order" is REMOVED from both the canonical string and this
+         *    fallback. The store does not receive tracking numbers from its
+         *    printer. Reasoning, the live verification behind it, and the
+         *    full supersession chain live with the canonical string in
+         *    `bhp_book_pdp_shipping_link_text()`. This fallback is the exact
+         *    reason a second copy of a claim is dangerous: it has to be
+         *    corrected in lockstep or the defect survives the fix.
          */
         ?>
         <li><a href="<?php echo esc_url(home_url('/shipping-policy/')); ?>"><?php
             echo esc_html(
                 function_exists('bhp_book_pdp_shipping_link_text')
                     ? bhp_book_pdp_shipping_link_text()
-                    : __('Tiered shipping, secure checkout, tracking on every order', 'brave-hearts')
+                    : __('Tiered shipping, secure checkout', 'brave-hearts')
             );
         ?></a></li>
     </ul>
@@ -6363,10 +6490,42 @@ function bhp_register_marketing_consent_fields() {
         return;
     }
     foreach (bhp_get_marketing_consent_field_definitions() as $field) {
+        /*
+         * ⭐ 1.19.385 (2026-09-06, `CYCLE179-CX-EMAIL-CAPTURE`) — THE LOCATION IS
+         *    NOW READ FROM THE DEFINITION, DEFAULTING TO `order`.
+         *
+         * ⛔ THIS LINE ON ITS OWN CHANGES NOTHING. No definition in
+         *    `bhp_get_marketing_consent_field_definitions()` carries a `location`,
+         *    so the default below reproduces the previous hard-coded `'order'`
+         *    byte for byte. The behaviour change is made by ONE line in
+         *    `inc/checkout-experience.php`'s existing F12 filter, and deleting
+         *    that one line restores today's checkout exactly.
+         *
+         * ⭐ THE STORAGE KEY DOES NOT MOVE, AND THAT IS WHY THIS IS SAFE.
+         *    WooCommerce writes additional-field values under
+         *    `CheckoutFields::BILLING_FIELDS_PREFIX` / `SHIPPING_FIELDS_PREFIX`
+         *    ONLY for `location === 'address'`; every other location falls to
+         *    `OTHER_FIELDS_PREFIX` (`_wc_other/`). Read on staging in
+         *    WooCommerce 10.9.1, `src/Blocks/Domain/Services/CheckoutFields.php`
+         *    lines 129–136 and `get_group_key()` at 1507. So `contact` and
+         *    `order` both store `_wc_other/brave-hearts/new-book-releases`,
+         *    `bhp_store_marketing_consent_meta()` keeps reading the same key,
+         *    `inc/checkout-optin-sync.php` keeps working untouched, and every
+         *    historical order's consent record keeps resolving.
+         *
+         * ⛔ `address` IS DELIBERATELY NOT ACCEPTED. An `address` location would
+         *    move the meta key and silently orphan every consent record already
+         *    on file, so it is rejected here rather than trusted to a caller.
+         */
+        $location = isset($field['location']) ? (string) $field['location'] : 'order';
+        if (!in_array($location, ['contact', 'order'], true)) {
+            $location = 'order';
+        }
+
         woocommerce_register_additional_checkout_field([
             'id'       => $field['id'],
             'label'    => $field['label'],
-            'location' => 'order',
+            'location' => $location,
             'type'     => 'checkbox',
             'required' => false,
         ]);
@@ -7846,7 +8005,7 @@ function bhp_free_resources_downloads() {
              *    and 4. An alt text that said "a sea turtle to color" would
              *    describe the FILE and misdescribe the PICTURE, which is the
              *    thing a screen-reader user is actually being offered. */
-            'preview_alt' => __('Page one of the file: a cover sheet headed "Three Pages to Color", listing what is on each of the three pages that follow (the sea turtle, the four words, the anglerfish), with notes on printing them and coloring them together.', 'brave-hearts'),
+            'preview_alt' => __('The top of the cover sheet: the Brave Hearts compass mark, the heading "Three Pages to Color", a note that these are three real pages from the Mariana Trench Ocean Coloring Book printed exactly as they appear in it, and a numbered list of what is on each of the three pages that follow, the sea turtle, the four words, and the anglerfish. The printing and coloring notes below it are cut off by the crop.', 'brave-hearts'),
         ),
         array(
             'key'         => 'mantra_poster',
@@ -7870,7 +8029,7 @@ function bhp_free_resources_downloads() {
             'file'        => 'assets/downloads/stop-breathe-think-act-poster.pdf',
             'cta'         => __('Open the poster', 'brave-hearts'),
             'pages'       => 1,
-            'preview_alt' => __('The poster: STOP. BREATHE. THINK. ACT. set in four wide gold bands down a dark navy sheet, with a boxed list of four numbered breathing steps underneath and two black-and-white drawings to color at the foot of the page.', 'brave-hearts'),
+            'preview_alt' => __('The top of the poster: the Brave Hearts compass mark above the line "When something goes wrong", then STOP. BREATHE. THINK. ACT. set in four wide gold bands down a dark navy sheet. The boxed breathing steps and the two drawings to color are below the crop and are not shown.', 'brave-hearts'),
             /* ⭐ ONE CARD, TWO FILES, RATHER THAN TWO CARDS. The ink-saver is
              *    the same poster on white with outlined chips; listing it as a
              *    separate resource would inflate the grid without adding one. */
@@ -7884,7 +8043,7 @@ function bhp_free_resources_downloads() {
             'file'        => 'assets/downloads/backyard-expedition.pdf',
             'cta'         => __('Open the activity', 'brave-hearts'),
             'pages'       => 1,
-            'preview_alt' => __('The activity sheet: four numbered things to do outside. Draw what you see, with a blank box to draw in; read a bit outside, with lines to fill in; spot ten things, with a tick list; and one slow breath, with four numbered steps.', 'brave-hearts'),
+            'preview_alt' => __('The top of the activity sheet: the Brave Hearts compass mark, the heading "Backyard Expedition", and the first two of four things to do outside with your kid. One, draw what you see, with a blank box to draw in. Two, read a bit outside, with three lines to fill in. Things three and four are below the crop.', 'brave-hearts'),
         ),
         array(
             'key'         => 'reading_ladder',
@@ -7893,7 +8052,7 @@ function bhp_free_resources_downloads() {
             'file'        => 'assets/downloads/reading-ladder.pdf',
             'cta'         => __('Open the ladder', 'brave-hearts'),
             'pages'       => 1,
-            'preview_alt' => __('The one-page ladder: three numbered rungs (graphic novels, bridge books, chapter books), each with a line on what it asks of a reader, followed by a checklist of titles grouped by the rung they sit on.', 'brave-hearts'),
+            'preview_alt' => __('The top of the one-page ladder: the Brave Hearts compass mark, the heading "The Reading Ladder", a boxed note that the jump from one rung to the next is a format problem rather than a reading level problem, and the first rungs of three, graphic novels and bridge books, each with a line on what it asks of a reader. The book checklist is below the crop.', 'brave-hearts'),
         ),
         array(
             'key'         => 'how_did_she_do',
@@ -7907,7 +8066,7 @@ function bhp_free_resources_downloads() {
             'file'        => 'assets/downloads/how-did-she-do-reading-it.pdf',
             'cta'         => __('Open the parent card', 'brave-hearts'),
             'pages'       => 1,
-            'preview_alt' => __('The parent card: the question "How did she do reading it?" set large in a dark panel, with two columns underneath. One is what to do if they tell you everything, the other what to do if you get a shrug, each with a short checklist of books.', 'brave-hearts'),
+            'preview_alt' => __('The top of the parent card: the Brave Hearts compass mark, the heading "Your kid finished the book. Now what?", and the question "How did she do reading it?" set large in a dark panel. Underneath it the two column headings begin, one for a child who tells you everything and one for a child who shrugs. Their checklists are below the crop.', 'brave-hearts'),
         ),
     ));
 

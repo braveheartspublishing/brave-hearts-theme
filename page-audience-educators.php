@@ -386,7 +386,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
                   'source'     => 'educator_landing',
               ]);
               ?>
-              <p class="audience-landing-pricecard__link-row"><?php esc_html_e('Secure checkout · Tracking provided ·', 'brave-hearts'); ?> <a href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('View individual books', 'brave-hearts'); ?></a></p>
+              <p class="audience-landing-pricecard__link-row"><?php esc_html_e('Secure checkout ·', 'brave-hearts'); ?> <a href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('View individual books', 'brave-hearts'); ?></a></p>
             </div>
           </div>
         <?php endforeach; ?>

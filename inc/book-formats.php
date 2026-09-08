@@ -838,24 +838,58 @@ function bhp_book_free_shipping_line() {
  *    THAT WROTE THIS. That is an Andrew gate and it was not crossed. This is
  *    a theme string.
  *
- * ⚠️ "secure checkout, tracking on every order" IS CARRIED FORWARD UNCHANGED
- *    AND IS NOT VERIFIED BY THIS PASS. It is pre-existing copy, outside the
- *    contradiction being fixed, and it is REPORTED rather than silently
- *    absorbed or silently edited.
+ * ⚠️ "secure checkout, tracking on every order" WAS CARRIED FORWARD UNCHANGED
+ *    BY THAT PASS, WHICH REPORTED IT RATHER THAN VERIFYING IT. The report was
+ *    correct and the verification is now done. See the next block.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ CYCLE179-CX-TRACKING-CLAIM (2026-09-06) — THE TRACKING CLAIM IS FALSE
+ *     AND IS REMOVED. NOTHING REPLACES IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE DEFECT. "tracking on every order" told a buyer that every order
+ *    carries tracking. It does not. Owner, verbatim, 2026-09-06:
+ *    *"we dont have tracking by the way"*.
+ *
+ * ⭐ CORROBORATED IN CODE AND ON THE SERVER, NOT TAKEN ON THE SENTENCE ALONE:
+ *
+ *      · `woocommerce/emails/customer-completed-order.php` — the shipping
+ *        confirmation this store actually sends — already tells the buyer
+ *        the opposite: "we do not receive a tracking number from our
+ *        printer, so we cannot give you one."
+ *      · VERIFIED LIVE ON STAGING 2026-09-06 over SSH: the installed
+ *        `bookvault` plugin contains ZERO occurrences of "tracking" in any
+ *        `.php` file. Nothing in the fulfilment path writes a tracking
+ *        number, a carrier or a tracking URL onto an order.
+ *      · The bundle plugin's own admin dashboard states it in terms:
+ *        "no Bookvault tracking webhook or API integration exists yet".
+ *
+ * ⛔ NOTHING REPLACES THE CLAIM. No delivery promise, no "tracking where
+ *    available", no substitute reassurance. `inc/bookvault-tracker.php` can
+ *    read a Bookvault dispatch record that SOMETIMES carries a tracking
+ *    number, and its own note text prints "not supplied" when it does not.
+ *    Whether any given order carries one is therefore UNAVAILABLE, and an
+ *    unavailable fact is not a sentence on a product page.
+ *
+ * ⛔ "secure checkout" IS KEPT. It is mechanically true: checkout is served
+ *    over TLS.
  *
  * ⛔ NO EM DASH. §9.1 VOICE: no "we", "us" or "our". No outcome claim.
  *
  * SUPERSEDED wording, retained so the movement is visible and is not
- * re-derived: "Flat-rate shipping, secure checkout, tracking on every order".
+ * re-derived, in the order it moved:
+ *   1. "Flat-rate shipping, secure checkout, tracking on every order"
+ *   2. "Tiered shipping, secure checkout, tracking on every order"
+ *   3. "Tiered shipping, free at 3 books, secure checkout, tracking on every order"
  *
  * @return string Translated, unescaped.
  */
 function bhp_book_pdp_shipping_link_text() {
     if (function_exists('bhp_book_any_three_ships_free') && bhp_book_any_three_ships_free()) {
-        return __('Tiered shipping, free at 3 books, secure checkout, tracking on every order', 'brave-hearts');
+        return __('Tiered shipping, free at 3 books, secure checkout', 'brave-hearts');
     }
 
-    return __('Tiered shipping, secure checkout, tracking on every order', 'brave-hearts');
+    return __('Tiered shipping, secure checkout', 'brave-hearts');
 }
 
 /**
@@ -1068,6 +1102,40 @@ function bhp_book_purchase_data($key) {
  * ⛔ NO PRICE IS COMPUTED OR STORED HERE. Every figure is still read live from
  *    WooCommerce and the plugin's approved discount table.
  */
+/**
+ * Does a PUBLISHED, non-password `/complete-collection/` page exist right now?
+ *
+ * ⛔⛔ THIS IS THE GATE THE SHOP CARD'S LINK USES, AND IT IS DELIBERATELY
+ *    STRICTER THAN `bhp_book_collection_data()`'s own URL resolution.
+ *    That function falls back to `home_url('/complete-collection/')` when no
+ *    page resolves, which is correct for its callers — they need a string —
+ *    and WRONG for a link, because it would point a shop card at a 404.
+ *
+ * ⛔ `post_status` ALONE IS NOT ENOUGH. A page can be `publish` and still be
+ *    password-protected, which serves a password form to a shopper who just
+ *    clicked a product card.
+ *
+ * ⭐ CACHED PER REQUEST, and it mirrors `bhp_pair_landing_page_exists()` in
+ *    `inc/bundle-pair-landing.php` deliberately: the two shop cards fixed in
+ *    this build ask the same question about two different pages, and one
+ *    answer shape means one thing to reason about.
+ *
+ * @since 1.19.399
+ * @return bool
+ */
+function bhp_book_collection_page_exists() {
+    static $exists = null;
+    if (null !== $exists) {
+        return $exists;
+    }
+    $page = get_page_by_path('complete-collection', OBJECT, 'page');
+    $exists = ($page instanceof WP_Post)
+        && 'publish' === $page->post_status
+        && '' === (string) $page->post_password;
+
+    return $exists;
+}
+
 function bhp_book_collection_data($format_override = '') {
     $page = get_page_by_path('complete-collection');
     $url = $page && 'publish' === $page->post_status ? get_permalink($page) : home_url('/complete-collection/');
@@ -2570,10 +2638,74 @@ function bhp_book_shop_collection_card($loop_end) {
         $bhp_scc_img = function_exists('bhp_offer_composite_card_image')
             ? bhp_offer_composite_card_image('collection')
             : '';
-        echo $bhp_scc_img; // phpcs:ignore WordPress.Security.EscapeOutput -- wp_get_attachment_image() output.
+
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.399 — THE CARD IS A LINK AGAIN. `CYCLE179-LD-BUILD-399`.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ THE FOUNDER FOUND IT: "I clicked on the shop grid and when you try
+         *    to click each bundle they dont go ti a product page like the
+         *    individual books". ⚠️ RELAYED through `chief-of-staff` in the build
+         *    brief, NOT witnessed first-hand by this desk.
+         *
+         * ⭐ VERIFIED FIRST-HAND ON STAGING BEFORE THIS LINE WAS WRITTEN, by
+         *    reading the served `/shop/` DOM at an asserted `window.innerWidth`
+         *    of 1280: each of the four real product cards carries 2 anchors to
+         *    its PDP; `.bhp-shop-collection-card` carried ⛔ ZERO — the image
+         *    was bare and the title was a bare `<h2>` — even though
+         *    `/complete-collection/` exists and is published.
+         *
+         * ⭐⭐ HOW IT WENT MISSING, recorded so it is not re-derived: 1.19.284
+         *    replaced this card's plain link to `/complete-collection/` with an
+         *    add-to-cart form. The buy control was the improvement; the
+         *    DESTINATION left with the link, and nothing put it back. So the
+         *    grid's one card with no route out was the one card that had
+         *    previously been nothing but a route.
+         *
+         * ⛔ THE ADD-TO-CART FORMS BELOW ARE NOT TOUCHED. This adds a route; it
+         *    reverts no CTA. Image and title carry the link, exactly as
+         *    WooCommerce's own loop card does — the button still buys.
+         *
+         * ⛔ AND IT ONLY LINKS WHERE THERE IS SOMETHING TO LINK TO.
+         *    `bhp_book_collection_data()` falls back to `home_url()` when no
+         *    page resolves, which would be a card pointing at a 404 — a worse
+         *    defect than the dead card, because a dead card frustrates and a
+         *    broken link looks like a broken store. `bhp_book_collection_page_
+         *    exists()` is asked instead, and an unresolved page renders exactly
+         *    the card 1.19.398 rendered.
+         */
+        $bhp_scc_link = bhp_book_collection_page_exists() ? $collection['url'] : '';
+
+        if ('' !== $bhp_scc_link && '' !== trim($bhp_scc_img)) {
+            printf(
+                '<a class="bhp-shop-collection-card__image-link" href="%s" tabindex="-1" aria-hidden="true">%s</a>',
+                esc_url($bhp_scc_link),
+                $bhp_scc_img // phpcs:ignore WordPress.Security.EscapeOutput -- wp_get_attachment_image() output.
+            );
+        } else {
+            echo $bhp_scc_img; // phpcs:ignore WordPress.Security.EscapeOutput -- wp_get_attachment_image() output.
+        }
         ?>
         <span class="bhp-shop-collection-card__badge"><?php esc_html_e('BEST VALUE', 'brave-hearts'); ?></span>
-        <h2 class="woocommerce-loop-product__title"><?php esc_html_e('The Complete Collection', 'brave-hearts'); ?></h2>
+        <h2 class="woocommerce-loop-product__title"><?php
+        /*
+         * ⭐ THE TITLE IS THE ACCESSIBLE LINK, AND THE IMAGE LINK ABOVE IS
+         *    DELIBERATELY `aria-hidden` + `tabindex="-1"`. Two adjacent anchors
+         *    to one destination is two tab stops and two identical screen-reader
+         *    announcements for one card. WooCommerce's own loop card has the
+         *    same shape; this matches it rather than inventing a third pattern.
+         */
+        if ('' !== $bhp_scc_link) {
+            printf(
+                '<a class="bhp-shop-collection-card__title-link" href="%s">%s</a>',
+                esc_url($bhp_scc_link),
+                esc_html__('The Complete Collection', 'brave-hearts')
+            );
+        } else {
+            esc_html_e('The Complete Collection', 'brave-hearts');
+        }
+        ?></h2>
         <p class="bhp-shop-descriptor"><?php esc_html_e('All three adventures together', 'brave-hearts'); ?></p>
         <?php if ($collection['price_html']): ?>
           <span class="bhp-shop-collection-card__price bhp-shop-format-price__amount"><?php echo wp_kses_post($collection['price_html']); ?></span>

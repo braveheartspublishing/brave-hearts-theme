@@ -129,7 +129,7 @@ $faqs = [
     [__('Are the facts real?', 'brave-hearts'), __('Yes. The adventures are built around real places, animals, science, and history - the kind of details kids love repeating at the dinner table.', 'brave-hearts')],
     [__('What’s included in the Complete Collection?', 'brave-hearts'), __('All three adventures - The Mariana Trench, Mount Everest, and The Amazon - in one purchase and one shipment.', 'brave-hearts')],
     [__('Paperback or hardcover?', 'brave-hearts'), __('Both include the same three complete stories. Paperback is lightweight and easy for small hands; hardcover is a durable keepsake edition. Your choice.', 'brave-hearts')],
-    [__('How does print-on-demand shipping work?', 'brave-hearts'), __('Books are printed and shipped with tracking, and the complete collection ships free. You’ll receive one shipment with all three books.', 'brave-hearts')],
+    [__('How does print-on-demand shipping work?', 'brave-hearts'), __('Books are printed to order and shipped, and the complete collection ships free. You’ll receive one shipment with all three books.', 'brave-hearts')],
     /*
      * ⭐ 1.19.308 — this answer now names the Kit, because it is the FAQ entry
      *    a visitor reads when they want to know exactly what lands in their
@@ -137,8 +137,34 @@ $faqs = [
      *    printable explorer activity, and a few simple tips for reading it
      *    together." ⛔ The contents are the live PDF's real contents and the
      *    count "three" traces to the 1.19.296 lane's read of all seven pages.
+     *
+     * ⭐⭐ CORRECTED 1.19.389 (2026-09-06, `CYCLE179-LD-BUILD-389`) — THE KIT ON
+     *     THIS PAGE SAID **CHAPTER 7** FOR THREE DAYS AFTER THE FILE BEHIND IT
+     *     BECAME **CHAPTER 10**. Every rendered "Chapter 7" on this page is now
+     *     "Chapter 10", and the seven-page contents note above is superseded by
+     *     the eleven-page note at the `#free` panel.
+     *
+     * ⭐ VERIFIED LIVE, NOT READ FROM A DOCUMENT (Standing Rules §9.2). Checked
+     *    by `lead-developer` 2026-09-06 over SSH against the PRODUCTION document
+     *    root, three independent reads:
+     *      1. `wp option get bhp_lead_magnet_pdfs` → `adventure_kit_parent` =
+     *         `.../uploads/2026/07/Reluctant-Reader-Adventure-Kit-1.pdf`
+     *      2. that file on disk: 8,944,368 bytes, mtime **2026-09-03 19:26**,
+     *         md5 **e227eea53ec762df4abdb6a09615a730**, `/Count 11`
+     *      3. the same md5 is the Drive kit of record
+     *         "Reluctant Reader Adventure Kit v2.2 (Chapter 10, live
+     *         2026-09-03).pdf", whose page 3 reads "FROM THE MARIANA TRENCH,
+     *         CHAPTER 10: THE DIVE".
+     *    ⛔ The superseded chapter was Chapter 7, "The Swordfish". The live one
+     *       is **Chapter 10, "The Dive"**, and the kit is **11 pages**, not 7.
+     *
+     * ⚠ A WORKING DRAFT IN CIRCULATION SAYS THE OPPOSITE and is wrong:
+     *   `WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-BUNDLE-TABLE-EXIT.md` §0
+     *   records the Chapter 10 kit as an unshipped draft, on the strength of a
+     *   build README. **The file on the production server settles it.** Live
+     *   state beats a document, and the document is the stale party here.
      */
-    [__('What comes with the free chapter?', 'brave-hearts'), __('The chapter arrives inside my free Reluctant Reader Adventure Kit: Chapter 7 from The Mariana Trench in full, a matching printable explorer activity, and three ways to make it feel like an adventure.', 'brave-hearts')],
+    [__('What comes with the free chapter?', 'brave-hearts'), __('The chapter arrives inside my free Reluctant Reader Adventure Kit: Chapter 10 from The Mariana Trench in full, a matching printable explorer activity, and three ways to make it feel like an adventure.', 'brave-hearts')],
     [__('How often will I receive emails?', 'brave-hearts'), __('After the free chapter, you’ll get occasional Adventure Club updates and reading resources for parents - never spam.', 'brave-hearts')],
     [__('Can I unsubscribe?', 'brave-hearts'), __('Anytime, with one click at the bottom of any email. Signing up for the free sample never requires a purchase.', 'brave-hearts')],
 ];
@@ -791,7 +817,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
                   'source'     => 'adventure_kit_landing',
               ]);
               ?>
-              <p class="parent-landing-pricecard__link-row"><?php esc_html_e('Secure checkout · Tracking provided ·', 'brave-hearts'); ?> <a href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('View individual books', 'brave-hearts'); ?></a></p>
+              <p class="parent-landing-pricecard__link-row"><?php esc_html_e('Secure checkout ·', 'brave-hearts'); ?> <a href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('View individual books', 'brave-hearts'); ?></a></p>
             </div>
           </div>
         <?php endforeach; ?>
@@ -978,6 +1004,19 @@ if (function_exists('bhp_get_amazon_review_registry')) {
          *    the 1.19.296 lane, all seven pages, and recorded in this repo:
          *      - one real chapter (Chapter 7, "The Swordfish", from *The
          *        Mariana Trench*),
+         *
+         * ⭐⭐ SUPERSEDED 1.19.389 — THE FILE CHANGED UNDERNEATH THIS COMMENT.
+         *     The live kit has been **v2.2, 11 pages, Chapter 10 "The Dive"**
+         *     since **2026-09-03 19:26** (md5
+         *     `e227eea53ec762df4abdb6a09615a730`, verified on the production
+         *     document root by `lead-developer` 2026-09-06 — see the §FAQ note
+         *     at the top of this file for the three reads). ⛔ The three
+         *     contents above are STILL the real contents — one real chapter, a
+         *     printable explorer activity, and three ways to make it feel like
+         *     an adventure — and pages 1 to 4, which this page now shows, are
+         *     raster-identical across v2, v2.1 and v2.2. **Only the chapter
+         *     number and the page count moved.** The seven-page wording is
+         *     preserved rather than overwritten so the movement stays visible.
          *      - a printable explorer activity,
          *      - "Three Ways to Make This Feel Like an Adventure" — THREE tips
          *        to the PARENT.
@@ -990,10 +1029,37 @@ if (function_exists('bhp_get_amazon_review_registry')) {
         <h2><?php esc_html_e('FREE Chapter for Reluctant Readers', 'brave-hearts'); ?></h2>
         <p class="parent-landing__lead"><?php esc_html_e("I'll send you the chapter now, just add your email. It arrives inside my free Reluctant Reader Adventure Kit, along with a printable activity and tips for reading it with a 6 to 9 year old.", 'brave-hearts'); ?></p>
         <div class="parent-landing-checklist parent-landing-checklist--compact parent-landing-lead__checklist">
-          <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('Chapter 7 from The Mariana Trench, in full', 'brave-hearts'); ?></span></div>
+          <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('Chapter 10 from The Mariana Trench, in full', 'brave-hearts'); ?></span></div>
           <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('A printable explorer activity to go with it', 'brave-hearts'); ?></span></div>
           <div class="parent-landing-checklist__row"><span class="check">&#10003;</span><span class="text"><?php esc_html_e('Three ways to make it feel like an adventure', 'brave-hearts'); ?></span></div>
         </div>
+
+        <?php
+        /*
+         * ⭐⭐⭐ 1.19.389 — THE INSTANT SAMPLE. Andrew Signore, 2026-09-06,
+         *     relayed by `chief-of-staff`: show the kit's first four pages on
+         *     the page itself, "as recommended", above the form.
+         *
+         * ⭐ IT SITS ABOVE THE FORM AND BELOW THE CHECKLIST DELIBERATELY. The
+         *    checklist says what arrives; the sample shows it; the form asks
+         *    for the address to send the rest to. A parent meets proof before
+         *    the ask, and the ask has not moved by one pixel of its own markup.
+         *
+         * ⛔ THE FORM IS NOT TOUCHED. No id, no context, no lead-magnet key, no
+         *    audience, no redirect and no submit label below this line changed.
+         *    The sample renders no form of its own and mints no funnel state.
+         *
+         * ⭐ THE GATE IS THE SAME GATE. Four pages are shown; page five onward
+         *    is what the email delivers. The line under the strip says so in
+         *    those words rather than implying it.
+         *
+         * ⚠ IT RENDERS ONLY WHEN ITS IMAGES ARE ON DISK — see the template
+         *   part's own header. A theme deployed without `assets/img/kit-sample/`
+         *   renders nothing here rather than four broken images above the one
+         *   email field this page exists to fill.
+         */
+        get_template_part('template-parts/acquisition/kit-sample-preview');
+        ?>
 
         <?php if ($download['ready']): ?>
           <?php get_template_part('template-parts/acquisition/lead-magnet-cta', null, [
@@ -1031,7 +1097,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
       <div class="parent-landing-lead__art">
         <div>
           <?php echo $mariana ? bhp_parent_landing_cover($mariana, 'large') : ''; ?>
-          <p class="tag"><?php esc_html_e('Free · Chapter 7', 'brave-hearts'); ?></p>
+          <p class="tag"><?php esc_html_e('Free · Chapter 10', 'brave-hearts'); ?></p>
           <p class="sub"><?php esc_html_e('from The Mariana Trench', 'brave-hearts'); ?></p>
         </div>
       </div>

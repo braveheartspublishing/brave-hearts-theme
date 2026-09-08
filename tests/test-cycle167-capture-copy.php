@@ -56,6 +56,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
+/*
  * ⛔ COUNTERS IN $GLOBALS, for the reason `test-cycle167-capture-fix.php`
  *    records at length: `wp eval-file` runs this file in FUNCTION scope, so a
  *    file-top `$pass = 0;` is a LOCAL and `global $pass;` inside the helper
@@ -243,12 +263,106 @@ bhp_ccc_ok(
  * ═══════════════════════════════════════════════════════════════════════════ */
 bhp_ccc_head( '§1 ONE HEADLINE ACROSS EVERY PARENT SURFACE' );
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.389 (2026-09-06, `CYCLE179-LD-BUILD-389`) — ONE SURFACE NOW CARRIES
+ *     A SECOND APPROVED HEADLINE, AND IT IS NAMED RATHER THAN EXCUSED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THIS IS NOT A RELAXATION, AND THE DIFFERENCE MATTERS. The exit-intent
+ *    modal is not exempted from having a locked headline; it is moved onto a
+ *    SECOND locked headline, asserted character for character below. The count
+ *    of guarded surfaces is unchanged at fourteen. What changed is that one of
+ *    them is compared against a different constant.
+ *
+ * ⭐ THE AUTHORITY: `marketing-growth`'s Variant B, §2.2 of
+ *    `WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-BUNDLE-TABLE-EXIT.md`,
+ *    carried in the `chief-of-staff` desk's brief. ⚠ RELAYED, not witnessed by this desk.
+ *
+ * ⭐ WHY THE EXIT MODAL IS THE ONE SURFACE THAT MOVES. It is the only surface a
+ *    visitor meets on the way OUT. Every other surface is met while browsing,
+ *    where "FREE Chapter for Reluctant Readers" states an offer; on the way out
+ *    the job is a reason to stay tonight. That is a different sentence for a
+ *    different moment, not a second name for the offer, and the OFFER ITSELF is
+ *    still one thing: §2 below still asserts the same button on all fourteen.
+ *
+ * ⚠⚠ WHAT THIS COSTS, STATED PLAINLY RATHER THAN HIDDEN IN A PASSING SUITE:
+ *    Variant B's supporting line does NOT name the Kit, so §3 below can no
+ *    longer assert the chapter -> Kit BRIDGE on this surface. That bridge is
+ *    founder item 290 condition (b). The modal still reaches the bridge by the
+ *    same path `parent-ab-popup.php` already uses and which §3 already
+ *    documents as an accepted exemption — the thank-you page, asserted in §4 —
+ *    but a reader should know the exemption list grew by one.
+ *    ⛔ NOT SETTLED BY THIS DESK. It is a copy decision that belongs to Andrew,
+ *       it is flagged as an open item in the build report, and it is recorded
+ *       here so it cannot be lost by a future reader who only sees green.
+ */
+$offer_headline_exit = 'Before you go, test Chapter 10 with your child tonight for free';
+$offer_eyebrow_exit  = 'A free chapter tonight';
+$offer_support_exit  = 'It is a real chapter from The Mariana Trench, about ten minutes of reading, and it arrives with a printable activity and three ways to make it feel like an adventure.';
+
+$exit_surface = 'template-parts/acquisition/exit-intent-popup.php';
+
 foreach ( $parent_surfaces as $rel ) {
+	if ( $exit_surface === $rel ) {
+		continue;
+	}
 	bhp_ccc_ok(
 		"§1 {$rel} leads with the founder's headline",
 		false !== strpos( bhp_ccc_code_only( $rel ), $offer_headline )
 	);
 }
+
+$exit_code = bhp_ccc_code_only( $exit_surface );
+bhp_ccc_ok(
+	"§1x {$exit_surface} leads with the approved EXIT headline, character for character",
+	false !== strpos( $exit_code, $offer_headline_exit )
+);
+bhp_ccc_ok(
+	"§1x {$exit_surface} carries the approved exit eyebrow",
+	false !== strpos( $exit_code, $offer_eyebrow_exit )
+);
+bhp_ccc_ok(
+	"§1x {$exit_surface} carries the approved exit supporting line, character for character",
+	false !== strpos( $exit_code, $offer_support_exit )
+);
+/* ⛔ AND THE SITEWIDE HEADLINE IS GONE FROM ITS CODE, so a partial revert
+ *   leaves this suite RED rather than a modal carrying two headlines. */
+bhp_ccc_ok(
+	"§1x ⛔ {$exit_surface} does not also carry the sitewide headline in code",
+	false === strpos( $exit_code, $offer_headline )
+);
+/* ⛔ RAILS ON THE TWO NEW STRINGS, checked here rather than trusted. */
+bhp_ccc_ok( '§1x ⛔ the exit headline contains no em dash', false === strpos( $offer_headline_exit, "\xE2\x80\x94" ) );
+bhp_ccc_ok( '§1x ⛔ the exit supporting line contains no em dash', false === strpos( $offer_support_exit, "\xE2\x80\x94" ) );
+bhp_ccc_ok(
+	'§1x ⛔ neither exit string says "we"/"us"/"our" (VOICE §9.1)',
+	0 === preg_match( '/\b(we|us|our)\b/i', $offer_headline_exit . ' ' . $offer_support_exit )
+);
+bhp_ccc_ok(
+	'§1x ⛔ no rating, review, award, urgency or scarcity claim in the exit strings',
+	0 === preg_match( '/\b(rating|reviews?|stars?|awards?|best-?sell\w*|hurry|limited time|only \d+ left)\b/i', $offer_headline_exit . ' ' . $offer_support_exit )
+);
+bhp_ccc_ok(
+	'§1x ⛔ no outcome claim about the child in the exit strings',
+	0 === preg_match( '/\b(will (?:love|read|improve)|turns? your|makes? your child|guaranteed|proven)\b/i', $offer_headline_exit . ' ' . $offer_support_exit )
+);
+bhp_ccc_ok(
+	'§1x ⛔ no invented contents in the exit supporting line',
+	0 === preg_match( '/\b(workbook|worksheets?|audiobook|poster|sticker|lesson plans?|flashcards?)\b/i', $offer_support_exit )
+);
+/*
+ * ⛔⛔ THE CHAPTER NUMBER MUST MATCH THE KIT LANDING PAGE. Verified live this
+ *    build against the PRODUCTION document root: the served kit is md5
+ *    `e227eea53ec762df4abdb6a09615a730`, `/Count 11`, Chapter 10 "The Dive".
+ *    The landing page said "Chapter 7" for three days after that file changed,
+ *    because nothing compared the two surfaces. Now something does.
+ */
+bhp_ccc_ok(
+	'§1x ⛔ the kit landing page names the SAME chapter the exit modal names',
+	false !== strpos( bhp_ccc_code_only( 'page-reluctant-reader-adventure-kit.php' ), 'Chapter 10' )
+		&& false === strpos( bhp_ccc_code_only( 'page-reluctant-reader-adventure-kit.php' ), 'Chapter 7' )
+);
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * §2 · ONE BUTTON, AND **NO "FREE" ON IT**.
@@ -310,9 +424,31 @@ foreach ( $parent_surfaces as $rel ) {
  * ═══════════════════════════════════════════════════════════════════════════ */
 bhp_ccc_head( '§3 THE SUPPORT LINE AND THE CHAPTER -> KIT BRIDGE' );
 
+/*
+ * ⚠⚠ 1.19.389 — THE EXIT MODAL JOINS THE BRIDGE EXEMPTION, AND THE COST IS
+ *    STATED RATHER THAN BURIED. Variant B's supporting line (asserted verbatim
+ *    in §1x above) names the chapter, the book and the contents, but it does
+ *    NOT name the Reluctant Reader Adventure Kit. Founder item 290(b) requires
+ *    a surface that says what arrives to bridge chapter -> Kit.
+ *
+ * ⭐ THE PATH THAT STILL COVERS IT is the one already accepted for
+ *    `parent-ab-popup.php` directly above: the THANK-YOU PAGE, asserted end to
+ *    end in §4 below, which names the chapter, names the Kit, and states the
+ *    relationship between them. So the visitor's path is still bridged; the
+ *    modal itself no longer carries the bridge in its own words.
+ *
+ * ⛔ NOT RESOLVED HERE, AND NOT RESOLVABLE HERE. Whether the exit modal should
+ *    carry the Kit name is a copy decision and it is Andrew's. It ships as
+ *    `marketing-growth` wrote it and as the brief instructed; the tension is flagged in the
+ *    build report. This comment exists so that a future reader meeting a green
+ *    suite does not conclude the requirement was quietly dropped.
+ */
 $bridge_surfaces = array_values( array_diff(
 	$parent_surfaces,
-	array( 'template-parts/acquisition/parent-ab-popup.php' )
+	array(
+		'template-parts/acquisition/parent-ab-popup.php',
+		'template-parts/acquisition/exit-intent-popup.php',
+	)
 ) );
 
 foreach ( $bridge_surfaces as $rel ) {
@@ -588,10 +724,31 @@ foreach ( array(
 	$text = wp_strip_all_tags( $html );
 
 	bhp_ccc_ok( "§8 {$slug} renders", '' !== trim( $html ) );
+	/*
+	 * ⭐ 1.19.389 — the exit modal is compared against ITS OWN approved
+	 *    headline, for the reason set out in §1 above. ⛔ It is still asserted
+	 *    character for character, and it is asserted on the RENDERED text
+	 *    rather than the source, so the guard on this surface is exactly as
+	 *    strong as it is on the other four. What changed is the constant, not
+	 *    the strength.
+	 */
+	$expected_headline = ( 'template-parts/acquisition/exit-intent-popup' === $slug )
+		? $offer_headline_exit
+		: $offer_headline;
 	bhp_ccc_ok(
 		"§8 {$slug} RENDERS the offer headline",
-		false !== strpos( $text, $offer_headline )
+		false !== strpos( $text, $expected_headline )
 	);
+	if ( 'template-parts/acquisition/exit-intent-popup' === $slug ) {
+		bhp_ccc_ok(
+			"§8 {$slug} RENDERS the approved exit eyebrow and supporting line",
+			false !== strpos( $text, $offer_eyebrow_exit ) && false !== strpos( $text, $offer_support_exit )
+		);
+		bhp_ccc_ok(
+			"§8 ⛔ {$slug} does not ALSO render the sitewide headline",
+			false === strpos( $text, $offer_headline )
+		);
+	}
 	bhp_ccc_ok(
 		"§8 {$slug} RENDERS the send-imperative button",
 		false !== strpos( $text, $offer_button )

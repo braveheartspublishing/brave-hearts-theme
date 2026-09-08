@@ -37,6 +37,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
+/*
  * ⛔ INITIALISED THROUGH `$GLOBALS`, NOT AS PLAIN LOCALS. Under
  *    `wp eval-file` this file's top level is an eval'd scope, so
  *    `$smg_failures = 0;` creates a LOCAL that `$GLOBALS['smg_failures']`
@@ -218,20 +238,87 @@ foreach ( array( 'new_order', 'cancelled_order', 'failed_order', 'customer_proce
 	);
 }
 /*
- * ⛔ NOT ORDER EMAILS, AND NOT THIS GUARD'S BUSINESS. Suppressing a password
- *    reset would break real QA; suppressing the lead-magnet path would break
- *    funnel QA silently, which is worse.
+ * ⛔⛔ SUPERSEDED 1.19.397 (`CYCLE179-LD-BUILD-397`). THE POLICY THESE TWO
+ *     ASSERTIONS PINNED WAS DELIBERATELY REVERSED, SO THE ASSERTIONS ARE
+ *     INVERTED HERE RATHER THAN DELETED, WITH THE ORIGINAL PRESERVED STRUCK.
+ *
+ *     ~~⛔ NOT ORDER EMAILS, AND NOT THIS GUARD'S BUSINESS. Suppressing a
+ *     password reset would break real QA; suppressing the lead-magnet path
+ *     would break funnel QA silently, which is worse.~~
+ *
+ *     ~~foreach ( array( 'customer_new_account', 'customer_reset_password' )
+ *       as $smg_id ) { smg_assert( ! in_array( $smg_id, $smg_ids, true ), … ); }~~
+ *
+ * ⭐ WHY IT WAS REVERSED, measured on staging 2026-09-07 rather than argued:
+ *    both ids read `is_enabled() === TRUE` while every id in §5.1 read false.
+ *    Staging is refreshed FROM PRODUCTION, so its user table holds real
+ *    customers — `customer_reset_password` on staging mails a real person from
+ *    a test box. ⛔ The lead-magnet half of the struck reasoning is still true
+ *    and is still honoured: that path is not a `WC_Email` at all and no id
+ *    here touches it.
+ *
+ * ⭐ "Would break real QA" was answered with a DOOR rather than a gap:
+ *    `bhp_staging_mail_guard_exempt_ids`. §5.2b asserts the door exists, so
+ *    un-guarding stays possible and stays deliberate.
  */
 foreach ( array( 'customer_new_account', 'customer_reset_password' ) as $smg_id ) {
 	smg_assert(
-		! in_array( $smg_id, $smg_ids, true ),
-		sprintf( '5.2 ⛔ "%s" is NOT suppressed — it is not an order email', $smg_id )
+		in_array( $smg_id, $smg_ids, true ),
+		sprintf( '5.2 "%s" IS suppressed on staging (policy reversed at 1.19.397 — see the note above)', $smg_id )
 	);
 }
 smg_assert(
-	false === strpos( file_get_contents( get_template_directory() . '/inc/staging-mail-guard.php' ), "add_filter( 'wp_mail'" )
-	&& false === strpos( $smg_src, "pre_wp_mail" ),
-	'5.3 ⛔ it does NOT blanket-kill wp_mail — the funnel and Mailchimp QA paths keep working'
+	false !== strpos( $smg_src, 'bhp_staging_mail_guard_exempt_ids' ),
+	'5.2b the explicit un-guard door exists, so an exemption is a deliberate act rather than a gap'
+);
+
+/*
+ * ⛔⛔ 5.3 SCANNED RAW FILE TEXT AND MATCHED ITS OWN FORBIDDEN TERM INSIDE A
+ *     COMMENT. Corrected 1.19.397; the superseded predicate is preserved.
+ *
+ *     ~~false === strpos( $smg_src, "pre_wp_mail" )~~
+ *
+ * ⭐ WHAT HAPPENED: theme 1.19.397 added a paragraph to the guard's header
+ *    explaining that hand-rolled `wp_mail()` senders are covered by a
+ *    DIFFERENT file, `inc/test-order-mail-guard.php`, which sits on
+ *    `pre_wp_mail`. The words "pre_wp_mail" then existed in this file — in
+ *    prose, describing another file — and this assertion failed. The guard
+ *    registers no such hook and never did.
+ *
+ * ⚠️⚠️ THIS IS THE SECOND TIME THIS EXACT DEFECT HAS BEEN FOUND IN A `5.3`,
+ *      IN A DIFFERENT SUITE, IN TWO DAYS. `commerce-cx` hit it at 1.19.396:
+ *      its own 5.3 matched `wp_schedule_single_event` inside the comment that
+ *      documented the safety property being checked, and it fixed it with
+ *      `token_get_all()`. ⭐ A raw-text scan for a forbidden term punishes
+ *      DOCUMENTING the boundary — which is the opposite of what a codebase
+ *      that writes comments like these can afford. The same fix is applied
+ *      here, for the same reason, rather than by deleting the paragraph.
+ *
+ * ⭐ STRINGS ARE DELIBERATELY KEPT. A hook name hidden in a string literal is
+ *    precisely what this check exists to catch; only comments are stripped.
+ */
+$smg_code = '';
+foreach ( token_get_all( $smg_src ) as $smg_tok ) {
+	if ( is_array( $smg_tok ) ) {
+		if ( in_array( $smg_tok[0], array( T_COMMENT, T_DOC_COMMENT ), true ) ) {
+			continue;
+		}
+		$smg_code .= $smg_tok[1];
+	} else {
+		$smg_code .= $smg_tok;
+	}
+}
+smg_assert(
+	false === strpos( $smg_code, "add_filter( 'wp_mail'" ) && false === strpos( $smg_code, 'pre_wp_mail' ),
+	'5.3 ⛔ it does NOT blanket-kill wp_mail — the funnel and Mailchimp QA paths keep working (comments stripped)'
+);
+smg_assert(
+	'' !== $smg_code && strlen( $smg_code ) < strlen( $smg_src ),
+	'5.3b the comment-stripper actually removed something, so 5.3 cannot pass vacuously'
+);
+smg_assert(
+	false !== strpos( $smg_src, 'pre_wp_mail' ),
+	'5.3c …and the RAW file DOES contain the term, which is what makes 5.3b meaningful'
 );
 
 smg_assert(

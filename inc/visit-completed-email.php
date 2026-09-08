@@ -315,7 +315,7 @@ function bhp_visit_email_copy_sets() {
 		 *     its important to use these books"*.
 		 * ══════════════════════════════════════════════════════════════════
 		 *
-		 * ⛔⛔ `approved => false`, AND THAT IS NOT AN OVERSIGHT. Merry's own
+		 * ⛔⛔ `approved => false`, AND THAT IS NOT AN OVERSIGHT. The `marketing-growth` desk's own
 		 *     file, which is where every word below comes from, states its status
 		 *     in its first paragraph and again at the end of its §1: **"Status:
 		 *     DRAFT. Copy only"** and **"This is proposed copy, not an applied
@@ -352,14 +352,14 @@ function bhp_visit_email_copy_sets() {
 		 *    child's behaviour. Every school-specific fact now lives in exactly
 		 *    one place: `{VisitLine}`, which Andrew fills in himself.
 		 *
-		 * ⛔⛔ `{VisitLine}` IS NEVER AUTO-FILLED. Merry calls it *"the
+		 * ⛔⛔ `{VisitLine}` IS NEVER AUTO-FILLED. `marketing-growth` calls it *"the
 		 *     load-bearing safety feature of this email"* and she is right: an
 		 *     empty `{VisitLine}` renders NOTHING and the email still reads
 		 *     correctly without it. Anything that generates a plausible line for
 		 *     it fabricates a classroom result (Standing Rules §3), which is the
 		 *     precise failure this slot exists to make structurally impossible.
 		 *
-		 * ⭐ CLAIMS PROVENANCE (Merry's own table, and it was checked, not
+		 * ⭐ CLAIMS PROVENANCE (the `marketing-growth` desk's own table, and it was checked, not
 		 *    assumed): the gap between picture books and denser chapter books,
 		 *    the white space and the short chapters are Andrew's own words from
 		 *    `docs-private\business-os-interviews\
@@ -373,7 +373,7 @@ function bhp_visit_email_copy_sets() {
 		'_default'         => array(
 			/*
 			 * ⭐⭐ 1.19.365 · APPROVED BY ANDREW, SEAL 982, RELAYED THROUGH
-			 *     GANDALF VERBATIM: *"agreed, conitnue to build it out"*, given
+			 *     CHIEF-OF-STAFF VERBATIM: *"agreed, conitnue to build it out"*, given
 			 *     on 2026-09-05 and naming day 0, touch 1, touch 2 and the web
 			 *     variant of touch 1. It attaches to
 			 *     `Business OS\WORKING-DRAFTS\marketing-growth\
@@ -393,7 +393,7 @@ function bhp_visit_email_copy_sets() {
 			'subject'   => __( 'The signed books went home today', 'brave-hearts' ),
 			/*
 			 * ⚠ ENGINEERING COPY, MARKED AS SUCH, AND IT RESTATES THE SUBJECT
-			 *   RATHER THAN ADDING A CLAIM. Merry's template is a plain note and
+			 *   RATHER THAN ADDING A CLAIM. The `marketing-growth` desk's template is a plain note and
 			 *   carries no heading, but `bhp_visit_email_copy_is_usable()` requires
 			 *   a non-empty one and an empty string there would silently discard
 			 *   this whole set in favour of nothing.
@@ -429,7 +429,7 @@ function bhp_visit_email_copy_sets() {
 				 * ⚠ GRAMMAR-ONLY ADJUSTMENT, AWAITING ANDREW'S CONFIRMATION. The
 				 *   plural branch changes `is`->`are`, `it is`->`they are` and
 				 *   `it`->`they` in APPROVED FOUNDER COPY. Standing Rules §9 puts
-				 *   approved copy with Andrew and Merry; this is built and reported
+				 *   approved copy with Andrew and `marketing-growth`; this is built and reported
 				 *   as a grammar correction for his confirmation, not slipped in as
 				 *   an engineering detail. ⛔ Reverting it is one line: return the
 				 *   singular from the helper call below.
@@ -444,7 +444,7 @@ function bhp_visit_email_copy_sets() {
 				__( 'Between picture books and thick chapter books there is a gap, and these books are written for the reader standing in it. There is a lot of white space, so a page never looks like a wall. The chapters are short, so the finish line is always close enough to see. The prose is written to be read out loud, and that is how I would read it to you if you were sitting here.', 'brave-hearts' ),
 				/*
 				 * ⭐⭐ SEAL 1064 - THE FOUNDER REPLACED THIS SENTENCE, 2026-09-05.
-				 *     ⛔ RELAYED through Gandalf, not heard first-hand by this desk.
+				 *     ⛔ RELAYED through `chief-of-staff`, not heard first-hand by this desk.
 				 *
 				 *     WHY. Seal 1063, Andrew Signore, verbatim: *"We made need to
 				 *     change one line ... Theres a talking dog and the historical
@@ -452,7 +452,7 @@ function bhp_visit_email_copy_sets() {
 				 *     places. Lets come up with something else"*. The old sentence
 				 *     claimed **all of it is true** of books that contain a talking
 				 *     dog, which is the one kind of claim this company does not
-				 *     make. Gandalf offered replacements; Andrew chose option 1
+				 *     make. `chief-of-staff` offered replacements; Andrew chose option 1
 				 *     (seal 1064, verbatim: *"1"*).
 				 *
 				 * ⛔ SUPERSEDED SENTENCE, PRESERVED VERBATIM SO IT IS NOT RE-ADDED:
@@ -469,7 +469,7 @@ function bhp_visit_email_copy_sets() {
 				/*
 				 * ⭐ SEAL 1007 - THE PLAIN SIGN-OFF IS GONE FROM THE DAY-0 SET TOO.
 				 *    Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
-				 *    Gandalf, not heard first-hand): *"I like the nice signature
+				 *    `chief-of-staff`, not heard first-hand): *"I like the nice signature
 				 *    and big place brave hearts - drop the plain one"*. The
 				 *    signature block below the rule carries the name.
 				 *
@@ -682,7 +682,7 @@ function bhp_visit_email_copy_is_approved( $slug ) {
  * Resolve the day-0 merge slots for one order.
  *
  * ⛔⛔ `{VisitLine}` IS READ FROM THE ORDER'S OWN VISIT RECORD AND IS NEVER
- *     GENERATED. Merry: *"One line Andrew writes himself, per visit ... If
+ *     GENERATED. `marketing-growth`: *"One line Andrew writes himself, per visit ... If
  *     Andrew has not written one, render nothing. Never auto-fill it."* An
  *     empty value here removes the paragraph entirely (see the body reader
  *     below); it does not leave a blank line and it does not invent one.
@@ -746,13 +746,13 @@ function bhp_visit_email_merge_values( $order ) {
 		}
 
 		/*
-		 * ⭐ A NATURAL LIST, NOT A COMMA-SEPARATED DUMP. Merry's slot table:
+		 * ⭐ A NATURAL LIST, NOT A COMMA-SEPARATED DUMP. The `marketing-growth` desk's slot table:
 		 *    *"One title verbatim, or a natural list for two or more: The
 		 *    Mariana Trench and Mount Everest"*.
 		 */
 		/*
 		 * ⭐⭐ 1.19.375 · EXTRACTED, NOT REWRITTEN. This join was the ONLY
-		 *     implementation of Merry's list rule until seal 1032 required the
+		 *     implementation of the `marketing-growth` desk's list rule until seal 1032 required the
 		 *     review-ask lane to produce the same list. Rather than write a
 		 *     second one — two copies of a join drift, and the day-0 email and
 		 *     the +7 email listing the same order's books differently is the
@@ -832,7 +832,7 @@ function bhp_visit_email_merge_values( $order ) {
  * ⛔ `{VisitLine}` IS NOT CHECKED. It is designed to be absent — see
  *    `bhp_visit_email_merge_values()`. `{ParentFirstName}` is not checked
  *    either, because it falls back to "there". The other two ARE hard
- *    requirements: Merry's slot table says *"If no school resolves, this is
+ *    requirements: the `marketing-growth` desk's slot table says *"If no school resolves, this is
  *    not a visit order and this email must not send"* and *"If no title
  *    resolves, do not send"*.
  *
@@ -981,7 +981,7 @@ function bhp_visit_email_body( $email ) {
 		 * ⭐ AN EMPTY PARAGRAPH IS DROPPED, NOT RENDERED BLANK. This is how
 		 *    `{VisitLine}` disappears when Andrew has not written one: the
 		 *    paragraph is the slot and nothing else, so the email closes up
-		 *    around it exactly as Merry specified.
+		 *    around it exactly as `marketing-growth` specified.
 		 */
 		if ( '' !== $merged ) {
 			$out[] = $merged;
@@ -1016,7 +1016,7 @@ function bhp_visit_email_body( $email ) {
  * the Dallas Harris Elementary visit (September 3)"*. ⛔ THE PICKUP NAME IS
  * PRINTED TWICE AND THE SENTENCE UNDERNEATH IS THE CHECKOUT'S EXPLANATION,
  * which the day-0 email's own approved body has already given in full
- * paragraphs above the table. Legolas's render note, founder seal 1025.
+ * paragraphs above the table. The `design-creative` desk's render note, founder seal 1025.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * ⛔⛔ WHAT THIS DELIBERATELY DOES NOT DO, AND WHY. READ BEFORE CHANGING IT.
@@ -1054,7 +1054,7 @@ function bhp_visit_email_body( $email ) {
  *
  * ⚠ NOT VERIFIED: no render was produced from this build and there is no PHP
  *   on this machine. The failure was observed in the 1.19.373 render; the fix
- *   is stated as designed behaviour until Gandalf re-renders on staging.
+ *   is stated as designed behaviour until `chief-of-staff` re-renders on staging.
  *
  * @since 1.19.374
  * @param array    $total_rows Rows from `WC_Order::get_order_item_totals()`.
@@ -1157,7 +1157,7 @@ function bhp_visit_email_shorten_pickup_row( $total_rows, $order = null ) {
 	 *
 	 * ⚠ NOT VERIFIED FIRST-HAND: the WooCommerce 10.8.0 template source has
 	 *   NOT been read at this desk — there is no WooCommerce checkout here and
-	 *   the line numbers above are Gandalf's read, not mine. What IS first-hand
+	 *   the line numbers above are the `chief-of-staff` desk's read, not mine. What IS first-hand
 	 *   is the render evidence above, which is consistent with it and with
 	 *   nothing else I could construct. If `meta` turns out not to be the key,
 	 *   the tax row says the appended string is still a second key on the row,

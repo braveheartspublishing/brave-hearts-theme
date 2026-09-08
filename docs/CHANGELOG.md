@@ -2,6 +2,334 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## Move or switch off the auto-injected book rail on one post (`_bhp_book_rail_position`, 1.19.388)
+
+The rail's position is computed from article depth (`bhp_blog_ask_paragraph_targets()`), and
+since 1.19.388 it also refuses to land directly after a paragraph that reads as a numbered list
+entry's title — `8. Adventures of Charlotte & Henry: Mount Everest` and the like. That guard is
+automatic and needs nothing set.
+
+When a particular post still wants the rail somewhere else, one post meta key overrides it.
+There is no editor UI for it — deliberately, so it does not widen the REST surface of every
+post — so it is set from WP-CLI.
+
+**Production:** 1.19.388 installed 2026-09-06 late evening (MDT) under Andrew's token from ZIP md5 `4632131da3fd6680de29b7b3702f9e71`; rollback tarball `~/_rollback/PROD-theme-1.19.386-pre-388-20260907-052932.tar.gz`; verified live: active 1.19.388, `ok` probe, 695 files, home assets stamped `ver=1.19.388`, product page free of the tracking claim. 1.19.387 was a staging-only build (its ZIP also swept in an unfinished rail guard from a parallel lane) and never reached production; 1.19.388 carries its tracking-claim removals.
+
+**Bundle plugin 1.8.84** installed on production the same evening (ZIP md5 `34d3d5deeffb28216a46ce0a611e69f2`; rollback `~/_rollback/PROD-bundle-pricing-1.8.83-pre-1.8.84-20260907-053041.tar.gz`): the collection page fine print no longer claims tracking.
+
+**Content changes the same evening (WordPress, not theme code):** post 82 `/blog/reading-level-by-grade-chart/` body replaced with the reviewed rewrite (chart table above the fold, one heading per grade K to 4, sourced Lexile section, parent quote and reader photo; title and meta unchanged; pre-write snapshot kept locally); post 46 `/blog/books-like-magic-tree-house/` body replaced with the reviewed rewrite (store-first routing, six tagged affiliate links for other publishers' titles under `bhothers-20`, no Amazon links for Brave Hearts titles, Everest interior spread, parent quote, skip link) and its title changed to "8 Books Like Magic Tree House for Ages 6 to 9"; new post 829 `/blog/dallas-harris-and-liberty-read-aloud/` published; `/shipping-policy/` Tracking section deleted and `/privacy-policy/` "Shipping and delivery tracking" line dropped (no tracking exists on orders).
+
+## 1.19.387 — the tracking claim was false and is removed (CYCLE179-CX-TRACKING-CLAIM)
+
+The store told buyers, on the product page and on all three audience landing
+pages, that an order carries tracking. It does not. Owner, verbatim:
+"we dont have tracking by the way".
+
+Eight strings in six theme files removed the claim. "Secure checkout" is kept;
+it is mechanically true. NOTHING replaced the claim: the Bookvault dispatch
+record sometimes carries a tracking number and sometimes does not, so the
+honest status is UNAVAILABLE, and an unavailable fact is not a sentence on a
+product page.
+
+- inc/book-formats.php — bhp_book_pdp_shipping_link_text(), both branches
+- functions.php — the duplicate fallback string, which is exactly why a second
+  copy of a claim is dangerous
+- page-audience-educators.php, page-audience-gift-buyers.php,
+  page-reluctant-reader-adventure-kit.php — the price-card trust line
+- the two shipping FAQs on the gift-buyer and Adventure Kit pages
+- assets/css/audience-landing.css — the comment recording the trust line
+
+VERIFIED LIVE: the installed bookvault plugin contains zero occurrences of
+"tracking" in any PHP file. The completed-order email already told the buyer
+the opposite ("we do not receive a tracking number from our printer"), so the
+store had been contradicting its own receipt.
+
+NEW GATE: tests/test-cycle179-cx-tracking-claim.php. Scans every translated
+theme string against a frozen five-entry allowlist, asserts the four historic
+carrier phrasings are dead in code, and asserts the honest disclaimer in the
+completed-order email SURVIVES. Proved against a reintroduced defect.
+
+STILL OPEN, not fixed by this build: the bundle plugin renders
+/complete-collection/ and still prints "Secure checkout · Tracking provided"
+(bundle-landing-page.php:1668). The /shipping-policy/ and /privacy-policy/
+pages carry their own tracking text in the database. Both are gated.
+
+## 1.19.386 — the test suites stop mailing a real relay (CYCLE179-LD-TEST-MAIL-SUPPRESS)
+
+**The defect.** Six WooCommerce "Your payment did not go through" emails left staging
+through Google's SMTP relay during two test-suite runs and bounced back to the owner.
+Verified in the live FluentSMTP log, rows 41-46, `status = sent`, addressed to the
+`bhp-cycle168+optin-*@example.com` fixtures.
+
+**Root cause — the guard we had was working; its list had gone stale.**
+`inc/staging-mail-guard.php` was active and correct throughout. `customer_failed_order`
+and `customer_cancelled_order` are customer-side WooCommerce emails added after that
+guard's hand-maintained id list was written, and because the ADMIN `failed_order` WAS on
+the list, the omission read as covered. Nothing in the suites changed; staging did — it
+has relayed live since 1.19.385, so any test that creates an order or moves one between
+statuses became an outbound-mail event.
+
+**Three layers, deliberately independent:**
+
+- `tests/bootstrap-mail-guard.php` (NEW) — included by all 132 `tests/test-*.php`.
+  Blocks every outbound message at `pre_wp_mail` and captures it for assertion via
+  `bhp_test_mail_log()` / `bhp_test_mail_find()`. It PROVES the block at include time
+  with three checks and aborts the suite if it cannot: `wp_mail()` on this stack is
+  FluentSMTP's, not WordPress's own, so a filter registered against a hook the runtime
+  never applies would have been a silent no-op.
+- `inc/test-order-mail-guard.php` (NEW) — keyed to the ADDRESS, not the host, so it
+  holds on every environment. Blocks RFC 2606 reserved addresses at `pre_wp_mail`, and
+  the admin notification for a fixture order at `woocommerce_mail_callback` (the only
+  layer that can see the order). Enumerates no email ids. Fails towards delivery.
+  Every suppression is logged to `WooCommerce > Status > Logs`, source
+  `bhp-test-mail-guard`.
+- `inc/staging-mail-guard.php` — `customer_failed_order` and `customer_cancelled_order`
+  added to the suppressed list.
+
+**Also:** `tests/test-bookvault-tracker-integration.php` repaired — two assertions had
+been failing since 1.19.281 because the staging guard disables `customer_completed_order`
+before the message is built; now 72/72. `tests/test-cycle179-review-seq.php` section 14's
+`wp_mail()` header probe no longer skips, because the block's guarantee is now obtained
+rather than assumed.
+
+**Verified on staging, not inferred:** all 132 suites run on the shipped artefact; the
+FluentSMTP log went 46 rows -> 46 rows, MAX(id) 46 -> 46. Zero rows gained. All 132 suite
+outputs carry the block's banner. 123 suites exit 0; the 9 that do not are the same set
+that fails on 1.19.385, measured by re-running them against that artefact.
+
+**No production change. No WooCommerce setting changed. Nothing was sent.**
+
+**Production:** installed 2026-09-06 evening (MDT) under Andrew's token from ZIP md5 `b3cf30b0d916dd6f5dc15f71541c1e80`; rollback tarball `~/_rollback/PROD-theme-1.19.385-pre-386-20260907-025620.tar.gz`; verified live: active 1.19.386, `ok` probe, 693 files, home assets stamped `ver=1.19.386`.
+
+## 1.19.385 — 2026-09-06 — the checkout opt-in moves next to the email field, and two dead URLs stop 404ing
+
+**The marketing opt-in is asked where it can be read.** The checkbox that invites a
+buyer to hear about new Charlotte and Henry books moved out of "Additional order
+information" — which sits below Payment options, at the moment a parent is looking
+at the pay button — and into "Contact information", directly under the email field.
+Measured on staging at both viewports: it went from 1,147 px (desktop) and 1,471 px
+(mobile) below the email field to **66 px and 50 px**. Nothing else about it changed:
+the approved label is byte-identical, the box is still **unchecked**, and the stored
+consent key did not move, so every historical order's record still resolves.
+
+**Two legacy URLs Google still had indexed as hard 404s now redirect.**
+`/what-is-a-lexile-score/` (the pre-`/blog/`-prefix form of an article that was never
+deleted) and the Squarespace-era `/resources` hub each get a single 301 to the page
+that carries that intent today. Exactly two literal paths are matched, query strings
+are preserved, and the dead Squarespace tag URLs in the same Search Console bucket are
+deliberately left to 404 — pointing them at an unrelated page would be a soft-404
+signal, not a fix.
+
+**The review-ask engine's DKIM warning was stale and is lifted.** The engine header
+told operators not to enable it in production until a DKIM record was published. Site
+mail now goes through FluentSMTP to Google's SMTP relay and authenticates cleanly
+(DKIM, SPF and DMARC all pass, selector `google`), so the prohibition no longer
+describes reality. The superseded text is preserved in place rather than deleted. The
+web lane's own send gate is untouched and still closed.
+
+**Not a defect, recorded so it is not re-diagnosed:** the free Activity Book checkbox
+appears twice in the checkout DOM. The second is the closed cart drawer's own copy of
+the same control — off-canvas and `visibility: hidden` at every viewport. Exactly one
+is visible to a customer.
+
+**Production:** installed 2026-09-06 (afternoon, MDT) under Andrew's token from ZIP md5 `7489794599a37b19e21dd5729ad4a5ad`; rollback tarball `~/_rollback/PROD-theme-1.19.384-pre-385-20260906-230828.tar.gz`; verified live: active 1.19.385, `ok` probe, 691 files, both 301s single-hop, home assets stamped `ver=1.19.385` with none older.
+
+**Site configuration change on the same day (not theme code):** the Rank Math default Open Graph image (site-wide `og:image`, also the homepage Facebook image) was replaced with the compass-mark share card `wp-content/uploads/2026/09/brave-hearts-publishing-social-share-1200x630-compass.png` (media id 822 on production, 10409 on staging); the previous file (id 335, the retired sunrise-heart mark) is left in the media library; option backup `~/_rollback/PROD-rankmath-titles-pre-sharecard-20260906-231109.json`. Staging first, production second, verified on `/`, `/shop/` and `/reluctant-reader-adventure-kit/`. Platforms cache link previews per URL; a re-scrape (Facebook Sharing Debugger, LinkedIn Post Inspector) is needed for previews that were already cached.
+
+## 1.19.362 – 1.19.381 — 2026-09-05 — the review-ask sequence and the school-visit email set
+
+Shipped as one release; supersedes the `1.19.369`, `1.19.370` and `1.19.371`
+staging-candidate entries below on the version number only. Nineteen internal
+builds, one customer-visible change set.
+
+**The review-ask sequence (new).** A three-touch Amazon review ask driven by
+approved copy sets, with a separate web lane. Copy sets carry their own
+`delay_days` and an `approved` flag, and the engine refuses to render an
+unapproved or incomplete set rather than sending a half-merged letter. The
+sequence is OFF by default: `bhp_review_ask_enabled` is unset and must be set
+deliberately.
+
+**The school-visit fork of the completed-order email (day 0).** An order carrying
+`_bhp_school_visit_slug` gets a body written for a book handed to a child at a
+read-aloud, not a posted parcel. The three sentences that describe a shipment
+("left our print partner", "no tracking number from our printer", "if anything
+arrives damaged") are false for a hand-delivered order and are replaced wholesale
+rather than edited around. Every ordinary order email is byte-identical to
+1.19.361.
+
+**Copy and voice.**
+- Standing voice rule enforced across the whole set: no "we/us/our" in
+  customer-facing words. The suites test it with word boundaries so "week",
+  "answers" and "however" cannot produce a false failure.
+- No em dashes anywhere in the copy.
+- Quoted third-party words are never re-pronouned. Rewriting a "we" inside a real
+  customer review would fabricate a customer statement.
+- One greeting per email. The template's own "Hi %s," is suppressed where the
+  approved copy opens with its own.
+- One sign-off per email: the signature block (Andrew Signore / Author | Brave
+  Hearts Publishing / Big Places. Brave Hearts.), shared by the review ask and the
+  day-0 email from a single function so the two cannot drift apart. The plain
+  sign-off and plain tagline are removed from every copy set, superseded lines
+  preserved in place.
+
+**Every book on the order is named.** The review ask's `{BookTitle}` slot resolved
+to the first chapter book on an order, so a parent who bought three books read a
+sentence naming one. It now resolves to all of them, joined as a natural list
+("The Mariana Trench and Mount Everest"; "The Mariana Trench, Mount Everest and
+The Amazon") by the same join the day-0 email already used — extracted to one
+function so the two emails cannot describe the same order differently. The
+five-star row still rates one book, because one review page exists per title, so
+its caption names that book through a separate `{FirstBookTitle}` slot rather
+than listing books the row cannot rate. Both slots are send gates: an order that
+cannot resolve either is declined rather than mailed with a gap in the sentence.
+A single-book order renders exactly as it did before.
+
+**The receipt reads on a phone, and the sentence agrees with itself.** The
+hand-delivery row of the day-0 receipt printed the pickup method name in both of
+its cells; the heading now says "Hand delivery:" and the name is printed once,
+beside it. On a narrow screen the order table was breaking words in half —
+"Quantity", "Price" and "$11.99" each split across two lines — because a
+mid-word break had been applied to every cell; it is now applied only to the
+product-name cell, and the quantity and price columns hold their width. And a
+parent who bought two or three books no longer reads a sentence that disagrees
+with itself: "why The Mariana Trench and Mount Everest are built the way they
+are". A one-book order is unchanged, word for word.
+
+**Rendering.**
+- A charset is declared on every email and on the mailer object, so a Unicode
+  star row and typographic punctuation survive the wire.
+- The star row is built from Unicode rather than images, with an accessible
+  label, resting in pale gold `#dfc793` and filling to bold gold `#c4a15c`.
+- The empty `<h1>` band above the hero is removed at the stage that renders it.
+  An email that has a heading still gets one, unchanged, including every ordinary
+  WooCommerce email in the store.
+- Order and downloads tables are made readable at 375px: left-aligned cells,
+  wrapped text, column headings kept, and no table wider than the viewport.
+- The hand-delivery row in the day-0 order summary shows the approved pickup
+  label alone, left-aligned, instead of the pickup name twice followed by the
+  checkout's forty-word explanation. Ordinary order emails are untouched.
+
+**Photographs.**
+- Hero photographs are mapped per visit slug through one filterable table,
+  `bhp_review_ask_hero_map()`. Dallas Harris (2026-09-03) and Adams (2026-08-28)
+  each map a wide-room frame to day 0 and a reading frame to touch 1.
+- Any unmapped visit, and the whole web lane, gets the general hero,
+  `BHP_EMAIL_GENERAL_HERO` — a single constant a `wp-config.php` define can
+  override. A photograph captioned for a school a family never attended is a false
+  statement in a picture, which is why the fallback is general rather than the
+  nearest visit.
+- Touch 2 carries no photograph.
+- Every hero has alt text that describes the scene and repeats any baked caption.
+  No child is named, no reaction is described, and a hero file that is not on disk
+  renders nothing rather than a broken-image icon.
+- One gallery frame is asserted absent from the theme: it shows a second adult
+  whose consent is not on record and a legible visitor badge.
+
+**Suites.** `tests/test-cycle179-review-seq.php`,
+`tests/test-cycle169-review-ask.php` and `tests/test-visit-completed-email.php`.
+The visit suite writes nothing to the database: orders are built in memory and
+never saved, and no email is sent, enabled or triggered, so it is safe to run on
+any environment. ⚠ The figures below are the 1.19.379 staging run; the 1.19.381
+section has not been run yet and its 24 assertions are NOT inside these counts.
+At 1.19.379 on staging: review-seq 615 pass / 0 fail / 1 skip
+(the skipped assertion needs a render of this build on disk and says so rather
+than passing silently), cycle169 131 pass / 0 fail, the visit-email suite green,
+and the ship-prep suite carrying only its two pre-existing version pins. Every
+PHP file in the deploy artefact — 327 of them — was syntax-checked out of the ZIP
+on the server before the theme was installed.
+
+**Two build defects were caught on staging and are recorded rather than tidied
+away.** (1) 1.19.378 shipped a PHP parse error: three prose apostrophes inside a
+198-line single-quoted CSS string in `inc/transactional-emails.php`, the first of
+which closed the string. `wp theme install --force` deletes the theme directory
+before extracting, so there was no theme left to fall back to and staging returned
+HTTP 500 until 1.19.379 replaced it. Production was never touched. The control
+that would have caught it — linting every PHP file out of the ZIP **before**
+install — is now a required step in `docs/RUNBOOK.md`. (2) The `source-md5`
+recorded in `style.min.css` did not match the `style.css` inside the artefact, and
+the cause was not a stale build: `git archive` was writing CRLF into every text
+file (one byte per line, 18,425 lines, exactly the size difference). The canonical
+build command in `docs/RUNBOOK.md` now carries
+`git -c core.autocrlf=false -c core.eol=lf archive`, and the artefact is verified
+LF-only with the two md5s equal.
+
+1.19.379 carries no functional change. It repairs the parse error introduced in
+1.19.378 and corrects the deploy artefact to LF line endings, so the `source-md5`
+recorded in `style.min.css` again matches the `style.css` that actually ships.
+
+**1.19.380 — two gates that decide who the first real run may write to.** A dry
+run of the sequence against real completed orders showed that switching the
+engine on would have mailed a year of backlog on its first morning alongside the
+orders it was built for, and would have sent a reminder chasing a first ask a
+retired engine had sent.
+
+- **A backlog floor.** `BHP_REVIEW_ASK_FLOOR_DATE` is a single constant,
+  filterable and overridable from `wp-config.php`. An order whose touch-1 anchor
+  — the visit date in the visit lane, the completion date in the web lane — falls
+  before it is declined `before_floor` and enters neither touch. The floor reads
+  the same anchor the schedule reads, so the two cannot disagree about an order.
+  An order with no resolvable anchor is still declined `no_anchor`, not
+  `before_floor`, so a data problem cannot hide behind a policy decision.
+- **A reminder can only follow this engine own first ask.** Touch 1 now writes a
+  ledger key that only this sequence writes, and touch 2 requires it. A touch-1
+  stamp left by the retired 21-day engine, or by the hand-send migration,
+  declines `legacy_touch1` instead of producing a reminder for a letter this
+  sequence never sent.
+- **Both are visible before they act.** `wp bhp review-ask plan` and
+  `wp bhp review-ask dry` print the floor in force, name every order either gate
+  declines with its resolved anchor, and end with one summary line of counts by
+  reason.
+
+The suite gains a section covering both gates in both lanes: fixtures either side
+of a filtered floor, the boundary asserted on the anchor date itself and one day
+later, a legacy-stamped fixture declining and then allowed once the ledger key
+exists, and the plan output asserted for the floor and summary lines.
+
+**And 1.19.381 settled who those gates apply to.** The floor shipped in the
+previous build as a deliberately open decision with two candidate dates; Andrew
+chose, and the choice moved a second number with it.
+
+- **Seal 1066 — the floor is `2026-08-28`, the Adams visit date, on both lanes.**
+  Andrew, asked to choose: *"Include them all"*, confirmed *"Yes"*. The eight
+  Adams orders enter the sequence. The two July/August web orders completed
+  before that date are still declined `before_floor`, and the four customers
+  whose only touch-1 record came from the retired 21-day engine are still held
+  out by the separate `legacy_touch1` rule, which no floor date reaches. Two
+  rules, two reasons. The superseded `2026-09-03` default is preserved in the
+  code with the reason it was rejected.
+- **The visit lane cap is 20; the web lane stays 10.** This is not tuning. With
+  the floor at the Adams date the first morning carries thirteen visit-lane
+  orders at once, and at a cap of 10 three parents would have been deferred to
+  the next day — a send filter quietly half-applying a founder ruling. The web
+  lane was not asked to move and did not: its backlog is exactly what the floor
+  and the cap exist to hold back. `bhp_review_ask_daily_cap()` called without a
+  lane still returns the lower number, so a caller that does not know its lane
+  cannot be handed the more permissive budget.
+- **The caps are now stated where an operator reads them.** `status` prints the
+  floor in force and both cap numbers. `plan` prints both caps before it
+  evaluates any date, counts WOULD SEND per lane, and compares each lane against
+  its own budget — the line it replaces compared one total against the lane-less
+  cap of 10 and would have reported a false overflow on every visit-heavy day.
+  The one-line summary carries `visit=n/cap` and `web=n/cap`.
+- **Seal 1064 — one sentence of the day-0 email changed.** *"The places are real.
+  So are the animals, the weather and the science. None of it is homework and all
+  of it is true."* becomes *"… The adventures are made up; the world they happen
+  in is not."* Andrew raised it himself: there is a talking dog, and the
+  historical figures did not really take Charlotte and Henry anywhere, so *all of
+  it is true* was a claim this company does not make. One sentence, no other word
+  changed, paragraph count unchanged, superseded text preserved verbatim in a
+  comment.
+
+The suite carries all of it: the floor default with the superseded assertion
+preserved, arithmetic that the floor still sits after the July/August web orders
+and on the Adams date rather than after it, the 20/10 asymmetry and the
+conservative lane-less default, that the visit cap covers the thirteen of the
+first morning, and the day-0 sentence pinned **both ways** — the new one present,
+the withdrawn truth claim absent in any wording.
+
+1.19.380 to 1.19.383 (same day): the backlog floor (2026-08-28, both lanes) and the rule that touch 2 never fires from a legacy 21-day stamp; visit-lane daily cap 20 (web 10); the day-0 sentence replaced on the owner's instruction; test-fixture alignment; the deploy ZIP is now built with `git -c core.autocrlf=false -c core.eol=lf archive` after a CRLF style.css broke the min.css stamp. 1.19.383 deployed to production 2026-09-05 19:0x MDT with the engine switched off pending the owner's enable.
+
+
 ## 2026-09-05 - STAGING CANDIDATE THEME `1.19.382` — REVIEW-ASK SEQUENCE, ROUND 21: THE TWELVE FIXTURE FAILURES (NOT ON PRODUCTION)
 
 > ⛔ **THIS IS NOT A PRODUCTION RELEASE.** Production is still theme `1.19.361` / bundle plugin `1.8.83`. `1.19.382` is the CYCLE179-LD-REVIEW-SEQ staging candidate. **The review-ask engine's master switch `bhp_review_ask_enabled` is unset, so installing this theme sends nothing.** Go-live gates: `docs/RUNBOOK.md`, "Review-ask engine — staging QA and the production go-live gates (1.19.382)".
@@ -14,7 +342,7 @@ Major milestones only, human-readable. Not a commit log — see `git log` for th
 - **⭐⭐ `tests/test-cycle169-review-ask.php` filters the backlog floor off, the same move `test-cycle179-review-seq.php` §0 already makes.** That suite was written for the `1.19.317` engine and its fixtures are aged by construction — 5, 20, 30 and 35 days — because those are the only ages at which `not_due`, the delay boundary and `copy_delay_mismatch` mean anything. Seal 1066 put the shipped floor at `2026-08-28`, below which all of them sit, so six assertions naming `not_due`, `no_billing_email`, `excluded`, `copy_delay_mismatch` and "QUALIFIES" were all being answered `before_floor` by a gate introduced after they were written. **The floor is not weakened and is not untested:** it is asserted live, on both sides of a fixed date and in both lanes, in review-seq §19, the suite that owns it. The engine is not modified and the constant is not touched.
 - **Not done, deliberately:** no assertion was deleted, no rule was relaxed, no `remove_filter` was added to the R19 sections, and §19's legacy and floor assertions are untouched.
 
-Tests: five fixtures amended in `tests/test-cycle179-review-seq.php` (§2 ×3, §3, §4) plus one new assertion; one filter added to `tests/test-cycle169-review-ask.php` §0. **⚠ NO PHP RUNTIME WAS AVAILABLE IN THIS SESSION. `php -l`, both suites and every dry run are Gandalf's to run on staging. The only static check performed here was a brace/paren/bracket balance comparison against the pre-edit backups — the delta is balanced for both edited files, which is not the same fact as a clean lint, and is not evidence that any assertion now passes.**
+Tests: five fixtures amended in `tests/test-cycle179-review-seq.php` (§2 ×3, §3, §4) plus one new assertion; one filter added to `tests/test-cycle169-review-ask.php` §0. **⚠ NO PHP RUNTIME WAS AVAILABLE IN THIS SESSION. `php -l`, both suites and every dry run are the chief-of-staff's to run on staging. The only static check performed here was a brace/paren/bracket balance comparison against the pre-edit backups — the delta is balanced for both edited files, which is not the same fact as a clean lint, and is not evidence that any assertion now passes.**
 
 ## 2026-09-05 - STAGING CANDIDATE THEME `1.19.371` — REVIEW-ASK SEQUENCE, ROUND 10 (NOT ON PRODUCTION)
 
@@ -22,15 +350,15 @@ Tests: five fixtures amended in `tests/test-cycle179-review-seq.php` (§2 ×3, �
 
 One founder edit, one defect still being chased, one stale test repaired, one go-live step added.
 
-- **⭐⭐ SEAL 1007 — the plain sign-off is gone; the signature block carries the name.** Andrew Signore, 2026-09-05, verbatim (⚠ **RELAYED** through Gandalf, not heard first-hand): *"I like the nice signature and big place brave hearts - drop the plain one"*. The standalone `Andrew` line is removed from all four sets in the sequence — day 0 (`inc/visit-completed-email.php`, body now eight paragraphs), visit touch 1, web touch 1 and touch 2 (`inc/review-ask-email.php`, `signoff` now `array()`). Every superseded line is preserved verbatim in a comment at its own site. **The eyebrow stays omitted.** This settles the duplication `CYCLE179-DES-29(a)` flagged as an open decision at 1.19.370, where the name appeared twice — once as the sign-off, once as signature furniture. ⛔ The legacy 21-day set is **not** in the sequence and was **not** touched.
+- **⭐⭐ SEAL 1007 — the plain sign-off is gone; the signature block carries the name.** Andrew Signore, 2026-09-05, verbatim (⚠ **RELAYED** through the chief-of-staff, not heard first-hand): *"I like the nice signature and big place brave hearts - drop the plain one"*. The standalone `Andrew` line is removed from all four sets in the sequence — day 0 (`inc/visit-completed-email.php`, body now eight paragraphs), visit touch 1, web touch 1 and touch 2 (`inc/review-ask-email.php`, `signoff` now `array()`). Every superseded line is preserved verbatim in a comment at its own site. **The eyebrow stays omitted.** This settles the duplication `CYCLE179-DES-29(a)` flagged as an open decision at 1.19.370, where the name appeared twice — once as the sign-off, once as signature furniture. ⛔ The legacy 21-day set is **not** in the sequence and was **not** touched.
 - **⛔ And the usability gate had to move with it, or the change would have been silent and catastrophic.** `bhp_review_ask_copy_is_usable()` required a **non-empty** `signoff`. Emptying the arrays without relaxing that check would have made all three approved sets fail their own gate and the engine fall back to a set nobody selected — with no error anywhere. `signoff` now joins `question`, `links_lead` and `body_middle` in the present-and-must-be-an-array group, so a typo'd or deleted key is still caught. A test asserts each set is still usable.
-- **⭐⭐ The charset, second attempt, because the first one did not finish the job.** After 1.19.370 shipped `bhp_email_force_charset()` on `woocommerce_email_headers`, FluentSMTP's log **still** recorded `text/html` with no charset for both staging test sends (log ids 6 and 7 — ⚠ **relayed by Gandalf, not observed at this desk**). The header filter writes into a header *string*; FluentSMTP replaces `wp_mail()` wholesale, parses that string into its own structures and re-emits headers, and anything it does not carry across the parse is lost. So `bhp_email_phpmailer_charset()` now runs on `phpmailer_init` (priority 99) and sets `$phpmailer->CharSet` — the property PHPMailer uses to **build** the `Content-Type` line rather than a header to be parsed — plus `Encoding` to `quoted-printable` **only where it is still PHPMailer's `8bit` default**, so `★` (`E2 98 85`) travels as `=E2=98=85` and survives a relay that does not advertise 8BITMIME. Both mechanisms are kept; neither is trusted alone. Off switch: `bhp_email_phpmailer_charset_enabled`. The call-site header moves into `bhp_email_html_content_type_header()` so one string serves the whole path.
-- **⛔ Two honest limits on that fix.** (a) It is **not** scoped to the review ask and the visit email: at `phpmailer_init` there is no reliable back-reference to the `WC_Email` that built the message, and sniffing a subject line to decide a charset would be worse engineering than applying the site's own charset to the site's own mail. (b) **Nothing here proves the delivered header changed.** That is Gimli's raw-source read and a fresh FluentSMTP log entry, not a code claim.
+- **⭐⭐ The charset, second attempt, because the first one did not finish the job.** After 1.19.370 shipped `bhp_email_force_charset()` on `woocommerce_email_headers`, FluentSMTP's log **still** recorded `text/html` with no charset for both staging test sends (log ids 6 and 7 — ⚠ **relayed by the chief-of-staff, not observed at this desk**). The header filter writes into a header *string*; FluentSMTP replaces `wp_mail()` wholesale, parses that string into its own structures and re-emits headers, and anything it does not carry across the parse is lost. So `bhp_email_phpmailer_charset()` now runs on `phpmailer_init` (priority 99) and sets `$phpmailer->CharSet` — the property PHPMailer uses to **build** the `Content-Type` line rather than a header to be parsed — plus `Encoding` to `quoted-printable` **only where it is still PHPMailer's `8bit` default**, so `★` (`E2 98 85`) travels as `=E2=98=85` and survives a relay that does not advertise 8BITMIME. Both mechanisms are kept; neither is trusted alone. Off switch: `bhp_email_phpmailer_charset_enabled`. The call-site header moves into `bhp_email_html_content_type_header()` so one string serves the whole path.
+- **⛔ Two honest limits on that fix.** (a) It is **not** scoped to the review ask and the visit email: at `phpmailer_init` there is no reliable back-reference to the `WC_Email` that built the message, and sniffing a subject line to decide a charset would be worse engineering than applying the site's own charset to the site's own mail. (b) **Nothing here proves the delivered header changed.** That is the connected operator's raw-source read and a fresh FluentSMTP log entry, not a code claim.
 - **The stale assertion in `tests/test-visit-completed-email.php` is fixed at root cause, and it was wrong twice.** `'visit order => four paragraphs (Amazon ask removed, seal 977)'` named the per-school Adams set that seal 994 retired at 1.19.369 — and its fixture order carries a slug and nothing else, so `{BookTitle(s)}` cannot resolve and `bhp_visit_email_merge_is_complete()` is a hard stop: the correct answer was an **empty** body, not four paragraphs, whatever the number said. It now asserts that hard stop explicitly, and then asserts the real rendered body against a **resolvable** in-memory order (school from `_bhp_school_visit_school`, title from one line item whose product id comes from `bhp_book_registry()` at runtime) — seven rendered paragraphs from a set of eight, `{VisitLine}` dropped, ending on the reply route, no raw `{Slot}`, no bare "Andrew". ⛔ Nothing is saved and no WooCommerce record is touched. The day-0 count assertion moves from nine to eight for the same reason.
 - **⚠ One assertion in `tests/test-cycle179-review-seq.php` had quietly become an environment trap and was rewritten before it fired.** §13.6 asserted `stripos( $html, 'facebook.com' ) === false` against the ambient render. That was correct while no Facebook URL existed anywhere — and became wrong the moment `bhp_social_links` was set on staging with two real URLs, at which point the suite would have gone red for the software working as designed. It now asserts the invariant that actually matters — *nothing is emitted when nothing is supplied* — against a render with the links explicitly emptied through the public filter, and **prints** what the live option holds instead of asserting it.
 - **Go-live.** `docs/RUNBOOK.md` §C gains step **2b**: `wp option update bhp_social_links` with the two real URLs (`facebook.com/braveheartspublishing`, `instagram.com/charlotteandhenrybooks`), read back, cache purged, and verified through `bhp_review_ask_signature()` rather than through the option table alone — before Andrew's enable gate, never after. §D gains the matching one-line rollback.
 
-Tests: `tests/test-cycle179-review-seq.php` gains **§14** — the header string WooCommerce hands to `wp_mail()`, the shared call-site header, the headers **as they reach the `wp_mail` filter** (via a `pre_wp_mail` short-circuit so nothing leaves the process, and **gated on `wp_mail()` still being WordPress's own**, checked with Reflection, because a replaced `wp_mail()` cannot be assumed to honour that short-circuit and a test must never send a real email to prove a header), the `phpmailer_init` handler including its off switch and its refusal to override a deliberate `base64`, and seal 1007 on all three sets plus the rendered HTML. **⚠ NO PHP RUNTIME WAS AVAILABLE IN THIS SESSION. `php -l`, all three suites, the dry runs and every test-send are Gandalf's to run on staging. The only static check performed here was a brace/paren/bracket balance comparison against the pre-edit backups — it is unchanged for all five edited files, which is not the same fact as a clean lint.**
+Tests: `tests/test-cycle179-review-seq.php` gains **§14** — the header string WooCommerce hands to `wp_mail()`, the shared call-site header, the headers **as they reach the `wp_mail` filter** (via a `pre_wp_mail` short-circuit so nothing leaves the process, and **gated on `wp_mail()` still being WordPress's own**, checked with Reflection, because a replaced `wp_mail()` cannot be assumed to honour that short-circuit and a test must never send a real email to prove a header), the `phpmailer_init` handler including its off switch and its refusal to override a deliberate `base64`, and seal 1007 on all three sets plus the rendered HTML. **⚠ NO PHP RUNTIME WAS AVAILABLE IN THIS SESSION. `php -l`, all three suites, the dry runs and every test-send are the chief-of-staff's to run on staging. The only static check performed here was a brace/paren/bracket balance comparison against the pre-edit backups — it is unchanged for all five edited files, which is not the same fact as a clean lint.**
 
 ## 2026-09-05 - STAGING CANDIDATE THEME `1.19.370` — REVIEW-ASK SEQUENCE, ROUND 9 (NOT ON PRODUCTION)
 
@@ -41,11 +369,11 @@ Four founder-driven changes plus two test repairs.
 - **⭐⭐ The charset, and it is the fix that matters most.** Every WooCommerce email — the review ask, the visit day-0 email and every receipt — now sends `Content-Type: text/html; charset=UTF-8`. **This is a fix for an observed defect, not a precaution:** FluentSMTP's own log recorded the outgoing type as bare `text/html`, and the U+2605 stars in the delivered 1.19.369 ask arrived as `âââââ`, the signature of UTF-8 bytes decoded as CP1252. WordPress's own `wp_mail()` charset fallback does not apply because FluentSMTP replaces `wp_mail()` wholesale. One filter, `bhp_email_force_charset()` on `woocommerce_email_headers` in `inc/transactional-emails.php`; it **only adds** the parameter and never rewrites a media type or an existing charset.
 - **⭐⭐ The star row is Unicode again, and round 8's PNGs are retired from the email.** `design-creative` rendered the 1.19.369 image row with images unavailable and got *"a row of empty grey boxes"* — Outlook desktop blocks images by default, so the row was a dead end on the client most likely to receive it. The row is now five `U+2605` characters, one centred line, ascending 1 to 5, each its own link to the same five `?rating=N` URLs with the same pre-fill token, 32px, 44px tap targets, `aria-label` "1 star" … "5 stars". **Resting grey `#c9c2b3`, gold `#c4a15c` on hover** (seal 1003, *"moving the mouse over them should turn them gold"*), delivered through class selectors in the assembled email stylesheet; `.bhp-star:has(~ .bhp-star:hover)` fills 1..N where `:has()` is supported and star N alone where it is not. **`assets/images/email/review-star-gold@2x.png` still ships** — it is wanted for the site's review page and for social — the email simply stops referencing it. The counter-argument for the PNG (Gmail mobile substitutes a colour emoji, some Outlook builds a box) is preserved in the template rather than pretended away.
 - **⭐ The shell, per `CYCLE179-DES-REVIEW-EMAIL.md`.** Three hero photographs ship into `assets/images/email/` (`hero-dallas-harris-2026-09-03-01.jpg`, `-02.jpg`, `hero-read-aloud-general.jpg`, gradient and caption baked in) and are selected by a filterable array keyed on `_bhp_school_visit_slug`: the Dallas Harris visit gets frame 02 on touch 1 and frame 01 on day 0; **every other slug and every web order gets the general frame**, because a photograph captioned for a school the family never attended is a false statement in a picture. **Touch 2 carries no hero.** A signature block (`Andrew Signore` / `Author | Brave Hearts Publishing` / `Big Places. Brave Hearts.`) renders below a rule after the P.S., in both the HTML and plain parts. H1 to 30px. Existing opt-out and postal footer unchanged.
-- **⚠ Two things Legolas's spec asks for that this build did NOT do, and both are recorded rather than absorbed.** (a) **The hero renders below the H1, not above it.** Putting it above requires overriding `emails/email-header.php`, which `inc/transactional-emails.php` prohibits because the `email_improvements` feature flag rewrites that template and an override would diverge silently on the next core update. It is moot on every email this build sends, because the H1 is empty in all three live sets. (b) **No Facebook or Instagram link is emitted.** No such URL exists anywhere in this repository — grepped across `inc/`, `functions.php`, `woocommerce/`, `template-parts/` and the content engine; the only `facebook.com` hits are the Meta pixel endpoint and Meta's privacy policy. **A plausible-looking profile URL is a fabricated fact and was not invented.** The line renders the moment real URLs are supplied through the `bhp_review_ask_social_links` filter or the `bhp_social_links` option, and a test asserts both the absence and the wiring.
+- **⚠ Two things the design lane's spec asks for that this build did NOT do, and both are recorded rather than absorbed.** (a) **The hero renders below the H1, not above it.** Putting it above requires overriding `emails/email-header.php`, which `inc/transactional-emails.php` prohibits because the `email_improvements` feature flag rewrites that template and an override would diverge silently on the next core update. It is moot on every email this build sends, because the H1 is empty in all three live sets. (b) **No Facebook or Instagram link is emitted.** No such URL exists anywhere in this repository — grepped across `inc/`, `functions.php`, `woocommerce/`, `template-parts/` and the content engine; the only `facebook.com` hits are the Meta pixel endpoint and Meta's privacy policy. **A plausible-looking profile URL is a fabricated fact and was not invented.** The line renders the moment real URLs are supplied through the `bhp_review_ask_social_links` filter or the `bhp_social_links` option, and a test asserts both the absence and the wiring.
 - **The eyebrow is omitted** (`CYCLE179-DES-28`, Andrew pending; default omit) and **the empty H1 is kept** — filling it was tried and rejected on a render at 1.19.36x, because the reader met the same sentence three times in the first screen.
 - **Two failing assertions fixed at root cause, and in both cases the engine was right and the test was measuring the wrong world.** The web probe order was 12 days old while 1.19.369 raised the web delay to 14, so it was genuinely not due and `§6` got `not_due` instead of `copy_not_approved`; it is now 16 days, with two days of slack so a run in the small hours cannot land on the midnight boundary. And `§9.6` read `$bhp_rs_row[3]` for "the 2-star link" — an offset left behind when 1.19.369 made the row ascending, which turned it into the 4-star link; the row is now **searched by rating** rather than indexed, and the ascending order is asserted separately and on purpose.
 
-Tests: `tests/test-cycle179-review-seq.php` gains **§13** (charset, Unicode stars, hero mapping, shell, signature, byte budget), asserted against a real render through `WC_Email_BHP_Review_Ask::prepare_preview()` and `get_content()` rather than against the copy arrays or the template source. The 60 KB budget is measured on the full rendered message, not the body fragment. **⚠ No PHP runtime was available in this session: nothing below the ZIP build was executed. `php -l`, the suites, the dry runs and every test-send are Gandalf's to run on staging. No email client was opened and no hover was observed.**
+Tests: `tests/test-cycle179-review-seq.php` gains **§13** (charset, Unicode stars, hero mapping, shell, signature, byte budget), asserted against a real render through `WC_Email_BHP_Review_Ask::prepare_preview()` and `get_content()` rather than against the copy arrays or the template source. The 60 KB budget is measured on the full rendered message, not the body fragment. **⚠ No PHP runtime was available in this session: nothing below the ZIP build was executed. `php -l`, the suites, the dry runs and every test-send are the chief-of-staff's to run on staging. No email client was opened and no hover was observed.**
 
 ## 2026-09-05 - STAGING CANDIDATE THEME `1.19.369` — REVIEW-ASK SEQUENCE, ROUND 8 (NOT ON PRODUCTION)
 
@@ -60,7 +388,7 @@ Six founder-ruled changes, from seal 998 (*"The stars look terrible, they should
 - **The daily cap is 10 and it is per lane**, counted from the send log's existing `lane` field. A cap of 0 now means 0 (a real per-lane pause) rather than silently falling back to the default.
 - **The migration path is retired.** `wp bhp review-ask migrate` refuses orders 612, 615, 620, 621, 624, 628, 634, 654, 716, 717, 730, 732, 737, 741, 770, 772 by id: seal 994 made them ordinary visit orders, and marking any of them would suppress touch 1 forever. The command itself is kept, unused and documented, for a genuinely hand-sent ask.
 
-Tests: `tests/test-cycle179-review-seq.php` gains §11 (round 8) and has six assertions rewritten with the superseded lines preserved; `tests/test-cycle169-review-ask.php` pins the cap through the filter instead of the constant; `tests/test-visit-completed-email.php` §4 and §6 rewritten for the one-set world. **⚠ Three assertions in that last file were already failing before this build** — 1.19.364 took the Adams body from five paragraphs to four and the suite was never updated. **⚠ No PHP runtime was available in this session: nothing below the ZIP build was executed. `php -l` and all three suites are Gandalf's to run on staging.**
+Tests: `tests/test-cycle179-review-seq.php` gains §11 (round 8) and has six assertions rewritten with the superseded lines preserved; `tests/test-cycle169-review-ask.php` pins the cap through the filter instead of the constant; `tests/test-visit-completed-email.php` §4 and §6 rewritten for the one-set world. **⚠ Three assertions in that last file were already failing before this build** — 1.19.364 took the Adams body from five paragraphs to four and the suite was never updated. **⚠ No PHP runtime was available in this session: nothing below the ZIP build was executed. `php -l` and all three suites are the chief-of-staff's to run on staging.**
 
 ## 2026-09-04 - PRODUCTION IS NOW THEME `1.19.361` / BUNDLE PLUGIN `1.8.83` (supersedes the 1.19.359 entry below on the version number only)
 

@@ -35,6 +35,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit( 1 );
 }
 
+/*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
 $failures = array();
 
 function bhp_vce_assert( $condition, $label, array &$failures ) {
@@ -190,7 +210,7 @@ bhp_vce_assert(
 bhp_vce_assert( true === $day0['approved'], 'The generic day-0 set is flagged approved (seal 982)', $failures );
 /*
  * ⭐ EIGHT SINCE 1.19.371, NOT NINE — SEAL 1007. Andrew Signore, 2026-09-05,
- *    verbatim (⛔ RELAYED through Gandalf, not heard first-hand): *"I like the
+ *    verbatim (⛔ RELAYED through `chief-of-staff`, not heard first-hand): *"I like the
  *    nice signature and big place brave hearts - drop the plain one"*. The
  *    ninth paragraph was a bare `Andrew` and it is gone; the name is carried by
  *    the signature block. ⚠ If this ever reads 9 again, the plain sign-off has
@@ -225,7 +245,7 @@ bhp_vce_assert(
  *   (seal 1063). It is on the wrong side of this company's never-invent rule.
  *
  * ⛔ SOURCE: `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-SEQ-V2.md`
- *    line 55, as amended 2026-09-05 by Gandalf under seal 1064. ⚠ THAT
+ *    line 55, as amended 2026-09-05 by `chief-of-staff` under seal 1064. ⚠ THAT
  *    AMENDMENT CHANGED THE FILE'S md5: the seal-982 pin recorded elsewhere in
  *    this suite as `1ecd9c75acfc755df0e121b47ca73842` is the PRE-AMENDMENT
  *    digest; the file now reads `0ecc659fbea46fb25ef9b01014c2ed13` (measured
@@ -569,7 +589,7 @@ bhp_vce_assert(
  *
  * ⚠ STATED PLAINLY: this proves the transform. It does NOT prove the
  *   rendered email, because nothing here renders one. The rendered proof is
- *   Gandalf's re-render on staging.
+ *   The `chief-of-staff` desk's re-render on staging.
  */
 
 $bhp_vce_pickup_value = 'Collection from <strong>Author hand-delivery at the Dallas Harris Elementary visit (September 3)</strong>:<br>Andrew brings the signed books to Dallas Harris Elementary on Thursday, September 3. Nothing is posted to your home, and there is no shipping charge. Visit time: 10:10 AM.';

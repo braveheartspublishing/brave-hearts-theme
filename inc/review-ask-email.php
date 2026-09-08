@@ -23,7 +23,7 @@
  *      2. `--as-of` is accepted on `dry` (refused on a live run) and as an
  *         alias for `--dates` on `plan`.
  *
- *    ⛔ NOTHING BELOW THIS NOTE CHANGED IN 1.19.363. The §1/§4 failures Gandalf
+ *    ⛔ NOTHING BELOW THIS NOTE CHANGED IN 1.19.363. The §1/§4 failures `chief-of-staff`
  *       measured on staging were a defect in the SUITE'S FIXTURE, not in this
  *       engine: it hooked `bhp_school_visit_records`, which no code applies.
  *       See `tests/test-cycle179-review-seq.php` §0.
@@ -56,7 +56,7 @@
  *
  *      TOUCH 1, WEB LANE (no slug):
  *        order completion + 10 days.
- *        ⚠⚠ THE 10 IS **GANDALF'S INFERENCE, NOT ANDREW'S WORD**. It is a
+ *        ⚠⚠ THE 10 IS **THE CHIEF-OF-STAFF DESK'S INFERENCE, NOT ANDREW'S WORD**. It is a
  *        filterable constant, it is labelled `PENDING ANDREW` at its
  *        definition and in the CLI `status` output, and the web copy set it
  *        pairs with is NOT approved, so the engine cannot send this lane at
@@ -84,14 +84,81 @@
  *       ⛔ THIS IS NOT RESOLVED HERE. It is recorded as `CYCLE179-LD-40` and
  *       routed to Andrew. It is not this desk's contradiction to settle.
  *
- * ⚠ PRODUCTION ACTIVATION IS BLOCKED ON A DNS FIX THAT IS NOT IN THIS
- *   REPOSITORY. Site mail (`wp_mail` through SiteGround) currently FAILS DKIM
- *   at Gmail — `dkim=permerror (no key for signature) header.s=default` — and
- *   therefore fails DMARC on every message, surviving only because the domain
- *   policy is `p=none`. Read: `Business OS\ANDREW-REVIEW\2026-09-05\
- *   SITE-MAIL-AUTH-READ.md` (Gimli, 2026-09-05, Gmail RAW headers).
- *   ⛔ Do not switch `bhp_review_ask_enabled` on in production before that
- *      record is published at `default._domainkey.braveheartspublishing.com`.
+ * ⭐⭐ 2026-09-06 (`CYCLE179-LD-BUILD-385`, closing conflict `CYCLE179-CX-30`)
+ *    — THE DKIM PROHIBITION THAT STOOD HERE IS STALE AND IS
+ *    LIFTED. Site mail now AUTHENTICATES CLEANLY. The superseded text is
+ *    preserved immediately below rather than deleted (additive-only
+ *    discipline), because a future session that finds only "it's fine now"
+ *    cannot tell what was fixed or how to recognise a regression.
+ *
+ *    ⛔ SUPERSEDED 2026-09-06 — the text that was here, verbatim:
+ *
+ *      "⚠ PRODUCTION ACTIVATION IS BLOCKED ON A DNS FIX THAT IS NOT IN THIS
+ *        REPOSITORY. Site mail (`wp_mail` through SiteGround) currently FAILS
+ *        DKIM at Gmail — `dkim=permerror (no key for signature)
+ *        header.s=default` — and therefore fails DMARC on every message,
+ *        surviving only because the domain policy is `p=none`. Read:
+ *        `Business OS\ANDREW-REVIEW\2026-09-05\SITE-MAIL-AUTH-READ.md`
+ *        (`connected-operator`, 2026-09-05, Gmail RAW headers).
+ *        ⛔ Do not switch `bhp_review_ask_enabled` on in production before
+ *           that record is published at
+ *           `default._domainkey.braveheartspublishing.com`."
+ *
+ * ⭐ THE CURRENT TRANSPORT, AND HOW EACH HALF OF IT IS KNOWN.
+ *
+ *    1. `wp_mail` no longer hands the message to SiteGround's local MTA. The
+ *       site sends through **FluentSMTP**, which relays to **Google's SMTP
+ *       relay** (`smtp-relay.gmail.com`) over TLS 1.3.
+ *       ⭐ VERIFIED LIVE 2026-09-06 by this desk: `wp plugin list
+ *          --status=active` on the PRODUCTION docroot lists `fluent-smtp`
+ *          **2.3.1, active**. (Read-only. The plugin's settings option was
+ *          NOT opened — it can hold a credential, and the guard that refused
+ *          that read was accepted, not worked around. So "FluentSMTP is the
+ *          active transport" is verified; the specific connection record
+ *          inside it is NOT read by this desk and is not asserted here.)
+ *       ⭐ The relay path itself is OBSERVED, not inferred, in the `Received`
+ *          chain of a real production message — order #820's WooCommerce
+ *          notice, 2026-09-06 09:25:20 MDT:
+ *            `by smtp-relay.gmail.com with ESMTPS id …
+ *             (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384)`
+ *          plus `X-Relaying-Domain: braveheartspublishing.com`.
+ *
+ *    2. The signing selector moved from `default` to **`google`**, which is
+ *       why the old `s=default` permerror is gone rather than merely quiet.
+ *       ⭐ OBSERVED in the same message's `Authentication-Results` as received
+ *          at `mx.google.com`, verbatim:
+ *            dkim=pass header.i=@braveheartspublishing.com header.s=google
+ *            spf=pass … smtp.mailfrom=andrew@braveheartspublishing.com
+ *            dmarc=pass (p=NONE sp=NONE dis=NONE)
+ *          **DKIM pass · SPF pass · DMARC pass**, and the message landed in
+ *          the INBOX.
+ *
+ *    ⛔ READ FROM DOCUMENTATION, NOT RE-READ FROM THE MAILBOX BY THIS DESK:
+ *       both header quotations above come from `Business OS\ANDREW-REVIEW\
+ *       2026-09-06\FIRST-LIVE-SENDS-READ.md` (`connected-operator`, 2026-09-06, Gmail RAW
+ *       headers read first-hand there), corroborated by seals 1029 and 1089.
+ *       This desk verified the ACTIVE PLUGIN live and took the headers from
+ *       that record; it did not open the mailbox itself.
+ *
+ * ⭐ SO THERE IS NO LONGER A MAIL-AUTHENTICATION REASON TO KEEP
+ *    `bhp_review_ask_enabled` OFF, and the prohibition is removed. The option
+ *    in fact already reads `yes` on production (VERIFIED LIVE by `commerce-cx`,
+ *    2026-09-06, `wp option get bhp_review_ask_enabled`) — the state this
+ *    comment forbade. That contradiction is what `CYCLE179-CX-30` was raised
+ *    for, and lifting the stale text is how it closes.
+ *
+ * ⚠ WHAT IS **NOT** LIFTED, AND MUST NOT BE READ AS LIFTED BY THIS EDIT:
+ *    · The WEB LANE still cannot send. `BHP_REVIEW_ASK_WEB_DELAY_DAYS` is
+ *      The `chief-of-staff` desk's inference, labelled `PENDING ANDREW` at its own definition,
+ *      and its copy set is unapproved. That gate is untouched here.
+ *    · DMARC policy is still `p=none`. Passing DMARC under `p=none` is a pass,
+ *      not a policy that would have caught a failure — so a future selector or
+ *      relay change can regress silently. Re-read the headers of a real send
+ *      before trusting this paragraph again.
+ *    · `CYCLE179-LD-40` (a visit buyer can receive the visit-completed email's
+ *      own Amazon ask AND touch 1 AND touch 2) is a DIFFERENT open question and
+ *      is still routed to Andrew, unresolved.
+ *    · Nothing here approves a production deploy, a send, or an activation.
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐⭐ WHY THE STORE SENDS THIS AND NOT MAILCHIMP
@@ -468,7 +535,7 @@ if ( ! defined( 'BHP_REVIEW_ASK_TOUCH2_SENT_META' ) ) {
  * ⭐⭐ SEAL 1066, 2026-09-05 · '2026-08-28', THE ADAMS VISIT DATE, FOR BOTH
  *     LANES. Andrew Signore, asked to choose between the two candidate floors
  *     below, answered *"Include them all"* and confirmed *"Yes"*. The eight
- *     Adams orders are IN. ⛔ RELAYED through Gandalf, not heard first-hand by
+ *     Adams orders are IN. ⛔ RELAYED through `chief-of-staff`, not heard first-hand by
  *     this desk.
  *
  *     WHAT THAT ACTUALLY ADMITS, stated so the reader does not have to derive
@@ -545,7 +612,7 @@ if ( ! defined( 'BHP_REVIEW_ASK_WEB_DELAY_DAYS' ) ) {
  * Both lanes: days after touch 1 went out before the single reminder.
  *
  * ⭐⭐ 4, NOT 7, SINCE 1.19.364 — ANDREW, SEAL 977, VERBATIM: *"If no reviews
- *     we ask 4 days later"*. Merry's `CYCLE179-MKT-REVIEW-SEQ-V2.md` §3 records
+ *     we ask 4 days later"*. The `marketing-growth` desk's `CYCLE179-MKT-REVIEW-SEQ-V2.md` §3 records
  *     the same number and marks it as the change from V1.
  *
  * ⛔ SUPERSEDED VALUE, PRESERVED RATHER THAN DELETED: **7**, seal 965,
@@ -610,7 +677,7 @@ if ( ! defined( 'BHP_REVIEW_ASK_WINDOW_END_HOUR' ) ) {
  *    window's start and two and a half hours before its end, so a late queue,
  *    a slow `action_scheduler_run_queue` or a daylight-saving shift all have
  *    room to be absorbed without the run falling out of the window. It is also
- *    exactly where Gandalf's hand-repair put production (action 4863, 15:30
+ *    exactly where the `chief-of-staff` desk's hand-repair put production (action 4863, 15:30
  *    UTC = 09:30 America/Boise), so a 1.19.384 deploy finds that action already
  *    correct and LEAVES IT ALONE rather than churning it.
  *
@@ -1588,7 +1655,7 @@ function bhp_review_ask_copy_legacy_21day() {
 		/*
 		 * ⭐⭐ 1.19.373 · SEAL 1007 REACHES THIS SET TOO, BY RULING.
 		 *
-		 * ⛔ Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through Gandalf,
+		 * ⛔ Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through `chief-of-staff`,
 		 *    not heard first-hand): *"I like the nice signature and big place
 		 *    brave hearts - drop the plain one"*. Applied to the three live
 		 *    sets in 1.19.371 and to the day-0 set in 1.19.372; round 11
@@ -1649,7 +1716,7 @@ function bhp_review_ask_copy_legacy_21day() {
  * VISIT LANE, TOUCH 1. ⭐ APPROVED.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⛔⛔ MERRY'S APPROVED PRIMARY TEMPLATE, RENDERED WORD FOR WORD.
+ * ⛔⛔ THE MARKETING-GROWTH DESK'S APPROVED PRIMARY TEMPLATE, RENDERED WORD FOR WORD.
  *     SOURCE, READ AT SOURCE RATHER THAN ACCEPTED FROM A BRIEF:
  *     `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-ASKS.md`
  *     §1 "THE PRIMARY TEMPLATE (single book)", 2026-09-05.
@@ -1684,7 +1751,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 
 	/*
 	 * ⚠ THE TIME PHRASE IS THE ONLY THING THE BOOK COUNT CHANGES, AND IT
-	 *   CHANGES BECAUSE MERRY FLAGGED IT RATHER THAN BECAUSE IT LOOKED NICER.
+	 *   CHANGES BECAUSE MARKETING-GROWTH FLAGGED IT RATHER THAN BECAUSE IT LOOKED NICER.
 	 *   V2 "Numbers used": *"about a week now" is ACTUAL for the 7-day send.
 	 *   ⚠ For a two-or-more-book order sending at +10 days, swap to "for a
 	 *   week and a half now". Flagged so it is not shipped wrong."* This set
@@ -1704,7 +1771,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 	 * ⛔ AND IT IS ALSO A RENDERING NECESSITY. `{ChildFirstName}` falls back to
 	 *    the lower-case `your reader`, so the named opener would render
 	 *    *"your reader has had ..."* with a lower-case letter opening the
-	 *    email. Merry supplies a differently-capitalised generic line for
+	 *    email. `marketing-growth` supplies a differently-capitalised generic line for
 	 *    exactly that reason. This is the branch the docblock on
 	 *    `bhp_review_ask_copy_touch2()` anticipated in 1.19.362.
 	 */
@@ -1714,7 +1781,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 	 *     and *"Ava and Noah has had"* is a broken sentence. The verb is
 	 *     chosen from the same count that produced the phrase.
 	 *
-	 * ⚠ THIS IS NOT NEW COPY. It is Merry's own approved sentence with its
+	 * ⚠ THIS IS NOT NEW COPY. It is the `marketing-growth` desk's own approved sentence with its
 	 *   verb made to agree with its own subject; no word is added and none is
 	 *   removed. The singular branch is byte-identical to 1.19.365.
 	 */
@@ -1783,7 +1850,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		),
 
 		/*
-		 * ⭐⭐ 1.19.365 · APPROVED BY ANDREW, SEAL 982, RELAYED THROUGH GANDALF
+		 * ⭐⭐ 1.19.365 · APPROVED BY ANDREW, SEAL 982, RELAYED THROUGH CHIEF-OF-STAFF
 		 *     VERBATIM: *"agreed, conitnue to build it out"*, given 2026-09-05
 		 *     after seal 981 removed one sentence from touch 1 (recorded
 		 *     below). The approval names day 0, touch 1, touch 2 and the web
@@ -1801,7 +1868,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		'subject'         => __( 'A small favor about the book', 'brave-hearts' ),
 
 		/*
-		 * ⚠ ENGINEERING COPY, MARKED AS SUCH. Merry's template is a plain note
+		 * ⚠ ENGINEERING COPY, MARKED AS SUCH. The `marketing-growth` desk's template is a plain note
 		 *   with no preheader. A WooCommerce email renders a preheader slot,
 		 *   and leaving it empty shows the reader the raw start of the HTML in
 		 *   the inbox preview. This restates the subject rather than adding a
@@ -1818,7 +1885,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		/*
 		 * ⭐ V2 §2 BODY, TRANSCRIBED WORD FOR WORD. The greeting is NOT here:
 		 *    both templates render *"Hi {first name},"* / *"Hi there,"*
-		 *    themselves, which is the conditional Merry's merge table asks for.
+		 *    themselves, which is the conditional the `marketing-growth` desk's merge table asks for.
 		 */
 		'body_before'     => array(
 			$opener,
@@ -1835,7 +1902,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		 *       "A three-star review that says why is worth more to me than a
 		 *        five-star one that does not."
 		 *
-		 * ⚠ IT WAS NEVER IN THIS FILE. It lived in Merry's draft only; this
+		 * ⚠ IT WAS NEVER IN THIS FILE. It lived in the `marketing-growth` desk's draft only; this
 		 *   engine's touch-1 set carried the superseded ASKS §1 prose until
 		 *   1.19.365. Recorded so the absence is a decision on the record and
 		 *   not an accident of which draft a future editor happens to open.
@@ -1848,7 +1915,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		 *    SITS BETWEEN THE ROW AND THE LINK. ⚠ `links_lead` renders inside
 		 *    <strong>, so these words are bolder in the email than on the page.
 		 *    That is a RENDERING deviation, reported not hidden. The words are
-		 *    Merry's, unchanged.
+		 *    The `marketing-growth` desk's, unchanged.
 		 *
 		 * ⛔⛔ SUPERSEDED 2026-09-05 BY THE ROUND-8 BRIEF (seal 998 verdict),
 		 *     PRESERVED VERBATIM RATHER THAN DELETED:
@@ -1869,7 +1936,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		 *     supplied verbatim: *"Tap a star to rate {BookTitle}. Then two or
 		 *     three honest sentences on the next page."*
 		 *
-		 * ⛔ IT IS NOT AN INVENTED SENTENCE AND IT IS NOT MERRY'S EITHER: it
+		 * ⛔ IT IS NOT AN INVENTED SENTENCE AND IT IS NOT THE MARKETING-GROWTH DESK'S EITHER: it
 		 *    arrived in the brief as the exact string to ship, which is the
 		 *    same route every other locked string in this file took. It says
 		 *    what the row is for, which the row can no longer say for itself
@@ -1921,7 +1988,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		 *       too, and that link is the QR on the bookmark that came with
 		 *       the book."
 		 *
-		 * ⚠ IT IS NOT ONLY A PREFERENCE. Merry's V2 §7 decoded the V6 bookmark
+		 * ⚠ IT IS NOT ONLY A PREFERENCE. The `marketing-growth` desk's V2 §7 decoded the V6 bookmark
 		 *   QR first-hand on 2026-09-05: it resolves to
 		 *   `amazon.com/review/create-review`, so the removed sentence pointed
 		 *   at the second destination in the same breath as describing it.
@@ -1933,7 +2000,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 		/*
 		 * ⭐ SEAL 1007 - THE PLAIN SIGN-OFF IS GONE, THE SIGNATURE BLOCK CARRIES
 		 *    THE NAME. Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
-		 *    Gandalf, not heard first-hand): *"I like the nice signature and
+		 *    `chief-of-staff`, not heard first-hand): *"I like the nice signature and
 		 *    big place brave hearts - drop the plain one"*.
 		 *
 		 * ⛔ SUPERSEDED LINE, PRESERVED SO IT IS NOT RE-DERIVED BY ACCIDENT:
@@ -1954,7 +2021,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
 
 		/*
 		 * ⚠ D-6 AGAIN, AND IT IS A PROMISE IN HIS NAME. *"I answer every one."*
-		 *   Merry's template carries it as a P.S.; ship it only if he will
+		 *   The `marketing-growth` desk's template carries it as a P.S.; ship it only if he will
 		 *   actually do it, on an email the store sends without him.
 		 *
 		 * ⭐ 1.19.369 · VERB AGREEMENT, same rule as the opener. Two children
@@ -1978,10 +2045,10 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
  * WEB LANE, TOUCH 1. ⭐ APPROVED 2026-09-05, SEAL 982.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⛔⛔ MERRY'S V2 §4 PROSE, TRANSCRIBED WORD FOR WORD FROM
+ * ⛔⛔ THE MARKETING-GROWTH DESK'S V2 §4 PROSE, TRANSCRIBED WORD FOR WORD FROM
  *     `Business OS\WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-REVIEW-SEQ-V2.md`
  *     (md5 `1ecd9c75acfc755df0e121b47ca73842`, read on both mounts 2026-09-05),
- *     approved by Andrew, seal 982, relayed verbatim through Gandalf:
+ *     approved by Andrew, seal 982, relayed verbatim through `chief-of-staff`:
  *     *"agreed, conitnue to build it out"*.
  * ═══════════════════════════════════════════════════════════════════════════
  *
@@ -1997,7 +2064,7 @@ function bhp_review_ask_copy_visit_touch1( $order = null ) {
  * ⚠ THE 10-DAY DELAY IS STILL AN INFERENCE, NOT A SEAL. Conflict
  *   CYCLE179-MKT-34, carried forward UNRESOLVED and still PENDING ANDREW.
  *   Seal 977 spoke to visit timings; *"the 7 day review ask for the website"*
- *   has two honest readings and neither Merry nor this desk may settle it.
+ *   has two honest readings and neither `marketing-growth` nor this desk may settle it.
  *   ⛔ `BHP_REVIEW_ASK_WEB_DELAY_DAYS` was NOT edited in this build.
  *
  * ⭐⭐ 1.19.375 · IT TAKES THE ORDER NOW, for the same reason the visit set has
@@ -2031,11 +2098,11 @@ function bhp_review_ask_copy_web_touch1( $order = null ) {
 	 *
 	 * ⭐ THE REPAIR IS AGREEMENT ONLY. `it` -> `they`, `it` -> `them`. No word
 	 *    is added, none is removed, none is reordered, and the clause keeps
-	 *    Merry's rhythm and Merry's meaning exactly. The SINGULAR BRANCH IS
+	 *    The `marketing-growth` desk's rhythm and the `marketing-growth` desk's meaning exactly. The SINGULAR BRANCH IS
 	 *    BYTE-IDENTICAL to 1.19.374 and is still pinned as V2 §4 verbatim by
 	 *    the suite.
 	 *
-	 * ⛔⛔ FLAGGED FOR GANDALF AND MERRY RATHER THAN SLIPPED THROUGH: the brief
+	 * ⛔⛔ FLAGGED FOR CHIEF-OF-STAFF AND MARKETING-GROWTH RATHER THAN SLIPPED THROUGH: the brief
 	 *     said *"adjust only articles/verbs, never the approved wording"*, and
 	 *     `it`/`them` are PRONOUNS, not articles or verbs. This desk judged
 	 *     that shipping the ungrammatical plural was the worse of the two
@@ -2102,7 +2169,7 @@ function bhp_review_ask_copy_web_touch1( $order = null ) {
 			 *      "Your reader has had {BookTitle} for a week or so now. It
 			 *       went out in the mail, so I never got to see who opened it."
 			 *
-			 *    Every other word of Merry's V2 §4 sentence is untouched.
+			 *    Every other word of the `marketing-growth` desk's V2 §4 sentence is untouched.
 			 *
 			 * ⭐ 1.19.375 · the second clause is composed for agreement, above.
 			 *    ⚠ "Your reader has had" needs NO verb change: its subject is
@@ -2145,7 +2212,7 @@ function bhp_review_ask_copy_web_touch1( $order = null ) {
 		/*
 		 * ⭐ SEAL 1007 - THE PLAIN SIGN-OFF IS GONE, THE SIGNATURE BLOCK CARRIES
 		 *    THE NAME. Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
-		 *    Gandalf, not heard first-hand): *"I like the nice signature and
+		 *    `chief-of-staff`, not heard first-hand): *"I like the nice signature and
 		 *    big place brave hearts - drop the plain one"*.
 		 *
 		 * ⛔ SUPERSEDED LINE, PRESERVED SO IT IS NOT RE-DERIVED BY ACCIDENT:
@@ -2166,7 +2233,7 @@ function bhp_review_ask_copy_web_touch1( $order = null ) {
 		/*
 		 * ⛔ NO POSTSCRIPT ON THE WEB SET. V2 §4 carries none, and the visit
 		 *    set's *"I answer every one"* P.S. is a promise in Andrew's name
-		 *    (D-6). It is not copied into a set Merry did not put it in.
+		 *    (D-6). It is not copied into a set `marketing-growth` did not put it in.
 		 */
 		'postscript'      => '',
 
@@ -2180,14 +2247,14 @@ function bhp_review_ask_copy_web_touch1( $order = null ) {
  * TOUCH 2, BOTH LANES. ⭐ APPROVED 2026-09-05, SEAL 982.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⛔⛔ MERRY'S V2 §3 PROSE, TRANSCRIBED WORD FOR WORD. Same source file and
+ * ⛔⛔ THE MARKETING-GROWTH DESK'S V2 §3 PROSE, TRANSCRIBED WORD FOR WORD. Same source file and
  *     same md5 as the web set above. V2 §4 closes with *"Touch 2 for web
  *     orders is the section 3 body unchanged"*, which is why ONE set serves
  *     both lanes: it names no school and no child, so there is nothing to
  *     differ about.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔⛔ TWO SENTENCES IN THIS SET ARE LOAD-BEARING AND MERRY MARKED THEM SO.
+ * ⛔⛔ TWO SENTENCES IN THIS SET ARE LOAD-BEARING AND MARKETING-GROWTH MARKED THEM SO.
  *
  *   1. *"I know how a week can get away from me"* is ANDREW'S OWN SENTENCE and
  *      MUST NOT BE REWORDED. Seal 977: *"the seven days later should be I know
@@ -2213,7 +2280,7 @@ function bhp_review_ask_copy_web_touch1( $order = null ) {
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * ⛔ THIS SET NAMES NO CHILD. There is no `{ChildFirstName}` anywhere in
- *    Merry's V2 §3 body, on purpose — §4 says that is the reason ONE set can
+ *    The `marketing-growth` desk's V2 §3 body, on purpose — §4 says that is the reason ONE set can
  *    serve both lanes (*"it names no school and no child, so there is nothing
  *    to differ about"*). With no subject there is no verb to make agree.
  *
@@ -2290,7 +2357,7 @@ function bhp_review_ask_copy_touch2() {
 		/*
 		 * ⭐ SEAL 1007 - THE PLAIN SIGN-OFF IS GONE, THE SIGNATURE BLOCK CARRIES
 		 *    THE NAME. Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
-		 *    Gandalf, not heard first-hand): *"I like the nice signature and
+		 *    `chief-of-staff`, not heard first-hand): *"I like the nice signature and
 		 *    big place brave hearts - drop the plain one"*.
 		 *
 		 * ⛔ SUPERSEDED LINE, PRESERVED SO IT IS NOT RE-DERIVED BY ACCIDENT:
@@ -2439,7 +2506,7 @@ function bhp_review_ask_copy_is_usable( $copy ) {
 	 *   moved out of the `empty()` loop above and joined `heading`, which was
 	 *   already here for exactly this reason: the visit touch-1 set Andrew
 	 *   approved has no bolded question and no "Find the one you read:" line,
-	 *   because Merry's template has neither. ⛔ Leaving them in the loop would
+	 *   because the `marketing-growth` desk's template has neither. ⛔ Leaving them in the loop would
 	 *   make the approved copy fail its own usability test and fall back to a
 	 *   set nobody selected. They are still required to be PRESENT and to be
 	 *   STRINGS, so a typo'd key is still caught.
@@ -2780,7 +2847,7 @@ function bhp_review_ask_child_verb( $order, $singular, $plural ) {
 /**
  * The school name for a visit order, from the registry.
  *
- * ⛔ THE REGISTRY'S OWN `school` VALUE, NEVER THE SLUG PRETTIFIED. Merry's
+ * ⛔ THE REGISTRY'S OWN `school` VALUE, NEVER THE SLUG PRETTIFIED. The `marketing-growth` desk's
  *    merge table is explicit: *"The school's own name, never 'your school'"* —
  *    and `adams-2026-08-28` title-cased is "Adams 2026 08 28", not a school.
  *
@@ -2846,7 +2913,7 @@ function bhp_review_ask_first_chapter_book_key( $order ) {
  *
  * ⭐ THE SHORT TITLE, via `bhp_review_book_title()` — "The Mariana Trench",
  *    not "Adventures of Charlotte and Henry: The Mariana Trench", which is what
- *    Merry's merge table specifies and what a parent calls the book.
+ *    The `marketing-growth` desk's merge table specifies and what a parent calls the book.
  *
  * ⛔⛔ 1.19.375 · THIS FUNCTION NO LONGER BACKS `{BookTitle}`. Seal 1032 moved
  *     that slot to the FULL LIST (`bhp_review_ask_book_title_list()` below).
@@ -2877,7 +2944,7 @@ function bhp_review_ask_book_title( $order ) {
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐ 1.19.375 · SEAL 1032. ANDREW SIGNORE, 2026-09-05, VERBATIM (⛔ RELAYED
- *     through Gandalf, not heard first-hand): *"I also assume the 'mariana
+ *     through `chief-of-staff`, not heard first-hand): *"I also assume the 'mariana
  *     trench' is just a holder for 1 book and will be the book that was
  *     purchased in its place on production and if its multiple books all the
  *     books listed in the paragraph"*.
@@ -2893,7 +2960,7 @@ function bhp_review_ask_book_title( $order ) {
  *
  * ⭐ THIS IS NOT A NEW JOIN. It is the DAY-0 join, extracted verbatim from
  *    `bhp_visit_email_merge_values()` where it has shipped since 1.19.364,
- *    and that function now calls this one. Merry's slot table specified it
+ *    and that function now calls this one. The `marketing-growth` desk's slot table specified it
  *    there: *"One title verbatim, or a natural list for two or more: The
  *    Mariana Trench and Mount Everest"*. Two lanes, one implementation, so
  *    they cannot drift apart the way two copies of a join always do.
@@ -3093,7 +3160,7 @@ function bhp_review_ask_merge_is_complete( $copy, $order ) {
  * ANDREW, SEAL 977: *"Is there anyway to put the 5 stars in the email and all
  * they have to do is click 5 stars and it goes direct to the website?"*
  *
- * ⛔⛔ ALL FIVE ARE ALWAYS BUILT, AND NOTHING HERE STEERS TOWARD FIVE. Merry's
+ * ⛔⛔ ALL FIVE ARE ALWAYS BUILT, AND NOTHING HERE STEERS TOWARD FIVE. The `marketing-growth` desk's
  *     V2 §5 rule 1, and it is not a styling preference: *"A star row that
  *     visually steers toward five is a solicitation for a five-star review, and
  *     it is exactly the thing that makes a review programme indefensible."*
@@ -3190,7 +3257,7 @@ function bhp_review_ask_star_alt( $rating ) {
  *
  * ⛔ AN EMPTY ARRAY IS A SEND-STOPPER, NOT A DEGRADED EMAIL. It means no
  *    per-title review URL resolved, and `bhp_review_ask_decline_reason()`
- *    returns `unresolved_merge_slot`. Merry's V2 §2 merge table says the same
+ *    returns `unresolved_merge_slot`. The `marketing-growth` desk's V2 §2 merge table says the same
  *    in words: *"If no per-title review URL resolves, do not send."*
  *
  * ⚠ THE TOKEN IS MINTED PER ORDER AND IS THE SAME ON ALL FIVE LINKS. It
@@ -3297,7 +3364,7 @@ function bhp_review_ask_copy_has_stars( $copy ) {
  *
  * ⭐ THE PNGs ARE NOT DELETED. `bhp_review_ask_star_image_url()` still
  *    resolves and `assets/images/email/review-star-gold@2x.png` still ships;
- *    Legolas's spec wants a designed star for the site's review page and for
+ *    The `design-creative` desk's spec wants a designed star for the site's review page and for
  *    social images, where a PNG is the only option. The EMAIL simply stops
  *    referencing it.
  * ====================================================================== */
@@ -3325,7 +3392,7 @@ function bhp_review_ask_star_glyph() {
  *    state.
  *
  * ⭐⭐ 1.19.372 · SEALS 1016a AND 1016b SUPERSEDE THE GREY. Andrew Signore,
- *     2026-09-05, verbatim (⛔ RELAYED through Gandalf, not heard first-hand):
+ *     2026-09-05, verbatim (⛔ RELAYED through `chief-of-staff`, not heard first-hand):
  *     seal 1016a *"Wait, do B"* and seal 1016b *"pale gold to bold gold"*. The
  *     row therefore rests in PALE GOLD `#dfc793` and fills to BOLD GOLD
  *     `#c4a15c`, which is still a real change of state under the mouse — it is
@@ -3336,7 +3403,7 @@ function bhp_review_ask_star_glyph() {
  *    to 1.19.371 inclusive.
  *
  * ⚠ CONTRAST, MEASURED NOT ASSUMED, AND IT IS WHY THE CAPTION IS MANDATORY.
- *   Legolas §4 measured `#c4a15c` on `#fffaf0` at roughly 2.2:1. `#dfc793` on
+ *   `design-creative` §4 measured `#c4a15c` on `#fffaf0` at roughly 2.2:1. `#dfc793` on
  *   the same ground is LIGHTER STILL and therefore lower. ⛔ NEITHER VALUE IS
  *   ALLOWED TO CARRY INFORMATION ALONE, and the pale resting state does not
  *   change that rule — it makes it more important, not less. ⚠ THE `#dfc793`
@@ -3344,7 +3411,7 @@ function bhp_review_ask_star_glyph() {
  *   by inspection of the hex, not by a computed figure. Every star is a link
  *   with an `aria-label`, and the caption line beneath the row states in full
  *   body-contrast text what the row is for. The star is decoration over an
- *   accessible control, which is the same ruling Legolas §4 point 1 made for
+ *   accessible control, which is the same ruling `design-creative` §4 point 1 made for
  *   the gold.
  *
  * @since 1.19.370
@@ -3416,7 +3483,7 @@ function bhp_review_ask_star_colours() {
  *     colour of its own, and an `!important` author declaration outranks a
  *     normal inline one, so `a:hover span[aria-hidden] { color: ... !important }`
  *     is the pair of facts that makes the hover actually land. This is
- *     Legolas's prescription in `CYCLE179-DES-REVIEW-EMAIL.md`, adopted as
+ *     The `design-creative` desk's prescription in `CYCLE179-DES-REVIEW-EMAIL.md`, adopted as
  *     written. ⚠ STILL NOT VERIFIED IN ANY MAIL CLIENT: no client was opened
  *     and no send was made in this build.
  *
@@ -3499,7 +3566,7 @@ function bhp_review_ask_hero_map() {
 	if ( ! defined( 'BHP_EMAIL_GENERAL_HERO' ) ) {
 		/*
 		 * ⭐⭐ FOUNDER SEAL 1027, 2026-09-05. Andrew Signore, verbatim
-		 *     (⛔ RELAYED through Gandalf, not heard first-hand):
+		 *     (⛔ RELAYED through `chief-of-staff`, not heard first-hand):
 		 *     *"Faces toward the camera"*.
 		 *
 		 * ⭐ THAT PICKS THE ADAMS LIBRARY FRAME. Two candidates were shipped
@@ -3530,10 +3597,10 @@ function bhp_review_ask_hero_map() {
 		array(
 			/*
 			 * ⭐⭐ 1.19.372 · SEAL 1015. Andrew Signore, 2026-09-05, verbatim
-			 *     (⛔ RELAYED through Gandalf, not heard first-hand): *"I dont
+			 *     (⛔ RELAYED through `chief-of-staff`, not heard first-hand): *"I dont
 			 *     like that picture though, use another one"*. The rejected
 			 *     picture is frame 02. Touch 1 now defaults to frame 04 —
-			 *     Legolas's own first choice for a review ask
+			 *     The `design-creative` desk's own first choice for a review ask
 			 *     (`CYCLE179-DES-REVIEW-EMAIL.md` §A3): the room from behind
 			 *     with the cover of The Amazon legible on the screen, so the
 			 *     book being asked about is visible.
@@ -3559,7 +3626,7 @@ function bhp_review_ask_hero_map() {
 			 *    stated rather than assumed: seal 1020 records them as
 			 *    CONSENTED AND ALREADY PUBLIC. That is the whole permission,
 			 *    and it is the founder's, not this lane's. ⚠ RELAYED through
-			 *    Gandalf, not heard first-hand.
+			 *    `chief-of-staff`, not heard first-hand.
 			 *
 			 * ⭐ 01 IS DAY 0, 02 IS TOUCH 1, which is the same shape as the
 			 *    Dallas Harris entry: the day-0 note goes out the evening of a
@@ -3586,7 +3653,7 @@ function bhp_review_ask_hero_map() {
 			 * ⭐⭐ 1.19.374 · THE GENERAL HERO IS THE ADAMS LIBRARY. SEAL 1027.
 			 *
 			 * ⭐ Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through
-			 *    Gandalf, not heard first-hand): *"Faces toward the camera"*.
+			 *    `chief-of-staff`, not heard first-hand): *"Faces toward the camera"*.
 			 *    Both candidates stay shipped; the DEFAULT is now
 			 *    `hero-read-aloud-general-adams.jpg`.
 			 *
@@ -3612,7 +3679,7 @@ function bhp_review_ask_hero_map() {
  * The hero photograph for one order, or an empty array when there is none.
  *
  * ⭐ THE MAPPING IS AN ARRAY KEYED BY VISIT SLUG, AND IT IS FILTERABLE, so the
- *    next school visit is one filter callback rather than a deploy. Legolas's
+ *    next school visit is one filter callback rather than a deploy. The `design-creative` desk's
  *    spec §7 assigns the two Dallas Harris frames: frame 02 shows the printed
  *    book being read and suits the review ask, frame 01 shows the whole room
  *    and suits the day-0 thank-you.
@@ -3622,7 +3689,7 @@ function bhp_review_ask_hero_map() {
  *    Dallas Harris is a false statement in a picture, which is the same
  *    failure class as a false statement in a sentence.
  *
- * ⛔ TOUCH 2 HAS NO HERO. Legolas §7: it is the short last note, and *"a
+ * ⛔ TOUCH 2 HAS NO HERO. `design-creative` §7: it is the short last note, and *"a
  *    photograph would make it look like a bigger ask than it is."*
  *
  * ⛔⛔ READ THIS BEFORE TOUCHING ANY FILE WITH `05` IN THE NAME. TWO DIFFERENT
@@ -3635,14 +3702,14 @@ function bhp_review_ask_hero_map() {
  *      AND IT MUST NOT BE USED ON ANY CUSTOMER-FACING SURFACE UNTIL CONSENT IS
  *      ON RECORD. That decision is still open.
  *
- *   ⭐ `hero-dallas-harris-2026-09-03-05.jpg` — a DIFFERENT image. Legolas's
+ *   ⭐ `hero-dallas-harris-2026-09-03-05.jpg` — a DIFFERENT image. The `design-creative` desk's
  *      output numbering is deliberately independent of the gallery numbering
  *      (`CYCLE179-DES-REVIEW-EMAIL.md` §A3): this one is cropped from gallery
  *      frame 03 and no child is in the frame at all. It is shipped, and it is
  *      NOT mapped by default.
  *
  * ⚠ ONE OPEN FLAG ON THAT FILE, `CYCLE179-DES-31`: it makes Andrew's own
- *   "About the Author" slide the largest element in the frame. Legolas read
+ *   "About the Author" slide the largest element in the frame. `design-creative` read
  *   the slide at full resolution and found none of the four flagged
  *   specifics, but it is Andrew's own copy on display in a customer-facing
  *   image. ⛔ SHIPPING THE FILE IS NOT USING IT. Mapping 05 into `touch1` or
@@ -3722,7 +3789,7 @@ function bhp_review_ask_hero( $order, $context = 'touch1' ) {
  *
  * ⭐ THE ALT CARRIES THE BAKED CAPTION AS WELL AS THE SCENE, because the
  *    caption is pixels: a screen reader gets nothing from it otherwise.
- *    Strings are Legolas's spec §8 verbatim.
+ *    Strings are the `design-creative` desk's spec §8 verbatim.
  *
  * ⛔ NO CHILD IS NAMED, NO NUMBER OF CHILDREN IS CLAIMED, AND NO REACTION IS
  *    DESCRIBED. "A room of first and second graders" is what the photograph
@@ -3776,7 +3843,7 @@ function bhp_review_ask_hero_alt( $file ) {
 		/*
 		 * ⭐⭐ 1.19.373 · ADAMS ELEMENTARY, 2026-08-28. SEAL 1020.
 		 *
-		 * ⛔ THESE FOUR STRINGS ARE LEGOLAS'S, TRANSCRIBED FROM THE ROUND-12
+		 * ⛔ THESE FOUR STRINGS ARE THE DESIGN-CREATIVE DESK'S, TRANSCRIBED FROM THE ROUND-12
 		 *    BRIEF WORD FOR WORD. Nothing was rewritten, tightened or made
 		 *    warmer. ⛔ The `-plain` twins carry the same scene sentence with
 		 *    the "Read-aloud at ..." caption sentence removed, because those
@@ -3785,7 +3852,7 @@ function bhp_review_ask_hero_alt( $file ) {
 		 *
 		 * ⛔ NO CHILD IS NAMED AND NO REACTION IS DESCRIBED. "About forty first
 		 *    and second graders" is a count of a photographed room, which is
-		 *    what the photograph shows; it is Legolas's own number from the
+		 *    what the photograph shows; it is the `design-creative` desk's own number from the
 		 *    frame and it is not a claim about attendance, enjoyment or
 		 *    outcome.
 		 */
@@ -3811,7 +3878,7 @@ function bhp_review_ask_hero_alt( $file ) {
 		 *    is kept in full, because that file is still shipped and is still
 		 *    one constant away.
 		 *
-		 * ⛔ THE STRING ITSELF IS UNCHANGED and is Legolas's, transcribed word
+		 * ⛔ THE STRING ITSELF IS UNCHANGED and is the `design-creative` desk's, transcribed word
 		 *    for word in 1.19.373. No child is named, no count is claimed and no
 		 *    reaction is described.
 		 */
@@ -3837,7 +3904,7 @@ function bhp_review_ask_hero_alt( $file ) {
  *   is Andrew's. It is built because the round-9 brief asks for it; it is
  *   flagged here so it is not mistaken for a settled question.
  *
- * ⛔⛔ THE SOCIAL LINE DEFAULTS TO EMPTY AND THAT IS DELIBERATE. Legolas's spec
+ * ⛔⛔ THE SOCIAL LINE DEFAULTS TO EMPTY AND THAT IS DELIBERATE. The `design-creative` desk's spec
  *     names "Facebook · Instagram", but NO Facebook or Instagram URL exists
  *     anywhere in this repository — grepped 2026-09-05 across `inc/`,
  *     `functions.php`, `woocommerce/`, `template-parts/` and the content
@@ -3905,7 +3972,7 @@ function bhp_review_ask_signature() {
  * ⭐⭐ 1.19.372 · WHY THIS FUNCTION EXISTS AT ALL: ONE BLOCK, TWO EMAILS.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through Gandalf, not heard
+ * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through `chief-of-staff`, not heard
  *    first-hand): day 0 must end with the SAME signature block as touch 1 —
  *    Andrew Signore / Author | Brave Hearts Publishing / Big Places. Brave
  *    Hearts. / the social line — and not WooCommerce's plain `<em>Big Places.
@@ -4531,6 +4598,34 @@ function bhp_review_ask_decline_reason( $order, $now = 0 ) {
 	}
 
 	/*
+	 * ⭐⭐ V-9, SEAL 1304, THEME 1.19.396. AN ORDER THAT REDEEMED A REWARD
+	 *    COUPON IS NEVER ASKED FOR A REVIEW.
+	 *
+	 * ⛔ THE REASON IS NOT TIDINESS AND IT IS NOT ABOUT DUPLICATE EMAIL. The
+	 *    reward coupon is how a parent who already gave a video testimonial
+	 *    receives a free coloring book. Asking that parent for a store review
+	 *    a few days later converts a disclosed incentive into an undisclosed
+	 *    one and publishes an incentivized review on a page where the
+	 *    incentive is invisible. That is an FTC exposure (16 CFR 465), not a
+	 *    user-experience nicety, and it is why this gate sits with `refunded`
+	 *    at the top of the function rather than among the timing checks.
+	 *
+	 * ⚠ PLACED BEFORE `bhp_review_ask_next_touch()` DELIBERATELY. Every check
+	 *   below this line reasons about WHEN to ask. This one decides WHETHER,
+	 *   and a "when" answer computed for an order that must never be asked is
+	 *   at best wasted and at worst a touch-2 schedule that outlives a later
+	 *   correction to the touch-1 logic.
+	 *
+	 * ⚠ `function_exists` rather than a bare call: `inc/review-ask-email.php`
+	 *   is also loaded by suites that do not boot the whole theme, and a fatal
+	 *   here would take down the send run rather than skip one order. Absent
+	 *   predicate means "not suppressed", which is the pre-1.19.396 behaviour.
+	 */
+	if ( function_exists( 'bhp_postpurchase_is_suppressed' ) && bhp_postpurchase_is_suppressed( $order ) ) {
+		return 'suppressed_coupon';
+	}
+
+	/*
 	 * ⭐ SEAL 965. WHICH TOUCH IS THIS ORDER NEXT IN LINE FOR? `0` means both
 	 *    have been dealt with and the sequence is finished for this order,
 	 *    which is the replacement for the old flat `already_sent`. The old
@@ -4684,7 +4779,7 @@ function bhp_review_ask_decline_reason( $order, $now = 0 ) {
 	 *     is what guarantees placeholder text can never reach a customer even
 	 *     if somebody switches the engine on early. It is a per-order gate
 	 *     rather than a global halt so that the visit touch-1 lane, whose copy
-	 *     IS approved, keeps running while the other two wait for Merry.
+	 *     IS approved, keeps running while the other two wait for `marketing-growth`.
 	 */
 	/*
 	 * ⛔⛔ RAW, NOT MERGED, SINCE 1.19.364. `bhp_review_ask_copy()` returns the
@@ -4712,7 +4807,7 @@ function bhp_review_ask_decline_reason( $order, $now = 0 ) {
 	 *    FIVE. `bhp_review_ask_star_row()` returns an empty array when no
 	 *    per-title review URL resolves, and an email whose only call to action
 	 *    is a row that did not render is a wasted send to a real parent.
-	 *    Merry's V2 §2 merge table: *"If no per-title review URL resolves, do
+	 *    The `marketing-growth` desk's V2 §2 merge table: *"If no per-title review URL resolves, do
 	 *    not send."* Same slug as the other unresolved slot, deliberately, so
 	 *    the run summary counts one kind of failure by one name.
 	 */
@@ -5228,7 +5323,7 @@ function bhp_review_ask_run( $args = array() ) {
 	 *
 	 * ⭐ SO THE POOL IS DESCRIBED BEFORE IT IS WALKED, by status, using a
 	 *    COUNT-ONLY query (`return => ids`, `limit => -1`) that loads no order
-	 *    objects. This is the line that answers Gandalf's question directly:
+	 *    objects. This is the line that answers the `chief-of-staff` desk's question directly:
 	 *    if `total shop orders (any status)` is 0, staging simply does not have
 	 *    the sixteen visit orders; if it is non-zero but `completed` is 0, they
 	 *    are present in another status and the candidate query is correctly
@@ -5704,7 +5799,7 @@ function bhp_review_ask_next_daily_run_timestamp( $now = 0 ) {
  * Every PENDING Action Scheduler action for this feature's hook.
  *
  * ⛔ `as_get_scheduled_actions()`, NOT `wp action-scheduler action list`. The
- *    CLI list prints NOTHING on this install (observed by Gandalf at go-live
+ *    CLI list prints NOTHING on this install (observed by `chief-of-staff` at go-live
  *    on 2026-09-06), so an operator checking the schedule that way reads an
  *    empty table and concludes nothing is scheduled. The library function is
  *    the source of truth here and `status` uses it for the same reason.
@@ -5799,7 +5894,7 @@ function bhp_review_ask_next_pending_timestamp( $pending ) {
  * ⚠ THE TEST IS THE WALL CLOCK, NOT THE TIMESTAMP. A correct action is due on
  *   some future DATE, so it can never equal "the next 09:30 from now". What
  *   makes it correct is that it fires at 09:30 site-local. This is also what
- *   makes the deploy quiet on production: Gandalf's hand-made action 4863 is
+ *   makes the deploy quiet on production: the `chief-of-staff` desk's hand-made action 4863 is
  *   already at 09:30 local, so this returns false and it is left alone.
  *
  * @since 1.19.384
@@ -6197,7 +6292,7 @@ function bhp_review_ask_cli( $args, $assoc_args = array(), $say = null ) {
  * `wp bhp review-ask test-send --to=<address> --set=<day0|touch1|touch2|web1> --order=<id> [--dump=<path>]`
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⭐⭐ 1.19.365 · THE VISUAL-CHECK SEAM. Andrew and Gandalf need to LOOK at
+ * ⭐⭐ 1.19.365 · THE VISUAL-CHECK SEAM. Andrew and `chief-of-staff` need to LOOK at
  *     these four emails in a real inbox before anything is activated, and
  *     until now the only way to make one appear was to enable the engine and
  *     wait for a cron. That trade is unacceptable, so this renders ONE real
@@ -6218,7 +6313,7 @@ function bhp_review_ask_cli( $args, $assoc_args = array(), $say = null ) {
  *     required. There is no default, no fallback to the order and no bcc;
  *   - it does NOT bypass the copy gate. An `approved => false` set is REFUSED,
  *     not previewed, because the whole point of the gate is that unapproved
- *     strings do not reach an inbox, and Gandalf's inbox is an inbox.
+ *     strings do not reach an inbox, and the `chief-of-staff` desk's inbox is an inbox.
  *
  * ⛔⛔ IT REFUSES TO RUN ANYWHERE BUT STAGING, AND THE CHECK IS ON `home_url()`
  *     RATHER THAN ON `--url`, deliberately. `--url` is what the operator TYPED;
@@ -6728,7 +6823,7 @@ function bhp_review_ask_cli_plan( $assoc_args, $say ) {
  *
  * ⚠⚠ **AND WHY IT WILL NOT MARK THEM AS SENT BY DEFAULT. VERIFIED, NOT
  *    ASSUMED:** `Business OS\ANDREW-REVIEW\2026-09-05\REVIEW-ASKS\SUMMARY.md`
- *    (Gimli, 2026-09-05) records the live state of those sixteen as
+ *    (`connected-operator`, 2026-09-05) records the live state of those sixteen as
  *    *"16 drafts created in Gmail. NOTHING SENT. Nothing scheduled."*, with
  *    Andrew pressing send himself, one note at a time. ⛔ A DRAFT IS NOT A
  *    SEND (Standing Rules §9.2 rule 1). Writing "touch 1 sent on 2026-09-10"
@@ -6821,7 +6916,7 @@ function bhp_review_ask_cli_migrate( $assoc_args, $say ) {
 	 * ⛔⛔ AND RUNNING THIS COMMAND ON THEM NOW WOULD BE THE DEFECT, NOT THE
 	 *     FIX. `external-pending-<date>` writes the SENT marker, which
 	 *     suppresses touch 1 forever and makes touch 2 decline
-	 *     `touch1_date_unknown`. One `--apply` against the list Gandalf was
+	 *     `touch1_date_unknown`. One `--apply` against the list `chief-of-staff` was
 	 *     given in an earlier round would silently cancel the entire launch the
 	 *     go-live checklist is built around, and nothing downstream would say
 	 *     so — the run summary would simply report sixteen orders already

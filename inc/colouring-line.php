@@ -1859,9 +1859,100 @@ function bhp_offer_shop_card_items() {
          *    picture. ⛔ It never borrows a component's cover. A chapter-book
          *    cover beside $22.99 states that that book costs $22.99.
          */
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.399 — THE PAIR CARD HAS A DESTINATION. `CYCLE179-LD-BUILD-399`.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⭐ THE FOUNDER FOUND IT: "when you click on the bundles they dont
+         *    have their own bundle page?" ⚠️ RELAYED through `chief-of-staff`
+         *    in the build brief, NOT witnessed first-hand by this desk.
+         *
+         * ⭐ VERIFIED FIRST-HAND ON STAGING BEFORE THIS LINE WAS WRITTEN, by
+         *    reading the served `/shop/` DOM at an asserted `window.innerWidth`
+         *    of 1280: this card carried ⛔ ZERO anchors — and unlike the
+         *    Collection card beside it, there was no page anywhere for it to
+         *    point at. The link and the destination are both new in 1.19.399.
+         *
+         * ⛔⛔ THE GATE IS THE POINT, AND IT IS NOT DEFENSIVE PADDING. The page
+         *    is created by a `wp post create` on the environment being served;
+         *    the theme ships the template and the shortcode, not the page. So
+         *    on any environment where that page has NOT been created — which
+         *    right now includes PRODUCTION, deliberately — this card must
+         *    render exactly as it rendered in 1.19.398: no anchor, no 404.
+         *    `bhp_pair_landing_page_exists()` asks the database at render, per
+         *    request, cached.
+         *
+         * ⛔ ONE OWNER OF THE URL. `bhp_pair_landing_url()` is the only place
+         *    the slug becomes a link, so the card and the page can never
+         *    disagree about where the page lives — which is the defect class
+         *    that produced the dead Collection card in the first place.
+         *
+         * ⛔ THE PAPERBACK OFFER ONLY. `$key` here is whichever offer the
+         *    catalog is rendering; the pair page is the destination for the
+         *    Mariana pair specifically, so the map is asked rather than
+         *    assumed. An offer with no page maps to '' and stays unlinked.
+         *
+         * ⛔ NO BUY CONTROL IS TOUCHED. `$module` below is unchanged: the card
+         *    still adds the set to the cart from the grid. This adds a route.
+         */
+        $pair_url = '';
+        if (
+            function_exists('bhp_pair_landing_offers')
+            && function_exists('bhp_pair_landing_page_exists')
+            && function_exists('bhp_pair_landing_url')
+            && in_array($key, (array) bhp_pair_landing_offers(), true)
+            && bhp_pair_landing_page_exists()
+        ) {
+            $pair_url = bhp_pair_landing_url();
+        }
+
+        $card_img   = bhp_offer_composite_card_image($key);
+        $card_title = esc_html(bhp_colouring_draft_copy('offer_card_title'));
+
+        if ('' !== $pair_url) {
+            /*
+             * ⭐ IMAGE LINK IS `aria-hidden` + `tabindex="-1"`; THE TITLE IS THE
+             *    ACCESSIBLE LINK. Two adjacent anchors to one destination is two
+             *    tab stops and two identical announcements for one card. This is
+             *    WooCommerce's own loop-card shape and the same shape the
+             *    Collection card takes in this build.
+             *
+             * ⛔⛔ THE CLASS PREFIX IS `bhp-shop-offer-CARD__`, NOT
+             *     `bhp-shop-offer-ITEM__`, AND THAT ONE WORD IS LOAD-BEARING.
+             *     ⭐ CAUGHT BY THE SUITE ON THIS BUILD'S FIRST STAGING RUN, not
+             *     reasoned about in advance:
+             *     `tests/test-shop-grid-2up-204.php` §6.4b asserts the pair card
+             *     MOVED to the strip rather than being deleted, and it does so
+             *     with `substr_count( $doc, 'bhp-shop-offer-item' ) === 1`.
+             *     ⛔ BEM child classes share their block's prefix, so naming
+             *     these `bhp-shop-offer-item__image-link` and
+             *     `...__title-link` took that count from 1 to 3 and turned a
+             *     guard against a DELETED CARD into a red line, on a build that
+             *     deleted nothing. Observed: `FAIL: 6.4b ... (strip 1, offer
+             *     card 3)`.
+             * ⭐ FIXED AT THIS END ON PURPOSE. Loosening §6.4b to
+             *    `class="product bhp-shop-offer-item"` would also have worked
+             *    and is arguably the better assertion — but it weakens a guard
+             *    in another build's file to accommodate new markup, and the
+             *    markup is the thing that is free to move. The `<li>` keeps
+             *    `bhp-shop-offer-item`; only these two children differ.
+             * ⚠️ THE LATENT FRAGILITY IS REPORTED, NOT SILENTLY ROUTED AROUND:
+             *    §6.4b counts a class PREFIX as though it were a card, so the
+             *    next `bhp-shop-offer-item__*` anyone adds trips it again.
+             *    Routed to `chief-of-staff` as a finding; not amended here.
+             */
+            if ('' !== trim($card_img)) {
+                $card_img = '<a class="bhp-shop-offer-card__image-link" href="' . esc_url($pair_url)
+                    . '" tabindex="-1" aria-hidden="true">' . $card_img . '</a>';
+            }
+            $card_title = '<a class="bhp-shop-offer-card__title-link" href="' . esc_url($pair_url) . '">'
+                . $card_title . '</a>';
+        }
+
         $out .= '<li class="product bhp-shop-offer-item" data-bhp-card-kind="bundle">'
-            . bhp_offer_composite_card_image($key)
-            . '<h2 class="woocommerce-loop-product__title">' . esc_html(bhp_colouring_draft_copy('offer_card_title')) . '</h2>'
+            . $card_img
+            . '<h2 class="woocommerce-loop-product__title">' . $card_title . '</h2>'
             . '<p class="bhp-shop-descriptor">' . esc_html(bhp_colouring_draft_copy('offer_descriptor')) . '</p>'
             . $module
             . '</li>';

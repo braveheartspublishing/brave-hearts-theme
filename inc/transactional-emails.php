@@ -282,7 +282,7 @@ add_filter(
  * ⭐⭐ 1.19.372 · WHY THE DAY-0 HEADING IS SUPPRESSED RATHER THAN MOVED.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through Gandalf, not heard
+ * ⭐ FOUNDER INSTRUCTION, ROUND 11 (⛔ RELAYED through `chief-of-staff`, not heard
  *    first-hand): day 0's heading *"must sit in the same position as touch 1"*.
  *
  * ⛔ THE BRIEF'S PREMISE WAS WRONG ON ONE POINT AND THE CORRECTION IS RECORDED
@@ -1109,7 +1109,7 @@ add_filter( 'woocommerce_email_styles', 'bhp_email_brand_styles', 20 );
  * ⛔⛔ 1.19.372 SHIPPED THIS AND IT DID NOT WORK. THE DIAGNOSIS, FIRST.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * ⛔ THE OBSERVED FAILURE. Gandalf's staging run of 1.19.372 reported one
+ * ⛔ THE OBSERVED FAILURE. The `chief-of-staff` desk's staging run of 1.19.372 reported one
  *    failure out of 443: *"Day 0 renders NO H1 band at all — the same
  *    position as touch 1 -- h1 found: <h1></h1>"*. The rendered document
  *    `rs372-day0.html` (read byte-for-byte at this desk, 2026-09-05) still
@@ -1192,7 +1192,7 @@ add_filter( 'woocommerce_email_styles', 'bhp_email_brand_styles', 20 );
  *
  * ⚠ NOT VERIFIED: there is no PHP on this machine. Nothing below was executed
  *   here. It is reasoned against four rendered documents that are on disk and
- *   were read byte-for-byte; Gandalf's staging run is the first execution.
+ *   were read byte-for-byte; the `chief-of-staff` desk's staging run is the first execution.
  *   ⛔ In particular, whether 1.19.372's late filter DID clean the delivered
  *   message is unknown — no delivered-message source was inspected, only
  *   renders. This round makes that question moot rather than answering it.
@@ -1349,7 +1349,7 @@ function bhp_email_header_without_empty_band( $email_heading, $email = null ) {
  *    stars in the delivered 1.19.369 review ask arrived as `âââââ` —
  *    the exact signature of UTF-8 bytes decoded as CP1252 (U+2605 is
  *    `E2 98 85`, which is `â`, `˜`, `…` in Windows-1252). ⚠ Reported by
- *    Gandalf from the staging send; NOT re-observed in this build, which has
+ *    `chief-of-staff` from the staging send; NOT re-observed in this build, which has
  *    no PHP runtime and sent nothing.
  *
  * ⛔ WHY WORDPRESS DID NOT ALREADY HANDLE IT. `wp_mail()` reads the charset
@@ -1419,7 +1419,7 @@ add_filter( 'woocommerce_email_headers', 'bhp_email_force_charset', 20 );
  *
  * ⛔ WHAT WAS SEEN AFTER 1.19.370. FluentSMTP's delivery log STILL recorded
  *    the content type as `text/html` with no charset for both staging test
- *    sends (log ids 6 and 7, reported by Gandalf 2026-09-05). ⚠ RELAYED, not
+ *    sends (log ids 6 and 7, reported by `chief-of-staff` 2026-09-05). ⚠ RELAYED, not
  *    observed at this desk — this build has no PHP runtime and sent nothing.
  *
  * ⭐ WHY THE HEADER FILTER ALONE CAN LOSE. `bhp_email_force_charset()` puts
@@ -1438,7 +1438,7 @@ add_filter( 'woocommerce_email_headers', 'bhp_email_force_charset', 20 );
  *   independent way to turn `★` (`E2 98 85`) into mojibake. `quoted-printable`
  *   encodes those bytes as `=E2=98=85` — 7-bit clean end to end, and unlike
  *   base64 the ASCII body stays human-readable in a raw source view, which is
- *   exactly what Gimli is reading right now.
+ *   exactly what `connected-operator` is reading right now.
  *
  * ⛔ IT ONLY REPLACES THE DEFAULT. If some other plugin has deliberately set
  *    an encoding other than `8bit` (or the empty string), that choice is left

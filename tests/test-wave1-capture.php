@@ -44,6 +44,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit( 1 );
 }
 
+/*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
 $failures = array();
 
 function bhp_w1_assert( $condition, $label, array &$failures ) {
@@ -820,13 +840,58 @@ foreach ( $new_copy_files as $rel ) {
 			$failures
 		);
 	}
-	// No digit-bearing claim other than the approved age range.
-	$without_age = str_replace( array( '6 to 9', '6–9', '6-9' ), '', $blob );
+	/*
+	 * No digit-bearing claim other than the approved age range.
+	 *
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ WIDENED BY EXACTLY ONE STRING, 1.19.389 (2026-09-06,
+	 *     `CYCLE179-LD-BUILD-389`), AND THE RAIL IS NOT WEAKENED BY IT.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ WHAT THIS RAIL IS ACTUALLY FOR, restated because it decides the
+	 *    question: it forbids a FABRICATED NUMERIC CLAIM on a capture surface —
+	 *    a subscriber count, a rating, a review count, a scarcity number, a
+	 *    reading-time promise. It has caught real ones.
+	 *
+	 * ⭐ "Chapter 10" IS NOT THAT. It is the chapter number of the file the
+	 *    visitor is being offered, and it is verifiable in one place: the PDF
+	 *    the site actually serves. Verified live this build (Standing Rules
+	 *    §9.2 — who, when, with what): `lead-developer`, 2026-09-06, over SSH
+	 *    against the PRODUCTION document root. `bhp_lead_magnet_pdfs`
+	 *    ['adventure_kit_parent'] resolves to
+	 *    `.../uploads/2026/07/Reluctant-Reader-Adventure-Kit-1.pdf`, which is
+	 *    8,944,368 bytes, mtime 2026-09-03 19:26, md5
+	 *    `e227eea53ec762df4abdb6a09615a730`, `/Count 11` — byte-identical to
+	 *    the Drive kit of record "Reluctant Reader Adventure Kit v2.2
+	 *    (Chapter 10, live 2026-09-03).pdf", page 3: "FROM THE MARIANA
+	 *    TRENCH, CHAPTER 10: THE DIVE".
+	 *
+	 * ⛔ THE EXEMPTION IS THE EXACT STRING, NOT A PATTERN. `'Chapter 10'` and
+	 *    nothing else. `\d` still fires on "Chapter 11", on "2,000 parents",
+	 *    on "4.8 stars", on "only 3 left" and on "20 minutes". A regex like
+	 *    `Chapter \d+` would have let any number through behind one safe word,
+	 *    which is how a rail quietly stops being a rail.
+	 *
+	 * ⚠ AND IT IS PAIRED WITH A POSITIVE ASSERTION, immediately below, so the
+	 *   exemption cannot outlive its justification: if the string ever appears
+	 *   on a surface while the kit landing page names a different chapter, the
+	 *   suite goes red.
+	 */
+	$without_age = str_replace( array( '6 to 9', '6–9', '6-9', 'Chapter 10' ), '', $blob );
 	bhp_w1_assert(
 		0 === preg_match( '/\d/', $without_age ),
-		"{$rel} copy carries NO number except the approved 6 to 9 age range",
+		"{$rel} copy carries NO number except the approved 6 to 9 age range and the live kit's chapter number",
 		$failures
 	);
+	if ( false !== strpos( $blob, 'Chapter 10' ) ) {
+		$w1_kit_page = (string) bhp_w1_read( 'page-reluctant-reader-adventure-kit.php' );
+		$w1_kit_code = bhp_w1_strip_comments( $w1_kit_page );
+		bhp_w1_assert(
+			false !== strpos( $w1_kit_code, 'Chapter 10' ) && false === strpos( $w1_kit_code, 'Chapter 7' ),
+			"{$rel} names a chapter, and the kit landing page names the SAME one (no surface drifts alone)",
+			$failures
+		);
+	}
 	bhp_w1_assert(
 		false === strpos( $blob, '5-9' ) && false === strpos( $blob, '5 to 9' ),
 		"{$rel} states the reading age as 6 to 9, never 5 to 9",

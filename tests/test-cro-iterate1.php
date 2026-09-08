@@ -53,6 +53,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
 $failures = array();
 
 function bhp_it1_assert( $condition, $label, array &$failures ) {
@@ -256,10 +276,80 @@ bhp_it1_assert(
 	$failures
 );
 
+/*
+ * ⭐⭐ AMENDED 1.19.398 (`CYCLE179-CX-BUILD-398`) — AND THE FIRST THING WORTH
+ *     RECORDING IS THAT `$desktop_block` WAS NEVER THE DESKTOP SECTION.
+ *
+ * ⛔ IT IS BUILT AT LINE ~207 AS `/@media\s*\(\s*min-width:\s*601px\s*\)\s*\{(.*)$/s`
+ *    — `(.*)$` WITH `/s`, SO IT RUNS TO END OF FILE. Everything written after
+ *    the first `min-width: 601px` query is inside it, INCLUDING the
+ *    `@media (max-width: 812px)` sticky phone buy bar added in 1.19.393. So
+ *    this assertion has been reading phone rules and calling them desktop
+ *    rules since that block was written; it only went red now because 1.19.398
+ *    is the first build to hide anything in there.
+ *
+ * ⭐ THE BOUNDARY IS NOT NARROWED, DELIBERATELY. Narrowing `$desktop_block` to
+ *    the real desktop section would silently change what §1.6, §1.7, §1.8 and
+ *    §2.3 search, and any of those could start passing vacuously against a
+ *    stylesheet that had actually regressed. ⭐ A test that gets quieter is a
+ *    worse outcome than a test that names its exceptions. So the block stays
+ *    exactly as it is and the EXCEPTIONS ARE ENUMERATED.
+ *
+ * ⭐ THE FOUR ALLOWED HIDES, ALL INSIDE `@media (max-width: 812px)`, ALL
+ *    CONTROLS RATHER THAN COPY, and the reasoning is written out once in §3.6
+ *    of `test-product-template.php` rather than twice here:
+ *      · `.bhp-formats__buy [hidden]` — restores the `hidden` attribute that
+ *        1.19.393's bare `display: block` beat on ORIGIN, which put TWO
+ *        identical GET THE COMPLETE COLLECTION buttons in the bar (measured on
+ *        staging 1.19.397 at an asserted `window.innerWidth` of 375)
+ *      · the three `#wc-stripe-express-checkout-element-*` wallet buttons,
+ *        each hidden only where `:has()` proves another wallet is mounted
+ *
+ * ⛔ NOTHING ELSE MAY HIDE. `visibility: hidden` is still banned outright, and
+ *    any `display: none` on a selector outside the list still fails — which is
+ *    what the assertion was protecting: copy moved, never suppressed.
+ */
+$it1_hide_allow = array(
+	'.bhp-formats__buy [hidden]',
+	'#wc-stripe-express-checkout-element-link',
+	'#wc-stripe-express-checkout-element-amazonPay',
+	'#wc-stripe-express-checkout-element-googlePay',
+);
+
+$it1_desktop_code = (string) preg_replace( '#/\*.*?\*/#s', '', $desktop_block );
+$it1_unallowed    = array();
+foreach ( preg_split( '/\}/', $it1_desktop_code ) as $it1_chunk ) {
+	if ( ! preg_match( '/display\s*:\s*none|visibility\s*:\s*hidden/', $it1_chunk ) ) {
+		continue;
+	}
+	$it1_brace = strrpos( $it1_chunk, '{' );
+	if ( false === $it1_brace ) {
+		continue;
+	}
+	$it1_sel = (string) preg_replace( '/\s+/', ' ', substr( $it1_chunk, 0, $it1_brace ) );
+
+	// `visibility: hidden` is never allowed, whatever the selector says.
+	$it1_ok = ! preg_match( '/visibility\s*:\s*hidden/', $it1_chunk );
+	if ( $it1_ok ) {
+		$it1_ok = false;
+		foreach ( $it1_hide_allow as $it1_allowed ) {
+			if ( false !== strpos( $it1_sel, $it1_allowed ) ) {
+				$it1_ok = true;
+				break;
+			}
+		}
+	}
+	if ( ! $it1_ok ) {
+		$it1_unallowed[] = trim( substr( $it1_sel, -90 ) );
+	}
+}
+
 bhp_it1_assert(
-	'' !== $desktop_block
-		&& 0 === preg_match( '/display\s*:\s*none|visibility\s*:\s*hidden/', $desktop_block ),
-	'§2.4 the desktop section hides nothing',
+	'' !== $desktop_block && empty( $it1_unallowed ),
+	sprintf(
+		'§2.4 the desktop section hides no COPY — only the four allowlisted 1.19.398 buy-bar controls (%s)',
+		empty( $it1_unallowed ) ? 'none unallowed' : implode( ' | ', $it1_unallowed )
+	),
 	$failures
 );
 

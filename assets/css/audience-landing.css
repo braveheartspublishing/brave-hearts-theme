@@ -455,7 +455,7 @@
 .audience-landing-pricecard__foot .bhp-collection-cta { display: block; width: 100%; }
 .audience-landing-final__ctas .bhp-collection-cta,
 .audience-landing-stickybar__ctas .bhp-collection-cta { display: inline-flex; }
-.audience-landing-pricecard__link-row { text-align: center; font-size: var(--trust-min, 0.875rem); color: #6b6a5c; margin: 16px 0 0; }   /* 1.19.266: was 13px / #8a8875. #8a8875 measured 3.09-3.52:1 on this page's creams; #6b6a5c measures 5.37:1 on #fffdf7, 5.11:1 on #faf7ef, 4.93:1 on #f7f3e9 and 4.72:1 on #f4eede. Trust line: "Secure checkout - Tracking provided". */
+.audience-landing-pricecard__link-row { text-align: center; font-size: var(--trust-min, 0.875rem); color: #6b6a5c; margin: 16px 0 0; }   /* 1.19.266: was 13px / #8a8875. #8a8875 measured 3.09-3.52:1 on this page's creams; #6b6a5c measures 5.37:1 on #fffdf7, 5.11:1 on #faf7ef, 4.93:1 on #f7f3e9 and 4.72:1 on #f4eede. Trust line: "Secure checkout" (CYCLE179-CX-TRACKING-CLAIM, 2026-09-06: "- Tracking provided" removed, the store receives no tracking numbers from its printer; nothing replaced it). */
 .audience-landing-pricecard__link-row a { color: #6f6d61; text-decoration: underline; }
 .audience-landing-pricecard [data-parent-format-panel][hidden] { display: none; }
 

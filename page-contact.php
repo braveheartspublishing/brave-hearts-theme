@@ -19,7 +19,61 @@ $contact_field = static function ($key, $fallback = '') use ($page_id) {
 };
 
 $page_url = get_permalink($page_id) ?: home_url('/contact/');
-$read_aloud_url = add_query_arg('inquiry', 'read-aloud', $page_url) . '#contact-form';
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.19.394 — "REQUEST A READ-ALOUD" LEAVES THE CONTACT PAGE.
+ *      `CYCLE179-CX-BUILD-394`, item 6.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ ANDREW SIGNORE, 2026-09-07, verbatim. ⚠ RELAYED through the supervising
+ *    session — NOT witnessed first-hand here (Standing Rules §9.2 rule 2):
+ *    *"The request a read aloud on the contact page needs to go to the read
+ *    aloud page - it currently stays on the contact us page - incorrect."*
+ *
+ * ⛔ THE SUPERSEDED LINE, PRESERVED SO THE MOVEMENT IS VISIBLE:
+ *      ~~$read_aloud_url = add_query_arg('inquiry', 'read-aloud', $page_url) . '#contact-form';~~
+ *
+ *    VERIFIED LIVE on staging 2026-09-07 before the change: all THREE controls
+ *    labelled "Request a Read-Aloud" on `/contact/` resolved to
+ *    `https://staging2.braveheartspublishing.com/contact/?inquiry=read-aloud#contact-form`
+ *    — the page the reader is already standing on. The button reloaded the
+ *    same page and scrolled down. That is the defect, and it is a trust
+ *    defect rather than a cosmetic one: a control that appears to do nothing
+ *    teaches a parent that the buttons on this site do not work.
+ *
+ * ⛔⛔ THE DESTINATION IS `/school-read-alouds/`, NOT `/read-aloud/`, AND THE
+ *     DIFFERENCE MATTERS ENOUGH TO WRITE DOWN. The build brief guessed
+ *     `/read-aloud/`. ⚠ THAT GUESS IS WRONG, and it was checked rather than
+ *     followed. Both pages were fetched live on staging, 2026-09-07:
+ *
+ *       /read-aloud/          H1 "You met Charlotte & Henry today!"
+ *                             `page-read-aloud.php` — the TAKE-HOME landing
+ *                             page a child reaches by scanning the QR printed
+ *                             on the coloring sheet AFTER a visit. It cannot
+ *                             book anything.
+ *       /school-read-alouds/  H1 "Book a free read-aloud"
+ *                             `page-school-read-alouds.php` — the TEACHER
+ *                             page with the scheduler on it. This is where a
+ *                             request is actually made.
+ *
+ *     ⭐ AND THE SITE ALREADY AGREES: the primary navigation item labelled
+ *        "Read-Alouds" points at `/school-read-alouds/` (`functions.php`
+ *        line ~1532). Sending the button somewhere else would have created
+ *        the very page-to-page inconsistency he is objecting to.
+ *
+ * ⚠ ROUTED, NOT DECIDED HERE: three other surfaces carry a read-aloud control
+ *   that still lands on the contact form — `page-mariana-guide-teacher.php`
+ *   ("Request an Author Visit") and `page-mariana-guide-thank-you.php`
+ *   ("Request a Read-Aloud or Author Visit"), both of which name an AUTHOR
+ *   VISIT and may belong at `/author-visits/` instead. Those are reported
+ *   upward for Andrew rather than changed on this desk's judgement.
+ *
+ * ⛔ `$school_url` AND `$general_url` ARE UNTOUCHED. A schools-and-media
+ *    inquiry and a general question both genuinely belong in the form on this
+ *    page, and nothing in his instruction reaches them.
+ */
+$read_aloud_url = home_url('/school-read-alouds/');
 $school_url = add_query_arg('inquiry', 'school-library', $page_url) . '#contact-form';
 $general_url = $page_url . '#contact-form';
 $contact_email = sanitize_email($contact_field('email', 'andrew@braveheartspublishing.com'));

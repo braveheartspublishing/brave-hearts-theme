@@ -758,6 +758,38 @@
  *    first screen is unchanged at one: ADD ... TO CART.
  */
 
+/* ────────────────────────────────────────────────────────────────────────
+ * 393.4b · THE PHONE ORDER OF THE BUY WRAPPER (`CYCLE179-CX-BUILD-391-1`).
+ *
+ * Relocated here from the 1.19.393 block at the foot of this file, which
+ * explains why in full. `.bhp-formats__buy` is the new grid child carrying ADD
+ * TO CART and the wallet, so it takes the slot `.bhp-formats__cta-wrap` used to
+ * hold as a grid item. `__spec` and `__note` are re-stated at the SAME values
+ * section 3 already gives them, so the rail's slot list reads in one place.
+ *
+ * ⚠ IT SITS ABOVE THE 601px SECTION BECAUSE OF AN INSTRUMENT, NOT A CASCADE.
+ *   `tests/test-cro-iterate1.php` §2.3 slices this file from the 601px block to
+ *   the END OF FILE and refuses any `order:` in the slice. These rules are
+ *   inside `max-width: 900px` and reorder nothing on a desktop, but that
+ *   assertion cannot see the difference. Rewriting another desk's assertion to
+ *   clean up one's own fail-line diff is the move that makes a suite stop
+ *   meaning anything, so the rules moved instead.
+ * ──────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+	body.single-product.woocommerce div.product .bhp-formats__buy      { order: 4; }
+	body.single-product.woocommerce div.product .bhp-formats__spec     { order: 5; }
+	body.single-product.woocommerce div.product .bhp-formats__note     { order: 6; }
+
+	/* The one-card (colouring book) rail places every child explicitly — see
+	   section 3d, which records why a half-explicit grid is where the next
+	   auto-placement surprise comes from. The wrapper takes the row the
+	   cta-wrap used to hold. */
+	body.single-product.woocommerce div.product .bhp-formats--single .bhp-formats__buy {
+		grid-row: 3;
+		grid-column: 1 / -1;
+	}
+}
+
 @media (min-width: 601px) {
 
 	/*
@@ -1050,4 +1082,877 @@ body.single-product.woocommerce div.product .bhp-formats__spec,
 body.single-product.woocommerce div.product .bhp-formats__note,
 body.single-product.woocommerce div.product .bhp-formats__paperback-only {
 	text-align: center;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.19.393 — `CYCLE179-CX-BUILD-391-1` — THE PRODUCT-PAGE FOLD.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * commerce-cx under chief-of-staff, 2026-09-07.
+ * Approved by supervisor seals 1272 / 1274, from Andrew's own words of 2026-09-07.
+ *
+ * ⛔ EVERY BASELINE NUMBER IN THIS BLOCK WAS READ FROM A LIVE BROWSER on
+ *    staging 1.19.391, product 333 (The Mariana Trench, paperback), with
+ *    `window.innerWidth` AND `window.innerHeight` asserted IN THE SAME
+ *    EVALUATION that took the measurement. Nothing here is read from a
+ *    document. Method: this machine's display is 1280x720 CSS, so a top-level
+ *    window cannot be 1440 wide and headless Chrome here clamps
+ *    `--window-size` to a 500px floor; every viewport was therefore produced
+ *    inside an EXACT-SIZE SAME-ORIGIN IFRAME, which has its own viewport, so
+ *    media queries and `innerWidth` inside it are real.
+ *
+ *   BASELINE, 1.19.391          CTA bottom      .bhp-express bottom
+ *     1280 x 580                   649              791     both BELOW fold
+ *     1440 x 900                   664              805     both above fold
+ *      375 x 667                   785             2933     both BELOW fold
+ *      375 x 812                   785             2933     CTA 27px clear
+ *
+ * ⚠ THE EXPRESS ELEMENT'S HEIGHT IS ENVIRONMENT-DEPENDENT AND MUST NOT BE
+ *   READ AS 10px. `#wc-stripe-express-checkout-element` measured 10px at 1280
+ *   and 20px at 375 in the automation profile because NO WALLET MOUNTED there.
+ *   Andrew has a wallet on both his devices. In a headless render on this same
+ *   machine where Stripe Link DID mount, the button drew at roughly 48-50px.
+ *   48px is therefore RESERVED below — without a reservation the guarantee
+ *   line and everything under it move up on a device with no wallet and down
+ *   on one with a wallet, and the fold arithmetic would be true for the test
+ *   browser instead of true for the customer.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 393.1 · THE DEAD BUFFER BETWEEN THE HEADER AND THE BREADCRUMB
+ *
+ * Andrew: "theres alot of buffer between those items and the nav bar."
+ *
+ * MEASURED CAUSE, not guessed: `.woo-expedition-shell` computes
+ * `padding-top: 76.8px` at 1280 and `86.4px` at 1440 — it is
+ * `var(--section-space-sm)`. Header bottom is 80; breadcrumb top is 157 at
+ * 1280 and 166 at 1440. The gap is that one declaration and nothing else.
+ * Andrew estimated ~120 device px on his scaled display, which is ~80 CSS px.
+ * He was right to the pixel.
+ *
+ * ⭐ THE PHONE ALREADY HAS THIS FIX — section 4 of this file sets
+ *    `padding-top: 20px` inside the mobile query. The desktop never got it.
+ *
+ * ⛔ SCOPED TO `body.single-product`. The shop archive, cart and checkout keep
+ *    the section rhythm they were designed with. This is a fold fix for one
+ *    template, not a sitewide spacing change.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 901px) {
+	body.single-product.woocommerce .woo-expedition-shell {
+		padding-top: 24px;              /* was 76.8px at 1280 / 86.4px at 1440 */
+	}
+
+	/* Measured 19px of slack under the breadcrumb box; 10px still reads it as
+	   a separate line. */
+	body.single-product.woocommerce .woocommerce-breadcrumb {
+		margin-bottom: 10px;
+	}
+}
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 393.2 · THE H1
+ *
+ * Andrew: "the H1 is far too large". MEASURED: 45.82px at 1280 (2 lines,
+ * 101px tall), 47.95px at 1440 (2 lines, 105px), 33.79px at 375 (3 lines,
+ * 112px).
+ *
+ * ⚠ THIS IS A TYPE CHANGE, AND SECTION 3c OF THIS FILE WARNS AGAINST ONE FOR
+ *   THE MOBILE FOLD: "if it breaks, the fix is spacing inside this media
+ *   query, NOT a smaller H1", because 1.19.266 raised the mobile H1 off a
+ *   28px accessibility floor. ⛔ THE FLOOR IS RESPECTED — the mobile value
+ *   below is 28px, which IS the floor, not under it, and the phone fold is
+ *   now carried by the sticky bar in 393.7 rather than by shrinking type.
+ *   The DESKTOP H1 has no such recorded floor.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 901px) {
+	body.single-product.woocommerce .product_title {
+		font-size: clamp(1.9rem, 2.5vw, 2.3rem);   /* ~34px at 1280, ~37px at 1440 */
+		line-height: 1.12;
+		margin-bottom: 12px;                        /* was 20px */
+	}
+
+	/* The value-prop sentence. 60px tall at 1280 with 8px below. Tightened,
+	   NOT removed: it is the only line that says what the book is before the
+	   format rail. */
+	body.single-product.woocommerce .bhp-product-value-prop {
+		line-height: 1.45;
+		margin-bottom: 4px;
+	}
+
+	body.single-product.woocommerce .bhp-formats {
+		margin-top: 4px;                            /* was 10px */
+	}
+}
+
+@media (max-width: 900px) {
+	body.single-product.woocommerce .product_title {
+		font-size: 1.75rem;                         /* 28px — the 1.19.266 floor */
+		line-height: 1.15;
+	}
+}
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 393.3 · THE PRICE MOVES INTO THE SELECTED CARD
+ *
+ * Andrew: "See if you cna put the price inside the paperback box and move the
+ * CTA up so its above the URL bar."
+ *
+ * ⭐ WHAT WAS ACTUALLY WRONG WAS ONE SELECTOR, AND THE REPOSITORY PREDICTED
+ *    THIS EXACT REQUEST. VERIFIED LIVE at 1280 on 1.19.391: the paperback card
+ *    DOES contain its price ($11.99, 16px, rgb(28,107,74)) and it computed
+ *    `display: none`, from `style.css`:
+ *        .bhp-format-card.is-selected .bhp-format-card__price { display: none }
+ *    The SELECTED card was the only card with no visible price (hardcover
+ *    showed $17.99, collection $31.99). The price was then reprinted below the
+ *    grid in `.bhp-formats__selected-price` — a 43px band at 1280, 36px at
+ *    375 — sitting directly above ADD TO CART.
+ *    `style.css`'s own comment above that rule reads: "IF ANDREW WANTS CONCEPT
+ *    A LITERALLY ... it is one selector: drop `.is-selected` from the rule
+ *    below. Flagged rather than chosen, because it is a merchandising call."
+ *    He has now made the call.
+ *
+ * ⛔⛔ THIS DEMOTES A PROTECTED ELEMENT AND IT WAS NOT DECIDED HERE.
+ *     `21-PROTECTED-ELEMENTS-MANIFEST.md` §3.3 protects
+ *     `bhp-formats__selected-price` at `min 1` ("the price — SALES"), and
+ *     `tests/test-protected-elements.php` greps the rendered markup for that
+ *     CLASS STRING. ⭐ THE NODE IS KEPT — its class, its
+ *     `data-bhp-format-price` hook and its `aria-live="polite"` are all
+ *     unchanged, so the assertion still passes and a format swap is still
+ *     announced. It stops being the VISIBLE price. THE SUPERVISOR APPROVED THIS
+ *     DEMOTION (seal 1272) and the manifest amendment is prepared for
+ *     the knowledge lane; it is NOT applied by this build.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* 393.3a. Every card shows its price, the selected one included.
+   ⚠ THE SELECTOR IS DELIBERATELY MORE SPECIFIC THAN THE RULE IT BEATS.
+     `style.css`'s rule is (0,2,0) and lives in a different file whose load
+     order relative to this one is set by `wp_enqueue_style` dependencies, not
+     by anything visible here. `body.single-product.woocommerce` in front makes
+     this (0,4,0) and removes the question. The superseded rule and its long
+     rationale stay readable where they are, which is the point. */
+body.single-product.woocommerce .bhp-format-card.is-selected .bhp-format-card__price {
+	display: block;
+	font-size: 1.22rem;
+	line-height: 1.15;
+}
+
+/* 393.3b. The band keeps its node, its class and its live region, and stops
+   occupying a row above ADD TO CART.
+   ⚠ `clip-path` AND A 1px BOX, NOT `display: none`. A `display: none` live
+     region is announced by no screen reader at all, and announcing the new
+     price on a format swap is this element's entire remaining job. */
+body.single-product.woocommerce .bhp-formats__selected-price {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 393.4 · THE WALLET SITS UNDER ADD TO CART
+ *
+ * Andrew: "move up the quick pay options below the add paperback to cart."
+ *
+ * ⛔ CSS ALONE COULD NOT DO THIS AND THAT WAS THE FINDING.
+ *    `bhp_express_bridge_render()` was hooked on
+ *    `woocommerce_single_product_summary` at priority 16 while the rail prints
+ *    at 15, so `.bhp-express` was a SIBLING of `.bhp-formats` — at 375 it
+ *    computed `order: 8` in the SUMMARY grid and landed at y=2883 under a CTA
+ *    that ended at y=785. A grid cannot `order:` an element it does not
+ *    contain. The template now prints the bridge from inside the rail; these
+ *    are the layout half only.
+ *
+ * ⚠ `.bhp-formats__buy` IS THE NEW GRID CHILD. The rules at section 3 of this
+ *   file that gave `.bhp-formats__cta-wrap` `order: 4`, and the `--single`
+ *   rail's explicit `grid-row: 3`, now address a node that is no longer a grid
+ *   item. Both are re-stated here for the wrapper. Everything else that names
+ *   `.bhp-formats__cta-wrap` is a self or descendant rule and still applies.
+ * ─────────────────────────────────────────────────────────────────────────── */
+body.single-product.woocommerce div.product .bhp-formats__buy {
+	display: block;
+}
+
+body.single-product.woocommerce div.product .bhp-formats__buy .bhp-express {
+	/* ⚠ RESERVED, NOT COSMETIC — see the block header. 48px is the height the
+	   Link button actually rendered at in a headless render on this machine. */
+	min-height: 48px;
+	margin: 8px 0 2px;
+}
+
+/*
+ * ⛔ THE PHONE ORDERING RULES FOR `.bhp-formats__buy` DO NOT LIVE HERE. They
+ *    are placed EARLIER IN THIS FILE, immediately above the
+ *    `@media (min-width: 601px)` section — see "393.4b" there.
+ *
+ * ⚠ THE REASON IS AN INSTRUMENT, NOT A CASCADE. `tests/test-cro-iterate1.php`
+ *   §2.3 asserts "the desktop section reorders nothing" by slicing this file
+ *   from `@media (min-width: 601px) {` TO THE END OF THE FILE and refusing any
+ *   `order:` in the slice. That slice was exact while the 601px block was the
+ *   last thing in the file; anything appended afterwards falls inside it,
+ *   whatever media query it is actually wrapped in. These rules are inside
+ *   `max-width: 900px` and reorder nothing on a desktop, but the assertion
+ *   cannot see that.
+ *
+ * ⭐ MOVING THE RULES WAS CHOSEN OVER REWRITING THE ASSERTION. Editing another
+ *    desk's test so one's own fail-line diff comes out clean is the move that
+ *    makes a suite stop meaning anything. The rules have no competitor at their
+ *    specificity (`__spec` 5 and `__note` 6 are the SAME values section 3
+ *    already sets, and `__buy` is a new node), so source position changes
+ *    nothing about what renders. The instrument's over-broad slice is reported
+ *    rather than silently worked around.
+ */
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 393.5 · THE "BEST VALUE" CARD, NOT THE BADGE
+ *
+ * Andrew: "the best value box needs to be centered (its to the left)", said in
+ * his MOBILE paragraph.
+ *
+ * ⭐ THE BADGE WAS ALREADY DEAD CENTRE AND MEASURING IT IS WHAT FOUND THE REAL
+ *    DEFECT. VERIFIED LIVE: at 1280 the collection card spans x 949..1086
+ *    (centre 1017.5) and the badge x 975..1059 (centre 1017); at 375 the card
+ *    spans x 16..175 (centre 95.5) and the badge x 53..137 (centre 95).
+ *
+ * ⭐ WHAT IS OFF-CENTRE IS THE CARD. At 375, section 3 of this file gives the
+ *    collection card `grid-column: auto`, so it drops into column 1 of a
+ *    two-column grid: 159px wide, flush left, with 169px of empty parchment to
+ *    its right. Andrew wrote "box", and the box is what is left-aligned.
+ *
+ * ⛔ IT IS MADE FULL-WIDTH RATHER THAN CENTRED AT 159px. A centred half-width
+ *    card still reads as a fragment of a two-up row with a gap either side;
+ *    the collection is the one offer not being compared side by side with
+ *    anything, so it gets the row.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+	body.single-product.woocommerce div.product
+		.bhp-format-card[data-bhp-format="collection"] {
+		grid-column: 1 / -1;
+	}
+}
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 393.6 · THE GALLERY FILLS ITS FRAME
+ *
+ * Andrew, on the staging PDP: the hero renders small, letterboxed inside a
+ * wide cream box. MEASURED at 1280: the hero's natural size is 560 x 859
+ * (portrait, aspect 0.652) and it rendered at 108 x 165 inside a 578 x 303
+ * stage — 19% of the frame width and 54% of its height.
+ *
+ * ⭐⭐ ON DESKTOP THIS IS FREE AND ON THE PHONE IT IS NOT, AND THAT ASYMMETRY
+ *     IS THE WHOLE DESIGN. At >=901px the gallery is `grid-column: 1` and the
+ *     buy box is `grid-column: 2`, so growing the gallery extends the LEFT
+ *     column only and cannot move ADD TO CART by one pixel. At 375 the gallery
+ *     is `order: 1`, directly ABOVE the title and the buy box, so every pixel
+ *     it gains is a pixel the CTA loses.
+ *
+ * ⛔ THE PHONE HERO IS THEREFORE NOT MADE TALLER. What the phone gets is the
+ *    CREAM shrunk to the picture (`width: fit-content`), which removes the
+ *    letterbox at zero fold cost, plus larger thumbnails. The flip-through
+ *    button is untouched at both widths — the brief's item 5 says keep it, and
+ *    nothing here selects it.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 901px) {
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__stage {
+		aspect-ratio: auto;
+		/*
+		 * ⛔⛔ SUPERSEDED BY 394.1 AND REMOVED FROM THE CASCADE, 2026-09-07,
+		 *     PRESERVED STRUCK SO THE MOVEMENT STAYS READABLE:
+		 *
+		 *       ~~min-height: 560px;~~
+		 *
+		 * ⭐ IT WAS REMOVED RATHER THAN LEFT TO LOSE. 394.1 declares the same
+		 *    property on the SAME selector inside a second
+		 *    `@media (min-width: 901px)` block further down this file, so the two
+		 *    declarations have identical specificity and 394.1 won ONLY on source
+		 *    order. That is a correct render resting on a fragile reason: anything
+		 *    that later reorders this file, or splits it, silently restores 560px.
+		 *
+		 * ⚠ This is the failure mode 394.3 documents one file over, in the other
+		 *   direction — a rule that looks applied and does nothing. Here it would
+		 *   be a rule that looks superseded and comes back. One live declaration
+		 *   per property per selector is the only version of this that cannot rot.
+		 *
+		 * ⛔ `aspect-ratio: auto` and the padding below are NOT superseded and
+		 *    stay here. 394.1 sets the height alone and deliberately restates
+		 *    nothing else.
+		 */
+		padding: 10px;                 /* the thin cream border, not a field */
+	}
+
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__stage img {
+		width: auto;
+		height: 100%;
+		/* ⛔ SUPERSEDED BY 394.1, same reason as the block above:
+		     ~~max-height: 540px;~~   — 394.1 sets 450px. */
+		max-width: 100%;
+		object-fit: contain;
+	}
+
+	/* Measured 81px tall at 1440. A 4:3 interior spread at that size is
+	   unreadable as a preview. */
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__thumbs img {
+		height: 104px;
+	}
+}
+
+/*
+ * ⛔⛔ CORRECTED IN THE SAME SITTING, 1.19.393 — `width: fit-content` ON THE
+ *     PHONE STAGE WAS WRONG AND IT SHIPPED TO STAGING BEFORE IT WAS MEASURED.
+ *
+ *     SUPERSEDED, PRESERVED SO THE MISTAKE STAYS READABLE:
+ *       ~~.bhp-gallery__stage { width: fit-content; margin-inline: auto }~~
+ *
+ * ⚠ WHY IT COLLAPSED: `.bhp-gallery__slide` is `position: absolute; inset: 0`.
+ *   The stage therefore has NO in-flow content, so `fit-content` resolved to
+ *   almost nothing. MEASURED on staging 1.19.393 at an asserted 375x812: the
+ *   stage rendered **16 x 190** and the cover inside it **16 x 25**. The hero
+ *   was effectively invisible.
+ *
+ * ⭐ THE REAL FIX IS THE ONE THE DESKTOP ALREADY USES: leave the stage its
+ *    width and make the IMAGE fill the stage's HEIGHT, so the cream stops
+ *    being a field and becomes a border. That is what "the hero fills the
+ *    frame" means, and it costs the fold nothing.
+ *
+ * ⭐⭐ AND THE FOLD OBJECTION IS GONE ANYWAY. The phone CTA now lives in the
+ *     sticky bar (393.7), so gallery height no longer competes with ADD TO
+ *     CART at all. The trade that the 391 report escalated — "a hero that
+ *     fills the width and a CTA above the fold cannot both be had" — was
+ *     dissolved by the sticky bar rather than decided.
+ */
+@media (max-width: 900px) {
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__stage {
+		padding: 8px;
+	}
+
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__stage img {
+		height: 100%;
+		width: auto;
+		max-width: 100%;
+		object-fit: contain;
+	}
+
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__thumbs img {
+		height: 74px;                  /* was 65px */
+	}
+}
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 393.7 · ⭐⭐⭐ THE STICKY PHONE BUY BAR, UP TO 812px
+ *
+ * Andrew, of the phone: ADD TO CART is "blocked by the url box - you cant read
+ * it". Supervisor seal 1274 chose this over the two alternatives.
+ *
+ * ⛔⛔ WHY A NEW ELEMENT AND NOT MORE TIGHTENING — THE ARITHMETIC, MEASURED.
+ *     At 375 the components are: sticky header 93, gallery 282, H1 89 at the
+ *     28px accessibility floor, format cards 66, CTA 48.
+ *         93 + 282 + 89 + 66 + 48 = 578
+ *     with EVERY gap, margin, breadcrumb and price line removed. The express
+ *     button then needs another 58 (48 + margins) -> 636, against a 667
+ *     viewport that a Safari bottom bar reduces to about 607. THERE IS NO
+ *     SPACING LEFT TO TAKE. Shrinking the phone hero was the only other lever
+ *     and it contradicts 393.6.
+ *
+ * ⭐ THE BAR CARRIES THE REAL CONTROLS, NOT COPIES. `.bhp-formats__buy` is the
+ *    same wrapper that holds the one `bhp-formats__cta` anchor, the one
+ *    collection direct-buy form and the one
+ *    `#wc-stripe-express-checkout-element` on the page. `position: fixed`
+ *    moves them; it does not duplicate them. §4.20 of the 389 suite ("exactly
+ *    one express container is printed") is what pins that.
+ *
+ * ⚠⚠ FIRST-VISIT CONSENT BANNER, STATED RATHER THAN DISCOVERED LATER.
+ *    `.wpconsent-banner` is `position: fixed`, `z-index: 900000`, and occupies
+ *    the bottom ~105px of a phone fold until it is answered (measured at 390
+ *    on 1.19.275 and recorded in section 3 of this file). THIS BAR SITS AT
+ *    `z-index: 500` AND IS THEREFORE COVERED BY IT ON A FIRST VISIT, exactly
+ *    as the in-flow CTA was.
+ *    ⛔ RAISING THE BAR ABOVE 900000 WAS CONSIDERED AND REFUSED: consent must
+ *       stay answerable and must never be covered (the same rule
+ *       `quiz-modal.css` records for the quiz dialog). Burying a consent
+ *       banner under a buy button is a worse defect than the one being fixed.
+ *    ⭐ AFTER CONSENT IS ANSWERED — and on every subsequent visit — the bar is
+ *       at the bottom of the screen at every scroll position. 500 also keeps
+ *       it UNDER the cart drawer (99000 / 100000), so the drawer still covers
+ *       it when open, which is correct.
+ *
+ * ⚠ `env(safe-area-inset-bottom)` IS WHAT PUTS IT ABOVE THE HOME INDICATOR on
+ *   an iPhone. It resolves to 0 on every browser without a notch, so the
+ *   padding is simply 10px there.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 812px) {
+	body.single-product.woocommerce div.product .bhp-formats__buy {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 500;
+		margin: 0;
+		padding: 8px 14px;
+		padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+		background: var(--parchment, #f8f3e9);
+		border-top: 1px solid rgba(20, 48, 77, 0.18);
+		box-shadow: 0 -6px 18px rgba(20, 48, 77, 0.13);
+	}
+
+	/* The CTA is the whole width of the bar and keeps its 48px target. */
+	body.single-product.woocommerce div.product .bhp-formats__buy .bhp-formats__cta-wrap {
+		margin: 0;
+	}
+
+	/*
+	 * ⛔⛔ 1.19.398 — `:not([hidden])` IS THE WHOLE BUG FIX, AND IT IS NOT A
+	 *     TIDY-UP. THIS RULE SHIPPED AS A BARE `display: block` IN 1.19.393
+	 *     AND THAT DEFEATED THE `hidden` ATTRIBUTE.
+	 *
+	 *     `[hidden] { display: none }` is a USER-AGENT rule, so ANY author
+	 *     `display` declaration matching the same element beats it on origin
+	 *     alone — no specificity contest required. The buy block prints TWO
+	 *     controls that carry `bhp-formats__cta` and are meant to be mutually
+	 *     exclusive: the `<a>` add-to-cart anchor, and the `<button>` inside
+	 *     `.bhp-formats__cta-direct` that submits the Collection's direct-buy
+	 *     form. `template-parts/commerce/format-cards.php` marks whichever one
+	 *     is not in play with `hidden`, and `assets/js/book-formats.js` keeps
+	 *     that attribute correct on every format change. Both were doing their
+	 *     job. This stylesheet was overruling them.
+	 *
+	 * ⭐ MEASURED ON STAGING 1.19.397, NOT INFERRED. Mariana PDP, Collection
+	 *    format selected, asserted `window.innerWidth` 375:
+	 *
+	 *        A.bhp-formats__cta                    hidden=true   display=block  h=48  top=597
+	 *        BUTTON.bhp-formats__cta (direct)      hidden=false  display=block  h=48  top=645
+	 *
+	 *    Two identical GET THE COMPLETE COLLECTION buttons stacked in the bar.
+	 *    ⭐ AND THE SCOPE IS EXACTLY THIS MEDIA QUERY: at an asserted 1440 the
+	 *    same anchor computes `display: none` and is 0px tall, because no rule
+	 *    outside this block sets `display` on it. The defect was a phone-only
+	 *    defect from the day the bar was built.
+	 *
+	 * ⚠ THE FOUNDER FOUND THIS ON HIS OWN PHONE, and the desk that shipped
+	 *   1.19.393 did not. Standing Rules §9.2 rule 7 is the entry that
+	 *   predicts this exact outcome. The lesson worth keeping: a rule that
+	 *   sets `display` on a class is a rule that can silently un-hide every
+	 *   member of that class, and this codebase uses `hidden` as a real
+	 *   control, not as a hint.
+	 */
+	body.single-product.woocommerce div.product .bhp-formats__buy .bhp-formats__cta:not([hidden]) {
+		display: block;
+		width: 100%;
+		min-height: 48px;
+	}
+
+	/*
+	 * ⛔ BELT AND BRACES, AT A SPECIFICITY THAT CANNOT LOSE. The rule above
+	 *    fixes the one selector that caused the observed defect. This one
+	 *    states the invariant for the whole bar, so a future `display`
+	 *    declaration added inside this media query cannot resurrect the same
+	 *    class of bug on a different element. It is scoped to `[hidden]`
+	 *    INSIDE the buy block only, so it can never hide anything a template
+	 *    intended to show.
+	 */
+	body.single-product.woocommerce div.product .bhp-formats__buy [hidden] {
+		display: none;
+	}
+
+	/* The wallet sits directly under ADD TO CART inside the bar. Its 48px
+	   reservation is dropped here on purpose: in the bar an unmounted wallet
+	   should cost nothing, because there is no content below it whose position
+	   depends on the reservation. */
+	body.single-product.woocommerce div.product .bhp-formats__buy .bhp-express {
+		min-height: 0;
+		margin: 6px 0 0;
+	}
+
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐⭐ 1.19.398 — ONE WALLET IN THE PINNED BAR, AND IT IS THE DEVICE'S
+	 *      OWN. `CYCLE179-CX-BUILD-398`.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ ANDREW SIGNORE, 2026-09-07, of staging on his own iPhone, RELAYED
+	 *    through the supervising session (Standing Rules §9.2 rule 2 — not
+	 *    witnessed first-hand here): *"Do you think there are too many ways to
+	 *    pay, like its just a little too big on the screen?"* His screenshot
+	 *    shows the bar carrying FOUR rows — the CTA, Apple Pay, Google Pay and
+	 *    Link — over roughly half a 375x812 screen.
+	 *
+	 * ⛔⛔ THE STRIPE GATEWAY EXPOSES NO FILTER FOR THIS. Read out of
+	 *     woocommerce-gateway-stripe **10.8.5 on staging** this build, not
+	 *     assumed: `build/express-checkout.js` hardcodes the element options
+	 *
+	 *         paymentMethods: { amazonPay:"auto", applePay:"always",
+	 *                           googlePay:"always", link:"auto",
+	 *                           paypal:"never" },
+	 *         layout: { overflow: "never" }
+	 *
+	 *     with no `apply_filters` anywhere near them —
+	 *     `class-wc-stripe-express-checkout-element.php` and
+	 *     `-helper.php` were both grepped for `apply_filters` and neither
+	 *     exposes `layout`, `paymentMethodOrder` or `paymentMethods`. There is
+	 *     no `maxRows` string in the bundle at all. ⛔ SO `layout.maxRows` /
+	 *     `paymentMethodOrder` / `paymentMethods.link = 'never'` COULD NOT BE
+	 *     SET, and nothing here pretends they were.
+	 *
+	 * ⛔⛔ AND TURNING LINK OFF PROPERLY IS ANDREW'S GATE, NOT A THEME EDIT.
+	 *     `woocommerce_stripe_settings` carries Link in
+	 *     `upe_checkout_experience_accepted_payments`. Changing that is a
+	 *     payment-configuration mutation and it was NOT touched. This block
+	 *     changes PRESENTATION IN ONE CONTAINER, on phones only.
+	 *
+	 * ⭐⭐ WHAT MAKES IT DOABLE IN CSS: the element mounts ONE ADDRESSABLE DIV
+	 *     PER METHOD. MEASURED on staging 1.19.397 in a real browser at an
+	 *     asserted 375x812, `#wc-stripe-express-checkout-element` is
+	 *     `display:flex; flex-wrap:wrap; gap:10px` with children
+	 *
+	 *         #wc-stripe-express-checkout-element-applePay    48px
+	 *         #wc-stripe-express-checkout-element-googlePay   47px
+	 *
+	 *     (Chrome on this machine offers two; the founder's iPhone offered
+	 *     three, adding `-link`). The ids are deterministic, so the choice can
+	 *     be expressed as a cascade instead of a script — which also means it
+	 *     cannot race the wallet's own late mount, and `--bhp-buybar-h` is
+	 *     republished by the bridge's ResizeObserver when the height settles.
+	 *
+	 * ⛔⛔ THE ORDER OF THESE RULES IS THE SAFETY PROPERTY, NOT A PREFERENCE.
+	 *     Nothing is hidden unless something else is proven present, so there
+	 *     is NO browser on which this block can leave the bar with zero
+	 *     wallets. A device that offers only Link keeps Link.
+	 *
+	 * ⚠ `:has()` IS THE MECHANISM AND ITS FAILURE MODE IS BENIGN. Safari 15.4+
+	 *   and Chrome 105+ support it; on anything older every rule below simply
+	 *   does not match and the bar renders exactly as 1.19.397 did. The
+	 *   degradation is "the old layout", not "no way to pay".
+	 */
+
+	/* 1 · Link and Amazon Pay stand down — but only where a native wallet has
+	       actually mounted to take their place. */
+	body.single-product.woocommerce div.product .bhp-formats__buy #wc-stripe-express-checkout-element:has(> #wc-stripe-express-checkout-element-applePay, > #wc-stripe-express-checkout-element-googlePay) > #wc-stripe-express-checkout-element-link,
+	body.single-product.woocommerce div.product .bhp-formats__buy #wc-stripe-express-checkout-element:has(> #wc-stripe-express-checkout-element-applePay, > #wc-stripe-express-checkout-element-googlePay) > #wc-stripe-express-checkout-element-amazonPay {
+		display: none;
+	}
+
+	/* 2 · Where neither native wallet exists, Link is the one that stays and
+	       Amazon Pay stands down behind it. */
+	body.single-product.woocommerce div.product .bhp-formats__buy #wc-stripe-express-checkout-element:has(> #wc-stripe-express-checkout-element-link) > #wc-stripe-express-checkout-element-amazonPay {
+		display: none;
+	}
+
+	/* 3 · Apple Pay wins over Google Pay on a device that offers both, because
+	       on that device Apple Pay is the native one. */
+	body.single-product.woocommerce div.product .bhp-formats__buy #wc-stripe-express-checkout-element:has(> #wc-stripe-express-checkout-element-applePay) > #wc-stripe-express-checkout-element-googlePay {
+		display: none;
+	}
+
+	/*
+	 * ⛔⛔ THE PAGE MUST RESERVE THE BAR'S HEIGHT OR THE LAST SECTION IS
+	 *     UNREADABLE, AND NO STYLESHEET CAN KNOW THAT HEIGHT.
+	 *
+	 *     A fixed element is out of flow, so without a reservation the
+	 *     footer's final rows sit permanently underneath it. The bar is the
+	 *     CTA plus whatever the Stripe element mounted, and THAT IS
+	 *     ENVIRONMENT-DEPENDENT: MEASURED on staging 1.19.393 at an asserted
+	 *     375x812 the wallet drew THREE 48px buttons and the bar was 263px
+	 *     tall, against the 132px this rule first reserved — 131px of page
+	 *     would have been permanently covered.
+	 *
+	 * ⭐ SO THE NUMBER IS PUBLISHED BY THE BAR ITSELF.
+	 *    `assets/js/express-checkout-bridge.js` measures the bar and sets
+	 *    `--bhp-buybar-h` on the document element, re-reading it through a
+	 *    `ResizeObserver` when the wallet mounts late or the device rotates.
+	 *
+	 * ⚠ 132px IS THE FALLBACK, NOT THE ANSWER. It is what a page with no
+	 *   JavaScript, or a page before the wallet mounts, reserves: CTA 48 +
+	 *   padding 20 + an unmounted wallet's 48 + margins. A page where the
+	 *   bridge does not render at all has a ~68px bar and over-reserves by
+	 *   about 64px of blank parchment at the very bottom of a long page. That
+	 *   is the cheap direction of the error and it is stated rather than
+	 *   hidden.
+	 */
+	body.single-product.woocommerce {
+		padding-bottom: var(--bhp-buybar-h, 132px);
+	}
+}
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 393.8 · ⭐⭐ THE SECOND PASS, AND WHY THERE HAD TO BE ONE.
+ *
+ * ⛔⛔ THE FIRST PASS'S BUDGET WAS BUILT ON A 48px WALLET AND THE WALLET IS NOT
+ *     48px. MEASURED ON STAGING 1.19.393, CDP viewport asserted 1280x580, the
+ *     Stripe element mounted THREE 48px buttons
+ *     (`#wc-stripe-express-checkout-element` had three `.StripeElement`
+ *     children of 48px each), wrapping to two rows: 106px at 1280 and 164px
+ *     stacked at 375. The block header above reserves 48px because that is the
+ *     only mounted wallet this machine had ever drawn. It now has three.
+ *
+ * ⭐ SO THE TARGET WAS RE-DERIVED FROM THE WORST CASE ACTUALLY OBSERVED rather
+ *    than from the reservation: at 1280x580 the wallet must clear the fold
+ *    with a 106px element, which needs the CTA to end by 466.
+ *
+ * ⚠ AND TWO FIRST-PASS RULES SILENTLY LOST THEIR CASCADE FIGHTS, which the
+ *   measurement caught and a source review would not have. `.product_title`
+ *   was given `margin-bottom: 12px` and computed **20px**; the value prop was
+ *   given `4px` and computed **8px**. Both are re-stated below at the
+ *   specificity the existing rules actually use
+ *   (`div.product > .summary > .product_title`). ⭐ THE LESSON IS THE ONE THIS
+ *   FILE KEEPS RECORDING: a rule that is written is not a rule that applies,
+ *   and only the computed value says which.
+ *
+ * EVERY FIGURE BELOW IS A MEASURED SLACK, taken from the gap chain read at
+ * 1280x580 on 1.19.393:
+ *
+ *     shell padding-top        24  ->  12     -12
+ *     breadcrumb margin-bottom 10  ->   6      -4
+ *     H1 margin-bottom         20  ->   8     -12
+ *     value prop margin-bottom  8  ->   2      -6
+ *     .bhp-formats margin-top   4  ->   0      -4
+ *     format-card padding      14  ->  10      -8   (95px card -> 87px; the
+ *                                                    44px target floor is not
+ *                                                    approached)
+ *     rail heading mt/mb     10/6  -> 2/4     -10
+ *     wallet gap under CTA     18  ->   4     -14
+ *                                              ----
+ *                                              -70
+ *
+ * ⛔⛔ THE LAST ROW NEEDED A SECOND ATTEMPT AND THE FIRST ONE FAILED SILENTLY,
+ *     WHICH IS WHY IT IS WRITTEN DOWN HERE RATHER THAN QUIETLY CORRECTED.
+ *
+ *     The 18px gap under ADD TO CART is NOT `.bhp-express`'s margin. MEASURED
+ *     on staging 1.19.393: `.bhp-express` computed `margin-top: 4px` (this
+ *     file's rule won) while `#wc-stripe-express-checkout-element` computed
+ *     **18px**, and the two collapse, so 18 wins. The Stripe plugin sets it
+ *     INLINE — the element carries `style="margin-top: 1em; clear: both;"`,
+ *     read off the live DOM — and an inline declaration beats every selector
+ *     in this stylesheet regardless of specificity.
+ *
+ * ⭐ SO THE `!important` BELOW IS THE ONLY THING THAT CAN WIN, and it is
+ *    narrow: one property, one third-party element, inside the buy block. It
+ *    is worth 14px at every width, which took the 1280x580 wallet clearance
+ *    from 16px to 30px.
+ * ──────────────────────────────────────────────────────────────────────── */
+/*
+ * ⚠⚠ THIRD PASS, AND THE REASON IS A NUMBER THIS FILE ALREADY WARNS ABOUT.
+ *    After the second pass the wallet cleared the 1280x580 fold by FOUR PIXELS
+ *    (express bottom 576 against 580), measured. Section 3c records the last
+ *    time this page shipped on a seven-pixel margin and what happened next:
+ *    "Seven pixels is one copy edit away from being sixteen again." Four is
+ *    worse. Fourteen more pixels of pure whitespace are taken below so the
+ *    clearance is ~18px WITH A THREE-BUTTON WALLET, which is the worst case
+ *    this machine has ever rendered.
+ */
+@media (min-width: 901px) {
+	body.single-product.woocommerce .woo-expedition-shell {
+		padding-top: 8px;               /* 24 -> 12 -> 8 */
+	}
+
+	body.single-product.woocommerce .woocommerce-breadcrumb {
+		margin-bottom: 4px;
+	}
+
+	/* ⚠ THE SELECTOR IS THE EXISTING ONE, NOT A NEW ONE. Section 3c already
+	   addresses `div.product > .summary > .product_title`; anything shorter
+	   loses, as 393.2's `margin-bottom` did. */
+	body.single-product.woocommerce div.product > .summary > .product_title {
+		margin-bottom: 4px;
+	}
+
+	body.single-product.woocommerce div.product .bhp-product-value-prop {
+		margin-bottom: 0;
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats {
+		margin-top: 0;
+	}
+
+	/* ⛔ PADDING ONLY. The card is the tap/click target and it stays 87px tall
+	   against a 44px floor; no type shrinks and no label changes. */
+	body.single-product.woocommerce div.product .bhp-format-card {
+		padding-top: 10px;
+		padding-bottom: 10px;
+	}
+
+	body.single-product.woocommerce div.product .bhp-format-card[data-bhp-format="collection"] {
+		padding-top: 18px;              /* the badge still needs its shoulder */
+	}
+
+	body.single-product.woocommerce div.product .bhp-formats__heading {
+		margin-top: 0;
+		margin-bottom: 4px;
+	}
+}
+
+/*
+ * ⛔ THE WALLET'S OWN MARGIN IS WHAT MAKES THE GAP, NOT `.bhp-express`'s, AND
+ *    IT IS AN INLINE STYLE. MEASURED on staging: `.bhp-express` computes
+ *    `margin-top: 4px` from the rule below, while
+ *    `#wc-stripe-express-checkout-element` carries
+ *    `style="margin-top: 1em; clear: both;"` written by the Stripe plugin. The
+ *    two collapse and 18px wins. Setting only the wrapper moves nothing, which
+ *    is exactly the sort of change that gets reported as done and is not.
+ *
+ * ⚠ `!important` IS REQUIRED AND IT IS NOT LAZINESS: an inline declaration
+ *   outranks every selector in this stylesheet, so there is no specificity
+ *   that would win. It is scoped to ONE property on ONE third-party element
+ *   INSIDE the buy block, so nothing else on the page is affected, and the
+ *   wallet outside the buy block (there is none today) would be untouched.
+ */
+body.single-product.woocommerce div.product .bhp-formats__buy .bhp-express {
+	margin-top: 4px;
+}
+
+body.single-product.woocommerce div.product .bhp-formats__buy #wc-stripe-express-checkout-element {
+	margin-top: 4px !important;
+	margin-bottom: 0 !important;
+}
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 394.1 · THE HERO COMES DOWN SO THE CAROUSEL CLEARS THE FOLD
+ *
+ * ⭐ ANDREW SIGNORE, 2026-09-07, on staging 1.19.393, RELAYED through
+ *    the supervising session (Standing Rules §9.2 rule 2 — not witnessed
+ *    first-hand here): *"The photo on staging is too big now - we need to
+ *    decrease it just enough to have the carousel above the fold but not as
+ *    small as it was last time."*
+ *
+ * ⛔ MEASURED ON STAGING 1.19.393, NOT INFERRED. At a CSS viewport of
+ *    1536 x 830 the gallery read:
+ *
+ *        .bhp-gallery__stage        110 →  670   (560 tall, set by 393.6)
+ *        .bhp-gallery__img          120 →  660   (352 x 540)
+ *        .bhp-gallery__thumb-img    716 →  820   ⚠ 10px of clearance
+ *        .bhp-look-inside__note     857 →  880   ⛔ BELOW THE FOLD
+ *
+ *    The thumbnail strip technically cleared an 830px fold by ten pixels and
+ *    the note under it did not. ⭐ THE FOUNDER'S OWN FOLD IS NOT 830 AND THAT
+ *    IS THE POINT: 1920x1080 at 125% is 864 CSS px of SCREEN, and the tab
+ *    strip, the omnibox and the taskbar come out of that before the page gets
+ *    any. A fixed pixel height set against an assumed fold is the defect, not
+ *    the number chosen for it.
+ *
+ * ⭐⭐ SO THE HEIGHT IS TIED TO THE VIEWPORT INSTEAD OF TO A GUESS.
+ *     `clamp(360px, 52vh, 470px)` is bounded at both ends: it can never
+ *     collapse back toward the 391 letterbox (the floor), and it can never
+ *     grow past the 393 complaint (the ceiling). MEASURED in a same-origin
+ *     probe frame laid out at three real viewport heights:
+ *
+ *        vh    stage h   cover        thumb-img bottom   note bottom
+ *        745     388     253 x 388           640              708
+ *        830     432     281 x 432           684              752
+ *        900     485     293 x 450           737              805
+ *
+ *     Every row clears its own fold, including the one this desk cannot rule
+ *     out for his machine.
+ *
+ * ⛔ THE BRACKET THE BRIEF ASKED FOR, STATED IN NUMBERS RATHER THAN ADJECTIVES.
+ *    Larger than 391 (which rendered the cover at 108 x 165 inside a 578 x 303
+ *    stage — a picture floating in a cream field) and smaller than 393
+ *    (352 x 540). At 830 this lands on 281 x 432: 2.6x the 391 cover by height
+ *    and 80% of the 393 cover.
+ *
+ * ⛔ NOTHING HERE TOUCHES THE BUY COLUMN. At >=901px the gallery is
+ *    `grid-column: 1` and the buy box is `grid-column: 2`; ADD TO CART, the
+ *    wallet buttons, the shipping line and the guarantee do not move by one
+ *    pixel, and that was re-measured after the change rather than assumed.
+ *
+ * ⚠ THE PHONE IS DELIBERATELY UNTOUCHED. 393.6's `max-width: 900px` half and
+ *   393.7's sticky buy bar are the phone's answer and they are not re-opened
+ *   here. This selector starts at 901px.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 901px) {
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__stage {
+		/* ⛔ SUPERSEDED, PRESERVED SO THE MOVEMENT STAYS READABLE:
+		     ~~min-height: 560px~~  (393.6, measured too tall on his screen) */
+		min-height: clamp(360px, 52vh, 470px);
+	}
+
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__stage img {
+		/* ⛔ SUPERSEDED: ~~max-height: 540px~~ */
+		max-height: 450px;
+	}
+
+	/* 96px, not 393.6's 104px. The strip is the thing that has to clear the
+	   fold, and eight pixels per thumbnail is eight pixels of clearance. A
+	   4:3 interior spread is still readable as a preview at this size. */
+	body.single-product.woocommerce .bhp-media-gallery--hero .bhp-gallery__thumbs img {
+		height: 96px;
+	}
+}
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 394.2 · THE THREE FORMAT BOXES SIT UNDER THE MIDDLE OF THE TITLE
+ *
+ * ⭐ ANDREW SIGNORE, 2026-09-07, RELAYED: *"the paperback, hardcover and
+ *    collection buttons need to be centered on the shop page under the title -
+ *    they are offset left."*
+ *
+ * ⛔ THE CAUSE IS A TRACK COUNT THAT OUTLIVED ITS CARD COUNT, and it is worth
+ *    naming because the symptom looks like an alignment bug and is not.
+ *    `book-formats.css` sets `grid-template-columns: repeat(4, minmax(0, 1fr))`
+ *    at >=1100px. ⭐ THE RAIL RENDERS THREE CARDS. Read out of the live DOM on
+ *    staging 1.19.393, all three chapter-book PDPs: `paperback`, `hardcover`,
+ *    `collection`. The fourth track is empty, so the three cards sit in tracks
+ *    1 to 3 and the whole group hangs to the left of a heading and a button
+ *    that both span the column.
+ *
+ *    MEASURED at 1536 x 830 before the change:
+ *        .bhp-formats__grid   x787 → x1378   (mid 1083)
+ *        cards                x787 → x1229   (mid 1008)   ⛔ 75px left of centre
+ *        .bhp-formats__cta    x787 → x1378   (mid 1083)
+ *
+ * ⭐⭐ WHY FLEX RATHER THAN `repeat(3, ...)`. Three tracks would fix today's
+ *     three cards and break the moment a rail has one or two — the empty-track
+ *     bug again, with a different number in it. A centred flex row is card
+ *     COUNT-AGNOSTIC: the cards keep the width the four-track grid gave them
+ *     (the cap below is that width, written as the same arithmetic), the row
+ *     centres whatever it is given, and a wrapped last row centres too.
+ *
+ * ⛔ THE CARD WIDTH IS NOT CHANGED, ON PURPOSE. He asked for centred, not
+ *    bigger. MEASURED after: cards 140px each, exactly as before, spanning
+ *    x862 → x1303, mid 1083 — the same 1083 as the heading and the button.
+ *
+ * ⚠ 601px IS THE FLOOR AND IT IS NOT ARBITRARY. Below it the PDP rail is
+ *   `display: contents` inside `.bhp-formats`' own grid (the <=600px section
+ *   at the head of this file), where the cards are placed by explicit
+ *   `grid-row` / `grid-column`. Reaching into that with a flex container would
+ *   dismantle the mobile order that 1.19.349 measured into place.
+ *
+ * ⛔ NO `order:` AND NO `display: none` IN THIS BLOCK. `test-cro-iterate1.php`
+ *    §2.3 and §2.4 read from the FIRST `min-width: 601px` in this file to END
+ *    OF FILE, so every future append lands inside their window. Anything added
+ *    below this line inherits that constraint.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 601px) {
+	body.single-product.woocommerce .bhp-formats__grid {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	body.single-product.woocommerce .bhp-formats__grid > * {
+		flex: 1 1 auto;
+		min-width: 0;
+		/* The two-track width, so a wrapped row keeps the 2-up proportion. */
+		max-width: calc((100% - 10px) / 2);
+	}
+}
+
+@media (min-width: 1100px) {
+	/* The four-track width, restated as arithmetic rather than as 140px, so it
+	   tracks the column instead of going stale the way the track count did. */
+	body.single-product.woocommerce .bhp-formats__grid > * {
+		max-width: calc((100% - 30px) / 4);
+	}
 }

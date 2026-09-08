@@ -52,14 +52,14 @@ if ( function_exists( 'bhp_email_header_without_empty_band' ) ) {
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * ⚠ IT RENDERS BELOW THE H1, NOT ABOVE IT, AND THAT IS A DELIBERATE DEVIATION
- *   FROM `CYCLE179-DES-REVIEW-EMAIL.md` §6, WHICH PUTS IT ABOVE. Legolas's
+ *   FROM `CYCLE179-DES-REVIEW-EMAIL.md` §6, WHICH PUTS IT ABOVE. The `design-creative` desk's
  *   order would require overriding `emails/email-header.php`, and
  *   `inc/transactional-emails.php` carries a standing prohibition on exactly
  *   that: *"the `email_improvements` feature flag is enabled on this store and
  *   rewrites both; an override pins the theme to one branch of core and
  *   diverges silently on the next update."* ⛔ A layout preference does not
  *   outrank a rule written to stop a silent break on a core update. Recorded
- *   for Gandalf rather than absorbed.
+ *   for `chief-of-staff` rather than absorbed.
  *
  * ⚠ AND IT IS MOOT ON EVERY EMAIL THIS BUILD ACTUALLY SENDS: the H1 is empty
  *   in all three live copy sets, so the hero IS the first thing under the logo
@@ -130,7 +130,7 @@ if ( '' !== $bhp_first_name ) {
 /*
  * ⚠ CONDITIONAL FROM 1.19.362, AND THE CONDITION IS THE POINT. The approved
  *   visit touch-1 set has NO bolded question and NO "Find the one you read:"
- *   line, because Merry's template has neither. ⛔ Rendering these blocks
+ *   line, because the `marketing-growth` desk's template has neither. ⛔ Rendering these blocks
  *   unconditionally would print an empty <strong> band above the link, which
  *   reads as a broken email. Inventing a question to fill the slot would be
  *   writing copy into an email whose copy is locked (Standing Rules §9).
@@ -165,7 +165,7 @@ if ( '' !== $bhp_first_name ) {
  *       "⛔⛔ EVERY CELL CARRIES ITS VISIBLE TEXT LABEL, NOT A GRAPHIC ALONE,
  *        and the glyph is a real character rather than a shipped image, so
  *        there is nothing to block, nothing to download and nothing to break.
- *        Merry's V2 §5: 'A row of five broken-image icons with no labels is a
+ *        The `marketing-growth` desk's V2 §5: 'A row of five broken-image icons with no labels is a
  *        dead end for the reader and a wasted send.' ⚠ If anyone later swaps
  *        the glyph for an <img>, the alt text must equal the label and the
  *        visible label must stay."
@@ -217,7 +217,7 @@ if ( '' !== $bhp_first_name ) {
  *    at 375px. ⚠ COMPUTED FROM THE DECLARED SIZES, NOT MEASURED IN A REAL
  *    CLIENT — no email client was opened in this build. See the deliverable.
  *
- * ⛔⛔ NOTHING STEERS TOWARD FIVE, AND THIS ROW SATISFIES MERRY'S V2 §5 RULE 1
+ * ⛔⛔ NOTHING STEERS TOWARD FIVE, AND THIS ROW SATISFIES THE MARKETING-GROWTH DESK'S V2 §5 RULE 1
  *     MORE STRICTLY THAN ITS PREDECESSOR DID, NOT LESS. Every cell holds the
  *     SAME image at the SAME size with the SAME padding and the SAME tap
  *     target. No default selection, no highlight, no hover state.
@@ -278,7 +278,7 @@ $bhp_star_colours  = function_exists( 'bhp_review_ask_star_colours' ) ? bhp_revi
 /*
  * ⭐ THE CAPTION, IN BODY TEXT, CENTRED UNDER THE ROW. ⛔ NOT <strong>: the
  *    superseded `links_lead` rendered bold and 1.19.365 flagged that as a
- *    rendering deviation from Merry's own page. The brief asks for "one caption
+ *    rendering deviation from the `marketing-growth` desk's own page. The brief asks for "one caption
  *    line in body text", so it is one caption line in body text.
  */
 ?>
@@ -372,7 +372,7 @@ echo implode( '<br>', $bhp_signoff_lines ); // phpcs:ignore WordPress.Security.E
 <?php
 /*
  * ⭐ 1.19.362 — THE P.S., AND IT SITS BELOW THE SIGN-OFF BECAUSE THAT IS WHAT
- *    A P.S. IS. Merry's approved template ends on one, and a postscript moved
+ *    A P.S. IS. The `marketing-growth` desk's approved template ends on one, and a postscript moved
  *    above the name stops being a postscript and becomes another paragraph.
  *
  * ⚠ IT RENDERS ONLY WHEN THE COPY SET CARRIES ONE. The superseded 21-day set
@@ -401,7 +401,7 @@ echo implode( '<br>', $bhp_signoff_lines ); // phpcs:ignore WordPress.Security.E
  *    `bhp_review_ask_signature()`: no Facebook or Instagram URL exists anywhere
  *    in this repository, and one will not be guessed.
  *
- * ⚠ THE BRAND LINE IS `#a8863f`, NOT `#c4a15c`. Legolas §4 measured brand gold
+ * ⚠ THE BRAND LINE IS `#a8863f`, NOT `#c4a15c`. `design-creative` §4 measured brand gold
  *   on the cream card at roughly 2.2:1 and the darker gold at roughly 3.3:1.
  *   Both are short of 4.5:1, so the line is set at 14px and carries no
  *   information that appears nowhere else — it is the company's own series

@@ -955,3 +955,59 @@ function bhp_capstone_format_aware_collection_link( $translated, $original, $dom
 	}
 	return $translated;
 }
+
+
+/**
+ * CYCLE179-LD-GSC-REDIRECTS (2026-09-06) - two legacy URLs that Google has in
+ * its index as hard 404s get a 301 to the page that now serves the same
+ * intent. Both were confirmed 404 live on the bare host before this was
+ * written; both targets were confirmed 200 live in the same pass.
+ *
+ * 1. /what-is-a-lexile-score/  ->  /blog/what-is-a-lexile-score/
+ *    The article was never deleted - it lives under the /blog/ prefix. The
+ *    root-level URL is the pre-prefix form Google crawled on 2026-07-15 and
+ *    still has recorded as "Not found (404)".
+ *
+ * 2. /resources  (and /resources/)  ->  /free-resources/
+ *    The Squarespace-era resources hub. /free-resources/ is the page that now
+ *    carries that intent; it is in the live page sitemap.
+ *
+ * Deliberately NOT done here: no wildcard, no pattern, no catch-all 404
+ * handler. Exactly two literal paths are matched, so nothing else on the site
+ * can change behaviour. The legacy taxonomy 404s in the same GSC bucket are
+ * left to 404 on purpose - they are dead Squarespace tag URLs with no modern
+ * equivalent, and 301ing them to an unrelated page would be a soft-404 signal,
+ * not a fix.
+ *
+ * Query strings are preserved. The match is anchored at the start of the path,
+ * so /free-resources/ cannot match rule 2.
+ */
+add_action( 'template_redirect', 'bhp_redirect_legacy_gsc_404s', 1 );
+function bhp_redirect_legacy_gsc_404s() {
+	if ( is_admin() ) {
+		return;
+	}
+	$req = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	if ( '' === $req ) {
+		return;
+	}
+
+	$path  = (string) wp_parse_url( $req, PHP_URL_PATH );
+	$query = (string) wp_parse_url( $req, PHP_URL_QUERY );
+
+	$map = array(
+		'#^/what-is-a-lexile-score/?$#i' => '/blog/what-is-a-lexile-score/',
+		'#^/resources/?$#i'              => '/free-resources/',
+	);
+
+	foreach ( $map as $pattern => $target ) {
+		if ( preg_match( $pattern, $path ) ) {
+			$dest = home_url( $target );
+			if ( '' !== $query ) {
+				$dest .= '?' . $query;
+			}
+			wp_safe_redirect( $dest, 301 );
+			exit;
+		}
+	}
+}

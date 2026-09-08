@@ -71,7 +71,7 @@ $faqs = [
     [__('What’s in the Meaningful Gift Guide?', 'brave-hearts'), __('A free guide to choosing a gift that sparks curiosity and shared memories - plus a look at what’s inside the books themselves.', 'brave-hearts')],
     [__('What’s included in the Complete Collection?', 'brave-hearts'), __('All three adventures - The Mariana Trench, Mount Everest, and The Amazon - in one purchase and one shipment. The primary way to give the whole series as a gift.', 'brave-hearts')],
     [__('Paperback or hardcover?', 'brave-hearts'), __('Both include the same three complete stories. Paperback is lightweight and easy for small hands; hardcover is a durable keepsake edition - often the better gift choice.', 'brave-hearts')],
-    [__('How does shipping work?', 'brave-hearts'), __('Books are printed and shipped from the USA with tracking. You’ll receive one shipment with all three books. Because each book is printed to order, we suggest ordering early - especially around busy holidays.', 'brave-hearts')],
+    [__('How does shipping work?', 'brave-hearts'), __('Books are printed and shipped from the USA. You’ll receive one shipment with all three books. Because each book is printed to order, we suggest ordering early - especially around busy holidays.', 'brave-hearts')],
     [__('Ordering for a birthday or holiday - how far ahead should I order?', 'brave-hearts'), __('Since books are printed to order, we recommend ordering at least 2 weeks before the date you need it, especially around busy holiday seasons.', 'brave-hearts')],
     [__('Is gift wrapping or a gift note available?', 'brave-hearts'), __('Not currently - books ship in protective packaging without gift wrap or a gift note. We’re noting this as something to consider for the future.', 'brave-hearts')],
     [__('Can I buy just one book instead of the whole Collection?', 'brave-hearts'), __('Yes - each book is also available individually if you’d rather start with one adventure. The Complete Collection is simply the most popular way to give the whole series as a gift.', 'brave-hearts')],
@@ -397,7 +397,7 @@ if (function_exists('bhp_get_amazon_review_registry')) {
                   'source'     => 'gift_landing',
               ]);
               ?>
-              <p class="audience-landing-pricecard__link-row"><?php esc_html_e('Secure checkout · Tracking provided ·', 'brave-hearts'); ?> <a href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('View individual books', 'brave-hearts'); ?></a></p>
+              <p class="audience-landing-pricecard__link-row"><?php esc_html_e('Secure checkout ·', 'brave-hearts'); ?> <a href="<?php echo esc_url(home_url('/books/')); ?>"><?php esc_html_e('View individual books', 'brave-hearts'); ?></a></p>
             </div>
           </div>
         <?php endforeach; ?>

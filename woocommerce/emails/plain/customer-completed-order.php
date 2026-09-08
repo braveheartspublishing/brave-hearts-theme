@@ -53,8 +53,8 @@ if ( '' !== $bhp_plain_heading ) {
 
 /*
  * ⭐⭐ SEAL 1010 · EXACTLY ONE GREETING, THE SAME RULING AS THE HTML TWIN.
- *     Andrew Signore, 2026-09-05 (⛔ RELAYED through Gandalf): *"There is a
- *     double 'Hi Aragorn, Hi Aragorn' -- needs to be fixed"*. The approved
+ *     Andrew Signore, 2026-09-05 (⛔ RELAYED through `chief-of-staff`): *"There is a
+ *     double 'Hi [name], Hi [name]' -- needs to be fixed"*. The approved
  *     copy's own `Hi {ParentFirstName},` is the first line of
  *     `$bhp_visit_body`, so this template's greeting stands down whenever
  *     there is a visit body and is unchanged for every ordinary order.

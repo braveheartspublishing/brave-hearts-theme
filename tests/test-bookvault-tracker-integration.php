@@ -20,6 +20,26 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
 if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 	return;
 }
@@ -104,6 +124,60 @@ add_filter(
 	10,
 	2
 );
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.386 — THE SECOND SEAM, AND WITHOUT IT §3's ASSERTIONS ARE A LIE
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ §3 asserts that the LIVE dispatch produces EXACTLY ONE email and that it
+ *    is the E2 shipping confirmation. That assertion reads the `pre_wp_mail`
+ *    capture above — and `pre_wp_mail` only fires if something actually reaches
+ *    `wp_mail()`.
+ *
+ * ⛔ ON STAGING, NOTHING DOES, AND HAS NOT SINCE THEME 1.19.281.
+ *    `inc/staging-mail-guard.php` answers `is_enabled()` with FALSE for
+ *    `customer_completed_order`, so `WC_Email::trigger()` returns before it
+ *    ever builds a message. ⭐ MEASURED, NOT REASONED ABOUT: WooCommerce's own
+ *    `EmailLogger` wrote it to `wc-logs/transactional-emails-2026-09-06-*.log`
+ *    during the 2026-09-06 full-suite run —
+ *
+ *      NOTICE Email "customer_completed_order" for order #10486 not sent:
+ *             email type is disabled  {"status":"disabled","recipient":"guest"}
+ *
+ *    ⚠️ SO THESE TWO ASSERTIONS HAVE BEEN FAILING SINCE 1.19.281, ON A
+ *       PRE-EXISTING CAUSE THAT HAS NOTHING TO DO WITH THE MAIL BLOCK. They are
+ *       repaired here rather than left red, because a suite with two permanently
+ *       red assertions trains whoever runs it to ignore the colour.
+ *
+ * ⭐ THE REPAIR RESTORES THE ORIGINAL MEANING RATHER THAN WEAKENING IT. The
+ *    staging suppression is lifted for THIS ONE EMAIL ID, in THIS PROCESS only,
+ *    so the confirmation is really constructed, really addressed and really
+ *    handed onward — and then stopped, twice over, by the two guards below it.
+ *    ⛔ Nothing is sent: `tests/bootstrap-mail-guard.php` has already PROVED the
+ *    `pre_wp_mail` block end-to-end at include time, and the fixture's billing
+ *    address is `tracker-fixture@example.com`, which
+ *    `inc/test-order-mail-guard.php` blocks by address on every environment.
+ *
+ * ⛔ AND THE CAPTURE ABOVE STILL SEES IT, WHICH IS NOT AN ACCIDENT.
+ *    `inc/test-order-mail-guard.php` blocks a message addressed to a test
+ *    address at `pre_wp_mail` and NOT by substituting the transport, precisely
+ *    so that `wp_mail()` is really reached and `WC_Email::send()` still runs end
+ *    to end. ⚠️ An earlier version of that guard DID substitute the transport,
+ *    and it took thirteen assertions in `tests/test-cycle169-review-ask.php`
+ *    down with it. The message is therefore recorded exactly ONCE, by the
+ *    `pre_wp_mail` capture above.
+ */
+
+/*
+ * ⛔ SCOPED TO ONE ID AND ONE PROCESS. Every other order email stays suppressed
+ *    on staging, and `remove_filter()` on an environment where the guard was
+ *    never registered is a harmless no-op. This changes no option and no
+ *    WooCommerce setting — it is a runtime filter, in a CLI process that ends.
+ */
+if ( function_exists( 'bhp_staging_mail_guard_disable' ) ) {
+	remove_filter( 'woocommerce_email_enabled_customer_completed_order', 'bhp_staging_mail_guard_disable', 99 );
+}
 
 /**
  * Reset the mail capture.

@@ -18,9 +18,32 @@ $teacher_field = static function ($key, $fallback = '') use ($page_id) {
     return apply_filters('bhp_teachers_field_' . sanitize_key($key), $value, $page_id);
 };
 
+/*
+ * ⭐ 1.19.394 (`CYCLE179-CX-BUILD-394`, item 6) — the two controls on this page
+ *    labelled "Request a Read-Aloud" now default to the page that can actually
+ *    take a request, the same destination the primary navigation's
+ *    "Read-Alouds" item already uses.
+ *
+ * ⛔ SUPERSEDED DEFAULT, PRESERVED SO THE MOVEMENT IS VISIBLE:
+ *      ~~add_query_arg('inquiry', 'read-aloud', home_url('/contact/'))~~
+ *
+ * ⭐ ANDREW SIGNORE named `/contact/` only. ⚠ THIS PAGE IS CHANGED FOR THE
+ *    CONSISTENCY REASON HE GAVE IN THE SAME SITTING — *"they make a big impact
+ *    on the trust value if things look odd or not consistent page to page"* —
+ *    because the LABEL here is the identical string. Two buttons reading
+ *    "Request a Read-Aloud" that go to two different places is the defect he
+ *    is describing, one page over.
+ *
+ * ⛔ THIS IS THE FALLBACK ONLY. The `bhp_teachers_read_aloud_url` post meta and
+ *    its filter still win, so the destination is reversible from the database
+ *    without another release.
+ *
+ * ⛔ VERIFIED LIVE on staging 2026-09-07: `/school-read-alouds/` returns 200
+ *    with H1 "Book a free read-aloud" and carries the scheduler.
+ */
 $read_aloud_url = bhp_get_safe_link_url(
     $teacher_field('read_aloud_url', ''),
-    add_query_arg('inquiry', 'read-aloud', home_url('/contact/'))
+    home_url('/school-read-alouds/')
 );
 $hero_image_id = (int) $teacher_field('hero_image_id', 0);
 $adventures = bhp_get_series_adventures();

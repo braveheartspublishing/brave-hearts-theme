@@ -61,6 +61,41 @@ class BHP_Order_Provenance {
 	const ORIGIN_UNKNOWN                  = 'unknown_origin';
 
 	/**
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐⭐ 1.8.86 — THE ONE ORIGIN THAT IS NEITHER A SALE NOR A TEST.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * A testimonial reward order: a real family, a real address, a real book
+	 * that Bookvault really prints and really ships, bought with a 100 percent
+	 * coupon so the store takes no revenue for the goods.
+	 *
+	 * ⛔ EVERY OTHER NON-`LIVE_CUSTOMER` ORIGIN ABOVE MEANS SOME FLAVOUR OF
+	 *    "TEST" — `production_admin_test`, `production_payment_test`,
+	 *    `staging_origin_order`, `pre_launch_test_order`, `legacy_test_order`.
+	 *    Reusing one of them to keep a reward out of revenue would file a
+	 *    genuine shipment to a genuine reader as a fake order, in the executive
+	 *    numbers, permanently. ⭐ THAT IS THE ENTIRE REASON THIS CONSTANT
+	 *    EXISTS RATHER THAN A ONE-LINE REUSE: the exclusion was always easy;
+	 *    the exclusion WITHOUT THE LIE is what needed a new name.
+	 *
+	 * ⭐ WHAT IT BUYS, AND IT IS EXACT: `reporting_status_for_origin()` maps it
+	 *    to `STATUS_AUDIT_ONLY`, so `is_executive_eligible()` answers false,
+	 *    and that single function is already the gate on gross sales, net
+	 *    revenue, orders, units, AOV, offer mix, format mix, estimated profit
+	 *    (see this class's own closing docblock) AND on the `purchase` and
+	 *    `bundle_type_purchased` dataLayer events in `bundle-analytics.php`
+	 *    lines 346 and 444. ⛔ NO CONSUMER NEEDED CHANGING. If a consumer had
+	 *    needed changing, that would have been evidence the gate was not
+	 *    single, and worth reporting rather than working around.
+	 *
+	 * ⭐ IT IS STILL COUNTED IN FULFILLMENT. `audit_only` excludes an order
+	 *    from executive commerce KPIs; it does not hide it. A reward order is
+	 *    a real print job with a real unit cost, and it must stay visible to
+	 *    anything reasoning about what the store actually shipped.
+	 */
+	const ORIGIN_INCENTIVE_FULFILLMENT    = 'incentive_fulfillment_order';
+
+	/**
 	 * Manual override meta key. If ever set on a real order (via wp-cli
 	 * or a future small admin action -- none exists yet, this is just the
 	 * read side), it takes precedence over everything below, so a
@@ -69,6 +104,70 @@ class BHP_Order_Provenance {
 	 * Value must be one of the ORIGIN_* constants above.
 	 */
 	const OVERRIDE_META_KEY = '_bhp_order_provenance_override';
+
+	/**
+	 * The durable order stamp that marks a reward order.
+	 *
+	 * ⛔ DELIBERATELY NOT `OVERRIDE_META_KEY`, AND THIS IS THE ONE DESIGN
+	 *    DECISION IN 1.8.86 WORTH ARGUING WITH.
+	 *
+	 * The obvious implementation is to write `OVERRIDE_META_KEY =
+	 * ORIGIN_INCENTIVE_FULFILLMENT` and stop — the override already wins over
+	 * everything, so it would work on the first try. ⛔ IT WOULD ALSO SPEND
+	 * THE MANUAL CHANNEL. `OVERRIDE_META_KEY` is documented directly above as
+	 * the human correction door: the thing a person sets, by hand, when the
+	 * automatic classification got an order wrong. Once an automatic stamper
+	 * writes to it, "this order carries an override" stops meaning "a human
+	 * disagreed with the classifier" — and the next person who needs to
+	 * correct a reward order's classification has nothing left to correct it
+	 * WITH, because the classifier is already sitting in that slot.
+	 *
+	 * ⭐ So the reward stamp gets its own key, `classify()` reads it as
+	 *    evidence like any other evidence, and `OVERRIDE_META_KEY` keeps
+	 *    outranking it — meaning a human can still override a reward
+	 *    classification, which is the property that would have been lost.
+	 *
+	 * Value is `yes`. Written once, never cleared. See `stamp_order()`.
+	 */
+	const INCENTIVE_ORDER_META_KEY = '_bhp_order_incentive_fulfillment';
+
+	/**
+	 * Coupon meta marking a coupon as a testimonial reward.
+	 *
+	 * ⚠️ THIS RAIL CANNOT SURVIVE THE COUPON. These coupons are single-use and
+	 *    are deleted after redemption — the seal 1300 test deletes its own and
+	 *    Andrew's production procedure will too. Once the post is gone,
+	 *    `new WC_Coupon( $code )` returns id 0 and this meta cannot be read at
+	 *    all. It is a convenience for the live window, never the load-bearing
+	 *    rail. The order stamp and the code prefix are.
+	 */
+	const INCENTIVE_COUPON_META_KEY = '_bhp_incentive_fulfillment';
+
+	/**
+	 * Coupon-code prefixes that identify a testimonial reward, lower-cased.
+	 *
+	 * ⚠️⚠️ TWO PREFIXES ARE LISTED AND THAT IS A REPORTED DISCREPANCY, NOT A
+	 *      DESIGN. The 397 brief names `READER-`. The V-9 module already
+	 *      shipped in theme 1.19.396 keys on `bhp-thanks-`, and a real coupon
+	 *      with that prefix was created, redeemed and deleted on staging under
+	 *      seal 1300 — so `bhp-thanks-` is the only prefix with a live
+	 *      redemption behind it, and `READER-` is the only one a brief names.
+	 *
+	 * ⛔ BOTH ARE RECOGNISED HERE RATHER THAN ONE BEING PICKED, because
+	 *    picking is Andrew's call and guessing it wrong is silent: a reward
+	 *    coupon whose prefix is not on this list produces a reward order that
+	 *    counts as revenue, and nothing anywhere reports that it happened.
+	 *    Recognising both cannot produce that failure in either direction.
+	 *
+	 * ⭐ The cost of the extra prefix is bounded and worth naming: any future
+	 *    coupon beginning `READER-` or `bhp-thanks-` — including one created
+	 *    for an unrelated purpose — is treated as a reward and kept out of
+	 *    revenue. Both are namespaced enough that this is unlikely, and the
+	 *    failure direction is "a real sale is under-counted", which is visible
+	 *    in the dashboard, rather than "a reward inflates revenue", which is
+	 *    not.
+	 */
+	const INCENTIVE_COUPON_PREFIXES = array( 'reader-', 'bhp-thanks-' );
 
 	/**
 	 * Known internal verification orders, confirmed 2026-07-06 by direct
@@ -189,6 +288,34 @@ class BHP_Order_Provenance {
 			);
 		}
 
+		/*
+		 * ⭐⭐ THE REWARD-ORDER TEST, AND ITS POSITION IS DELIBERATE.
+		 *
+		 * BELOW the manual override, so a human can still correct a reward
+		 * order (see INCENTIVE_ORDER_META_KEY's docblock for why that mattered
+		 * enough to cost a second meta key).
+		 *
+		 * ⛔ BELOW THE `failed` BRANCH TOO, AND THAT IS THE ARGUABLE ONE.
+		 *    A reward order that fails payment is reported as a payment
+		 *    failure, not as a reward. Both readings are defensible: it is not
+		 *    a lost SALE, so counting it as a customer payment failure
+		 *    overstates the failure rate; but a reward order still charges
+		 *    real shipping ($2.99 on this store, measured under seal 1300 —
+		 *    a 100 percent coupon does NOT net $0 here), so a family really
+		 *    can really fail to pay, and that is a real checkout failure worth
+		 *    seeing. ⭐ The tie is broken by blast radius: leaving the `failed`
+		 *    branch untouched changes no existing number, and the reverse
+		 *    would quietly move orders out of a metric nobody asked to change.
+		 */
+		if ( self::is_incentive_fulfillment( $order ) && 'failed' !== $order->get_status() ) {
+			return array(
+				'order_id'         => $id,
+				'origin'           => self::ORIGIN_INCENTIVE_FULFILLMENT,
+				'reporting_status' => self::STATUS_AUDIT_ONLY,
+				'reason'           => 'Testimonial reward fulfillment -- a real order shipped to a real reader under a 100 percent reward coupon. Excluded from revenue, AOV and purchase events because no revenue was taken for the goods, NOT because it is a test order',
+			);
+		}
+
 		if ( 'failed' === $order->get_status() ) {
 			if ( in_array( $id, self::KNOWN_TEST_ORDER_IDS, true ) ) {
 				return array(
@@ -247,6 +374,170 @@ class BHP_Order_Provenance {
 		);
 	}
 
+	/**
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐⭐ THE SINGLE SOURCE OF TRUTH FOR "IS THIS A REWARD ORDER?"
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * The theme's V-9 post-purchase suppression
+	 * (`inc/postpurchase-suppression.php`, theme 1.19.396) asks THIS function
+	 * rather than re-deriving the answer from its own rails. ⛔ TWO
+	 * INDEPENDENT DETECTORS FOR ONE CONCEPT IS THE DEFECT, not the redundancy
+	 * it looks like: the day someone adds a prefix to one of them, an order
+	 * stops being asked for a review while still counting as revenue, or the
+	 * reverse. Either half of that is silent.
+	 *
+	 * ⭐ V-9 KEEPS ITS OWN RAILS AS A FALLBACK FOR EXACTLY ONE CASE — this
+	 *    plugin being deactivated — because a theme that stops suppressing
+	 *    review asks when a commerce plugin is switched off would email a real
+	 *    reward recipient. See that file's rail 0.
+	 *
+	 * THREE RAILS, in the order they are cheapest and most durable:
+	 *
+	 *   1 · THE ORDER STAMP. Written once at checkout, never cleared. Survives
+	 *       the coupon's deletion, a coupon rename, and a change to the prefix
+	 *       list. ⭐ This is the rail that still works in a year.
+	 *   2 · THE CODE PREFIX. A string test on codes the order stores forever.
+	 *       Survives coupon deletion; it is what stamps rail 1 in the first
+	 *       place, and what classifies orders placed BEFORE 1.8.86 shipped.
+	 *   3 · THE COUPON META. Reads the coupon post. ⚠️ Dies with the coupon.
+	 *
+	 * @param WC_Order $order
+	 * @return bool
+	 */
+	public static function is_incentive_fulfillment( $order ) {
+		if ( ! $order instanceof WC_Order ) {
+			return false;
+		}
+
+		// Rail 1 — the durable stamp.
+		if ( 'yes' === $order->get_meta( self::INCENTIVE_ORDER_META_KEY ) ) {
+			return true;
+		}
+
+		$codes = self::order_coupon_codes( $order );
+
+		// Rail 2 — the code prefix. No database read.
+		foreach ( $codes as $code ) {
+			if ( self::code_is_incentive( $code ) ) {
+				return true;
+			}
+		}
+
+		// Rail 3 — coupon meta, while the coupon still exists.
+		if ( class_exists( 'WC_Coupon' ) ) {
+			foreach ( $codes as $code ) {
+				$coupon = new WC_Coupon( $code );
+				if ( $coupon->get_id() && 'yes' === $coupon->get_meta( self::INCENTIVE_COUPON_META_KEY ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Does this coupon code carry a reward prefix?
+	 *
+	 * ⛔ COMPARED LOWER-CASED. WooCommerce stores coupon codes lower-cased via
+	 *    `wc_format_coupon_code()`, so a brief that writes `READER-` and a
+	 *    database that holds `reader-` are the same coupon. A case-sensitive
+	 *    test here would match the brief, match nothing in production, and
+	 *    fail silently — which is the failure mode this whole class exists to
+	 *    stop.
+	 *
+	 * @param string $code
+	 * @return bool
+	 */
+	public static function code_is_incentive( $code ) {
+		$code = strtolower( trim( (string) $code ) );
+		if ( '' === $code ) {
+			return false;
+		}
+		foreach ( self::incentive_coupon_prefixes() as $prefix ) {
+			if ( '' !== $prefix && 0 === strpos( $code, $prefix ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The reward-coupon prefixes, lower-cased and filterable.
+	 *
+	 * @return string[]
+	 */
+	public static function incentive_coupon_prefixes() {
+		$prefixes = array_map( 'strtolower', (array) self::INCENTIVE_COUPON_PREFIXES );
+
+		/**
+		 * Adjust the reward-coupon prefix list.
+		 *
+		 * @param string[] $prefixes Lower-cased prefixes.
+		 */
+		return array_values( array_filter( array_map( 'strval', (array) apply_filters( 'bhp_incentive_coupon_prefixes', $prefixes ) ) ) );
+	}
+
+	/**
+	 * Coupon codes on an order, across the two WooCommerce APIs.
+	 *
+	 * ⛔ `get_coupon_codes()` DOES NOT EXIST ON EVERY ORDER OBJECT THIS STORE
+	 *    HANDS AROUND. It landed in WooCommerce 3.7 on `WC_Abstract_Order`,
+	 *    and a refund object is a `WC_Order` subclass that does not carry it.
+	 *    The `get_items('coupon')` fallback is the pre-3.7 form and works on
+	 *    both, so the method test is cheaper than finding out in production.
+	 *
+	 * @param WC_Order $order
+	 * @return string[] Lower-cased codes.
+	 */
+	private static function order_coupon_codes( $order ) {
+		$codes = array();
+
+		if ( method_exists( $order, 'get_coupon_codes' ) ) {
+			$codes = (array) $order->get_coupon_codes();
+		} elseif ( method_exists( $order, 'get_items' ) ) {
+			foreach ( (array) $order->get_items( 'coupon' ) as $item ) {
+				if ( is_object( $item ) && method_exists( $item, 'get_code' ) ) {
+					$codes[] = $item->get_code();
+				}
+			}
+		}
+
+		return array_values( array_filter( array_map( 'strtolower', array_map( 'strval', $codes ) ) ) );
+	}
+
+	/**
+	 * Write the durable reward stamp onto an order, once.
+	 *
+	 * ⭐ IDEMPOTENT AND WRITE-ONLY. It never clears the stamp, because the
+	 *    coupon that justified it will be deleted and the evidence would go
+	 *    with it. An order that was a reward stays a reward.
+	 *
+	 * ⛔ IT WRITES ONE ORDER META KEY AND NOTHING ELSE. No coupon is created,
+	 *    read for modification, or changed; no product, price, stock,
+	 *    shipping, tax, payment or checkout setting is touched.
+	 *
+	 * @param WC_Order|int $order_or_id
+	 * @return bool TRUE if this call wrote the stamp.
+	 */
+	public static function stamp_order( $order_or_id ) {
+		$order = $order_or_id instanceof WC_Order ? $order_or_id : ( function_exists( 'wc_get_order' ) ? wc_get_order( $order_or_id ) : false );
+		if ( ! $order instanceof WC_Order ) {
+			return false;
+		}
+		if ( 'yes' === $order->get_meta( self::INCENTIVE_ORDER_META_KEY ) ) {
+			return false; // Already stamped.
+		}
+		if ( ! self::is_incentive_fulfillment( $order ) ) {
+			return false;
+		}
+
+		$order->update_meta_data( self::INCENTIVE_ORDER_META_KEY, 'yes' );
+		$order->save();
+		return true;
+	}
+
 	private static function reporting_status_for_origin( $origin ) {
 		$map = array(
 			self::ORIGIN_LIVE_CUSTOMER             => self::STATUS_INCLUDE,
@@ -259,6 +550,7 @@ class BHP_Order_Provenance {
 			self::ORIGIN_PRELAUNCH_TEST            => self::STATUS_AUDIT_ONLY,
 			self::ORIGIN_LEGACY_TEST               => self::STATUS_AUDIT_ONLY,
 			self::ORIGIN_REFUNDED_TEST             => self::STATUS_AUDIT_ONLY,
+			self::ORIGIN_INCENTIVE_FULFILLMENT     => self::STATUS_AUDIT_ONLY,
 			self::ORIGIN_FAILED_PAYMENT            => self::STATUS_FAILURE_ONLY,
 			self::ORIGIN_UNKNOWN                   => self::STATUS_UNKNOWN,
 		);
@@ -271,6 +563,7 @@ class BHP_Order_Provenance {
 			self::ORIGIN_INTERNAL_FULFILLMENT_TEST,
 			self::ORIGIN_IMPORTED_STAGING, self::ORIGIN_STAGING, self::ORIGIN_PRELAUNCH_TEST,
 			self::ORIGIN_LEGACY_REAL, self::ORIGIN_LEGACY_TEST, self::ORIGIN_REFUNDED_TEST,
+			self::ORIGIN_INCENTIVE_FULFILLMENT,
 			self::ORIGIN_FAILED_PAYMENT, self::ORIGIN_UNKNOWN,
 		);
 	}
@@ -287,6 +580,7 @@ class BHP_Order_Provenance {
 			self::ORIGIN_LEGACY_REAL               => __( 'Legacy real customer order', 'bhp-bundle-pricing' ),
 			self::ORIGIN_LEGACY_TEST               => __( 'Legacy test order', 'bhp-bundle-pricing' ),
 			self::ORIGIN_REFUNDED_TEST             => __( 'Refunded test order', 'bhp-bundle-pricing' ),
+			self::ORIGIN_INCENTIVE_FULFILLMENT     => __( 'Testimonial reward fulfillment (real order, no revenue -- not a test)', 'bhp-bundle-pricing' ),
 			self::ORIGIN_FAILED_PAYMENT            => __( 'Failed payment', 'bhp-bundle-pricing' ),
 			self::ORIGIN_UNKNOWN                   => __( 'Unknown origin', 'bhp-bundle-pricing' ),
 		);

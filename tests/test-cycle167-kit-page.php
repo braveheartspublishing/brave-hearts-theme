@@ -54,6 +54,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
+/*
  * ⛔ COUNTERS IN $GLOBALS. `wp eval-file` runs this file in FUNCTION scope, so
  *    a file-top `$pass = 0;` is a LOCAL and `global $pass;` inside the helper
  *    binds a different, unset global — the helper would increment one variable
@@ -561,11 +581,56 @@ bhp_kit_ok(
 	'§4a ⛔ nothing is promised that the Kit does not contain',
 	0 === preg_match( '/\b(workbook|worksheets?|audiobook|audio ?book|poster|stickers?|lesson plans?|flashcards?|curriculum)\b/i', $code )
 );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ CORRECTED 1.19.389 (2026-09-06, `CYCLE179-LD-BUILD-389`) — THE CHAPTER
+ *     NUMBER MOVED IN THE ARTEFACT AND THIS ASSERTION HAD NOT NOTICED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED ASSERTION, PRESERVED SO THE MOVEMENT IS VISIBLE:
+ *      false !== stripos( $code, 'Chapter 7 from The Mariana Trench' )
+ *
+ * ⭐ WHY IT MOVED. The kit the site actually serves became **Chapter 10, "The
+ *    Dive", 11 pages** on 2026-09-03 19:26. The landing page went on saying
+ *    "Chapter 7" in three rendered places for three days, and this suite went
+ *    green throughout — because it was asserting the OLD string, so it locked
+ *    the defect in place instead of catching it. ⛔ That is the specific
+ *    failure mode this note exists to record: a copy guard is only as true as
+ *    the artefact it was written against.
+ *
+ * ⭐ VERIFIED LIVE, NOT READ FROM A DOCUMENT (Standing Rules §9.2 — who, when,
+ *    with what): `lead-developer`, 2026-09-06, over SSH against the PRODUCTION
+ *    document root. `wp option get bhp_lead_magnet_pdfs` →
+ *    `adventure_kit_parent` = `.../uploads/2026/07/
+ *    Reluctant-Reader-Adventure-Kit-1.pdf`; that file is 8,944,368 bytes,
+ *    mtime 2026-09-03 19:26, md5 `e227eea53ec762df4abdb6a09615a730`,
+ *    `/Count 11`; and that md5 is byte-identical to the Drive kit of record
+ *    "Reluctant Reader Adventure Kit v2.2 (Chapter 10, live 2026-09-03).pdf",
+ *    whose page 3 reads "FROM THE MARIANA TRENCH, CHAPTER 10: THE DIVE".
+ *
+ * ⚠ A WORKING DRAFT SAYS THE OPPOSITE AND IS THE STALE PARTY:
+ *   `WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-BUNDLE-TABLE-EXIT.md` §0
+ *   records the Chapter 10 kit as an unshipped draft, on the strength of a
+ *   build README. The file on the production server settles it.
+ *
+ * ⭐ THE OTHER TWO CONTENTS ARE UNCHANGED AND WERE RE-CHECKED, NOT ASSUMED: the
+ *    printable explorer activity and the three ways to make it feel like an
+ *    adventure are still what the kit contains. Only the chapter number and
+ *    the page count moved.
+ *
+ * ⭐ §4b2 BELOW IS NEW AND IS THE PART THAT STOPS THIS RECURRING: the retired
+ *    chapter number must be ABSENT from the code, so a partial revert leaves
+ *    this suite RED rather than a page offering a chapter nobody will receive.
+ */
 bhp_kit_ok(
 	'§4b the three real contents are all named',
-	false !== stripos( $code, 'Chapter 7 from The Mariana Trench' )
+	false !== stripos( $code, 'Chapter 10 from The Mariana Trench' )
 		&& false !== stripos( $code, 'printable explorer activity' )
 		&& false !== stripos( $code, 'ways to make it feel like an adventure' )
+);
+bhp_kit_ok(
+	'§4b2 ⛔ the retired chapter number is gone from the CODE (it survives in docblocks, deliberately)',
+	false === stripos( $code, 'Chapter 7' )
 );
 bhp_kit_ok(
 	'§4c ⛔ no duration claim (retired 2026-08-03 under his own rule)',

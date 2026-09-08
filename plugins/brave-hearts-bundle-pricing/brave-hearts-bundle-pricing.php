@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Brave Hearts Bundle Pricing
  * Description: Fixed-dollar bundle discounts, shipping, and storefront offers for the six approved Adventures of Charlotte and Henry editions. Every bundle purchase adds the real, individually-mapped WooCommerce products as separate cart line items — Bookvault fulfillment routing and per-book tax are never altered.
- * Version: 1.8.83
+ * Version: 1.8.86
  * Author: Brave Hearts Publishing
  * Requires Plugins: woocommerce
  * Text Domain: bhp-bundle-pricing
@@ -42,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * ⛔ KEEP IT IN STEP WITH THE `Version:` HEADER ABOVE, every release.
  */
-define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.83' );
+define( 'BHP_BUNDLE_PRICING_VERSION', '1.8.86' );
 define( 'BHP_BUNDLE_PRICING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BHP_BUNDLE_PRICING_URL', plugin_dir_url( __FILE__ ) );
 
@@ -105,6 +105,17 @@ function bhp_bundle_pricing_init() {
 	// addon-upsell.php because it resolves the same SKU allowlist.
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/addon-vocab-cards.php';
 	require_once BHP_BUNDLE_PRICING_DIR . 'includes/bundle-analytics.php';
+	/*
+	 * 1.8.86 (2026-09-07, CYCLE179-LD-BUILD-397): the testimonial-reward order
+	 * stamp. Loaded AFTER bundle-analytics.php on purpose — analytics is the
+	 * consumer that most needs the classification, and loading the stamper
+	 * after it keeps "who writes the mark" below "who reads it" in this list.
+	 * Ordering is documentation here, not a dependency: both files only
+	 * register hooks, and every entry point in the stamper is guarded by
+	 * class_exists( 'BHP_Order_Provenance' ) because the dashboard module that
+	 * defines that class is deliberately omissible from a release.
+	 */
+	require_once BHP_BUNDLE_PRICING_DIR . 'includes/incentive-fulfillment.php';
 	// 1.8.49 (2026-08-17, CYCLE162-LD-SCHOOL-PICKUP): author hand-delivery at a
 	// school visit. Loaded LAST of the storefront includes because its shipping
 	// filter deliberately runs at priority 25 -- after the theme's Bookvault

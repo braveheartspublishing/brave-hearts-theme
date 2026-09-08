@@ -1,0 +1,333 @@
+/**
+ * Brave Hearts - the book + coloring book PAIR landing page.
+ * 1.19.399, `CYCLE179-LD-BUILD-399-BUNDLE-PAGES`.
+ *
+ * ⭐ THIS SHEET ONLY ADDS. It is enqueued with `bhp-bundle-landing` as a hard
+ *    dependency, so the collection page's forest-green system loads first and
+ *    this file cannot win a cascade it was not meant to enter.
+ *
+ * ⛔ EVERY SELECTOR IS SCOPED UNDER `.bhp-pair-landing`. Not one rule here can
+ *    reach `/complete-collection/`, and that containment is the reason reusing
+ *    the collection stylesheet is safe rather than merely convenient.
+ *
+ * ⛔ NO COLOUR LITERAL IS INVENTED. Every colour is a `--bl-*` custom property
+ *    already declared by `bundle-landing.css` on `.bhp-landing`, which this
+ *    page's wrapper also carries. A hex code here would be a second palette.
+ */
+
+.bhp-pair-landing__hero .bhp-landing-hero__inner {
+	text-align: center;
+}
+
+.bhp-pair-landing__title {
+	font-family: var(--bl-serif);
+	color: var(--bl-forest);
+	font-size: clamp(1.6rem, 4.2vw, 2.6rem);
+	line-height: 1.15;
+	margin: 0 auto 0.5rem;
+	max-width: 20ch;
+}
+
+.bhp-pair-landing__sub {
+	font-family: var(--bl-body);
+	color: var(--bl-text-muted);
+	font-size: clamp(0.95rem, 1.9vw, 1.1rem);
+	line-height: 1.5;
+	margin: 0 auto clamp(1rem, 3vw, 1.75rem);
+	max-width: 46ch;
+}
+
+/* ⭐ The composite is ONE approved picture of the pair. It is never a grid of
+   two covers assembled in CSS: assembling it here would make the browser the
+   author of an image the media registry is supposed to own. */
+.bhp-pair-landing__covers {
+	max-width: 460px;
+	margin: 0 auto clamp(1rem, 3vw, 1.75rem);
+}
+
+.bhp-pair-landing__covers img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE TWO PRICED PANELS
+   ⛔ `auto-fit` WITH A `minmax` FLOOR, NOT A FIXED TWO-COLUMN GRID, AND THE
+      REASON IS A REAL FAILURE MODE RATHER THAN TIDINESS: either panel can be
+      absent at render (`bhp_offer_is_offerable()` refuses a school-visit
+      session, and the hardcover panel is skipped whenever its offer cannot be
+      priced). A hard `1fr 1fr` would leave a single surviving panel sitting in
+      the left half of the row with a hole beside it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bhp-pair-landing__panels {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: clamp(0.75rem, 2vw, 1.25rem);
+	max-width: 760px;
+	margin: 0 auto;
+}
+
+.bhp-pair-landing__panel {
+	background: var(--bl-cream-card);
+	border: 1px solid var(--bl-border);
+	border-radius: 14px;
+	padding: clamp(1rem, 2.5vw, 1.5rem);
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+}
+
+.bhp-pair-landing__panel-label {
+	font-family: var(--bl-sans);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-size: 0.78rem;
+	color: var(--bl-text-light);
+	margin: 0 0 0.5rem;
+}
+
+.bhp-pair-landing__price {
+	margin: 0 0 0.25rem;
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+/* ⛔ The strike is `line-through` on the anchor figure only. It is printed by
+   PHP only when a saving is statable, so this rule can never strike a number
+   that has no replacement beside it. */
+.bhp-pair-landing__was {
+	text-decoration: line-through;
+	color: var(--bl-text-light);
+	font-size: 0.95rem;
+}
+
+.bhp-pair-landing__now {
+	font-family: var(--bl-serif);
+	font-size: clamp(1.4rem, 3.4vw, 1.9rem);
+	color: var(--bl-forest);
+	line-height: 1;
+}
+
+.bhp-pair-landing__saving {
+	font-family: var(--bl-sans);
+	font-size: 0.85rem;
+	color: var(--bl-gold-dark);
+	margin: 0 0 0.85rem;
+}
+
+/* ⭐ `margin-top: auto` pins every CTA to its panel floor, so two panels of
+   unequal text height still present one button baseline. DOM order is
+   untouched: this is alignment, never a visual reorder. */
+.bhp-pair-landing__form {
+	margin-top: auto;
+}
+
+.bhp-pair-landing__cta {
+	width: 100%;
+}
+
+.bhp-pair-landing__shipping {
+	font-family: var(--bl-sans);
+	font-size: 0.85rem;
+	color: var(--bl-text-muted);
+	margin: clamp(0.85rem, 2vw, 1.25rem) auto 0;
+	max-width: 44ch;
+}
+
+/* ⭐ 1.19.399 — THE NUDGE SITS DIRECTLY UNDER THE RULE LINE AND READS AS ITS
+   SECOND HALF. Tighter top margin than the rule line above it, so the two
+   group as one statement rather than as two unrelated notes.
+
+   ⛔ NO ALARM TREATMENT. `bhp_bundle_ship_progress_copy()`'s own standing
+   constraint is "no urgency theatrics" — no countdown, no scarcity, no colour
+   alarm. So this is the same muted body colour as the line above, one weight
+   heavier and nothing else. It is a fact about the cart, not a prod. */
+.bhp-pair-landing__shipping-nudge {
+	font-family: var(--bl-sans);
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--bl-text-muted);
+	margin: 0.3rem auto 0;
+	max-width: 44ch;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WHAT IS INSIDE EACH BOOK
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bhp-pair-landing__inside-inner {
+	max-width: 900px;
+	margin-inline: auto;
+	padding-inline: clamp(1rem, 4vw, 2rem);
+}
+
+.bhp-pair-landing__section-heading {
+	font-family: var(--bl-serif);
+	color: var(--bl-forest);
+	font-size: clamp(1.25rem, 3vw, 1.75rem);
+	text-align: center;
+	margin: 0 0 clamp(1rem, 3vw, 1.5rem);
+}
+
+.bhp-pair-landing__inside-cols {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: clamp(1rem, 3vw, 2rem);
+}
+
+.bhp-pair-landing__inside-title {
+	font-family: var(--bl-sans);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-size: 0.8rem;
+	color: var(--bl-text-light);
+	margin: 0 0 0.6rem;
+}
+
+.bhp-pair-landing__inside-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.bhp-pair-landing__inside-list li {
+	position: relative;
+	padding-left: 1.15rem;
+	margin: 0 0 0.7rem;
+	font-family: var(--bl-body);
+	font-size: 0.95rem;
+	line-height: 1.5;
+	color: var(--bl-text);
+}
+
+/* ⭐ `aria-hidden` is unnecessary because this marker is a CSS `::before`,
+   which assistive technology does not announce as content. */
+.bhp-pair-landing__inside-list li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.55em;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--bl-gold);
+}
+
+.bhp-pair-landing__lookinside-inner {
+	max-width: 900px;
+	margin-inline: auto;
+	padding-inline: clamp(1rem, 4vw, 2rem);
+}
+
+.bhp-pair-landing__lookinside,
+.bhp-pair-landing__inside {
+	margin-top: clamp(2rem, 5vw, 3.25rem);
+}
+
+/* ⭐ The value block and the final CTA inherit the collection page's
+   dark-green sections wholesale. Only the top margin is set here, so the two
+   pages keep one rhythm. */
+.bhp-pair-landing__value,
+.bhp-pair-landing__final {
+	margin-top: clamp(2.5rem, 6vw, 4rem);
+}
+
+.bhp-pair-landing__singles {
+	margin-top: clamp(1.5rem, 4vw, 2.25rem);
+	text-align: center;
+}
+
+/* ⛔ 44px MINIMUM TOUCH TARGET on the one text link on this page, because a
+   thumb on a phone is the surface it is actually used from. */
+.bhp-pair-landing__singles .bhp-landing-singles__link {
+	display: inline-block;
+	min-height: 44px;
+	line-height: 44px;
+	color: var(--bl-forest);
+}
+
+.bhp-pair-landing__final .bhp-pair-landing__panel {
+	max-width: 420px;
+	margin-inline: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐ 375px. The founder reviews this site on his phone, and that is the width
+      the check is run at. One column, and the CTA stays full-bleed inside its
+      panel so the tap target is the whole card width.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+	.bhp-pair-landing__panels {
+		grid-template-columns: 1fr;
+	}
+
+	.bhp-pair-landing__covers {
+		max-width: 300px;
+	}
+
+	.bhp-pair-landing__price {
+		gap: 0.35rem;
+	}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1.19.400 — THE H1 WAS NOT CENTERED, AND `text-align` WAS NEVER THE CAUSE.
+   ---------------------------------------------------------------------------
+   `chief-of-staff`, from his own look at the 1280 render of this page:
+   the H1 "renders left-offset under a centered eyebrow and subtitle".
+
+   ⭐ THE CAUSE, MEASURED LIVE ON STAGING 1.19.399 RATHER THAN INFERRED, AND IT
+      IS A SPECIFICITY LOSS, NOT AN ALIGNMENT SETTING:
+
+        .bhp-landing h1            (0,1,1)   margin: 0     <- PLUGIN,
+                                                              bundle-landing.css
+        .bhp-pair-landing__title   (0,1,0)   margin: 0 auto 0.5rem   <- HERE
+
+      The plugin's selector carries one class AND one element and therefore
+      WINS. `margin-inline` resolved to `0px`, not `auto` — read off the live
+      element, computed marginLeft "0px" / marginRight "0px". With
+      `max-width: 20ch` the box then hugged the left edge of the 1180px hero
+      inner, and `text-align: center` faithfully centered the text INSIDE that
+      narrow box. Everything was doing exactly what it was told.
+
+   ⛔ THIS IS WHY THE SUBTITLE LOOKED FINE AND THE HEADING DID NOT.
+      `.bhp-pair-landing__sub` has NO competing `.bhp-landing p` rule, so its
+      `auto` survived: measured marginLeft/Right 363.698px at 1280. Same
+      stylesheet, same declaration, opposite outcome — the difference is
+      entirely whether the plugin happens to name that element.
+
+   MEASURED OFFSET BEFORE, gapL vs gapR against documentElement.clientWidth at
+   ASSERTED viewport widths, theme 1.19.399:
+        375 ->  16.00 vs  36.68   (delta  20.68)
+        402 ->  16.07 vs  60.24   (delta  44.17)
+       1280 ->  74.33 vs 753.55   (delta 679.22)
+   The eyebrow and the subtitle measured within 0.33px of centre at all three,
+   which is exactly why the heading read as broken rather than the page.
+
+   ⭐ THE FIX IS SPECIFICITY, NOT `!important`. Adding the hero class takes this
+      to (0,2,0), which beats the plugin's (0,1,1) on class count. An
+      `!important` would have worked too and would have hidden the reason.
+
+   ⛔ `margin-inline` ONLY — the block-direction margins are deliberately NOT
+      restored. The plugin's `margin: 0` also flattens the 0.5rem bottom margin
+      this file's shipped rule asked for; that is a REAL and separate finding,
+      it is recorded in the build report, and it is NOT silently fixed here.
+      The brief asked for the heading to be centred. Changing vertical rhythm
+      on the same line would ship an unrequested visual change inside a
+      centring fix, and nobody reviewing "centre the H1" would be looking for
+      it.
+
+   ⛔ `/complete-collection/` WAS CHECKED FOR THE SAME DEFECT AND DOES NOT HAVE
+      IT. Its heading is `.bhp-landing-hero__title` inside
+      `.bhp-landing-hero__intro`, which carries `text-align: center` and its own
+      `margin: 0 auto` on the WRAPPER — so the centring never depends on the
+      h1's own margin and the plugin's `margin: 0` cannot reach it. Measured
+      live at 1280: gapL 222.33 vs gapR 222.67, delta 0.34. No change is made
+      to that page by this build.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bhp-pair-landing__hero .bhp-pair-landing__title {
+	margin-inline: auto;
+}

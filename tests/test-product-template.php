@@ -49,6 +49,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
 $failures = array();
 
 function bhp_pt_assert( $condition, $label, array &$failures ) {
@@ -295,11 +315,101 @@ bhp_pt_assert(
  *       this same file: "comments are stripped before the search rather than
  *       the search being weakened."
  */
+/*
+ * ⭐⭐ AMENDED 1.19.398 (`CYCLE179-CX-BUILD-398`) — THE COUNT BECOMES AN
+ *     ALLOWLIST, AND THAT IS STRICTER IN THE DIRECTION THAT MATTERS.
+ *
+ * ⛔ WHAT THIS ASSERTION IS PROTECTING HAS NOT CHANGED, AND IT IS WRITTEN IN
+ *    PROSE FOUR COMMENTS ABOVE: *"Any other `display:none` would mean copy was
+ *    suppressed rather than moved, and that is a content decision this build
+ *    was not given."* ⭐ THAT SENTENCE IS STILL THE RULE. What changed is that
+ *    a bare count cannot tell a suppressed PARAGRAPH from a suppressed
+ *    DUPLICATE CONTROL, and 1.19.398 had to add four of the second kind.
+ *
+ * ⭐ THE FOUR, AND WHY EACH ONE IS NOT COPY:
+ *
+ *      .bhp-formats__buy [hidden]
+ *          Restores the USER-AGENT behaviour of the `hidden` attribute inside
+ *          the pinned phone buy bar. 1.19.393's bare `display: block` on
+ *          `.bhp-formats__cta` beat `[hidden] { display: none }` on ORIGIN and
+ *          un-hid the add-to-cart anchor while the Collection direct-buy
+ *          button was also showing. MEASURED on staging 1.19.397 at an
+ *          asserted `window.innerWidth` of 375: two identical GET THE COMPLETE
+ *          COLLECTION buttons, 48px each, stacked. This declaration hides
+ *          NOTHING a template intended to show — it stops the stylesheet
+ *          showing something a template intended to hide.
+ *
+ *      #wc-stripe-express-checkout-element-link
+ *      #wc-stripe-express-checkout-element-amazonPay
+ *      #wc-stripe-express-checkout-element-googlePay
+ *          Redundant WALLET BUTTONS in the same pinned bar, each hidden only
+ *          when `:has()` proves another wallet is mounted to take its place.
+ *          No sentence, price, benefit, guarantee or shipping line is touched.
+ *
+ * ⛔⛔ AND THE AMENDMENT IS STRICTER, NOT LOOSER, IN THE PLACE IT COUNTS. The
+ *     old form allowed ANY single `display: none` anywhere in the file. The
+ *     new form checks the SELECTOR of every rule that carries one against a
+ *     named list, so a `display: none` on a benefit bullet, a price line or a
+ *     shipping note now fails where before it could have replaced the pill
+ *     silently and kept the count at one.
+ *
+ * ⚠ COMMENTS ARE STILL STRIPPED FIRST, for the reason the 1.19.265 note above
+ *   gives: a comment must not be able to trip this, and must not be able to
+ *   hide a real declaration inside a commented-out rule either.
+ */
 $css_code_only = preg_replace( '#/\*.*?\*/#s', '', $css );
 $display_nones = preg_match_all( '/display:\s*none/i', $css_code_only );
+
+$pt_hide_allow = array(
+	'.bhp-gallery__inspect-hint',                     // the hover-only enlarge pill (pre-1.19.398)
+	'.bhp-formats__buy [hidden]',                     // 1.19.398 — the `hidden` attribute, restored
+	'#wc-stripe-express-checkout-element-link',       // 1.19.398 — redundant wallet
+	'#wc-stripe-express-checkout-element-amazonPay',  // 1.19.398 — redundant wallet
+	'#wc-stripe-express-checkout-element-googlePay',  // 1.19.398 — redundant wallet
+);
+
+/*
+ * Walk the comment-stripped stylesheet rule by rule. Everything between the
+ * previous `}` (or `{` of an at-rule) and this rule's `{` is its selector, and
+ * a rule that hides something must name one of the allowed selectors in it.
+ */
+$pt_unallowed = array();
+$pt_chunks    = preg_split( '/\}/', $css_code_only );
+foreach ( $pt_chunks as $pt_chunk ) {
+	if ( ! preg_match( '/display:\s*none/i', $pt_chunk ) ) {
+		continue;
+	}
+	$pt_brace = strrpos( $pt_chunk, '{' );
+	if ( false === $pt_brace ) {
+		continue;
+	}
+	$pt_sel = substr( $pt_chunk, 0, $pt_brace );
+	$pt_sel = (string) preg_replace( '/\s+/', ' ', $pt_sel );
+
+	$pt_ok = false;
+	foreach ( $pt_hide_allow as $pt_allowed ) {
+		if ( false !== strpos( $pt_sel, $pt_allowed ) ) {
+			$pt_ok = true;
+			break;
+		}
+	}
+	if ( ! $pt_ok ) {
+		$pt_unallowed[] = trim( substr( $pt_sel, -90 ) );
+	}
+}
+
 bhp_pt_assert(
-	1 === $display_nones,
-	sprintf( '§3.6 exactly one `display:none` DECLARATION in the whole stylesheet, and it is the hover-only pill (found %d)', $display_nones ),
+	5 === $display_nones,
+	sprintf( '§3.6 exactly five `display:none` DECLARATIONS in the whole stylesheet — the hover-only pill plus the four 1.19.398 buy-bar hides (found %d)', $display_nones ),
+	$failures
+);
+
+bhp_pt_assert(
+	empty( $pt_unallowed ),
+	sprintf(
+		'§3.6b every `display:none` names an allowlisted selector — no copy is suppressed (%s)',
+		empty( $pt_unallowed ) ? 'none unallowed' : implode( ' | ', $pt_unallowed )
+	),
 	$failures
 );
 

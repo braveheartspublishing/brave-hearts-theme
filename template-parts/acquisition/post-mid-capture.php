@@ -52,6 +52,20 @@
  *    printable explorer activity ("Create Your Own Deep-Sea Creature"), and a
  *    note to the parent. ⭐ "a sample chapter, a printable activity, and tips
  *    for reading it with a 6 to 9 year old" is TRUE of the real file.
+ * ⭐⭐ SUPERSEDED 1.19.389 (2026-09-06, `CYCLE179-LD-BUILD-389`) — THE
+ *    ARTEFACT MOVED UNDER THIS NOTE. The kit the site serves has been
+ *    **v2.2, 11 pages, Chapter 10 "The Dive"** since 2026-09-03 19:26.
+ *    Verified live over SSH against the PRODUCTION document root by
+ *    `lead-developer` on 2026-09-06: md5
+ *    `e227eea53ec762df4abdb6a09615a730`, 8,944,368 bytes, `/Count 11`,
+ *    byte-identical to the Drive kit of record "Reluctant Reader
+ *    Adventure Kit v2.2 (Chapter 10, live 2026-09-03).pdf".
+ * ⛔ THE THREE CONTENTS ABOVE ARE STILL CORRECT — one real chapter, a
+ *    printable explorer activity, and tips to the parent. Only the
+ *    chapter number and the page count moved, and the seven-page wording
+ *    is preserved rather than overwritten so the movement stays visible.
+ * ⚠ THIS FILE'S RENDERED COPY NAMES NO CHAPTER NUMBER, so nothing a
+ *    visitor reads here was wrong. This is a comment correction only.
  *
  * VOICE — standing rule §9.1: I/me/my, never "we". No em dash. Ages 6 to 9,
  * never 5 to 9. ⛔ NO OUTCOME CLAIM: the copy says what the Kit CONTAINS and

@@ -47,6 +47,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit( 1 );
 }
 
+/*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
 $GLOBALS['bhp_ecc_pass'] = 0;
 $GLOBALS['bhp_ecc_fail'] = 0;
 
@@ -201,11 +221,20 @@ bhp_ecc_ok(
  *    background tab is an ordinary shopper action, so a setTimeout fallback is
  *    required alongside the rAF.
  */
+/*
+ * ⭐ THE PATTERN WAS WIDENED IN 1.19.391 AND THE RULE WAS NOT WEAKENED. v1
+ *    wrote the fallback as `setTimeout( show, ... )` at the CALL SITE. v2 moved
+ *    it INSIDE `show()` as `window.setTimeout( add, 32 )`, which is strictly
+ *    stronger: every caller of `show()` now gets the fallback instead of only
+ *    the one that remembered to schedule it.
+ * ⛔ The requirement is unchanged: a background tab, where rAF never fires,
+ *    must still get `is-visible`. Both shapes satisfy it; only one matched.
+ */
 bhp_ecc_ok(
 	'§1.10 ⭐ reveal() does not depend on requestAnimationFrame alone '
 		. '(background tabs never fire it)',
 	strpos( $ecc_js_src, 'requestAnimationFrame' ) !== false
-		&& (bool) preg_match( '/setTimeout\(\s*show\s*,/', $ecc_js_src )
+		&& (bool) preg_match( '/setTimeout\(\s*(show|add)\s*,/', $ecc_js_src )
 );
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -269,16 +298,62 @@ bhp_ecc_ok(
 	(bool) preg_match( '/unset\(\s*\$_POST\[\s*[\'"]subscribed[\'"]\s*\]\s*\)/', $ecc_php_src )
 );
 
+/*
+ * ⛔⛔ §3.3 AND §3.4 ARE SUPERSEDED. Theme 1.19.391, 2026-09-07,
+ *     `CYCLE179-CX-BUILD-391`, on Andrew Signore's ruling (seal 1225): the
+ *     panel now carries an UNTICKED opt-in box, and a ticked box subscribes
+ *     the person through `bhp_process_signup()`.
+ *
+ * ⭐ THE SUPERSESSION IS WRITTEN AT THE LINE IT CORRECTS, WITH THE ORIGINAL
+ *    PRESERVED STRUCK BESIDE IT, rather than appended as a note further down.
+ *    That is the method conclusion `evidence-verification` draws from the
+ *    founder-specifics case: an annotation the reader never reaches is not a
+ *    correction, and this suite is exactly where a future reader would look
+ *    first to decide whether the opt-in box is a defect.
+ *
+ * ⛔ THE SUPERSEDED ASSERTIONS, PRESERVED SO A LATER READER CAN SEE WHAT
+ *    CHANGED AND WHY. Do not reinstate them:
+ *
+ *      ~~§3.3 the capture path never calls the theme signup pipeline
+ *             (bhp_process_signup would create a SUBSCRIBED contact)
+ *             strpos( $ecc_php_src, 'bhp_process_signup' ) === false~~
+ *      ~~§3.4 no marketing opt-in checkbox is rendered on this surface in v1
+ *             (deliberate non-goal, recorded in the file header)
+ *             strpos( $ecc_php_src, 'type="checkbox"' ) === false~~
+ *
+ * ⭐ WHY v1 WAS RIGHT WHEN IT WAS WRITTEN: with no box on the panel there was
+ *    no consent to carry, so subscribing anybody from this surface would have
+ *    been a subscription nobody asked for. v1's rule and 1.19.391's rule are
+ *    the SAME rule -- never subscribe without an explicit tick -- applied to
+ *    two different surfaces. What changed is that the surface now has a tick.
+ *
+ * ⛔ WHAT DID NOT CHANGE, AND IS ASSERTED BELOW RATHER THAN ASSUMED: an
+ *    UNTICKED shopper is still never subscribed, `$_POST['subscribed']` is
+ *    still never set for the vendor call (§3.2 above still stands), and the
+ *    word `checked` still never appears in the executable source.
+ */
 bhp_ecc_ok(
-	'§3.3 ⛔ the capture path never calls the theme signup pipeline '
-		. '(bhp_process_signup would create a SUBSCRIBED contact)',
-	strpos( $ecc_php_src, 'bhp_process_signup' ) === false
+	'§3.3 ⭐ SUPERSEDED 1.19.391 (seal 1225): a TICKED box subscribes the person '
+		. 'through the house path, so bhp_process_signup IS called here',
+	strpos( $ecc_php_src, 'bhp_process_signup' ) !== false
 );
 
 bhp_ecc_ok(
-	'§3.4 ⛔ no marketing opt-in checkbox is rendered on this surface in v1 '
-		. '(deliberate non-goal, recorded in the file header)',
-	strpos( $ecc_php_src, 'type="checkbox"' ) === false
+	'§3.4 ⭐ SUPERSEDED 1.19.391 (seal 1225): the panel renders a marketing '
+		. 'opt-in checkbox',
+	strpos( $ecc_php_src, 'type="checkbox"' ) !== false
+);
+
+bhp_ecc_ok(
+	'§3.4a ⛔ the checkbox is NEVER pre-ticked: the word `checked` does not '
+		. 'appear anywhere in the executable source',
+	strpos( $ecc_php_src, 'checked' ) === false
+);
+
+bhp_ecc_ok(
+	'§3.4b ⛔ consent is read with empty(), never isset(): a browser posts '
+		. 'nothing for an unchecked box, so absence and refusal are one state',
+	(bool) preg_match( '/!\s*empty\(\s*\$post\[[^\]]*optin[^\]]*\]\s*\)/', $ecc_php_src )
 );
 
 bhp_ecc_ok(
@@ -460,9 +535,27 @@ foreach ( $ecc_variants as $ecc_key => $ecc_copy ) {
 			&& ! empty( $ecc_copy['success'] ) && ! empty( $ecc_copy['placeholder'] )
 	);
 
+	/*
+	 * ⭐ THE PATTERN WAS WIDENED IN 1.19.391, AND THE ASSERTION WAS NOT
+	 *    WEAKENED. Andrew approved variant A's fine print verbatim (seal 1225):
+	 *    "I will not add you to my email list unless you tick the box above."
+	 *    That sentence does exactly what this assertion tests for and matched
+	 *    none of the five original alternatives, because every one of them was
+	 *    written against v1's wording before there was a box to name.
+	 *
+	 * ⛔ THE INSTRUMENT WAS STALE, NOT THE COPY. This suite already records
+	 *    the same failure shape at §1.0: an assertion that is right about the
+	 *    rule and wrong about how it looks for it punishes a correct file, and
+	 *    the tempting "fix" is to change the correct thing. The approved
+	 *    string is not editable here; the regex is.
+	 *
+	 * ⛔ WHAT IS STILL REQUIRED, unchanged: the fine print must SAY that the
+	 *    email does not enrol the shopper in marketing. A fine print that
+	 *    merely mentions a checkbox would still fail.
+	 */
 	bhp_ecc_ok(
 		"§8.7[{$ecc_key}] ⭐ the fine print states the contact is not signed up to marketing",
-		(bool) preg_match( '/newsletter|sign(s)? you up|does not sign|no marketing|anything else/i', $ecc_copy['fine_print'] ),
+		(bool) preg_match( '/newsletter|email list|mailing list|sign(s)? you up|does not sign|no marketing|anything else/i', $ecc_copy['fine_print'] ),
 		$ecc_copy['fine_print']
 	);
 }

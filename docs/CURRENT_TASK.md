@@ -1,5 +1,30 @@
 # Current Task
 
+> ## NEWEST, 2026-09-06 (night) - **NO ENGINEERING TASK IS ACTIVE.** Production is theme
+> `1.19.388` / bundle plugin `1.8.84`.
+>
+> Everything below this block, including the 2026-09-03 "NEWEST" block naming `1.19.358`, is
+> history. Production moved four theme releases on 2026-09-06: `1.19.384` (10:13), `1.19.385`
+> (17:12), `1.19.386` (20:57), `1.19.388` (23:34). **`1.19.387` was built and staged and NEVER
+> reached production**; its ZIP swept in a half-written rail guard from a shared working tree, and
+> `1.19.388` supersedes it. Plugin `1.8.84` shipped 23:34.
+>
+> Landed the same night: posts 82 and 46 republished with reviewed bodies; visit post 829 published;
+> review drafts 831 and 833 trashed (reversible); the false "tracking" claims removed from theme,
+> plugin, shipping policy and privacy policy.
+>
+> ### In progress on staging as `1.19.389` (owner's go-ahead per item before production)
+> 1. Sticky-header anchor defect: `scroll-margin-top: 0` puts every in-page anchor target under the
+>    sticky header; the skip link on post 46 is affected at 375 and 1440. One-line CSS fix.
+> 2. Kit page copy says "Chapter 7" in several places while production has served the Chapter 10 kit
+>    since 2026-09-03; plus the gated on-page sample (kit pages 1 to 4).
+> 3. Stripe wallet buttons do not render on the PDP: the custom purchase block prints no standard
+>    add-to-cart form, so the express element container never prints. Theme fix; Stripe side configured.
+> 4. Single-book versus Complete Collection comparison table on the PDP; exit-intent popup headline.
+> 5. Plugin: `addon_upsell_shown` fires for the hidden cart-drawer panel (impression inflation). Minor:
+>    the table scroll cue never retires after scrolling fully right.
+
+
 
 > ## ⭐⭐ NEWEST, 2026-09-03 · **NO ENGINEERING TASK IS ACTIVE.** Production is theme `1.19.358` / bundle plugin `1.8.83`.
 >

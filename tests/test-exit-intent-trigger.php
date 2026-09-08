@@ -52,6 +52,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit( 1 );
 }
 
+/*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
+
 $failures = array();
 
 function bhp_ei_assert( $condition, $label, array &$failures ) {
@@ -274,8 +294,59 @@ bhp_ei_assert( empty( $claim_hits ), 'exit modal copy carries no rating/review/a
  *    A sweep that moved every guarded string at once would be indistinguishable
  *    from a sweep that moved them carelessly.
  */
-bhp_ei_assert( strpos( $template, 'FREE Chapter for Reluctant Readers' ) !== false, 'approved headline is unchanged (locked prose is never silently rewritten)', $failures );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ UPDATED AGAIN 1.19.389 (2026-09-06, `CYCLE179-LD-BUILD-389`) — THE
+ *     HEADLINE MOVED A SECOND TIME. THE GUARD STILL DID NOT WEAKEN, AND IT IS
+ *     NOW STRICTER THAN WHAT IT REPLACES.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ SAME DISCIPLINE AS THE 1.19.297 NOTE ABOVE: the guard failed, it was
+ *    investigated, the authority was named, and it is updated in the SAME
+ *    release as the change rather than relaxed or deleted.
+ *
+ * ⭐ THE AUTHORITY: `marketing-growth`'s Variant B, §2.2 of
+ *    `WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-BUNDLE-TABLE-EXIT.md`,
+ *    carried in the `chief-of-staff` desk's brief for this build, which names the eyebrow, the
+ *    headline and the supporting line and leaves the button alone.
+ *    ⚠ RELAYED, not witnessed by this desk. ⛔ STAGING ONLY, and flagged at the
+ *      top of the build report so Andrew meets it at the deploy gate.
+ *
+ * ⭐⭐ THREE WAYS THIS IS STRICTER:
+ *     1. It asserts against `$template_code`, the COMMENT-STRIPPED source. The
+ *        old line read `$template`, the raw file — and this release preserves
+ *        the retired headline verbatim in a docblock, exactly as the house
+ *        style requires. A raw-source assertion would have gone green on a
+ *        comment and proved nothing. ⛔ That is not hypothetical: it is the
+ *        precise reason `bhp_ei_strip_php_comments()` exists in this file.
+ *     2. It locks the EYEBROW and the SUPPORTING LINE as well as the headline.
+ *        All three moved together, so all three are guarded together.
+ *     3. It asserts the retired 1.19.297 headline is ABSENT from the code,
+ *        which the previous version never did for that string.
+ */
+bhp_ei_assert( strpos( $template_code, 'Before you go, test Chapter 10 with your child tonight for free' ) !== false, 'approved headline is unchanged (locked prose is never silently rewritten)', $failures );
+bhp_ei_assert( strpos( $template_code, 'A free chapter tonight' ) !== false, 'approved eyebrow is unchanged', $failures );
+bhp_ei_assert( strpos( $template_code, 'It is a real chapter from The Mariana Trench, about ten minutes of reading, and it arrives with a printable activity and three ways to make it feel like an adventure.' ) !== false, 'approved supporting line is unchanged, character for character', $failures );
 bhp_ei_assert( strpos( $template, 'Before you go, take the free kit.' ) === false, '⛔ the retired 1.19.296 headline is gone, not lingering beside the new one', $failures );
+bhp_ei_assert( strpos( $template_code, 'FREE Chapter for Reluctant Readers' ) === false, '⛔ the retired 1.19.297 headline is gone from the CODE (it survives in a docblock, deliberately)', $failures );
+/*
+ * ⛔⛔ THE CHAPTER NUMBER IS A CLAIM ABOUT A FILE, AND IT IS NOW ASSERTED
+ *    AGAINST THE ONLY OTHER SURFACE THAT NAMES IT. The kit landing page and
+ *    this popup must never disagree about which chapter arrives.
+ *
+ * ⭐ WHY IT EXISTS: on 2026-09-03 the served kit became Chapter 10, "The Dive",
+ *    11 pages (verified live this build against the PRODUCTION document root —
+ *    md5 `e227eea53ec762df4abdb6a09615a730`, `/Count 11`). The landing page
+ *    went on saying "Chapter 7" in three rendered places for three days,
+ *    because nothing compared the two.
+ *
+ * ⚠ THIS IS A CONSISTENCY GUARD, NOT AN ARTEFACT READ. It cannot open the PDF.
+ *   It fails the day one surface is edited without the other, which is the
+ *   drift class that actually occurred.
+ */
+$bhp_ei_kit_code = bhp_ei_strip_php_comments( bhp_ei_read( 'page-reluctant-reader-adventure-kit.php' ) );
+bhp_ei_assert( '' !== $bhp_ei_kit_code && strpos( $bhp_ei_kit_code, 'Chapter 10' ) !== false, 'the kit landing page names the SAME chapter this popup names', $failures );
+bhp_ei_assert( '' !== $bhp_ei_kit_code && strpos( $bhp_ei_kit_code, 'Chapter 7' ) === false, '⛔ no "Chapter 7" survives in the kit landing page CODE (it survives in docblocks, deliberately)', $failures );
 bhp_ei_assert( strpos( $template, 'Send me the chapter' ) !== false, 'the CTA is the sitewide send-imperative', $failures );
 bhp_ei_assert( strpos( $template, 'Free printable PDF. No purchase required.' ) !== false, 'approved trust line is unchanged', $failures );
 

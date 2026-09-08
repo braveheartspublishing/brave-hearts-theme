@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 8a5fa992cf47953380c198c1d76cbde6
+    source-md5: d041ff9bde92e104ef7a110ca0f4424f
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.384
+Version: 1.19.400
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -3364,6 +3364,35 @@ body:not(.home) .contact-hero .btn-outline { color: var(--expedition-navy); }
 .editorial-surface { padding: clamp(2rem,5vw,4rem); border: 1px solid var(--expedition-border); background: rgba(255,250,240,.75); box-shadow: 0 18px 55px rgba(53,43,27,.06); }
 .entry-content > :where(h2,h3,h4) { margin-top: 1.5em; }
 .entry-content a:not(.btn) { color: var(--expedition-forest); text-decoration-color: var(--expedition-gold); text-underline-offset: .2em; }
+.entry-content .bhp-table-scroll { margin-block: 1.5rem; }
+.entry-content .bhp-table-scroll__pane { overflow-x: auto; max-width: 100%; }
+.entry-content .bhp-table-scroll__pane:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.entry-content .bhp-table-scroll__hint { display: none; }
+.entry-content figure.wp-block-table { overflow-x: auto; max-width: 100%; }
+@media (max-width: 768px) {
+.entry-content .bhp-table-scroll__pane > table,
+  .entry-content figure.wp-block-table > table { width: 43rem; min-width: 100%; max-width: none; }
+.entry-content .bhp-table-scroll__pane {
+    background-image:
+      linear-gradient(to right, rgb(253,248,238) 30%, rgba(253,248,238,0)),
+      linear-gradient(to left,  rgb(253,248,238) 30%, rgba(253,248,238,0)),
+      linear-gradient(to right, rgba(53,43,27,.18), rgba(53,43,27,0)),
+      linear-gradient(to left,  rgba(53,43,27,.18), rgba(53,43,27,0));
+    background-position: 0 0, 100% 0, 0 0, 100% 0;
+    background-repeat: no-repeat;
+    background-size: 34px 100%, 34px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+  .entry-content .bhp-table-scroll__hint {
+    display: block;
+    margin-top: .4rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-ui);
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+}
 .post-content.entry-content a:not(.btn) {
   color: var(--expedition-link);
   text-decoration-line: underline;
@@ -3396,6 +3425,7 @@ body:not(.home) .contact-hero .btn-outline { color: var(--expedition-navy); }
 }
 .entry-content blockquote { margin: 2.5rem 0; padding: 1.5rem 2rem; border-left: 3px solid var(--expedition-gold); color: var(--expedition-navy); font-family: var(--font-display); font-size: 1.45rem; }
 .blog-index { padding-block: var(--section-space); }
+body:not(.home) .bhp-archive-band + .blog-index { padding-block-start: 2.5rem; }
 .card-grid--posts { grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(24px,3vw,42px); }
 .blog-card { border: 1px solid var(--expedition-border); border-radius: 2px; background: #fffaf0; box-shadow: 0 18px 45px rgba(38,31,21,.07); }
 .blog-card .card__image { height: 250px; }
@@ -3709,6 +3739,9 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woocommerce-
     grid-row: 2;
 min-width: 0;
     margin-top: clamp(1.5rem, 2.5vw, 2.25rem);
+  }
+.woocommerce div.product {
+    grid-template-rows: max-content 1fr;
   }
 }
 .bhp-format-card.is-selected .bhp-format-card__price {
@@ -7325,7 +7358,7 @@ padding: var(--space-3) var(--space-2);
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 5;
+aspect-ratio: 3 / 2;
   object-fit: cover;
   object-position: top center;
 }
@@ -8983,6 +9016,8 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-for
   gap: 0.4rem;
   margin: 0 0.9rem 0.6rem;
   padding: 0;
+flex-wrap: wrap;
+  justify-content: center;
 }
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-prices__sep {
   display: none; 
@@ -8990,6 +9025,7 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-for
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price {
   display: flex;
   flex: 1 1 0;
+min-width: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -9370,5 +9406,156 @@ body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.bhp-
   }
   body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
     margin-bottom: 0;
+  }
+}
+:root {
+  --bhp-anchor-offset: 93px;
+}
+.entry-content h2[id],
+.entry-content h3[id],
+.entry-content h4[id],
+.entry-content h5[id],
+.entry-content h6[id],
+#main {
+  scroll-margin-top: var(--bhp-anchor-offset, 93px);
+}
+.bhp-look-inside[id],
+.bhp-look-inside[id] > .bhp-gallery {
+  scroll-margin-top: var(--bhp-anchor-offset, 93px);
+}
+.entry-content .bhp-table-scroll.is-scroll-end .bhp-table-scroll__hint {
+  display: none;
+}
+.blog-card .card__media {
+  display: block;
+  aspect-ratio: 16 / 9;
+}
+.blog-card .card__image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+header.bhp-archive-band.interior-hero {
+  padding-top: var(--space-3) !important;
+  padding-bottom: var(--space-3) !important;
+  min-height: 0;
+}
+header.bhp-archive-band.interior-hero--parchment::after {
+  content: none;
+}
+.bhp-archive-band__inner {
+  display: block;
+}
+.bhp-archive-band__series {
+  margin: 0 0 0.15rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+.bhp-archive-band__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.55rem 0.8rem;
+  margin: 0;
+}
+body .bhp-archive-band h1.bhp-archive-band__title {
+  max-width: none;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+.bhp-archive-band__diamond {
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--color-gold);
+}
+.bhp-archive-band__line {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+.bhp-archive-band__meta {
+  margin: 0 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.bhp-archive-band .bhp-archive-band__intro {
+  max-width: 780px;
+  margin-top: 0.55rem;
+  font-size: 0.95rem;
+}
+.bhp-archive-band .bhp-archive-band__intro p {
+  margin: 0;
+}
+@media (max-width: 1365px) {
+  .bhp-archive-band__series {
+    display: none;
+  }
+body .bhp-archive-band h1.bhp-archive-band__title {
+    font-size: 1.35rem;
+  }
+}
+@media (max-width: 640px) {
+  header.bhp-archive-band.interior-hero {
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+.bhp-archive-band__row {
+    gap: 0 0.6rem;
+  }
+body .bhp-archive-band h1.bhp-archive-band__title {
+    font-size: 1.05rem;
+    line-height: 1.1;
+  }
+.bhp-archive-band__diamond,
+  .bhp-archive-band__line {
+    display: none;
+  }
+.bhp-archive-band__meta {
+    margin-left: 0;
+    font-size: 0.62rem;
+  }
+}
+.free-resources-jump__list {
+  padding-inline: 0;
+}
+@media (max-width: 600px) {
+  .free-resources-jump__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-1) 0;
+  }
+.free-resources-jump__list a {
+    display: block;
+    text-align: center;
+  }
+}
+@media (max-width: 768px) {
+  .free-resource-card {
+    text-align: center;
+  }
+.free-resource-card__cta {
+    align-self: stretch;
+  }
+}
+@media (max-width: 430px) {
+  body:not(.home) .free-resources-hero .component-heading__eyebrow {
+    font-size: 12px;
+    letter-spacing: .06em;
   }
 }

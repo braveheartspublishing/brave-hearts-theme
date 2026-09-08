@@ -10,6 +10,27 @@
  *    not reverse an owner ruling. It is built, wired, tested and one
  *    filter away from live.
  *
+ * ⭐⭐ THE FIVE LINES DIRECTLY ABOVE ARE STALE AND HAVE BEEN SINCE 2026-08-04.
+ *     ⛔ DO NOT ACT ON THEM. They are preserved struck rather than deleted so a
+ *     reader who meets the same words quoted elsewhere knows they were
+ *     corrected, and when.
+ *
+ *     **THIS POPUP IS LIVE.** Corrected in 1.19.389 (2026-09-06,
+ *     `CYCLE179-LD-BUILD-389`) on `marketing-growth`'s finding
+ *     (`WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-BUNDLE-TABLE-EXIT.md`
+ *     §2.1, §3 row 4), re-verified against the code this build:
+ *     `bhp_should_show_exit_intent_popup()` in `functions.php` returns
+ *     `apply_filters('bhp_show_exit_intent_popup', true)` and has defaulted
+ *     **true** since 2026-08-04 on Andrew's "Turn it on."
+ *
+ *     The only suppressions are `/teachers/`, the read-aloud landing, the
+ *     school read-alouds and the positivity news pages.
+ *
+ *     ⭐ CODE BEATS COMMENT. A header that says a live customer-facing surface
+ *        is disabled is worse than no header: it invites the next author to
+ *        edit copy nobody is reading, which is exactly what a parent then
+ *        reads.
+ *
  * FUNNEL RULES, all of them from `.claude/rules/funnels.md`, applied here
  * rather than reinvented:
  *   - Storage prefix `bhp_parent_popup`, event prefix `parent_popup`,
@@ -156,10 +177,74 @@ $popup_config = wp_json_encode([
      * ⛔ NO OUTCOME CLAIM. VOICE §9.1: I/me/my, no em dash, ages 6 to 9.
      */
     ?>
-    <p class="component-heading__eyebrow"><?php esc_html_e('Before you go', 'brave-hearts'); ?></p>
-    <h2 id="exit-intent-popup-title"><?php esc_html_e('FREE Chapter for Reluctant Readers', 'brave-hearts'); ?></h2>
+    <?php
+    /*
+     * ═══════════════════════════════════════════════════════════════════════
+     * ⭐⭐⭐ 1.19.389 (2026-09-06, `CYCLE179-LD-BUILD-389`) — THE COPY SET IS
+     *      `marketing-growth`'s **VARIANT B**, from
+     *      `WORKING-DRAFTS\marketing-growth\CYCLE179-MKT-BUNDLE-TABLE-EXIT.md`
+     *      §2.2, carried in the `chief-of-staff` desk's brief.
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * ⛔ THE SUPERSEDED SET, PRESERVED VERBATIM SO THE MOVEMENT IS VISIBLE AND
+     *    IS NOT RE-DERIVED:
+     *      eyebrow  "Before you go"
+     *      headline "FREE Chapter for Reluctant Readers"
+     *      support  "I'll send you the chapter now, just add your email. It
+     *                arrives inside my free Reluctant Reader Adventure Kit,
+     *                along with a printable activity and tips for reading it
+     *                with a 6 to 9 year old."
+     *
+     * ⭐ THE EYEBROW MOVED RATHER THAN HIS SENTENCE BEING TRIMMED. Andrew's
+     *    line opens "Before you go", which was already the eyebrow; keeping
+     *    both would print those words twice on one card. The `marketing-growth` desk's judgement,
+     *    kept: his words are the headline and the label is what gives way.
+     *
+     * ⭐⭐ VARIANT B NAMES **CHAPTER 10**, AND ITS PRECONDITION IS MET. `marketing-growth`
+     *     wrote both variants because a working draft recorded the Chapter 10
+     *     kit as unshipped. ⛔ THAT DRAFT IS THE STALE PARTY. Verified in the
+     *     live system by `lead-developer` on 2026-09-06 over SSH against the
+     *     PRODUCTION document root (Standing Rules §9.2 — who, when, with
+     *     what):
+     *       · `wp option get bhp_lead_magnet_pdfs` →
+     *         `adventure_kit_parent` = `.../uploads/2026/07/
+     *         Reluctant-Reader-Adventure-Kit-1.pdf`
+     *       · that file: 8,944,368 bytes, mtime **2026-09-03 19:26**, md5
+     *         **e227eea53ec762df4abdb6a09615a730**, `/Count 11`
+     *       · same md5 as the Drive kit of record "Reluctant Reader Adventure
+     *         Kit v2.2 (Chapter 10, live 2026-09-03).pdf", page 3 of which
+     *         reads "FROM THE MARIANA TRENCH, CHAPTER 10: THE DIVE"
+     *     ⭐ the `marketing-growth` desk's own precondition 2 — "the live kit page's Chapter 7
+     *        mentions are updated in the same release" — is satisfied by this
+     *        same release, in `page-reluctant-reader-adventure-kit.php`.
+     *
+     * ⭐ "about ten minutes" IS SOURCED, NOT ESTIMATED. The kit's own page 1
+     *    reads "A real chapter from the book. About 10 minutes." It is written
+     *    in words here, not digits, and it is a description of the artefact
+     *    rather than a claim about what reading it will do to a child.
+     *    ⚠ FLAGGED IN THE BUILD REPORT rather than settled here: the kit
+     *      LANDING PAGE retired duration claims on 2026-08-03 (rule A6), and
+     *      whether that retirement was meant to reach this popup is Andrew's
+     *      call, not this desk's. It ships as `marketing-growth` wrote it and as the brief
+     *      instructed, with the tension named.
+     *
+     * ⛔ WHAT IS **NOT** CHANGED, checked rather than assumed:
+     *    the `context` `parent_popup_exit` (a live Mailchimp tag join key) ·
+     *    the storage prefix `bhp_parent_popup` · the event prefix
+     *    `parent_popup` · the 20 second dwell floor and its two literal arrow
+     *    lines · the submit label · the privacy line · the trust caption · the
+     *    dismiss control · the close control · the name label.
+     *
+     * ⛔ RAILS ON THE NEW STRINGS: no em dash · no "we"/"us"/"our" · first
+     *    person is I/my · no rating, review, award, urgency or scarcity · no
+     *    outcome claim · no subscriber count · nothing on the never-invent
+     *    list · no tracking claim.
+     */
+    ?>
+    <p class="component-heading__eyebrow"><?php esc_html_e('A free chapter tonight', 'brave-hearts'); ?></p>
+    <h2 id="exit-intent-popup-title"><?php esc_html_e('Before you go, test Chapter 10 with your child tonight for free', 'brave-hearts'); ?></h2>
     <p id="exit-intent-popup-desc" class="mariana-popup__text">
-      <?php esc_html_e("I'll send you the chapter now, just add your email. It arrives inside my free Reluctant Reader Adventure Kit, along with a printable activity and tips for reading it with a 6 to 9 year old.", 'brave-hearts'); ?>
+      <?php esc_html_e('It is a real chapter from The Mariana Trench, about ten minutes of reading, and it arrives with a printable activity and three ways to make it feel like an adventure.', 'brave-hearts'); ?>
     </p>
 
     <?php get_template_part('template-parts/acquisition/signup-form', null, [

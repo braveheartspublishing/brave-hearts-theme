@@ -35,7 +35,7 @@
  *   §5  the morning send window;
  *   §6  PENDING-COPY can never be sent;
  *   §7  the copy rails - no em dash, no "we", the merge slots resolve, and the
- *       approved visit strings are Merry's verbatim.
+ *       approved visit strings are the `marketing-growth` desk's verbatim.
  *
  * ---------------------------------------------------------------------------
  * ⛔⛔ IT REFUSES TO RUN ANYWHERE BUT STAGING, AND IT SENDS NOTHING, ANYWHERE
@@ -70,6 +70,26 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+
+/*
+ * ⛔⛔ OUTBOUND MAIL IS BLOCKED FOR THE WHOLE OF THIS SUITE (1.19.386).
+ *
+ * ⭐ Six real emails left staging through Google's SMTP relay during two suite
+ *    runs and bounced back to the founder. Staging now relays live, so any
+ *    test that creates an order or moves one between statuses is an
+ *    outbound-mail event. This include stops every one of them at
+ *    `pre_wp_mail`, captures it instead, and PROVES the block at include time
+ *    rather than assuming it.
+ *
+ * ⛔ NO ISO DATE APPEARS IN THIS BLOCK, AND THAT IS DELIBERATE. Two suites
+ *    scan their OWN source for one and fail if they find it — which is
+ *    exactly what the first version of this comment did to them. The dated
+ *    evidence lives in tests/bootstrap-mail-guard.php, which nothing scans.
+ *
+ * ⛔ Assert on mail with `bhp_test_mail_log()` / `bhp_test_mail_find()`.
+ *    Never by sending. See tests/bootstrap-mail-guard.php.
+ */
+require_once get_template_directory() . '/tests/bootstrap-mail-guard.php';
 
 $GLOBALS['bhp_rs_pass']     = 0;
 $GLOBALS['bhp_rs_fail']     = 0;
@@ -344,7 +364,7 @@ echo "OK: the 1.19.380 backlog floor is filtered OFF for §1-§18 (aged fixtures
  * ⛔ BUT IT ALSO MASKS EVERY GATE BEHIND IT. With touch 2 permanently declining
  *    `copy_not_approved`, the reminder's timing, its review suppression and
  *    the cooldown scoping would all be untestable - and they would stay
- *    untestable right up until the day Merry's copy lands and switches them
+ *    untestable right up until the day the `marketing-growth` desk's copy lands and switches them
  *    all on at once, unproven, against real parents.
  *
  * ⭐ SO SECTIONS THAT TEST A GATE **BEHIND** THE COPY GATE MARK THE SET
@@ -406,7 +426,7 @@ $bhp_rs_v3 = bhp_rs_make_order( 'rs-v3@example.com', 9, $bhp_rs_visit_meta, arra
  *    MADE THIS PASS. Andrew's seal 977 says *"Then the 7 day review ask for
  *    the website and 10day for multiple books"*, and there are two honest
  *    readings of it: 7/10 everywhere, or 7/10 for the VISIT lane with
- *    "for the website" naming the destination rather than the lane. Merry's
+ *    "for the website" naming the destination rather than the lane. The `marketing-growth` desk's
  *    `CYCLE179-MKT-REVIEW-SEQ-V2.md` §4 takes the second reading explicitly
  *    and marks the web timing *"still an inference, not a seal"*, carried as
  *    open conflict **CYCLE179-MKT-34**. ⛔ A developer does not settle an open
@@ -500,7 +520,7 @@ bhp_rs_ok( 'Two-book visit order at visit+9 declines not_due', 'not_due' === bhp
 bhp_rs_ok( '⭐ Two-book visit order at visit+10 QUALIFIES', '' === bhp_review_ask_decline_reason( $bhp_rs_v2, $bhp_rs_day10 ), 'got: ' . bhp_review_ask_decline_reason( $bhp_rs_v2, $bhp_rs_day10 ) );
 
 /*
- * ⭐ THE REAL SCHEDULE, RE-DERIVED FROM THE ENGINE RATHER THAN RESTATED. Gimli
+ * ⭐ THE REAL SCHEDULE, RE-DERIVED FROM THE ENGINE RATHER THAN RESTATED. `connected-operator`
  *    built sixteen hand-sent drafts to these exact dates on 2026-09-05
  *    (`Business OS\ANDREW-REVIEW\2026-09-05\REVIEW-ASKS\SUMMARY.md`): Dallas
  *    Harris visited 2026-09-03 and sends 09-10 / 09-13; Liberty visited
@@ -616,7 +636,7 @@ bhp_rs_ok(
 );
 /*
  * ⭐⭐ FOUR DAYS, NOT SEVEN, SINCE 1.19.364. ANDREW, SEAL 977, VERBATIM: *"If
- *     no reviews we ask 4 days later"*. Merry's `CYCLE179-MKT-REVIEW-SEQ-V2.md`
+ *     no reviews we ask 4 days later"*. The `marketing-growth` desk's `CYCLE179-MKT-REVIEW-SEQ-V2.md`
  *     §3 carries the same number and marks it as the change from V1.
  *
  * ⛔ SUPERSEDED ASSERTION, PRESERVED RATHER THAN DELETED (seal 965, shipped in
@@ -900,7 +920,7 @@ add_filter( 'bhp_review_ask_in_send_window', '__return_true', 99 );
  * ⭐⭐ 1.19.365 · THIS SECTION WAS INVERTED BY ANDREW'S SEAL 982, AND THE
  *     INVERSION IS THE POINT. Until this build the section proved "PENDING-COPY
  *     can never be sent" by observing two sets that were unapproved. Those sets
- *     now carry Merry's V2 §3 and §4 prose and Andrew has approved them, so
+ *     now carry the `marketing-growth` desk's V2 §3 and §4 prose and Andrew has approved them, so
  *     the old assertions would now be asserting the WRONG WORLD.
  *
  * ⛔⛔ THE GATE IS THEREFORE PROVED THE OTHER WAY ROUND, WHICH IS STRONGER:
@@ -977,7 +997,7 @@ bhp_rs_ok(
 );
 
 /* =========================================================================
- * §6B — MERRY'S V2 PROSE, ASSERTED WORD FOR WORD
+ * §6B — THE MARKETING-GROWTH DESK'S V2 PROSE, ASSERTED WORD FOR WORD
  *
  * ⛔ ASSERTED AGAINST THE **UNMERGED** SETS, so a slot that fails to resolve
  *    cannot make a sentence look right by disappearing.
@@ -1062,7 +1082,7 @@ bhp_rs_ok(
 );
 
 /*
- * ⭐⭐ THE TIME PHRASE MOVES WITH THE DELAY, AND THIS IS THE ONE MERRY FLAGGED.
+ * ⭐⭐ THE TIME PHRASE MOVES WITH THE DELAY, AND THIS IS THE ONE MARKETING-GROWTH FLAGGED.
  *     A one-book order sends at +7 and must say "about a week"; a two-book
  *     order sends at +10 and must say "a week and a half". ⛔ If these two ever
  *     read the same, the copy is false on one of the two lanes.
@@ -1092,7 +1112,7 @@ bhp_rs_ok(
 
 /*
  * ⭐ THE POST-STAR-ROW LINE IS PRESENT ON ALL THREE SETS, verbatim, and it is
- *    the same sentence in each because Merry wrote it once.
+ *    the same sentence in each because `marketing-growth` wrote it once.
  */
 foreach (
 	array(
@@ -1262,7 +1282,7 @@ bhp_rs_ok(
 
 /*
  * ⭐ A NAME-SHAPED FIELD IS USED WHEN ONE EXISTS, AND A TWO-CHILD FIELD IS NOT.
- *    Gimli hit the two-child case twice in sixteen real orders.
+ *    `connected-operator` hit the two-child case twice in sixteen real orders.
  */
 $bhp_rs_named = bhp_rs_make_order( 'rs-named@example.com', 9, array_merge( $bhp_rs_visit_meta, array( '_bhp_school_visit_child_first_name' => 'Rowan' ) ), array( $bhp_rs_pb[0] ) );
 bhp_rs_ok( 'A single child first name is used', 'Rowan' === bhp_review_ask_child_first_name( $bhp_rs_named ) );
@@ -1295,7 +1315,7 @@ bhp_rs_ok(
 
 /*
  * ═══════════════════════════════════════════════════════════════════════════
- * ⭐ MERRY'S APPROVED SENTENCES, VERBATIM.
+ * ⭐ THE MARKETING-GROWTH DESK'S APPROVED SENTENCES, VERBATIM.
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * ⛔⛔ 1.19.366 · THE SOURCE OF THESE PINS CHANGED, AND THAT IS WHY FIVE OF
@@ -1317,7 +1337,7 @@ bhp_rs_ok(
  *                                                    (removed by SEAL 977)
  *     · "Either way, thank you for reading with your little human."
  *
- * ⭐ SOURCE OF THE PINS BELOW: V2 §2, via Gandalf's round-5 ruling on
+ * ⭐ SOURCE OF THE PINS BELOW: V2 §2, via the `chief-of-staff` desk's round-5 ruling on
  *    CYCLE179-LD-47. ⛔ Asserted against the UNMERGED set so a slot
  *    substitution cannot mask a reworded sentence.
  */
@@ -1435,7 +1455,7 @@ bhp_rs_ok( 'Fixture teardown deferred to the end of the run (see the note above)
  * ⭐ §9 — SEAL 977: THE STAR ROW, THE PRE-FILL TOKEN, AND THE +4 REMINDER
  *
  * ⛔ EVERY ASSERTION HERE IS ABOUT A MECHANISM, NOT ABOUT WORDS. The copy this
- *    machinery carries is Merry's and Andrew's; nothing below asserts a
+ *    machinery carries is the `marketing-growth` desk's and Andrew's; nothing below asserts a
  *    sentence that has not already been approved somewhere else.
  * ====================================================================== */
 
@@ -1518,7 +1538,7 @@ foreach ( $bhp_rs_row as $bhp_rs_star ) {
 
 /*
  * ⛔⛔ THE BARE /review/ PATH IS A LIVE 404 AND MUST NEVER BE CONSTRUCTED.
- *     Merry's V2 §5 records it as verified on 2026-09-05.
+ *     The `marketing-growth` desk's V2 §5 records it as verified on 2026-09-05.
  */
 foreach ( $bhp_rs_row as $bhp_rs_star ) {
 	bhp_rs_ok(
@@ -1750,7 +1770,7 @@ if ( function_exists( 'bhp_visit_email_copy_sets' ) ) {
 
 	/*
 	 * ⭐⭐ 1.19.365 · INVERTED BY SEAL 982. Until this build the _default
-	 *     day-0 set was Merry's V2 §1 prose awaiting Andrew, and this
+	 *     day-0 set was the `marketing-growth` desk's V2 §1 prose awaiting Andrew, and this
 	 *     asserted it could not send. He approved it, so the assertion now
 	 *     reads the other way. ⛔ The GATE is still proved, immediately
 	 *     below, by asking an unapproved key the same question.
@@ -2322,7 +2342,7 @@ bhp_rs_ok(
 /*
  * ⚠ TOUCH 2 CARRIES NO CHILD NAME AT ALL, AND THAT IS ASSERTED RATHER THAN
  *   ASSUMED. Item 3 of the round-8 brief asks for verb agreement in touch 2 as
- *   well; there is no subject in Merry's approved V2 §3 body to agree with, and
+ *   well; there is no subject in the `marketing-growth` desk's approved V2 §3 body to agree with, and
  *   no name was invented to create one. This assertion is the record of that.
  */
 bhp_rs_ok(
@@ -2623,7 +2643,7 @@ if ( $bhp_rs_email instanceof WC_Email_BHP_Review_Ask ) {
 	);
 
 	/*
-	 * ⛔⛔ ROUND 8's PNG IS GONE FROM THE EMAIL. Legolas rendered that row with
+	 * ⛔⛔ ROUND 8's PNG IS GONE FROM THE EMAIL. `design-creative` rendered that row with
 	 *     images blocked and got five empty grey boxes.
 	 */
 	bhp_rs_ok(
@@ -2739,7 +2759,7 @@ if ( $bhp_rs_email instanceof WC_Email_BHP_Review_Ask ) {
 	 *    Asserted by comparison rather than by a hard-coded sentence, for the
 	 *    same reason as above. ⚠ The two general candidates carry DIFFERENT
 	 *    caption sentences (the Dallas file's is prefixed "Caption:", the Adams
-	 *    one's is not) because those strings are Legolas's transcriptions of
+	 *    one's is not) because those strings are the `design-creative` desk's transcriptions of
 	 *    what is baked into each photograph, and neither is rewritten here.
 	 */
 	$bhp_rs_gen_alt = ( function_exists( 'bhp_review_ask_hero_alt' ) && defined( 'BHP_EMAIL_GENERAL_HERO' ) )
@@ -2763,7 +2783,7 @@ if ( $bhp_rs_email instanceof WC_Email_BHP_Review_Ask ) {
 	);
 
 	/*
-	 * ⛔⛔ TOUCH 2 HAS NO HERO. Legolas §7: the short last note must not look
+	 * ⛔⛔ TOUCH 2 HAS NO HERO. `design-creative` §7: the short last note must not look
 	 *     like a bigger ask than it is.
 	 */
 	$bhp_rs_email->touch = 2;
@@ -3063,7 +3083,7 @@ bhp_rs_head( '§14 Round 10: charset on the wire, and the plain sign-off is gone
  * ⭐⭐ WHY THIS SECTION EXISTS. 1.19.370 added `bhp_email_force_charset()` on
  *     `woocommerce_email_headers` and FluentSMTP's log STILL recorded
  *     `text/html` with no charset for both test sends (log ids 6 and 7,
- *     reported by Gandalf 2026-09-05 — ⚠ RELAYED, not observed at this desk).
+ *     reported by `chief-of-staff` 2026-09-05 — ⚠ RELAYED, not observed at this desk).
  *     A filter that is registered is not the same fact as a charset that
  *     survives to the mailer, and only the second one matters.
  * ═══════════════════════════════════════════════════════════════════════════
@@ -3139,7 +3159,29 @@ echo 'INFO: wp_mail() is defined in ' . ( '' !== $bhp_rs_mail_file ? $bhp_rs_mai
 
 $bhp_rs_is_core_mail = ( '' !== $bhp_rs_mail_file && false !== stripos( $bhp_rs_mail_file, 'pluggable.php' ) );
 
-if ( $bhp_rs_is_core_mail ) {
+/*
+ * ⭐⭐ 1.19.386 — THE SKIP ABOVE IS NO LONGER THE ONLY HONEST ANSWER, AND THE
+ *     REASON IS EVIDENCE, NOT A CHANGE OF MIND.
+ *
+ * ⛔ The gate's caution was exactly right when it was written: a replaced
+ *    `wp_mail()` "is not guaranteed to honour `pre_wp_mail`", so probing would
+ *    have risked a real send. ⭐ That guarantee has since been OBTAINED rather
+ *    than assumed. `tests/bootstrap-mail-guard.php` reads the live
+ *    implementation and proves the short-circuit end-to-end at include time —
+ *    including a real `wp_mail()` call that must be intercepted or the suite
+ *    aborts. `BHP_TEST_MAIL_GUARD` is only defined once those checks have
+ *    passed in THIS process.
+ *
+ * ⭐ FluentSMTP's replacement (`app/Functions/helpers.php:290`) applies
+ *    `pre_wp_mail` with core's own short-circuit semantics, and returns BEFORE
+ *    its logger — verified by reading the plugin on the server 2026-09-06.
+ *
+ * ⚠️ The skip branch is KEPT, not deleted. On any environment where the block
+ *    is absent, this still refuses to probe and still prints why.
+ */
+$bhp_rs_mail_probe_safe = $bhp_rs_is_core_mail || defined( 'BHP_TEST_MAIL_GUARD' );
+
+if ( $bhp_rs_mail_probe_safe ) {
 	$GLOBALS['bhp_rs_mail_seen'] = array();
 
 	$bhp_rs_capture = static function ( $atts ) {
@@ -3190,7 +3232,7 @@ if ( $bhp_rs_is_core_mail ) {
 
 	unset( $GLOBALS['bhp_rs_mail_seen'] );
 } else {
-	echo "SKIP: wp_mail() is not WordPress's own, so no probe send was attempted (a blocked send could not be guaranteed).\n";
+	echo "SKIP: wp_mail() is not WordPress's own AND tests/bootstrap-mail-guard.php is not loaded, so no probe send was attempted (a blocked send could not be guaranteed).\n";
 	echo "      ⚠ THIS IS THE FINDING, NOT A GAP. See the block comment above.\n";
 }
 
@@ -3262,7 +3304,7 @@ if ( function_exists( 'bhp_email_phpmailer_charset' ) ) {
 /* ---- 14.5 seal 1007: the plain sign-off is gone from all three sets ---- */
 
 /*
- * ⭐ Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through Gandalf, not
+ * ⭐ Andrew Signore, 2026-09-05, verbatim (⛔ RELAYED through `chief-of-staff`, not
  *    heard first-hand): *"I like the nice signature and big place brave hearts
  *    - drop the plain one"*.
  */
@@ -3484,8 +3526,8 @@ if ( $bhp_rs_d0_email instanceof WC_Email && isset( $bhp_rs_visit_hero ) && $bhp
 
 	/*
 	 * ═══════════════════════════════════════════════════════════════════════
-	 * ⭐⭐ SEAL 1010. Andrew Signore, 2026-09-05 (⛔ RELAYED through Gandalf):
-	 *     *"There is a double 'Hi Aragorn, Hi Aragorn' -- needs to be fixed"*.
+	 * ⭐⭐ SEAL 1010. Andrew Signore, 2026-09-05 (⛔ RELAYED through `chief-of-staff`):
+	 *     *"There is a double 'Hi [name], Hi [name]' -- needs to be fixed"*.
 	 * ═══════════════════════════════════════════════════════════════════════
 	 *
 	 * ⛔ THE COUNT IS THE TEST. "Contains a greeting" would have PASSED on the
@@ -3632,7 +3674,7 @@ if ( function_exists( 'bhp_email_brand_styles' ) ) {
  * §16 — ROUND 12
  *
  * ⛔⛔ THE ONE 1.19.372 FAILURE, AND WHY IT WAS NOT A REGEX BUG.
- *     Gandalf's staging run reported 442/1, the single failure being
+ *     The `chief-of-staff` desk's staging run reported 442/1, the single failure being
  *     *"Day 0 renders NO H1 band at all -- h1 found: <h1></h1>"*. The
  *     diagnosis (full version on `bhp_email_strip_empty_heading()`):
  *     `woocommerce_mail_content` is applied inside `WC_Email::send()`, but
@@ -3888,7 +3930,7 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 
 	/*
 	 * ⭐⭐ FOUNDER SEAL 1027, 2026-09-05. Andrew Signore, verbatim (⛔ RELAYED
-	 *     through Gandalf, not heard first-hand): *"Faces toward the camera"*.
+	 *     through `chief-of-staff`, not heard first-hand): *"Faces toward the camera"*.
 	 *
 	 * ⛔ SUPERSEDED, PRESERVED RATHER THAN DELETED. Through 1.19.373 this
 	 *    assertion read *"... and it still defaults to
@@ -3926,7 +3968,7 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
 	);
 
 	/*
-	 * ⛔ THE ALT TEXT IS LEGOLAS'S, TRANSCRIBED. It is asserted here rather
+	 * ⛔ THE ALT TEXT IS THE DESIGN-CREATIVE DESK'S, TRANSCRIBED. It is asserted here rather
 	 *    than trusted because the picture that fronts every unmapped visit and
 	 *    the whole web lane now depends on it, and an empty alt on a 536px
 	 *    photograph is a blank space to a screen reader.
@@ -4047,7 +4089,7 @@ if ( function_exists( 'bhp_review_ask_hero' ) ) {
  * §17 — ROUND 14: SEAL 1032. {BookTitle} IS THE WHOLE ORDER.
  * =========================================================================
  *
- * ⭐⭐ ANDREW SIGNORE, 2026-09-05, VERBATIM (⛔ RELAYED through Gandalf, not
+ * ⭐⭐ ANDREW SIGNORE, 2026-09-05, VERBATIM (⛔ RELAYED through `chief-of-staff`, not
  *     heard first-hand): *"I also assume the 'mariana trench' is just a holder
  *     for 1 book and will be the book that was purchased in its place on
  *     production and if its multiple books all the books listed in the
@@ -4385,7 +4427,7 @@ bhp_rs_ok(
 
 /*
  * ⛔ TOUCH 2 NAMES NO BOOK IN ITS BODY, AND NONE WAS ADDED. The round-14 brief
- *    named touch 2 alongside touch 1, but Merry's V2 §3 body carries no
+ *    named touch 2 alongside touch 1, but the `marketing-growth` desk's V2 §3 body carries no
  *    `{BookTitle}` at all — writing one in to satisfy the brief would be
  *    minting customer-facing copy in a locked email (Standing Rules §9). The
  *    ONLY seal-1032 change to touch 2 is its caption's slot name. Asserted
@@ -4535,7 +4577,7 @@ bhp_rs_ok(
 );
 
 /*
- * ⛔⛔ R16 · THE ASSERTION ON THE RENDERED `<th>`, AS GANDALF ASKED FOR IT.
+ * ⛔⛔ R16 · THE ASSERTION ON THE RENDERED `<th>`, AS CHIEF-OF-STAFF ASKED FOR IT.
  *
  * ⚠ THIS IS A MODEL OF THE TEMPLATE, NOT THE TEMPLATE. WooCommerce is not
  *   loadable at this desk, so `bhp_rs_r16_render_totals_th()` reproduces the
@@ -4572,7 +4614,7 @@ bhp_rs_ok(
 /*
  * ⛔ THE SAME TWO CHECKS AGAINST THE REAL STAGING RENDER, WHEN THERE IS ONE.
  *    1.19.378 · R17: THE RENDER NOW EXISTS. `rs377-day0.html` was written to
- *    the review folder 2026-09-05 15:57 by Gandalf's staging deploy and read
+ *    the review folder 2026-09-05 15:57 by the `chief-of-staff` desk's staging deploy and read
  *    first-hand at this desk: its shipping <th> is exactly "Hand delivery:"
  *    and the method string occurs once. These two assertions therefore RUN
  *    now instead of skipping. The skip branch is KEPT for the case where the
@@ -4693,7 +4735,7 @@ bhp_rs_ok(
  *    rule deleted outright - and, worse, it demanded `nowrap` on
  *    `tr.order-totals td.text-align-right`, the cell that holds the 70-
  *    character hand-delivery sentence. That demand is what overflowed the
- *    375px render (Legolas, seal 1049).
+ *    375px render (`design-creative`, seal 1049).
  *
  * ⭐ THE REPLACEMENT PARSES THE RULE. The selector list is captured from
  *    immediately before the `white-space: nowrap` declaration, so the two
@@ -5299,7 +5341,7 @@ if ( $bhp_rs_tz_ok ) {
 	 *    testing. America/Boise is MST (UTC-7) outside DST and MDT (UTC-6)
 	 *    inside it; 2026 DST runs 2026-03-08 to 2026-11-01.
 	 *
-	 * ⭐ 15:30 UTC IS ALSO THE INSTANT GANDALF'S HAND-REPAIRED PRODUCTION
+	 * ⭐ 15:30 UTC IS ALSO THE INSTANT THE CHIEF-OF-STAFF DESK'S HAND-REPAIRED PRODUCTION
 	 *    ACTION 4863 IS SET TO. If these rows are right, a 1.19.384 deploy
 	 *    agrees with that repair instead of churning it.
 	 */

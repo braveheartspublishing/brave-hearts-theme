@@ -986,6 +986,53 @@
 		 */
 		crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart);
 
+		/*
+		 * ══════════════════════════════════════════════════════════════
+		 * ⭐⭐ 1.8.85 (`CYCLE179-CX-BUILD-391-1`) — DOES THIS COLOURING BOOK EARN
+		 *     FREE SHIPPING?
+		 * ══════════════════════════════════════════════════════════════
+		 *
+		 * Andrew Signore, 2026-09-07: "still says add the coloring book save
+		 * 1.99 shouldnt it say add the coloring book get free shipping? or
+		 * something."
+		 *
+		 * ⛔ IT IS DECIDED HERE, NOT IN `chooseColouringOffer()`, AND THE REASON
+		 *    IS `hasUnrelated`. That flag is computed a few lines above and is
+		 *    NOT in scope inside the chooser. An item outside the six editions
+		 *    and the allowlisted add-on stops
+		 *    `bhp_bundle_override_shipping_cost()` running AT ALL, so a
+		 *    free-shipping promise on such a cart would be a claim the checkout
+		 *    refuses. The chooser and its ranking are left byte-untouched.
+		 *
+		 * ⛔ NOTHING IS RECOUNTED. `physicalBookCount()` is the sanctioned JS
+		 *    mirror of `bhp_bundle_physical_book_count()` (see its own header),
+		 *    and `freeShipAtCount` / `anyThreeActive` are published by the
+		 *    server from `bhp_bundle_colouring_policy()`. No second definition
+		 *    of the rule is introduced by this change.
+		 *    ⚠ DEPARTURE FROM THE PREPARED PATCH, RECORDED RATHER THAN
+		 *      ABSORBED: `plugin-1.8.85-colouring-freeship.patch.md` proposed
+		 *      adding `physical_book_count` and `freeship_threshold` to the PHP
+		 *      payload. Both facts were ALREADY published, so that half of the
+		 *      patch was dropped and NO PHP file was touched.
+		 *
+		 * ⚠ `(count + 1) === threshold`, NOT `>=`. A cart already at or past
+		 *   the threshold ships free already, and a button promising free
+		 *   shipping the shopper has ALREADY EARNED is a false claim.
+		 *
+		 * ⛔ SCOPED TO THE COLOURING OFFER, DELIBERATELY NARROW. The
+		 *    decision (seal 1274) is about the coloring book making the third
+		 *    physical book. A chapter-book pair offer that would also reach the
+		 *    threshold is NOT given the clause here; that is a separate
+		 *    merchandising question and it is not answered by this build.
+		 */
+		if (crossSell && 'colouring' === crossSell.format && !hasUnrelated) {
+			var fsData = window.bhpDrawerData || {};
+			var fsThreshold = parseInt(fsData.freeShipAtCount, 10) || 0;
+			crossSell.earns_freeship = !!fsData.anyThreeActive
+				&& fsThreshold > 0
+				&& (physicalBookCount(cart) + 1) === fsThreshold;
+		}
+
 		// Tiers exposed for renderDrawer()'s per-line-item "included in your
 		// savings" notes and summary math -- same 0/2/3 values the PHP side
 		// uses, with the same mixed-format suppression already applied
@@ -1265,6 +1312,30 @@
 				&& window.bhpDrawerData.freeShipCopy
 				&& window.bhpDrawerData.freeShipCopy.cta_clause) || '';
 			if (cs.completes_collection && freeShipClause) {
+				ctaLabel += freeShipClause;
+			} else if (cs.earns_freeship && freeShipClause) {
+				/*
+				 * ⭐⭐ 1.8.85 — THE COLOURING BOOK THAT MAKES THE THIRD PHYSICAL
+				 *     BOOK SAYS SO, IN THE BUTTON'S OWN APPROVED CLAUSE.
+				 *
+				 * ⛔ THE CLAUSE IS NOT AUTHORED HERE AND IS NOT NEW COPY. It is
+				 *    `bhp_bundle_freeship_copy()['cta_clause']` — " - Ships
+				 *    Free" — the same string this button already appends when an
+				 *    ADVENTURE completes the collection (1.8.24,
+				 *    `CYCLE144-LD-14`). One function, one string, every surface.
+				 *    The rendered label is "Add The Coloring Book - Ships Free".
+				 *
+				 * ⚠ A SENTENCE FORM WAS PROPOSED AND WAS NOT CHOSEN. The
+				 *   original brief named "Add the coloring book and shipping is
+				 *   free.", from the seal-1234 CART LINE pattern. That pattern
+				 *   is approved for a cart SENTENCE; this is a BUTTON, and the
+				 *   button has its own approved pattern. Register B was chosen
+				 *   (seal 1274), so no new customer-facing string is introduced
+				 *   by this release at all.
+				 *
+				 * ⛔ B4's HYPHEN CONVENTION IS PRESERVED because the clause is
+				 *    unchanged: a HYPHEN, never an em dash.
+				 */
 				ctaLabel += freeShipClause;
 			} else if (cs.savings > 0) {
 				ctaLabel += ' - Save ' + formatMoneyPlain(cs.savings);

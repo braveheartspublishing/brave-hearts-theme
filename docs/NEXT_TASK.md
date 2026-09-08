@@ -1,5 +1,19 @@
 # Next Task
 
+> ## NEWEST, 2026-09-06 (night) - Production is theme `1.19.388` / bundle plugin `1.8.84`.
+> **Everything below this block predates the `1.19.384` to `1.19.388` series and is history.**
+>
+> `1.19.389` is being built on staging with the owner's four conversion items (kit sample pages 1 to 4
+> with the Chapter 10 copy fix, PDP comparison table, Stripe express element in the purchase block,
+> exit-intent headline) plus the sticky-header anchor offset and the scroll-cue retirement. Each ships
+> to production only on the owner's word after a real-browser check at 375 and 1440.
+>
+> Still open after that: `addon_upsell_shown` on the hidden cart-drawer panel (plugin); the 17 live blog
+> featured images that still carry the retired sunrise-heart mark (PARKED on the owner's decision:
+> logo-only swap or all-new); the collection and product trust-row evidence claims ("Placed in
+> classrooms across Boise", "Five-star reader reviews", "Kirkus Reviews") for an evidence pass.
+
+
 
 > ## ⭐⭐ NEWEST, 2026-09-03 · Production is theme `1.19.358` / bundle plugin `1.8.83`. **Everything below this block predates the `1.19.357` and `1.19.358` releases.**
 >

@@ -20,6 +20,38 @@
  *     "Email me when a new Charlotte and Henry book or edition is released,
  *      plus the occasional family reading idea. (optional)"
  *
+ * ⚠⚠ THE MARKUP ABOVE IS THE 1.19.313 STATE AND IS PRESERVED, NOT CORRECTED.
+ *    ⭐ 1.19.385 (2026-09-06, `CYCLE179-CX-EMAIL-CAPTURE`) MOVED THE FIELD'S
+ *      `location` from `order` to `contact`, so WooCommerce now renders it in
+ *      the Contact information step directly under the email input. The
+ *      RENDERED ATTRIBUTES CHANGED WITH IT, measured on staging 1.19.385:
+ *
+ *          <input id="contact-brave-hearts-new-book-releases"
+ *                 name="contact_brave-hearts/new-book-releases" type="checkbox">
+ *
+ *      ⛔ ANY SELECTOR, TEST OR AUTOMATION KEYED ON `order-…` / `order_…` NOW
+ *         MATCHES NOTHING. A repo-wide grep on 2026-09-06 found the old strings
+ *         in exactly one place — the four lines above — and in no executable
+ *         code, which is why the move was safe.
+ *
+ *    ⭐ NOTHING THIS FILE READS CHANGED, AND THAT IS THE POINT.
+ *      · The Store API request key is still `brave-hearts/new-book-releases`
+ *        (read from the live checkout schema on staging, `OPTIONS
+ *        /wp-json/wc/store/v1/checkout`, 2026-09-06: `additional_fields`
+ *        carries exactly that one property).
+ *      · WooCommerce sends every non-`address` location to
+ *        `CheckoutFields::OTHER_FIELDS_PREFIX`, so the stored key is still
+ *        `_wc_other/brave-hearts/new-book-releases`.
+ *      · `bhp_store_marketing_consent_meta()` therefore still mirrors into
+ *        `_bhp_new_book_releases_optin`, and every function below is untouched.
+ *
+ *    ⚠ NOT VERIFIED, AND SAID PLAINLY: no end-to-end browser order was placed
+ *      at 1.19.385 to watch that meta key land, because staging's only enabled
+ *      gateway is live Stripe and a payment is an Andrew gate. The evidence is
+ *      the schema read, the group-key assertion in
+ *      `tests/test-cycle179-cx-optin-position.php` §4.5–§4.8, and the CYCLE168
+ *      wire suite passing 65/65 unchanged.
+ *
  * ⭐ OBSERVED LIVE on staging2 checkout at window.innerWidth 1440 and 375,
  *    2026-08-28, before this file existed. It is registered by
  *    `bhp_register_marketing_consent_fields()` in `functions.php` through

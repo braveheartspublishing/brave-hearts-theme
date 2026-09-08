@@ -224,6 +224,20 @@ add_action( 'wp_footer', function () {
  * ⛔ NO OUTCOME CLAIM. NO INVENTED CONTENTS: the 296 lane read all seven pages
  *    of the live `Reluctant-Reader-Adventure-Kit-1.pdf` from the production
  *    document root. VOICE §9.1: I/me/my, no em dash, ages 6 to 9.
+ * ⭐⭐ SUPERSEDED 1.19.389 (2026-09-06, `CYCLE179-LD-BUILD-389`) — THE
+ *    ARTEFACT MOVED UNDER THIS NOTE. The kit the site serves has been
+ *    **v2.2, 11 pages, Chapter 10 "The Dive"** since 2026-09-03 19:26.
+ *    Verified live over SSH against the PRODUCTION document root by
+ *    `lead-developer` on 2026-09-06: md5
+ *    `e227eea53ec762df4abdb6a09615a730`, 8,944,368 bytes, `/Count 11`,
+ *    byte-identical to the Drive kit of record "Reluctant Reader
+ *    Adventure Kit v2.2 (Chapter 10, live 2026-09-03).pdf".
+ * ⛔ THE THREE CONTENTS ABOVE ARE STILL CORRECT — one real chapter, a
+ *    printable explorer activity, and tips to the parent. Only the
+ *    chapter number and the page count moved, and the seven-page wording
+ *    is preserved rather than overwritten so the movement stays visible.
+ * ⚠ THIS FILE'S RENDERED COPY NAMES NO CHAPTER NUMBER, so nothing a
+ *    visitor reads here was wrong. This is a comment correction only.
  *    ⛔ The curly apostrophe in the old "don’t" is replaced with "do not"
  *      rather than a straight quote, so no encoding difference rides in.
  */

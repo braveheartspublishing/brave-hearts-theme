@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.384
+Version: 1.19.400
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -4454,6 +4454,118 @@ body:not(.home) .contact-hero .btn-outline { color: var(--expedition-navy); }
    order named "all blog pages"; widening it to every editorial surface on the
    site would have been a larger change than he asked for. */
 .entry-content a:not(.btn) { color: var(--expedition-forest); text-decoration-color: var(--expedition-gold); text-underline-offset: .2em; }
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.388 (`CYCLE179-LD-TABLE-RAIL-FIX`) — WIDE TABLES SCROLL INSTEAD OF
+ *     BEING CLIPPED. THE MEASUREMENT, NOT THE ARGUMENT:
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ *   staging post 82 /blog/reading-level-by-grade-chart/, asserted innerWidth 375
+ *     table box            left 57 … right 468            (412px)
+ *     main.site-main       clientWidth 360, scrollWidth 468
+ *     computed             overflow-x: clip
+ *     column 5 "Where a Charlotte and Henry book sits"   392 … 466  — UNREACHABLE
+ *
+ * ⛔ `body:not(.home) .site-main { overflow: clip }` (further up this file) IS
+ *    NOT TOUCHED. It is what keeps 68 interior pages from growing a document
+ *    scrollbar off a full-bleed hero, and relaxing it to fix a table would
+ *    trade one visible defect for a sitewide one. The scroll container is
+ *    around the table alone, so the blast radius is the tables.
+ *
+ * ⭐ DESKTOP IS UNCHANGED BY CONSTRUCTION, AND IT IS WORTH SAYING HOW rather
+ *    than asserting it: above 768px the pane carries `overflow-x: auto` and
+ *    nothing else, and `overflow-x: auto` on a box whose content already fits
+ *    paints no scrollbar and moves no pixel. The two declarations that DO
+ *    change layout — `width: max-content` on the table and the visible cue —
+ *    live inside the narrow media query and cannot reach a desktop viewport.
+ *    `test-cycle179-table-rail.php` §2.3 asserts that by finding the NEAREST
+ *    ENCLOSING at-rule, not by matching three strings in order.
+ *
+ * ⚠ `width: max-content` IS THE LOAD-BEARING ONE AND IT IS EASY TO LEAVE OUT.
+ *   A `<table>` inside a 360px scroll container SHRINKS to fit rather than
+ *   overflowing — the columns just get narrower and the fifth one becomes
+ *   three characters wide. The pane would then scroll nothing and the fix
+ *   would test green while reading worse than the defect.
+ */
+.entry-content .bhp-table-scroll { margin-block: 1.5rem; }
+.entry-content .bhp-table-scroll__pane { overflow-x: auto; max-width: 100%; }
+.entry-content .bhp-table-scroll__pane:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.entry-content .bhp-table-scroll__hint { display: none; }
+
+/* The block editor's own table block gets the same treatment on its own
+   wrapper — `bhp_content_wrap_tables()` deliberately does not nest a second
+   container inside a `figure.wp-block-table`. */
+.entry-content figure.wp-block-table { overflow-x: auto; max-width: 100%; }
+
+@media (max-width: 768px) {
+  /* ⭐⭐ THE TABLE LAYS OUT AT THE WIDTH IT HAS ON A DESKTOP, AND THE PANE
+     SCROLLS TO IT. 43rem = 688px at a 16px root, against the 691px this
+     table MEASURES at an asserted innerWidth of 1440 on staging post 82.
+     So a phone reader gets the desktop table, sideways, rather than a
+     different table.
+
+     ⛔ THE FIRST BUILD OF THIS RELEASE SHIPPED `width: max-content` HERE AND IT
+        WAS WRONG. Recorded rather than quietly swapped, because it passed every
+        unit assertion and looked correct in source. Measured in a browser at an
+        asserted innerWidth of 375 on staging post 82, `max-content` rendered
+        the table at 2408px — `max-content` means "never wrap any cell", so the
+        five columns each grew to their longest sentence and the reader had to
+        drag through six and a half screens of a table that is 691px on a
+        laptop. It satisfied "column 5 is reachable" and failed the reason that
+        requirement exists.
+
+     ⚠ `width: auto` IS NOT THE ANSWER EITHER, AND IT IS THE OBVIOUS THING TO
+       TRY NEXT: a table shrinks to fit its container, so at auto this one
+       renders at its 412px min-content width — which is what the DEFECT looked
+       like, minus the clipping. A fixed width is what makes the pane scroll to
+       a readable table rather than to a cramped one. */
+  .entry-content .bhp-table-scroll__pane > table,
+  .entry-content figure.wp-block-table > table { width: 43rem; min-width: 100%; max-width: none; }
+
+  /* ⭐ THE CUE, IN TWO PARTS, BECAUSE EITHER ALONE IS WEAK.
+     1. A right-edge shadow painted with the classic `background-attachment`
+        pair: two opaque covers scroll WITH the content (`local`) and two dark
+        shadows are pinned to the box (`scroll`), so a shadow shows only while
+        there is more content past that edge and disappears at the end. No JS,
+        no scroll listener, correct on first paint.
+     2. A short line of words under the table, because a shadow is invisible to
+        a reader who is not looking for it. `aria-hidden` on the span: the pane
+        is a focusable `role="region"` with its own label, so a screen reader
+        is already told the table scrolls and does not need it said twice.
+
+     ⚠ THE COVER COLOUR IS DERIVED, NOT PICKED, AND IF EITHER INPUT MOVES THIS
+       MUST MOVE WITH IT. A blog body is `.post-content.entry-content
+       .editorial-surface`, whose background is `rgba(255,250,240,.75)`
+       composited over the body's `--expedition-parchment-light` (#f8f3e9):
+         r = .75*255 + .25*248 = 253.25
+         g = .75*250 + .25*243 = 248.25
+         b = .75*240 + .25*233 = 238.25   ->  rgb(253,248,238)
+       A cover that misses the real surface shows as a visible band rather than
+       as nothing, which is why the arithmetic is written down instead of a hex
+       being eyeballed. CSS cannot compute this from the two custom properties,
+       so it is hand-kept — the same trade `--color-ivory-rgb` already makes
+       eleven hundred lines up. */
+  .entry-content .bhp-table-scroll__pane {
+    background-image:
+      linear-gradient(to right, rgb(253,248,238) 30%, rgba(253,248,238,0)),
+      linear-gradient(to left,  rgb(253,248,238) 30%, rgba(253,248,238,0)),
+      linear-gradient(to right, rgba(53,43,27,.18), rgba(53,43,27,0)),
+      linear-gradient(to left,  rgba(53,43,27,.18), rgba(53,43,27,0));
+    background-position: 0 0, 100% 0, 0 0, 100% 0;
+    background-repeat: no-repeat;
+    background-size: 34px 100%, 34px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+  .entry-content .bhp-table-scroll__hint {
+    display: block;
+    margin-top: .4rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-ui);
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * ⭐⭐ 1.19.344 (2026-08-31, `CYCLE173-LD-344`) — BLOG POST BODY LINKS.
@@ -4556,6 +4668,68 @@ body:not(.home) .contact-hero .btn-outline { color: var(--expedition-navy); }
 }
 .entry-content blockquote { margin: 2.5rem 0; padding: 1.5rem 2rem; border-left: 3px solid var(--expedition-gold); color: var(--expedition-navy); font-family: var(--font-display); font-size: 1.45rem; }
 .blog-index { padding-block: var(--section-space); }
+
+/* ⭐⭐ 1.19.396 (`CYCLE179-CX-BUILD-396` item 2) — THE GAP UNDER THE ARCHIVE
+      BAND IS SET TO THE SHOP PAGE'S BAR-TO-GRID RHYTHM.
+
+   ⛔ WHY THE OLD VALUE WAS RIGHT AND THEN BECAME WRONG. `--section-space` was
+      sized for the TALL hero this page used to carry, where a generous gap
+      separated two large blocks. Theme 1.19.394 replaced that hero with the
+      74px `.bhp-archive-band` to match the shop's Expedition Catalog bar, and
+      left the section padding alone. A short band above a tall gap reads as a
+      dropped element rather than as breathing room.
+
+   MEASURED ON STAGING 1.19.395, band bottom to first card top, `innerWidth`
+   asserted beside every number:
+
+              /blog/     /shop/
+      1536     128.0       39.6
+      1280     115.2       39.6
+       375      80.0       44.0
+
+   The shop figure is near-constant because its shell contributes only 8px of
+   padding plus the result-count row; the blog figure tracked a viewport-scaled
+   token instead, so the two surfaces diverged more the wider the screen got,
+   which is the opposite of "consistent page to page".
+
+   ⭐ 2.5rem = 40px lands within 4.4px of the shop at every measured width, so
+      the two pages read as one rhythm. A flat value is correct HERE precisely
+      because the surface it is matching is itself flat. ⛔ Do not "improve"
+      this back into a clamp: the target is another page's constant, not a
+      proportion of the viewport.
+
+   ⚠ SCOPED TO THE ADJACENCY, not to `.blog-index`. Only a `.blog-index` that
+     directly follows the band gets the tightened gap; a layout that ever drops
+     the band keeps the original section rhythm rather than collapsing into the
+     header. The bottom padding is untouched.
+
+   ⛔⛔ THE `body:not(.home)` PREFIX IS LOAD-BEARING AND MUST NOT BE TIDIED AWAY.
+      The first version of this rule was written as a bare
+      `.bhp-archive-band + .blog-index`, it was present in the served
+      stylesheet, its selector MATCHED the element — and the computed
+      `padding-top` was still 128px. Measured on staging 1.19.396, not
+      reasoned about: enumerating every CSSOM rule that both mentions padding
+      and matches this element returns FOUR, not the two a source read
+      suggests:
+
+        .section, .content-section          padding-block: var(--section-space)   (0,1,0)
+        .blog-index                         padding-block: var(--section-space)   (0,1,0)
+        .bhp-archive-band + .blog-index     padding-block-start: 2.5rem           (0,2,0)
+        body:not(.home) .section            padding-block: var(--section-space)   (0,2,1)  <== wins
+
+      ⭐ THE FOURTH RULE IS THE ONE NOBODY LOOKS FOR. It is written against
+        `.section`, not against `.blog-index`, so a search for the thing being
+        overridden never finds it; and `:not(.home)` quietly buys it a class's
+        worth of specificity plus an element's, putting it at (0,2,1) — one
+        point above two plain classes. A two-class selector looks like it
+        should be enough, and it is not.
+
+      ⚠ THE FIX IS SPECIFICITY, NOT `!important`. Matching the same
+        `body:not(.home)` prefix takes this rule to (0,3,1), which beats the
+        override on its own terms and leaves the next author a cascade they can
+        still reason about. An `!important` here would win too, and would make
+        every future rule on this element a fight. */
+body:not(.home) .bhp-archive-band + .blog-index { padding-block-start: 2.5rem; }
 .card-grid--posts { grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(24px,3vw,42px); }
 .blog-card { border: 1px solid var(--expedition-border); border-radius: 2px; background: #fffaf0; box-shadow: 0 18px 45px rgba(38,31,21,.07); }
 .blog-card .card__image { height: 250px; }
@@ -5551,6 +5725,39 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.bhp-shop-collection-i
        shrink and pushes the page sideways. Same trap as book-media.css:26. */
     min-width: 0;
     margin-top: clamp(1.5rem, 2.5vw, 2.25rem);
+  }
+
+  /* ═══ 1.19.391 (`CYCLE179-CX-BUILD-391`) — THE PLATES COME UP TO THE
+   * ═══ GALLERY. Andrew, seal 1208: "bring up the look inside next to the
+   * ═══ table". `design-creative` measured the gap on production 2026-09-07 at 1440:
+   * ═══ the gallery ends at y=898 and `.bhp-pdp-left` starts at y=1411, so
+   * ═══ the plates render 513px of empty column below the thing they belong
+   * ═══ under, and 1,015px below the comparison table.
+   *
+   * ⛔⛔ THE PLACEMENT WAS ALREADY CORRECT AND THAT IS THE WHOLE POINT. The
+   *     block has been `grid-column: 1; grid-row: 2` since 1.19.349, i.e.
+   *     already directly under the gallery in the grid. The gap is a TRACK
+   *     SIZING artefact, not a placement one, and "fixing" the placement would
+   *     have changed nothing while looking like a fix.
+   *
+   * ⭐ WHY ROW 1 GROWS. `.summary` spans `1 / span 2`. CSS Grid §12.5 sizes a
+   *    spanning item by distributing its contribution across the intrinsic
+   *    tracks it spans, so a 2,600px summary pushes row 1 far past the 695px
+   *    gallery, and row 2 (the plates) starts wherever that lands.
+   *
+   * ⭐ THE FIX IS ONE DECLARATION. `1fr` gives row 2 a FLEXIBLE max sizing
+   *    function, and §12.5's spanning step is skipped for an item that spans a
+   *    flexible track — the summary is resolved later, in Expand Flexible
+   *    Tracks, instead of inflating row 1. Row 1 is then sized by the gallery
+   *    alone, which is exactly what "directly under the hero gallery" means.
+   *
+   * ⛔ DESKTOP ONLY, AND DELIBERATELY. Below 901px the block keeps
+   *    `order: 10` from `pdp-content.css` and stays BELOW the buy box. Pulling
+   *    it up on a phone would put a look-inside plate above ADD TO CART, which
+   *    is the founder's seal-672 rule and is not what seal 1208 asked for.
+   * ════════════════════════════════════════════════════════════════════ */
+  .woocommerce div.product {
+    grid-template-rows: max-content 1fr;
   }
 }
 
@@ -14131,11 +14338,33 @@ body.bhp-catalog-grid .woocommerce-ordering { margin-bottom: var(--space-4); }
  * ⭐ `top`, not `center`: every one of these sheets carries its title in the
  *    top third. A centred crop would cut the one part of the page that says
  *    what the thing is.
- * ⭐ 4/5 rather than the sheet's own 0.7727 — a full US Letter page at a 379px
- *    card width is 491px tall, which pushes the description and the button off
- *    a phone screen entirely. 4/5 shows the head of the page at a size where
- *    the title is legible and still leaves the card readable in one glance.
- *    The full page is one tap away; this is the shop window, not the shelf. */
+ * ⛔⛔ SUPERSEDED 2026-09-07 BY 1.19.400 (`CYCLE179-CX-BUILD-400`). THE
+ *    SENTENCE BELOW IS WRONG AND HAS BEEN WRONG SINCE 1.19.303. It is
+ *    preserved here, at the line it describes, rather than corrected in a
+ *    note further down the file where nobody reading this rule would reach
+ *    it. The frame moves to 3 / 2 in the 1.19.400 block at the foot of this
+ *    stylesheet; `object-fit: cover` and `object-position: top center` are
+ *    unchanged.
+ *
+ *    ⭐ WHY IT IS WRONG, MEASURED not inferred: 4/5 is 0.8000 and a US Letter
+ *       sheet is 0.7727. `cover` therefore crops 3.5 percent off the BOTTOM
+ *       and shows very nearly the WHOLE sheet, not "the head of the page" —
+ *       verified live on all five cards at 375 / 390 / 402 / 430 / 1280,
+ *       displayed ratio 0.800 against natural ratio 0.772. No test could see
+ *       this: the rule and the comment were internally consistent and only
+ *       the render disagreed.
+ *
+ *    ⚠ THE SUPERSEDED TEXT, VERBATIM:
+ *      "⭐ 4/5 rather than the sheet's own 0.7727 — a full US Letter page at a
+ *       379px card width is 491px tall, which pushes the description and the
+ *       button off a phone screen entirely. 4/5 shows the head of the page at
+ *       a size where the title is legible and still leaves the card readable
+ *       in one glance. The full page is one tap away; this is the shop window,
+ *       not the shelf."
+ *
+ *    ⭐ The REASONING in that text still holds and is why 3/2 was chosen over
+ *       the sheet's true 0.7727: a full-page frame is too tall for a phone
+ *       card. Only the claim about what 4/5 actually SHOWS was false. */
 .free-resource-card__preview {
   display: block;
   margin: 0 0 var(--space-5);
@@ -14149,7 +14378,11 @@ body.bhp-catalog-grid .woocommerce-ordering { margin-bottom: var(--space-4); }
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 5;
+  /* ⛔ 1.19.400: was `aspect-ratio: 4 / 5`. Changed HERE, at the shipped rule,
+     rather than overridden from the foot of the file — an override would have
+     left a dead 4/5 declaration that a later reader could restore by deleting
+     what looks like an additive tail block. See the supersession note above. */
+  aspect-ratio: 3 / 2;
   object-fit: cover;
   object-position: top center;
 }
@@ -17674,6 +17907,43 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-for
   gap: 0.4rem;
   margin: 0 0.9rem 0.6rem;
   padding: 0;
+  /* ⭐⭐ 1.19.396 (`CYCLE179-CX-BUILD-396` item 1) — THE ROW IS CENTRED BY
+        CONSTRUCTION AT EVERY WIDTH, NOT BY COINCIDENCE AT WIDE ONES.
+
+     ⛔ MEASURED ON STAGING 1.19.395 BEFORE THIS CHANGE, not inferred. The chip
+        row's midpoint against its card title's midpoint:
+
+          1536  drift 0
+          1280  drift 0
+           375  drift +8.7, and the row OVERFLOWED its container by 17.4px
+
+     ⭐ THE CAUSE, and it is worth stating because "drift 0" at two widths reads
+        like a solved problem. The chips are `flex: 1 1 0`, so while they FIT
+        they divide the row exactly and the ink span equals the container, which
+        symmetric margins already centre. Nothing was centring them. At 375 the
+        two chips' min-content width exceeds the card, a flex item's default
+        `min-width: auto` refuses to shrink below min-content, `flex-wrap` was
+        `nowrap`, and the surplus therefore spilled to the RIGHT with no
+        `justify-content` to place it. The row went off-centre in the one place
+        it had no slack.
+
+     THREE DECLARATIONS, EACH DOING A DIFFERENT JOB:
+       `justify-content: center` — makes centring an instruction rather than an
+          artefact of the chips happening to fill the row.
+       `flex-wrap: wrap`        — gives the overflow somewhere to go, so a third
+          chip or a longer label stacks instead of spilling.
+       `min-width: 0` on the chip (below) — the declaration that actually lets a
+          flex item shrink. Without it the other two change nothing at 375.
+
+     ⚠ This is NOT the item Andrew raised on 2026-09-07 (seal 1293). His three
+       named buttons, "paperback, hardcover and colllection", are the PDP format
+       rail, which carries exactly those three and was 75px left of centre at
+       1.19.393; theme 1.19.394 fixed it and it measures drift 0 at 1536, 1280
+       and 375 on 1.19.395. A `/shop/` grid card carries TWO chips. This rule
+       fixes a real but different defect, found by looking where the 396 brief
+       pointed. Both readings are recorded in the build report. */
+  flex-wrap: wrap;
+  justify-content: center;
 }
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-prices__sep {
   display: none; /* ⭐ The chips are boxes now; a middot between them is noise. */
@@ -17681,6 +17951,13 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-for
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-format-price {
   display: flex;
   flex: 1 1 0;
+  /* ⭐ 1.19.396 — THE DECLARATION THAT DOES THE WORK. A flex item's default
+     `min-width: auto` is what refused to shrink below min-content and pushed
+     17.4px of chip past the card's right edge at 375. `flex: 1 1 0` alone never
+     had authority to shrink it. ⛔ Do not remove this thinking `flex-wrap`
+     covers it: wrap only helps once an item is allowed to be narrow enough for
+     the browser to prefer a second line. */
+  min-width: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -18421,5 +18698,536 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip
   }
   body.bhp-catalog-grid.woocommerce-shop .woo-expedition-shell ul.products li.bhp-shop-collection-item form.bhp-shop-collection-card__form--upsell {
     margin-bottom: 0;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.390 (2026-09-07, `CYCLE179-LD-BUILD-390`) — THE STICKY HEADER WAS
+ *     EATING EVERY IN-PAGE ANCHOR TARGET.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * Origin: a production check at seal 1188, carried into this build by the
+ * Chief of Staff's addendum to 389. VERIFIED ON PRODUCTION 2026-09-07 before the fix
+ * was written, not inferred from source: on
+ * `/blog/books-like-magic-tree-house/` the in-body link "Skip straight to the
+ * eight books" targets `#the-eight-books`, that `<h2 id="the-eight-books">`
+ * carried `scroll-margin-top: 0px` in its computed style, and `.site-header`
+ * is `position: sticky; top: 0` (style.css :480) at z-index 100. The browser
+ * therefore scrolls the heading to viewport y=0 and the header paints on top
+ * of it. The reader clicks a link about eight books and lands on the middle of
+ * a paragraph, with the heading they asked for hidden behind the nav.
+ *
+ * ⛔ `--header-height` IS NOT USED HERE, AND THE REASON IS ALREADY WRITTEN IN
+ *    THIS FILE. It is declared `70px` at :303 while the header actually renders
+ *    92.8px at 375 and 80.0px at 1440 (both measured; the same measurements are
+ *    recorded at :9027 and :12140). Reusing it would reserve 70px against a
+ *    93px header and leave 23px of the heading behind the nav — a fix that
+ *    tests green and still hides the words.
+ *
+ * ⭐ SO THE OFFSET IS ITS OWN VARIABLE AND IT IS FED FROM TWO PLACES:
+ *
+ *   1. THIS STATIC FALLBACK, 93px, which is the LARGER of the two measured
+ *      heights. It is deliberately not breakpoint-split. Over-reserving 13px at
+ *      1440 puts the heading 13px below the header — still fully visible, which
+ *      is the whole requirement. UNDER-reserving hides it. One number that is
+ *      safe at both widths cannot go stale at a breakpoint nobody re-measured,
+ *      which is exactly how `--header-height` became wrong. The same
+ *      "reserve the larger" reasoning is already used by `--bhp-pc-nav` at
+ *      :15605.
+ *
+ *   2. `assets/js/anchor-offset.js`, which measures the real `.site-header`
+ *      (its `offsetHeight` PLUS its computed `top`, so the 32px/46px admin bar
+ *      is included for a logged-in editor) and writes the true value onto
+ *      `:root`. It re-measures on resize and on orientation change. If the
+ *      script never runs the fallback above is still correct.
+ *
+ * ⛔ `scroll-padding-top` ON THE SCROLLER WAS CONSIDERED AND REJECTED. It would
+ *    catch every anchor target sitewide in one line — and it would ADD to the
+ *    ten `scroll-margin-top: calc(var(--header-height) + ...)` rules already in
+ *    this file (`.homepage-section`, `.about-section`, `.books-section` and the
+ *    rest), double-offsetting seven page families to fix one. Container padding
+ *    and target margin both apply; they do not override each other.
+ * ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --bhp-anchor-offset: 93px;
+}
+
+.entry-content h2[id],
+.entry-content h3[id],
+.entry-content h4[id],
+.entry-content h5[id],
+.entry-content h6[id],
+#main {
+  scroll-margin-top: var(--bhp-anchor-offset, 93px);
+}
+
+/* ═══ 1.19.391 (`CYCLE179-CX-BUILD-391`) — ONE MORE ANCHOR TARGET ═══
+ * The comparison table's "Look inside" cue is an in-page link to the hero
+ * gallery (`#bhp-look-inside-<key>`). That section is NOT an `.entry-content`
+ * heading and is not `#main`, so the 1.19.390 rule above did not reach it and
+ * the sticky header would paint over the gallery on arrival — the exact defect
+ * that rule exists to prevent.
+ *
+ * ⛔ WRITTEN AS A SEPARATE RULE, NOT AS A SIXTH SELECTOR IN THE LIST ABOVE.
+ *    `tests/test-cycle179-build-390.php` §1 and §2 assert that list and the
+ *    minified form of it by string. Extending it would have been tidier and
+ *    would have risked a green suite going red for a cosmetic reason, which is
+ *    how a real regression later gets waved through.
+ *
+ * ⭐ IT READS THE SAME VARIABLE, so the measured header height from
+ *    `anchor-offset.js` governs both, and there is still exactly one number.
+ * ════════════════════════════════════════════════════════════════════════ */
+/*
+ * ⛔⛔ BOTH SELECTORS ARE REQUIRED, AND THE SECOND ONE WAS FOUND BY
+ *     MEASURING RATHER THAN BY READING. At 1440 `.bhp-look-inside[id]` computes
+ *     `display: block` and takes the reservation. AT 375 IT COMPUTES
+ *     `display: contents` — `product-template.css` promotes its children to
+ *     grid items — and an element with `display: contents` GENERATES NO BOX,
+ *     so `scroll-margin-top` on it has nothing to apply to and the sticky
+ *     header would paint over the gallery on arrival.
+ *
+ * ⭐ VERIFIED LIVE on staging 1.19.391, 2026-09-07, in a real browser with
+ *    `window.innerWidth` asserted at 1440 and at 375:
+ *      1440 → display: block,    box present, scroll-margin-top 80px applied
+ *       375 → display: contents, NO box, and the first in-flow child is
+ *              `.bhp-gallery`, which is what the browser actually scrolls to.
+ *
+ * ⭐ SO THE CHILD CARRIES THE SAME RESERVATION. It costs one selector, it is
+ *    inert at 1440 (the parent's box wins), and it removes a dependence on
+ *    unspecified behaviour for a `display: contents` fragment target.
+ */
+.bhp-look-inside[id],
+.bhp-look-inside[id] > .bhp-gallery {
+  scroll-margin-top: var(--bhp-anchor-offset, 93px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * 1.19.390 — THE TABLE SCROLL CUE RETIRES ITSELF.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * The same addendum, item 2. `.bhp-table-scroll__hint` ("Scroll for more →")
+ * is painted under every wrapped table below 768px by the rule at :4558. It
+ * had no exit: a reader who has already reached the last column is still being
+ * told to scroll, which reads as a broken control rather than as a hint.
+ *
+ * `assets/js/anchor-offset.js` adds `is-scroll-end` to the `.bhp-table-scroll`
+ * WRAPPER when its pane has reached its right edge, and also immediately when
+ * the pane does not overflow at all (a narrow table on a wide phone was being
+ * told to scroll to nowhere). The class is never removed once set — scrolling
+ * back left does not un-learn that the table scrolls, and re-showing the line
+ * would flicker it on every swipe.
+ *
+ * ⭐ THIS RULE SITS OUTSIDE THE `max-width: 768px` BLOCK ON PURPOSE. A media
+ *    query adds no specificity, so `0,4,0` here beats the `0,2,0` inside it
+ *    regardless of which comes first in the file, and this cannot be broken by
+ *    someone later reordering the two blocks.
+ *
+ * ⛔ The RIGHT-EDGE SHADOW is NOT retired with it and that asymmetry is
+ *    deliberate. The shadow is painted with the `background-attachment:
+ *    local/scroll` pair at :4547 and ALREADY disappears at the end of the pane
+ *    on its own, with no JS — and it comes back when the reader scrolls left
+ *    again, which is correct for a shadow and wrong for a sentence.
+ * ─────────────────────────────────────────────────────────────────────────── */
+.entry-content .bhp-table-scroll.is-scroll-end .bhp-table-scroll__hint {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1.19.394 — `CYCLE179-CX-BUILD-394`, the commerce and CX lane.
+   Andrew Signore's review of staging 1.19.393 on his own desktop, 2026-09-07.
+   ⚠ RELAYED through the supervising session — NOT witnessed first-hand here
+     (Standing Rules §9.2 rule 2).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 394.3 · THE BLOG CARD STOPS CROPPING THE FIRST LETTER OFF EVERY IMAGE ────
+ *
+ * ⭐ ANDREW SIGNORE, verbatim, RELAYED: *"All the new photos cut off the first
+ *    letters of the words on the blogs."*
+ *
+ * ⛔ REPRODUCED AND PHOTOGRAPHED, NOT INFERRED. Staging 1.19.393, real browser,
+ *    asserted `window.innerWidth` 1280: the first card rendered "TWO DIFFERENT
+ *    ANSWERS" with the T sheared, "What to Read After" with the W sheared, and
+ *    "Magic Tree House" reading "...ic Tree House". Screenshot filed with the
+ *    build evidence.
+ *
+ * ⛔⛔ THE CAUSE IS THE FRAME, NOT THE ARTWORK, AND THAT IS WHY THIS IS A THEME
+ *     FIX. The card images are 16:9 (measured: `naturalWidth` 768,
+ *     `naturalHeight` 432 on every card on the index). The frame was
+ *     `height: 250px` with `object-fit: cover` and a width set by the column,
+ *     so the browser scaled to FILL and threw the overflow away sideways:
+ *
+ *       frame 404 x 250 (3-up at 1536)  -> render 444 x 250 -> 20px off each side
+ *       frame 373 x 250 (3-up at 1280)  -> render 444 x 250 -> 36px off each side
+ *
+ *     ⭐ THE ARITHMETIC OF THE FAILURE, so the next person does not re-derive
+ *        it: with a design safe zone inset 8% from the left edge, the first
+ *        glyph sits 35.6px into the rendered image. Cropping 36px per side
+ *        removes it. The cut therefore begins at a frame width of about 373px
+ *        and gets worse as the column narrows — which is exactly why it showed
+ *        up on "all the new photos" at once rather than on one bad file.
+ *
+ * ⭐⭐ THE FIX IS TO STOP CROPPING AT ALL. An `aspect-ratio: 16 / 9` frame at
+ *     `width: 100%` matches the source aspect exactly, so `cover` has nothing
+ *     to throw away and the whole 16:9 plate renders at every column width.
+ *     ⛔ NO IMAGE IS RE-EXPORTED and no safe zone is re-cut. The images were
+ *        never wrong.
+ *
+ * ⭐ ONE RULE COVERS THREE SURFACES because `index.php` is the template for
+ *    the blog index, every category / tag / author / date archive, AND the
+ *    search results page. All three emit `.blog-card`. Verified live on
+ *    staging: `/blog/` and `/?s=ocean` both render 10 `.blog-card` nodes from
+ *    this template.
+ *
+ * ⚠ `height` MUST be reset to `auto`. Three earlier rules set an explicit
+ *   pixel height on this element (the shared `.card__image` at 220px, the
+ *   `.blog-card` override at 250px, and the 640px-and-below override at
+ *   220px). An `aspect-ratio` beside a definite `height` is ignored, so the
+ *   frame would have kept cropping and the fix would have looked applied and
+ *   done nothing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+.blog-card .card__media {
+  display: block;
+  aspect-ratio: 16 / 9;
+}
+
+.blog-card .card__image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+/* ── 394.4 · THE ARCHIVE BAND. "FIELD NOTES" IS SET LIKE "THE EXPEDITION
+ *    CATALOG", BECAUSE A PARENT WALKS BETWEEN THE TWO PAGES ─────────────────
+ *
+ * ⭐ ANDREW SIGNORE, verbatim, RELAYED: *"using the third photo you can see
+ *    that we have simplified and narrowed the Expedition catalog bar - That
+ *    should be done similarly on the blog page for 'Field notes'."* And the
+ *    reason, in his own words: *"These are little things - but they make a big
+ *    impact on the trust value if things look odd or not consistent page to
+ *    page."*
+ *
+ * ⛔ MEASURED ON STAGING 1.19.393 at 1536 x 830, both bands, same instrument:
+ *        /shop/   header.bhp-catalog-band     y80 -> y154     74px
+ *        /blog/   header.archive-hero         y80 -> y245    165px
+ *    2.2x the height for one word less of content.
+ *
+ * ⭐ THE STRUCTURE IS COPIED FROM THE CATALOG BAND ON PURPOSE — series eyebrow
+ *    on its own row, then the title, the diamond, the brand line and a
+ *    right-hand meta note on one baseline. The values below are the catalog
+ *    band's own values, not new ones, so the two bands cannot drift apart the
+ *    next time either is touched.
+ *
+ * ⛔ NO NEW CLAIM AND NO NEW STRING. Every word this band prints is already
+ *    live on the site: the series name and "Big Places. Brave Hearts." are on
+ *    the catalog band, and "Ages 6 to 9" is the standing approved age band
+ *    (⛔ 6 to 9, never 5 to 9). ⛔ No "we" (§9.1). ⛔ No em dash. ⛔ No outcome
+ *    claim. ⛔ The H1's WORDS are untouched — "Field Notes" on the index, the
+ *    archive title on an archive, the search string on a search. Only the
+ *    setting changes.
+ *
+ * ⛔ THE ARCHIVE DESCRIPTION SURVIVES. A category that has one still prints it,
+ *    compacted, below the row. Dropping it to win the height measurement would
+ *    have lost real content to a cosmetic fix.
+ *
+ * ⚠ WHAT WAS DELIBERATELY NOT CONVERTED, and it is a scope line rather than an
+ *   oversight: `/free-resources/` carries `interior-hero--atmospheric` with an
+ *   eyebrow, an H1 AND a lead paragraph, and `/school-read-alouds/`,
+ *   `/read-aloud/` and `/author-visits/` carry no `.interior-hero` at all
+ *   (verified live, 2026-09-07). Those are landing pages with their own
+ *   approved copy, not archives with a tall hero. Compressing them would have
+ *   REMOVED locked copy, which is proposed and never done.
+ * ─────────────────────────────────────────────────────────────────────────── */
+header.bhp-archive-band.interior-hero {
+  padding-top: var(--space-3) !important;
+  padding-bottom: var(--space-3) !important;
+  min-height: 0;
+}
+
+/* The 260px decorative circle is furniture for a 165px hero. At 74px it
+   collides with the type instead of framing it. */
+header.bhp-archive-band.interior-hero--parchment::after {
+  content: none;
+}
+
+.bhp-archive-band__inner {
+  display: block;
+}
+
+.bhp-archive-band__series {
+  margin: 0 0 0.15rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.bhp-archive-band__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.55rem 0.8rem;
+  margin: 0;
+}
+
+/* ⛔ THE SELECTOR CARRIES `body` AND THE TAG NAME, AND THAT IS NOT DECORATION.
+   It is the same trap the catalog band documents at its own title rule.
+   `.bhp-archive-band__title` alone is (0,1,0) and loses to
+   `body:not(.home) .interior-hero h1` at (0,2,2), which this band's wrapper
+   still carries. `body .bhp-archive-band h1.bhp-archive-band__title` is
+   (0,2,2) — a tie that this block wins on source order, being the last
+   declaration in the stylesheet. */
+body .bhp-archive-band h1.bhp-archive-band__title {
+  max-width: none;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.bhp-archive-band__diamond {
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--color-gold);
+}
+
+.bhp-archive-band__line {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+/* `margin-inline-start: auto` puts the note on the right without a second grid
+   or a float, and it simply wraps to its own line when the row runs out. */
+.bhp-archive-band__meta {
+  margin: 0 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.bhp-archive-band .bhp-archive-band__intro {
+  max-width: 780px;
+  margin-top: 0.55rem;
+  font-size: 0.95rem;
+}
+
+.bhp-archive-band .bhp-archive-band__intro p {
+  margin: 0;
+}
+
+/* 1366 and below: the band gives up its series row first, exactly as the
+   catalog band does. */
+@media (max-width: 1365px) {
+  .bhp-archive-band__series {
+    display: none;
+  }
+
+  body .bhp-archive-band h1.bhp-archive-band__title {
+    font-size: 1.35rem;
+  }
+}
+
+/* Mobile, 640 and below. The brand line and the diamond come out because the
+   site header already carries the brand line on every page. */
+@media (max-width: 640px) {
+  header.bhp-archive-band.interior-hero {
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+
+  .bhp-archive-band__row {
+    gap: 0 0.6rem;
+  }
+
+  body .bhp-archive-band h1.bhp-archive-band__title {
+    font-size: 1.05rem;
+    line-height: 1.1;
+  }
+
+  .bhp-archive-band__diamond,
+  .bhp-archive-band__line {
+    display: none;
+  }
+
+  .bhp-archive-band__meta {
+    margin-left: 0;
+    font-size: 0.62rem;
+  }
+}
+
+/* ============================================================================
+   /free-resources/ — PHONE LAYOUT REPAIR + 3:2 PREVIEW FRAME
+   1.19.400 (2026-09-07, `CYCLE179-CX-BUILD-400-FREE-RESOURCES`)
+   ----------------------------------------------------------------------------
+   Andrew, on staging /free-resources/ from an iPhone 16 Pro (402 x 874 CSS px):
+   "This isnt very centered and it looks bad"
+
+   Every number in the comments below is VERIFIED LIVE against the staging DOM
+   at an ASSERTED viewport width (documentElement.clientWidth read in the same
+   evaluation), 2026-09-07, against theme 1.19.399.
+
+   ⛔ ALL GAP FIGURES ARE AGAINST documentElement.clientWidth, NEVER
+      window.innerWidth. innerWidth includes the vertical scrollbar; at 1280
+      that artifact alone reported the jump bar as 24.7px off center when the
+      true figure was 39.67px.
+   ============================================================================ */
+
+/* ITEM 1 — THE JUMP BAR IS 40px OFF CENTER, AND IT IS A UA DEFAULT, NOT A
+   LAYOUT BUG.
+   ----------------------------------------------------------------------------
+   The shipped rule sets `margin: 0` and `padding-block: var(--space-4)` on the
+   `ul` and never touches padding-inline, so the user-agent default
+   `padding-inline-start: 40px` survives. The flex content box starts 40px in
+   from the left and ends flush right; `justify-content: center` then centers
+   each row inside THAT box, putting every row 20px right of true center.
+
+   MEASURED, computed style, live: padding-inline-start 40px, end 0px.
+   Row-1 gapL vs gapR before, at asserted widths:
+     375  -> 94.69 vs 54.35    (delta 40.33)
+     402  -> 60.47 vs 20.48    (delta 39.99)   <- Andrew's device
+    1280  -> 414.11 vs 374.45  (delta 39.67)
+   One declaration is the whole of it.                                        */
+.free-resources-jump__list {
+  padding-inline: 0;
+}
+
+/* ITEM 2 — THE RAGGED WRAP.
+   ----------------------------------------------------------------------------
+   Four labels of four different widths in a centered flex row wrap by available
+   space, so the split changes with the viewport. MEASURED before:
+     375 -> 2 + 2       402 -> 3 + 1       (the ragged rows in the screenshot)
+   A 3 + 1 wrap leaves one label alone under three, which is what reads as
+   broken rather than merely uneven.
+
+   ⭐ THE BRIEF ALLOWED A HORIZONTAL SCROLLER OR A 2x2 GRID. The grid is taken
+      because THIS COMPONENT'S OWN SHIPPED COMMENT ALREADY REJECTED horizontal
+      scrolling by name — an affordance "that nobody discovers". A lane asked to
+      straighten the bar does not get to reopen that decision.
+
+   Equal 1fr cells make the split identical at every phone width and give each
+   label a tap target of half the row rather than the ink of the word. 600px is
+   the breakpoint: the four labels need about 477px of row, so above 600 the
+   shipped single flex row still fits and is left exactly as it ships.        */
+@media (max-width: 600px) {
+  .free-resources-jump__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-1) 0;
+  }
+
+  .free-resources-jump__list a {
+    display: block;
+    text-align: center;
+  }
+}
+
+/* ITEM 3 — THE PREVIEW SHOWED THE WHOLE SHEET, SO IT SHOWED ALMOST NOTHING.
+   ----------------------------------------------------------------------------
+   See the SUPERSESSION NOTE at `.free-resource-card__preview img` above for why
+   the shipped 4/5 comment was false. 4/5 is 0.8000 against the sheet's 0.7727,
+   so `cover` cropped 3.5 percent off the BOTTOM and delivered the entire
+   document scaled down: mostly empty paper, body text at roughly 10px
+   effective. MEASURED on all five cards at 375 / 402 / 1280: displayed ratio
+   0.800, natural ratio 0.772.
+
+   3/2 crops to the top 51.5 percent of the sheet, which on all five files is
+   the masthead, the title, the description and the head of the first content
+   block. A thumbnail of the thing rather than a photograph of a piece of paper.
+
+   `object-position: top center` is unchanged and still load bearing: every one
+   of these sheets carries its title in the top third.
+
+   ⭐ THE UPSCALE IS GONE IN THIS SAME BUILD, so the note that used to sit here
+      about an 800 x 1036 source being asked for 921px of width no longer
+      applies. 1.19.400 also replaces all ten derivatives with 1800 x 1200
+      pre-cropped top bands rendered at 300 dpi from the shipped PDFs
+      (`design-creative`, workstream `CYCLE179-DES-FREE-RESOURCES-PREVIEWS`).
+      The five `preview_alt` strings in `bhp_free_resources_downloads()` were
+      rewritten in the same build to describe a CROP rather than a whole page —
+      the shipped strings named content the band does not contain.            */
+/* ⭐ THE DECLARATION IS NOT REPEATED HERE. It was applied at the shipped rule
+   itself (search `aspect-ratio: 3 / 2`), so there is exactly ONE aspect-ratio
+   declaration for this element in the stylesheet. An override at the foot of
+   the file would have worked by source order and left the old 4/5 in place —
+   two declarations, one of them dead, and the dead one is the defect. */
+
+/* ITEM 4 — THE CARD READS OFF CENTER BECAUSE ITS CONTENTS ARE.
+   ----------------------------------------------------------------------------
+   MEASURED: the card FRAME is already symmetric on every phone width — gapL 16
+   gapR 16.00 at 402, gapL 16.00 gapR 15.67 at 375. So the frame is not the
+   complaint. The complaint is inside it: the section header above is centered
+   (`.component-heading--center`) while the card's title, body, meta and alt
+   link all compute `text-align: start`. A centered heading sitting over a
+   left-aligned card is the thing that reads as "not centered".
+
+   Centered on phones only. On desktop the three-column grid gives each card a
+   left edge to hang from and the shipped left alignment is correct there, so
+   nothing above 768 changes.
+
+   `align-self: stretch` on the CTA states what the button already does: it
+   measured 294px, the full content width, while the shipped declaration says
+   `flex-start`. Stating it removes the disagreement between rule and render. */
+@media (max-width: 768px) {
+  .free-resource-card {
+    text-align: center;
+  }
+
+  .free-resource-card__cta {
+    align-self: stretch;
+  }
+}
+
+/* ITEM 5 — THE HERO EYEBROW WRAPPED TO TWO LINES ON EVERY PHONE.
+   ----------------------------------------------------------------------------
+   "FOR FAMILIES WITH READERS AGES 6 TO 9" at 12.48px with 0.2em tracking
+   measures 358.5px of single-line ink. The hero content column is 295px at 375,
+   so it wrapped at 375, 402 and 430 and held one line only at desktop.
+   MEASURED line counts before: 375 -> 2, 402 -> 2, 1280 -> 1.
+
+   11px with 0.1em tracking measures 275.4px, holding one line at 375 with
+   19.6px of headroom. Candidates measured live with the hero's own font stack:
+     11.5px / 0.12em -> 296.4  (fits 402, wraps at 375)
+     11.0px / 0.12em -> 283.5  (fits 375 by 11.5px)
+     11.0px / 0.10em -> 275.4  (fits 375 by 19.6px)   <- taken
+   The brief asked only for one line at 390 and a clean wrap at 375; one line at
+   375 is the better outcome and leaves headroom for iOS Safari rendering
+   differently from the measuring browser.
+
+   ⚠ TRADE OFF, STATED RATHER THAN BURIED: this halves the eyebrow's tracking on
+     phones, 0.2em -> 0.1em, ON THIS HERO ONLY. Keeping 0.2em means keeping a
+     two-line eyebrow at 375. It is a taste call, it is recorded in the report,
+     and it is reversible by changing these two values.
+
+   SCOPED TO THIS HERO. `.component-heading__eyebrow` is sitewide and this is
+   the only instance that wraps: measured across the page, its five section
+   eyebrows are all one line, and /read-aloud/, /school-read-alouds/ and /blog/
+   carry no wrapping eyebrow at all.
+
+   ⛔⛔ THE `body:not(.home)` PREFIX IS LOAD BEARING AND IS NOT DECORATION.
+       The governing shipped rule is
+         body:not(.home) .component-heading__eyebrow, body:not(.home) .card__eyebrow
+       at specificity (0,2,1). The obvious override,
+         .free-resources-hero .component-heading__eyebrow
+       is (0,2,0), LOSES the cascade and changes nothing at all — no error, no
+       warning, no failing test. That exact selector was written first, injected
+       into the live page, and MEASURED as having zero effect: computed
+       font-size stayed 12.48px and the eyebrow stayed on two lines. It was
+       caught only by reading the computed style rather than trusting the rule.
+       Restoring the prefix takes it to (0,3,1) and it wins without
+       `!important`.                                                          */
+@media (max-width: 430px) {
+  body:not(.home) .free-resources-hero .component-heading__eyebrow {
+    font-size: 12px;
+    letter-spacing: .06em;
   }
 }

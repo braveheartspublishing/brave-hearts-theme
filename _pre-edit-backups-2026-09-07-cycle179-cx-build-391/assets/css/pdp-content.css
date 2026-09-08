@@ -1,0 +1,198 @@
+/* ============================================================================
+   BRAVE HEARTS — PDP LEFT COLUMN, PHASE 2 OF THE CONCEPT A REDESIGN
+   1.19.349 · CYCLE179-LD-349 · founder seal 679
+   ============================================================================
+
+   ⭐ WHAT THIS FILLS. 1.19.348 removed 1,072-1,953px of PAINTED dead parchment
+      under the gallery with `align-items: start`, and put nothing in the space.
+      This is the content that goes there: "Look inside" plates, then
+      "What is inside" bullets, in the left column, exactly as Concept A draws
+      them (`CONCEPT-A-DESKTOP-1440x900.png`, the design lane's visual of
+      record).
+
+   ⛔ ENQUEUED ONLY WHERE THE BLOCK CAN RENDER. `bhp_pdp_enqueue_content_css()`
+      uses the same predicate as the renderer, so a page that renders nothing
+      downloads nothing.
+
+   ⛔ THE GRID PLACEMENT ITSELF IS NOT HERE. It lives beside the grid
+      declaration it belongs to, in `style.css`, because a placement rule
+      separated from the `grid-template-columns` it depends on is how the two
+      drift apart.
+   ========================================================================= */
+
+.bhp-pdp-left {
+	/*
+	 * ⛔ `min-width: 0` IS LOAD-BEARING ON A GRID ITEM, not decoration. A grid
+	 *    item defaults to `min-width: auto`, i.e. its min-content width. A
+	 *    1600px-wide plate's min-content is large, so without this the item
+	 *    refuses to shrink and blows the column out sideways. This is the same
+	 *    trap `book-media.css:26` records for the thumbnail rail.
+	 */
+	min-width: 0;
+}
+
+.bhp-pdp-section__title {
+	margin: 0 0 1rem;
+	padding-bottom: 0.55rem;
+	border-bottom: 1px solid var(--expedition-border, rgba(111, 83, 38, 0.22));
+	color: var(--expedition-navy, #12271d);
+	font-family: var(--font-display, Georgia, serif);
+	/*
+	 * ⭐ 26px at the small end, which is comfortably clear of the 18px body and
+	 *    of the accessibility floor the product H1 was raised off in 1.19.266.
+	 *    It never competes with that H1 (34px at 390, larger at 1440) because
+	 *    it is capped below it.
+	 */
+	font-size: clamp(1.5rem, 2.2vw, 1.85rem);
+	font-weight: 500;
+	line-height: 1.2;
+}
+
+/* ── Look inside ─────────────────────────────────────────────────────────── */
+
+.bhp-pdp-look-inside {
+	margin: clamp(1.75rem, 3vw, 2.5rem) 0 0;
+}
+
+.bhp-pdp-look-inside__grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.bhp-pdp-plate {
+	margin: 0;
+	min-width: 0;
+}
+
+.bhp-pdp-plate__img {
+	display: block;
+	width: 100%;
+	height: auto;
+	/*
+	 * ⛔ NO `object-fit`, NO `aspect-ratio` OVERRIDE, NO CROP, ANYWHERE. The
+	 *    white margins in these files are the real printed margins; cropping
+	 *    them changes what the printed page looks like and breaks the alt text,
+	 *    which describes the page as printed (`design-creative` handling note
+	 *    3). The
+	 *    intrinsic `width`/`height` attributes on the element are the 1600px
+	 *    file's real dimensions, so the box is the printed page's aspect ratio
+	 *    and nothing is letterboxed or squashed.
+	 */
+	border: 1px solid var(--expedition-border, rgba(111, 83, 38, 0.22));
+	background: #fff;
+}
+
+.bhp-pdp-plate__caption {
+	margin: 0.45rem 0 0;
+	color: var(--expedition-navy, #12271d);
+	font-family: var(--font-ui, system-ui, sans-serif);
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	opacity: 0.75;
+}
+
+.bhp-pdp-look-inside__note {
+	margin: 0.9rem 0 0;
+	color: var(--expedition-navy, #12271d);
+	font-size: 0.9rem;
+	opacity: 0.7;
+}
+
+/* ── What is inside ──────────────────────────────────────────────────────── */
+
+.bhp-pdp-whats-inside {
+	margin: clamp(2rem, 3.5vw, 3rem) 0 0;
+}
+
+.bhp-pdp-whats-inside__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bhp-pdp-whats-inside__item {
+	position: relative;
+	margin: 0 0 0.85rem;
+	padding-left: 1.6rem;
+	line-height: 1.55;
+}
+
+/*
+ * ⛔ THE MARKER IS A CSS PSEUDO-ELEMENT, NOT A CHARACTER IN THE STRING. The
+ *    bullets are approved copy with a per-line claims audit; putting a glyph
+ *    inside the authored string would mean the audited text and the rendered
+ *    text were different strings. It is also `aria-hidden` by construction:
+ *    generated content on a list item is not announced as content, and the
+ *    `<li>` already carries list semantics.
+ */
+.bhp-pdp-whats-inside__item::before {
+	content: "";
+	position: absolute;
+	top: 0.62em;
+	left: 0.25rem;
+	width: 8px;
+	height: 8px;
+	transform: rotate(45deg);
+	background: var(--expedition-gold, #c8992e);
+}
+
+/* ── The Complete Collection surface ─────────────────────────────────────── */
+
+/*
+ * ⭐ THREE PLATES, NOT TWO, AND THEY SIT IN A ROW. The collection page is a
+ *    full-width landing template, not a two-column product grid, so its strip
+ *    has the whole page width to work with and one plate per book reads as
+ *    "three adventures" at a glance.
+ * ⛔ THE THREE FILES ARE BYTE-IDENTICAL COPIES of each book's illustrated
+ *    spread, so this page exposes no printed page a book page does not.
+ */
+.bhp-pdp-left--collection {
+	max-width: 1180px;
+	margin-inline: auto;
+	padding-inline: clamp(1rem, 4vw, 2rem);
+}
+
+@media (min-width: 901px) {
+	.bhp-pdp-left--collection .bhp-pdp-look-inside__grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+	/*
+	 * The bullets read as prose, not as a wall, so they get a measure rather
+	 * than the full 1180px the plates use.
+	 */
+	.bhp-pdp-left--collection .bhp-pdp-whats-inside__list {
+		max-width: 820px;
+	}
+}
+
+/* ── Phone ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+	/*
+	 * ⛔ THE BLOCK MUST NOT REACH THE FIRST SCREEN. `product-template.css`
+	 *    promotes `.summary`'s children to grid items at this breakpoint and
+	 *    sorts them; anything not named there takes `order: 8`. This block is a
+	 *    direct child of `div.product`, so it takes that default and lands
+	 *    after the buy box, which is where it belongs: the founder's rule is
+	 *    that ADD TO CART clears the fold (seal 672), and a look-inside plate
+	 *    above it would be the fastest way to break that.
+	 *
+	 * ⭐ ORDER 10 IS EXPLICIT ANYWAY, so it also sits after the Amazon review
+	 *    section (6) and the gallery cue (7) rather than depending on source
+	 *    order among the `order: 8` siblings.
+	 */
+	body.single-product.woocommerce div.product > .bhp-pdp-left {
+		order: 10;
+	}
+
+	.bhp-pdp-look-inside {
+		margin-top: 1.5rem;
+	}
+
+	.bhp-pdp-whats-inside__item {
+		margin-bottom: 0.75rem;
+	}
+}

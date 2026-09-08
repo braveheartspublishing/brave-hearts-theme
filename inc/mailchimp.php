@@ -652,9 +652,20 @@ function bhp_get_signup_preserved_values($form_id) {
  * bhp_resolve_success_redirect() — never a URL taken from the request.
  * Forms that never set it keep the exact existing behavior.
  */
-function bhp_mailchimp_signup_redirect($status, $source_page, $form_id, $success_redirect = '', $preserve = []) {
+/*
+ * ⭐ 1.19.392 — `$extra` is a small map of NON-PII query arguments added on
+ *    the SUCCESS path only. Today its only user is the instant kit modal's
+ *    single-use token. ⛔ It is deliberately NOT a general-purpose escape
+ *    hatch: it is applied after `$status === 'success'` has been checked, so
+ *    nothing an error path passes can reach a URL, and the rule this file
+ *    already states — no personal data in a query string — is unchanged and
+ *    still binding on whatever a future caller wants to put here.
+ */
+function bhp_mailchimp_signup_redirect($status, $source_page, $form_id, $success_redirect = '', $preserve = [], $extra = []) {
+    $extra = ($status === 'success' && is_array($extra)) ? array_filter($extra) : [];
+
     if ($status === 'success' && $success_redirect) {
-        wp_safe_redirect($success_redirect, 303);
+        wp_safe_redirect($extra ? add_query_arg($extra, $success_redirect) : $success_redirect, 303);
         exit;
     }
 
@@ -668,6 +679,10 @@ function bhp_mailchimp_signup_redirect($status, $source_page, $form_id, $success
         'bhp_signup' => sanitize_key($status),
         'bhp_form'   => $form_id,
     ];
+
+    foreach ($extra as $extra_key => $extra_value) {
+        $query_args[sanitize_key($extra_key)] = sanitize_text_field((string) $extra_value);
+    }
 
     if ($status !== 'success') {
         if (!empty($preserve['email'])) {
@@ -973,7 +988,46 @@ function bhp_process_signup(array $input) {
         'signup_method' => $context === 'audience_quiz' ? 'quiz' : 'form',
     ]);
 
-    return ['ok' => true, 'code' => 'success', 'redirect' => $success_redirect];
+    /*
+     * ═══════════════════════════════════════════════════════════════════
+     * ⭐ 1.19.392 (`CYCLE179-LD-KIT-MODAL-392`) — THE INSTANT KIT TOKEN.
+     * ═══════════════════════════════════════════════════════════════════
+     *
+     * ⛔ THE PLACEMENT IS THE POINT, AND IT IS THE SAME ARGUMENT THE
+     *    CONVERSION TOKEN ABOVE ALREADY MAKES. This is downstream of the
+     *    Mailchimp subscribe and the tag write, so it is reached exactly
+     *    when a real subscriber really landed. ⭐ NOTHING FIRES FOR A
+     *    FAILED SIGNUP: `invalid`, `missing_name`, `unavailable` and
+     *    `error` all return before this line, so they mint no token, store
+     *    no address and open no modal.
+     *
+     * ⛔ IT IS NOT ADDED TO `$success_redirect`. A kit form has no
+     *    whitelisted thank-you page, so that URL is EMPTY for every kit
+     *    surface and appending to it would be appending to nothing. The
+     *    token travels back to the caller instead, and each transport puts
+     *    it on the URL it actually sends.
+     *
+     * ⭐ IT CARRIES NO PERSONAL DATA. The token is 32 opaque characters;
+     *    the address is in a transient under a salted hash of it and is
+     *    deleted on first read. `inc/kit-instant-modal.php` holds the full
+     *    argument, including why the address is NOT put in the query
+     *    string the way the error path puts it.
+     *
+     * ⚠️ IT CANNOT BREAK A SIGNUP. `bhp_kit_modal_mint()` returns '' on any
+     *    storage failure, on any other lead magnet, and on an address that
+     *    somehow failed re-validation. An empty token means no modal, and
+     *    the visitor still gets the kit by email exactly as before.
+     */
+    $kit_token = function_exists('bhp_kit_modal_mint')
+        ? bhp_kit_modal_mint($email, $lead_magnet)
+        : '';
+
+    return [
+        'ok'        => true,
+        'code'      => 'success',
+        'redirect'  => $success_redirect,
+        'kit_token' => $kit_token,
+    ];
 }
 
 /**
@@ -1048,7 +1102,17 @@ function bhp_handle_mailchimp_signup() {
         bhp_mailchimp_signup_redirect($result['code'], $source_page, $form_id, '', $preserve);
     }
 
-    bhp_mailchimp_signup_redirect('success', $source_page, $form_id, $result['redirect']);
+    /*
+     * ⭐ 1.19.392 — the kit token rides back to the page the visitor was
+     *    already on, which for every one of the twelve kit capture surfaces
+     *    is where they stay: no kit form sets a whitelisted
+     *    `success_redirect_key`, so `$result['redirect']` is '' and this is
+     *    the same-page branch. ⛔ Nothing else about this call changed, and
+     *    the anchor, the status, the form id and the feedback message are
+     *    byte-identical to 1.19.391.
+     */
+    $kit_extra = !empty($result['kit_token']) ? ['bhp_kit' => $result['kit_token']] : [];
+    bhp_mailchimp_signup_redirect('success', $source_page, $form_id, $result['redirect'], [], $kit_extra);
 }
 add_action('admin_post_nopriv_bhp_mailchimp_signup', 'bhp_handle_mailchimp_signup');
 add_action('admin_post_bhp_mailchimp_signup', 'bhp_handle_mailchimp_signup');
@@ -1167,9 +1231,22 @@ function bhp_handle_quiz_signup_ajax() {
 
     // Only redirect once Mailchimp has accepted BOTH the subscriber and the
     // tag write. Delivery itself is asynchronous and is not waited on.
+    /*
+     * ⭐ 1.19.392 — the quiz's parent route delivers the kit, so it gets the
+     *    same instant view the forms get. ⛔ THE RULE THIS ENDPOINT WAS BUILT
+     *    ON IS UNCHANGED AND IS THE REASON THE TOKEN EXISTS: no personal data
+     *    in a URL. What is appended here is 32 opaque characters, not an
+     *    address. The three non-kit routes mint no token and this line adds
+     *    nothing to their URL.
+     */
+    $quiz_redirect = $result['redirect'] ?: home_url('/');
+    if (!empty($result['kit_token'])) {
+        $quiz_redirect = add_query_arg('bhp_kit', $result['kit_token'], $quiz_redirect);
+    }
+
     wp_send_json([
         'ok'       => true,
-        'redirect' => $result['redirect'] ?: home_url('/'),
+        'redirect' => $quiz_redirect,
     ], 200);
 }
 add_action('wp_ajax_nopriv_bhp_quiz_signup', 'bhp_handle_quiz_signup_ajax');

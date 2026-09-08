@@ -217,6 +217,8 @@ Exits non-zero on any failure. Run this (and the Kirkus test suite, as a
 regression check) after any deploy that touches `inc/amazon-reviews.php`
 or `template-parts/components/amazon-review-showcase.php`.
 
+> ⛔ CORRECTED 2026-09-05 (1.19.383): build the ZIP with `git -c core.autocrlf=false -c core.eol=lf archive ...`. On a Windows checkout with `core.autocrlf=true`, a plain `git archive` writes CRLF files into the ZIP, so the shipped style.css no longer matches the `source-md5:` stamp in style.min.css and the ship-prep suite fails. Verify after building: md5 of style.css extracted from the ZIP equals the stamp; 0 CR bytes in extracted text files; then php -l every PHP file out of the ZIP on the server before `wp theme install --force`.
+
 ## Building a deploy ZIP by hand (before anything is committed yet)
 The normal flow (`git archive --format=zip HEAD ...`) only works once the
 new files are committed. If you need to test on staging before creating
@@ -313,178 +315,273 @@ built (Andrew's explicit instruction). To add a new review:
    way as any other theme change (full-ZIP `wp theme install --force`,
    staging-verified first).
 
-## Review-ask engine — staging QA and the production go-live gates (1.19.382)
+## Review-ask sequence and school-visit emails — staging QA and the production go-live gates (1.19.383)
 
-**The engine sends nothing until `bhp_review_ask_enabled` is `yes`. That option
-flip is Andrew's, and it is the only irreversible step in this list** — an email
-that has gone to a parent cannot be recalled. Everything above it is reversible.
+⛔ **The engine sends nothing until `bhp_review_ask_enabled` is `yes`. That option
+flip is Andrew's, and it is the only irreversible step in this document** — an
+email that has gone to a parent cannot be recalled. Everything above it is
+reversible.
 
-`<slug>` below is `brave-hearts-theme-deploy-explorer-expedition-guides`.
+`<slug>` is `brave-hearts-theme-deploy-explorer-expedition-guides`.
 `<doc_root>` is the environment's WordPress root.
 
 ### A. Staging QA, in order (nothing here can email a customer)
 
-```
-# 1. install the candidate
-wp theme install /path/to/brave-hearts-theme-1.19.382-review-seq.zip --force
-wp theme list --status=active                 # must show <slug> at 1.19.382
-wp sg purge
+⛔ **Step 0 is not optional and it is not new advice.** `wp theme install --force`
+deletes the theme directory before it extracts, so a PHP parse error inside the
+ZIP is an immediate HTTP 500 with no theme left to fall back to. That is exactly
+what 1.19.378 did to staging.
 
-# 2. fatal check
-wp eval 'echo "ok";' --user=1
-
-# 3. the three suites
-wp eval-file wp-content/themes/<slug>/tests/test-cycle179-review-seq.php --user=1
-wp eval-file wp-content/themes/<slug>/tests/test-cycle169-review-ask.php --user=1
-wp eval-file wp-content/themes/<slug>/tests/test-visit-completed-email.php --user=1
-
-# 4. the schedule, read-only, on each of the four launch dates
-wp bhp review-ask dry --as-of=2026-09-10
-wp bhp review-ask dry --as-of=2026-09-11
-wp bhp review-ask dry --as-of=2026-09-13
-wp bhp review-ask dry --as-of=2026-09-14
-wp bhp review-ask status
-
-# 5. one rendered email per set, into a mailbox somebody will actually open
-wp bhp review-ask test-send --to=<address> --set=day0   --order=<visit order id>
-wp bhp review-ask test-send --to=<address> --set=touch1 --order=<visit order id>
-wp bhp review-ask test-send --to=<address> --set=touch2 --order=<visit order id>
-wp bhp review-ask test-send --to=<address> --set=web1   --order=<web order id>
-```
 
 `test-send` refuses to run anywhere but staging (the check is on `home_url()`,
 not on `--url`), refuses without one valid `--to`, and refuses an unapproved set.
 
-### B. What Gandalf must verify on staging BEFORE the option is discussed
+⚠ **Expect one large, benign byte diff on the first install of 1.19.379.** The
+artefact is LF; earlier candidates on staging were CRLF. Nearly every text file
+will report as changed. That is the line-ending correction landing once, toward
+parity with production, not a regression. ⭐ Installing **1.19.383 over an
+installed 1.19.379 or 1.19.380** must NOT reproduce it: all three artefacts are
+LF, so the diff should be confined to the files each build actually changed. At
+1.19.383 those are `inc/review-ask-email.php`, `inc/visit-completed-email.php`,
+`tests/test-cycle179-review-seq.php`, `tests/test-visit-completed-email.php`,
+`style.css` and `style.min.css` — six files. A wide diff on that install means the
+build flags were dropped again.
 
-0. **⭐⭐ THE CHARSET, AND CHECK IT FIRST BECAUSE IT INVALIDATES EVERY OTHER
-   VISUAL CHECK BELOW IT.** In FluentSMTP → Email Logs, open the touch-1
-   test-send and read the raw `Content-Type` header. It must read
-   `text/html; charset=UTF-8`. **If the charset is missing, stop** — the stars
-   will arrive as `âââââ` and nothing else on this list can be judged.
-   Then confirm in the delivered message that the five stars are stars and not
-   mojibake. *(Shipped 1.19.371, carried forward unchanged through 1.19.382. The defect was observed on the 1.19.369 send.)*
-1. **The star row is a row.** Open the touch-1 test-send on a phone and on
-   desktop: five stars, one line, left to right, no wrapping at 375px.
-   **They rest GREY (`#c9c2b3`), not gold** — that is the designed resting
-   state, not a bug.
-1b. **Hover, on a desktop client that runs CSS** (Apple Mail, or the browser
-   preview): moving the mouse across the row turns stars gold from the left up
-   to the one under the pointer. **In a client that ignores `<style>` the row
-   simply stays grey and every link still works** — that is an accepted
-   outcome, not a failure. ⚠ Not verified in any mail client by the build.
-1c. **The hero photograph.** Touch 1 and day 0 carry one 536px photograph with
-   its caption baked in; **touch 2 carries none.** A visit order whose slug is
-   not in the map, and every web order, must show the general read-aloud frame
-   — **never a frame captioned for a school the reader did not attend.**
-1d. **The signature block** below the rule reads `Andrew Signore` /
-   `Author | Brave Hearts Publishing` / `Big Places. Brave Hearts.` **There is
-   no Facebook or Instagram line, and that is deliberate: no real URL for
-   either exists in the repository and none was invented.** See the open item
-   in the deliverable.
-2. **With images blocked**, the same email still shows five stars (they are
-   characters now, not images), the caption and "Or open the review page".
-   **The hero becomes its alt text** — read it and confirm it describes the
-   photograph and its caption.
-3. **Star 1 goes to `?rating=1` and star 5 to `?rating=5`** — click both and
-   read the query string on the landing page.
-4. **The caption names the book** ("Tap a star to rate The Amazon."), not
-   "Tap a star to rate ." — an empty title there means the merge gate should
-   have declined the order and did not.
-5. **Names.** Test-send touch 1 for order 612 (two children) and read the
-   opening sentence: it must say "<A> and <B> **have** had", never "has had".
-6. **Day 0 names the school** from `_bhp_school_visit_school` and carries no
-   Adams fact (no grade band, no headcount, no coloring page, no book read
-   aloud) and no blank paragraph where `{VisitLine}` would be.
-7. **The dry runs produce the four dates**: touch 1 on 09-10 (Dallas one-book),
-   09-11 (Liberty one-book), 09-13 (Dallas multi), 09-14 (Liberty multi), and
-   touch 2 four days after each. **No order may be declined `daily_cap_lane`**
-   on any of those days.
-8. **`wp bhp review-ask status` reports the engine DISABLED** at the end of QA.
+### 0. Before anything else is judged
+0a. `wp theme list --status=active` reports version **1.19.383**.
+0b. `php -l` clean on every PHP file in the artefact — proven by step 0 above, not
+    by spot-checking the files this release touched.
+0c. All three suites green, with SKIPs read as skips.
+0d. Object cache and page cache purged after the deploy, then re-verify 0a.
 
-### C. Production go-live, exact commands in order
+### 0B. The gates that decide WHO the first run may write to (1.19.380 + seal 1066/1064 at 1.19.383)
+⛔ **These are read before any rendering is judged.** They are the difference
+between a first run that writes to the orders the sequence was built for and one
+that writes to a year of backlog.
 
-**Steps 1 to 3 change no behaviour: the engine is off, so installing the theme
+0Ba. `wp bhp review-ask plan --dates=<the intended first send date>` prints a
+     `backlog floor:` line naming the date in force. If it prints `NONE`, stop:
+     the constant has been overridden or filtered off somewhere.
+0Bb. Every order the floor excludes is named in that output as `DECLINED
+     ... before_floor` with its resolved anchor. Read the anchors, not the
+     count: a visit-lane order must report its VISIT date, a web-lane order its
+     completion date.
+0Bc. Every order whose only touch-1 record came from the retired 21-day engine
+     reports `DECLINED ... legacy_touch1`. None of them may appear as
+     `WOULD SEND touch 2`.
+0Bd. The day ends with one `SUMMARY <date>: would_send=N; ...` line. Quote that
+     line into the release record rather than re-deriving the counts.
+0Be. ⭐⭐ **SEAL 1066 SETTLED THE FLOOR AND IT IS NOW A FACT, NOT A DEFAULT TO BE
+     INHERITED QUIETLY.** `BHP_REVIEW_ASK_FLOOR_DATE` ships as `'2026-08-28'`,
+     the Adams visit date, on both lanes. Andrew, asked to choose between the
+     two candidates: *"Include them all"*, confirmed *"Yes"*. ⛔ The superseded
+     candidate `'2026-09-03'` excluded the eight Adams orders from the sequence
+     permanently and was rejected. **If the plan prints any floor other than
+     `2026-08-28`, stop** — staging or `wp-config.php` is overriding the
+     shipped constant and the run in front of you is not the ruled one.
+0Bf. ⭐⭐ **AND THE CAP LINE IS PART OF THE SAME CHECK.** `plan` prints
+     `daily cap: 20 visit lane | 10 web lane` before it evaluates any date, and
+     each day ends with a per-lane comparison. On the intended first send date
+     the visit line must read **`visit 13 of cap 20`** and the day must report
+     **the whole day fits under both caps**. ⛔ If it reports orders slipping to
+     the next day, the ruling is being half-applied by a filter and the enable
+     gate is NOT met: the eight Adams parents and the five Dallas one-book
+     parents were ruled to go together.
+0Bg. The `SUMMARY` line now carries the lane split — `visit=n/cap` and
+     `web=n/cap`. Quote the whole line; the totals alone cannot say whether a
+     day fits.
+0Bh. ⭐ **Seal 1064 — read one rendered day-0 email before enabling.** The body
+     must contain *"The places are real. So are the animals, the weather and the
+     science. The adventures are made up; the world they happen in is not."* and
+     must **not** contain the phrase *"all of it is true"* in any wording. The
+     old sentence claimed everything in the books was true; there is a talking
+     dog. The suite pins this both ways, but the rendered email is the check
+     that matters.
+
+### 1. Rendering — check the SOURCE, not only the screenshot
+1a. Day 0, touch 1, touch 2 and web touch 1 all render, each with its hero (touch
+    2 has none, by design).
+1b. Exactly one greeting per email. No "Hi X, Hi X,".
+1c. Exactly one sign-off per email: the signature block, three lines, in order —
+    Andrew Signore / Author | Brave Hearts Publishing / Big Places. Brave Hearts.
+    No plain-text tagline above or below it.
+1d. No "we", "us" or "our" anywhere in customer-facing words.
+1e. No em dash (U+2014) anywhere.
+1f. **The charset first, because it invalidates every visual check below it.** In
+    the SMTP plugin's own log, open the touch-1 test-send and read the raw
+    `Content-Type` header: it must read `text/html; charset=UTF-8`. ⛔ If the
+    charset is missing, STOP — the stars will arrive as `âââââ` and nothing
+    else on this list can be judged.
+1g. The star row renders as five stars, resting pale gold `#dfc793`, with its
+    accessible label, in Gmail web, Gmail iOS and Apple Mail. A row of question
+    marks or boxes means the charset did not reach the wire.
+1g-ii. Hover, on a desktop client that runs CSS: the row fills to `#c4a15c` from
+    the left up to the star under the pointer. **In a client that ignores
+    `<style>` the row simply stays pale and every link still works** — an accepted
+    outcome, not a failure.
+1h. **No empty heading band.** View the RAW message and confirm there is no `<h1`
+    anywhere in it, and that the hero touches the top of the card with no cream
+    gap. ⛔ 1.19.372 passed the eyeball and still had the element and its 20px
+    band in the HTML.
+1i. **Then send yourself an ordinary processing-order and completed-order email
+    and confirm their headings are STILL THERE.** The same code path runs on
+    every WooCommerce email in the store.
+1j. With images blocked, the same email still shows five stars (they are
+    characters, not images), the caption and "Or open the review page". The hero
+    becomes its alt text — read it and confirm it describes the photograph and
+    its baked caption.
+1k. Star 1 goes to `?rating=1` and star 5 to `?rating=5`. Click both and read the
+    query string on the landing page.
+1l. At 375px the order and downloads tables are readable, left-aligned, wrapped,
+    with their column headings intact.
+
+### 1m. Every book on the order is named (seal 1032)
+1m-i.   Place a staging visit order holding **two** chapter books and preview
+        touch 1. The paragraph must read "… has had The Mariana Trench and Mount
+        Everest for a week and a half now." — both titles, "and", no comma.
+1m-ii.  Repeat with **three** books: "The Mariana Trench, Mount Everest and The
+        Amazon". ⛔ There is no comma before "and". That is deliberate and
+        matches the day-0 email.
+1m-iii. On both, the caption under the star row names **ONE** book — the first —
+        and the "Or open the review page" link goes to **that same** book's
+        review page. ⛔ Caption and destination naming different books is worse
+        than either being wrong alone.
+1m-iv.  Preview the **web** lane at two books. The second clause must read "They
+        went out in the mail, so I never got to see who opened them." ⛔ "It went
+        out" about two books is the regression this gate exists for.
+1m-v.   Preview a **one-book** order in both lanes and confirm it is unchanged
+        from 1.19.374, word for word.
+
+### 1n. The day-0 receipt on a phone, and the sentence that names the books (seal 1042)
+1n-i.   Open the day-0 email at **375px**. The totals block heading reads exactly
+        "Hand delivery:" — nothing after the colon — and the pickup label appears
+        ONCE, in the cell beside it. This gate has now caught the same defect in
+        two consecutive builds (1.19.374, 1.19.376), each time because the fix was
+        applied to the row's `label` while the duplicate was being printed from
+        its `meta`. **Read the RENDER, not the callback.** An ordinary web receipt
+        must still show its shipping method name in this heading — check one.
+1n-ii.  At a 375px viewport, read `document.scrollWidth` in the client's own
+        inspector, or scroll the receipt sideways with a finger. It must not move.
+        At 1.19.376/1.19.377 it was 553px against a 375px viewport, and the cause
+        was NOT the table width — it was `white-space: nowrap` on the totals row's
+        amount cell, which holds the 70-character hand-delivery sentence rather
+        than a price. **Before adding `nowrap` to any cell in
+        `.email-order-details`, check what that cell actually contains in a REAL
+        render.** The class is shared by three tables with three different
+        payloads.
+1n-iii. In the same render, "Quantity", "Price" and every "$" amount sit on ONE
+        line each. ⛔ A word split across two lines ("Qu / antity") means the
+        blanket word-break came back.
+1n-iv.  The product name still wraps normally, at word boundaries, and the
+        Downloads table still shows both live links, left-aligned.
+1n-v.   Check the same render at **600px** — the narrow-screen work lives inside a
+        `≤480px` media query and must be invisible above it.
+1n-vi.  Place a staging visit order with **two** chapter books and preview day 0.
+        The paragraph must read "… why The Mariana Trench and Mount Everest
+        **are** built the way **they are**, because **they are** built for one
+        particular kid." Repeat at **three** books. Preview a **one-book** order
+        and confirm that paragraph is unchanged from 1.19.375, word for word.
+1n-vii. ⛔ A visit order whose books cannot be resolved must still send NOTHING.
+        The send gate moved from `{BookTitle(s)}` onto `{WhyBuiltLine}` in
+        1.19.376.
+
+### 2. Photographs
+2a. An order with `_bhp_school_visit_slug = dallas-harris-2026-09-03` renders
+    hero 01 on day 0 and hero 04 on touch 1.
+2b. An order with `_bhp_school_visit_slug = adams-2026-08-28` renders
+    `hero-adams-2026-08-28-01.jpg` on day 0 and `-02.jpg` on touch 1, each with
+    alt text naming Adams Elementary and August 28, 2026.
+2c. An order with NO visit slug, and every web-lane ask, renders
+    `BHP_EMAIL_GENERAL_HERO` — as of seal 1027 that is
+    `hero-read-aloud-general-adams.jpg`, the Adams library.
+    ⛔ Seeing a different picture there means someone changed the constant.
+2d. Every hero has non-empty alt text. No child named, no reaction described.
+2e. `read-aloud-dallas-harris-2026-09-03-05.jpg` is absent from the theme and
+    named by no mapping.
+
+### 3. The day-0 order summary
+3a. The hand-delivery row's label reads `Hand delivery:` and nothing more.
+3b. Its value is the approved pickup label alone, left-aligned, on one or two
+    lines — not the pickup name followed by a forty-word paragraph.
+3c. Subtotal, tax and total are unchanged, in the same order, with the same
+    values.
+3d. ⛔ **Then place an ordinary web order and confirm its shipping row is exactly
+    as it was in 1.19.373** — "Shipping:" and the flat rate, untouched.
+
+### 4. Content truth
+4a. The day-0 body makes no shipping, tracking or arrival claim.
+4b. Every review link resolves to the correct ASIN.
+4c. No unconfirmed founder specific appears anywhere ("Island Peak", "Jiri",
+    "20,000 feet", "without oxygen").
+4d. No review, rating, testimonial or aggregate score is asserted anywhere.
+
+### 5. Schedule and cap, still on staging
+5a. The dry runs produce the four dates: touch 1 on 09-10 (Dallas one-book),
+    09-11 (Liberty one-book), 09-13 (Dallas multi), 09-14 (Liberty multi), and
+    touch 2 four days after each. **No order may be declined `daily_cap_lane`**
+    on any of those days.
+5b. `wp bhp review-ask status` reports the engine **DISABLED** at the end of QA.
+
+### B. Production go-live, exact commands in order
+
+**Steps 0 to 3 change no behaviour: the engine is off, so installing the theme
 ships inert code.** Step 4 is the live one.
 
-```
-# 0. ROLLBACK ARTEFACT FIRST. Do not skip.
-cd <doc_root>/wp-content/themes
-tar -czf ~/PROD-theme-PRE-1.19.382-$(date +%Y%m%d-%H%M).tar.gz <slug>
-wp option get bhp_review_ask_enabled                 # record the answer verbatim
-wp option get bhp_review_ask_stats  > ~/PRE-369-review-ask-stats.json
-wp option get bhp_review_ask_log    > ~/PRE-369-review-ask-log.json
 
-# 1. install and confirm it replaced the LIVE theme rather than adding one
-wp theme install /path/to/brave-hearts-theme-1.19.382-review-seq.zip --force
-wp theme list --status=active                        # <slug>, 1.19.382
-wp eval 'echo "ok";' --user=1
-wp sg purge
+### C. ⛔ ANDREW'S GATE — the only irreversible command in this document
 
-# 2. confirm the engine is still OFF after the install
-wp bhp review-ask status                             # must read disabled
+**Do not run this on inference, on a prior approval, or on "it is a small
+change". It needs Andrew's explicit, current approval, and it is the last
+command in the go-live sequence.**
 
-# 2b. THE SIGNATURE BLOCK'S SOCIAL LINE. Production has no bhp_social_links
-#     option yet, so the signature block ends on the brand line and NO social
-#     link is emitted. These are the two real URLs, already set on staging.
-#     ⛔ Nothing here is invented: supply exactly these, or leave the option
-#     unset and accept a signature with no social line. Do this BEFORE step 4.
-wp option get bhp_social_links                       # record the answer verbatim (likely: option not set)
-wp option update bhp_social_links '[{"label":"Facebook","url":"https://www.facebook.com/braveheartspublishing"},{"label":"Instagram","url":"https://www.instagram.com/charlotteandhenrybooks"}]' --format=json
-wp option get bhp_social_links --format=json         # read it back; two entries
-wp sg purge
-#     ⚠ VERIFY IT REACHES THE EMAIL, not just the option table:
-wp eval 'print_r( bhp_review_ask_signature() );' --user=1
-#     Expect name, role, brand and a `social` array of exactly two entries.
 
-# 3. READ-ONLY dry runs on production, for the two Dallas dates
-wp bhp review-ask dry --as-of=2026-09-10
-wp bhp review-ask dry --as-of=2026-09-13
-#    Read the "would send" lines. They name order ids only.
-#    STOP HERE and get Andrew's word before step 4.
+### D. Immediately after enabling — prove the runner is actually scheduled
 
-# 4. ⛔ ANDREW'S GATE — the only irreversible command in this runbook
-wp option update bhp_review_ask_enabled yes
-wp bhp review-ask status                             # must now read enabled
+**An enabled engine with no scheduled run sends nothing and reports no error.
+Check this in the same sitting as the flip, not the next morning.**
 
-# 5. the scheduler must actually be scheduled
-wp cron event list --fields=hook,next_run_relative | grep bhp_review_ask_daily
-#    If Action Scheduler owns it instead:
-wp action-scheduler list --hook=bhp_review_ask_daily --status=pending
-#    If neither shows an entry, the daily runner is not scheduled and nothing
-#    will send. Re-run bootstrap by loading any admin page, then re-check.
 
-# 6. first live morning, watch rather than assume
-wp bhp review-ask status
-wp bhp review-ask plan --dates=2026-09-10,2026-09-11,2026-09-13,2026-09-14
-```
+### E. Rollback
 
-### D. Rollback
 
-```
-# fastest, and it stops all sending in one command
-wp option update bhp_review_ask_enabled no
-wp bhp review-ask status                             # must read disabled
+**⛔ Rolling the code back does NOT unsend an email.** The option flip is the real
+stop; the tarball only restores the previous behaviour for future runs.
 
-# the social line alone, if that is the only thing to undo
-wp option delete bhp_social_links                    # signature block ends on the brand line again
-
-# full code rollback
-cd <doc_root>/wp-content/themes
-rm -rf <slug>
-tar -xzf ~/PROD-theme-PRE-1.19.382-<stamp>.tar.gz
-wp theme list --status=active
-wp sg purge
-```
-
-**⛔ Rolling the code back does NOT unsend an email.** The option flip in D is
-the real stop; the tarball only restores the previous behaviour for future runs.
-
-### E. What this runbook deliberately does not do
+### F. What this runbook deliberately does not do
 
 - It does not run `wp bhp review-ask migrate`. Seal 994 made the sixteen visit
   orders ordinary engine orders, and the command now refuses all sixteen by id.
   Marking any of them would suppress touch 1 forever.
-- It does not touch any WooCommerce product, price, coupon, stock, shipping,
-  tax, payment or checkout setting. The engine reads orders and writes two
-  order meta keys plus its own options; nothing else.
+- It does not touch any WooCommerce product, price, coupon, stock, shipping, tax,
+  payment or checkout setting. The engine reads orders and writes two order meta
+  keys plus its own options; nothing else. The day-0 receipt change is a
+  render-time override of one table cell in one email — no shipping method, zone,
+  rate, title or pickup location is created or edited.
+- It does not enable anything on its own. Section C is the only switch, and it is
+  Andrew's, per-action and per-session.
+
+## Book rail placement - `_bhp_book_rail_position`
+
+The theme auto-injects a book rail into post content. Before `1.19.388` it could land between a
+numbered list item's title and its first paragraph, splitting the entry (observed on post 46,
+item 8, at both 375 and 1440).
+
+**What the guard does.** The injector refuses insertion points that fall inside a numbered entry
+(directly after a paragraph that begins with a number and a period, or after a heading) and moves
+the rail to the next legal boundary.
+
+**Per-post override.** Post meta `_bhp_book_rail_position` pins the rail explicitly (an integer
+paragraph index, or `off`).
+
+    wp post meta get <post_id> _bhp_book_rail_position
+    wp post meta update <post_id> _bhp_book_rail_position <value>
+    wp post meta delete <post_id> _bhp_book_rail_position   # restore automatic placement
+
+**When to use it.** Only when automatic placement is wrong on a specific post. Prefer fixing the
+guard over pinning individual posts; a pin is invisible to the next editor.
+
+**Verify after changing it.** Load the post in a real browser at 375 and 1440, assert
+`window.innerWidth` in-page before trusting the viewport, and confirm the rail sits clear of every
+numbered entry. `curl` proves the shell loads, not that placement is correct.
+
+**Owner:** `lead-developer`. **Introduced:** theme `1.19.388`, 2026-09-06.

@@ -293,6 +293,59 @@ function bhp_merge_marketing_consent_fields($fields) {
             'Email me when a new Charlotte and Henry book or edition is released, plus the occasional family reading idea.',
             'brave-hearts'
         );
+
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐ 1.19.385 (2026-09-06, `CYCLE179-CX-EMAIL-CAPTURE`) — THE OPT-IN
+         *    MOVES FROM "Additional order information" TO "Contact information",
+         *    DIRECTLY UNDER THE EMAIL FIELD. ONE LINE. NOTHING ELSE CHANGES.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔ WHAT WAS MEASURED, NOT ASSUMED. staging2, theme 1.19.384,
+         *    headless Chrome, cart holding one paperback plus the free activity
+         *    book, `window.innerWidth` asserted in-page on both rows,
+         *    2026-09-06:
+         *
+         *      1440x900  email field #email  y=456   ·  opt-in box y=1603
+         *                → the box sits 1147px BELOW the email field, inside
+         *                  `wc-block-checkout__order-fields`, under the heading
+         *                  "Additional order information" (y=1539), which is
+         *                  BELOW "Payment options" (y=1186).
+         *      375x812   email field #email  y=449   ·  opt-in box y=1920
+         *                → 1471px below, on a 4966px page, again after payment.
+         *
+         *    A parent on a phone reaches the pay button before the box, and the
+         *    box is the last thing between them and paying. That is the whole
+         *    defect: it is not hidden, it is simply asked at the moment nobody
+         *    is reading.
+         *
+         * ⭐ THE EVIDENCE THAT THIS IS THE ACTUAL GAP. Production order #820
+         *    (2026-09-06 09:25, a real buyer, read read-only) carries
+         *    `_bhp_new_book_releases_optin = "no"`. The checkbox rendered, the
+         *    wire built by `CYCLE168-LD-CHECKOUT-OPTIN` was in place and correct,
+         *    and the buyer simply did not tick it. Nothing was broken. The ask
+         *    was in the wrong place.
+         *
+         * ⛔ NOT ONE WORD OF THE LABEL IS CHANGED, AND THE BOX IS STILL
+         *    UNCHECKED. Standing Rules §9: approved customer-facing copy is not
+         *    silently rewritten, and a pre-ticked marketing box is a consent
+         *    question for Andrew, not a layout decision for this file. No new
+         *    promise is made: this file adds no free chapter, no sample, no
+         *    download and no discount, because none of those is wired to
+         *    deliver.
+         *
+         * ⭐ THE META KEY DOES NOT MOVE. See the long note at
+         *    `bhp_register_marketing_consent_fields()` in `functions.php`:
+         *    WooCommerce stores every non-`address` location under `_wc_other/`,
+         *    so `_wc_other/brave-hearts/new-book-releases` is unchanged,
+         *    `_bhp_new_book_releases_optin` is unchanged, and
+         *    `inc/checkout-optin-sync.php` is untouched by this change.
+         *
+         * ⛔ ROLLBACK IS THIS ONE LINE. Delete it and the field returns to the
+         *    `order` location and to "Additional order information", because the
+         *    registration defaults to `order` when no definition sets a location.
+         */
+        $fields['new_book_releases']['location'] = 'contact';
     }
     return $fields;
 }

@@ -1068,6 +1068,39 @@ $bhp_rail_single = !empty($data['rail_single']);
   $bhp_cta_buy_id     = (int) (isset($bhp_initial_conf['productId']) ? $bhp_initial_conf['productId'] : 0);
   $bhp_cta_panel_hook = ($bhp_cta_buy_id > 0 && empty($bhp_initial_conf['external']) && !$bhp_cta_is_direct);
   ?>
+  <?php
+  /*
+   * ════════════════════════════════════════════════════════════════════════
+   * ⭐⭐ 1.19.393 (`CYCLE179-CX-BUILD-391-1`) — THE BUY BLOCK BECOMES ONE BOX.
+   * ════════════════════════════════════════════════════════════════════════
+   *
+   * Andrew, 2026-09-07: "move up the quick pay options below the add paperback
+   * to cart", and of the phone: "blocked by the url box - you cant read it".
+   * Supervisor seals 1272 / 1274 approved a STICKY PHONE BUY BAR up to 812px.
+   *
+   * ⭐ ONE WRAPPER, NOT A SECOND CONTROL. `.bhp-formats__buy` exists so that
+   *    ADD TO CART and the wallet can be pinned to the bottom of a phone
+   *    screen AS THE SAME NODES already on the page. Nothing is duplicated:
+   *    there is still exactly one `bhp-formats__cta` anchor, one collection
+   *    direct-buy form and one `#wc-stripe-express-checkout-element` in the
+   *    document. A second copy would be two add-to-cart paths and two Stripe
+   *    mounts, and the Stripe plugin mounts into the first container it finds.
+   *
+   * ⚠ IT IS A NEW GRID CHILD, so the two rules that positioned
+   *    `.bhp-formats__cta-wrap` AS a grid child (`product-template.css`
+   *    `order: 4` at the phone breakpoint, and the `--single` rail's explicit
+   *    `grid-row: 3`) now apply to nothing. Both are re-stated for
+   *    `.bhp-formats__buy` in the 1.19.393 block of `style.css`. Every OTHER
+   *    rule naming `.bhp-formats__cta-wrap` is a self or descendant rule
+   *    (margin, text-align, button sizing) and is unaffected by the wrap.
+   *
+   * ⛔ DOCUMENT ORDER IS UNCHANGED. `tests/test-cycle179-359.php` §3.6/§3.7
+   *    compare `strpos()` of `bhp-formats__cta-wrap`, `bhp-formats__note` and
+   *    `bhp-formats__amazon`; the wrapper opens BEFORE `cta-wrap` and closes
+   *    BEFORE `__note`, so all three offsets keep their relative order.
+   */
+  ?>
+  <div class="bhp-formats__buy">
   <div class="bhp-formats__cta-wrap">
     <a class="btn btn-primary bhp-formats__cta<?php echo $bhp_cta_disabled ? ' is-disabled' : ''; ?>"
        data-bhp-format-cta
@@ -1092,6 +1125,37 @@ $bhp_rail_single = !empty($data['rail_single']);
     <span class="bhp-formats__cta-direct" data-bhp-collection-cta<?php echo $bhp_cta_is_direct ? '' : ' hidden'; ?>><?php echo $bhp_collection_direct_cta; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped --every component escaped in bhp_collection_add_to_cart_cta() ?></span>
     <?php endif; ?>
   </div>
+
+    <?php
+    /*
+     * ⭐ 1.19.393 (`CYCLE179-CX-BUILD-391-1`) — THE WALLET IS PRINTED HERE,
+     *    NOT RE-ORDERED HERE.
+     *
+     * ⛔ CSS COULD NOT DO THIS, AND THAT IS WHY THE TEMPLATE CHANGED.
+     *    `bhp_express_bridge_render()` was hooked on
+     *    `woocommerce_single_product_summary` at priority 16 while this rail
+     *    prints at 15, so `.bhp-express` was a SIBLING of `.bhp-formats`, and
+     *    a grid cannot `order:` an element it does not contain. MEASURED on
+     *    staging 1.19.391 at an asserted 375x812: `.bhp-formats__cta` bottom
+     *    y=785, `.bhp-express` bottom y=2933 — 2,148px and four screens apart.
+     *
+     * ⛔ THE PRIORITY-16 HOOK IS REMOVED RATHER THAN RELIED UPON TO NO-OP.
+     *    The function also carries a print-once guard of its own
+     *    (`inc/express-checkout-bridge.php`); belt and braces here is cheap,
+     *    and two containers would mean two wallets.
+     *
+     * ⛔ NOTHING ABOUT WHAT THE WALLET BUYS CHANGES.
+     *    `bhp_express_bridge_initial_id()`, the hidden scaffold, its
+     *    `aria-hidden` / `tabindex="-1"`, and the
+     *    `assets/js/express-checkout-bridge.js` mirror are untouched, and
+     *    `woocommerce_after_add_to_cart_form` still fires exactly once.
+     */
+    if ( function_exists( 'bhp_express_bridge_render' ) ) {
+        remove_action( 'woocommerce_single_product_summary', 'bhp_express_bridge_render', 16 );
+        bhp_express_bridge_render();
+    }
+    ?>
+  </div><?php /* /.bhp-formats__buy */ ?>
 
   <?php /* CYCLE143-CX-2: the shipping note is server-rendered for the same
            reason as the CTA above — it was the last empty element in the
