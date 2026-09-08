@@ -54,9 +54,38 @@ while (have_posts()): the_post();
   if (function_exists('is_checkout') && function_exists('is_order_received_page')) {
       $bhp_is_checkout_page = is_checkout() && !is_order_received_page();
   }
+
+  /*
+   * ═══════════════════════════════════════════════════════════════════════
+   * ⭐⭐ 1.19.401 — THE CART GETS THE SHOP'S BAND. `CYCLE179-CX-BUILD-401-CART`.
+   * ═══════════════════════════════════════════════════════════════════════
+   *
+   * ⭐ Andrew Signore, 2026-09-07 (⛔ RELAYED through the Chief of Staff, NOT
+   *    witnessed first-hand): "The cart shows a ton of white space on it-
+   *    needs to be changed to match the other pages"
+   *
+   * ⛔ THE BRANCH IS ADDED IN FRONT OF THE EXISTING TWO, AND NEITHER OF THEM
+   *    IS REWORDED. `/cart/` takes the new first branch; the checkout page
+   *    still takes the `else` and still gets its visually-hidden <h1>; every
+   *    other page still takes the parchment hero, byte for byte.
+   *
+   * ⛔ IT FAILS OPEN. `function_exists()` is tested first, so a tree in which
+   *    `inc/cart-surface.php` is absent renders exactly what 1.19.400
+   *    rendered on every page including this one. The 397 incident is the
+   *    reason that matters: an artefact that drops a file must degrade, not
+   *    fatal.
+   *
+   * ⛔ THE CHECKOUT PAGE IS DELIBERATELY NOT GIVEN A BAND. His 2026-08-05
+   *    ruling quoted below took the header OFF that page and said "bring
+   *    everything up". Reversing it is his call, not this desk's, and it is
+   *    registered as `CYCLE179-CX-B-1`. See `inc/cart-surface.php`.
+   */
+  $bhp_cart_band = (function_exists('bhp_cart_band_applies') && bhp_cart_band_applies());
 ?>
 
-<?php if (!$bhp_is_checkout_page): ?>
+<?php if ($bhp_cart_band): ?>
+<?php bhp_cart_band_render(); ?>
+<?php elseif (!$bhp_is_checkout_page): ?>
 <header class="interior-hero interior-hero--parchment">
   <div class="container container--content">
     <?php /* ⭐ 1.19.269 item 5 (founder ruling, 2026-08-19) — REMOVED, decoration above the page H1:

@@ -388,11 +388,70 @@ bhp_vt_ok(
  */
 echo "\n-- §6 the emails --\n";
 
-$before = count( bhp_testimonial_mail_log() );
-$r      = bhp_testimonial_send( 'bhp-cycle179+vt@example.com', 'Suite probe', 'Body.' );
+/*
+ * ⭐⭐ 1.19.406 (2026-09-08, `CYCLE179-CX-BUILD-406`) — §6.2 WAS ASSERTING A
+ *     THING THAT CANNOT BE TRUE ON A LONG-LIVED ENVIRONMENT, AND IT HAD
+ *     STARTED FAILING FOR THAT REASON RATHER THAN FOR A REAL ONE.
+ *
+ * ⛔⛔ THE SUPERSEDED ASSERTION, PRESERVED STRUCK AT THE LINE:
+ *
+ *      ~~$before = count( bhp_testimonial_mail_log() );
+ *        bhp_vt_ok( '§6.2 the capture log grew by one',
+ *                   count( bhp_testimonial_mail_log() ) === $before + 1 );~~
+ *
+ * ⚠️ WHY IT COULD NEVER PASS AGAIN. The writer caps the option:
+ *    `inc/video-testimonial-form.php:94  const BHP_TESTIMONIAL_MAIL_LOG_MAX = 30;`
+ *    `inc/video-testimonial-form.php:157 array_slice( $log, 0, ...MAX )`.
+ *    Every run of this suite appends one entry, so the log climbs to 30 and
+ *    then STAYS at 30 — `count()` stops growing while the write keeps
+ *    succeeding perfectly. Read live on staging2 2026-09-08:
+ *    `wp eval 'echo count(bhp_testimonial_mail_log());'` -> 30.
+ *    `CYCLE179-LD-PLUGIN-1.8.87` measured the same value and re-ran it 3/3
+ *    identically, so it is deterministic saturation, not flake.
+ *
+ * ⛔ THE FIXTURE WAS NOT CLEARED TO MAKE THIS GREEN. Emptying the option
+ *    would have hidden a test-design defect behind a passing row, and the
+ *    defect is the interesting part: a counter is the wrong instrument for a
+ *    capped ring buffer. ⭐ SO THE ROW NOW ASSERTS WHAT THE FEATURE ACTUALLY
+ *    PROMISES — that THIS send landed at the head of the log — which is true
+ *    whether the log is empty, half full or saturated, and is a STRICTLY
+ *    STRONGER claim than the old count: it proves the entry is OURS, where
+ *    `+1` would have been satisfied by any write at all.
+ *
+ * ⭐ A UNIQUE SUBJECT PER RUN is what makes that identity check possible;
+ *    two runs in the same second previously wrote indistinguishable rows.
+ *    §6.4 below still sees its `[PLACEHOLDER COPY]` prefix, which the
+ *    composer adds, so the nonce does not disturb it.
+ */
+$vt_nonce   = 'vt-' . uniqid( '', true );
+$before_log = bhp_testimonial_mail_log();
+$before     = count( $before_log );
+$before_top = ( $before_log && isset( $before_log[0]['subject'] ) ) ? (string) $before_log[0]['subject'] : '(empty log)';
+
+$r = bhp_testimonial_send( 'bhp-cycle179+vt@example.com', 'Suite probe ' . $vt_nonce, 'Body.' );
 
 bhp_vt_ok( '§6.1 the send was CAPTURED, not sent', true === $r['captured'] && false === $r['sent'] );
-bhp_vt_ok( '§6.2 the capture log grew by one', count( bhp_testimonial_mail_log() ) === $before + 1 );
+
+$after_log = bhp_testimonial_mail_log();
+$after_top = ( $after_log && isset( $after_log[0]['subject'] ) ) ? (string) $after_log[0]['subject'] : '';
+
+bhp_vt_ok(
+	'§6.2 THIS send is the newest entry in the capture log',
+	false !== strpos( $after_top, $vt_nonce ),
+	sprintf( 'newest subject was %s, is now %s', $before_top, '' === $after_top ? '(empty log)' : $after_top )
+);
+
+/*
+ * ⭐ AND THE CAP IS ASSERTED AS A CAP, which is the behaviour the old row was
+ *    accidentally testing. Below the cap the log grows by exactly one; at the
+ *    cap it holds. Stating both means neither an unbounded log nor a silently
+ *    dropped write can pass.
+ */
+bhp_vt_ok(
+	'§6.2b the log grew by one, or held at BHP_TESTIMONIAL_MAIL_LOG_MAX',
+	count( $after_log ) === min( $before + 1, BHP_TESTIMONIAL_MAIL_LOG_MAX ),
+	sprintf( 'before %d, after %d, max %d', $before, count( $after_log ), BHP_TESTIMONIAL_MAIL_LOG_MAX )
+);
 
 $last = bhp_testimonial_mail_log();
 $last = $last ? $last[0] : array();

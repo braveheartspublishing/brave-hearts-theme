@@ -189,9 +189,51 @@ bhp_fs_assert(
  *    precisely the thing a future reader would otherwise get wrong.
  */
 add_filter( 'bhp_bundle_colouring_policy', 'bhp_fs_force_conservative' );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ SUPERSEDED AGAIN 2026-09-08, PLUGIN 1.8.87. FOUNDER SEAL 1359.
+ *     The 1.8.62 note immediately above is now itself out of date in ONE
+ *     clause, and that clause is struck here rather than corrected quietly.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE RULING, verbatim as relayed by `chief-of-staff` (⚠️ RELAYED, NOT
+ *    WITNESSED FIRST-HAND by the agent that made this change):
+ *
+ *      "If they buy any two books they should get the discount - doesnt
+ *       matter."
+ *
+ * ⛔ THE CLAUSE OF THE 1.8.62 NOTE THAT IS NO LONGER TRUE, struck:
+ *      ~~"while remaining two titles short of a collection for every DISCOUNT
+ *        purpose"~~
+ *    ⭐ It remains two titles short of a COLLECTION, and every collection
+ *    assertion in this file still proves that. What it is no longer short of
+ *    is the DISCOUNT: three books of a format now reach tier 3 by count.
+ *
+ * ⛔ THE SUPERSEDED ROW, PRESERVED VERBATIM. Do not restore it:
+ *
+ *    ~~bhp_fs_assert(
+ *        1.99 === bhp_fs_ship( array( $pb( $PB_EVEREST, 3 ) ) ),
+ *        '2. [conservative] 3 copies of ONE paperback -> $1.99 single rate,
+ *         NOT free (never a collection)',
+ *        $failures
+ *      );~~
+ *
+ * ⭐ WHY IT MOVED, TRACED RATHER THAN ASSERTED. Under `conservative` branch A
+ *    is off and branch B is off (this is not a collection), so the cart falls
+ *    through to the per-format tier loop at the END of
+ *    `bhp_bundle_shipping_amount()`. That loop reads `paperback_tier`, which
+ *    from 1.8.87 is a BOOK COUNT, so 3 copies reads tier 3 and returns
+ *    `bhp_bundle_rules('paperback')[3]['shipping']` = $0.00. ⛔ The figure
+ *    itself did not move; the cart that reaches it did.
+ */
 bhp_fs_assert(
-	1.99 === bhp_fs_ship( array( $pb( $PB_EVEREST, 3 ) ) ),
-	'2. [conservative] 3 copies of ONE paperback -> $1.99 single rate, NOT free (never a collection)',
+	0.00 === bhp_fs_ship( array( $pb( $PB_EVEREST, 3 ) ) ),
+	'2. [conservative] 1.8.87 seal 1359: 3 copies of ONE paperback -> $0.00 via the tier-3 row (was $1.99 single rate)',
+	$failures
+);
+bhp_fs_assert(
+	1 === count( bhp_bundle_distinct_adventures_in_cart( bhp_fs_cart( array( $pb( $PB_EVEREST, 3 ) ) ) ) ),
+	'2. [conservative] ... and it is STILL one adventure and never a collection - only the money rule moved',
 	$failures
 );
 remove_filter( 'bhp_bundle_colouring_policy', 'bhp_fs_force_conservative' );
@@ -283,9 +325,31 @@ bhp_fs_assert(
 	'4. [conservative] COUNTERFACTUAL: 3 books, 2 adventures across formats (Mariana twice) -> $4.99, NOT free',
 	$failures
 );
+/*
+ * ⛔⛔ SUPERSEDED 2026-09-08, PLUGIN 1.8.87, FOUNDER SEAL 1359. Preserved
+ *     struck at the line rather than corrected quietly.
+ *
+ *    ~~bhp_fs_assert(
+ *        2.99 === bhp_fs_ship( array( $pb( $PB_EVEREST, 5 ), $pb( $PB_AMAZON, 5 ) ) ),
+ *        '4. [conservative] COUNTERFACTUAL: 10 books but only 2 adventures ->
+ *         $2.99 tier-2 rate, NOT free',
+ *        $failures
+ *      );~~
+ *
+ * ⭐ 10 paperbacks is a paperback COUNT of 10, which reads tier 3 from
+ *    `bhp_bundle_qualifying_tier_by_count()` and returns the tier-3 $0.00 row
+ *    even with the any-three shipping branch forced off. ⛔ The COUNTERFACTUAL
+ *    the row was written to protect - that a book count is not an adventure
+ *    count - is still asserted, on the same cart, immediately below.
+ */
 bhp_fs_assert(
-	2.99 === bhp_fs_ship( array( $pb( $PB_EVEREST, 5 ), $pb( $PB_AMAZON, 5 ) ) ),
-	'4. [conservative] COUNTERFACTUAL: 10 books but only 2 adventures -> $2.99 tier-2 rate, NOT free',
+	0.00 === bhp_fs_ship( array( $pb( $PB_EVEREST, 5 ), $pb( $PB_AMAZON, 5 ) ) ),
+	'4. [conservative] 1.8.87 seal 1359: 10 paperbacks (2 adventures) -> $0.00 via the tier-3 row (was $2.99)',
+	$failures
+);
+bhp_fs_assert(
+	2 === count( bhp_bundle_distinct_adventures_in_cart( bhp_fs_cart( array( $pb( $PB_EVEREST, 5 ), $pb( $PB_AMAZON, 5 ) ) ) ) ),
+	'4. [conservative] ... and that cart is STILL two adventures, not ten - the set question is unmoved',
 	$failures
 );
 remove_filter( 'bhp_bundle_colouring_policy', 'bhp_fs_force_conservative' );

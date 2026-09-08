@@ -698,9 +698,41 @@ if ( function_exists( 'bhp_postpurchase_is_suppressed' ) ) {
 c397_section( '§4 · rails that must not have moved' );
 // ═══════════════════════════════════════════════════════════════════════════
 
+/*
+ * ⭐⭐ 1.19.406 (2026-09-08, `CYCLE179-CX-BUILD-406`) — A FLOOR, NOT A PIN.
+ *
+ * ⛔⛔ THE SUPERSEDED ASSERTION, PRESERVED STRUCK AT THE LINE:
+ *
+ *      ~~c397_ok( '4.1 the bundle plugin reports 1.8.86',
+ *          defined( 'BHP_BUNDLE_PRICING_VERSION' )
+ *              && '1.8.86' === BHP_BUNDLE_PRICING_VERSION, ... );~~
+ *
+ * ⚠️ WHY IT MOVED. `CYCLE179-LD-PLUGIN-1.8.87` bumped the plugin to 1.8.87
+ *    (founder seal 1359 — duplicate copies of one paperback now earn the
+ *    count-keyed tier), and this row failed IMMEDIATELY AND CORRECTLY: it
+ *    pinned the version literally, so it reported a version change as a
+ *    defect. That lane rightly did not edit it — it is a THEME file and that
+ *    lane took no theme version — and left the block PREPARED, NOT APPLIED in
+ *    `Business OS/ANDREW-REVIEW/2026-09-08/PLUGIN-1.8.87/`, file
+ *    `05-DOC-AND-TEST-UPDATE-BLOCKS.md`.
+ *    This build is the theme release that applies it.
+ *
+ * ⭐ WHAT THIS ROW IS ACTUALLY FOR, WHICH IS WHY A FLOOR IS THE RIGHT SHAPE.
+ *    §4 is "rails that must not have moved". The rail here is that the theme
+ *    is running against a bundle plugin NEW ENOUGH to carry the behaviour the
+ *    rest of this suite assumes — not that it is running against one exact
+ *    build. A literal pin turns every future plugin release into a false
+ *    theme-suite failure, which is precisely what happened here.
+ *
+ * ⛔ IT IS STILL A REAL GATE. `version_compare` with '>=' FAILS on a
+ *    DOWNGRADE below 1.8.86, which is the regression this row exists to
+ *    catch, and the undefined-constant case still fails. Raise the floor
+ *    deliberately when a later version becomes a hard requirement.
+ */
 c397_ok(
-	'4.1 the bundle plugin reports 1.8.86',
-	defined( 'BHP_BUNDLE_PRICING_VERSION' ) && '1.8.86' === BHP_BUNDLE_PRICING_VERSION,
+	'4.1 the bundle plugin reports at least 1.8.86',
+	defined( 'BHP_BUNDLE_PRICING_VERSION' )
+		&& version_compare( BHP_BUNDLE_PRICING_VERSION, '1.8.86', '>=' ),
 	defined( 'BHP_BUNDLE_PRICING_VERSION' ) ? BHP_BUNDLE_PRICING_VERSION : '(undefined)'
 );
 

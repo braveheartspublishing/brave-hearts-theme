@@ -246,7 +246,61 @@ add_action( 'wp_footer', function () {
   <div class="container container--content passport-status-page__inner">
     <p class="component-heading__eyebrow"><?php esc_html_e('Your chapter is on the way', 'brave-hearts'); ?></p>
     <h1 id="adventure-kit-thank-you-title"><?php esc_html_e('Your Reluctant Reader Adventure Kit Is on Its Way', 'brave-hearts'); ?></h1>
-    <p class="text-lead"><?php esc_html_e('Your chapter is inside the Kit, along with a printable activity and tips for reading it with a 6 to 9 year old. Please allow up to 15 minutes for it to arrive, and check your promotions or spam folder if you do not see it.', 'brave-hearts'); ?></p>
+    <?php
+    /*
+     * ⭐ 1.19.404 (`CYCLE179-LD-BUILD-404-KIT-PREVIEW-ONLY`) — ONE WORD MOVED
+     *    IN THIS SENTENCE AND NOTHING ELSE DID.
+     *
+     * ⛔ SUPERSEDED CLAUSE, preserved so the change is visible rather than
+     *    re-derived: it read *"Please allow up to 15 minutes for **it** to
+     *    arrive"*. It now reads *"for **the email** to arrive"*.
+     *
+     * ⚠️ WHY. Until 1.19.400 this page was the whole delivery story, so "it"
+     *    could only mean the email. Since the instant kit panel shipped, a
+     *    visitor reaching this page has ALREADY SEEN the eleven pages, so an
+     *    unqualified "it" now reads as a fifteen-minute wait for something
+     *    they are looking at. Naming the email removes the collision. ⭐ The
+     *    MEANING is unchanged and the operational value — the wait warning and
+     *    the spam-folder note, which are the reason this page reduces support
+     *    email — is kept word for word.
+     *
+     * ⭐ The "now vs up to 15 minutes" reasoning in the docblock above still
+     *    holds and is not re-argued: the SEND is immediate, ARRIVAL is a
+     *    mail-delivery fact nobody controls.
+     */
+    ?>
+    <p class="text-lead"><?php esc_html_e('Your chapter is inside the Kit, along with a printable activity and tips for reading it with a 6 to 9 year old. Please allow up to 15 minutes for the email to arrive, and check your promotions or spam folder if you do not see it.', 'brave-hearts'); ?></p>
+    <?php
+    /*
+     * ⭐⭐ 1.19.404 · APPROVED VERBATIM BY ANDREW, FIRST PERSON (seal 1366,
+     *     RELAYED through the Chief of Staff, NOT witnessed by this desk).
+     *     ⛔ LOCKED PROSE — Standing Rules §9. Do not reword, re-tense or
+     *     re-person it.
+     *
+     * ⭐ WHAT IS VERIFIED BEHIND IT, because a delivery promise on a
+     *    thank-you page is a claim:
+     *      · TWO DAYS is journey 89's E2 delay;
+     *      · *"How did story time go?"* is the subject reading on the journey's
+     *        Details panel, read in Mailchimp by `connected-operator` on
+     *        2026-09-07 and CONFIRMED CURRENT BY ANDREW in the same sitting;
+     *      · the PARENT10 code is genuinely carried again in E2.
+     *
+     * ⚠️ A SUBJECT-LINE TEST RAN ON 2026-09-04 under the alternative
+     *    *"Your free chapter ends in the dark"*. Seal 1365 therefore had this
+     *    line ship with NO quoted subject at all, to avoid naming a subject a
+     *    given parent might not receive. ⭐ Seal 1366 SUPERSEDES that: Andrew
+     *    confirms the live subject is the one quoted here. ⛔ IF THE SUBJECT IS
+     *    EVER CHANGED IN MAILCHIMP, THIS SENTENCE BECOMES FALSE AND MUST MOVE
+     *    WITH IT. That coupling is the cost of quoting a subject, and it is
+     *    recorded here rather than discovered later.
+     *
+     * ⛔ SUPERSEDED DRAFTS, preserved: seal 1360 proposed *"a second note
+     *    arrives from Andrew"* (third person, and it named Chapter 10 and the
+     *    dark-chapter subject); seal 1365 removed the subject entirely. Neither
+     *    shipped. The founder's own first-person wording is what shipped.
+     */
+    ?>
+    <p><?php esc_html_e('In two days, a second note arrives from me, subject "How did story time go?" It carries the PARENT10 code again in case you have not used it yet.', 'brave-hearts'); ?></p>
   </div>
 </section>
 

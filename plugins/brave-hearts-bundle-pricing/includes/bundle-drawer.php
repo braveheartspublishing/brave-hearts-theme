@@ -318,9 +318,34 @@ function bhp_bundle_drawer_assets() {
 			'crossSellHeading' => function_exists( 'bhp_bundle_checkout_upsell_copy' )
 				? bhp_bundle_checkout_upsell_copy()['heading']
 				: '',
-			// Copy verbatim from the approved UX addendum. Keyed the same
-			// way bundle-drawer.js counts distinct titles (1, 2, 3) so the
-			// script only has to look up a string, never compose one.
+			/*
+			 * Copy verbatim from the approved UX addendum. The script only
+			 * has to look up a string, never compose one.
+			 *
+			 * ⛔⛔ 1.8.87 - THE KEYS ARE NO LONGER ALL THE SAME QUANTITY, AND
+			 *    THE SUPERSEDED COMMENT IS STRUCK HERE RATHER THAN CORRECTED
+			 *    SILENTLY:
+			 *      ~~"Keyed the same way bundle-drawer.js counts distinct
+			 *        titles (1, 2, 3)"~~
+			 *
+			 * ⭐ Founder seal 1359, 2026-09-08 (⚠️ RELAYED, NOT WITNESSED HERE):
+			 *    "If they buy any two books they should get the discount -
+			 *     doesnt matter."
+			 *
+			 * ⭐ SO `computeDrawerMeta()` NOW READS THEM ON TWO DIFFERENT
+			 *    QUANTITIES, because the two kinds of sentence are true of two
+			 *    different things:
+			 *      · key 1 -> BOOK COUNT of that format, duplicates included.
+			 *        "Add another paperback and save $1.99." is a money claim
+			 *        and the money now keys on a count.
+			 *      · keys 2 and 3 -> DISTINCT TITLES of that format. "the
+			 *        final adventure", "Complete Paperback Collection" are
+			 *        series claims and stay false on a duplicate cart.
+			 *    `savedCopy` below is a money claim and keys on the COUNT.
+			 *
+			 * ⛔ NOT ONE STRING IS EDITED BY 1.8.87. Only which cart reaches
+			 *    which string moved.
+			 */
 			'progressCopy' => array(
 				'paperback' => array(
 					1 => 'Add another paperback and save $1.99.',

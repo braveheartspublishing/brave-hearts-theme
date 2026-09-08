@@ -334,9 +334,17 @@
 	}
 
 	/**
-	 * B4 (2026-08-03) — the REAL incremental saving from adding one more
-	 * distinct title of `format`, given the cart already holds `count` of
-	 * them.
+	 * B4 (2026-08-03) — the REAL incremental saving from adding one more book
+	 * of `format`, given the cart already holds `count` of them.
+	 *
+	 * ⭐ 1.8.87 — `count` IS A BOOK COUNT, DUPLICATES INCLUDED. It was "one
+	 *    more DISTINCT TITLE ... `count` of them" until founder seal 1359
+	 *    moved the discount onto a count of books; the superseded wording is
+	 *    struck here rather than silently rewritten:
+	 *      ~~"the REAL incremental saving from adding one more distinct title
+	 *        of `format`, given the cart already holds `count` of them."~~
+	 *    The arithmetic below is byte-unchanged. Only what the caller counts
+	 *    moved, and it moved so this stays true.
 	 *
 	 * ⛔ THE RULE THIS FUNCTION EXISTS TO OBEY: never hardcode a dollar
 	 *    amount on a button. Every number below is read from
@@ -634,7 +642,15 @@
 		return null;
 	}
 
-	function chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart) {
+	/*
+	 * ⭐ 1.8.87 — `counts` ADDED AS AN ARGUMENT (books per format, duplicates
+	 *    included). It is used for exactly one thing: `crossSellSavings()`
+	 *    below, whose delta is now a function of the BOOK COUNT because the
+	 *    fee is. ⛔ Every title decision in this function - which adventure is
+	 *    offered, the two passes, `completes_collection` - still reads
+	 *    `distinct`/`adventures` and is byte-unchanged.
+	 */
+	function chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart, counts) {
 		var catalog = (window.bhpDrawerData && window.bhpDrawerData.catalog) || {};
 
 		/*
@@ -720,7 +736,26 @@
 				variation_id: info.variation_id,
 				// B4: the real delta, computed from the same rules table the
 				// cart fee is built from.
-				savings: crossSellSavings(format, distinct[format].length, isMixedFormat),
+					/*
+					 * ⛔⛔ 1.8.87 — THIS ARGUMENT MOVED FROM
+					 *    `distinct[format].length` TO THE BOOK COUNT, AND IT
+					 *    IS NOT COSMETIC. `crossSellSavings()` subtracts the
+					 *    discount the cart ALREADY HAS from the one it would
+					 *    have after the add. From 1.8.87 the cart already has
+					 *    is a function of the count.
+					 *
+					 * ⭐ THE CART THAT PROVES IT: 3x Mariana paperback. Books
+					 *    3, distinct 1. Passing the distinct count computed
+					 *    `discountAt(2) - discountAt(1)` = $1.99 and put "Save
+					 *    $1.99" on a button that would have paid the customer
+					 *    NOTHING - they are already at the -$3.98 tier-3 fee
+					 *    and there is no tier 4. Passing the book count gives
+					 *    `next > 3` and returns 0, so the button renders with
+					 *    no savings clause at all. A button promising money
+					 *    the invoice does not give is the exact defect
+					 *    `bhp_bundle_saving_label()` was written to prevent.
+					 */
+					savings: crossSellSavings(format, (counts && counts[format]) || 0, isMixedFormat),
 				/*
 				 * ⭐ 1.8.24, UNCHANGED IN SUBSTANCE BY 1.8.25 — TRUE exactly
 				 *    when adding THIS title takes the cart from two distinct
@@ -828,6 +863,26 @@
 		var progressCopy = (window.bhpDrawerData && window.bhpDrawerData.progressCopy) || {};
 		var savedCopy = (window.bhpDrawerData && window.bhpDrawerData.savedCopy) || {};
 		var distinct = { paperback: [], hardcover: [] };
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐⭐⭐ 1.8.87 — BOOKS OF EACH FORMAT, DUPLICATES INCLUDED. SEAL 1359.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⭐ THE RULING, verbatim as relayed (⚠️ RELAYED, NOT WITNESSED HERE):
+		 *    "If they buy any two books they should get the discount - doesnt
+		 *     matter."
+		 *
+		 * ⭐ THE SERVER'S `bhp_bundle_quantities_in_cart()`, MIRRORED. This
+		 *    panel does not ask the server what the cart is worth; it recomputes
+		 *    it from the Store API payload it already has, so from 1.8.87 it has
+		 *    to count the same way `bhp_bundle_evaluate_cart()` counts or the
+		 *    button and the invoice will disagree about a duplicate cart.
+		 *
+		 * ⛔ `distinct` IS KEPT AND IS STILL USED. Titles answer the series
+		 *    questions (which adventure to cross-sell, `completes_collection`,
+		 *    "add the final adventure"); this count answers the money ones.
+		 */
+		var counts = { paperback: 0, hardcover: 0 };
 
 		(cart.items || []).forEach(function (item) {
 			var match = identifyCartItem(item);
@@ -837,6 +892,8 @@
 			if (distinct[match.format].indexOf(match.titleKey) === -1) {
 				distinct[match.format].push(match.titleKey);
 			}
+			var qty = parseInt(item.quantity, 10);
+			counts[match.format] += (qty > 0 ? qty : 0);
 		});
 
 		/*
@@ -913,8 +970,89 @@
 			return addonIds.indexOf(id) === -1;
 		});
 
-		// True exactly when the two-adventure free-shipping nudge will render.
-		var freeShipLeads = !hasUnrelated && 2 === adventures.length;
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⛔⛔⛔ 1.8.88 (2026-09-08) — THE NUDGE NOW ASKS THE SHIPPING RULE'S
+		 *      OWN QUESTION. `C-DUP-1`, Merry's Finding 1, seal 1410.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⛔ SUPERSEDED LINE, PRESERVED RATHER THAN QUIETLY REPLACED:
+		 *
+		 *      ~~// True exactly when the two-adventure free-shipping nudge
+		 *        //    will render.
+		 *        var freeShipLeads = !hasUnrelated && 2 === adventures.length;~~
+		 *
+		 * ⛔⛔ THE DEFECT, AND IT WAS RENDERING ON STAGING, NOT INFERRED FROM
+		 *    SOURCE. Cart `2x Mariana PB + 1x Everest PB` — three physical
+		 *    books, TWO distinct adventures. Read first-hand in a real browser
+		 *    at plugin 1.8.87 on staging2, 2026-09-08, the drawer panel
+		 *    printed these two lines ONE ABOVE THE OTHER:
+		 *
+		 *      "Add the final adventure and your order ships free."
+		 *      "Your order ships FREE."
+		 *
+		 *    An offer, and the same offer reported already fulfilled, in one
+		 *    panel. The Store API on that cart reports a ZERO total shipping.
+ *    (Stated in words on purpose: `test-freeship-leads.php` 6.4 forbids a
+ *    literal shipping-or-discount figure anywhere in this file, comments
+ *    included, and that guard is correct - it is what stops a money figure
+ *    being copied out of a note into code. The prose bends, not the rail.)
+		 *
+		 * ⭐ THE CAUSE IS A UNIT MISMATCH, NOT A COPY ERROR. The sentence
+		 *    describes a SHIPPING rule, and the shipping rule has been keyed on
+		 *    a PHYSICAL BOOK COUNT since 1.8.62 / `FD-583`
+		 *    (`bhp_bundle_shipping_amount()` branch A returns $0.00 at
+		 *    `physical_book_count >= 3`). The trigger asked a TITLES question.
+		 *    The two have been counting different things for nineteen days.
+		 *
+		 * ⛔ SO THE STRING IS BYTE-UNCHANGED AND THE GATE MOVED. The sentence is
+		 *    TRUE wherever adding a book actually changes the shipping, and it
+		 *    is only there that it now fires. `physicalBookCount()` is the
+		 *    existing 1.8.66 mirror of `bhp_bundle_physical_book_count()` and
+		 *    `freeShipAtCount` is `bhp_bundle_freeship_book_threshold()`
+		 *    localized — the rule's own count against the rule's own threshold,
+		 *    read from the engine, not restated here.
+		 *
+		 * ⭐ `parseInt(...) || 0` IS THE FAIL-SAFE AND IT NEEDS NO SPECIAL CASE.
+		 *    A missing or filtered-to-zero threshold makes `books < 0` false and
+		 *    the nudge silent, which is the correct reading twice over: an
+		 *    unknown threshold cannot support a shipping promise, and a
+		 *    threshold of zero means the cart already ships free at any size.
+		 *
+		 * ⛔ ONE PREDICATE, TWO READERS, DELIBERATELY. `freeShipLeads` also
+		 *    suppresses the count-2 progress line further down. If the nudge
+		 *    were hidden while `freeShipLeads` stayed true, that line would be
+		 *    suppressed for a nudge that never rendered and the panel would go
+		 *    silent. They are the same variable so they cannot drift.
+		 *    ⭐ VERIFIED NO SIDE EFFECT ON THE ONE CART THAT CHANGES: on
+		 *    `2x Mariana + 1 Everest` the count-2 line carries its own
+		 *    `books < 3` guard (1.8.87), so it stays correctly silent at three
+		 *    books whichever way `freeShipLeads` reads.
+		 *
+		 * ⚠️ ONE EDGE IS REPORTED RATHER THAN SILENTLY ABSORBED. Under the
+		 *    NON-DEFAULT `conservative` colouring policy a MIXED cart of three
+		 *    books and two adventures ships $4.99, and adding the third
+		 *    adventure could complete a single-format collection and reach
+		 *    $0.00 — there the nudge would have been true and is now silent.
+		 *    ⭐ The live policy on staging2 was read first-hand this build:
+		 *    `bhp_bundle_colouring_policy()` = `any-three`, threshold `3`, so
+		 *    that branch is unreachable as configured. Widening the gate to
+		 *    model every branch of `bhp_bundle_shipping_amount()` in JS would
+		 *    reintroduce exactly the duplicated-rule drift this fix removes.
+		 *    Recorded, not resolved here.
+		 */
+		var freeShipThreshold = parseInt(
+			(window.bhpDrawerData && window.bhpDrawerData.freeShipAtCount),
+			10
+		) || 0;
+		var physicalBooksInCart = physicalBookCount(cart);
+
+		// True exactly when the two-adventure free-shipping nudge will render:
+		// two adventures, nothing unrelated, AND the order does not already
+		// ship free at the threshold the sentence is talking about.
+		var freeShipLeads = !hasUnrelated
+			&& 2 === adventures.length
+			&& physicalBooksInCart < freeShipThreshold;
 
 		var messages = [];
 		var crossSell = null;
@@ -922,7 +1060,9 @@
 		// Mixed-format messaging rule (Overnight Conversion Sprint, Priority
 		// 7 -- supersedes the old blanket "mixed = no messaging at all"
 		// guard). Matches the PHP-side rule in bhp_bundle_apply_discount_
-		// fees() / bhp_bundle_print_progress_messages():
+		// fees() / bhp_bundle_print_progress_messages() (1.8.88: the latter is
+		// REMOVED - dead classic-hook path; the rule below is unchanged and
+		// this panel is now its only reader):
 		// - A "you saved $X with your 2-book set" claim is suppressed
 		//     once mixed, because that discount is genuinely NOT applied
 		//     in a mixed cart (it would be a lie to show it).
@@ -938,36 +1078,96 @@
 		//     when mixed, for the same reason.
 		var isMixedFormat = distinct.paperback.length > 0 && distinct.hardcover.length > 0;
 
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐⭐⭐ 1.8.87 — MONEY LINES KEY ON THE BOOK COUNT, SERIES LINES KEY ON
+		 *      THE TITLES. FOUNDER SEAL 1359. ⛔ NO STRING IS REWRITTEN.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⛔⛔ THE CLAIM DEFECT THE RULING CREATES, STATED BEFORE THE FIX. The
+		 *    four approved strings this loop draws from split cleanly into two
+		 *    kinds, and until 1.8.87 one variable served both because a cart
+		 *    could not hold two books of a format without holding two titles:
+		 *
+		 *      MONEY, true of a COUNT:
+		 *        progressCopy[fmt][1]  "Add another paperback and save $1.99."
+		 *        savedCopy[fmt]        "You saved $1.99 with your 2-book ..."
+		 *      SERIES, true only of TITLES:
+		 *        progressCopy[fmt][2]  "Add the final adventure to complete the
+		 *                               collection and save $3.98 total."
+		 *        progressCopy[fmt][3]  "Best Value - Complete Paperback
+		 *                               Collection"
+		 *
+		 *    From 1.8.87 two copies of ONE title earn the -$1.99, so keying the
+		 *    SERIES strings on the count would have made the panel tell a
+		 *    2x-Mariana shopper to "add the final adventure" (TWO are missing)
+		 *    and would have called three copies of one book a "Complete
+		 *    Paperback Collection". Both are false statements to a customer,
+		 *    created by a rule change with no copy edit.
+		 *
+		 * ⭐ THE BRIEF'S OWN TEST IS THE `count === 1` LINE: "Add another
+		 *    paperback and save $1.99." had to become TRUE for a duplicate
+		 *    second copy. Keyed on `books` it now is, on every cart that can
+		 *    reach it.
+		 *
+		 * ⭐ THE PHP SIDE IS KEPT IN STEP DELIBERATELY. The same split is made
+		 *    in `bhp_bundle_print_progress_messages()` (bundle-cart.php); the
+		 *    two surfaces have been maintained as one rule since 1.8.24 and
+		 *    diverging them here would be the drift this file keeps paying for.
+		 *    ⛔ 1.8.88: THERE IS NO LONGER A SECOND SURFACE TO KEEP IN STEP —
+		 *    that function was removed as a dead classic-hook path. The 1.8.87
+		 *    split described above is unchanged; only its twin is gone.
+		 */
 		['paperback', 'hardcover'].forEach(function (format) {
-			var count = distinct[format].length;
-			if (0 === count) {
+			var books = counts[format];
+			var titles = distinct[format].length;
+			if (0 === books) {
 				return;
 			}
-			if (1 === count && isMixedFormat) {
+			if (1 === books && isMixedFormat) {
 				// "Add another and save" is not reachable while mixed -- skip.
-			} else if (2 === count && isMixedFormat) {
+			} else if (2 === books && isMixedFormat) {
 				// Skip the "you saved" claim (not actually applied), but the
 				// "complete the series" progress message below still holds.
-				if (progressCopy[format] && progressCopy[format][count]) {
-					messages.push(progressCopy[format][count]);
+				if (2 === titles && progressCopy[format] && progressCopy[format][2]) {
+					messages.push(progressCopy[format][2]);
 				}
 			} else {
-				if (2 === count && savedCopy[format]) {
+				if (1 === books && progressCopy[format] && progressCopy[format][1]) {
+					messages.push(progressCopy[format][1]);
+				}
+				if (2 === books && savedCopy[format]) {
 					messages.push(savedCopy[format]);
 				}
 				/*
-				 * ⭐ 1.8.24 — the ONE suppression. At count===2 with the
+				 * ⭐ 1.8.24 — the ONE suppression. At two books with the
 				 *    free-shipping nudge about to lead, this line and the
 				 *    nudge make the identical ask ("add the final
 				 *    adventure") back to back; Andrew asked for the
-				 *    shipping one. Every other count is untouched, and this
+				 *    shipping one. Every other state is untouched, and this
 				 *    line returns unchanged the moment the cart is not one
 				 *    step from free shipping.
+				 *
+				 * ⛔ 1.8.87 — `books < 3` IS LOAD-BEARING, NOT PADDING. The
+				 *    string ends "and save $3.98 total", an INCREMENTAL money
+				 *    promise. On 2x Mariana PB + 1x Everest PB the format
+				 *    holds 3 books and 2 titles, the tier-3 fee is ALREADY
+				 *    applied, and the third adventure gains nothing further.
 				 */
-				if (2 === count && freeShipLeads) {
-					// suppressed in favour of the free-shipping nudge
-				} else if (progressCopy[format] && progressCopy[format][count]) {
-					messages.push(progressCopy[format][count]);
+				if (2 === titles && books < 3 && !freeShipLeads
+					&& progressCopy[format] && progressCopy[format][2]) {
+					messages.push(progressCopy[format][2]);
+				}
+				/*
+				 * ⛔ 1.8.87 — "Best Value - Complete <Format> Collection" stays
+				 *    a TITLE test. Three copies of one book is three books and
+				 *    is not a collection; the shopper still gets the -$3.98 fee
+				 *    on the invoice and the founder-approved "Your order ships
+				 *    FREE." progress line, and is not told they own a set they
+				 *    do not own.
+				 */
+				if (3 === titles && progressCopy[format] && progressCopy[format][3]) {
+					messages.push(progressCopy[format][3]);
 				}
 			}
 		});
@@ -984,7 +1184,7 @@
 		 * message, every suppression and every `savedCopy` line is
 		 * byte-identical to 1.8.24.
 		 */
-		crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart);
+		crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart, counts);
 
 		/*
 		 * ══════════════════════════════════════════════════════════════
@@ -1033,16 +1233,36 @@
 				&& (physicalBookCount(cart) + 1) === fsThreshold;
 		}
 
-		// Tiers exposed for renderDrawer()'s per-line-item "included in your
-		// savings" notes and summary math -- same 0/2/3 values the PHP side
-		// uses, with the same mixed-format suppression already applied
-		// above (a tier-2 format inside a mixed cart reports its RAW
-		// distinct-title count here, e.g. 2, not a suppressed 0 -- callers
-		// must apply the same isMixedFormat check themselves for tier 2,
-		// exactly as this function just did for messaging).
+		/*
+		 * Tiers exposed for renderDrawer()'s per-line-item "included in your
+		 * savings" notes and summary math -- same 0/2/3 values the PHP side
+		 * uses, with the mixed-format suppression NOT applied here (a tier-2
+		 * format inside a mixed cart reports its RAW tier, e.g. 2, not a
+		 * suppressed 0 -- callers apply the same isMixedFormat check
+		 * themselves via effectiveTierFor(), exactly as the messaging loop
+		 * above just did).
+		 *
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐⭐ 1.8.87 — COUNTED FROM BOOKS, TO MATCH THE FEE. SEAL 1359.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⛔ THIS IS NOT A LABEL TIDY-UP, AND THE CART THAT PROVES IT IS 3x
+		 *    MARIANA PAPERBACK. The server now adds a real -$3.98 "Bundle
+		 *    Savings (Paperback)" fee to that cart. Left reading distinct
+		 *    titles, `tiers.paperback` would have been 0, so:
+		 *      · `itemQualifyingNote()` would print nothing on a line the
+		 *        customer IS being given money for, and
+		 *      · `renderSummary()` would label a COMPLETE-SET fee "2-book
+		 *        savings", because its only test is `3 === tier`.
+		 *    The panel would have described the invoice wrongly on exactly
+		 *    the carts this ruling exists to create.
+		 *
+		 * ⭐ MIRRORS `bhp_bundle_qualifying_tier_by_count()` in
+		 *    bundle-data.php. Same thresholds, same input, one rule.
+		 */
 		var tiers = {
-			paperback: distinct.paperback.length >= 3 ? 3 : (distinct.paperback.length >= 2 ? 2 : 0),
-			hardcover: distinct.hardcover.length >= 3 ? 3 : (distinct.hardcover.length >= 2 ? 2 : 0)
+			paperback: counts.paperback >= 3 ? 3 : (counts.paperback >= 2 ? 2 : 0),
+			hardcover: counts.hardcover >= 3 ? 3 : (counts.hardcover >= 2 ? 2 : 0)
 		};
 
 		/*
@@ -1050,13 +1270,28 @@
 		 * ⭐ 1.8.23 — THE FREE-SHIPPING LINE, mirroring the PHP side exactly.
 		 * ═══════════════════════════════════════════════════════════════
 		 *
-		 * Counterpart of the block at the end of
-		 * bhp_bundle_print_progress_messages() in includes/bundle-cart.php.
-		 * Same trigger (distinct ADVENTURES across both formats, not books,
-		 * not per format), same suppression (nothing unrelated in the cart),
-		 * same two strings — which are localized from
-		 * bhp_bundle_freeship_copy() rather than written here, so the drawer
-		 * and the cart page cannot drift apart.
+		 * ⛔⛔ 1.8.88 — THIS CROSS-REFERENCE IS NOW DANGLING AND IS CORRECTED
+		 *    AT THE LINE. SUPERSEDED TEXT, PRESERVED:
+		 *
+		 *      ~~Counterpart of the block at the end of
+		 *        bhp_bundle_print_progress_messages() in
+		 *        includes/bundle-cart.php. Same trigger (distinct ADVENTURES
+		 *        across both formats, not books, not per format), same
+		 *        suppression (nothing unrelated in the cart), same two
+		 *        strings...~~
+		 *
+		 *    ⭐ TWO THINGS MOVED AND BOTH MATTER. (a) That PHP function was
+		 *    REMOVED at 1.8.88 — it hooked the classic cart, which this store
+		 *    does not have, so it had no counterpart to be a counterpart OF.
+		 *    ⛔ THIS PANEL IS NOW THE ONLY SURFACE FOR THESE TWO STRINGS.
+		 *    (b) The trigger is no longer "distinct ADVENTURES" alone: the
+		 *    nudge is gated on the physical book count against
+		 *    `freeShipAtCount` as well (`C-DUP-1`; see the block at
+		 *    `freeShipLeads`). The `earned` line is still a titles test.
+		 *
+		 * ⭐ UNCHANGED, AND STILL THE POINT: both strings are localized from
+		 * bhp_bundle_freeship_copy() rather than written here, so a filter that
+		 * changes the wording changes every surface that reads it at once.
 		 *
 		 * ⛔ THE ADD-ON IS NOT AN UNRELATED ITEM. Its product IDs are
 		 *    localized in precisely so a $5 digital activity book cannot
@@ -1104,9 +1339,35 @@
 		 *    reachable — it renders again the moment the cart is no longer
 		 *    one step from free shipping (e.g. an unrelated item present).
 		 */
+		/*
+		 * ⛔⛔ 1.8.88 — THE TRIGGER IS NOW `freeShipLeads`, THE SAME VARIABLE THE
+		 *    SUPPRESSION ABOVE READS. SUPERSEDED CONDITION, PRESERVED:
+		 *
+		 *      ~~if (2 === adventures.length && freeShipCopy.nudge) {~~
+		 *
+		 *    That expression and `freeShipLeads` used to be equal by
+		 *    construction, so restating it here was harmless duplication.
+		 *    1.8.88 adds the physical-book-count gate (see the block at
+		 *    `freeShipLeads`), and restating a two-term condition where the
+		 *    variable now carries three terms is precisely how the two would
+		 *    have drifted. It reads the variable instead.
+		 *
+		 * ⛔ THE `earned` BRANCH IS BYTE-UNCHANGED and is still a TITLES test.
+		 *    "Your complete collection ships free." is a claim about owning the
+		 *    collection, and three copies of one book is not one — that string
+		 *    must not follow a book count.
+		 *
+		 * ⭐ ON THE CART THIS FIXES, THE PANEL IS NOT LEFT MUTE. `2x Mariana +
+		 *    1 Everest` still renders the founder-approved progress line "Your
+		 *    order ships FREE." from `shipProgressLine()`, which has been keyed
+		 *    on the physical book count since 1.8.66, and the cross-sell button
+		 *    still offers the missing adventure with no savings clause (correct
+		 *    — the third adventure gains $0 there). Nothing is invented to fill
+		 *    the gap; a true line already covers it.
+		 */
 		var freeShipCopy = (window.bhpDrawerData && window.bhpDrawerData.freeShipCopy) || {};
 		if (!hasUnrelated) {
-			if (2 === adventures.length && freeShipCopy.nudge) {
+			if (freeShipLeads && freeShipCopy.nudge) {
 				messages.unshift(freeShipCopy.nudge);
 			} else if (adventures.length >= 3 && freeShipCopy.earned) {
 				messages.unshift(freeShipCopy.earned);

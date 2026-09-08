@@ -58,7 +58,24 @@ function bhp_theme_setup() {
      */
     add_image_size('bhp-hero-cover', 400, 0, false);
     add_theme_support('woocommerce');
-    add_theme_support('wc-product-gallery-zoom');
+    /*
+     * ⛔ 1.19.405 (CYCLE179-CX-BUILD-405, item 5) — `wc-product-gallery-zoom`
+     *    IS DELIBERATELY NOT DECLARED. DO NOT RE-ADD IT.
+     *
+     * It used to sit on this line. WooCommerce's zoom support binds
+     * jQuery.zoom to the gallery image, which on a book cover magnifies a
+     * flat 2D artwork nobody needs magnified, and on touch it fights the
+     * slider's own swipe handling for the same gesture.
+     *
+     * ⭐ THE OTHER TWO SUPPORTS ARE SEPARATE FEATURES AND ARE KEPT ON PURPOSE:
+     *      - `wc-product-gallery-lightbox` — tap the cover, get it full-screen
+     *        (PhotoSwipe). This is the "Look Inside" surface.
+     *      - `wc-product-gallery-slider`   — the flip-through between the
+     *        cover and the interior spreads (FlexSlider).
+     *    Removing zoom does not touch either: WooCommerce gates each of the
+     *    three on its own `current_theme_supports()` check when it enqueues
+     *    the scripts, so this is a removal of one script, not of the gallery.
+     */
     add_theme_support('wc-product-gallery-lightbox');
     add_theme_support('wc-product-gallery-slider');
     add_theme_support('html5', ['search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'style', 'script']);
@@ -5077,6 +5094,16 @@ require_once get_template_directory() . '/inc/header-offer.php';
  *    renders exactly what it rendered in 1.19.349.
  */
 require_once get_template_directory() . '/inc/catalog-surfaces.php';
+
+/*
+ * ⭐ 1.19.401 — THE CART BAND (`CYCLE179-CX-BUILD-401-CART`). Loaded AFTER
+ *    `catalog-surfaces.php` because it reuses that surface's `.bhp-catalog-band`
+ *    classes and its CSS, and a reader who arrives at one should find the other
+ *    next to it. It registers one `body_class` filter and two functions that
+ *    `page.php` calls behind `function_exists()`; it hooks nothing else and
+ *    changes no behaviour on any page except `/cart/`.
+ */
+require_once get_template_directory() . '/inc/cart-surface.php';
 /*
  * ⭐⭐ 1.19.350 — THE SCHOOL-VISIT BAND. Loaded AFTER `catalog-surfaces.php`
  *    because it gates on `bhp_catalog_grid_context()`, and it is a THEME file

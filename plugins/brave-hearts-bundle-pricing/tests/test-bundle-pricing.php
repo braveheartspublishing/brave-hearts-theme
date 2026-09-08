@@ -225,7 +225,33 @@ $cart_two_same_pb = new BHP_Test_Stub_Cart(
 	)
 );
 $eval = bhp_bundle_evaluate_cart( $cart_two_same_pb );
-bhp_test_assert( 0 === $eval['paperback_tier'], 'Two copies of the same paperback do NOT qualify as "any 2"', $failures );
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ SUPERSEDED 2026-09-08, PLUGIN 1.8.87 (`CYCLE179-LD-PLUGIN-1.8.87`).
+ *     FOUNDER SEAL 1359 REVERSED THIS ASSERTION. It is preserved struck, at
+ *     the line, rather than deleted, so a future reader can see that the old
+ *     behaviour was DELIBERATE and was then RULED AGAINST.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE RULING, verbatim as relayed by `chief-of-staff` (⚠️ RELAYED, NOT
+ *    WITNESSED FIRST-HAND by the agent that made this change):
+ *
+ *      "If they buy any two books they should get the discount - doesnt
+ *       matter."
+ *
+ * ⛔ THE SUPERSEDED ROW, PRESERVED VERBATIM. Do not restore it:
+ *
+ *    ~~bhp_test_assert( 0 === $eval['paperback_tier'], 'Two copies of the
+ *      same paperback do NOT qualify as "any 2"', $failures );~~
+ *
+ * ⭐ THE REPLACEMENT ASSERTS BOTH HALVES, because a change that widened too
+ *    far would pass a test that only asserted the new half: the DISCOUNT tier
+ *    is now 2, AND the same cart is still one adventure with a distinct-title
+ *    tier of 0. Full coverage lives in tests/test-cycle179-count-discount.php.
+ */
+bhp_test_assert( 2 === $eval['paperback_tier'], '1.8.87 (seal 1359): two copies of the same paperback DO qualify as "any 2" (was tier 0)', $failures );
+bhp_test_assert( 1 === (int) $eval['distinct_adventures'], '1.8.87: ... and that cart is still ONE adventure, not two - only the money moved', $failures );
+bhp_test_assert( 0 === (int) $eval['paperback_titles_tier'], '1.8.87: ... and its distinct-TITLE tier is still 0, which is what the audience coupon reads', $failures );
 
 $cart_all_three_hc = new BHP_Test_Stub_Cart(
 	array(

@@ -1027,6 +1027,37 @@ if (!defined('BHP_COLOURING_SHIPHOME_PARAM')) {
 }
 
 /**
+ * ════════════════════════════════════════════════════════════════════════════
+ * ⛔⛔⛔ UNAPPROVED PLACEHOLDER COPY — **NEEDS ANDREW'S APPROVAL**.
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE STRING BELOW IS A PLACEHOLDER, NOT APPROVED COPY, AND IT IS IN A
+ *    CONSTANT SO THAT ANDREW'S WORDING REPLACES IT IN **ONE PLACE**. It is
+ *    named in the 1.19.407 build report under NEEDS ANDREW'S APPROVAL.
+ *
+ * ⭐ WHY IT EXISTS AT ALL. With the coloring book out of stock, the single
+ *    coloring PDP's own control still READ "ADD PAPERBACK, $12.99", dimmed.
+ *    Dimming is not a sentence: `commerce-cx` read the rendered page and the
+ *    words "out of stock" appeared NOWHERE on it. A disabled control that
+ *    still states a price and an action is a control a parent will click, and
+ *    on a phone the dimming is close to invisible.
+ *
+ * ⛔ RAILS APPLIED TO THE PLACEHOLDER: American spelling · no "we/us/our" ·
+ *    no em dash · no outcome claim · no date or promise about WHEN it returns,
+ *    because nobody can honestly make one yet.
+ *
+ * ⭐ IT DELIBERATELY DOES NOT SAY "OUT OF STOCK". WooCommerce's own core
+ *    availability line already says that, in its own words, on the same page.
+ *    This is the CONTROL'S label, and its job is to stop reading like a
+ *    purchase invitation.
+ *
+ * @since 1.19.407
+ */
+if (!defined('BHP_COLOURING_UNAVAILABLE_CTA')) {
+    define('BHP_COLOURING_UNAVAILABLE_CTA', 'Temporarily unavailable');
+}
+
+/**
  * ⭐⭐ THE CONFIRMATION STEP. `R9c` / `E2`, founder seal 698.
  *
  * ⛔ IT RENDERS ONLY WHEN THERE IS SOMETHING TO LOSE. No `?bhp_shiphome`, or a
@@ -1719,6 +1750,25 @@ function bhp_offer_shop_shiphome_module($key) {
 
     try {
         if (!bhp_offer_is_purchasable($key) || bhp_offer_is_offerable($key)) {
+            return '';
+        }
+        /*
+         * ⭐⭐ 1.19.407 (`CYCLE179-LD-BUILD-407-STOCK-GATE`) — SHIP-HOME IS A
+         *     REMEDY FOR A **SESSION** REFUSAL AND FOR NOTHING ELSE.
+         *
+         * ⛔ FROM PLUGIN 1.8.89 `bhp_offer_is_offerable()` ALSO GOES FALSE WHEN
+         *    A COMPONENT IS OUT OF STOCK, so `purchasable && !offerable` — the
+         *    two-line test this module has always keyed off — stopped meaning
+         *    "this session is refused" and started ALSO meaning "the printer
+         *    cannot make it". Without this line an out-of-stock coloring book
+         *    would swap one dead control for a WORSE one: a card inviting a
+         *    parent to pay postage, in their own name, for a book that cannot
+         *    be printed at all.
+         *
+         * ⛔ A STOCK REFUSAL HAS NO REMEDY THE PARENT CAN CHOOSE. There is
+         *    nothing to offer, so nothing is offered. The card stays absent.
+         */
+        if (function_exists('bhp_offer_is_in_stock') && !bhp_offer_is_in_stock($key)) {
             return '';
         }
     } catch (Throwable $e) {

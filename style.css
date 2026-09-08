@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.400
+Version: 1.19.408
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -18124,49 +18124,74 @@ body.bhp-catalog-grid.bhp-visit-active .woo-expedition-shell ul.products {
       (0,4,4) and LOST: the strip's composite took the grid's 246px cover well
       and the strip rendered 580px tall. MEASURED on staging at 1.19.350, not
       predicted. The prefix is what makes these rules win. */
+/* ══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.405 (`CYCLE179-CX-BUILD-405`, item 6) — THE PAIR CARD TAKES THE
+       GRID CARD'S GEOMETRY. THE STRIP IS NOW A MIRROR OF THE GRID, NOT A
+       SECOND, SMALLER CARD DESIGN.
+
+   ⛔ WHAT WAS WRONG, STATED AS GEOMETRY RATHER THAN AS TASTE. The block that
+      used to sit here re-declared FIVE things the grid card already defines,
+      and every one of them disagreed with it:
+        cover well   110px flat          vs  var(--bhp-cover-well)  (230px)
+        cover pad    0.7rem 0.7rem 0.2rem vs 0.9rem 0.9rem 0.35rem
+        title        1rem                 vs  1.08rem
+        descriptor   0.8rem               vs  the grid's own size
+        columns      a private 2-up       vs  the catalog's own track list
+      The result was a card that sat directly under the grid, carried the same
+      components in the same order, and was visibly a different size — which
+      reads as a second-class item rather than as another way to buy.
+
+   ⭐⭐ THE FIX IS DELETION, NOT MORE CSS, AND THAT IS THE WHOLE DESIGN.
+      Every selector in the grid block above is
+      `body.bhp-catalog-grid .woo-expedition-shell ul.products li.product ...`
+      — and the strip's `<ul>` CARRIES `products` and sits INSIDE
+      `.woo-expedition-shell`. So the grid rules ALREADY MATCH these cards.
+      They were simply being overridden. Removing the overrides hands the
+      strip the grid geometry exactly, with no second copy of any number to
+      drift. ⛔ DO NOT "restore" a cover height here: a fixed px value in this
+      block is precisely the defect that was removed, and it will silently
+      diverge the next time the grid's well is re-measured.
+
+   ⭐ THE `--bhp-cover-well` VARIABLE FOLLOWS FOR FREE, INCLUDING ITS
+      RESPONSIVE AND FLAGGED-SESSION VALUES. It is declared on
+      `...ul.products`, which the strip's list matches, so the 230px desktop
+      well, the 158px visit-flagged well and the 132px narrow well all apply
+      to the pair card without a line of new code.
+
+   ⚠️ THE 1.19.399 ANCHORS ARE THE ONE THING THIS SIMPLIFICATION COULD HAVE
+      BROKEN, AND THEY ARE HANDLED BELOW RATHER THAN ASSUMED SAFE. The grid's
+      cover rule targets `li.product img`; on the pair card that `<img>` is
+      wrapped in `a.bhp-shop-offer-card__image-link`, an INLINE box by default.
+      An inline parent around a block image is where the height would have been
+      lost. The link is made a block so the wrapped image lays out exactly as
+      every unwrapped grid cover does.
+
+   ⛔ ONLY THE CONTAINER'S OWN SPACING IS STRIP-SPECIFIC and only that is kept.
+   ══════════════════════════════════════════════════════════════════════════ */
 .bhp-catalog-bundle-strip {
   margin: var(--space-6) 0 0;
 }
 body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product {
-  display: flex;
-  flex-direction: column;
   margin: 0;
   padding: 0 0 0.8rem;
   width: auto;
-  border: 1px solid rgba(var(--color-earth-rgb), 0.28);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
 }
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product img,
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-offer__composite {
-  height: 110px;
-  max-height: 110px;
-  width: auto;
-  object-fit: contain;
-  padding: 0.7rem 0.7rem 0.2rem;
-}
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .woocommerce-loop-product__title {
-  padding: 0 0.9rem;
-  margin: 0 0 0.15rem;
-  font-size: 1rem;
-  line-height: 1.2;
-}
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-shop-descriptor {
-  margin: 0 0.9rem 0.4rem;
-  padding-bottom: 0;
-  border-bottom: 0;
-  font-size: 0.8rem;
-}
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-shop-format-prices {
-  margin: 0 0.9rem 0.35rem;
+/* ⭐ 1.19.399's two anchors, kept working in the 1.19.405 geometry.
+   ⛔ `display: block` ONLY — no padding, no margin, no size of its own. The
+      link must be a transparent wrapper: every dimension still comes from the
+      grid's `li.product img` rule, so the linked pair cover and an unlinked
+      grid cover are laid out by the SAME declaration and cannot diverge.
+   ⚠️ The title link is deliberately NOT given a display change. It is inline
+      inside its `<h2>`, which is exactly what the other card titles are, and
+      making it a block would stretch its hit area across the full card width —
+      a different affordance from the one 1.19.399 shipped and tested. */
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-offer-card__image-link {
+  display: block;
 }
 
 /* ── G · THE TRUST STRIP, below everything ───────────────────────────────────
@@ -19229,5 +19254,116 @@ body .bhp-archive-band h1.bhp-archive-band__title {
   body:not(.home) .free-resources-hero .component-heading__eyebrow {
     font-size: 12px;
     letter-spacing: .06em;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐⭐ 1.19.401 — THE CART BAND AND THE PADDING COLLAPSE.
+   `CYCLE179-CX-BUILD-401-CART`.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ ANDREW SIGNORE, 2026-09-07 (⚠️ RELAYED through `chief-of-staff`, NOT
+      witnessed first-hand by this desk): "The cart shows a ton of white space
+      on it- needs to be changed to match the other pages"
+
+   ⭐⭐ THE MEASUREMENT THIS BLOCK IS WRITTEN AGAINST. Read out of the live DOM
+       on PRODUCTION 1.19.400, 2026-09-07, `/cart/` empty, `window.innerWidth`
+       asserted in the same evaluation:
+
+                                    1280        375
+         site header                  80px        93px
+         .interior-hero--parchment   149px       108px
+         .page-content padding-top    77px        56px   (EMPTY)
+         article padding-top          64px        24px   (EMPTY)
+         cart block starts at        y371        y281
+         /shop/ first card at        y169        y181   <- the page it must match
+
+   ⛔⛔ THE HERO IS ONLY HALF OF IT. 141px of the 290px above the cart block at
+       1280 is two nested paddings with nothing in them. Section A below
+       replaces the hero; ⭐ SECTION B IS THE HALF THAT ACTUALLY CLOSES THE GAP,
+       and a release that shipped only section A would move 100px of 202px and
+       read as "still too much white space".
+
+   ⛔ SCOPED TO `body.bhp-cart-band-on`, WHICH `inc/cart-surface.php` EMITS ONLY
+      WHEN IT ACTUALLY RENDERED A BAND. Not `body.woocommerce-cart`, which
+      WooCommerce emits either way: scoping to the theme's own token means the
+      band and its spacing switch on and off together, so a filtered-off band
+      cannot leave the cart with band geometry and a parchment hero.
+
+   ⛔ NOTHING HERE TOUCHES `/checkout/`. Its hero was removed on Andrew's own
+      2026-08-05 instruction and stays removed (`CYCLE179-CX-B-1`).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── A · THE BAND ─────────────────────────────────────────────────────────────
+   ⭐ THE DECLARATIONS ARE THE SHOP BAND'S, RE-SCOPED AND NOT RE-DESIGNED. The
+      unscoped children (`__series`, `__row`, `__diamond`, `__line`, `__meta`)
+      already match on any page and are deliberately NOT repeated here, so the
+      two bands cannot drift. Only the two rules that carry
+      `body.bhp-catalog-grid` in their selector need a cart-side twin.
+
+   ⛔ THE TITLE SELECTOR CARRIES `body.bhp-cart-band-on ... h1.bhp-catalog-band__title`
+      FOR THE SAME REASON THE SHOP'S DOES, and it is not decoration:
+      `.bhp-catalog-band__title` alone (0,1,0) LOSES to
+      `body:not(.home) .interior-hero h1`, which this band's own wrapper still
+      carries. Without the extra weight the H1 keeps the interior hero's display
+      size and the band renders roughly twice as tall as the shop's. */
+body.bhp-cart-band-on header.woo-archive-hero.bhp-catalog-band,
+body.bhp-cart-band-on header.bhp-catalog-band.interior-hero {
+  padding-top: var(--space-3) !important;
+  padding-bottom: var(--space-3) !important;
+  min-height: 0;
+}
+body.bhp-cart-band-on .bhp-catalog-band h1.bhp-catalog-band__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+/* ── B · THE PADDING COLLAPSE. The half that closes the gap ──────────────────
+   ⛔ THE TOP ONLY. `.page-content`'s BOTTOM padding is what separates the cart
+      from the footer and is deliberately left at its sitewide value; this rule
+      names `padding-top` rather than `padding` so the bottom cannot be lost by
+      accident.
+   ⭐ 32px, AND THE NUMBER IS SET AGAINST `/shop/` RATHER THAN BY TASTE. Band
+      (49px measured) + 32px puts the cart block at y161 against the shop's
+      first card at y169 - inside 8px of the page Andrew asked it to match. */
+body.bhp-cart-band-on .page-content {
+  padding-top: var(--space-8);
+}
+body.bhp-cart-band-on .page-content > .entry-content {
+  padding-top: 0;
+}
+
+/* ── C · 1366 AND BELOW: the band gives up its series row first ──────────────
+   ⭐ Mirrors section J of the catalog band so the two surfaces step down at the
+      same breakpoint. `.bhp-catalog-band__series` is already hidden unscoped by
+      that section and is not repeated. */
+@media (max-width: 1365px) {
+  body.bhp-cart-band-on .bhp-catalog-band h1.bhp-catalog-band__title {
+    font-size: 1.35rem;
+  }
+}
+
+/* ── D · MOBILE, 640 AND BELOW ───────────────────────────────────────────────
+   ⭐ Mirrors section K. The diamond and the brand line are already hidden
+      unscoped there (the brand line is on every page's header anyway), so only
+      the two scoped rules and the page padding need a cart-side twin.
+   ⭐ 24px rather than 32px: at 375 the band measures ~44px and the header 93px,
+      so 24px puts the cart block at y161 against the shop's first card at
+      y181. */
+@media (max-width: 640px) {
+  body.bhp-cart-band-on header.woo-archive-hero.bhp-catalog-band,
+  body.bhp-cart-band-on header.bhp-catalog-band.interior-hero {
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.3rem !important;
+  }
+  body.bhp-cart-band-on .bhp-catalog-band h1.bhp-catalog-band__title {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+  body.bhp-cart-band-on .page-content {
+    padding-top: var(--space-6);
   }
 }

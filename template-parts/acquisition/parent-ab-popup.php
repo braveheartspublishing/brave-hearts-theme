@@ -86,9 +86,44 @@
  *    `CYCLE158-LD-SIGNUP-POPUP` and is re-asserted by this release's suite.
  *
  * ═══════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THE SECTION BELOW (1.19.300, TIME ONLY) IS SUPERSEDED AS OF 1.19.405,
+ *     2026-09-07, BY SEAL 1359. DO NOT IMPLEMENT FROM IT.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Andrew Signore, 2026-09-07 21:30, seal 1359, VERBATIM:
+ *
+ *      "If they buy any two books they should get the discount - doesnt
+ *       matter. change the trigger if thats whats recommended"
+ *
+ * Seal 1359 records the decision in terms: *"HOME POPUP TRIGGER: change from
+ * the bare timer to scroll depth or exit intent as the audit recommends"* —
+ * the audit being CYCLE179-CX-PROD-AUDIT-400, fix 3. Item 306 is 2026-08-27;
+ * seal 1359 is 2026-09-07. ELEVEN DAYS LATER, and it names this surface.
+ * Andrew overruling Andrew again, which is the only thing that moves a
+ * founder ruling — the same standard item 306 itself was held to.
+ *
+ * ⭐ VERIFIED FIRST-HAND BY THE DESK THAT MADE THIS EDIT, not relayed: seal
+ *    1359 was read in the canonical sidecar
+ *    (`Business OS\WORKING-DRAFTS\chief-of-staff\SEAL-563-PENDING-APPEND.md`,
+ *    line 2039) and item 306's date was read in
+ *    `FOUNDER-VERBATIM-2026-08-05-PRODUCTION-DEPLOY-AUTHORIZATION.md` line 937.
+ *    ⚠ Note the contrast with the relay caveat recorded below for item 306 —
+ *      that carrier file was searched for and NOT FOUND at the time. This one
+ *      was opened and read. The difference is stated because it is the whole
+ *      reason this edit was made and item 306's was flagged.
+ *
+ * ⭐ THE LIVE CONFIGURATION IS AT THE `trigger` BLOCK, NOT HERE. Everything in
+ *    this header from the line below to the end of the 1.19.300 section
+ *    describes behaviour that ENDED at 1.19.404. It is preserved because the
+ *    reasoning is worth reading and because deleting a superseded ruling is
+ *    how a company loses track of why it moved. It is not instructions.
+ *
+ * ---------------------------------------------------------------------
+ * ⛔ SUPERSEDED BY SEAL 1359 (1.19.405) — PRESERVED ENTIRE, NOT DELETED.
+ * ---------------------------------------------------------------------
  * ⭐⭐ 1.19.300 (2026-08-27, `CYCLE167-LD-POPUP-TIME-ONLY`) — THE TRIGGER IS
  *     TIME ONLY. THE SCROLL REQUIREMENT IS REMOVED BY FOUNDER RULING.
- * ═══════════════════════════════════════════════════════════════════════
+ *
  *
  * ⭐ Andrew Signore, 2026-08-27, carrier item 306, VERBATIM:
  *
@@ -283,24 +318,76 @@ $popup_config = wp_json_encode([
         //   equivalent guard in exit-intent-popup.php, and both were caught by
         //   running the suite rather than by review.
         //
-        // ⭐ MODE `simple` = TIME ONLY, ON FOUNDER CARRIER ITEM 306
-        //   ("I think we keep our pop ups time only"). See the file header for
-        //   the full supersession note over his 2026-08-19 engagement ruling.
+        // ══════════════════════════════════════════════════════════════════
+        // ⭐⭐ 1.19.405 (2026-09-07) — THE TRIGGER IS ENGAGEMENT, NOT TIME.
+        //    SEAL 1359 SUPERSEDES FOUNDER CARRIER ITEM 306.
         //
-        // ⛔ NO `scrollPct` ON EITHER DEVICE, AND ITS ABSENCE IS THE WHOLE
-        //   CHANGE. The engine puts its scroll listener behind a
-        //   `typeof scrollPct === 'number'` guard, so omitting the key means no
-        //   scroll listener is ever registered — the popup is scroll-FREE, not
-        //   merely scroll-independent. Re-adding a threshold here would make
-        //   `simple` mode RACE time against scroll and could open the popup
-        //   EARLIER than fifteen seconds, which is not what he asked for.
+        // Andrew Signore, 2026-09-07 21:30, seal 1359, VERBATIM:
         //
-        // ⛔ NO `fallbackDelay` EITHER — it is a `gated`-mode key and does
-        //   nothing in this mode. Reaching time-only by adding one to a gated
-        //   config would leave a dead scroll listener and a redundant timer.
+        //   "If they buy any two books they should get the discount - doesnt
+        //    matter. change the trigger if thats whats recommended"
+        //
+        // The recommendation he is answering is the production audit's
+        // (CYCLE179-CX-PROD-AUDIT-400, fix 3): fire this popup on scroll depth
+        // or exit intent instead of the bare timer. Seal 1359 records the
+        // decision explicitly — "HOME POPUP TRIGGER: change from the bare timer
+        // to scroll depth or exit intent as the audit recommends".
+        //
+        // ⛔ SUPERSEDED — PRESERVED STRUCK, NOT DELETED, so the movement stays
+        //    legible and a future reader does not "restore" it by accident:
+        //
+        //  > ~~⭐ MODE `simple` = TIME ONLY, ON FOUNDER CARRIER ITEM 306
+        //  >   ("I think we keep our pop ups time only"). See the file header
+        //  >   for the full supersession note over his 2026-08-19 engagement
+        //  >   ruling.~~
+        //  > ~~⛔ NO `scrollPct` ON EITHER DEVICE, AND ITS ABSENCE IS THE WHOLE
+        //  >   CHANGE. Re-adding a threshold here would make `simple` mode RACE
+        //  >   time against scroll and could open the popup EARLIER than
+        //  >   fifteen seconds, which is not what he asked for.~~
+        //
+        //   Item 306 is 2026-08-27. Seal 1359 is 2026-09-07 — ELEVEN DAYS
+        //   LATER, and it names this surface. The later word governs.
+        //   ⚠ The struck note's objection ("could open EARLIER than fifteen
+        //     seconds") is now the INTENT rather than the hazard: there is no
+        //     fifteen-second promise left to protect, because there is no timer.
+        //
+        // ⛔ THERE IS NO `delay` KEY ON EITHER DEVICE, AND ITS ABSENCE IS THE
+        //   WHOLE CHANGE. The engine arms its timer behind a
+        //   `typeof deviceConfig.delay === 'number'` guard, so omitting the key
+        //   means NO TIMER IS EVER SET — the popup is time-FREE, not merely
+        //   time-independent. Adding a delay back, at any value, reinstates the
+        //   bare timer seal 1359 removed.
+        //
+        // ⭐ `scrollPct` 50 ON BOTH DEVICES, per the audit's "about 50 percent".
+        //   ⚠ This is NOT the 20/12 the 2026-08-19 ruling measured. Those were
+        //     tuned as a GATE in `gated` mode, where the dwell floor did the
+        //     waiting; here the depth IS the trigger, so it sits where the
+        //     audit put it. Recorded because the two numbers look like a
+        //     regression side by side and are not.
+        //
+        // ⭐ `exitIntent` + `exitMinDelay` ARE 'simple'-MODE KEYS ADDED IN THIS
+        //   RELEASE (assets/js/mariana-popup.js). They race the scroll trigger:
+        //   whichever condition is met first opens the popup, which is exactly
+        //   "scroll depth OR exit intent". The 5s floor stops a leave gesture in
+        //   the first moments of the page from counting as a considered exit.
+        //
+        // ⛔ FREQUENCY CAPPING IS UNCHANGED BY THIS RELEASE. `sessionGuard`,
+        //   `storagePrefix` and the one-modal-per-session rule above are byte
+        //   for byte what they were in 1.19.404. Only the trigger moved.
+        //
+        // ⚠ THE TWO SCROLL THRESHOLDS BELOW MUST STAY ON ONE LINE EACH, ONE PER
+        //   DEVICE. `tests/test-popup-ab.php` ASSERTS THE TRIGGER SHAPE
+        //   EXPLICITLY — that the mode is `simple`, that BOTH devices carry
+        //   `scrollPct` and `exitIntent`, and that NEITHER carries `delay`.
+        //   ⭐ IT NO LONGER COUNTS DELAY ASSIGNMENTS. Counting was the right
+        //     guard for a promise about a NUMBER ("make it 15 seconds"); it is
+        //     the wrong guard for a promise about a SHAPE, because a count of
+        //     zero passes just as well when the whole trigger block has been
+        //     deleted. The test now names what must be true.
+        // ══════════════════════════════════════════════════════════════════
         'mode'    => 'simple',
-        'desktop' => ['delay' => 15000],
-        'mobile'  => ['delay' => 15000],
+        'desktop' => ['scrollPct' => 50, 'exitIntent' => true, 'exitMinDelay' => 5000],
+        'mobile'  => ['scrollPct' => 50, 'exitIntent' => true, 'exitMinDelay' => 5000],
     ],
 ]);
 

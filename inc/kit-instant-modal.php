@@ -89,13 +89,68 @@
  *    never adopts it and never manages its lifecycle.
  *
  * ═══════════════════════════════════════════════════════════════════════════
- * ⚠️ WHAT THE MOBILE FALLBACK CAN AND CANNOT DO — read before changing copy
+ * ⭐⭐ 1.19.404 · PREVIEW ONLY. THERE IS NO PDF IN THIS PANEL ANY MORE.
+ *     `CYCLE179-LD-BUILD-404-KIT-PREVIEW-ONLY`, founder decision seal 1357.
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * The primary reader is the browser's own PDF viewer in a same-origin iframe,
- * which scrolls all eleven pages and prints. Where no PDF viewer exists —
- * iOS Safari renders page one of a framed PDF and refuses to scroll it — the
- * fallback shows the page images the theme actually has.
+ * ⭐ ANDREW, VERBATIM (seal 1357, RELAYED through the Chief of Staff, NOT
+ *    witnessed by this desk): *"maybe do the preview and dont let them
+ *    download it or print it from there?"*
+ *
+ * ⭐ WHAT THE PANEL IS NOW: the ELEVEN page images, on every device, scrollable,
+ *    full width. One Close button and the round close. Nothing else.
+ *
+ * ⛔ REMOVED IN 1.19.404, AND EVERY REMOVAL IS DELIBERATE:
+ *      · the same-origin PDF `<iframe>` and the whole `__viewer` element;
+ *      · `navigator.pdfViewerEnabled` — there is no branch left to choose;
+ *      · `bhp_kit_modal_forced_view()` and the staging-only `bhp_kit_view`
+ *        QA flag, which existed ONLY to reach the image branch on a desktop
+ *        browser. The image branch is now the only branch, so the flag is
+ *        dead weight and dead weight on a request-read parameter is worse
+ *        than dead weight;
+ *      · the **Download PDF** control, the **Print** control, and the
+ *        *"Open the full kit in a new tab"* link;
+ *      · ⛔⛔ the `data-bhp-kit-pdf` ATTRIBUTE. THE PDF URL DOES NOT APPEAR IN
+ *        THIS PANEL'S MARKUP AT ALL. A right-click, a view-source or a
+ *        DevTools read hands out nothing. The printable file arrives BY EMAIL
+ *        and by no other route from here. The page IMAGES are exposed, which
+ *        is intended: they are the preview.
+ *
+ * ⚠️ WHY THIS SUPERSEDES THE iOS WORK OF 1.19.403 RATHER THAN EXTENDING IT.
+ *    Andrew opened a minted token on his own iPhone on 2026-09-07 at 21:19 and
+ *    sent a screenshot: Safari reports `navigator.pdfViewerEnabled === true`
+ *    while its inline frame paints PAGE ONE ONLY, oversized and unscrollable.
+ *    The feature probe was therefore answering a question that Safari answers
+ *    wrongly. ⛔ The fix is not a better probe. The fix is that there is
+ *    nothing to probe. **Evidence class: the founder's own device, RELAYED to
+ *    this desk as a screenshot; not reproduced on hardware here.**
+ *
+ * ⭐ THE READINESS GATE IS KEPT. `bhp_get_reluctant_reader_download()` must
+ *    still report `ready`, because a site with no kit configured has nothing to
+ *    email and should show the ordinary success message rather than a preview
+ *    of a file that will never arrive. ⛔ Its URL is READ FOR THE GATE AND
+ *    NEVER PRINTED.
+ *
+ * ⛔ WHAT WAS DELIBERATELY NOT TOUCHED: the single-use token, the focus trap,
+ *    Escape, backdrop close, the body scroll lock, `overscroll-behavior`, and
+ *    1.19.403's `dvh` panel sizing. This build changes WHAT IS IN the panel,
+ *    not how the panel behaves.
+ *
+ * ⚠️ THE `@media print` BLOCK AT THE FOOT IS LEFT BYTE-UNTOUCHED, AND THAT IS
+ *    A REPORTED DECISION RATHER THAN AN OVERSIGHT. The panel no longer OFFERS
+ *    a print control. A browser-initiated print (Ctrl+P) still routes to the
+ *    kit pages rather than to the page behind. Whether that should also go is
+ *    Andrew's call, not this desk's, and it is raised as finding F2.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔ SUPERSEDED 1.19.404, PRESERVED SO THE MOVEMENT STAYS VISIBLE — read this
+ *    only as history. Until 1.19.403 the section below described the panel.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ~~The primary reader is the browser's own PDF viewer in a same-origin
+ * iframe, which scrolls all eleven pages and prints. Where no PDF viewer
+ * exists — iOS Safari renders page one of a framed PDF and refuses to scroll
+ * it — the fallback shows the page images the theme actually has.~~
  *
  * ⭐⭐ 1.19.392 · THE FALLBACK NOW CARRIES ALL ELEVEN PAGES, AND THE HONESTY
  *     SENTENCE IS GONE BECAUSE IT IS NO LONGER TRUE. `design-creative`
@@ -417,6 +472,30 @@ function bhp_kit_modal_sample_pages() {
 	return $out;
 }
 
+/*
+ * ⛔⛔ `bhp_kit_modal_forced_view()` WAS DELETED IN 1.19.404, AND ITS ABSENCE IS
+ *     ASSERTED BY A TEST SO IT CANNOT CREEP BACK.
+ *
+ * ⭐ WHAT IT WAS: a staging-only QA flag (`?bhp_kit_view=images|pdf`, gated on
+ *    `BHP_Analytics_Config::is_staging()`) that forced one of the modal's TWO
+ *    reader branches. It existed for exactly one reason -- every desktop
+ *    browser on this machine reports `navigator.pdfViewerEnabled === true`, so
+ *    the image branch could not otherwise be inspected without hand-editing
+ *    the DOM, which proves nothing about what the theme ships.
+ *
+ * ⭐ WHY IT IS GONE: 1.19.404 has ONE branch. The images are what every device
+ *    gets. A flag that selects between one thing and nothing is not a QA aid,
+ *    it is a request-read parameter with no job, and the safest version of a
+ *    parameter with no job is the one that does not exist.
+ *
+ * ⚠️ THE FINDING IT CARRIED IS STILL TRUE AND IS KEPT HERE RATHER THAN LOST
+ *    WITH THE CODE: `wp_get_environment_type()` returns `local` on PRODUCTION
+ *    AND on staging2 -- measured over WP-CLI against both installs on
+ *    2026-09-07, and independently recorded in `inc/amazon-reviews.php`.
+ *    ⛔ ANY future code that gates behaviour on it is gating on nothing.
+ *    `BHP_Analytics_Config::is_staging()` is the theme's one working test.
+ */
+
 /**
  * Render the modal, but only for a request that carries a live token.
  *
@@ -445,26 +524,60 @@ function bhp_kit_modal_render() {
 		return;
 	}
 
-	$pdf   = $download['url'];
+	/*
+	 * ⛔⛔ `$download['url']` IS READ FOR THE READINESS GATE ABOVE AND IS
+	 *     DELIBERATELY NOT ASSIGNED TO A VARIABLE HERE. 1.19.404 prints no PDF
+	 *     URL anywhere in this panel -- not in an attribute, not in an href,
+	 *     not in the inline script. Founder decision seal 1357.
+	 *     ⛔ Do not reintroduce a `$pdf` local "just for the print handler" or
+	 *        "just for a fallback link". A test asserts the URL is absent from
+	 *        the rendered markup.
+	 */
 	$email = $payload['email'];
 	$pages = bhp_kit_modal_sample_pages();
-
-	/*
-	 * `#view=FitH` asks the viewer to fit the page width, which is what a
-	 * parent on a laptop wants; `navpanes=0` drops the thumbnail rail so the
-	 * page itself gets the width. Both are hints. A viewer that ignores them
-	 * still scrolls and still prints, so nothing depends on them.
-	 */
-	$framed = $pdf . '#view=FitH&navpanes=0';
 	?>
-<div class="bhp-kit-modal mariana-popup is-open" id="bhp-kit-modal" role="dialog" aria-modal="true" aria-labelledby="bhp-kit-modal-title" data-bhp-kit-modal data-bhp-kit-pdf="<?php echo esc_url( $pdf ); ?>">
+<div class="bhp-kit-modal mariana-popup is-open" id="bhp-kit-modal" role="dialog" aria-modal="true" aria-labelledby="bhp-kit-modal-title" data-bhp-kit-modal>
 	<div class="bhp-kit-modal__backdrop" data-bhp-kit-close></div>
 	<div class="bhp-kit-modal__dialog" role="document">
 		<h2 id="bhp-kit-modal-title" class="bhp-kit-modal__sr"><?php esc_html_e( 'Your Reluctant Reader Adventure Kit', 'brave-hearts' ); ?></h2>
 
+		<?php
+		/*
+		 * ⭐⭐ THE BAR LINE IS THE FOUNDER'S OWN SENTENCE PLUS HIS OWN APPROVED
+		 *     ADDITION, AND IT IS REPRODUCED WORD FOR WORD.
+		 *
+		 * ⭐ Andrew, verbatim (seal 1358, RELAYED, not witnessed by this desk):
+		 *    *"Well they have to put their email in and submit before they can
+		 *    get the preview - then at the top of the preview it states \" This
+		 *    Free Chapter Activity was sent to your email, see your email to
+		 *    download it now\""*
+		 *
+		 * ⭐ The trailing clause *", with your PARENT10 code for 10% off the
+		 *    Collection"* is his APPROVED addition (seal 1362). It is the one
+		 *    payload of email E1 that this panel would otherwise not reproduce.
+		 *
+		 * ⛔⛔ THE STRING IS LOCKED PROSE. Standing Rules §9 -- approved copy is
+		 *     not silently rewritten. ⛔ `PARENT10` must survive VERBATIM: it is
+		 *     a real coupon code a parent will type, so a line break inside it,
+		 *     a lower-casing, a smart-quote pass or a "10 %" spacing fix would
+		 *     hand out a code that does not work. It is NOT wrapped in its own
+		 *     element, deliberately, so the sentence stays one text node and an
+		 *     exact-string assertion can prove it shipped intact.
+		 *
+		 * ⚠️ IT WRAPS, AND WRAPPING IS THE DESIGN. At 320 this is four or five
+		 *    rendered lines. The brief's allowance is explicit -- two rows at
+		 *    phone widths are fine -- and a truncated coupon code would be
+		 *    worse than a taller bar. ⛔ Do not add `text-overflow:ellipsis` to
+		 *    this line. The ADDRESS below it still ellipsises, because an
+		 *    address is recognisable from its head and a coupon is not.
+		 *
+		 * ⭐ COPY RAILS CHECKED ON THIS EXACT STRING: no "we/us/our" (§9.1),
+		 *    American spelling (§9.4), no em dash, no outcome claim.
+		 */
+		?>
 		<div class="bhp-kit-modal__bar">
 			<p class="bhp-kit-modal__bar-text">
-				<span class="bhp-kit-modal__bar-label"><?php esc_html_e( 'Also sent to your email:', 'brave-hearts' ); ?></span>
+				<span class="bhp-kit-modal__bar-msg"><?php esc_html_e( 'This Free Chapter Activity was sent to your email, see your email to download it now, with your PARENT10 code for 10% off the Collection', 'brave-hearts' ); ?></span>
 				<span class="bhp-kit-modal__bar-email"><?php echo esc_html( $email ); ?></span>
 			</p>
 			<button type="button" class="bhp-kit-modal__close" data-bhp-kit-close aria-label="<?php esc_attr_e( 'Close and return to the page', 'brave-hearts' ); ?>">
@@ -472,17 +585,15 @@ function bhp_kit_modal_render() {
 			</button>
 		</div>
 
-		<div class="bhp-kit-modal__viewer" data-bhp-kit-viewer>
-			<iframe
-				class="bhp-kit-modal__frame"
-				data-bhp-kit-frame
-				src="<?php echo esc_url( $framed ); ?>"
-				title="<?php esc_attr_e( 'The Reluctant Reader Adventure Kit', 'brave-hearts' ); ?>"
-				loading="eager"
-			></iframe>
-		</div>
-
-		<div class="bhp-kit-modal__fallback" data-bhp-kit-fallback hidden>
+		<?php
+		/*
+		 * ⭐⭐ 1.19.404 · THE READER. Formerly `__fallback`, and the RENAME IS
+		 *     THE POINT: this is not a degraded path any more, it is the panel.
+		 *     There is no `__viewer`, no `<iframe>`, and no branch above it.
+		 *     ⛔ It is NOT `hidden`, and nothing may hide it.
+		 */
+		?>
+		<div class="bhp-kit-modal__reader" data-bhp-kit-reader>
 			<?php if ( $pages ) : ?>
 				<div class="bhp-kit-modal__pages">
 					<?php foreach ( $pages as $page ) : ?>
@@ -539,53 +650,48 @@ function bhp_kit_modal_render() {
 			<?php endif; ?>
 			<?php
 			/*
-			 * ⭐⭐ 1.19.392 · THE SENTENCE SAYS WHAT IS ON SCREEN, AND WHAT IS
-			 *     ON SCREEN IS NOW THE WHOLE KIT. Every page the theme ships
-			 *     is rendered above, so the line no longer sends the visitor
-			 *     to the PDF for the missing part — there is no missing part.
+			 * ⭐⭐ 1.19.404 · THE ONE LINE UNDER THE PAGES, APPROVED VERBATIM BY
+			 *     ANDREW (seal 1366), FIRST PERSON, and it is here because it
+			 *     is the only thing a visitor can usefully DO from this panel
+			 *     now that the file itself arrives only by email.
 			 *
-			 * ⛔ IT STILL CLAIMS ONLY WHAT IS COUNTED. The count comes from
-			 *    `$pages`, which is built from files proved to exist on disk,
-			 *    so a short deploy under-claims instead of over-claiming. ⛔ Do
-			 *    not hardcode "eleven" here.
+			 * ⭐ Its two claims are both VERIFIED FACTS, not marketing:
+			 *      · the FROM address on all three steps of journey 89 is
+			 *        `andrew@braveheartspublishing.com` -- read in Mailchimp by
+			 *        `connected-operator` on 2026-09-07 (seal 1365), which is
+			 *        what unblocked this sentence;
+			 *      · **TWO** more emails follow, not three. Journey 89 has
+			 *        THREE steps in total (E1, E2, E3) and E1 is the one the
+			 *        visitor has already been sent. ⛔ "the next three emails"
+			 *        would be wrong by one and is a never-say here.
 			 *
-			 * ⛔ THE EMPTY BRANCH IS NOT DEAD CODE. With no page images on
-			 *    disk at all the fallback is the link-out alone, which is the
-			 *    only honest thing left to show.
+			 * ⛔ *"I read the replies myself"* is ANDREW'S OWN SENTENCE about
+			 *    himself. It is not an outcome claim, not a testimonial, and it
+			 *    is not this desk's to soften, embellish or make plural. §9.1:
+			 *    he is the sole operator, so the voice is I, never "we".
+			 *
+			 * ⛔ SUPERSEDED AND DELETED IN 1.19.404, recorded so the movement
+			 *    is visible rather than re-derived: two `__note` paragraphs
+			 *    stood here. The first explained that *"this browser will not
+			 *    display a PDF inside a page"* -- a sentence that is now false
+			 *    on every device, because no browser is being asked to. The
+			 *    second was the *"Open the full kit in a new tab"* link, which
+			 *    is removed under seal 1357 along with Download and Print.
 			 */
 			?>
-			<p class="bhp-kit-modal__note">
-				<?php
-				echo $pages
-					? esc_html(
-						sprintf(
-							/* translators: %d: number of kit pages shown on screen. */
-							_n(
-								'This browser will not display a PDF inside a page, so all %d page of the kit is shown above. Open or download the printable file below.',
-								'This browser will not display a PDF inside a page, so all %d pages of the kit are shown above. Open or download the printable file below.',
-								count( $pages ),
-								'brave-hearts'
-							),
-							count( $pages )
-						)
-					)
-					: esc_html__( 'This browser will not display a PDF inside a page. Open or download the kit below.', 'brave-hearts' );
-				?>
-			</p>
-			<p class="bhp-kit-modal__note">
-				<a class="bhp-kit-modal__link" href="<?php echo esc_url( $pdf ); ?>" target="_blank" rel="noopener">
-					<?php esc_html_e( 'Open the full kit in a new tab', 'brave-hearts' ); ?>
-				</a>
-			</p>
+			<p class="bhp-kit-modal__note"><?php esc_html_e( 'Add andrew@braveheartspublishing.com to your contacts so the next two emails reach your inbox. I read the replies myself.', 'brave-hearts' ); ?></p>
 		</div>
 
+		<?php
+		/*
+		 * ⭐ ONE BUTTON. Close, and the round close in the bar -- two ways out
+		 *    and no way to take the file. Seal 1357.
+		 * ⛔ The row keeps `flex-wrap` and the stacked phone form from 1.19.403
+		 *    rather than being simplified to a single centred button, because a
+		 *    future approved control would otherwise land in an untested row.
+		 */
+		?>
 		<div class="bhp-kit-modal__actions">
-			<a class="bhp-kit-modal__btn bhp-kit-modal__btn--primary" href="<?php echo esc_url( $pdf ); ?>" download data-bhp-kit-download>
-				<?php esc_html_e( 'Download PDF', 'brave-hearts' ); ?>
-			</a>
-			<button type="button" class="bhp-kit-modal__btn" data-bhp-kit-print>
-				<?php esc_html_e( 'Print', 'brave-hearts' ); ?>
-			</button>
 			<button type="button" class="bhp-kit-modal__btn bhp-kit-modal__btn--quiet" data-bhp-kit-close>
 				<?php esc_html_e( 'Close', 'brave-hearts' ); ?>
 			</button>
@@ -604,18 +710,91 @@ function bhp_kit_modal_render() {
 .bhp-kit-modal{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:0}
 .bhp-kit-modal__sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .bhp-kit-modal__backdrop{position:absolute;inset:0;background:rgba(10,26,38,.72)}
-.bhp-kit-modal__dialog{position:relative;display:flex;flex-direction:column;width:min(980px,100%);height:100%;max-height:100%;background:#fdfaf4;box-shadow:0 18px 60px rgba(10,26,38,.45);overflow:hidden}
-@media (min-width:768px){.bhp-kit-modal{padding:24px}.bhp-kit-modal__dialog{height:min(92vh,100%);border-radius:14px}}
-.bhp-kit-modal__bar{display:flex;align-items:center;gap:12px;padding:10px 12px;background:#0a2a43;color:#fff;flex:0 0 auto}
-.bhp-kit-modal__bar-text{margin:0;font-size:.9rem;line-height:1.35;flex:1 1 auto;min-width:0}
-.bhp-kit-modal__bar-label{display:inline-block;margin-right:.35em}
-.bhp-kit-modal__bar-email{font-weight:700;word-break:break-all}
-.bhp-kit-modal__close{flex:0 0 auto;width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer}
+/*
+ * 1.19.403 - THE PANEL IS BOUNDED IN BOTH AXES, AND THE HEIGHT UNIT IS THE
+ * POINT. `height:100%` resolved against a `position:fixed` parent is the LARGE
+ * viewport on a phone whose address bar is still showing, so the bottom of the
+ * dialog -- which is where the buttons live -- can sit under the browser
+ * chrome until the visitor scrolls it away. `dvh` is the unit that tracks the
+ * chrome as it moves.
+ *
+ * THE `vh` LINE IS NOT DEAD CODE. It is declared FIRST on purpose: a browser
+ * too old to parse `dvh` drops that declaration and keeps the `vh` one, which
+ * is the behaviour this pair exists for. Do not "tidy" it away, and do not
+ * reorder the pair.
+ *
+ * AT 768 AND UP the shell takes 24px of padding, so the dialog is bounded by
+ * `100%` of the padded box as well as by the viewport unit -- `min()` keeps
+ * whichever is smaller, which is why the desktop layout that was already right
+ * stays right.
+ */
+/*
+ * 1.19.404 - `overscroll-behavior:contain` IS ON THE DIALOG AS WELL AS ON THE
+ * READER. On the reader it stops the scroll chain at the end of the eleven
+ * pages; on the dialog it stops a touch that begins on the BAR or the BUTTON
+ * ROW - neither of which scrolls - from being handed to the document behind.
+ * The body class already sets `overflow:hidden`; this is the second net, and
+ * it is the one that matters on iOS, where the body lock alone has never been
+ * enough on its own.
+ */
+.bhp-kit-modal__dialog{position:relative;display:flex;flex-direction:column;width:min(980px,100%);max-width:100%;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;background:#fdfaf4;box-shadow:0 18px 60px rgba(10,26,38,.45);overflow:hidden;overscroll-behavior:contain}
+@media (min-width:768px){.bhp-kit-modal{padding:24px}.bhp-kit-modal__dialog{height:min(92vh,100%);height:min(92dvh,100%);max-height:100%;border-radius:14px}}
+/*
+ * 1.19.403 - THE CLOSE CONTROL IS THE ONE THING IN THIS BAR THAT MAY NEVER BE
+ * PUSHED ANYWHERE. It is `flex:0 0 40px` with a matching `min-width`, so it is
+ * not merely un-shrinkable by flex -- it also cannot be squeezed by a
+ * min-content contribution from its own glyph.
+ *
+ * THE ADDRESS NO LONGER WRAPS, AND THE BREAK-ANYWHERE DECLARATION IT USED TO
+ * CARRY IS DELETED RATHER THAN OVERRIDDEN. A long address used to grow the bar
+ * to two and three lines and push the reader down the panel; it now stays on
+ * ONE line and ellipsises. An address the visitor just typed is recognisable
+ * from its head, which is the half an ellipsis keeps. A suite assertion checks
+ * the old declaration is absent from the file, so it cannot creep back.
+ *
+ * UNDER 480 THE LABEL SITS ABOVE THE ADDRESS rather than beside it. Measured
+ * at 320: the row form leaves the address about 86px, roughly "jennifer.mc",
+ * because the label eats the line. Stacking gives the address the full width
+ * of the bar, and both lines are still single lines. The bar's rendered height
+ * is unchanged either way, so nothing below it moves.
+ */
+/*
+ * 1.19.404 - THE BAR CARRIES A SENTENCE NOW, NOT A LABEL, SO THE 1.19.403
+ * ONE-LINE-WITH-ELLIPSIS TREATMENT IS DELIBERATELY NOT APPLIED TO IT.
+ *
+ * `align-items:flex-start` rather than `center`: with a message that wraps to
+ * four or five lines at 320, centring would drift the round close control down
+ * the bar and away from the top-right corner where a thumb looks for it.
+ *
+ * THE MESSAGE WRAPS AND MUST WRAP. It carries the coupon code PARENT10, and a
+ * clipped or ellipsised coupon is a coupon that does not work. `overflow-wrap:
+ * anywhere` is NOT set on it either - that would allow a break INSIDE the code
+ * itself; normal word wrapping keeps PARENT10 whole because it is one word.
+ *
+ * THE ADDRESS still gets exactly 1.19.403's treatment - one line, ellipsis -
+ * because an address is recognisable from its head and a coupon is not. That
+ * asymmetry is the whole reason these are two elements and not one.
+ */
+.bhp-kit-modal__bar{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:#0a2a43;color:#fff;flex:0 0 auto}
+.bhp-kit-modal__bar-text{margin:0;font-size:.8rem;line-height:1.35;flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.bhp-kit-modal__bar-msg{min-width:0}
+.bhp-kit-modal__bar-email{display:block;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (min-width:480px){.bhp-kit-modal__bar-text{font-size:.875rem}}
+.bhp-kit-modal__close{flex:0 0 40px;width:40px;min-width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer}
 .bhp-kit-modal__close:hover{background:rgba(255,255,255,.26)}
-.bhp-kit-modal__close:focus-visible,.bhp-kit-modal__btn:focus-visible,.bhp-kit-modal__link:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
-.bhp-kit-modal__viewer{flex:1 1 auto;min-height:0;background:#e9e4da}
-.bhp-kit-modal__frame{display:block;width:100%;height:100%;border:0}
-.bhp-kit-modal__fallback{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;background:#e9e4da;text-align:center}
+.bhp-kit-modal__close:focus-visible,.bhp-kit-modal__btn:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
+/*
+ * THE READER FILLS WHATEVER THE BAR AND THE BUTTON ROW LEAVE. Both of those
+ * are `flex:0 0 auto`, so they take their natural height first; the reader is
+ * the only `flex:1 1 auto` child and `min-height:0` lets it actually shrink
+ * instead of forcing the column past the panel. That is 1.19.403's sizing,
+ * unchanged - it now applies to the images instead of to an iframe.
+ *
+ * 1.19.404 - `.bhp-kit-modal__viewer` and `.bhp-kit-modal__frame` ARE DELETED
+ * with the iframe they styled. A test asserts the frame rule is absent, so a
+ * copy-paste cannot quietly bring the PDF path back through the stylesheet.
+ */
+.bhp-kit-modal__reader{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:14px;background:#e9e4da;text-align:center}
 .bhp-kit-modal__pages{display:flex;flex-direction:column;gap:12px;align-items:center}
 /*
  * ⭐ 1.19.392 · THE HAIRLINE IS LOAD BEARING, NOT DECORATION. The page renders
@@ -633,9 +812,33 @@ function bhp_kit_modal_render() {
  */
 .bhp-kit-modal__page{display:block;width:100%;max-width:640px;height:auto;aspect-ratio:1200/1553;background:#fff;border:1px solid rgba(10,26,38,.14);box-shadow:0 2px 10px rgba(10,26,38,.18)}
 .bhp-kit-modal__note{margin:14px auto 0;max-width:44ch;font-size:.9rem;line-height:1.5;color:#243b4a}
-.bhp-kit-modal__link{color:#0a4d7a;font-weight:700}
+/*
+ * 1.19.404 - `.bhp-kit-modal__link` IS DELETED. There is no link in this
+ * panel, and leaving a style for one is an invitation to add one back.
+ */
+/*
+ * 1.19.404 - THERE IS ONE BUTTON IN THIS ROW NOW, AND THE ROW MACHINERY IS
+ * KEPT ANYWAY. `flex-wrap:wrap` plus the under-480 stack are 1.19.403's, and
+ * they are retained rather than simplified to a single centred button because
+ * a row that has only ever been tested with one child is a row that breaks the
+ * day a second approved control lands in it. It costs nothing today: one
+ * `flex:1 1 auto` child fills the row at every width.
+ *
+ * THE COST THAT 1.19.403 STATED IS NOW REPAID. Three stacked full-width
+ * buttons were about 168px of panel; one is about 64px. That is roughly 104px
+ * of reader given back on a phone, which on a 568px-tall handset is a fifth of
+ * the screen - and it is reader, which scrolls, rather than chrome, which does
+ * not.
+ *
+ * ⛔ SUPERSEDED, PRESERVED so the movement is visible: this comment previously
+ *    read *"UNDER 480 THE THREE BUTTONS STACK, FULL WIDTH ... in the row form
+ *    at 320 they measure 135 / 72 / 74 CSS px"*. That measurement was real and
+ *    is the reason the stack exists; there are simply no longer three buttons
+ *    to measure. Download and Print are gone under seal 1357.
+ */
 .bhp-kit-modal__actions{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;background:#fdfaf4;border-top:1px solid #e2dacd;flex:0 0 auto}
-.bhp-kit-modal__btn{flex:1 1 auto;min-height:44px;padding:10px 14px;border:1px solid #0a2a43;border-radius:8px;background:#fff;color:#0a2a43;font-size:.95rem;font-weight:700;line-height:1.2;text-align:center;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.bhp-kit-modal__btn{flex:1 1 auto;min-width:0;min-height:44px;padding:10px 14px;border:1px solid #0a2a43;border-radius:8px;background:#fff;color:#0a2a43;font-size:.95rem;font-weight:700;line-height:1.2;text-align:center;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+@media (max-width:479px){.bhp-kit-modal__actions{flex-direction:column;flex-wrap:nowrap}.bhp-kit-modal__btn{flex:0 0 auto;width:100%}}
 .bhp-kit-modal__btn--primary{background:#0a2a43;color:#fff}
 .bhp-kit-modal__btn--quiet{border-color:#b9ad99;color:#4a3f31}
 body.bhp-kit-modal-open{overflow:hidden}
@@ -650,37 +853,36 @@ body.bhp-kit-modal-open{overflow:hidden}
 
 	var doc = document;
 	var body = doc.body;
-	var frame = modal.querySelector('[data-bhp-kit-frame]');
-	var viewer = modal.querySelector('[data-bhp-kit-viewer]');
-	var fallback = modal.querySelector('[data-bhp-kit-fallback]');
 	var closer = modal.querySelector('.bhp-kit-modal__close');
-	var pdf = modal.getAttribute('data-bhp-kit-pdf') || '';
 	var opener = doc.activeElement;
 
 	/*
-	 * ⭐ FEATURE PROBE, NOT A USER-AGENT SNIFF. `navigator.pdfViewerEnabled`
-	 *    is the standard way to ask "will a framed PDF actually render", and
-	 *    it is exactly false on the browsers that show page one and refuse to
-	 *    scroll. Where the property is undefined the frame is KEPT: an older
-	 *    browser that would have coped is not demoted on a guess.
+	 * ⛔⛔ 1.19.404 · THERE IS NO READER SELECTION LOGIC IN THIS FILE ANY MORE,
+	 *     AND ITS ABSENCE IS THE FIX.
+	 *
+	 * ⭐ DELETED HERE: `frame`, `viewer`, `fallback` and `pdf` locals ·
+	 *    `forcedView()` · `usePdfFrame()` · the `navigator.pdfViewerEnabled`
+	 *    probe · the `window.bhpKitModalForceView` harness hook · the whole
+	 *    hide-one-show-the-other block · the Print handler and its
+	 *    `contentWindow.print()` / `window.open()` pair.
+	 *
+	 * ⚠️ WHY THE PROBE HAD TO GO RATHER THAN BE IMPROVED. It asked the browser
+	 *    "will a framed PDF render?", and iOS Safari answers TRUE and then
+	 *    paints page one, oversized, unscrollable - the founder's own iPhone,
+	 *    2026-09-07 21:19. A probe whose one authority lies to it is not a
+	 *    probe. ⛔ Do not re-add it with a user-agent test bolted on: the
+	 *    images are now the design on every device, not a fallback for some.
+	 *
+	 * ⛔ NOTHING IN THIS SCRIPT READS OR HOLDS THE PDF URL. There is no
+	 *    `data-bhp-kit-pdf` attribute to read.
 	 */
-	function usePdfFrame() {
-		if (typeof navigator.pdfViewerEnabled === 'boolean') {
-			return navigator.pdfViewerEnabled;
-		}
-		return true;
-	}
-
-	if (!usePdfFrame()) {
-		if (viewer) { viewer.hidden = true; }
-		if (frame) { frame.removeAttribute('src'); }
-		if (fallback) { fallback.hidden = false; }
-	}
 
 	body.classList.add('bhp-kit-modal-open');
 
-	/* Focusable elements inside the dialog, recomputed on each Tab so a
-	   hidden fallback never traps focus in something invisible. */
+	/* Focusable elements inside the dialog, recomputed on each Tab. The
+	   `iframe` selector is kept in the list deliberately: it costs nothing,
+	   and if a future approved control ever reintroduces an embedded document
+	   the trap keeps working rather than silently leaking focus past it. */
 	function focusables() {
 		var all = modal.querySelectorAll('a[href], button:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])');
 		var out = [];
@@ -752,31 +954,6 @@ body.bhp-kit-modal-open{overflow:hidden}
 		closers[c].addEventListener('click', function (event) {
 			event.preventDefault();
 			close();
-		});
-	}
-
-	/*
-	 * ⭐ PRINT PRINTS THE KIT, NOT THE PAGE BEHIND IT. The PDF is same-origin,
-	 *    so the frame's own `print()` is reachable and gives the visitor the
-	 *    eleven pages rather than a screenshot of a dialog. Where that throws
-	 *    — a cross-origin CDN in some future, a viewer that exposes no window
-	 *    — the PDF opens in a new tab, where the browser's own print works.
-	 */
-	var printBtn = modal.querySelector('[data-bhp-kit-print]');
-	if (printBtn) {
-		printBtn.addEventListener('click', function () {
-			var printed = false;
-			try {
-				if (frame && !viewer.hidden && frame.contentWindow) {
-					frame.contentWindow.focus();
-					frame.contentWindow.print();
-					printed = true;
-				}
-			} catch (e) { printed = false; }
-
-			if (!printed && pdf) {
-				window.open(pdf, '_blank', 'noopener');
-			}
 		});
 	}
 

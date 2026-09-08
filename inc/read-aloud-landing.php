@@ -499,6 +499,25 @@ function bhp_read_aloud_offer_blocked_by_visit($key) {
     }
 
     try {
+        /*
+         * ⭐⭐ 1.19.407 (`CYCLE179-LD-BUILD-407-STOCK-GATE`) — THE THIRD
+         *     CLAUSE, AND IT IS THE REASON THE STOCK GATE NEEDED ITS OWN
+         *     PREDICATE INSTEAD OF BEING INLINED INTO `is_offerable()`.
+         *
+         * ⛔ THIS FUNCTION'S WHOLE JOB IS TO TELL TWO REFUSALS APART, and from
+         *    plugin 1.8.89 `!offerable` carries a THIRD cause: out of stock.
+         *    Link mode is the remedy for a SESSION refusal — it routes a
+         *    visit-flagged parent to a page where the pair can be bought and
+         *    mailed. There is no equivalent route around a book the printer
+         *    cannot make, so an out-of-stock offer must fall through to
+         *    SILENCE, which is what the caller does with `false`.
+         *
+         * ✅ FAILS OPEN TO 1.19.406 BEHAVIOUR on a pre-1.8.89 plugin: the
+         *    function is absent, the clause is true, nothing changes.
+         */
+        if (function_exists('bhp_offer_is_in_stock') && !bhp_offer_is_in_stock($key)) {
+            return false;
+        }
         return bhp_offer_is_purchasable($key) && !bhp_offer_is_offerable($key);
     } catch (Throwable $e) {
         return false; // FAIL CLOSED: an unexplained refusal is not advertised.

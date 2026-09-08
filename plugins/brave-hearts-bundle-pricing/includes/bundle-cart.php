@@ -561,8 +561,30 @@ function bhp_audience_coupon_cart_qualifies( $cart ) {
 		}
 	}
 
-	$pb_complete = ( 3 === $eval['paperback_tier'] ) && ! $eval['has_hardcover'];
-	$hc_complete = ( 3 === $eval['hardcover_tier'] ) && ! $eval['has_paperback'];
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.8.87 — REPOINTED AT `*_titles_tier`, WHICH IS WHAT THIS LINE
+	 *     ALWAYS MEANT. ⛔ THE COUPON'S SCOPE IS DELIBERATELY UNCHANGED.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ `paperback_tier` USED TO BE A DISTINCT-TITLE TIER AND IS NOW A BOOK
+	 *    COUNT (founder seal 1359, "If they buy any two books they should get
+	 *    the discount - doesnt matter"). Left reading the old key, this line
+	 *    would have started accepting a Complete-Collection audience coupon on
+	 *    a cart holding THREE COPIES OF ONE TITLE.
+	 *
+	 * ⛔ THAT WOULD HAVE BEEN A COUPON-SCOPE CHANGE NOBODY RULED. Seal 1359 is
+	 *    about the multi-buy DISCOUNT. An audience coupon is a separate,
+	 *    named, Collection-only instrument with its own approval history, and
+	 *    widening it by side effect is exactly the class of silent drift the
+	 *    `has_unrelated` guards in this file exist to prevent.
+	 *
+	 * ⚠️ REPORTED, NOT DECIDED. Whether an audience coupon should also honour
+	 *    the count rule is an open founder question, raised in this build's
+	 *    report. It is HELD at three distinct adventures until he answers.
+	 */
+	$pb_complete = ( 3 === $eval['paperback_titles_tier'] ) && ! $eval['has_hardcover'];
+	$hc_complete = ( 3 === $eval['hardcover_titles_tier'] ) && ! $eval['has_paperback'];
 
 	return $pb_complete || $hc_complete;
 }
@@ -577,7 +599,10 @@ function bhp_audience_coupon_qualifying_format( $cart ) {
 		return null;
 	}
 	$eval = bhp_bundle_evaluate_cart( $cart );
-	return ( 3 === $eval['paperback_tier'] ) ? 'paperback' : 'hardcover';
+	// 1.8.87: reads `paperback_titles_tier` for the same reason the qualifier
+	// above does. The two must answer the same question or the coupon would
+	// be accepted for one format and priced against the other.
+	return ( 3 === $eval['paperback_titles_tier'] ) ? 'paperback' : 'hardcover';
 }
 
 /**
@@ -838,6 +863,13 @@ function bhp_bundle_apply_discount_fees( $cart ) {
 	 *    own progress copy goes QUIET, because
 	 *    `bhp_bundle_print_progress_messages()` DOES check `has_unrelated`.
 	 *    Less discoverable, not more.
+	 *
+	 * ⛔ 1.8.88 FOOTNOTE, ADDED SO THIS PARAGRAPH IS NOT READ AS CURRENT. The
+	 *    function named above was REMOVED at 1.8.88 (see the strike further
+	 *    down this file). ⭐ THE DEFECT NARRATIVE IS UNCHANGED AND IS NOT
+	 *    REWRITTEN — it is a true account of what happened at 1.8.66, and the
+	 *    `has_unrelated` behaviour it describes now lives in the drawer's own
+	 *    `hasUnrelated`, which mirrors the same rule. Only the name is stale.
 	 *
 	 * ⭐⭐ WHY IT COULD NOT WAIT: no code change was required to trigger it.
 	 *    CREATING A PRODUCT RECORD WAS SUFFICIENT. The colouring line made
@@ -1154,6 +1186,34 @@ function bhp_bundle_shipping_amount( array $eval ) {
 		return $eval['physical_book_count'] <= 2 ? 3.99 : 4.99;
 	}
 
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.8.87 — THIS LOOP IS BYTE-UNCHANGED AND ITS ANSWER MOVED ANYWAY.
+	 *     FOUNDER SEAL 1359. That is the point of keying the tier once, in
+	 *     `bhp_bundle_evaluate_cart()`, rather than at each reader.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ `$eval[$format.'_tier']` IS NOW A BOOK COUNT, duplicates included, so
+	 *    a cart of 2x Mariana paperback reaches tier 2 and returns
+	 *    `bhp_bundle_rules('paperback')[2]['shipping']` = $2.99. ⛔ BEFORE
+	 *    1.8.87 the same cart read tier 0 and fell through to
+	 *    `bhp_bundle_single_shipping('paperback')` = $1.99, which was the
+	 *    "pre-existing quirk of a table keyed on DISTINCT titles" already
+	 *    named in branch C's flagged reading 3 above. ⭐ THE QUIRK IS GONE, AND
+	 *    IT IS GONE IN THE DIRECTION BRANCH C ALREADY WENT: two printed books
+	 *    cost two books of postage.
+	 *
+	 * ⚠️⚠️ IT IS A REAL COMMERCIAL MOVEMENT AND IS REPORTED AS ONE, NOT AS A
+	 *    CONSEQUENCE. A shopper buying two copies of one paperback pays $1.00
+	 *    more shipping than before ($1.99 -> $2.99) and receives $1.99 off the
+	 *    books, so the order is $0.99 better for them and the fulfilment cost
+	 *    is covered rather than absorbed. Both halves of the ruling land on the
+	 *    same cart, which is why they ship together.
+	 *
+	 * ⛔ NO FIGURE IN `bhp_bundle_rules()` IS TOUCHED and no WooCommerce zone,
+	 *    method or setting is touched on any environment. Only which carts
+	 *    reach which existing row.
+	 */
 	foreach ( array( 'paperback', 'hardcover' ) as $format ) {
 		if ( ! $eval[ 'has_' . $format ] ) {
 			continue;
@@ -1169,120 +1229,107 @@ function bhp_bundle_shipping_amount( array $eval ) {
 }
 
 /**
- * Bundle progress messaging on the cart and checkout pages. Plain
- * informational text only — no percentages, no popups, never blocks
- * checkout (Phase 8).
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔⛔ REMOVED AT PLUGIN 1.8.88, 2026-09-08 — THE CLASSIC-HOOK CART SURFACE.
+ *      `CYCLE179-LD-PLUGIN-1.8.88`, seal 1411, on `commerce-cx`'s 1.19.406
+ *      handoff. THIS IS A DELETION AND IS RECORDED AS ONE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHAT STOOD HERE, AND ITS SUPERSEDED REGISTRATIONS, PRESERVED AT THE LINE
+ *    RATHER THAN DELETED WITHOUT TRACE:
+ *
+ *      ~~/**
+ *        * Bundle progress messaging on the cart and checkout pages. Plain
+ *        * informational text only — no percentages, no popups, never blocks
+ *        * checkout (Phase 8).
+ *        *\/
+ *        add_action( 'woocommerce_before_cart_table', 'bhp_bundle_print_progress_messages' );
+ *        add_action( 'woocommerce_checkout_before_order_review', 'bhp_bundle_print_progress_messages' );
+ *        function bhp_bundle_print_progress_messages() { ... }~~
+ *
+ *    ⭐ THE FULL 206-LINE BODY IS PRESERVED VERBATIM, not summarised, at
+ *    `Business OS\ANDREW-REVIEW\2026-09-08\PLUGIN-1.8.88\06-REMOVED-CLASSIC-HOOK.php.txt`
+ *    (taken from the 1.8.87 file, md5 `fb1e031975b9ce2baaf56c4941ae5246`), so
+ *    the deletion is auditable and reversible without a git checkout.
+ *
+ * ⛔⛔ WHY IT WENT: BOTH HOOKS ARE CLASSIC-SHORTCODE HOOKS AND THIS STORE HAS
+ *    NO CLASSIC CART. `woocommerce_before_cart_table` and
+ *    `woocommerce_checkout_before_order_review` fire from the
+ *    `[woocommerce_cart]` / `[woocommerce_checkout]` shortcode templates. The
+ *    live cart (page 7) and checkout (page 8) are WooCommerce BLOCKS —
+ *    `wp:woocommerce/cart` and `wp:woocommerce/checkout`, with ZERO shortcode
+ *    occurrences in either page's content. The function has therefore printed
+ *    nothing to a customer on this store for as long as the Blocks pages have
+ *    been the cart.
+ *
+ * ⭐⭐ VERIFIED LIVE BEFORE REMOVAL, NOT INFERRED FROM THE HOOK NAMES — and
+ *    deliberately verified while the function was STILL PRESENT and STILL
+ *    HOOKED, at plugin 1.8.87, which is the only order in which the claim can
+ *    be proved. staging2, real browser, 2026-09-08, cart holding
+ *    `2x Mariana PB + 1x Everest PB`:
+ *
+ *      /cart/      -> document.querySelectorAll('.bhp-bundle-message').length === 0
+ *      /checkout/  -> document.querySelectorAll('.bhp-bundle-message').length === 0
+ *                     and .bhp-bundle-message--freeship === 0
+ *
+ *    Page content read over WP-CLI in the same pass:
+ *      page 7 -> wp:woocommerce/cart,      0 x [woocommerce_cart]
+ *      page 8 -> wp:woocommerce/checkout,  0 x [woocommerce_checkout]
+ *
+ * ⭐ THE DRAWER IS THE SURFACE, AND IT CARRIES THE COPY. Every string this
+ *    function held is localized to `bundle-drawer.js` through
+ *    `bhp_bundle_drawer_data()` and renders there:
+ *
+ *      'Add another paperback and save $1.99.'            -> progressCopy[pb][1]
+ *      'Add another hardcover and save $2.99.'            -> progressCopy[hc][1]
+ *      'You saved $1.99 with your 2-book paperback set.'  -> savedCopy[pb]
+ *      'You saved $2.99 with your 2-book hardcover set.'  -> savedCopy[hc]
+ *      'Complete the hardcover collection and save $4.98 total.'
+ *                                                         -> progressCopy[hc][2]
+ *      $freeship['nudge'] / $freeship['earned']           -> freeShipCopy,
+ *                       both from the same bhp_bundle_freeship_copy() source
+ *
+ * ⚠️⚠️ EXACTLY ONE STRING WAS UNIQUE TO THIS PATH, AND IT IS NAMED RATHER THAN
+ *    GLOSSED AS "no copy lost":
+ *
+ *      'Add the final adventure to complete the series and save $3.98 total.'
+ *
+ *    The drawer carries the same claim in the approved variant that has always
+ *    been ITS string:
+ *
+ *      'Add the final adventure to complete the collection and save $3.98 total.'
+ *
+ *    ⭐ ONE WORD DIFFERS — "series" vs "collection" — and the two are two
+ *    renderings of one approved sentence, not two claims. The drawer's variant
+ *    is the one a customer has actually been reading, because the classic one
+ *    has been rendering to nobody. ⛔ NOTHING IS REWRITTEN TO CLOSE THE GAP:
+ *    the drawer string is byte-untouched by this build, and no new copy is
+ *    authored here. The paperback "series" wording is simply no longer carried
+ *    by any live surface, which is the accurate statement and is reported to
+ *    Andrew as such rather than being quietly equated.
+ *
+ * ⭐ THE DRAWER ALSO CARRIES ONE STRING THIS PATH NEVER HAD —
+ *    progressCopy[fmt][3], "Best Value - Complete <Format> Collection". The
+ *    surfaces were never equal; the drawer was always the richer one.
+ *
+ * ⛔ NO OTHER CALLER. Grepped across the whole plugin and theme: the only
+ *    remaining references to the name are these two hook lines and comments in
+ *    `bundle-drawer.js` and `bundle-data.php` that cite it as the PHP
+ *    counterpart. Those citations are updated in the same build rather than
+ *    left pointing at a function that no longer exists.
+ *
+ * ⭐ `bhp_bundle_freeship_copy()`, `bhp_bundle_evaluate_cart()` and
+ *    `bhp_bundle_distinct_titles_in_cart()` ARE NOT REMOVED. All three have
+ *    other live readers; only this function and its two `add_action` calls go.
+ *
+ * ⚠️ A CONSEQUENCE WORTH STATING: this path carried the SAME free-shipping
+ *    trigger defect 1.8.88 fixes in the drawer
+ *    (`2 === (int) $eval['distinct_adventures']`, with no book-count gate).
+ *    Removing it removes that copy of the defect rather than fixing it twice.
+ *    ⛔ IF THIS SURFACE IS EVER REVIVED FOR A CLASSIC CART, IT MUST BE REVIVED
+ *    WITH THE 1.8.88 GATE:
+ *    `$eval['physical_book_count'] < bhp_bundle_freeship_book_threshold()`.
  */
-add_action( 'woocommerce_before_cart_table', 'bhp_bundle_print_progress_messages' );
-add_action( 'woocommerce_checkout_before_order_review', 'bhp_bundle_print_progress_messages' );
-function bhp_bundle_print_progress_messages() {
-	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-		return;
-	}
-
-	// Mixed-format messaging rule (Priority 7): a partial 2-book progress
-	// message is suppressed once the opposite format is present (matches
-	// the discount-fee suppression above) -- a mixed cart is never called
-	// a "bundle" for a partial 2-book offer. A complete 3-book set message
-	// always shows regardless of mixing, since that discount always
-	// applies once earned.
-	$eval     = bhp_bundle_evaluate_cart( WC()->cart );
-	$distinct = bhp_bundle_distinct_titles_in_cart( WC()->cart );
-
-	/*
-	 * ═══════════════════════════════════════════════════════════════════
-	 * ⭐ 1.8.24 (2026-08-05) — THE FREE-SHIPPING LINE NOW LEADS. CYCLE144-LD-14.
-	 * ═══════════════════════════════════════════════════════════════════
-	 *
-	 * Andrew Signore, 2026-08-05: the two-book state was "supposed to say
-	 * the Free Shipping info". In 1.8.23 this block ran at the END of the
-	 * function, so the shipping fact arrived under the discount sentences.
-	 * It is now printed FIRST, and the count===2 per-format progress line is
-	 * suppressed while it shows, because the two make the identical ask.
-	 *
-	 * ⛔ EVERY GUARD FROM 1.8.23 IS CARRIED OVER UNCHANGED, and the
-	 *    `has_unrelated` one is the load-bearing one: with an unknown product
-	 *    in the cart the shipping override does not run at all, so the
-	 *    customer must not be shown a promise the checkout would break. The
-	 *    allowlisted activity-book add-on is NOT an unrelated item.
-	 *
-	 * ⛔ MOVING IT CHANGED THE ORDER, NOT THE CONDITIONS. Same
-	 *    `distinct_adventures` thresholds, same copy function, same
-	 *    suppression. This is the PHP counterpart of the `unshift` in
-	 *    bundle-drawer.js's computeDrawerMeta(); the two surfaces are kept
-	 *    identical deliberately.
-	 */
-	$freeship        = bhp_bundle_freeship_copy();
-	$freeship_leads  = empty( $eval['has_unrelated'] ) && 2 === (int) $eval['distinct_adventures'];
-
-	if ( empty( $eval['has_unrelated'] ) ) {
-		if ( $freeship_leads ) {
-			printf( '<p class="bhp-bundle-message bhp-bundle-message--freeship">%s</p>', esc_html( $freeship['nudge'] ) );
-		} elseif ( $eval['distinct_adventures'] >= 3 ) {
-			printf( '<p class="bhp-bundle-message bhp-bundle-message--freeship">%s</p>', esc_html( $freeship['earned'] ) );
-		}
-	}
-
-	$copy     = array(
-		'paperback' => array(
-			1 => 'Add another paperback and save $1.99.',
-			2 => 'You saved $1.99 with your 2-book paperback set. Add the final adventure to complete the series and save $3.98 total.',
-		),
-		'hardcover' => array(
-			1 => 'Add another hardcover and save $2.99.',
-			2 => 'You saved $2.99 with your 2-book hardcover set. Complete the hardcover collection and save $4.98 total.',
-		),
-	);
-
-	foreach ( array( 'paperback', 'hardcover' ) as $format ) {
-		$count = count( $distinct[ $format ] );
-		if ( 2 === $count && $eval['is_mixed_format'] ) {
-			continue; // Partial 2-book progress message suppressed once mixed.
-		}
-		/*
-		 * ⛔ 1.8.24 DELIBERATELY DOES **NOT** SUPPRESS THE count===2 LINE ON
-		 *    THIS SURFACE, even though bundle-drawer.js does. The asymmetry
-		 *    is intentional and this note exists so it is not "tidied up".
-		 *
-		 *    In the drawer the two facts are TWO strings — "You saved $1.99
-		 *    with your 2-book paperback set." and "Add the final adventure to
-		 *    complete the collection and save $3.98 total." — so the ask can
-		 *    be dropped while the report of money already saved survives.
-		 *    Here they are ONE approved string carrying both. Suppressing it
-		 *    would silently delete a true statement about the customer's
-		 *    money in order to remove a duplicate ask, and rewriting it would
-		 *    be editing approved copy. Leading with the shipping line, which
-		 *    is what Andrew asked for, is achieved above without either.
-		 */
-		if ( isset( $copy[ $format ][ $count ] ) ) {
-			printf(
-				'<p class="bhp-bundle-message">%s</p>',
-				esc_html( $copy[ $format ][ $count ] )
-			);
-		}
-		// 0 or 3 distinct titles: nothing to prompt — either no books of
-		// that format are in the cart yet, or the full-set discount is
-		// already applied and shown as its own Bundle Savings fee line.
-	}
-
-	/*
-	 * ⭐ 1.8.24 — THE 1.8.23 FREE-SHIPPING BLOCK USED TO END THIS FUNCTION.
-	 *
-	 * It has MOVED to the top, above the per-format loop, so the shipping
-	 * fact is the first line the customer reads (Andrew Signore, 2026-08-05).
-	 * Its guards, thresholds and strings are carried over character for
-	 * character — read them there, including the load-bearing
-	 * `has_unrelated` suppression and the reason the trigger is distinct
-	 * ADVENTURES rather than format or book count.
-	 *
-	 * ⛔ THE OLD BLOCK'S EARLY `return` ON `has_unrelated` WENT WITH IT, AND
-	 *    THAT MATTERED. It sat AFTER the per-format loop, so it never
-	 *    suppressed a discount message — it only skipped the shipping lines.
-	 *    The replacement wraps the shipping lines in the same condition
-	 *    instead of returning, which is the same behaviour without leaving a
-	 *    `return` in the middle of a function that now has code after it.
-	 */
-}
 
 /**
  * Admin UI for the audience-coupon flag (added 1.8.8).

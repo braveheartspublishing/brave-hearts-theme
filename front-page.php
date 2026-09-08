@@ -18,26 +18,67 @@ $page_id = get_queried_object_id();
 
 // Load the live book collection once for the hero preview, destinations, and book grid.
 $featured_books = bhp_get_homepage_books(-1);
-$find_home_book = static function ($destination) use ($featured_books) {
+/*
+ * ⛔⛔ CORRECTED 2026-09-08, `CYCLE179-LD-BUILD-408` (CX-1). BOTH LOOKUPS ON
+ *    THIS PAGE NOW IDENTIFY A BOOK BY `bhp_book_registry()` IDENTITY. The
+ *    superseded body is preserved STRUCK, AT THE LINE, because the bug is
+ *    invisible unless you can see what it used to say:
+ *
+ *    ~~foreach ($featured_books as $book) {
+ *        if (stripos($book['title'], $destination) !== false) { ... }
+ *      }~~
+ *
+ * ⚠️ THE DEFECT, OBSERVED ON PRODUCTION by `CYCLE179-CX-PROD-AUDIT-407`:
+ *    the colouring book's title CONTAINS "Mariana Trench", so a substring
+ *    match could not tell it apart from the chapter book. In the sibling
+ *    `$find_formats_for_destination()` below that mis-selection reached the
+ *    customer -- the hub card advertised THE MARIANA TRENCH at "From $12.99",
+ *    which is the COLOURING BOOK's price. See `bhp_book_key_product_ids()`
+ *    in `inc/book-formats.php` for the full root cause.
+ *
+ * ⛔ THE ARGUMENT IS NOW A REGISTRY KEY (`mariana_trench`), NOT A DISPLAY
+ *    STRING ("Mariana Trench"). That is the point: a key cannot be
+ *    accidentally satisfied by a different product that happens to be named
+ *    after the same place. Every call site below was updated with it.
+ *
+ * ⭐ NO PRODUCT ID IS TYPED ON THIS PAGE. The IDs come from the registry,
+ *    which differs per environment for the colouring book (618 production /
+ *    4065 staging) and is exactly why a hardcoded skip-list was refused.
+ *
+ * ⭐ THE PAPERBACK PREFERENCE IS UNCHANGED IN BEHAVIOUR, only in mechanism:
+ *    it was "the first title-matching book that looks like a paperback, else
+ *    the first title-matching book at all"; it is now "the registry's
+ *    `pb_product`, else its `hc_product`". Same intent, stated by the
+ *    registry instead of guessed from a string.
+ *
+ * ⛔ FAIL BEHAVIOUR IS DELIBERATE AND VISIBLE. An unknown key, or a registry
+ *    product absent from `bhp_get_homepage_books()`, yields `[]` -- the card
+ *    then falls back to its existing `home_url('/books/')` link and renders
+ *    NO price cue. It does not silently substitute a different book, which
+ *    is the failure mode this whole change exists to remove.
+ */
+$find_home_book = static function ($book_key) use ($featured_books) {
+    $ids = function_exists('bhp_book_key_product_ids') ? bhp_book_key_product_ids($book_key) : [];
+    if (!$ids) {
+        return [];
+    }
     $fallback = [];
     foreach ($featured_books as $book) {
-        if (stripos($book['title'], $destination) !== false) {
-            $formats = is_array($book['formats'] ?? null) ? $book['formats'] : [];
-            if (in_array('Paperback', $formats, true) || stripos($book['title'], 'paperback') !== false) {
-                return $book;
-            }
-            if (!$fallback) {
-                $fallback = $book;
-            }
+        $product_id = (int) ($book['product_id'] ?? 0);
+        if ($product_id && $product_id === $ids['paperback']) {
+            return $book;
+        }
+        if ($product_id && $product_id === $ids['hardcover'] && !$fallback) {
+            $fallback = $book;
         }
     }
     return $fallback;
 };
 
 $hero_preview_books = array_values(array_filter([
-    $find_home_book('Mariana Trench'),
-    $find_home_book('Mount Everest'),
-    $find_home_book('Amazon'),
+    $find_home_book('mariana_trench'),
+    $find_home_book('mount_everest'),
+    $find_home_book('amazon_rainforest'),
 ], static function ($book) {
     return !empty($book['image_id']) && !empty($book['url']) && !empty($book['title']);
 }));
@@ -67,9 +108,9 @@ foreach ($featured_books as $book) {
  * byte-identical -- a move, not a rewrite, and exactly one copy.
  */
 // 4. Explore the World: destination gateways remain filterable as the series grows.
-$mariana_book = $find_home_book('Mariana Trench');
-$everest_book = $find_home_book('Mount Everest');
-$amazon_book = $find_home_book('Amazon');
+$mariana_book = $find_home_book('mariana_trench');
+$everest_book = $find_home_book('mount_everest');
+$amazon_book = $find_home_book('amazon_rainforest');
 
 // Conversion correction (2026-07-06): these discovery cards now also
 // function as commerce entries -- surface age range and both real,
@@ -78,13 +119,46 @@ $amazon_book = $find_home_book('Amazon');
 // separate WooCommerce products (paperback + hardcover, never a single
 // variable product with both), so both must be looked up by title
 // rather than assumed from one $find_home_book() result.
-$find_formats_for_destination = static function ($destination) use ($featured_books) {
+$find_formats_for_destination = static function ($book_key) use ($featured_books) {
+    /*
+     * ⛔ THIS IS THE FUNCTION THAT SHIPPED THE WRONG PRICE. Superseded body
+     *    preserved struck, at the line:
+     *
+     *    ~~if (stripos($book['title'], $destination) === false) { continue; }
+     *      $label = stripos($book['title'], 'hardcover') !== false
+     *             ? __('Hardcover') : __('Paperback');~~
+     *
+     * ⚠️ TWO SEPARATE SUBSTRING FAULTS, and BOTH are gone:
+     *      1. SELECTION -- "Mariana Trench" matched the colouring book too.
+     *      2. LABELLING -- the format was inferred from whether the word
+     *         "hardcover" appeared in the title, so the colouring book was
+     *         labelled `Paperback` and OVERWROTE the real paperback entry in
+     *         this map. `bhp_get_home_price_cue()` then published the lowest
+     *         value it was handed: the colouring book's $12.99.
+     *
+     * ⭐ THE FORMAT ROLE NOW COMES FROM THE REGISTRY FIELD THE ID WAS FOUND
+     *    IN (`pb_product` -> Paperback, `hc_product` -> Hardcover), so the
+     *    label is asserted by the registry rather than read off a title. A
+     *    book with an unusual title cannot be mislabelled, and a non-registry
+     *    product cannot enter this map at all.
+     *
+     * ⭐ THE CUE STILL TYPES NO PRICE. Values remain the LIVE
+     *    `$book['price']` already fetched for these cards, exactly as before.
+     */
+    $ids = function_exists('bhp_book_key_product_ids') ? bhp_book_key_product_ids($book_key) : [];
+    if (!$ids) {
+        return [];
+    }
     $formats = [];
     foreach ($featured_books as $book) {
-        if (stripos($book['title'], $destination) === false) {
+        $product_id = (int) ($book['product_id'] ?? 0);
+        if ($product_id && $product_id === $ids['paperback']) {
+            $label = __('Paperback', 'brave-hearts');
+        } elseif ($product_id && $product_id === $ids['hardcover']) {
+            $label = __('Hardcover', 'brave-hearts');
+        } else {
             continue;
         }
-        $label = stripos($book['title'], 'hardcover') !== false ? __('Hardcover', 'brave-hearts') : __('Paperback', 'brave-hearts');
         if (!empty($book['price'])) {
             $formats[$label] = $book['price'];
         }
@@ -123,11 +197,11 @@ $find_formats_for_destination = static function ($destination) use ($featured_bo
  * Recorded for Andrew's decision as CYCLE143-LD-162.
  */
 $home_price_cues_on = bhp_home_price_cues_enabled();
-$home_price_cue = static function ($destination) use ($home_price_cues_on, $find_formats_for_destination) {
+$home_price_cue = static function ($book_key) use ($home_price_cues_on, $find_formats_for_destination) {
     if (!$home_price_cues_on) {
         return '';
     }
-    return bhp_get_home_price_cue($find_formats_for_destination($destination));
+    return bhp_get_home_price_cue($find_formats_for_destination($book_key));
 };
 
 $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
@@ -150,7 +224,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
            list is gone from this discovery module. Prices still live on
            /books/, on every product page and on /complete-collection/. */
         'formats_info' => [],
-        'price_cue' => $home_price_cue('Mariana Trench'),
+        'price_cue' => $home_price_cue('mariana_trench'),
         'image_size'   => 'woocommerce_single', /* F7: bhp-book-card does not exist for attachments 16/19 -- see the hero note below */
         'image_sizes_attr' => '125px', /* CYCLE144-LD-206 (2026-08-05): MEASURED, not derived.
                                        `190px` was the CSS CAP, not the rendered width -- and it is the cap on
@@ -182,7 +256,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
            list is gone from this discovery module. Prices still live on
            /books/, on every product page and on /complete-collection/. */
         'formats_info' => [],
-        'price_cue' => $home_price_cue('Mount Everest'),
+        'price_cue' => $home_price_cue('mount_everest'),
         'image_size'   => 'woocommerce_single', /* F7: bhp-book-card does not exist for attachments 16/19 -- see the hero note below */
         'image_sizes_attr' => '125px', /* CYCLE144-LD-206 (2026-08-05): MEASURED, not derived.
                                        `190px` was the CSS CAP, not the rendered width -- and it is the cap on
@@ -210,7 +284,7 @@ $adventure_cards = apply_filters('bhp_homepage_adventure_cards', [
            list is gone from this discovery module. Prices still live on
            /books/, on every product page and on /complete-collection/. */
         'formats_info' => [],
-        'price_cue' => $home_price_cue('Amazon'),
+        'price_cue' => $home_price_cue('amazon_rainforest'),
         'image_size'   => 'woocommerce_single', /* F7: bhp-book-card does not exist for attachments 16/19 -- see the hero note below */
         'image_sizes_attr' => '125px', /* CYCLE144-LD-206 (2026-08-05): MEASURED, not derived.
                                        `190px` was the CSS CAP, not the rendered width -- and it is the cap on

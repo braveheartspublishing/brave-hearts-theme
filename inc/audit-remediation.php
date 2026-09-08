@@ -569,9 +569,34 @@ function bhp_handle_contact_submit() {
  * (the pre-BH-08 state), which is cosmetically imperfect and commercially
  * safe — the failure mode of this function must never again be "wallet hidden".
  */
+/*
+ * ⭐⭐ 1.19.405 (CYCLE179-CX-BUILD-405, item 2) — BH-08 NOW ALSO RUNS ON
+ *     /cart/. THIS IS A SCOPE EXTENSION, NOT NEW LOGIC.
+ *
+ * The cart page prints the SAME `.wc-block-components-express-payment` block
+ * as checkout, from the same Blocks package, and it had the same defect: on a
+ * device with no wallet, an empty bordered frame and its "or continue below"
+ * rule reserved vertical space above the fold on a phone. This function
+ * already solved that. It was simply gated to `is_checkout()`.
+ *
+ * ⛔ NOTHING BELOW THIS LINE CHANGED except the gate and the observer root.
+ *    The grace window, the one-way `everHadWallet` latch, the clip-don't-hide
+ *    decision, the rAF coalescing and the stale-`display:none` repair all
+ *    carry over exactly as written, and every reason recorded in the docblock
+ *    above still applies verbatim on the cart.
+ *    ⚠ READ THAT DOCBLOCK BEFORE TOUCHING THIS. A naive version of this
+ *      function wedged headless Chrome twice. The coalescing is why.
+ *
+ * ⭐ `is_cart()` IS CALLED THROUGH ITS OWN `function_exists()` CHECK rather
+ *    than assumed to exist because `is_checkout()` does. Both are WooCommerce
+ *    conditionals; a theme file that runs with WooCommerce deactivated must
+ *    fatal on neither.
+ */
 add_action( 'wp_enqueue_scripts', 'bhp_bh08_tidy_empty_express', 40 );
 function bhp_bh08_tidy_empty_express() {
-	if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+	$bhp_bh08_on_checkout = function_exists( 'is_checkout' ) && is_checkout();
+	$bhp_bh08_on_cart     = function_exists( 'is_cart' ) && is_cart();
+	if ( ! $bhp_bh08_on_checkout && ! $bhp_bh08_on_cart ) {
 		return;
 	}
 	wp_register_style( 'bhp-express-tidy', false, array(), null );
@@ -694,7 +719,13 @@ function bhp_bh08_tidy_empty_express() {
 	function start(){
 		tidy();
 		var t = 0, iv = window.setInterval(function(){ tidy(); if (++t >= 40) { window.clearInterval(iv); } }, 400);
-		var root = document.querySelector('.wp-block-woocommerce-checkout, .wc-block-checkout') || document.body;
+		// 1.19.405: the cart block roots are listed FIRST-CLASS alongside the
+		// checkout ones. Without them the observer on /cart/ would fall through
+		// to document.body — which still works, but watches attribute mutations
+		// across the entire page instead of the one subtree that matters, and
+		// this callback forces layout. Scoping it is what keeps the cart as
+		// cheap as the checkout.
+		var root = document.querySelector('.wp-block-woocommerce-checkout, .wc-block-checkout, .wp-block-woocommerce-cart, .wc-block-cart') || document.body;
 		if (window.MutationObserver) {
 			// attributes:true is the fix for the deaf observer. Stripe sizes an
 			// EXISTING iframe by writing style/width/height — no childList

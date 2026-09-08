@@ -478,14 +478,30 @@ foreach (
 	);
 }
 
-/* ⭐ UPDATED 1.19.300 (`CYCLE167-LD-POPUP-TIME-ONLY`) ON FOUNDER CARRIER ITEM
- * 306 ("I think we keep our pop ups time only"). The FLOOR ITSELF is what this
- * assertion has always guarded and it is untouched at 15000 ms; only the array
- * key moved, because `simple` mode reads `delay` where `gated` mode read
- * `minDelay`. ⚠ Item 306 relayed via the Chief of Staff, not witnessed here. */
+/* ⭐⭐ UPDATED 1.19.405 (`CYCLE179-CX-BUILD-405`) ON SEAL 1359. Andrew Signore,
+ * 2026-09-07 21:30, VERBATIM: "If they buy any two books they should get the
+ * discount - doesnt matter. change the trigger if thats whats recommended" —
+ * recorded in seal 1359 as "HOME POPUP TRIGGER: change from the bare timer to
+ * scroll depth or exit intent as the audit recommends". Read FIRST-HAND in the
+ * canonical sidecar by the desk that made this edit; item 306 is 2026-08-27,
+ * eleven days earlier, and was itself only ever relayed.
+ *
+ * ⛔ SUPERSEDED ASSERTION, PRESERVED STRUCK:
+ *  > ~~2 === substr_count( $tpl, "'delay' => 15000" )~~
+ *  > ~~'item 306: the founder's 15-second timer for the AUTOMATIC open is
+ *  >   untouched'~~
+ *
+ * ⚠️ WHAT THIS FILE IS ACTUALLY ABOUT, WHICH IS WHY THE CHANGE IS SMALL. This
+ *    suite guards the KIT CTA behaviour; it read the parent popup's timer only
+ *    to prove the AUTOMATIC open was not disturbed by CTA work. That concern is
+ *    unchanged — it just has a new shape to check, because the automatic open
+ *    is no longer timed. The trigger's own correctness is owned by
+ *    `tests/test-popup-ab.php` and `test-cycle167-popup-time-only.php`; this
+ *    asserts only that the automatic open still EXISTS and is still automatic. */
 bhp_kit_assert(
-	2 === substr_count( $tpl, "'delay' => 15000" ),
-	'item 306: the founder\'s 15-second timer for the AUTOMATIC open is untouched',
+	0 === preg_match( "/'delay'\s*=>/", $tpl )
+		&& 2 === preg_match_all( "/'scrollPct'\s*=>\s*50\b/", $tpl ),
+	'seal 1359: the AUTOMATIC open is intact and is now engagement-triggered (scroll depth 50 on both devices, no timer)',
 	$failures
 );
 

@@ -1,5 +1,43 @@
 # Start Here
 
+> ## ⭐⭐ NEWEST, 2026-09-08 (06:07 MDT) - **PRODUCTION IS THEME `1.19.407` / BUNDLE PLUGIN `1.8.89`.** Every version number below this block is SUPERSEDED.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-08** | **`1.19.407`** | **`1.8.89`** |
+>
+> ⭐ **VERIFIED LIVE, not read from a document:** `https://braveheartspublishing.com/` returned
+> HTTP 200 serving `ver=1.19.407` when this correction was written, 2026-09-08 ~06:35 MDT.
+> The plugin version is **read from the release record (founder seal 1427)**, not independently
+> re-verified here - the distinction is stated rather than blurred.
+>
+> Production moved twice in under seven hours, and **both moves were undocumented in this file
+> until now**:
+>
+> 1. **2026-09-07 23:53 MDT** - theme `1.19.400` to **`1.19.404`**, carrying 1.19.401 to
+>    1.19.404 (the cart band, the adventure-kit panel hardening, the preview-only kit panel).
+>    Plugin unchanged at `1.8.86`. Founder seals 1396 (staging approval), 1397 (token), 1398
+>    (execution).
+> 2. **2026-09-08 06:07 MDT** - theme `1.19.404` to **`1.19.407`** and plugin `1.8.86` to
+>    **`1.8.89`**, carrying 1.19.405, 1.19.406, 1.19.407 and plugin 1.8.87, 1.8.88, 1.8.89.
+>    Founder seal 1427. **Andrew did not do his own staging look on this push.**
+>
+> **Artefacts that were built and never released on their own, and must not be deployed:**
+> `1.19.401` (superseded within the hour by `1.19.402`), `1.19.405` and `1.19.406` (their
+> contents reached production inside `1.19.407`), plugin `1.8.87` and `1.8.88` (inside
+> `1.8.89`), and the superseded `-r1` rebuild of the `1.19.407` ZIP (`6d1f702e...`). **The
+> 1.19.407 artefact of record is ZIP md5 `97360f03786d549de57bcc35d8b8134f`.**
+>
+> ⚠️ **Two things are live and unsettled, and they are not buried in the detail:**
+> the placeholder string `"Temporarily unavailable"` is on the coloring product page **without
+> the owner's wording approval**; and **product 618 (the Mariana coloring book) is out of stock
+> by founder ruling** until Bookvault links the title, which is what makes the whole coloring
+> stock gate visible at all.
+>
+> **Per-release detail:** `CHANGELOG.md`, the 2026-09-08 entry headed "PRODUCTION IS NOW THEME
+> `1.19.407`" and the 2026-09-07 (23:53 MDT) entry headed "PRODUCTION MOVED TO THEME
+> `1.19.404`". Both were written after the fact on 2026-09-08 to close a gap in that file.
+
 > ## ⭐⭐ READ THIS FIRST, 2026-09-03 · **PRODUCTION IS THEME `1.19.358` / BUNDLE PLUGIN `1.8.83`.** Every version number below this block is SUPERSEDED.
 >
 > | | Theme | Bundle plugin |

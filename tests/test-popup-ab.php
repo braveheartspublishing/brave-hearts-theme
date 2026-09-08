@@ -105,98 +105,146 @@ bhp_ab_assert('' !== $js, 'mariana-popup.js exists and is readable', $failures);
 bhp_ab_assert('' !== $px, 'class-bhp-meta-pixel.php exists and is readable', $failures);
 
 /* =====================================================================
- * 1. THE TRIGGER — TIME ONLY, AT FIFTEEN SECONDS
+ * 1. THE TRIGGER — ENGAGEMENT, NOT TIME: SCROLL DEPTH OR EXIT INTENT
  *
- * ⭐⭐ REWRITTEN 1.19.300 (`CYCLE167-LD-POPUP-TIME-ONLY`) ON FOUNDER CARRIER
- *     ITEM 306, 2026-08-27, VERBATIM: "We also dont have the awareness or
- *     market share - I think we keep our pop ups time only."
- *     ⚠ RELAYED via the Chief of Staff; not witnessed by this suite's author.
+ * ⭐⭐ REWRITTEN 1.19.405 (`CYCLE179-CX-BUILD-405`) ON SEAL 1359, ANDREW
+ *     SIGNORE, 2026-09-07 21:30, VERBATIM: "If they buy any two books they
+ *     should get the discount - doesnt matter. change the trigger if thats
+ *     whats recommended" — the recommendation being the production audit's
+ *     (CYCLE179-CX-PROD-AUDIT-400 fix 3), and seal 1359 recording it as
+ *     "HOME POPUP TRIGGER: change from the bare timer to scroll depth or exit
+ *     intent as the audit recommends".
+ *     ⭐ Seal 1359 was read FIRST-HAND in the canonical sidecar by the desk
+ *       that made this edit, and item 306's 2026-08-27 date was read in the
+ *       founder-verbatim file. Not relayed. The contrast with item 306's own
+ *       "RELAYED, carrier not found" caveat is the reason this edit was made.
  *
- * ⛔ THIS SECTION PREVIOUSLY ASSERTED THE OPPOSITE, and that is recorded
- *    rather than quietly overwritten. Until 1.19.299 it asserted mode `gated`
- *    plus two `scrollPct` thresholds, on Andrew's 2026-08-19 *"wait for
- *    engagement and time."* Item 306 supersedes that ruling by his own word,
- *    so the assertions invert with it. The suite is not being loosened — it
- *    asserts the NEW shape just as strictly, including the things that must
- *    now be ABSENT.
+ * ⛔ THIS SECTION PREVIOUSLY ASSERTED THE OPPOSITE — mode `simple` with a bare
+ *    15000ms timer on both devices, and NO scroll threshold — on founder
+ *    carrier item 306 (2026-08-27). Seal 1359 is eleven days later and names
+ *    this surface, so the assertions invert with it. Recorded, not quietly
+ *    overwritten. The old block is preserved verbatim in this release's
+ *    pre-edit backup directory (`popup-trigger-block.OLD.txt`).
+ *
+ * ⛔⛔ THIS SUITE NO LONGER COUNTS DELAY ASSIGNMENTS, AND THAT IS A DELIBERATE
+ *     CHANGE OF GUARD, NOT A RELAXATION.
+ *     Counting the two `delay` assignments was the correct guard for a promise
+ *     about a NUMBER ("make it 15 second delay") — it caught a silent edit of
+ *     the value. It is the WRONG guard for a promise about a SHAPE, because a
+ *     count of zero passes just as well when someone deletes the entire
+ *     trigger block. So every assertion below NAMES what must be true:
+ *     the mode, both thresholds, both exit flags, and the absence of any timer.
  * ================================================================== */
 
-/* Andrew's number, unchanged since "Make it 15 second delay". Only the KEY
- * moved: `simple` mode reads `delay`, `gated` mode read the dwell floor. The
- * count-exactly-twice convention is kept — it is what catches a silent edit. */
+/* ⭐ THE TRIGGER IS TIME-FREE. The engine arms its timer behind
+ * `typeof deviceConfig.delay === 'number'`, so an ABSENT delay key means no
+ * timer is ever set — provably time-free, not merely time-independent. This is
+ * the exact mirror of the assertion item 306 required, inverted. */
 bhp_ab_assert(
-    2 === substr_count($tpl, "'delay' => 15000"),
-    "item 306: the timer `'delay' => 15000` appears exactly twice, once per device (Andrew Signore: \"Make it 15 second delay\", his number unreduced)",
+    0 === preg_match("/'delay'\s*=>/", $tpl),
+    'seal 1359: NO `delay` key on either device — the bare timer is gone, and no timer is ever armed',
     $failures
 );
 
-// Nothing may open sooner by another number, under either key name.
+/* Nothing may reintroduce a timer under a neighbouring key name either. Note
+ * `exitMinDelay` is EXCLUDED by name: it is not a trigger, it is the dwell
+ * floor that holds exit intent back, and it opens nothing on its own. */
 bhp_ab_assert(
-    0 === preg_match("/'(?:min)?[Dd]elay'\s*=>\s*(?!15000)\d+/", $tpl),
-    'item 306: no other delay value exists anywhere in the template',
+    0 === preg_match("/'(?:fallbackDelay|minDelay)'\s*=>/", $tpl),
+    'seal 1359: no `fallbackDelay` and no `minDelay` — neither a gated dwell floor nor an ungated fallback timer is bolted back on',
     $failures
 );
 
 bhp_ab_assert(
     1 === preg_match("/'mode'\s*=>\s*'simple'/", $tpl) &&
     0 === preg_match("/'mode'\s*=>\s*'(gated|exit)'/", $tpl),
-    "item 306: trigger mode is 'simple' — time alone opens the popup",
+    "seal 1359: trigger mode stays 'simple' — the conditions RACE rather than gate each other, which is what \"whichever first\" means",
     $failures
 );
 
-/* ⛔⛔ THE ASSERTION THIS WHOLE SECTION NOW EXISTS FOR, AND IT IS THE EXACT
- *    MIRROR OF THE ONE IT REPLACED. A `scrollPct` key here would do two bad
- *    things at once: it would make the engine register a scroll listener, and
- *    in `simple` mode it would RACE the timer rather than gate it — so the
- *    popup could open EARLIER than fifteen seconds on a fast scroll. Item 306
- *    asks for time only, and time only means no scroll path in either
- *    direction.
+/* ⛔⛔ THE ASSERTION THIS SECTION NOW EXISTS FOR. Both devices must carry the
+ *    depth threshold, and it must be the audit's ~50%. Asserted per device
+ *    rather than by a bare count, so moving one device's number is caught.
  * ⚠ THE QUOTED KEY, NOT THE BARE WORD — the template's docblock discusses
  *   `scrollPct` at length in the preserved supersession note, and a
  *   bare-substring test would trip on the explanation of the rule it tests.
  *   That defect has been caught on this file's neighbours twice. */
 bhp_ab_assert(
-    0 === preg_match("/'scrollPct'\s*=>/", $tpl),
-    'item 306: NO scroll threshold is configured — no scroll listener is ever registered, so the popup is scroll-FREE, not merely scroll-independent',
+    2 === preg_match_all("/'scrollPct'\s*=>\s*50\b/", $tpl),
+    'seal 1359: scrollPct => 50 appears exactly twice, once per device — the audit\'s "about 50 percent" depth trigger, on desktop and mobile',
     $failures
 );
 
-/* A gated-mode fallback is still forbidden, for a NEW reason. It is now a
- * dead key in `simple` mode, and reaching time-only through it would mean
- * mode `gated` plus a fallback — same timing, but a live scroll listener and
- * a redundant second timer shipped to every visitor. */
 bhp_ab_assert(
-    false === strpos($tpl, "'fallbackDelay'"),
-    'item 306: no `fallbackDelay` — time-only is reached by mode simple, not by bolting an ungated timer onto a gated config',
+    0 === preg_match("/'scrollPct'\s*=>\s*(?!50\b)\d+/", $tpl),
+    'seal 1359: no other scroll threshold value exists anywhere in the template',
     $failures
 );
 
-/* ⭐ THE ENGINE HALF, which is where "time only" is actually decided. Asserted
+/* The second racer. `exitIntent` is what attaches the leave-intent listeners
+ * in simple mode; without it this would be a depth-only trigger and half of
+ * what seal 1359 asked for. */
+bhp_ab_assert(
+    2 === preg_match_all("/'exitIntent'\s*=>\s*true/", $tpl),
+    'seal 1359: exitIntent => true on BOTH devices — exit intent is the second racer, not a desktop-only extra',
+    $failures
+);
+
+bhp_ab_assert(
+    2 === preg_match_all("/'exitMinDelay'\s*=>\s*5000\b/", $tpl),
+    'seal 1359: a 5s exit dwell floor on both devices — a leave gesture in the first moments is not a considered exit',
+    $failures
+);
+
+/* ⭐ THE ENGINE HALF, which is where the trigger is actually decided. Asserted
  * in the JS rather than inferred from config, because a config key means
- * nothing if the engine stopped honouring it. */
+ * nothing if the engine does not honour it. */
 bhp_ab_assert(
     1 === preg_match('/var minTimeElapsed = \(mode === \x27simple\x27\);/', $js),
-    'item 306: the engine opens the gate at init in simple mode (minTimeElapsed starts true), so the timer alone governs',
+    'seal 1359: simple mode still opens the gate at init, so neither racer waits on a dwell floor it does not have',
     $failures
 );
 
-/* ⛔ THE LOAD-BEARING ENGINE LINE. The scroll listener is registered ONLY
- * when a numeric threshold is present. With `scrollPct` absent from the
- * config (asserted above), this guard is what makes the claim "no scroll
- * listener exists" true rather than merely likely. */
+/* ⛔ THE LOAD-BEARING ENGINE LINE FOR RACER ONE. The scroll listener is
+ * registered only when a numeric threshold is present — with scrollPct 50
+ * configured (asserted above), this guard is what makes the listener exist. */
 bhp_ab_assert(
     1 === preg_match('/if \(typeof scrollPct === \x27number\x27\) \{\s*window\.addEventListener\(\x27scroll\x27, onScroll, \{ passive: true \}\);/', $js),
-    'item 306: the engine registers its scroll listener only behind a numeric-threshold guard — with no threshold configured, none is ever attached',
+    'seal 1359: the engine registers its scroll listener behind a numeric-threshold guard — with 50 configured, the depth trigger is live',
     $failures
 );
 
-/* The simple-mode timer path itself: the engine must still arm a timer from
- * the `delay` key, or the popup would never open at all. */
+/* ⛔ THE LOAD-BEARING ENGINE LINE FOR RACER TWO, added in 1.19.405. Exit
+ * listeners attach in simple mode only when the config opts in. */
 bhp_ab_assert(
-    1 === preg_match('/if \(typeof deviceConfig\.delay === \x27number\x27\) \{\s*minTimeTimerId = window\.setTimeout\(trigger, deviceConfig\.delay\);/', $js),
-    'item 306: the engine arms the simple-mode timer from the `delay` key — the popup does open, on time alone',
+    1 === preg_match('/if \(deviceConfig\.exitIntent === true\) \{/', $js) &&
+    1 === preg_match('/exitFloorElapsed = false;\s*exitFloorTimerId = window\.setTimeout\(/', $js),
+    'seal 1359: the engine attaches exit listeners in simple mode behind the exitIntent opt-in, and arms the dwell floor from exitMinDelay',
     $failures
 );
+
+/* ⛔ THE ADDITION MUST BE INERT FOR EVERY OTHER POPUP SHARING THIS ENGINE.
+ * `exitFloorElapsed` defaults TRUE, so modes `exit` and `gated` — and any
+ * simple-mode popup without the opt-in — reach exitBlocked() exactly as they
+ * did in 1.19.404. If this default is ever flipped, every other popup on the
+ * site silently gains a floor it was never configured for. */
+bhp_ab_assert(
+    1 === preg_match('/var exitFloorElapsed = true;/', $js),
+    '1.19.405: exitFloorElapsed defaults true — the new exit floor is a no-op for every popup that did not opt in',
+    $failures
+);
+
+/* ⛔ THE TIMER PATH STILL EXISTS IN THE ENGINE and that is CORRECT — other
+ * popups use it. What must be true is that THIS template does not feed it,
+ * which the delay-absent assertion above pins. Asserting the engine line here
+ * keeps the two halves honest: if someone deletes the timer path to
+ * "simplify", a sibling popup breaks and this catches it. */
+bhp_ab_assert(
+    1 === preg_match('/if \(typeof deviceConfig\.delay === \x27number\x27\) \{\s*minTimeTimerId = window\.setTimeout\(trigger, deviceConfig\.delay\);/', $js),
+    '1.19.405: the engine still honours `delay` for the OTHER popups that use it — this template simply no longer supplies one',
+    $failures
+);
+
 
 /* =====================================================================
  * 2. THE COPY INVENTORY — THE "EXACTLY" TEST

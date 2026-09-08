@@ -961,6 +961,47 @@ function bhp_book_canonical_id($key) {
     return isset($reg[$key]) ? (int) $reg[$key]['pb_product'] : 0;
 }
 
+/**
+ * Both product IDs for one registry title, labelled by the FORMAT ROLE the
+ * registry assigns them — not by anything read off a product title.
+ *
+ * ⭐ ADDED 2026-09-08, `CYCLE179-LD-BUILD-408` (CX-1). It exists so callers
+ *    outside this file can identify a book WITHOUT a title substring and
+ *    WITHOUT hardcoding an ID. `front-page.php` is the first caller.
+ *
+ * ⛔ WHY A SUBSTRING WAS NEVER SAFE, AND THE PRODUCTION DEFECT IT CAUSED.
+ *    `front-page.php` selected a title's formats with
+ *    `stripos($book['title'], 'Mariana Trench')`. The colouring book's title
+ *    ALSO contains "Mariana Trench", so it was swept into the Mariana format
+ *    set, labelled "Paperback" (its title has no "hardcover" to say
+ *    otherwise), and — being the cheapest thing in the set —
+ *    `bhp_get_home_price_cue()` published it: the homepage hub card priced
+ *    THE MARIANA TRENCH at "From $12.99", the colouring book's price.
+ *    Observed on production by `CYCLE179-CX-PROD-AUDIT-407`.
+ *
+ * ⛔ AND WHY NOT HARDCODED IDs: the colouring book is 618 on production and
+ *    4065 on staging. Any list of "ids to skip" is wrong on one environment
+ *    the day it is written. Identity is a positive test against the registry,
+ *    never a negative test against a denylist.
+ *
+ * ⭐ THE REGISTRY IS ALREADY THE THEME'S IDENTITY SOURCE — `pb_product` /
+ *    `hc_product`, verified live and filterable via `bhp_book_registry` — so
+ *    this adds no new source of truth, it just exposes the one that exists.
+ *
+ * @param string $key A `bhp_book_registry()` key, e.g. `mariana_trench`.
+ * @return array{paperback:int,hardcover:int} Empty array for an unknown key.
+ */
+function bhp_book_key_product_ids($key) {
+    $reg = bhp_book_registry();
+    if (!isset($reg[$key])) {
+        return [];
+    }
+    return [
+        'paperback' => (int) $reg[$key]['pb_product'],
+        'hardcover' => (int) $reg[$key]['hc_product'],
+    ];
+}
+
 /** Reverse lookup: which title does this product belong to, and as what format? */
 function bhp_book_lookup_product($product_id) {
     $product_id = (int) $product_id;
@@ -1679,8 +1720,59 @@ function bhp_book_enqueue_media_assets() {
      *        for a component that no longer renders anywhere on the page.
      */
     if (function_exists('is_product') && is_product()) {
-        $found = bhp_book_lookup_product(get_queried_object_id());
-        if (!$found || !$found['canonical'] || !bhp_book_has_look_inside($found['key'])) {
+        /*
+         * ⛔⛔ CORRECTED 2026-09-08, `CYCLE179-LD-BUILD-408` (CX-2). THE
+         *    SUPERSEDED CONDITION IS PRESERVED STRUCK, AT THE LINE, because
+         *    the head note of this very function already states the rule it
+         *    broke and a reader who cannot see both together will re-derive
+         *    the bug:
+         *
+         *    ~~$found = bhp_book_lookup_product(get_queried_object_id());
+         *      if (!$found || !$found['canonical']
+         *          || !bhp_book_has_look_inside($found['key'])) { return; }~~
+         *
+         * ⭐ THE RULE, quoted from the preserved 1.19.235 note a few lines
+         *    below: "the enqueue gate and the render call must ask the SAME
+         *    question". This branch was the one place that did NOT.
+         *
+         * ⚠️ WHAT IT COST, OBSERVED ON PRODUCTION BY `CYCLE179-CX-PROD-AUDIT-407`
+         *    AND REPRODUCED HERE: `bhp_book_lookup_product()` walks
+         *    `bhp_book_registry()`, which holds the THREE CHAPTER BOOKS ONLY.
+         *    The colouring book is in neither registry entry, so the lookup
+         *    returned null and this gate returned early — no `book-media.css`,
+         *    no `book-media.js`.
+         *    ⛔ But the RENDER side does not use that lookup. It calls
+         *       `bhp_book_hero_key_for_product()`, whose colouring branch
+         *       resolves `colouring_mariana` through
+         *       `bhp_colouring_slug_for_product()` and returns a COVER-ONLY
+         *       hero key. So `bhp_book_replace_product_gallery()` replaced the
+         *       native gallery and printed the full look-inside scaffold —
+         *       "Click to enlarge", the lightbox markup, the flip-through cue —
+         *       onto a page carrying neither the CSS nor the JS that make any
+         *       of it work. A dead control on a live PDP.
+         *
+         * ⭐ THE FIX IS TO ASK THE RENDER'S OWN QUESTION, not to teach this
+         *    gate about colouring books a second time. Calling
+         *    `bhp_book_hero_key_for_product()` here makes the two sides
+         *    STRUCTURALLY INCAPABLE of disagreeing: the assets ship exactly
+         *    when the builder will render, for chapter books and colouring
+         *    books alike, and any future hero key added to that resolver is
+         *    enqueued for free.
+         *
+         * ⛔ NOTHING ABOUT THE 1.19.405/406 DECISIONS CHANGES. The colouring
+         *    hero is still cover-first and uncropped, there is still no hover
+         *    zoom, and `bhp_book_media_registry()` is NOT touched — the
+         *    missing `colouring_mariana` media-library key recorded in
+         *    `bhp_book_hero_key_for_product()` is still open and still
+         *    `chief-of-staff`'s call. This build makes the EXISTING cover-only
+         *    hero work; it does not add media.
+         *
+         * ⭐ STILL FAILS SAFE, unchanged: with no look-inside media AND no
+         *    cover the resolver returns '', this returns early, and the native
+         *    WooCommerce gallery stays. The gate and the builder now return
+         *    early together or proceed together — never one without the other.
+         */
+        if ('' === bhp_book_hero_key_for_product(get_queried_object_id())) {
             return;
         }
     /*
@@ -1760,12 +1852,143 @@ add_action('wp_enqueue_scripts', 'bhp_book_enqueue_media_assets');
  * The swap is conditional: a title with no approved media keeps WooCommerce's
  * native gallery exactly as before. Nothing is removed that is not replaced.
  */
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.405 (`CYCLE179-CX-BUILD-405`, item 4) — WHICH MEDIA KEY, IF ANY,
+ *     SHOULD RENDER THE HERO GALLERY ON THIS PRODUCT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THIS EXISTS BECAUSE THE COLOURING BOOK WAS SILENTLY EXCLUDED, AND THE
+ *    EXCLUSION WAS INVISIBLE AT THE CALL SITE. Both callers below used to ask
+ *    `bhp_book_lookup_product()`, which walks `bhp_book_registry()` and matches
+ *    only the three titles' `pb_product` / `hc_product` IDs. The colouring book
+ *    is not in that registry, so the lookup returned null, the swap never
+ *    happened, and the colouring PDP kept WooCommerce's NATIVE gallery — a
+ *    different frame, a different fill and different thumbnails from every
+ *    other product page on the site. Nothing was broken; a condition simply
+ *    never became true, which is the hardest kind of gap to see.
+ *
+ * ⭐ THE COLOURING MEDIA ALREADY EXISTED AND WAS ALREADY APPROVED. Key
+ *    `colouring_mariana` carries two look-inside spreads. This release renders
+ *    media that was authored and sitting unused; it adds no image and approves
+ *    nothing.
+ *
+ * ⛔ ONE RESOLVER, TWO CALLERS, NO DRIFT — the rule this file already states
+ *    for `bhp_book_hero_gallery_media()`. The gate that decides whether to
+ *    swap the gallery and the builder that fills it MUST agree about which key
+ *    is in play. Two copies of this branch would disagree the first time the
+ *    colouring lookup changed, and the symptom would be a removed native
+ *    gallery with nothing rendered in its place — a blank product page.
+ *
+ * ⭐ THE COLOURING BRANCH IS TRIED FIRST, mirroring `bhp_pdp_content_key()`.
+ *    It is ID-based via `bhp_colouring_slug_for_product()`, never a title
+ *    substring — `CYCLE165-OPS-019` was exactly that bug, and it put a
+ *    colouring cover beside a chapter-book price.
+ *
+ * @param int $product_id
+ * @return string The media key, or '' when this product has no hero gallery.
+ */
+function bhp_book_hero_key_for_product($product_id) {
+    $product_id = (int) $product_id;
+
+    if (function_exists('bhp_colouring_slug_for_product')) {
+        $slug = bhp_colouring_slug_for_product($product_id);
+        if ($slug) {
+            $key = 'colouring_' . $slug;
+            /*
+             * ⭐⭐ THE COLOURING BRANCH ACCEPTS A COVER-ONLY HERO, AND THE
+             *    CHAPTER-BOOK BRANCH BELOW DOES NOT. THE ASYMMETRY IS
+             *    DELIBERATE AND IT IS LOAD-BEARING.
+             *
+             * ⛔⛔ CORRECTED 2026-09-08, `CYCLE179-CX-BUILD-406`. THE
+             *    CONCLUSION BELOW IS RIGHT; THE REASON GIVEN FOR IT WAS WRONG,
+             *    AND THE WRONG REASON TRAVELLED. Superseded text preserved
+             *    struck, at the line:
+             *
+             *    ~~VERIFIED LIVE ON STAGING 2026-09-08, NOT ASSUMED: the two
+             *      colouring look-inside spreads named in `bhp_book_media()`
+             *      (`look-inside-mariana-coloring-book-pp95-101` and
+             *      `-pp99-109`) ARE NOT PRESENT — on staging OR production.
+             *      ... The registry names images that were never uploaded.
+             *      That is an ASSET GAP, not a defect.~~
+             *
+             * ⚠️⚠️ WHY IT WAS WRONG, MEASURED THIS BUILD IN FOUR PLACES:
+             *    the 1.19.405 artefact entry list carries 35 look-inside
+             *    entries INCLUDING all six of those files; staging2 and
+             *    production each hold 33 files in `assets/look-inside/`;
+             *    and all six URLs return HTTP 200 on staging2 (checked with
+             *    `curl` on the served bytes, which decode at the declared
+             *    800x522 / 1200x784 / 1600x1045). THE FILES WERE NEVER
+             *    MISSING AND NOTHING EVER DROPPED THEM FROM A DEPLOY.
+             *
+             * ⭐ THE REAL REASON `bhp_book_has_look_inside('colouring_mariana')`
+             *    IS FALSE IS A NAME COLLISION BETWEEN TWO REGISTRIES, and it
+             *    is the whole finding:
+             *      · `bhp_pdp_look_inside_registry()` (this file) maps keys to
+             *        THEME ASSET PATHS under `assets/look-inside/`. It HAS a
+             *        `colouring_mariana` entry, those files are present, and
+             *        the left-column "Look inside" plate rail HAS BEEN
+             *        RENDERING ON THE COLOURING PDP ALL ALONG (verified in a
+             *        real browser on staging2 at 1280 and 375, 2026-09-08).
+             *      · `bhp_book_media_registry()` (inc/book-media.php:41) maps
+             *        keys to MEDIA-LIBRARY ATTACHMENT SLUGS and drives the
+             *        hero gallery and its thumbnail rail. It has NO
+             *        `colouring_mariana` key AT ALL — not a key naming absent
+             *        images, no key. `bhp_book_media()` therefore returns zero
+             *        items and `has_any` is false.
+             *
+             * ⛔ SO THE GAP IS A MISSING REGISTRY ENTRY, NOT A MISSING ASSET,
+             *    and "upload the two spreads" would NOT have fixed it: with no
+             *    `colouring_mariana` key in `bhp_book_media_registry()` there
+             *    is nothing for an upload to satisfy. Recorded, NOT resolved —
+             *    whether the colouring hero should gain a media-library entry
+             *    is a product-presentation decision for `chief-of-staff`, and
+             *    it needs an Andrew gate if it touches attachments.
+             *
+             * ⭐ THE COVER-ONLY HERO BELOW REMAINS CORRECT EITHER WAY, so the
+             *    asymmetry this comment exists to explain is unchanged.
+             *
+             * ⭐ WHAT THIS STILL DELIVERS TODAY. The product HAS a cover
+             *    (attachment 4066). The hero frame, the contained — uncropped —
+             *    fill and the cover-first ordering are exactly what the brief
+             *    asked for, and none of them need a second image.
+             *    `look-inside.php` already carries a `--single` variant for a
+             *    one-item gallery, so this renders a designed state, not a
+             *    degraded one. The thumbnail rail appears on its own the moment
+             *    the two spreads are uploaded — no further code change.
+             *
+             * ⛔ A CHAPTER BOOK MUST NOT TAKE THIS PATH. Those three pages have
+             *    real look-inside media; if one ever resolved empty, that is a
+             *    REGRESSION and swapping in a silent cover-only gallery would
+             *    hide it. They keep the strict gate below, so the failure stays
+             *    visible as the native gallery it always was.
+             *
+             * ⛔ AND IT STILL FAILS SAFE. With no look-inside media AND no
+             *    cover, this returns '' and the native gallery stays. The one
+             *    outcome that must never happen — the gate removing the native
+             *    gallery while the builder renders nothing, i.e. a blank
+             *    product page — is unreachable, because the gate and the
+             *    builder ask this same function the same question.
+             */
+            if (bhp_book_has_look_inside($key)) {
+                return $key;
+            }
+            return get_post_thumbnail_id($product_id) ? $key : '';
+        }
+    }
+
+    $found = bhp_book_lookup_product($product_id);
+    if (!$found || !$found['canonical'] || !bhp_book_has_look_inside($found['key'])) {
+        return '';
+    }
+    return $found['key'];
+}
+
 function bhp_book_replace_product_gallery() {
     if (!function_exists('is_product') || !is_product()) {
         return;
     }
-    $found = bhp_book_lookup_product(get_queried_object_id());
-    if (!$found || !$found['canonical'] || !bhp_book_has_look_inside($found['key'])) {
+    if ('' === bhp_book_hero_key_for_product(get_queried_object_id())) {
         return; // Native gallery stays.
     }
 
@@ -1795,14 +2018,29 @@ add_action('wp', 'bhp_book_replace_product_gallery');
  */
 function bhp_book_hero_gallery_media($product_id) {
     $product_id = (int) $product_id;
-    $found = bhp_book_lookup_product($product_id);
-    if (!$found || !$found['canonical']) {
+    // 1.19.405 item 4: the SAME resolver the swap gate uses, so the gate and
+    // the builder can never disagree about which key is in play. See the
+    // docblock on bhp_book_hero_key_for_product() for why that matters.
+    $key = bhp_book_hero_key_for_product($product_id);
+    if ('' === $key) {
         return null;
     }
 
-    $media = bhp_book_media($found['key']);
-    if (empty($media['has_any'])) {
+    $media = bhp_book_media($key);
+    /*
+     * ⛔ EMPTY MEDIA IS NO LONGER AN AUTOMATIC null — see the cover-only note
+     *    on bhp_book_hero_key_for_product(). The cover is prepended below, and
+     *    `has_any` is recomputed from what the list ACTUALLY ends up holding
+     *    rather than from what the registry promised. If there is no cover
+     *    either, the list stays empty, `has_any` stays false, and
+     *    look-inside.php renders nothing — which is the same safe outcome the
+     *    old early return produced.
+     */
+    if (empty($media['has_any']) && ! get_post_thumbnail_id($product_id)) {
         return null;
+    }
+    if (! isset($media['items']) || ! is_array($media['items'])) {
+        $media['items'] = array();
     }
 
     /*
@@ -1828,6 +2066,17 @@ function bhp_book_hero_gallery_media($product_id) {
         ]);
         $media['count'] = count($media['items']);
     }
+
+    /*
+     * ⭐ `has_any` IS RECOMPUTED FROM THE LIST, NOT INHERITED FROM THE REGISTRY.
+     *    look-inside.php bails on `empty($media['has_any'])`, so a cover-only
+     *    gallery would render nothing without this line even though it has a
+     *    real item to show. Computing it from the items is also the honest
+     *    definition: "is there anything to display" is a question about the
+     *    list, and the registry's answer can be wrong in exactly the way it is
+     *    wrong for the colouring book today — media named but not uploaded.
+     */
+    $media['has_any'] = ! empty($media['items']);
 
     return $media;
 }
@@ -3182,20 +3431,78 @@ function bhp_pdp_look_inside_registry() {
                 'alt'   => __('Pages 26 and 27 of The Amazon: Chapter 5 ends with the motorcycle\'s front tire going flat in the rainforest, facing the opening page of Chapter 6, The Sound, under a drawing of rainforest trees.', 'brave-hearts'),
             ],
         ],
+        /*
+         * ⭐⭐ 1.19.406 (2026-09-08, `CYCLE179-CX-BUILD-406`) — THE VISIBLE
+         *     PAGE NUMBERS WERE A FALSE STATEMENT ABOUT THE PRINTED BOOK, AND
+         *     THE CAPTION WAS CONTRADICTED BY THE IMAGE DIRECTLY BENEATH IT.
+         *
+         * ⛔⛔ WHAT WAS WRONG. `'pages'` feeds `bhp_pdp_look_inside_noun()`,
+         *    which renders a real customer-facing `<figcaption>`: on staging
+         *    1.19.405 it read "Two coloring pages, 95 and 101". VERIFIED LIVE
+         *    in a browser on staging2 2026-09-08 BEFORE this edit. But 95, 101,
+         *    99 and 109 are PDF PAGE INDICES, not printed folios. Under this
+         *    book's imposition (printed folio n = PDF page 2n+3,
+         *    `PAGE-MD5-TABLE-v8-FINAL3.md`) those four indices are printed
+         *    folios 46, 49, 48 and 53 — and the folio numeral is STAMPED IN THE
+         *    ART. The caption said 95 while the drawing beneath it said 46.
+         *    `design-creative` found this while rendering the replacements
+         *    (`CYCLE179-DES-COLORING-LOOKINSIDE`, UPLOAD-NOTE.md section 2).
+         *
+         * ⛔ IT IS THE never-invent RULE, NOT A TYPO. A page number is a claim
+         *    about the physical object the customer is being asked to buy.
+         *    Reusing the old stems would have carried the false numbers
+         *    forward, so the stems changed WITH the numbers rather than the
+         *    numbers being quietly corrected under the same filenames.
+         *
+         * ⭐ THE SUPERSEDED ENTRIES ARE PRESERVED STRUCK, AT THE LINE, rather
+         *    than deleted or annotated somewhere below — the method conclusion
+         *    recorded in the evidence-verification skill after an annotation
+         *    appended far from the line it corrected went unread for two weeks.
+         *    A future reader sees the wrong value and its reason on the same
+         *    screen as the right one:
+         *
+         *      ~~'stem'  => 'look-inside-mariana-coloring-book-pp95-101',
+         *        'pages' => '95 and 101',~~  <- PDF indices; real folios 46 and 49
+         *      ~~'stem'  => 'look-inside-mariana-coloring-book-pp99-109',
+         *        'pages' => '99 and 109',~~  <- PDF indices; real folios 48 and 53
+         *
+         * ⚠️ THE SIX v7 FILES THOSE STEMS NAME ARE NOT DELETED BY THIS BUILD.
+         *    They are orphaned by this edit and `UPLOAD-NOTE.md` section 5
+         *    proposes deleting them, but the artefact entry-list gate
+         *    hard-fails on ANY removed entry: `wp theme install --force`
+         *    removes the theme directory before extracting, so an entry
+         *    dropped from the ZIP is a file DELETED from the environment.
+         *    Removing them is a separate, deliberate decision with its own
+         *    gate run. Flagged to `chief-of-staff`; NOT taken here. They cost
+         *    ~700KB and are referenced by nothing once this registry stops
+         *    naming them.
+         *
+         * ⭐ ZERO NEW PAGES ARE EXPOSED. Folios 12, 33 and 49 are already
+         *    published free in `BHP-FREE-Coloring-Pages-Mariana-Trench` at
+         *    /free-resources, and folio 48 is already exposed today as the
+         *    entry above called "99". The count stays at 4, under the
+         *    `MANIFEST.md` section 5 cap of 6.
+         *
+         * ⛔ `'w'`, `'h'` AND THE PLURAL NOUN ARE UNCHANGED. The replacement
+         *    plates are 1600x1045 exactly like the originals — asserted with
+         *    `file(1)` on the shipped bytes and re-asserted out of the built
+         *    ZIP, not assumed — so the declared intrinsic box and the printed
+         *    aspect ratio both stay true and no layout shift is introduced.
+         */
         'colouring_mariana' => [
             [
-                'stem'  => 'look-inside-mariana-coloring-book-pp95-101',
+                'stem'  => 'look-inside-mariana-coloring-book-p12-p33',
                 'w'     => 1600,
                 'h'     => 1045,
-                'pages' => '95 and 101',
-                'alt'   => __('Two coloring pages from The Mariana Trench Coloring Book, pages 95 and 101: Charlotte and Henry at a submersible porthole, and an anglerfish with its lit lure above the seafloor.', 'brave-hearts'),
+                'pages' => '12 and 33',
+                'alt'   => __('Two coloring pages from The Mariana Trench Ocean Coloring Book, pages 12 and 33: a sea turtle surfacing above a coral reef with a jellyfish and small fish below and a kite in the sky beyond, captioned "Thank you, thank you!" the turtle cries happily.; and a lettering page reading STOP. BREATHE. THINK. ACT. ringed by a seal, a dolphin, a sunfish, kelp, a sand dollar and shells.', 'brave-hearts'),
             ],
             [
-                'stem'  => 'look-inside-mariana-coloring-book-pp99-109',
+                'stem'  => 'look-inside-mariana-coloring-book-p48-p49',
                 'w'     => 1600,
                 'h'     => 1045,
-                'pages' => '99 and 109',
-                'alt'   => __('Two coloring pages from The Mariana Trench Coloring Book, pages 99 and 109: a shells and reef-fish page lettered STEADY HEAD. BRAVE HEART., and an empty submersible porthole captioned “I left this window empty. Draw what you would see.”', 'brave-hearts'),
+                'pages' => '48 and 49',
+                'alt'   => __('Two coloring pages from The Mariana Trench Ocean Coloring Book, pages 48 and 49: a lettering page reading STEADY HEAD. BRAVE HEART. ringed by shells, a coral, a reef fish and a small drawing of a girl kneeling beside a dog wearing goggles; and an anglerfish with its lit lure above the seafloor, captioned "It makes its own light, like a firefly!".', 'brave-hearts'),
             ],
         ],
         'collection' => [

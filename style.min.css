@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: d041ff9bde92e104ef7a110ca0f4424f
+    source-md5: 0f6c920452196eae088fcc5af064c0fd
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.400
+Version: 1.19.408
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -9104,45 +9104,17 @@ body.bhp-catalog-grid.bhp-visit-active .woo-expedition-shell ul.products {
   margin: var(--space-6) 0 0;
 }
 body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product {
-  display: flex;
-  flex-direction: column;
   margin: 0;
   padding: 0 0 0.8rem;
   width: auto;
-  border: 1px solid rgba(var(--color-earth-rgb), 0.28);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
 }
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product img,
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-offer__composite {
-  height: 110px;
-  max-height: 110px;
-  width: auto;
-  object-fit: contain;
-  padding: 0.7rem 0.7rem 0.2rem;
-}
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .woocommerce-loop-product__title {
-  padding: 0 0.9rem;
-  margin: 0 0 0.15rem;
-  font-size: 1rem;
-  line-height: 1.2;
-}
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-shop-descriptor {
-  margin: 0 0.9rem 0.4rem;
-  padding-bottom: 0;
-  border-bottom: 0;
-  font-size: 0.8rem;
-}
-body.bhp-catalog-grid .woo-expedition-shell ul.products.bhp-catalog-bundle-strip__list li.product .bhp-shop-format-prices {
-  margin: 0 0.9rem 0.35rem;
+body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-offer-card__image-link {
+  display: block;
 }
 .bhp-catalog-trust-strip {
   margin: var(--space-8) 0 0;
@@ -9557,5 +9529,43 @@ body .bhp-archive-band h1.bhp-archive-band__title {
   body:not(.home) .free-resources-hero .component-heading__eyebrow {
     font-size: 12px;
     letter-spacing: .06em;
+  }
+}
+body.bhp-cart-band-on header.woo-archive-hero.bhp-catalog-band,
+body.bhp-cart-band-on header.bhp-catalog-band.interior-hero {
+  padding-top: var(--space-3) !important;
+  padding-bottom: var(--space-3) !important;
+  min-height: 0;
+}
+body.bhp-cart-band-on .bhp-catalog-band h1.bhp-catalog-band__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+body.bhp-cart-band-on .page-content {
+  padding-top: var(--space-8);
+}
+body.bhp-cart-band-on .page-content > .entry-content {
+  padding-top: 0;
+}
+@media (max-width: 1365px) {
+  body.bhp-cart-band-on .bhp-catalog-band h1.bhp-catalog-band__title {
+    font-size: 1.35rem;
+  }
+}
+@media (max-width: 640px) {
+  body.bhp-cart-band-on header.woo-archive-hero.bhp-catalog-band,
+  body.bhp-cart-band-on header.bhp-catalog-band.interior-hero {
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.3rem !important;
+  }
+  body.bhp-cart-band-on .bhp-catalog-band h1.bhp-catalog-band__title {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+  body.bhp-cart-band-on .page-content {
+    padding-top: var(--space-6);
   }
 }

@@ -178,35 +178,164 @@ bhp_fsl_assert(
 // 2. THE PHP CART/CHECKOUT SURFACE: SHIPPING LEADS
 // =====================================================================
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔⛔ RESHAPED 2026-09-08, PLUGIN 1.8.88, SEAL 1411 — THE SURFACE THIS
+ *      SECTION TESTED NO LONGER EXISTS, SO THE SECTION NOW TESTS THAT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ `bhp_bundle_print_progress_messages()` AND ITS TWO `add_action` CALLS WERE
+ *    REMOVED at 1.8.88. They hooked `woocommerce_before_cart_table` and
+ *    `woocommerce_checkout_before_order_review` — CLASSIC SHORTCODE hooks. The
+ *    live cart (page 7) and checkout (page 8) are WooCommerce BLOCKS, so the
+ *    function printed nothing to a customer. VERIFIED LIVE ON staging2 IN A
+ *    REAL BROWSER AT 1.8.87, WHILE THE FUNCTION WAS STILL PRESENT AND STILL
+ *    HOOKED: `.bhp-bundle-message` count was 0 on BOTH pages.
+ *
+ * ⛔ THE SUPERSEDED NEEDLES ARE PRESERVED HERE RATHER THAN QUIETLY DROPPED, SO
+ *    A LATER READER CAN SEE WHAT WAS ASSERTED AND WHY IT STOPPED APPLYING:
+ *
+ *      ~~$fsl_fn_start = strpos( $fsl_cart_src,
+ *          'function bhp_bundle_print_progress_messages()' );
+ *        $fsl_fn_end   = strpos( $fsl_cart_src,
+ *          'Admin UI for the audience-coupon flag', $fsl_fn_start );
+ *        $fsl_fn       = substr( $fsl_cart_src, $fsl_fn_start,
+ *          $fsl_fn_end - $fsl_fn_start );~~
+ *
+ *      ~~'2. the free-shipping nudge is printed BEFORE the per-format discount
+ *          loop (Andrew: the shipping info leads)'~~
+ *      ~~'2. each shipping string is printed exactly once — the block MOVED,
+ *          it was not duplicated'~~
+ *      ~~'2. REGRESSION: the load-bearing has_unrelated suppression survived
+ *          the move'~~
+ *      ~~'2. REGRESSION: the approved per-format discount copy is still present
+ *          and still printed (nothing was deleted to make room)'~~
+ *
+ * ⭐⭐ THE REGRESSION THOSE LAST TWO ROWS PROTECTED IS NOT ABANDONED, IT IS
+ *    REPOINTED. Their real subject was "the approved copy still exists on a
+ *    live surface, nothing was deleted to make room". That surface is now the
+ *    drawer localizer, and the rows below assert exactly that against
+ *    `includes/bundle-drawer.php` — which, unlike the removed function, a
+ *    customer actually reads. ⛔ A TEST THAT ONLY PROVED THE REMOVAL WOULD HAVE
+ *    LOST THE COPY GUARANTEE, WHICH IS THE PART WORTH KEEPING.
+ */
+/*
+ * PLUGIN 1.8.88 - STRIP COMMENTS BEFORE ASSERTING THAT SOMETHING IS ABSENT.
+ *
+ * ⛔ THIS HELPER EXISTS BECAUSE THE NAIVE ASSERTION WAS WRONG AND THE ZIP
+ *    CHECK CAUGHT IT BEFORE IT SHIPPED. `bundle-cart.php` now carries a dated
+ *    STRIKE that quotes the removed function signature, its two `add_action`
+ *    lines and its copy table VERBATIM - that is the house additive-only
+ *    discipline working as intended. A plain `strpos()` for those tokens
+ *    therefore matches the STRIKE and reports the dead code as still present.
+ *
+ * ⭐ SO ABSENCE IS ASSERTED AGAINST CODE ONLY, VIA `token_get_all()`, WHILE
+ *    PRESENCE OF THE STRIKE IS ASSERTED AGAINST THE FULL SOURCE. The two
+ *    questions are different and are asked of different inputs:
+ *      "is the function still declared or hooked?"  -> code only
+ *      "is the removal recorded at the line?"       -> full source
+ *
+ * ⛔ NEVER REPLACE THIS WITH A REGEX ON `^function`. A `^`-anchored needle
+ *    passes today only because the strike happens to indent its quotation; a
+ *    later reflow of that comment would silently turn this suite green on a
+ *    file that still declares the function.
+ */
+function bhp_fsl_code_only( $src ) {
+	$out = '';
+	foreach ( token_get_all( (string) $src ) as $tok ) {
+		if ( is_array( $tok ) ) {
+			if ( T_COMMENT === $tok[0] || T_DOC_COMMENT === $tok[0] ) {
+				continue;
+			}
+			$out .= $tok[1];
+		} else {
+			$out .= $tok;
+		}
+	}
+	return $out;
+}
+
 $fsl_cart_src = bhp_fsl_read( 'includes/bundle-cart.php' );
+$fsl_cart_code = bhp_fsl_code_only( $fsl_cart_src );
 bhp_fsl_assert( null !== $fsl_cart_src, '2. includes/bundle-cart.php is readable', $failures );
 
-$fsl_fn_start = strpos( (string) $fsl_cart_src, 'function bhp_bundle_print_progress_messages()' );
-$fsl_fn_end   = strpos( (string) $fsl_cart_src, 'Admin UI for the audience-coupon flag', (int) $fsl_fn_start );
-$fsl_fn       = substr( (string) $fsl_cart_src, (int) $fsl_fn_start, (int) $fsl_fn_end - (int) $fsl_fn_start );
+bhp_fsl_assert(
+	false === strpos( $fsl_cart_code, 'bhp_bundle_print_progress_messages' ),
+	'2. ⛔ the dead classic-hook function is GONE from bundle-cart.php',
+	$failures
+);
+bhp_fsl_assert(
+	false === strpos( $fsl_cart_code, 'woocommerce_before_cart_table' )
+	&& false === strpos( $fsl_cart_code, 'woocommerce_checkout_before_order_review' ),
+	'2. ⛔ neither classic-shortcode hook is registered any more',
+	$failures
+);
+/*
+ * ⭐ THE DELETION IS RECORDED AT THE LINE, NOT PERFORMED SILENTLY. This row is
+ *    the house additive-only discipline made testable: a future pass that
+ *    "tidies away" the strike would fail here.
+ */
+bhp_fsl_assert(
+	false !== strpos( (string) $fsl_cart_src, 'REMOVED AT PLUGIN 1.8.88' )
+	&& false !== strpos( (string) $fsl_cart_src, 'bhp_bundle_print_progress_messages' ),
+	'2. the removal is struck and dated AT the line, naming what stood there',
+	$failures
+);
+/*
+ * ⛔ THE REVIVAL WARNING IS LOAD-BEARING. That path carried its own copy of the
+ *    C-DUP-1 free-shipping defect (a titles trigger on a book-count rule).
+ *    Anyone reviving it for a classic cart must carry the 1.8.88 gate with it,
+ *    and the strike says so. This row keeps that sentence from being trimmed.
+ */
+bhp_fsl_assert(
+	false !== strpos( (string) $fsl_cart_src, 'bhp_bundle_freeship_book_threshold()' ),
+	'2. the strike carries the gate any revival of that surface must include',
+	$failures
+);
+bhp_fsl_assert(
+	false !== strpos( (string) $fsl_cart_src, 'function bhp_bundle_freeship_copy' )
+	|| function_exists( 'bhp_bundle_freeship_copy' ),
+	'2. REGRESSION: bhp_bundle_freeship_copy() itself was NOT removed (it has other live readers)',
+	$failures
+);
 
-$fsl_pos_freeship = strpos( $fsl_fn, "esc_html( \$freeship['nudge'] )" );
-$fsl_pos_loop     = strpos( $fsl_fn, "foreach ( array( 'paperback', 'hardcover' ) as \$format )" );
+$fsl_drawer_php = bhp_fsl_read( 'includes/bundle-drawer.php' );
+bhp_fsl_assert( null !== $fsl_drawer_php, '2. includes/bundle-drawer.php is readable', $failures );
+
 bhp_fsl_assert(
-	false !== $fsl_pos_freeship && false !== $fsl_pos_loop && $fsl_pos_freeship < $fsl_pos_loop,
-	'2. the free-shipping nudge is printed BEFORE the per-format discount loop (Andrew: the shipping info leads)',
+	false !== strpos( (string) $fsl_drawer_php, 'You saved $1.99 with your 2-book paperback set.' )
+	&& false !== strpos( (string) $fsl_drawer_php, 'You saved $2.99 with your 2-book hardcover set.' ),
+	'2. REGRESSION (REPOINTED): the approved per-format discount copy survives on the surface that renders — the drawer localizer',
 	$failures
 );
 bhp_fsl_assert(
-	1 === substr_count( $fsl_fn, "\$freeship['nudge']" )
-	&& 1 === substr_count( $fsl_fn, "\$freeship['earned']" ),
-	'2. each shipping string is printed exactly once — the block MOVED, it was not duplicated',
+	false !== strpos( (string) $fsl_drawer_php, 'Add another paperback and save $1.99.' )
+	&& false !== strpos( (string) $fsl_drawer_php, 'Add another hardcover and save $2.99.' )
+	&& false !== strpos( (string) $fsl_drawer_php, 'Complete the hardcover collection and save $4.98 total.' ),
+	'2. REGRESSION (REPOINTED): every other string the removed path carried is still localized to the drawer',
+	$failures
+);
+/*
+ * ⚠️ EXACTLY ONE STRING WAS UNIQUE TO THE REMOVED PATH and it is asserted as a
+ *    KNOWN, REPORTED GAP rather than papered over:
+ *
+ *      removed  'Add the final adventure to complete the series and save $3.98 total.'
+ *      drawer   'Add the final adventure to complete the collection and save $3.98 total.'
+ *
+ *    One word differs. The drawer's is the variant customers have actually been
+ *    reading, because the classic one rendered to nobody. ⛔ NO COPY IS
+ *    REWRITTEN TO CLOSE THE GAP — that is Andrew's, not this desk's. This row
+ *    pins the drawer variant so a later pass cannot "harmonise" it silently.
+ */
+bhp_fsl_assert(
+	false !== strpos( (string) $fsl_drawer_php, 'Add the final adventure to complete the collection and save $3.98 total.' )
+	&& false === strpos( (string) $fsl_drawer_php, 'complete the series and save' ),
+	'2. the drawer keeps its own approved "complete the collection" variant, unedited (the "series" variant is reported as no longer carried, not silently substituted)',
 	$failures
 );
 bhp_fsl_assert(
-	false !== strpos( $fsl_fn, "empty( \$eval['has_unrelated'] )" ),
-	'2. REGRESSION: the load-bearing has_unrelated suppression survived the move',
-	$failures
-);
-bhp_fsl_assert(
-	false !== strpos( $fsl_fn, 'You saved $1.99 with your 2-book paperback set.' )
-	&& false !== strpos( $fsl_fn, 'You saved $2.99 with your 2-book hardcover set.' ),
-	'2. REGRESSION: the approved per-format discount copy is still present and still printed (nothing was deleted to make room)',
+	false !== strpos( (string) $fsl_drawer_php, "'freeShipCopy' => bhp_bundle_freeship_copy()" ),
+	'2. the drawer still reads both shipping strings from the one server-side source',
 	$failures
 );
 
@@ -228,9 +357,24 @@ bhp_fsl_assert(
 	'3. no push() of a shipping line survives anywhere in the drawer',
 	$failures
 );
+/*
+ * ⛔⛔ RESHAPED 2026-09-08, PLUGIN 1.8.87, FOUNDER SEAL 1359. The suppression
+ *     itself is UNCHANGED in intent and still asserted; only the expression
+ *     that carries it moved, because 1.8.87 split one `count` variable into
+ *     `books` (money) and `titles` (series). The superseded needle is
+ *     preserved here rather than quietly swapped:
+ *
+ *       ~~'if (2 === count && freeShipLeads)'~~
+ *
+ * ⭐ The replacement pins the SAME behaviour on the new shape: the
+ *    "add the final adventure" ask is a TITLE test, is suppressed while the
+ *    free-shipping nudge leads, and now also stands down once the format has
+ *    already earned tier 3 by count (`books < 3`).
+ */
+$fsl_needle_suppress = 'if (2 === titles && books < 3 && !freeShipLeads';
 bhp_fsl_assert(
-	false !== strpos( (string) $fsl_js, 'if (2 === count && freeShipLeads)' ),
-	'3. the count===2 progress line is suppressed while the shipping nudge leads (they make the identical ask)',
+	false !== strpos( (string) $fsl_js, $fsl_needle_suppress ),
+	'3. the "final adventure" progress line is suppressed while the shipping nudge leads (they make the identical ask)',
 	$failures
 );
 bhp_fsl_assert(
@@ -244,7 +388,9 @@ bhp_fsl_assert(
  * the suppression silently never fire.
  */
 $fsl_pos_leads_decl = strpos( (string) $fsl_js, 'var freeShipLeads =' );
-$fsl_pos_leads_use  = strpos( (string) $fsl_js, 'if (2 === count && freeShipLeads)' );
+// 1.8.87: the needle moved with the suppression above; the ORDER requirement
+// this row exists to protect is byte-unchanged.
+$fsl_pos_leads_use  = strpos( (string) $fsl_js, $fsl_needle_suppress );
 bhp_fsl_assert(
 	false !== $fsl_pos_leads_decl && false !== $fsl_pos_leads_use && $fsl_pos_leads_decl < $fsl_pos_leads_use,
 	'3. freeShipLeads is ASSIGNED before the loop that reads it (a var hoists; its value does not)',
@@ -383,8 +529,20 @@ bhp_fsl_assert(
  *    unchanged and still in the same order, which is what the assertion below
  *    still pins — this widened the call, it did not rewrite it.
  */
+/*
+ * ⛔ WIDENED AGAIN 2026-09-08, PLUGIN 1.8.87, FOUNDER SEAL 1359. A sixth
+ *    argument, `counts` (books per format, duplicates included), was appended
+ *    so `crossSellSavings()` can subtract the discount the cart ALREADY has,
+ *    which from 1.8.87 is a function of the book count. The superseded needle,
+ *    preserved so the widening is visible rather than re-derived:
+ *
+ *      ~~'crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart)'~~
+ *
+ *    ⭐ The five original arguments are unchanged and still in the same order,
+ *    which is what this assertion still pins.
+ */
 bhp_fsl_assert(
-	false !== strpos( (string) $fsl_js, 'crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart)' ),
+	false !== strpos( (string) $fsl_js, 'crossSell = chooseCrossSell(distinct, adventures, isMixedFormat, hasUnrelated, cart, counts)' ),
 	'6.1 computeDrawerMeta() delegates the choice and passes it the CROSS-FORMAT adventure list',
 	$failures
 );

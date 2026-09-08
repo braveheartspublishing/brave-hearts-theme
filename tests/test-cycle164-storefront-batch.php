@@ -404,13 +404,26 @@ if ( $c164_coll ) {
 			$failures
 		);
 
-		/* ⛔ AND THE RENDERED CONFIG CARRIES NO SCROLL THRESHOLD. Asserted on
-		 *    the HTML rather than the template, because this is the page where
-		 *    a leftover threshold would cost the most. */
+		/* ⭐⭐ INVERTED 1.19.405 (`CYCLE179-CX-BUILD-405`) ON SEAL 1359 — Andrew
+		 *    Signore, 2026-09-07: "change the trigger if thats whats
+		 *    recommended", recorded as "HOME POPUP TRIGGER: change from the bare
+		 *    timer to scroll depth or exit intent as the audit recommends".
+		 *
+		 * ⛔ SUPERSEDED ASSERTION, PRESERVED STRUCK:
+		 *  > ~~false === strpos( $c164_cbody, 'scrollPct' )~~
+		 *  > ~~'2: item 306: the rendered popup config on /complete-collection/
+		 *  >   carries NO scroll threshold'~~
+		 *
+		 * ⭐ IT STAYS ASSERTED ON THE RENDERED HTML rather than on the template,
+		 *    and that is still the right call for the reason the old note gave:
+		 *    this is the page where getting the trigger wrong costs the most. The
+		 *    assertion is not weakened — it simply now requires the threshold to
+		 *    be PRESENT rather than absent, and checks both the raw and the
+		 *    entity-encoded spelling exactly as before. */
 		bhp_c164_assert(
-			false === strpos( $c164_cbody, 'scrollPct' )
-				&& false === strpos( $c164_cbody, '&quot;scrollPct&quot;' ),
-			'2: ⛔ item 306: the rendered popup config on /complete-collection/ carries NO scroll threshold',
+			false !== strpos( $c164_cbody, 'scrollPct' )
+				|| false !== strpos( $c164_cbody, '&quot;scrollPct&quot;' ),
+			'2: ⭐ seal 1359: the rendered popup config on /complete-collection/ CARRIES the scroll-depth threshold',
 			$failures
 		);
 	}

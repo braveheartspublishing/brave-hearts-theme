@@ -2,6 +2,325 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## 2026-09-08 - PRODUCTION IS NOW THEME `1.19.407` / BUNDLE PLUGIN `1.8.89` (theme 1.19.405, 1.19.406, 1.19.407; plugin 1.8.87, 1.8.88, 1.8.89)
+
+Three theme versions and three plugin versions, all six staged, suite-checked and browser-QA'd
+on `staging2` before release. The storefront changes are a price that prints correctly on the
+primary buy control, a coloring product page that leads with its cover, a popup that fires on
+engagement instead of a clock, a multi-buy discount that counts books instead of titles, a
+free-shipping nudge that stops appearing on carts that already ship free, and - while the
+coloring book is out of stock - every offer to buy it withdrawn from the six surfaces that
+carried it.
+
+**Authorization.** Founder seal 1427. Andrew's words, verbatim: "Lets push to production now"
+then "Then you check asethetic and purchase flow audit after on production". The PROD-UNLOCK
+token he touched in his own PowerShell at about 05:20 MDT for the product-618 stock write
+(seal 1425) was still inside its 60-minute window, so no fresh token touch was required and no
+gate block occurred. Scope as stated to him: theme 1.19.404 to 1.19.407 and plugin 1.8.86 to
+1.8.89, **code and theme assets only - no WooCommerce product, price, coupon, stock, shipping,
+tax or payment setting changed by the release**, and product 618 stays out of stock.
+⚠ **Andrew did not do his own staging look on this push.** He chose to release on the build
+lane's staging QA plus server reads. That is recorded because it is a departure from the usual
+sequence, not because anything went wrong.
+
+**Installed** at about 06:07 MDT (12:07 UTC). Theme `1.19.407` from ZIP md5
+`97360f03786d549de57bcc35d8b8134f`; bundle plugin `1.8.89` from ZIP md5
+`9f2488a0409cf7226fecd6b36944e5c9`. Both md5s verified on the server after upload, not only
+locally. 449 PHP files linted out of the extracted ZIPs on the server, 0 failures. Live-vs-ZIP
+diff: 0 live-only theme files, 0 live-only plugin files. Active after install: 1.19.407 and
+1.8.89; `wp core version` 7.1; `wp sg purge` dynamic cache OK; installed `format-cards.php`
+md5 `1ad036d4` matching the ZIP; `assets/look-inside/` 39 files (was 33). The Bookvault plugin
+emits a harmless PHP warning at `Bookvault.php:528` on any install (undefined array key
+`destination`); it is pre-existing and was not caused by this release.
+⚠ **Theme and plugin file counts were not recorded in the release seal and are not stated here.**
+
+**Baseline before the release:** theme `1.19.404` (ZIP md5 `88b75cdbebe3169fc0ec963e703b83aa`),
+plugin `1.8.86`, WordPress 7.1, 755 theme files, `assets/look-inside/` 33 files. **Production
+never received 1.19.405 or 1.19.406, so this push spans three theme versions and three plugin
+versions.**
+
+**The artefact ambiguity, resolved before anything shipped.** Two ZIPs named
+`brave-hearts-theme-1.19.407.zip` existed with identical entry lists (818 entries each,
+identical names in identical order) and a byte-identical `style.css`. **Every cheap check
+passed on both**, which is the whole point of the finding: an entry-list diff cannot tell them
+apart. Only two of 763 files differed - `template-parts/commerce/format-cards.php` (block-comment
+text only; executable code identical after comment stripping) and `tests/test-cycle179-407.php`
+(real code - the superseded `-r1` read the plugin from under the theme directory, a path the
+theme artefact deliberately excludes, so four assertions read an empty string on a real
+install). A per-file md5 manifest of staging2's installed theme proved which was installed:
+`97360f03...` matched 762 of 763 files, `6d1f702e...` matched 760. The single remaining
+difference,
+`content-engine/blogs/bhp-test-draft-package-bridge-books/content-brief.json`, was proved to be
+a post-install runtime rewrite by mtime - the theme extracted at 11:34:21 UTC, that file was
+rewritten by the running content engine at 11:44:57 UTC. The plugin artefact matched staging
+**97 of 97 files, zero mismatches**. **`97360f03...` shipped; the `-r1` artefact did not.**
+
+**Staging and the artefact were proved identical before the release, not assumed.** What
+production received is what staging was QA'd on.
+
+**Rollback path, recorded before the install:**
+`~/_rollback/PROD-theme-1.19.404-pre-407-20260908-120705.tar.gz` (31,303,024 bytes) and
+`~/_rollback/PROD-plugin-1.8.86-pre-1.8.89-20260908-120705.tar.gz` (720,512 bytes). Tarball
+md5s were not recorded in the release seal.
+
+**Verified live after the release - and the evidence class is stated rather than blurred.**
+**Shell evidence (`curl`), first-hand:** home 200 carrying 17 `ver=1.19.407` markers; `/shop/`
+200; the Mariana paperback PDP 200 with `ADD BOTH` 0 occurrences, `Add The Coloring Book` 0,
+`ADD PAPERBACK` 2; the coloring PDP 200 with `Out of stock` 1, `Temporarily unavailable` 2 and
+`add-to-cart=618` links 0; `/cart/` 200; `/adventure-kit-thank-you/` 200; `/read-aloud/` 200.
+⚠ **No real-browser production QA is claimed in this entry.** A `commerce-cx` aesthetic and
+purchase-flow audit at 390 and 1440 was dispatched immediately after the push and was still
+running when this record was written. Its findings belong to a later entry.
+
+**⚠ The coloring gate is conditional on stock, and that is by design.** Product 618 reads
+`outofstock` on production (set by hand under seal 1425, not by this release). While it does,
+the coloring offers are withdrawn from all six surfaces. If it is set back to `instock`,
+1.19.407 renders the storefront exactly as 1.19.404 did and every offer returns. **This release
+changed no stock value.**
+
+**Known and open, recorded rather than smoothed:**
+
+- One new customer-facing string ships **unapproved and is live now**:
+  `BHP_COLOURING_UNAVAILABLE_CTA` = "Temporarily unavailable", the placeholder on the coloring
+  product page's own button. Andrew's wording to settle; he had not answered at the time of
+  writing.
+- The pair landing `/mariana-trench-book-and-coloring-book/` degrades to a ~1,200-character
+  empty shell while the book is out of stock - correct title, header, footer, no dead control,
+  and **no stated reason**. A content decision, not an engineering one.
+- `/read-aloud/` still mentions the coloring book and keeps a "See the coloring book" link. A
+  link, not an add control; it lands on a page that says the book is unavailable.
+- The coloring product page never prints the literal words "out of stock" in the theme's own
+  rail - it prints the placeholder instead, because the theme replaces core's add-to-cart rail
+  and core's availability line with it. Core's own "Out of stock" line is present once.
+- `/share-your-reader/` and its reward email still promise a free printed coloring book and
+  tell a winner to add it to their cart. Untouched by this release, still live.
+- The approved thank-you copy names `PARENT10` while a live engineering guard forbids printing
+  a coupon code on that page. The guard was **not** weakened and the copy **was** shipped, so
+  the suite carries exactly one deliberate failure. Unresolved. Carried from 1.19.404, not
+  introduced here.
+- One approved string is no longer carried by any live surface: the classic cart path's
+  `Add the final adventure to complete the series and save $3.98 total.` The drawer carries the
+  same sentence with "collection" in place of "series", and the drawer's is the one customers
+  have actually been reading. **Nothing was rewritten to close the one-word gap.**
+- Two comment variants of `format-cards.php` assert opposite facts about whether chapter-book
+  hardcover is intentionally out of stock. The shipping artefact says it is **not** (citing the
+  print-on-demand policy in `docs/DECISIONS.md` 2026-07-13); the superseded variant says it
+  **is**. Comment text only - the shipping code is identical either way. **Recorded for the
+  decisions register, not resolved here.**
+- Under the non-default `conservative` coloring policy, a mixed cart of three books and two
+  adventures could make the free-shipping nudge true where it is now silent. The live policy
+  reads `any-three`, threshold 3, so the branch is unreachable as configured. Recorded, not
+  resolved.
+- The audience coupon still requires three **distinct** titles, and the coloring book still
+  sits outside the tier discount. Both remain owner holds; neither moved.
+- The wallet-present branch of the `/cart/` express collapse was never exercised - the QA
+  instrument has no wallet. "A real Apple/Google Pay button is never hidden" is **not** claimed.
+- 1.19.405's pair-strip geometry fix **cannot be verified on production** while 618 is out of
+  stock, because 1.19.407 hides the strip. Untestable, not passed.
+
+### Releases folded into the 2026-09-08 production push
+
+- **1.19.405** - nine items. The phone buy bar carries the live price (`ADD PAPERBACK, $11.99`),
+  and the same item fixed a customer-facing bug caught by a test's diagnostic note before any
+  browser look: `wc_price()` returns the dollar sign as the entity `&#36;` and
+  `wp_strip_all_tags()` strips tags but not entities, so the primary purchase control would
+  have printed `ADD PAPERBACK, &#36;11.99`. Fixed with `html_entity_decode()`. The `/cart/`
+  express-payment block collapses to 0px, `inert`, `aria-hidden` at mobile. The home popup
+  fires on scroll depth / exit intent instead of a bare timer, on the authority of founder seal
+  1359 - **scoped to the home/parent funnel only; the teacher popup was deliberately left on
+  item 306's 15-second timer and verified still running it.** The coloring PDP hero leads
+  cover-first and uncropped. Hover zoom removed, lightbox and flip-through kept. The pair strip
+  takes the grid card's geometry. The drawer nudge deliberately unchanged, asserted rather than
+  assumed. The LD-404-1 guard re-scoped. Four superseded item-306 guards updated across three
+  suites - more than the brief knew about - with item 306 preserved struck and one guard split
+  by funnel so the teacher ruling survives. ZIP md5 `ea57a3ea3bf4e76975ea729c6b11422e`, 811
+  entries. Suite: 152 files / 9,279 passes / 24 real fail lines, one fewer than 1.19.404's 25,
+  with zero new fail lines.
+- **1.19.406** - the coloring look-inside correction. Two plates ship at 800/1200/1600 jpg (six
+  files), taking `assets/look-inside/` from 33 to 39, and the `colouring_mariana` registry
+  entries are corrected so the captions read "Two coloring pages, 12 and 33" and "Two coloring
+  pages, 48 and 49" - the **printed folios**. The superseded entries named **PDF indices**,
+  which the printed pages contradict; they are preserved struck at the line.
+  `tests/test-cycle179-397.php` section 4.1's hard pin `'1.8.86' === BHP_BUNDLE_PRICING_VERSION`
+  becomes a `version_compare( ..., '1.8.86', '>=' )` floor - which is what makes a
+  theme-then-plugin install order safe. `tests/test-cycle179-video-testimonial.php` section
+  6.2's `count()+1` assertion, which saturates at the log cap, is replaced by an identity
+  assertion against the log's newest entry. **The brief's premise for the plate work was false
+  and that is the most useful thing the build found:** nothing had ever dropped the coloring
+  plates from a deployed artefact. A gate at 39 look-inside jpgs now keeps that true. ZIP md5
+  `5b84f788c89bdb17e53ce4cb0c92ad52`.
+- **1.19.407** - the theme half of the coloring stock gate. When the coloring book is out of
+  stock, its own buy control renders the placeholder `BHP_COLOURING_UNAVAILABLE_CTA` instead of
+  `ADD PAPERBACK, $12.99`, with `aria-disabled="true"`, `tabindex="-1"`, `href="#"`, no
+  cart-drawer hook and `pointer-events: none` - **inert to mouse, keyboard and assistive
+  technology, not merely greyed.** The change is scoped by `$data['key']` to the coloring rail:
+  **the chapter-book rail is byte-unchanged and its "ADD HARDCOVER TO CART" reads exactly as
+  before.** The ship-home degrade was protected at both call sites: `purchasable && !offerable`
+  used to mean "this session is refused, ship-to-home is the remedy" and now also means out of
+  stock, which has no remedy - without the added stock clause the shop would have swapped a dead
+  ADD control for an invitation to pay postage for a book that cannot be printed. In the shop
+  grid the coloring card stays in place and degrades to WooCommerce core's loop fallback -
+  title, `$12.99`, `AGES 6-9`, `PAPERBACK 8.5 x 11`, `READ MORE` linking to the product page -
+  with the pair strip and ship-home card absent and no `?add-to-cart=` anywhere on the page. New
+  suite `tests/test-cycle179-407.php`, 58 assertions, covering every surface in **both** stock
+  states without writing to a single product record - it flips
+  `woocommerce_product_is_in_stock` for one product id and asserts its own teardown. ZIP md5
+  `97360f03786d549de57bcc35d8b8134f`, 818 entries, 0 removed / 1 added vs the 1.19.406 artefact.
+  Full theme suite on staging 12,047 pass / 70 fail against a pre-407 baseline of 11,989 pass /
+  70 fail taken minutes earlier on the same install - **+58 passes, zero new failures, fail-line
+  set identical line for line.**
+- **plugin 1.8.87** - the multi-buy discount keys on a **count of physical books**, not on
+  distinct titles, on founder seal 1359 ("If they buy any two books they should get the discount
+  - doesnt matter"). `bhp_bundle_evaluate_cart()` now derives `paperback_tier` / `hardcover_tier`
+  from `bhp_bundle_qualifying_tier_by_count()` over the new `bhp_bundle_quantities_in_cart()` -
+  books per format, duplicates included. Two paperbacks earn the two-book discount and the
+  two-book shipping tier even when they are the same title; three earn the Collection price and
+  free shipping. Hardcover and mixed tiers likewise. The two `bundle-data.php` comments that
+  argued the old rule in writing are struck and dated at those lines with seal 1359 quoted
+  beside them. `bhp_bundle_distinct_adventures_in_cart()` is kept for what still needs
+  distinctness. Reward-order origin and V-9 suppression unchanged. ZIP md5
+  `00655b062dad669e4b0d2c9cfaccfad2`.
+- **plugin 1.8.88** - the free-shipping nudge is gated on the shipping rule's own count, and the
+  dead classic-cart path is removed. A cart of 2x Mariana + 1x Everest was being shown "Add the
+  final adventure and your order ships free." directly above its own "Your order ships FREE." -
+  an offer and the same offer reported already fulfilled, in one panel, on a cart the Store API
+  confirmed was already at $0.00 shipping. **The cause was a unit mismatch, not a copy error:**
+  the sentence describes a shipping rule that has keyed on a physical book count since 1.8.62 /
+  `FD-583`, while its trigger asked a titles question - they had been counting different things
+  for nineteen days. The string is byte-unchanged and the gate moved: one predicate in
+  `assets/bundle-drawer.js` now also requires `physicalBooksInCart < freeShipThreshold`. Verified
+  live at three cart shapes: two distinct titles $2.99 nudge **shows**; two copies plus one other
+  $0.00 nudge **hidden**; three distinct $0.00 nudge **hidden**. Separately,
+  `bhp_bundle_print_progress_messages()` and its two classic hooks were removed after being
+  **proved dead while still hooked** - `.bhp-bundle-message` count 0 on `/cart/` and 0 on
+  `/checkout/` on a qualifying cart at 1.8.87, and 0 and 0 at 1.8.88; cart page 7 and checkout
+  page 8 are Blocks with zero `[woocommerce_cart]` shortcodes. Customer-visible output is
+  identical across the removal. Exactly one string was carried only by that path and it is named
+  rather than glossed: "Add the final adventure to complete the **series** and save $3.98
+  total.", against the drawer's "...complete the **collection**...". ZIP md5
+  `43990e1adef6e4324d7cb22e484b4754`.
+  ⚠ **Not done before this plugin shipped: no mobile render.** `innerWidth` stayed 1280 across
+  two resize attempts, so the phone read was owed and was never taken.
+- **plugin 1.8.89** - the offer engine learns about stock. Bookvault cannot fulfil the Mariana
+  coloring book (SKU 9798996810840). Marking the product out of stock stopped exactly **one**
+  control and left **six** live, because every offer surface asked `bhp_offer_is_purchasable()`,
+  and WooCommerce's `is_purchasable()` checks published status, a non-empty price and password
+  protection - **not stock**. Verified on staging before any edit: `is_in_stock()` false,
+  `is_purchasable()` TRUE. Clicking any of the six live controls landed a parent on `/cart/`
+  with one $11.99 book, at $13.98, with no message on the page at all; the cart drawer's "Add
+  The Coloring Book" row simply did nothing. This release adds `bhp_offer_is_in_stock()` and
+  makes `bhp_offer_is_offerable()` - the **display** question - false when any component is out
+  of stock. **`bhp_offer_is_purchasable()` is byte-unchanged, and that is the most important
+  line in the release:** `bhp_offer_apply_fees()` reads it to price a cart, so gating it would
+  have taken $1.99 off a cart a parent had already assembled and made their total **go up**.
+  `offer-engine.php` carries that warning in its own source; it was read first and honored, and
+  a suite assertion now fails if anyone moves the gate. The cart-drawer row is why this needed a
+  plugin release at all - it is built and localized entirely inside the plugin with no filter on
+  the path, so no theme-only edit could reach it. A direct `?add-to-cart=` URL is now refused by
+  WooCommerce **on the page the customer landed on**, instead of the refusal being queued and
+  surfaced minutes later at the top of an unrelated page. ZIP md5
+  `9f2488a0409cf7226fecd6b36944e5c9`, 107 entries, 0 removed / 0 added vs 1.8.88.
+
+## 2026-09-07 (23:53 MDT) - PRODUCTION MOVED TO THEME `1.19.404` (releases 1.19.401, 1.19.402, 1.19.403, 1.19.404; plugin unchanged at `1.8.86`)
+
+⭐ **This entry was written after the fact, on 2026-09-08, to close a gap in this file.** Between
+the 1.19.400 entry below and the 1.19.407 entry above, `CHANGELOG.md` contained no record of
+1.19.401 through 1.19.404 at all, while production had been running 1.19.404 since the night of
+2026-09-07. The gap was found by the release lane preparing the 407 packet and is recorded here
+rather than papered over: **writing a 405/406/407 entry on top of a missing 404 entry would have
+left this file claiming a jump the history does not contain.**
+
+Four theme versions, one production push, no plugin change. The customer-visible result is a
+cart page that starts within the first screen instead of below a tall parchment hero, and an
+adventure-kit panel that shows the eleven kit pages as images on every device instead of framing
+a PDF that iOS Safari could not scroll.
+
+**Staging approval.** Founder seal 1396, Andrew's words, verbatim: "Looks amazing on staging on
+iphone" - theme 1.19.404 as seen on his own iPhone.
+
+**Authorization.** Founder seal 1397. Andrew touched the PROD-UNLOCK token in his own PowerShell
+and said, verbatim: "touched", against a scope statement read back to him in full beforehand:
+theme 1.19.404 to production (ZIP md5 `88b75cdbebe3169fc0ec963e703b83aa`), carrying 401 to 404 -
+the cart band, the kit panel hardening, the preview-only kit panel with his approved lines - and
+the full ritual at every step: lint out of the ZIP on the server, live-vs-ZIP diff, rollback
+tarball, install, list, ok probe, purge, live checks.
+
+**Installed** 2026-09-07 about 23:53 MDT (2026-09-08 05:53 UTC), executed under seal 1398. Theme
+`1.19.404` from a server-verified md5 of `88b75cdbebe3169fc0ec963e703b83aa`; 363 PHP files linted
+out of the extracted ZIP on the server, 0 failures; live-vs-ZIP diff 0 removed / 4 added; active
+1.19.404; `ok` probe returned; caches purged; 755 theme files; `inc/cart-surface.php` and
+`inc/kit-instant-modal.php` present. **The `-r1` artefact `3b8f7d59...` was not installed.**
+
+**Rollback path, recorded before the install:**
+`~/_rollback/PROD-theme-1.19.400-pre-404-20260908-055216.tar.gz` (31,256,340 bytes).
+
+**Verified live after the release:** home, shop, cart, blog, `/adventure-kit-thank-you/`, the
+Mariana PDP and the kit page all 200; `style` version 1.19.404; the cart band markup present on
+`/cart/`; the thank-you page carries the approved "How did story time go?" line.
+
+**Known and open at the time of this release:**
+
+- **Not exercised on production:** a real signup through the form to the kit panel. Minting a
+  production kit token is Andrew's, not an agent's, so the end-to-end path was left untested
+  rather than tested with a token an agent minted.
+- The `PARENT10` guard conflict shipped deliberately - see 1.19.404 below.
+
+### Releases folded into the 2026-09-07 (late) production push
+
+- **1.19.401** - the cart page gets the shop's band. The tall `.interior-hero--parchment` is gone
+  from `/cart/` and the catalog band is in its place, with H1 "Cart", the diamond at desktop
+  widths and a one-line meta. The empty nested padding above the cart panels is removed
+  (`.page-content` padding-top 76.8px to 32px at desktop, 56px to 24px on phones; the empty 64px
+  `.entry-content` top padding removed). Measured against production 1.19.400 in a real browser
+  with `innerWidth` asserted in the same evaluation as the geometry: the cart block moves from
+  y370.24 to y162 at 1280, and from y281.34 to y146 at 375. Zero WooCommerce reads or writes in
+  the new code; `/checkout/` unchanged, verified with a non-empty cart. Installed on staging2
+  2026-09-08 02:49:51 UTC. ⭐ **Superseded within the hour by 1.19.402 and never released on its
+  own** - its own new test reported two false failures.
+- **1.19.402** - 1.19.401's new test corrected, **and nothing else**. ZIP md5
+  `a9638e5ede415cc86ea24d912850d11e`; 149 files / 9,137 pass / 34 fail, with the fail-line diff
+  against 1.19.400's final run **identical, nothing added and nothing removed**. Installed on
+  staging2 2026-09-07 21:19:28 MDT.
+  ⚠️ **Two lanes were briefed onto theme version 1.19.402 at the same time, and the collision was
+  found by accident rather than by a gate.** A writer lock declares the FILES a desk will write;
+  nothing declared the VERSION NUMBER it would consume, so two desks took the same one without
+  either lock showing a conflict. It was ruled on the day that 1.19.402 is the cart build, and
+  the other lane rebuilt as 1.19.403 and repointed its entry-list diff at the installed 402.
+  **No work was lost and nothing was overwritten.** The rule that came out of it - claim the
+  version number in the lock at acquisition - was applied from 1.19.404 onward.
+- **1.19.403** - the adventure-kit panel hardened for phones. The top bar keeps the address on one
+  line with an ellipsis and the close control visible from 320px up; the button row wraps and
+  stacks under 480px with full-width tap targets; the panel never exceeds the viewport in either
+  axis (`dvh` with a `vh` fallback) and the frame fills the remaining height. ZIP md5
+  `d5ce6a2519b6074e477925e2cfe13843`. ⚠️ **The two symptoms the brief reported did not reproduce
+  by DOM measurement** at 320 or 390, with a short or a 51-character address - the close control
+  was in the viewport and hit-tested to itself, and all three buttons were whole. The build was
+  still worth doing, and the likely explanation is recorded rather than asserted: on this
+  workstation the browser pane's frame and the emulated viewport diverge, and a screenshot
+  captures the frame, cropping exactly the right-hand edge where the close control sits. **A
+  layout brief written off a screenshot taken on this machine should be checked against DOM
+  measurement first.**
+- **1.19.404** - the kit panel becomes preview-only. The eleven kit page images on every device;
+  **no PDF iframe anywhere, no `pdfViewerEnabled` probe, and no PDF URL in the panel markup at
+  all**; Download PDF, Print and the "open in a new tab" link removed, leaving one Close button
+  and the round close. ZIP md5 `88b75cdbebe3169fc0ec963e703b83aa`, 810 entries.
+  ⭐ **The feature probe was deleted, not improved, and that is the build.**
+  `navigator.pdfViewerEnabled` is the correct standard question and iOS Safari answers it
+  wrongly - `true`, followed by page one of a framed PDF, oversized and unscrollable, which
+  Andrew observed on his own iPhone. **A probe whose one authority lies to it cannot be fixed by
+  asking it more politely**, and a user-agent sniff would have traded a broken standard for a
+  worse one. There is now one branch, so there is nothing to probe. The readiness gate is kept
+  and its URL is never printed - it is read for the gate and **not assigned to a local at all**,
+  so no variable exists that a future edit could print by habit. `__fallback` was renamed
+  `__reader`, because it is not a degraded path any more, it is the panel.
+  ⛔ **One thing shipped deliberately unresolved and it is not buried:** the approved thank-you
+  copy names `PARENT10`, and a live engineering guard forbids printing a coupon code on that
+  page. **The guard was not weakened and the copy was shipped**, so the suite carries exactly
+  one new failure. Andrew's to settle.
+  ⚠️ **`wp_get_environment_type()` returns `local` on BOTH production and staging.** Any code
+  gating behaviour on it is gating on nothing. Second file in the theme to record it; not fixed
+  by this release.
+
 ## 2026-09-07 - PRODUCTION IS NOW THEME `1.19.400` / BUNDLE PLUGIN `1.8.86` (releases 1.19.389 through 1.19.400, plugin 1.8.85 and 1.8.86)
 
 The largest single release this project has run: eleven theme versions and two plugin

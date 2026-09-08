@@ -682,6 +682,28 @@
         var fallbackTimerId = null;
         var scrollPct = deviceConfig.scrollPct;
 
+        // 1.19.405 — OPTIONAL EXIT-INTENT ALONGSIDE A SCROLL TRIGGER.
+        //
+        // `exitFloorElapsed` DEFAULTS TRUE, and that default is what makes
+        // this addition invisible to modes 'exit' and 'gated': with no
+        // `exitMinDelay` in play the flag is true before the first listener
+        // can ever run, so `exitBlocked()` behaves exactly as it did.
+        //
+        // It exists so 'simple' mode can carry exit-intent WITHOUT reusing
+        // `minTimeElapsed` for the dwell floor. Reusing that flag would have
+        // been the smaller diff and the wrong one: in 'simple' mode it also
+        // gates `onScroll()`, so setting it false to hold exit intent back
+        // would have silently held the SCROLL trigger back too.
+        //
+        // ⭐ THE LISTENERS STILL ATTACH IMMEDIATELY, and the floor is enforced
+        //    at the gate instead. Deferring `attachExitListeners()` behind the
+        //    timer was tried in design and rejected: `hasUpwardPointerVelocity()`
+        //    needs a sample history, so a late attach makes the FIRST leave
+        //    gesture unreadable — the popup would miss precisely the moment it
+        //    exists to catch.
+        var exitFloorElapsed = true;
+        var exitFloorTimerId = null;
+
         function getScrollPercent() {
             var doc = document.documentElement;
             var scrolled = window.scrollY || doc.scrollTop || 0;
@@ -699,6 +721,10 @@
             if (fallbackTimerId) {
                 clearTimeout(fallbackTimerId);
                 fallbackTimerId = null;
+            }
+            if (exitFloorTimerId) {
+                clearTimeout(exitFloorTimerId);
+                exitFloorTimerId = null;
             }
             window.removeEventListener('scroll', onScroll);
             detachExitListeners();
@@ -1029,6 +1055,11 @@
             if (!minTimeElapsed) {
                 return true;
             }
+            // 1.19.405 — the 'simple'-mode exit dwell floor. True by default,
+            // so this is a no-op for modes 'exit' and 'gated'.
+            if (!exitFloorElapsed) {
+                return true;
+            }
             if (navigationPending) {
                 return true;
             }
@@ -1191,6 +1222,20 @@
             }
             if (typeof scrollPct === 'number') {
                 window.addEventListener('scroll', onScroll, { passive: true });
+            }
+            // 1.19.405 — OPT-IN exit intent as a THIRD racer in 'simple' mode,
+            // so a config can say "scroll depth OR leave intent, whichever
+            // first" without a timer. Every key here is optional and absent
+            // from every other popup's config, so no other surface changes.
+            if (deviceConfig.exitIntent === true) {
+                if (typeof deviceConfig.exitMinDelay === 'number' && deviceConfig.exitMinDelay > 0) {
+                    exitFloorElapsed = false;
+                    exitFloorTimerId = window.setTimeout(function () {
+                        exitFloorTimerId = null;
+                        exitFloorElapsed = true;
+                    }, deviceConfig.exitMinDelay);
+                }
+                attachExitListeners();
             }
         } else if (mode === 'exit') {
             // Listeners attach immediately so depth and scroll velocity are

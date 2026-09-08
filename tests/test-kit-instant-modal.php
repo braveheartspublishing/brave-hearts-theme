@@ -178,6 +178,22 @@ echo "\n== 3: the trigger, the bar and the close ==\n";
  */
 $_GET[ BHP_KIT_MODAL_ARG ] = $bhp_kim_token;
 $bhp_kim_html              = bhp_kim_render();
+/*
+ * ⚠️ THE COMMENT-STRIPPED COPY OF THE RENDERED MARKUP, ADDED 1.19.404 AFTER
+ *    IT CAUGHT THREE FALSE FAILURES ON A REAL STAGING RUN.
+ *
+ * ⛔ PHP comments never reach the browser, so it is easy to assume no comment
+ *    does. The `<style>` and `<script>` blocks in this modal are INLINE HTML:
+ *    their comments are printed into the page verbatim. 1.19.404's script
+ *    comment names `data-bhp-kit-pdf`, `contentWindow.print()` and
+ *    `navigator.pdfViewerEnabled` precisely in order to record that they were
+ *    removed -- so absence assertions run against the raw markup failed on the
+ *    sentences documenting the removal.
+ *
+ * ⭐ ABSENCE checks for a token that also appears in prose use this copy.
+ *    PRESENCE checks, and the PDF-URL check, stay on the raw markup.
+ */
+$bhp_kim_code_html         = preg_replace( '#/\*.*?\*/#s', '', $bhp_kim_html );
 
 bhp_kim_assert(
 	'' !== trim( $bhp_kim_html ),
@@ -191,9 +207,30 @@ bhp_kim_assert(
 	'3 TRIGGER: it renders as a labelled modal dialog',
 	$failures
 );
+/*
+ * ⛔ SUPERSEDED 1.19.404 (seals 1358 / 1362). Was: the bar carries the exact
+ *    phrase *"Also sent to your email:"*. That was this desk's wording. It is
+ *    replaced by ANDREW'S OWN SENTENCE plus his own approved PARENT10 clause,
+ *    and the exact-string check moves with it.
+ *
+ * ⛔⛔ PARENT10 IS ASSERTED SEPARATELY AND ON PURPOSE. It is a real coupon code
+ *     a parent will type. A case change, a smart-quote pass, a "10 %" spacing
+ *     fix or a hyphenation would ship a code that does not work, and none of
+ *     those would fail a looser check on the sentence around it.
+ */
 bhp_kim_assert(
-	false !== strpos( $bhp_kim_html, 'Also sent to your email:' ),
-	'3 BAR: the top bar carries the exact phrase "Also sent to your email:"',
+	false !== strpos( $bhp_kim_html, 'This Free Chapter Activity was sent to your email, see your email to download it now, with your PARENT10 code for 10% off the Collection' ),
+	'3 BAR: the top bar carries the founder-authored line VERBATIM (seals 1358, 1362)',
+	$failures
+);
+bhp_kim_assert(
+	false !== strpos( $bhp_kim_html, 'PARENT10' ),
+	'3 BAR: the coupon code PARENT10 survives intact in the rendered bar',
+	$failures
+);
+bhp_kim_assert(
+	false === strpos( $bhp_kim_html, 'Also sent to your email:' ),
+	'3 BAR: the superseded 1.19.392 label is gone, not merely moved',
 	$failures
 );
 bhp_kim_assert(
@@ -242,33 +279,66 @@ bhp_kim_assert(
 	$failures
 );
 
-echo "\n== 4: the whole kit is reachable, and the fallback does not overclaim ==\n";
+echo "\n== 4: the preview shows the whole kit, and hands out no file ==\n";
 
 $bhp_kim_pdf = isset( $bhp_kim_download['url'] ) ? $bhp_kim_download['url'] : '';
 
+/*
+ * ⛔⛔ SUPERSEDED 1.19.404 IN FULL, founder decision seal 1357. FIVE assertions
+ *     stood here and every one of them is now INVERTED, because every thing
+ *     they proved present has been deliberately removed:
+ *
+ *       ~~4: the configured kit PDF is the document the modal renders~~
+ *       ~~4: the primary reader is a same-origin iframe, so it can scroll and print~~
+ *       ~~4: Print prints the kit, not the page behind it~~
+ *       ~~4: a Download PDF control is present~~
+ *       ~~4: the fallback is chosen by feature probe, never by user-agent sniffing~~
+ *
+ * ⭐ ANDREW, VERBATIM (seal 1357, RELAYED, not witnessed by this desk):
+ *    *"maybe do the preview and dont let them download it or print it from
+ *    there?"* The panel is a PREVIEW. The printable file arrives BY EMAIL and
+ *    by no route from this panel.
+ *
+ * ⚠️ THE FIFTH ONE IS WORTH READING TWICE. The feature probe was correct
+ *    engineering and it still failed the customer: `navigator.pdfViewerEnabled`
+ *    reports TRUE on iOS Safari, which then paints page ONE of a framed PDF,
+ *    oversized and unscrollable. Observed by Andrew on his own iPhone on
+ *    2026-09-07 at 21:19 and relayed here as a screenshot -- NOT reproduced on
+ *    hardware at this desk. A probe whose one authority answers wrongly cannot
+ *    be fixed by asking it more politely.
+ *
+ * ⛔ THE URL CHECK IS THE STRICT ONE: it runs against the URL the site is
+ *    ACTUALLY configured with, not against a literal, so it cannot pass
+ *    vacuously in an environment where no kit is set.
+ */
 bhp_kim_assert(
-	'' !== $bhp_kim_pdf && false !== strpos( $bhp_kim_html, esc_url( $bhp_kim_pdf ) ),
-	'4: the configured kit PDF is the document the modal renders',
+	'' !== $bhp_kim_pdf && false === strpos( $bhp_kim_html, esc_url( $bhp_kim_pdf ) ),
+	'4: the configured kit PDF URL appears NOWHERE in the rendered panel',
 	$failures
 );
 bhp_kim_assert(
-	false !== strpos( $bhp_kim_html, 'data-bhp-kit-frame' ) && false !== strpos( $bhp_kim_html, '<iframe' ),
-	'4: the primary reader is a same-origin iframe, so it can scroll and print',
+	false === strpos( $bhp_kim_code_html, 'data-bhp-kit-pdf' ),
+	'4: there is no data-bhp-kit-pdf attribute to read the file out of',
 	$failures
 );
 bhp_kim_assert(
-	false !== strpos( $bhp_kim_html, 'data-bhp-kit-print' ) && false !== strpos( $bhp_kim_html, 'contentWindow.print()' ),
-	'4: Print prints the kit, not the page behind it',
+	false === strpos( $bhp_kim_code_html, 'data-bhp-kit-frame' ) && false === strpos( $bhp_kim_code_html, '<iframe' ),
+	'4: there is no PDF iframe on any device',
 	$failures
 );
 bhp_kim_assert(
-	false !== strpos( $bhp_kim_html, 'download data-bhp-kit-download' ) || false !== strpos( $bhp_kim_html, 'data-bhp-kit-download' ),
-	'4: a Download PDF control is present',
+	false === strpos( $bhp_kim_code_html, 'data-bhp-kit-print' ) && false === strpos( $bhp_kim_code_html, 'contentWindow.print()' ),
+	'4: the Print control and its handler are gone',
 	$failures
 );
 bhp_kim_assert(
-	false !== strpos( $bhp_kim_html, 'navigator.pdfViewerEnabled' ),
-	'4: the fallback is chosen by feature probe, never by user-agent sniffing',
+	false === strpos( $bhp_kim_code_html, 'data-bhp-kit-download' ),
+	'4: the Download PDF control is gone',
+	$failures
+);
+bhp_kim_assert(
+	false === strpos( $bhp_kim_code_html, 'navigator.pdfViewerEnabled' ),
+	'4: the feature probe iOS Safari answers wrongly is gone (there is one branch now)',
 	$failures
 );
 
@@ -328,14 +398,47 @@ bhp_kim_assert(
 	'4: the superseded shortfall sentence is gone from the rendered fallback',
 	$failures
 );
+/*
+ * ⛔ SUPERSEDED 1.19.404. Was:
+ *       ~~4: the fallback states the count it actually rendered~~
+ *         (*"all 11 pages of the kit are shown above"*)
+ *       ~~4: the fallback always offers a route to the complete kit~~
+ *         (*"Open the full kit in a new tab"*)
+ *
+ * ⭐ THE FIRST SENTENCE BEGAN *"This browser will not display a PDF inside a
+ *    page"*, which is FALSE on every device now, because no browser is being
+ *    asked to display one. ⛔ A sentence that is no longer true is removed, not
+ *    softened -- the same rule the 1.19.392 pass applied to the shortfall
+ *    sentence three lines above.
+ *
+ * ⭐ THE SECOND WAS THE LINK-OUT, removed under seal 1357 with Download and
+ *    Print. Its ABSENCE is asserted so it cannot return by copy-paste.
+ *
+ * ⭐⭐ WHAT REPLACED THEM IS ANDREW'S OWN APPROVED LINE (seal 1366, first
+ *     person), and both of its claims are verified rather than assumed: the
+ *     FROM address on all three steps of journey 89 is his, read in Mailchimp
+ *     by `connected-operator` on 2026-09-07; and TWO further emails follow,
+ *     because the journey has THREE steps and E1 has already been sent.
+ *     ⛔ "the next three emails" would be wrong by one.
+ */
 bhp_kim_assert(
-	false !== strpos( $bhp_kim_html, 'all 11 pages of the kit are shown above' ),
-	'4: the fallback states the count it actually rendered',
+	false === strpos( $bhp_kim_html, 'This browser will not display a PDF' ),
+	'4: the no-PDF-viewer explanation is gone (it is false on every device now)',
 	$failures
 );
 bhp_kim_assert(
-	false !== strpos( $bhp_kim_html, 'Open the full kit in a new tab' ),
-	'4: the fallback always offers a route to the complete kit',
+	false === strpos( $bhp_kim_html, 'Open the full kit in a new tab' ),
+	'4: the link-out to the complete kit is gone (seal 1357)',
+	$failures
+);
+bhp_kim_assert(
+	false !== strpos( $bhp_kim_html, 'Add andrew@braveheartspublishing.com to your contacts so the next two emails reach your inbox. I read the replies myself.' ),
+	'4: the approved first-person contacts line renders under the pages VERBATIM (seal 1366)',
+	$failures
+);
+bhp_kim_assert(
+	false === strpos( $bhp_kim_html, 'next three emails' ),
+	'4: the count is TWO, not three - journey 89 has three steps and E1 is already sent',
 	$failures
 );
 

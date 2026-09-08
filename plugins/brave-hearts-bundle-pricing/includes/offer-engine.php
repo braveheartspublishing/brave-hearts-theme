@@ -379,6 +379,81 @@ function bhp_offer_is_purchasable( $key ) {
 }
 
 /**
+ * ⭐⭐⭐ 1.8.89 (`CYCLE179-LD-BUILD-407-STOCK-GATE`) — IS EVERY COMPONENT OF
+ *     THIS OFFER ACTUALLY **IN STOCK** RIGHT NOW?
+ *
+ * ════════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THE DEFECT THIS EXISTS FOR, AND IT WAS FOUND ON STAGING, NOT REASONED
+ *     ABOUT. `commerce-cx` set the Mariana colouring product out of stock and
+ *     read the engine back:
+ *
+ *         is_in_stock()     false
+ *         is_purchasable()  TRUE
+ *
+ *     WooCommerce's `is_purchasable()` asks THREE questions — published
+ *     status, a non-empty price, password protection — and **stock is not one
+ *     of them**. So `bhp_offer_components()` resolved the pair perfectly
+ *     happily, every offer surface asked the one gate it has always asked, and
+ *     SIX live controls went on selling a book the printer cannot make.
+ *     Clicking one landed the parent on `/cart/` with ONE book and no message.
+ *
+ * ════════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ WHY THE TEST IS **HERE**, IN A THIRD PREDICATE, AND **NOT** INSIDE
+ *     `bhp_offer_components()` / `bhp_offer_is_purchasable()`.
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE FILE'S OWN WARNING, AT `bhp_offer_is_offerable()` BELOW, APPLIES TO
+ *    THIS CHANGE AND WAS READ BEFORE IT WAS MADE: `bhp_offer_apply_fees()`
+ *    reads `bhp_offer_is_purchasable()` to decide whether an offer's DISCOUNT
+ *    applies to a cart. Putting a stock test THERE would mean a parent whose
+ *    cart ALREADY holds a legally-added pair — added while the book was in
+ *    stock, carts persist across sessions on this store — silently loses the
+ *    $1.99 and watches the total **GO UP**.
+ *
+ * ⭐ SO THE PRICING PATH IS LEFT EXACTLY AS IT WAS. Stock is a DISPLAY fact
+ *    here, never a pricing fact. An existing pair cart keeps its discount and
+ *    is stopped, if at all, by WooCommerce's own stock refusal at checkout —
+ *    which is a stop, not a repricing. That is the same split the visit gate
+ *    made in 1.8.69 and it is honored, not fought.
+ *
+ * ⭐ AND IT IS A SEPARATE PREDICATE RATHER THAN AN INLINE TEST INSIDE
+ *    `bhp_offer_is_offerable()`, because two surfaces need to tell the two
+ *    refusals APART. `bhp_offer_shop_shiphome_module()` and
+ *    `bhp_read_aloud_offer_blocked_by_visit()` both key off
+ *    `purchasable && !offerable` to offer a SHIP-HOME REMEDY for a
+ *    school-visit refusal. Out of stock has no such remedy, and offering one
+ *    would tell a parent to pay postage for a book that cannot be printed.
+ *
+ * ✅ FAILS OPEN ON A MISSING RESOLVER, FAILS CLOSED ON A MISSING PRODUCT:
+ *    no `wc_get_product` at all -> true (this is 1.8.88 behaviour, nothing
+ *    hidden); a component that will not resolve or reports not-in-stock ->
+ *    false.
+ *
+ * @since 1.8.89
+ * @param string $key Offer key.
+ * @return bool
+ */
+function bhp_offer_is_in_stock( $key ) {
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return true; // FAIL OPEN: no WooCommerce, no stock opinion.
+	}
+
+	$components = bhp_offer_components( $key );
+	if ( null === $components ) {
+		return false; // Not assemblable at all -> certainly not in stock.
+	}
+
+	foreach ( $components as $component ) {
+		$product = wc_get_product( (int) $component['buy_id'] );
+		if ( ! $product || ! $product->is_in_stock() ) {
+			return false; // ⛔ ANY ONE COMPONENT CLOSES THE WHOLE OFFER.
+		}
+	}
+
+	return true;
+}
+
+/**
  * ⭐⭐ 1.8.69 (`CYCLE165-LD-VISIT-COLOURING-GATE`, item 217) — MAY THIS OFFER
  *     BE SHOWN TO **THIS** VISITOR?
  *
@@ -424,6 +499,27 @@ function bhp_offer_is_purchasable( $key ) {
  */
 function bhp_offer_is_offerable( $key ) {
 	if ( ! bhp_offer_is_purchasable( $key ) ) {
+		return false;
+	}
+
+	/*
+	 * ⭐⭐ 1.8.89 (`CYCLE179-LD-BUILD-407-STOCK-GATE`) — AN OFFER WHOSE
+	 *     COMPONENT IS OUT OF STOCK IS NOT OFFERED TO ANYBODY.
+	 *
+	 * ⛔ IT SITS HERE, IN THE DISPLAY QUESTION, AND NOT IN
+	 *    `bhp_offer_is_purchasable()`, WHICH `bhp_offer_apply_fees()` READS.
+	 *    The full reasoning is on `bhp_offer_is_in_stock()` above; the short
+	 *    version is that gating the pricing path would take the discount off a
+	 *    cart a parent already assembled and raise their total.
+	 *
+	 * ⛔ IT IS ABOVE THE VISIT GATE ON PURPOSE. Out of stock is true for every
+	 *    visitor, flagged or not, so it is answered before anything reads the
+	 *    session at all.
+	 *
+	 * ✅ CONTROL PATH: while every component is in stock this returns nothing
+	 *    and 1.8.88 behaviour continues unchanged, line for line.
+	 */
+	if ( ! bhp_offer_is_in_stock( $key ) ) {
 		return false;
 	}
 
@@ -1098,6 +1194,34 @@ function bhp_offer_apply_fees( $cart ) {
 function bhp_offer_add_to_cart( $key ) {
 	$components = bhp_offer_components( $key );
 	if ( null === $components ) {
+		wc_add_notice( 'That offer is not available right now.', 'error' );
+		return 0;
+	}
+
+	/*
+	 * ⭐⭐ 1.8.89 (`CYCLE179-LD-BUILD-407-STOCK-GATE`) — NO PARTIAL ADD.
+	 *
+	 * ⛔ THE OBSERVED FAILURE THIS CLOSES, read on staging by `commerce-cx`:
+	 *    with the colouring book out of stock, this loop added the $11.99
+	 *    paperback, WooCommerce refused the colouring line from inside
+	 *    `WC_Cart::add_to_cart()`, and the parent landed on `/cart/` holding
+	 *    HALF A PAIR at $13.98 with `visibleNotices: []`. An offer is priced as
+	 *    a unit, so a half-added one is not a cheaper offer, it is a broken
+	 *    promise.
+	 *
+	 * ⛔ IT REFUSES THE WHOLE OFFER, UP FRONT, and it reuses the string four
+	 *    lines above rather than coining a second sentence for the same event.
+	 *    NO NEW CUSTOMER-FACING COPY IS WRITTEN HERE.
+	 *
+	 * ⭐ THIS IS A BACKSTOP, NOT THE FIX. Once `bhp_offer_is_offerable()` is
+	 *    false no surface renders a control that reaches here — but a bookmarked
+	 *    POST, a stale page in a background tab and a hand-typed URL all still
+	 *    reach it, and each of those is a real customer.
+	 *
+	 * ✅ CONTROL PATH: true for every in-stock offer, so nothing changes while
+	 *    the catalogue is healthy.
+	 */
+	if ( function_exists( 'bhp_offer_is_in_stock' ) && ! bhp_offer_is_in_stock( $key ) ) {
 		wc_add_notice( 'That offer is not available right now.', 'error' );
 		return 0;
 	}

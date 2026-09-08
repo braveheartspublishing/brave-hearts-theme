@@ -1,4 +1,43 @@
 # Project State — Brave Hearts Publishing (Executive Summary)
+
+> ## ⭐⭐ NEWEST, 2026-09-08 (06:07 MDT) - **PRODUCTION IS THEME `1.19.407` / BUNDLE PLUGIN `1.8.89`.** Every version number below this block is SUPERSEDED.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-08** | **`1.19.407`** | **`1.8.89`** |
+>
+> ⭐ **VERIFIED LIVE, not read from a document:** `https://braveheartspublishing.com/` returned
+> HTTP 200 serving `ver=1.19.407` when this correction was written, 2026-09-08 ~06:35 MDT.
+> The plugin version is **read from the release record (founder seal 1427)**, not independently
+> re-verified here - the distinction is stated rather than blurred.
+>
+> Production moved twice in under seven hours, and **both moves were undocumented in this file
+> until now**:
+>
+> 1. **2026-09-07 23:53 MDT** - theme `1.19.400` to **`1.19.404`**, carrying 1.19.401 to
+>    1.19.404 (the cart band, the adventure-kit panel hardening, the preview-only kit panel).
+>    Plugin unchanged at `1.8.86`. Founder seals 1396 (staging approval), 1397 (token), 1398
+>    (execution).
+> 2. **2026-09-08 06:07 MDT** - theme `1.19.404` to **`1.19.407`** and plugin `1.8.86` to
+>    **`1.8.89`**, carrying 1.19.405, 1.19.406, 1.19.407 and plugin 1.8.87, 1.8.88, 1.8.89.
+>    Founder seal 1427. **Andrew did not do his own staging look on this push.**
+>
+> **Artefacts that were built and never released on their own, and must not be deployed:**
+> `1.19.401` (superseded within the hour by `1.19.402`), `1.19.405` and `1.19.406` (their
+> contents reached production inside `1.19.407`), plugin `1.8.87` and `1.8.88` (inside
+> `1.8.89`), and the superseded `-r1` rebuild of the `1.19.407` ZIP (`6d1f702e...`). **The
+> 1.19.407 artefact of record is ZIP md5 `97360f03786d549de57bcc35d8b8134f`.**
+>
+> ⚠️ **Two things are live and unsettled, and they are not buried in the detail:**
+> the placeholder string `"Temporarily unavailable"` is on the coloring product page **without
+> the owner's wording approval**; and **product 618 (the Mariana coloring book) is out of stock
+> by founder ruling** until Bookvault links the title, which is what makes the whole coloring
+> stock gate visible at all.
+>
+> **Per-release detail:** `CHANGELOG.md`, the 2026-09-08 entry headed "PRODUCTION IS NOW THEME
+> `1.19.407`" and the 2026-09-07 (23:53 MDT) entry headed "PRODUCTION MOVED TO THEME
+> `1.19.404`". Both were written after the fact on 2026-09-08 to close a gap in that file.
+
 > **SUPERSEDING NOTE 2026-09-06 (afternoon):** production is now theme **1.19.388** (scrollable post tables, book-rail placement guard, tracking claims removed, test-mail guard; 1.19.385 and 1.19.386 earlier the same day) and bundle plugin **1.8.84** / plugin **1.8.83**. The review-ask engine is **ON** (owner enabled it 2026-09-05 evening; first live sends 2026-09-06 09:30 site-local, three Adams one-book asks). 1.19.385 moves the checkout marketing opt-in under the email field, adds two legacy 301s, and lifts the stale DKIM comment (site mail now authenticates through FluentSMTP to Google's SMTP relay). The site-wide Open Graph share image was replaced with the compass-mark card the same day (Rank Math setting, not theme code). Details in `CHANGELOG.md`.
 
 > **SUPERSEDING NOTE 2026-09-05 (evening):** production is now theme **1.19.383** / plugin **1.8.83**. 1.19.383 ships the review-ask sequence and the school-visit email set (day 0, touch 1 with star row, touch 2), the mailer charset fix, the transparent email header logo, the Activity Book v5.1 download; the review-ask engine is switched OFF until the owner enables it. Details in `CHANGELOG.md` and the review-ask section of `RUNBOOK.md`. Notes below stand for everything else.

@@ -593,10 +593,61 @@ if ( $ktu_auto ) {
 		'9: the discounted figure is QUALIFIED, never presented as the plain price',
 		$failures
 	);
-	/* ⛔ AND NO CODE. The auto-apply path renders an outcome, never a code. */
+	/* ══════════════════════════════════════════════════════════════════════
+	 * ⛔ AND NO CODE — **IN THE OFFER MODULE**. RE-SCOPED 1.19.405
+	 *    (`CYCLE179-CX-BUILD-405` item 8), CLOSING `CYCLE179-LD-404-1`.
+	 *
+	 * ⛔ SUPERSEDED ASSERTION, PRESERVED SO THE MOVEMENT IS LEGIBLE:
+	 *
+	 *      ~~strpos( $html, $ktu_auto['code'] ) === false || (bool) $ktu_notice~~
+	 *      ~~'9: the auto-apply path does not render the coupon code anywhere'~~
+	 *
+	 * ⚠️ WHY IT HAD TO MOVE. It searched `$html` — THE WHOLE PAGE — and
+	 *    1.19.404 shipped Andrew's approved email-sequence line (seal 1366),
+	 *    which names PARENT10 outside this module: *"It carries the PARENT10
+	 *    code again in case you have not used it yet."* Two legitimate sources
+	 *    collided, the lead-developer desk refused to resolve it inside a build
+	 *    about a different file, and the suite carried one red line into 404.
+	 *    ⭐ THE RESOLUTION IS THE CHIEF OF STAFF'S RULING (seal 1391): the copy
+	 *      line STAYS and this guard is narrowed to the module's own markup.
+	 *      Option 1 of the three the 404 desk put up. Nobody overruled anybody.
+	 *
+	 * ⭐ WHAT THE GUARD IS ACTUALLY FOR, WHICH IS WHY NARROWING IT DOES NOT
+	 *    WEAKEN IT. It exists so the OFFER does not tell a customer to type a
+	 *    code that has already been applied for them — the module says "no code
+	 *    to enter" three lines above, and a code printed beside that sentence
+	 *    contradicts it at the point of purchase. Andrew's sentence is not an
+	 *    offer: it describes what a future email contains, and it carries its
+	 *    own hedge. Different surface, different claim.
+	 *
+	 * ⛔ THE `usage_limit_per_user=1` REASON STILL STANDS AND IS UNCHANGED.
+	 *    ⭐ RE-READ LIVE OVER WP-CLI ON STAGING 2026-09-07 (not carried from a
+	 *      prior report): PARENT10 `usage_limit_per_user` = **1**. So a repeat
+	 *      redeemer cannot get the discounted figure a second time, which is
+	 *      exactly why the effective price must stay QUALIFIED ("with your
+	 *      welcome discount") — asserted separately above, and NOT relaxed here.
+	 *
+	 * ⭐ THE MODULE IS ADDRESSED BY `data-bhp-typ-offer`, its own stable hook,
+	 *    rather than by a class name or a byte offset. If the section ever
+	 *    stops rendering, `$ktu_offer_html` is empty and this assertion passes
+	 *    vacuously — which is correct: no module, no offer, nothing to mislead.
+	 * ══════════════════════════════════════════════════════════════════════ */
+	$ktu_offer_html = '';
+	if ( preg_match( '/<section\b[^>]*\bdata-bhp-typ-offer\b.*?<\/section>/s', $html, $ktu_offer_m ) ) {
+		$ktu_offer_html = $ktu_offer_m[0];
+	}
 	bhp_ktu_assert(
-		strpos( $html, $ktu_auto['code'] ) === false || (bool) $ktu_notice,
-		'9: the auto-apply path does not render the coupon code anywhere',
+		strpos( $ktu_offer_html, $ktu_auto['code'] ) === false || (bool) $ktu_notice,
+		'9: the auto-apply path does not render the coupon code inside the offer module (re-scoped 1.19.405, CYCLE179-LD-404-1)',
+		$failures
+	);
+	/* ⭐ AND THE NARROWING IS PROVED, NOT ASSUMED. If the regex above ever
+	 * silently matched nothing, the assertion would pass for the wrong reason
+	 * and the guard would be dead. This asserts the module was actually found
+	 * and actually contains the offer, so a vacuous pass is visible as a fail. */
+	bhp_ktu_assert(
+		'' !== $ktu_offer_html && strpos( $ktu_offer_html, 'bhp-kit-upsell__card' ) !== false,
+		'9: the offer module was located by its data-bhp-typ-offer hook, so the assertion above is not passing vacuously',
 		$failures
 	);
 	echo "NOTE: the auto-applied welcome discount IS enabled on this environment (option bhp_typ_auto_coupon is set).\n";

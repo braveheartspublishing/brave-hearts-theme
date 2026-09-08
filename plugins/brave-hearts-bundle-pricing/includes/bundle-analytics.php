@@ -365,10 +365,14 @@ function bhp_bundle_track_purchase_completed( $order_id ) {
 		return;
 	}
 
-	$items    = array();
-	$distinct = array(
-		'paperback' => array(),
-		'hardcover' => array(),
+	$items = array();
+	// 1.8.87: books of each format on the order, duplicates included. See the
+	// note above `$bundle_types` below for why this replaced a distinct-title
+	// set. Accumulated in the loop that is already walking the line items
+	// rather than in a second pass over them.
+	$counts = array(
+		'paperback' => 0,
+		'hardcover' => 0,
 	);
 	foreach ( $order->get_items() as $item ) {
 		$match = bhp_bundle_identify_cart_item( $item->get_product_id(), $item->get_variation_id() );
@@ -376,9 +380,7 @@ function bhp_bundle_track_purchase_completed( $order_id ) {
 			continue;
 		}
 		list( $format, $title_key ) = $match;
-		if ( ! in_array( $title_key, $distinct[ $format ], true ) ) {
-			$distinct[ $format ][] = $title_key;
-		}
+		$counts[ $format ] += (int) $item->get_quantity();
 		$line_discount = $item->get_subtotal() - $item->get_total(); // per-line discount actually applied
 		$ga4_item      = bhp_bundle_ga4_item( $format, $title_key, $item->get_quantity(), $line_discount > 0 ? $line_discount : null );
 		if ( $ga4_item ) {
@@ -386,9 +388,27 @@ function bhp_bundle_track_purchase_completed( $order_id ) {
 		}
 	}
 
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐ 1.8.87 — REPORTS THE BUNDLE THE ORDER ACTUALLY RECEIVED. SEAL 1359.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⛔ IT READ `bhp_bundle_qualifying_tier( $distinct[$format] )`, a
+	 *    DISTINCT-TITLE tier. From 1.8.87 the fee is built from a BOOK COUNT
+	 *    (`bhp_bundle_qualifying_tier_by_count()`), so an order of 2x Mariana
+	 *    paperback would have carried a -$1.99 Bundle Savings line on the
+	 *    invoice and NO `bundle_type` in GA4. ⭐ ANALYTICS THAT UNDER-REPORT
+	 *    THE OFFER THEY GAVE ARE WORSE THAN NO ANALYTICS: the duplicate carts
+	 *    this ruling exists to create are exactly the ones that would have
+	 *    been invisible.
+	 *
+	 * ⛔ THIS IS A REPORT, NOT A GATE. It changes no price, no discount, no
+	 *    shipping figure and no order record; it changes one string in a
+	 *    dataLayer push so it matches the fee the same order already carries.
+	 */
 	$bundle_types = array();
 	foreach ( array( 'paperback', 'hardcover' ) as $format ) {
-		$tier = bhp_bundle_qualifying_tier( $distinct[ $format ] );
+		$tier = bhp_bundle_qualifying_tier_by_count( $counts[ $format ] );
 		if ( $tier >= 2 ) {
 			$bundle_types[] = $format . '_' . $tier;
 		}

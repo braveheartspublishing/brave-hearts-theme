@@ -107,8 +107,21 @@
 			ctaEl.classList.toggle('is-disabled', conf.inStock === false);
 			if (conf.inStock === false) {
 				ctaEl.setAttribute('aria-disabled', 'true');
+				/*
+				 * ⛔ 1.19.407 (`CYCLE179-LD-BUILD-407-STOCK-GATE`) — TAKE IT
+				 *    OUT OF THE TAB ORDER TOO. `is-disabled` is a
+				 *    `pointer-events` rule, which is a MOUSE rule: on staging
+				 *    the dimmed control was still focusable over a live
+				 *    `?add-to-cart=` href, so Enter added the very book the
+				 *    click was blocked from. `aria-disabled` announces the
+				 *    state; only `tabindex="-1"` stops the keyboard reaching
+				 *    it. The server render sets the same pair, so a format
+				 *    switch cannot undo what the page loaded with.
+				 */
+				ctaEl.setAttribute('tabindex', '-1');
 			} else {
 				ctaEl.removeAttribute('aria-disabled');
+				ctaEl.removeAttribute('tabindex');
 			}
 
 			/*

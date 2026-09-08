@@ -334,6 +334,117 @@ if ('' !== $bhp_free_addon_note) {
 }
 
 /*
+ * ⭐ 1.19.405 (CYCLE179-CX-BUILD-405, item 1) — THE PAPERBACK CTA CARRIES THE
+ *    LIVE PRICE: "ADD PAPERBACK, $11.99".
+ *
+ * WHY: on a phone this anchor is not an in-flow button. `.bhp-formats__buy`
+ * is `position: fixed` at the bottom of the viewport below 812px
+ * (assets/css/product-template.css) and it carries the REAL controls rather
+ * than copies. A customer who has scrolled past the price block therefore sees
+ * a buy button with no number on it at the moment of decision. Putting the
+ * price ON the control is the production audit's fix
+ * (CYCLE179-CX-PROD-AUDIT-400).
+ *
+ * ⛔ THE PRICE IS READ FROM THE PRODUCT, NEVER TYPED. `$data['paperback']
+ *    ['price']` is `WC_Product::get_price()` (inc/book-formats.php:1054).
+ *    ⚠ DO NOT hardcode "$11.99" here even though that is today's live value
+ *      (verified on staging 2026-09-07). A price literal in a template is a
+ *      claim that goes stale silently the first time Andrew reprices, and the
+ *      customer would be shown one number and charged another.
+ *
+ * ⛔ `wc_price()` RETURNS HTML and this label is `esc_html()`'d at the point of
+ *    use, so the tags are stripped here rather than escaped into visible
+ *    markup. `wc_price()` (not a hand-built "$" . $n) is what keeps the
+ *    currency symbol, decimal separator and position correct if the store's
+ *    currency settings ever change.
+ *
+ * ⛔ THE FALLBACK IS THE OLD LABEL, NOT AN EMPTY PRICE. If `get_price()`
+ *    returns '' — an environment without the product, a variable product not
+ *    yet resolved — the CTA reads exactly what it read before this change
+ *    rather than "ADD PAPERBACK, ". A missing price must degrade to the
+ *    working button, never to a broken sentence.
+ *
+ * ⭐ PAPERBACK ONLY, DELIBERATELY. The hardcover label is UNCHANGED. Two
+ *    reasons, both recorded so a later reader does not "finish the job":
+ *    (a) the brief named the paperback bar, and
+ *    (b) CHARTER-05: "Hardcover and Kindle are not advertised until their
+ *        royalty economics are documented." Promoting the hardcover price into
+ *        the primary control is a merchandising decision that is not this
+ *        build's to make. The asymmetry is intentional and is reported.
+ */
+/*
+ * ⛔⛔ `html_entity_decode()` IS NOT DEFENSIVE PADDING — WITHOUT IT THE BUTTON
+ *     READS "ADD PAPERBACK, &#36;11.99" IN THE CUSTOMER'S FACE.
+ *
+ * ⚠️ OBSERVED, NOT ANTICIPATED. The first staging run of this build printed
+ *    `live paperback price reads &#36;11.99` from the test's own NOTE line.
+ *    `get_woocommerce_currency_symbol()` returns the dollar sign as the HTML
+ *    ENTITY `&#36;`, so `wc_price()` emits an entity, `wp_strip_all_tags()`
+ *    removes TAGS but not ENTITIES, and the `esc_html()` at the point of use
+ *    then escapes the ampersand to `&amp;#36;` — printing the entity as
+ *    literal text on the primary purchase control.
+ *
+ * ⭐ DECODE HERE, ESCAPE AT OUTPUT. That order is the correct one and is the
+ *    reason this is safe: the label is a PLAIN STRING from here on, and the
+ *    single `esc_html()` that renders it is what makes it safe to print. There
+ *    is no path by which decoded markup reaches the page unescaped.
+ */
+$bhp_pb_price_raw   = isset($data['paperback']['price']) ? $data['paperback']['price'] : '';
+$bhp_pb_price_plain = ('' !== $bhp_pb_price_raw)
+    ? trim(html_entity_decode(wp_strip_all_tags(wc_price((float) $bhp_pb_price_raw)), ENT_QUOTES, 'UTF-8'))
+    : '';
+$bhp_pb_cta_label = ('' !== $bhp_pb_price_plain)
+    ? sprintf(
+        /* translators: %s is the live paperback price, e.g. $11.99 */
+        __('ADD PAPERBACK, %s', 'brave-hearts'),
+        $bhp_pb_price_plain
+    )
+    : __('ADD PAPERBACK TO CART', 'brave-hearts');
+
+/*
+ * ════════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.407 (`CYCLE179-LD-BUILD-407-STOCK-GATE`) — AN OUT-OF-STOCK COLORING
+ *     BOOK'S CONTROL STOPS SAYING "ADD PAPERBACK, $12.99".
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THREE DEFECTS WERE READ OFF THE RENDERED PAGE BY `commerce-cx`, not
+ *    inferred: the disabled control still read "ADD PAPERBACK, $12.99"; the
+ *    words "out of stock" appeared NOWHERE in the page text; and the anchor
+ *    was still KEYBOARD-FOCUSABLE over a live `?add-to-cart=` href, so Enter
+ *    navigated to the add URL the mouse was blocked from.
+ *
+ * ⛔⛔ IT IS SCOPED TO THE COLORING RAIL BY `$data['key']` AND THAT SCOPE IS
+ *     DELIBERATE. This template also renders the three chapter books in four
+ *     formats. Relabelling EVERY out-of-stock format here would change words a
+ *     parent reads on six other product pages, from inside a build whose whole
+ *     subject is one coloring book, and it would describe any future chapter
+ *     outage as a "printing problem" that nobody has established.
+ *
+ * ⚠ AND THE OBVIOUS-LOOKING JUSTIFICATION FOR WIDENING IT IS STALE, so it is
+ *    corrected here rather than repeated: hardcover is **NOT** intentionally
+ *    out of stock any more. `.claude/rules/woocommerce.md` records that
+ *    "Hardcover editions are intentionally out-of-stock" was SUPERSEDED by the
+ *    print-on-demand stock policy (`docs/DECISIONS.md`, 2026-07-13) and that
+ *    all six published products, all three hardcovers included, verified
+ *    `instock`. ⭐ So the wide version of this change would not even fire
+ *    today; it would just sit there waiting to surprise someone.
+ *
+ * ⭐ THE CHAPTER-BOOK RAIL IS THEREFORE BYTE UNCHANGED and its
+ *    "ADD HARDCOVER TO CART" still reads exactly as it did.
+ *
+ * ⚠ THE LABEL ITSELF IS AN UNAPPROVED PLACEHOLDER, in the constant
+ *    `BHP_COLOURING_UNAVAILABLE_CTA` (`inc/colouring-line.php`). See that
+ *    block. It is listed as NEEDS ANDREW'S APPROVAL in the build report.
+ */
+$bhp_pb_is_colouring = isset($data['key']) && 0 === strpos((string) $data['key'], 'colouring_');
+$bhp_pb_unavailable  = $bhp_pb_is_colouring && empty($data['paperback']['in_stock']);
+if ($bhp_pb_unavailable) {
+    $bhp_pb_cta_label = defined('BHP_COLOURING_UNAVAILABLE_CTA')
+        ? (string) BHP_COLOURING_UNAVAILABLE_CTA
+        : __('Temporarily unavailable', 'brave-hearts');
+}
+
+/*
  * ⭐ CYCLE143-CX-2 / CYCLE143-CX-24 (2026-08-04) — ONE PAYLOAD, TWO CONSUMERS.
  *
  * This array used to be built inline inside the <script> block at the bottom
@@ -351,12 +462,21 @@ if ('' !== $bhp_free_addon_note) {
 $bhp_format_payload = [
     'paperback' => [
         'priceHtml' => $data['paperback']['price_html'],
-        'addUrl'    => $data['paperback']['add_url'],
+        /*
+         * ⛔ 1.19.407 — THE ADD PATH IS REMOVED, NOT JUST DIMMED, when the
+         *    coloring book is out of stock. An empty `addUrl` makes
+         *    `book-formats.js` write `href="#"`; a zero `productId` makes the
+         *    same function REMOVE `data-bhp-cart-add`, so the cart drawer stops
+         *    intercepting a click on it as well. ⭐ BOTH CONSUMERS READ THIS ONE
+         *    ARRAY, which is why this is fixed here: the server render and the
+         *    script switch cannot end up disagreeing about the same control.
+         */
+        'addUrl'    => $bhp_pb_unavailable ? '' : $data['paperback']['add_url'],
         'inStock'   => (bool) $data['paperback']['in_stock'],
         'sku'       => $data['paperback']['sku'],
-        'productId' => $data['paperback']['product_id'],
+        'productId' => $bhp_pb_unavailable ? 0 : $data['paperback']['product_id'],
         'variationId' => $data['paperback']['variation_id'],
-        'ctaLabel'  => __('ADD PAPERBACK TO CART', 'brave-hearts'),
+        'ctaLabel'  => $bhp_pb_cta_label, // 1.19.405 item 1 — live price, see the block above.
         'formatSpec' => $bhp_format_specs['paperback'],
         'note'      => $bhp_shipping_note_paperback,
     ],
@@ -1111,7 +1231,18 @@ $bhp_rail_single = !empty($data['rail_single']);
        <?php endif; ?>
        href="<?php echo esc_url($bhp_initial_conf['addUrl'] ? $bhp_initial_conf['addUrl'] : '#'); ?>"
        <?php echo $bhp_cta_external ? 'target="_blank" rel="noopener nofollow sponsored"' : ''; ?>
-       <?php echo $bhp_cta_disabled ? 'aria-disabled="true"' : ''; ?>
+       <?php
+       /*
+        * ⛔ 1.19.407 — `tabindex="-1"` NOW TRAVELS WITH `aria-disabled`.
+        *    Without it the dimmed control stayed in the tab order over a live
+        *    `?add-to-cart=` href, so a keyboard user pressed Enter and added
+        *    the book the mouse was blocked from. `pointer-events: none` is a
+        *    MOUSE rule and was never the whole answer.
+        *    ⭐ APPLIED TO EVERY DISABLED FORMAT, not only the coloring rail:
+        *    focusing a control that cannot act is wrong on all of them, and
+        *    unlike the LABEL above this changes no word a parent reads.
+        */
+       echo $bhp_cta_disabled ? 'aria-disabled="true" tabindex="-1"' : ''; ?>
        <?php echo $bhp_cta_is_direct ? 'hidden' : ''; ?>><?php echo esc_html($bhp_initial_conf['ctaLabel']); ?></a>
     <?php
     /*

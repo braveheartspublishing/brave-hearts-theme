@@ -712,8 +712,41 @@ function bhp_bundle_identify_cart_item( $product_id, $variation_id ) {
 /**
  * Scan the cart and report, per format, which distinct approved titles are
  * present. Extra quantity of a title already present does not add a second
- * "distinct title" — the Phase 4 rule is explicit that two copies of the
- * same title never qualify as a 2-book bundle.
+ * "distinct title": that is what the word DISTINCT means, and it is still
+ * exactly what this function computes.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ STRUCK 2026-09-08, PLUGIN 1.8.87 (`CYCLE179-LD-PLUGIN-1.8.87`). THE
+ *     SENTENCE BELOW WAS THE OLD DISCOUNT RULE AND THE FOUNDER HAS RULED
+ *     AGAINST IT. It is preserved struck, AT the line it governed, because
+ *     an annotation a reader never reaches is not a correction.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ SUPERSEDED, PRESERVED VERBATIM. Do not act on the struck text:
+ *
+ *    ~~"the Phase 4 rule is explicit that two copies of the same title never
+ *      qualify as a 2-book bundle."~~
+ *
+ * ⭐ FOUNDER RULING, SEAL 1359, 2026-09-08, verbatim as relayed to this desk
+ *    by `chief-of-staff` (⚠️ RELAYED, NOT WITNESSED FIRST-HAND HERE):
+ *
+ *      "If they buy any two books they should get the discount - doesnt
+ *       matter."
+ *
+ * ⭐ WHAT THAT MOVED, AND WHAT IT DID NOT. The multi-buy DISCOUNT and the
+ *    shipping tier that travels with it now key on the COUNT of books of a
+ *    format in the cart, duplicates included. This function is NOT the place
+ *    that changed: see `bhp_bundle_quantities_in_cart()` and
+ *    `bhp_bundle_qualifying_tier_by_count()` below, which
+ *    `bhp_bundle_evaluate_cart()` now uses for `paperback_tier` /
+ *    `hardcover_tier`.
+ *
+ * ⛔ THIS FUNCTION IS BYTE-UNCHANGED IN BEHAVIOUR AND IS DELIBERATELY KEPT.
+ *    Distinctness is still the honest answer to a SERIES question: which
+ *    adventures does this shopper own, which one completes the collection,
+ *    which title should the cross-sell offer, and which Complete-Collection
+ *    audience coupon may be accepted. Those questions are about TITLES and
+ *    remain about titles. Only the money question moved to a count.
  *
  * @param WC_Cart|null $cart
  * @return array{paperback: string[], hardcover: string[]}
@@ -758,14 +791,51 @@ function bhp_bundle_distinct_titles_in_cart( $cart ) {
  * one shipment. The `chief-of-staff` direction for this build, verbatim: *"mixed
  * 3-distinct-book carts ALSO ship free (same bundle family)"*.
  *
- * ⛔ IT IS A UNION OF TITLES, NEVER A COUNT OF BOOKS, and that is the whole
- *    coherence argument. `bundle-data.php` has said since Phase 4 that
- *    "two copies of the same title never qualify" — so Mariana paperback +
- *    Mariana hardcover + Everest paperback is THREE BOOKS but TWO
- *    ADVENTURES, is not a collection, and keeps the $4.99 mixed rate. If
- *    this counted books instead, the store would be giving free shipping
- *    for buying the same story twice, which contradicts the rule the entire
- *    tier table is built on.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ STRUCK 2026-09-08, PLUGIN 1.8.87 (`CYCLE179-LD-PLUGIN-1.8.87`). THE
+ *     PARAGRAPH BELOW ARGUED THE OLD DISCOUNT RULE IN WRITING AND THE
+ *     FOUNDER HAS RULED AGAINST IT. Struck AT the line, not annotated
+ *     further down, because an annotation a reader never reaches is not a
+ *     correction.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ FOUNDER RULING, SEAL 1359, 2026-09-08, verbatim as relayed to this desk
+ *    by `chief-of-staff` (⚠️ RELAYED, NOT WITNESSED FIRST-HAND HERE):
+ *
+ *      "If they buy any two books they should get the discount - doesnt
+ *       matter."
+ *
+ * ⛔ SUPERSEDED, PRESERVED VERBATIM. Do not act on the struck text:
+ *
+ *    ~~"⛔ IT IS A UNION OF TITLES, NEVER A COUNT OF BOOKS, and that is the
+ *      whole coherence argument. `bundle-data.php` has said since Phase 4
+ *      that 'two copies of the same title never qualify' - so Mariana
+ *      paperback + Mariana hardcover + Everest paperback is THREE BOOKS but
+ *      TWO ADVENTURES, is not a collection, and keeps the $4.99 mixed rate.
+ *      If this counted books instead, the store would be giving free
+ *      shipping for buying the same story twice, which contradicts the rule
+ *      the entire tier table is built on."~~
+ *
+ * ⚠️⚠️ TWO OF ITS CLAIMS WERE ALREADY FALSE BEFORE THE RULING, AND THAT IS
+ *    REPORTED RATHER THAN QUIETLY DROPPED. Measured against the code as it
+ *    stood at 1.8.86, not inferred:
+ *      · "keeps the $4.99 mixed rate" stopped being true at 1.8.62, when
+ *        `bhp_bundle_colouring_policy()` defaulted to `any-three` (`FD-583`).
+ *        Mariana PB + Mariana HC + Everest PB is three physical books, so
+ *        `bhp_bundle_shipping_amount()` BRANCH A returns $0.00 and the mixed
+ *        table is never reached. Shipping has keyed on a COUNT since then.
+ *      · "the rule the entire tier table is built on" is the sentence struck
+ *        at `bhp_bundle_distinct_titles_in_cart()` above, and seal 1359
+ *        removes it. The tier table is now built on a count of books.
+ *
+ * ⭐ WHAT THIS FUNCTION IS FOR, RESTATED RATHER THAN DELETED. It is still a
+ *    UNION OF TITLES, and it is still the right answer to the question it is
+ *    asked: "does this shopper hold the whole series?" That question feeds
+ *    `is_complete_collection` (the free-add-on and collection copy),
+ *    `distinct_adventures` (the cross-sell's "add the final adventure"
+ *    ask), and nothing else. ⛔ IT NO LONGER FEEDS THE DISCOUNT, which is
+ *    the entire change: a set answers a set question, a count answers a
+ *    money question, and 1.8.87 stops one function doing both jobs.
  *
  * ⭐ It subsumes the pure sets rather than competing with them: three
  *    distinct paperbacks are also three distinct adventures, so the
@@ -807,6 +877,71 @@ function bhp_bundle_total_quantity_in_cart( $cart ) {
 		$total += (int) $cart_item['quantity'];
 	}
 	return $total;
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.87 (2026-09-08) — HOW MANY BOOKS OF EACH FORMAT, DUPLICATES
+ *      INCLUDED. `CYCLE179-LD-PLUGIN-1.8.87`. FOUNDER SEAL 1359.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE RULING, verbatim as relayed by `chief-of-staff` (⚠️ RELAYED, NOT
+ *    WITNESSED FIRST-HAND HERE):
+ *
+ *      "If they buy any two books they should get the discount - doesnt
+ *       matter."
+ *
+ * ⭐ THIS IS THE COUNTER THE MULTI-BUY DISCOUNT NOW KEYS ON. It is the exact
+ *    sibling of `bhp_bundle_distinct_titles_in_cart()` above, asking the other
+ *    question about the same cart: that one returns WHICH TITLES, this one
+ *    returns HOW MANY BOOKS. Two functions, two questions, no function doing
+ *    both jobs and getting one of them wrong.
+ *
+ * ⛔ IT COUNTS THE SIX CATALOG EDITIONS ONLY. A coloring book is a physical
+ *    book for SHIPPING (`bhp_bundle_physical_book_count()`, unchanged) and it
+ *    has its own pair-offer money in `offer-engine.php` (unchanged). It is
+ *    deliberately NOT counted toward a chapter-book discount tier here:
+ *      · the tier tables are per-format chapter tables whose fixed-dollar
+ *        amounts were approved against the $11.99 / $17.99 chapter prices,
+ *        and `bhp_bundle_prices_match_expected()` refuses the discount when a
+ *        line does not read that price. The coloring book does not, so a
+ *        coloring line inside the tier would either be refused or would need
+ *        a new approved amount that nobody has authored;
+ *      · the brief for this build scopes the coloring book to "shipping
+ *        (already) and the coloring-attach bundle as today", which is what
+ *        this preserves.
+ *    ⚠️ FLAGGED, NOT SETTLED: whether a chapter paperback plus a coloring
+ *    book should earn the two-book chapter discount is a founder question.
+ *    It does not today, and it did not before this build either.
+ *
+ * ⛔ WEIGHTLESS ADD-ONS ARE NOT COUNTED, for the same reason
+ *    `bhp_bundle_total_quantity_in_cart()` does not count them: a $5 PDF must
+ *    not move a book tier. It is not in the catalog, so it cannot be.
+ *
+ * @since 1.8.87
+ * @param WC_Cart|null $cart
+ * @return array{paperback:int, hardcover:int} Book counts, duplicates included.
+ */
+function bhp_bundle_quantities_in_cart( $cart ) {
+	$counts = array(
+		'paperback' => 0,
+		'hardcover' => 0,
+	);
+
+	if ( ! $cart ) {
+		return $counts;
+	}
+
+	foreach ( $cart->get_cart() as $cart_item ) {
+		$match = bhp_bundle_identify_cart_item( $cart_item['product_id'], $cart_item['variation_id'] );
+		if ( null === $match ) {
+			continue;
+		}
+		list( $format ) = $match;
+		$counts[ $format ] += (int) $cart_item['quantity'];
+	}
+
+	return $counts;
 }
 
 /**
@@ -954,14 +1089,59 @@ function bhp_bundle_cart_has_unrelated_items( $cart ) {
 }
 
 /**
- * The single best-qualifying tier for one format: 3 if all three distinct
- * titles are present, 2 if exactly two are, otherwise 0. Deliberately
- * cannot return more than one tier at once — that is what guarantees the
- * two-book and three-book discounts can never both apply to the same
- * format in the same cart (Phase 9).
+ * The single best-qualifying tier for one format, given a set of DISTINCT
+ * TITLES: 3 if all three are present, 2 if exactly two are, otherwise 0.
+ * Deliberately cannot return more than one tier at once — that is what
+ * guarantees the two-book and three-book discounts can never both apply to
+ * the same format in the same cart (Phase 9).
+ *
+ * ⛔ 1.8.87 — THIS IS NO LONGER WHAT THE DISCOUNT READS. Seal 1359 moved the
+ *    money to `bhp_bundle_qualifying_tier_by_count()` below. This function is
+ *    KEPT, unchanged, and is still the right answer for the one caller that
+ *    genuinely asks a TITLE question: `bhp_audience_coupon_cart_qualifies()`
+ *    in bundle-cart.php, whose coupon scope is "the Complete Collection" and
+ *    was not part of the ruling. See `paperback_titles_tier` in
+ *    `bhp_bundle_evaluate_cart()`.
  */
 function bhp_bundle_qualifying_tier( array $distinct_titles ) {
-	$count = count( $distinct_titles );
+	return bhp_bundle_qualifying_tier_by_count( count( $distinct_titles ) );
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐⭐ 1.8.87 — THE TIER, FROM A COUNT OF BOOKS. FOUNDER SEAL 1359.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE RULING, verbatim as relayed (⚠️ RELAYED, NOT WITNESSED FIRST-HAND):
+ *
+ *      "If they buy any two books they should get the discount - doesnt
+ *       matter."
+ *
+ * ⭐ SAME THRESHOLDS, DIFFERENT INPUT, AND NOTHING ELSE MOVED. 3 or more is
+ *    tier 3, exactly 2 is tier 2, otherwise 0. ⛔ NOT ONE FIGURE IN
+ *    `bhp_bundle_rules()` IS TOUCHED by this build: the discounts are still
+ *    -$1.99 / -$3.98 (paperback) and -$2.99 / -$4.98 (hardcover), and the
+ *    shipping tiers are still $2.99 / $0.00 and $3.99 / $0.00. What changed is
+ *    only WHICH CARTS REACH THEM.
+ *
+ * ⭐ FOUR OR MORE COPIES STILL READS TIER 3, exactly as four books across
+ *    three distinct titles always has. The table has no tier above 3, and
+ *    inventing one would be pricing nobody approved.
+ *
+ * ⭐ CONTRIBUTION IS UNCHANGED BY THE DUPLICATE CASE. `finance-analytics`
+ *    (Frodo) measured it for this build in `CYCLE179-FIN-COUNT-DISCOUNT`
+ *    (`Business OS\WORKING-DRAFTS\finance-analytics\`, md5
+ *    de3b79219dcd78db9f2d916283386624): contribution is identical whether the
+ *    two books are two titles or two copies of one, because unit cost and
+ *    unit price do not depend on which title is printed. ⚠️ READ FROM THAT
+ *    DOCUMENT, not recomputed here.
+ *
+ * @since 1.8.87
+ * @param int $count Books of one format in the cart, duplicates included.
+ * @return int 0, 2 or 3.
+ */
+function bhp_bundle_qualifying_tier_by_count( $count ) {
+	$count = (int) $count;
 	if ( $count >= 3 ) {
 		return 3;
 	}
@@ -982,10 +1162,59 @@ function bhp_bundle_qualifying_tier( array $distinct_titles ) {
  */
 function bhp_bundle_evaluate_cart( $cart ) {
 	$distinct = bhp_bundle_distinct_titles_in_cart( $cart );
+	/*
+	 * ═══════════════════════════════════════════════════════════════════════
+	 * ⭐⭐⭐ 1.8.87 — THE TIER NOW COMES FROM A COUNT. FOUNDER SEAL 1359.
+	 * ═══════════════════════════════════════════════════════════════════════
+	 *
+	 * ⭐ THE RULING, verbatim as relayed (⚠️ RELAYED, NOT WITNESSED HERE):
+	 *    "If they buy any two books they should get the discount - doesnt
+	 *     matter."
+	 *
+	 * ⛔ ONE LINE MOVES BOTH READERS OF `*_tier`, WHICH IS WHY THE CHANGE IS
+	 *    MADE HERE RATHER THAN AT EACH CALL SITE:
+	 *      · `bhp_bundle_apply_discount_fees()` (bundle-cart.php) builds the
+	 *        real Bundle Savings fee from `$eval[$format.'_tier']`;
+	 *      · `bhp_bundle_shipping_amount()`'s final loop (bundle-cart.php)
+	 *        reads the same key for the tier shipping figure.
+	 *    So two paperbacks now earn BOTH the -$1.99 discount AND the $2.99
+	 *    two-book shipping row, duplicates included, and they cannot disagree
+	 *    with each other because they read one field.
+	 *
+	 * ⛔ NO NEW KEY IS REQUIRED BY `bhp_bundle_shipping_amount()`. That
+	 *    function is called with hand-built `$eval` arrays by the THEME
+	 *    (`inc/book-formats.php`, `bhp_book_any_three_ships_free()` and
+	 *    `bhp_book_collection_ships_free()`), which pass `paperback_tier`
+	 *    themselves. Those fixtures keep working byte-for-byte. Verified by
+	 *    reading both functions in the theme, not assumed.
+	 */
+	$counts = bhp_bundle_quantities_in_cart( $cart );
 
 	$result = array(
-		'paperback_tier'  => bhp_bundle_qualifying_tier( $distinct['paperback'] ),
-		'hardcover_tier'  => bhp_bundle_qualifying_tier( $distinct['hardcover'] ),
+		'paperback_tier'  => bhp_bundle_qualifying_tier_by_count( $counts['paperback'] ),
+		'hardcover_tier'  => bhp_bundle_qualifying_tier_by_count( $counts['hardcover'] ),
+		/*
+		 * ⭐ 1.8.87 — the books of each format in the cart, duplicates
+		 *    included. Exposed so a surface can key its copy on the same
+		 *    quantity the fee is built from instead of recounting.
+		 */
+		'paperback_count' => (int) $counts['paperback'],
+		'hardcover_count' => (int) $counts['hardcover'],
+		/*
+		 * ⭐⭐ 1.8.87 — THE OLD DISTINCT-TITLE TIER, KEPT AND RENAMED RATHER
+		 *    THAN DELETED, because exactly one caller still needs a TITLE
+		 *    answer and deleting it would have silently widened that caller.
+		 *
+		 * ⛔ ITS ONE READER IS `bhp_audience_coupon_cart_qualifies()`. An
+		 *    audience coupon is scoped to the Complete Collection, three
+		 *    DISTINCT adventures in one format. Seal 1359 is a ruling about
+		 *    the multi-buy DISCOUNT; it says nothing about coupon scope, and
+		 *    widening a coupon on inference would be this desk deciding a
+		 *    commercial question that is Andrew's. HELD AT DISTINCT TITLES,
+		 *    DELIBERATELY, AND REPORTED AS AN OPEN QUESTION.
+		 */
+		'paperback_titles_tier' => bhp_bundle_qualifying_tier( $distinct['paperback'] ),
+		'hardcover_titles_tier' => bhp_bundle_qualifying_tier( $distinct['hardcover'] ),
 		'has_paperback'   => count( $distinct['paperback'] ) > 0,
 		'has_hardcover'   => count( $distinct['hardcover'] ) > 0,
 		'has_unrelated'   => bhp_bundle_cart_has_unrelated_items( $cart ),
@@ -1067,6 +1296,9 @@ function bhp_bundle_evaluate_cart( $cart ) {
  *     `bhp_bundle_rules()` BEFORE any cart exists, so it STILL RENDERED;
  *   · `bhp_bundle_print_progress_messages()` DOES check `has_unrelated`, so
  *     the cart copy went quiet -- making it LESS discoverable, not more.
+ *     ⛔ 1.8.88: that function was REMOVED (dead classic-hook path, never
+ *     rendered on this Blocks store). The account above is historical and is
+ *     left standing; the equivalent suppression is the drawer's `hasUnrelated`.
  *
  * ⭐ NET: the site promises free shipping, the shopper adds the collection and
  *    a colouring book, and is charged for shipping. A FALSE ADVERTISED CLAIM,

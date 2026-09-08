@@ -144,54 +144,128 @@ if ( $GLOBALS['bhp_pto_fail'] > 0 ) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * §1 · THE CONFIG IS TIME-ONLY ON BOTH SURFACES.
+ * §1 · THE TRIGGER SHAPE, AND IT IS NOW DIFFERENT PER FUNNEL.
  *
- * ⭐ "our pop ups" is PLURAL in item 306, which is why the teacher funnel is
- *    held to the same shape as the parent funnel here. Each keeps its own
- *    storage, events and thank-you path — §3 asserts that separately.
+ * ⭐⭐ CHANGED 1.19.405 (`CYCLE179-CX-BUILD-405`) ON SEAL 1359 — AND ONLY FOR
+ *     THE PARENT FUNNEL. Andrew Signore, 2026-09-07 21:30, VERBATIM: "If they
+ *     buy any two books they should get the discount - doesnt matter. change
+ *     the trigger if thats whats recommended". Seal 1359 records the decision
+ *     in terms: "HOME POPUP TRIGGER: change from the bare timer to scroll
+ *     depth or exit intent as the audit recommends" — the audit being
+ *     CYCLE179-CX-PROD-AUDIT-400 fix 3.
+ *     ⭐ Read FIRST-HAND in the canonical sidecar by the desk that made this
+ *       edit; item 306's 2026-08-27 date read in the founder-verbatim file.
+ *       Seal 1359 is eleven days later. The later word governs.
+ *
+ * ⛔⛔ THE TEACHER FUNNEL IS NOT TOUCHED, AND THAT IS THE MOST IMPORTANT LINE
+ *     IN THIS FILE.
+ *     This section used to hold BOTH surfaces to one shape, on the reasoning
+ *     that "our pop ups" is PLURAL in item 306. Seal 1359 is NOT plural: it
+ *     says "HOME POPUP TRIGGER", and the surface the production audit measured
+ *     was the home parent capture. Nothing in it mentions /teachers/.
+ *     ⭐ SO THE TEACHER POPUP STAYS TIME-ONLY AT FIFTEEN SECONDS, asserted
+ *       below exactly as item 306 required — same assertions, same strictness,
+ *       unchanged bytes. Extending a parent-funnel ruling to the teacher funnel
+ *       because it would be tidier is precisely what `.claude/rules/funnels.md`
+ *       forbids: the two funnels are independent by design.
+ *
+ * ⛔ SUPERSEDED FOR THE PARENT SURFACE ONLY — PRESERVED STRUCK so the movement
+ *    is legible and is not re-derived:
+ *
+ *  > ~~§1.2 [parent] the 15-second timer appears exactly twice, once per
+ *  >   device~~
+ *  > ~~§1.4 [parent] NO scrollPct anywhere in the code — the scroll
+ *  >   requirement is GONE, not merely relaxed~~
+ *
+ *   Both are now INVERTED for the parent: there must be NO delay, and there
+ *   MUST be a scroll threshold. Both still stand for the teacher.
  * ═══════════════════════════════════════════════════════════════════════════ */
-bhp_pto_head( '§1 item 306 — the trigger is TIME ONLY on both surfaces' );
+bhp_pto_head( '§1 the trigger shape — engagement for the parent (seal 1359), time only for the teacher (item 306)' );
 
 foreach ( bhp_pto_surfaces() as $funnel => $rel ) {
 	$src  = bhp_pto_file( $rel );
 	$code = bhp_pto_code_only( $rel );
 
+	/* Mode `simple` is common to both rulings: for the teacher it means the
+	 * timer alone opens it; for the parent it means the conditions RACE rather
+	 * than gate each other. Same key, two intents, one assertion. */
 	bhp_pto_ok(
-		"§1.1 [{$funnel}] item 306: trigger mode is 'simple' — time alone opens it",
+		"§1.1 [{$funnel}] trigger mode is 'simple'",
 		1 === preg_match( "/'mode'\s*=>\s*'simple'/", $code )
 			&& 0 === preg_match( "/'mode'\s*=>\s*'(gated|exit)'/", $code )
 	);
 
-	/* Andrew's own number, unreduced. The count-exactly-twice convention is
-	 * carried over from the assertion this replaces — it is what catches a
-	 * silent edit to one device only. */
-	bhp_pto_ok(
-		"§1.2 [{$funnel}] item 306: the 15-second timer appears exactly twice, once per device",
-		2 === substr_count( $code, "'delay' => 15000" ),
-		'found ' . substr_count( $code, "'delay' => 15000" )
-	);
+	if ( 'parent' === $funnel ) {
+		/* ⭐ SEAL 1359. No timer at all: the engine arms its timeout behind a
+		 * `typeof deviceConfig.delay === 'number'` guard, so an ABSENT key means
+		 * no timer is ever set — provably time-free, not merely time-independent. */
+		bhp_pto_ok(
+			"§1.2 [{$funnel}] seal 1359: NO delay key on either device — the bare timer is gone",
+			0 === preg_match( "/'delay'\s*=>/", $code ),
+			'found ' . preg_match_all( "/'delay'\s*=>/", $code )
+		);
+
+		bhp_pto_ok(
+			"§1.3 [{$funnel}] seal 1359: no minDelay either — no dwell floor is bolted back on",
+			0 === preg_match( "/'minDelay'\s*=>/", $code )
+		);
+
+		/* ⛔⛔ THE ASSERTION THIS SECTION NOW TURNS ON, and it is the exact
+		 *    mirror of the one it replaced. The depth threshold IS the trigger. */
+		bhp_pto_ok(
+			"§1.4 [{$funnel}] seal 1359: scrollPct 50 on BOTH devices — the audit's depth trigger is live",
+			2 === preg_match_all( "/'scrollPct'\s*=>\s*50\b/", $code )
+				&& 0 === preg_match( "/'scrollPct'\s*=>\s*(?!50\b)\d+/", $code )
+		);
+
+		/* The second racer, without which this is a depth-only trigger and half
+		 * of what seal 1359 asked for. */
+		bhp_pto_ok(
+			"§1.4b [{$funnel}] seal 1359: exitIntent on BOTH devices — exit intent races the depth trigger",
+			2 === preg_match_all( "/'exitIntent'\s*=>\s*true/", $code )
+		);
+	} else {
+		/* ⛔ ITEM 306 STANDS HERE, UNCHANGED. Andrew's own number, unreduced.
+		 * The count-exactly-twice convention is the right guard for a promise
+		 * about a NUMBER, which is what the teacher surface still carries. */
+		bhp_pto_ok(
+			"§1.2 [{$funnel}] item 306: the 15-second timer appears exactly twice, once per device",
+			2 === substr_count( $code, "'delay' => 15000" ),
+			'found ' . substr_count( $code, "'delay' => 15000" )
+		);
+
+		bhp_pto_ok(
+			"§1.3 [{$funnel}] item 306: no OTHER delay value exists, under either key name",
+			0 === preg_match( "/'(?:min)?[Dd]elay'\s*=>\s*(?!15000)\d+/", $code )
+		);
+
+		/* ⛔⛔ In `simple` mode a scroll threshold does not GATE the timer, it
+		 *    RACES it — so a leftover `scrollPct` would let the teacher popup
+		 *    open EARLIER than fifteen seconds on a fast scroll, which is the
+		 *    opposite of what item 306 asks for. Comments stripped, so this
+		 *    tests the code and not the note that explains it. */
+		bhp_pto_ok(
+			"§1.4 [{$funnel}] item 306: ⛔ NO scrollPct anywhere in the code — the scroll requirement is GONE, not merely relaxed",
+			false === strpos( $code, 'scrollPct' )
+		);
+	}
 
 	bhp_pto_ok(
-		"§1.3 [{$funnel}] item 306: no OTHER delay value exists, under either key name",
-		0 === preg_match( "/'(?:min)?[Dd]elay'\s*=>\s*(?!15000)\d+/", $code )
-	);
-
-	/* ⛔⛔ THE ASSERTION THE WHOLE PASS TURNS ON. In `simple` mode a scroll
-	 *    threshold does not GATE the timer, it RACES it — so a leftover
-	 *    `scrollPct` would let the popup open EARLIER than fifteen seconds on a
-	 *    fast scroll, which is the opposite of what item 306 asks for. It would
-	 *    also make the engine register a scroll listener. Comments stripped, so
-	 *    this tests the code and not the supersession note that explains it. */
-	bhp_pto_ok(
-		"§1.4 [{$funnel}] item 306: ⛔ NO scrollPct anywhere in the code — the scroll requirement is GONE, not merely relaxed",
-		false === strpos( $code, 'scrollPct' )
-	);
-
-	bhp_pto_ok(
-		"§1.5 [{$funnel}] item 306: ⛔ no fallbackDelay — a dead gated-mode key, and the wrong way to reach time-only",
+		"§1.5 [{$funnel}] ⛔ no fallbackDelay — a dead gated-mode key on either ruling",
 		false === strpos( $code, 'fallbackDelay' )
 	);
 }
+
+/* ⛔⛔ AND THE ISOLATION ITSELF, ASSERTED RATHER THAN TRUSTED. The whole point
+ *    of the branch above is that the two funnels moved apart. If a later pass
+ *    ever "tidies" the teacher config to match the parent, every assertion
+ *    above would still pass for the parent and the teacher's own ruling would
+ *    be gone silently. This catches that directly. */
+bhp_pto_ok(
+	'§1.6 the two funnels now carry DIFFERENT triggers, and the teacher keeps item 306 — asserted, not assumed',
+	false === strpos( bhp_pto_code_only( 'template-parts/acquisition/mariana-popup.php' ), 'scrollPct' )
+		&& 1 === preg_match( "/'scrollPct'\s*=>\s*50\b/", bhp_pto_code_only( 'template-parts/acquisition/parent-ab-popup.php' ) )
+);
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * §2 · THE ENGINE PATH THAT CONFIG SELECTS.
