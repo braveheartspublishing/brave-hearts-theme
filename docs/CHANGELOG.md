@@ -2,6 +2,365 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## 2026-09-07 - PRODUCTION IS NOW THEME `1.19.400` / BUNDLE PLUGIN `1.8.86` (releases 1.19.389 through 1.19.400, plugin 1.8.85 and 1.8.86)
+
+The largest single release this project has run: eleven theme versions and two plugin
+versions, installed in one evening under one authorization. Every intermediate build had
+already been staged and suite-checked; none of them had been released.
+
+**Authorization.** Andrew touched the production token in his own PowerShell and said
+"touched", against a scope statement read back to him in full beforehand: theme 1.19.400,
+plugin 1.8.86, 31 featured-image swaps on 30 blog posts, five bridge-books source posts set
+to draft with their 301s re-checked afterwards, one post author corrected, and the full
+ritual at every step. Token freshness is enforced by the deploy gate itself - an agent may
+not read or touch the token file, and an attempt to read its modification time for the
+record was correctly blocked.
+
+**Installed.** Theme `1.19.400` from ZIP md5 `d348d48032af66a002351047985caba8`; bundle
+plugin `1.8.86` from ZIP md5 `6e357d7a6b91465ac1327a5a8b6bab44`. Both md5s were verified on
+the server after upload, not only locally. 441 PHP files linted out of the extracted ZIPs on
+the server, 0 failures. Live-vs-ZIP diff: theme 0 files removed / 42 added, plugin 0 removed.
+Active after install: 1.19.400 and 1.8.86; `ok` probe returned; caches purged; 751 theme
+files; `product-template.min.css` stamped `cdb9f1b2...`.
+
+**Rollback path, recorded before the install and still on the server:**
+`~/_rollback/PROD-theme-1.19.389-pre-400-20260908-011823.tar.gz` (29,097,834 bytes) and
+`~/_rollback/PROD-plugin-1.8.84-pre-1.8.86-20260908-011823.tar.gz` (671,507 bytes).
+
+**Content changes applied in the same window (WordPress data, not theme code):**
+
+- 31 featured-image swaps across 30 blog posts, from three manifests: v4 18 of 18, EXT 3 of 3,
+  EXT2 10 of 10. Two of the three needed one clean retry - v4's first attempt stopped on an SSH
+  hiccup **before any import ran**, and EXT's first attempt could not upload its row list.
+  Neither partial-applied. Records: `APPLIED-v4-PROD-20260907-192513.tsv`,
+  `APPLIED-v4EXT-PROD-20260907-192906.tsv`, `APPLIED-v4EXT2-PROD-20260907-192204.tsv`.
+  `og:image` read-back mismatched only on the 301-redirected source posts, which is expected.
+- Posts 48, 90, 64, 60 and 50 (the bridge-books source posts) set to draft. All five still
+  return 301 to `/blog/top-bridge-books-for-kids/`, re-checked after the change, not assumed.
+- Post 638's author set to 1. Post 366 already had it and was left alone.
+
+**Verified live after the release:** home, shop, blog, `/free-resources/` and a product page all
+200; `style.css` version 1.19.400; the L03 post's `og:image` serves the v4 card.
+
+**Known and open, recorded rather than smoothed:**
+
+- `/mariana-trench-book-and-coloring-book/` **returns 404 on production.** The page record was
+  created on staging only, and the shop grid now links to it - so the release shipped a live link
+  to a missing page. Creating it is Andrew's call.
+- `/share-your-reader/` returns 404 on production by design: it is unlinked and its release text
+  is not written yet.
+- The bundle plugin prints an undefined-key warning on every install. Pre-existing, not caused by
+  this release, and not fixed by it.
+- The trust-row wording approved on 2026-09-07 ("Five-star reader reviews on all three titles") is
+  **not in this release.** The string lives in the plugin, and the site's own review record holds
+  zero entries for the third title while the claim needs one. Changing the words without the record
+  would make the page say something the site cannot support. Prepared, not applied.
+
+### Releases folded into the 2026-09-07 production push
+
+Eleven theme versions and two plugin versions, all staged and suite-checked before release.
+Suite growth across the run: 138 files / 8,528 passing at 1.19.391, to 147 files / 9,100
+passing at 1.19.400. The failing set was held flat at 34 and its fail-line diff was compared
+build to build rather than trusted - the one build that added a fail line (1.19.398) had it
+traced to a fixture, not to the build.
+
+- **1.19.390** - anchor offset made a measured value (`--bhp-anchor-offset`: 93px at 375,
+  80px at 1440, measured by JS and verified with `elementFromPoint`); the table cue retired.
+  ZIP md5 `e79755f08b8eac584564a4202d4eecc3`.
+- **1.19.391** - the early cart capture prompt. ZIP md5 `e290fb30acb5f6275b5865fb3623388f`;
+  138 suites / 8,528 passing / 34 failing, fail-line diff against a re-measured 390 baseline
+  **zero bytes**; 340 PHP linted, 0 failures.
+- **1.19.392** - the adventure kit instant modal at `/adventure-kit-thank-you/`, plus an
+  alias scrub across 14 files. ZIP md5 `724ec0c666fc73aa338d0992f2d55f6a`, 784 entries, 342
+  PHP linted 0 failures. A fallback defect was found and fixed **inside this build's own work**:
+  lazy rows collapsed to zero height because native lazy-loading never fired in a nested
+  scroller; now measured width and height, explicit aspect-ratio, eager loading, 11 of 11
+  loading, pinned by three tests. Seven string-literal occurrences of the old alias were
+  **deliberately left untouched** - six are CSS comments inside an email-styles string that
+  Emogrifier strips, and rewriting them would have changed a string for no effect.
+- **1.19.393** and **bundle plugin 1.8.85** - the phone PDP becomes two summary cards (One Book
+  and Complete Collection, BEST VALUE marked, only the four differences: price, shipping, what
+  is included, best for), on Andrew's decision "Clearly the 2 summary cards are better". Theme
+  ZIP md5 `5b7c527a395eda66d68a0aeca581abe3`; plugin ZIP md5 `26191986580265b6d489e3b16b4902cc`.
+- **1.19.394** - staged and installed; its own lane's report is the record.
+- **1.19.395** - the video testimonial submission queue. See the full entry below; **the upload
+  route in it was decided by measurement, not preference**, and the measurement is the point.
+- **1.19.396** - ZIP md5 `653e0fce01c4a33c6c6bb85eb6929a74`, 797 entries, 352 PHP linted 0
+  failures, suite 143 / 8,899 / 34, fail set **byte-identical** to 395.
+- **1.19.397** and **bundle plugin 1.8.86** - theme ZIP md5 `582dbff3a85619761f157177ed891cfc`,
+  plugin ZIP md5 `6e357d7a6b91465ac1327a5a8b6bab44` (the plugin build that shipped to production);
+  suite 144 / 8,983 / 34, fail set byte-identical to 396.
+- **1.19.398** - the slim phone buy bar, approved by Andrew on staging as seen ("I want it on
+  check out - looks good now"); the payment link stays available at checkout and no Stripe
+  gateway change was made. ZIP md5 `758e59cdcbc09148b1cc0ab265bb964b`, 800 entries, entry-list
+  diff clean both ways, 355 PHP linted 0 failures.
+- **1.19.399** - the bundles get pages of their own. See the full entry below.
+- **1.19.400** - `/free-resources/` phone layout, 3:2 previews, and the pair-page H1. See the
+  full entry below. **It also carries a copy correction that no test could have found**: a
+  preview image still displayed a retracted sentence, because the correction had reached the
+  PDF and the card copy but never the picture.
+
+## 1.19.395 · the video testimonial submission queue (CYCLE179-LD-BUILD-395-TESTIMONIAL)
+
+Staging only, built to the button. A parent or grandparent sends a short video of
+themselves with their reader; nothing they send is published by this code. The
+submission lands in a private post type, the checklist is scored by hand, and a
+passing submission earns the printed coloring book through a coupon Andrew creates
+himself. Founder seals 1294 to 1301. **Every customer-facing string is placeholder
+copy and is waiting on approval.**
+
+- **The upload route was decided by measurement, not by preference.** The brief
+  offered a private uploads directory "with a deny rule" as one option. The deny
+  rule does not work on this host, and that was proved rather than assumed: a
+  directory under `wp-content/uploads/` carrying a well-formed `Require all denied`
+  served `probe.mp4` and `probe.txt` over HTTPS with **HTTP 200 and the sentinel
+  body**, while `probe.php` in the same directory returned 403. PHP goes through
+  Apache, which honours `.htaccess`; static files do not. So every byte written
+  anywhere under the document root on this host is reachable by anyone who has or
+  guesses the URL, and an unguessable filename is obscurity rather than access
+  control. A **link submission** is therefore the primary route and stores only a
+  string; **direct upload** is secondary, capped at 100 MB, and writes **outside
+  the document root** where it can only be read back through an `admin_post`
+  endpoint demanding `manage_options` and a nonce. The media library is never
+  used. `inc/video-testimonials.php`
+- **The submission queue is private, and each visibility flag is asserted
+  separately.** `bhp_testimonial` is registered `public`, `publicly_queryable`,
+  `show_in_rest`, `has_archive`, `rewrite`, `query_var` and `show_in_nav_menus` all
+  off, `exclude_from_search` on, and `show_ui` deliberately **on** so the queue is
+  usable. It supports `title` only: an open editor on this post type would be a
+  place for a child's name to be typed. The suite asks the REST server for its
+  routes by name rather than trusting the flag. `inc/video-testimonials.php`
+- **No child's name is collected, because there is no field for one.** A validator
+  that strips a child's name is a field that collected one. The post title is built
+  from the submitter's own name and a date. No shipping address is collected either
+  — seal 1299 chose the coupon route, which puts the address in WooCommerce
+  checkout where it already lives. `inc/video-testimonial-form.php`
+- **The consent step is the Apple pattern seal 1295 asked for, and it is
+  evidenced.** A short disclaimer, a link to the full terms, one required checkbox
+  reading "I have reviewed the terms and release", and a typed full name as a
+  signature. The record stores the typed name, the checkbox, a UTC timestamp, the
+  terms version and the submitting IP. A separate required line, "I am this child's
+  parent or legal guardian", is enforced where a child appears. The terms version
+  is stamped **per submission** rather than read live, because a record that cannot
+  say which text was agreed to is evidence of nothing.
+  `inc/video-testimonials.php`, `inc/video-testimonial-form.php`
+- **The terms and release page is an empty slot, not a draft.** `ads-knowledge`
+  owns the release language. A plausible-sounding paragraph written to fill the gap
+  would be the worst outcome, because it looks finished and would be signed by real
+  people. The page says so in plain words and lists only the sections the finished
+  text is expected to cover. `page-video-testimonial-terms.php`
+- **Passing is independent of sentiment, and the sentence is on the screen where
+  the scoring happens.** Every one of the seven checklist items is an observable
+  property of the recording; the suite asserts that not one of them contains
+  opinion language. An automatic fail outranks a fully ticked checklist.
+  `inc/video-testimonials.php`, `inc/video-testimonial-admin.php`
+- **Setting a status does not email anybody.** Seal 1301 promises **one** note, and
+  an email that fires on every status change turns one note into four. A separate
+  checkbox has to be ticked in the same save and it clears itself; the screen says
+  whether a note has already gone. The flow forbids exactly one move,
+  `failed -> published`, because that is the only transition that would make the
+  fail note a lie. `inc/video-testimonial-admin.php`
+- **No coupon is created by any code in this theme.** Seal 1300 makes coupon
+  creation Andrew's own act on production. The code is typed into the review
+  screen. On staging, leaving it blank uses a string that says what it is inside
+  itself, so a captured email can never be mistaken for a real one.
+  `inc/video-testimonial-admin.php`
+- **The placeholder marking is a flag, not a comment.** While
+  `BHP_TESTIMONIAL_COPY_APPROVED` is false the page prints a visible band and every
+  email subject carries `[PLACEHOLDER COPY]`, and the suite asserts both, so the
+  marking cannot be lost in an edit. `inc/video-testimonial-form.php`
+- **Staging sends nothing.** The three emails are hand-rolled `wp_mail()` calls,
+  which walk straight past `inc/staging-mail-guard.php` — that guard only reaches
+  `WC_Email` classes, exactly the trap `inc/readaloud-scheduler.php` documents. The
+  capture reuses `bhp_readaloud_request_should_capture()` verbatim so there is one
+  definition of "is this staging" in the theme, and it fails towards production.
+  No Mailchimp call and no dataLayer push: a testimonial submitter is not a
+  newsletter signup and has not asked to be one.
+  `inc/video-testimonial-form.php`
+- **One assertion in the new suite was WRONG ON ITS FIRST RUN AND WAS CORRECTED,
+  and the correction is worth more than the line it fixed.** §7.3 ("no submission
+  is ever in publish status") asked the question through `WP_Query`. But
+  `bhp_testimonial_never_on_front_end()` strips this post type out of any
+  NON-ADMIN query, and WP-CLI is non-admin — so the query came back rewritten to
+  `post_type = 'post'` and counted every published BLOG POST as a submission in
+  publish status. MEASURED, NOT REASONED ABOUT: it reported `FAIL ... -- 37`,
+  where 37 was the blog-post count and the true answer was zero. ⭐ The product
+  was correct and the assertion was lying, which is the worse of the two because
+  it trains a reader to ignore a red line. The invariant is about rows in the
+  database, so it is now counted in SQL, which nothing can rewrite in transit;
+  and the guard that caused the confusion is now asserted in its own right as
+  §7.3b. `tests/test-cycle179-video-testimonial.php`
+- **New suite.** `tests/test-cycle179-video-testimonial.php`
+
+## The bundles had no pages of their own (1.19.399, staging only)
+
+Clicking a bundle on `/shop/` did nothing. The founder found it: *"when you click
+on the bundles they dont have their own bundle page?"* Verified on staging before
+any code was written, by reading the served DOM at 1280px: each of the four real
+product cards carried anchors to its product page; the Complete Collection card
+carried **zero** anchors even though `/complete-collection/` existed, and the
+"book + coloring book" card carried zero anchors and had no page to point at.
+
+The Collection card's link had been removed in 1.19.284, when its plain link to
+`/complete-collection/` was replaced by an add-to-cart form. The destination went
+with the link. 1.19.399 puts the route back on the image and the title and
+**leaves both add-to-cart forms exactly as they are** — the buy control that
+1.19.284 added is not reverted.
+
+The book + coloring pair now has a landing page of its own, built on the same
+template family as `/complete-collection/`: a WordPress page carrying a shortcode,
+rendered through a full-width template. **No bundle became a WooCommerce product.**
+The pair is still computed by the bundle plugin's offer engine from cart contents,
+and no product, variation, SKU, price record or coupon was created.
+
+Every figure on the new page is read from the plugin at render — the offer price,
+the live component total, and the saving, which is recomputed on every render and
+suppressed entirely when a live price no longer matches. There is no
+dollars-and-cents literal anywhere in the page's source, and the suite asserts
+that on every run.
+
+The page states the shipping rule and then states where this cart stands
+against it: the locked sentence "FREE Shipping on the complete collection or 3
+or more books purchased", followed by "Add 1 more book and shipping is FREE."
+Both come from the plugin that owns them — the second from the founder-approved
+`bhp_bundle_ship_progress_copy()` table, keyed on the number of physical books
+this offer actually puts in a cart, counted rather than assumed. **No per-pair
+shipping figure is printed**, because a two-book cart is below the free-shipping
+threshold and the hardcover pair's amount is a literal inside a plugin branch
+with no accessor. The rule line alone would have read, beside a two-book set, as
+though the set ships free. It does not.
+
+- `inc/bundle-pair-landing.php` — new. The `[bhp_bundle_pair_landing]` shortcode
+  and its sections.
+- `page-bundle-pair.php` — new. Full-width template, mirroring
+  `page-complete-collection.php`.
+- `assets/css/bundle-pair-landing.css` (+ `.min`) — new. Every rule scoped under
+  `.bhp-pair-landing`; the page reuses the collection page's stylesheet for
+  everything else.
+- `inc/book-formats.php` — the Complete Collection card's image and title are
+  links again, and a new `bhp_book_collection_page_exists()` gate means the card
+  only becomes a link once the destination is proved published and non-private.
+- `inc/colouring-line.php` — the bundle-strip card's image and title link to the
+  new page, and only once that page is proved to exist and be published.
+- `functions.php` — loads the new include.
+- `style.css` / `style.min.css` — version stamp and rebuilt source-md5.
+- `tests/test-cycle179-399.php` — new. 70 pass, 0 fail.
+- `tests/test-cycle179-397.php` — §2.5 pinned the theme version with `===` and
+  had been failing on every build after 397, permanently. It now uses
+  `version_compare(..., '>=')`, which still fails on a theme older than the
+  release it tests but no longer fails merely because time passed.
+
+**Open for Andrew:** the page title, the slug, and every new sentence on the page
+are marked FOR ANDREW'S APPROVAL and are not approved copy. Whether the page is
+indexed on production, and whether it enters the production sitemap, are SEO
+decisions under Standing Rules §25 and require a Google Analytics review first;
+neither is decided by this build.
+
+**Not on the page, deliberately:** no per-pair shipping figure (a two-book cart is
+below the any-three free-shipping threshold, and the hardcover pair's figure is a
+literal inside a plugin branch with no accessor), and no sticky buy bar. Verified
+in a real browser at 375 and 1280 with `window.innerWidth` asserted: zero visible
+`position: fixed` elements at the top, middle and bottom of the page.
+
+**Also corrected:** the shop grid's bundle-card links are named
+`bhp-shop-offer-card__*` rather than `bhp-shop-offer-item__*`. BEM child classes
+share their block's prefix, and `tests/test-shop-grid-2up-204.php` §6.4b guards
+against a deleted bundle card by counting the substring `bhp-shop-offer-item`,
+which the child classes took from 1 to 3. The guard was left alone and the markup
+was renamed instead.
+
+## 1.19.400 — 2026-09-07 — `/free-resources/` phone layout, 3:2 previews, and the pair-page H1
+
+`CYCLE179-CX-BUILD-400-FREE-RESOURCES` · `commerce-cx` under `chief-of-staff`.
+Staging only. Plugin `brave-hearts-bundle-pricing` unchanged at 1.8.86.
+
+Andrew, on staging `/free-resources/` from an iPhone 16 Pro (402 x 874 CSS px):
+"This isnt very centered and it looks bad". Four separate causes sat behind that
+one sentence, and three of them were invisible to every existing test.
+
+### `/free-resources/`
+
+- **Jump bar centred.** `.free-resources-jump__list` now resets `padding-inline`.
+  The shipped rule set `margin: 0` and `padding-block` and never touched the
+  inline axis, so the **user-agent default `padding-inline-start: 40px`
+  survived** and `justify-content: center` centred each row inside a box that
+  was itself 40px off. Row offset before → after: 40.33 → 0.33 at 375,
+  39.99 → 0.00 at 402, 39.67 → −0.33 at 1280.
+- **No more ragged wrap on phones.** Below 600px the bar is an equal
+  two-column grid, so the split is 2+2 at every phone width. It was **3+1 at
+  402 — the width Andrew was looking at**. Above 600px the shipped single flex
+  row is untouched. A horizontal scroller was **not** used: this component's own
+  comment already rejects it by name as an affordance "that nobody discovers".
+- **Preview frame is 3/2, changed at the shipped rule rather than overridden.**
+  The old `4 / 5` is 0.8000 against a US Letter sheet's 0.7727, so `cover`
+  cropped 3.5% off the **bottom** and showed the whole sheet at thumbnail size.
+  **The shipped comment claimed it showed "the head of the page"; it did not,
+  and had been wrong since 1.19.303.** That comment is preserved struck, at the
+  line, with the measurement that disproves it.
+- **All ten preview derivatives replaced** with 1800x1200 pre-cropped top bands
+  (top 51.52% of the sheet), rendered at 300 dpi from the shipped PDFs by
+  `design-creative` (`CYCLE179-DES-FREE-RESOURCES-PREVIEWS`). No generative
+  content, no upscaler, no spend. **This removes the 3x upscale**: resource
+  factor at 402 on a 3x device goes 0.80 (upscaled) → 0.53 (downscaled).
+- **⛔ COPY CORRECTION, not only a sharpness change.** The shipped
+  `mariana-trench-coloring-pages-preview` **displayed the retracted sentence
+  "Four words from the story"**. That wording was corrected in the PDF (rebuilt
+  2026-09-02: "Four words from the coloring book's quote pages") and in the card
+  copy, and **the correction never reached the picture** — the wrong words sat
+  on the live page rendered as an image, where no string search and no test
+  could ever find them. Verified first-hand at build time by reading both
+  images and by extracting the PDF's own page-1 text.
+- **All five `preview_alt` strings rewritten** to describe a crop. The shipped
+  strings named content the 3:2 band does not contain ("a checklist of titles",
+  "two drawings to color at the foot of the page") and would have put a
+  described-but-absent claim in front of every screen-reader user.
+- **Card contents centred on phones only** (≤768px); desktop keeps its left
+  alignment, where the three-column grid gives each card a left edge to hang
+  from. The card **frame** was already symmetric and was never the complaint.
+- **Hero eyebrow holds one line at 375**, at 12px / 0.06em, phones only, this
+  hero only. Desktop is unchanged at 12.48px / 0.2em.
+
+### Pair page — `/mariana-trench-book-and-coloring-book/`
+
+- **H1 centred, and `text-align` was never the cause.** The heading computed
+  `text-align: center` throughout; what it did not compute was
+  `margin-inline: auto`. The plugin's `.bhp-landing h1` (0,1,1) `margin: 0`
+  outranks the theme's `.bhp-pair-landing__title` (0,1,0) `margin: 0 auto`, so
+  `auto` never survived and the `max-width: 20ch` box hugged the left edge while
+  the text centred inside it. Offset before → after: −20.68 → 0.32 at 375,
+  −44.17 → 0.00 at 402, **−679.22 → −0.34 at 1280**. Fixed by specificity
+  (`.bhp-pair-landing__hero .bhp-pair-landing__title`, (0,2,0)), **not
+  `!important`**. `.bhp-pair-landing__sub` is the control that proves the
+  diagnosis: same file, same declaration, centred correctly — because no
+  `.bhp-landing p` rule exists to outrank it.
+- `/complete-collection/` **checked and unaffected** — it centres via its
+  wrapper, so the plugin's `margin: 0` never mattered there. Measured identical
+  before and after (delta −0.33 at 1280).
+
+### Tests
+
+- New `tests/test-cycle179-cx-free-resources-400.php` — 9 sections, 42
+  assertions, all passing. Pins the UA padding reset, the 2x2 grid, the 3/2
+  frame (and that it is declared exactly **once**), phone-only card centring,
+  the load-bearing `body:not(.home)` prefix on the eyebrow override, the ≥12px
+  eyebrow floor, landscape derivatives, and the crop-naming alt strings.
+
+### Suite
+
+147 files / **9,100 PASS / 34 FAIL** / 9 non-zero exits, against
+`--url=https://staging2.braveheartspublishing.com`.
+**Fail-line diff vs 1.19.399: identical — nothing added, nothing removed.**
+
+### Not done in this build
+
+- **The trust-row wording is NOT changed.** "Five-star reader reviews on my
+  first two titles" lives in the **plugin**, which the theme artefact excludes
+  by an explicit gate. It also needs its `$has_reviews` gate widened, and the
+  approved registry holds **zero** reviews for the third title. Prepared, not
+  applied; Andrew's.
+- The pair-page H1's **0.5rem bottom margin is still flattened** by the same
+  plugin rule. Recorded, deliberately not fixed inside a centring change.
+
 ## Move or switch off the auto-injected book rail on one post (`_bhp_book_rail_position`, 1.19.388)
 
 The rail's position is computed from article depth (`bhp_blog_ask_paragraph_targets()`), and

@@ -40,3 +40,7 @@ brave-hearts-theme-deploy-*.zip
 meta_token.txt
 *.token
 output/
+
+# build artefacts and agent pre-edit snapshots
+_prod-candidates/
+_pre-edit-backups-*/

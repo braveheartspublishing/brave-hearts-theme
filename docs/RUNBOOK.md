@@ -80,6 +80,22 @@ git archive --format=zip --prefix=brave-hearts-theme-deploy-explorer-expedition-
   Homepage-Implementation-Notes.md Logo.jpg README.md Theme-Freeze.md $TOP_PHP \
   ':(exclude)assets/covers'
 ```
+
+> **The deploy archive must be built from the WORKING TREE, not from `HEAD`.**
+> `git ls-tree HEAD` and `git archive ... HEAD` read the last commit. On this project the
+> tree routinely runs many versions ahead of the newest commit - on 2026-09-07 the tree was
+> `1.19.400` while `HEAD` was `1.19.384` - so a `HEAD`-based archive builds a stale version
+> **without erroring**. Build from the tree, or stage into a temporary index first.
+>
+> **Run the entry-list gate on every artefact.** Compare the ZIP's entry list against the
+> expected theme set, and fail the build on any entry outside it. This gate caught all three
+> artefact defects during the 1.19.389-400 run and is the reason the 1.19.400 ZIP could be
+> asserted clean. It is a required step, not a nicety.
+>
+> **A check that cannot fail is not a check.** `deploy-399.sh`'s carriage-return scan ran with
+> an empty pattern and reported a meaningless count; the artefacts happened to be clean, so
+> nothing broke and nobody noticed. Assert that each guard produces a non-trivial result before
+> trusting its verdict.
 The `--prefix` must exactly match the active theme's slug or the install
 creates a new, inactive theme instead of replacing the live one.
 
