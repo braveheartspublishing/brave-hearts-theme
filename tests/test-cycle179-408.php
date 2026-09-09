@@ -410,14 +410,49 @@ bhp_c408_assert( (bool) current_theme_supports( 'wc-product-gallery-slider' ), '
 
 $c408_media = function_exists( 'bhp_book_media' ) ? bhp_book_media( 'colouring_mariana' ) : array();
 bhp_c408_assert( is_array( $c408_media ), '3.4: bhp_book_media() answers for the colouring key', $failures );
-bhp_c408_note( '3.x — colouring hero remains COVER-ONLY (has_any=' . ( ! empty( $c408_media['has_any'] ) ? 'true' : 'false' ) . '); the cover-first, uncropped 405/406 presentation is unchanged by this build.' );
+/* ⛔ NOTE CORRECTED 1.19.409: it read ~~"colouring hero remains COVER-ONLY"~~,
+ *    which was true at 1.19.408 and is no longer. The 405/406 PRESENTATION
+ *    decisions (cover first, uncropped, no hover zoom) are still unchanged —
+ *    what changed is how many items sit behind the cover. */
+bhp_c408_note( '3.x — colouring hero media has_any=' . ( ! empty( $c408_media['has_any'] ) ? 'true' : 'false' ) . ', count=' . (int) ( $c408_media['count'] ?? 0 ) . ' (cover-only at 1.19.408; six interior pages from 1.19.409). The cover-first, uncropped 405/406 presentation is unchanged.' );
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * 4 · OUT OF SCOPE — ASSERTED UNTOUCHED, NOT ASSUMED UNTOUCHED
  * ═══════════════════════════════════════════════════════════════════════════ */
 
+/*
+ * ⭐⭐ 4.1 IS INVERTED AS OF 1.19.409 (`CYCLE179-LD-BUILD-409`), AND THE
+ *     INVERSION IS THE CORRECT OUTCOME, NOT A WEAKENING.
+ *
+ * ⛔⛔ THE SUPERSEDED ASSERTION, PRESERVED STRUCK AT THE LINE:
+ *
+ *      ~~bhp_c408_assert( ! isset( $c408_media_reg['colouring_mariana'] ),
+ *        '4.1: bhp_book_media_registry() still has NO colouring_mariana key —
+ *        the thumbnail-rail gap recorded at 1.19.406 is STILL OPEN and was NOT
+ *        quietly closed by this build', $failures );~~
+ *
+ * ⭐ WHAT IT WAS FOR, WHICH IS WHY IT WAS RIGHT TO WRITE IT. §4 of this suite
+ *    is "out of scope — ASSERTED untouched, not ASSUMED untouched". 1.19.408
+ *    was told not to close the media-registry gap, so it asserted that it had
+ *    not. That assertion did its job for exactly one release.
+ *
+ * ⛔ IT MUST NOT SURVIVE AS A BLOCKER. `CYCLE179-LD-BUILD-409` was briefed to
+ *    close that gap, and it did. Left as-is, this row would report the
+ *    COMMISSIONED work as a defect — the same false-failure shape as a version
+ *    pin. It is therefore turned around to assert the NEW truth rather than
+ *    deleted, so the history stays legible.
+ *
+ * ⚠️ THIS IS AN EDIT TO ANOTHER BUILD'S TEST FILE, made deliberately and
+ *    named in the 409 report. The alternative — asserting around it from a new
+ *    file while a red line stands here — is the "standing red line" this
+ *    project has already ruled against twice (1.19.404, 1.19.405 §3).
+ */
 $c408_media_reg = function_exists( 'bhp_book_media_registry' ) ? bhp_book_media_registry() : array();
-bhp_c408_assert( ! isset( $c408_media_reg['colouring_mariana'] ), '4.1: bhp_book_media_registry() still has NO colouring_mariana key — the thumbnail-rail gap recorded at 1.19.406 is STILL OPEN and was NOT quietly closed by this build', $failures );
+bhp_c408_assert( isset( $c408_media_reg['colouring_mariana'] ), '4.1: bhp_book_media_registry() NOW HAS a colouring_mariana key — the thumbnail-rail gap recorded at 1.19.406 and held open through 1.19.408 was closed by 1.19.409 (see the struck original above)', $failures );
+bhp_c408_assert( 6 === count( $c408_media_reg['colouring_mariana']['items'] ?? array() ), '4.1b: that entry names exactly the SIX interior colouring pages', $failures );
+foreach ( (array) ( $c408_media_reg['colouring_mariana']['items'] ?? array() ) as $c408_ci ) {
+	bhp_c408_assert( ! preg_match( '/^\d+$/', (string) ( $c408_ci['slug'] ?? '' ) ) && '' !== (string) ( $c408_ci['slug'] ?? '' ), '4.1c: every colouring media item is addressed by SLUG, never by a hardcoded attachment ID (' . ( $c408_ci['slug'] ?? '(none)' ) . ')', $failures );
+}
 
 $c408_col_product = function_exists( 'wc_get_product' ) ? wc_get_product( $c408_col ) : null;
 bhp_c408_note( '4.2: colouring product stock status READ-ONLY = ' . ( $c408_col_product ? $c408_col_product->get_stock_status() : 'unavailable' ) . ' (this suite writes nothing to it; the brief leaves staging out of stock).' );

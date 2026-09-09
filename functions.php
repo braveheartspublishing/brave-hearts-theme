@@ -2487,8 +2487,67 @@ function bhp_get_homepage_books($limit = -1) {
         $description = has_excerpt($book) ? get_the_excerpt($book) : '';
         $review      = get_post_meta($book->ID, 'bhp_review_label', true);
 
-        if (!$review && stripos(get_the_title($book), 'Mariana Trench') !== false) {
-            $review = __('Kirkus reviewed', 'brave-hearts');
+        /*
+         * ⛔⛔ CORRECTED 2026-09-08, `CYCLE179-LD-BUILD-409`. THE KIRKUS LABEL
+         *     IS NOW SET BY REGISTRY IDENTITY, NEVER BY A TITLE SUBSTRING.
+         *     The superseded body is preserved STRUCK, AT THE LINE, because
+         *     the defect is invisible unless you can see what it used to say:
+         *
+         *     ~~if (!$review && stripos(get_the_title($book), 'Mariana Trench') !== false) {
+         *         $review = __('Kirkus reviewed', 'brave-hearts');
+         *       }~~
+         *
+         * ⛔ WHY THIS WAS A FABRICATED-ENDORSEMENT DEFECT, NOT A TIDINESS ONE.
+         *    The colouring book's title is "Coloring Adventures with Charlotte
+         *    and Henry: The Mariana Trench Ocean Coloring Book" — it CONTAINS
+         *    "Mariana Trench". So this test matched it, and the colouring
+         *    book's hub card printed "Kirkus reviewed" in its meta line
+         *    (`template-parts/components/book-card.php`, the
+         *    age · formats · review row). ⛔ KIRKUS REVIEWED ONE TITLE:
+         *    "Adventures of Charlotte & Henry: The Mariana Trench", the
+         *    CHAPTER book — see `bhp_get_kirkus_review_data()`, whose own
+         *    docblock says nothing here may be reused to imply otherwise.
+         *    A colouring book carrying that label is an endorsement claim the
+         *    review does not support, which the never-invent rule reaches
+         *    directly.
+         *
+         * ⭐ THIS IS THE SAME CLASS OF BUG `CYCLE179-LD-BUILD-408` FIXED ON
+         *    `front-page.php` (CX-1, the "From $12.99" price cue), in the same
+         *    function's output, and it survived that build because 408's
+         *    declared write paths did not include this file. It is named in
+         *    408's "not done" list rather than having been discovered twice.
+         *
+         * ⭐ THE MECHANISM IS 408'S RESOLVER, NOT A SECOND ONE.
+         *    `bhp_book_key_product_ids('mariana_trench')` returns the
+         *    registry's own `pb_product` / `hc_product`, so the label is
+         *    asserted by `bhp_book_registry()` — the theme's single identity
+         *    source — instead of guessed from a display string.
+         *
+         * ⛔ AND NO PRODUCT ID IS TYPED HERE. The colouring book is 618 on
+         *    production and 4065 on staging; any hardcoded skip-list is wrong
+         *    on one environment the day it is written. Identity is a POSITIVE
+         *    test against the registry, never a negative test against a
+         *    denylist.
+         *
+         * ⭐ THE `bhp_review_label` POST-META OVERRIDE IS UNTOUCHED and still
+         *    takes precedence, so an editor can still label a card by hand.
+         *
+         * ⛔ FAIL BEHAVIOUR IS DELIBERATE AND SAFE. If the resolver is absent
+         *    or the key is unknown, `$ids` is empty and NO card gets the
+         *    label. An absent credibility line is a non-event; a wrongly
+         *    placed one is a false claim.
+         */
+        if (!$review) {
+            $bhp_kirkus_ids = function_exists('bhp_book_key_product_ids')
+                ? bhp_book_key_product_ids('mariana_trench')
+                : [];
+            if ($bhp_kirkus_ids) {
+                $bhp_book_id = (int) $book->ID;
+                if ($bhp_book_id === (int) $bhp_kirkus_ids['paperback']
+                    || $bhp_book_id === (int) $bhp_kirkus_ids['hardcover']) {
+                    $review = __('Kirkus reviewed', 'brave-hearts');
+                }
+            }
         }
 
         $cards[] = [

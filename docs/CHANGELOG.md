@@ -2,6 +2,151 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## 2026-09-08 - PRODUCTION IS NOW THEME `1.19.409` / BUNDLE PLUGIN `1.8.91` (plugin 1.8.90 carried inside 1.8.91)
+
+The push that removed a security-relevant file from production, plus the collection-pricing
+change Andrew chose and a cross-sell button that stops promising free shipping to carts that
+already have it. Released the night before a five-day founder absence, because Andrew asked
+what absolutely needed doing before he left and this was the answer.
+
+**Authorization.** Founder seal 1447. Andrew asked, verbatim: "I leave tomorrow, is there
+anything in the business that absolutely needs to be done right now". The scope was then stated
+back to him verbatim - "theme 1.19.408 to 1.19.409 (removes that file; Kirkus label by registry
+identity; coloring hero rail; test floor) and plugin 1.8.89 to 1.8.91 (your option B plus the
+Ships Free button fix)" - and he answered "token touched - reviewing draft email now".
+⚠ Part of the scope is attributed in the seal to an earlier standing "push both" from a 17:2x
+message. The current-turn approval is present and sound; the reliance on a carried-forward
+standing word is recorded because approval is scoped to an action, not to a category.
+
+**Installed** at about 22:03 MDT (2026-09-09 04:03 UTC). Theme `1.19.409` from ZIP md5
+`a7e3eb79d42b012b6cedc6399962c904`; bundle plugin `1.8.91` from ZIP md5
+`d58b8799289f948ce66c728fe7ca2575`. Both md5s verified on the server after upload, and **both
+were independently re-computed from the local artefacts when this entry was written and match**.
+452 PHP files linted on the server, 0 failures. Live-vs-ZIP diff: **exactly one live-only theme
+file** - `docs/security-investigation-nlo-finance-redirect-2026-07-09.md` - which is the intended
+deletion, and 0 live-only plugin files. Rollback tarballs taken first:
+`~/_rollback/PROD-theme-1.19.408-pre-409-20260909-040144.tar.gz` (32,108,582 B) and
+`PROD-plugin-1.8.89-pre-1.8.91-20260909-040144.tar.gz` (750,571 B). Active after install: theme
+`1.19.409`, plugin `1.8.91`; `wp core version` 7.1; `wp sg purge` dynamic cache OK; 765 theme
+files; installed `functions.php` md5 `ec2addb4...` and `bundle-drawer.js` md5 `75a9af89...`
+matching the ZIPs.
+
+**Live checks after install.** Home 200 with `ver=1.19.409` and the Mariana card at "From
+$11.99"; `/shop/` 200; Mariana paperback PDP 200 with ADD BOTH 0 and "Kirkus reviewed" 0;
+coloring PDP 200 with `book-media` enqueued twice, "Out of stock" 1, and the new hero-rail
+thumbnails present; `/cart/` 200; `/checkout/` 302 (empty-cart redirect, normal);
+`/adventure-kit-thank-you/` 200. **Independently re-verified at about 22:1x MDT from a separate
+desk:** HTTP 200, 17 `ver=1.19.409` markers, 6 plugin asset markers at `ver=1.8.91`, "From
+$11.99" three times.
+
+### The security file, and an honest note about its cause
+
+The `1.19.408` artefact shipped `docs/security-investigation-nlo-finance-redirect-2026-07-09.md`
+to production. That file is marked `export-ignore` in `.gitattributes` precisely because it
+quotes malware IOC strings and tripped SiteGround's scanner on 2026-08-04. `1.19.409` removes it,
+and **it is verified gone: a live request for the path returns HTTP 404, and the server directory
+listing reports it absent.**
+
+⚠ **The cause is not established, and this entry will not claim otherwise.** The build lane's
+finding attributes the leak to archiving without `--worktree-attributes`. That does not explain
+the artefact. `assets/covers` - 121 tracked files, governed by a line in the *same committed*
+`.gitattributes` - was correctly excluded from the very same `build-408.zip`. Both `export-ignore`
+lines were committed long before the build (the IOC line since `aaecd9f`, 2026-08-05) and both
+are present at the commit the archive was taken from. Something other than, or in addition to,
+the missing flag produced this. **Until the exact command that built `build-408.zip` is stated,
+the incident has no established cause.**
+
+**The durable fix is therefore not the flag.** It is a preflight assertion that no `export-ignore`
+path appears in a deploy artefact, checked before upload - a control that holds whatever the
+mechanism turns out to be. Passing `--worktree-attributes` is strictly safer and should be done
+anyway. It is simply not sufficient as an explanation.
+
+### What changed in the theme (1.19.409)
+
+- **Kirkus label by registry identity.** `bhp_get_homepage_books()` had been setting the
+  "Kirkus reviewed" card label from the title substring `"Mariana Trench"` - the same substring
+  class that caused the home-page price defect. It now uses
+  `bhp_book_key_product_ids('mariana_trench')`. **Correction to the earlier record: this was
+  latent and never live.** The review field is rendered only by `featured-books.php`, which no
+  page calls. The two other substring sites were already guarded and are now under test.
+- **Coloring product page hero rail.** Six interior pages selected by slug (slugs are identical
+  across environments; ids are not), cover from the featured image, lightbox verified at 1440
+  and 390. No new customer-facing string.
+- **Test floor.** The theme suite is green against plugin `1.8.91` with 0 new functional
+  failures. 13 pre-existing red lines remain in `test-cycle179-407` from out-of-stock control
+  rows; they are pre-existing and were not introduced here.
+- **Deploy archive** now honours `.gitattributes` `export-ignore`, which is what removes the
+  security file. 765 live theme files after install.
+
+### What changed in the bundle plugin (1.8.90, then 1.8.91)
+
+`1.8.90` never reached production on its own; its contents shipped inside `1.8.91`.
+
+- **`1.8.90` - the collection-pricing shape Andrew chose (his "option B", seal 1436).** For a
+  cart of three paperbacks across two titles, totals are unchanged from `1.8.89` ($35.97 to
+  $31.99, free shipping, Store API totals identical). The drawer now reads "Your order ships
+  FREE." above "Bundle Savings (Paperback) -$3.98", using WooCommerce's own fee name, and the
+  "COMPLETE THE COLLECTION" eyebrow and per-item notes are suppressed for that shape in both
+  drawer and checkout. Three-distinct and two-distinct cart shapes are unchanged at 390 and
+  1440. No new customer-facing string. 50 drawer assertions plus 45 PHP assertions.
+- **`1.8.91` - the cross-sell button fix.** The button read "Add This Adventure - Ships Free" on
+  carts that were already shipping free, which was live on production. It now reads "Add This
+  Adventure" on carts already shipping free and keeps " - Ships Free" only where shipping is
+  still charged. Verified at innerWidth 1440 and 390. Entry gate against `1.8.90`: 0 removed,
+  0 added, 5 changed. Plugin suite 2575 assertions / 22 files against a 2551 / 22 baseline;
+  theme suite 11957 / 142 unchanged; fail-line diffs empty. Rollback exercised.
+
+**Known and unfixed:** the checkout upsell panel does not render at 390 (pre-existing, not
+introduced by these versions).
+
+### Baseline before this release
+
+Theme `1.19.408`, plugin `1.8.89`, WordPress 7.1, product 618 out of stock (unchanged by this
+release). **No WooCommerce product, price, coupon, stock, shipping, tax or payment setting was
+changed by this release.**
+
+---
+
+## 2026-09-08 - PRODUCTION THEME `1.19.408` (plugin unchanged at `1.8.89`)
+
+A single-purpose theme release: the home page had been printing the wrong price for The Mariana
+Trench, and the coloring product page was missing the media script it needed.
+
+**Authorization.** Founder seals 1436 and 1439. Andrew: "Push 408", then "token pushed". Scope
+as stated to him: "theme 1.19.407 to 1.19.408 on production (home Mariana price by registry
+identity; coloring page media script enqueued), same ritual as this morning: upload, md5, lint,
+live-vs-ZIP diff, rollback tarball, install, purge, live checks. Plugin untouched."
+
+⚠ **An approval is not an execution, and the record keeps both.** The push was approved at 15:07
+MDT and had not run at 15:12, when an independent live read still showed `ver=1.19.407` and the
+wrong price still on the home page. It was installed at 15:20 and verified live at 15:28:39.
+Both readings are preserved because each was true when taken.
+
+**Installed** at about 15:20 MDT (21:20 UTC). Theme `1.19.408` from ZIP md5
+`5084a80484cfb17de27bc4946c416789`, verified on the server after upload and **re-computed from
+the local artefact when this entry was written**. 366 PHP files linted, 0 failures. Live-vs-ZIP
+diff: 0 live-only files. Rollback tarball
+`~/_rollback/PROD-theme-1.19.407-pre-408-20260908-211949.tar.gz` (32,083,836 B). Active theme
+`1.19.408`; `wp core version` 7.1; `wp sg purge` OK; installed `front-page.php` md5 `0a6ff2e8...`
+and `inc/book-formats.php` md5 `30c4a17f...` equal to the ZIP; `assets/look-inside/` 39 files.
+
+**Live checks.** Home 200 with 17 `ver=1.19.408` markers and the Mariana card reading "From
+$11.99"; coloring PDP 200 with `book-media` enqueued twice, "Out of stock" 1, "Temporarily
+unavailable" 2; Mariana paperback PDP with ADD BOTH 0 and ADD PAPERBACK 2; `/shop/` 200;
+`/cart/` 200.
+
+**What changed.** The home-page price for The Mariana Trench is set by registry identity rather
+than by a title substring. The coloring product page enqueues the book-media script it needs.
+Plugin remained `1.8.89`; product 618 remained out of stock.
+
+⚠ **This artefact shipped a file it should not have** -
+`docs/security-investigation-nlo-finance-redirect-2026-07-09.md`, marked `export-ignore`. It was
+on production from 15:20 on 2026-09-08 until `1.19.409` removed it at 22:03 the same day. See
+the `1.19.409` entry above, including the honest note that the stated cause does not explain the
+artefact.
+
+---
+
 ## 2026-09-08 - PRODUCTION IS NOW THEME `1.19.407` / BUNDLE PLUGIN `1.8.89` (theme 1.19.405, 1.19.406, 1.19.407; plugin 1.8.87, 1.8.88, 1.8.89)
 
 Three theme versions and three plugin versions, all six staged, suite-checked and browser-QA'd

@@ -1,5 +1,5 @@
 /*! Built from style.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 0f6c920452196eae088fcc5af064c0fd
+    source-md5: f2b1573bb17a1c618d8df13e18e820e1
     Comments stripped for transfer size; the source file is canonical. */
 /*
 Theme Name: Brave Hearts Publishing
@@ -7,7 +7,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.408
+Version: 1.19.411
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -6006,6 +6006,44 @@ padding-top: 0;
     box-shadow: 0 1px 4px rgba(var(--color-jungle-rgb), 0.18);
   }
 .mariana-popup--photo .popup-ab__kit-cover img { width: 96px; }
+}
+.mariana-popup--ab .mariana-popup__close {
+  z-index: 2;
+}
+.mariana-popup--photo.mariana-popup--ab .mariana-popup__close {
+  background: rgb(var(--popup-ab-ground-rgb));
+  border: 1px solid var(--color-forest);
+  border-radius: 50%;
+  color: var(--color-forest);
+  box-shadow: 0 2px 6px rgba(var(--color-jungle-rgb), 0.28);
+}
+.mariana-popup--photo.mariana-popup--ab .mariana-popup__close:hover {
+  background: rgb(var(--popup-ab-ground-rgb));
+  border-color: var(--color-jungle);
+  color: var(--color-jungle);
+}
+.mariana-popup--ab .popup-ab__lede {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-ink);
+}
+.mariana-popup--ab .popup-ab__lede + .popup-ab__subhead {
+  margin-top: var(--space-2);
+}
+@media (min-width: 1440px) {
+  .mariana-popup--ab .mariana-popup__dialog h2 {
+    font-size: var(--h3-size);
+  }
+  .mariana-popup--ab .popup-ab__subhead {
+    font-size: var(--text-base);
+  }
+}
+@media (max-width: 767px) {
+  .mariana-popup--ab .popup-ab__kit-cover {
+    display: none;
+  }
 }
 .bhp-free-bullets {
   list-style: none;

@@ -1760,12 +1760,26 @@ function bhp_book_enqueue_media_assets() {
          *    enqueued for free.
          *
          * ⛔ NOTHING ABOUT THE 1.19.405/406 DECISIONS CHANGES. The colouring
-         *    hero is still cover-first and uncropped, there is still no hover
-         *    zoom, and `bhp_book_media_registry()` is NOT touched — the
-         *    missing `colouring_mariana` media-library key recorded in
-         *    `bhp_book_hero_key_for_product()` is still open and still
-         *    `chief-of-staff`'s call. This build makes the EXISTING cover-only
-         *    hero work; it does not add media.
+         *    hero is still cover-first and uncropped, and there is still no
+         *    hover zoom.
+         *
+         * ⛔ SUPERSEDED 2026-09-08, `CYCLE179-LD-BUILD-409`, preserved struck
+         *    at the line because it is the SECOND half of the same sentence
+         *    and a reader must not carry it forward as current:
+         *    ~~and `bhp_book_media_registry()` is NOT touched — the missing
+         *      `colouring_mariana` media-library key recorded in
+         *      `bhp_book_hero_key_for_product()` is still open and still
+         *      `chief-of-staff`'s call. This build makes the EXISTING
+         *      cover-only hero work; it does not add media.~~
+         *    1.19.409 ADDED that key. See the corrected block in
+         *    `bhp_book_hero_key_for_product()` below and the entry itself in
+         *    `inc/book-media.php`.
+         *
+         * ⭐ THIS GATE NEEDED NO EDIT FOR THAT, WHICH IS THE POINT OF ASKING
+         *    THE RENDER'S OWN QUESTION. The resolver's answer changed from a
+         *    cover-only key to a six-item key; this line still asks it, still
+         *    gets a non-empty string, and still enqueues. The two sides moved
+         *    together without either being told about the other.
          *
          * ⭐ STILL FAILS SAFE, unchanged: with no look-inside media AND no
          *    cover the resolver returns '', this returns early, and the native
@@ -1868,10 +1882,19 @@ add_action('wp_enqueue_scripts', 'bhp_book_enqueue_media_assets');
  *    other product page on the site. Nothing was broken; a condition simply
  *    never became true, which is the hardest kind of gap to see.
  *
- * ⭐ THE COLOURING MEDIA ALREADY EXISTED AND WAS ALREADY APPROVED. Key
- *    `colouring_mariana` carries two look-inside spreads. This release renders
- *    media that was authored and sitting unused; it adds no image and approves
- *    nothing.
+ * ⭐ THE COLOURING MEDIA ALREADY EXISTED AND WAS ALREADY APPROVED. This
+ *    release renders media that was authored and sitting unused; it adds no
+ *    image and approves nothing.
+ *
+ * ⛔ CORRECTED 2026-09-08, `CYCLE179-LD-BUILD-409` — the sentence
+ *    ~~"Key `colouring_mariana` carries two look-inside spreads"~~ was
+ *    ambiguous between the file registry and the media-library registry, and
+ *    that ambiguity is precisely what produced the wrong "missing assets"
+ *    diagnosis this file spent 1.19.406 unpicking. To be exact:
+ *    `bhp_pdp_look_inside_registry()` carries TWO look-inside plate FILES for
+ *    this key; `bhp_book_media_registry()` carries SIX media-library interior
+ *    pages for it (added 1.19.409). Two registries, one key, different
+ *    contents, both correct.
  *
  * ⛔ ONE RESOLVER, TWO CALLERS, NO DRIFT — the rule this file already states
  *    for `bhp_book_hero_gallery_media()`. The gate that decides whether to
@@ -1932,30 +1955,54 @@ function bhp_book_hero_key_for_product($product_id) {
              *        real browser on staging2 at 1280 and 375, 2026-09-08).
              *      · `bhp_book_media_registry()` (inc/book-media.php:41) maps
              *        keys to MEDIA-LIBRARY ATTACHMENT SLUGS and drives the
-             *        hero gallery and its thumbnail rail. It has NO
-             *        `colouring_mariana` key AT ALL — not a key naming absent
-             *        images, no key. `bhp_book_media()` therefore returns zero
-             *        items and `has_any` is false.
+             *        hero gallery and its thumbnail rail.
              *
-             * ⛔ SO THE GAP IS A MISSING REGISTRY ENTRY, NOT A MISSING ASSET,
-             *    and "upload the two spreads" would NOT have fixed it: with no
-             *    `colouring_mariana` key in `bhp_book_media_registry()` there
-             *    is nothing for an upload to satisfy. Recorded, NOT resolved —
-             *    whether the colouring hero should gain a media-library entry
-             *    is a product-presentation decision for `chief-of-staff`, and
-             *    it needs an Andrew gate if it touches attachments.
+             * ⛔⛔ CLOSED 2026-09-08, `CYCLE179-LD-BUILD-409`. THE GAP THE TWO
+             *     PARAGRAPHS BELOW DESCRIBE NO LONGER EXISTS. They are
+             *     preserved STRUCK, at the line, because the WRONG diagnosis
+             *     ("upload the spreads") travelled once already and would be
+             *     re-derived from a silent deletion:
              *
-             * ⭐ THE COVER-ONLY HERO BELOW REMAINS CORRECT EITHER WAY, so the
-             *    asymmetry this comment exists to explain is unchanged.
+             *     ~~It has NO `colouring_mariana` key AT ALL — not a key
+             *       naming absent images, no key. `bhp_book_media()` therefore
+             *       returns zero items and `has_any` is false.
              *
-             * ⭐ WHAT THIS STILL DELIVERS TODAY. The product HAS a cover
-             *    (attachment 4066). The hero frame, the contained — uncropped —
-             *    fill and the cover-first ordering are exactly what the brief
-             *    asked for, and none of them need a second image.
-             *    `look-inside.php` already carries a `--single` variant for a
-             *    one-item gallery, so this renders a designed state, not a
-             *    degraded one. The thumbnail rail appears on its own the moment
-             *    the two spreads are uploaded — no further code change.
+             *       ⛔ SO THE GAP IS A MISSING REGISTRY ENTRY, NOT A MISSING
+             *       ASSET, and "upload the two spreads" would NOT have fixed
+             *       it: with no `colouring_mariana` key in
+             *       `bhp_book_media_registry()` there is nothing for an upload
+             *       to satisfy. Recorded, NOT resolved — whether the colouring
+             *       hero should gain a media-library entry is a
+             *       product-presentation decision for `chief-of-staff`, and it
+             *       needs an Andrew gate if it touches attachments.
+             *
+             *       ⭐ WHAT THIS STILL DELIVERS TODAY. The product HAS a cover
+             *       (attachment 4066) ... The thumbnail rail appears on its
+             *       own the moment the two spreads are uploaded — no further
+             *       code change.~~
+             *
+             * ⭐ WHAT IS TRUE NOW. `bhp_book_media_registry()` HAS a
+             *    `colouring_mariana` entry naming the SIX interior colouring
+             *    pages that are already in the media library on BOTH
+             *    environments under identical slugs. `bhp_book_media()`
+             *    resolves them, `has_any` is TRUE, and this branch therefore
+             *    takes the `return $key` line below rather than the cover-only
+             *    fallback. The rail renders six thumbs plus the prepended
+             *    cover.
+             *
+             * ⭐ NO ANDREW GATE WAS NEEDED IN THE END, and the reason is worth
+             *    keeping: the paragraph above assumed the entry would have to
+             *    TOUCH attachments or name per-environment IDs. It does
+             *    neither — the six slugs are identical on production and
+             *    staging, and the cover still comes from the product's own
+             *    featured image. No attachment was created, edited, deleted or
+             *    re-pointed by that build.
+             *
+             * ⭐ THE COVER-ONLY FALLBACK BELOW IS DELIBERATELY KEPT, not
+             *    removed as dead code. It is what runs on any environment
+             *    where those six slugs do not resolve, and it is the reason
+             *    the gate can never strip the native gallery and then render
+             *    nothing.
              *
              * ⛔ A CHAPTER BOOK MUST NOT TAKE THIS PATH. Those three pages have
              *    real look-inside media; if one ever resolved empty, that is a

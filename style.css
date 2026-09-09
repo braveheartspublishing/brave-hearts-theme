@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.408
+Version: 1.19.411
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -11053,6 +11053,210 @@ a.header-expedition-cta {
    entrance. Recorded so the absence reads as a decision rather than an
    oversight. */
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 9e · 1.19.410 (2026-09-08, `CYCLE179-LD-BUILD-410`) — THE CLOSE CONTROL
+          IS PUT BACK ON TOP OF THE PHOTOGRAPH. A LIVE PRODUCTION DEFECT.
+   ══════════════════════════════════════════════════════════════════════════
+
+   ⛔⛔ WHAT WAS BROKEN, MEASURED RATHER THAN REASONED. On staging2 at 1.19.409,
+      at an asserted `window.innerWidth` of BOTH 390 and 1440,
+      `document.elementFromPoint()` at the close button's centre — and at all
+      four of its corners — returned the photograph's `<img>`, never the
+      button. A real trusted mouse click dispatched at that centre left the
+      dialog OPEN. At 390 no × was visible on the surface at all.
+      Found by `commerce-cx`, `CYCLE179-CX-PARENT-FUNNEL-SHOTS` D-1.
+
+   ⭐ WHY, AND IT IS ENTIRELY A STACKING ACCIDENT — nothing here was written
+      wrongly, two correct rules simply met. §9a gives `.popup-ab__photo`
+      `position: relative` (it needs to be a containing block for the mask and
+      the overflow clip). The close button is `position: absolute`. NEITHER
+      declares a `z-index`, so both sit in the same stacking context at
+      `z-index: auto`, and CSS paints two such elements in DOM ORDER. The
+      photograph is the LAST child of the dialog and the button is the FIRST.
+      The picture therefore paints over — and hit-tests over — the only control
+      that dismisses the modal.
+
+   ⛔ THIS WAS NOT A COSMETIC BUG. Escape and the overlay both still worked and
+      both were verified working before and after this fix — but a phone has no
+      Escape key, and at 390 the overlay strip beside the dialog measures
+      27px on each side. A visitor on a phone had a 27px miss-and-you-are-stuck
+      target and no visible ×.
+
+   ⭐ THE FIX IS TWO THINGS, AND BOTH ARE NEEDED. A `z-index` alone would have
+      been half a fix, and the screenshots are why: at BOTH widths the pixels
+      the button sits on are a pale cream wall, which is close to this dialog's
+      own ivory. The 0.92 cream disc that §9c and §9d already give it would
+      have painted on top and still been hard to see. So the disc is taken to
+      FULLY OPAQUE and given an edge.
+
+   ⛔ SCOPED TO THE VARIANT, NOT WIDENED TO THE SHARED RULE. The unmodified
+      shared close-control rule at the top of this stylesheet still declares no
+      `z-index`, exactly as it did. That is deliberate: `--signup` already
+      solves the identical problem locally, with the identical value and for
+      the identical stated reason (see its rule and its comment), and this
+      follows that precedent rather than inventing a second, sitewide one.
+      ⚠ THE GENERAL CASE IS A FINDING, NOT A FIX: any future variant that puts
+        a positioned decorative element in the same stacking context will
+        reproduce this. Reported to the Chief of Staff, not resolved here.
+
+   ⛔ THE PHOTOGRAPH IS NOT TOUCHED — no crop, no mask, no size, no position,
+      no z-index of its own. The control moved; the picture did not. */
+
+/* The whole variant, with or without a photograph. `z-index: 2` is not a
+   magic number: it is the value `--signup` already uses for this exact
+   purpose, kept identical so the two read as one decision. */
+.mariana-popup--ab .mariana-popup__close {
+  z-index: 2;
+}
+
+/* ⭐ The visible treatment, and ONLY where a photograph actually renders —
+   because the ring exists to separate the control from a picture, and there is
+   no picture to separate it from otherwise.
+   ⛔ SUPERSEDES the 0.92-alpha disc declared twice above (§9c and §9d), which
+      is left in place rather than deleted so the movement stays visible; this
+      block is later in source order and both selectors carry the same
+      specificity, so this is what computes.
+   ⭐ 44 x 44 IS UNCHANGED AND CANNOT BE EATEN BY THE BORDER: this stylesheet
+      sets `box-sizing: border-box` globally, so the 1px ring is drawn inside
+      the box and `getBoundingClientRect()` still measures 44 x 44. Asserted
+      live at both widths, not assumed.
+   ⭐ THE GLYPH GOES TO `--color-forest`, replacing the shared rule's
+      `--color-text-muted`. Muted grey was tuned for a cream card, not for a
+      control that has to be found on a photograph in one glance. */
+.mariana-popup--photo.mariana-popup--ab .mariana-popup__close {
+  background: rgb(var(--popup-ab-ground-rgb));
+  border: 1px solid var(--color-forest);
+  border-radius: 50%;
+  color: var(--color-forest);
+  box-shadow: 0 2px 6px rgba(var(--color-jungle-rgb), 0.28);
+}
+/* ⚠⚠ HOVER TINTS. IT DOES NOT INVERT — AND THAT IS A CORRECTION MADE
+      AGAINST A CAPTURE, NOT A PREFERENCE. This rule first read
+      `background: var(--color-forest); color: <the ground>`, a full inversion.
+      Rendered at 390 on staging it made the close control a solid dark disc
+      with a white glyph THE INSTANT THE POPUP OPENED — because the engine
+      moves focus to the first focusable element and Chromium matches
+      `:focus-visible` on that programmatic focus even for a mouse-only
+      visitor. Section 7 above documents exactly that behaviour, and documents
+      a deliberate decision to keep that first-focus indicator quiet.
+   ⛔ THE RESULT WAS THE LOUDEST THING ON A LEAD-CAPTURE SURFACE BEING THE WAY
+      OUT. The resting disc and its ring already satisfy "visible"; section 7's
+      2px forest outline already marks focus. So hover TINTS the ring and the
+      glyph and leaves the ground alone.
+   ⭐ `:focus-visible` is deliberately NOT listed here. Focus is indicated by
+      section 7's outline and by nothing else on this control. */
+.mariana-popup--photo.mariana-popup--ab .mariana-popup__close:hover {
+  background: rgb(var(--popup-ab-ground-rgb));
+  border-color: var(--color-jungle);
+  color: var(--color-jungle);
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 9f · 1.19.411 (2026-09-09, `CYCLE179-LD-BUILD-411`) — THREE APPROVED
+          CHANGES: A NEW LINE, A DESKTOP TYPE STEP, AND THE THUMBNAIL OFF THE
+          PHONE.
+   ══════════════════════════════════════════════════════════════════════════
+
+   ⭐ Andrew Signore, seal 1451: *"Make all those changes to make it better
+      please"*, on a brief carrying all three. ⚠ RELAYED through the Chief of
+      Staff; NOT witnessed first-hand by this build (Standing Rules §9.2).
+
+   ⛔ EVERY MEASUREMENT IN THIS COMMENT WAS TAKEN FIRST-HAND ON staging2
+      RUNNING 1.19.410, at an asserted `window.innerWidth` (a hard abort in the
+      harness, because resizes are unreliable on this machine). Nothing below
+      is inferred from the stylesheet.
+
+   ⚠⚠ ONE CARRIED FIGURE DID NOT SURVIVE RE-MEASUREMENT, AND IT IS RECORDED
+      RATHER THAN QUIETLY REPLACED. The brief carried the popup at **~74.8% of
+      the viewport at 390**. Measured here on the running 1.19.410 at an
+      asserted 390 x 844: the dialog is **732.3px tall = 86.8%**, and it did
+      **not** overflow (`scrollHeight` 730 = `clientHeight` 730) — the submit
+      button already sat at y689–735, inside the fold. The brief's premise that
+      the surface scrolls at 390 was therefore NOT reproduced. The changes are
+      still made as approved; the headroom they buy is real and is what keeps
+      the surface inside the fold once the new line is added.
+
+   ── 1 · THE LEDE ──────────────────────────────────────────────────────────
+   ⭐ A new approved customer-facing line at BOTH widths, between the headline
+      and the sub-line. Its wording is the founder's and is reproduced verbatim
+      in `parent-ab-popup.php`; nothing here may restyle it into a second
+      headline. Plain body face, the theme's existing small-body size — the
+      same size the sub-line has always carried, so the line reads as body copy
+      subordinate to the headline rather than as a competing deck.
+   ⛔ THE SUB-LINE'S OWN MARGIN RULE IS NOT EDITED. It carries a NEGATIVE top
+      margin (it was written to tuck under the `h2`), and with a lede between
+      them that negative would collapse against the lede's bottom margin and
+      make the two lines touch. The fix is an ADJACENT-SIBLING override that
+      only applies WHEN A LEDE ACTUALLY RENDERS — so if `bhp_parent_popup_lede`
+      is ever filtered to '', the sub-line falls back to its original spacing
+      with no rule to unwind. */
+.mariana-popup--ab .popup-ab__lede {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-ink);
+}
+.mariana-popup--ab .popup-ab__lede + .popup-ab__subhead {
+  margin-top: var(--space-2);
+}
+
+/* ── 2 · THE DESKTOP TYPE STEP ─────────────────────────────────────────────
+   ⭐ 1440 AND WIDER ONLY, and it is one rung on the theme's OWN scale rather
+      than a hand-picked pixel value:
+        headline  `clamp(1.25rem, 2vw, 1.4rem)` -> `var(--h3-size)`
+                  MEASURED 22.4px -> 27.2px at 1440 (the clamp's 1.7rem cap)
+        sub-line  `var(--text-sm)` -> `var(--text-base)`
+                  MEASURED 14.4px -> 18px (0.9rem -> 1.125rem)
+      `--h3-size` is the next heading rung above this dialog's bespoke size and
+      sits well below `--h2-size` (36px at 1440), which would have shouted.
+   ⛔ NO LAYOUT RULE IS TOUCHED. No width, grid, padding, margin or column
+      changes here — only two `font-size` declarations. The dialog's geometry
+      at 1440 is byte-identical to 1.19.410.
+   ⚠ THE HEADLINE MAY NOW TAKE TWO LINES at 1440. That was explicitly accepted
+      in the brief. */
+@media (min-width: 1440px) {
+  .mariana-popup--ab .mariana-popup__dialog h2 {
+    font-size: var(--h3-size);
+  }
+  .mariana-popup--ab .popup-ab__subhead {
+    font-size: var(--text-base);
+  }
+}
+
+/* ── 3 · THE KIT THUMBNAIL COMES OFF THE PHONE ─────────────────────────────
+   ⛔⛔ READ THIS BEFORE CHANGING IT. The rule two sections above carries
+      *"THE KIT COVER STEPS DOWN, AND IT DOES NOT GO AWAY … IT MUST NOT GO
+      AWAY"*, resting on Andrew Signore's standing instruction of 2026-08-19:
+      *"Keep a small picture of the actual front page of the kit on the pop
+      up"*. That instruction is NOT overturned here and that comment is left
+      byte-untouched so the tension stays visible rather than tidied away.
+   ⭐ WHAT CHANGED IS THE VIEWPORT, NOT THE INSTRUCTION. The picture is KEPT on
+      desktop, where his sentence is still satisfied in full. It is hidden
+      BELOW 768px only, under his later and more specific approval (seal 1451),
+      because a phone stacks TWO images above the copy and the surface has to
+      absorb a new line of type.
+   ⛔ THE MARKUP IS NOT REMOVED — this is `display: none`, not a deleted
+      `<picture>`. That is deliberate and it is load-bearing three ways: the
+      element stays in the DOM at every width, so the two existing suites that
+      assert the popup renders exactly one `.popup-ab__kit-cover` keep passing
+      honestly rather than being edited to permit an absence; the founder's
+      instruction remains structurally satisfied; and restoring it on phone is
+      a one-line revert. The `<img>` is `loading="lazy"`, so a hidden picture
+      also costs a phone no bytes.
+   ⚠ THE SEAM AT 700–767px IS REAL AND IS REPORTED, NOT HIDDEN. This
+      stylesheet's popup breakpoint is 700px, and the approved boundary for
+      this change is 768px. Between the two the dialog is in its two-column
+      desktop layout WITH the thumbnail suppressed. That band was measured at
+      neither of the two approved QA widths (390, 1440) and is listed as an
+      open observation for review rather than silently re-cut, because moving
+      the boundary to 700 would contradict the approved "below 768px". */
+@media (max-width: 767px) {
+  .mariana-popup--ab .popup-ab__kit-cover {
+    display: none;
+  }
+}
 /* ═══════════════════════════════════════════════════════════════════════
  * 1.19.210 (2026-08-09, CYCLE148-LD-02/03) — FREE-ITEM BULLETS and the
  * FUNNEL FAST-PURCHASE BAND.

@@ -333,12 +333,36 @@ bhp_c405_assert(
  * Approved media that was authored and sitting unused is what this item makes
  * visible; it adds no image and approves nothing. */
 /* ⚠️⚠️ THIS ASSERTION FAILED ON ITS FIRST STAGING RUN AND THE FAILURE WAS
- *    REAL — it is the reason the cover-only path exists. The two colouring
- *    spreads named in the media registry
- *    (`look-inside-mariana-coloring-book-pp95-101` and `-pp99-109`) ARE NOT
- *    UPLOADED, on staging or production. `bhp_book_has_look_inside(
- *    'colouring_mariana')` returns FALSE while all three chapter books return
- *    TRUE.
+ *    REAL — it is the reason the cover-only path exists.
+ *
+ * ⛔⛔ BUT THE REASON RECORDED HERE FOR THAT FAILURE WAS FALSE, and it is
+ *    corrected 2026-09-08 by `CYCLE179-LD-BUILD-409` (the one-line fix
+ *    `CYCLE179-CX-BUILD-406` raised as its open question 4 and could not make
+ *    from its own lane). Superseded sentence preserved STRUCK, at the line:
+ *
+ *    ~~The two colouring spreads named in the media registry
+ *      (`look-inside-mariana-coloring-book-pp95-101` and `-pp99-109`) ARE NOT
+ *      UPLOADED, on staging or production.~~
+ *
+ * ⚠️ WHY IT WAS FALSE. Those two stems name THEME FILES in
+ *    `bhp_pdp_look_inside_registry()`, and 406 established first-hand that
+ *    they were present in the artefact, present on both servers and serving
+ *    HTTP 200 the whole time. They were never in the MEDIA registry at all.
+ *    The real cause was a name collision: `bhp_book_media_registry()` had no
+ *    `colouring_mariana` key, so `bhp_book_media()` returned zero items.
+ *    ⛔ THE FALSE SENTENCE MATTERED because it sent the next build looking
+ *    for an upload, which could not have fixed anything.
+ *
+ * ⭐ AND AS OF 1.19.409 EVEN THE CORRECTED GAP IS CLOSED: that registry now
+ *    carries the six media-library interior pages, so
+ *    `bhp_book_has_look_inside('colouring_mariana')` returns TRUE like the
+ *    three chapter books. The assertion below is unchanged and still passes,
+ *    now by the spreads route rather than the cover-only route — which is
+ *    exactly what it was re-aimed to allow.
+ *
+ * ⛔ HISTORICAL, AND TRUE WHEN WRITTEN: `bhp_book_has_look_inside(
+ *    'colouring_mariana')` returned FALSE while all three chapter books
+ *    returned TRUE.
  * ⭐ SO THE ASSERTION WAS RE-AIMED AT WHAT MUST ACTUALLY BE TRUE: the colouring
  *    PDP gets a hero gallery with SOMETHING REAL IN IT — the spreads if they
  *    are there, the cover alone if they are not. It is NOT weakened to "pass

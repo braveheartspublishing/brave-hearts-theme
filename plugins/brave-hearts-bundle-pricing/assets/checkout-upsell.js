@@ -123,12 +123,38 @@
 	 * comes from the catalog and the label from the server, and neither is
 	 * ever parsed as markup. Same rule the drawer follows for the same string.
 	 */
-	function buildPanel(cs, onAdd) {
+	function buildPanel(cs, onAdd, meta) {
 		var box = document.createElement('div');
 		box.className = 'bhp-checkout-upsell';
 		box.setAttribute('data-bhp-checkout-upsell', '1');
 
-		if (COPY.heading) {
+		/*
+		 * ⛔⛔ 1.8.90 — SEAL 1436, CX-3 OPTION B (⚠️ RELAYED THROUGH
+		 *     `chief-of-staff`, NOT WITNESSED FIRST-HAND BY THIS DESK).
+		 *
+		 * ⭐ THE HEADING IS THE DRAWER'S EYEBROW. Literally: both surfaces read
+		 *    `bhp_bundle_checkout_upsell_copy()['heading']`, by design since R4
+		 *    so the two cannot say different things. It follows that a
+		 *    suppression applied to one and not the other would RE-CREATE the
+		 *    divergence that shared string exists to prevent — the customer
+		 *    would lose the false claim in the drawer and meet it again one
+		 *    screen later, at checkout, which is the screen Pippin walked.
+		 *
+		 * ⛔ THE PREDICATE IS NOT RECOMPUTED HERE. `meta.tier_without_set` is
+		 *    computed ONCE, in `computeDrawerMeta()`, and arrives on the same
+		 *    object as `cross_sell` — the same rule this file already follows
+		 *    for `completes_collection` (see the 1.8.24 note below). A second
+		 *    copy of the test is exactly the drift this module was written to
+		 *    avoid.
+		 *
+		 * ✅ FAILS OPEN, DELIBERATELY. An older or partially-loaded payload
+		 *    with no `meta` renders the heading exactly as 1.8.89 did. The
+		 *    worst case of a missing flag is the current behaviour, never a
+		 *    blank panel.
+		 */
+		var collectionCopyAllowed = !(meta && meta.tier_without_set);
+
+		if (COPY.heading && collectionCopyAllowed) {
 			var h = document.createElement('p');
 			h.className = 'bhp-checkout-upsell__heading';
 			h.textContent = COPY.heading;
@@ -172,8 +198,27 @@
 		var freeShipClause = (window.bhpDrawerData
 			&& window.bhpDrawerData.freeShipCopy
 			&& window.bhpDrawerData.freeShipCopy.cta_clause) || '';
+		/*
+		 * ⭐⭐ 1.8.91 — AND ONLY IF THE ORDER DOES NOT ALREADY SHIP FREE.
+		 *     Closes F1 of `CYCLE179-LD-PLUGIN-1.8.90` on this surface too.
+		 *
+		 * ⛔ THE PREDICATE IS NOT RECOMPUTED HERE. `already_ships_free` is
+		 *    computed ONCE in `computeDrawerMeta()`, from
+		 *    `bhp_bundle_physical_book_count()`'s JS mirror against the
+		 *    localized free-shipping threshold, and arrives on the same
+		 *    object as `savings` and `completes_collection`. This file's own
+		 *    standing rule, stated directly above: there is deliberately no
+		 *    second copy of the test.
+		 *
+		 * ⛔ THE BRANCH IS KEPT AND ONLY THE SUFFIX IS DROPPED. Falling
+		 *    through to the savings arm would swap one customer-facing claim
+		 *    for a different one; the direction was the BASE label. An older
+		 *    drawer build that sends no flag renders exactly what 1.8.90 did.
+		 */
 		if (cs.completes_collection && freeShipClause) {
-			label += freeShipClause;
+			if (!cs.already_ships_free) {
+				label += freeShipClause;
+			}
 		} else if (cs.savings > 0) {
 			var money = maths() ? maths().money(cs.savings) : '$' + cs.savings.toFixed(2);
 			label += (COPY.ctaSavings || ' - Save %s').replace('%s', money);
@@ -298,18 +343,44 @@
 			if (!parent) { return; }
 			var existing = parent.querySelector(':scope > [data-bhp-checkout-upsell]');
 
+			/*
+			 * ⛔ 1.8.90 — `tier_without_set` JOINS THE IDENTITY KEY, AND IT HAD
+			 *    TO. This key is the whole reason the panel is not rebuilt on
+			 *    every React commit. Suppressing the heading without adding the
+			 *    flag to the key would mean a shopper who takes their cart from
+			 *    2 books to 3 keeps a stale panel — heading and all — because
+			 *    the title, format and savings can all be unchanged across that
+			 *    exact transition. The suppression would then be real in the
+			 *    code and invisible on the screen.
+			 */
+			/*
+			 * ⛔ 1.8.91 — `already_ships_free` JOINS IT FOR THE SAME REASON,
+			 *    AND THE STALE CART IS A REAL ONE, NOT A HYPOTHETICAL. Two
+			 *    paperbacks of two titles, then a coloring book is added: the
+			 *    cart reaches three PHYSICAL books and ships free, while the
+			 *    offered title, its format, its savings, `completes_collection`
+			 *    and `tier_without_set` are ALL unchanged across that
+			 *    transition. Without this term the panel would keep the stale
+			 *    " - Ships Free" button and the fix would be real in the code
+			 *    and invisible on the screen — exactly the trap 1.8.90 named.
+			 */
+			var offerKey = cs.title_key + '|' + cs.format + '|' + cs.savings
+				+ '|' + (cs.completes_collection ? '1' : '0')
+				+ '|' + (meta && meta.tier_without_set ? '1' : '0')
+				+ '|' + (cs.already_ships_free ? '1' : '0');
+
 			if (existing) {
 				// Same offer already drawn? Leave it alone — replacing it on
 				// every React commit would steal focus and restart the CSS
 				// transition on a panel the customer may be reading.
-				if (existing.getAttribute('data-offer') === cs.title_key + '|' + cs.format + '|' + cs.savings + '|' + (cs.completes_collection ? '1' : '0')) {
+				if (existing.getAttribute('data-offer') === offerKey) {
 					return;
 				}
 				existing.remove();
 			}
 
-			var panel = buildPanel(cs, addItem);
-			panel.setAttribute('data-offer', cs.title_key + '|' + cs.format + '|' + cs.savings + '|' + (cs.completes_collection ? '1' : '0'));
+			var panel = buildPanel(cs, addItem, meta);
+			panel.setAttribute('data-offer', offerKey);
 			parent.insertBefore(panel, host);
 		});
 	}

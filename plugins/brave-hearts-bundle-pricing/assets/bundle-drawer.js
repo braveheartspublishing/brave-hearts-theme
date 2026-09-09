@@ -1234,6 +1234,53 @@
 		}
 
 		/*
+		 * ══════════════════════════════════════════════════════════════
+		 * ⭐⭐ 1.8.91 (`CYCLE179-LD-PLUGIN-1.8.91`) — DOES THIS CART ALREADY
+		 *     SHIP FREE? Closes F1 of `CYCLE179-LD-PLUGIN-1.8.90`.
+		 * ══════════════════════════════════════════════════════════════
+		 *
+		 * ⛔ THE DEFECT, STATED AS IT WAS MEASURED: on a cart of three
+		 *    paperbacks holding two titles, the cross-sell button read
+		 *    "Add This Adventure - Ships Free" while the order ALREADY
+		 *    shipped free. `completes_collection` is a TITLES test and is
+		 *    legitimately true there — adding the third adventure does
+		 *    complete the collection — but the cart had crossed the
+		 *    PHYSICAL-BOOK threshold independently, so the clause promised
+		 *    something the shopper had already earned.
+		 *
+		 * ⭐ THIS IS THE SAME UNIT MISMATCH 1.8.88 FIXED ON THE NUDGE, ONE
+		 *    SURFACE OVER, AND IT IS GATED ON THE SAME STOCK OF TRUTH.
+		 *    `physicalBookCount()` is the 1.8.66 mirror of
+		 *    `bhp_bundle_physical_book_count()`; `freeShipThreshold` is
+		 *    `bhp_bundle_freeship_book_threshold()` localized and is the
+		 *    SAME LOCAL already computed above for `freeShipLeads`. No
+		 *    second definition of the shipping rule is introduced, and
+		 *    nothing is recounted.
+		 *
+		 * ⛔ `> 0` IS THE SAME FAIL-SAFE 1.8.88 STATES: a missing or
+		 *    filtered-to-zero threshold cannot support a shipping claim
+		 *    either way, so the flag reads FALSE and the button keeps the
+		 *    1.8.90 label exactly. A stale or absent flag can only ever
+		 *    restore prior behaviour, never invent a new claim.
+		 *
+		 * ⭐ SET ON THE OFFER, NOT ON `meta`, DELIBERATELY — `checkout-
+		 *    upsell.js` reads `meta.cross_sell` and assembles the same
+		 *    label from the same object. One predicate, two readers, which
+		 *    is this file's own established discipline (1.8.85's
+		 *    `earns_freeship`, 1.8.88's `freeShipLeads`). The two surfaces
+		 *    cannot drift because there is only one flag.
+		 *
+		 * ⛔ NO PRICING, TIER, DISCOUNT, SHIPPING FIGURE OR COUPON SCOPE IS
+		 *    READ DIFFERENTLY BY THIS LINE. Shipping is already free on
+		 *    every cart this flags; the flag changes what the button SAYS
+		 *    about that fact, never the fact.
+		 */
+		if (crossSell) {
+			crossSell.already_ships_free = freeShipThreshold > 0
+				&& physicalBooksInCart >= freeShipThreshold;
+		}
+
+		/*
 		 * Tiers exposed for renderDrawer()'s per-line-item "included in your
 		 * savings" notes and summary math -- same 0/2/3 values the PHP side
 		 * uses, with the mixed-format suppression NOT applied here (a tier-2
@@ -1264,6 +1311,77 @@
 			paperback: counts.paperback >= 3 ? 3 : (counts.paperback >= 2 ? 2 : 0),
 			hardcover: counts.hardcover >= 3 ? 3 : (counts.hardcover >= 2 ? 2 : 0)
 		};
+
+		/*
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⭐⭐⭐ 1.8.90 — THE PRICE AND THE WORD "COLLECTION" ARE NOW TWO
+		 *      DIFFERENT QUESTIONS. FOUNDER SEAL 1436, CX-3 OPTION B.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⭐ THE RULING, as relayed (⚠️ RELAYED THROUGH `chief-of-staff`, NOT
+		 *    WITNESSED FIRST-HAND BY THIS DESK — Standing Rules §9.2). Andrew
+		 *    Signore, 2026-09-08, answering the CX-3 options with "4. B":
+		 *    the COMPLETE-THE-COLLECTION invite and the "Complete Collection"
+		 *    label belong to a cart that holds THREE DISTINCT TITLES. The
+		 *    count-keyed discount and shipping tiers of 1.8.87 (seal 1359)
+		 *    are UNCHANGED and STAY.
+		 *
+		 * ⛔⛔ THE DEFECT IT CLOSES, MEASURED LIVE ON PRODUCTION BY
+		 *    `commerce-cx` (Pippin), `CYCLE179-CX-PROD-AUDIT-407` CX-3, at 390.
+		 *    Cart: Mount Everest x1 + The Amazon x2. Three paperbacks, TWO
+		 *    titles. One panel said all three of these at once:
+		 *
+		 *      · every line item  "Included in your complete-set savings"
+		 *      · the fee row      "Complete-set savings (Paperback)"
+		 *      · the cross-sell   "COMPLETE THE COLLECTION"
+		 *
+		 *    ...while PARENT10 was REFUSED on the same cart for not being a
+		 *    Complete Collection. Three answers to one question on one screen.
+		 *
+		 * ⛔ NOTHING BELOW TOUCHES A PRICE, A DISCOUNT, A TIER, A THRESHOLD OR
+		 *    A SHIPPING FIGURE. `tiers` above is byte-unchanged and still
+		 *    count-keyed; the server's fee is not read differently; no coupon
+		 *    scope moves. `offer-engine.php`'s own warning is the rail this
+		 *    build was written against and it is quoted rather than
+		 *    paraphrased: "SO THE PRICING PATH IS LEFT EXACTLY AS IT WAS.
+		 *    Stock is a DISPLAY fact here, never a pricing fact." The same
+		 *    split is made here, one noun over: OWNING THE SET is a display
+		 *    fact, never a pricing fact.
+		 *
+		 * ⛔ AND NO CUSTOMER-FACING STRING IS AUTHORED, EDITED OR COINED BY
+		 *    THIS BUILD. Every surface below either keeps an approved string,
+		 *    falls back to another approved string the customer already reads
+		 *    elsewhere for the same fee, or renders nothing. Coining copy is
+		 *    Andrew's; removing a false claim is not (1.8.65 / 1.8.68 set that
+		 *    precedent on this exact eyebrow and it is followed, not extended).
+		 */
+
+		/*
+		 * ⭐ Does the cart actually HOLD the three distinct adventures in this
+		 *    format? This is the only question a "Complete <Format>
+		 *    Collection" claim is allowed to ask. It is the SAME test
+		 *    `progressCopy[fmt][3]` has used since 1.8.87 — that string was
+		 *    already correct, and this simply gives the other two surfaces the
+		 *    test they were missing rather than inventing a second rule.
+		 */
+		var formatSet = {
+			paperback: distinct.paperback.length >= 3,
+			hardcover: distinct.hardcover.length >= 3
+		};
+
+		/*
+		 * ⭐⭐ THE CART SEAL 1436 IS ABOUT: it has been GIVEN the top tier by
+		 *    COUNT while holding fewer than three titles in that format. On
+		 *    such a cart the money is right and the word "collection" is not.
+		 *
+		 * ⛔ IT IS NOT "fewer than three adventures in the cart". A cart of
+		 *    Mariana PB + Everest PB + Mariana HC holds three adventures? No —
+		 *    two. But neither format reaches tier 3 there, so this reads FALSE
+		 *    and nothing is suppressed, which is correct: that cart is never
+		 *    told it has a complete set in the first place.
+		 */
+		var tierWithoutSet = ( 3 === tiers.paperback && !formatSet.paperback )
+			|| ( 3 === tiers.hardcover && !formatSet.hardcover );
 
 		/*
 		 * ═══════════════════════════════════════════════════════════════
@@ -1380,7 +1498,17 @@
 			tiers: tiers,
 			is_mixed_format: isMixedFormat,
 			distinct_adventures: adventures.length,
-			has_unrelated: hasUnrelated
+			has_unrelated: hasUnrelated,
+			/*
+			 * ⭐ 1.8.90 — seal 1436. Two DISPLAY facts, computed once here and
+			 *    read by three render sites, so the drawer, the checkout panel
+			 *    and the fee row cannot end up disagreeing about one cart the
+			 *    way they did at 1.8.89. Exposed on `meta` (and therefore
+			 *    through `window.bhpBundleCrossSell.compute()`) precisely so
+			 *    they are testable by execution rather than by grep.
+			 */
+			format_set: formatSet,
+			tier_without_set: tierWithoutSet
 		};
 	}
 
@@ -1457,9 +1585,188 @@
 			return 'Included in your 2-book savings';
 		}
 		if (3 === tier) {
+			/*
+			 * ⛔⛔ 1.8.90 — SEAL 1436. "Included in your complete-set savings"
+			 *    is a CLAIM THAT THE CUSTOMER OWNS THE SET, and since 1.8.87
+			 *    `tier` has been a count. On Everest x1 + Amazon x2 this line
+			 *    printed on all three items and the customer owns two titles.
+			 *
+			 * ⭐ SUPPRESSED, NOT REPLACED, AND THE PRECEDENT IS THIS FILE'S
+			 *    OWN: 1.8.65 and 1.8.68 removed the false eyebrow rather than
+			 *    writing a truer one, on the stated ground that "removing a
+			 *    false claim needs nobody's approval; adding a new true one
+			 *    does." The same reasoning governs here.
+			 *
+			 * ⛔ AND IT DOES NOT FALL BACK TO THE TIER-2 STRING. "Included in
+			 *    your 2-book savings" on a three-book cart would be a second
+			 *    false statement, quieter than the first. The line simply
+			 *    carries no note, exactly as an unqualified item does today.
+			 *    The DISCOUNT is untouched, still applied, and still named on
+			 *    the fee row below and on the invoice.
+			 */
+			if (!(meta.format_set && meta.format_set[match.format])) {
+				return '';
+			}
 			return 'Included in your complete-set savings';
 		}
 		return '';
+	}
+
+	/* ─────────────────────────────────────────────────────────────────
+	 * ⭐⭐ 1.8.90 — THE FEE ROW'S LABEL, EXTRACTED SO IT CAN BE RUN.
+	 *
+	 * It used to be one inline ternary inside `renderSummary()`, which made
+	 * it unreachable from the Node harness and therefore only ever
+	 * source-asserted. `renderSummary()` calls it with the same three facts
+	 * it had in hand; nothing else changed about how the row is drawn.
+	 *
+	 * ⛔ THE FALLBACK IS NOT NEW COPY AND THAT IS THE WHOLE POINT. On a cart
+	 *    that earned tier 3 by COUNT without holding the set, BOTH existing
+	 *    labels are false — "Complete-set savings" claims a set the customer
+	 *    does not own, and "2-book savings" misdescribes a three-book fee. So
+	 *    the row falls back to `feeName`, which is WooCommerce's own name for
+	 *    this exact fee, built server-side by
+	 *    `bhp_bundle_apply_discount_fees()` and ALREADY PRINTED VERBATIM to
+	 *    this same customer on the cart page and at checkout. The drawer stops
+	 *    paraphrasing the invoice and quotes it.
+	 *
+	 * ✅ FAILS SAFE. With no `feeName` the row keeps the 1.8.89 label rather
+	 *    than rendering blank — a slightly-wrong label beats a nameless
+	 *    money row.
+	 *
+	 * @param {string} format   'paperback' | 'hardcover'
+	 * @param {object} meta     computeDrawerMeta() output
+	 * @param {string} feeName  the Store API fee's own name
+	 * @returns {string}
+	 * ───────────────────────────────────────────────────────────────── */
+	function savingsRowLabel(format, meta, feeName) {
+		var tier = effectiveTierFor(format, meta);
+		var setHeld = !!(meta && meta.format_set && meta.format_set[format]);
+		if (3 === tier && !setHeld && feeName) {
+			return feeName;
+		}
+		return (3 === tier ? 'Complete-set savings' : '2-book savings')
+			+ ' (' + (format === 'paperback' ? 'Paperback' : 'Hardcover') + ')';
+	}
+
+	/* ─────────────────────────────────────────────────────────────────
+	 * ⭐⭐ 1.8.91 — THE CROSS-SELL BUTTON'S LABEL, AS A PURE FUNCTION.
+	 *
+	 * ⛔ EXTRACTED, NOT REWRITTEN. Every branch below is byte-for-byte the
+	 *    logic that stood inline in `renderDrawer()` at 1.8.90, in the same
+	 *    order, with the same fallbacks and the same history comments moved
+	 *    across with it. The ONLY behavioural change is the 1.8.91 gate
+	 *    marked below.
+	 *
+	 * ⭐ WHY EXTRACTED AT ALL: `test-crosssell-selection.mjs` states the
+	 *    reason about this exact class of defect — "A source assertion could
+	 *    not have caught the 1.8.24 defect, because the defective code
+	 *    contained every string that suite greps for." 1.8.91 adds and
+	 *    removes NO string: " - Ships Free" is still in this file and a grep
+	 *    for it passes identically at 1.8.90 and 1.8.91. The entire content
+	 *    of the fix is WHICH CART REACHES IT, so the assembly is made
+	 *    runnable and is exported as a test seam, exactly as 1.8.90 did with
+	 *    `savingsRowLabel()`.
+	 *
+	 * ⛔ NO STRING IS AUTHORED HERE. `cs.cta` is the server's, the clause is
+	 *    `bhp_bundle_freeship_copy()['cta_clause']`, the savings clause is
+	 *    B4's approved hyphen form. This function only chooses between them.
+	 *
+	 * @param {object} cs              a `meta.cross_sell` offer
+	 * @param {string} freeShipClause  bhp_bundle_freeship_copy().cta_clause
+	 * @returns {string}
+	 * ───────────────────────────────────────────────────────────────── */
+	function crossSellCtaLabel(cs, freeShipClause) {
+		/*
+		 * B4 (2026-08-03). Andrew, walk-3: "Add this adventure - save X
+		 * amount of money". A HYPHEN, not an em dash -- the sitewide
+		 * em-dash purge (commit 3ef65be) applies to new copy too.
+		 *
+		 * The clause is APPENDED to the existing label and appears only
+		 * when a real, non-zero saving exists. A cross-sell that earns
+		 * nothing (e.g. the second title in a mixed-format cart, where
+		 * the 2-book tier is genuinely not granted) renders the original
+		 * "Add This Adventure" untouched, because a "save $0.00" button
+		 * would be worse than no claim at all.
+		 */
+		/*
+		 * ⭐ 1.8.65 — the colouring offer brings its OWN button word, from
+		 *    `bhp_colouring_draft_copy('panel_cta')`, because "Add This
+		 *    Adventure" is false of a coloring book. Every other offer is
+		 *    byte-unchanged: absent `cs.cta`, this is the 1.8.64 literal.
+		 */
+		var ctaLabel = (cs && cs.cta) || 'Add This Adventure';
+		if (!cs) { return ctaLabel; }
+
+		if (cs.completes_collection && freeShipClause) {
+			/*
+			 * ⭐ 1.8.24 (2026-08-05) — CYCLE144-LD-14. Andrew: on the
+			 *    two-book state this button "supposed to say the Free
+			 *    Shipping info", not "save $1.99".
+			 *
+			 *    When this title is the one that completes the collection,
+			 *    the savings clause is REPLACED by the free-shipping clause
+			 *    from `bhp_bundle_freeship_copy()` — the same function the
+			 *    cart, the drawer message and the checkout panel all read,
+			 *    so one filter still changes every surface at once.
+			 *
+			 *    Falls back to the savings clause if the server did not send
+			 *    `cta_clause` (an older plugin build), so the button can
+			 *    never render bare on a real saving.
+			 *
+			 * ⭐⭐ 1.8.91 — AND ONLY IF THE ORDER DOES NOT ALREADY SHIP FREE.
+			 *     This is F1 of `CYCLE179-LD-PLUGIN-1.8.90`: on three
+			 *     paperbacks of two titles the cart ships free ALREADY, and
+			 *     the button was promising it again. `already_ships_free` is
+			 *     computed ONCE in `computeDrawerMeta()` from
+			 *     `physicalBookCount()` against the localized threshold — the
+			 *     same stock of truth 1.8.88 moved the nudge onto. There is
+			 *     deliberately no second copy of the test here.
+			 *
+			 * ⛔ THE BRANCH IS KEPT AND ONLY THE SUFFIX IS DROPPED, WHICH IS
+			 *    THE WHOLE POINT. Letting this cart fall through to the
+			 *    `savings > 0` arm would swap one customer-facing claim for
+			 *    a DIFFERENT one on this desk's own judgement. The direction
+			 *    was to use the button's BASE label, so the button reads
+			 *    "Add This Adventure" and makes no shipping or savings claim
+			 *    at all. NO NEW STRING IS COINED AND NONE IS SUBSTITUTED.
+			 */
+			if (!cs.already_ships_free) {
+				ctaLabel += freeShipClause;
+			}
+		} else if (cs.earns_freeship && freeShipClause) {
+			/*
+			 * ⭐⭐ 1.8.85 — THE COLOURING BOOK THAT MAKES THE THIRD PHYSICAL
+			 *     BOOK SAYS SO, IN THE BUTTON'S OWN APPROVED CLAUSE.
+			 *
+			 * ⛔ THE CLAUSE IS NOT AUTHORED HERE AND IS NOT NEW COPY. It is
+			 *    `bhp_bundle_freeship_copy()['cta_clause']` — " - Ships
+			 *    Free" — the same string this button already appends when an
+			 *    ADVENTURE completes the collection (1.8.24,
+			 *    `CYCLE144-LD-14`). One function, one string, every surface.
+			 *    The rendered label is "Add The Coloring Book - Ships Free".
+			 *
+			 * ⚠ A SENTENCE FORM WAS PROPOSED AND WAS NOT CHOSEN. The
+			 *   original brief named "Add the coloring book and shipping is
+			 *   free.", from the seal-1234 CART LINE pattern. That pattern
+			 *   is approved for a cart SENTENCE; this is a BUTTON, and the
+			 *   button has its own approved pattern. Register B was chosen
+			 *   (seal 1274), so no new customer-facing string is introduced
+			 *   by this release at all.
+			 *
+			 * ⛔ B4's HYPHEN CONVENTION IS PRESERVED because the clause is
+			 *    unchanged: a HYPHEN, never an em dash.
+			 *
+			 * ⭐ 1.8.91 ADDS NO GATE HERE AND DOES NOT NEED ONE. This arm
+			 *    already carries `(count + 1) === threshold`, so a cart that
+			 *    already ships free can never reach it. Left byte-untouched
+			 *    rather than "hardened" with a redundant test.
+			 */
+			ctaLabel += freeShipClause;
+		} else if (cs.savings > 0) {
+			ctaLabel += ' - Save ' + formatMoneyPlain(cs.savings);
+		}
+		return ctaLabel;
 	}
 
 	function renderDrawer(cart, meta) {
@@ -1531,76 +1838,23 @@
 			var box = document.createElement('div');
 			box.className = 'bhp-cart-drawer__crosssell-box';
 			/*
-			 * B4 (2026-08-03). Andrew, walk-3: "Add this adventure - save X
-			 * amount of money". A HYPHEN, not an em dash -- the sitewide
-			 * em-dash purge (commit 3ef65be) applies to new copy too.
+			 * ⭐⭐ 1.8.91 — THE LABEL IS ASSEMBLED BY `crossSellCtaLabel()`,
+			 *     A PURE FUNCTION DEFINED ABOVE AND EXPORTED AS A TEST SEAM.
 			 *
-			 * The clause is APPENDED to the existing label and appears only
-			 * when a real, non-zero saving exists. A cross-sell that earns
-			 * nothing (e.g. the second title in a mixed-format cart, where
-			 * the 2-book tier is genuinely not granted) renders the original
-			 * "Add This Adventure" untouched, because a "save $0.00" button
-			 * would be worse than no claim at all.
+			 * ⛔ THE LOGIC MOVED; IT DID NOT CHANGE SHAPE. Every branch, its
+			 *    order, its fallbacks and the whole B4 / 1.8.24 / 1.8.65 / 1.8.85
+			 *    comment history moved WITH it and are readable there. The only
+			 *    behavioural change in 1.8.91 is the `already_ships_free` gate on
+			 *    the 1.8.24 arm, which closes F1 of `CYCLE179-LD-PLUGIN-1.8.90`.
+			 *
+			 * ⭐ `checkout-upsell.js` assembles the SAME label from the SAME
+			 *    `meta.cross_sell` object and carries the same gate, so the two
+			 *    surfaces still cannot disagree about one cart.
 			 */
-			/*
-			 * ⭐ 1.8.24 (2026-08-05) — CYCLE144-LD-14. Andrew: on the
-			 *    two-book state this button "supposed to say the Free
-			 *    Shipping info", not "save $1.99".
-			 *
-			 *    When this title is the one that completes the collection,
-			 *    the savings clause is REPLACED by the free-shipping clause
-			 *    from `bhp_bundle_freeship_copy()` — the same function the
-			 *    cart, the drawer message and the checkout panel all read,
-			 *    so one filter still changes every surface at once. In every
-			 *    other state the B4 savings clause is byte-unchanged.
-			 *
-			 *    Falls back to the savings clause if the server did not send
-			 *    `cta_clause` (an older plugin build), so the button can
-			 *    never render bare on a real saving.
-			 */
-			/*
-			 * ⭐ 1.8.65 — the colouring offer brings its OWN button word, from
-			 *    `bhp_colouring_draft_copy('panel_cta')`, because "Add This
-			 *    Adventure" is false of a coloring book. Every other offer is
-			 *    byte-unchanged: absent `cs.cta`, this is the 1.8.64 literal.
-			 *
-			 * ⛔ THE SAVINGS CLAUSE IS STILL APPENDED BY THE SAME CODE BELOW,
-			 *    from the same live figure. No offer carries a number in its
-			 *    own copy.
-			 */
-			var ctaLabel = cs.cta || 'Add This Adventure';
 			var freeShipClause = (window.bhpDrawerData
 				&& window.bhpDrawerData.freeShipCopy
 				&& window.bhpDrawerData.freeShipCopy.cta_clause) || '';
-			if (cs.completes_collection && freeShipClause) {
-				ctaLabel += freeShipClause;
-			} else if (cs.earns_freeship && freeShipClause) {
-				/*
-				 * ⭐⭐ 1.8.85 — THE COLOURING BOOK THAT MAKES THE THIRD PHYSICAL
-				 *     BOOK SAYS SO, IN THE BUTTON'S OWN APPROVED CLAUSE.
-				 *
-				 * ⛔ THE CLAUSE IS NOT AUTHORED HERE AND IS NOT NEW COPY. It is
-				 *    `bhp_bundle_freeship_copy()['cta_clause']` — " - Ships
-				 *    Free" — the same string this button already appends when an
-				 *    ADVENTURE completes the collection (1.8.24,
-				 *    `CYCLE144-LD-14`). One function, one string, every surface.
-				 *    The rendered label is "Add The Coloring Book - Ships Free".
-				 *
-				 * ⚠ A SENTENCE FORM WAS PROPOSED AND WAS NOT CHOSEN. The
-				 *   original brief named "Add the coloring book and shipping is
-				 *   free.", from the seal-1234 CART LINE pattern. That pattern
-				 *   is approved for a cart SENTENCE; this is a BUTTON, and the
-				 *   button has its own approved pattern. Register B was chosen
-				 *   (seal 1274), so no new customer-facing string is introduced
-				 *   by this release at all.
-				 *
-				 * ⛔ B4's HYPHEN CONVENTION IS PRESERVED because the clause is
-				 *    unchanged: a HYPHEN, never an em dash.
-				 */
-				ctaLabel += freeShipClause;
-			} else if (cs.savings > 0) {
-				ctaLabel += ' - Save ' + formatMoneyPlain(cs.savings);
-			}
+			var ctaLabel = crossSellCtaLabel(cs, freeShipClause);
 			box.innerHTML =
 				'<span class="bhp-cart-drawer__crosssell-label">' +
 				cs.label +
@@ -1689,8 +1943,35 @@
 			 *    it keeps the approved checkout-module heading it has had since
 			 *    R4.
 			 */
+			/*
+			 * ⛔⛔ 1.8.90 — A THIRD SUPPRESSION, SAME MECHANISM, SAME REASON,
+			 *     AND NOW FROM THE FOUNDER RATHER THAN FROM THIS DESK.
+			 *     Seal 1436, CX-3 option B (⚠️ RELAYED, not witnessed here).
+			 *
+			 * ⭐ 1.8.65 and 1.8.68 both removed this eyebrow where it made a
+			 *    FALSE statement about the Complete Collection. `meta
+			 *    .tier_without_set` is the third such cart and the founder
+			 *    named it: Everest x1 + Amazon x2 has already been given the
+			 *    Collection PRICE and free shipping by seal 1359, so inviting
+			 *    that shopper to "COMPLETE THE COLLECTION" sits directly above
+			 *    a fee row and three item notes that had just told them they
+			 *    had completed it.
+			 *
+			 * ⛔ THE OFFER ITSELF IS NOT REMOVED, ONLY THE COLLECTION CLAIM
+			 *    ABOVE IT. The box keeps the missing adventure's title and its
+			 *    "Add This Adventure" button, exactly as the pair and colouring
+			 *    offers have kept theirs without an eyebrow since 1.8.65. A
+			 *    shopper who wants the third book can still add it in one tap;
+			 *    they are simply no longer told two things at once.
+			 *
+			 * ⛔ THE TWO-BOOK CART IS UNTOUCHED AND THAT IS EXPLICIT IN THE
+			 *    BRIEF. At 2 books / 2 titles `tiers.paperback` is 2, so
+			 *    `tier_without_set` is FALSE and the eyebrow renders exactly as
+			 *    it did at 1.8.89. Nothing about the two-distinct-title journey
+			 *    moves in this release.
+			 */
 			var csHeading = (window.bhpDrawerData && window.bhpDrawerData.crossSellHeading) || '';
-			if ('pair' === cs.offer_kind || 'colouring' === cs.format) {
+			if ('pair' === cs.offer_kind || 'colouring' === cs.format || (meta && meta.tier_without_set)) {
 				csHeading = '';
 			}
 			if (csHeading) {
@@ -1839,8 +2120,11 @@
 		var totalSavingsMinor = 0;
 		bundleFees.forEach(function (fee) {
 			var format = fee.name.indexOf('Paperback') !== -1 ? 'paperback' : 'hardcover';
-			var tier = effectiveTierFor(format, meta);
-			var label = (3 === tier ? 'Complete-set savings' : '2-book savings') + ' (' + (format === 'paperback' ? 'Paperback' : 'Hardcover') + ')';
+			// 1.8.90 (seal 1436): the label decision moved into
+			// savingsRowLabel() so it can be executed by the Node harness
+			// instead of only grepped. Same inputs, same output on every
+			// cart that is not tier-3-without-the-set.
+			var label = savingsRowLabel(format, meta, fee.name);
 			addRow(label, money(fee.totals.total, minorUnit), 'savings');
 			totalSavingsMinor += Number(fee.totals.total);
 		});
@@ -2898,7 +3182,35 @@
 		compute: computeDrawerMeta,
 		savings: crossSellSavings,
 		identify: identifyCartItem,
-		money: formatMoneyPlain
+		money: formatMoneyPlain,
+		/*
+		 * ⭐ 1.8.90 — TWO PURE LABEL FUNCTIONS, EXPORTED AS A TEST SEAM.
+		 *
+		 * ⛔ THE REASON IS THE ONE `test-crosssell-selection.mjs` ALREADY
+		 *    STATES ABOUT ITSELF: "A source assertion could not have caught the
+		 *    1.8.24 defect, because the defective code contained every string
+		 *    that suite greps for." Both labels below are strings that already
+		 *    exist in this file at 1.8.89; a grep test for them proves nothing
+		 *    about WHICH CART gets WHICH label, which is the entire content of
+		 *    seal 1436. They are exported so the harness can RUN them.
+		 *
+		 * ⛔ ADDITIVE ONLY. No existing key changed. `checkout-upsell.js` reads
+		 *    `compute` and `money` from this object and is unaffected.
+		 */
+		qualifyingNote: itemQualifyingNote,
+		savingsRowLabel: savingsRowLabel,
+		/*
+		 * ⭐ 1.8.91 — A THIRD PURE LABEL FUNCTION, EXPORTED FOR THE SAME
+		 *    REASON AS THE TWO ABOVE. " - Ships Free" is neither added nor
+		 *    removed by 1.8.91, so a grep for it passes identically at
+		 *    1.8.90 and 1.8.91 and proves nothing. Exported so the harness
+		 *    can RUN the assembly and read the actual button label off each
+		 *    of the four cart shapes.
+		 *
+		 * ⛔ ADDITIVE ONLY. No existing key changed. `checkout-upsell.js`
+		 *    reads `compute` and `money` from this object and is unaffected.
+		 */
+		ctaLabel: crossSellCtaLabel
 	};
 
 	/**

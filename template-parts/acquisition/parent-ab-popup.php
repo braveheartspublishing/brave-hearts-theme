@@ -623,6 +623,55 @@ $popup_classes = 'mariana-popup mariana-popup--ab' . ($has_photo ? ' mariana-pop
 
     <?php
     /**
+     * ⭐⭐ 1.19.411 (2026-09-09, `CYCLE179-LD-BUILD-411`) — THE LEDE. A NEW
+     *     APPROVED CUSTOMER-FACING LINE, AND IT SAYS WHAT THE FILE ACTUALLY IS.
+     *
+     * ⭐ APPROVED WORDING, Andrew Signore, seal 1451: *"Make all those changes
+     *    to make it better please"*, on a brief carrying this exact string.
+     *    ⚠ RELAYED to this desk through the Chief of Staff; NOT witnessed
+     *    first-hand here (Standing Rules §9.2).
+     *
+     * ⛔ THE WORDING IS NOT THIS FILE'S TO ADJUST. It is reproduced verbatim,
+     *    including the two full stops and the word "About". §9 locks approved
+     *    copy: propose changes, never make them.
+     *
+     * ⭐ THE PROVENANCE CLAIM WAS CHECKED BEFORE IT SHIPPED, not assumed from
+     *    the popup's `mariana` class name. `inc/kit-instant-modal.php` (the
+     *    kit cover's own alt text, written against the real artwork) describes
+     *    the cover as carrying *"a line describing it as a real chapter from
+     *    the book, and the underwater cover of the Mariana Trench book below
+     *    it"*, and this file's own header records the kit of record as v2.2,
+     *    11 pages, **Chapter 10 "The Dive"**. So "A real chapter from The
+     *    Mariana Trench" is SOURCED, not inferred.
+     * ⚠ "About 10 minutes" IS A READ-TIME ESTIMATE AND IS FOUNDER-APPROVED
+     *    RATHER THAN INDEPENDENTLY MEASURED. It is hedged by "About" in his
+     *    own approved string. Recorded here so a later reader does not mistake
+     *    it for a verified figure. The earlier "20 minute" wording described
+     *    the WHOLE kit, not this one chapter, so the two are not in conflict.
+     *
+     * ⛔ IT IS A `<p>`, NOT A SECOND HEADING. Putting a second `h*` between the
+     *    dialog's `aria-labelledby` target and the form would give the dialog
+     *    two competing headings for a screen reader on a surface whose whole
+     *    job is one offer and one field pair.
+     *
+     * ⭐ FILTERABLE ON THE SAME PATTERN AS THE SUBHEAD BELOW, so the next copy
+     *    change is a one-line change and not a template edit. Passing '' to
+     *    `bhp_parent_popup_lede` renders nothing.
+     *
+     * ⛔ NO OUTCOME CLAIM. It says what the file IS and roughly how long it
+     *    takes to read. It does not say what it will do to a child.
+     */
+    $popup_lede = trim((string) apply_filters(
+        'bhp_parent_popup_lede',
+        __('A real chapter from The Mariana Trench. About 10 minutes.', 'brave-hearts')
+    ));
+    if ($popup_lede !== '') :
+    ?>
+      <p class="popup-ab__lede"><?php echo esc_html($popup_lede); ?></p>
+    <?php endif; ?>
+
+    <?php
+    /**
      * ⭐⭐ 1.19.297 — THE SUBHEAD SLOT IS FILLED, AND ANDREW FILLED IT.
      *
      * ⭐ HIS LINE, carrier item 290, verbatim: *"I'll send you the chapter now,

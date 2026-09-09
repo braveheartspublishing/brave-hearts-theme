@@ -687,6 +687,183 @@ bhp_photo_assert(
     $failures
 );
 
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 9 · 1.19.410 (`CYCLE179-LD-BUILD-410`) — THE CLOSE CONTROL PAINTS AND
+ *       HIT-TESTS ABOVE THE PHOTOGRAPH.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔⛔ THE DEFECT THIS SECTION EXISTS TO PREVENT RECURRING WAS LIVE ON
+ *     PRODUCTION and was found by `commerce-cx` in
+ *     `CYCLE179-CX-PARENT-FUNNEL-SHOTS`, item D-1. Measured on staging2 at
+ *     1.19.409, at an asserted `window.innerWidth` of both 390 and 1440:
+ *     `document.elementFromPoint()` at the close button's centre AND at all
+ *     four of its corners returned the photograph's `<img>`, never the button;
+ *     a real trusted mouse click at that centre left the dialog OPEN; and at
+ *     390 no × was visible on the surface at all.
+ *
+ * ⭐ THE MECHANISM, because a test that does not name it cannot guard it.
+ *    `.popup-ab__photo` is `position: relative` (§9a needs it as a containing
+ *    block for the mask and the overflow clip) and the close button is
+ *    `position: absolute`. With NEITHER declaring a `z-index`, both sit at
+ *    `z-index: auto` in one stacking context, and CSS paints two such elements
+ *    in DOM ORDER. The photograph is the dialog's LAST child; the button is
+ *    its FIRST. So the picture won.
+ *
+ * ⛔ THE ORDERING ROW BELOW IS THE ONE THAT MATTERS, and it is why this is not
+ *    just a `strpos` for a declaration. Two earlier rules (§9c and §9d) still
+ *    declare the old 0.92-alpha disc, deliberately preserved. The new block
+ *    only computes because it comes LATER IN SOURCE ORDER at equal
+ *    specificity. A future edit that moves it above them would leave every
+ *    presence check green and put the translucent disc back. So the position
+ *    is asserted, not just the text.
+ *
+ * ⛔ ASSERTED IN style.min.css AS WELL AS style.css. The minified file is what
+ *    the browser loads; the source is not deployed as the served stylesheet.
+ *    A check that only reads the source would pass on a stale build.
+ */
+$min = @file_get_contents($theme_dir . '/style.min.css');
+
+$z_rule    = ".mariana-popup--ab .mariana-popup__close {\n  z-index: 2;\n}";
+$disc_rule = ".mariana-popup--photo.mariana-popup--ab .mariana-popup__close {\n"
+           . "  background: rgb(var(--popup-ab-ground-rgb));\n"
+           . "  border: 1px solid var(--color-forest);\n";
+
+bhp_photo_assert(
+    is_string($css) && false !== strpos($css, $z_rule),
+    '⛔ 9.1 the close control declares a z-index, so the photograph cannot paint over the only way out',
+    $failures
+);
+
+bhp_photo_assert(
+    is_string($min) && false !== strpos($min, $z_rule),
+    '⛔ 9.2 the z-index reaches style.min.css, which is the file the browser actually loads',
+    $failures
+);
+
+bhp_photo_assert(
+    is_string($css) && false !== strpos($css, $disc_rule),
+    '⛔ 9.3 the disc under the × is FULLY OPAQUE and carries a ring — a cream disc on the cream wall in this crop is not a visible control',
+    $failures
+);
+
+bhp_photo_assert(
+    is_string($min) && false !== strpos($min, $disc_rule),
+    '⛔ 9.4 the opaque disc and its ring reach style.min.css',
+    $failures
+);
+
+/*
+ * ⭐ SOURCE ORDER, ASSERTED AS A NUMBER. Both superseded 0.92 rules must come
+ *    BEFORE the new block, and the new block must be outside any media query
+ *    (it applies at every width — the defect did).
+ */
+$old_disc_pos = is_string($css)
+    ? strrpos($css, 'background: rgba(var(--popup-ab-ground-rgb), 0.92);')
+    : false;
+$new_disc_pos = is_string($css) ? strpos($css, $disc_rule) : false;
+bhp_photo_assert(
+    false !== $old_disc_pos && false !== $new_disc_pos && $new_disc_pos > $old_disc_pos,
+    '⛔ 9.5 the new disc rule sits AFTER both preserved 0.92 rules, so it is what computes at equal specificity',
+    $failures
+);
+
+/*
+ * ⛔ THE FIX MUST NOT HAVE BEEN A REGRESSION. The lazy way to stop the picture
+ *    painting over the button is to take `position: relative` off the figure —
+ *    which would silently break the mask's containing block and the corner
+ *    clip. This row proves the photograph's own geometry is untouched.
+ */
+bhp_photo_assert(
+    is_string($css) && false !== strpos(
+        $css,
+        ".mariana-popup--photo .popup-ab__photo {\n  position: relative;"
+    ),
+    '⛔ 9.6 the photograph KEEPS `position: relative` — the control moved, the picture did not',
+    $failures
+);
+
+/*
+ * ⛔ THE 44px FLOOR SURVIVES THE RING. `box-sizing: border-box` is set globally
+ *    at the top of this stylesheet, so a 1px border is drawn INSIDE the box and
+ *    the hit area stays 44 x 44. Both halves are asserted, because the floor is
+ *    only safe while the global reset holds.
+ */
+bhp_photo_assert(
+    is_string($css) && false !== strpos($css, '*, *::before, *::after { box-sizing: border-box; }'),
+    '⛔ 9.7 `box-sizing: border-box` is global, so the ring is drawn inside the 44px box',
+    $failures
+);
+bhp_photo_assert(
+    is_string($css) && false !== strpos(
+        $css,
+        ".mariana-popup--ab .mariana-popup__close {\n  width: 44px;\n  height: 44px;\n}"
+    ),
+    '⛔ 9.8 the 44 x 44 minimum tap target is still declared for this variant',
+    $failures
+);
+
+/*
+ * ⛔⛔ THE TEACHER POPUP IS A DIFFERENT COMPONENT AND WAS NOT TOUCHED — and
+ *     this row is what makes that statement checkable rather than a claim in a
+ *     report. `mariana-popup.php` renders NO image element of any kind, so it
+ *     has no positioned decorative sibling that could out-paint its close
+ *     control, and it additionally keeps a second, large exit
+ *     (`mariana-popup__dismiss`) that the parent popup deleted at 1.19.267.
+ *     If either of those ever changes, the teacher popup acquires this defect
+ *     class and this row goes red BEFORE a visitor finds it.
+ */
+bhp_photo_assert(
+    '' !== $teacher
+        && false === strpos($teacher, '<img')
+        && false === strpos($teacher, '<picture'),
+    '⛔ 9.9 the teacher popup renders no image, so it cannot reproduce this stacking defect',
+    $failures
+);
+bhp_photo_assert(
+    '' !== $teacher && false !== strpos($teacher, 'data-bhp-popup-dismiss'),
+    '⛔ 9.10 the teacher popup still carries its second exit, so its × is not its only way out',
+    $failures
+);
+
+/*
+ * ⛔⛔ 9.11 · THE CLOSE CONTROL MUST NOT INVERT ON FOCUS, AND THIS ROW GUARDS A
+ *     MISTAKE THIS BUILD ACTUALLY MADE AND CAUGHT ON A CAPTURE.
+ *
+ * ⭐ The first 1.19.410 treatment gave the control a solid forest ground and a
+ *    pale glyph on `:hover, :focus-visible`. Rendered at 390 on staging, that
+ *    made the close control a solid dark disc with a white × THE INSTANT THE
+ *    POPUP OPENED — because the engine moves focus to the first focusable
+ *    element and Chromium matches `:focus-visible` on that programmatic focus
+ *    even for a visitor who has only ever used a mouse. Section 7 of the
+ *    stylesheet documents that behaviour and documents a deliberate decision to
+ *    keep the first-focus indicator quiet.
+ *
+ * ⚠ THE FAILURE MODE IS A BUSINESS ONE, NOT A VISUAL ONE: the loudest element
+ *   on a surface whose only job is to collect an email address became the way
+ *   out of it. Nothing in a functional suite would ever have caught that, which
+ *   is why the row exists.
+ *
+ * ⛔ ASSERTED AS AN ABSENCE, AND THE COMPANION PRESENCE ROW IS WHAT MAKES IT
+ *    NON-VACUOUS: 9.12 proves the hover rule is actually there, so 9.11 cannot
+ *    pass merely because the whole block went missing.
+ */
+$invert_rule = ".mariana-popup--photo.mariana-popup--ab .mariana-popup__close:focus-visible {\n"
+             . "  background: var(--color-forest);\n";
+bhp_photo_assert(
+    is_string($css) && false === strpos($css, $invert_rule),
+    '⛔ 9.11 the close control does NOT invert on focus — the popup focuses it on open, and a shouting exit on a capture surface is a regression',
+    $failures
+);
+bhp_photo_assert(
+    is_string($css) && false !== strpos(
+        $css,
+        ".mariana-popup--photo.mariana-popup--ab .mariana-popup__close:hover {\n"
+    ),
+    '⛔ 9.12 a hover treatment IS declared, so 9.11 is an absence inside a rule that exists rather than an absence of the rule',
+    $failures
+);
 echo "\n";
 if ($failures > 0) {
     echo "RESULT: {$failures} failure(s)\n";

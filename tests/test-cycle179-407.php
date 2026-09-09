@@ -347,7 +347,42 @@ bhp_c407_assert( 0 === preg_match( '/\b(back (in|on)|soon|shortly|next week|rest
 
 $c407_style = bhp_c407_read( 'style.css' );
 bhp_c407_assert( 1 === preg_match( '/^Version:\s*1\.19\.407\s*$/m', $c407_style ), '6.1: theme style.css declares 1.19.407', $failures );
-bhp_c407_assert( defined( 'BHP_BUNDLE_PRICING_VERSION' ) && '1.8.89' === BHP_BUNDLE_PRICING_VERSION, '6.2: the ACTIVE plugin reports 1.8.89 — read from the constant, not from the file on disk', $failures );
+/*
+ * ⭐⭐ 1.19.409 (2026-09-08, `CYCLE179-LD-BUILD-409`, F3) — A FLOOR, NOT A PIN.
+ *     Same move, same reasoning and the same shape as the 1.19.406 fix to
+ *     `test-cycle179-397.php` §4.1; see that block for the long argument.
+ *
+ * ⛔⛔ THE SUPERSEDED ASSERTION, PRESERVED STRUCK AT THE LINE:
+ *
+ *      ~~bhp_c407_assert( defined( 'BHP_BUNDLE_PRICING_VERSION' )
+ *          && '1.8.89' === BHP_BUNDLE_PRICING_VERSION,
+ *          '6.2: the ACTIVE plugin reports 1.8.89 — read from the constant,
+ *          not from the file on disk', $failures );~~
+ *
+ * ⚠️ WHY IT MOVED, AND IT IS AN OBSERVED FAILURE, NOT A PRECAUTION. The bundle
+ *    plugin on staging2 reads **1.8.91** (VERIFIED first-hand over SSH,
+ *    `wp plugin get brave-hearts-bundle-pricing --field=version`, 2026-09-08).
+ *    A literal pin reports that ROUTINE, CORRECT plugin release as a THEME
+ *    defect, which is exactly the false-failure this suite is supposed to
+ *    make impossible to ignore.
+ *
+ * ⭐ WHAT §6 IS ACTUALLY FOR. It is "the versions this suite's assumptions
+ *    rest on". The assumption here is that the theme runs against a plugin
+ *    NEW ENOUGH to carry the 1.8.89 out-of-stock display behaviour §5 and
+ *    §0.3 exercise — not that it runs against one exact build.
+ *
+ * ⛔ IT IS STILL A REAL GATE. `version_compare` with '>=' FAILS on a
+ *    DOWNGRADE below 1.8.89 — the regression this row exists to catch — and
+ *    the undefined-constant case still fails. Raise the floor deliberately
+ *    when a later version becomes a hard requirement.
+ *
+ * ⚠️ 6.1 IS DELIBERATELY LEFT AS A LITERAL PIN and is EXPECTED to fail on
+ *    every later theme build. That row is this file's own version stamp: it
+ *    records which release this suite was written against, and turning it
+ *    into a floor would erase that. The one FAIL line it produces per bump is
+ *    mechanical and is reported as such in every build diff.
+ */
+bhp_c407_assert( defined( 'BHP_BUNDLE_PRICING_VERSION' ) && version_compare( BHP_BUNDLE_PRICING_VERSION, '1.8.89', '>=' ), '6.2: the ACTIVE plugin reports at least 1.8.89 — read from the constant, not from the file on disk (got ' . ( defined( 'BHP_BUNDLE_PRICING_VERSION' ) ? BHP_BUNDLE_PRICING_VERSION : '(undefined)' ) . ')', $failures );
 
 echo "\n";
 if ( $failures ) {

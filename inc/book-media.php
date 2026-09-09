@@ -415,6 +415,98 @@ function bhp_book_media_registry() {
         ],
 
         /*
+         * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ THE MARIANA TRENCH OCEAN COLOURING BOOK — added 1.19.409
+         *     (2026-09-08, `CYCLE179-LD-BUILD-409`). THE GAP THAT WAS HELD
+         *     OPEN ON PURPOSE THROUGH 1.19.405, 1.19.406 AND 1.19.408 IS NOW
+         *     CLOSED, AND THIS IS THE ONE EDIT THAT CLOSES IT.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔ WHAT WAS ACTUALLY WRONG, recorded so the WRONG diagnosis does not
+         *    come back. `CYCLE179-CX-BUILD-405` reported the colouring
+         *    thumbnail rail as "blocked on two absent images". IT WAS NOT.
+         *    `CYCLE179-CX-BUILD-406` falsified that: there are TWO registries
+         *    with confusingly similar jobs —
+         *      · `bhp_pdp_look_inside_registry()` (theme FILES under
+         *        `assets/look-inside/`) HAS a `colouring_mariana` key and its
+         *        files are present on both environments; and
+         *      · THIS registry (MEDIA-LIBRARY attachment slugs), which drives
+         *        the hero gallery and its thumbnail rail, had NO
+         *        `colouring_mariana` key at all — not a key naming absent
+         *        images, no key.
+         *    ⛔ So uploading anything would not have fixed it. The fix is a
+         *    registry entry, and only a registry entry.
+         *
+         * ⭐⭐ NO ATTACHMENT ID IS TYPED HERE, AND THAT IS THE WHOLE REASON
+         *     THIS COULD BE BUILT WITHOUT AN OWNER GATE. 406's open question 3
+         *     assumed the per-environment attachment IDs had to be ANSWERED
+         *     first. They do not have to be answered at all: rule 2 at the top
+         *     of this file already addresses every asset by SLUG, and
+         *     `bhp_book_media_attachment_id()` resolves the slug on whichever
+         *     environment is running.
+         *
+         * ⭐ VERIFIED FIRST-HAND OVER SSH, 2026-09-08, BOTH ENVIRONMENTS,
+         *    before a line of this entry was written — these six slugs are
+         *    IDENTICAL on production and staging, and only the numeric IDs
+         *    differ, which is exactly the case slugs exist for:
+         *
+         *      slug                                                | prod | staging
+         *      ----------------------------------------------------|------|--------
+         *      …-interior-the-submersible-porthole                 |  752 |  7343
+         *      …-interior-the-anglerfish                           |  753 |  7344
+         *      …-interior-a-quote-page                             |  754 |  7345
+         *      …-interior-riding-the-humpback-whale                |  755 |  7346
+         *      …-interior-the-jellyfish                            |  756 |  7347
+         *      …-interior-draw-your-own-creature                   |  757 |  7348
+         *
+         *    ⚠ THE COVER IS DELIBERATELY NOT LISTED, and this is the detail
+         *      that would have forced a hardcoded ID if it had been. The cover
+         *      slug is the ONE thing that genuinely differs between the two
+         *      environments (staging
+         *      `coloring-adventures-…-ocean-coloring-book-front-cover` / 4066;
+         *      production `coloring-adventures-…-mariana-trench-cover-2026-08-30`
+         *      / 694). It does not belong here: `bhp_book_hero_gallery_media()`
+         *      already PREPENDS the product's own featured image, read from
+         *      the product, so the cover resolves per environment with no name
+         *      in this file — and 405's "cover first" decision is satisfied by
+         *      that same prepend, unchanged.
+         *
+         * ⛔ NO NEW CUSTOMER-FACING STRING IS AUTHORED IN THIS ENTRY, and the
+         *    absence of `alt` here is deliberate rather than an omission.
+         *    Every one of these six attachments ALREADY carries approved alt
+         *    text in the media library, BYTE-IDENTICAL on both environments
+         *    (verified over SSH in the same pass). `bhp_book_media()` now
+         *    falls back to `_wp_attachment_image_alt` when a registry item
+         *    names no `alt`, so the live approved wording travels and this
+         *    build invents nothing. ⚠ That trades away rule 3 at the top of
+         *    this file (alt-with-the-code) FOR THIS ENTRY ONLY, knowingly:
+         *    authoring six new descriptive strings was the alternative, and
+         *    this build was told not to add customer-facing strings. If the
+         *    media-library alt is ever cleared, the fallback yields '' and the
+         *    images render with an empty alt — that is the honest degradation
+         *    and it is stated rather than hidden.
+         *
+         * ⭐ THE ORDER IS THE PRODUCT'S OWN APPROVED GALLERY ORDER
+         *    (`_product_image_gallery` on 618 / 4065, read first-hand: 752-757
+         *    and 7343-7348 respectively, in that sequence). It is not a new
+         *    editorial choice by this build.
+         *
+         * ⛔ NOTHING HERE TOUCHES STOCK. Product 4065 is `outofstock` on
+         *    staging by founder ruling and is LEFT that way; the 1.8.89
+         *    out-of-stock display behaviour is unchanged by a gallery entry.
+         */
+        'colouring_mariana' => [
+            'items' => [
+                [ 'type' => 'image', 'slug' => 'mariana-trench-coloring-book-interior-the-submersible-porthole' ],
+                [ 'type' => 'image', 'slug' => 'mariana-trench-coloring-book-interior-the-anglerfish' ],
+                [ 'type' => 'image', 'slug' => 'mariana-trench-coloring-book-interior-a-quote-page' ],
+                [ 'type' => 'image', 'slug' => 'mariana-trench-coloring-book-interior-riding-the-humpback-whale' ],
+                [ 'type' => 'image', 'slug' => 'mariana-trench-coloring-book-interior-the-jellyfish' ],
+                [ 'type' => 'image', 'slug' => 'mariana-trench-coloring-book-interior-draw-your-own-creature' ],
+            ],
+        ],
+
+        /*
          * THE COMPLETE COLLECTION — hero gallery, 2026-08-02.
          *
          * Composed almost entirely from slugs already approved on the three
@@ -1108,11 +1200,41 @@ function bhp_book_media($key) {
             if (!$id) {
                 continue;
             }
+            /*
+             * ⭐ 1.19.409 (2026-09-08, `CYCLE179-LD-BUILD-409`) — WHEN THE
+             *    REGISTRY NAMES NO `alt`, THE ATTACHMENT'S OWN APPROVED ALT
+             *    TEXT IS USED INSTEAD OF AN EMPTY STRING.
+             *
+             * ⛔ WHY THIS IS NOT A RELAXATION OF RULE 3 AT THE TOP OF THIS
+             *    FILE. That rule ("alt lives HERE, next to the asset") exists
+             *    so alt text cannot depend on what somebody typed into the
+             *    media library. It still governs every entry that declares an
+             *    `alt`, and all sixteen image items that predate this change
+             *    declare one — VERIFIED by count before the change, so this
+             *    is purely ADDITIVE and alters nothing that already rendered.
+             *
+             * ⭐ WHAT IT IS FOR. `look-inside.php` passes this value to
+             *    `wp_get_attachment_image()` as an EXPLICIT attribute and also
+             *    into the rail thumb and the lightbox's `data-bhp-alt`. An
+             *    explicit `''` OVERRIDES WordPress's own fallback, so an entry
+             *    with no `alt` would ship `alt=""` on a content image — an
+             *    accessibility defect, not a neutral default.
+             *
+             * ⛔ IT INVENTS NOTHING. The value comes from
+             *    `_wp_attachment_image_alt` — wording that is already live on
+             *    the storefront and already approved. A missing meta still
+             *    yields '', which is the same outcome as before.
+             */
+            $reg_alt = isset($item['alt']) ? (string) $item['alt'] : '';
+            if ('' === $reg_alt) {
+                $reg_alt = (string) get_post_meta($id, '_wp_attachment_image_alt', true);
+            }
+
             $items[] = [
                 'type'  => 'image',
                 'group' => isset($item['group']) ? $item['group'] : '',
                 'id'    => $id,
-                'alt'   => isset($item['alt']) ? $item['alt'] : '',
+                'alt'   => $reg_alt,
             ];
         }
     }

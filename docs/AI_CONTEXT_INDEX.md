@@ -1,6 +1,65 @@
 # AI Context Index
 
-> ## ⭐⭐ NEWEST, 2026-09-08 (06:07 MDT) - **PRODUCTION IS THEME `1.19.407` / BUNDLE PLUGIN `1.8.89`.** Every version number below this block is SUPERSEDED.
+> ## ⭐⭐ NEWEST, 2026-09-08 (22:03 MDT) - **PRODUCTION IS THEME `1.19.409` / BUNDLE PLUGIN `1.8.91`.** Every version number below this block is SUPERSEDED.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-08 22:03 MDT** | **`1.19.409`** | **`1.8.91`** |
+>
+> ⭐ **VERIFIED LIVE, not read from a document.** `https://braveheartspublishing.com/` returned
+> HTTP 200 at 2026-09-08 ~22:1x MDT serving **17** `ver=1.19.409` markers and **6** bundle-plugin
+> asset markers at `ver=1.8.91`; the home Mariana card reads **"From $11.99"** (3 occurrences).
+> ⭐ **Both version numbers were verified live this time** - unlike the 06:07 block below, where
+> the plugin version was read from the release record. The distinction is stated, not blurred.
+>
+> Production moved twice more on 2026-09-08 after the 06:07 release recorded below:
+>
+> 1. **2026-09-08 15:20 MDT** - theme `1.19.407` to **`1.19.408`** (home Mariana price by registry
+>    identity; coloring page media script enqueued). Plugin unchanged at `1.8.89`. Founder seals
+>    1436 ("Push 408") and 1439. Artefact `build-408.zip`, ZIP md5
+>    `5084a80484cfb17de27bc4946c416789`.
+> 2. **2026-09-08 22:03 MDT** - theme `1.19.408` to **`1.19.409`** and plugin `1.8.89` to
+>    **`1.8.91`** (carrying `1.8.90`). Founder seal 1447; Andrew: "token touched". Artefacts
+>    `build-409.zip` md5 `a7e3eb79d42b012b6cedc6399962c904` and
+>    `brave-hearts-bundle-pricing-1.8.91.zip` md5 `d58b8799289f948ce66c728fe7ca2575`.
+>    **All three ZIP md5s above were re-computed locally when this block was written and match
+>    their release seals.**
+>
+> ⛔⛔ **A SECURITY-RELEVANT FILE WAS ON PRODUCTION AND `1.19.409` REMOVED IT.** The `1.19.408`
+> artefact shipped `docs/security-investigation-nlo-finance-redirect-2026-07-09.md`, a file that
+> `.gitattributes` marks `export-ignore` because it quotes malware IOC strings and tripped
+> SiteGround's scanner on 2026-08-04. `1.19.409` removes it. ⭐ **Verified gone: a live request for
+> that path returns HTTP 404.**
+>
+> ⚠️⚠️ **BUT THE CAUSE IS NOT ESTABLISHED, AND THIS FILE WILL NOT PRETEND IT IS.** The release seal
+> attributes the leak to archiving without `--worktree-attributes`. **That does not explain the
+> artefact:** `assets/covers` - 121 tracked files, governed by a line in the *same committed*
+> `.gitattributes` - was correctly excluded from the very same `build-408.zip`. Both `export-ignore`
+> lines were committed well before the build (the IOC line since `aaecd9f`, 2026-08-05) and both are
+> present at the archive-time commit. **Until someone states the exact command that built
+> `build-408.zip`, this incident has no established cause.** The durable fix is a preflight
+> assertion that no `export-ignore` path appears in a deploy artefact - a control that holds
+> whatever the mechanism turns out to be. Passing `--worktree-attributes` is strictly safer and
+> should be done anyway; on this evidence it is not sufficient as an explanation.
+>
+> ⛔⛔ **NO COMMIT IN THIS REPOSITORY CONTAINS WHAT PRODUCTION IS RUNNING.** `HEAD` is `755d5ae`
+> ("docs: release record for 1.19.401-407 and plugin 1.8.87-1.8.89", 2026-09-08 15:14:45 -0600),
+> pushed, and its tree content is `1.19.408` - so even its own message understates it. The
+> `1.19.409` and `1.8.91` changes are **uncommitted in the working tree: 11 modified files and 3
+> untracked test files.** ➡ **This is the first thing to do when Andrew is back: commit the working
+> tree.** Until then the only copies of what production runs are the ZIPs and the server itself.
+>
+> **Artefacts built and never released on their own, and which must not be deployed:** plugin
+> `1.8.90` (its contents reached production inside `1.8.91`), in addition to everything already
+> listed in the 06:07 block below.
+>
+> **Basis:** written 2026-09-08 ~22:2x MDT by `business-ops-knowledge` under workstream
+> `CYCLE179-OPS-CARRY-1437-1447` (carrier 15), from sidecar items 1437-1447 plus first-hand
+> read-only verification (`curl`, `md5sum`, `unzip -l`, `git log`/`status`/`show`). ⛔ **No git
+> write command was run. This block is uncommitted.** Full evidence:
+> `Business OS\20-CONFLICT-REGISTER.md` §124 and `17-CURRENT-OPERATING-STATE.md` PART 105.
+
+> ## ⛔ SUPERSEDED 2026-09-08 22:03 MDT — preserved, not deleted. This block was headed "⭐⭐ NEWEST, 2026-09-08 (06:07 MDT)" and was TRUE WHEN WRITTEN. **PRODUCTION WAS THEME `1.19.407` / BUNDLE PLUGIN `1.8.89` at 06:07 MDT; it is now `1.19.409` / `1.8.91` — see the block above.** Every version number below this block is SUPERSEDED.
 >
 > | | Theme | Bundle plugin |
 > |---|---|---|

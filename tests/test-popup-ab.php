@@ -467,17 +467,59 @@ bhp_ab_assert(
  *    identified by class immediately below, so "two paragraphs" cannot silently
  *    become "the privacy line plus whatever an agent added". Andrew's
  *    2026-08-19 "the only words should be…" bare-bones rule still governs — his
- *    own item-290 pick is what added the second line, and nothing else may. */
+ *    own item-290 pick is what added the second line, and nothing else may.
+ *
+ * ⭐⭐ 1.19.411 (2026-09-09, `CYCLE179-LD-BUILD-411`) — THE COUNT MOVES 2 -> 3,
+ *     AND IT IS TIGHTENED IN THE SAME BREATH, EXACTLY AS THE PARAGRAPH ABOVE
+ *     INSTRUCTS. This is the assertion its own author predicted would one day
+ *     be quietly loosened, so the change is made loudly instead.
+ *
+ * ⭐ THE AUTHORITY IS THE FOUNDER'S, NOT THIS BUILD'S. Andrew Signore, seal
+ *    1451, approved a new customer-facing line between the headline and the
+ *    sub-line: *"A real chapter from The Mariana Trench. About 10 minutes."*
+ *    ⚠ RELAYED through the Chief of Staff; NOT witnessed first-hand by the
+ *    build that made this edit (Standing Rules §9.2).
+ *
+ * ⛔ HIS 2026-08-19 BARE-BONES RULE IS NOT REPEALED AND STILL GOVERNS. The
+ *    dialog is still a headline, a picture, a lede, a sub-line, two fields, a
+ *    button and one line of small print. What changed is that HE added a
+ *    sentence, which is the only way this count is ever allowed to move.
+ * ⛔ AND THE GUARD IS NOT WEAKENED: all THREE paragraphs are identified by
+ *    class immediately below, so "three paragraphs" cannot silently become
+ *    "the privacy line plus whatever an agent added" either. If a future pass
+ *    needs a fourth, it needs a founder decision — not an edit to this number.
+ */
 bhp_ab_assert(
-    2 === substr_count($body, '<p '),
-    'exactly TWO paragraphs render in the dialog — the founder\'s subhead and the privacy line, and nothing else',
+    3 === substr_count($body, '<p '),
+    'exactly THREE paragraphs render in the dialog — the founder\'s lede, his subhead and the privacy line, and nothing else',
     $failures
 );
 
 bhp_ab_assert(
-    1 === substr_count($body, '<p class="popup-ab__subhead">')
+    1 === substr_count($body, '<p class="popup-ab__lede">')
+        && 1 === substr_count($body, '<p class="popup-ab__subhead">')
         && 1 === substr_count($body, '<p class="acquisition-form__privacy">'),
-    '⛔ and those two paragraphs are exactly those two, identified by class, not merely counted',
+    '⛔ and those three paragraphs are exactly those three, identified by class, not merely counted',
+    $failures
+);
+
+/* ⛔ THE LEDE'S WORDING IS PINNED HERE TOO, not only in the 411 suite. This
+ *    file is the popup's standing copy guard; a founder-approved string that
+ *    lives in only one suite is one deletion away from being unguarded. */
+bhp_ab_assert(
+    1 === preg_match(
+        '/<p class="popup-ab__lede">A real chapter from The Mariana Trench\. About 10 minutes\.<\/p>/',
+        $body
+    ),
+    '⭐ the lede is the founder-approved sentence, verbatim (seal 1451)',
+    $failures
+);
+
+/* The lede sits BETWEEN the headline and the sub-line, by markup order. */
+bhp_ab_assert(
+    strpos($body, 'parent-ab-popup-title') < strpos($body, 'popup-ab__lede')
+        && strpos($body, 'popup-ab__lede') < strpos($body, 'popup-ab__subhead'),
+    'the lede renders after the headline and before the subhead, in document order',
     $failures
 );
 
