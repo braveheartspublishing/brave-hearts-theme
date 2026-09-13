@@ -2,12 +2,285 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
-## 1.19.414, 1.19.415 / bundle plugin 1.8.94, and 1.19.416 - 2026-09-13 - STAGED ON staging2, NOT DEPLOYED TO PRODUCTION
+## 1.19.419 — 2026-09-13 — STAGED ON staging2, NOT DEPLOYED TO PRODUCTION
 
-⛔ **Production is theme `1.19.412` / bundle plugin `1.8.92`.** None of the three
-releases below is on production. They are recorded together because they ship
-together: the production push is **theme `1.19.416` + plugin `1.8.94` + a Rank Math
-sitemap regeneration, on one token.**
+> ⚠⚠ **READ THIS LINE LAST AND TRUST IT LEAST.** The three entries below this one each went
+> stale at the push, and the `1.19.417` entry went stale *inside the hour it was authored*.
+> **Release-state prose is the least durable thing in this file.** Verify the deployment
+> status of this entry against `wp theme list --status=active` before relying on it.
+
+Production is theme `1.19.417`, verified by read-only `wp theme list --status=active` over SSH
+at 12:43:58 MDT on 2026-09-13, before this build made any change. staging2 was on `1.19.418`.
+**This release is staged only. Deployment is unrequested and unapproved. The bundle plugin does
+not move** — staging was read back and confirmed still serving `1.8.94` rather than assumed.
+
+> ⚠ **THERE IS NO `1.19.418` ENTRY IN THIS FILE, AND THIS ENTRY DOES NOT SUPPLY ONE.**
+> `1.19.418` shipped to staging2 earlier the same day (the per-post Amazon affiliate
+> disclosure, the store links in the end-of-post block, post 78's duplicated H3, and the
+> hardcover-row switch this release flips). Its changelog block was **prepared and handed over,
+> not applied** — that file is `business-ops-knowledge`'s lane under Standing Rules §12, and an
+> implementer writing another role's entry would be the quieter of the two defects. **The gap
+> is recorded here so a reader does not conclude `1.19.418` never existed.**
+
+### One functional change: the hardcover row comes off the Complete Collection shop card
+
+**Andrew ruled it** on 2026-09-13 — recorded before `1.19.418` shipped,
+but it did not reach that build's brief in time, so `1.19.418` shipped the switch in the KEEP
+position and this release moves it. ⚠ The ruling reached the building desk **relayed**, not
+first-hand. This closes `CYCLE180-LD-417-F1`, open since `1.19.417` measured the row.
+
+`BHP_SHOP_CARD_HARDCOVER_ROW` now defaults to **`false`**. The *"Prefer the hardcover? $48.99"*
+row no longer renders on the Complete Collection card in the shop grid.
+
+**What did NOT change, which is most of the point:**
+
+- **No code was deleted.** The constant, its `defined()` guard, the
+  `bhp_shop_card_hardcover_row` filter and the single call site are byte-identical to
+  `1.19.418`. Only the boolean moved. Either `define( 'BHP_SHOP_CARD_HARDCOVER_ROW', true )` in
+  `wp-config.php` or `add_filter( 'bhp_shop_card_hardcover_row', '__return_true' )` in a
+  one-line mu-plugin **restores the row per environment with no deploy and no code change.**
+  The new test suite proves that route travels rather than asserting it.
+- **No WooCommerce data was touched** — no product, variation, price, stock or coupon. **The
+  hardcover collection is still a live, priced, purchasable product** and is still reached by
+  the pair card's own hardcover swap, the PDP format selector, the Complete Collection landing
+  page and its own product URL. The suite reads the hardcover record back and requires a real
+  price, so "the row is gone" can never be confused with "the product is gone".
+- **One row on one card.** The gate is absent from `inc/colouring-line.php` and
+  `template-parts/commerce/format-cards.php`, each asserted with a control proving the file was
+  really read. The colouring line's own *"Prefer the hardcover?"* string is a different surface
+  and is untouched.
+- The three conditions that already guarded the row are unchanged and still all required.
+
+**Why it was worth doing:** `1.19.417` measured that dropping this row moves the shop grid's
+primary CTA from 675px to 614px at Andrew's real 1280×600 viewport — **61px**, the single
+largest remaining gain on that page. That measurement is carried forward from `1.19.417`; it was
+**not** re-measured in this build.
+
+**Also corrected:** `tests/test-cycle180-build-418.php` §4.1, §4.2 and §4.3 asserted the KEEP
+default and went red the moment this release installed. They are re-pointed at the new correct
+answer, exactly — **not** relaxed to a floor. This is deliberately the opposite remedy from the
+one applied to `test-cycle180-build-417.php` §0.4/§0.5: those rows went red because *time
+passed*, and a floor is right for a moving version number; these went red because *a decision
+changed*, and a build that silently reverted to KEEP must still go red. The superseded
+assertions are preserved struck at the line. No other assertion in that file was touched.
+
+**Evidence.** The row's absence was verified by reading the **rendered** `/shop/` page from the
+server, not by inspecting the template: all six cards and their buy panels intact, zero
+occurrences of *"Prefer the hardcover"*. New suite `tests/test-cycle180-build-419.php`.
+
+## 1.19.417 — 2026-09-13 — DEPLOYED TO PRODUCTION
+
+> ⭐⭐ **CORRECTED IN PLACE, 2026-09-13, minutes after this entry was first written.** This
+> entry was written while `1.19.417` was staged and unapproved. **It was approved and
+> deployed at 17:52 UTC / 11:53 MDT, while the entry was being written.** The superseded
+> text is preserved struck, here at the line.
+>
+> **Superseded heading:** ~~`1.19.417 - 2026-09-13 - STAGED ON staging2, NOT DEPLOYED TO PRODUCTION`~~
+>
+> **Superseded paragraph:** ~~"Production is theme `1.19.416` / bundle plugin `1.8.94` (see the entry below). This release is staged only. Deployment is unrequested and unapproved."~~
+>
+> ⚠⚠ **This is the THIRD staged-release entry in three releases to go stale at the push** —
+> and this one went stale inside the same hour it was authored. **Release-state prose is the
+> least durable thing in this file.** The durable fix is a release-checklist step that
+> re-reads the top entry at deploy time; it does not exist yet, and until it does, treat the
+> deployment status of the newest entry as the least trustworthy line in it.
+
+⭐ **Production runs theme `1.19.417`. The bundle plugin is untouched at `1.8.94`.**
+
+**What the deploy did, recorded from the deploy run itself:**
+
+- **Server md5 of the installed theme matches the staged artefact:**
+  `07caf0e10c57bc42b256b9c479615cbc`.
+- **Lint:** `php -l` clean on **374/374** files. IOC scan: 0 in docs, 0 in the mu-plugin.
+- **Live-vs-ZIP:** **0** live-only files.
+- **Rollback taken before the install:**
+  `~/_rollback/PROD-theme-1.19.416-pre-417-20260913-175230.tar.gz`.
+- **After the install:** active theme `1.19.417`, php-ok, cache purged, **772** theme files
+  on production.
+- ⚠ **Browser verification of the live pages is deferred to the next release**, because
+  `curl` from the deploying host is captcha-blocked by the edge. **The pixel figures in this
+  entry are staging measurements, not production re-measurements.**
+
+⚠ **One decision recorded against `CYCLE180-LD-417-F1` below, taken after this build
+shipped:** the **"Prefer the hardcover?" row will be dropped** from the Complete Collection
+shop card in the next release, which is option **C1** in the table further down. That change
+is **not** in `1.19.417`.
+
+⚠ **Provenance of this entry, stated because it is not uniform.** The build's own report
+records that a prepared changelog block was routed for inclusion, and **cross-references a
+section that contains no such block**; no prepared block for `1.19.417` exists anywhere.
+**This entry was therefore compiled from that report's own measured figures** — the same
+method, and the same disclosure, that the `1.19.414` and `1.19.415` entries below already
+carry. **Nothing here is inferred, estimated or rounded**, and every number traces to a
+measurement in that report.
+
+**Theme only. The bundle plugin was not rebuilt** — staging was read back and confirmed
+still serving `1.8.94` rather than assumed.
+
+**Theme ZIP md5 (the artefact actually installed on staging):**
+`07caf0e10c57bc42b256b9c479615cbc`
+
+### What it changes
+
+Three layout complaints, all measured before and after in a real browser at asserted
+viewport sizes.
+
+| # | Symptom | Result at 1440x900 |
+|---|---|---|
+| 1 | Shop page CTA not above the fold | Button top **685 → 630**, bottom **733 → 678**; cards **559 → 505**, all five equal; phone byte-identical |
+| 2 | Product-page related cards too tall to fit the screen | Related card **718 → 509**; the section **804 → 594**, so it now fits a 900px screen. At 390: **927 → 692** |
+| 3 | "Choose your format" not centred on the related cards | Button centre offset **−35.7px → 0** at 1440 and 1920; **−15.6px → 0** at 390 |
+
+**Tests:** baseline **160/151/9** → after **161/152/9**, same nine files, **zero new
+failures**. New suite for this build: **57/0/0**. Entry gate **PASS**, 827 entries.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `style.css` | `--bhp-cover-well` 230px → 180px **edited in place**; new `@media (min-width: 641px)` rhythm block; `Version:` 1.19.416 → 1.19.417 |
+| `assets/css/book-formats.css` | related/upsell CTA centring rule, unconditional; a wrong specificity comment corrected |
+| `inc/catalog-surfaces.php` | new `bhp_pdp_loop_row_context()`; `bhp_catalog_unhook_card_proof()` now ORs the two contexts |
+| `tests/test-cycle180-build-417.php` | **new**, 57 assertions |
+| `style.min.css`, `assets/css/book-formats.min.css` | rebuilt via `node tools/build-css.mjs`; source-md5 stamps verified out of the ZIP |
+
+### ⭐ The cover-well token, and why it had to be edited in place
+
+One token drove the whole shop-grid change: both cover selectors read `--bhp-cover-well`,
+so all five cards shrink together. Measured 1:1 and equal at every step — 230 → 200 → 180 →
+165 → 150 produced card heights 559 → 529 → 509 → 494 → 479, all five equal throughout.
+**180px buys the most height while leaving the cover the largest element on the card.**
+
+⛔ **The first attempt appended a new rule for the token instead of editing the base
+declaration, and every grep passed while the phone card grew from 324px to 372px.**
+`--bhp-cover-well` is declared three times: the base, a visit-active override at 158px that
+wins on specificity anywhere, and a **≤640px mobile value of 132px that has identical
+specificity to the base and wins on source order alone.** An appended rule lands after it.
+**Editing the value in place preserves every cascade relationship exactly.** The suite now
+asserts the byte order of the two declarations, and the entry gate re-asserts it on the
+shipped artefact by line number, so re-appending goes red instead of green.
+
+### ⭐⭐ Two green checks that were not checking anything
+
+Both were caught and fixed during this build. They are recorded because the class of
+failure matters more than the instances.
+
+1. **The entry gate reported PASS with four checks that had never run.** The md5/CR-byte
+   loop split `"$SRC:$MIN"` on `:` — and every path begins `C:/`. `SRC` became the literal
+   string `C`, both `md5sum` and the stamp `grep` errored to stderr, and **the comparison of
+   two empty strings passed.** Caught by reading the gate's stderr rather than its verdict.
+   The delimiter is now `|`, and the loop fails closed on a missing file *and* on an empty
+   md5 or stamp, so the "two empty strings are equal" trap cannot return.
+2. **A shipped CSS comment published two wrong specificity triples** — `(0,3,1)` and
+   `(0,4,4)`, where the true values are **`(0,4,2)`** and **`(0,7,4)`**. The suite's controls
+   disagreed with the hand count and **the machine was right.** The wrong pair still
+   supported the correct conclusion, which is exactly why it survived being written and
+   re-read. A new assertion now requires the shipped comment and the suite to publish the
+   **same** two triples, so a comment can no longer drift from the code it explains.
+
+⛔ **Neither was fixed by relaxing an assertion.**
+
+**Also built, measured, and deliberately reverted:** a 3px reduction of the BEST VALUE
+badge margin. It bought exactly 3px, which is not a reason to erode a reviewed separation.
+The gap below the badge is unchanged at **14px desktop / 12px phone**, and the suite pins
+the 1.19.415 values byte-for-byte.
+
+### ⛔⛔ `CYCLE180-LD-417-F1` — the acceptance test could not fail, and the symptom reproduces
+
+**The 1440x900 test for symptom 1 was already passing on both environments before this
+build existed** — button bottom 733 against a 900px fold. Reporting "above the fold at
+1440x900 — PASS" would have been reporting a test that could not fail.
+
+**The symptom is real and it reproduces at the viewport the notes actually came from.**
+That display measures **1280 x 720 CSS px at `devicePixelRatio` 1.5**, `availHeight` **672**
+— a 1920-physical-px window at 150% Windows scaling **is 1280 CSS px wide**, and the tallest
+viewport it can produce is about **600 CSS px**. ⭐ **A 900px-tall viewport does not exist on
+that screen.**
+
+| Build | Button bottom at 1280x600 | Clears the 600px fold? |
+|---|---|---|
+| 1.19.416 | 730 | no, by 130px |
+| **1.19.417 (this build)** | **675** | **no, by 75px** — 55px better |
+
+**Options measured live on staging, neither shipped:**
+
+| Option | Button bottom | Clears? | Cost |
+|---|---|---|---|
+| 1.19.417 as built | 675 | no | — |
+| **C1** — remove the "Prefer the hardcover? $48.99" row from the Complete Collection card | **614** | no, by 14px | a secondary offer leaves a selling card |
+| **C2** — C1 **+** cover well 180 → 165px | **599** | **yes** | the above plus 15px of cover |
+| cover shrink alone | — | needs the well at ≈**105px** | a thumbnail, not a book cover |
+
+⛔ **Neither C1 nor C2 was shipped. C1 removes a live secondary purchase offer from a
+selling card — a commerce decision, not an engineering one, and outside this build's
+brief.**
+
+⭐ **Why the Complete Collection card is the whole story:** every card stretches to the
+tallest, and the tallest is the BEST VALUE card — cover, badge, two-line title, tagline,
+price, the 58px hardcover upsell row, then the CTA. The other four carry **67–100px of
+blank space purely to match it.** Shrinking the three book covers alone moves nothing, and
+reordering gains **0px**: moving the upsell below the CTA changes which element sits where,
+not how tall the row is.
+
+### Other findings, recorded and not acted on
+
+| ID | Finding |
+|---|---|
+| `CYCLE180-LD-417-F2` | The colouring PDP's related row **mixes CTA labels** — two cards read "CHOOSE YOUR FORMAT" and two read WooCommerce's own sentence-case "Add to cart". Pre-existing; 1.19.286's label fix was scoped to the shop grid. Not introduced by 417 |
+| `CYCLE180-LD-417-F3` | **Production's related card measures 718px where staging's measured 687px**, because production has two approved reviews and staging has zero. ⛔ **No test review was created to make them match.** Read any staging/production proof-block difference against this before calling it a regression |
+| `CYCLE180-LD-417-F4` | `git log -1` reads a subject one version behind the tree it contains — the fourth consecutive release whose commit title does not describe its content. Recorded, not resolved |
+| `CYCLE180-LD-417-F5` | The visit-active cover well (158px) is now only **22px** below the base (180px) rather than 72px. It still clears its own 768 fold, but the number it was tuned against has moved |
+
+### Rollback
+
+1. **Staging, immediate:** re-install the parked 416 artefact (`theme-1.19.416-r2.zip`),
+   full-ZIP `--force`, then `wp sg purge`.
+2. **Source:** restore the three changed files from the build's pre-edit backup, revert
+   `Version:` to 1.19.416, re-run `node tools/build-css.mjs`.
+3. **Production:** nothing to roll back. **Production was never written to by this build.**
+
+---
+
+## 1.19.414, 1.19.415 / bundle plugin 1.8.94, and 1.19.416 — 2026-09-13 — DEPLOYED TO PRODUCTION
+
+> ⭐ **CORRECTED IN PLACE, 2026-09-13, after the deploy.** This heading and the paragraph
+> below it were written while the three releases were still staged. They went to production
+> the same day at 09:40 MDT, exactly as the paragraph said they would. **The superseded text
+> is preserved struck, here at the line, rather than rewritten away or corrected in a note
+> further down the file — because a correction the reader never reaches is not a correction.**
+>
+> **Superseded heading:** ~~`1.19.414, 1.19.415 / bundle plugin 1.8.94, and 1.19.416 - 2026-09-13 - STAGED ON staging2, NOT DEPLOYED TO PRODUCTION`~~
+>
+> **Superseded paragraph:** ~~"Production is theme `1.19.412` / bundle plugin `1.8.92`. None of the three releases below is on production. They are recorded together because they ship together: the production push is theme `1.19.416` + plugin `1.8.94` + a Rank Math sitemap regeneration, on one token."~~
+>
+> ⚠ **This is the second time in two releases that a staged-release entry went stale at the
+> push and had to be corrected afterwards.** Nothing currently forces release-state prose to
+> be re-read at deploy time. Worth fixing in the release checklist, not here.
+
+⭐ **Production now runs theme `1.19.416` / bundle plugin `1.8.94`.** All three releases
+below are on production. They shipped together on one token, with the sitemap regeneration.
+
+**What the deploy did, recorded from the deploy run itself:**
+
+- **Theme artefact:** `theme-1.19.416-r2.zip`, md5 `d8dbd515f92a1174e0b808757fadc812`, 826
+  entries. ⭐ **The `r2` repack differs from the first `1.19.416` ZIP by one word in this
+  file and by nothing else** — the first ZIP had been built before that word was corrected
+  in the repository, so fixing the repository alone would *not* have fixed what shipped.
+  **The check that protects a public repository is the check on the artefact.**
+- **Plugin artefact:** md5 `0407da89c090eb72e0e684acc903df8f`.
+- **Rollbacks taken before the install:**
+  `~/_rollback/PROD-theme-1.19.412-pre-416-20260913-153727.tar.gz` and
+  `~/_rollback/PROD-plugin-1.8.92-pre-1.8.94-20260913-153727.tar.gz`.
+- **Lint:** `php -l` clean on **456/456** files. IOC scan: 0 in docs, 0 in the mu-plugin.
+- **Live-vs-ZIP:** theme **0** live-only files; plugin **2** live-only, both
+  `_pre-edit-backups-2026-09-06` development files, removed by `--force` as intended.
+- **Sitemap:** `wp rankmath sitemap generate`, then cache purge and flush. The product
+  sitemap lists the live colouring URL and **0** legacy entries (5 locs).
+- **Live checks after the install:** home serves `ver=1.19.416`; the colouring PDP is no
+  longer single-class and its gallery is restored, with variation `947` add-to-cart; the
+  Mariana paperback PDP carries an `/author-visits/` link and the ADD BOTH control;
+  `/complete-collection/`, `/shop/`, `/author-visits/`, `/cart/` and the pair page all
+  return **200**; **771** theme files on production; the plugin development backups are gone.
 
 ⚠ **Provenance of this entry, stated because it is not uniform.** The `1.19.416`
 section is the build's own prepared text, applied verbatim. The `1.19.414` and

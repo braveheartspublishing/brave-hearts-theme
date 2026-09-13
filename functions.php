@@ -5246,6 +5246,22 @@ require_once get_template_directory() . '/inc/page-hero.php';
 // book-formats.php / the bundle plugin so bhp_book_has_look_inside() and
 // bhp_bundle_landing_price_facts() exist when the rail resolves its facts.
 require_once get_template_directory() . '/inc/blog-post-template.php';
+// 1.19.418 — the per-post Amazon affiliate disclosure (CYCLE180-LD-BUILD-418,
+// founder ruling seal 1550, RELAYED). Pure helpers: no hooks, no options, no
+// WooCommerce dependency, so its load position is not load-bearing. It is
+// placed beside blog-post-template.php because both are single-post surfaces
+// and a reader looking for "what else prints on a blog post" should find them
+// together. It reads BHP_CTA_Collision_Detector's pattern constant when that
+// class is present and falls back to the identical literal when it is not, so
+// load ORDER against the content engine is not a dependency either.
+require_once get_template_directory() . '/inc/affiliate-disclosure.php';
+// 1.19.418 — the store links inside the end-of-post related block
+// (CYCLE180-LD-BUILD-418, ruling 3, the approved Sturm tactic (b)). Loaded
+// AFTER blog-post-template.php because it calls that file's post→adventure
+// resolver and its eyebrow string, and after nothing else: the adventures
+// themselves come from bhp_get_series_adventures() in this file, which is
+// already defined by the time any template runs.
+require_once get_template_directory() . '/inc/related-books.php';
 // 1.19.262 — the product template (CYCLE165-LD-DIRECTION1-STEP3-PRODUCT),
 // step 3 of the same board build. Loaded AFTER header-offer.php for the same
 // reason step 2 is: this step is what makes the product page carry its own

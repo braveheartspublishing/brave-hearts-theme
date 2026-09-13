@@ -1993,6 +1993,81 @@
 	color: rgba(217, 164, 95, 0.3);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.417 — THE RELATED-CARD BUTTON IS CENTRED. `CYCLE180-LD-BUILD-417`.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ ANDREW SIGNORE, after the 1.19.416 push, third desktop screenshot,
+      verbatim: *"Also, choose your format isnt centered on those product
+      cards."* ⚠️ RELAYED through `chief-of-staff` in the 417 brief — ⛔ NOT
+      witnessed first-hand by the agent that wrote this block (Standing Rules
+      §9.2 rule 2).
+
+   ⭐⭐ HE IS DESCRIBING `align-self: flex-start`, AND THIS FILE'S OWN 1.19.415
+      BLOCK ALREADY NAMED THE RULE WITHOUT CONNECTING IT TO A DEFECT. The
+      winning declaration is `style.css`:
+
+          .woocommerce ul.products li.product .button {
+            align-self: flex-start; margin: 0 1.5rem 1.5rem; … }
+
+      ⭐ AND 1.19.286 DELIBERATELY LEFT IT ALONE, IN WRITING (style.css, the
+         ONE BUTTON, SIX CARDS block, defect 2): *"THAT RULE IS UNTOUCHED and
+         still governs every other `ul.products` surface — the related/upsell
+         rows on a product page, the search archive, the category archives."*
+      ⛔ THAT DECISION IS NOT BEING CALLED WRONG. It was correct for its own
+         scope: 1.19.286 was fixing the SHOP GRID and had no founder note about
+         the related rows. ⭐ It has one now, so the exception it consciously
+         carved out is closed for the related and upsell rows only.
+
+   ⛔ THE SHOP GRID, THE SEARCH ARCHIVE AND THE CATEGORY ARCHIVES ARE NOT
+      TOUCHED BY THIS RULE. Its selector names `div.product .related.products`
+      and `div.product .upsells.products`, both of which exist only inside a
+      single product page. ⭐ Everything 1.19.286 protected is still protected.
+
+   ⭐ THE MEASUREMENT, at an asserted innerWidth, on staging2:
+        1440 — card content 100→458 (centre 279); button 124→363 (centre 243.5)
+               ⇒ the button sat **35.7px LEFT of centre**. Now 0.
+         390 — the same defect, smaller: **15.6px left of centre**. Now 0.
+      ⛔ "At every width" is the brief's wording and is why this rule carries NO
+         MEDIA QUERY. The 1.19.415 related-card block above is `min-width:1024px`
+         because it is about height on desktop; being off-centre was never a
+         desktop-only fault and must not be fixed only there.
+
+   ⭐ `align-self` IS THE FIX AND THE `auto` MARGINS ARE THE BELT. `li.product`
+      is `display:flex; flex-direction:column`, so `align-self` is what actually
+      positions the button on the cross axis; the `auto` inline margins make the
+      same rule correct if a future change turns the card back into block flow.
+      ⛔ The button's WIDTH is not set here — it stays shrink-to-fit at 239px, so
+      no label is clipped and no card is widened.
+
+   ⛔ SPECIFICITY, COMPUTED RATHER THAN HOPED (`style.css` records that this
+      grid has lost specificity arguments before):
+        `.woocommerce ul.products li.product .button`                = (0,4,2)
+           4 classes: .woocommerce .products .product .button
+           2 elements: ul li
+        `.woocommerce div.product .related.products ul.products
+                                       li.product a.button`          = (0,7,4)
+           7 classes: .woocommerce .product .related .products
+                      .products .product .button
+           4 elements: div ul li a
+      ⭐ (0,7,4) beats (0,4,2) on class count alone, so this does not depend on
+         source order or on which stylesheet loads second.
+
+   ⛔⛔ THESE TWO TRIPLES WERE WRONG IN THE FIRST DRAFT OF THIS COMMENT — it
+      published (0,3,1) and (0,4,4), both under-counted — AND THE CORRECTION IS
+      RECORDED RATHER THAN QUIETLY APPLIED, because the wrong pair was wrong in
+      a way that still reached the right conclusion, which is the most durable
+      kind of mistake. ⭐ `tests/test-cycle180-build-417.php` §2.4a/§2.4b now
+      pin BOTH triples as CONTROLS on a specificity calculator, so the numbers
+      in this comment are re-derived by machine on every run instead of being
+      trusted because they are written down. That is what caught them. */
+.woocommerce div.product .related.products ul.products li.product a.button,
+.woocommerce div.product .upsells.products ul.products li.product a.button {
+	align-self: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+
 /* ---- 3. BEST VALUE badge separation, BOTH WIDTHS ------------------------ */
 
 /* PDP format card: the ribbon seats ON the card's top edge instead of

@@ -85,6 +85,39 @@ while (have_posts()): the_post(); ?>
 
     <?php
     /*
+     * ⭐ 1.19.418 (CYCLE180-LD-BUILD-418, founder ruling seal 1550, ⚠ RELAYED
+     *    through the Chief of Staff and NOT witnessed first-hand by the session
+     *    that wrote this line) — THE PER-POST AMAZON AFFILIATE DISCLOSURE.
+     *
+     * ⛔ IT SITS HERE, AFTER THE `if`/`else`, ON PURPOSE. The two header
+     *    branches order the title and the meta DIFFERENTLY: the field-note
+     *    branch renders eyebrow → H1 → deck → meta, the 1.19.260 branch renders
+     *    meta → eyebrow → H1. One insertion point inside each branch would have
+     *    put the disclosure above the headline in one of them. Placed after
+     *    both, it is "under the post title and meta" in BOTH orderings, which
+     *    is what the ruling asks for, and there is one call site rather than
+     *    two that can drift apart.
+     *
+     * ⛔ IT IS ABOVE THE FEATURED IMAGE, not below it. A 650px image between
+     *    the headline and the disclosure is a disclosure the reader meets after
+     *    the links, which defeats it.
+     *
+     * ⭐ `function_exists()` IS THE GATE, as it is for every other optional
+     *    include in this file: a partial deploy that lands single.php without
+     *    inc/affiliate-disclosure.php renders exactly what 1.19.417 rendered
+     *    instead of fatalling.
+     *
+     * The detection rule, the approved wording and the reason the footer
+     * disclosure is NOT replaced all live in `inc/affiliate-disclosure.php`.
+     * This file places; it does not decide.
+     */
+    if (function_exists('bhp_affiliate_disclosure_html')) {
+      echo bhp_affiliate_disclosure_html(get_post()); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in the helper
+    }
+    ?>
+
+    <?php
+    /*
      * 1.19.323 — the masthead featured image is now behind
      * bhp_blog_featured_image_on_single(), default TRUE. With no subscriber
      * this condition is exactly `has_post_thumbnail()`, which is what it was

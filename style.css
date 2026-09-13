@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.416
+Version: 1.19.419
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -2452,6 +2452,19 @@ body.search-results.woocommerce .woo-expedition-shell ul.products li.product img
 .guide-continuation { max-width: 1120px; margin: var(--section-space-sm) auto 0; padding: clamp(2rem,5vw,4rem); background: var(--expedition-parchment); }
 .guide-continuation__paths { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin: 1.5rem 0 3rem; }
 .guide-continuation__paths a { color: var(--expedition-forest); font-weight: 700; text-underline-offset: .2em; }
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.418 (CYCLE180-LD-BUILD-418, ruling 3) — the store links inside the
+ *    end-of-post block. Deliberately a plain list, not cards: the "Related
+ *    Field Notes" grid directly below is already a card grid, and two card
+ *    grids stacked is the visual form of the redundancy the founder ruled
+ *    against on 2026-08-31.
+ * ⛔ NO MEDIA QUERY — `flex-wrap` handles 390 and 1440 with one rule. See the
+ *    1.19.417 note on `book-formats.css`: a rule dropped inside a `min-width`
+ *    block silently does nothing on a phone.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+.guide-continuation__books-title { margin-top: 0; }
+.guide-continuation__books { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin: 1rem 0 3rem; padding: 0; list-style: none; }
+.guide-continuation__books a { color: var(--expedition-forest); font-weight: 700; text-underline-offset: .2em; }
 .guide-article-grid--related { grid-template-columns: repeat(4,minmax(0,1fr)); }
 .guide-article-grid--related .guide-article-card h3 { font-size: 1.35rem; }
 
@@ -4744,6 +4757,33 @@ article.single-post { max-width: 1120px; margin-inline: auto; padding-inline: va
 .post-header { max-width: 960px; margin-inline: auto; text-align: center; }
 .post-header__meta { color: var(--expedition-muted); font-family: var(--font-ui); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
 .post-header__title { color: var(--expedition-navy); }
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⭐ 1.19.418 (CYCLE180-LD-BUILD-418) — THE PER-POST AFFILIATE DISCLOSURE LINE.
+ *    Founder ruling seal 1550, ⚠ RELAYED, not witnessed first-hand.
+ *
+ * ⛔ NOT `.text-caption`. That utility is uppercase, which is right for a
+ *    four-word meta line and wrong for a 15-word sentence a reader has to
+ *    actually read. See `inc/affiliate-disclosure.php` for the full reason.
+ * ⛔ NO MEDIA QUERY, because the ruling says BOTH WIDTHS and the line is a
+ *    single flow paragraph inside the already-centred `.post-header`, which is
+ *    `max-width: 960px` here and full-bleed-minus-gutter on a phone. A rule
+ *    dropped inside a `min-width` block would silently do nothing at 390 —
+ *    the exact trap 1.19.417 recorded against the related-card centring.
+ * ⭐ `--expedition-muted` (#6f685b) on the page's parchment, NOT a lower-
+ *    contrast grey. Muted means secondary, not unreadable; a disclosure is a
+ *    legal statement that must survive being small.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+.bhp-affiliate-disclosure {
+  max-width: 62ch;
+  margin: var(--space-3) auto 0;
+  color: var(--expedition-muted);
+  font-family: var(--font-ui);
+  font-size: .8125rem;
+  font-style: italic;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: 0;
+}
 .post-header__image { max-height: 650px; border-radius: 2px; object-fit: cover; box-shadow: 0 24px 65px rgba(7,21,34,.14); }
 .post-content { margin-inline: auto; font-size: 1.18rem; }
 .post-footer { max-width: var(--container-narrow); margin-inline: auto; }
@@ -17983,7 +18023,50 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products {
      16px comes out of the cover well and 8px out of the shell padding above,
      which is the cheapest 24px on the card: a cover loses 7% of its height, and
      nothing else on the card loses anything. */
-  --bhp-cover-well: 230px;
+
+  /* ⛔⛔ SUPERSEDED 2026-09-13 BY 1.19.417 (`CYCLE180-LD-BUILD-417`): the value
+     is now 180px. ⭐ THE CORRECTION IS WRITTEN AT THE LINE RATHER THAN
+     ANNOTATED ELSEWHERE (Standing Rules §3, the 2026-09-06 method finding: an
+     annotation the reader does not reach is not a correction). The superseded
+     value is preserved struck immediately below and the paragraph above is
+     BYTE-UNTOUCHED, so the 1366x768 arithmetic that produced 230px stays
+     readable.
+
+         ~~--bhp-cover-well: 230px;~~
+
+     ⭐ WHY IT MOVED. Andrew Signore, after the 1.19.416 push, three desktop
+        screenshots, verbatim: *"Shop page CTA not above the fold."* ⚠️ RELAYED
+        through `chief-of-staff` in the 417 brief — ⛔ NOT witnessed first-hand
+        by the agent that wrote this block (Standing Rules §9.2 rule 2).
+
+     ⭐ MEASURED ON staging2 AT AN ASSERTED innerWidth/innerHeight, NOT CHOSEN.
+        The well moves the card and the button 1:1 — 230→200→180→165→150 gave
+        card heights 559→529→509→494→479 with all five cards equal at every
+        step. 180px is the value that buys the most height while leaving the
+        cover the largest element on the card.
+
+     ⛔ THIS IS THE ONLY DECLARATION THAT NEEDED TO CHANGE FOR THE COVER, AND
+        THAT IS THE POINT OF THE TOKEN. Both cover selectors — `li.product img`
+        AND `li.product .bhp-offer__composite`, the Complete Collection's
+        composite — read it, so the five cards shrink together and the row stays
+        equal-height by arithmetic rather than by luck.
+
+     ⛔⛔ THE VALUE IS EDITED IN PLACE AND IS NOT RE-DECLARED IN A LATER BLOCK,
+        AND THAT IS LOAD-BEARING. Two later definitions override this one and
+        BOTH must keep winning:
+          · `body.bhp-catalog-grid.bhp-visit-active … ul.products` = 158px,
+            which wins on specificity (0,4,2 against 0,3,2) at any source
+            position. Still lower than 180px, so a flagged session's card is
+            still the shorter of the two.
+          · the ≤640px block's 132px, which has the SAME specificity (0,3,2)
+            and wins ONLY on source order because it appears later in this
+            file. ⭐ Appending a new rule for this token instead of editing
+            this line would therefore have silently overridden the PHONE value.
+            ⛔ That is not a theory: it was the first thing tried in the browser
+            during this build and the phone card grew 324px → 372px. The phone
+            is byte-identical under the shipped change, re-measured at an
+            asserted 390x844. */
+  --bhp-cover-well: 180px;
 }
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.product img,
 body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-offer__composite {
@@ -18095,6 +18178,73 @@ body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-des
   font-size: 0.86rem;
   line-height: 1.3;
   color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.417 — THE VERTICAL RHYTHM BETWEEN THE COVER AND THE BUTTON.
+        `CYCLE180-LD-BUILD-417`.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ THE OTHER HALF OF THE COVER-WELL CHANGE ABOVE, AND IT IS DELIBERATELY THE
+      SMALLER HALF. The well gave 50px; this block gives 8px. ⛔ THE RATIO IS
+      RECORDED ON PURPOSE so that a future pass looking for height does not
+      start here: the cover is the lever, the gaps are the trim, and squeezing
+      the gaps further buys single-digit pixels while making the card read as
+      cramped. Measured: btnTop 685 → 635 from the well alone, → 627 with this
+      block, at an asserted 1440x900.
+
+   ⛔ EVERY VALUE IS A REDUCTION OF AN EXISTING DECLARATION. Nothing here is a
+      new element, a new claim, a hidden element or a changed string. ⛔ NO COPY
+      CHANGED IN THIS BUILD, at all, anywhere.
+
+   ⛔⛔ `min-width: 641px` IS THE EXACT COMPLEMENT OF THE ≤640px BLOCK THIS
+      STYLESHEET ALREADY USES, AND IT IS WHY THE PHONE IS UNTOUCHED. The two
+      can never both apply, so no rule here can quietly restyle the mobile
+      card's approved geometry. Andrew's note is about the desktop shop page;
+      the phone was measured before and after at an asserted 390x844 and is
+      IDENTICAL — card heights 324/324/324/333/380 and the first card's button
+      at y446–494 in both. ⭐ The brief permitted a phone change if the same
+      tightening helped; it did not help, so it was not taken.
+
+   ⛔ `.bhp-shop-collection-card__badge` IS NOT TOUCHED BY THIS BLOCK. Its
+      `margin-top: -2px; margin-bottom: 6px` is the 1.19.415 BEST VALUE
+      clearance and the 417 brief requires it kept. ⭐ A 3px reduction there was
+      built, measured at 1440x900 (it bought exactly 3px) and REVERTED before
+      shipping, because 3px is not a reason to erode a founder-reviewed
+      separation. The gap below the badge measures 14px at 1440/1920 and 12px at
+      390, before and after. */
+@media (min-width: 641px) {
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .woo-card__eyebrow {
+    /* was `0.4rem 0.9rem 0.1rem` (section C above). ⛔ The FONT-SIZE and
+       LETTER-SPACING are NOT touched: 0.75rem is the accessibility floor
+       `test-cro-iterate5.php` §5.3 enforces, and it outranks any pixel this
+       block wants. Only the outer margins move. */
+    margin: 0.25rem 0.9rem 0.05rem;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .star-rating {
+    /* was `4px auto 10px` (assets/css/book-formats.css, the 1.19.415 star row).
+       ⭐ `auto` inline margins are PRESERVED — they are what centres the row,
+       and this build is the one that centres things, not the one that stops. */
+    margin: 2px auto 6px;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-descriptor {
+    /* was `0 0.9rem 0.5rem` / `padding-bottom: 0.5rem` (the rule directly
+       above). ⛔ The 1px rule line under the descriptor is KEPT — it is what
+       separates the tagline from the format chips; only the air around it
+       comes in. */
+    margin: 0 0.9rem 0.35rem;
+    padding-bottom: 0.35rem;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .price {
+    /* ⛔ PADDING-TOP AND PADDING-BOTTOM ONLY, never the shorthand. The inline
+       padding is the card gutter and is shared with every other element on the
+       card; restating it here would fork it. */
+    padding-top: 0.2rem;
+    padding-bottom: 0.5rem;
+  }
+  body.bhp-catalog-grid .woo-expedition-shell ul.products li.product .bhp-shop-from-price {
+    margin-bottom: 0.4rem;
+  }
 }
 /* ⛔ THE ONE BIG PRICE. `.price` is WooCommerce's own element and stays the
    card's single figure; the chips below carry the OTHER format's figure and

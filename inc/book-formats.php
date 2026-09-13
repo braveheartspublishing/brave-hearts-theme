@@ -2689,6 +2689,109 @@ const BHP_SHOP_ATC_CLASS = 'bhp-shop-atc';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.418 — THE HARDCOVER ROW ON THE COMPLETE COLLECTION SHOP CARD,
+ *     PREPARED FOR REMOVAL AND SHIPPED KEPT. `CYCLE180-LD-BUILD-418` ruling 4,
+ *     against the measurement `CYCLE180-LD-417-F1`.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠ RELAYED through the Chief of Staff; NOT witnessed first-hand by the session
+ *   that wrote this (Standing Rules §9.2 rule 2).
+ *
+ * ⭐⭐ 1.19.419 (2026-09-13, `CYCLE180-LD-BUILD-419`) — THE DEFAULT IS NOW
+ *     `false` = REMOVE. ANDREW DECIDED IT — a founder ruling of 2026-09-13,
+ *     recorded before 1.19.418 shipped, which did not reach the 418 brief in
+ *     time; 418 therefore shipped the switch in the KEEP position and this
+ *     release moves it. ⚠ RELAYED through the Chief of Staff; NOT witnessed
+ *     first-hand by the session that wrote this (Standing Rules §9.2 rule 2).
+ *     This closes `CYCLE180-LD-417-F1`.
+ *
+ * ⛔ THE RULING IS POINTED AT, NOT QUOTED. Its wording lives in the private
+ *    carrier and in the build report `CYCLE180-LD-BUILD-419`; this repository
+ *    is public, so founder words do not travel here (Standing Rules §4.1, and
+ *    the precedent 1.19.418 set in `inc/affiliate-disclosure.php`).
+ *
+ * ⭐ NOTHING ELSE MOVED. The constant, the `defined()` guard, the filter and
+ *    the single call site are byte-identical to 1.19.418; only the boolean
+ *    changed. ⛔ NO CODE WAS DELETED — the row is one `define()` away from
+ *    coming back, with no deploy, which is the reason 418 built a switch
+ *    instead of an edit.
+ *
+ * ⛔ SUPERSEDED WORDING — preserved struck and dated rather than deleted, so a
+ *    reader arriving from the 1.19.418 report, from `CYCLE180-LD-417-F1`, or
+ *    from the test suite's §4.2 can see what changed and why. **Do not act on
+ *    the struck text.** The MEASUREMENT in it is still true and still the
+ *    reason the row was worth removing; only the decision it was waiting on has
+ *    since been made.
+ *
+ *    ~~⛔⛔ THE DEFAULT IS `true` = KEEP, AND THAT IS THE WHOLE POINT OF THE
+ *      CONSTANT. … ⛔ BUT REMOVING IT TAKES A LIVE SECONDARY PURCHASE OFFER OFF
+ *      A SELLING CARD. That is a commerce decision, it is Andrew's (§6), and
+ *      1.19.417 deliberately did not take it. This release builds the switch
+ *      and leaves it in the position that changes nothing.~~
+ *
+ * ⭐ THE MEASUREMENT THAT MADE IT WORTH DOING, CARRIED FORWARD UNCHANGED:
+ *    1.19.417 measured that dropping the "Prefer the hardcover? …" row moves
+ *    the shop grid's primary CTA from 675px to 614px at Andrew's real 1280x600
+ *    viewport — 61px, the single largest remaining gain on that page.
+ *
+ * ⛔ WHAT THIS FLIP DOES NOT DO, AND IT MATTERS MORE THAN THE FLIP: it removes
+ *    ONE ROW FROM ONE CARD. ⭐ NO WOOCOMMERCE DATA IS TOUCHED — no product, no
+ *    variation, no price, no stock, no coupon. The hardcover collection is
+ *    still a live, purchasable product and is still reachable by every other
+ *    path it has today: the PAIR card's own hardcover swap, the PDP format
+ *    selector, the Complete Collection landing page, and its own product URL.
+ *
+ * ⭐ FLIPPING IT IS ONE LINE AND DELETES NO CODE, which is this codebase's
+ *    house rule from `bhp_blog_rail_enabled()`: *"a switch that only travels
+ *    one way is not a switch."* ⭐ 1.19.419 TRAVELLED IT, AND IT TRAVELS BACK
+ *    THE SAME WAY. Either of these RESTORES the row without a deploy:
+ *
+ *      define( 'BHP_SHOP_CARD_HARDCOVER_ROW', true );    // wp-config / mu-plugin
+ *      add_filter( 'bhp_shop_card_hardcover_row', '__return_true' );
+ *
+ *    …and either of these drops it again, on an environment where the constant
+ *    has been set back to true:
+ *
+ *      define( 'BHP_SHOP_CARD_HARDCOVER_ROW', false );   // wp-config / mu-plugin
+ *      add_filter( 'bhp_shop_card_hardcover_row', '__return_false' );
+ *
+ * ⭐ THE CONSTANT IS `defined()`-GUARDED SO IT CAN BE SET FROM OUTSIDE THE
+ *    THEME. A constant that can only be changed by editing a theme file is a
+ *    code change wearing a flag's clothes; this one can be thrown in
+ *    `wp-config.php` or a one-line mu-plugin, per environment, with no deploy.
+ *
+ * ⛔ AND THE FILTER RUNS EVEN WHEN THE CONSTANT IS TRUE, so staging can be
+ *    flipped for a measurement without production inheriting it.
+ *
+ * ⛔ WHAT THIS DOES NOT TOUCH: the PAIR card's own hardcover swap, the PDP
+ *    format selector, the colouring line's `offer_upsell` string, and the
+ *    hardcover products themselves. It governs ONE row on ONE card. The
+ *    hardcover collection remains purchasable by every other path it has today.
+ */
+if ( ! defined( 'BHP_SHOP_CARD_HARDCOVER_ROW' ) ) {
+    define( 'BHP_SHOP_CARD_HARDCOVER_ROW', false );
+}
+
+/**
+ * Does the Complete Collection shop card carry its hardcover swap row?
+ *
+ * ⭐ 1.19.419 — the shipped default is now FALSE (Andrew's ruling; see the
+ *    block above). ⛔ THE `false` IN THE `defined()` TERNARY'S ELSE BRANCH IS
+ *    NOT A SECOND COPY OF THE DEFAULT — it is the answer for the impossible
+ *    case where this function is somehow reached before the `define()` above
+ *    ran. It is kept in step with the constant deliberately, so the two cannot
+ *    disagree about what "unset" means.
+ *
+ * @return bool True = keep the row. False = drop it (the shipped default).
+ */
+function bhp_shop_card_hardcover_row_enabled() {
+    $enabled = defined( 'BHP_SHOP_CARD_HARDCOVER_ROW' ) ? (bool) BHP_SHOP_CARD_HARDCOVER_ROW : false;
+
+    return (bool) apply_filters( 'bhp_shop_card_hardcover_row', $enabled );
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
  * ⛔⛔ 1.19.286 — IS THIS LOOP THE SHOP GRID? THE SCOPE GATE FOR ITEMS 210+211.
  * ═══════════════════════════════════════════════════════════════════════════
  *
@@ -3108,7 +3211,23 @@ function bhp_book_shop_collection_card($loop_end) {
         ?>
         <?php if ($bhp_cc_can_buy): ?>
           <?php
-          $bhp_cc_alt = ('paperback' === $collection['format'] && function_exists('bhp_book_hardcover_is_offerable') && bhp_book_hardcover_is_offerable())
+          /*
+           * ⭐ 1.19.418 — `bhp_shop_card_hardcover_row_enabled()` is the FIRST
+           *    term, so with the row switched off the hardcover collection data
+           *    is not even fetched. ⛔ The three conditions that were already
+           *    here are UNCHANGED and still all required; the new one only ever
+           *    makes the row LESS likely to render, never more.
+           *
+           * ⭐ 1.19.419 — THE DEFAULT IS NOW REMOVE, on Andrew's ruling. ⛔ THIS
+           *    LINE IS BYTE-UNTOUCHED BY THAT CHANGE: only the constant moved,
+           *    which is the entire reason 418 built a gate here instead of
+           *    deleting the block. See the constant's block at the head of this
+           *    file for the ruling, the measurement and the way back.
+           */
+          $bhp_cc_alt = (bhp_shop_card_hardcover_row_enabled()
+              && 'paperback' === $collection['format']
+              && function_exists('bhp_book_hardcover_is_offerable')
+              && bhp_book_hardcover_is_offerable())
               ? bhp_book_collection_data('hardcover')
               : null;
           ?>

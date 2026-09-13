@@ -261,9 +261,59 @@ c399_ok(
 	'1.7a the paperback smart-add form survives',
 	false !== strpos( $c399_loop, 'complete_paperback_smart' )
 );
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ⛔ CORRECTED 2026-09-13 (`CYCLE180-LD-BUILD-419`) — §1.7b ASSERTED THAT THE
+ *    HARDCOVER UPSELL ROW RENDERS. ANDREW HAS SINCE RULED IT REMOVED, SO THE
+ *    CORRECT ANSWER MOVED AND THIS ROW MOVES WITH IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ OBSERVED, NOT ANTICIPATED. The full staging sweep on 1.19.419 went from 9
+ *    non-zero suites to 10 and the newcomer was this file — 68 passes and this
+ *    single red row. It was investigated rather than waved through, which is
+ *    the only reason the correction is here and not in a later build's
+ *    "mysterious pre-existing failure" list.
+ *
+ * ⭐ THE RULING: a founder ruling of 2026-09-13 — the *"Prefer the hardcover?"*
+ *    row comes off the Complete Collection SHOP CARD. ⚠ RELAYED through the
+ *    Chief of Staff, NOT witnessed first-hand by the session that made this
+ *    edit (Standing Rules §9.2 rule 2). `BHP_SHOP_CARD_HARDCOVER_ROW` now
+ *    defaults to `false`.
+ *
+ * ⛔ THE RULING IS POINTED AT, NOT QUOTED. This repository is public and
+ *    founder words do not travel here (Standing Rules §4.1, and the precedent
+ *    1.19.418 set). Its wording lives in the private carrier and in the build
+ *    report `CYCLE180-LD-BUILD-419`.
+ *
+ * ⛔⛔ THIS IS NOT THE 417 DEFECT AND THE REMEDY IS DELIBERATELY DIFFERENT.
+ *     `test-cycle180-build-417.php` §0.4/§0.5 went red because TIME PASSED —
+ *     an equality on a version number, correctly replaced by a FLOOR. This row
+ *     went red because A DECISION CHANGED. ⭐ A floor would be exactly wrong
+ *     here: the assertion stays EXACT and is re-pointed at the new right
+ *     answer, so a build that silently brings the row back still goes red.
+ *
+ * ⛔ NOTHING ELSE IN THIS FILE IS TOUCHED, including §1.7a immediately above,
+ *    which still proves the card's real buy form survives — and which doubles
+ *    as the control for the assertion below: a `$c399_loop` that failed to
+ *    render would make an absence check pass for the wrong reason.
+ *
+ * **The superseded assertion is preserved immediately below rather than
+ *   deleted, so the movement stays visible:**
+ *
+ *   // SUPERSEDED 2026-09-13 by the founder ruling of that date (RELAYED)
+ *   c399_ok(
+ *   	'1.7b the hardcover upsell form survives',
+ *   	false !== strpos( $c399_loop, 'complete_hardcover_smart' )
+ *   );
+ *
+ * ⭐ THE ROW IS GONE BY RULING, NOT BY REGRESSION, AND IT IS RESTORABLE WITH
+ *    ONE `define()` AND NO DEPLOY. The switch, its filter and the row's markup
+ *    all still exist; `tests/test-cycle180-build-419.php` §1.3 proves the route
+ *    back actually travels, and §3.1 proves the hardcover collection is still a
+ *    live priced product reachable by every other path it has.
+ * ═══════════════════════════════════════════════════════════════════════════ */
 c399_ok(
-	'1.7b the hardcover upsell form survives',
-	false !== strpos( $c399_loop, 'complete_hardcover_smart' )
+	'1.7b ⛔ the hardcover upsell form is ABSENT from the shop card (1.19.419 ruling)',
+	false === strpos( $c399_loop, 'complete_hardcover_smart' )
 );
 
 // ═══════════════════════════════════════════════════════════════════════════

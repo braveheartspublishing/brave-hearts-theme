@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: f0b45b67c97180c416d0a7d359d42266
+    source-md5: fcd95ba35e979cc0a4ee76f44499edc1
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -1040,6 +1040,12 @@ object-position: 50% 22%;
 }
 .woocommerce div.product .woocommerce-product-rating .star-rating::before {
 	color: rgba(217, 164, 95, 0.3);
+}
+.woocommerce div.product .related.products ul.products li.product a.button,
+.woocommerce div.product .upsells.products ul.products li.product a.button {
+	align-self: center;
+	margin-left: auto;
+	margin-right: auto;
 }
 .bhp-format-card__badge {
 	top: auto;

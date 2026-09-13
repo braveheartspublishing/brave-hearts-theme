@@ -713,8 +713,103 @@ add_action('woocommerce_after_shop_loop_item_title', 'bhp_catalog_price_lead', 9
  * @since 1.19.350
  * @return void
  */
+/**
+ * ⭐⭐ 1.19.417 (`CYCLE180-LD-BUILD-417`) — THE PDP's RELATED AND UPSELL ROWS
+ *     JOIN THE UNHOOK, AND THIS IS THE PREDICATE THAT SAYS SO.
+ *
+ * ⭐ ANDREW SIGNORE, after the 1.19.416 push, verbatim: *"The bottom of the
+ *    product pages still have these very long product cards that dont fit on
+ *    the screen."* ⚠️ RELAYED through `chief-of-staff` in the 417 brief — ⛔ NOT
+ *    witnessed first-hand by the agent that wrote this function (§9.2 rule 2).
+ *
+ * ⛔⛔ HE IS DESCRIBING THIS FILE'S OWN KNOWN CARVE-OUT, AND THE NUMBERS MAKE IT
+ *     EXACT. `bhp_catalog_grid_context()` returns FALSE on `is_product()` —
+ *     first, by design — so the two proof hooks that 1.19.350 took OFF every
+ *     catalog card were left ON inside the PDP's related and upsell rows. The
+ *     1.19.350 block above records precisely why that was right at the time: the
+ *     related rows were out of scope and nobody had ruled on them.
+ *
+ * ⭐ MEASURED LIVE ON staging2 AT AN ASSERTED 1440x900, on
+ *    `/product/adventures-of-charlotte-and-henry-mount-everest-paperback/`:
+ *
+ *      related card                        = 687px   (brief's cap: ~650px)
+ *      section.related.products            = 773px   (against a 900px viewport)
+ *      card 1 (Mariana, id 333)  Kirkus YES, Amazon review YES
+ *      card 2 (The Amazon, id 18) Kirkus NO,  Amazon review NO
+ *
+ *    ⛔ AND THE COST IS THE WHOLE DIFFERENCE: the compact Kirkus pill is 29px
+ *       (+8px margin) and the compact review showcase is 142px — **179px**,
+ *       carried by ONE card, with the other card STRETCHED 179px of blank space
+ *       to match it. That is the same uneven-proof defect, with the same
+ *       arithmetic, that the 1.19.350 block above describes finding on `/shop/`.
+ *       Removing both puts the card at **509px** and the section at **594px**,
+ *       which fits a 900px screen with the heading.
+ *
+ * ⛔⛔ NOTHING IS DELETED, REWORDED OR HIDDEN. These are a REAL Kirkus line and
+ *     REAL Amazon customer reviews; §3 (never invent) and §9.1a (never rewrite a
+ *     word inside a quoted third-party statement) bind here exactly as they bind
+ *     above. ⭐ THE BLOCKS STAY ON THE PDP ITSELF and that was VERIFIED IN THE
+ *     RENDERED PAGE rather than assumed — on the Everest PDP, outside
+ *     `.related.products`: a `kirkus-credibility--series_note` at y1686 (48px)
+ *     and an `amazon-review-showcase--expanded` at y3930 (247px), both still
+ *     present after the change.
+ *
+ * ⭐ AND THE PROOF THAT WAS REMOVED WAS NOT EVEN THIS PAGE'S PROOF. The Everest
+ *    PDP's related card carried MARIANA's Kirkus pill and MARIANA's review. A
+ *    parent reading about Everest was being shown a different book's evidence in
+ *    a card whose job is a link.
+ *
+ * ⛔ THE BRIEF OFFERED "keep the KIRKUS REVIEWS pill and one short line" AS AN
+ *    ALTERNATIVE AND IT IS RECORDED AS CONSIDERED AND REJECTED. Keeping the 29px
+ *    pill leaves the card at ~545px — under the cap — but it re-creates the
+ *    precise defect the 1.19.350 block spent two paragraphs on: card 1 with a
+ *    proof line and card 2 without, both forced to card 1's height. ⭐ Dropping
+ *    both is the choice that makes the two cards actually equal instead of
+ *    equalised, and it is the choice this codebase already made once, on the
+ *    same components, for the same reason.
+ *
+ * ⛔ WHY A WHOLE-REQUEST `remove_action` IS SAFE HERE. Both callbacks are hung
+ *    on `woocommerce_after_shop_loop_item_title`, which fires ONLY inside
+ *    `content-product.php` — the shop loop. On a single product page the only
+ *    loops that run are the related, upsell and cross-sell rows. There is no
+ *    other consumer on the request to lose, and the PDP's own proof blocks are
+ *    emitted by different hooks entirely (`functions.php` priorities 34 and the
+ *    trust row), which is why they survive above.
+ *
+ * @since 1.19.417
+ * @return bool
+ */
+function bhp_pdp_loop_row_context() {
+    if (is_admin() || !function_exists('is_product')) {
+        return false;
+    }
+
+    /**
+     * Whether the current request is a single product page, whose only
+     * `ul.products` loops are the related / upsell / cross-sell rows.
+     *
+     * ⭐ A TEST SEAM, exactly like `bhp_catalog_grid_context`'s, and for the
+     *    same reason: a WP-CLI suite has no real query to make `is_product()`
+     *    true for, so without this the suite could only ever reach one branch.
+     *
+     * @since 1.19.417
+     * @param bool $is
+     */
+    return (bool) apply_filters('bhp_pdp_loop_row_context', is_product());
+}
+
 function bhp_catalog_unhook_card_proof() {
-    if (!bhp_catalog_grid_context()) {
+    /*
+     * ⭐ 1.19.417: the condition widens from ONE context to TWO, and the two are
+     *    deliberately separate predicates rather than one loosened one.
+     *    `bhp_catalog_grid_context()` MUST keep returning false on `is_product()`
+     *    — the 1.19.350 block above records that giving the PDP rows the shop
+     *    control put two live add-to-cart buttons on the page. ⛔ Widening that
+     *    predicate would have shipped the defect it was written to prevent. This
+     *    unhook is the only behaviour the two contexts share, so it is the only
+     *    place they are ORed.
+     */
+    if (!bhp_catalog_grid_context() && !bhp_pdp_loop_row_context()) {
         return;
     }
     remove_action('woocommerce_after_shop_loop_item_title', 'bhp_woocommerce_loop_kirkus_badge', 15);

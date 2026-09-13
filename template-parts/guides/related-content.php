@@ -113,6 +113,37 @@ $book_urls = [
     <?php if (in_array('Gift Buyers', $data['audiences'] ?? [], true)): ?><a href="<?php echo esc_url(home_url('/gift-buyers-guide/')); ?>"><?php esc_html_e('Shopping for a meaningful gift?', 'brave-hearts'); ?></a><?php endif; ?>
     <?php if (in_array('Organizations', $data['audiences'] ?? [], true)): ?><a href="<?php echo esc_url(home_url('/organizations-community-reading-kit/')); ?>"><?php esc_html_e('Planning a reading program?', 'brave-hearts'); ?></a><?php endif; ?>
   </div>
+  <?php
+  /*
+   * ⭐ 1.19.418 (CYCLE180-LD-BUILD-418, ruling 3 — the approved Sturm tactic
+   *    (b); ⚠ RELAYED through the Chief of Staff, NOT witnessed first-hand).
+   *
+   * THE STORE HALF of this block. The sibling-post half is the grid below and
+   * is BYTE-UNTOUCHED by 1.19.418. Every fact here — which books, their titles,
+   * their URLs — is resolved in `inc/related-books.php` from the guide registry
+   * and from live product records. ⛔ NO ID, SKU OR URL IS TYPED, in that file
+   * or in this one. This template draws; it does not decide.
+   *
+   * ⛔ IT SITS INSIDE THE EXISTING ASIDE ON PURPOSE. A separate box under a
+   *    block that already lists related things is the exact redundancy Andrew
+   *    ruled out on 2026-08-31, quoted in full at the head of this file.
+   *
+   * ⭐ `function_exists()` gates both calls, as everywhere else in this theme:
+   *    a partial deploy that lands this template without the new include
+   *    renders exactly what 1.19.417 rendered.
+   */
+  $bhp_rb = function_exists('bhp_related_books_for_post') ? bhp_related_books_for_post($post) : [];
+  $bhp_rb_heading = ($bhp_rb && function_exists('bhp_related_books_heading')) ? bhp_related_books_heading(count($bhp_rb)) : '';
+  ?>
+  <?php if ($bhp_rb && $bhp_rb_heading): ?>
+    <h3 class="guide-continuation__books-title"><?php echo esc_html($bhp_rb_heading); ?></h3>
+    <ul class="guide-continuation__books">
+      <?php foreach ($bhp_rb as $bhp_book): ?>
+        <?php /* The anchor text IS the product's own title. Nothing is added to it. */ ?>
+        <li><a href="<?php echo esc_url($bhp_book['url']); ?>"><?php echo esc_html($bhp_book['title']); ?></a></li>
+      <?php endforeach; ?>
+    </ul>
+  <?php endif; ?>
   <?php if ($related): ?>
     <h3><?php esc_html_e('Related Field Notes', 'brave-hearts'); ?></h3>
     <div class="guide-article-grid guide-article-grid--related">
