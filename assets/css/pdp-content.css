@@ -196,3 +196,223 @@
 		margin-bottom: 0.75rem;
 	}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.414 (`CYCLE180-LDB-10`, founder seal 1486 note 2) — ON THE PHONE,
+      THE LOOK-INSIDE RAIL SAT 4,000 PIXELS BELOW THE THING IT SELLS.
+   ---------------------------------------------------------------------------
+   ⛔ THE FOUNDER'S OWN MEASUREMENT, and it is the whole brief: at 390 the
+      bundle CTA `div.bhp-offer--product` and the rail
+      `div.bhp-pdp-left--product` are about 4,000px apart. Reproduced live on
+      staging2 1.19.413 with `window.innerWidth` asserted at 390:
+
+        .bhp-offer--product      order 8    top  907  bottom 1473
+        .bhp-printed-for-you     order 8    top 1501
+        .bhp-product-links       order 8    top 1937
+        .bhp-activity-book-note  order 8    top 2029
+        .product_meta            order 8    top 2243
+        .woocommerce-tabs        order 8    top 2363
+        .related.products        order 8    top 4058
+        .final-cta               order 8    top 5005
+        .bhp-pdp-left            order 10   top 5412     <- 3,939px of gap
+
+   ⛔⛔ THE TRAP, AND IT IS WHY THE OBVIOUS ONE-CHARACTER FIX IS WRONG.
+      Moving `.bhp-pdp-left` from `order: 10` to `order: 9` changes NOTHING
+      AND CAN ONLY MAKE THINGS WORSE: 9 and 10 are both "after every `order: 8`
+      sibling", and there are eight of them. The rail would land in exactly the
+      same place, having spent a version number to do it.
+      ⭐ The gap is not caused by the value `10`. It is caused by the rail being
+      the ONLY named slot below the DEFAULT BUCKET, which every unnamed block
+      falls into.
+
+   ⭐ THE FIX. Inside the colouring scope only, the default bucket moves from
+      8 to 9 and slot 8 is reserved for exactly three blocks, which then sort
+      among themselves in DOM order:
+
+        8   .bhp-look-inside__note   (DOM 2nd)   <- pinned so it does NOT move
+        8   .bhp-offer--product      (DOM 8th)   <- the CTA, its own slot
+        8   .bhp-pdp-left            (DOM 13th)  <- the rail, directly under it
+        9   everything else, in its existing relative order
+
+      ⭐ The rail is ALREADY the DOM sibling that follows `.product_meta`, so
+        nothing here reverses reading order relative to source; it only stops
+        eight full-width bands from cutting in front of it.
+
+   ⛔⛔ WHY THE SCOPE CLASS, AND WHY THIS IS NOT OVER-ENGINEERING. The order
+      block in `product-template.css` is SHARED BY EVERY PRODUCT PAGE, and the
+      same defect is present on the chapter books and is LARGER there
+      (Mariana PB 333 at 390: CTA 4050-4616, rail 10496 — 5,880px). The 414
+      brief requires the chapter-book PDPs to be UNCHANGED at both widths, so
+      the shared rule cannot be the thing that is edited.
+      ⭐ `bhp-colouring-pdp` is emitted by `bhp_body_classes()` off the
+      colouring REGISTRY, not off an id. See the block at functions.php.
+      ⚠ THE CHAPTER-BOOK GAP IS A REAL LIVE DEFECT THAT THIS BUILD DELIBERATELY
+      DOES NOT TOUCH. It is raised as `CYCLE180-LDB-11` for Andrew, because
+      moving eight bands on three selling pages is a layout decision, not a
+      bug fix, and nobody reviewing "fix the colouring page" would expect it.
+
+   ⛔ THE SPECIFICITY IS ENGINEERED, NOT ACCIDENTAL, AND IT IS THE REASON SLOTS
+      1-7 ARE PROVABLY UNTOUCHED:
+
+        html body.woocommerce.bhp-colouring-pdp div.product > *      (0,3,3)
+        body.single-product.woocommerce div.product > *              (0,3,2)  <- beaten
+        ...div.product .bhp-product-value-prop__age { order: 4 }     (0,4,2)  <- WINS
+        ...div.product > .summary > .product_title  { order: 3 }     (0,5,2)  <- WINS
+
+      Equal class count, more elements, so the scoped default beats the
+      unscoped default; fewer classes, so every NAMED slot rule still beats the
+      scoped default. ⭐ THAT ORDERING HOLDS WITHOUT DEPENDING ON WHICH SHEET
+      LOADS FIRST, which is the point — `pdp-content.min.css` does currently
+      load after `product-template.min.css` (verified live), but a fix that
+      relies on enqueue order is one `wp_enqueue_style` argument away from
+      silently reverting.
+
+      ⚠ THE BINDING CASE IS THE AGE PILL AT (0,4,2), NOT THE TITLE. ⭐ The
+      numbers above are COMPUTED BY THE SUITE (`test-cycle180-build-414.php`
+      §2.7) rather than counted by eye, and that is not ceremony: the first
+      draft of this comment recorded the title as (0,4,2) because `.summary`
+      was missed in the count. The arithmetic was still sound — the margin is
+      one class either way — but a hand-counted specificity in a comment about
+      specificity is exactly the thing that should not be trusted.
+
+   ⚠ ONE KNOWN INTERACTION, RECORDED RATHER THAN GUESSED AT.
+      `product-template.css` gives `.bhp-product-guarantee` an explicit
+      `order: 8` at (0,4,2), which OUTRANKS the scoped default. That block does
+      not render on the colouring PDP — it is absent from the live element list
+      captured above — so it is not a live issue. If it is ever added to this
+      surface it will land inside the reserved slot 8, and this comment is
+      where the next reader finds out why.
+
+   ⛔ DESKTOP IS NOT TOUCHED. Every rule below is inside `max-width: 600px`,
+      and the 901px grid placement in `style.css`
+      (`.woocommerce div.product > .bhp-pdp-left { grid-column: 1; grid-row: 2 }`)
+      is not edited by this build.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.416 (`CYCLE180-LDB-11`, founder seal 1497) — THE 1.19.414 MOVE IS
+      WIDENED FROM THE COLOURING PDP TO EVERY PRODUCT PAGE THAT HAS A RAIL.
+   ---------------------------------------------------------------------------
+   ⛔ ANDREW'S RULING, VERBATIM: "Apply the same move to all pages for the
+      build." 1.19.414 fixed the colouring PDP and RAISED `CYCLE180-LDB-11`
+      rather than absorbing it, on the stated reasoning that moving eight bands
+      on three selling pages is a layout decision and not a bug fix. He has now
+      made that decision. This block is the decision applied — the SAME move,
+      the SAME three reserved slots, the SAME specificity argument, with the
+      colouring-only scope removed.
+
+   ⭐ THE DEFECT IT CLOSES, MEASURED ON staging2 1.19.415 AT AN ASSERTED
+      `window.innerWidth` OF 390, ALL SEVEN URL STATES, BEFORE THIS BUILD:
+
+        URL state              buy box bottom    rail top    distance
+        Mariana   PB (333)          951           10496       9,545
+        Mariana   HC (333 ?hc)      974           10519       9,545
+        Everest   PB (15)           913            8732       7,819
+        Everest   HC (15 ?hc)       936            8755       7,819
+        Amazon    PB (18)           869            7900       7,031
+        Amazon    HC (18 ?hc)       892            7922       7,030
+        colouring    (19020)        775            1501         726   <- 1.19.414
+
+      ⚠ "buy box bottom" is `.bhp-formats` — the format cards, the ADD
+        PAPERBACK/HARDCOVER button and the express row. On Mariana the bundle
+        CTA `.bhp-offer--product` also sits mid-page, and the gap THAT block
+        had to the rail is the figure `CYCLE180-LDB-11` was registered with:
+        5,880px (CTA 4050-4616, rail 10496). Both numbers describe the same
+        defect from different anchors.
+
+      ⚠⚠ DO NOT READ "the rail's gap from the block directly above it" AS THE
+        DEFECT. On Everest and Amazon the rail is the LAST BLOCK ON THE PAGE,
+        so that gap is an ordinary 27-28px margin and looks healthy. The defect
+        is the distance from the BUY BOX: the rail sat 7,000-9,500px down,
+        below the compare table, the trust row, Kirkus, the review invite, the
+        learn block, printed-for-you, the links, the activity note, the meta,
+        the review section, the tabs, the upsell, related products and the
+        final CTA. A parent on a phone never reached it.
+
+   ⛔⛔ WHY THE SELECTOR IS `html body.single-product.woocommerce` AND NOT
+      SIMPLY THE 1.19.414 RULE WITH THE CLASS DELETED. Deleting
+      `.bhp-colouring-pdp` drops the scoped default from (0,3,3) to (0,2,3),
+      which LOSES to the unscoped default in `product-template.css` at (0,3,2)
+      on class count. The rule would silently do nothing and the build would
+      ship a no-op that reviews as correct. `.single-product` replaces the
+      colouring class ONE FOR ONE, so the class count is preserved and every
+      specificity relation 1.19.414 engineered still holds, unchanged:
+
+        html body.single-product.woocommerce div.product > *        (0,3,3)
+        body.single-product.woocommerce div.product > *             (0,3,2)  <- beaten
+        ...div.product .bhp-product-value-prop__age  { order: 4 }   (0,4,2)  <- WINS
+        ...div.product > .summary > .product_title   { order: 3 }   (0,5,2)  <- WINS
+        ...div.product > .bhp-pdp-left               { order: 10 }  (0,4,2)  <- beaten by
+                                   the reserved rule below, which is (0,4,3)
+
+      ⭐ SLOTS 1-7 ARE THEREFORE PROVABLY UNTOUCHED AND THE FIRST SCREEN DOES
+        NOT MOVE — gallery 1, cue 2, title 3, age pill 4, format cards / price
+        / add-to-cart 5, Amazon reviews 6, hook 7. That claim is verified live
+        at 390 on all seven URL states before and after, not inferred from this
+        comment; the specificity numbers are COMPUTED by
+        `test-cycle180-build-416.php` rather than counted by eye, for the
+        reason 1.19.414 recorded when a hand count got one of them wrong.
+
+   ⭐ WHY NO NEW BODY CLASS WAS MINTED, WHICH THE BRIEF OFFERED AS THE
+      ALTERNATIVE. THIS SHEET IS ALREADY SCOPED BY ITS ENQUEUE.
+      `bhp_pdp_enqueue_content_css()` in `inc/book-formats.php` loads
+      `pdp-content.css` only where `bhp_pdp_has_left_column()` is true — that
+      is, only on a page that actually renders `.bhp-pdp-left`. A page with no
+      rail downloads no rule and cannot be reordered by one. The Adventure
+      Activity Book (833) is the live proof: no rail, sheet not enqueued,
+      geometry identical before and after at both widths. A new body class
+      would have duplicated a predicate that already exists — and two copies of
+      a predicate is two places for it to go wrong.
+
+   ⚠ `.bhp-product-guarantee` IS NOT AFFECTED, AND 1.19.414's WARNING ABOUT IT
+      IS RESOLVED HERE RATHER THAN CARRIED FORWARD. 414 recorded that
+      `product-template.css` gives it `order: 8` at (0,4,2), which outranks the
+      scoped default, and warned it would land inside the reserved slot if it
+      ever rendered on the surface. ⭐ IT CANNOT. `format-cards.php:1394` emits
+      it INSIDE `.bhp-formats`, and `.bhp-formats` is `display: grid` at this
+      breakpoint, NOT `display: contents` — so the guarantee is never promoted
+      into the grid of `div.product` and its `order: 8` refers to a different
+      formatting context entirely. Checked in the markup, and confirmed live:
+      the block is absent from the flattened grid-item list on all seven URL
+      states. No rule is written for it because none is needed.
+
+   ⛔ DESKTOP IS NOT TOUCHED. Every rule below is inside `max-width: 600px`. At
+      1440 `.summary` and `.bhp-media-gallery--hero` generate ordinary boxes,
+      every computed `order` is 0, and the 901px grid placement in `style.css`
+      is not edited by this build. Fingerprinted at 1440 on all seven URL
+      states before and after.
+
+   ⛔ SUPERSEDED 2026-09-13 — the 1.19.414 selectors, preserved struck rather
+      than deleted so the movement stays visible. They were CORRECT for their
+      brief, which required the chapter-book PDPs to be unchanged:
+
+        html body.woocommerce.bhp-colouring-pdp div.product > *,
+        html body.woocommerce.bhp-colouring-pdp div.product > .summary > *,
+        html body.woocommerce.bhp-colouring-pdp div.product > .bhp-media-gallery--hero > *
+            { order: 9 }
+
+        html body.woocommerce.bhp-colouring-pdp div.product > .bhp-media-gallery--hero > .bhp-look-inside__note,
+        html body.woocommerce.bhp-colouring-pdp div.product > .summary > .bhp-offer--product,
+        html body.woocommerce.bhp-colouring-pdp div.product > .bhp-pdp-left
+            { order: 8 }
+
+      ⭐ THE COLOURING PDP IS NOT REGRESSED BY THE WIDENING. It is a
+        `body.single-product` too, so it matches the new rule at identical
+        specificity with identical slot assignments, and its measured geometry
+        at 390 is unchanged: note 856, CTA 907-1473, rail 1501.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+
+	html body.single-product.woocommerce div.product > *,
+	html body.single-product.woocommerce div.product > .summary > *,
+	html body.single-product.woocommerce div.product > .bhp-media-gallery--hero > * {
+		order: 9;
+	}
+
+	html body.single-product.woocommerce div.product > .bhp-media-gallery--hero > .bhp-look-inside__note,
+	html body.single-product.woocommerce div.product > .summary > .bhp-offer--product,
+	html body.single-product.woocommerce div.product > .bhp-pdp-left {
+		order: 8;
+	}
+}

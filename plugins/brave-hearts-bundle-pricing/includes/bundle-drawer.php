@@ -465,8 +465,43 @@ function bhp_bundle_drawer_assets() {
 					: 0,
 				'anyThreeActive'   => function_exists( 'bhp_bundle_colouring_policy' )
 					&& 'any-three' === bhp_bundle_colouring_policy(),
-				'colouringIds'     => function_exists( 'bhp_colouring_product_ids' )
-					? array_values( array_map( 'intval', bhp_colouring_product_ids() ) )
+				/*
+				 * ⭐⭐ 1.8.92 — BOTH IDs PER TITLE, AND THE REASON IS WHAT THE
+				 *     STORE API PUTS IN `item.id`.
+				 *
+				 * ⛔ `bundle-drawer.js` tests `colouringIds.indexOf(item.id)`.
+				 *    In the Store API cart response `id` is the VARIATION id
+				 *    for a variation line and the PRODUCT id for a simple one.
+				 *    Sending only parents would make every colouring line on a
+				 *    variable shape invisible to the drawer — it would be
+				 *    counted as an UNRELATED item, which is the one thing
+				 *    `colouringIdsForUnrelated` exists to prevent, and the
+				 *    shopper would be told their order does not qualify for
+				 *    shipping progress it has in fact earned.
+				 *
+				 * ⭐ SENDING BOTH IS SAFE BECAUSE THIS IS AN ALLOWLIST built
+				 *    from the SKU catalogue. It can only ever contain ids the
+				 *    colouring line already resolved, so a parent id that can
+				 *    never appear as a cart-line id is inert rather than
+				 *    wrong. On today's simple shape the two are equal and
+				 *    `array_unique` collapses them, so the payload is
+				 *    byte-identical to 1.8.91 on both environments.
+				 */
+				'colouringIds'     => function_exists( 'bhp_colouring_identity_map' )
+					? array_values(
+						array_unique(
+							call_user_func(
+								function () {
+									$ids = array();
+									foreach ( bhp_colouring_identity_map() as $identity ) {
+										$ids[] = (int) $identity['parent'];
+										$ids[] = (int) $identity['buy'];
+									}
+									return array_filter( $ids );
+								}
+							)
+						)
+					)
 					: array(),
 			'shipRowLabel'        => (string) apply_filters( 'bhp_bundle_drawer_ship_row_label', 'Shipping' ),
 			'shipRowPickupLabel'  => (string) apply_filters( 'bhp_bundle_drawer_ship_row_pickup_label', '' ),

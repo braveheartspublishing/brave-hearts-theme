@@ -147,9 +147,118 @@ foreach ( $product_ids as $pid ) {
 bhp_vp_assert( count( $colouring ) >= 1, sprintf( '§2.1 at least one colouring product resolves here (found %d: %s)', count( $colouring ), implode( ',', $colouring ) ), $failures, $passes );
 bhp_vp_assert( count( $chapter ) >= 1, sprintf( '§2.2 at least one non-colouring product to regression-check (found %d)', count( $chapter ) ), $failures, $passes );
 
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.413 (`CYCLE180-LDB-1`, closing `CYCLE180-LDR-1`) — §2.3 READ THE
+ *     SKU OFF THE **PARENT**, AND THE PARENT OF A VARIABLE SHAPE HAS NONE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED LINES, PRESERVED VERBATIM so the movement is visible and
+ *    is not re-derived:
+ *
+ *      $sku = wc_get_product( $pid ) ? wc_get_product( $pid )->get_sku() : '';
+ *      bhp_vp_assert( '9798996810840' === $sku, ... );
+ *
+ * ⭐ WHAT WAS ACTUALLY WRONG, and it is not "the SKU value changed". `$pid`
+ *    comes from `bhp_colouring_product_ids()`, which since plugin 1.8.92 is
+ *    DELIBERATELY THE PARENT. A variable parent created by the Bookvault
+ *    portal carries NO SKU at all, so `get_sku()` returned `''` and the
+ *    assertion failed on an EMPTY value rather than a wrong one.
+ *
+ *    ⭐ OBSERVED, not inferred — staging2, 2026-09-12, `wp eval`:
+ *         19020  type=variable   sku=[]                <- the parent
+ *         19021  type=variation  sku=[TEST000000001]   <- the buy record
+ *
+ * ⛔ IT WOULD HAVE FAILED IDENTICALLY ON PRODUCTION with the real ISBN on the
+ *    variation. This is a TEST defect, not a data defect, and it would have
+ *    turned the whole suite red the moment the migration landed.
+ *
+ * ⭐ THE FIX IS THE IDENTITY SPLIT 1.8.92 ALREADY SHIPPED: price, stock and
+ *    SKU come from the BUY record; permalink, title, thumbnail and archive
+ *    identity from the PARENT. `bhp_colouring_buy_ids()` is the accessor the
+ *    plugin documents for exactly this. On a SIMPLE product parent and buy are
+ *    the same record, so 618 and 4065 are unaffected line for line.
+ *
+ * ⛔ THE EXPECTED VALUE IS READ FROM THE CATALOGUE, NOT RE-HARDCODED. The old
+ *    line pinned the literal `'9798996810840'` in a second place; the
+ *    catalogue row (`bhp_colouring_catalog()`) already owns that string AND
+ *    its `sku_aliases`, and `bhp_colouring_product_ids()` resolves through
+ *    exactly that list. A test that re-states the value cannot notice when the
+ *    catalogue changes it.
+ *
+ * ⚠️ AND THE HONEST PART: this assertion is only MEANINGFUL on an environment
+ *    whose colouring record is resolved BY one of those SKUs. Where the id
+ *    arrived through the documented `bhp_colouring_product_ids` filter instead
+ *    — every test-injected environment, and staging2 while the migration
+ *    rehearsal's mu-plugin is installed — there is no canonical SKU to find
+ *    and asserting one would be asserting a fact about a fixture. That case
+ *    SKIPS LOUDLY. ⛔ It does not silently pass, and it does not fail.
+ */
+$vp_catalog = function_exists( 'bhp_colouring_catalog' ) ? bhp_colouring_catalog() : array();
+
 foreach ( $colouring as $pid ) {
-	$sku = wc_get_product( $pid ) ? wc_get_product( $pid )->get_sku() : '';
-	bhp_vp_assert( '9798996810840' === $sku, sprintf( '§2.3 colouring id %d carries the canonical SKU (got "%s")', $pid, $sku ), $failures, $passes );
+	$slug = bhp_colouring_slug_for_product( $pid );
+
+	/* The BUY record — the variation on a variable shape, the product itself on a simple one. */
+	$buy = (int) $pid;
+	if ( function_exists( 'bhp_colouring_buy_ids' ) ) {
+		$vp_buy_ids = bhp_colouring_buy_ids();
+		if ( isset( $vp_buy_ids[ $slug ] ) && (int) $vp_buy_ids[ $slug ] > 0 ) {
+			$buy = (int) $vp_buy_ids[ $slug ];
+		}
+	}
+
+	/* Every SKU this catalogue row is allowed to resolve by, canonical first. */
+	$vp_expected = array();
+	if ( isset( $vp_catalog[ $slug ]['sku'] ) && '' !== trim( (string) $vp_catalog[ $slug ]['sku'] ) ) {
+		$vp_expected[] = trim( (string) $vp_catalog[ $slug ]['sku'] );
+	}
+	if ( isset( $vp_catalog[ $slug ]['sku_aliases'] ) ) {
+		foreach ( (array) $vp_catalog[ $slug ]['sku_aliases'] as $vp_alias ) {
+			$vp_alias = trim( (string) $vp_alias );
+			if ( '' !== $vp_alias ) {
+				$vp_expected[] = $vp_alias;
+			}
+		}
+	}
+
+	/* Does this environment actually CARRY one of those SKUs, or was the id injected? */
+	$vp_resolved_by_sku = 0;
+	if ( function_exists( 'wc_get_product_id_by_sku' ) ) {
+		foreach ( $vp_expected as $vp_candidate ) {
+			$vp_resolved_by_sku = (int) wc_get_product_id_by_sku( $vp_candidate );
+			if ( $vp_resolved_by_sku > 0 ) {
+				break;
+			}
+		}
+	}
+
+	$vp_buy_product = wc_get_product( $buy );
+	$sku            = $vp_buy_product ? (string) $vp_buy_product->get_sku() : '';
+
+	if ( empty( $vp_expected ) || $vp_resolved_by_sku < 1 ) {
+		printf(
+			"SKIP  §2.3 colouring id %d / buy id %d — this environment resolves no catalogue SKU (%s); the id came from the `bhp_colouring_product_ids` filter, so there is no canonical SKU to assert. Buy record reads \"%s\".\n",
+			(int) $pid,
+			(int) $buy,
+			$vp_expected ? implode( ', ', $vp_expected ) : 'catalogue row has no sku',
+			$sku
+		);
+		continue;
+	}
+
+	bhp_vp_assert(
+		in_array( $sku, $vp_expected, true ),
+		sprintf(
+			'§2.3 colouring parent %d carries the canonical SKU on its BUY record %d (expected one of %s, got "%s")',
+			(int) $pid,
+			(int) $buy,
+			implode( '|', $vp_expected ),
+			$sku
+		),
+		$failures,
+		$passes
+	);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

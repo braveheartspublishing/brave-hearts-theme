@@ -1809,3 +1809,203 @@
 		margin: 0 0 2px;
 	}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.415 (`CYCLE180-LD-BUILD-415`, Andrew's notes — founder seals 1492
+      and 1493). THREE CARD DEFECTS HE FOUND BY LOOKING AT THE PAGE, FIXED
+      FROM MEASURED NUMBERS RATHER THAN FROM TASTE.
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ⭐ EVERY NUMBER BELOW WAS MEASURED IN A REAL BROWSER ON staging2 BEFORE IT
+      WAS CHANGED, at an `innerWidth` ASSERTED IN-PAGE (1440x900 and 390x844),
+      not estimated from the source. The "before" column is observation.
+
+   ─────────────────────────────────────────────────────────────────────────
+   1. THE RELATED-PRODUCT CARD DID NOT FIT ON ONE SCREEN.
+   ─────────────────────────────────────────────────────────────────────────
+   Andrew: the cards "take up a full scroll to see the whole card".
+
+   ⭐ MEASURED AT 1440x900: `li.product` = **805px** tall and the whole
+      `section.related.products` = **905px** — against a 900px viewport. The
+      section was LITERALLY taller than the screen, so no scroll position
+      existed from which a whole card was visible. That is why this is a
+      defect and not a preference.
+
+      Where the 805px went: cover **340px** · title 58 · price 51 · eyebrow
+      21 (+22.4 margin-top) · descriptor 23 · format prices 26 · button 48
+      (+24 margin-bottom) · ages row margin-bottom 22.5.
+
+   ⭐ THE COVER IS THE ONE BIG LEVER AND IT IS TAKEN FIRST: 340px -> 232px.
+      `object-fit: contain` is inherited from the rule above, so the artwork
+      is SCALED, never cropped — no part of any cover is lost. The rest is
+      spacing that was tuned for a taller card.
+
+   ⛔ DESKTOP ONLY, AND THE MEDIA QUERY IS THE POINT. At 390 the card is the
+      full width of the phone and the cover is the thing a parent is actually
+      looking at; shrinking it there would fix a complaint nobody made and
+      damage the one view that works. Andrew's note is about desktop
+      ("a full scroll"), so the phone layout is left EXACTLY as measured
+      (card 829px, cover 340x318) and is deliberately untouched.
+
+   ─────────────────────────────────────────────────────────────────────────
+   2. THE REVIEW STAR ROW — LEFT-ALIGNED, SMALL, AND DARK GREEN.
+   ─────────────────────────────────────────────────────────────────────────
+   ⛔ THE STARS WERE NEVER STYLED BY THIS THEME AT ALL. There is no
+      `.star-rating` rule anywhere in the theme before this block — the row
+      renders in WooCommerce's own defaults, and its FILLED glyphs take their
+      colour by INHERITANCE from the card's body text, which is the forest
+      green. That is the "dark green treatment": not a choice, an absence.
+
+   ⭐ HOW WOOCOMMERCE BUILDS THIS WIDGET, recorded because the two halves need
+      different declarations and it is not guessable from the markup:
+        `.star-rating::before`      -> the EMPTY track, `color: #cfc8d8` (an
+                                       explicit declaration, so it must be
+                                       overridden explicitly)
+        `.star-rating span::before` -> the FILLED overlay, colour INHERITED
+                                       from `.star-rating`
+      So one `color` on the element golds the filled stars, and the empty
+      track needs its own rule or it stays lilac-grey next to the gold.
+
+   ⛔ #D9A45F, THE LIVE GOLD, AND NOT #c4a15c. `#c4a15c` is the RETIRED gold
+      (superseded by the F1 palette collapse of 2026-08-03, style.css line 36)
+      and it is named here only so a future reader does not "restore" it. No
+      new hex is invented: the token `--expedition-gold` is used with #D9A45F
+      as its documented fallback, exactly as the rest of this file does.
+
+   ⭐ THE EMPTY TRACK IS THE SAME GOLD AT 30% ALPHA, not a second colour, so
+      the row reads as one rating rather than two materials.
+
+   ⛔ THE RATING COUNT TEXT IS KEPT. Nothing here hides
+      `.woocommerce-review-link` or the `(N customer review)` string — it is
+      the only thing on the row that tells a parent how much the stars are
+      worth, and a five-star average over one review must stay legible AS one
+      review. Removing it would be the fabrication-adjacent move.
+
+   ⚠⚠ THIS ROW CANNOT BE PHOTOGRAPHED ON STAGING AND THAT IS NOT AN OVERSIGHT.
+      staging2 has **zero** reviews on every product (verified by
+      `wp comment list --type=review` on both environments, 2026-09-12);
+      production has exactly two real ones (products 333 and 15, 5.00 each,
+      the reviews Andrew approved as 481/490). ⛔ NO TEST REVIEW WAS CREATED
+      TO MAKE A SCREENSHOT POSSIBLE. Inventing review content to photograph a
+      CSS change is the exact failure class the zero-fabrication rule names,
+      and a prettier evidence pack is not a reason to cross it.
+
+   ─────────────────────────────────────────────────────────────────────────
+   3. "BEST VALUE" SAT ON TOP OF "COMPLETE COLLECTION".
+   ─────────────────────────────────────────────────────────────────────────
+   ⭐ MEASURED, AND IT IS A REAL OVERLAP RATHER THAN A TIGHT GAP: on the PDP
+      format card the badge occupies 1px->22px from the card's top edge while
+      `.bhp-format-card__name` starts at 20px. The badge's bottom edge is
+      **2px BELOW** the title's top edge. IDENTICAL AT 1440 AND AT 390.
+
+   ⛔ THE OBVIOUS FIX IS THE ONE THE BRIEF FORBIDS. Growing
+      `.bhp-format-card--collection`'s `padding-top` would clear the title and
+      would change the card's size, which Andrew's note rules out. So the
+      RIBBON MOVES OFF THE CARD INSTEAD: `bottom: 100%` seats it on the card's
+      top edge as a tab, with the radius flipped to match, and the card's own
+      box is not touched by a single pixel. Verified there is room: at 390 the
+      collection card sits on its own grid row with 107px of clearance above.
+
+   ⭐ `.bhp-format-card--collection`'s existing `padding-top` IS DELIBERATELY
+      LEFT IN PLACE. It is now decorative rather than load-bearing, but
+      removing it would SHRINK the card — also a size change, in the other
+      direction.
+
+   ⭐ THE SHOP CARD IS A DIFFERENT SHAPE AND NEEDS A DIFFERENT FIX. There the
+      badge is a flex item in normal flow, not absolute, and it is not
+      overlapping anything — it is simply **6px** from the title (measured,
+      390), which is the same 6px it has above it, so it reads as floating
+      between the cover and the title rather than labelling the card. The
+      separation below it is doubled and pulled back above it, and the ~4px
+      net is invisible: measured live, the collection card OCCUPIES ITS OWN
+      GRID ROW (top 873, alone, while the four book cards sit two-up at 181
+      and 523), so its height drives no other card's row.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ---- 1. Related / upsell card height, DESKTOP ONLY ---------------------- */
+@media (min-width: 1024px) {
+
+	/* Selector deliberately mirrors style.css's own winning rule character for
+	   character, so this wins on source order rather than on a specificity
+	   arms race that the next editor would have to re-derive. */
+	.woocommerce div.product .related.products ul.products li.product img,
+	.woocommerce div.product .upsells.products ul.products li.product img {
+		height: 232px;
+		padding: 0.85rem 0.85rem 0.4rem;
+		margin-bottom: 10px;
+	}
+
+	.woocommerce div.product .related.products ul.products li.product .woo-card__eyebrow,
+	.woocommerce div.product .upsells.products ul.products li.product .woo-card__eyebrow {
+		margin-top: 8px;
+		margin-bottom: 2px;
+	}
+
+	.woocommerce div.product .related.products ul.products li.product .price,
+	.woocommerce div.product .upsells.products ul.products li.product .price {
+		margin-bottom: 4px;
+	}
+
+	.woocommerce div.product .related.products ul.products li.product .bhp-shop-ages,
+	.woocommerce div.product .upsells.products ul.products li.product .bhp-shop-ages {
+		margin-bottom: 8px;
+	}
+
+	.woocommerce div.product .related.products ul.products li.product a.button,
+	.woocommerce div.product .upsells.products ul.products li.product a.button {
+		margin-bottom: 6px;
+	}
+
+	.woocommerce div.product .related.products > h2,
+	.woocommerce div.product .upsells.products > h2 {
+		margin-bottom: 18px;
+	}
+}
+
+/* ---- 2. The review star row, BOTH WIDTHS -------------------------------- */
+
+/* Card stars: centred under the title, larger, brand gold. */
+.woocommerce ul.products li.product .star-rating,
+.woocommerce div.product .related.products ul.products li.product .star-rating,
+.woocommerce div.product .upsells.products ul.products li.product .star-rating {
+	display: block;
+	float: none;
+	margin: 4px auto 10px;
+	font-size: 1.15rem;
+	color: var(--expedition-gold, #D9A45F);
+}
+
+.woocommerce ul.products li.product .star-rating::before,
+.woocommerce div.product .related.products ul.products li.product .star-rating::before,
+.woocommerce div.product .upsells.products ul.products li.product .star-rating::before {
+	color: rgba(217, 164, 95, 0.3);
+}
+
+/* PDP header stars: the same gold and the same size step. NOT re-centred —
+   this row is a float that sits beside the "(N customer review)" link, and
+   centring it would break that pairing. */
+.woocommerce div.product .woocommerce-product-rating .star-rating {
+	font-size: 1.15rem;
+	color: var(--expedition-gold, #D9A45F);
+}
+
+.woocommerce div.product .woocommerce-product-rating .star-rating::before {
+	color: rgba(217, 164, 95, 0.3);
+}
+
+/* ---- 3. BEST VALUE badge separation, BOTH WIDTHS ------------------------ */
+
+/* PDP format card: the ribbon seats ON the card's top edge instead of
+   hanging 2px into the title. The card's own box is unchanged. */
+.bhp-format-card__badge {
+	top: auto;
+	bottom: 100%;
+	border-radius: 8px 8px 0 0;
+}
+
+/* Shop archive card: in normal flow, so this is spacing, not position.
+   Net effect on card height is ~4px, on a card that owns its grid row. */
+.bhp-shop-collection-card__badge {
+	margin-top: -2px;
+	margin-bottom: 6px;
+}

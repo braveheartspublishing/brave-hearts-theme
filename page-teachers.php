@@ -317,6 +317,41 @@ get_template_part('template-parts/components/teacher-resources-cta', null, [
     </div>
     <div class="teacher-read-aloud__action">
       <a class="btn btn-primary" href="<?php echo esc_url($read_aloud_url); ?>"><?php esc_html_e('Request a Read-Aloud', 'brave-hearts'); ?></a>
+      <?php
+      /*
+       * ═════════════════════════════════════════════════════════════════════
+       * ⭐⭐ 1.19.413 (`CYCLE180-LDB-4`) — `/teachers/` GETS ITS LINK TO
+       *     `/author-visits/`. MERRY'S `R1`, FIRST NAMED HUB.
+       * ═════════════════════════════════════════════════════════════════════
+       *
+       * ⛔ THE MEASURED DEFECT. `CYCLE180-MKT-GSC-TRIAGE` (2026-09-12) counted
+       *    the anchors on this page against `/author-visits/` and found
+       *    **ZERO**, while the Search Console export showed that page
+       *    "Discovered – currently not indexed" since 2026-03-03 — six months
+       *    known to Google and never crawled. An orphan does not get crawl
+       *    budget.
+       *
+       * ⭐ WHY THIS SECTION AND NOT A NEW ONE. This block is already titled
+       *    "Read-Alouds and Author Visits" and already asks the reader for
+       *    exactly this decision. ⛔ Putting the link anywhere else would have
+       *    meant inventing a section, and inventing a section means inventing
+       *    customer-facing prose to fill it. The brief forbids both.
+       *
+       * ⛔ THE EXISTING BUTTON PATTERN, NOT A NEW ONE. `btn btn-secondary`
+       *    beside a `btn btn-primary` is the same pairing this template
+       *    already uses in `#teachers-final-cta` below.
+       *
+       * ⛔ THE LABEL IS THE PAGE'S OWN TITLE — "Author Visits" — read
+       *    read-only off PRODUCTION this build (`wp post list
+       *    --post_type=page --name=author-visits` -> ID 592, post_title
+       *    "Author Visits"). ⭐ NOT recalled, and not re-worded into a CTA.
+       *
+       * ✅ NO SENTENCE IS ADDED. The `<p>` below is byte-unchanged, and this
+       *    edit introduces no customer-facing words other than the two in the
+       *    link label.
+       */
+      ?>
+      <a class="btn btn-secondary" href="<?php echo esc_url(home_url('/author-visits/')); ?>"><?php esc_html_e('Author Visits', 'brave-hearts'); ?></a>
       <p><?php esc_html_e('Availability depends on location, timing, audience, and school-year schedule.', 'brave-hearts'); ?></p>
     </div>
   </div>

@@ -317,7 +317,10 @@ function bhp_offer_components( $key ) {
 
 	$components   = array();
 	$book_catalog = function_exists( 'bhp_bundle_catalog' ) ? bhp_bundle_catalog() : array();
-	$colouring    = function_exists( 'bhp_colouring_product_ids' ) ? bhp_colouring_product_ids() : array();
+	// ⭐ 1.8.92 — the IDENTITY map, not the flat id map: a combo component has
+	//    to carry `product_id` and `variation_id` separately, exactly as the
+	//    chapter-book branch below already does.
+	$colouring    = function_exists( 'bhp_colouring_identity_map' ) ? bhp_colouring_identity_map() : array();
 	$format       = $offer['format'];
 
 	foreach ( (array) $offer['chapter'] as $slug ) {
@@ -346,7 +349,24 @@ function bhp_offer_components( $key ) {
 		if ( empty( $colouring[ $slug ] ) ) {
 			return null; // ⭐ The gate. This is where Everest and Amazon stop.
 		}
-		$buy_id  = (int) $colouring[ $slug ];
+		/*
+		 * ⭐⭐ 1.8.92 — THE THREE IDs, RESOLVED THE SAME WAY THE CHAPTER-BOOK
+		 *     BRANCH ABOVE RESOLVES THEM. `variation_id => 0` was hard-coded
+		 *     here, which is TRUE on a simple product and a silently broken
+		 *     cart line on a variable one: the Store API would be handed a
+		 *     variable parent with no variation, and the add would be refused
+		 *     ("Please choose product options") or, worse, accepted as an
+		 *     unpriced parent line.
+		 *
+		 * ⛔ `product_id` IS THE PARENT AND `buy_id` IS WHAT CARRIES THE PRICE.
+		 *    They are the same number on today's shape. Reading the price off
+		 *    the parent of a variable product would read a RANGE.
+		 */
+		$identity     = $colouring[ $slug ];
+		$buy_id       = (int) $identity['buy'];
+		$parent_id    = (int) $identity['parent'];
+		$variation_id = (int) $identity['variation'];
+
 		$product = wc_get_product( $buy_id );
 		if ( ! $product || ! $product->is_purchasable() ) {
 			return null;
@@ -355,8 +375,8 @@ function bhp_offer_components( $key ) {
 			'line'         => 'colouring',
 			'adventure'    => $slug,
 			'format'       => 'colouring',
-			'product_id'   => $buy_id,
-			'variation_id' => 0,
+			'product_id'   => $parent_id,
+			'variation_id' => $variation_id,
 			'buy_id'       => $buy_id,
 			'price'        => (float) $product->get_price(),
 		);

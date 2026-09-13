@@ -1,6 +1,109 @@
 # Next Task
 
-> ## ⭐⭐ NEWEST, 2026-09-08 (22:03 MDT) - **PRODUCTION IS THEME `1.19.409` / BUNDLE PLUGIN `1.8.91`.** Every version number below this block is SUPERSEDED.
+> ## ⭐⭐ NEWEST, 2026-09-12 (~20:1x MDT) - **PRODUCTION IS THEME `1.19.412` / BUNDLE PLUGIN `1.8.92`.** Every version number below this block is SUPERSEDED.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-12 ~20:1x MDT** | **`1.19.412`** | **`1.8.92`** |
+>
+> ⭐ **VERIFIED LIVE, not read from a document.** `wp theme list --status=active` over SSH returns
+> `brave-hearts-theme-deploy-explorer-expedition-guides  active  none  1.19.412`, and `wp plugin list`
+> returns `brave-hearts-bundle-pricing  active  none  1.8.92`, both read at **2026-09-12 ~21:1x MDT**.
+> The production colouring PDP returned HTTP 200 in 0.49 s serving **26** `ver=1.19.412` markers and
+> **0** `ver=1.19.411`. ⭐ **The plugin version was verified by WP-CLI, not inferred from asset markers.**
+>
+> **What moved production, 2026-09-12 ~20:01-21:00 MDT**, on Andrew's token and his word "go":
+> theme `1.19.411` to **`1.19.412`** and bundle plugin `1.8.91` to **`1.8.92`**, followed immediately by
+> the colouring-book product migration the release exists to make safe.
+>
+> ⭐⭐ **THE COLOURING BOOK'S PRODUCT ID CHANGED, AND EVERY DOCUMENT THAT SAYS `618` IS NOW WRONG
+> ABOUT PRODUCTION.** The colouring book of record is **`946`** (variable parent: page, archive and
+> thumbnail identity) with variation **`947`** (price, stock, SKU `9798996810840`, and the Bookvault
+> link `bvlt_liked true` / `bvlt_locations {"locations":[1,3]}`), at `12.99`, in stock. **`618` is now
+> `draft`** with SKU `9798996810840-OLD` and slug `...-legacy`, **kept as the rollback and not deleted**;
+> product `899` (the failed 2026-09-08 attempt) **remains in the trash**. All verified live by read-only
+> WP-CLI at this desk on 2026-09-12.
+>
+> ⚠️ **The trap this release exists to remove.** `wc_get_product_id_by_sku()` searches `product` AND
+> `product_variation`, so on the migrated shape it returns **`947`**, not `946`. A caller treating that
+> as "the product" gets a variation: `get_permalink()` yields nothing usable, a `post__in` product query
+> never matches, `get_post_thumbnail_id()` returns `0`, and the PDP's `get_queried_object_id()` returns
+> the parent, which no longer matches. **None of it throws - it silently stops being there.** `1.8.92`
+> splits parent identity from buy identity; **use `bhp_colouring_parent_ids()` and
+> `bhp_colouring_buy_ids()`, never a bare SKU lookup.**
+>
+> ⛔⛔ **THE COLOURING BOOK IS PURCHASABLE AGAIN, BUT "CONNECTED TO BOOKVAULT" IS NOT PROVEN AND MUST
+> NOT BE WRITTEN AS PROVEN.** What is observed is that the link **fields** are present on `947`. Andrew
+> declined a proof order on cost: "I dont have money to keep buying coloring books. Get it into
+> production we test it live with new orders - if it doesnt work I do it manually." **The connectivity
+> read is the next real customer order, watched**, with manual fulfilment pre-authorised as the fallback.
+>
+> ⛔⛔ **THIS RELEASE IS IN NO COMMIT ON ANY BRANCH, AND NEITHER IS `1.19.413`.** Verified first-hand
+> 2026-09-12: `HEAD` is `ece5cd53ee59cd4558ff0e2f49e1cda7bb9ce752`, four days old, **titled "1.19.409"
+> while containing `1.19.411`**; the current branch `feature/cycle180-colouring-resolver-1.19.412`
+> **has no remote ref** (`git rev-list` against `origin/<branch>` fails with *unknown revision*); **no
+> branch's committed `style.css` reads `1.19.412` or `1.19.413`**; the working tree holds 28 modified
+> and 2 untracked files. ⛔ **There is therefore no rollback-to-commit path for the code production is
+> serving** - the only rollback is a server-side tarball, whose existence nobody in the record has
+> verified. ⛔ **`git log` is not a way to ask what production runs.** Use WP-CLI over SSH.
+>
+> ⚠️ **Known and recorded, not fixed here:** the colouring PDP hero renders `bhp-media-gallery--single`
+> on production (**the carousel is absent**) while staging renders the full carousel. Confirmed live at
+> this desk and reported first-hand by Andrew. **It is NOT a migration regression** - it was filed as
+> `CYCLE180-CX-3` nearly four hours before the migration ran, and is a per-environment **media**
+> difference, not code. Queued for `1.19.415` with two further founder notes (related-product card
+> height at desktop; review-star styling - centred, larger, and live brand gold `#D9A45F`).
+>
+> ⭐ **Also live since 2026-09-12:** the pair landing page `/mariana-trench-book-and-coloring-book/`
+> (page `943`, HTTP 200, "ADD THE SET" at `$22.99`), which is the QR target for the printed
+> colouring-page handout; and the **first two approved customer reviews in the company's history**
+> (comments `481` and `490`), from which an `aggregateRating` now renders on two PDPs.
+>
+> **Per-release detail:** `CHANGELOG.md`, the 2026-09-12 entry.
+>
+> ## ⛔ SUPERSEDED 2026-09-12 ~20:1x MDT — preserved, not deleted. This block was headed "⭐⭐ NEWEST, 2026-09-09 (00:52 MDT)" and was TRUE WHEN WRITTEN. **PRODUCTION WAS THEME `1.19.411` / BUNDLE PLUGIN `1.8.91` at 00:52 MDT on 2026-09-09; production is now THEME `1.19.412` / BUNDLE PLUGIN `1.8.92` — see the block above.** Every version number below this block is SUPERSEDED.
+>
+> | | Theme | Bundle plugin |
+> |---|---|---|
+> | **Production, 2026-09-09 00:52 MDT** | **`1.19.411`** | **`1.8.91`** (UNCHANGED) |
+>
+> ⭐ **VERIFIED LIVE, not read from a document, and re-verified on 2026-09-12.**
+> `wp theme list --status=active` over SSH returns
+> `brave-hearts-theme-deploy-explorer-expedition-guides  active  none  1.19.411`, and
+> `wp plugin list` returns `brave-hearts-bundle-pricing  active  none  1.8.91`, both read at
+> **2026-09-12 ~16:4x MDT**. `https://braveheartspublishing.com/` returned HTTP 200 in 0.49 s
+> serving **17** `ver=1.19.411` markers, **0** `ver=1.19.409` markers and **6** bundle-plugin
+> asset markers at `ver=1.8.91`; the home Mariana card reads **"From $11.99"** (3 occurrences).
+> ⭐ **The plugin version was verified by WP-CLI this time, not inferred from asset markers.**
+>
+> Production moved once after the 22:03 release recorded below:
+>
+> 1. **2026-09-09 00:52 MDT** - theme `1.19.409` to **`1.19.411`**, carrying `1.19.410`.
+>    `1.19.410` fixes a **live production defect**: the parent adventure-kit popup's × close
+>    control did not close the popup at either width, because the photo `figure`
+>    (`position:relative`) painted over the button (`position:absolute`) and neither carried a
+>    `z-index`. `1.19.411` applies three founder-approved copy and type changes to the same
+>    popup. Plugin **untouched** at `1.8.91`. Founder seals 1451-1454; Andrew: "we can push it
+>    tonight" then "touched". Artefact `build-411.zip` md5
+>    `592159e610928f0b74b3362b7d547804`.
+>
+> ⚠️ **THE RELEASE IS VERIFIED; THE DEFECT FIX IS NOT VERIFIED ON PRODUCTION.** The
+> `1.19.411` version marker and the new copy line are confirmed live. ⛔ **But the defect was
+> that a *click* did nothing, and no click has been performed against production by anyone in
+> the record** - the fix is well-evidenced on staging2 (real click closes at 390 and 1440,
+> Escape and overlay still work, 44×44 hit area kept, popup suite 85/0 with 12 new rows) and
+> **staging2 is not production**. ⛔ **How long the defect was live is UNAVAILABLE**: it was
+> observed at 22:46 on 2026-09-08 and removed at 00:52 on 2026-09-09, but nothing in the record
+> establishes which release introduced it.
+>
+> ⛔ **The repository commit that contains this tree is `ece5cd5`, and its title reads
+> "1.19.409" while its content is `1.19.411` + plugin `1.8.91`.** The commit is already pushed;
+> correcting the message would rewrite published history and has deliberately not been done.
+> Verified first-hand 2026-09-12: `HEAD` `ece5cd53ee59cd4558ff0e2f49e1cda7bb9ce752`, branch
+> `feature/cycle179-review-seq-1.19.362`, working tree clean (0 entries), level with origin (0/0),
+> `style.css` `Version: 1.19.411`.
+>
+> ## ⛔ SUPERSEDED 2026-09-09 00:52 MDT — preserved, not deleted. This block was headed "⭐⭐ NEWEST, 2026-09-08 (22:03 MDT)" and was TRUE WHEN WRITTEN. **PRODUCTION WAS THEME `1.19.409` / BUNDLE PLUGIN `1.8.91` at 22:03 MDT on 2026-09-08; the theme is now `1.19.411` — see the block above. The PLUGIN is UNCHANGED at `1.8.91`.** Every version number below this block is SUPERSEDED.
 >
 > | | Theme | Bundle plugin |
 > |---|---|---|

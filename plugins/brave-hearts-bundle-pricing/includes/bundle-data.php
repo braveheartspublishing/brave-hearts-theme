@@ -1419,12 +1419,208 @@ function bhp_colouring_catalog() {
 }
 
 /**
+ * ⭐⭐ 1.8.92 — THE TWO IDs A COLOURING TITLE HAS, AND WHY ONE WAS NEVER ENOUGH.
+ *
+ * ⛔ THE DEFECT THIS FIXES IS SHAPE-DEPENDENT AND SILENT. Until 1.8.92 the
+ *    whole colouring line resolved through ONE number, from
+ *    `wc_get_product_id_by_sku()`. That is correct for a SIMPLE product —
+ *    today's shape, 618 production / 4065 staging — because the id it returns
+ *    IS the product, the page, and the thing you add to the cart, all at once.
+ *
+ *    The moment the colouring book becomes a VARIABLE product with one
+ *    "Perfect Bound" variation carrying the SKU — the shape the Mariana
+ *    paperback already has (333 parent / 334 variation) — that same call
+ *    returns the VARIATION id, and every caller silently gets the wrong kind
+ *    of number:
+ *      · `get_permalink( $variation_id )` → the parent's URL with an
+ *        `?attribute_…` query string, or nothing usable on an archive;
+ *      · the shop grid asks for a post that is not a `product` post type and
+ *        the card disappears;
+ *      · `get_post_thumbnail_id()` on a variation returns 0, so the
+ *        read-aloud tile loses its image;
+ *      · `is_product()` / `get_queried_object_id()` on the PDP return the
+ *        PARENT, which no longer matches the map, so the entire colouring
+ *        rail, hero, lightbox and spec line stop rendering.
+ *    None of that throws. It just quietly stops being there.
+ *
+ * ⭐ THE FIX IS THE PATTERN THE THEME ALREADY PROVED — `pb_product` /
+ *    `pb_variation` in `bhp_book_registry()`, and `buy_id` in
+ *    `bhp_bundle_offer_components()`. Two questions, two answers:
+ *      · PARENT — "which post is the page, the permalink, the archive entry,
+ *        the thumbnail, the thing `get_queried_object_id()` will hand me?"
+ *      · BUY    — "which record carries the price, the stock, the SKU, and
+ *        what must actually reach the cart?"
+ *    On a simple product both answers are the same number, which is exactly
+ *    why the single-map code appeared to work and why no test caught it.
+ *
+ * ⛔ THIS FUNCTION IS THE ONLY PLACE THE SHAPE IS INSPECTED. Callers ask for
+ *    the id they need by name and never branch on `is_type( 'variation' )`
+ *    themselves — a second shape test elsewhere is the drift this replaces.
+ *
+ * @param int $id A product OR variation id, as returned by a SKU lookup.
+ * @return array{parent:int,buy:int,variation:int} Zeros when unresolvable.
+ */
+function bhp_colouring_identity_for_id( $id ) {
+	static $memo = array();
+
+	$id = (int) $id;
+	if ( $id <= 0 ) {
+		return array(
+			'parent'    => 0,
+			'buy'       => 0,
+			'variation' => 0,
+		);
+	}
+
+	if ( isset( $memo[ $id ] ) ) {
+		return $memo[ $id ];
+	}
+
+	// ⛔ FAILS OPEN TO THE SIMPLE SHAPE, never to zero. With WooCommerce absent
+	//    (or a product record that will not load) the id we were handed is the
+	//    best answer available, and it is the RIGHT answer on every
+	//    environment today. Returning zeros here would take the colouring line
+	//    off a site that is merely mid-boot.
+	$out = array(
+		'parent'    => $id,
+		'buy'       => $id,
+		'variation' => 0,
+	);
+
+	$product = function_exists( 'wc_get_product' ) ? wc_get_product( $id ) : null;
+
+	if ( $product ) {
+		if ( $product->is_type( 'variation' ) ) {
+			// ── The SKU sits on the variation. The shape the brief describes.
+			$parent = (int) $product->get_parent_id();
+			if ( $parent > 0 ) {
+				$out['parent']    = $parent;
+				$out['buy']       = $id;
+				$out['variation'] = $id;
+			}
+		} elseif ( $product->is_type( 'variable' ) ) {
+			/*
+			 * ── The SKU sits on the PARENT of a variable product.
+			 *
+			 * ⚠ NOT the shape the brief describes, and handled anyway because
+			 *   it is one admin click away from it: a parent SKU plus one
+			 *   variation is what you get if someone fills the SKU field on
+			 *   the product rather than on the variation. The price and stock
+			 *   that matter still live on the variation, so the buy id must
+			 *   still be the variation.
+			 *
+			 * ⛔ EXACTLY ONE CHILD, OR WE DO NOT GUESS. "One Perfect Bound
+			 *    variation" is the whole premise of the colouring line being
+			 *    single-format. If a second variation ever appears, picking
+			 *    one of them here would be choosing a customer's format for
+			 *    them; falling back to the parent makes the ambiguity visible
+			 *    at the till instead of resolving it wrongly and silently.
+			 */
+			$children = $product->get_children();
+			if ( is_array( $children ) && 1 === count( $children ) ) {
+				$child = (int) reset( $children );
+				if ( $child > 0 ) {
+					$out['buy']       = $child;
+					$out['variation'] = $child;
+				}
+			}
+		}
+	}
+
+	$memo[ $id ] = $out;
+
+	return $out;
+}
+
+/**
+ * ⭐ 1.8.92 — the resolved colouring line, as BOTH ids per title.
+ *
+ * @return array<string,array{parent:int,buy:int,variation:int}>
+ */
+function bhp_colouring_identity_map() {
+	$parents = bhp_colouring_product_ids();
+	$map     = array();
+
+	foreach ( $parents as $slug => $parent_id ) {
+		/*
+		 * ⭐ RE-DERIVED FROM THE FILTERED VALUE, NOT FROM THE RAW SKU LOOKUP,
+		 *    AND THAT ORDERING IS THE WHOLE REASON THE TESTS STILL WORK.
+		 *    `bhp_colouring_product_ids` is the documented injection point —
+		 *    `tests/test-colouring-line-tiers.php` uses it to put a colouring
+		 *    id on an environment that has no colouring product. If this map
+		 *    resolved from SKUs independently, an injected id would reach the
+		 *    parent map and NOT the buy map, and the two would disagree for
+		 *    exactly the callers this split exists to keep in agreement.
+		 */
+		$identity = bhp_colouring_identity_for_id( (int) $parent_id );
+		if ( $identity['parent'] > 0 ) {
+			$map[ $slug ] = $identity;
+		}
+	}
+
+	/**
+	 * The colouring line's parent/buy identities.
+	 *
+	 * @since 1.8.92
+	 * @param array<string,array{parent:int,buy:int,variation:int}> $map
+	 */
+	return apply_filters( 'bhp_colouring_identity_map', $map );
+}
+
+/**
+ * ⭐ 1.8.92 — PAGE-SIDE ids: permalink, archive, thumbnail, queried object.
+ *
+ * @return array<string,int> adventure slug => parent product id.
+ */
+function bhp_colouring_parent_ids() {
+	$out = array();
+	foreach ( bhp_colouring_identity_map() as $slug => $identity ) {
+		$out[ $slug ] = (int) $identity['parent'];
+	}
+	return $out;
+}
+
+/**
+ * ⭐ 1.8.92 — CART-SIDE ids: price, stock, SKU, add-to-cart, offer components.
+ *
+ * ⛔ THIS IS THE ONE THAT MOVES MONEY. A caller reading a price, testing
+ *    `is_in_stock()`, or putting a line in the cart uses this and never the
+ *    parent map — on a variable shape the parent's price is a RANGE and its
+ *    stock is an aggregate, and neither is what the customer is buying.
+ *
+ * @return array<string,int> adventure slug => buy id (variation when variable).
+ */
+function bhp_colouring_buy_ids() {
+	$out = array();
+	foreach ( bhp_colouring_identity_map() as $slug => $identity ) {
+		$out[ $slug ] = (int) $identity['buy'];
+	}
+	return $out;
+}
+
+/**
  * Resolve the colouring-line SKUs to live product IDs.
  *
  * Request-scoped static for the same reason `bhp_bundle_addon_product_ids()`
  * has one: `has_unrelated` is evaluated several times per cart calculation.
  *
- * @return array<string,int> adventure slug => product id, for SKUs that resolve.
+ * ⚠⚠ 1.8.92 — READ THIS BEFORE ADDING A CALLER. This function is now the
+ *    PARENT-side map and the back-compatibility surface, NOT the general
+ *    answer to "the colouring product id". New code asks for the id it
+ *    actually needs: `bhp_colouring_parent_ids()` for a page, permalink,
+ *    archive entry or thumbnail; `bhp_colouring_buy_ids()` for a price,
+ *    stock test, SKU or anything reaching the cart.
+ *
+ * ⛔ ITS RETURN IS UNCHANGED ON EVERY ENVIRONMENT THAT EXISTS TODAY, which is
+ *    why it was not renamed: on a simple product parent and buy are the same
+ *    id, so this keeps returning exactly what it returned in 1.8.91, and the
+ *    `bhp_colouring_product_ids` filter keeps behaving exactly as its tests
+ *    expect. On a variable shape it now returns the PARENT rather than the
+ *    variation — which is the correction, not a regression: every surviving
+ *    caller of this name wants the page, and the cart-side callers were
+ *    migrated to `bhp_colouring_buy_ids()` in this same release.
+ *
+ * @return array<string,int> adventure slug => parent product id.
  */
 function bhp_colouring_product_ids() {
 	static $resolved = null;
@@ -1455,7 +1651,19 @@ function bhp_colouring_product_ids() {
 					}
 					$id = (int) wc_get_product_id_by_sku( $candidate );
 					if ( $id > 0 ) {
-						$resolved[ $slug ] = $id;
+						/*
+						 * ⭐ 1.8.92 — NORMALISED TO THE PARENT HERE, at the one
+						 *    point the raw SKU lookup happens. On a variable
+						 *    shape `wc_get_product_id_by_sku()` hands back the
+						 *    VARIATION; this function's contract is the parent,
+						 *    and every page-side caller downstream depends on
+						 *    that being true before the filter ever runs.
+						 * ⛔ On a simple product this is the identity function —
+						 *    `identity_for_id()` returns the id it was given —
+						 *    so today's environments see no change at all.
+						 */
+						$identity          = bhp_colouring_identity_for_id( $id );
+						$resolved[ $slug ] = $identity['parent'] > 0 ? $identity['parent'] : $id;
 						break;
 					}
 				}
@@ -1528,12 +1736,44 @@ function bhp_colouring_isbn( $slug ) {
  * @return string
  */
 function bhp_colouring_isbn_for_product( $product_id ) {
-	foreach ( bhp_colouring_product_ids() as $slug => $id ) {
-		if ( (int) $product_id === (int) $id ) {
-			return bhp_colouring_isbn( $slug );
+	/*
+	 * ⭐ 1.8.92 — MATCHES EITHER ID. A caller holding an ORDER LINE holds the
+	 *    buy id (the variation, on a variable shape); a caller holding a PAGE
+	 *    holds the parent. Both are the same title and both must route to the
+	 *    same ISBN, so this asks the identity map rather than one flat list.
+	 */
+	$slug = bhp_colouring_slug_for_any_id( $product_id );
+	return null === $slug ? '' : bhp_colouring_isbn( $slug );
+}
+
+/**
+ * ⭐⭐ 1.8.92 — WHICH COLOURING TITLE THIS ID IS, WHICHEVER ID YOU HOLD.
+ *
+ * ⛔ THE SINGLE IDENTITY TEST FOR THE WHOLE LINE, and the reason the split
+ *    does not leak into callers. Before 1.8.92 there was one map, so "is this
+ *    id colouring" was one `in_array()`. With two ids per title the naive
+ *    version of that question has two wrong answers — match only parents and
+ *    every cart line on a variable shape stops being recognised; match only
+ *    buy ids and the PDP, shop card and thumbnail stop being recognised.
+ *
+ * ⚠ SO IT IS DELIBERATELY PERMISSIVE, AND THAT IS SAFE HERE because it is an
+ *   ALLOWLIST built from the SKU catalogue, not a category or title test. The
+ *   only ids it can ever match are ids this line already resolved.
+ *
+ * @param int $id A parent product id OR a variation id.
+ * @return string|null Adventure slug, or null.
+ */
+function bhp_colouring_slug_for_any_id( $id ) {
+	$id = (int) $id;
+	if ( $id <= 0 ) {
+		return null;
+	}
+	foreach ( bhp_colouring_identity_map() as $slug => $identity ) {
+		if ( $id === (int) $identity['parent'] || $id === (int) $identity['buy'] ) {
+			return $slug;
 		}
 	}
-	return '';
+	return null;
 }
 
 /**
@@ -1596,8 +1836,8 @@ function bhp_colouring_product_isbn_state( $product_id ) {
  * that replaces title-substring matching everywhere it matters.
  */
 function bhp_is_colouring_product( $product_id ) {
-	$product_id = (int) $product_id;
-	return $product_id > 0 && in_array( $product_id, array_map( 'intval', bhp_colouring_product_ids() ), true );
+	// ⭐ 1.8.92 — parent OR buy id. See `bhp_colouring_slug_for_any_id()`.
+	return null !== bhp_colouring_slug_for_any_id( $product_id );
 }
 
 /**
@@ -1609,13 +1849,18 @@ function bhp_is_colouring_product( $product_id ) {
  * @return string|null Adventure slug, or null.
  */
 function bhp_bundle_identify_colouring_item( $product_id, $variation_id = 0 ) {
-	foreach ( bhp_colouring_product_ids() as $slug => $id ) {
-		if ( (int) $product_id === (int) $id ) {
-			return $slug;
-		}
-		if ( $variation_id && (int) $variation_id === (int) $id ) {
-			return $slug;
-		}
+	/*
+	 * ⭐ 1.8.92 — A WooCommerce cart line carries BOTH numbers: `product_id` is
+	 *    the parent even on a variable product, `variation_id` is 0 on a simple
+	 *    one. Testing each against the identity map means the same cart line is
+	 *    recognised whichever shape the colouring book currently has.
+	 */
+	$slug = bhp_colouring_slug_for_any_id( $product_id );
+	if ( null !== $slug ) {
+		return $slug;
+	}
+	if ( $variation_id ) {
+		return bhp_colouring_slug_for_any_id( $variation_id );
 	}
 	return null;
 }

@@ -560,10 +560,63 @@ bhp_i5_assert(
  * ⛔ RAISED BY EXACTLY ONE, AND NOT LOOSENED TO A RANGE. The whole value of
  *    this line is that the NEXT link somebody adds trips it.
  */
+/*
+ * ⚠⚠ 1.19.413 (2026-09-12, `CYCLE180-LDB-4`) — THE CEILING GOES 13 -> 14, AND
+ *    LIKE THE 1.19.314 MOVE ABOVE IT, ANDREW SHOULD BE TOLD IT MOVED, BECAUSE
+ *    IT GUARDS HIS OWN RULING.
+ *
+ * ⛔ THE SUPERSEDED LINE, PRESERVED VERBATIM:
+ *      $footer_links > 0 && $footer_links <= 13,
+ *      '§4.7 the footer carries at most 13 links (found %d; ~25 before the prune, 12 from 1.19.269, 13 from 1.19.314)'
+ *
+ * ⭐ WHAT MOVED IT. 1.19.413 adds ONE footer link, "Author Visits" ->
+ *   `/author-visits/`. The GSC triage (`CYCLE180-MKT-GSC-TRIAGE` R1,
+ *   2026-09-12) established from the Search Console export that the page has
+ *   been "Discovered – currently not indexed" since 2026-03-03 — six months
+ *   known to Google and never crawled — while returning 200, carrying
+ *   `follow, index`, and sitting in the sitemap. ⛔ The measured cause is that
+ *   it is an ORPHAN: 0 internal links from `/blog/`, 0 from the home page,
+ *   0 from `/teachers/`. Same defect, same evidence class and same one-`<li>`
+ *   remedy as `/retailers-wholesale-guide/`.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ AND THE PART THAT IS A FINDING, NOT A BUMP — `CYCLE180-LDB-5`. THE OLD
+ *     CEILING WAS ALREADY BEING BREACHED, AND NOBODY SAW IT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ THE CEILING GOES 13 -> 15, WHICH IS **TWO**, AND ONLY ONE OF THEM IS MINE.
+ *
+ * ⛔ MEASURED, NOT INFERRED — the rendered `<footer class="site-footer">` on the
+ *    real served home document, 2026-09-12, counted by this suite's own regex:
+ *        PRODUCTION, theme 1.19.411, WITHOUT the Author Visits link:  **14**
+ *        staging2,   theme 1.19.413, WITH    the Author Visits link:  **15**
+ *
+ * ⛔ SO THE PRE-1.19.413 COUNT WAS 14 AND THE CEILING SAID 13. `1.19.337` added
+ *    the "About" `<li>` — the second half of founder item 547 — and did NOT
+ *    move this line. §4.7 has therefore been FAILING since 1.19.337.
+ *
+ * ⚠⚠ WHY NOBODY NOTICED, and this is the real defect: **THIS SUITE HAD NO
+ *    `exit()`.** It printed `FAILURES (n)` and returned 0 regardless, so every
+ *    release runner has recorded it GREEN while it was red. That is the same
+ *    "a check that cannot fail" class `CYCLE180-LD-BUILD-412-RESOLVER` found
+ *    and fixed twice in its own new suite. ⭐ The `exit()` is added at the foot
+ *    of this file by 1.19.413, so from now on this line can actually stop a
+ *    release.
+ *
+ * ⚠ SAME TENSION AS 1.19.314 AND 1.19.337, stated again rather than smoothed
+ *   over: the 2026-08-19 prune set this footer to "shop / kit / contact /
+ *   policies". This is the seventh link in that column. ⛔ IF HE WANTS THE
+ *   SHORTER FOOTER BACK it is one `<li>` in footer.php per link, and this
+ *   ceiling back down by the same number.
+ *
+ * ⛔ SET TO THE MEASURED COUNT AND NOT LOOSENED TO A RANGE — for the same
+ *    reason the 1.19.314 note gives. The whole value of this line is that the
+ *    NEXT link somebody adds trips it.
+ */
 $footer_links = preg_match_all( '/<a\b[^>]*href=/', $home_footer );
 bhp_i5_assert(
-	$footer_links > 0 && $footer_links <= 13,
-	sprintf( '§4.7 the footer carries at most 13 links (found %d; ~25 before the prune, 12 from 1.19.269, 13 from 1.19.314)', $footer_links ),
+	$footer_links > 0 && $footer_links <= 15,
+	sprintf( '§4.7 the footer carries at most 15 links (found %d; ~25 before the prune, 12 from 1.19.269, 13 from 1.19.314, 14 from 1.19.337 with the ceiling left behind, 15 from 1.19.413)', $footer_links ),
 	$failures
 );
 echo sprintf( "      (footer link count on the home document: %d)\n", $footer_links );
@@ -850,3 +903,31 @@ if ( empty( $failures ) ) {
 		echo "  - {$f}\n";
 	}
 }
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.413 (`CYCLE180-LDB-5`) — THIS SUITE COULD NOT FAIL, AND HAD BEEN
+ *     REPORTING GREEN WHILE RED FOR SEVENTY-SIX RELEASES.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ WHAT WAS MISSING: an `exit()`. The block above printed `FAILURES (n)` and
+ *    then fell off the end of the file, so `wp eval-file` returned 0 no matter
+ *    how many assertions had failed. Every release runner on this project
+ *    records a suite by its EXIT CODE, so this file has been recorded as
+ *    PASSING since it was written.
+ *
+ * ⚠ OBSERVED, NOT THEORISED, 2026-09-12: on staging at 1.19.413 it printed
+ *   `FAILURES (2)` — §4.7 and §7.3 — and still exited 0. §4.7 had in fact been
+ *   failing since 1.19.337 added the "About" footer link without moving the
+ *   ceiling, and nothing surfaced it in the nine releases since.
+ *
+ * ⭐ THE SAME DEFECT CLASS `CYCLE180-LD-BUILD-412-RESOLVER` found twice inside
+ *    its own new suite and fixed both times ("a suite that cannot fail is not a
+ *    suite"). Fixing it here rather than only there is what stops the lesson
+ *    being re-learned a fourth time.
+ *
+ * ⛔ THIS CHANGES NO ASSERTION. Nothing above is loosened, tightened, added or
+ *    removed by this line — it only makes the result reportable. A green run
+ *    stays green; a red run now stops a release instead of being invisible.
+ */
+exit( empty( $failures ) ? 0 : 1 );

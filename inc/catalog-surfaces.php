@@ -239,7 +239,19 @@ function bhp_catalog_reading_order_ids() {
         }
     }
 
-    if (function_exists('bhp_colouring_product_ids')) {
+    /*
+     * ⭐ 1.19.412 — PARENT ids, named as such. These become `post__in` on a
+     *    product-archive query, so they must be `product` POSTS. A variation
+     *    is a `product_variation` post and would simply never match, taking
+     *    the colouring card off the shop grid with no error anywhere.
+     * ⛔ The `function_exists()` fallback is the pre-1.8.92 plugin, where the
+     *    one flat map was already parent-shaped on every simple product.
+     */
+    if (function_exists('bhp_colouring_parent_ids')) {
+        foreach (bhp_colouring_parent_ids() as $id) {
+            $ids[] = (int) $id;
+        }
+    } elseif (function_exists('bhp_colouring_product_ids')) {
         foreach (bhp_colouring_product_ids() as $id) {
             $ids[] = (int) $id;
         }

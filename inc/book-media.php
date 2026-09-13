@@ -881,6 +881,87 @@ function bhp_collection_carousel_slugs() {
  * Resolve an attachment slug to an attachment ID on the CURRENT environment.
  * Returns 0 when it does not resolve, which every caller treats as
  * "not approved". Memoised: one page can ask for the same slug repeatedly.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.415 (`CYCLE180-CX-19` / `CYCLE180-CX-3`) — AN ATTACHMENT THAT IS
+ *     ATTACHED TO A POST WAS INVISIBLE TO THIS FUNCTION, AND THAT IS WHY THE
+ *     PRODUCTION COLOURING GALLERY SHOWED ONE SLIDE WHILE STAGING SHOWED SEVEN
+ *     FROM BYTE-IDENTICAL CODE.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE WRONG DIAGNOSIS, RECORDED SO IT DOES NOT COME BACK: "production is
+ *    missing the six interior images." IT IS NOT, AND NO MEDIA IMPORT WAS EVER
+ *    NEEDED. All six exist on production with the exact registry slugs, status
+ *    `inherit`, ids 752-757 — read first-hand over SSH, 2026-09-12, and
+ *    product 946 even carries them in `_product_image_gallery` (752,753,754,
+ *    755,756,757). The bytes were never the problem.
+ *
+ * ⭐ WHAT IS ACTUALLY WRONG — `get_page_by_path()` IS A PATH RESOLVER, NOT A
+ *    SLUG RESOLVER, AND THE DIFFERENCE ONLY SHOWS UP ON A PARENTED ATTACHMENT.
+ *    Given a ONE-SEGMENT path it walks the matched post's `post_parent` chain
+ *    and accepts the match ONLY if that chain terminates at 0. An attachment
+ *    that is ATTACHED to a post has `post_parent = <that post>`, so the walk
+ *    cannot reach 0 and core returns NULL — even though the row is right
+ *    there and every other lookup finds it.
+ *
+ * ⭐ THE TWO ENVIRONMENTS DIFFER IN DATA, NOT CODE. Verified by md5 over SSH,
+ *    2026-09-12: `inc/book-media.php`, `inc/book-formats.php` and
+ *    `inc/colouring-line.php` are BYTE-IDENTICAL on production and staging,
+ *    and so is the plugin's `includes/bundle-data.php`. What differs:
+ *
+ *      environment  | interior attachment ids | post_parent | slides rendered
+ *      -------------|-------------------------|-------------|----------------
+ *      production   | 752-757                 | 618         | 1  (cover only)
+ *      staging2     | 7343-7348               | 0           | 7
+ *
+ *    618 is the DRAFT legacy colouring product kept as the migration rollback.
+ *    The six interiors were uploaded THROUGH that product's media modal, so
+ *    they were born attached to it; staging's were uploaded unattached. That
+ *    single field is the whole defect.
+ *
+ * ⭐ PROVEN END TO END ON PRODUCTION, READ-ONLY, BEFORE THIS LINE WAS WRITTEN
+ *    (`wp eval-file`, 2026-09-12):
+ *      · `bhp_book_media_attachment_id()` returned **0 for all six** slugs
+ *      · `bhp_book_hero_key_for_product(946)` returned `'colouring_mariana'`
+ *        — the 1.8.92 identity split is CORRECT and is not implicated
+ *      · `bhp_book_media('colouring_mariana')` returned **0 items**
+ *      · `bhp_book_hero_gallery_media(946)` returned **1 item** — the
+ *        prepended featured image, which is exactly the one slide a customer
+ *        sees.
+ *    And the control: `get_page_by_path()` on a staging attachment with
+ *    `post_parent = 5089` returns NULL while the row exists as id 5090.
+ *
+ * ⭐ SCOPE, MEASURED RATHER THAN ASSUMED. Audited ALL 33 registry slugs on
+ *    production in the same pass: 27 resolve today, **6 are blocked by this
+ *    exact cause** (all six `colouring_mariana`), and **0 are genuinely
+ *    absent**. So this one fallback closes the entire known surface.
+ *
+ * ⛔ WHY A CODE FIX AND NOT A DATA FIX. Re-parenting the six attachments to 0
+ *    would also work and is a ONE-TIME repair of ONE symptom on ONE
+ *    environment: it mutates production records, needs an owner gate, and
+ *    leaves the next attachment uploaded through a product's media modal to
+ *    fail the same silent way. This function is the single choke point every
+ *    registry slug passes through, so fixing it here fixes every surface at
+ *    once and keeps production data untouched.
+ *
+ * ⭐ STRICTLY ADDITIVE, WHICH IS WHY IT CANNOT REGRESS ANYTHING.
+ *    `get_page_by_path()` still runs FIRST and its answer still wins whenever
+ *    it has one. The fallback can only ever turn a **0 into a real id** — it
+ *    can never change an id that already resolved. Every surface that works
+ *    on staging today takes the identical first branch it took before.
+ *
+ * ⛔ `post_status = 'inherit'` IS THE GATE, NOT DECORATION. It is the only
+ *    status a normally-uploaded attachment has, and requiring it keeps a
+ *    trashed or auto-drafted row from resolving as approved media. The
+ *    negative control was run on production too: a slug that does not exist
+ *    returns 0, so this does not loosen the "not approved" contract.
+ *
+ * ⚠ `'attachment' => $slug` IS THE CORRECT QUERY VAR AND `'name'` IS NOT.
+ *   WP_Query routes attachment name lookups through `attachment`; passing
+ *   `name` returns nothing for `post_type=attachment`. Both spellings were
+ *   tried against real production rows — `attachment` resolved 6/6, `name`
+ *   resolved 0/6. Recorded because the wrong one fails silently and looks
+ *   like the media is missing, which is how this bug read in the first place.
  */
 function bhp_book_media_attachment_id($slug) {
     static $cache = [];
@@ -894,7 +975,27 @@ function bhp_book_media_attachment_id($slug) {
     }
 
     $post = get_page_by_path($slug, OBJECT, 'attachment');
-    $cache[$slug] = ($post && 'attachment' === $post->post_type) ? (int) $post->ID : 0;
+    $id   = ($post && 'attachment' === $post->post_type) ? (int) $post->ID : 0;
+
+    if (! $id) {
+        // ── Parent-independent fallback. See the block above: this is the
+        //    ONLY way a slug on an ATTACHED attachment can be found.
+        $found = get_posts([
+            'post_type'              => 'attachment',
+            'post_status'            => 'inherit',
+            'attachment'             => $slug,
+            'numberposts'            => 1,
+            'fields'                 => 'ids',
+            'orderby'                => 'ID',
+            'order'                  => 'ASC',
+            'no_found_rows'          => true,
+            'update_post_term_cache' => false,
+            'suppress_filters'       => false,
+        ]);
+        $id = $found ? (int) $found[0] : 0;
+    }
+
+    $cache[$slug] = $id;
 
     return $cache[$slug];
 }

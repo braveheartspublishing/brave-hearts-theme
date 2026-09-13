@@ -403,6 +403,53 @@ $bhp_pb_cta_label = ('' !== $bhp_pb_price_plain)
 
 /*
  * ════════════════════════════════════════════════════════════════════════════
+ * ⭐⭐ 1.19.412 (`CYCLE180-LD-BUILD-412`) — THE HARDCOVER BUY BAR CARRIES ITS
+ *     PRICE TOO. `CYCLE180-CX-5`, verified live at 390 AND 1440 by
+ *     `commerce-cx` on the Amazon PDP by clicking the real format card:
+ *
+ *       PAPERBACK  -> "ADD PAPERBACK, $11.99"      price shown
+ *       HARDCOVER  -> "ADD HARDCOVER TO CART"      NO number, NO dollar sign
+ *
+ *     $17.99 was present on the format chip and in `[data-bhp-format-price]`
+ *     the whole time — so the price was never missing from the PAGE, only
+ *     from THE CONTROL THE CUSTOMER CLICKS. The release's acceptance line is
+ *     "buy bar with price and dollar sign", and it held for one format and
+ *     not the other.
+ *
+ * ⭐ BUILT BY THE SAME THREE STEPS AS THE PAPERBACK LABEL ABOVE, deliberately
+ *    including `wc_price()` -> `wp_strip_all_tags()` -> `html_entity_decode()`,
+ *    because the label is later `esc_html()`-escaped into the DOM and a raw
+ *    `&#36;` would otherwise reach the customer as literal text. That exact
+ *    defect is recorded at the paperback block: "READS `ADD PAPERBACK, &#36;11.99`
+ *    IN THE CUSTOMER'S FACE."
+ *
+ * ⛔ DEGRADES TO THE OLD LABEL, NEVER TO "ADD HARDCOVER, ". An empty or
+ *    unreadable price falls back to the exact string 1.19.411 shipped, so the
+ *    worst case of this change is today's behaviour rather than a dangling
+ *    comma. Same rule the paperback branch already states.
+ *
+ * ⚠ NO STOCK GATE HERE, AND THAT IS ON PURPOSE — it matches the paperback.
+ *   `$bhp_pb_unavailable` (below) is scoped `$bhp_pb_is_colouring && !in_stock`:
+ *   the 1.19.407 "Temporarily unavailable" swap applies to THE COLOURING LINE
+ *   ONLY, never to chapter-book formats. A chapter-book hardcover that is out
+ *   of stock therefore keeps showing its price today, exactly as its paperback
+ *   does, and this change does not alter that either way.
+ * ════════════════════════════════════════════════════════════════════════════
+ */
+$bhp_hc_price_raw   = isset($data['hardcover']['price']) ? $data['hardcover']['price'] : '';
+$bhp_hc_price_plain = ('' !== $bhp_hc_price_raw)
+    ? trim(html_entity_decode(wp_strip_all_tags(wc_price((float) $bhp_hc_price_raw)), ENT_QUOTES, 'UTF-8'))
+    : '';
+$bhp_hc_cta_label = ('' !== $bhp_hc_price_plain)
+    ? sprintf(
+        /* translators: %s is the live hardcover price, e.g. $17.99 */
+        __('ADD HARDCOVER, %s', 'brave-hearts'),
+        $bhp_hc_price_plain
+    )
+    : __('ADD HARDCOVER TO CART', 'brave-hearts');
+
+/*
+ * ════════════════════════════════════════════════════════════════════════════
  * ⭐⭐ 1.19.407 (`CYCLE179-LD-BUILD-407-STOCK-GATE`) — AN OUT-OF-STOCK COLORING
  *     BOOK'S CONTROL STOPS SAYING "ADD PAPERBACK, $12.99".
  * ════════════════════════════════════════════════════════════════════════════
@@ -487,7 +534,7 @@ $bhp_format_payload = [
         'sku'       => $data['hardcover']['sku'],
         'productId' => $data['hardcover']['product_id'],
         'variationId' => 0,
-        'ctaLabel'  => __('ADD HARDCOVER TO CART', 'brave-hearts'),
+        'ctaLabel'  => $bhp_hc_cta_label, // 1.19.412 CX-5 — live price, see the block above.
         'formatSpec' => $bhp_format_specs['hardcover'],
         'note'      => $bhp_shipping_note_hardcover,
     ],

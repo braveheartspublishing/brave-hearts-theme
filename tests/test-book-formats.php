@@ -253,13 +253,37 @@ foreach ($registry as $key => $book) {
     // paperback, and points at the paperback add-to-cart URL.
     bhp_test_assert(
         $failures,
-        "markup {$pb}: the CTA reads ADD PAPERBACK TO CART",
-        strpos($html, '>ADD PAPERBACK TO CART</a>') !== false
+        /*
+         * ⚠⚠ CORRECTED 2026-09-12 (`CYCLE180-LD-BUILD-412`) — A PRE-EXISTING
+         *    RED ASSERTION, STALE SINCE 1.19.405, NOT A CHANGE THIS RELEASE
+         *    CAUSED. Recorded rather than quietly fixed:
+         *
+         *    1.19.405 gave the PAPERBACK buy bar its live price
+         *    ("ADD PAPERBACK, $11.99"), and this assertion — which pins the
+         *    unpriced literal — was never updated with it. It has been failing
+         *    on staging ever since. VERIFIED, not inferred: this suite was run
+         *    against 1.19.411 on staging on 2026-09-12 before this release was
+         *    installed, and reported `Error: 6 assertion(s) failed` — these
+         *    three plus their payload twins, and nothing else.
+         *
+         * ⛔ WHY IT IS FIXED HERE RATHER THAN LEFT FOR ITS OWN TICKET: the CX-5
+         *    hardcover work in this release edits the SAME assertions in the
+         *    SAME block for the SAME reason (a literal label replaced by a
+         *    priced one). Leaving the paperback half red while making the
+         *    hardcover half green would leave a suite that fails for a reason
+         *    no reader could distinguish from this release's own work.
+         *    Disclosed in the build report as a deliberate widening.
+         */
+        "markup {$pb}: the CTA names PAPERBACK and shows a price",
+        (bool) preg_match('/>ADD PAPERBACK[^<]*\$\s?\d[^<]*<\/a>/i', $html)
     );
     bhp_test_assert(
         $failures,
-        "markup {$pb}: the CTA does NOT read ADD HARDCOVER TO CART",
-        strpos($html, 'ADD HARDCOVER TO CART</a>') === false
+        // ⭐ STRENGTHENED 1.19.412: was `'ADD HARDCOVER TO CART</a>' === false`,
+        //    which after CX-5 would pass trivially because the label changed.
+        //    An assertion that can no longer fail is not an assertion.
+        "markup {$pb}: the CTA does NOT name HARDCOVER on the paperback view",
+        stripos($html, '>ADD HARDCOVER') === false
     );
     /*
      * ⭐ CYCLE178-LD-346 (2026-09-02) — THE TWO CTA-HREF ASSERTIONS ARE NOW
@@ -347,10 +371,30 @@ foreach ($registry as $key => $book) {
         foreach (['paperback', 'hardcover', 'kindle', 'collection'] as $fmt) {
             bhp_test_assert($failures, "payload {$pb}: carries '{$fmt}'", isset($payload[$fmt]));
         }
-        bhp_test_assert($failures, "payload {$pb}: hardcover label intact",
-            isset($payload['hardcover']['ctaLabel']) && $payload['hardcover']['ctaLabel'] === 'ADD HARDCOVER TO CART');
-        bhp_test_assert($failures, "payload {$pb}: paperback label intact",
-            isset($payload['paperback']['ctaLabel']) && $payload['paperback']['ctaLabel'] === 'ADD PAPERBACK TO CART');
+        /*
+         * ⭐ UPDATED 1.19.412 (`CYCLE180-LD-BUILD-412`, defect `CYCLE180-CX-5`).
+         *    Was an equality test against the literal 'ADD HARDCOVER TO CART'.
+         *    The hardcover buy bar now carries its live price, exactly as the
+         *    paperback one has since 1.19.405 — "ADD HARDCOVER, $17.99".
+         *
+         * ⛔ THE ASSERTION IS DELIBERATELY NOT A NEW HARD-CODED LITERAL. Pinning
+         *    "ADD HARDCOVER, $17.99" here would put a PRICE in a test, and the
+         *    price is a live product value that Andrew may change without
+         *    touching a line of code. It asserts the two things that are
+         *    actually contractual: the label names the FORMAT, and it carries a
+         *    dollar amount. That is the CX-5 acceptance line, stated as a test.
+         */
+        $bhp_hc_label = isset($payload['hardcover']['ctaLabel']) ? (string) $payload['hardcover']['ctaLabel'] : '';
+        bhp_test_assert($failures, "payload {$pb}: hardcover label names the format",
+            false !== stripos($bhp_hc_label, 'HARDCOVER'));
+        bhp_test_assert($failures, "payload {$pb}: hardcover label carries a price with a dollar sign",
+            (bool) preg_match('/\$\s?\d/', $bhp_hc_label));
+        // ⚠ Same pre-existing 1.19.405 staleness as the markup assertion above.
+        $bhp_pb_label = isset($payload['paperback']['ctaLabel']) ? (string) $payload['paperback']['ctaLabel'] : '';
+        bhp_test_assert($failures, "payload {$pb}: paperback label names the format",
+            false !== stripos($bhp_pb_label, 'PAPERBACK'));
+        bhp_test_assert($failures, "payload {$pb}: paperback label carries a price with a dollar sign",
+            (bool) preg_match('/\$\s?\d/', $bhp_pb_label));
         // The server-rendered CTA and the payload the script re-applies must
         // agree — that is the whole reason the array was hoisted.
         bhp_test_assert($failures, "payload {$pb}: server CTA label === payload paperback label",
@@ -399,8 +443,12 @@ foreach ($registry as $key => $book) {
     );
     bhp_test_assert(
         $failures,
-        "markup {$pb} (?bhp_format=hardcover): the CTA reads ADD HARDCOVER TO CART",
-        strpos($html, '>ADD HARDCOVER TO CART</a>') !== false
+        // ⭐ UPDATED 1.19.412 (`CYCLE180-CX-5`) — the hardcover CTA now carries
+        //    its live price. Asserted as "names the format AND shows a dollar
+        //    amount" rather than as a literal, for the reason given at the
+        //    payload assertion above: a price is live data, not a contract.
+        "markup {$pb} (?bhp_format=hardcover): the CTA names HARDCOVER and shows a price",
+        (bool) preg_match('/>ADD HARDCOVER[^<]*\$\s?\d[^<]*<\/a>/i', $html)
     );
 }
 

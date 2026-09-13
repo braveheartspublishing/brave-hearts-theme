@@ -246,6 +246,69 @@ $bhp_show_capture      = function_exists('bhp_should_show_footer_capture') && bh
         <?php
         /*
          * ═══════════════════════════════════════════════════════════════════
+         * ⭐⭐ 1.19.413 (`CYCLE180-LDB-4`) — AUTHOR VISITS LANDS HERE, AND IT
+         *     IS THE THIRD TIME THIS EXACT DEFECT HAS BEEN CLOSED THIS WAY.
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * ⛔ THE DEFECT, MEASURED RATHER THAN SUSPECTED. `marketing-growth`
+         *    (`CYCLE180-MKT-GSC-TRIAGE`, 2026-09-12) triaged the Google Search
+         *    Console indexing export and found `/author-visits/`:
+         *      · "Discovered – currently not indexed" since 2026-03-03 —
+         *        SIX MONTHS known to Google and never once crawled;
+         *      · HTTP 200, `content="follow, index"`, in the sitemap with
+         *        `lastmod` 2026-08-18 — nothing is wrong with the page;
+         *      · internal links: 0 from `/blog/`, 0 from the home page,
+         *        0 from `/teachers/`. 13 from `/school-read-alouds/`, and
+         *        that page is the only route in.
+         *    ⭐ Google does not spend crawl budget on orphans. The page is
+         *      commercially load-bearing — it is where school read-aloud
+         *      bookings start.
+         *
+         * ⭐ WHY THE FOOTER IS THE RIGHT INSTRUMENT, and it is this file's own
+         *    precedent rather than a new idea. `/retailers-wholesale-guide/`
+         *    (1.19.314) and `/about/` (1.19.337) were both HTTP 200,
+         *    indexable, in the sitemap and reachable by no human — and both
+         *    were closed by exactly one `<li>` here. ⛔ The footer renders on
+         *    EVERY document, which is what makes it reach `/blog/` and the
+         *    home page in one edit; `CYCLE180-MKT-GSC-TRIAGE` `R1` named "`/teachers/`, the
+         *    `/blog/` sidebar or footer, and main nav", and `/blog/` HAS NO
+         *    SIDEBAR (`index.php` renders a card grid and a pagination block,
+         *    nothing else), so the footer is the only one of those two that
+         *    exists.
+         *
+         * ⛔ THE MAIN NAV IS **NOT** DONE BY THIS BUILD, AND THAT IS A
+         *    BOUNDARY, NOT AN OVERSIGHT. The header is
+         *    `wp_nav_menu(['theme_location' => 'primary'])` — a WordPress MENU
+         *    on each environment, not theme code. Adding a seventh top-level
+         *    item is a `wp menu item add`, it is an editorial decision about
+         *    the consumer navigation, and the retailer block above this one
+         *    already recorded that such a decision IS ANDREW'S. The command is
+         *    prepared, unrun, in the build report.
+         *
+         * ⛔ THE LABEL IS "Author Visits", WHICH IS THE PAGE'S OWN TITLE — read
+         *    read-only off PRODUCTION this build, not recalled:
+         *    `wp post list --post_type=page --name=author-visits` returns
+         *    ID 592, `post_title` "Author Visits", status publish.
+         *    ⭐ No new customer-facing wording is invented for a link that is
+         *      only changing where it lives. Same rule the "About" `<li>`
+         *      below states, applied again rather than re-derived.
+         *
+         * ⚠️⚠️ AND THE TENSION, DECLARED RATHER THAN QUIETLY INHERITED — this
+         *     is the SEVENTH footer link, and Andrew's 2026-08-19 prune set
+         *     this footer to "shop / kit / contact / policies". The same
+         *     tension was declared for the retailer link and again for About.
+         *     ⛔ `tests/test-cro-iterate5.php` §4.7 guards that ruling with a
+         *     hard ceiling, and this build RAISES IT BY EXACTLY ONE (13 -> 14)
+         *     rather than loosening it, because the whole value of that line is
+         *     that the next link somebody adds trips it. ⛔ IF HE WANTS THE
+         *     SHORTER FOOTER BACK, THIS `<li>` AND THE CEILING ARE THE WHOLE
+         *     REVERSAL.
+         */
+        ?>
+        <li><a href="<?php echo esc_url(home_url('/author-visits/')); ?>"><?php esc_html_e('Author Visits', 'brave-hearts'); ?></a></li>
+        <?php
+        /*
+         * ═══════════════════════════════════════════════════════════════════
          * ⭐⭐ 1.19.337 (2026-08-30, `CYCLE170-LD-MICRO`) — ABOUT LANDS HERE.
          *     CARRIER ITEM 547, THE SECOND HALF OF THE SAME RULING.
          * ═══════════════════════════════════════════════════════════════════

@@ -331,3 +331,87 @@
 .bhp-pair-landing__hero .bhp-pair-landing__title {
 	margin-inline: auto;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.413 (`CYCLE180-LDB-3`, founder seal 1477) — THE OUT-OF-STOCK NOTICE.
+
+   ⛔ IT STYLES A SENTENCE, NOT A CONTROL, AND THAT IS THE POINT. No button
+      shape, no panel chrome, no price typography and nothing that could be
+      mistaken for something to click. `R1.4` forbids advertising what cannot
+      be bought; this must therefore not LOOK buyable.
+
+   ⛔ NO COLOUR LITERAL, exactly as this file's header requires. `--bl-forest`
+      and `--bl-serif` are declared by `bundle-landing.css` on `.bhp-landing`,
+      which the unavailable wrapper also carries, so the notice inherits the
+      same palette the live page uses rather than introducing a second one.
+
+   ⛔ SCOPED UNDER `.bhp-pair-landing` like every other rule in this sheet, so
+      it cannot reach `/complete-collection/` or any other landing page.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bhp-pair-landing--unavailable .bhp-pair-landing__unavailable {
+	padding: clamp(2.5rem, 8vw, 5rem) 1.25rem;
+	text-align: center;
+}
+
+.bhp-pair-landing--unavailable .bhp-pair-landing__unavailable-text {
+	margin: 0 auto;
+	max-width: 32rem;
+	font-family: var(--bl-serif);
+	color: var(--bl-forest);
+	font-size: clamp(1.15rem, 3.2vw, 1.5rem);
+	line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⭐⭐ 1.19.414 (`CYCLE180-LDB-9`, founder seal 1486 note 1) — THE VALUE
+      HEADING WAS INVISIBLE. FOREST TYPE ON A FOREST BAND.
+   ---------------------------------------------------------------------------
+   ⛔ THE FOUNDER FOUND THIS ON HIS OWN PHONE, WHICH IS WHY IT IS A DEFECT AND
+      NOT A PREFERENCE. `h2.bhp-landing-value__heading` ("Both books together")
+      rendered colour rgb(23, 63, 47) on background rgb(23, 63, 47).
+      MEASURED CONTRAST RATIO: 1.00. The text was there, selectable, and read
+      aloud correctly by a screen reader. A sighted reader saw an empty green
+      band with 2rem of space under it.
+
+   ⭐ THE CAUSE IS A SPECIFICITY LOSS, NOT A MISSING DECLARATION, AND IT IS THE
+      SAME CLASS OF DEFECT AS THE 1.19.400 H1 BLOCK DIRECTLY ABOVE:
+
+        .bhp-landing h1, .bhp-landing h2, .bhp-landing h3   (0,1,1)
+            color: var(--bl-forest)     <- PLUGIN, bundle-landing.css:44
+        .bhp-landing-value__heading                         (0,1,0)
+            color: #fff                 <- PLUGIN, bundle-landing.css:277
+
+      One class AND one element beats one class. The plugin's own intended
+      white LOSES to the plugin's own generic heading colour, on the plugin's
+      own page. Nothing in this theme caused it and nothing in this theme could
+      have prevented it; the theme is simply the last sheet in the cascade
+      (`bundle-pair-landing.min.css` is enqueued with `bhp-bundle-landing` as a
+      hard dependency, so it always loads after) and is therefore the only
+      place a theme-scoped fix can live.
+
+   ⭐ THE FIX IS SPECIFICITY, NOT `!important`. Adding the page wrapper class
+      takes this to (0,2,0), which beats the plugin's (0,1,1) on class count.
+      An `!important` would have worked and would have hidden the reason.
+
+   ⛔ NO COLOUR LITERAL, exactly as this file's header requires. `--bl-ivory`
+      (#FFFDF8) is declared by `bundle-landing.css` on `.bhp-landing` and is
+      ALREADY the light ground of this very section
+      (`.bhp-landing-value__panel--light`). ⚠ It is NOT byte-identical to the
+      plugin's `#fff`: it is the declared near-white of this palette rather
+      than a second one. Stated rather than glossed, because the two differ by
+      two units of green and seven of blue and a reader comparing the sheets
+      would otherwise wonder which is authoritative.
+
+   ⛔ SCOPED UNDER `.bhp-pair-landing`, like every other rule in this sheet.
+
+   ⛔⛔ `/complete-collection/` HAS THE IDENTICAL DEFECT AND THIS BLOCK DOES NOT
+      REACH IT. Measured live on staging2 1.19.413 at 390 and 1440:
+      "Complete the adventure and save." also renders rgb(23,63,47) on
+      rgb(23,63,47), ratio 1.00. Its only root fix is the plugin line above,
+      which would move the plugin version; the 414 brief freezes the plugin at
+      1.8.93. ⭐ RAISED AS `CYCLE180-LDB-9` WITH A ONE-LINE PATCH PREPARED AND
+      NOT APPLIED. It is deliberately out of scope, not overlooked.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bhp-pair-landing .bhp-landing-value__heading {
+	color: var(--bl-ivory);
+}

@@ -126,6 +126,28 @@ function bhp_colouring_registry() {
  * @return string|null
  */
 function bhp_colouring_slug_for_product($product_id) {
+    /*
+     * ⭐⭐ 1.19.412 — DELEGATES TO THE PLUGIN'S TWO-ID TEST, and the delegation
+     *     is the point. This function answers "is this id a colouring title",
+     *     and after the parent/buy split there are TWO ids that must both say
+     *     yes: the PDP hands it `get_queried_object_id()` (a parent) while
+     *     `bhp_colouring_purchase_data()` and the cart hand it a buy id.
+     *
+     * ⛔ THE OLD LOOP MATCHED ONE FLAT MAP AND WOULD HAVE ANSWERED NO TO HALF
+     *    OF ITS OWN CALLERS on a variable shape — which is precisely how the
+     *    PDP, the shop card and the read-aloud tile would have vanished
+     *    without a single error being logged.
+     *
+     * ⚠ THE `function_exists()` GUARD IS NOT DECORATION. This is the THEME and
+     *   that is the PLUGIN; with the bundle plugin deactivated every colouring
+     *   surface must resolve to "not a colouring product" and disappear
+     *   cleanly, rather than fatal on a parent's phone.
+     */
+    if (function_exists('bhp_colouring_slug_for_any_id')) {
+        return bhp_colouring_slug_for_any_id($product_id);
+    }
+
+    // ── Fallback for a plugin older than 1.8.92: one flat map, parent only.
     if (!function_exists('bhp_colouring_product_ids')) {
         return null;
     }
@@ -135,6 +157,38 @@ function bhp_colouring_slug_for_product($product_id) {
         }
     }
     return null;
+}
+
+/**
+ * ⭐ 1.19.412 — the PAGE id and the BUY id for a colouring title, theme-side.
+ *
+ * ⛔ THEME-SIDE SHIM, NOT A SECOND SOURCE OF TRUTH. It reads the plugin's
+ *    identity map and adds no rule of its own. It exists so that theme
+ *    callers do not each have to write the same `function_exists()` dance,
+ *    and so that a plugin-less site degrades to the simple shape in ONE place
+ *    instead of in eight.
+ *
+ * @param int $product_id Any id belonging to the title (parent or variation).
+ * @return array{parent:int,buy:int,variation:int}
+ */
+function bhp_colouring_ids_for_product($product_id) {
+    $fallback = [
+        'parent'    => (int) $product_id,
+        'buy'       => (int) $product_id,
+        'variation' => 0,
+    ];
+
+    if (!function_exists('bhp_colouring_identity_map')) {
+        return $fallback;
+    }
+
+    $slug = bhp_colouring_slug_for_product($product_id);
+    if (null === $slug) {
+        return $fallback;
+    }
+
+    $map = bhp_colouring_identity_map();
+    return isset($map[$slug]) ? $map[$slug] : $fallback;
 }
 
 /** True when the current request is a colouring-line product page. */
@@ -461,10 +515,60 @@ function bhp_colouring_purchase_data($product_id) {
     if (!$slug || !function_exists('wc_get_product')) {
         return null;
     }
-    $product = wc_get_product($product_id);
-    if (!$product) {
+    /*
+     * ⭐⭐ 1.19.412 — TWO PRODUCT OBJECTS, BECAUSE THERE ARE TWO QUESTIONS.
+     *
+     *     · `$parent`  — the POST. Its permalink is the canonical URL, its
+     *       title is the FD-557 name on the record, its id is what
+     *       `get_queried_object_id()` will hand back on the PDP.
+     *     · `$priced`  — the RECORD THAT SELLS. Its price, its stock status,
+     *       its SKU. On a variable shape this is the "Perfect Bound"
+     *       variation and the parent's own price is a RANGE
+     *       ("$12.99 – $12.99") that must never reach the rail.
+     *
+     * ⛔ ON TODAY'S SIMPLE SHAPE THESE ARE THE SAME OBJECT, which is exactly
+     *    why one variable was enough for eleven releases and why nothing
+     *    observable changes on 618 or 4065 in this build.
+     *
+     * ⭐ MIRRORS `bhp_book_format_payload()`'s `$pb_priced` / `$pb_parent`
+     *    split, deliberately including the variable names, so the two
+     *    payload builders read as one pattern rather than two inventions.
+     */
+    $ids       = bhp_colouring_ids_for_product($product_id);
+    $parent_id = $ids['parent'] > 0 ? (int) $ids['parent'] : (int) $product_id;
+    $buy_id    = $ids['buy'] > 0 ? (int) $ids['buy'] : (int) $product_id;
+
+    $parent = wc_get_product($parent_id);
+    $priced = ($buy_id !== $parent_id) ? wc_get_product($buy_id) : $parent;
+
+    // ⛔ BOTH must load. A half-resolved title renders a rail with no price.
+    if (!$parent || !$priced) {
         return null;
     }
+
+    /*
+     * ⭐ THE VARIATION'S OWN ATTRIBUTES, READ OFF THE RECORD — never the
+     *    literal "Perfect Bound". `add-to-cart` on a variable product is
+     *    refused ("Please choose product options") unless the attribute terms
+     *    travel with it. Reading them from the variation means a rename in
+     *    WooCommerce admin cannot break the button, and means this code needs
+     *    no registry entry the way `pb_attributes` does.
+     */
+    $variation_attributes = [];
+    if ($ids['variation'] > 0 && method_exists($priced, 'get_variation_attributes')) {
+        foreach ((array) $priced->get_variation_attributes() as $attr_key => $attr_value) {
+            if ('' !== (string) $attr_value) {
+                $variation_attributes[$attr_key] = $attr_value;
+            }
+        }
+    }
+
+    $add_args = array_merge(
+        ['add-to-cart' => $parent_id],
+        $ids['variation'] > 0 ? ['variation_id' => (int) $ids['variation']] : [],
+        $variation_attributes
+    );
+    $add_url_raw = add_query_arg($add_args, get_permalink($parent_id));
 
     $reg = bhp_colouring_registry();
 
@@ -489,17 +593,23 @@ function bhp_colouring_purchase_data($product_id) {
      */
     return [
         'key'           => 'colouring_' . $slug,
-        'title'         => $product->get_name(), // ⛔ FD-557 lives on the record.
+        // ⛔ FD-557 lives on the record — and on the PARENT record, which is
+        //    the post a customer's browser shows. A variation's `get_name()`
+        //    appends its attributes ("… - Perfect Bound") and is not the title.
+        'title'         => $parent->get_name(),
         'descriptor'    => $reg[$slug]['descriptor'],
-        'canonical_url' => get_permalink($product_id),
+        'canonical_url' => get_permalink($parent_id),
         'paperback'     => [
-            'product_id'   => (int) $product_id,
-            'variation_id' => 0,
-            'sku'          => $product->get_sku(),
+            // ⭐ 1.19.412 — the parent and the variation, stated separately.
+            //    `variation_id => 0` was hard-coded here; see the file header.
+            'product_id'   => (int) $parent_id,
+            'variation_id' => (int) $ids['variation'],
+            // ⭐ SKU, PRICE and STOCK all come from `$priced`, never `$parent`.
+            'sku'          => $priced->get_sku(),
             // ⛔ LIVE, every request. Never a literal.
-            'price_html'   => $product->get_price_html(),
-            'price'        => $product->get_price(),
-            'in_stock'     => $product->is_in_stock(),
+            'price_html'   => $priced->get_price_html(),
+            'price'        => $priced->get_price(),
+            'in_stock'     => $priced->is_in_stock(),
             /*
              * ⭐ 1.19.281 — CARRIER ITEM 188. The colouring book's ADD TO CART
              *    is an ADD TO CART like any other, so it carries the same
@@ -513,8 +623,8 @@ function bhp_colouring_purchase_data($product_id) {
              *    footer Andrew objected to in item 186.
              */
             'add_url'      => function_exists('bhp_purchase_flow_mark_panel')
-                ? bhp_purchase_flow_mark_panel(add_query_arg(['add-to-cart' => $product_id], get_permalink($product_id)))
-                : add_query_arg(['add-to-cart' => $product_id], get_permalink($product_id)),
+                ? bhp_purchase_flow_mark_panel($add_url_raw)
+                : $add_url_raw,
         ],
         'hardcover'     => [
             'product_id'   => 0,

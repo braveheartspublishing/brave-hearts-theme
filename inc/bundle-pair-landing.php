@@ -327,8 +327,133 @@ add_action('wp_enqueue_scripts', 'bhp_pair_landing_enqueue_assets');
  * @since 1.19.399
  * @return string
  */
+/**
+ * ⭐⭐ 1.19.413 (`CYCLE180-LDB-3`, founder seal 1477) — IS THE PAGE DARK
+ *     SPECIFICALLY BECAUSE A COMPONENT IS OUT OF STOCK?
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THE TWO REFUSALS ARE DELIBERATELY NOT CONFLATED, AND THE OFFER ENGINE
+ *     ALREADY SAYS WHY IN ITS OWN WORDS.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * `bhp_offer_is_offerable()` returns false for THREE different reasons: the
+ * offer cannot be assembled or priced at all, a component is OUT OF STOCK, or
+ * this VISITOR may not be shown it (the school-visit gate). ⛔ Only the middle
+ * one is "temporarily unavailable".
+ *
+ * ⭐ `bhp_offer_is_in_stock()`'s own header states the rule this function
+ *    obeys rather than re-derives: *"Out of stock has no such remedy, and
+ *    offering one would tell a parent to pay postage for a book that cannot be
+ *    printed."* The inverse is just as wrong — telling a school-visit-flagged
+ *    parent the set is "temporarily unavailable" when it is in stock and their
+ *    session is simply being routed differently would be a false statement
+ *    about the catalogue.
+ *
+ * ⛔ SO THIS ASKS THE NARROW QUESTION ONLY: assemblable and priced, but a
+ *    component is not in stock. Every other refusal keeps 1.19.412 behaviour
+ *    exactly — the shortcode returns '' and the page stays dark.
+ *
+ * ✅ FAILS CLOSED ON A MISSING RESOLVER: no offer engine, no opinion, no
+ *    notice. A missing plugin must not start printing words at a customer.
+ *
+ * @since 1.19.413
+ * @return bool
+ */
+function bhp_pair_landing_unavailable_by_stock() {
+    if (!function_exists('bhp_offer_is_purchasable') || !function_exists('bhp_offer_is_in_stock')) {
+        return false;
+    }
+    $offers = bhp_pair_landing_offers();
+    if (empty($offers['paperback'])) {
+        return false;
+    }
+    $key = $offers['paperback'];
+
+    return bhp_offer_is_purchasable($key) && !bhp_offer_is_in_stock($key);
+}
+
+/**
+ * ⭐⭐ 1.19.413 — THE OUT-OF-STOCK NOTICE. ONE EXISTING STRING, NO NEW COPY.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ THE LABEL IS READ FROM THE CONSTANT AND IS NEVER RE-TYPED AS A LITERAL.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * `BHP_COLOURING_UNAVAILABLE_CTA` (`inc/colouring-line.php`) exists precisely
+ * so that one wording change replaces every occurrence in ONE place. ⛔ Writing
+ * the words here as a literal would create a SECOND owner of the same string
+ * and quietly defeat that design — which is the whole reason the constant was
+ * introduced at 1.19.407. `template-parts/commerce/format-cards.php` reads it
+ * exactly this way and this block copies that pattern deliberately.
+ *
+ * ⚠️⚠️ AND THE PART THAT IS A FINDING RATHER THAN A FIX — `CYCLE180-LDB-3`.
+ *     **Two sources disagree about whether this string is approved copy, and
+ *     this build does not resolve the disagreement.**
+ *       · The `CYCLE180-LD-BUILD-413` brief and founder seal `1477` both call
+ *         it *"the already-approved string"*.
+ *       · The constant's own header at `inc/colouring-line.php:1141` reads
+ *         *"UNAPPROVED PLACEHOLDER COPY — NEEDS ANDREW'S APPROVAL"*, and
+ *         `tests/test-cycle179-407.php:266` asserts it as
+ *         *"(PLACEHOLDER COPY, needs Andrew approval)"*.
+ *     ⭐ Standing Rules §7: an agent records a contradiction, it does not pick.
+ *     ⛔ IT DOES NOT BLOCK THIS BUILD, and that is the point of reading the
+ *        constant: whichever way Andrew rules, the wording changes in one
+ *        place and this page inherits it with no further edit.
+ *
+ * ⛔ WHAT IS DELIBERATELY **NOT** RENDERED HERE. No date, no promise about
+ *    when the book returns, no "out of stock" sentence of its own, no
+ *    explanation, and no second route. The brief is *"show the approved string
+ *    in place of the empty shell"* and nothing beyond that string is invented.
+ *    ⚠️ That leaves the page with no onward link while it is dark; that is
+ *    recorded as a recommendation in the build report, NOT silently absorbed
+ *    into this change.
+ *
+ * @since 1.19.413
+ * @return string
+ */
+function bhp_pair_landing_render_unavailable() {
+    $label = defined('BHP_COLOURING_UNAVAILABLE_CTA')
+        ? (string) BHP_COLOURING_UNAVAILABLE_CTA
+        : __('Temporarily unavailable', 'brave-hearts');
+
+    ob_start();
+    ?>
+    <div class="bhp-landing bhp-pair-landing bhp-pair-landing--unavailable" data-bhp-landing data-bhp-pair-landing data-bhp-pair-unavailable>
+        <section class="bhp-pair-landing__unavailable" aria-live="polite">
+            <p class="bhp-pair-landing__unavailable-text"><?php echo esc_html($label); ?></p>
+        </section>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
 function bhp_pair_landing_render() {
     if (!bhp_pair_landing_available()) {
+        /*
+         * ⭐⭐ 1.19.413 (founder seal `1477`) — THE OUT-OF-STOCK STATE GETS A
+         *     SENTENCE INSTEAD OF AN EMPTY PAGE.
+         *
+         * ⛔ WHAT WAS OBSERVED, not predicted. Seal 1477, 2026-09-12: the page
+         *    was created on production, returned HTTP 200 with the correct
+         *    `page-template-page-bundle-pair` body class and the pair
+         *    stylesheet loaded — and the shortcode rendered NOTHING, because
+         *    618 is out of stock. A parent arriving from the printed handout
+         *    QR got a styled, titled, completely blank page.
+         *
+         * ⛔ `R1.4` IS NOT WEAKENED BY THIS AND THE DISTINCTION MATTERS:
+         *    "nothing is advertised that cannot be bought" forbids rendering a
+         *    PRICE, a PANEL or an ADD control. It does not require silence.
+         *    Nothing priced or buyable renders below — the notice carries no
+         *    price, no button and no form.
+         *
+         * ✅ EVERY OTHER REFUSAL IS BYTE-IDENTICAL TO 1.19.412: plugin off,
+         *    no offer configured, unpriceable, or a visitor-gated session all
+         *    still fall through to the empty string exactly as before.
+         */
+        if (bhp_pair_landing_unavailable_by_stock()) {
+            return bhp_pair_landing_render_unavailable();
+        }
+
         return ''; // R1.4: nothing is advertised that cannot be bought.
     }
 

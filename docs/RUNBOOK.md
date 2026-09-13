@@ -74,11 +74,63 @@ node tools/build-css.mjs --check   # every line must read FRESH
 ```bash
 cd "C:\BHP\brave-hearts-theme"
 TOP_PHP=$(git ls-tree HEAD --name-only | grep '\.php$')
-git archive --format=zip --prefix=brave-hearts-theme-deploy-explorer-expedition-guides/ \
+git -c core.autocrlf=false -c core.eol=lf archive --worktree-attributes \
+  --format=zip --prefix=brave-hearts-theme-deploy-explorer-expedition-guides/ \
   -o /path/to/build.zip HEAD style.css style.min.css theme.json assets inc template-parts \
   content-engine docs tests woocommerce Brand-Soul-Audit.md CLAUDE.md \
   Homepage-Implementation-Notes.md Logo.jpg README.md Theme-Freeze.md $TOP_PHP \
   ':(exclude)assets/covers'
+```
+
+> ### ⛔ ADDED 2026-09-12 (`CYCLE180-LD-BUILD-412`) — `--worktree-attributes` IS NOT OPTIONAL
+>
+> **`export-ignore` is read from `.gitattributes` AS FOUND IN THE TREE-ISH BEING ARCHIVED — not
+> from the working tree.** That is fine when archiving `HEAD` with `.gitattributes` committed. It
+> is **silently wrong** in the two cases this project actually builds in:
+>
+> 1. **A temporary index** — the method this RUNBOOK recommends immediately below, and on this
+>    project the tree running ahead of `HEAD` is the normal state. A temp index seeded with only
+>    the deploy paths does **not** contain `.gitattributes`, so **every `export-ignore` line
+>    stops applying** and the files they exclude ship.
+> 2. **An uncommitted edit to `.gitattributes` itself** — the new rule does not take effect until
+>    it is committed, so the build meant to test the exclusion does not test it.
+>
+> **What ships when it fails:** `docs/security-investigation-nlo-finance-redirect-2026-07-09.md`,
+> which **quotes malware IOC strings** and **trips SiteGround's malware scanner on upload**
+> (observed 2026-08-04). ⚠ `assets/covers/` is *not* the exposure here — it is excluded **twice**,
+> by `export-ignore` and by the `':(exclude)assets/covers'` pathspec, and the pathspec has been
+> doing the work. **The IOC document has only the `export-ignore`.**
+>
+> ⭐ **VERIFIED BY NEGATIVE CONTROL, 2026-09-12, not asserted.** Same temp index, the flag as the
+> only variable:
+>
+> | build | IOC doc in ZIP |
+> |---|---|
+> | temp index without `.gitattributes`, no flag | **1 — it ships** |
+> | same index, `--worktree-attributes` | **0 — excluded** |
+>
+> ### ⚠️ ADDED 2026-09-12 (`CYCLE180-LD-BUILD-413`) — STAGE **EVERY** DEPLOY PATH INTO THE TEMP INDEX
+>
+> **A path you forget to `git add` into the temp index is archived from `HEAD`, silently, at
+> whatever version `HEAD` happens to carry.** It does not error and the ZIP looks normal.
+>
+> ⛔ **OBSERVED IN THIS BUILD, not hypothetical.** The temp index was seeded with the theme paths
+> but **not** `plugins`. The plugin ZIP built from that tree therefore carried **1.8.91** — the
+> version in `HEAD` — while the working tree held **1.8.93**. It installed cleanly, reported
+> "Plugin updated successfully", and **downgraded staging by two versions.** Caught only because
+> the post-install `wp plugin list` was read rather than assumed.
+>
+> **The rule:** the `git add` list and the `git archive` pathspec list must match, and the
+> post-install version check is not a formality — it is the only thing that catches this.
+
+**Build the bundle plugin's artefact from the same tree**, so theme and plugin can never come
+from different commits:
+
+```bash
+git -c core.autocrlf=false -c core.eol=lf archive --worktree-attributes \
+  --format=zip --prefix=brave-hearts-bundle-pricing/ \
+  -o /path/to/plugin.zip "$TREE":plugins/brave-hearts-bundle-pricing . \
+  ':(exclude)_pre-edit-backups*'
 ```
 
 > **The deploy archive must be built from the WORKING TREE, not from `HEAD`.**
@@ -96,6 +148,39 @@ git archive --format=zip --prefix=brave-hearts-theme-deploy-explorer-expedition-
 > an empty pattern and reported a meaningless count; the artefacts happened to be clean, so
 > nothing broke and nobody noticed. Assert that each guard produces a non-trivial result before
 > trusting its verdict.
+>
+> ### ⛔⛔ ADDED 2026-09-12 (`CYCLE180-LD-BUILD-413`) — THE REHEARSAL mu-plugin MUST NEVER SHIP
+>
+> `wp-content/mu-plugins/bhp-rehearsal-testsku.php` is scaffolding created by
+> `CYCLE180-LD-COLORING-MIGRATION-REHEARSAL`. It filters `bhp_colouring_product_ids` at
+> **priority 99** to point the colouring catalogue at the staging **TEST SKU** `TEST000000001`
+> instead of the real ISBN, so staging can hold the migrated state without the live ISBN ever
+> being written onto a staging record.
+>
+> ⛔ **On production it would point the live catalogue at a product that does not exist.** It is
+> **STAGING2 ONLY**. The two `unzip` assertions added to the gate block below exist so that it
+> cannot reach an artefact even by accident — it lives outside the theme directory, so the
+> normal pathspec would never pick it up, and the assertions make that a *checked* fact rather
+> than a structural assumption.
+>
+> ⚠️ **IT ALSO MAKES STAGING SUITE RESULTS UNRELIABLE WHILE IT IS INSTALLED, AND THIS IS
+> MEASURED, NOT SUSPECTED.** Its priority-99 filter runs **after** the priority-10 fixtures that
+> the test suites use through the documented `bhp_colouring_product_ids` injection seam, so it
+> **silently overwrites them**. Observed 2026-09-12: `test-cycle179-count-discount.php` injects
+> the fixture id `9000001` and the mu-plugin replaced it with `19020`, failing 7 assertions.
+> With the mu-plugin moved aside the same suite was **ALL PASS, exit 0**. ⭐ **Read any colouring
+> suite failure on staging against this before treating it as a code regression.**
+>
+> **Removing it when the migration is finished is one command, and it is the last step:**
+>
+> ```bash
+> ssh <user>@<host> -p <port> "rm <staging_docroot>/wp-content/mu-plugins/bhp-rehearsal-testsku.php"
+> ssh <user>@<host> -p <port> "cd <staging_docroot> && wp sg purge --user=1"
+> ```
+>
+> ⛔ **Do not remove it while staging is still holding the migrated rehearsal state for review** —
+> without it the catalogue looks for the real ISBN, finds nothing, and the colouring book
+> disappears from staging entirely.
 The `--prefix` must exactly match the active theme's slug or the install
 creates a new, inactive theme instead of replacing the live one.
 
@@ -126,6 +211,9 @@ unzip -l /path/to/build.zip | grep -c 'content-engine/'            # MUST be >= 
 unzip -l /path/to/build.zip | grep -c '\.min\.css'                 # MUST be >= 14
 unzip -l /path/to/build.zip | grep -c 'tools/'                     # MUST be 0
 unzip -l /path/to/build.zip | grep -c 'assets/covers/'             # MUST be 0
+unzip -l /path/to/build.zip | grep -c 'security-investigation-nlo' # MUST be 0  (1.19.412)
+unzip -l /path/to/build.zip | grep -ci 'bhp-rehearsal-testsku'     # MUST be 0  (1.19.413)
+unzip -l /path/to/build.zip | grep -c 'mu-plugins/'                # MUST be 0  (1.19.413)
 md5sum /path/to/build.zip                                          # record it in the release doc
 ```
 > ### ⛔ CORRECTED 2026-09-02 (`CYCLE178-LD-DOCS-SYNC`, applied `CYCLE179-LD-350`) - the minified-CSS assertion was an equality on a stale number, and it fails a CORRECT build
@@ -303,6 +391,14 @@ installed, not after.
   > ⚠ **This line is left standing rather than rewritten**, because it describes the verification the
   > project actually wants. **`CYCLE179-LD-002` is OPEN and is Andrew's.** The fix the gate itself
   > proposes is an explicit allow-list of exact read-only eval strings, added by him.
+  >
+  > ### ⛔ CORRECTED 2026-09-13 (`CYCLE180-LD-BUILD-416`, finding `CYCLE180-LD-415-F1`) — "permanently and by design, not by an expired token" IS THE WRONG HALF OF THE SENTENCE
+  >
+  > **`wp eval` and `wp eval-file` are NOT permanently blocked against production.** They are classified as mutating verbs by `C:\BHP\.claude\hooks\gates\g1_production_write.py` (`MUTATING_WP`, last pattern) and are therefore blocked on production **exactly as long as Andrew's `PROD-UNLOCK` token is stale — and they run when it is fresh, inside its 60-minute window.** That is how `CYCLE180-LD-BUILD-415` diagnosed `CX-19` on production with `wp eval-file` on 2026-09-12.
+  >
+  > **Verified first-hand 2026-09-13, not inherited from the 415 report:** a read-only `wp eval 'echo "ok";'` against the production docroot was refused by the gate, and the gate's own message named the mechanism — *"Unlock state: token is STALE (76 min old, limit 60); touched 2026-09-12T22:01:04"*. The refusal was accepted; no workaround was attempted and no token was requested.
+  >
+  > ⭐ **THE STANDING DISPOSITION ABOVE IS UNCHANGED AND IS STILL CORRECT PRACTICE.** The token is Andrew's to touch and an agent never asks for it in order to run a test suite, so the suites still run on **staging** against the byte-identical artefact and production is still verified with read-only verbs plus a logged-out browser check. **What changes is the reason recorded, not the behaviour:** the previous wording taught the next reader that the block could never lift, which is why a real production diagnosis later read as impossible. **`CYCLE179-LD-002` remains OPEN and remains Andrew's** — an `ALLOWED_ON_PROD` allow-list of exact read-only eval strings would remove the need for a token at all, which is a different and better fix.
 - SiteGround cache purged.
 - A real, logged-out browser smoke test of the changed area — `curl` proves the page shell loads, not that cart/checkout/JS-driven behavior works.
 - No new entries in `php_errorlog` since the deploy.

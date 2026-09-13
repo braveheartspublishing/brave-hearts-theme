@@ -1,5 +1,5 @@
 /*! Built from book-formats.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: 5966e86c320ca97fb710a81b4348e199
+    source-md5: f0b45b67c97180c416d0a7d359d42266
     Comments stripped for transfer size; the source file is canonical. */
 :root {
 	--bhp-fmt-green: #1c6b4a;
@@ -990,4 +990,63 @@ object-position: 50% 22%;
 .bhp-compare__everylist li {
 		margin: 0 0 2px;
 	}
+}
+@media (min-width: 1024px) {
+.woocommerce div.product .related.products ul.products li.product img,
+	.woocommerce div.product .upsells.products ul.products li.product img {
+		height: 232px;
+		padding: 0.85rem 0.85rem 0.4rem;
+		margin-bottom: 10px;
+	}
+.woocommerce div.product .related.products ul.products li.product .woo-card__eyebrow,
+	.woocommerce div.product .upsells.products ul.products li.product .woo-card__eyebrow {
+		margin-top: 8px;
+		margin-bottom: 2px;
+	}
+.woocommerce div.product .related.products ul.products li.product .price,
+	.woocommerce div.product .upsells.products ul.products li.product .price {
+		margin-bottom: 4px;
+	}
+.woocommerce div.product .related.products ul.products li.product .bhp-shop-ages,
+	.woocommerce div.product .upsells.products ul.products li.product .bhp-shop-ages {
+		margin-bottom: 8px;
+	}
+.woocommerce div.product .related.products ul.products li.product a.button,
+	.woocommerce div.product .upsells.products ul.products li.product a.button {
+		margin-bottom: 6px;
+	}
+.woocommerce div.product .related.products > h2,
+	.woocommerce div.product .upsells.products > h2 {
+		margin-bottom: 18px;
+	}
+}
+.woocommerce ul.products li.product .star-rating,
+.woocommerce div.product .related.products ul.products li.product .star-rating,
+.woocommerce div.product .upsells.products ul.products li.product .star-rating {
+	display: block;
+	float: none;
+	margin: 4px auto 10px;
+	font-size: 1.15rem;
+	color: var(--expedition-gold, #D9A45F);
+}
+.woocommerce ul.products li.product .star-rating::before,
+.woocommerce div.product .related.products ul.products li.product .star-rating::before,
+.woocommerce div.product .upsells.products ul.products li.product .star-rating::before {
+	color: rgba(217, 164, 95, 0.3);
+}
+.woocommerce div.product .woocommerce-product-rating .star-rating {
+	font-size: 1.15rem;
+	color: var(--expedition-gold, #D9A45F);
+}
+.woocommerce div.product .woocommerce-product-rating .star-rating::before {
+	color: rgba(217, 164, 95, 0.3);
+}
+.bhp-format-card__badge {
+	top: auto;
+	bottom: 100%;
+	border-radius: 8px 8px 0 0;
+}
+.bhp-shop-collection-card__badge {
+	margin-top: -2px;
+	margin-bottom: 6px;
 }

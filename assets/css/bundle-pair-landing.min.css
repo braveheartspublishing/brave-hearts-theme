@@ -1,5 +1,5 @@
 /*! Built from bundle-pair-landing.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: c309d122457ba1884999d0358e205e31
+    source-md5: 219005a136cb6b087008bb6b4c0109a5
     Comments stripped for transfer size; the source file is canonical. */
 .bhp-pair-landing__hero .bhp-landing-hero__inner {
 	text-align: center;
@@ -188,4 +188,19 @@
 }
 .bhp-pair-landing__hero .bhp-pair-landing__title {
 	margin-inline: auto;
+}
+.bhp-pair-landing--unavailable .bhp-pair-landing__unavailable {
+	padding: clamp(2.5rem, 8vw, 5rem) 1.25rem;
+	text-align: center;
+}
+.bhp-pair-landing--unavailable .bhp-pair-landing__unavailable-text {
+	margin: 0 auto;
+	max-width: 32rem;
+	font-family: var(--bl-serif);
+	color: var(--bl-forest);
+	font-size: clamp(1.15rem, 3.2vw, 1.5rem);
+	line-height: 1.4;
+}
+.bhp-pair-landing .bhp-landing-value__heading {
+	color: var(--bl-ivory);
 }

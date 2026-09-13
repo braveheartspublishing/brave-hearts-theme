@@ -966,6 +966,57 @@ function bhp_body_classes($classes) {
                     $classes[] = 'bhp-gallery-multi';
                 }
             }
+
+            /*
+             * ═══════════════════════════════════════════════════════════════
+             * ⭐ 1.19.414 (`CYCLE180-LDB-10`, founder seal 1486 note 2) — THE
+             *    COLOURING-LINE PRODUCT PAGE SIGNAL.
+             * ═══════════════════════════════════════════════════════════════
+             *
+             * ⭐ WHY IT EXISTS. Andrew's note is that on the colouring PDP at
+             *    390 the bundle CTA and the "Look inside" rail sit roughly
+             *    4,000px apart. The rule that produces that gap is the shared
+             *    `@media (max-width: 600px)` order block in
+             *    `assets/css/product-template.css`, which every product page
+             *    uses. ⛔ THE SAME GAP IS PRESENT ON THE CHAPTER BOOKS AND IS
+             *    LARGER THERE — measured live on staging2 1.19.413 at an
+             *    asserted innerWidth of 390:
+             *        colouring PDP 19020 : CTA 907-1473,  rail 5412  (3,939px)
+             *        Mariana PB    333   : CTA 4050-4616, rail 10496 (5,880px)
+             *    The 414 brief requires the chapter-book pages to be
+             *    UNCHANGED. An edit to the shared rule cannot satisfy that, so
+             *    the fix has to be scoped, and a body class is the only scope
+             *    available that is neither an id nor a guess.
+             *
+             * ⛔ NOTHING IS HARDCODED TO A PRODUCT ID. The test is
+             *    `bhp_colouring_slug_for_product()`, which reads the colouring
+             *    registry — so the class follows the line across the 4065 ->
+             *    19020/946 migration and onto any colouring title added later,
+             *    with no code change. Verified over SSH on staging2:
+             *        19020 -> 'mariana'   19021 -> 'mariana'
+             *        333   -> NULL (chapter book)   833 -> NULL (activity book)
+             *
+             * ⛔ WHY NOT THE ALTERNATIVES, recorded so they are not re-tried:
+             *    · `bhp-gallery-multi` above happens to be true only on this
+             *      page TODAY, and only because of how many gallery images the
+             *      product carries. It means "has a gallery", not "is a
+             *      colouring book", and a chapter book gaining one image would
+             *      silently inherit a layout decision.
+             *    · `body.postid-19020` is environment-specific — production is
+             *      946 — and would have to be edited at every migration.
+             *    · `:has(.bhp-formats--single)` expresses it in CSS, and the
+             *      block above already records why `:has()` is refused on this
+             *      template: unsupported in Firefox before 121 and in every
+             *      pre-2023 Safari, and the failure is SILENT.
+             *
+             * ⛔ IT IS PRESENTATION ONLY. One class. It reads nothing from the
+             *    request, writes no option, sets no cookie, touches no session,
+             *    and changes no price, product, cart or setting.
+             */
+            if (function_exists('bhp_colouring_slug_for_product')
+                && null !== bhp_colouring_slug_for_product(get_queried_object_id())) {
+                $classes[] = 'bhp-colouring-pdp';
+            }
         }
     }
     return $classes;

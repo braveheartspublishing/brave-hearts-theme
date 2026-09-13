@@ -4,7 +4,7 @@ Theme URI: https://braveheartspublishing.com
 Author: Brave Hearts Publishing
 Author URI: https://braveheartspublishing.com
 Description: Custom theme for Brave Hearts Publishing — Adventures of Charlotte and Henry. Big Places. Brave Hearts.
-Version: 1.19.411
+Version: 1.19.416
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -11197,6 +11197,30 @@ a.header-expedition-cta {
   font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--color-ink);
+  /* ⭐⭐ 1.19.412 — THE "minutes." ORPHAN, FIXED IN CSS AND NOT IN THE COPY.
+        At 390 the lede wraps so that the final line reads just "minutes." —
+        one word alone under two full lines, on the first surface a parent
+        sees.
+
+     ⛔ THE STRING IS NOT TOUCHED, AND THAT IS THE WHOLE CONSTRAINT. "A real
+        chapter from The Mariana Trench. About 10 minutes." is FOUNDER-APPROVED
+        copy (see the long note at `parent-ab-popup.php`). Inserting `&nbsp;`
+        or a `<span style="white-space:nowrap">` around "10 minutes." would
+        mean either editing approved copy or pushing markup through a string
+        that is `esc_html()`-escaped and publicly filterable via
+        `bhp_parent_popup_lede` — a filter that returns plain text, as every
+        current caller does. Both routes break a contract to fix a widow.
+
+     ⭐ `text-wrap: pretty` IS THE BROWSER'S OWN ANSWER TO EXACTLY THIS: it
+        asks the line-breaker to avoid leaving a short last line, without
+        anyone having to nominate WHICH words must stay together. It therefore
+        keeps working if the copy ever changes, which a hard-coded nowrap
+        around "10 minutes." would not.
+
+     ⚠ UNSUPPORTED BROWSERS IGNORE IT AND RENDER EXACTLY AS THEY DO TODAY.
+       This is a progressive enhancement with no fallback needed — the
+       pre-1.19.412 rendering IS the fallback. */
+  text-wrap: pretty;
 }
 .mariana-popup--ab .popup-ab__lede + .popup-ab__subhead {
   margin-top: var(--space-2);

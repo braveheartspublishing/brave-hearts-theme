@@ -123,12 +123,62 @@ if ( ! $c407_col || ! function_exists( 'bhp_offer_is_in_stock' ) ) {
 	return;
 }
 
-/* The filter is scoped to ONE product id, so everything else in the store
- * keeps whatever stock status it really has and the hardcover / C12-C13
- * question is untouched by this suite. */
-$GLOBALS['bhp_c407_oos_id'] = $c407_col;
+/* The filter is scoped to the colouring product's OWN ids, so everything else
+ * in the store keeps whatever stock status it really has and the hardcover /
+ * C12-C13 question is untouched by this suite. */
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.413 (`CYCLE180-LDB-6`) — THIS FILTER FORCED STOCK ON THE **PARENT**
+ *     AND THE ENGINE READS THE **BUY** RECORD. ON A VARIABLE SHAPE IT FORCED
+ *     NOTHING, AND SIXTEEN ASSERTIONS WENT SILENTLY INERT.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⛔ THE SUPERSEDED LINES, PRESERVED VERBATIM:
+ *
+ *      $GLOBALS['bhp_c407_oos_id'] = $c407_col;
+ *      function bhp_c407_force_oos( $in_stock, $product ) {
+ *          if ( $product && (int) $product->get_id() === (int) $GLOBALS['bhp_c407_oos_id'] ) {
+ *
+ * ⭐ THE DEFECT, AND IT IS `CYCLE180-LDR-1`'S TWIN. `$c407_col` comes from
+ *    `bhp_colouring_product_ids()`, which since plugin 1.8.92 is DELIBERATELY
+ *    THE PARENT. But `bhp_offer_is_in_stock()` reads each component's
+ *    `buy_id` — the VARIATION on a variable shape. So this filter matched a
+ *    product nothing asks about, every §2 predicate kept reporting IN STOCK,
+ *    and the whole out-of-stock half of this suite tested nothing.
+ *
+ * ⚠️ OBSERVED on staging2 at 1.19.413, 2026-09-12, on the migrated shape
+ *   (parent 19020 / variation 19021) — SEVENTEEN failures, sixteen of them
+ *   §2 rows that had simply stopped being exercised:
+ *       FAIL 2.1 bhp_offer_is_in_stock() goes FALSE ... (it did not)
+ *   ⛔ IT WAS INVISIBLE BEFORE THE MIGRATION because on a SIMPLE product
+ *     parent and buy are the same id, so the old line happened to be right.
+ *     ⭐ That is precisely why it had to be fixed BEFORE the production
+ *     migration rather than after it.
+ *
+ * ⭐ THE FIX FORCES BOTH IDS, which is correct on either shape rather than
+ *    merely correct on the new one: on a simple product the two are the same
+ *    number and the behaviour is byte-identical to 1.19.412.
+ *
+ * ⚠️ WHAT IS **NOT** CHANGED HERE, DELIBERATELY: this suite still has no
+ *    closing `exit()`, and that is the AUTHOR'S DOCUMENTED CHOICE, not an
+ *    oversight — §6's own note says row `6.1` is a literal version pin that is
+ *    "EXPECTED to fail on every later theme build" as this file's version
+ *    stamp. Adding an `exit()` would make the suite permanently red by design.
+ *    ⛔ It is therefore reported as a standing caveat rather than "fixed":
+ *    THIS SUITE'S EXIT CODE IS NOT A PASS SIGNAL AND MUST BE READ, NOT
+ *    COUNTED. (`test-cro-iterate5.php` is the opposite case and DID get an
+ *    `exit()` in this build — there the missing one was a real defect.)
+ */
+$GLOBALS['bhp_c407_oos_ids'] = array_values( array_unique( array_filter( array_map(
+	'intval',
+	array_merge(
+		array( $c407_col ),
+		function_exists( 'bhp_colouring_buy_ids' ) ? array( (int) ( bhp_colouring_buy_ids()['mariana'] ?? 0 ) ) : array()
+	)
+) ) ) );
 function bhp_c407_force_oos( $in_stock, $product ) {
-	if ( $product && (int) $product->get_id() === (int) $GLOBALS['bhp_c407_oos_id'] ) {
+	if ( $product && in_array( (int) $product->get_id(), (array) $GLOBALS['bhp_c407_oos_ids'], true ) ) {
 		return false;
 	}
 	return $in_stock;

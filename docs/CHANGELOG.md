@@ -2,6 +2,579 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## 1.19.414, 1.19.415 / bundle plugin 1.8.94, and 1.19.416 - 2026-09-13 - STAGED ON staging2, NOT DEPLOYED TO PRODUCTION
+
+⛔ **Production is theme `1.19.412` / bundle plugin `1.8.92`.** None of the three
+releases below is on production. They are recorded together because they ship
+together: the production push is **theme `1.19.416` + plugin `1.8.94` + a Rank Math
+sitemap regeneration, on one token.**
+
+⚠ **Provenance of this entry, stated because it is not uniform.** The `1.19.416`
+section is the build's own prepared text, applied verbatim. The `1.19.414` and
+`1.19.415` sections were **compiled from those builds' own reports** - no prepared
+changelog block was written for either - and every figure traces to a report on
+disk. Nothing here is inferred, estimated or rounded.
+
+⚠ **And a limit on the `1.19.414` material specifically.** That build's report is
+itself a **reconstruction from surviving artefacts**, written during `1.19.415`,
+because the original session's returned text did not exist. Its author declined to
+invent a substitute, on the grounds that doing so *"would be a fabricated
+verification record - the same failure class as a fabricated test result."* So the
+`1.19.414` section below records what that build **shipped**. It is not an
+attestation of what its QA observed at the time.
+
+---
+
+### 1.19.414 - the invisible value heading, and a phone rail four thousand pixels below its CTA
+
+**Theme only. The bundle plugin was frozen at `1.8.93` by this build's brief.**
+
+**`CYCLE180-LDB-9` - the pair-page value heading was literally invisible.**
+`h2.bhp-landing-value__heading` ("Both books together") rendered `rgb(23, 63, 47)`
+on `rgb(23, 63, 47)`. **Measured contrast ratio 1.00:1** - not low contrast, *no*
+contrast. Corrected by theme override on specificity to `var(--bl-ivory)`, measured
+at **11.55:1** at both 390 and 1440.
+
+⚠ **This build fixed the symptom on one page and said so.** The same `1.00:1`
+heading was found **live on production** at `/complete-collection/`, whose root
+cause is in the bundle plugin, not the theme. That is fixed properly in `1.8.94`
+below.
+
+**`CYCLE180-LDB-10` - the look-inside rail sat roughly 4,000 px below the buy CTA
+on the colouring PDP at 390.** Fixed by a registry-driven body class
+`bhp-colouring-pdp` and a `max-width: 600px` ordering block: the rail moved to
+**28 px under the bundle CTA** (from 5,477 px to 1,501 px). First screen unmoved;
+desktop and chapter-book PDPs deliberately unchanged, because this build's brief
+required it.
+
+⚠ **It raised the identical - and larger - defect on the chapter-book PDPs as
+`CYCLE180-LDB-11` and left the decision to the founder rather than widening its own
+scope.** He made it; see `1.19.416`.
+
+**Files:** `assets/css/bundle-pair-landing.css` (+ `.min`),
+`assets/css/pdp-content.css` (+ `.min`), `functions.php`, `style.css` (+ `.min`),
+`tests/test-cycle180-build-413.php`, and a new `tests/test-cycle180-build-414.php`.
+
+---
+
+### 1.19.415 / bundle plugin 1.8.94 - the carousel defect was never about the media
+
+**`CYCLE180-CX-19` - and the diagnosis matters more than the fix, because the
+obvious remedy would have caused damage.**
+
+The colouring hero rendered as a single slide on production while working on
+staging. The expected reading was missing media. **It was not.** Production holds
+all six interior attachments (`752`-`757`), **byte-identical to staging**. The
+difference is not media and not code - it is **data**: on production those
+attachments are **parented to product `618`** (now `draft`), while staging's are
+unattached.
+
+The theme resolver used `get_page_by_path()`, which **refuses a one-segment path
+when `post_parent != 0`**. So the lookup failed on production and only on
+production, and the gallery fell back to one slide.
+
+⛔ **Consequence, and it is the load-bearing line: no media import is needed, and
+performing one would have duplicated every file.** The fix is additive, in
+`inc/book-media.php`. **The production step is to deploy the theme.** Registry
+audit across the catalogue: 6 of 33 blocked by this condition, **0 genuinely
+absent**.
+
+**`CYCLE180-LDB-9` fixed at its root (this is the plugin bump).** The `1.00:1`
+heading on `/complete-collection/` is corrected in the plugin rather than overridden
+per page: measured **1.00:1 to 11.74:1**. `1.19.414`'s theme override treated one
+page; this removes the cause everywhere the heading renders.
+
+**Related-product cards at 1440.** Section `905 to 736 px`, card `805 to 651`,
+cover `340 to 232` - so a card now fits a 900 px viewport. Phone unchanged.
+
+**The review star row.** Forest green to `#D9A45F`, `15.4 to 18.4 px`, centered;
+**the count is kept**.
+
+**BEST VALUE badge.** +2 px overlap to **18 px clearance**, card height unchanged.
+
+**Tests.** `414` baseline `200 suites / 182 pass / 18 fail`, `415` final
+`201 / 183 / 18`. **Zero new failures; the 18 are the same 18 files.**
+
+⚠ **Two suites were amended, and the reasoning is recorded rather than assumed.**
+`test-cycle180-build-413.php` and `test-cycle180-build-414.php` failed on `415`
+**only** on version *equalities* ("plugin is exactly 1.8.93", "theme is exactly
+1.19.414") - **every behavioural assertion passed**. Both were converted from
+equalities to **floors**, superseded lines preserved struck and dated in place. The
+regression they exist to catch still fails them: the `1.19.413` accident, where a
+temp index missing `plugins` silently shipped `1.8.91` over `1.8.93` while reporting
+"Plugin updated successfully", lands *below* the floor. What no longer fails is a
+legitimate forward release. After amendment: `413` to `45/0`, `414` to `52/0`.
+
+⚠ **A contamination note that qualifies every failure count in this entry.**
+`wp-content/mu-plugins/bhp-rehearsal-testsku.php` is **still installed on staging2**,
+and its priority-99 filter overwrites the priority-10 fixtures the colouring suites
+use - the RUNBOOK names `test-cycle179-count-discount.php` specifically, and that
+file is inside the failing set. It was present and unchanged across every run, so
+each A/B is a controlled comparison. **But the failing files are not all proven to
+be genuine code defects.**
+
+**Rank Math sitemap refresh: PREPARED AND NOT RUN.** Confirmed live again on
+2026-09-13 - production's product sitemap still advertises the draft `-legacy` URL
+and still does not list `946`. Rank Math `1.0.272`; `wp rankmath sitemap generate`
+is available and proven on staging. **It is part of the production push, not of
+this build.**
+
+---
+
+### 1.19.416 - the look-inside rail moves under the buy CTA on EVERY product page
+
+**Founder seal 1497. Closes `CYCLE180-LDB-11`.** The founder's ruling, verbatim:
+*"Apply the same move to all pages for the build"*.
+
+**Theme only. The bundle plugin does not move and stays at 1.8.94** - asserted by
+`test-cycle180-build-416.php` §6.4 rather than assumed.
+
+#### What changed
+
+`1.19.414` fixed a phone ordering defect on the colouring PDP and deliberately
+scoped it to `.bhp-colouring-pdp`, because its brief required the chapter-book
+PDPs to be unchanged. It raised the identical - and larger - defect on those
+pages as `CYCLE180-LDB-11` and left the decision to the founder. He made it.
+
+`1.19.416` removes the colouring-only scope from the ordering block in
+`assets/css/pdp-content.css`. Same move, same three reserved slots, same
+specificity argument, now on every product page that renders a look-inside rail.
+
+At `max-width: 600px`, inside that scope, the default order bucket moves 8 to 9
+and slot 8 is reserved for exactly three blocks, which then sort in DOM order:
+the look-inside note, the bundle CTA, and the rail directly beneath it.
+
+#### Measured on staging2 at an asserted `window.innerWidth` of 390
+
+| URL state | rail top before | rail top after | moved up |
+|---|---|---|---|
+| Mariana paperback (333) | 10496 | **3274** | 7,222 px |
+| Mariana hardcover (333 `?bhp_format=hardcover`) | 10519 | **3297** | 7,222 px |
+| Everest paperback (15) | 8732 | **1924** | 6,808 px |
+| Everest hardcover (15 `?bhp_format=hardcover`) | 8755 | **1947** | 6,808 px |
+| Amazon paperback (18) | 7900 | **1022** | 6,878 px |
+| Amazon hardcover (18 `?bhp_format=hardcover`) | 7922 | **1045** | 6,877 px |
+| colouring book (19020) | 1501 | 1501 | already moved by 1.19.414 |
+
+The rail's gap from the block directly above it is **27-28 px** on all seven, no
+overlaps anywhere. The first screen is unmoved - slots 1-7 hold identical top
+offsets before and after on every page.
+
+**Desktop is unchanged, measured rather than argued:** at 1440 the document
+height and every `div.product` child's `top / left / width / height` are
+identical to 1.19.415 on all seven URL states, and every computed `order` at that
+width is `0`.
+
+#### The selector, and the trap it avoids
+
+The obvious widening - deleting `.bhp-colouring-pdp` from the selector - drops
+its specificity from **(0,3,3)** to **(0,2,3)**, which LOSES on class count to
+the unscoped default at **(0,3,2)** in `product-template.css`. The stylesheet
+would parse, the rule would be present, every grep would pass, and the page would
+not move. `.single-product` replaces the colouring class one for one, so the
+class count is preserved and every specificity relation 1.19.414 engineered still
+holds. `test-cycle180-build-416.php` §2 computes all of them and asserts the
+ordering relations, including the no-op case.
+
+#### Why no new body class was minted
+
+`pdp-content.css` is already scoped by its enqueue: `bhp_pdp_enqueue_content_css()`
+loads it only where `bhp_pdp_has_left_column()` is true. The Adventure Activity
+Book (833) has no rail, does not receive the stylesheet at all (`NOT ENQUEUED`,
+read from the live DOM), and is byte-identical before and after at both widths.
+
+#### Files
+
+- `assets/css/pdp-content.css` (+ `.min`) - the ordering block, widened; the
+  1.19.414 selectors preserved struck in a dated superseded-wording comment
+- `style.css` (+ `.min`) - version
+- `tests/test-cycle180-build-416.php` - **new**, 50 assertions, all pass
+- `tests/test-cycle180-build-414.php` - §2.5-§2.9 amended from the colouring
+  scope to the widened scope, superseded needles preserved struck; 52 pass / 0
+  fail, unchanged count
+
+#### Tests
+
+Full suites on staging2: **1.19.415 baseline 160 suites / 151 pass / 9 fail to
+1.19.416 161 suites / 152 pass / 9 fail. The nine are the same nine files. Zero
+new failures.**
+
+⛔⛔ **THE SUITE TOTALS FOR 1.19.415 DO NOT AGREE BETWEEN THIS BUILD AND THE LAST,
+AND NEITHER IS PRINTED HERE AS SETTLED.** The `1.19.415` report states
+**201 suites / 183 pass / 18 fail**; this build measured the same release at
+**160 / 151 / 9**, by `ls tests/*.php | wc -l` (160 before, 161 after) corroborated
+by `find . -name 'test*.php'` (161). The `1.19.416` author recorded the difference
+rather than reconciling it - *"I cannot reproduce 201 and I am not guessing what it
+counted"* - and that is why both numbers appear above with their sources.
+
+⭐ **What is NOT in doubt:** each A/B used the **same enumeration command on both
+halves of its own comparison**, and **both report zero new failures**. The release
+criterion holds on either reading. **What is unknown is the absolute failure count
+of the suite**, and that question is open.
+
+#### Acceptance criterion - two readings, and this build picked neither
+
+The brief's *"under 60 px"* is **met** when measured from the block directly above
+the rail (27-28 px on all seven). It is **not met** when measured from the format
+cards (**726 px**, and on the colouring page too). That is a further layout
+decision and it was deliberately not taken here.
+
+⚠ **"Seven PDPs" means seven URL states over four rendered posts.**
+
+#### Not done in this release
+
+- ⛔ Production untouched. Production remains theme 1.19.412 / plugin 1.8.92.
+- ⛔ The production Rank Math sitemap refresh is still **prepared and not run**.
+  Re-verified live 2026-09-13: production's product sitemap still advertises the
+  draft `-legacy` URL and still does not list 946.
+- ⛔ `docs/PROJECT_STATE.md`, `docs/START_HERE.md`, `docs/CURRENT_TASK.md`,
+  `docs/NEXT_TASK.md` and `docs/RELEASES/` are **deliberately not updated by this
+  entry.** They are release-*state* records and the release has not happened;
+  writing "production is now 1.19.416" before the push would state a deploy that
+  did not occur. They fall due immediately **after** the push.
+- ⛔ `docs/START_HERE.md`'s production block still reads `1.19.412`, and that is
+  **correct**. Staging is what moved.
+
+#### RUNBOOK
+
+`docs/RUNBOOK.md` was corrected by the `1.19.416` build, not by this entry:
+`wp eval` and `wp eval-file` are **not** permanently blocked against production.
+They are classified as mutating verbs by the production-write gate and run when the
+unlock token is **fresh**, inside its window. The correction was verified present
+before this entry was written and was **not re-applied**.
+
+---
+
+## 2026-09-12 (~20:01-21:00 MDT) - PRODUCTION IS NOW THEME `1.19.412` / BUNDLE PLUGIN `1.8.92` (theme `1.19.413` / plugin `1.8.93` are STAGED, NOT DEPLOYED)
+
+One release, and then the product migration it exists to make safe. **The colouring book is
+purchasable again** after four days out of stock, as a Bookvault-created **variable** product,
+with the Bookvault link on the variation where their SKU gate reads it.
+
+⭐ **Verified live by read-only WP-CLI over SSH, 2026-09-12 ~21:1x MDT:** active theme
+`1.19.412`; bundle plugin `1.8.92` (**by WP-CLI, not inferred from asset markers**); product
+`946` publish/instock/12.99, thumbnail 694, menu_order 7, **no SKU on the parent**; variation
+`947` parent 946, `_sku` and `_global_unique_id` `9798996810840`, `bvlt_liked true`,
+`bvlt_locations {"locations":[1,3]}`, `attribute_paperback` "Perfect Bound"; `618` **draft**
+with SKU `9798996810840-OLD` and slug `...-legacy`, kept as the rollback; `899` **trash**; page
+`943` publish. Colouring PDP HTTP 200 in 0.49 s with **26** `ver=1.19.412` and **0**
+`ver=1.19.411`; pair page HTTP 200 with "ADD THE SET" and `$22.99`.
+
+⛔⛔ **THIS RELEASE IS IN NO COMMIT ON ANY BRANCH.** `HEAD` is `ece5cd5`, dated 2026-09-09,
+titled "1.19.409" while containing `1.19.411`; the branch
+`feature/cycle180-colouring-resolver-1.19.412` **has no remote ref**; **no branch's committed
+`style.css` reads `1.19.412` or `1.19.413`**; 28 files are modified and 2 untracked in the
+working tree. **There is no rollback-to-commit path for the code production is serving**, and
+`git log` cannot answer what production runs - use WP-CLI over SSH. Recorded, not fixed here.
+
+⛔ **"Connected to Bookvault" is NOT proven and must not be written as proven.** What is
+observed is that the link **fields** are present on `947`. Andrew declined a proof order on
+cost; **the connectivity read is the next real customer order, watched**, with manual
+fulfilment pre-authorised as the fallback.
+
+### The identity split (`CYCLE180-LD-BUILD-412-RESOLVER`)
+
+Until 1.8.92 the entire colouring line resolved through ONE number, from
+`wc_get_product_id_by_sku()`. That is correct while the colouring book is a
+SIMPLE product - 618 production / 4065 staging - because the id it returns is
+the product, the page and the thing you add to the cart, all at once.
+
+The moment the colouring book becomes a VARIABLE product with one "Perfect
+Bound" variation carrying the SKU - the shape the Mariana paperback already has
+(333 parent / 334 variation) - that same call returns the VARIATION, and every
+caller silently receives the wrong kind of number. `get_permalink()` on a
+variation yields nothing usable; a variation is a `product_variation` post so the
+shop-grid `post__in` query never matches it; `get_post_thumbnail_id()` returns 0,
+so the read-aloud tile loses its image; and `get_queried_object_id()` on the PDP
+returns the PARENT, which no longer matches the map, so the colouring hero, rail,
+lightbox and spec line stop rendering. **None of it throws. It just stops being
+there.**
+
+**New in the plugin** - `bhp_colouring_identity_for_id()` (the only place the
+product shape is inspected), `bhp_colouring_identity_map()`,
+`bhp_colouring_parent_ids()`, `bhp_colouring_buy_ids()`,
+`bhp_colouring_slug_for_any_id()`. **New in the theme** -
+`bhp_colouring_ids_for_product()`.
+
+`bhp_colouring_product_ids()` is **kept, not renamed**, and is now the PARENT map
+plus the back-compatibility surface. On every environment that existed at release
+time its return was unchanged, which is asserted directly by the new suite.
+
+**Fixed with it:** the hard-coded `variation_id => 0` on the colouring PDP
+add-to-cart (`inc/colouring-line.php`) and on the offer engine's colouring
+component (`offer-engine.php`). The PDP add URL now carries
+`add-to-cart=<parent>&variation_id=<variation>` plus the variation's own
+attributes, read off the record rather than hard-coded to "Perfect Bound".
+
+Price, stock and SKU are now read from the BUY record; permalink, title,
+thumbnail and archive identity from the PARENT. On a simple product these are the
+same record, which is why nothing observable changed on 618 or 4065.
+
+The drawer's `colouringIds` payload now carries both ids per title, deduplicated,
+because the Store API puts the VARIATION id in `item.id` for a variation line -
+sending only parents would have counted a colouring line as an UNRELATED item and
+denied the shopper shipping progress they had earned.
+
+### Also in this release
+
+- **`CYCLE180-CX-5` - the hardcover buy bar shows its price.** It read
+  "ADD HARDCOVER TO CART" while the paperback read "ADD PAPERBACK, $11.99"; the
+  price was on the chip and in `[data-bhp-format-price]` but not on the control
+  the customer clicks. Now "ADD HARDCOVER, $17.99", built by the same
+  `wc_price()` -> `wp_strip_all_tags()` -> `html_entity_decode()` path as the
+  paperback label, and degrading to the old string if the price is unreadable.
+- **The "minutes." orphan in the parent popup lede.** Fixed with
+  `text-wrap: pretty` in CSS, **not** by editing the founder-approved string and
+  **not** by pushing markup through an `esc_html()`-escaped, publicly filterable
+  value. Measured at 390: the last line goes from 48px ("minutes." alone) to 65px
+  ("10 minutes.").
+- **Deploy artefacts honour `export-ignore` again** - `--worktree-attributes`.
+  See `RUNBOOK.md`.
+
+### Tests
+
+New suite `tests/test-colouring-identity-split.php` - 47 assertions, both product
+shapes, **read-only**. The variable shape is exercised by pointing the resolver at
+the REAL Mariana 333/334 records through the documented `bhp_colouring_product_ids`
+filter, so no product record is created on any environment.
+
+Two pre-existing test defects were corrected in the same pass and are called out
+rather than absorbed: `test-book-formats.php` had been failing since **1.19.405**
+on three stale paperback CTA assertions (verified against 1.19.411 on staging
+before this release was installed), and the new suite's own counters were
+initially scoped so that it could report "0 failed" regardless - both fixed, the
+latter proven by a deliberate negative control.
+
+**Full suites: 197 run on staging, 18 failing, and all 18 were verified failing on
+1.19.411 / 1.8.91 first. Zero new failures. `test-book-formats.php` moved from red
+to green.**
+
+### The production migration that followed (founder seals 1487-1491)
+
+Andrew's scope, verbatim: *"deploy theme 1.19.412 and plugin 1.8.92 to production with the
+usual ritual and rollback tarballs; prove the code changes nothing on 618 while it is still
+simple; free the ISBN, unique id and slug on 618 (it stays published; the coloring page is
+absent for the minutes until your portal step); then, after your portal step, verify the new
+product's shape, move 618's content, images, categories and slug onto it, set 618 to draft,
+purge, and verify. Product 899 stays in the trash. Nothing else."*
+
+The resolver was proved a no-op on the still-simple `618` before anything was freed (parent
+618 / buy 618 / variation 0 / slug unchanged). Bookvault then created product `946` with
+variation `947`; content, excerpt, menu_order, thumbnail `694`, gallery `752-757`, categories
+`16,17` and the Rank Math primary category were moved onto `946`; `618` was set to draft.
+Rollback path: set `946` draft, revert `618`'s SKU, `_global_unique_id` and slug, publish
+`618`, purge.
+
+⭐ The connected-operator agent's final `Upload Product` submit was denied by the session's own auto-mode classifier
+and **nothing reached Bookvault** (verified by zero network calls); **Andrew pressed the button
+himself.** Recorded because it is the approval model working as designed, not a mishap.
+
+---
+
+## 1.19.413 / bundle plugin 1.8.93 - 2026-09-12 - STAGED ON staging2, NOT DEPLOYED TO PRODUCTION
+
+⛔ **Recorded inside this entry rather than as its own production milestone, because it is not
+on production.** Production is `1.19.412` / `1.8.92`, verified above.
+
+**Four decided items, and three test defects that only the colouring migration
+could have exposed.**
+
+### The two migration blockers (`CYCLE180-LDR-1`, `CYCLE180-LDR-2`)
+
+**`tests/test-cycle178-pdp-value-prop.php` read the SKU off the PARENT.** Since
+plugin 1.8.92 `bhp_colouring_product_ids()` is deliberately the parent map, and a
+variable parent created by the print portal carries **no SKU at all** - so the
+assertion compared the canonical ISBN against an empty string and failed. It would
+have failed identically on production the moment the migration landed. It now
+resolves the BUY record through `bhp_colouring_buy_ids()`, and the expected value
+is read from `bhp_colouring_catalog()` rather than re-hardcoded, so the catalogue
+has one owner of that string instead of two.
+
+**The offer cart door did not test stock** (`bundle-shortcode.php`, hence the
+plugin version bump). Its own comment said it existed because *"a form can be
+replayed after a product goes out of stock"* - but it asked
+`bhp_offer_is_purchasable()`, which is `null !== bhp_offer_components()` and
+nothing more. WooCommerce's `is_purchasable()` asks three questions and stock is
+not one of them. Measured with the colouring component out of stock:
+`is_in_stock()` false, `is_purchasable()` **true** - the door opened. It now asks
+the same predicate the render surfaces ask. The change is at the call site and
+**not** inside `bhp_offer_is_purchasable()`, which `bhp_offer_apply_fees()` reads -
+gating that would have taken the discount off a cart a parent had already legally
+assembled and raised their total. Pricing is untouched.
+
+### The pair landing page states a reason (founder seal 1477)
+
+`/mariana-trench-book-and-coloring-book/` returned HTTP 200 with the correct
+template and stylesheet and rendered **nothing**, because the colouring book was
+out of stock. A parent arriving from the printed handout QR got a styled, titled,
+completely blank page. It now renders the existing `BHP_COLOURING_UNAVAILABLE_CTA`
+string in that state - **read from the constant, never re-typed**. **No new copy is
+introduced.** The predicate is deliberately narrow: *purchasable but not in stock*.
+Telling a visit-gated parent the set was "temporarily unavailable" when it is in
+stock would be a false statement about the catalogue.
+
+### `/author-visits/` is no longer an orphan (`CYCLE180-MKT-GSC-TRIAGE` R1)
+
+Search Console showed `/author-visits/` "Discovered - currently not indexed" since
+**2026-03-03** - six months known to Google and never crawled - while returning 200,
+carrying `follow, index` and sitting in the sitemap. The measured cause was **0
+internal links** from `/blog/`, the home page or `/teachers/`. It now has a footer
+link and a link in `/teachers/`. **The link text is the page's own title, "Author
+Visits"**; no new customer-facing sentence is added. Requesting indexing remains
+Andrew's.
+
+### Three test defects found on the way, reported rather than absorbed
+
+- **`test-cro-iterate5.php` had no `exit()` and could not fail.** It printed
+  `FAILURES (n)` and returned 0 regardless, so every release runner recorded it
+  green. Section 4.7's footer-link ceiling had in fact been breached since
+  **1.19.337**. The `exit()` is added and the ceiling set to the measured 15.
+- **`test-cycle179-407.php` forced stock on the PARENT id.** Same defect class as
+  `LDR-1`. It now forces both ids. ⚠️ That suite still has no closing `exit()` **by
+  its author's documented design**, so **its exit code is not a pass signal and must
+  be read rather than counted.**
+- The artefact build must stage **every** deploy path into the temp index. A path
+  omitted from `git add` is archived from `HEAD` silently; in this build that
+  shipped a plugin ZIP at 1.8.91 which installed cleanly and **downgraded staging
+  by two versions**, caught only by reading the post-install version. Recorded in
+  `RUNBOOK.md`.
+
+### Tests
+
+New suite `tests/test-cycle180-build-413.php` - **45 assertions, 0 failures**,
+read-only. Both stock states are exercised through WooCommerce's own
+`woocommerce_product_is_in_stock` filter, added and removed around each assertion,
+so **no product record is created or changed on any environment.**
+
+**Full suites: 198 run on staging, 16 failing, and every one of the 16 was already
+failing on 1.19.412. Zero new failures.**
+
+⚠️ **staging2 is LEFT MIGRATED** from the rehearsal: `19020` parent / `19021`
+variation with a TEST SKU, `4065` set to draft, and the rehearsal mu-plugin still
+installed. Any colouring-related suite failure on staging must be read against that
+before being treated as a regression.
+
+---
+
+> ⛔ **Provenance note for the two blocks above, recorded rather than glossed.** Their technical
+> content was written by `lead-developer` and is applied **verbatim**. Both were drafted at
+> **19:06 MDT** and correctly said `1.19.412` was *"not deployed to production"*; the deploy
+> happened roughly two hours later. `lead-developer` expressly left two decisions to
+> `business-ops-knowledge` and answered neither: the heading format, and whether to hold the
+> blocks until deploy. Both were decided here - **converted to this file's house shape**
+> (date-first, production-scoped) and **pasted as one production entry**, with `1.19.413`
+> recorded inside it as staged. The prepared source files in
+> `Business OS\ANDREW-REVIEW\2026-09-12\BUILD-412\` and `\BUILD-413\` are **left byte-untouched**
+> and still read "not deployed to production"; they were true when written.
+
+## 2026-09-09 - PRODUCTION IS NOW THEME `1.19.411` / BUNDLE PLUGIN `1.8.91` (theme 1.19.410 carried inside 1.19.411; plugin UNCHANGED)
+
+Two theme releases pushed as one, an hour before a five-day founder absence. `1.19.410` fixes a
+defect that was live on production: the parent adventure-kit popup could not be closed with its
+own close control. `1.19.411` applies three founder-approved changes to the same popup. The
+bundle plugin was not touched.
+
+**How the defect was found.** Andrew asked, verbatim: "Before I go can you check the parent
+funnel on the webpage on both mobile and desktop ... take pictures so I can see the kit pop up
+and pathway- I want to see what the message is, how big it is, and if its on brand". The
+capture pass (28 PNGs, headless Chrome with `innerWidth` asserted, production popup captured
+without submission) found the defect while answering a question about copy and branding.
+**It was not found by a test.**
+
+### `1.19.410` - the close control
+
+**Defect.** The popup's `×` close button did not close the popup at **either** width.
+**Cause, established mechanically rather than guessed:** DOM paint order. The photo `figure`
+was `position:relative`, the button `position:absolute`, and **neither carried a `z-index`**,
+so the photo painted over the control - `elementFromPoint` at the button's coordinates returned
+the `img`. **Fix:** `z-index: 2` on the control, plus an opaque ivory disc with a forest ring so
+the button reads against the photo (the pixels beneath it are cream at both widths).
+
+**Severity.** Escape and overlay-click always worked, so the popup was never a hard trap. ⚠️
+**But on a 390 px phone the only exit was a 27 px overlay strip**, which is why this was a real
+defect and not a cosmetic one.
+
+⛔ **How long it was live is UNAVAILABLE.** It was observed at 22:46 MDT on 2026-09-08 and
+removed at 00:52 on 2026-09-09. **Nothing in the record establishes which release introduced
+it**, so the exposure window could be days or weeks. No estimate is given here, and none should
+be added later.
+
+**Verification on staging2:** active theme `1.19.410`; a real click closes the popup at 390 and
+1440; Escape and overlay still work; the 44×44 hit area is kept; the photo is untouched. The
+teacher popup was checked - different component, no defect. 154 suites, zero new functional
+failures; the popup suite 85/0 with 12 new rows. Two slips made during the build (an inverted
+focus state, and a call name in `style.css`) were **caught by the capture step and by the
+existing suites before shipping** - the controls worked.
+
+### `1.19.411` - three approved popup changes
+
+Andrew asked "do you think the message is big enough or prominent enough and on brand?" and
+then, verbatim: "Make all those changes to make it better please". All three:
+
+1. **Desktop headline and sub-line one type step larger** - headline 22.4 → 27.2 px, sub-line
+   14.4 → 18 px. `font-size` only; no layout change.
+2. **A new customer-facing line, approved verbatim**, between the headline and the sub-line at
+   both widths: **"A real chapter from The Mariana Trench. About 10 minutes."** Its provenance
+   is the adventure-kit cover's own line - **not copy invented for the popup**.
+3. **The small kit-card thumbnail is hidden on phone** (below 768 px, by CSS; the markup is
+   kept). Desktop unchanged.
+
+The photo, the form fields, the button text and the footer line are unchanged. The popup copy
+now reads: "FREE Chapter for Reluctant Readers" / "A real chapter from The Mariana Trench. About
+10 minutes." / "I'll send you the chapter now, just add your email." / First name, Email address
+/ SEND ME THE CHAPTER / "No spam. Unsubscribe anytime." Trigger is 50% scroll depth with **no
+dwell floor**.
+
+⚠️ **Known polish item, not a blocker:** the approved line wraps to two lines at 1440 (the
+column is 300 px) and at 390 with "minutes." alone on the second line. The remedy is a `nowrap`
+on "10 minutes." or a slightly wider column.
+
+⛔ **A measurement in this range is DISPUTED and no value is recorded as fact.** The popup's
+share of a 390×844 phone viewport was measured at **74.8%** (pre-`1.19.410` production) from
+one desk and **86.8%** (`1.19.410`) from another, which stated explicitly that 74.8% *"not
+reproduced"*; the same desk measured **76.5%** for `1.19.411`. The desktop figure (26.3%) is
+uncontested.
+
+### The release
+
+**Authorization.** Founder seals 1451-1454. Andrew: "we can push it tonight", then "touched".
+The scope was stated back to him verbatim first - "theme 1.19.409 to 1.19.411 on production
+(close button fix plus the three popup changes), same ritual with rollback tarball, plugin
+untouched."
+
+**Installed** at 00:52 MDT on 2026-09-09. Theme `1.19.411` from `build-411.zip`, ZIP md5
+`592159e610928f0b74b3362b7d547804`, matched on the server after upload. ⚠️ A superseded
+suite-fix ZIP (`cf4245f201bd5e0bfdd6f17b2485b572`) sits beside it in the candidate folder and is
+**not** the artefact. 368 PHP files linted on the server, 0 failures. **No `export-ignore` path
+inside the ZIP** - the preflight assertion added after the 2026-09-08 incident was exercised on
+its first release and passed. Live-vs-ZIP `comm -23`: **0 live-only files**. Rollback tarball
+taken first: `~/_rollback/PROD-theme-1.19.409-pre-411-20260909-065134.tar.gz` (32,120,520 B).
+Active after install: theme `1.19.411`; `wp core version` 7.1; `wp sg purge` OK; 766 theme
+files; installed `style.css` md5 `f2b1573b...` and `inc/kit-instant-modal.php` md5 `5b213d84...`
+matching the ZIP.
+
+**Live checks after install.** Home 200 with `ver=1.19.411` and the approved line present (1
+occurrence); `/shop/`, `/cart/`, `/adventure-kit-thank-you/` and the Mariana paperback PDP all
+200.
+
+**Independently re-verified 2026-09-12 from a separate desk, read-only:**
+`wp theme list --status=active` returns `1.19.411`; `wp plugin list` returns
+`brave-hearts-bundle-pricing 1.8.91`; the home document returns HTTP 200 in 0.49 s with **17**
+`ver=1.19.411` markers, **0** `ver=1.19.409` markers, **6** plugin asset markers at `ver=1.8.91`,
+the approved line present once and "From $11.99" three times.
+
+⚠️ **What is verified and what is not, stated separately.** The **release** is verified live:
+the version marker and the new copy line are on production. The **defect fix is NOT verified on
+production** - the defect was that a *click* did nothing, and every production check in this
+record is an HTTP request, not a click. The fix is well-evidenced on staging2, and staging2 is
+not production.
+
+⛔ **Commit note.** The commit containing this tree is `ece5cd5`, **titled "1.19.409" while its
+content is `1.19.411` plus plugin `1.8.91`**. It is already pushed; correcting the message would
+rewrite published history and has deliberately not been done. Recorded here so the next reader
+does not trust the title. Verified 2026-09-12: working tree clean, level with origin,
+`style.css` `Version: 1.19.411`.
+
 ## 2026-09-08 - PRODUCTION IS NOW THEME `1.19.409` / BUNDLE PLUGIN `1.8.91` (plugin 1.8.90 carried inside 1.8.91)
 
 The push that removed a security-relevant file from production, plus the collection-pricing

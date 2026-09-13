@@ -274,6 +274,40 @@
 /* ---------- Value comparison ---------- */
 .bhp-landing-value { background: var(--bl-forest); margin-top: clamp(2.5rem, 6vw, 4rem); padding-block: clamp(2.5rem, 5vw, 3.5rem); }
 .bhp-landing-value__inner { max-width: 900px; margin: 0 auto; padding-inline: clamp(1rem, 4vw, 2rem); text-align: center; }
+/* ⭐⭐ 1.8.94 (`CYCLE180-LDB-9`, founder seal 1486 note 1) — THE ROOT-CAUSE FIX.
+      FOREST TYPE ON A FOREST BAND: MEASURED CONTRAST RATIO 1.00.
+
+   ⛔ THE DECLARATION WAS NEVER MISSING. `color: #fff` has been on this line the
+      whole time and LOST the cascade to this sheet's own generic heading rule
+      forty lines above:
+
+        .bhp-landing h1, .bhp-landing h2, .bhp-landing h3   (0,1,1)
+            color: var(--bl-forest)          <- line 43 of THIS file
+        .bhp-landing-value__heading          (0,1,0)
+            color: #fff                      <- THIS line
+
+      One class AND one element beats one class. The plugin's intended white
+      lost to the plugin's own generic heading colour, on the plugin's own
+      page. Nothing in the theme caused it and nothing in the theme could have
+      prevented it.
+
+   ⭐ REPEATING THE BLOCK CLASS TAKES THIS TO (0,2,0), WHICH BEATS (0,1,1) ON
+      CLASS COUNT. `!important` would also have worked and would have hidden
+      the reason; the selector states it.
+
+   ⛔⛔ THIS IS THE LINE THAT REACHES `/complete-collection/`. Theme 1.19.414
+      shipped `.bhp-pair-landing .bhp-landing-value__heading` and that fixed
+      the PAIR page only — the theme sheet is scoped to the pair wrapper and
+      cannot reach the collection page, whose heading ("Complete the adventure
+      and save.") was measured at ratio 1.00 on staging2 1.19.413 at 390 and
+      1440. Fixing it at the source was deferred out of 414 solely because
+      that brief froze the plugin at 1.8.93.
+
+   ⭐ THE 1.19.414 THEME OVERRIDE IS DELIBERATELY KEPT, NOT REVERTED. It is
+      harmless (it resolves to the same near-white on a page this rule already
+      covers) and it is the belt to this braces while any environment is still
+      serving a plugin older than 1.8.94. */
+.bhp-landing-value .bhp-landing-value__heading { color: #fff; }
 .bhp-landing-value__heading { color: #fff; font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: 2rem; }
 .bhp-landing-value__panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: left; }
 .bhp-landing-value__panel { border-radius: 12px; padding: 1.25rem 1.5rem; }

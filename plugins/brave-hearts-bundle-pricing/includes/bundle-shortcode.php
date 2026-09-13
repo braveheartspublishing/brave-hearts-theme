@@ -88,8 +88,65 @@ function bhp_bundle_handle_add_to_cart() {
 		 *    POST is not a render, and a form can be replayed after a product
 		 *    goes out of stock. Checking here means the gate cannot be walked
 		 *    around by a stale page.
+		 *
+		 * ═══════════════════════════════════════════════════════════════════
+		 * ⛔⛔ 1.8.93 (`CYCLE180-LDB-2`, closing `CYCLE180-LDR-2`) — THIS GATE
+		 *     DID NOT DO WHAT THE COMMENT DIRECTLY ABOVE IT SAYS IT DOES.
+		 * ═══════════════════════════════════════════════════════════════════
+		 *
+		 * ⛔ THE SUPERSEDED LINE, PRESERVED VERBATIM:
+		 *
+		 *      if ( ! bhp_offer_is_purchasable( $offer_key ) ) {
+		 *
+		 * ⭐ THE DEFECT, STATED PRECISELY. The comment's whole justification is
+		 *    *"a form can be replayed after a product goes OUT OF STOCK"* —
+		 *    and `bhp_offer_is_purchasable()` is `null !== bhp_offer_components()`
+		 *    and nothing more. ⛔ IT DOES NOT TEST STOCK. WooCommerce's own
+		 *    `is_purchasable()` asks three questions — published status, a
+		 *    non-empty price, password protection — and stock is not one of
+		 *    them; `bhp_offer_is_in_stock()` above documents that at length.
+		 *
+		 *    ⭐ OBSERVED on staging2 with the colouring component OUT OF STOCK,
+		 *      not reasoned about:
+		 *          bhp_offer_is_in_stock()     false
+		 *          bhp_offer_is_purchasable()  TRUE   <- the door opened
+		 *
+		 * ⭐ WHY IT WAS NEVER EXPLOITABLE FROM A LIVE PAGE, said plainly so the
+		 *    severity is not overstated: every RENDER surface moved to
+		 *    `bhp_offer_is_offerable()` / `bhp_offer_is_in_stock()` in 1.8.89 —
+		 *    `bundle-pair-landing.php`, `colouring-line.php`,
+		 *    `read-aloud-landing.php`, `offer-engine.php` — so no surface emits
+		 *    the form while a component is out of stock. ⛔ THIS CALL SITE IS
+		 *    THE ONE ADD-PATH 1.8.89 MISSED. The exposure is precisely the
+		 *    replay this comment was written to close: a page rendered while
+		 *    the book was in stock, POSTed after it went out.
+		 *
+		 * ⭐ WHY `bhp_offer_is_offerable()` AND NOT `bhp_offer_is_in_stock()`.
+		 *    The cart door must agree with the surfaces that render the form,
+		 *    and those ask `is_offerable()`. It is the STRICTER of the two
+		 *    (purchasable AND in stock AND permitted to this session), so it
+		 *    closes the stock hole and additionally refuses a replay from a
+		 *    school-visit-flagged session, which the render surfaces already
+		 *    refuse.
+		 *
+		 * ⛔ IT IS CHANGED **HERE, AT THE CALL SITE**, AND NOT INSIDE
+		 *    `bhp_offer_is_purchasable()`. That function is read by
+		 *    `bhp_offer_apply_fees()` to decide whether an offer's DISCOUNT
+		 *    applies to a cart; gating it would take the discount off a cart a
+		 *    parent already legally assembled and make their total GO UP.
+		 *    `bhp_offer_is_in_stock()`'s own header states that reasoning in
+		 *    full, and this edit deliberately obeys it rather than re-deriving
+		 *    it. ✅ NOTHING ABOUT PRICING CHANGES.
+		 *
+		 * ✅ CONTROL PATH: while every component is in stock and the session is
+		 *    unflagged, `bhp_offer_is_offerable()` returns exactly what
+		 *    `bhp_offer_is_purchasable()` returned, so an ordinary add is
+		 *    byte-identical to 1.8.92.
+		 *
+		 * ⛔ THE CUSTOMER-FACING STRING IS UNCHANGED. No new copy is introduced
+		 *    by this fix (Standing Rules §9 — approved copy is locked).
 		 */
-		if ( ! bhp_offer_is_purchasable( $offer_key ) ) {
+		if ( ! bhp_offer_is_offerable( $offer_key ) ) {
 			wc_add_notice( 'That offer is not available right now.', 'error' );
 			return;
 		}

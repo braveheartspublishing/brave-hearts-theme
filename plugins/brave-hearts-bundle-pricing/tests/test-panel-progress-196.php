@@ -302,7 +302,14 @@ $pp_drawer_code = pp_code( $pp_plugin . '/includes/bundle-drawer.php' );
 foreach ( array(
 	'shipProgressCopy' => 'bhp_bundle_ship_progress_copy',
 	'freeShipAtCount'  => 'bhp_bundle_freeship_book_threshold',
-	'colouringIds'     => 'bhp_colouring_product_ids',
+	/*
+	 * ⭐ UPDATED 1.8.92 (CYCLE180-LD-BUILD-412). Was `bhp_colouring_product_ids`.
+	 *    The assertion's INTENT is unchanged and is the only thing that mattered:
+	 *    the value is READ FROM A FUNCTION, never restated in the drawer or in
+	 *    JavaScript. The source function was renamed by the parent/buy identity
+	 *    split, so the string it looks for moved with it.
+	 */
+	'colouringIds'     => 'bhp_colouring_identity_map',
 ) as $pp_key => $pp_source ) {
 	pp_assert(
 		false !== strpos( $pp_drawer_code, "'" . $pp_key . "'" ),

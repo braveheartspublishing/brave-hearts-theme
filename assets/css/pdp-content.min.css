@@ -1,5 +1,5 @@
 /*! Built from pdp-content.css by tools/build-css.mjs — DO NOT EDIT.
-    source-md5: f65df312a34874a47c2309bc4670aa1f
+    source-md5: fd00c87a5fe5bfd04f32541145c5e78d
     Comments stripped for transfer size; the source file is canonical. */
 .bhp-pdp-left {
 min-width: 0;
@@ -95,5 +95,17 @@ body.single-product.woocommerce div.product > .bhp-pdp-left {
 	}
 .bhp-pdp-whats-inside__item {
 		margin-bottom: 0.75rem;
+	}
+}
+@media (max-width: 600px) {
+html body.single-product.woocommerce div.product > *,
+	html body.single-product.woocommerce div.product > .summary > *,
+	html body.single-product.woocommerce div.product > .bhp-media-gallery--hero > * {
+		order: 9;
+	}
+html body.single-product.woocommerce div.product > .bhp-media-gallery--hero > .bhp-look-inside__note,
+	html body.single-product.woocommerce div.product > .summary > .bhp-offer--product,
+	html body.single-product.woocommerce div.product > .bhp-pdp-left {
+		order: 8;
 	}
 }

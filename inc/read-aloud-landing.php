@@ -331,8 +331,20 @@ function bhp_read_aloud_continuity_pair() {
      *    page still renders, rather than fataling on a parent's phone.
      */
     $colouring = ['key' => 'colouring', 'image_id' => 0, 'alt' => '', 'url' => ''];
-    if (function_exists('bhp_colouring_product_ids')) {
-        $ids           = bhp_colouring_product_ids();
+    /*
+     * ⭐ 1.19.412 — PARENT id, named as such, and this tile is the clearest
+     *    illustration of why the split exists. It calls `get_post_status()`,
+     *    `get_post_thumbnail_id()` and `get_permalink()` — three functions
+     *    that ALL return something useless for a variation: a variation's
+     *    post status is `publish` but it has no featured image (0) and no
+     *    permalink of its own. The tile would have rendered imageless and
+     *    linked to nothing, which is exactly the defect the take-home sheet
+     *    route cannot afford.
+     */
+    if (function_exists('bhp_colouring_parent_ids') || function_exists('bhp_colouring_product_ids')) {
+        $ids           = function_exists('bhp_colouring_parent_ids')
+            ? bhp_colouring_parent_ids()
+            : bhp_colouring_product_ids();
         $colouring_id  = (int) ($ids['mariana'] ?? 0);
         if ($colouring_id > 0 && 'publish' === get_post_status($colouring_id)) {
             $thumb = (int) get_post_thumbnail_id($colouring_id);
