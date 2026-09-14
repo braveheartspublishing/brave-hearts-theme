@@ -2,7 +2,9 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
-## 1.19.419 — 2026-09-13 — STAGED ON staging2, NOT DEPLOYED TO PRODUCTION
+## 1.19.419 — 2026-09-13 — DEPLOYED TO PRODUCTION
+
+> **Deployment status, corrected 2026-09-13 14:1x MDT by `chief-of-staff`:** deployed to production at 13:31 MDT on the founder's fresh production token and explicit word, in the same release as the post 78 H3 removal, the post 82 FAQ section, six content edits and two new posts. Live read after deploy: `wp theme list --status=active` = `1.19.419`; bundle plugin `1.8.94` unchanged. Rollback tarball taken first. The paragraphs below were written before the deploy and describe the staged state; they are preserved as written.
 
 > ⚠⚠ **READ THIS LINE LAST AND TRUST IT LEAST.** The three entries below this one each went
 > stale at the push, and the `1.19.417` entry went stale *inside the hour it was authored*.
@@ -67,6 +69,50 @@ assertions are preserved struck at the line. No other assertion in that file was
 **Evidence.** The row's absence was verified by reading the **rendered** `/shop/` page from the
 server, not by inspecting the template: all six cards and their buy panels intact, zero
 occurrences of *"Prefer the hardcover"*. New suite `tests/test-cycle180-build-419.php`.
+
+## 1.19.418 — 2026-09-13 — STAGED ON staging2 ONLY; SHIPPED TO PRODUCTION INSIDE 1.19.419
+
+Staged on staging2 at 12:3x MDT while production was `1.19.417`. This build was never deployed on its own;
+its changes reached production at 13:31 MDT inside `1.19.419` (see the entry above). The bundle plugin did not move (`1.8.94`).
+
+**Four founder rulings (seal 1550), one release.**
+
+- **A per-post Amazon affiliate disclosure, auto-detected.** Any post whose body
+  carries an `amazon.com` link with a `tag=` parameter now renders the approved
+  disclosure line under the title and meta, above the featured image, at every
+  width. No per-post flag: the line appears when an affiliate link is added and
+  disappears when the last one is removed. The sitewide footer disclosure is a
+  different, still-required statement and is byte-untouched. New:
+  `inc/affiliate-disclosure.php`. Detection reuses
+  `BHP_CTA_Collision_Detector::AMAZON_AFFILIATE_URL_PATTERN` rather than minting a
+  second definition, and applies it PER ANCHOR - applied to a whole document the
+  pattern's greedy `.*` bridges unrelated links and reports affiliate income that
+  does not exist.
+- **Deliberate internal links from the ranking posts to the store.** The
+  end-of-post `.guide-continuation` block now carries links to the store product
+  pages, resolved from the guide registry and from live product records, with each
+  anchor's text being the product's own title. New: `inc/related-books.php`. The
+  links went INSIDE the existing block rather than into a new one: a second
+  end-of-post box is the redundancy the 2026-08-31 founder ruling removed.
+- **Post 78's duplicated old title removed as an H3** (staging content edit;
+  the production command is prepared and unapproved).
+- **The Complete Collection card's hardcover row is now behind
+  `BHP_SHOP_CARD_HARDCOVER_ROW`, DEFAULTING TO TRUE.** Nothing about the card
+  changes in this release. Removing the row was measured at 1.19.417 as worth 61px
+  of above-the-fold height, but it takes a live secondary purchase offer off a
+  selling card, which is Andrew's decision. `define('BHP_SHOP_CARD_HARDCOVER_ROW',
+  false)` or `add_filter('bhp_shop_card_hardcover_row', '__return_false')` drops it
+  with no code change.
+
+**Also corrected:** `tests/test-cycle180-build-417.php` §0.4 and §0.5 pinned the
+theme version with `===` and failed every later build. Restored to the
+`version_compare(..., '>=')` floor that `test-cycle180-build-416.php` already used;
+the superseded lines are preserved struck at the line. A floor still catches a
+deploy that lands an OLDER theme, which is the failure those rows exist for.
+
+Theme ZIP `089e07fab62fce838216b68d2d9e0565`, 830 entries, entry gate PASS.
+New suite 61/0/0. Full staging sweep 162 files, 153 exit-0, 9 non-zero - the same
+nine as the 1.19.417 baseline, zero new failures.
 
 ## 1.19.417 — 2026-09-13 — DEPLOYED TO PRODUCTION
 
