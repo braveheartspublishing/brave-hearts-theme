@@ -284,20 +284,90 @@ bhp_pos_assert(
  *    closure in functions.php.
  */
 $pos_callbacks = bhp_pos_theme_callbacks();
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ⛔⛔ 1.19.420 (2026-09-14, CYCLE181-LD-BUILD-420) — TWO ROWS RE-POINTED.
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ⭐ WHY THEY WENT RED: `inc/faq-schema.php` added a THIRD theme callback at
+ *    priority 999 (`bhp_faq_schema_add_node`, for FAQPage structured data).
+ *    `bhp_pos_theme_callbacks()` resolves the set from `$wp_filter` rather than
+ *    from a list — deliberately, so a new callback is exercised instead of
+ *    silently untested — so the new one appears here too. ⛔ THE SUITE WAS
+ *    MEASURING THE OLD CORRECT ANSWER: `2 === count()` and "index 1" were true
+ *    statements about a world in which exactly two callbacks existed. Nothing
+ *    about the product schema regressed; the harness observed one more caller.
+ *
+ * ⭐ THE REMEDY IS THE ONE `CYCLE180-LD-BUILD-419` §6 prescribes for a suite
+ *    that went red BECAUSE A DECISION CHANGED, not because time passed: stay
+ *    EXACT and re-point at the new right answer. ⛔ It is NOT relaxed to a
+ *    floor-only check. The rows below are STRICTLY STRONGER against the intent
+ *    the comment above states — they now name the callback that must be found
+ *    and assert the ORDERING RELATION that created the dead-code defect,
+ *    rather than two array indices that happened to encode it.
+ *
+ * ⛔ THE SUPERSEDED ASSERTIONS ARE PRESERVED STRUCK AT THE LINE, not deleted,
+ *    so the next reader can see what was corrected rather than re-deriving it:
+ *
+ *      ~~2 === count( $pos_callbacks )~~
+ *      ~~isset( $pos_callbacks[1] ) && $pos_callbacks[1] instanceof Closure~~
+ *
+ * ⭐ A BUILD THAT DROPS EITHER PRODUCT CALLBACK, OR THAT RE-ORDERS THEM, MUST
+ *    STILL GO RED — and §1's rows below are what do that.
+ */
 bhp_pos_assert(
-	'the harness resolved BOTH theme callbacks at priority 999',
-	2 === count( $pos_callbacks ),
-	'found ' . count( $pos_callbacks )
+	'the harness resolved the hardcover-offer callback (a zero here makes the whole suite vacuous)',
+	in_array( 'bhp_book_add_hardcover_offer', $pos_callbacks, true ),
+	'found ' . count( $pos_callbacks ) . ': ' . implode(
+		', ',
+		array_map(
+			static function ( $cb ) {
+				return $cb instanceof Closure ? '{closure}' : (string) $cb;
+			},
+			$pos_callbacks
+		)
+	)
 );
+
+$pos_closures = array_keys( array_filter( $pos_callbacks, static function ( $cb ) {
+	return $cb instanceof Closure;
+} ) );
+bhp_pos_assert(
+	'the harness resolved the shippingDetails/GTIN closure, declared in this theme',
+	1 === count( $pos_closures ),
+	count( $pos_closures ) . ' theme closure(s) at 999'
+);
+
+$pos_hardcover_i = array_search( 'bhp_book_add_hardcover_offer', $pos_callbacks, true );
 bhp_pos_assert(
 	'the hardcover-offer callback runs FIRST — the order that created the dead-code defect',
-	isset( $pos_callbacks[0] ) && 'bhp_book_add_hardcover_offer' === $pos_callbacks[0],
+	0 === $pos_hardcover_i,
 	var_export( $pos_callbacks[0] ?? null, true )
 );
 bhp_pos_assert(
-	'the shippingDetails/GTIN callback runs SECOND, and is a closure declared in this theme',
-	isset( $pos_callbacks[1] ) && $pos_callbacks[1] instanceof Closure
+	'the shippingDetails/GTIN closure runs AFTER it — the ordering relation, not an index',
+	false !== $pos_hardcover_i && isset( $pos_closures[0] ) && $pos_closures[0] > $pos_hardcover_i,
+	'hardcover@' . var_export( $pos_hardcover_i, true ) . ' closure@' . var_export( $pos_closures[0] ?? null, true )
 );
+
+/*
+ * ⭐ 1.19.420 — AND THE NEW THIRD CALLBACK MUST NOT DISTURB A PRODUCT GRAPH.
+ *    `bhp_faq_schema_add_node()` is gated on an `<h2>` marker that no product
+ *    carries, so on a product page it must hand back the graph byte-identical.
+ *    Asserted rather than assumed: a callback that quietly added a node to
+ *    every singular page would look identical on the blog post it was written
+ *    for and would be a different, much worse event on a PDP.
+ */
+if ( function_exists( 'bhp_faq_schema_add_node' ) ) {
+	$pos_faq_seed = array( 'Product' => array( '@type' => 'Product', 'name' => 'probe' ) );
+	bhp_pos_assert(
+		'the 420 FAQPage callback leaves a product graph byte-identical',
+		$pos_faq_seed === bhp_faq_schema_add_node( $pos_faq_seed, null )
+	);
+} else {
+	bhp_pos_skip( 'the 420 FAQPage callback leaves a product graph byte-identical', 'inc/faq-schema.php not loaded' );
+}
 
 bhp_pos_assert(
 	'bhp_bundle_single_shipping() is available — the schema rate has an authoritative source',

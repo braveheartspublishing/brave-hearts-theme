@@ -5262,6 +5262,13 @@ require_once get_template_directory() . '/inc/affiliate-disclosure.php';
 // themselves come from bhp_get_series_adventures() in this file, which is
 // already defined by the time any template runs.
 require_once get_template_directory() . '/inc/related-books.php';
+// 1.19.420 — FAQPage structured data for in-body FAQ sections
+// (CYCLE181-LD-BUILD-420, ACT-OPS-677). Load position is NOT load-bearing: the
+// file registers one `rank_math/json_ld` callback at priority 999 and defines
+// four pure helpers, with no dependency on WooCommerce, the bundle plugin, the
+// content engine or any other inc/ file. It is placed here only to sit beside
+// the other blog-surface includes.
+require_once get_template_directory() . '/inc/faq-schema.php';
 // 1.19.262 — the product template (CYCLE165-LD-DIRECTION1-STEP3-PRODUCT),
 // step 3 of the same board build. Loaded AFTER header-offer.php for the same
 // reason step 2 is: this step is what makes the product page carry its own
