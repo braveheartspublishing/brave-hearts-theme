@@ -2,6 +2,117 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## 1.19.420 — 2026-09-14 — DEPLOYED TO PRODUCTION
+
+> **Deployment status, written by `chief-of-staff` 2026-09-14 13:2x MDT:** deployed to production at 13:16 MDT on the founder's fresh token and word, in one run with the www internal-link rewrite (24 records, 152 host fixes, 146 trailing slashes, snapshots per record), 18 plugin updates (all pending except the Stripe gateway major, which stays at 10.9.0 by decision), WooCommerce 11.1.0 with its 4 update routines, and the free coloring PDF v3 at `assets/downloads/mariana-trench-coloring-pages.pdf`. Rollback tarballs for theme and plugins taken first. Any staged-only wording below describes the pre-deploy state.
+
+
+**Deployment status at the time of writing: staging2 only. Production deployment is
+unrequested and unapproved, and no production write of any kind was made by this release.**
+Both environments were read first, read-only, before anything changed: `wp theme list
+--status=active` returned `1.19.419` on production and `1.19.419` on staging2 at 08:48 MDT.
+After this build staging2 serves `1.19.420` and production still serves `1.19.419` — read back
+rather than assumed.
+
+> ⚠ Release-state prose in this file goes stale faster than anything else in it. Verify this
+> entry's deployment status against `wp theme list --status=active` before relying on it.
+
+> ⚠ **The `1.19.418` gap recorded in the `1.19.419` entry is still open. This entry does not
+> supply it** — that entry belongs to a different writer lane and an implementer filling it in
+> would be the quieter of two defects. The gap is restated here so a reader arriving at the top
+> of the file does not conclude `1.19.418` never existed. Tracked as `CYCLE180-LD-419-F1`.
+
+### One functional change in the theme: `FAQPage` structured data for in-body FAQ sections
+
+`ACT-OPS-677`. Several blog posts carry a visible FAQ section written as classic HTML inside
+`post_content` — an `<h2>` carrying a marker, then a run of `<h3>` question / `<p>` answer pairs,
+ending at the next `<h2>`. Rank Math builds FAQ schema only from its own FAQ block, so that
+section reached readers and no search engine. New file `inc/faq-schema.php` reads the section
+back out of `post_content` at render time and adds **one** `FAQPage` node to Rank Math's
+existing `@graph` via the `rank_math/json_ld` filter at priority 999.
+
+**Verified on the rendered page, not inferred from the filter code** (`.claude/rules/schema.md`
+requires this): the delivered HTML of the marked post carries exactly one `FAQPage` node inside
+the same single `@graph` as the existing `WebPage` and `BlogPosting` nodes, with eight
+`Question` → `acceptedAnswer` → `Answer` entries. Every question and every answer was matched
+back, verbatim, against the visible text of the same delivered HTML.
+
+**What it does NOT do, which is most of the point:**
+
+- ⛔ **It never emits `aggregateRating` or `review`, in any form.** The node is a closed literal
+  shape with no merge, no spread and no filter over the finished node, so neither key can arrive
+  by any route. The test suite serialises the finished node and asserts the absence of eight
+  rating/review key and `@type` patterns, with a control proving the same search finds a key that
+  is present. The house rule is absolute and this is the row that guards it.
+- ⛔ **It is not pinned to a post.** The gate is a marker — an `<h2>` `id` or CSS class — and the
+  build gate asserts no hard-coded post id appears anywhere in the file. A post without the
+  marker emits nothing, asserted against a real published post rather than argued.
+- ⛔ **It never overwrites an authored Rank Math FAQ block.** Where one already exists on the
+  page, this file stays silent rather than emitting a second, competing `FAQPage`.
+- ⛔ **It invents no text.** Every string is the plain-text rendering of markup already visible
+  on the page.
+
+**Two filters, so behaviour can change with no deploy:** `bhp_faq_schema_markers` extends the
+marker set; `bhp_faq_schema_enabled` returning `false` suppresses the node entirely. Both routes
+are travelled by the suite — including the reversal — rather than asserted.
+
+**No other theme behaviour changed.** `style.css` carries the only version declaration; all 17
+stylesheets were rebuilt because each `.min.css` stamps a `source-md5` computed from its source,
+and `--check` reports 17 FRESH / 0 STALE.
+
+### One test correction, re-pointed rather than relaxed
+
+`tests/test-product-offer-schema.php` went red on this build and the failure was investigated,
+not waved through. Its harness resolves the theme's `rank_math/json_ld` callbacks from
+`$wp_filter` rather than from a list — deliberately, so a new callback is exercised instead of
+being silently untested — so the new `FAQPage` callback appeared there as a third entry and two
+rows that asserted `2 === count()` and an array index went red. **Nothing about the product
+schema regressed; the suite was measuring the old correct answer.**
+
+The rows are now **exact and strictly stronger against the intent the file's own comment states**:
+they name the callback that must be found and assert the *ordering relation* that created the
+original dead-code defect, instead of two array indices that happened to encode it. A build that
+drops either product callback, or re-orders them, still goes red. The superseded assertions are
+preserved struck at the line. One row was added: the new callback must leave a product graph
+byte-identical, asserted rather than assumed.
+
+### Plugin updates — **staging2 only**
+
+Twenty-four pending plugin updates were applied on staging2, in three isolated stages so a
+failure would be attributable: WooCommerce core first, then everything except the payment
+gateway major, then the gateway major alone. A rollback tarball of `wp-content/plugins` and a
+CSV of every pre-update version were taken **before** the first update. **Production plugins
+were not touched, and production pending updates were read only.**
+
+Notable: WooCommerce `10.9.1` → `11.1.0` (six routine database migrations ran;
+`woocommerce_db_version` now `11.1.0-1`), Rank Math SEO `1.0.272` → `1.0.278`, and the Stripe
+gateway **major** `10.8.5` → `11.0.0`. The `FAQPage` node was re-verified on the rendered page
+*after* the Rank Math update, because that is the plugin whose filter the new code hooks.
+
+**Results:** zero pending updates remain on staging2 · no fatal on any stage · the full suite
+sweep returned the **same nine** pre-existing non-zero suites before and after, by `diff` —
+**zero new failures** from either the theme change or the twenty-four plugin updates · ten
+customer-facing surfaces plus the Blocks checkout returned HTTP 200 with zero PHP errors,
+warnings or notices in the delivered HTML.
+
+⛔ **No WooCommerce product, variation, price, stock, coupon, shipping, tax, payment or checkout
+setting was changed on any environment.** Read back after the updates: prices unchanged, all
+products in stock, one shipping zone (`Contiguous United States`) with one `flat_rate` method at
+the documented `3.99` base cost and no BookVAULT method zoned. No order was created — the most
+recent order on staging2 still predates this build by four weeks.
+
+⚠ **Two side effects of these updates that a production deploy would also carry**, recorded
+rather than absorbed: the migration `wc_update_1100_enable_point_of_sale_feature` sets a
+Point-of-Sale feature flag, and the Stripe major introduces Stripe Dynamic Payment Methods for
+on-session Optimized Checkout, which makes the methods offered at checkout follow the Stripe
+Payment Method Configuration. Both are owner decisions, not implementation details.
+
+### Not in this release, and stated rather than omitted
+
+The `www` → non-www canonical-host work carried out alongside this build resulted in a **server
+`.htaccess` change, not a repository change**, so nothing about it ships in this theme artefact.
+It was applied on staging2 only and is recorded in the build report.
+
 ## 1.19.419 — 2026-09-13 — DEPLOYED TO PRODUCTION
 
 > **Deployment status, corrected 2026-09-13 14:1x MDT by `chief-of-staff`:** deployed to production at 13:31 MDT on the founder's fresh production token and explicit word, in the same release as the post 78 H3 removal, the post 82 FAQ section, six content edits and two new posts. Live read after deploy: `wp theme list --status=active` = `1.19.419`; bundle plugin `1.8.94` unchanged. Rollback tarball taken first. The paragraphs below were written before the deploy and describe the staged state; they are preserved as written.
