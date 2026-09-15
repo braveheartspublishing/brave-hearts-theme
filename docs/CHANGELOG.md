@@ -2,6 +2,73 @@
 
 Major milestones only, human-readable. Not a commit log — see `git log` for that.
 
+## 1.19.421 — 2026-09-15 — The visit-registry arithmetic tripwire (`CYCLE181-LD-VISIT-REGISTRY-AMITY-1007`)
+
+**Deployment status at the time of writing: staging2 only. Production deployment is unrequested
+and unapproved, and no production write of any kind was made by this release.** Both environments
+were read first, read-only, before anything changed: `wp theme list --status=active` returned
+`1.19.420` on production and `1.19.420` on staging2 at 12:31 MDT. After this build staging2 serves
+`1.19.421` and production still serves `1.19.420` — read back rather than assumed.
+
+> ⚠ Release-state prose in this file goes stale faster than anything else in it. Verify this
+> entry's deployment status against `wp theme list --status=active` before relying on it.
+
+### No production code path changed. That is the whole shape of this release.
+
+The work this release accompanies is a **registry row**, and the registry is a WordPress option
+(`bhp_school_visits`), not code. A row is entered with `wp option patch insert` on the environment
+it belongs to, and it takes effect on the very next request without a deploy. Nothing in `inc/`,
+`template-parts/` or the bundle plugin was edited, and no behaviour changed for any existing row.
+
+**What ships is a test suite and a version bump.** `tests/test-cycle181-visit-registry.php` is a
+tripwire for the defect class `CYCLE181-MKT-AVD-4`, live and unfixed since 2026-09-02 and escalated
+twice (`CYCLE179-LD-350` §8.3):
+
+- `/author-visits/` prints a deadline derived from a row's own `cutoff` field.
+- Ordering closes at `visit − 2`, computed from that row's `date`.
+- **Nothing in the code forces those two fields to agree**, because they are two hand-entered
+  fields of one row. A row typed at `visit − 1` makes two customer-facing surfaces state two
+  different deadlines to the same family, and that has already happened on a live row.
+
+`bhp_visit_deadline_display()` contains the damage — it clamps the printed date to the online close
+whenever `cutoff` is later than `visit − 2`, so a page can never advertise a date past the gate.
+The suite asserts that clamp **in both directions**, including the control proving the clamp really
+moved the date. What the clamp cannot do is make an *early* row agree with the gate, which is the
+state every legacy row is in.
+
+**§3 is the row that matters.** It walks the live registry on whatever environment it runs on and
+reports, per row, whether the printed deadline equals the computed close. It **fails** only where
+the divergence is unsafe (printed later than the gate) and otherwise **reports** — because the
+legacy rows are data, they are Andrew's to edit, and a suite that went red on them would be
+switched off within a week and would then be protecting nothing.
+
+**§5 covers the state this release actually introduces:** two visits at one school live in the
+registry at once, one before its read-aloud and one after. The entitlement resolver and the
+after-visit resolver are mutually exclusive by construction, never by a flag. §5 requires each slug
+to resolve through exactly one of the two and requires the pair to disagree with each other — so a
+future change that let them overlap could not grant hand delivery against the wrong visit.
+
+Also asserted: the `visit − 2` arithmetic across a month boundary; all four window boundaries
+including the deliberate one-day gap at `visit − 1` that belongs to neither window; fail-closed
+behaviour on an unusable or impossible date; `/author-visits/` column placement from synthetic rows
+and a fixed "today", including that a school is still in the upcoming column on the morning of the
+read-aloud; that no live registry slug has leaked into `inc/author-visits.php`; and that no
+WooCommerce product or shipping method moved.
+
+**One pre-existing finding this suite reports rather than fails on:** `inc/visit-band.php` carries
+one live registry slug in a comment. It is covered by neither of the two suites that assert this
+rule for `inc/author-visits.php`, it is a file this workstream did not touch, and shipping a red
+suite for something outside the brief would train the next reader to ignore the suite. Reported in
+the workstream record and routed.
+
+### Files
+
+| File | Change |
+|---|---|
+| `tests/test-cycle181-visit-registry.php` | **new** — the tripwire suite |
+| `style.css` | `Version:` 1.19.420 → **1.19.421** |
+| `style.min.css` | rebuilt via `node tools/build-css.mjs`; `--check` **17 FRESH, 0 STALE** |
+
 ## 1.19.420 — 2026-09-14 — DEPLOYED TO PRODUCTION
 
 > **Deployment status, written by `chief-of-staff` 2026-09-14 13:2x MDT:** deployed to production at 13:16 MDT on the founder's fresh token and word, in one run with the www internal-link rewrite (24 records, 152 host fixes, 146 trailing slashes, snapshots per record), 18 plugin updates (all pending except the Stripe gateway major, which stays at 10.9.0 by decision), WooCommerce 11.1.0 with its 4 update routines, and the free coloring PDF v3 at `assets/downloads/mariana-trench-coloring-pages.pdf`. Rollback tarballs for theme and plugins taken first. Any staged-only wording below describes the pre-deploy state.
